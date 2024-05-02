@@ -13,10 +13,12 @@ import {
   LocaleKey,
   useColumnUtils,
   NumberCell,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import {
   InventoryAdjustmentReasonRowFragment,
   getPackVariantCell,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
@@ -66,185 +68,223 @@ export const useStocktakeColumns = ({
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
-  return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
+
+  const columns: ColumnDescription<
+    StocktakeLineFragment | StocktakeSummaryItem
+  >[] = [
     [
+      'itemCode',
+      {
+        getSortValue: row => {
+          return row.item?.code ?? '';
+        },
+        accessor: ({ rowData }) => {
+          return rowData.item?.code ?? '';
+        },
+      },
+    ],
+    [
+      'itemName',
+      {
+        Cell: TooltipTextCell,
+        getSortValue: row =>
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'itemName'] },
+            { path: ['itemName'], default: '' },
+          ]),
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'itemName'] },
+            { path: ['itemName'], default: '' },
+          ]),
+      },
+    ],
+    [
+      'batch',
+      {
+        getSortValue: row =>
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'batch'] },
+            { path: ['batch'], default: '' },
+          ]),
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'batch'] },
+            { path: ['batch'] },
+          ]),
+      },
+    ],
+    [
+      'expiryDate',
+      {
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'expiryDate'] },
+            { path: ['expiryDate'] },
+          ]),
+      },
+    ],
+    {
+      key: 'locationCode',
+      label: 'label.location',
+      width: 100,
+      accessor: ({ rowData }) =>
+        getColumnProperty(rowData, [
+          { path: ['lines', 'location', 'code'] },
+          { path: ['location', 'code'] },
+        ]),
+    },
+  ];
+
+  if (isPackVariantsEnabled) {
+    columns.push({
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: getPackVariantCell({
+        getItemId: row => row?.item?.id ?? '',
+        getPackSizes: row => {
+          if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+          else return [row.packSize ?? 1];
+        },
+        getUnitName: row => row?.item?.unitName ?? null,
+      }),
+      width: 130,
+    });
+  } else {
+    columns.push(
       [
-        'itemCode',
+        'itemUnit',
         {
           getSortValue: row => {
-            return row.item?.code ?? '';
+            return row.item?.unitName ?? '';
           },
           accessor: ({ rowData }) => {
-            return rowData.item?.code ?? '';
+            return rowData.item?.unitName ?? '';
           },
+          sortable: false,
         },
       ],
       [
-        'itemName',
-        {
-          Cell: TooltipTextCell,
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'itemName'] },
-              { path: ['itemName'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'itemName'] },
-              { path: ['itemName'], default: '' },
-            ]),
-        },
-      ],
-      [
-        'batch',
-        {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'batch'] },
-              { path: ['batch'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'batch'] },
-              { path: ['batch'] },
-            ]),
-        },
-      ],
-      [
-        'expiryDate',
+        'packSize',
         {
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
-              { path: ['lines', 'expiryDate'] },
-              { path: ['expiryDate'] },
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'] },
             ]),
         },
-      ],
-      {
-        key: 'locationCode',
-        label: 'label.location',
-        width: 100,
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'location', 'code'] },
-            { path: ['location', 'code'] },
-          ]),
+      ]
+    );
+  }
+
+  columns.push(
+    {
+      key: 'snapshotNumPacks',
+      label: 'label.snapshot-num-of-packs',
+      description: 'description.snapshot-num-of-packs',
+      align: ColumnAlign.Right,
+      Cell: NumberCell,
+      getIsError: row =>
+        getLinesFromRow(row).some(
+          r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
+        ),
+      sortable: false,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          return (
+            lines.reduce(
+              (total, line) => total + line.snapshotNumberOfPacks,
+              0
+            ) ?? 0
+          ).toString();
+        } else {
+          return rowData.snapshotNumberOfPacks;
+        }
       },
-      {
-        key: 'packUnit',
-        label: 'label.pack',
-        sortable: false,
-        Cell: getPackVariantCell({
-          getItemId: row => row?.item?.id ?? '',
-          getPackSizes: row => {
-            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-            else return [row.packSize ?? 1];
-          },
-          getUnitName: row => row?.item?.unitName ?? null,
-        }),
-        width: 130,
+    },
+    {
+      key: 'countedNumPacks',
+      label: 'label.counted-num-of-packs',
+      description: 'description.counted-num-of-packs',
+      align: ColumnAlign.Right,
+      Cell: NumberCell,
+      getIsError: row =>
+        getLinesFromRow(row).some(
+          r => getError(r)?.__typename === 'StockLineReducedBelowZero'
+        ),
+      sortable: false,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          return (
+            lines.reduce(
+              (total, line) => total + (line.countedNumberOfPacks ?? 0),
+              0
+            ) ?? 0
+          ).toString();
+        } else {
+          return rowData.countedNumberOfPacks;
+        }
       },
-      {
-        key: 'snapshotNumPacks',
-        label: 'label.snapshot-num-of-packs',
-        description: 'description.snapshot-num-of-packs',
-        align: ColumnAlign.Right,
-        Cell: NumberCell,
-        getIsError: row =>
-          getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
-          ),
-        sortable: false,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return (
-              lines.reduce(
-                (total, line) => total + line.snapshotNumberOfPacks,
-                0
-              ) ?? 0
-            ).toString();
-          } else {
-            return rowData.snapshotNumberOfPacks;
-          }
-        },
+    },
+    {
+      key: 'difference',
+      label: 'label.difference',
+      align: ColumnAlign.Right,
+      sortable: false,
+      accessor: ({ rowData }) => {
+        if ('lines' in rowData) {
+          const { lines } = rowData;
+          const total =
+            lines.reduce(
+              (total, line) =>
+                total +
+                (line.snapshotNumberOfPacks -
+                  (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
+              0
+            ) ?? 0;
+          return (total < 0 ? Math.abs(total) : -total).toString();
+        } else {
+          return (
+            (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
+            rowData.snapshotNumberOfPacks
+          );
+        }
       },
-      {
-        key: 'countedNumPacks',
-        label: 'label.counted-num-of-packs',
-        description: 'description.counted-num-of-packs',
-        align: ColumnAlign.Right,
-        Cell: NumberCell,
-        getIsError: row =>
-          getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'StockLineReducedBelowZero'
-          ),
-        sortable: false,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return (
-              lines.reduce(
-                (total, line) => total + (line.countedNumberOfPacks ?? 0),
-                0
-              ) ?? 0
-            ).toString();
-          } else {
-            return rowData.countedNumberOfPacks;
-          }
-        },
-      },
-      {
-        key: 'difference',
-        label: 'label.difference',
-        align: ColumnAlign.Right,
-        sortable: false,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            const total =
-              lines.reduce(
-                (total, line) =>
-                  total +
-                  (line.snapshotNumberOfPacks -
-                    (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
-                0
-              ) ?? 0;
-            return (total < 0 ? Math.abs(total) : -total).toString();
-          } else {
-            return (
-              (rowData.countedNumberOfPacks ?? rowData.snapshotNumberOfPacks) -
-              rowData.snapshotNumberOfPacks
-            );
-          }
-        },
-      },
-      {
-        key: 'inventoryAdjustmentReason',
-        label: 'label.reason',
-        accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
-        sortable: false,
-      },
-      {
-        key: 'comment',
-        label: 'label.stocktake-comment',
-        sortable: false,
-        accessor: ({ rowData }) =>
-          getColumnProperty(rowData, [
-            { path: ['lines', 'comment'] },
-            { path: ['comment'] },
-          ]),
-      },
-      expandColumn,
-      GenericColumnKey.Selection,
-    ],
-    { sortBy, onChangeSortBy },
-    [sortBy, onChangeSortBy]
+    },
+    {
+      key: 'inventoryAdjustmentReason',
+      label: 'label.reason',
+      accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
+      sortable: false,
+    },
+    {
+      key: 'comment',
+      label: 'label.stocktake-comment',
+      sortable: false,
+      accessor: ({ rowData }) =>
+        getColumnProperty(rowData, [
+          { path: ['lines', 'comment'] },
+          { path: ['comment'] },
+        ]),
+    },
+    expandColumn,
+    GenericColumnKey.Selection
   );
+
+  return useColumns(columns, { sortBy, onChangeSortBy }, [
+    sortBy,
+    onChangeSortBy,
+  ]);
 };
 
 export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
   const { getError } = useStocktakeLineErrorContext();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
+
   return useColumns([
     'batch',
     'expiryDate',
@@ -254,19 +294,23 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    {
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: getPackVariantCell({
-        getItemId: row => row?.itemId,
-        getPackSizes: row => {
-          return [row?.packSize ?? 1];
-        },
-        getUnitName: row => row?.item.unitName ?? null,
-      }),
-      width: 130,
-    },
+    ...(isPackVariantsEnabled
+      ? [
+          {
+            key: 'packUnit',
+            label: 'label.pack',
+            sortable: false,
+            Cell: getPackVariantCell({
+              getItemId: row => row?.itemId,
+              getPackSizes: row => {
+                return [row?.packSize ?? 1];
+              },
+              getUnitName: row => row?.item.unitName ?? null,
+            }),
+            width: 130,
+          } as ColumnDescription<StocktakeLineFragment>,
+        ]
+      : ['packSize' as ColumnDescription<StocktakeLineFragment>]),
     {
       key: 'snapshotNumPacks',
       width: 150,

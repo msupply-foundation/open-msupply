@@ -30,6 +30,7 @@ fn asset_catalogue_item1() -> AssetCatalogueItemRow {
         manufacturer: Some("Manufacturer 1".to_string()),
         model: "Model 1".to_string(),
         type_id: "a6625bba-052b-4cf8-9e0f-b96ebba0a31f".to_string(),
+        ..Default::default()
     }
 }
 

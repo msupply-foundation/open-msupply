@@ -1,6 +1,34 @@
 use crate::migrations::*;
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+    #[cfg(feature = "postgres")]
+    sql!(
+        connection,
+        r#"
+        CREATE TYPE sync_file_status AS ENUM (
+            'NEW',
+            'IN_PROGRESS',
+            'ERROR',
+            'DONE',
+            'PERMANENT_FAILURE'
+        );
+        CREATE TYPE sync_file_direction AS ENUM (
+            'UPLOAD',
+            'DOWNLOAD'
+        );
+        "#,
+    );
+    const SYNC_FILE_STATUS_ENUM_TYPE: &str = if cfg!(feature = "postgres") {
+        "sync_file_status"
+    } else {
+        "TEXT"
+    };
+    const SYNC_FILE_DIRECTION_ENUM_TYPE: &str = if cfg!(feature = "postgres") {
+        "sync_file_direction"
+    } else {
+        "TEXT"
+    };
+
     sql!(
         connection,
         r#"
@@ -15,8 +43,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 total_bytes INTEGER NOT NULL DEFAULT 0,
                 retries INTEGER NOT NULL DEFAULT 0,
                 retry_at TIMESTAMP,
-                direction TEXT NOT NULL,
-                status TEXT NOT NULL,
+                direction {SYNC_FILE_DIRECTION_ENUM_TYPE} NOT NULL,
+                status {SYNC_FILE_STATUS_ENUM_TYPE} NOT NULL,
                 error TEXT,
                 created_datetime TIMESTAMP NOT NULL, -- No modified datetime, as we don't allow updates it would break sync
                 deleted_datetime TIMESTAMP
