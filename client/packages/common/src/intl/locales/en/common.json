@@ -42,6 +42,7 @@
   "button.sync-now": "Sync now!",
   "button.test": "Test",
   "button.try-again": "Try again",
+  "button.home": "Home",
   "button.view": "View",
   "button.zero-line-quantity": "Set quantities to 0",
   "description.already-issued": "Quantity already issued in shipments.",
