@@ -3,8 +3,12 @@ import {
   NumberInputCell,
   useColumns,
   CellProps,
+  ColumnDescription,
 } from '@openmsupply-client/common';
-import { getPackVariantCell } from '@openmsupply-client/system';
+import {
+  getPackVariantCell,
+  useIsPackVariantsEnabled,
+} from '@openmsupply-client/system';
 import React from 'react';
 import { GenerateOutboundReturnLineFragment } from '../../api';
 
@@ -19,42 +23,62 @@ export const QuantityToReturnTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
-  const columns = useColumns<GenerateOutboundReturnLineFragment>(
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
+
+  const columnDescriptions: ColumnDescription<GenerateOutboundReturnLineFragment>[] =
     [
       'itemCode',
       'itemName',
-      // 'itemUnit', // not implemented for now
       // 'location',
       'batch',
       'expiryDate',
+    ];
+
+  if (isPackVariantsEnabled) {
+    columnDescriptions.push({
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      // eslint-disable-next-line new-cap
+      Cell: getPackVariantCell({
+        getItemId: row => row.item.id,
+        getPackSizes: row => [row.packSize],
+        getUnitName: row => row.item.unitName || null,
+      }),
+    });
+  } else {
+    columnDescriptions.push(
+      [
+        'itemUnit',
+        {
+          accessor: ({ rowData }) => rowData.item.unitName ?? '',
+        },
+      ],
+      'packSize'
+    );
+  }
+
+  columnDescriptions.push(
+    [
+      'availableNumberOfPacks',
       {
-        key: 'packUnit',
-        label: 'label.pack',
-        sortable: false,
-        // eslint-disable-next-line new-cap
-        Cell: getPackVariantCell({
-          getItemId: row => row.item.id,
-          getPackSizes: row => [row.packSize],
-          getUnitName: row => row.item.unitName || null,
-        }),
+        description: 'description.pack-quantity',
       },
-      [
-        'availableNumberOfPacks',
-        {
-          description: 'description.pack-quantity',
-        },
-      ],
-      [
-        'numberOfPacksToReturn',
-        {
-          description: 'description.pack-quantity',
-          width: 100,
-          setter: updateLine,
-          getIsDisabled: () => isDisabled,
-          Cell: NumberOfPacksToReturnReturnInputCell,
-        },
-      ],
     ],
+    [
+      'numberOfPacksToReturn',
+      {
+        description: 'description.pack-quantity',
+        width: 100,
+        setter: updateLine,
+        getIsDisabled: () => isDisabled,
+        Cell: NumberOfPacksToReturnReturnInputCell,
+      },
+    ]
+  );
+
+  const columns = useColumns<GenerateOutboundReturnLineFragment>(
+    columnDescriptions,
     {},
     [updateLine, lines]
   );
