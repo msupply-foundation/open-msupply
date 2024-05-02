@@ -12,9 +12,15 @@ export interface CellProps<T extends RecordWithId> {
   rowIndex: number;
   isDisabled?: boolean;
   isRequired?: boolean;
+  /** Indicates if there is an error, e.g. to draw a red box around the cell */
   isError?: boolean;
+  /**
+   * If there is an error this prop can hold a translated error message,
+   * e.g. to show in a tooltip
+   */
+  error?: string;
   isAutoFocus?: boolean;
-  // Unique name for browser autocomplete (to remember previously entered values for that name)
+  /** Unique name for browser autocomplete (to remember previously entered values for that name) */
   autocompleteName?: string;
   localisedText: TypedTFunction<LocaleKey>;
   localisedDate: (date: string | number | Date) => string;
@@ -78,6 +84,13 @@ export interface Column<T extends RecordWithId> {
   getSortValue?: (row: T) => string | number;
 
   getIsError?: (row: T) => boolean;
+  /**
+   * If get getError is provided getIsError can but doesn't need to be provided, i.e.
+   * if getIsError is not provided and getError() returns a string the isError Cell flag is set to
+   * true.
+   * However, if getIsError is provided, the isError flag is always set using getIsError.
+   */
+  getError?: (row: T) => string | undefined;
   getIsDisabled?: (row: T) => boolean;
 
   onChangeSortBy?: (sort: string, dir: 'desc' | 'asc') => void;

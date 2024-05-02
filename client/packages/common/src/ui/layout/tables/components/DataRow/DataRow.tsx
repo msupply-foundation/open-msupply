@@ -101,6 +101,11 @@ const DataRowComponent = <T extends RecordWithId>({
             onClick={onRowClick}
           >
             {columns.map((column, columnIndex) => {
+              const error = column.getError?.(rowData);
+              const isError = column.getIsError
+                ? column.getIsError(rowData)
+                : error !== undefined;
+
               return (
                 <TableCell
                   key={`${rowKey}${String(column.key)}`}
@@ -128,7 +133,8 @@ const DataRowComponent = <T extends RecordWithId>({
                       isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
                       rowData={rowData}
                       columns={columns}
-                      isError={column.getIsError?.(rowData)}
+                      isError={isError}
+                      error={error}
                       column={column}
                       rowKey={rowKey}
                       columnIndex={columnIndex}
