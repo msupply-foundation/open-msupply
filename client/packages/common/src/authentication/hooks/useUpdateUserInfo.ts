@@ -5,12 +5,16 @@ import {
   useGetUserPermissions,
   useLastSuccessfulUserSync,
   useUpdateUser,
+  useGetUserDetails,
+  getStore,
 } from '../api';
 import { noOtherVariants } from '../../utils/types';
+import { AuthenticationCredentials } from '../../localStorage';
 
 export const useUpdateUserInfo = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>,
-  cookie?: AuthCookie
+  cookie?: AuthCookie,
+  mostRecentCredentials?: AuthenticationCredentials[]
 ) => {
   const t = useTranslation('app');
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +23,7 @@ export const useUpdateUserInfo = (
     cookie?.token ?? ''
   );
   const getUserPermissions = useGetUserPermissions();
+  const { mutateAsync: getUserDetails } = useGetUserDetails();
 
   return {
     lastSuccessfulSync,
@@ -28,14 +33,18 @@ export const useUpdateUserInfo = (
       setError(null);
       try {
         const update = await updateUser();
-        const permissions = await getUserPermissions(
-          cookie?.token,
-          cookie?.store
-        );
 
         if (update.__typename === 'UpdateUserNode') {
+          const permissions = await getUserPermissions(
+            cookie?.token,
+            cookie?.store
+          );
+          const userDetails = await getUserDetails(cookie?.token);
+          const store = await getStore(userDetails, mostRecentCredentials);
+
           const authCookie = {
             ...cookie,
+            store,
             token: cookie?.token ?? '',
             user: {
               id: cookie?.user?.id ?? '',
