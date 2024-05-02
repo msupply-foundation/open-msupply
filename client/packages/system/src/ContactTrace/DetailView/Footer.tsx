@@ -78,7 +78,7 @@ export const Footer: FC<FooterProps> = ({
               variant="outlined"
               disabled={isDisabled || isSaving}
               isLoading={isSaving}
-              onClick={onSave}
+              onClick={() => onSave()}
               startIcon={<CheckIcon />}
             >
               {t('button.save')}
