@@ -3,8 +3,9 @@ use crate::{
         calculate_foreign_currency_total, calculate_total_after_tax,
         generate_invoice_user_id_update,
     },
-    invoice_line::inbound_shipment_line::{
-        generate::convert_invoice_line_to_single_pack, generate_batch,
+    invoice_line::{
+        inbound_shipment_line::generate::convert_invoice_line_to_single_pack,
+        stock_in_line::{generate_batch, StockLineInput},
     },
     store_preference::get_store_preferences,
     u32_to_i32,
@@ -52,10 +53,16 @@ pub fn generate(
 
     let upsert_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
         let new_batch = generate_batch(
-            &existing_invoice_row.store_id,
-            update_line.clone(),
+            // There will be a batch_to_delete_id if the item has changed
+            // If item has changed, we want a new stock line, otherwise keep existing
             batch_to_delete_id.is_none(),
-            &existing_invoice_row.name_link_id,
+            update_line.clone(),
+            StockLineInput {
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                on_hold: false,
+                barcode_id: None,
+            },
         );
         update_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)

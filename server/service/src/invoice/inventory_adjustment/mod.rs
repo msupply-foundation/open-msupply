@@ -1,5 +1,4 @@
-pub mod insert;
-pub use insert::*;
+pub mod adjust_existing_stock;
+pub use self::adjust_existing_stock::*;
 
-pub mod generate;
-pub mod validate;
+pub mod add_new_stock_line;

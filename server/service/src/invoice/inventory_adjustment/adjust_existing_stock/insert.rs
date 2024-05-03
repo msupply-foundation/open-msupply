@@ -109,7 +109,9 @@ mod test {
     use util::inline_edit;
 
     use crate::{
-        invoice::inventory_adjustment::{insert::InsertInventoryAdjustment, AdjustmentType},
+        invoice::inventory_adjustment::{
+            adjust_existing_stock::InsertInventoryAdjustment, AdjustmentType,
+        },
         service_provider::ServiceProvider,
     };
 
