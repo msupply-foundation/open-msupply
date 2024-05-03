@@ -3365,6 +3365,11 @@ export type MergeRequiredError = UpdateDocumentErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type MissingCredentials = UpdateUserErrorInterface & {
+  __typename: 'MissingCredentials';
+  description: Scalars['String']['output'];
+};
+
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
