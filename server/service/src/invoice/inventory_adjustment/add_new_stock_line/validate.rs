@@ -3,20 +3,14 @@ use repository::StorageConnection;
 use crate::common_stock::check_stock_line_does_not_exist;
 
 use crate::stocktake_line::validate::{check_active_adjustment_reasons, check_reason_is_valid};
-use crate::validate::check_store_exists;
 
 use super::insert::{AddNewStockLine, AddNewStockLineError};
 
 pub fn validate(
     connection: &StorageConnection,
-    store_id: &str,
     input: &AddNewStockLine,
 ) -> Result<(), AddNewStockLineError> {
     use AddNewStockLineError::*;
-    if !check_store_exists(connection, store_id)? {
-        return Err(InvalidStore);
-    }
-
     if !check_stock_line_does_not_exist(&input.stock_line_id, connection)? {
         return Err(StockLineAlreadyExists);
     }
