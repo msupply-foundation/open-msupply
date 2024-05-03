@@ -78,6 +78,7 @@
   "error.date_maxDate": "Date value is too large",
   "error.date_minDate": "Date value is too low",
   "error.general-query-error": "There was an error communicating with the server 😢",
+  "error.invalid-credentials": "Unable to fetch user details. Please re-login to update user details.",
   "error.json-bad-format-with-examples": "Incorrect format. Use: \"{{examples}}\"",
   "error.missing-inputs": "{{count}}",
   "error.no-data": "No data available",
