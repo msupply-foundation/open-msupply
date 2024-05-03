@@ -45,7 +45,7 @@ export const useDraftOutboundLines = (
 
     if (!data) return;
 
-    // Stocklines (date.nodes) are coming from availableStockLines from itemNode
+    // Stocklines (data.nodes) are coming from availableStockLines from itemNode
     // these are filtered by totalNumberOfPacks > 0 but it's possible to issue all of the packs
     // from the batch in picked status, need to make sure these are not hidden
     const invoiceLineStockLines = (lines ?? []).flatMap(l =>
