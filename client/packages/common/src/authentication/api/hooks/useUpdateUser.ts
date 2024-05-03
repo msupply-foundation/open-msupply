@@ -4,11 +4,11 @@ import {
   useQueryClient,
 } from '@openmsupply-client/common';
 
-export const useUpdateUser = (token: string) => {
+export const useUpdateUser = () => {
   const api = useAuthApi();
   const queryClient = useQueryClient();
 
   return useMutation(api.get.updateUser, {
-    onSettled: () => queryClient.invalidateQueries(api.keys.me(token)),
+    onSettled: () => queryClient.invalidateQueries(api.keys.userSync()),
   });
 };
