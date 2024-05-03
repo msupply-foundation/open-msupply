@@ -19,9 +19,7 @@ export const useUpdateUserInfo = (
   const t = useTranslation('app');
   const [error, setError] = useState<string | null>(null);
   const { data: lastSuccessfulSync } = useLastSuccessfulUserSync();
-  const { mutateAsync: updateUser, isLoading } = useUpdateUser(
-    cookie?.token ?? ''
-  );
+  const { mutateAsync: updateUser, isLoading } = useUpdateUser();
   const getUserPermissions = useGetUserPermissions();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
 
