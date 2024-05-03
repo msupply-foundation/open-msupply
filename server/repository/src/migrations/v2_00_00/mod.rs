@@ -10,6 +10,7 @@ mod currency_add_is_active;
 mod inventory_adjustment_logtype;
 mod inventory_adjustment_permissions;
 mod linked_shipment;
+mod name_created_datetime;
 mod pack_variant;
 mod report_views;
 mod requisition_line_add_item_name;
@@ -45,7 +46,7 @@ impl Migration for V2_00_00 {
         stock_on_hand_add_item_name::migrate(connection)?;
         currency_add_is_active::migrate(connection)?;
         stocktake_line_add_item_name::migrate(connection)?;
-
+        name_created_datetime::migrate(connection)?;
         Ok(())
     }
 }

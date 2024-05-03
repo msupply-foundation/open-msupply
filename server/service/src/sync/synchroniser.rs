@@ -272,6 +272,9 @@ impl Synchroniser {
 
         if !is_initialised {
             self.remote.advance_push_cursor(&ctx.connection)?;
+            if let Some(v6_sync) = &v6_sync {
+                v6_sync.advance_push_cursor(&ctx.connection)?;
+            }
             self.service_provider.site_is_initialised_trigger.trigger();
         }
 
