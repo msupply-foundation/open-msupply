@@ -30,6 +30,7 @@
   "error.unable-to-save-asset": "Unable to save asset",
   "error.unable-to-save-log": "Unable to save log",
   "error.unable-to-scan": "Unable to scan QR code",
+  "error.too-many-datapoints": "Warning: There are too many data points to display. Please reduce the date range to view the all the data.",
   "filename.asset-import-example": "Example Asset Item Import",
   "filename.cce": "equipment upload template",
   "filename.cce-failed-uploads": "Assets failed to upload",
