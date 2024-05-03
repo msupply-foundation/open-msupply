@@ -61,6 +61,7 @@ fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
             snapshot_datetime: None,
             approved_quantity: 0,
             approval_comment: None,
+            item_name: "Ibuprofen 200mg tablets".to_string(),
         },
     )
 }
@@ -81,7 +82,7 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
             snapshot_datetime: None,
             approved_quantity: 0,
             approval_comment: None,
-            item_name: "Item A".to_string()
+            item_name: "Ibuprofen 200mg tablets".to_string()
         }),
     }
 }
@@ -144,6 +145,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
                     .and_hms_opt(14, 48, 11)
                     .unwrap(),
             ),
+            item_name: "Ibuprofen 200mg tablets".to_string(),
         },
     )
 }
@@ -163,7 +165,7 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             approved_quantity: 0,
             approval_comment: Some("approval comment".to_string()),
             comment: Some("Some comment".to_string()),
-            item_name: "Item A".to_string(),
+            item_name: "Ibuprofen 200mg tablets".to_string(),
             snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 4, 4)
                     .unwrap()

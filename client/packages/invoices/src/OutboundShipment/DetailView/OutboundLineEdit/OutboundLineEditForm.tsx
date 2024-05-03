@@ -13,11 +13,13 @@ import {
   useDebounceCallback,
   NumericTextInput,
   useDebouncedValueCallback,
+  InputLabel,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
   usePackVariant,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
 import { DraftItem } from '../../..';
@@ -77,6 +79,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     item?.id ?? '',
     item?.unitName ?? null
   );
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const onChangePackSize = (newPackSize: number) => {
     const packSize = newPackSize === -1 ? 1 : newPackSize;
@@ -226,23 +229,51 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
             {packSizeController.options.length ? (
               <>
-                <Grid
-                  item
-                  alignItems="center"
-                  display="flex"
-                  justifyContent="flex-start"
-                  style={{ minWidth: 125 }}
-                >
-                  <Select
-                    sx={{ width: 110 }}
-                    options={packSizeController.options}
-                    value={packSizeController.selected?.value ?? ''}
-                    onChange={e => {
-                      const { value } = e.target;
-                      onChangePackSize(Number(value));
-                    }}
-                  />
-                </Grid>
+                {!isPackVariantsEnabled && (
+                  <Grid
+                    item
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="flex-start"
+                    style={{ minWidth: 125 }}
+                  >
+                    <InputLabel sx={{ fontSize: '12px' }}>
+                      {packSizeController.selected?.value === -1
+                        ? `${t('label.unit-plural', {
+                            unit: activePackVariant,
+                            count: issueQuantity,
+                          })} ${t('label.in-packs-of')}`
+                        : t('label.in-packs-of')}
+                    </InputLabel>
+                  </Grid>
+                )}
+                <Box marginLeft={1} />
+
+                <Select
+                  sx={{ width: 110 }}
+                  options={packSizeController.options}
+                  value={packSizeController.selected?.value ?? ''}
+                  onChange={e => {
+                    const { value } = e.target;
+                    onChangePackSize(Number(value));
+                  }}
+                />
+                {!isPackVariantsEnabled &&
+                  packSizeController.selected?.value !== -1 && (
+                    <Grid
+                      item
+                      alignItems="center"
+                      display="flex"
+                      justifyContent="flex-start"
+                    >
+                      <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
+                        {t('label.unit-plural', {
+                          count: packSizeController.selected?.value,
+                          unit: activePackVariant,
+                        })}
+                      </InputLabel>
+                    </Grid>
+                  )}
                 <Box marginLeft="auto" />
               </>
             ) : null}

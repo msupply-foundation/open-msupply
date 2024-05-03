@@ -1,5 +1,5 @@
 use super::{currency_row::currency::dsl as currency_dsl, StorageConnection};
-use crate::Upsert;
+use crate::{Delete, Upsert};
 
 use crate::repository_error::RepositoryError;
 
@@ -13,6 +13,7 @@ table! {
         code -> Text,
         is_home_currency -> Bool,
         date_updated -> Nullable<Date>,
+        is_active -> Bool,
     }
 }
 
@@ -25,6 +26,7 @@ pub struct CurrencyRow {
     pub code: String,
     pub is_home_currency: bool,
     pub date_updated: Option<NaiveDate>,
+    pub is_active: bool,
 }
 
 pub struct CurrencyRowRepository<'a> {
@@ -67,9 +69,28 @@ impl<'a> CurrencyRowRepository<'a> {
     }
 
     pub fn delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(currency_dsl::currency.filter(currency_dsl::id.eq(currency_id)))
+        diesel::update(currency_dsl::currency.filter(currency_dsl::id.eq(currency_id)))
+            .set(currency_dsl::is_active.eq(false))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CurrencyRowDelete(pub String);
+impl Delete for CurrencyRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        CurrencyRowRepository::new(con).delete(&self.0)
+    }
+
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert!(matches!(
+            CurrencyRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(Some(CurrencyRow {
+                is_active: false,
+                ..
+            })) | Ok(None)
+        ));
     }
 }
 

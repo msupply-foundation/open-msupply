@@ -33,6 +33,7 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub item_line_ID: Option<String>,
     pub item_ID: String,
+    pub item_name: String,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub Batch: Option<String>,
     #[serde(deserialize_with = "zero_date_as_option")]
@@ -89,6 +90,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             is_edited,
             item_line_ID,
             item_ID,
+            item_name,
             Batch,
             expiry,
             cost_price,
@@ -114,6 +116,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             snapshot_number_of_packs: snapshot_qty,
             counted_number_of_packs,
             item_link_id: item_ID,
+            item_name,
             batch: Batch,
             expiry_date: expiry,
             pack_size: Some(snapshot_packsize),
@@ -152,6 +155,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     snapshot_number_of_packs,
                     counted_number_of_packs,
                     item_link_id: _,
+                    item_name,
                     batch,
                     expiry_date,
                     pack_size,
@@ -175,6 +179,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             is_edited: counted_number_of_packs.is_some(),
             item_line_ID: stock_line_id,
             item_ID: item.id,
+            item_name,
             snapshot_packsize: pack_size
                 .unwrap_or(stock_line.as_ref().map(|it| it.pack_size).unwrap_or(0)),
             Batch: batch,

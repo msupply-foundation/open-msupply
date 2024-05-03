@@ -19,7 +19,7 @@ pub(crate) struct AssetTypeTranslation;
 
 impl SyncTranslation for AssetTypeTranslation {
     fn table_name(&self) -> &str {
-        "asset_type"
+        "asset_catalogue_type"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
@@ -37,7 +37,7 @@ impl SyncTranslation for AssetTypeTranslation {
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::AssetType)
+        Some(ChangelogTableName::AssetCatalogueType)
     }
 
     // Only translating and pulling from central server

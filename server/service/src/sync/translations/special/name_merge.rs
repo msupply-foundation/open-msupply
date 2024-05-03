@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection, StoreFilter, StoreRepository,
-    SyncBufferRow,
+    EqualFilter, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
+    StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -61,6 +61,10 @@ impl SyncTranslation for NameMergeTranslation {
                 })
             })
             .collect();
+        // delete the merged name
+        operations.push(IntegrationOperation::delete(NameRowDelete(
+            data.merge_id_to_delete.clone(),
+        )));
 
         let name_store_join_repo = NameStoreJoinRepository::new(connection);
         let name_store_joins_for_delete = name_store_join_repo.query_by_filter(
@@ -149,9 +153,7 @@ impl SyncTranslation for NameMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-    };
+    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use super::*;
     use repository::{
@@ -205,14 +207,11 @@ mod tests {
             MockDataInserts::none().units().names(),
         )
         .await;
-        let mut logger = SyncLogger::start(&connection).unwrap();
 
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
-            .await
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -225,14 +224,11 @@ mod tests {
         )
         .await;
         sync_records.reverse();
-        let mut logger = SyncLogger::start(&connection).unwrap();
 
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
-            .await
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -256,7 +252,6 @@ mod tests {
                 .name_store_joins(),
         )
         .await;
-        let mut logger = SyncLogger::start(&connection).unwrap();
         let name_store_join_repo = NameStoreJoinRepository::new(&connection);
 
         let count_name_store_join = |id: &str| -> usize {
@@ -313,9 +308,8 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
-            .await
-            .unwrap();
+
+        integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
 
         assert_eq!(count_name_store_join(&"name_a"), 0);
         assert_eq!(count_name_store_join(&"name2"), 0);

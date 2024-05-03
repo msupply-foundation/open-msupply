@@ -117,7 +117,7 @@ export const RequestLineEdit = ({
             update={update}
             disabled={mode === ModalMode.Update || disabled}
             onChangeItem={onChangeItem}
-            item={currentItem}
+            currentItem={currentItem}
             variantsControl={variantsControl}
             numberOfPacksFromQuantity={numberOfPacksFromQuantity}
             numberOfPacksToTotalQuantity={numberOfPacksToTotalQuantity}
