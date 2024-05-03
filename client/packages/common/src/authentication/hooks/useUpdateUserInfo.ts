@@ -62,6 +62,9 @@ export const useUpdateUserInfo = (
             case 'InvalidCredentials':
               setError(t('error.invalid-credentials'));
               break;
+            case 'MissingCredentials':
+              setError(t('error.invalid-credentials'));
+              break;
             default:
               noOtherVariants(update.error);
           }

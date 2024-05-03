@@ -7,11 +7,11 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    login::{FetchUserError, LoginError, LoginFailure},
+    login::{FetchUserError, LoginError, LoginFailure, UpdateUserError as LoginUpdateUserError},
     sync::sync_user::SyncUser,
 };
 
-use crate::InvalidCredentials;
+use crate::{InvalidCredentials, MissingCredentials};
 
 pub struct UpdateUserNode {
     pub last_successful_sync: Option<NaiveDateTime>,
@@ -30,6 +30,7 @@ impl UpdateUserNode {
 pub enum UpdateUserErrorInterface {
     ConnectionError(ConnectionError),
     InvalidCredentials(InvalidCredentials),
+    MissingCredentials(MissingCredentials),
 }
 
 #[derive(SimpleObject)]
@@ -69,6 +70,11 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
                     return Ok(UpdateResponse::Error(UpdateUserError {
                         error: UpdateUserErrorInterface::InvalidCredentials(InvalidCredentials),
                     }))
+                }
+                LoginError::UpdateUserError(LoginUpdateUserError::MissingCredentials) => {
+                    return Ok(UpdateResponse::Error(UpdateUserError {
+                        error: UpdateUserErrorInterface::MissingCredentials(MissingCredentials),
+                    }));
                 }
                 LoginError::FetchUserError(_)
                 | LoginError::UpdateUserError(_)
