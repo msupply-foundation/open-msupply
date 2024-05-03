@@ -131,6 +131,7 @@ async fn invoice_transfers() {
             // SHIPMENT
             tester.insert_outbound_shipment(&ctx.connection);
             // manually trigger because inserting the shipment didn't trigger the processor
+            // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
                 .shipment_transfer
                 .try_send(())
@@ -156,6 +157,7 @@ async fn invoice_transfers() {
             // RETURN
             tester.insert_outbound_return(&ctx.connection);
             // manually trigger because inserting the return doesn't trigger the processor
+            // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
                 .shipment_transfer
                 .try_send(())
@@ -353,6 +355,7 @@ async fn invoice_transfers_with_merged_name() {
             // SHIPMENT
             tester.insert_outbound_shipment(&ctx.connection);
             // manually trigger because inserting the shipment didn't trigger the processor
+            // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
                 .shipment_transfer
                 .try_send(())
@@ -379,6 +382,7 @@ async fn invoice_transfers_with_merged_name() {
             // RETURN
             tester.insert_outbound_return(&ctx.connection);
             // manually trigger because inserting the return doesn't trigger the processor
+            // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
                 .shipment_transfer
                 .try_send(())
