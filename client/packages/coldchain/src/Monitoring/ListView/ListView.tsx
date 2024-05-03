@@ -8,12 +8,21 @@ import {
 } from '@openmsupply-client/common';
 import { TemperatureBreachList } from './TemperatureBreach';
 import { TemperatureChart } from './TemperatureChart';
+import { OldTemperatureChart } from './TemperatureChart';
 import { AppBarButtons } from './AppBarButtons';
 
 export const ListView: FC = () => {
   const t = useTranslation('coldchain');
 
   const tabs = [
+    {
+      Component: <OldTemperatureChart />,
+      value: 'Old Chart',
+      sort: {
+        key: TemperatureLogSortFieldInput.Datetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
+    },
     {
       Component: <TemperatureChart />,
       value: t('label.chart'),

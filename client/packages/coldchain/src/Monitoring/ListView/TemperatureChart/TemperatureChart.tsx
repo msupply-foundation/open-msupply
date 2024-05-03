@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   ChartTooltip,
   ComposedChart,
+  FilterByWithBoolean,
   Legend,
   Line,
   NothingHere,
@@ -17,43 +18,126 @@ import {
   YAxis,
   useTheme,
   useUrlQuery,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { useTemperatureChartData } from './useTemperatureChartData';
 import { Entry, TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopover } from './BreachPopover';
 import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
 import { BreachIndicator } from './BreachIndicator';
 import { Toolbar } from '../TemperatureLog/Toolbar';
 import { useFormatTemperature } from '../../../common';
+import { TemperatureLogFragment, useTemperatureLog } from '../../api';
 
-const NUMBER_OF_HORIZONTAL_LINES = 4;
-const LOWER_THRESHOLD = 2;
-const UPPER_THRESHOLD = 8;
+import { scaleTime } from 'd3-scale';
+import { Tooltip, XAxisProps } from 'recharts';
+import { d } from 'msw/lib/glossary-de6278a9';
+import { useTemperatureLogs } from '../../api/TemperatureLog/hooks/document/useTemperatureLogs';
+
+const BREACH_MIN = 2;
+const BREACH_MAX = 8;
+const MAX_DATA_POINTS = 8640; // 30days for 1 sensor at a 5 minute interval
+
+interface DataPoint {
+  datetime: Date | null;
+  temperature: number | null;
+}
+
+interface ChartSeries {
+  id: string;
+  name: string;
+  colour: string;
+  data: DataPoint[];
+}
+
+const transformData = (
+  temperatureLogs: TemperatureLogFragment[],
+  colours: string[]
+): ChartSeries[] => {
+  const sensorData: ChartSeries[] = [];
+
+  for (let i = 0; i < temperatureLogs.length; i++) {
+    const log = temperatureLogs[i];
+    if (!log?.sensor) {
+      continue;
+    }
+    const sensorId = log.sensor.id;
+    const sensorName = log.sensor.name;
+    const sensorIndex = sensorData.findIndex(sensor => sensor.id === sensorId);
+
+    if (sensorIndex === -1) {
+      sensorData.push({
+        id: sensorId,
+        name: sensorName,
+        colour: colours[sensorData.length % colours.length] ?? 'black',
+        data: [
+          {
+            datetime: DateUtils.getDateOrNull(log.datetime),
+            temperature: log.temperature ?? null,
+          },
+        ],
+      });
+    } else {
+      sensorData[sensorIndex]?.data.push({
+        datetime: DateUtils.getDateOrNull(log.datetime),
+        temperature: log.temperature ?? null,
+      });
+    }
+  }
+
+  return sensorData;
+};
+
+const generateBreachConfig = (startTime: Date, endTime: Date) => {
+  // creating the full range of datetimes, otherwise it isn't showing full width
+  return {
+    cold: [
+      {
+        date: new Date(startTime),
+        temperature: BREACH_MIN,
+      },
+      {
+        date: new Date(endTime),
+        temperature: BREACH_MIN,
+      },
+    ],
+
+    hot: [
+      {
+        date: new Date(startTime),
+        temperature: BREACH_MAX,
+      },
+      {
+        date: new Date(endTime),
+        temperature: BREACH_MAX,
+      },
+    ],
+  };
+};
 
 const Chart = ({
-  breachConfig,
-  hasData,
+  data,
+  dataTruncated,
+  startTime,
+  endTime,
   isLoading,
-  sensors,
-  yAxisDomain,
 }: {
-  breachConfig: BreachConfig;
-  hasData: boolean;
+  data?: TemperatureLogFragment[];
+  dataTruncated: boolean;
+  startTime: Date;
+  endTime: Date;
   isLoading: boolean;
-  sensors: Sensor[];
-  yAxisDomain: [number, number];
 }) => {
   const t = useTranslation('coldchain');
   const theme = useTheme();
-  const { dayMonthTime, customDate } = useFormatDateTime();
-  const dateFormatter = (date: string) => dayMonthTime(date);
+  const { dayMonthTime } = useFormatDateTime();
+  const dateFormatter = (date: Date) => dayMonthTime(date);
   const [currentBreach, setCurrentBreach] = React.useState<BreachDot | null>(
     null
   );
-  const { urlQuery, updateQuery } = useUrlQuery();
+  // const { urlQuery, updateQuery } = useUrlQuery();
   const formatTemp = useFormatTemperature();
 
-  const formatTemperature = (value: number | null) =>
+  const formatTemperature = (value: number | null | undefined) =>
     !!value ? `${formatTemp(value)}` : '-';
 
   const TemperatureTooltip = ({
@@ -61,121 +145,116 @@ const Chart = ({
     payload,
     label,
   }: TooltipProps<number, string>) => {
-    const entries: Entry[] = [];
-
-    if (active && !!payload?.length) {
-      const date = payload[0]?.payload?.date;
-      sensors.forEach(sensor => {
-        const entry = sensor.logs.find(log => log.date === date.getTime());
-        if (!entry) return;
-        entries.push({
-          name: sensor.name,
-          value: formatTemperature(entry.temperature),
-          id: sensor.id,
-          color: sensor.colour,
-        });
-      });
+    if (!active || !payload) {
+      return null;
     }
+    // Payload looks something like this
+    /*
+    [
+    {
+        "name": "Sensor 1",
+        "strokeDasharray": "7 2",
+        "fill": "#922DD0",
+        "stroke": "#922DD0",
+        "strokeWidth": 1,
+        "dataKey": "temperature",
+        "color": "#922DD0",
+        "value": 23.5,
+        "payload": {
+            "datetime": "2024-02-08T04:10:12.000Z",
+            "temperature": 23.5
+        }
+    }
+    ]
+    */
+
+    const entries: Entry[] = payload?.map(entry => {
+      return {
+        name: entry.name ?? '',
+        value: formatTemperature(entry.value),
+        id: entry.name ?? '' + entry.value,
+        color: entry.color,
+      };
+    });
 
     return <TemperatureTooltipLayout entries={entries} label={label} />;
   };
-
-  // shows a breach icon if there is a breach
-  // and nothing otherwise
-  const TemperatureLineDot = React.useCallback(
-    ({ cx, cy, payload }: DotProps) =>
-      !payload?.breach ? (
-        <></>
-      ) : (
-        <BreachIndicator
-          cx={cx}
-          cy={cy}
-          payload={payload}
-          setCurrentBreach={setCurrentBreach}
-        />
-      ),
-    [setCurrentBreach]
-  );
-
-  const tickSpace =
-    (yAxisDomain[1] - yAxisDomain[0]) / (NUMBER_OF_HORIZONTAL_LINES + 1);
-  const ticks = Array.from({ length: NUMBER_OF_HORIZONTAL_LINES }).map(
-    (_, index) => Math.round((index + 1) * tickSpace)
-  );
-  ticks.push(Math.round(yAxisDomain[0]));
-  ticks.push(LOWER_THRESHOLD);
-  ticks.push(UPPER_THRESHOLD);
-  ticks.push(Math.round(yAxisDomain[1]));
-  ticks.sort((a, b) => (a > b ? 1 : -1));
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const CustomisedTick = ({ x, y, payload }: any) => {
-    const theme = useTheme();
-    const textColour =
-      payload.value === LOWER_THRESHOLD
-        ? theme.palette.chart.cold.main
-        : payload.value === UPPER_THRESHOLD
-        ? theme.palette.chart.hot.main
-        : theme.palette.gray.dark;
-    return (
-      <g>
-        <line x={x} y={y} stroke={theme.palette.gray.dark}></line>
-        <text
-          x={x}
-          y={y}
-          fill={textColour}
-          textAnchor="end"
-          style={{
-            fontSize: 12,
-            fontWeight:
-              payload.value === LOWER_THRESHOLD ||
-              payload.value === UPPER_THRESHOLD
-                ? 'bold'
-                : '',
-          }}
-        >
-          <tspan dy="0.355em">{formatTemperature(payload.value)}</tspan>
-        </text>
-      </g>
-    );
-  };
-
-  useEffect(() => {
-    if (!urlQuery['datetime']) {
-      const from = customDate(
-        DateUtils.addDays(new Date(), -1),
-        'yyyy-MM-dd HH:mm'
-      );
-      const to = customDate(new Date(), 'yyyy-MM-dd HH:mm');
-      updateQuery({ datetime: { from, to } });
-    }
-  }, []);
 
   if (isLoading) {
     return <BasicSpinner />;
   }
 
-  if (!hasData) {
+  if (!data) {
     return <NothingHere body={t('error.no-temperature-logs')} />;
   }
+
+  const series = transformData(data, theme.palette.chart.lines);
+  const breachConfig = generateBreachConfig(startTime, endTime);
+
+  // With .nice() we extend the domain to make the numbers look nicer e.g. ending in 0 or 5
+  const timeScale = scaleTime().domain([startTime, endTime]).nice();
+
+  const xAxisArgs: XAxisProps = {
+    domain: timeScale.domain().map(date => date.valueOf()),
+    scale: timeScale,
+    type: 'number',
+    ticks: timeScale.ticks(7).map(date => date.valueOf()),
+  };
 
   return (
     <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
       <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
         {t('heading.chart')}
       </Typography>
-
+      {dataTruncated && (
+        <Typography variant="body2" color="error">
+          {t('error.too-many-datapoints')}
+        </Typography>
+      )}
       <ResponsiveContainer width="90%" height="90%">
         <ComposedChart>
           <CartesianGrid vertical={false} />
           <XAxis
-            dataKey="date"
-            tickFormatter={dateFormatter}
+            dataKey="datetime"
+            tickFormatter={(date: string) => {
+              return dateFormatter(new Date(date));
+            }}
             tick={{ fontSize: 12 }}
+            {...xAxisArgs}
             allowDuplicatedCategory={false}
           />
-          <YAxis ticks={ticks} tick={<CustomisedTick />} domain={yAxisDomain} />
+          <YAxis dataKey="temperature" />
           <ChartTooltip content={TemperatureTooltip} />
+          <Area
+            data={breachConfig.hot}
+            type="monotone"
+            dataKey="temperature"
+            stroke={theme.palette.chart.hot.main}
+            fill={theme.palette.chart.hot.light}
+            baseValue="dataMax"
+          />
+          <Area
+            data={breachConfig.cold}
+            type="monotone"
+            dataKey="temperature"
+            stroke={theme.palette.chart.cold.main}
+            fill={theme.palette.chart.cold.light}
+            baseValue="dataMin"
+          />
+          {series.map(sensor => (
+            <Line
+              key={sensor.id}
+              type="monotone"
+              dataKey="temperature"
+              data={sensor.data}
+              name={sensor.name}
+              strokeDasharray="7 2"
+              connectNulls={false}
+              fill={sensor.colour}
+              stroke={sensor.colour}
+              dot={sensor.data.length < 200}
+            />
+          ))}
           <Legend
             align="right"
             verticalAlign="top"
@@ -218,42 +297,13 @@ const Chart = ({
                 ))}
               </ul>
             )}
-            payload={sensors.map(sensor => ({
+            payload={series.map(sensor => ({
               value: sensor.name,
               type: 'rect',
               id: sensor.id,
               color: sensor.colour,
             }))}
           />
-          <Area
-            data={breachConfig.hot}
-            type="monotone"
-            dataKey="temperature"
-            stroke={theme.palette.chart.hot.main}
-            fill={theme.palette.chart.hot.light}
-            baseValue="dataMax"
-          />
-          <Area
-            data={breachConfig.cold}
-            type="monotone"
-            dataKey="temperature"
-            stroke={theme.palette.chart.cold.main}
-            fill={theme.palette.chart.cold.light}
-            baseValue="dataMin"
-          />
-          {sensors.map(sensor => (
-            <Line
-              data={sensor.logs}
-              key={sensor.id}
-              dataKey="temperature"
-              stroke={sensor.colour}
-              type="monotone"
-              dot={({ key, ...rest }) => (
-                <TemperatureLineDot {...rest} key={`${sensor.id}_${key}`} />
-              )}
-              strokeWidth={4}
-            />
-          ))}
         </ComposedChart>
       </ResponsiveContainer>
       {currentBreach && (
@@ -266,18 +316,97 @@ const Chart = ({
   );
 };
 
+const temperatureLogFilterAndSort = {
+  initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
+  filters: [
+    { key: 'datetime', condition: 'between' },
+    {
+      key: 'sensor.name',
+    },
+    {
+      key: 'location.code',
+    },
+    {
+      key: 'temperatureBreach.type',
+      condition: 'equalTo',
+    },
+  ],
+};
+
+const getDateRangeAndFilter = (
+  filterBy: FilterByWithBoolean | null
+): { filterBy: FilterByWithBoolean; fromDatetime: Date; toDatetime: Date } => {
+  const now = DateUtils.setMilliseconds(new Date(), 0);
+  let fromDatetime = DateUtils.addDays(now, -1);
+  let toDatetime = now;
+  // console.log(filterBy);
+  const filterDatetime = filterBy?.['datetime'];
+
+  if (!!filterDatetime && typeof filterDatetime === 'object') {
+    const hasAfterOrEqualTo =
+      'afterOrEqualTo' in filterDatetime && !!filterDatetime['afterOrEqualTo'];
+
+    if (hasAfterOrEqualTo)
+      fromDatetime = new Date(String(filterDatetime['afterOrEqualTo']));
+
+    if (
+      'beforeOrEqualTo' in filterDatetime &&
+      !!filterDatetime['beforeOrEqualTo']
+    ) {
+      toDatetime = new Date(String(filterDatetime['beforeOrEqualTo']));
+
+      // the 'from' date needs to be before the 'to' date
+      // if this isn't the case, and if 'from' is not set,
+      // then set to a day prior to the 'to' date
+      if (fromDatetime >= toDatetime && !hasAfterOrEqualTo) {
+        fromDatetime = DateUtils.addDays(new Date(toDatetime), -1);
+      }
+    }
+  }
+
+  return {
+    filterBy: {
+      ...filterBy,
+      datetime: {
+        afterOrEqualTo: fromDatetime.toISOString(),
+        beforeOrEqualTo: toDatetime.toISOString(),
+      },
+    },
+    fromDatetime,
+    toDatetime,
+  };
+};
+
 export const TemperatureChart = () => {
-  const { breachConfig, filter, hasData, isLoading, sensors, yAxisDomain } =
-    useTemperatureChartData();
+  const {
+    filter,
+    queryParams: { filterBy },
+  } = useUrlQueryParams(temperatureLogFilterAndSort);
+
+  const {
+    filterBy: updatedFilterBy,
+    fromDatetime,
+    toDatetime,
+  } = getDateRangeAndFilter(filterBy);
+
+  const queryParams = {
+    filterBy: updatedFilterBy,
+    offset: 0,
+    sortBy: { key: 'datetime', isDesc: false, direction: 'asc' },
+    first: MAX_DATA_POINTS,
+  };
+
+  const { data, isLoading } = useTemperatureLogs(queryParams);
+  const dataTruncated = (data?.totalCount ?? 0) > (data?.nodes.length ?? 0);
   return (
     <>
       <Toolbar filter={filter} />
       <Chart
-        breachConfig={breachConfig}
-        hasData={hasData}
         isLoading={isLoading}
-        sensors={sensors}
-        yAxisDomain={yAxisDomain}
+        data={data?.nodes ?? []}
+        dataTruncated={dataTruncated}
+        startTime={fromDatetime}
+        endTime={toDatetime}
       />
     </>
   );
