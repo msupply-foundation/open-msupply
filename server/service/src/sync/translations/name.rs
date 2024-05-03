@@ -149,7 +149,7 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        connection: &StorageConnection,
+        _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameRow {
