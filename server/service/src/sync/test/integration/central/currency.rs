@@ -12,7 +12,7 @@ use util::uuid::uuid;
 pub(crate) struct CurrencyTester;
 
 impl SyncRecordTester for CurrencyTester {
-    fn test_step_data(&self, _new_site_properties: &NewSiteProperties) -> Vec<TestStepData> {
+    fn test_step_data(&self, _: &NewSiteProperties) -> Vec<TestStepData> {
         let mut result = Vec::new();
         // STEP 1 - insert
         let currency_row1 = CurrencyRow {

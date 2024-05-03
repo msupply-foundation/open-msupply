@@ -12,11 +12,11 @@ import {
   usePluginElements,
   PluginEventListener,
 } from '@openmsupply-client/common';
-import { Environment } from '@openmsupply-client/config';
 import { StockLineRowFragment, useStock } from '../api';
 import { ActivityLogList } from '../../ActivityLog';
 import { StockLineForm } from './StockLineForm';
 import { InventoryAdjustmentForm } from './InventoryAdjustment';
+import { LedgerForm } from './Ledger';
 
 interface StockLineEditModalProps {
   isOpen: boolean;
@@ -86,19 +86,19 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       ),
       value: 'label.details',
     },
-    ...(Environment.FEATURE_INVENTORY_ADJUSTMENTS
-      ? [
-          {
-            Component: (
-              <InventoryAdjustmentForm stockLine={draft} onUpdate={onUpdate} />
-            ),
-            value: 'label.adjust',
-          },
-        ]
-      : []),
+    {
+      Component: (
+        <InventoryAdjustmentForm stockLine={draft} onUpdate={onUpdate} />
+      ),
+      value: 'label.adjust',
+    },
     {
       Component: <ActivityLogList recordId={draft?.id ?? ''} />,
       value: 'label.log',
+    },
+    {
+      Component: <LedgerForm stockLine={draft} />,
+      value: 'label.ledger',
     },
   ];
 
@@ -117,8 +117,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
 
   return (
     <Modal
-      width={700}
-      height={575}
+      sx={{ maxWidth: 'unset', minWidth: 700, minHeight: 575 }}
       slideAnimation={false}
       title={t('title.stock-line-details')}
       okButton={
@@ -138,12 +137,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <Grid
-        container
-        paddingBottom={4}
-        alignItems="center"
-        flexDirection="column"
-      >
+      <Grid container alignItems="center" flexDirection="column">
         <Typography sx={{ fontWeight: 'bold' }} variant="h6">
           {stockLine.item.name}
         </Typography>

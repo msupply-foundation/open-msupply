@@ -35,6 +35,7 @@ const createDraftLine = ({
   isCreated: !seed,
   isUpdated: false,
   isDeleted: false,
+  itemName: item.name,
   ...seed,
 });
 

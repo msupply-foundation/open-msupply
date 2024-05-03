@@ -25,6 +25,7 @@ mod name_link_row;
 mod report_query;
 pub mod sync_file_reference;
 pub mod sync_file_reference_row;
+pub mod ledger;
 
 mod clinician_link_row;
 pub mod encounter_row;

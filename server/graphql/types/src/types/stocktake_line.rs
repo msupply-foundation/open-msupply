@@ -69,6 +69,10 @@ impl StocktakeLineNode {
         &self.line.item.id
     }
 
+    pub async fn item_name(&self) -> &str {
+        &self.line.line.item_name
+    }
+
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
         let item_option = loader.load_one(self.line.item.id.clone()).await?;

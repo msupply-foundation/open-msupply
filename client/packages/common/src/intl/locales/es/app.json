@@ -52,7 +52,7 @@
   "cmdk.goto-suppliers": "Ir a: Proveedores",
   "discovery.sub-heading": "¡Para abrir mSupply!",
   "error.connection-error": "No se puede conectar al servidor",
-  "error.integration-timeout-reached": "El tiempo límite para la integración con el servidor central ha expirado",
+  "error.integration-timeout-reached": "El servidor central tardó demasiado en integrar los registros enviados. Por favor, inténtalo de nuevo más tarde",
   "error.invalid-url": "url Invalida",
   "error.login": "Nombre de usuario o contraseña no válidos",
   "error.account-blocked": "Cuenta está bloqueada hasta el bloqueo el periodo ha expirado",
@@ -100,5 +100,7 @@
   "encounter": "Encuentros",
   "patients": "Pacientes",
   "dispensary": "Farmacia",
-  "programs": "Programas"
+  "programs": "Programas",
+  "heading.server-error": "Error de servidor",
+  "error.internal-error": "El servidor experimentó un problema."
 }

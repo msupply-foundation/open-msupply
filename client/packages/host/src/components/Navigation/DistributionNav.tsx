@@ -47,7 +47,7 @@ export const DistributionNav: FC = () => {
             to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.InboundReturn)
               .build()}
-            text={t('inbound-return')}
+            text={t('inbound-returns')}
           />
           <AppNavLink
             end

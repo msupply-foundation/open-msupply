@@ -157,6 +157,7 @@ mod test {
                         supplyQuantity
                         suggestedQuantity
                         comment
+                        itemName
                         itemStats {
                             averageMonthlyConsumption
                             availableStockOnHand
@@ -192,6 +193,7 @@ mod test {
                          "nodes": [{
                             "id": &response_requisition.lines[0].id,
                             "itemId":&response_requisition.lines[0].item_link_id,
+                            "itemName": &response_requisition.lines[0].item_name,
                             "requestedQuantity": &response_requisition.lines[0].requested_quantity,
                             "supplyQuantity": &response_requisition.lines[0].supply_quantity,
                             "suggestedQuantity": &response_requisition.lines[0].suggested_quantity,
