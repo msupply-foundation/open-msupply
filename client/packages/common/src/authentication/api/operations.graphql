@@ -157,6 +157,10 @@ mutation updateUser {
           __typename
           description
         }
+        ... on MissingCredentials {
+          __typename
+          description
+        }
         description
       }
     }
