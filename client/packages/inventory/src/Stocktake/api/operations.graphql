@@ -16,6 +16,7 @@ fragment StocktakeLine on StocktakeLineNode {
   stocktakeId
   batch
   itemId
+  itemName
   id
   expiryDate
   packSize

@@ -48,7 +48,7 @@ export const AppBarButtons = () => {
     setIsUploadingFridgeTag(true);
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('files', file);
 
     try {
       const result = await fetch(
@@ -56,6 +56,7 @@ export const AppBarButtons = () => {
         {
           method: 'POST',
           body: formData,
+          credentials: 'include',
         }
       );
 

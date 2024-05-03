@@ -1,3 +1,4 @@
+use chrono::Utc;
 use repository::RepositoryError;
 use repository::{
     ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
@@ -64,6 +65,7 @@ pub fn insert_inventory_adjustment(
 
             let verified_invoice = InvoiceRow {
                 status: InvoiceRowStatus::Verified,
+                verified_datetime: Some(Utc::now().naive_utc()),
                 ..new_invoice
             };
 
@@ -107,7 +109,9 @@ mod test {
     use util::inline_edit;
 
     use crate::{
-        invoice::inventory_adjustment::{insert::InsertInventoryAdjustment, AdjustmentType},
+        invoice::inventory_adjustment::{
+            adjust_existing_stock::InsertInventoryAdjustment, AdjustmentType,
+        },
         service_provider::ServiceProvider,
     };
 
@@ -249,8 +253,11 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_inventory_adjustment_success() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_inventory_adjustment_success", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_inventory_adjustment_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider

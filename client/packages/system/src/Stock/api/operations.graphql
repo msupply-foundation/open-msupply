@@ -48,6 +48,18 @@ fragment InvoiceRow on InvoiceNode {
   id
 }
 
+fragment LedgerRow on LedgerNode {
+  datetime
+  id
+  invoiceType
+  itemId
+  name
+  quantity
+  reason
+  stockLineId
+  storeId
+}
+
 query stockLines(
   $first: Int
   $offset: Int
@@ -80,6 +92,29 @@ query stockLine($id: String!, $storeId: String!) {
       nodes {
         __typename
         ...StockLineRow
+      }
+      totalCount
+    }
+  }
+}
+
+query ledger(
+  $key: LedgerSortFieldInput!
+  $desc: Boolean
+  $filter: LedgerFilterInput
+  $storeId: String!
+) {
+  ledger(
+    storeId: $storeId
+    filter: $filter
+    # page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on LedgerConnector {
+      __typename
+      nodes {
+        __typename
+        ...LedgerRow
       }
       totalCount
     }

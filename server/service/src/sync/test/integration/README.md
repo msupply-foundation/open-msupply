@@ -44,16 +44,15 @@ Only data that needs to be present on central server site is a new sync site (th
 
 ## 4 `Open mSupply central server`
 
-- The open mSupply central server should have a port offset of `+2` relative to the mSupply central server port.
-- IS_CENTRAL_SERVER env variable should be set to `true`
-- And graphql API should be 'open' (without token), thus `APP_SERVER__DEBUG_NO_ACCESS_CONTROL` env variable should be set to `true`
+- Another instance of omSupply should be running as central server, in order to set omSupply instance as central server, you will need to check "Site is open mSupply central server" against the site and enter correct This site url agains the site in mSupply->Special->Synchronisation->{Site}
+- And graphql API should be 'open' (without token), thus 'APP_SERVER\_\_DEBUG_NO_ACCESS_CONTROL' env variable should be set to `true`
 
 In case you are wondering, the APP env variables translate to settings in [configuration .yaml](https://github.com/msupply-foundation/open-msupply/blob/1b8b9237863eef1a764be3973d563e6d84358827/server/configuration/example.yaml#L7) files, and override them
 
-Here is the full command line I used
+Here is the full command line I used, for this setting "test" site `Site is open mSupply central server` is ticked and `This site url` is set to "http://localhost:2055"
 
 ```bash
-IS_CENTRAL_SERVER=true APP_SERVER__PORT=2050 APP_DATABASE__DATABASE_NAME="central_test" APP_SYNC__URL="http://localhost:2048" APP_SYNC__INTERVAL_SECONDS=30 APP_SERVER__DEBUG_NO_ACCESS_CONTROL=TRUE APP_SYNC__PASSWORD_SHA256="d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1" APP_SYNC__USERNAME="test" cargo run
+APP_SERVER__PORT=2055 APP_DATABASE__DATABASE_NAME="central_test" APP_SYNC__URL="http://localhost:2048" APP_SYNC__INTERVAL_SECONDS=30 APP_SERVER__DEBUG_NO_ACCESS_CONTROL=TRUE APP_SYNC__PASSWORD_SHA256="d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1" APP_SYNC__USERNAME="test" cargo run
 ```
 
 In this case d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 = pass
@@ -63,12 +62,6 @@ In this case d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 = 
 Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test integration_sync  --features integration_test`
 
 If you've set configurations in rust analyzer, can use inlay hint play and debug buttons in:
-
-- integration/remote/test
-- integration/central/test
-- integration/transfer/requisition
-- integration/transfer/shipment
-- integration/omsupply_central/test
 
 # How do they work (Central, Remote and open mSupply central)
 

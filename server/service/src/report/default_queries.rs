@@ -307,6 +307,7 @@ const REQUISITION_QUERY: &str = r#"query RequisitionQuery($storeId: String, $dat
             code
             name
           }
+          itemName
           remainingQuantityToSupply
           suggestedQuantity
           requestedQuantity

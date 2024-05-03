@@ -1,10 +1,11 @@
-# remote-server
+# Server
 
-mSupply remote server is a component of the Open mSupply system:
+Open mSupply server is a component of the Open mSupply system. The server:
 
-- Hosts the remote server web interface and exposes RESTful and GraphQL APIs for mSupply data.
+- Hosts the server web interface and exposes RESTful and GraphQL APIs for open mSupply data.
 - Synchronises with central servers which implement `v5` of the mSupply sync API.
 - Exposes a dynamic plugin system for customising and extending functionality.
+- Can act as a remote or central omSupply server, see [Synchronisation documentation](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/README.md#glossary)
 
 # Quick Start
 
@@ -97,6 +98,19 @@ cargo run
 > NOTE: make sure that sync configurations in `configuration/*.yaml` files are commented out if running without mSupply Central, otherwise you may get an error stating that the database and yaml sync configurations differ (in which case, the remote server will try to contact central server)
 
 Explore API available on `http://localhost:8000/graphql` with build in playground or try [online graphiql explorer](https://graphiql-online.com/)
+
+## Open mSupply Central and Remote
+
+Open mSupply server can be launched in both modes, this is controlled via `Site is open mSupply central server` configuration in legacy mSupply site settings, more info in [Sync Docs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/README.md#open-msupply-central-server) and [Integration Test Docs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/test/integration/README.md#4-open-msupply-central-server).
+
+From version 2.0 omSupply would require both legacy and omSupply central server for full configuration/syncrhonisation. To start both omSupply central and omSupply remote:
+- Create two sites as per [above "Set up sync with mSupply central" instructions](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/test/integration/README.md#4-open-msupply-central-server)
+- Configure one site to be central server by checking `Site is open mSupply central server` and entering the URL with which remote sites can reach this site in the field `This site url`
+- `cargo run` twice but change port, database and sync settings in yaml file or overwrite with env variables
+
+For example, two sites running locally from the same repo,  __central__ and  __test__, for __central__ site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055. 
+Comment out all sync settings in yaml and can start  __central__ with `APP_SERVER__PORT=2055 APP_DATABASE__DATABASE_NAME="central_test" cargo run` front end would be started with `yarn start -- -- --env API_HOST='http://localhost:2055' --port 3005` (--port is for webpack port), and then start  __test__ with `cargo run` and `yarn && yarn start-local` from respective folders. The first site would be initialised with `central` site credentials first, and second sites with  __test__ credentials,  __test__ site would sync with both legacy mSupply and omSupply central server (this  __central__ site), and __central__ site would synchronise with legacy mSupply server only
+
 
 ### Start server in watch mode
 
