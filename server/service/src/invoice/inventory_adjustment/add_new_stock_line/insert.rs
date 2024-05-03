@@ -31,7 +31,6 @@ pub struct AddNewStockLine {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum AddNewStockLineError {
-    InvalidStore,
     StockLineAlreadyExists,
     AdjustmentReasonNotValid,
     AdjustmentReasonNotProvided,
@@ -51,7 +50,7 @@ pub fn add_new_stock_line(
             // Needed for query below, input is moved
             let stock_line_id = input.stock_line_id.clone();
 
-            validate(connection, &ctx.store_id, &input)?;
+            validate(connection, &input)?;
             let GenerateResult {
                 invoice,
                 stock_in_line,
@@ -157,7 +156,7 @@ mod test {
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let mut context = service_provider
+        let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
@@ -173,19 +172,6 @@ mod test {
             ),
             Err(ServiceError::StockLineAlreadyExists)
         );
-
-        // Invalid store
-        context.store_id = "invalid".to_string();
-        assert_eq!(
-            service.add_new_stock_line(
-                &context,
-                AddNewStockLine {
-                    ..Default::default()
-                }
-            ),
-            Err(ServiceError::InvalidStore)
-        );
-        context.store_id = mock_store_a().id;
 
         // Missing reason
         assert_eq!(

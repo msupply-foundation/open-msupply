@@ -107,8 +107,7 @@ fn map_error(error: AddNewStockLineError) -> Result<InsertResponse> {
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        AddNewStockLineError::InvalidStore
-        | AddNewStockLineError::AdjustmentReasonNotValid
+        AddNewStockLineError::AdjustmentReasonNotValid
         | AddNewStockLineError::AdjustmentReasonNotProvided
         | AddNewStockLineError::StockLineAlreadyExists => BadUserInput(formatted_error),
         AddNewStockLineError::NewlyCreatedStockLineDoesNotExist
