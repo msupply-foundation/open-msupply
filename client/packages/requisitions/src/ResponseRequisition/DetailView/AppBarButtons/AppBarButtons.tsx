@@ -13,7 +13,6 @@ import {
   ReportSelector,
   useReport,
 } from '@openmsupply-client/system';
-import { CreateShipmentButton } from './CreateShipmentButton';
 import { SupplyRequestedQuantityButton } from './SupplyRequestedQuantityButton';
 import { useResponse } from '../../api';
 import { JsonData } from '@openmsupply-client/programs';
@@ -35,7 +34,6 @@ export const AppBarButtonsComponent = () => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <CreateShipmentButton />
         <SupplyRequestedQuantityButton />
         <ReportSelector
           context={ReportContext.Requisition}

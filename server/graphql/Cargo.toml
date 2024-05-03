@@ -53,5 +53,5 @@ assert-json-diff = { workspace = true }
 
 [features]
 default = ["sqlite"]
-sqlite = ["repository/sqlite"]
-postgres = ["repository/postgres"]
+sqlite = ["repository/sqlite", "graphql_reports/sqlite"]
+postgres = ["repository/postgres", "graphql_reports/postgres"]

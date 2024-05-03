@@ -38,6 +38,10 @@ impl RequisitionLineNode {
         &self.item_row().id
     }
 
+    pub async fn item_name(&self) -> &str {
+        &self.row().item_name
+    }
+
     pub async fn comment(&self) -> &Option<String> {
         &self.row().comment
     }

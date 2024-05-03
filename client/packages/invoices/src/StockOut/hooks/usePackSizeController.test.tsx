@@ -50,6 +50,7 @@ const testLine = ({
         unitName: '',
         __typename: 'ItemNode',
       },
+      itemName: '',
       type: InvoiceLineNodeType.StockOut,
       packSize,
       invoiceId: '',

@@ -7,7 +7,7 @@ pub use self::queries::sync_status::*;
 use self::queries::*;
 
 use graphql_core::pagination::PaginationInput;
-use util::is_central_server;
+use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
@@ -73,7 +73,7 @@ impl GeneralQueries {
     }
 
     pub async fn is_central_server(&self) -> bool {
-        is_central_server()
+        CentralServerConfig::is_central_server()
     }
 
     /// Query omSupply "name" entries
@@ -141,6 +141,17 @@ impl GeneralQueries {
         sort: Option<Vec<ItemSortInput>>,
     ) -> Result<ItemsResponse> {
         items(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn ledger(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Filter option")] filter: Option<LedgerFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<LedgerSortInput>>,
+    ) -> Result<LedgerResponse> {
+        ledger(ctx, store_id, filter, sort)
     }
 
     pub async fn invoice_counts(

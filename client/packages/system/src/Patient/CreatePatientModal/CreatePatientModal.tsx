@@ -116,7 +116,9 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
             variant="next"
             onClick={onNext}
             disabled={
-              !createNewPatient?.firstName && !createNewPatient?.lastName
+              !createNewPatient?.firstName ||
+              !createNewPatient?.lastName ||
+              !createNewPatient?.code
             }
           />
         ) : undefined

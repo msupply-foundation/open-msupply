@@ -52,7 +52,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Prescription)
               .build()}
-            text={t('prescription')}
+            text={t('prescriptions')}
           />
           <AppNavLink
             visible={isProgramModule}

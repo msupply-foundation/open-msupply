@@ -1,32 +1,28 @@
-use std::path::Path;
+use std::ops::Deref;
 
-use actix_multipart::form::{tempfile::TempFile, MultipartForm};
+use actix_multipart::form::MultipartForm;
 use actix_web::{
     post,
     web::{self, Data},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use anyhow::Context;
 
 use serde::Deserialize;
 
 use service::{
+    auth_data::AuthData,
     sensor::berlinger::{read_sensor, ReadSensor},
     service_provider::ServiceProvider,
     settings::Settings,
+    static_files::{StaticFileCategory, StaticFileService},
 };
-use util::prepare_file_dir;
+use util::format_error;
 
-const TEMP_FRIDGETAG_FILE_DIR: &str = "fridge_tag";
+use crate::{authentication::validate_cookie_auth, static_files::UploadForm};
 
 pub fn config_upload_fridge_tag(cfg: &mut web::ServiceConfig) {
     cfg.service(upload);
-}
-
-#[derive(Debug, MultipartForm)]
-struct UploadForm {
-    #[multipart(rename = "file")]
-    files: Vec<TempFile>,
 }
 
 #[derive(Deserialize)]
@@ -41,36 +37,27 @@ async fn upload(
     url_params: web::Query<UrlParams>,
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    request: HttpRequest,
 ) -> HttpResponse {
-    // TODO Permissions
+    // For now, we just check that the user is authenticated
+    // In future we might want to check that the user has access to upload fridge tag
+    if let Err(_) = validate_cookie_auth(request.clone(), &auth_data) {
+        return HttpResponse::InternalServerError().body("You need to be logged in");
+    };
 
     match upload_fridge_tag(form, url_params.into_inner(), &settings, &service_provider) {
         Ok(result) => HttpResponse::Ok().json(result),
-        Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+        Err(error) => {
+            log::error!("{}", format_error(&error.deref()));
+            HttpResponse::InternalServerError()
+                .body("Error uploading or integrading fridge tag data")
+        }
     }
 }
 
-fn move_file(from: &Path, to: &Path) -> std::io::Result<()> {
-    // First try to move file on same device. If this fails it might be because `from` and `to` are
-    // on different mount points. In this case the file needs to be copied and deleted manually.
-    let Err(_) = std::fs::rename(from, to) else {
-        return Ok(());
-    };
-
-    // The matching error kind is CrossesDevices but is currently unstable. In the future this
-    // should work:
-    //
-    // match err.kind() {
-    //     std::io::ErrorKind::CrossesDevices => {}
-    //     _ => return Err(err),
-    // };
-    std::fs::copy(from, to)?;
-    std::fs::remove_file(from)?;
-    Ok(())
-}
-
 fn upload_fridge_tag(
-    mut form: UploadForm,
+    UploadForm { file }: UploadForm,
     url_params: UrlParams,
     settings: &Settings,
     service_provider: &ServiceProvider,
@@ -79,18 +66,13 @@ fn upload_fridge_tag(
         .basic_context()
         .context("Cannot get connection")?;
 
-    let file = form.files.pop().context("Cannot find attached file")?;
-    let file_name = file.file_name.context("Filename is not specified")?;
+    let file_service = StaticFileService::new(&settings.server.base_dir)?;
 
-    let dir = prepare_file_dir(TEMP_FRIDGETAG_FILE_DIR, &settings.server.base_dir)?;
-
-    let new_file_path = dir.join(file_name);
-
-    move_file(file.file.path(), &new_file_path)?;
+    let static_file = file_service.move_temp_file(file, &StaticFileCategory::Temporary, None)?;
 
     ctx.connection
         .transaction_sync(|con| {
-            read_sensor(con, &url_params.store_id, new_file_path)
+            read_sensor(con, &url_params.store_id, static_file.to_path_buf())
                 .context("Error while integrating sensor data")
         })
         .map_err(|error| error.to_inner_error())

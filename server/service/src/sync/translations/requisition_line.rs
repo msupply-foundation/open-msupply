@@ -4,7 +4,7 @@ use crate::sync::{
 };
 use chrono::NaiveDateTime;
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, ItemRowRepository, RequisitionLineRow,
+    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, RequisitionLineRow,
     RequisitionLineRowDelete, RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -89,6 +89,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,
             approval_comment: data.approval_comment,
+            item_name: data.item_name,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -123,6 +124,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             snapshot_datetime,
             approved_quantity,
             approval_comment,
+            item_name,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -137,14 +139,6 @@ impl SyncTranslation for RequisitionLineTranslation {
                 "Item link ({item_link_id}) not found in requisition line ({id})"
             ))?
             .item_id;
-
-        // Required for backward compatibility (authorisation web app uses this to display item name)
-        let item_name = ItemRowRepository::new(connection)
-            .find_active_by_id(&item_id)?
-            .ok_or(anyhow::anyhow!(
-                "Item ({item_id}) not found in requisition line ({id})"
-            ))?
-            .name;
 
         let legacy_row = LegacyRequisitionLineRow {
             ID: id.clone(),
