@@ -223,6 +223,10 @@ export const UpdateUserDocument = gql`
           __typename
           description
         }
+        ... on MissingCredentials {
+          __typename
+          description
+        }
         description
       }
     }
