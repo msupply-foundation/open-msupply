@@ -62,7 +62,8 @@ export const HeaderCell = <T extends RecordWithId>({
     150
   );
 
-  const columnLabel = column.label === '' ? '' : t(column.label);
+  const columnLabel =
+    column.label === '' ? '' : t(column.label, column.labelProps);
   const tooltip = (
     <>
       {!!description && <div>{t(description)}</div>}

@@ -94,6 +94,8 @@ impl<'a> AssetCatalogueItemRepository<'a> {
             query = query.order(asset_catalogue_item_dsl::id.asc())
         }
 
+        query = query.filter(asset_catalogue_item_dsl::deleted_datetime.is_null());
+
         // // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 

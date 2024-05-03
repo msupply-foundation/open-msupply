@@ -4,6 +4,7 @@ import { PackVariantFragment, VariantFragment, usePackVariants } from '../api';
 import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { useAuthContext, useLocalStorage } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 
 interface PackVariantState {
   // From back end
@@ -69,6 +70,15 @@ export const useRefreshPackVariant = () => {
   }, [data, setItems]);
 };
 
+export const useIsPackVariantsEnabled = () => {
+  // For now, we are using a feature flag to enable pack variants
+  return Environment.FEATURE_PACK_VARIANTS;
+
+  // const { items } = usePackVariantStore();
+  // // If any pack variants are defined, then pack variants feature is enabled
+  // return Object.keys(items).length > 0;
+};
+
 export const usePackVariant = (
   itemId: string,
   variantName: string | null
@@ -92,7 +102,9 @@ export const usePackVariant = (
   const UserSelectedPackVariantId = UserSelectedPackVariant?.[itemId];
   const item = usePackVariantStore(state => state.items[itemId], isEqual);
 
-  if (!item || item.packVariants.length == 0) {
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
+
+  if (!isPackVariantsEnabled || !item || item.packVariants.length == 0) {
     return {
       asPackVariant: (packSize, defaultPackVariant) =>
         commonAsPackVariant({ packSize, variantName, t, defaultPackVariant }),

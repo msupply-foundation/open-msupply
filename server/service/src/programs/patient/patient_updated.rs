@@ -146,6 +146,7 @@ pub(crate) fn patient_to_name_row(
         date_of_death,
         national_health_number: code_2,
         custom_data_string: None,
+        deleted_datetime: existing_name.and_then(|name| name.deleted_datetime),
     })
 }
 
@@ -470,6 +471,7 @@ mod test {
             national_health_number: Some("new nhn".to_string()),
             date_of_death: Some(NaiveDate::from_ymd_opt(2001, 1, 2).unwrap()),
             custom_data_string: None,
+            deleted_datetime: None,
         };
         let updated_patient = patient_draft_document(&name_row_update, patient.clone());
         // Check that 2nd contact_details entry is not affected by the name_row change

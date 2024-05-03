@@ -115,6 +115,7 @@ pub fn generate(
         manufacturer,
         model,
         type_id,
+        deleted_datetime: None,
     }
 }
 

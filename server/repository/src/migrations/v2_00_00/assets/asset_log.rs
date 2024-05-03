@@ -13,19 +13,15 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             'NOT_FUNCTIONING',
             'DECOMMISSIONED'
           );
-          CREATE TABLE asset_log (
-            id TEXT NOT NULL PRIMARY KEY,
-            asset_id TEXT NOT NULL REFERENCES asset(id),
-            user_id TEXT NOT NULL REFERENCES user_account(id),
-            status asset_log_status,
-            reason_id TEXT REFERENCES asset_log_reason(id),
-            comment TEXT,
-            type TEXT,
-            log_datetime {DATETIME} NOT NULL
-          );
         "#
     )?;
-    #[cfg(not(feature = "postgres"))]
+
+    const ASSET_LOG_STATUS_ENUM_TYPE: &str = if cfg!(feature = "postgres") {
+        "asset_log_status"
+    } else {
+        "TEXT"
+    };
+
     sql!(
         connection,
         r#"
@@ -33,7 +29,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             id TEXT NOT NULL PRIMARY KEY,
             asset_id TEXT NOT NULL REFERENCES asset(id),
             user_id TEXT NOT NULL REFERENCES user_account(id),
-            status TEXT,
+            status {ASSET_LOG_STATUS_ENUM_TYPE},
             reason_id TEXT REFERENCES asset_log_reason(id),
             comment TEXT,
             type TEXT,

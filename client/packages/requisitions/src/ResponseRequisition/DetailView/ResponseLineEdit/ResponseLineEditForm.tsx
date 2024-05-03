@@ -106,6 +106,8 @@ export const ResponseLineEditForm = ({
               label={t('label.pack')}
               value={variantsControl.activeVariant.longName}
             />
+          ) : item.unitName ? (
+            <InfoRow label={t('label.unit')} value={item.unitName} />
           ) : null}
         </>
       }

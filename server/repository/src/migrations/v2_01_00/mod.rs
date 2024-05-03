@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod ledger;
 mod pg_enums;
 
 pub(crate) struct V2_01_00;
@@ -12,6 +13,7 @@ impl Migration for V2_01_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        ledger::migrate(connection)?;
         pg_enums::migrate(connection)?;
         Ok(())
     }

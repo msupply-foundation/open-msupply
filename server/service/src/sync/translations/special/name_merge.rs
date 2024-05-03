@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection, StoreFilter, StoreRepository,
-    SyncBufferRow,
+    EqualFilter, NameLinkRow, NameLinkRowRepository, NameRowDelete, NameStoreJoinFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection,
+    StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -61,6 +61,10 @@ impl SyncTranslation for NameMergeTranslation {
                 })
             })
             .collect();
+        // delete the merged name
+        operations.push(IntegrationOperation::delete(NameRowDelete(
+            data.merge_id_to_delete.clone(),
+        )));
 
         let name_store_join_repo = NameStoreJoinRepository::new(connection);
         let name_store_joins_for_delete = name_store_join_repo.query_by_filter(

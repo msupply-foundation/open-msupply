@@ -166,7 +166,8 @@ impl<'a> PatientRepository<'a> {
         allowed_ctx: Option<&[String]>,
     ) -> BoxedNameQuery {
         let mut query = name_dsl::name.into_boxed();
-
+        // Note, below are some OR filters which needs to go first to work
+        // TODO: able to make this more robust in Diesel 2?
         if let Some(f) = filter {
             let PatientFilter {
                 id,
@@ -252,6 +253,8 @@ impl<'a> PatientRepository<'a> {
             apply_string_filter!(query, email, name_dsl::email);
         };
 
+        // Only return active (not deleted) patients
+        query = query.filter(name_dsl::deleted_datetime.is_null());
         apply_equal_filter!(
             query,
             Some(NameType::equal_to(&NameType::Patient)),

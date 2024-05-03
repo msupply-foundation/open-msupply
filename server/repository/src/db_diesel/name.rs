@@ -232,6 +232,8 @@ impl<'a> NameRepository<'a> {
             };
         };
 
+        // Only return active (not deleted) names
+        query = query.filter(name_dsl::deleted_datetime.is_null());
         query
     }
 }

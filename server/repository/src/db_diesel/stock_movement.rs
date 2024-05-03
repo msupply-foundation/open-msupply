@@ -261,6 +261,13 @@ mod test {
             .unwrap();
 
         rows.sort_by(|a, b| a.datetime.cmp(&b.datetime));
+        rows = rows
+            .into_iter()
+            .map(|r| StockMovementRow {
+                id: "n/a".to_string(),
+                ..r
+            })
+            .collect();
 
         assert_eq!(
             rows,

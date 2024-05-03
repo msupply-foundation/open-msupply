@@ -1,3 +1,4 @@
+use chrono::Utc;
 use repository::RepositoryError;
 use repository::{
     ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
@@ -64,6 +65,7 @@ pub fn insert_inventory_adjustment(
 
             let verified_invoice = InvoiceRow {
                 status: InvoiceStatus::Verified,
+                verified_datetime: Some(Utc::now().naive_utc()),
                 ..new_invoice
             };
 
