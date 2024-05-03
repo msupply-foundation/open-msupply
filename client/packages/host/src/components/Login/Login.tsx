@@ -103,6 +103,7 @@ export const Login = () => {
           onChange={e => setUsername(e.target.value)}
           inputProps={{
             autoComplete: 'username',
+            name: 'username',
           }}
           autoFocus
         />
@@ -117,6 +118,7 @@ export const Login = () => {
           onChange={e => setPassword(e.target.value)}
           inputProps={{
             autoComplete: 'current-password',
+            name: 'password',
           }}
           inputRef={passwordRef}
         />
