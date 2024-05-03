@@ -79,7 +79,7 @@ export const Sync = () => {
     updateUserIsLoading,
     lastSuccessfulSync,
     updateUser,
-    error: updateUserError,
+    updateUserError,
   } = useAuthContext();
 
   const sync = async () => {
