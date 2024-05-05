@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-use std::str::FromStr;
 use std::{fs, sync::Mutex};
 
 use diesel::prelude::*;
@@ -11,7 +9,9 @@ use crate::{
     get_storage_connection_manager,
     migrations::{migrate, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
-    test_db::constants::{TEMPLATE_MARKER_FILE, TEST_OUTPUT_DIR},
+    test_db::constants::{
+        env_msupply_no_test_db_template, find_workspace_root, TEMPLATE_MARKER_FILE, TEST_OUTPUT_DIR,
+    },
     DBConnection, StorageConnectionManager,
 };
 
@@ -56,17 +56,6 @@ fn create_template_db(
     connection_manager
 }
 
-fn find_workspace_root() -> PathBuf {
-    let mut path = PathBuf::from_str(env!("CARGO_MANIFEST_DIR")).unwrap();
-    while let Some(current) = path.parent() {
-        path = current.to_path_buf();
-        if path.join("Cargo.lock").exists() {
-            return path;
-        }
-    }
-    panic!("workspace root not found!");
-}
-
 table! {
     pg_database (oid) {
         oid -> BigInt,
@@ -89,11 +78,50 @@ pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
         .0
 }
 
+async fn setup_with_version_no_template(
+    db_settings: &DatabaseSettings,
+    version: Option<Version>,
+    inserts: MockDataInserts,
+) -> (StorageConnectionManager, MockDataCollection) {
+    use diesel::{PgConnection, RunQueryDsl};
+
+    use crate::get_storage_connection_manager;
+
+    let connection_manager =
+        ConnectionManager::<PgConnection>::new(&db_settings.connection_string_without_db());
+    let pool = Pool::new(connection_manager).expect("Failed to connect to database");
+    let mut connection = pool.get().expect("Failed to open connection");
+
+    diesel::sql_query(format!(
+        "DROP DATABASE IF EXISTS \"{}\";",
+        &db_settings.database_name
+    ))
+    .execute(&mut connection)
+    .unwrap();
+
+    diesel::sql_query(format!(
+        "CREATE DATABASE \"{}\";",
+        &db_settings.database_name
+    ))
+    .execute(&mut connection)
+    .unwrap();
+
+    let connection_manager = get_storage_connection_manager(&db_settings);
+    let connection = connection_manager.connection().unwrap();
+    migrate(&connection, version).unwrap();
+
+    let collection = insert_all_mock_data(&connection, inserts).await;
+    (connection_manager, collection)
+}
+
 pub(crate) async fn setup_with_version(
     db_settings: &DatabaseSettings,
     version: Option<Version>,
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
+    if env_msupply_no_test_db_template() {
+        return setup_with_version_no_template(db_settings, version, inserts).await;
+    }
     // cache db template
     let cache_all_mock_data = inserts == MockDataInserts::all();
     let template_name = if cache_all_mock_data {
