@@ -18,7 +18,7 @@ import {
 } from '@openmsupply-client/system';
 import { DraftInboundLine } from './../../../../types';
 
-const taxPercentageCell = (props: CellProps<DraftInboundLine>) => (
+const TaxPercentageCell = (props: CellProps<DraftInboundLine>) => (
   <NumberInputCell {...props} max={100} decimalLimit={2} />
 );
 
@@ -66,7 +66,7 @@ export const useServiceLineColumns = (
       label: 'label.tax',
       width: 75,
       setter,
-      Cell: taxPercentageCell,
+      Cell: TaxPercentageCell,
     },
     {
       key: 'totalAfterTax',

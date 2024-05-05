@@ -31,7 +31,7 @@ pub struct UpdateInput {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
-    pub tax_percentage: Option<TaxInput>,
+    pub tax: Option<TaxInput>,
 }
 
 #[derive(SimpleObject)]
@@ -96,7 +96,7 @@ impl UpdateInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            tax_percentage,
+            tax,
         } = self;
 
         ServiceInput {
@@ -112,7 +112,7 @@ impl UpdateInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            tax_percentage: tax_percentage.and_then(|tax| {
+            tax_percentage: tax.and_then(|tax| {
                 Some(ShipmentTaxUpdate {
                     percentage: tax.percentage,
                 })

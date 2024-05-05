@@ -6643,7 +6643,7 @@ export type UpdateInboundShipmentInput = {
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
-  taxPercentage?: InputMaybe<TaxInput>;
+  tax?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6666,7 +6666,7 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  taxPercentage?: InputMaybe<TaxInput>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -6700,7 +6700,7 @@ export type UpdateInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  taxPercentage?: InputMaybe<TaxInput>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -6788,7 +6788,7 @@ export type UpdateOutboundShipmentInput = {
    * existing invoice items gets updated.
    */
   status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
-  taxPercentage?: InputMaybe<TaxInput>;
+  tax?: InputMaybe<TaxInput>;
   /** External invoice reference, e.g. purchase or shipment number */
   theirReference?: InputMaybe<Scalars['String']['input']>;
   transportReference?: InputMaybe<Scalars['String']['input']>;
@@ -6807,7 +6807,7 @@ export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
-  taxPercentage?: InputMaybe<TaxInput>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -6853,7 +6853,7 @@ export type UpdateOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  taxPercentage?: InputMaybe<TaxInput>;
+  tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 

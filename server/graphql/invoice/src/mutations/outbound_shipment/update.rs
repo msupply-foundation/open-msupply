@@ -32,7 +32,7 @@ pub struct UpdateInput {
     their_reference: Option<String>,
     transport_reference: Option<String>,
     colour: Option<String>,
-    tax_percentage: Option<TaxInput>,
+    tax: Option<TaxInput>,
     currency_id: Option<String>,
     currency_rate: Option<f64>,
 }
@@ -110,7 +110,7 @@ impl UpdateInput {
             their_reference,
             colour,
             transport_reference,
-            tax_percentage,
+            tax,
             currency_id,
             currency_rate,
         } = self;
@@ -123,7 +123,7 @@ impl UpdateInput {
             their_reference,
             colour,
             transport_reference,
-            tax_percentage: tax_percentage.and_then(|tax| {
+            tax_percentage: tax.and_then(|tax| {
                 Some(ShipmentTaxUpdate {
                     percentage: tax.percentage,
                 })
