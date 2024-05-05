@@ -29,7 +29,7 @@ pub struct UpdateInput {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
-    pub tax_percentage: Option<TaxInput>,
+    pub tax: Option<TaxInput>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
 }
@@ -95,7 +95,7 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
-            tax_percentage,
+            tax,
             currency_id,
             currency_rate,
         } = self;
@@ -108,7 +108,7 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
-            tax_percentage: tax_percentage.and_then(|tax| {
+            tax_percentage: tax.and_then(|tax| {
                 Some(ShipmentTaxUpdate {
                     percentage: tax.percentage,
                 })

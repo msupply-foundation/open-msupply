@@ -59,7 +59,7 @@ pub fn generate(
             number_of_packs: Some(line.number_of_packs),
             note: line.note,
             r#type: Some(StockOutType::OutboundReturn),
-            tax_percentage: None,
+            tax: None,
             total_before_tax: None,
         })
         .collect();

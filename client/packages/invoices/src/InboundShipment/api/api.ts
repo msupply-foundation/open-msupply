@@ -79,7 +79,7 @@ const inboundParsers = {
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
       theirReference:
         'theirReference' in patch ? patch.theirReference : undefined,
-      taxPercentage:
+      tax:
         'taxPercentage' in patch
           ? { percentage: patch.taxPercentage }
           : undefined,

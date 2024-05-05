@@ -177,7 +177,7 @@ fn try_allocate_existing_line(
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
                 stock_line_id: None,
                 total_before_tax: None,
-                tax_percentage: None,
+                tax: None,
                 note: None,
             }
         })

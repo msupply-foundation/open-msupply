@@ -87,7 +87,7 @@ const outboundParsers = {
     onHold: 'onHold' in patch ? patch.onHold : undefined,
     theirReference: patch.theirReference,
     transportReference: patch.transportReference,
-    taxPercentage:
+    tax:
       'taxPercentage' in patch
         ? { percentage: patch.taxPercentage }
         : undefined,
