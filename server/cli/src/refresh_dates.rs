@@ -185,7 +185,7 @@ impl<'a> RefreshDatesRepository<'a> {
 
         if days_difference < 0 {
             println!(
-                "Reference date {} - 1 day is lower then max data date {} for record: {:#?}",
+                "Reference date {} - 1 day is lower than the max date {} for record: {:#?}",
                 reference_date, max_timestamp, max_record
             );
             return None;
@@ -239,8 +239,10 @@ impl<'a> RefreshDatesRepository<'a> {
         table_name: &str,
         field_name: &str,
     ) -> Result<Vec<IdAndTimestamp>, RepositoryError> {
+        // the program_event table is using `9999-09-09 09:09:09` as a max timestamp value
+        // we don't want to update this datetime value
         let query = format!(
-            "select id, {} as dt from {} where {0} is not null",
+            "select id, {} as dt from {} where {0} is not null and {0} <> '9999-09-09 09:09:09'",
             field_name, table_name
         );
 
