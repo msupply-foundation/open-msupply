@@ -5,17 +5,27 @@ import { useTranslation } from '@common/intl';
 import {
   TemperatureBreachSortFieldInput,
   TemperatureLogSortFieldInput,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { TemperatureBreachList } from './TemperatureBreach';
 import { TemperatureChart } from './TemperatureChart';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
+import { temperatureLogFilterAndSort } from './TemperatureLog/TemperatureLogList';
 
 export const ListView: FC = () => {
   const t = useTranslation('coldchain');
 
+  const {
+    // updateSortQuery,
+    // updatePaginationQuery,
+    filter,
+    // queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams(temperatureLogFilterAndSort);
+
   const tabs = [
     {
-      Component: <TemperatureChart />,
+      Component: <TemperatureChart filter={filter} />,
       value: t('label.chart'),
       sort: {
         key: TemperatureLogSortFieldInput.Datetime,
@@ -43,7 +53,8 @@ export const ListView: FC = () => {
   return (
     <>
       <AppBarButtons />
-      <DetailTabs tabs={tabs} />
+      <Toolbar filter={filter}></Toolbar>
+      <DetailTabs tabs={tabs} overwriteQuery={false} />
     </>
   );
 };

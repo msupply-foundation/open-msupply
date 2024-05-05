@@ -14,9 +14,9 @@ import {
   useColumns,
 } from '@openmsupply-client/common';
 import { BreachTypeCell, useFormatTemperature } from '../../../common';
-import { Toolbar } from './Toolbar';
+// import { Toolbar } from './Toolbar';
 
-const temperatureLogFilterAndSort = {
+export const temperatureLogFilterAndSort = {
   initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
   filters: [
     { key: 'datetime', condition: 'between' },
@@ -37,7 +37,6 @@ const ListView: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    filter,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams(temperatureLogFilterAndSort);
   const queryParams = {
@@ -101,7 +100,7 @@ const ListView: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
+      {/* <Toolbar filter={filter} /> */}
       <DataTable
         id="temperature-log-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
