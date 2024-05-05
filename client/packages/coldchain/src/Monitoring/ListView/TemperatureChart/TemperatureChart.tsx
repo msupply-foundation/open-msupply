@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { FC, useEffect } from 'react';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Area,
@@ -7,6 +7,7 @@ import {
   CartesianGrid,
   ChartTooltip,
   ComposedChart,
+  FilterController,
   Legend,
   Line,
   NothingHere,
@@ -23,7 +24,7 @@ import { Entry, TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopover } from './BreachPopover';
 import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
 import { BreachIndicator } from './BreachIndicator';
-import { Toolbar } from '../TemperatureLog/Toolbar';
+// import { Toolbar } from '../TemperatureLog/Toolbar';
 import { useFormatTemperature } from '../../../common';
 
 const NUMBER_OF_HORIZONTAL_LINES = 4;
@@ -266,12 +267,14 @@ const Chart = ({
   );
 };
 
-export const TemperatureChart = () => {
-  const { breachConfig, filter, hasData, isLoading, sensors, yAxisDomain } =
-    useTemperatureChartData();
+export const TemperatureChart: FC<{ filter: FilterController }> = ({
+  filter,
+}) => {
+  const { breachConfig, hasData, isLoading, sensors, yAxisDomain } =
+    useTemperatureChartData(filter);
   return (
     <>
-      <Toolbar filter={filter} />
+      {/* <Toolbar filter={filter} /> */}
       <Chart
         breachConfig={breachConfig}
         hasData={hasData}

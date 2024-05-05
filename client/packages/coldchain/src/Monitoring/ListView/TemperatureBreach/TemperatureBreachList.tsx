@@ -15,7 +15,6 @@ import {
   useTemperatureBreach,
 } from '../../api/TemperatureBreach';
 import { BreachTypeCell } from '../../../common';
-import { Toolbar } from './Toolbar';
 import { useAcknowledgeBreachModal } from './useAcknowledgeBreachModal';
 import { DurationCell, IconCell } from './TempereatureBreachCells';
 import { useFormatTemperature } from '../../../common/utils';
@@ -24,12 +23,11 @@ const ListView: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    filter,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'startDatetime', dir: 'desc' },
+    initialSort: { key: 'datetime', dir: 'desc' },
     filters: [
-      { key: 'startDatetime', condition: 'between' },
+      { key: 'datetime', condition: 'between' },
       {
         key: 'sensor.name',
       },
@@ -145,7 +143,6 @@ const ListView: FC = () => {
 
   return (
     <>
-      <Toolbar filter={filter} />
       <DataTable
         id="temperature-breach-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
