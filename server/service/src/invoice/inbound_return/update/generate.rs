@@ -158,7 +158,7 @@ pub fn generate_lines_and_stock_lines(
             sell_price_per_pack,
             total_before_tax: _,
             total_after_tax: _,
-            tax_rate: _,
+            tax_percentage: _,
             r#type: _,
             number_of_packs,
             note,

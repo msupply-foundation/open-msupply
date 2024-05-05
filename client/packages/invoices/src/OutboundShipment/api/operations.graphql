@@ -17,7 +17,7 @@ fragment Outbound on InvoiceNode {
   theirReference
   transportReference
   type
-  taxRate
+  taxPercentage
 
   user {
     __typename
@@ -67,7 +67,7 @@ fragment Outbound on InvoiceNode {
     stockTotalAfterTax
     serviceTotalAfterTax
     serviceTotalBeforeTax
-    taxRate
+    taxPercentage
     foreignCurrencyTotalAfterTax
   }
 
@@ -99,11 +99,11 @@ fragment OutboundRow on InvoiceNode {
   type
   status
   colour
-  taxRate
+  taxPercentage
   pricing {
     __typename
     totalAfterTax
-    taxRate
+    taxPercentage
     foreignCurrencyTotalAfterTax
   }
   currency {

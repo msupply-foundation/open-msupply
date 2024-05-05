@@ -87,7 +87,10 @@ const outboundParsers = {
     onHold: 'onHold' in patch ? patch.onHold : undefined,
     theirReference: patch.theirReference,
     transportReference: patch.transportReference,
-    taxRate: 'taxRate' in patch ? { percentage: patch.taxRate } : undefined,
+    taxPercentage:
+      'taxPercentage' in patch
+        ? { percentage: patch.taxPercentage }
+        : undefined,
     currencyId: 'currency' in patch ? patch.currency?.id : undefined,
     currencyRate: 'currency' in patch ? patch.currency?.rate : undefined,
   }),
@@ -138,14 +141,14 @@ const outboundParsers = {
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
-    tax: line.taxRate,
+    tax: line.taxPercentage,
     totalBeforeTax: line.totalBeforeTax,
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftStockOutLine) => ({
     id: line.id,
     itemId: line.item.id,
-    tax: { percentage: line.taxRate },
+    tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
     note: line.note,
   }),
@@ -441,9 +444,9 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     type: InvoiceLineNodeType.StockOut | InvoiceLineNodeType.Service;
   }) => {
     const toUpdateStockLine = (line: StockOutLineFragment) =>
-      outboundParsers.toUpdateLine({ ...line, taxRate: tax });
+      outboundParsers.toUpdateLine({ ...line, taxPercentage: tax });
     const toUpdateServiceLine = (line: StockOutLineFragment) =>
-      outboundParsers.toUpdateServiceCharge({ ...line, taxRate: tax });
+      outboundParsers.toUpdateServiceCharge({ ...line, taxPercentage: tax });
 
     const result =
       (await sdk.upsertOutboundShipment({

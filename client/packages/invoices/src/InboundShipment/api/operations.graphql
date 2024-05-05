@@ -13,7 +13,7 @@ fragment InboundLine on InvoiceLineNode {
   invoiceId
   totalBeforeTax
   totalAfterTax
-  taxRate
+  taxPercentage
   foreignCurrencyPriceBeforeTax
   itemName
 
@@ -70,7 +70,7 @@ fragment Inbound on InvoiceNode {
   theirReference
   transportReference
   type
-  taxRate
+  taxPercentage
 
   linkedShipment {
     __typename
@@ -125,7 +125,7 @@ fragment Inbound on InvoiceNode {
     stockTotalAfterTax
     serviceTotalAfterTax
     serviceTotalBeforeTax
-    taxRate
+    taxPercentage
     foreignCurrencyTotalAfterTax
   }
 
@@ -150,12 +150,12 @@ fragment InboundRow on InvoiceNode {
   status
   colour
   theirReference
-  taxRate
+  taxPercentage
   onHold
   pricing {
     __typename
     totalAfterTax
-    taxRate
+    taxPercentage
     foreignCurrencyTotalAfterTax
   }
   linkedShipment {

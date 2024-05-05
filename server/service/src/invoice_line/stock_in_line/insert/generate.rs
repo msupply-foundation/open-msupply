@@ -69,7 +69,7 @@ fn generate_line(
         location,
         total_before_tax,
         note,
-        tax_rate: _,
+        tax_percentage: _,
         r#type: _,
     }: InsertStockInLine,
     ItemRow {
@@ -77,10 +77,10 @@ fn generate_line(
         code: item_code,
         ..
     }: ItemRow,
-    InvoiceRow { tax_rate, .. }: InvoiceRow,
+    InvoiceRow { tax_percentage, .. }: InvoiceRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
-    let total_after_tax = calculate_total_after_tax(total_before_tax, tax_rate);
+    let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     InvoiceLineRow {
         id,
         invoice_id,
@@ -98,7 +98,7 @@ fn generate_line(
         stock_line_id: None,
         total_before_tax,
         total_after_tax,
-        tax_rate,
+        tax_percentage,
         note,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,

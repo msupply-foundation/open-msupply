@@ -156,7 +156,7 @@ fn generate_new_line(
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         total_before_tax: None,
-        tax_rate: None,
+        tax_percentage: None,
         note: None,
     }
 }
@@ -177,7 +177,7 @@ fn try_allocate_existing_line(
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
                 stock_line_id: None,
                 total_before_tax: None,
-                tax_rate: None,
+                tax_percentage: None,
                 note: None,
             }
         })

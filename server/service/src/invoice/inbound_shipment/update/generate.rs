@@ -46,10 +46,10 @@ pub(crate) fn generate(
     update_invoice.their_reference = patch.their_reference.or(update_invoice.their_reference);
     update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
     update_invoice.colour = patch.colour.or(update_invoice.colour);
-    update_invoice.tax_rate = patch
-        .tax_rate
+    update_invoice.tax_percentage = patch
+        .tax_percentage
         .map(|tax| tax.percentage)
-        .unwrap_or(update_invoice.tax_rate);
+        .unwrap_or(update_invoice.tax_percentage);
 
     if let Some(status) = patch.status.clone() {
         update_invoice.status = status.full_status()
@@ -68,7 +68,7 @@ pub(crate) fn generate(
             connection,
             &update_invoice.store_id,
             &update_invoice.id,
-            update_invoice.tax_rate,
+            update_invoice.tax_percentage,
             &update_invoice.name_link_id,
             update_invoice.currency_id.clone(),
             &update_invoice.currency_rate,
@@ -94,11 +94,11 @@ pub(crate) fn generate(
         None
     };
 
-    let update_tax_for_lines = if update_invoice.tax_rate.is_some() {
+    let update_tax_for_lines = if update_invoice.tax_percentage.is_some() {
         Some(generate_tax_update_for_lines(
             connection,
             &update_invoice.id,
-            update_invoice.tax_rate,
+            update_invoice.tax_percentage,
         )?)
     } else {
         None
@@ -140,7 +140,7 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
 fn generate_tax_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
-    tax_rate: Option<f64>,
+    tax_percentage: Option<f64>,
 ) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
@@ -151,9 +151,9 @@ fn generate_tax_update_for_lines(
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
         let mut invoice_line_row = invoice_line.invoice_line_row;
-        invoice_line_row.tax_rate = tax_rate;
+        invoice_line_row.tax_percentage = tax_percentage;
         invoice_line_row.total_after_tax =
-            calculate_total_after_tax(invoice_line_row.total_before_tax, tax_rate);
+            calculate_total_after_tax(invoice_line_row.total_before_tax, tax_percentage);
         result.push(invoice_line_row);
     }
 
@@ -250,7 +250,7 @@ pub fn generate_lines_and_stock_lines(
     connection: &StorageConnection,
     store_id: &str,
     id: &str,
-    tax_rate: Option<f64>,
+    tax_percentage: Option<f64>,
     supplier_id: &str,
     currency_id: Option<String>,
     currency_rate: &f64,
@@ -262,9 +262,9 @@ pub fn generate_lines_and_stock_lines(
         let mut line = invoice_lines.clone();
         let stock_line_id = line.stock_line_id.unwrap_or(uuid());
         line.stock_line_id = Some(stock_line_id.clone());
-        if tax_rate.is_some() {
-            line.tax_rate = tax_rate;
-            line.total_after_tax = calculate_total_after_tax(line.total_before_tax, tax_rate);
+        if tax_percentage.is_some() {
+            line.tax_percentage = tax_percentage;
+            line.total_after_tax = calculate_total_after_tax(line.total_before_tax, tax_percentage);
         }
         line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
             connection,
@@ -288,7 +288,7 @@ pub fn generate_lines_and_stock_lines(
             sell_price_per_pack,
             total_before_tax: _,
             total_after_tax: _,
-            tax_rate: _,
+            tax_percentage: _,
             r#type: _,
             number_of_packs,
             note,

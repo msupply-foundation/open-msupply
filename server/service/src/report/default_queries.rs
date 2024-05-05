@@ -42,7 +42,7 @@ query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInpu
         serviceTotalBeforeTax
         stockTotalAfterTax
         stockTotalBeforeTax
-        taxRate
+        taxPercentage
         totalAfterTax
         totalBeforeTax
         foreignCurrencyTotalAfterTax
@@ -86,7 +86,7 @@ query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInpu
         numberOfPacks
         packSize
         sellPricePerPack
-        taxRate
+        taxPercentage
         totalAfterTax
         totalBeforeTax
         type
@@ -95,7 +95,7 @@ query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInpu
           serviceTotalBeforeTax
           stockTotalAfterTax
           stockTotalBeforeTax
-          taxRate
+          taxPercentage
           totalAfterTax
           totalBeforeTax
           foreignCurrencyTotalAfterTax

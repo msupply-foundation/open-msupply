@@ -70,7 +70,7 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "om_item_code")]
     pub item_code: Option<String>,
     #[serde(rename = "om_tax")]
-    pub tax_rate: Option<f64>,
+    pub tax_percentage: Option<f64>,
     #[serde(rename = "om_total_before_tax")]
     pub total_before_tax: Option<f64>,
     #[serde(rename = "om_total_after_tax")]
@@ -129,7 +129,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             item_code,
-            tax_rate,
+            tax_percentage,
             total_before_tax,
             total_after_tax,
             inventory_adjustment_reason_id,
@@ -150,12 +150,12 @@ impl SyncTranslation for InvoiceLineTranslation {
             r#type
         )))?;
 
-        let (item_code, tax_rate, total_before_tax, total_after_tax) = match item_code {
+        let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code {
             Some(item_code) => {
                 // use new om_* fields
                 (
                     item_code,
-                    tax_rate,
+                    tax_percentage,
                     total_before_tax.unwrap_or(0.0),
                     total_after_tax.unwrap_or(0.0),
                 )
@@ -231,7 +231,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             sell_price_per_pack,
             total_before_tax,
             total_after_tax,
-            tax_rate,
+            tax_percentage,
             r#type: line_type,
             number_of_packs,
             note,
@@ -282,7 +282,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     sell_price_per_pack,
                     total_before_tax,
                     total_after_tax,
-                    tax_rate,
+                    tax_percentage,
                     r#type,
                     number_of_packs,
                     note,
@@ -310,7 +310,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             item_code: Some(item_code),
-            tax_rate,
+            tax_percentage,
             total_before_tax: Some(total_before_tax),
             total_after_tax: Some(total_after_tax),
             inventory_adjustment_reason_id,

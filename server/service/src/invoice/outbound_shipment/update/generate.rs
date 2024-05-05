@@ -36,7 +36,7 @@ pub(crate) fn generate(
         their_reference: input_their_reference,
         colour: input_colour,
         transport_reference: input_transport_reference,
-        tax_rate: input_tax,
+        tax_percentage: input_tax,
         currency_id: input_currency_id,
         currency_rate: input_currency_rate,
     }: UpdateOutboundShipment,
@@ -54,9 +54,9 @@ pub(crate) fn generate(
     update_invoice.colour = input_colour.or(update_invoice.colour);
     update_invoice.transport_reference =
         input_transport_reference.or(update_invoice.transport_reference);
-    update_invoice.tax_rate = input_tax
+    update_invoice.tax_percentage = input_tax
         .map(|tax| tax.percentage)
-        .unwrap_or(update_invoice.tax_rate);
+        .unwrap_or(update_invoice.tax_percentage);
     update_invoice.currency_id = input_currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = input_currency_rate.unwrap_or(update_invoice.currency_rate);
 
@@ -87,11 +87,11 @@ pub(crate) fn generate(
         None
     };
 
-    let update_lines = if update_invoice.tax_rate.is_some() || input_currency_rate.is_some() {
+    let update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
         Some(generate_update_for_lines(
             connection,
             &update_invoice.id,
-            update_invoice.tax_rate,
+            update_invoice.tax_percentage,
             update_invoice.currency_id.clone(),
             &update_invoice.currency_rate,
         )?)
@@ -223,7 +223,7 @@ fn set_new_status_datetime(
 fn generate_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
-    tax_rate: Option<f64>,
+    tax_percentage: Option<f64>,
     currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
@@ -237,10 +237,10 @@ fn generate_update_for_lines(
     for invoice_line in invoice_lines {
         let mut invoice_line_row = invoice_line.invoice_line_row;
 
-        if tax_rate.is_some() {
-            invoice_line_row.tax_rate = tax_rate;
+        if tax_percentage.is_some() {
+            invoice_line_row.tax_percentage = tax_percentage;
             invoice_line_row.total_after_tax =
-                calculate_total_after_tax(invoice_line_row.total_before_tax, tax_rate);
+                calculate_total_after_tax(invoice_line_row.total_before_tax, tax_percentage);
         }
 
         invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
