@@ -31,7 +31,7 @@ pub struct UpdateInboundShipment {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
-    pub tax_rate: Option<ShipmentTaxUpdate>,
+    pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
 }
@@ -94,7 +94,7 @@ pub fn update_inbound_shipment(
                 for line in update_tax {
                     invoice_line_repository.update_tax(
                         &line.id,
-                        line.tax_rate,
+                        line.tax_percentage,
                         line.total_after_tax,
                     )?;
                 }
@@ -431,7 +431,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = invoice_test().id;
-                    r.tax_rate = Some(ShipmentTaxUpdate {
+                    r.tax_percentage = Some(ShipmentTaxUpdate {
                         percentage: Some(0.0),
                     });
                 }),
@@ -445,7 +445,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.tax_rate = Some(0.0);
+                u.tax_percentage = Some(0.0);
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
@@ -483,7 +483,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = invoice_test().id;
                     r.status = Some(UpdateInboundShipmentStatus::Delivered);
-                    r.tax_rate = Some(ShipmentTaxUpdate {
+                    r.tax_percentage = Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     });
                 }),
@@ -497,7 +497,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.tax_rate = Some(10.0);
+                u.tax_percentage = Some(10.0);
                 u.user_id = Some(mock_user_account_a().id);
                 u.status = InvoiceRowStatus::Delivered;
                 u
@@ -533,7 +533,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = invoice_test().id;
                     r.status = Some(UpdateInboundShipmentStatus::Verified);
-                    r.tax_rate = Some(ShipmentTaxUpdate {
+                    r.tax_percentage = Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     });
                 }),

@@ -30,7 +30,7 @@ pub struct UpdateOutboundShipment {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub transport_reference: Option<String>,
-    pub tax_rate: Option<ShipmentTaxUpdate>,
+    pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
 }
@@ -433,7 +433,7 @@ mod test {
                 their_reference: Some("their_reference".to_string()),
                 colour: Some("colour".to_string()),
                 transport_reference: Some("transport_reference".to_string()),
-                tax_rate: Some(ShipmentTaxUpdate {
+                tax_percentage: Some(ShipmentTaxUpdate {
                     percentage: Some(15.0),
                 }),
                 currency_id: None,
@@ -460,7 +460,7 @@ mod test {
                     their_reference,
                     colour,
                     transport_reference,
-                    tax_rate,
+                    tax_percentage,
                     currency_id: _,
                     currency_rate: _,
                 } = get_update();
@@ -469,7 +469,7 @@ mod test {
                 u.their_reference = their_reference;
                 u.colour = colour;
                 u.transport_reference = transport_reference;
-                u.tax_rate = tax_rate.map(|tax| tax.percentage.unwrap());
+                u.tax_percentage = tax_percentage.map(|tax| tax.percentage.unwrap());
                 u
             })
         );

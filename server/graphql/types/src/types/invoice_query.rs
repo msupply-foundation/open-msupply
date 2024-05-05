@@ -244,7 +244,7 @@ impl InvoiceNode {
             stock_total_after_tax: 0.0,
             service_total_before_tax: 0.0,
             service_total_after_tax: 0.0,
-            tax_percentage: self.row().tax_rate,
+            tax_percentage: self.row().tax_percentage,
             foreign_currency_total_after_tax: None,
         };
 
@@ -255,8 +255,8 @@ impl InvoiceNode {
         })
     }
 
-    pub async fn tax_rate(&self) -> &Option<f64> {
-        &self.row().tax_rate
+    pub async fn tax_percentage(&self) -> &Option<f64> {
+        &self.row().tax_percentage
     }
 
     pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
@@ -418,7 +418,7 @@ impl PricingNode {
 
     // tax
 
-    pub async fn tax_rate(&self) -> &Option<f64> {
+    pub async fn tax_percentage(&self) -> &Option<f64> {
         &self.invoice_pricing.tax_percentage
     }
 }
@@ -537,7 +537,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.total_after_tax = 110.0;
                 r.total_before_tax = 100.0;
-                r.tax_rate = Some(10.0);
+                r.tax_percentage = Some(10.0);
                 r.r#type = InvoiceLineRowType::Service;
             })
         }
@@ -548,7 +548,7 @@ mod test {
                 r.item_link_id = mock_item_b().id;
                 r.total_after_tax = 50.0;
                 r.total_before_tax = 50.0;
-                r.tax_rate = None;
+                r.tax_percentage = None;
                 r.r#type = InvoiceLineRowType::StockIn;
             })
         }
@@ -559,7 +559,7 @@ mod test {
                 r.item_link_id = mock_item_c().id;
                 r.total_after_tax = 105.0;
                 r.total_before_tax = 100.0;
-                r.tax_rate = Some(5.0);
+                r.tax_percentage = Some(5.0);
                 r.r#type = InvoiceLineRowType::StockOut;
             })
         }
@@ -586,10 +586,13 @@ mod test {
         }
         let total_before_tax = 50.0 + 100.0 + 100.0;
         let total_after_tax = 50.0 + 105.0 + 110.0;
-        let tax_rate_dec = (total_after_tax / total_before_tax) - 1.0;
+        let tax_percentage_dec = (total_after_tax / total_before_tax) - 1.0;
 
-        assert_eq!(total_before_tax * (1.0 + tax_rate_dec), total_after_tax);
-        let tax_rate = tax_rate_dec * 100.0;
+        assert_eq!(
+            total_before_tax * (1.0 + tax_percentage_dec),
+            total_after_tax
+        );
+        let tax_percentage = tax_percentage_dec * 100.0;
 
         let expected = json!({
             "testQuery": {
@@ -600,7 +603,7 @@ mod test {
                     "stockTotalAfterTax": 50.0 + 105.0,
                     "serviceTotalBeforeTax": 100.0,
                     "serviceTotalAfterTax": 110.0,
-                    "taxRate": tax_rate
+                    "taxPercentage": tax_percentage
                 },
             }
         }
@@ -616,7 +619,7 @@ mod test {
                     stockTotalAfterTax
                     serviceTotalBeforeTax
                     serviceTotalAfterTax
-                    taxRate  
+                    taxPercentage  
                 }
             }
         }

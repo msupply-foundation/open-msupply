@@ -29,7 +29,7 @@ pub fn generate_empty_invoice_lines(
                     sell_price_per_pack: 0.0,
                     total_before_tax: 0.0,
                     total_after_tax: 0.0,
-                    tax_rate: None,
+                    tax_percentage: None,
                     r#type: InvoiceLineRowType::StockIn,
                     number_of_packs: 0.0,
                     note: None,

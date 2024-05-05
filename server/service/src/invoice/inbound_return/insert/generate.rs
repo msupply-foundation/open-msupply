@@ -55,7 +55,7 @@ pub fn generate(
         colour: None,
         comment: None,
         their_reference: None,
-        tax_rate: None,
+        tax_percentage: None,
         transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
@@ -106,7 +106,7 @@ pub fn generate(
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: None,
-                tax_rate: None,
+                tax_percentage: None,
                 r#type: StockInType::InboundReturn,
             },
         )

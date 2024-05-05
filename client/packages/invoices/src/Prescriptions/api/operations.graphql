@@ -20,7 +20,7 @@ fragment PrescriptionRow on InvoiceNode {
     stockTotalAfterTax
     serviceTotalAfterTax
     serviceTotalBeforeTax
-    taxRate
+    taxPercentage
   }
   currencyRate
 

@@ -29,7 +29,7 @@ export const PricingSectionComponent = () => {
   const {
     pricing,
     lines,
-    taxRate,
+    taxPercentage,
     currency,
     update,
     otherParty,
@@ -37,7 +37,7 @@ export const PricingSectionComponent = () => {
   } = useInbound.document.fields([
     'pricing',
     'lines',
-    'taxRate',
+    'taxPercentage',
     'currency',
     'otherParty',
     'currencyRate',
@@ -84,18 +84,18 @@ export const PricingSectionComponent = () => {
         </PanelRow>
         <PanelRow>
           <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(
-            taxRate ?? 0
+            taxPercentage ?? 0
           )}`}</PanelLabel>
           <PanelField>
             <TaxEdit
               disabled={disableStockTax || isDisabled}
-              tax={taxRate ?? 0}
-              onChange={taxRate => {
-                update({ taxRate });
+              tax={taxPercentage ?? 0}
+              onChange={taxPercentage => {
+                update({ taxPercentage });
               }}
             />
           </PanelField>
-          <PanelField>{c(taxRate ?? 0).format()}</PanelField>
+          <PanelField>{c(taxPercentage ?? 0).format()}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>
@@ -124,10 +124,10 @@ export const PricingSectionComponent = () => {
             <TaxEdit
               disabled={disableServiceTax || isDisabled}
               tax={tax}
-              onChange={taxRate => {
+              onChange={taxPercentage => {
                 updateTax({
                   lines: lines.nodes,
-                  taxRate,
+                  taxPercentage,
                   type: InvoiceLineNodeType.Service,
                 });
               }}

@@ -98,7 +98,7 @@ impl UpdateInput {
             stock_line_id,
             number_of_packs,
             total_before_tax: None,
-            tax_rate: None,
+            tax_percentage: None,
             note,
         }
     }
@@ -540,7 +540,7 @@ mod test {
                     number_of_packs: Some(1.0),
                     note: Some("some note".to_string()),
                     total_before_tax: None,
-                    tax_rate: None,
+                    tax_percentage: None,
                 }
             );
             Ok(InvoiceLine {

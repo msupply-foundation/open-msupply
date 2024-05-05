@@ -30,7 +30,7 @@ pub struct UpdateStockInLine {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
-    pub tax_rate: Option<ShipmentTaxUpdate>,
+    pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub r#type: StockInType,
 }
 

@@ -75,7 +75,7 @@ export const useDraftServiceLines = () => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         const taxAmount =
-          (patch.totalBeforeTax ?? 0) * ((patch.taxRate ?? 0) / 100);
+          (patch.totalBeforeTax ?? 0) * ((patch.taxPercentage ?? 0) / 100);
         const totalAfterTax = (patch.totalBeforeTax ?? 0) + taxAmount;
         const newPatch = { ...patch, totalAfterTax };
         if (line.id === patch.id)

@@ -22,7 +22,7 @@ pub struct UpdateStockOutLine {
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
-    pub tax_rate: Option<ShipmentTaxUpdate>,
+    pub tax_percentage: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
 }
 
