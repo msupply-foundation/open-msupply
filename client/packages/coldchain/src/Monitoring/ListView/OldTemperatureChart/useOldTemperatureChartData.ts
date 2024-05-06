@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTheme } from '@common/styles';
 import { DateUtils } from '@common/intl';
-import { Sensor } from './types';
+import { Sensor } from './OldTypes';
 import { useUrlQueryParams } from '@common/hooks';
 import {
   TemperatureChartFragment,

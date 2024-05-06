@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { TemperatureBreachList } from './TemperatureBreach';
 import { TemperatureChart } from './TemperatureChart';
-import { OldTemperatureChart } from './TemperatureChart';
+import { OldTemperatureChart } from './OldTemperatureChart';
 import { AppBarButtons } from './AppBarButtons';
 
 export const ListView: FC = () => {

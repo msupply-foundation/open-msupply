@@ -1,9 +1,21 @@
 import { TemperatureBreachNodeType } from '@common/types';
-import { SensorFragment } from '../../../Sensor/api';
 
 export interface PopoverVirtualElement {
   getBoundingClientRect: () => DOMRect;
   nodeType: Node['ELEMENT_NODE'];
+}
+
+export interface DataPoint {
+  datetime: Date | null;
+  temperature: number | null;
+  breachId?: string;
+}
+
+export interface ChartSeries {
+  id: string;
+  name: string;
+  colour: string;
+  data: DataPoint[];
 }
 
 export interface Breach {
@@ -19,33 +31,10 @@ export interface Breach {
 export interface DotProps {
   cx: number;
   cy: number;
-  payload: Log;
+  payload: DataPoint;
 }
-
-export type Log = {
-  date: number;
-  sensorId: string;
-  temperature: number | null;
-  breach: {
-    ids: string[];
-    sensor: Pick<SensorFragment, 'id' | 'name'>;
-  } | null;
-};
-
-export type Sensor = {
-  colour: string | undefined;
-  id: string;
-  name: string;
-  location?: string | null;
-  logs: Log[];
-};
 
 export type BreachDot = {
   position: DOMRect;
-  breach: NonNullable<Log['breach']>;
-};
-
-export type BreachConfig = {
-  cold: { date: Date; temperature: number }[];
-  hot: { date: Date; temperature: number }[];
+  breachId: string;
 };
