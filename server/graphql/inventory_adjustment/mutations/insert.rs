@@ -121,7 +121,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
 impl AdjustmentTypeInput {
     pub fn to_domain(&self) -> AdjustmentType {
-        // use UpdateOutboundReturnStatus::*;
         match self {
             AdjustmentTypeInput::Addition => AdjustmentType::Addition,
             AdjustmentTypeInput::Reduction => AdjustmentType::Reduction,

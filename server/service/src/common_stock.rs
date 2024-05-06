@@ -29,6 +29,16 @@ pub fn check_stock_line_exists(
     Ok(stock_line)
 }
 
+pub fn check_stock_line_does_not_exist(
+    id: &str,
+    connection: &StorageConnection,
+) -> Result<bool, RepositoryError> {
+    let stock_lines = StockLineRepository::new(connection)
+        .query_by_filter(StockLineFilter::new().id(EqualFilter::equal_to(id)), None)?;
+
+    Ok(stock_lines.is_empty())
+}
+
 impl From<RepositoryError> for CommonStockLineError {
     fn from(error: RepositoryError) -> Self {
         CommonStockLineError::DatabaseError(error)
