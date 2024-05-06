@@ -77,8 +77,8 @@ export const Toolbar = () => {
     },
     {
       type: 'text',
-      name: t('label.code'),
-      urlParameter: 'code',
+      name: t('label.asset-number'),
+      urlParameter: 'assetNumber',
       isDefault: true,
     },
     {
