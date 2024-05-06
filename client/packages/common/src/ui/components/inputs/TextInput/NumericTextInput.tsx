@@ -55,7 +55,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       (val: number | undefined) =>
         noFormatting
           ? val === undefined
-            ? undefined
+            ? ''
             : String(val)
           : format(val, { minimumFractionDigits: decimalMin }),
       [decimalMin, format, noFormatting]
