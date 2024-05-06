@@ -36,7 +36,7 @@ pub(crate) fn generate(
         their_reference: input_their_reference,
         colour: input_colour,
         transport_reference: input_transport_reference,
-        tax_percentage: input_tax,
+        tax: input_tax,
         currency_id: input_currency_id,
         currency_rate: input_currency_rate,
     }: UpdateOutboundShipment,

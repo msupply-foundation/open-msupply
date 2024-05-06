@@ -47,7 +47,7 @@ pub(crate) fn generate(
     update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
     update_invoice.colour = patch.colour.or(update_invoice.colour);
     update_invoice.tax_percentage = patch
-        .tax_percentage
+        .tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax_percentage);
 

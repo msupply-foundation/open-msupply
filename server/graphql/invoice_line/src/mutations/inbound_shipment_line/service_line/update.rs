@@ -95,7 +95,7 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            tax_percentage: tax.and_then(|tax| {
+            tax: tax.and_then(|tax| {
                 Some(ShipmentTaxUpdate {
                     percentage: tax.percentage,
                 })
@@ -353,7 +353,7 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: Some(0.1),
-                    tax_percentage: Some(ShipmentTaxUpdate {
+                    tax: Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     }),
                     note: Some("note".to_string())

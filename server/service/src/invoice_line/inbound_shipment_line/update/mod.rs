@@ -28,7 +28,7 @@ pub struct UpdateInboundShipmentLine {
     pub expiry_date: Option<NaiveDate>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
-    pub tax_percentage: Option<ShipmentTaxUpdate>,
+    pub tax: Option<ShipmentTaxUpdate>,
 }
 
 type OutError = UpdateInboundShipmentLineError;

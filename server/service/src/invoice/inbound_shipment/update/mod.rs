@@ -31,7 +31,7 @@ pub struct UpdateInboundShipment {
     pub comment: Option<String>,
     pub their_reference: Option<String>,
     pub colour: Option<String>,
-    pub tax_percentage: Option<ShipmentTaxUpdate>,
+    pub tax: Option<ShipmentTaxUpdate>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
 }
@@ -431,7 +431,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = invoice_test().id;
-                    r.tax_percentage = Some(ShipmentTaxUpdate {
+                    r.tax = Some(ShipmentTaxUpdate {
                         percentage: Some(0.0),
                     });
                 }),
@@ -483,7 +483,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = invoice_test().id;
                     r.status = Some(UpdateInboundShipmentStatus::Delivered);
-                    r.tax_percentage = Some(ShipmentTaxUpdate {
+                    r.tax = Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     });
                 }),
@@ -533,7 +533,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = invoice_test().id;
                     r.status = Some(UpdateInboundShipmentStatus::Verified);
-                    r.tax_percentage = Some(ShipmentTaxUpdate {
+                    r.tax = Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     });
                 }),
