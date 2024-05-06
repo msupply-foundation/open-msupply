@@ -112,7 +112,7 @@ impl UpdateInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            tax_percentage: tax.and_then(|tax| {
+            tax: tax.and_then(|tax| {
                 Some(ShipmentTaxUpdate {
                     percentage: tax.percentage,
                 })
@@ -477,7 +477,7 @@ mod test {
                     expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                     number_of_packs: Some(1.0),
                     total_before_tax: None,
-                    tax_percentage: None,
+                    tax: None,
                 }
             );
             Ok(InvoiceLine {

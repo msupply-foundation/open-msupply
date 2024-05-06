@@ -123,7 +123,7 @@ impl UpdateInput {
             their_reference,
             colour,
             transport_reference,
-            tax_percentage: tax.and_then(|tax| {
+            tax: tax.and_then(|tax| {
                 Some(ShipmentTaxUpdate {
                     percentage: tax.percentage,
                 })

@@ -13,7 +13,7 @@ pub struct UpdateInboundShipmentServiceLine {
     pub item_id: Option<String>,
     pub name: Option<String>,
     pub total_before_tax: Option<f64>,
-    pub tax_percentage: Option<ShipmentTaxUpdate>,
+    pub tax: Option<ShipmentTaxUpdate>,
     pub note: Option<String>,
 }
 
@@ -249,7 +249,7 @@ mod test {
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: Some(1.0),
-                    tax_percentage: Some(ShipmentTaxUpdate {
+                    tax: Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     }),
                     note: Some("note".to_string()),

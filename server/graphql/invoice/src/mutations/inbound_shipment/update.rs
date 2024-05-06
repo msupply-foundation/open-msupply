@@ -108,7 +108,7 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
-            tax_percentage: tax.and_then(|tax| {
+            tax: tax.and_then(|tax| {
                 Some(ShipmentTaxUpdate {
                     percentage: tax.percentage,
                 })
@@ -500,7 +500,7 @@ mod test {
                     comment: Some("comment input".to_string()),
                     their_reference: Some("their reference input".to_string()),
                     colour: Some("colour input".to_string()),
-                    tax_percentage: None,
+                    tax: None,
                     currency_id: None,
                     currency_rate: None
                 }
