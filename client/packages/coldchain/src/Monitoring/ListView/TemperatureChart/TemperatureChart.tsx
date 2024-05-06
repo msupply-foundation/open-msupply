@@ -180,9 +180,17 @@ const Chart = ({
   // shows a breach icon if there is a breach
   // and nothing otherwise
   const TemperatureLineDot = React.useCallback(
-    ({ cx, cy, payload }: DotProps) => {
+    ({ cx, cy, stroke, payload, fill, r, strokeWidth }: DotProps) => {
       return !payload?.breachId ? (
-        <></>
+        <Dot
+          cx={cx}
+          cy={cy}
+          r={r * 0.5}
+          stroke={stroke}
+          fill={fill}
+          strokeWidth={strokeWidth}
+          clipDot={true}
+        ></Dot>
       ) : (
         <BreachIndicator
           cx={cx}
