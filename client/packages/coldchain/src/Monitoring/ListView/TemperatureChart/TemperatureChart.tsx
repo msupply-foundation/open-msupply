@@ -87,7 +87,6 @@ const transformData = (
 };
 
 const generateBreachConfig = (startTime: Date, endTime: Date) => {
-  // creating the full range of datetimes, otherwise it isn't showing full width
   return {
     cold: [
       {
@@ -453,7 +452,6 @@ const getDateRangeAndFilter = (
   const now = DateUtils.setMilliseconds(new Date(), 0);
   let fromDatetime = DateUtils.addDays(now, -1);
   let toDatetime = now;
-  // console.log(filterBy);
   const filterDatetime = filterBy?.['datetime'];
 
   if (!!filterDatetime && typeof filterDatetime === 'object') {
