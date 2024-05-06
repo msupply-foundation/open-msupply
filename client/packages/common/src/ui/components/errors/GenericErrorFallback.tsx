@@ -31,7 +31,7 @@ export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
               window.location.href = window.location.origin;
             }}
           >
-            {t('button.home')}
+            {t('button.dashboard')}
           </BaseButton>
         </Tooltip>
       </Grid>
