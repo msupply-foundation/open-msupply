@@ -20,7 +20,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { BreachDot } from './types';
+import { BreachDot } from './OldTypes';
 import { parseBreachType } from '@openmsupply-client/coldchain';
 import {
   TemperatureBreachFragment,
@@ -33,10 +33,13 @@ interface BreachPopperProps {
 }
 
 export const BreachPopover = ({ breachDot, onClose }: BreachPopperProps) => {
-  const { position, breachId } = breachDot;
+  const {
+    position,
+    breach: { sensor, ids: breachIds },
+  } = breachDot;
 
   const { data, isLoading } = useTemperatureBreach.document.list({
-    filterBy: { id: { equalTo: breachId ?? '' } },
+    filterBy: { id: { equalTo: breachIds?.[0] ?? '' } },
     offset: 0,
     first: 1,
     sortBy: {
@@ -57,7 +60,12 @@ export const BreachPopover = ({ breachDot, onClose }: BreachPopperProps) => {
       }}
       slotProps={{ paper: { sx: { borderRadius: 4 } } }}
     >
-      <Content isLoading={isLoading} breach={breach} onClose={onClose} />
+      <Content
+        isLoading={isLoading}
+        breach={breach}
+        sensor={sensor}
+        onClose={onClose}
+      />
     </Popover>
   );
 };
@@ -66,10 +74,12 @@ const Content = ({
   breach,
   isLoading,
   onClose,
+  sensor,
 }: {
   breach: TemperatureBreachFragment | null | undefined;
   isLoading: boolean;
   onClose: () => void;
+  sensor: { id: string; name: string };
 }) => {
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
@@ -105,7 +115,7 @@ const Content = ({
             <Typography
               sx={{ fontSize: 14, fontWeight: 600, paddingBottom: 1 }}
             >
-              {breach.sensor?.name ?? ''} {t('heading.breach')}
+              {sensor.name} {t('heading.breach')}
               <BreachIcon type={breach?.type} />
             </Typography>
             <Row

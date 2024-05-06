@@ -18,11 +18,11 @@ import {
   useTheme,
   useUrlQuery,
 } from '@openmsupply-client/common';
-import { useTemperatureChartData } from './useTemperatureChartData';
-import { Entry, TemperatureTooltipLayout } from './TemperatureTooltipLayout';
-import { BreachPopover } from './BreachPopover';
-import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
-import { BreachIndicator } from './BreachIndicator';
+import { useTemperatureChartData } from './useOldTemperatureChartData';
+import { Entry, TemperatureTooltipLayout } from './OldTemperatureTooltipLayout';
+import { BreachPopover } from './OldBreachPopover';
+import { BreachConfig, BreachDot, DotProps, Sensor } from './OldTypes';
+import { BreachIndicator } from './OldBreachIndicator';
 import { Toolbar } from '../TemperatureLog/Toolbar';
 import { useFormatTemperature } from '../../../common';
 
@@ -83,8 +83,9 @@ const Chart = ({
   // shows a breach icon if there is a breach
   // and nothing otherwise
   const TemperatureLineDot = React.useCallback(
-    ({ cx, cy, payload }: DotProps) =>
-      !payload?.breach ? (
+    ({ cx, cy, payload }: DotProps) => {
+      console;
+      return !payload?.breach ? (
         <></>
       ) : (
         <BreachIndicator
@@ -93,7 +94,8 @@ const Chart = ({
           payload={payload}
           setCurrentBreach={setCurrentBreach}
         />
-      ),
+      );
+    },
     [setCurrentBreach]
   );
 
