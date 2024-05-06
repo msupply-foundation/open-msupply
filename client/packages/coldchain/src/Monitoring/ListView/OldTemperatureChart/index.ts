@@ -1,1 +1,0 @@
-export { OldTemperatureChart } from './OldTemperatureChart';
