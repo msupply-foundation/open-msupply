@@ -101,13 +101,16 @@ pub fn generate(
                 item_id,
                 pack_size,
                 note,
+                r#type: StockInType::InboundReturn,
                 // Default
                 location: None,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: None,
                 tax: None,
-                r#type: StockInType::InboundReturn,
+                stock_line_id: None,
+                barcode: None,
+                stock_on_hold: false,
             },
         )
         .collect();

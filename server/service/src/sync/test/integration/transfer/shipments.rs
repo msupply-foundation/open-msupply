@@ -52,6 +52,7 @@ async fn integration_sync_shipment_transfers_normal() {
             &outbound_and_response_site.store,
             &inbound_and_request_site.store,
             None,
+            None,
             &item1,
             &item2,
         );
@@ -214,6 +215,7 @@ async fn integration_sync_shipment_transfers_delete() {
             &outbound_and_response_site.store,
             &inbound_and_request_site.store,
             None,
+            None,
             &item1,
             &item2,
         );
@@ -321,6 +323,7 @@ async fn integration_sync_shipment_transfers_initialise() {
         let mut tester = ShipmentTransferTester::new(
             &outbound_and_response_site.store,
             &inbound_and_request_site.store,
+            None,
             None,
             &item1,
             &item2,
