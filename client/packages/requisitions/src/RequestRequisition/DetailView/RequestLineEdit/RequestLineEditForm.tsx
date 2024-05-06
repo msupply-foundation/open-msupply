@@ -51,7 +51,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => {
 
 interface RequestLineEditFormLayoutProps {
   Left: React.ReactElement;
-  Middle: React.ReactElement;
+  Middle: React.ReactElement | null;
   Right: React.ReactElement;
   Top: React.ReactElement;
 }
@@ -280,9 +280,7 @@ export const RequestLineEditForm = ({
               />
             )}
           </>
-        ) : (
-          <></>
-        )
+        ) : null
       }
       Right={
         <>
