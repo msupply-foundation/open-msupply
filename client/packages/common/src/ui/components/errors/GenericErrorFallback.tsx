@@ -1,4 +1,4 @@
-import { Box, Grid, Typography } from '@mui/material';
+import { Box, Grid, Tooltip, Typography } from '@mui/material';
 import React, { FC } from 'react';
 import { ErrorBoundaryFallbackProps } from './types';
 import { UnhappyMan } from '@common/icons';
@@ -24,14 +24,16 @@ export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
       </Typography>
       <Grid container gap={1} justifyContent="center">
         <BaseButton onClick={onClearError}>{t('button.try-again')}</BaseButton>
-        <BaseButton
-          onClick={() => {
-            onClearError;
-            window.location.href = window.location.origin;
-          }}
-        >
-          {t('button.home')}
-        </BaseButton>
+        <Tooltip title={window.location.origin}>
+          <BaseButton
+            onClick={() => {
+              onClearError;
+              window.location.href = window.location.origin;
+            }}
+          >
+            {t('button.home')}
+          </BaseButton>
+        </Tooltip>
       </Grid>
     </Box>
   );
