@@ -31,7 +31,11 @@ export interface Breach {
 export interface DotProps {
   cx: number;
   cy: number;
+  stroke?: string;
   payload: DataPoint;
+  fill?: string;
+  r: number;
+  strokeWidth?: number;
 }
 
 export type BreachDot = {
