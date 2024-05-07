@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -12,24 +12,21 @@ import {
   Column,
   ColumnsIcon,
   RecordWithId,
-  useLocalStorage,
 } from '@openmsupply-client/common';
 import { LocaleKey, useTranslation } from '@common/intl';
 
 interface ColumnPickerProps<T extends RecordWithId> {
   columns: Column<T>[];
-  tableKey: string;
-  onChange: (columns: Column<T>[]) => void;
+  displayColumnKeys: string[];
+  onChange: (columnKeys: string[]) => void;
 }
 
 export const ColumnPicker = <T extends RecordWithId>({
-  tableKey,
   columns,
+  displayColumnKeys,
   onChange,
 }: ColumnPickerProps<T>) => {
   const t = useTranslation();
-  const [hiddenColumnsConfig, setHiddenColumnsConfig] =
-    useLocalStorage('/columns/hidden');
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
@@ -37,14 +34,9 @@ export const ColumnPicker = <T extends RecordWithId>({
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
 
-  const getHiddenColumns = useCallback(
-    () => hiddenColumnsConfig?.[tableKey] ?? [],
-    [hiddenColumnsConfig, tableKey]
-  );
-
   const isVisible = useCallback(
-    (column: Column<T>) => !getHiddenColumns()?.includes(String(column.key)),
-    [getHiddenColumns]
+    (column: Column<T>) => displayColumnKeys.includes(String(column.key)),
+    [displayColumnKeys]
   );
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -56,20 +48,10 @@ export const ColumnPicker = <T extends RecordWithId>({
   };
 
   const toggleColumn = (column: Column<T>) => {
-    const hidden = getHiddenColumns();
-    const updatedColumns = isVisible(column)
-      ? [...hidden, String(column.key)]
-      : hidden.filter(key => key !== column.key);
-
-    setHiddenColumnsConfig({
-      ...hiddenColumnsConfig,
-      [tableKey]: updatedColumns,
-    });
+    if (isVisible(column))
+      onChange(displayColumnKeys.filter(key => key !== column.key));
+    else onChange([...displayColumnKeys, String(column.key)]);
   };
-
-  useEffect(() => {
-    onChange(columns.filter(isVisible));
-  }, [columns, onChange, isVisible]);
 
   return (
     <>
@@ -78,7 +60,9 @@ export const ColumnPicker = <T extends RecordWithId>({
           <ColumnsIcon
             sx={{
               color:
-                getHiddenColumns().length > 0 ? 'secondary.main' : undefined,
+                displayColumnKeys.length !== columns.length
+                  ? 'secondary.main'
+                  : undefined,
             }}
           />
         </IconButton>
