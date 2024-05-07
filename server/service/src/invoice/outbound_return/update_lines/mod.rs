@@ -146,7 +146,7 @@ mod test {
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType,
         ReturnReasonRow,
     };
 
@@ -156,8 +156,8 @@ mod test {
             InvoiceRow {
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
-                r#type: InvoiceRowType::OutboundReturn,
-                status: InvoiceRowStatus::New,
+                r#type: InvoiceType::OutboundReturn,
+                status: InvoiceStatus::New,
                 ..Default::default()
             }
         }
@@ -172,7 +172,7 @@ mod test {
         fn shipped_return() -> InvoiceRow {
             InvoiceRow {
                 id: "shipped_return".to_string(),
-                status: InvoiceRowStatus::Shipped,
+                status: InvoiceStatus::Shipped,
                 ..base_test_return()
             }
         }

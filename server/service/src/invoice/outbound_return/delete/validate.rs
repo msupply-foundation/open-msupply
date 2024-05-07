@@ -2,7 +2,7 @@ use super::DeleteOutboundReturnError;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
-use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 pub fn validate(
     id: &str,
@@ -18,7 +18,7 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::OutboundReturn) {
+    if !check_invoice_type(&invoice, InvoiceType::OutboundReturn) {
         return Err(NotAnOutboundReturn);
     }
 

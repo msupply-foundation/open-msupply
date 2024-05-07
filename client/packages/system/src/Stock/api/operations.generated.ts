@@ -13,6 +13,8 @@ export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: s
 
 export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string };
 
+export type LedgerRowFragment = { __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId: string, storeId: string };
+
 export type StockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -32,6 +34,16 @@ export type StockLineQueryVariables = Types.Exact<{
 
 
 export type StockLineQuery = { __typename: 'Queries', stockLines: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } }> } };
+
+export type LedgerQueryVariables = Types.Exact<{
+  key: Types.LedgerSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.LedgerFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type LedgerQuery = { __typename: 'Queries', ledger: { __typename: 'LedgerConnector', totalCount: number, nodes: Array<{ __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId: string, storeId: string }> } };
 
 export type UpdateStockLineMutationVariables = Types.Exact<{
   input: Types.UpdateStockLineInput;
@@ -135,6 +147,19 @@ export const InvoiceRowFragmentDoc = gql`
   id
 }
     `;
+export const LedgerRowFragmentDoc = gql`
+    fragment LedgerRow on LedgerNode {
+  datetime
+  id
+  invoiceType
+  itemId
+  name
+  quantity
+  reason
+  stockLineId
+  storeId
+}
+    `;
 export const StockLinesDocument = gql`
     query stockLines($first: Int, $offset: Int, $key: StockLineSortFieldInput!, $desc: Boolean, $filter: StockLineFilterInput, $storeId: String!) {
   stockLines(
@@ -168,6 +193,20 @@ export const StockLineDocument = gql`
   }
 }
     ${StockLineRowFragmentDoc}`;
+export const LedgerDocument = gql`
+    query ledger($key: LedgerSortFieldInput!, $desc: Boolean, $filter: LedgerFilterInput, $storeId: String!) {
+  ledger(storeId: $storeId, filter: $filter, sort: {key: $key, desc: $desc}) {
+    ... on LedgerConnector {
+      __typename
+      nodes {
+        __typename
+        ...LedgerRow
+      }
+      totalCount
+    }
+  }
+}
+    ${LedgerRowFragmentDoc}`;
 export const UpdateStockLineDocument = gql`
     mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
   updateStockLine(input: $input, storeId: $storeId) {
@@ -258,6 +297,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     stockLine(variables: StockLineQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StockLineQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StockLineQuery>(StockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockLine', 'query');
     },
+    ledger(variables: LedgerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LedgerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LedgerQuery>(LedgerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ledger', 'query');
+    },
     updateStockLine(variables: UpdateStockLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateStockLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateStockLineMutation>(UpdateStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStockLine', 'mutation');
     },
@@ -311,6 +353,23 @@ export const mockStockLinesQuery = (resolver: ResponseResolver<GraphQLRequest<St
 export const mockStockLineQuery = (resolver: ResponseResolver<GraphQLRequest<StockLineQueryVariables>, GraphQLContext<StockLineQuery>, any>) =>
   graphql.query<StockLineQuery, StockLineQueryVariables>(
     'stockLine',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockLedgerQuery((req, res, ctx) => {
+ *   const { key, desc, filter, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ ledger })
+ *   )
+ * })
+ */
+export const mockLedgerQuery = (resolver: ResponseResolver<GraphQLRequest<LedgerQueryVariables>, GraphQLContext<LedgerQuery>, any>) =>
+  graphql.query<LedgerQuery, LedgerQueryVariables>(
+    'ledger',
     resolver
   )
 

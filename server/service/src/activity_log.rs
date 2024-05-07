@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
-    ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceRowStatus, StorageConnection,
+    ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceStatus, StorageConnection,
     StorageConnectionManager,
 };
 use repository::{PaginationOption, RepositoryError};
@@ -80,12 +80,9 @@ pub fn system_activity_log_entry(
     ActivityLogRowRepository::new(connection).insert_one(log)
 }
 
-pub fn log_type_from_invoice_status(
-    status: &InvoiceRowStatus,
-    prescription: bool,
-) -> ActivityLogType {
+pub fn log_type_from_invoice_status(status: &InvoiceStatus, prescription: bool) -> ActivityLogType {
     use ActivityLogType as to;
-    use InvoiceRowStatus as from;
+    use InvoiceStatus as from;
 
     match status {
         from::New => to::InvoiceCreated,
@@ -109,7 +106,7 @@ mod test {
     };
     use repository::{
         mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
-        ActivityLogType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        ActivityLogType, InvoiceRow, InvoiceStatus, InvoiceType,
     };
     use util::inline_init;
 
@@ -129,8 +126,8 @@ mod test {
                     r.id = "test".to_string();
                     r.name_link_id = mock_name_a().id;
                     r.store_id = mock_store_a().id;
-                    r.r#type = InvoiceRowType::OutboundShipment;
-                    r.status = InvoiceRowStatus::Allocated;
+                    r.r#type = InvoiceType::OutboundShipment;
+                    r.status = InvoiceStatus::Allocated;
                 })]
             }),
         )

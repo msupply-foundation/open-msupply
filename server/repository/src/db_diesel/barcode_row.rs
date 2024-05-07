@@ -34,8 +34,8 @@ allow_tables_to_appear_in_same_query!(barcode, item_link);
 allow_tables_to_appear_in_same_query!(barcode, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "barcode"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = barcode)]
 pub struct BarcodeRow {
     pub id: String,
     pub gtin: String,
@@ -61,7 +61,7 @@ impl<'a> BarcodeRowRepository<'a> {
             .on_conflict(barcode_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -69,14 +69,14 @@ impl<'a> BarcodeRowRepository<'a> {
     pub fn _upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(barcode_dsl::barcode)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(barcode_is_sync_update::table.find(id))
             .set(barcode_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
@@ -90,7 +90,7 @@ impl<'a> BarcodeRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<BarcodeRow>, RepositoryError> {
         let result = barcode_dsl::barcode
             .filter(barcode_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -98,7 +98,7 @@ impl<'a> BarcodeRowRepository<'a> {
     pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
         let result = barcode_dsl::barcode
             .filter(barcode_dsl::item_id.eq(item_id))
-            .get_results(&self.connection.connection)?;
+            .get_results(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -114,7 +114,7 @@ impl<'a> BarcodeRowRepository<'a> {
         let result = barcode_is_sync_update::table
             .find(id)
             .select(barcode_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }

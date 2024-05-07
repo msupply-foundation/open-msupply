@@ -3,7 +3,7 @@ use repository::temperature_breach::{
 };
 use repository::{
     EqualFilter, PaginationOption, RepositoryError, StorageConnection,
-    TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLogFilter,
+    TemperatureBreachRowRepository, TemperatureBreachType, TemperatureLogFilter,
     TemperatureLogRepository,
 };
 
@@ -60,18 +60,14 @@ pub fn get_max_or_min_breach_temperature(
             ))?;
 
     match breach.r#type {
-        TemperatureBreachRowType::HotConsecutive | TemperatureBreachRowType::HotCumulative => {
-            Ok(logs
-                .iter()
-                .map(|log| log.temperature_log_row.temperature)
-                .max_by(|a, b| a.partial_cmp(b).unwrap()))
-        }
-        TemperatureBreachRowType::ColdConsecutive | TemperatureBreachRowType::ColdCumulative => {
-            Ok(logs
-                .iter()
-                .map(|log| log.temperature_log_row.temperature)
-                .min_by(|a, b| a.partial_cmp(b).unwrap()))
-        }
-        TemperatureBreachRowType::Excursion => Ok(None),
+        TemperatureBreachType::HotConsecutive | TemperatureBreachType::HotCumulative => Ok(logs
+            .iter()
+            .map(|log| log.temperature_log_row.temperature)
+            .max_by(|a, b| a.partial_cmp(b).unwrap())),
+        TemperatureBreachType::ColdConsecutive | TemperatureBreachType::ColdCumulative => Ok(logs
+            .iter()
+            .map(|log| log.temperature_log_row.temperature)
+            .min_by(|a, b| a.partial_cmp(b).unwrap())),
+        TemperatureBreachType::Excursion => Ok(None),
     }
 }

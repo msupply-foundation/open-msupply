@@ -20,11 +20,11 @@ table! {
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
-#[table_name = "asset_catalogue_type"]
+#[diesel(table_name = asset_catalogue_type)]
 pub struct AssetTypeRow {
     pub id: String,
     pub name: String,
-    #[column_name = "asset_category_id"]
+    #[diesel(column_name = "asset_category_id")]
     pub category_id: String,
 }
 
@@ -44,7 +44,7 @@ impl<'a> AssetTypeRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_type_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -52,19 +52,19 @@ impl<'a> AssetTypeRowRepository<'a> {
     pub fn upsert_one(&self, asset_type_row: &AssetTypeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_catalogue_type)
             .values(asset_type_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn insert_one(&self, asset_type_row: &AssetTypeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_catalogue_type)
             .values(asset_type_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_all(&self) -> Result<Vec<AssetTypeRow>, RepositoryError> {
-        let result = asset_catalogue_type.load(&self.connection.connection);
+    pub fn find_all(&mut self) -> Result<Vec<AssetTypeRow>, RepositoryError> {
+        let result = asset_catalogue_type.load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -74,7 +74,7 @@ impl<'a> AssetTypeRowRepository<'a> {
     ) -> Result<Option<AssetTypeRow>, RepositoryError> {
         let result = asset_catalogue_type
             .filter(id.eq(asset_type_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -82,7 +82,7 @@ impl<'a> AssetTypeRowRepository<'a> {
     pub fn delete(&self, asset_type_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(asset_catalogue_type)
             .filter(id.eq(asset_type_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

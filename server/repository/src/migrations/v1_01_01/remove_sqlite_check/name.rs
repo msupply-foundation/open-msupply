@@ -75,7 +75,7 @@ async fn remove_sqlite_check_name() {
     let names = name_dsl::name
         .select((name_dsl::id, name_dsl::type_, name_dsl::gender))
         .order_by(name_dsl::id.asc())
-        .load::<(String, String, String)>(&connection.connection)
+        .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

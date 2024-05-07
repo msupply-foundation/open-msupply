@@ -1,15 +1,13 @@
-use std::cell::Cell;
+use std::sync::{Mutex, MutexGuard};
 
 use super::{get_connection, DBBackendConnection, DBConnection};
 
 use crate::repository_error::RepositoryError;
 
 use diesel::{
-    connection::TransactionManager,
+    connection::{AnsiTransactionManager, SimpleConnection, TransactionManager},
     r2d2::{ConnectionManager, Pool},
-    Connection,
 };
-use futures_util::Future;
 use log::error;
 
 // feature sqlite
@@ -19,16 +17,56 @@ const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN IMMEDIATE;";
 #[cfg(feature = "postgres")]
 const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN";
 
-pub struct StorageConnection {
-    pub connection: DBConnection,
-    // pub arc_connection: Arc<DBConnection>,
+/// Helper class to avoid deref_mut() calls, which would require to import DerefMut everywhere we
+/// want to use a connection.
+/// For example, without it, it would look like:
+/// let con: &mut DBConnection = connection.raw_connection.lock().unwrap().deref_mut();
+pub struct LockedConnection<'a> {
+    raw_connection: MutexGuard<'a, DBConnection>,
+}
+
+impl<'a> LockedConnection<'a> {
+    pub fn connection(&mut self) -> &mut DBConnection {
+        &mut self.raw_connection
+    }
+
     /// Current level of nested transaction.
     /// For example:
     /// 0 => no transaction
     /// 1 => in transaction
     /// 2 => 1st nested transaction
     /// 3 => 2nd nested transaction
-    pub transaction_level: Cell<i32>,
+    pub fn transaction_level<E>(&mut self) -> Result<i32, TransactionError<E>> {
+        let con: &mut DBBackendConnection = &mut self.raw_connection;
+        let level = match AnsiTransactionManager::transaction_manager_status_mut(con) {
+            diesel::connection::TransactionManagerStatus::Valid(l) => l.transaction_depth(),
+            diesel::connection::TransactionManagerStatus::InError => {
+                return Err(TransactionError::Transaction {
+                    msg: "Failed to get transaction depth".to_string(),
+                    level: -1,
+                })
+            }
+        };
+        Ok(match level {
+            Some(l) => {
+                let l: u32 = l.into();
+                l as i32
+            }
+            None => 0,
+        })
+    }
+}
+
+pub struct StorageConnection {
+    raw_connection: Mutex<DBConnection>,
+}
+
+impl StorageConnection {
+    pub fn lock(&self) -> LockedConnection {
+        LockedConnection {
+            raw_connection: self.raw_connection.lock().unwrap(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -70,73 +108,7 @@ impl From<TransactionError<RepositoryError>> for RepositoryError {
 impl StorageConnection {
     pub fn new(connection: DBConnection) -> StorageConnection {
         StorageConnection {
-            connection,
-            transaction_level: Cell::new(0),
-        }
-    }
-    /// Executes operations in transaction. A new transaction is only started if not already in a
-    /// transaction.
-    pub async fn transaction<'a, T, E, F, Fut>(&'a self, f: F) -> Result<T, TransactionError<E>>
-    where
-        F: FnOnce(&'a StorageConnection) -> Fut,
-        Fut: Future<Output = Result<T, E>>,
-    {
-        self.transaction_etc(f, true).await
-    }
-
-    pub async fn transaction_etc<'a, T, E, F, Fut>(
-        &'a self,
-        f: F,
-        reuse_tx: bool,
-    ) -> Result<T, TransactionError<E>>
-    where
-        F: FnOnce(&'a StorageConnection) -> Fut,
-        Fut: Future<Output = Result<T, E>>,
-    {
-        let current_level = self.transaction_level.get();
-        if current_level > 0 && reuse_tx {
-            let result = f(self).await.map_err(|err| TransactionError::Inner(err))?;
-            return Ok(result);
-        }
-
-        let con = &self.connection;
-        let transaction_manager = con.transaction_manager();
-        if current_level == 0 {
-            // sqlite can only have 1 writer at a time, so to avoid concurrency issues,
-            // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
-            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
-        } else {
-            transaction_manager.begin_transaction(con)
-        }
-        .map_err(|e| map_begin_transaction_error(e, current_level))?;
-
-        self.transaction_level.set(current_level + 1);
-        let result = f(self).await;
-        self.transaction_level.set(current_level);
-
-        match result {
-            Ok(value) => {
-                transaction_manager.commit_transaction(con).map_err(|err| {
-                    error!("Failed to end tx: {:?}", err);
-                    TransactionError::Transaction {
-                        msg: format!("Failed to end tx: {}", err),
-                        level: current_level + 1,
-                    }
-                })?;
-                Ok(value)
-            }
-            Err(e) => {
-                transaction_manager
-                    .rollback_transaction(con)
-                    .map_err(|err| {
-                        error!("Failed to rollback tx: {:?}", err);
-                        TransactionError::Transaction {
-                            msg: format!("Failed to rollback tx: {}", err),
-                            level: current_level + 1,
-                        }
-                    })?;
-                Err(TransactionError::Inner(e))
-            }
+            raw_connection: Mutex::new(connection),
         }
     }
 
@@ -144,7 +116,7 @@ impl StorageConnection {
     /// transaction.
     pub fn transaction_sync<'a, T, E, F>(&'a self, f: F) -> Result<T, TransactionError<E>>
     where
-        F: FnOnce(&'a StorageConnection) -> Result<T, E>,
+        F: FnOnce(&StorageConnection) -> Result<T, E>,
     {
         self.transaction_sync_etc(f, true)
     }
@@ -158,33 +130,38 @@ impl StorageConnection {
         reuse_tx: bool,
     ) -> Result<T, TransactionError<E>>
     where
-        F: FnOnce(&'a StorageConnection) -> Result<T, E>,
+        F: FnOnce(&StorageConnection) -> Result<T, E>,
     {
-        let current_level = self.transaction_level.get();
-        if current_level > 0 && reuse_tx {
-            return match f(self) {
-                Ok(ok) => Ok(ok),
-                Err(err) => Err(TransactionError::Inner(err)),
-            };
-        }
-        let con = &self.connection;
-        let transaction_manager = con.transaction_manager();
-        if current_level == 0 {
-            // sqlite can only have 1 writer, so to avoid concurrency issues,
-            // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
-            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
-        } else {
-            transaction_manager.begin_transaction(con)
-        }
-        .map_err(|e| map_begin_transaction_error(e, current_level))?;
+        let current_level = {
+            let mut guard = self.lock();
+            let current_level = guard.transaction_level()?;
+            if current_level > 0 && reuse_tx {
+                drop(guard);
+                return match f(self) {
+                    Ok(ok) => Ok(ok),
+                    Err(err) => Err(TransactionError::Inner(err)),
+                };
+            }
 
-        self.transaction_level.set(current_level + 1);
+            let con: &mut DBBackendConnection = guard.connection();
+            if current_level == 0 {
+                // sqlite can only have 1 writer, so to avoid concurrency issues,
+                // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
+                AnsiTransactionManager::begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
+            } else {
+                AnsiTransactionManager::begin_transaction(con)
+            }
+            .map_err(|e| map_begin_transaction_error(e, current_level))?;
+            current_level
+        };
+
         let result = f(self);
-        self.transaction_level.set(current_level);
 
         match result {
             Ok(value) => {
-                transaction_manager.commit_transaction(con).map_err(|err| {
+                let mut guard = self.raw_connection.lock().unwrap();
+                let con: &mut DBBackendConnection = &mut guard;
+                AnsiTransactionManager::commit_transaction(con).map_err(|err| {
                     error!("Failed to end tx: {:?}", err);
                     TransactionError::Transaction {
                         msg: format!("Failed to end tx: {}", err),
@@ -194,15 +171,15 @@ impl StorageConnection {
                 Ok(value)
             }
             Err(e) => {
-                transaction_manager
-                    .rollback_transaction(con)
-                    .map_err(|err| {
-                        error!("Failed to rollback tx: {:?}", err);
-                        TransactionError::Transaction {
-                            msg: format!("Failed to rollback tx: {}", err),
-                            level: current_level + 1,
-                        }
-                    })?;
+                let mut guard = self.raw_connection.lock().unwrap();
+                let con: &mut DBBackendConnection = &mut guard;
+                AnsiTransactionManager::rollback_transaction(con).map_err(|err| {
+                    error!("Failed to rollback tx: {:?}", err);
+                    TransactionError::Transaction {
+                        msg: format!("Failed to rollback tx: {}", err),
+                        level: current_level + 1,
+                    }
+                })?;
                 Err(TransactionError::Inner(e))
             }
         }
@@ -237,8 +214,8 @@ impl StorageConnectionManager {
     // Note, this method is only needed for an Android workaround to avoid adding a diesel
     // dependency to the server crate.
     pub fn execute(&self, sql: &str) -> Result<(), RepositoryError> {
-        let con = get_connection(&self.pool)?;
-        con.execute(sql)?;
+        let mut con = get_connection(&self.pool)?;
+        con.batch_execute(sql)?;
         Ok(())
     }
 }
@@ -253,40 +230,58 @@ mod connection_manager_tests {
         let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
-        assert_eq!(connection.transaction_level.get(), 0);
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
         let _result: Result<(), TransactionError<RepositoryError>> = connection
             .transaction_sync_etc(
                 |con| {
-                    assert_eq!(con.transaction_level.get(), 1);
-                    connection.transaction_sync_etc(
+                    assert_eq!(con.lock().transaction_level()?, 1);
+                    con.transaction_sync_etc(
                         |con| {
-                            assert_eq!(con.transaction_level.get(), 2);
+                            assert_eq!(con.lock().transaction_level()?, 2);
                             // reuse previous tx
-                            connection.transaction_sync(|con| {
-                                assert_eq!(con.transaction_level.get(), 2);
+                            con.transaction_sync(|con| {
+                                assert_eq!(con.lock().transaction_level()?, 2);
                                 Ok(())
                             })?;
-                            assert_eq!(con.transaction_level.get(), 2);
+                            assert_eq!(con.lock().transaction_level()?, 2);
                             Ok(())
                         },
                         false,
                     )?;
-                    assert_eq!(con.transaction_level.get(), 1);
+                    assert_eq!(con.lock().transaction_level()?, 1);
                     Ok(())
                 },
                 false,
             );
-        assert_eq!(connection.transaction_level.get(), 0);
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
 
         // test that new tx is started if there is none but reuse_tx was request
         let _result: Result<(), TransactionError<RepositoryError>> = connection
             .transaction_sync_etc(
                 |con| {
-                    assert_eq!(con.transaction_level.get(), 1);
+                    assert_eq!(con.lock().transaction_level()?, 1);
                     Ok(())
                 },
                 true,
             );
-        assert_eq!(connection.transaction_level.get(), 0);
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
     }
 }

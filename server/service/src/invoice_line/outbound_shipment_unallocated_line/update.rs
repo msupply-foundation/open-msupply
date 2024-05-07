@@ -4,7 +4,7 @@ use crate::{
     service_provider::ServiceContext,
 };
 use repository::{
-    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, RepositoryError,
+    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, RepositoryError,
     StorageConnection,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -52,7 +52,7 @@ fn validate(
     let invoice_line =
         check_line_row_exists_option(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
 
-    if invoice_line.r#type != InvoiceLineRowType::UnallocatedStock {
+    if invoice_line.r#type != InvoiceLineType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);
     }
 

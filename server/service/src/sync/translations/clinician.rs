@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository, Gender,
+    ChangelogRow, ChangelogTableName, ClinicianRow, ClinicianRowRepository, GenderType,
     StorageConnection, SyncBufferRow,
 };
 
@@ -93,9 +93,9 @@ impl SyncTranslation for ClinicianTranslation {
             mobile,
             email,
             gender: if is_female {
-                Some(Gender::Female)
+                Some(GenderType::Female)
             } else {
-                Some(Gender::Male)
+                Some(GenderType::Male)
             },
             is_active,
         };
@@ -128,7 +128,7 @@ impl SyncTranslation for ClinicianTranslation {
             )))?;
 
         let is_female = gender
-            .map(|gender| matches!(gender, Gender::Female))
+            .map(|gender| matches!(gender, GenderType::Female))
             .unwrap_or(false);
 
         let legacy_row = LegacyClinicianRow {

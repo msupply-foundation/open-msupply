@@ -71,11 +71,11 @@ pub enum ActivityLogType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "activity_log"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = activity_log)]
 pub struct ActivityLogRow {
     pub id: String,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: ActivityLogType,
     pub user_id: Option<String>,
     pub store_id: Option<String>,
@@ -97,14 +97,14 @@ impl<'a> ActivityLogRowRepository<'a> {
     pub fn insert_one(&self, row: &ActivityLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(activity_log_dsl::activity_log)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<ActivityLogRow>, RepositoryError> {
         let result = activity_log_dsl::activity_log
             .filter(activity_log_dsl::id.eq(log_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -112,7 +112,7 @@ impl<'a> ActivityLogRowRepository<'a> {
     pub fn find_many_by_record_id(&self, id: &str) -> Result<Vec<ActivityLogRow>, RepositoryError> {
         let result = activity_log_dsl::activity_log
             .filter(activity_log_dsl::record_id.eq(id))
-            .get_results(&self.connection.connection)?;
+            .get_results(self.connection.lock().connection())?;
         Ok(result)
     }
 }

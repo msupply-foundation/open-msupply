@@ -4,7 +4,7 @@ use crate::{
         temperature_log_row::temperature_log::dsl as temperature_log_dsl,
     },
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
-    TemperatureBreachRowType, TemperatureLogFilter,
+    TemperatureBreachType, TemperatureLogFilter,
 };
 use crate::{RepositoryError, StorageConnection};
 use chrono::NaiveDateTime;
@@ -91,7 +91,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
 
         apply_equal_filter!(
             query,
-            Some(TemperatureBreachRowType::Excursion.equal_to()),
+            Some(TemperatureBreachType::Excursion.equal_to()),
             temperature_breach_config_dsl::type_
         );
 
@@ -99,7 +99,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let log_data = query
-            .load::<QueryResult>(&self.connection.connection)?
+            .load::<QueryResult>(self.connection.lock().connection())?
             .into_iter()
             .map(TemperatureRow::from)
             .collect::<Vec<TemperatureRow>>();

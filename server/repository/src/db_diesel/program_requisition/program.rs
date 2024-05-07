@@ -36,7 +36,9 @@ impl<'a> ProgramRepository<'a> {
     pub fn count(&self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(&self, filter: ProgramFilter) -> Result<Vec<Program>, RepositoryError> {
@@ -75,7 +77,7 @@ impl<'a> ProgramRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<Program>(&self.connection.connection)?;
+        let result = final_query.load::<Program>(self.connection.lock().connection())?;
         Ok(result)
     }
 }

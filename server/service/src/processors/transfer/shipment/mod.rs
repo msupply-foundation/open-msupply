@@ -15,9 +15,9 @@ use crate::{
     sync::{ActiveStoresOnSite, GetActiveStoresOnSiteError},
 };
 use repository::{
-    ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueType, RepositoryError,
-    Requisition, StorageConnection,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, Invoice,
+    InvoiceFilter, InvoiceRepository, KeyType, RepositoryError, Requisition, RowActionType,
+    StorageConnection,
 };
 use thiserror::Error;
 
@@ -114,7 +114,7 @@ pub(crate) fn process_shipment_transfers(
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
-    let cursor_controller = CursorController::new(KeyValueType::ShipmentTransferProcessorCursor);
+    let cursor_controller = CursorController::new(KeyType::ShipmentTransferProcessorCursor);
     // For transfers, changelog MUST be filtered by records where name_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
@@ -142,9 +142,9 @@ pub(crate) fn process_shipment_transfers(
 
             // Prepare record
             let operation = match &log.row_action {
-                ChangelogAction::Upsert => get_upsert_operation(&ctx.connection, &log)
+                RowActionType::Upsert => get_upsert_operation(&ctx.connection, &log)
                     .map_err(Error::GetUpsertOperationError)?,
-                ChangelogAction::Delete => get_delete_operation(&ctx.connection, &log)
+                RowActionType::Delete => get_delete_operation(&ctx.connection, &log)
                     .map_err(Error::GetDeleteOperationError)?,
             };
 

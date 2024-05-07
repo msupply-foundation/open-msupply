@@ -12,7 +12,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[table_name = "name_tag_join"]
+#[diesel(table_name = name_tag_join)]
 pub struct NameTagJoinRow {
     pub id: String,
     pub name_link_id: String,
@@ -38,7 +38,7 @@ impl<'a> NameTagJoinRepository<'a> {
             .on_conflict(name_tag_join_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -46,21 +46,21 @@ impl<'a> NameTagJoinRepository<'a> {
     pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_tag_join_dsl::name_tag_join)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameTagJoinRow>, RepositoryError> {
         let result = name_tag_join_dsl::name_tag_join
             .filter(name_tag_join_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name_tag_join_dsl::name_tag_join.filter(name_tag_join_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
@@ -119,16 +119,15 @@ mod test_name_tag_row {
         .await;
 
         /* TESTS */
-
-        let name_tag_repo = NameTagRowRepository::new(&connection);
-
         // Check we can insert a name tag
         let name_tag_row = NameTagRow {
             id: "tag_name_id".to_string(),
             name: "tag1".to_string(),
         };
 
-        name_tag_repo.upsert_one(&name_tag_row).unwrap();
+        NameTagRowRepository::new(&connection)
+            .upsert_one(&name_tag_row)
+            .unwrap();
 
         let repo = NameTagJoinRepository::new(&connection);
 

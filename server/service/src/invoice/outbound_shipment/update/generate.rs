@@ -6,8 +6,7 @@ use repository::{
     RepositoryError,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow,
-    StorageConnection,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, StockLineRow, StorageConnection,
 };
 
 use crate::invoice::common::{
@@ -118,8 +117,8 @@ fn should_update_batches_total_number_of_packs(
         let invoice_status_index = invoice.status.index();
         let new_invoice_status_index = new_invoice_status.index();
 
-        new_invoice_status_index >= InvoiceRowStatus::Picked.index()
-            && invoice_status_index < InvoiceRowStatus::Picked.index()
+        new_invoice_status_index >= InvoiceStatus::Picked.index()
+            && invoice_status_index < InvoiceStatus::Picked.index()
     } else {
         false
     }
@@ -132,7 +131,7 @@ fn lines_to_trim(
     status: &Option<UpdateOutboundShipmentStatus>,
 ) -> Result<Option<Vec<InvoiceLineRow>>, RepositoryError> {
     // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
-    if invoice.status != InvoiceRowStatus::New {
+    if invoice.status != InvoiceStatus::New {
         return Ok(None);
     }
 
@@ -141,7 +140,7 @@ fn lines_to_trim(
         None => return Ok(None),
     };
 
-    if new_invoice_status == InvoiceRowStatus::New {
+    if new_invoice_status == InvoiceStatus::New {
         return Ok(None);
     }
 
@@ -151,14 +150,14 @@ fn lines_to_trim(
     let mut lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
-            .r#type(InvoiceLineRowType::UnallocatedStock.equal_to()),
+            .r#type(InvoiceLineType::UnallocatedStock.equal_to()),
     )?;
 
     let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
             .number_of_packs(EqualFilter::equal_to_f64(0.0))
-            .r#type(InvoiceLineRowType::StockOut.equal_to()),
+            .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
 
     if lines.is_empty() && empty_lines.is_empty() {
@@ -190,30 +189,30 @@ fn set_new_status_datetime(
     // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
     match (&invoice.status, new_status) {
         // From Shipped to Any, ignore
-        (InvoiceRowStatus::Shipped, _) => {}
+        (InvoiceStatus::Shipped, _) => {}
         // From New to Shipped, Picked, Allocated
-        (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Shipped) => {
+        (InvoiceStatus::New, UpdateOutboundShipmentStatus::Shipped) => {
             invoice.allocated_datetime = Some(current_datetime);
             invoice.picked_datetime = Some(current_datetime);
             invoice.shipped_datetime = Some(current_datetime)
         }
-        (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Picked) => {
+        (InvoiceStatus::New, UpdateOutboundShipmentStatus::Picked) => {
             invoice.allocated_datetime = Some(current_datetime);
             invoice.picked_datetime = Some(current_datetime);
         }
-        (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Allocated) => {
+        (InvoiceStatus::New, UpdateOutboundShipmentStatus::Allocated) => {
             invoice.allocated_datetime = Some(current_datetime);
         }
         // From Allocated to Shipped or Picked
-        (InvoiceRowStatus::Allocated, UpdateOutboundShipmentStatus::Shipped) => {
+        (InvoiceStatus::Allocated, UpdateOutboundShipmentStatus::Shipped) => {
             invoice.picked_datetime = Some(current_datetime);
             invoice.shipped_datetime = Some(current_datetime)
         }
-        (InvoiceRowStatus::Allocated, UpdateOutboundShipmentStatus::Picked) => {
+        (InvoiceStatus::Allocated, UpdateOutboundShipmentStatus::Picked) => {
             invoice.picked_datetime = Some(current_datetime)
         }
         // From Picked to Shipped
-        (InvoiceRowStatus::Picked, UpdateOutboundShipmentStatus::Shipped) => {
+        (InvoiceStatus::Picked, UpdateOutboundShipmentStatus::Shipped) => {
             invoice.shipped_datetime = Some(current_datetime)
         }
         _ => {}
@@ -230,7 +229,7 @@ fn generate_update_for_lines(
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(invoice_id))
-            .r#type(InvoiceLineRowType::StockOut.equal_to()),
+            .r#type(InvoiceLineType::StockOut.equal_to()),
     )?;
 
     let mut result = Vec::new();

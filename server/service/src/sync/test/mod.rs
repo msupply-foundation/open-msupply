@@ -33,7 +33,7 @@ impl TestSyncIncomingRecord {
                 r.table_name = table_name.to_owned();
                 r.record_id = id_and_data.0.to_owned();
                 r.data = id_and_data.1.to_owned();
-                r.action = SyncBufferAction::Upsert;
+                r.action = SyncAction::Upsert;
             }),
             extra_data: None,
         }
@@ -55,7 +55,7 @@ impl TestSyncIncomingRecord {
                 r.table_name = table_name.to_owned();
                 r.record_id = id.to_string();
                 r.data = "{}".to_string();
-                r.action = SyncBufferAction::Delete;
+                r.action = SyncAction::Delete;
             }),
             extra_data: None,
         }

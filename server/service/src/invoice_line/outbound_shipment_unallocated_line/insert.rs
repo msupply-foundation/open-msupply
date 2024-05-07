@@ -1,8 +1,8 @@
 use repository::EqualFilter;
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRowStatus, InvoiceRowType, ItemRow,
-    ItemRowType, RepositoryError, StorageConnection,
+    InvoiceLineRowRepository, InvoiceLineType, InvoiceStatus, InvoiceType, ItemRow, ItemType,
+    RepositoryError, StorageConnection,
 };
 
 use crate::invoice::check_store;
@@ -66,7 +66,7 @@ fn validate(
 
     let item_row = check_item_exists(connection, &input.item_id)?.ok_or(OutError::ItemNotFound)?;
 
-    if item_row.r#type != ItemRowType::Stock {
+    if item_row.r#type != ItemType::Stock {
         return Err(OutError::NotAStockItem);
     }
 
@@ -76,11 +76,11 @@ fn validate(
         return Err(OutError::NotThisStoreInvoice);
     }
 
-    if invoice_row.r#type != InvoiceRowType::OutboundShipment {
+    if invoice_row.r#type != InvoiceType::OutboundShipment {
         return Err(OutError::NotAnOutboundShipment);
     }
 
-    if invoice_row.status != InvoiceRowStatus::New {
+    if invoice_row.status != InvoiceStatus::New {
         return Err(OutError::CanOnlyAddLinesToNewOutboundShipment);
     }
 
@@ -108,7 +108,7 @@ fn generate(
         item_link_id: item_id,
         item_code: item.code,
         item_name: item.name,
-        r#type: InvoiceLineRowType::UnallocatedStock,
+        r#type: InvoiceLineType::UnallocatedStock,
 
         // Default
         total_before_tax: 0.0,
@@ -138,7 +138,7 @@ pub fn check_unallocated_line_does_not_exist(
         InvoiceLineFilter::new()
             .item_id(EqualFilter::equal_to(item_id))
             .invoice_id(EqualFilter::equal_to(invoice_id))
-            .r#type(InvoiceLineRowType::UnallocatedStock.equal_to()),
+            .r#type(InvoiceLineType::UnallocatedStock.equal_to()),
     ))?;
 
     Ok(count == 0)
@@ -159,7 +159,7 @@ mod test_insert {
             mock_unallocated_line, mock_unallocated_line2, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, ItemRowRepository,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
     };
 
     use crate::{
@@ -337,7 +337,7 @@ mod test_insert {
                 id: "new_line".to_owned(),
                 invoice_id: invoice_id.clone(),
                 pack_size: 1,
-                r#type: InvoiceLineRowType::UnallocatedStock,
+                r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 4.0,
                 item_link_id: item.id.clone(),
                 item_name: item.name.clone(),

@@ -1,4 +1,4 @@
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLine, StockLineRow};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StockLine, StockLineRow};
 
 use crate::invoice::common::calculate_total_after_tax;
 
@@ -11,7 +11,7 @@ pub fn generate(
     batch_pair: BatchPair,
     invoice: InvoiceRow,
 ) -> Result<(InvoiceLineRow, BatchPair), UpdateStockOutLineError> {
-    let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Picked;
+    let adjust_total_number_of_packs = invoice.status == InvoiceStatus::Picked;
 
     let batch_pair = BatchPair {
         main_batch: generate_batch_update(

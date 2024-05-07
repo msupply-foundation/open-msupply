@@ -2,11 +2,11 @@ use super::asset_log_row::asset_log::dsl::*;
 
 use crate::asset_row::AssetRowRepository;
 use crate::ChangeLogInsertRow;
-use crate::ChangelogAction;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
 use crate::EqualFilter;
 use crate::RepositoryError;
+use crate::RowActionType;
 use crate::StorageConnection;
 use crate::Upsert;
 
@@ -71,15 +71,15 @@ impl AssetLogStatus {
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
 )]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "asset_log"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = asset_log)]
 pub struct AssetLogRow {
     pub id: String,
     pub asset_id: String,
     pub user_id: String,
     pub status: Option<AssetLogStatus>,
     pub comment: Option<String>,
-    #[column_name = "type_"]
+    #[diesel(column_name = "type_")]
     pub r#type: Option<String>,
     pub reason_id: Option<String>,
     pub log_datetime: NaiveDateTime,
@@ -101,7 +101,7 @@ impl<'a> AssetLogRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_log_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -109,7 +109,7 @@ impl<'a> AssetLogRowRepository<'a> {
     pub fn _upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_log)
             .values(asset_log_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -118,7 +118,7 @@ impl<'a> AssetLogRowRepository<'a> {
         // Return the changelog id
         self.insert_changelog(
             asset_log_row.id.to_owned(),
-            ChangelogAction::Upsert,
+            RowActionType::Upsert,
             Some(asset_log_row.clone()),
         )
     }
@@ -126,7 +126,7 @@ impl<'a> AssetLogRowRepository<'a> {
     fn insert_changelog(
         &self,
         asset_log_id: String,
-        action: ChangelogAction,
+        action: RowActionType,
         row: Option<AssetLogRow>,
     ) -> Result<i64, RepositoryError> {
         let store_id = match &row {
@@ -148,11 +148,11 @@ impl<'a> AssetLogRowRepository<'a> {
             ..Default::default()
         };
 
-        ChangelogRepository::new(self.connection).insert(&row)
+        ChangelogRepository::new(&self.connection).insert(&row)
     }
 
-    pub fn find_all(&self) -> Result<Vec<AssetLogRow>, RepositoryError> {
-        let result = asset_log.load(&self.connection.connection);
+    pub fn find_all(&mut self) -> Result<Vec<AssetLogRow>, RepositoryError> {
+        let result = asset_log.load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -162,7 +162,7 @@ impl<'a> AssetLogRowRepository<'a> {
     ) -> Result<Option<AssetLogRow>, RepositoryError> {
         let result = asset_log
             .filter(id.eq(asset_log_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }

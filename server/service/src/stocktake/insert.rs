@@ -1,6 +1,6 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, DateFilter, EqualFilter, ItemRowRepository, ItemRowType, MasterListFilter,
+    ActivityLogType, DateFilter, EqualFilter, ItemRowRepository, ItemType, MasterListFilter,
     MasterListLineFilter, MasterListLineRepository, MasterListRepository, NumberRowType,
     RepositoryError, StockLineFilter, StockLineRepository, StockLineRow, Stocktake,
     StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
@@ -174,7 +174,7 @@ fn generate_lines_from_master_list(
         .query_by_filter(
             MasterListLineFilter::new()
                 .master_list_id(EqualFilter::equal_to(&master_list_id))
-                .item_type(ItemRowType::Stock.equal_to()),
+                .item_type(ItemType::Stock.equal_to()),
         )?
         .into_iter()
         .map(|r| r.item_id)

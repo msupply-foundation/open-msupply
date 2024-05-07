@@ -24,7 +24,7 @@ table! {
         supplying_store_id -> Nullable<Text>,
         first_name -> Nullable<Text>,
         last_name -> Nullable<Text>,
-        gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+        gender -> Nullable<crate::db_diesel::name_row::GenderTypeMapping>,
         date_of_birth -> Nullable<Date>,
         phone -> Nullable<Text>,
         charge_code-> Nullable<Text>,
@@ -42,6 +42,8 @@ table! {
         national_health_number -> Nullable<Text>,
         date_of_death -> Nullable<Date>,
         custom_data -> Nullable<Text>,
+
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -59,7 +61,7 @@ allow_tables_to_appear_in_same_query!(name, name_link);
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum Gender {
+pub enum GenderType {
     Female,
     Male,
     Transgender,
@@ -73,8 +75,8 @@ pub enum Gender {
     NonBinary,
 }
 
-impl Gender {
-    pub fn equal_to(&self) -> EqualFilter<Gender> {
+impl GenderType {
+    pub fn equal_to(&self) -> EqualFilter<GenderType> {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,
@@ -109,14 +111,14 @@ impl NameType {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "name"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = name)]
 pub struct NameRow {
     pub id: String,
-    #[column_name = "name_"]
+    #[diesel(column_name = name_)]
     pub name: String,
     pub code: String,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: NameType,
     pub is_customer: bool,
     pub is_supplier: bool,
@@ -125,7 +127,7 @@ pub struct NameRow {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
 
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub date_of_birth: Option<NaiveDate>,
     pub phone: Option<String>,
     pub charge_code: Option<String>,
@@ -149,8 +151,11 @@ pub struct NameRow {
     pub is_deceased: bool,
     pub national_health_number: Option<String>,
     pub date_of_death: Option<NaiveDate>,
-    #[column_name = "custom_data"]
+    #[diesel(column_name = "custom_data")]
     pub custom_data_string: Option<String>,
+
+    // Acts as a flag for soft deletion
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 pub struct NameRowRepository<'a> {
@@ -181,7 +186,7 @@ impl<'a> NameRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(name_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -189,7 +194,7 @@ impl<'a> NameRowRepository<'a> {
     fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name)
             .values(name_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -200,7 +205,7 @@ impl<'a> NameRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::update(name_is_sync_update::table.find(name_id))
             .set(name_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
@@ -212,15 +217,17 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, name_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(name.filter(id.eq(name_id))).execute(&self.connection.connection)?;
+    pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
+        diesel::update(name.filter(id.eq(name_id)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name)
             .values(name_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         insert_or_ignore_name_link(self.connection, name_row)?;
         Ok(())
     }
@@ -228,7 +235,7 @@ impl<'a> NameRowRepository<'a> {
     pub fn find_one_by_id(&self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
         let result = name
             .filter(id.eq(name_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -236,7 +243,7 @@ impl<'a> NameRowRepository<'a> {
     pub fn find_one_by_code(&self, name_code: &str) -> Result<Option<NameRow>, RepositoryError> {
         let result = name
             .filter(code.eq(name_code))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -244,7 +251,7 @@ impl<'a> NameRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
         let result = name
             .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -261,7 +268,7 @@ impl<'a> NameRowRepository<'a> {
         let result = name_is_sync_update::table
             .find(name_id)
             .select(name_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -272,7 +279,7 @@ pub struct NameRowDelete(pub String);
 // TODO soft delete
 impl Delete for NameRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameRowRepository::new(con).delete(&self.0)
+        NameRowRepository::new(con).mark_deleted(&self.0)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

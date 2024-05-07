@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRowStatus,
-    InvoiceRowType, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionRowStatus, RequisitionRowType, StockLineFilter,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceStatus,
+    InvoiceType, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    RequisitionLineRepository, RequisitionStatus, RequisitionType, StockLineFilter,
     StockLineRepository, StorageConnection,
 };
 
@@ -57,9 +57,9 @@ pub fn response_store_stats(
     let request_requisitions = RequisitionLineRepository::new(connection).query_by_filter(
         RequisitionLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
-            .r#type(RequisitionRowType::Request.equal_to())
+            .r#type(RequisitionType::Request.equal_to())
             .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
-            .status(RequisitionRowStatus::Sent.equal_to()),
+            .status(RequisitionStatus::Sent.equal_to()),
     )?;
 
     let stock_on_order = request_requisitions
@@ -72,9 +72,9 @@ pub fn response_store_stats(
         InvoiceLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
             .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
-            .r#type(InvoiceLineRowType::StockIn.equal_to())
-            .invoice_type(InvoiceRowType::InboundShipment.equal_to())
-            .invoice_status(InvoiceRowStatus::Shipped.equal_to()),
+            .r#type(InvoiceLineType::StockIn.equal_to())
+            .invoice_type(InvoiceType::InboundShipment.equal_to())
+            .invoice_status(InvoiceStatus::Shipped.equal_to()),
     )?;
 
     let incoming_stock = invoice_lines.iter().fold(0, |sum, invoice_line| {
@@ -86,8 +86,8 @@ pub fn response_store_stats(
         RequisitionLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
             .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
-            .r#type(RequisitionRowType::Response.equal_to())
-            .status(RequisitionRowStatus::Finalised.not_equal_to()),
+            .r#type(RequisitionType::Response.equal_to())
+            .status(RequisitionStatus::Finalised.not_equal_to()),
     )?;
 
     let other_requested_quantity = (response_requisition_lines

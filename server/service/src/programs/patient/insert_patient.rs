@@ -1,6 +1,6 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    EqualFilter, Gender, NameRow, NameRowRepository, NameType, Patient, PatientFilter,
+    EqualFilter, GenderType, NameRow, NameRowRepository, NameType, Patient, PatientFilter,
     RepositoryError, StorageConnection, TransactionError,
 };
 
@@ -15,7 +15,7 @@ pub struct InsertPatient {
     pub code_2: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub date_of_birth: Option<NaiveDate>,
     pub address1: Option<String>,
     pub phone: Option<String>,

@@ -6,7 +6,7 @@ use chrono::{DateTime, NaiveDate};
 use repository::{
     contact_trace::{ContactTraceFilter, ContactTraceRepository},
     contact_trace_row::{ContactTraceRow, ContactTraceRowRepository},
-    Document, Gender, ProgramRow, StorageConnection, StringFilter,
+    Document, GenderType, ProgramRow, StorageConnection, StringFilter,
 };
 use std::str::FromStr;
 use util::hash::sha256;
@@ -65,13 +65,13 @@ pub(crate) fn update_contact_trace_row(
             .and_then(|c| c.last_name.clone()),
         gender: contact.and_then(|c| {
             c.gender.as_ref().map(|g| match g {
-                SchemaGender::Female => Gender::Female,
-                SchemaGender::Male => Gender::Male,
-                SchemaGender::Transgender => Gender::Transgender,
-                SchemaGender::TransgenderMale => Gender::TransgenderMale,
-                SchemaGender::TransgenderFemale => Gender::TransgenderFemale,
-                SchemaGender::Unknown => Gender::Unknown,
-                SchemaGender::NonBinary => Gender::NonBinary,
+                SchemaGender::Female => GenderType::Female,
+                SchemaGender::Male => GenderType::Male,
+                SchemaGender::Transgender => GenderType::Transgender,
+                SchemaGender::TransgenderMale => GenderType::TransgenderMale,
+                SchemaGender::TransgenderFemale => GenderType::TransgenderFemale,
+                SchemaGender::Unknown => GenderType::Unknown,
+                SchemaGender::NonBinary => GenderType::NonBinary,
             })
         }),
         date_of_birth: contact

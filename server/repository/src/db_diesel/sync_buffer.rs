@@ -10,7 +10,7 @@ use diesel_derive_enum::DbEnum;
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum SyncBufferAction {
+pub enum SyncAction {
     Upsert,
     Delete,
     Merge,
@@ -23,7 +23,7 @@ table! {
         integration_datetime -> Nullable<Timestamp>,
         integration_error -> Nullable<Text>,
         table_name -> Text,
-        action -> crate::SyncBufferActionMapping,
+        action -> crate::SyncActionMapping,
         data -> Text,
         source_site_id -> Nullable<Integer>,
     }
@@ -32,15 +32,15 @@ table! {
 #[derive(
     Clone, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Eq,
 )]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "sync_buffer"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = sync_buffer)]
 pub struct SyncBufferRow {
     pub record_id: String,
     pub received_datetime: NaiveDateTime,
     pub integration_datetime: Option<NaiveDateTime>,
     pub integration_error: Option<String>,
     pub table_name: String,
-    pub action: SyncBufferAction,
+    pub action: SyncAction,
     pub data: String,
     pub source_site_id: Option<i32>,
 }
@@ -53,7 +53,7 @@ impl Default for SyncBufferRow {
             integration_datetime: Default::default(),
             integration_error: Default::default(),
             table_name: Default::default(),
-            action: SyncBufferAction::Upsert,
+            action: SyncAction::Upsert,
             data: Default::default(),
             source_site_id: Default::default(),
         }
@@ -84,7 +84,7 @@ impl<'a> SyncBufferRowRepository<'a> {
         // //   Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&statement).to_string());
 
-        statement.execute(&self.connection.connection)?;
+        statement.execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -92,7 +92,7 @@ impl<'a> SyncBufferRowRepository<'a> {
     pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_buffer_dsl::sync_buffer)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -104,7 +104,7 @@ impl<'a> SyncBufferRowRepository<'a> {
     }
 
     pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        Ok(sync_buffer_dsl::sync_buffer.load(&self.connection.connection)?)
+        Ok(sync_buffer_dsl::sync_buffer.load(self.connection.lock().connection())?)
     }
 
     pub fn find_one_by_record_id(
@@ -113,7 +113,7 @@ impl<'a> SyncBufferRowRepository<'a> {
     ) -> Result<Option<SyncBufferRow>, RepositoryError> {
         let result = sync_buffer_dsl::sync_buffer
             .filter(sync_buffer_dsl::record_id.eq(record_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -124,7 +124,7 @@ pub struct SyncBufferFilter {
     pub record_id: Option<EqualFilter<String>>,
     pub integration_datetime: Option<DatetimeFilter>,
     pub integration_error: Option<EqualFilter<String>>,
-    pub action: Option<EqualFilter<SyncBufferAction>>,
+    pub action: Option<EqualFilter<SyncAction>>,
     pub table_name: Option<EqualFilter<String>>,
     pub source_site_id: Option<EqualFilter<i32>>,
 }
@@ -154,7 +154,7 @@ impl SyncBufferFilter {
         self
     }
 
-    pub fn action(mut self, filter: EqualFilter<SyncBufferAction>) -> Self {
+    pub fn action(mut self, filter: EqualFilter<SyncAction>) -> Self {
         self.action = Some(filter);
         self
     }
@@ -165,7 +165,7 @@ impl SyncBufferFilter {
     }
 }
 
-impl SyncBufferAction {
+impl SyncAction {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
@@ -195,7 +195,7 @@ impl<'a> SyncBufferRepository<'a> {
     ) -> Result<Vec<SyncBuffer>, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        let result = query.load::<SyncBuffer>(&self.connection.connection)?;
+        let result = query.load::<SyncBuffer>(self.connection.lock().connection())?;
 
         Ok(result)
     }
@@ -237,15 +237,15 @@ mod test {
 
     use crate::{
         mock::{MockData, MockDataInserts},
-        test_db, DatetimeFilter, EqualFilter, SyncBufferAction, SyncBufferFilter,
-        SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
+        test_db, DatetimeFilter, EqualFilter, SyncAction, SyncBufferFilter, SyncBufferRepository,
+        SyncBufferRow, SyncBufferRowRepository,
     };
 
     pub fn row_a() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "store_a".to_string();
             r.integration_datetime = Some(Defaults::naive_date_time());
-            r.action = SyncBufferAction::Upsert;
+            r.action = SyncAction::Upsert;
         })
     }
 
@@ -253,14 +253,14 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "store_b".to_string();
             r.integration_error = Some("error".to_string());
-            r.action = SyncBufferAction::Delete;
+            r.action = SyncAction::Delete;
         })
     }
 
     pub fn row_c() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "store_c".to_string();
-            r.action = SyncBufferAction::Upsert;
+            r.action = SyncAction::Upsert;
         })
     }
 
@@ -275,33 +275,32 @@ mod test {
         )
         .await;
 
-        let repo = SyncBufferRepository::new(&connection);
-
         assert_eq!(
-            repo.query_by_filter(
-                SyncBufferFilter::new()
-                    .integration_datetime(DatetimeFilter::is_null(true))
-                    .integration_error(EqualFilter::is_null(true))
-            )
-            .unwrap(),
+            SyncBufferRepository::new(&connection)
+                .query_by_filter(
+                    SyncBufferFilter::new()
+                        .integration_datetime(DatetimeFilter::is_null(true))
+                        .integration_error(EqualFilter::is_null(true))
+                )
+                .unwrap(),
             vec![row_c()]
         );
 
         assert_eq!(
-            repo.query_by_filter(
-                SyncBufferFilter::new()
-                    .integration_datetime(DatetimeFilter::is_null(true))
-                    .integration_error(EqualFilter::is_null(true))
-            )
-            .unwrap(),
+            SyncBufferRepository::new(&connection)
+                .query_by_filter(
+                    SyncBufferFilter::new()
+                        .integration_datetime(DatetimeFilter::is_null(true))
+                        .integration_error(EqualFilter::is_null(true))
+                )
+                .unwrap(),
             vec![row_c()]
         );
 
         assert_eq!(
-            repo.query_by_filter(
-                SyncBufferFilter::new().action(SyncBufferAction::Delete.equal_to())
-            )
-            .unwrap(),
+            SyncBufferRepository::new(&connection)
+                .query_by_filter(SyncBufferFilter::new().action(SyncAction::Delete.equal_to()))
+                .unwrap(),
             vec![row_b()]
         );
         // Test upsert overwrites integration_datetime
@@ -315,12 +314,13 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            repo.query_by_filter(
-                SyncBufferFilter::new()
-                    .integration_datetime(DatetimeFilter::is_null(true))
-                    .record_id(EqualFilter::equal_to(&row_a().record_id))
-            )
-            .unwrap(),
+            SyncBufferRepository::new(&connection)
+                .query_by_filter(
+                    SyncBufferFilter::new()
+                        .integration_datetime(DatetimeFilter::is_null(true))
+                        .record_id(EqualFilter::equal_to(&row_a().record_id))
+                )
+                .unwrap(),
             vec![new_a]
         );
     }

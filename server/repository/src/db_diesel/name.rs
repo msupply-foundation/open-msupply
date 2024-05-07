@@ -13,10 +13,9 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{And, Eq, IntoBoxed, LeftJoin},
+    dsl::{And, Eq, IntoBoxed, LeftJoin, On},
     helper_types::InnerJoin,
     prelude::*,
-    query_source::joins::OnClauseWrapper,
 };
 use util::{constants::SYSTEM_NAME_CODES, inline_init};
 
@@ -89,7 +88,9 @@ impl<'a> NameRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(store_id.to_string(), filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -145,7 +146,8 @@ impl<'a> NameRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<NameAndNameStoreJoin>(&self.connection.connection)?;
+        let result =
+            final_query.load::<NameAndNameStoreJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(Name::from_join).collect())
     }
@@ -230,6 +232,8 @@ impl<'a> NameRepository<'a> {
             };
         };
 
+        // Only return active (not deleted) names
+        query = query.filter(name_dsl::deleted_datetime.is_null());
         query
     }
 }
@@ -259,7 +263,7 @@ type NameLinkIdEqualToId = Eq<name_store_join_dsl::name_link_id, name_link_dsl::
 // name_store_join_dsl::store_id.eq(store_id)
 type StoreIdEqualToStr = Eq<name_store_join_dsl::store_id, String>;
 type OnNameStoreJoinToNameLinkJoin =
-    OnClauseWrapper<name_store_join::table, And<NameLinkIdEqualToId, StoreIdEqualToStr>>;
+    On<name_store_join::table, And<NameLinkIdEqualToId, StoreIdEqualToStr>>;
 
 type BoxedNameQuery = IntoBoxed<
     'static,
@@ -425,14 +429,14 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
-        let (_, storage_connection, _, _) =
+        let (_, mut storage_connection, _, _) =
             test_db::setup_all("test_name_query_repository", MockDataInserts::none()).await;
-        let repository = NameRepository::new(&storage_connection);
 
         let (rows, queries) = data();
-        let name_repo = NameRowRepository::new(&storage_connection);
         for row in rows {
-            name_repo.upsert_one(&row).unwrap();
+            NameRowRepository::new(&mut storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
@@ -441,13 +445,18 @@ mod tests {
         // Test
         // .count()
         assert_eq!(
-            usize::try_from(repository.count(store_id, None).unwrap()).unwrap(),
+            usize::try_from(
+                NameRepository::new(&mut storage_connection)
+                    .count(store_id, None)
+                    .unwrap()
+            )
+            .unwrap(),
             queries.len()
         );
 
         // .query, no pagination (default)
         assert_eq!(
-            repository
+            NameRepository::new(&mut storage_connection)
                 .query(store_id, Pagination::new(), None, None)
                 .unwrap()
                 .len(),
@@ -455,7 +464,7 @@ mod tests {
         );
 
         // .query, pagination (offset 10)
-        let result = repository
+        let result = NameRepository::new(&mut storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -474,7 +483,7 @@ mod tests {
         );
 
         // .query, pagination (first 10)
-        let result = repository
+        let result = NameRepository::new(&mut storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -489,7 +498,7 @@ mod tests {
         assert_eq!(*result.last().unwrap(), queries[9]);
 
         // .query, pagination (offset 150, first 90) <- more then records in table
-        let result = repository
+        let result = NameRepository::new(&mut storage_connection)
             .query(
                 store_id,
                 Pagination {

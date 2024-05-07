@@ -24,7 +24,7 @@ joinable!(program_requisition_settings -> program (program_id));
 joinable!(program_requisition_settings -> period_schedule(period_schedule_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "program_requisition_settings"]
+#[diesel(table_name = program_requisition_settings)]
 pub struct ProgramRequisitionSettingsRow {
     pub id: String,
     pub name_tag_id: String,
@@ -48,7 +48,7 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
             .on_conflict(program_requisition_settings_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -56,7 +56,7 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     pub fn upsert_one(&self, row: &ProgramRequisitionSettingsRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_requisition_settings_dsl::program_requisition_settings)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -66,7 +66,7 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     ) -> Result<Option<ProgramRequisitionSettingsRow>, RepositoryError> {
         let result = program_requisition_settings_dsl::program_requisition_settings
             .filter(program_requisition_settings_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -77,7 +77,7 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     ) -> Result<Vec<ProgramRequisitionSettingsRow>, RepositoryError> {
         let result = program_requisition_settings_dsl::program_requisition_settings
             .filter(program_requisition_settings_dsl::program_id.eq(program_id))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -86,7 +86,7 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
             program_requisition_settings_dsl::program_requisition_settings
                 .filter(program_requisition_settings_dsl::id.eq(settings_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

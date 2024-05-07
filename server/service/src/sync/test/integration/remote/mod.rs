@@ -13,7 +13,7 @@ mod test;
 pub(crate) mod user_permission;
 
 use repository::{
-    ChangelogRepository, InvoiceRow, InvoiceRowType, NameRowRepository, StorageConnection,
+    ChangelogRepository, InvoiceRow, InvoiceType, NameRowRepository, StorageConnection,
 };
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
@@ -128,8 +128,8 @@ fn replace_system_name_ids(
             continue;
         };
 
-        if mut_invoice.r#type == InvoiceRowType::InventoryAddition
-            || mut_invoice.r#type == InvoiceRowType::InventoryReduction
+        if mut_invoice.r#type == InvoiceType::InventoryAddition
+            || mut_invoice.r#type == InvoiceType::InventoryReduction
         {
             mut_invoice.name_link_id = inventory_adjustment_name.id.clone();
             mut_invoice.name_store_id = None;

@@ -44,7 +44,9 @@ impl<'a> SyncLogRepository<'a> {
 
     pub fn count(&self, filter: Option<SyncLogFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(&self, filter: SyncLogFilter) -> Result<Option<SyncLog>, RepositoryError> {
@@ -88,7 +90,7 @@ impl<'a> SyncLogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<SyncLogRow>(&self.connection.connection)?;
+        let result = final_query.load::<SyncLogRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

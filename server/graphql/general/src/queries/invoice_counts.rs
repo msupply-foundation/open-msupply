@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{InvoiceRowStatus, InvoiceRowType};
+use repository::{InvoiceStatus, InvoiceType};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     dashboard::invoice_count::{CountTimeRange, InvoiceCountError},
@@ -13,8 +13,8 @@ use util::timezone::offset_to_timezone;
 
 fn do_invoice_count(
     ctx: &Context<'_>,
-    invoice_type: &InvoiceRowType,
-    invoice_status: &InvoiceRowStatus,
+    invoice_type: &InvoiceType,
+    invoice_status: &InvoiceStatus,
     range: &CountTimeRange,
     timezone_offset: &FixedOffset,
     store_id: &str,
@@ -43,8 +43,8 @@ fn do_invoice_count(
 }
 
 pub struct InvoiceCountsSummary {
-    invoice_type: InvoiceRowType,
-    invoice_status: InvoiceRowStatus,
+    invoice_type: InvoiceType,
+    invoice_status: InvoiceStatus,
     timezone_offset: FixedOffset,
     store_id: String,
 }
@@ -83,8 +83,8 @@ pub struct OutboundInvoiceCounts {
 impl OutboundInvoiceCounts {
     async fn created(&self) -> InvoiceCountsSummary {
         InvoiceCountsSummary {
-            invoice_type: InvoiceRowType::OutboundShipment,
-            invoice_status: InvoiceRowStatus::New,
+            invoice_type: InvoiceType::OutboundShipment,
+            invoice_status: InvoiceStatus::New,
             timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
         }
@@ -119,8 +119,8 @@ pub struct InboundInvoiceCounts {
 impl InboundInvoiceCounts {
     async fn created(&self) -> InvoiceCountsSummary {
         InvoiceCountsSummary {
-            invoice_type: InvoiceRowType::InboundShipment,
-            invoice_status: InvoiceRowStatus::New,
+            invoice_type: InvoiceType::InboundShipment,
+            invoice_status: InvoiceStatus::New,
             timezone_offset: self.timezone_offset,
             store_id: self.store_id.clone(),
         }

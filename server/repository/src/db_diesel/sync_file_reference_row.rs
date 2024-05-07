@@ -8,7 +8,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-use crate::{ChangeLogInsertRow, ChangelogAction, ChangelogRepository, ChangelogTableName, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -52,7 +52,7 @@ table! {
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
 )]
-#[table_name = "sync_file_reference"]
+#[diesel(table_name = sync_file_reference)]
 pub struct SyncFileReferenceRow {
     pub id: String,
     pub table_name: String,
@@ -105,7 +105,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(sync_file_reference_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -116,7 +116,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_file_reference)
             .values(sync_file_reference_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -125,16 +125,13 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
-        self.insert_changelog(
-            sync_file_reference_row.id.to_owned(),
-            ChangelogAction::Upsert,
-        )
+        self.insert_changelog(sync_file_reference_row.id.to_owned(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
         sync_file_reference_id: String,
-        action: ChangelogAction,
+        action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncFileReference,
@@ -143,7 +140,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             ..Default::default()
         };
 
-        ChangelogRepository::new(self.connection).insert(&row)
+        ChangelogRepository::new(&self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(
@@ -152,7 +149,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     ) -> Result<Option<SyncFileReferenceRow>, RepositoryError> {
         let result = sync_file_reference
             .filter(id.eq(sync_file_reference_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -160,8 +157,8 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     pub fn delete(&self, sync_file_reference_id: &str) -> Result<(), RepositoryError> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(&self.connection.connection)?;
-        self.insert_changelog(sync_file_reference_id.to_owned(), ChangelogAction::Upsert)?;
+            .execute(self.connection.lock().connection())?;
+        self.insert_changelog(sync_file_reference_id.to_owned(), RowActionType::Upsert)?;
         Ok(())
     }
 
@@ -179,7 +176,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
                         .eq(SyncFileStatus::Error)
                         .and(retry_at.lt(diesel::dsl::now))),
             )
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 

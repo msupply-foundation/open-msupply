@@ -1,5 +1,5 @@
 use crate::sync::{test::TestSyncIncomingRecord, translations::item::ordered_simple_json};
-use repository::{ItemRow, ItemRowDelete, ItemRowType};
+use repository::{ItemRow, ItemRowDelete, ItemType};
 
 const TABLE_NAME: &str = "item";
 
@@ -173,7 +173,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 name: "Non stock items".to_owned(),
                 code: "NSI".to_owned(),
                 unit_id: None,
-                r#type: ItemRowType::NonStock,
+                r#type: ItemType::NonStock,
                 legacy_record: ordered_simple_json(ITEM_1.1).unwrap(),
                 default_pack_size: 1,
                 is_active: true,
@@ -187,7 +187,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 name: "Non stock items 2".to_owned(),
                 code: "NSI".to_owned(),
                 unit_id: Some("A02C91EB6C77400BA783C4CD7C565F29".to_owned()),
-                r#type: ItemRowType::Stock,
+                r#type: ItemType::Stock,
                 legacy_record: ordered_simple_json(ITEM_2.1).unwrap(),
                 default_pack_size: 2,
                 is_active: true,

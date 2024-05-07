@@ -1,4 +1,4 @@
-use repository::{ItemRow, ItemRowDelete, ItemRowType, StorageConnection, SyncBufferRow};
+use repository::{ItemRow, ItemRowDelete, ItemType, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 
 use crate::sync::{sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation};
@@ -25,11 +25,11 @@ pub struct LegacyItemRow {
     default_pack_size: u32,
 }
 
-fn to_item_type(type_of: LegacyItemType) -> ItemRowType {
+fn to_item_type(type_of: LegacyItemType) -> ItemType {
     match type_of {
-        LegacyItemType::non_stock => ItemRowType::NonStock,
-        LegacyItemType::service => ItemRowType::Service,
-        LegacyItemType::general => ItemRowType::Stock,
+        LegacyItemType::non_stock => ItemType::NonStock,
+        LegacyItemType::service => ItemType::Service,
+        LegacyItemType::general => ItemType::Stock,
     }
 }
 

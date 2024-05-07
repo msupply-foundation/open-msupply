@@ -8,7 +8,7 @@ mod test_update {
             mock_request_draft_requisition_calculation_test, mock_request_program_requisition,
             mock_sent_request_requisition, mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
-        requisition_row::RequisitionRowStatus,
+        requisition_row::RequisitionStatus,
         test_db::{setup_all, setup_all_with_data},
         ActivityLogRowRepository, ActivityLogType, NameRow, NameStoreJoinRow,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -199,7 +199,7 @@ mod test_update {
             updated_row,
             inline_edit(&updated_row, |mut u| {
                 u.colour = Some("new colour".to_owned());
-                u.status = RequisitionRowStatus::Sent;
+                u.status = RequisitionStatus::Sent;
                 u.their_reference = Some("new their_reference".to_owned());
                 u.comment = Some("new comment".to_owned());
                 u.name_link_id = mock_name_store_c().id;

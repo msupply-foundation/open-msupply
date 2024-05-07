@@ -44,7 +44,9 @@ impl<'a> AssetCatalogueItemPropertyRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query(
@@ -56,7 +58,8 @@ impl<'a> AssetCatalogueItemPropertyRepository<'a> {
         // // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
-        let result = query.load::<AssetCatalogueItemPropertyRow>(&self.connection.connection)?;
+        let result =
+            query.load::<AssetCatalogueItemPropertyRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -70,7 +73,8 @@ impl<'a> AssetCatalogueItemPropertyRepository<'a> {
         // // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
-        let result = query.load::<AssetCatalogueItemPropertyJoin>(&self.connection.connection)?;
+        let result =
+            query.load::<AssetCatalogueItemPropertyJoin>(self.connection.lock().connection())?;
 
         Ok(result
             .into_iter()

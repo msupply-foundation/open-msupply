@@ -76,7 +76,9 @@ impl<'a> AssetLogRepository<'a> {
 
     pub fn count(&self, filter: Option<AssetLogFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(&self, filter: AssetLogFilter) -> Result<Option<AssetLog>, RepositoryError> {
@@ -115,7 +117,7 @@ impl<'a> AssetLogRepository<'a> {
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
-        let result = final_query.load::<AssetLog>(&self.connection.connection)?;
+        let result = final_query.load::<AssetLog>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -133,7 +135,7 @@ impl<'a> AssetLogRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = query.load::<AssetLog>(&self.connection.connection)?;
+        let result = query.load::<AssetLog>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -201,12 +203,12 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_asset_log_query_repository() {
-        let (_, storage_connection, _, _) = test_db::setup_all(
+        let (_, mut storage_connection, _, _) = test_db::setup_all(
             "test_asset_log_sort_query_repository",
             MockDataInserts::none().assets().asset_logs(),
         )
         .await;
-        let asset_log_repository = AssetLogRepository::new(&storage_connection);
+        let asset_log_repository = AssetLogRepository::new(&mut storage_connection);
 
         // test query by one
 

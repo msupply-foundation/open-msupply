@@ -1,4 +1,4 @@
-use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 use reqwest::Url;
 use thiserror::Error;
 
@@ -34,12 +34,10 @@ pub trait SettingsServiceTrait: Sync + Send {
     fn sync_settings(&self, ctx: &ServiceContext) -> Result<Option<SyncSettings>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        let url = key_value_store.get_string(KeyValueType::SettingsSyncUrl)?;
-        let username = key_value_store.get_string(KeyValueType::SettingsSyncUsername)?;
-        let password_sha256 =
-            key_value_store.get_string(KeyValueType::SettingsSyncPasswordSha256)?;
-        let interval_seconds =
-            key_value_store.get_i64(KeyValueType::SettingsSyncIntervalSeconds)?;
+        let url = key_value_store.get_string(KeyType::SettingsSyncUrl)?;
+        let username = key_value_store.get_string(KeyType::SettingsSyncUsername)?;
+        let password_sha256 = key_value_store.get_string(KeyType::SettingsSyncPasswordSha256)?;
+        let interval_seconds = key_value_store.get_i64(KeyType::SettingsSyncIntervalSeconds)?;
 
         // `?` inside this closure would result in closure returning `None`
         let make_settings = || {
@@ -66,18 +64,17 @@ pub trait SettingsServiceTrait: Sync + Send {
             .connection
             .transaction_sync(|con| {
                 let key_value_store = KeyValueStoreRepository::new(con);
-                key_value_store
-                    .set_string(KeyValueType::SettingsSyncUrl, Some(settings.url.clone()))?;
+                key_value_store.set_string(KeyType::SettingsSyncUrl, Some(settings.url.clone()))?;
                 key_value_store.set_string(
-                    KeyValueType::SettingsSyncUsername,
+                    KeyType::SettingsSyncUsername,
                     Some(settings.username.clone()),
                 )?;
                 key_value_store.set_string(
-                    KeyValueType::SettingsSyncPasswordSha256,
+                    KeyType::SettingsSyncPasswordSha256,
                     Some(settings.password_sha256.clone()),
                 )?;
                 key_value_store.set_i64(
-                    KeyValueType::SettingsSyncIntervalSeconds,
+                    KeyType::SettingsSyncIntervalSeconds,
                     Some(settings.interval_seconds as i64),
                 )?;
                 Ok(())
@@ -88,13 +85,13 @@ pub trait SettingsServiceTrait: Sync + Send {
 
     fn is_sync_disabled(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {
         Ok(KeyValueStoreRepository::new(&ctx.connection)
-            .get_bool(KeyValueType::SettingsSyncIsDisabled)?
+            .get_bool(KeyType::SettingsSyncIsDisabled)?
             .unwrap_or(false))
     }
 
     fn disable_sync(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {
         KeyValueStoreRepository::new(&ctx.connection)
-            .set_bool(KeyValueType::SettingsSyncIsDisabled, Some(true))
+            .set_bool(KeyType::SettingsSyncIsDisabled, Some(true))
     }
 }
 

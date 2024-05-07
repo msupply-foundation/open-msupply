@@ -2,8 +2,7 @@ use chrono::NaiveDate;
 use util::inline_init;
 
 use crate::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, ItemRow,
-    ItemRowType,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow, ItemType,
 };
 
 use super::MockData;
@@ -25,7 +24,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
         total_before_tax: 2.0,
         total_after_tax: 2.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -39,7 +38,7 @@ fn mock_item_with_no_stock_line() -> ItemRow {
         r.id = String::from("item_with_no_stock_line");
         r.name = String::from("Item with no stock line");
         r.code = String::from("code");
-        r.r#type = ItemRowType::Stock;
+        r.r#type = ItemType::Stock;
     })
 }
 
@@ -50,8 +49,8 @@ fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
         r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 3;
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::New;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::New;
         r.comment = Some("Sort comment test cA".to_owned());
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 6)

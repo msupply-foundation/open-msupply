@@ -16,7 +16,7 @@ pub enum ReportType {
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ReportContext {
+pub enum ContextType {
     Asset,
     InboundShipment,
     OutboundShipment,
@@ -38,7 +38,7 @@ table! {
       name -> Text,
       #[sql_name = "type"] type_ -> crate::db_diesel::report_row::ReportTypeMapping,
       template -> Text,
-      context -> crate::db_diesel::report_row::ReportContextMapping,
+      context -> crate::db_diesel::report_row::ContextTypeMapping,
       comment -> Nullable<Text>,
       sub_context -> Nullable<Text>,
       argument_schema_id -> Nullable<Text>,
@@ -50,16 +50,16 @@ joinable!(report -> form_schema (argument_schema_id));
 allow_tables_to_appear_in_same_query!(report, form_schema);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "report"]
+#[diesel(table_name = report)]
 pub struct ReportRow {
     pub id: String,
     pub name: String,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: ReportType,
     /// The template format depends on the report type
     pub template: String,
     /// Used to store the report context
-    pub context: ReportContext,
+    pub context: ContextType,
     pub comment: Option<String>,
     pub sub_context: Option<String>,
     pub argument_schema_id: Option<String>,
@@ -72,7 +72,7 @@ impl Default for ReportRow {
             name: Default::default(),
             r#type: ReportType::OmSupply,
             template: Default::default(),
-            context: ReportContext::InboundShipment,
+            context: ContextType::InboundShipment,
             comment: Default::default(),
             sub_context: Default::default(),
             argument_schema_id: Default::default(),
@@ -92,7 +92,7 @@ impl<'a> ReportRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReportRow>, RepositoryError> {
         let result = report_dsl::report
             .filter(report_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -104,7 +104,7 @@ impl<'a> ReportRowRepository<'a> {
             .on_conflict(report_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -112,13 +112,13 @@ impl<'a> ReportRowRepository<'a> {
     pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::replace_into(report_dsl::report)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(report_dsl::report.filter(report_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

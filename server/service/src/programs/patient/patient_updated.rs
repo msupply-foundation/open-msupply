@@ -1,7 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    EqualFilter, Gender, NameRow, NameRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, NameType, Patient, RepositoryError, StorageConnection,
+    EqualFilter, GenderType, NameRow, NameRowRepository, NameStoreJoinFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, NameType, Patient, RepositoryError,
+    StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -114,17 +115,17 @@ pub(crate) fn patient_to_name_row(
         first_name,
         last_name,
         gender: gender.map(|g| match g {
-            SchemaGender::Female => Gender::Female,
-            SchemaGender::Male => Gender::Male,
-            SchemaGender::Transgender => Gender::Transgender,
-            SchemaGender::TransgenderMale => Gender::TransgenderMale,
-            SchemaGender::TransgenderMaleHormone => Gender::TransgenderMaleHormone,
-            SchemaGender::TransgenderMaleSurgical => Gender::TransgenderMaleSurgical,
-            SchemaGender::TransgenderFemale => Gender::TransgenderFemale,
-            SchemaGender::TransgenderFemaleHormone => Gender::TransgenderFemaleHormone,
-            SchemaGender::TransgenderFemaleSurgical => Gender::TransgenderFemaleSurgical,
-            SchemaGender::Unknown => Gender::Unknown,
-            SchemaGender::NonBinary => Gender::NonBinary,
+            SchemaGender::Female => GenderType::Female,
+            SchemaGender::Male => GenderType::Male,
+            SchemaGender::Transgender => GenderType::Transgender,
+            SchemaGender::TransgenderMale => GenderType::TransgenderMale,
+            SchemaGender::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
+            SchemaGender::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,
+            SchemaGender::TransgenderFemale => GenderType::TransgenderFemale,
+            SchemaGender::TransgenderFemaleHormone => GenderType::TransgenderFemaleHormone,
+            SchemaGender::TransgenderFemaleSurgical => GenderType::TransgenderFemaleSurgical,
+            SchemaGender::Unknown => GenderType::Unknown,
+            SchemaGender::NonBinary => GenderType::NonBinary,
         }),
         date_of_birth,
         charge_code: existing_name.and_then(|n| n.charge_code.clone()),
@@ -145,6 +146,7 @@ pub(crate) fn patient_to_name_row(
         date_of_death,
         national_health_number: code_2,
         custom_data_string: None,
+        deleted_datetime: existing_name.and_then(|name| name.deleted_datetime),
     })
 }
 
@@ -200,17 +202,17 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
         first_name: patient.first_name.clone(),
         last_name: patient.last_name.clone(),
         gender: patient.gender.as_ref().map(|gender| match gender {
-            Gender::Female => SchemaGender::Female,
-            Gender::Male => SchemaGender::Male,
-            Gender::Transgender => SchemaGender::Transgender,
-            Gender::TransgenderMale => SchemaGender::TransgenderMale,
-            Gender::TransgenderMaleHormone => SchemaGender::TransgenderMaleHormone,
-            Gender::TransgenderMaleSurgical => SchemaGender::TransgenderMaleSurgical,
-            Gender::TransgenderFemale => SchemaGender::TransgenderFemale,
-            Gender::TransgenderFemaleHormone => SchemaGender::TransgenderFemaleHormone,
-            Gender::TransgenderFemaleSurgical => SchemaGender::TransgenderFemaleSurgical,
-            Gender::Unknown => SchemaGender::Unknown,
-            Gender::NonBinary => SchemaGender::NonBinary,
+            GenderType::Female => SchemaGender::Female,
+            GenderType::Male => SchemaGender::Male,
+            GenderType::Transgender => SchemaGender::Transgender,
+            GenderType::TransgenderMale => SchemaGender::TransgenderMale,
+            GenderType::TransgenderMaleHormone => SchemaGender::TransgenderMaleHormone,
+            GenderType::TransgenderMaleSurgical => SchemaGender::TransgenderMaleSurgical,
+            GenderType::TransgenderFemale => SchemaGender::TransgenderFemale,
+            GenderType::TransgenderFemaleHormone => SchemaGender::TransgenderFemaleHormone,
+            GenderType::TransgenderFemaleSurgical => SchemaGender::TransgenderFemaleSurgical,
+            GenderType::Unknown => SchemaGender::Unknown,
+            GenderType::NonBinary => SchemaGender::NonBinary,
         }),
         contact_details: if doc_contact_details == draft_contact_details {
             contact_details
@@ -260,7 +262,7 @@ mod test {
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter,
-        FormSchemaRowRepository, Gender as GenderRepo, NameRow,
+        FormSchemaRowRepository, GenderType as GenderRepo, NameRow,
     };
     use util::{
         constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
@@ -469,6 +471,7 @@ mod test {
             national_health_number: Some("new nhn".to_string()),
             date_of_death: Some(NaiveDate::from_ymd_opt(2001, 1, 2).unwrap()),
             custom_data_string: None,
+            deleted_datetime: None,
         };
         let updated_patient = patient_draft_document(&name_row_update, patient.clone());
         // Check that 2nd contact_details entry is not affected by the name_row change

@@ -122,7 +122,7 @@ async fn split_inventory_adjustment() {
     let invoices = invoice_dsl::invoice
         .select((invoice_dsl::id, invoice_dsl::type_))
         .order_by(invoice_dsl::id.asc())
-        .load::<(String, String)>(&connection.connection)
+        .load::<(String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(
@@ -151,7 +151,7 @@ async fn split_inventory_adjustment() {
             stocktake_dsl::inventory_reduction_id,
         ))
         .order_by(stocktake_dsl::id.asc())
-        .load::<(String, Option<String>, Option<String>)>(&connection.connection)
+        .load::<(String, Option<String>, Option<String>)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

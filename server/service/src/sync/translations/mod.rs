@@ -320,6 +320,7 @@ pub(crate) trait SyncTranslation {
         self.table_name() == row.table_name
     }
 
+    /// Translate an upsert record received from the central server(s)
     fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
@@ -328,6 +329,7 @@ pub(crate) trait SyncTranslation {
         Ok(PullTranslateResult::NotMatched)
     }
 
+    /// Translate a merge record received from the central server(s)
     fn try_translate_from_merge_sync_record(
         &self,
         _: &StorageConnection,
@@ -336,6 +338,7 @@ pub(crate) trait SyncTranslation {
         Ok(PullTranslateResult::NotMatched)
     }
 
+    /// Translate a delete record received from the central server(s)
     fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
@@ -422,10 +425,10 @@ fn translate_changelog(
         }
 
         let translation_result = match changelog.row_action {
-            ChangelogAction::Upsert => {
+            RowActionType::Upsert => {
                 translator.try_translate_to_upsert_sync_record(connection, changelog)?
             }
-            ChangelogAction::Delete => {
+            RowActionType::Delete => {
                 translator.try_translate_to_delete_sync_record(connection, changelog)?
             }
         };
@@ -463,7 +466,7 @@ fn is_active_record_on_site(
 ) -> Result<bool, ActiveRecordCheckError> {
     use ActiveRecordCheckError as Error;
     let site_id = KeyValueStoreRepository::new(connection)
-        .get_i32(repository::KeyValueType::SettingsSyncSiteId)
+        .get_i32(repository::KeyType::SettingsSyncSiteId)
         .map_err(Error::DatabaseError)?
         .ok_or(Error::SiteIdNotSet)?;
 

@@ -40,7 +40,7 @@ joinable!(requisition_line -> requisition (requisition_id));
 allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
-#[table_name = "requisition_line"]
+#[diesel(table_name = requisition_line)]
 pub struct RequisitionLineRow {
     pub id: String,
     pub requisition_id: String,
@@ -73,7 +73,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .on_conflict(requisition_line_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -81,14 +81,14 @@ impl<'a> RequisitionLineRowRepository<'a> {
     pub fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_line_dsl::requisition_line)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(requisition_line_is_sync_update::table.find(id))
             .set(requisition_line_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
@@ -104,14 +104,14 @@ impl<'a> RequisitionLineRowRepository<'a> {
             requisition_line_dsl::requisition_line
                 .filter(requisition_line_dsl::id.eq(requisition_line_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionLineRow>, RepositoryError> {
         let result = requisition_line_dsl::requisition_line
             .filter(requisition_line_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -128,7 +128,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
         let result = requisition_line_is_sync_update::table
             .find(id)
             .select(requisition_line_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }

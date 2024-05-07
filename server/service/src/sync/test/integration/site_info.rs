@@ -4,7 +4,7 @@ mod tests {
         central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
         init_test_context, SyncIntegrationContext,
     };
-    use repository::{KeyValueStoreRepository, KeyValueType};
+    use repository::{KeyType, KeyValueStoreRepository};
 
     #[actix_rt::test]
     async fn integration_sync_request_and_persist_site_info() {
@@ -27,11 +27,11 @@ mod tests {
         let repo = KeyValueStoreRepository::new(&connection);
 
         assert_eq!(
-            repo.get_i32(KeyValueType::SettingsSyncSiteId),
+            repo.get_i32(KeyType::SettingsSyncSiteId),
             Ok(Some(new_site_properties.site_id))
         );
         assert_eq!(
-            repo.get_string(KeyValueType::SettingsSyncSiteUuid),
+            repo.get_string(KeyType::SettingsSyncSiteUuid),
             Ok(Some(new_site_properties.site_uuid))
         );
     }

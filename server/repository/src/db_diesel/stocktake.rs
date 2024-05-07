@@ -147,7 +147,9 @@ impl<'a> StocktakeRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -195,7 +197,7 @@ impl<'a> StocktakeRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<Stocktake>(&self.connection.connection)?;
+            .load::<Stocktake>(self.connection.lock().connection())?;
 
         Ok(result)
     }
@@ -203,7 +205,7 @@ impl<'a> StocktakeRepository<'a> {
     pub fn find_one_by_id(&self, record_id: &str) -> Result<Option<Stocktake>, RepositoryError> {
         Ok(stocktake_dsl::stocktake
             .filter(stocktake_dsl::id.eq(record_id))
-            .first::<Stocktake>(&self.connection.connection)
+            .first::<Stocktake>(self.connection.lock().connection())
             .optional()?)
     }
 }

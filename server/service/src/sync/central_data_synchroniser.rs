@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{cursor_controller::CursorController, sync::api::CentralSyncBatchV5};
 use repository::{
-    KeyValueType, RepositoryError, StorageConnection, SyncBufferRow, SyncBufferRowRepository,
+    KeyType, RepositoryError, StorageConnection, SyncBufferRow, SyncBufferRowRepository,
 };
 use thiserror::Error;
 
@@ -33,7 +33,7 @@ impl CentralDataSynchroniser {
     ) -> Result<(), CentralPullError> {
         // TODO protection from infinite loop
 
-        let cursor_controller = CursorController::new(KeyValueType::CentralSyncPullCursor);
+        let cursor_controller = CursorController::new(KeyType::CentralSyncPullCursor);
 
         loop {
             let mut cursor = cursor_controller.get(&connection)?;

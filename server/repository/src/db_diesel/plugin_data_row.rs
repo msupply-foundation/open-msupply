@@ -27,8 +27,8 @@ pub enum RelatedRecordType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "plugin_data"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = plugin_data)]
 pub struct PluginDataRow {
     pub id: String,
     pub plugin_name: String,
@@ -50,7 +50,7 @@ impl<'a> PluginDataRowRepository<'a> {
     pub fn insert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::insert_into(plugin_data::table)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -61,7 +61,7 @@ impl<'a> PluginDataRowRepository<'a> {
             .on_conflict(plugin_data::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -69,14 +69,14 @@ impl<'a> PluginDataRowRepository<'a> {
     pub fn upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::replace_into(plugin_data::table)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<PluginDataRow>, RepositoryError> {
         let result: Option<PluginDataRow> = plugin_data::table
             .filter(plugin_data::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
 
         Ok(result)

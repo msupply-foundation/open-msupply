@@ -26,7 +26,7 @@ pub enum NumberRowTypeError {
     MissingTypePrefix,
 }
 
-#[derive(AsExpression, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NumberRowType {
     InboundShipment,
     OutboundShipment,
@@ -91,14 +91,14 @@ impl TryFrom<String> for NumberRowType {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "number"]
+#[diesel(table_name = number)]
 pub struct NumberRow {
     pub id: String,
     pub value: i64,
     /// Note, store id will be needed mainly for sync.
     pub store_id: String,
     // Table
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: String,
 }
 pub struct NumberRowRepository<'a> {
@@ -107,8 +107,8 @@ pub struct NumberRowRepository<'a> {
 
 #[derive(QueryableByName, Queryable, PartialEq, Debug)]
 pub struct NextNumber {
-    #[column_name = "value"]
-    #[sql_type = "BigInt"]
+    #[diesel(column_name = value)]
+    #[diesel(sql_type = BigInt)]
     pub number: i64,
 }
 
@@ -118,8 +118,12 @@ const NUMBER_INSERT_QUERY: &str =
     "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) RETURNING value;";
 
 // feature postgres
-// We need to use the ON CONFLICT DO NOTHING Clause for postgres just in case 2 threads insert at the same time (SQLite <on disk> does not need this as it only allows a single write transaction at a time).
-// Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
+// We need to use the ON CONFLICT DO NOTHING Clause for postgres just in case 2 threads insert at
+// the same time (SQLite <on disk> does not need this as it only allows a single write transaction
+// at a time).
+// Without this postgres will throw a unique constraint violation error and rollback the
+// transaction, which is hard to recover from, instead we just ignore the error and check if it
+// returned a value.
 #[cfg(feature = "postgres")]
 const NUMBER_INSERT_QUERY: &str = "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING value;";
 
@@ -131,7 +135,7 @@ impl<'a> NumberRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NumberRow>, RepositoryError> {
         let result = number_dsl::number
             .filter(number_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -144,7 +148,7 @@ impl<'a> NumberRowRepository<'a> {
     ) -> Result<NextNumber, RepositoryError> {
         // 1. First we try to just grab the next number from the database, in most cases this should work and be the fast.
 
-        let update_query = sql_query(r#"UPDATE number SET value = value+1 WHERE store_id = $1 and type = $2 RETURNING value;"#)
+        let update_query = sql_query(r#"UPDATE number SET value = value+1 WHERE store_id = $1 AND type = $2 RETURNING value;"#)
             .bind::<Text, _>(store_id)
             .bind::<Text, _>(r#type.to_string());
 
@@ -155,7 +159,7 @@ impl<'a> NumberRowRepository<'a> {
         // );
         let update_result = update_query
             .clone()
-            .get_result::<NextNumber>(&self.connection.connection);
+            .get_result::<NextNumber>(self.connection.lock().connection());
 
         match update_result {
             Ok(result) => Ok(result),
@@ -167,14 +171,13 @@ impl<'a> NumberRowRepository<'a> {
                     .bind::<Text, _>(store_id)
                     .bind::<Text, _>(r#type.to_string());
 
-                match insert_query.get_result::<NextNumber>(&self.connection.connection) {
+                let mut guard = self.connection.lock();
+                match insert_query.get_result::<NextNumber>(guard.connection()) {
                     Ok(result) => Ok(result),
                     Err(NotFound) => {
                         // 3. If we got here another thread inserted the record before we we able to (we know this because nothing was returned for the insert)
                         // We should now be able to do the same 'update returning' query as before to get our new number.
-
-                        let result =
-                            update_query.get_result::<NextNumber>(&self.connection.connection)?;
+                        let result = update_query.get_result::<NextNumber>(guard.connection())?;
                         Ok(result)
                     }
                     Err(e) => Err(RepositoryError::from(e)),
@@ -192,7 +195,7 @@ impl<'a> NumberRowRepository<'a> {
         match number_dsl::number
             .filter(number_dsl::store_id.eq(store_id))
             .filter(number_dsl::type_.eq(r#type.to_string()))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
         {
             Ok(row) => Ok(Some(row)),
             Err(diesel::result::Error::NotFound) => Ok(None),
@@ -207,7 +210,7 @@ impl<'a> NumberRowRepository<'a> {
             .on_conflict(number_dsl::id)
             .do_update()
             .set(number_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -221,14 +224,14 @@ impl<'a> NumberRowRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
         // );
 
-        final_query.execute(&self.connection.connection)?;
+        final_query.execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, number_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(number_dsl::number)
             .filter(number_dsl::id.eq(number_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -238,7 +241,7 @@ impl<'a> NumberRowRepository<'a> {
     ) -> Result<Vec<NumberRow>, RepositoryError> {
         let result = number_dsl::number
             .filter(number_dsl::store_id.eq_any(store_ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 }

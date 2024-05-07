@@ -32,7 +32,7 @@ joinable!(pack_variant -> item (item_id));
     Serialize,
     Deserialize,
 )]
-#[table_name = "pack_variant"]
+#[diesel(table_name = pack_variant)]
 #[serde(rename_all = "camelCase")]
 pub struct PackVariantRow {
     pub id: String,
@@ -59,7 +59,7 @@ impl<'a> PackVariantRowRepository<'a> {
             .on_conflict(pack_variant::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
@@ -68,7 +68,7 @@ impl<'a> PackVariantRowRepository<'a> {
     pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
         diesel::replace_into(pack_variant::dsl::pack_variant)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -78,7 +78,7 @@ impl<'a> PackVariantRowRepository<'a> {
     ) -> Result<Option<PackVariantRow>, RepositoryError> {
         let result = pack_variant
             .filter(id.eq(variant_id))
-            .first::<PackVariantRow>(&self.connection.connection)
+            .first::<PackVariantRow>(self.connection.lock().connection())
             .optional()?;
 
         Ok(result)

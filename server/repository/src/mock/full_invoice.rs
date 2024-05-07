@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 use util::inline_init;
 
 use crate::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StockLineRow,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
 };
 
 use super::common::{FullMockInvoice, FullMockInvoiceLine};
@@ -22,8 +22,8 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
             r.name_link_id = String::from("name_store_b");
             r.store_id = String::from("store_c");
             r.invoice_number = 10;
-            r.r#type = InvoiceRowType::OutboundShipment;
-            r.status = InvoiceRowStatus::New;
+            r.r#type = InvoiceType::OutboundShipment;
+            r.status = InvoiceStatus::New;
             r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
@@ -44,7 +44,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.total_before_tax = 278.26;
                     r.total_after_tax = 320.0;
                     r.tax = Some(15.0);
-                    r.r#type = InvoiceLineRowType::StockOut;
+                    r.r#type = InvoiceLineType::StockOut;
                     r.number_of_packs = 10.0;
                 }),
                 stock_line: inline_init(|r: &mut StockLineRow| {
@@ -71,7 +71,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.sell_price_per_pack = 21.0;
                     r.total_before_tax = 210.0;
                     r.total_after_tax = 210.0;
-                    r.r#type = InvoiceLineRowType::StockOut;
+                    r.r#type = InvoiceLineType::StockOut;
                     r.number_of_packs = 2.0;
                 }),
                 stock_line: inline_init(|r: &mut StockLineRow| {
@@ -98,8 +98,8 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
             r.name_link_id = String::from("name_store_a");
             r.store_id = String::from("store_a");
             r.invoice_number = 11;
-            r.r#type = InvoiceRowType::InboundShipment;
-            r.status = InvoiceRowStatus::New;
+            r.r#type = InvoiceType::InboundShipment;
+            r.status = InvoiceStatus::New;
             r.on_hold = true;
             r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
@@ -119,8 +119,8 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
             r.name_link_id = String::from("name_store_a");
             r.store_id = String::from("store_c");
             r.invoice_number = 11;
-            r.r#type = InvoiceRowType::OutboundShipment;
-            r.status = InvoiceRowStatus::New;
+            r.r#type = InvoiceType::OutboundShipment;
+            r.status = InvoiceStatus::New;
             r.on_hold = true;
             r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()

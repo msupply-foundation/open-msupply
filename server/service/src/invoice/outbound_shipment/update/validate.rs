@@ -6,8 +6,8 @@ use crate::invoice::{
 use crate::validate::get_other_party;
 use repository::{EqualFilter, NameLinkRowRepository};
 use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
-    InvoiceRowType, StorageConnection,
+    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
+    InvoiceType, StorageConnection,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError};
@@ -33,7 +33,7 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(InvoiceIsNotEditable);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::OutboundShipment) {
         return Err(NotAnOutboundShipment);
     }
     if patch.currency_id.is_some()
@@ -64,15 +64,15 @@ pub fn validate(
 fn check_can_change_status_to_allocated(
     connection: &StorageConnection,
     invoice_row: &InvoiceRow,
-    status_option: Option<InvoiceRowStatus>,
+    status_option: Option<InvoiceStatus>,
 ) -> Result<(), UpdateOutboundShipmentError> {
-    if invoice_row.status != InvoiceRowStatus::New {
+    if invoice_row.status != InvoiceStatus::New {
         return Ok(());
     };
 
     // Status sequence for outbound shipment: New, Allocated, Picked, Shipped
     if let Some(new_status) = status_option {
-        if new_status == InvoiceRowStatus::New {
+        if new_status == InvoiceStatus::New {
             return Ok(());
         }
 
@@ -80,7 +80,7 @@ fn check_can_change_status_to_allocated(
         let unallocated_lines = repository.query_by_filter(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(&invoice_row.id))
-                .r#type(InvoiceLineRowType::UnallocatedStock.equal_to())
+                .r#type(InvoiceLineType::UnallocatedStock.equal_to())
                 .number_of_packs(EqualFilter::not_equal_to_f64(0.0)),
         )?;
 

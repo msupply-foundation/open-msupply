@@ -26,8 +26,8 @@ joinable!(temperature_log -> store (store_id));
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
 )]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "temperature_log"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = temperature_log)]
 pub struct TemperatureLogRow {
     pub id: String,
     pub temperature: f64,
@@ -54,7 +54,7 @@ impl<'a> TemperatureLogRowRepository<'a> {
             .on_conflict(temperature_log_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -62,7 +62,7 @@ impl<'a> TemperatureLogRowRepository<'a> {
     pub fn _upsert_one(&self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
         diesel::replace_into(temperature_log_dsl::temperature_log)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -79,14 +79,14 @@ impl<'a> TemperatureLogRowRepository<'a> {
         diesel::update(temperature_log_dsl::temperature_log)
             .filter(temperature_log_dsl::id.eq_any(temperature_log_ids))
             .set(temperature_log_dsl::temperature_breach_id.eq(breach_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<TemperatureLogRow>, RepositoryError> {
         let result = temperature_log_dsl::temperature_log
             .filter(temperature_log_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -97,7 +97,7 @@ impl<'a> TemperatureLogRowRepository<'a> {
     ) -> Result<Vec<TemperatureLogRow>, RepositoryError> {
         Ok(temperature_log_dsl::temperature_log
             .filter(temperature_log_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
+            .load(self.connection.lock().connection())?)
     }
 }
 

@@ -10,7 +10,7 @@ use super::{sync_log_row::sync_log::dsl as sync_log_dsl, StorageConnection};
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum SyncLogRowErrorCode {
+pub enum SyncApiErrorCode {
     ConnectionError,
     SiteNameNotFound,
     IncorrectPassword,
@@ -55,13 +55,13 @@ table! {
         integration_progress_total -> Nullable<Integer>,
         integration_progress_done -> Nullable<Integer>,
         error_message -> Nullable<Text>,
-        error_code -> Nullable<crate::db_diesel::sync_log_row::SyncLogRowErrorCodeMapping>,
+        error_code -> Nullable<crate::db_diesel::sync_log_row::SyncApiErrorCodeMapping>,
     }
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "sync_log"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = sync_log)]
 pub struct SyncLogRow {
     pub id: String,
     pub started_datetime: NaiveDateTime,
@@ -93,7 +93,7 @@ pub struct SyncLogRow {
     pub integration_progress_total: Option<i32>,
     pub integration_progress_done: Option<i32>,
     pub error_message: Option<String>,
-    pub error_code: Option<SyncLogRowErrorCode>,
+    pub error_code: Option<SyncApiErrorCode>,
 }
 
 impl Default for SyncLogRow {
@@ -150,7 +150,7 @@ impl<'a> SyncLogRowRepository<'a> {
             .on_conflict(sync_log_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -158,14 +158,14 @@ impl<'a> SyncLogRowRepository<'a> {
     pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_log_dsl::sync_log)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogRow>, RepositoryError> {
         let result = sync_log_dsl::sync_log
             .filter(sync_log_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -177,7 +177,7 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, SyncLogRow, SyncLogRowErrorCode,
+        mock::MockDataInserts, test_db::setup_all, SyncApiErrorCode, SyncLogRow,
         SyncLogRowRepository,
     };
 
@@ -186,8 +186,8 @@ mod test {
         let (_, connection, _, _) = setup_all("sync_log_row_enum", MockDataInserts::none()).await;
 
         let repo = SyncLogRowRepository::new(&connection);
-        // Try upsert all variants of SyncLogRowErrorCode, confirm that diesel enums match postgres
-        for variant in SyncLogRowErrorCode::iter() {
+        // Try upsert all variants of SyncApiErrorCode, confirm that diesel enums match postgres
+        for variant in SyncApiErrorCode::iter() {
             let result = repo.upsert_one(&inline_init(|r: &mut SyncLogRow| {
                 r.id = "test".to_string();
                 r.error_code = Some(variant.clone());

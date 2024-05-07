@@ -2,7 +2,7 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
 };
-use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 use super::{UpdateInboundReturn, UpdateInboundReturnError};
 
@@ -21,7 +21,7 @@ pub fn validate(
     if !check_invoice_is_editable(&return_row) {
         return Err(ReturnIsNotEditable);
     }
-    if !check_invoice_type(&return_row, InvoiceRowType::InboundReturn) {
+    if !check_invoice_type(&return_row, InvoiceType::InboundReturn) {
         return Err(NotAnInboundReturn);
     }
 

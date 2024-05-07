@@ -23,8 +23,8 @@ table! {
         store_id -> Text,
         user_id -> Nullable<Text>,
         invoice_number -> BigInt,
-        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_row::InvoiceRowTypeMapping,
-        status -> crate::db_diesel::invoice_row::InvoiceRowStatusMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
+        status -> crate::db_diesel::invoice_row::InvoiceStatusMapping,
         on_hold -> Bool,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
@@ -57,11 +57,11 @@ allow_tables_to_appear_in_same_query!(invoice, name_link);
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum InvoiceRowType {
+pub enum InvoiceType {
     OutboundShipment,
     InboundShipment,
     Prescription,
-    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two separate types
+    // Initially we had single inventory adjustment InvoiceType, this was changed to two separate types
     // central server may have old inventory adjustment type, thus map it to inventory additions
     #[serde(alias = "INVENTORY_ADJUSTMENT")]
     InventoryAddition,
@@ -74,7 +74,7 @@ pub enum InvoiceRowType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum InvoiceRowStatus {
+pub enum InvoiceStatus {
     New,
     Allocated,
     Picked,
@@ -84,8 +84,8 @@ pub enum InvoiceRowStatus {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "invoice"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = invoice)]
 pub struct InvoiceRow {
     pub id: String,
     pub name_link_id: String,
@@ -93,9 +93,9 @@ pub struct InvoiceRow {
     pub store_id: String,
     pub user_id: Option<String>,
     pub invoice_number: i64,
-    #[column_name = "type_"]
-    pub r#type: InvoiceRowType,
-    pub status: InvoiceRowStatus,
+    #[diesel(column_name = type_)]
+    pub r#type: InvoiceType,
+    pub status: InvoiceStatus,
     pub on_hold: bool,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
@@ -120,8 +120,8 @@ impl Default for InvoiceRow {
     fn default() -> Self {
         Self {
             created_datetime: Defaults::naive_date_time(),
-            r#type: InvoiceRowType::InboundShipment,
-            status: InvoiceRowStatus::New,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
             // Defaults
             id: Default::default(),
             user_id: Default::default(),
@@ -166,7 +166,7 @@ impl<'a> InvoiceRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -174,19 +174,20 @@ impl<'a> InvoiceRowRepository<'a> {
     pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, invoice_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(invoice.filter(id.eq(invoice_id))).execute(&self.connection.connection)?;
+        diesel::delete(invoice.filter(id.eq(invoice_id)))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
-            .first(&self.connection.connection);
+            .first(self.connection.lock().connection());
         result.map_err(RepositoryError::from)
     }
 
@@ -197,7 +198,7 @@ impl<'a> InvoiceRowRepository<'a> {
     ) -> Result<Option<InvoiceRow>, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -205,19 +206,19 @@ impl<'a> InvoiceRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceRow>, RepositoryError> {
         let result = invoice
             .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_max_invoice_number(
         &self,
-        r#type: InvoiceRowType,
+        r#type: InvoiceType,
         store: &str,
     ) -> Result<Option<i64>, RepositoryError> {
         let result = invoice
             .filter(type_.eq(r#type).and(store_id.eq(store)))
             .select(max(invoice_number))
-            .first(&self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 }

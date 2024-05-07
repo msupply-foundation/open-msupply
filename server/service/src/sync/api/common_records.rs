@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{SyncBufferAction, SyncBufferRow};
+use repository::{SyncAction as SyncActionRepo, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
@@ -49,12 +49,12 @@ pub(crate) enum SyncAction {
 }
 
 impl SyncAction {
-    fn to_row_action(&self) -> SyncBufferAction {
+    fn to_row_action(&self) -> SyncActionRepo {
         match self {
-            SyncAction::Insert => SyncBufferAction::Upsert,
-            SyncAction::Update => SyncBufferAction::Upsert,
-            SyncAction::Delete => SyncBufferAction::Delete,
-            SyncAction::Merge => SyncBufferAction::Merge,
+            Self::Insert => SyncActionRepo::Upsert,
+            Self::Update => SyncActionRepo::Upsert,
+            Self::Delete => SyncActionRepo::Delete,
+            Self::Merge => SyncActionRepo::Merge,
         }
     }
 }
@@ -148,7 +148,7 @@ mod tests {
         let row = record.to_buffer_row(None).unwrap();
         assert_eq!(row.table_name, "test");
         assert_eq!(row.record_id, "test");
-        assert_eq!(row.action, SyncBufferAction::Upsert);
+        assert_eq!(row.action, SyncActionRepo::Upsert);
         assert_eq!(row.data, "{}");
     }
 
@@ -234,7 +234,7 @@ mod tests {
             .find_one_by_record_id("itemB")
             .unwrap()
             .unwrap();
-        assert_eq!(row.action, SyncBufferAction::Upsert);
+        assert_eq!(row.action, SyncActionRepo::Upsert);
 
         // ItemB Upsert + Two Upserts for itemA should should be only be persisted as one + ItemB->ItemA Merge
         let rows = sync_buffer_repository.get_all().unwrap();
@@ -243,7 +243,7 @@ mod tests {
         // Just one update for item A
         assert_eq!(
             rows.iter()
-                .filter(|r| r.record_id == "itemA" && r.action == SyncBufferAction::Upsert)
+                .filter(|r| r.record_id == "itemA" && r.action == SyncActionRepo::Upsert)
                 .collect::<Vec<_>>()
                 .len(),
             1
@@ -252,7 +252,7 @@ mod tests {
         // Merge for itemA
         assert_eq!(
             rows.iter()
-                .filter(|r| r.action == SyncBufferAction::Merge
+                .filter(|r| r.action == SyncActionRepo::Merge
                     && serde_json::from_str::<ItemMergeMessage>(&r.data)
                         .unwrap()
                         .merge_id_to_keep

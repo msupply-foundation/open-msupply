@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    DateFilter, EqualFilter, Gender, PaginationOption, PatientSort, PatientSortField,
+    DateFilter, EqualFilter, GenderType, PaginationOption, PatientSort, PatientSortField,
     RepositoryError, StringFilter,
 };
 
@@ -19,7 +19,7 @@ pub struct PatientSearch {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub date_of_birth: Option<NaiveDate>,
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub identifier: Option<String>,
 }
 

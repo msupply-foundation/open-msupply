@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     ActivityLogRow, ActivityLogType, CurrencyFilter, CurrencyRepository, InvoiceLineRow,
-    InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, ItemRowRepository,
+    InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRowRepository,
     LocationMovementRow, NameRowRepository, NumberRowType, RepositoryError, StockLine,
     StockLineRow,
 };
@@ -87,8 +87,8 @@ fn generate_invoice_and_lines(
         store_id: ctx.store_id.clone(),
         user_id: Some(ctx.user_id.clone()),
         invoice_number: next_number(connection, &NumberRowType::Repack, &ctx.store_id)?,
-        r#type: InvoiceRowType::Repack,
-        status: InvoiceRowStatus::Verified,
+        r#type: InvoiceType::Repack,
+        status: InvoiceStatus::Verified,
         on_hold: false,
         created_datetime: Utc::now().naive_utc(),
         verified_datetime: Some(Utc::now().naive_utc()),
@@ -115,7 +115,7 @@ fn generate_invoice_and_lines(
         batch: stock_line_to_update_row.batch.clone(),
         expiry_date: stock_line_to_update_row.expiry_date,
         pack_size: new_stock_line.pack_size,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: new_stock_line.total_number_of_packs,
         cost_price_per_pack: new_stock_line.cost_price_per_pack,
         sell_price_per_pack: new_stock_line.sell_price_per_pack,
@@ -131,7 +131,7 @@ fn generate_invoice_and_lines(
         stock_line_id: Some(stock_line_to_update_row.id.clone()),
         location_id: stock_line_to_update_row.location_id.clone(),
         pack_size: stock_line_to_update_row.pack_size,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: number_of_packs_input,
         cost_price_per_pack: stock_line_to_update_row.cost_price_per_pack,
         sell_price_per_pack: stock_line_to_update_row.sell_price_per_pack,

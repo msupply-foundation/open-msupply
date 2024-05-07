@@ -95,7 +95,9 @@ impl<'a> StocktakeLineRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -146,7 +148,7 @@ impl<'a> StocktakeLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<StocktakeLineJoin>(&self.connection.connection)?;
+            .load::<StocktakeLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

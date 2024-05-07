@@ -1,7 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, EqualFilter, KeyValueType, Pagination, RepositoryError,
-    Sort, SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
+    ChangelogRepository, DatetimeFilter, EqualFilter, KeyType, Pagination, RepositoryError, Sort,
+    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 use util::Defaults;
 
@@ -298,7 +298,7 @@ fn number_of_records_in_push_queue(
     use NumberOfRecordsInPushQueueError as Error;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
-    let cursor = CursorController::new(KeyValueType::RemoteSyncPushCursor)
+    let cursor = CursorController::new(KeyType::RemoteSyncPushCursor)
         .get(&ctx.connection)
         .map_err(Error::DatabaseError)?;
 

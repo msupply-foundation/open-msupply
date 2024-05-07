@@ -25,7 +25,7 @@ allow_tables_to_appear_in_same_query!(clinician, clinician_store_join);
 allow_tables_to_appear_in_same_query!(clinician_store_join, clinician_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "clinician_store_join"]
+#[diesel(table_name = clinician_store_join)]
 pub struct ClinicianStoreJoinRow {
     pub id: String,
     pub store_id: String,
@@ -48,7 +48,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             .on_conflict(clinician_store_join::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -56,7 +56,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
     fn _upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
     pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
@@ -68,7 +68,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(clinician_store_join_is_sync_update::table.find(id))
             .set(clinician_store_join_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
@@ -79,7 +79,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
     ) -> Result<Option<ClinicianStoreJoinRow>, RepositoryError> {
         let result = clinician_store_join::dsl::clinician_store_join
             .filter(clinician_store_join::dsl::id.eq(row_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }
@@ -89,7 +89,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             clinician_store_join::dsl::clinician_store_join
                 .filter(clinician_store_join::dsl::id.eq(row_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -105,7 +105,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         let result = clinician_store_join_is_sync_update::table
             .find(id)
             .select(clinician_store_join_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }

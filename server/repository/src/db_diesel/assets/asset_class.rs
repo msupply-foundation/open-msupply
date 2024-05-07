@@ -51,7 +51,9 @@ impl<'a> AssetClassRepository<'a> {
     pub fn count(&self, filter: Option<AssetClassFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
@@ -96,7 +98,7 @@ impl<'a> AssetClassRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetClassRow>(&self.connection.connection)?;
+        let result = final_query.load::<AssetClassRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -136,23 +138,21 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_class_query_repository() {
         // Prepare
-        let (_, storage_connection, _, _) =
+        let (_, mut storage_connection, _, _) =
             test_db::setup_all("test_asset_class_query_repository", MockDataInserts::none()).await;
-        let reference_data_repository = AssetClassRepository::new(&storage_connection);
-
-        let reference_data_row_repository = AssetClassRowRepository::new(&storage_connection);
 
         let id = "test_id".to_string();
         let name = "test_name".to_string();
 
         // Insert a row
-        let _reference_data_row = reference_data_row_repository.insert_one(&AssetClassRow {
-            id: id.clone(),
-            name: name.clone(),
-        });
+        let _reference_data_row =
+            AssetClassRowRepository::new(&mut storage_connection).insert_one(&AssetClassRow {
+                id: id.clone(),
+                name: name.clone(),
+            });
 
         // Query by id
-        let reference_data = reference_data_repository
+        let reference_data = AssetClassRepository::new(&mut storage_connection)
             .query_one(AssetClassFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
@@ -160,7 +160,7 @@ mod tests {
         assert_eq!(reference_data.name, name);
 
         // Query by name
-        let reference_data = reference_data_repository
+        let reference_data = AssetClassRepository::new(&mut storage_connection)
             .query_one(AssetClassFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();

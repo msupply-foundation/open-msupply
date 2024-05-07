@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
-use repository::{Gender, Name, NameRow, NameType};
+use repository::{GenderType as GenderRepo, Name, NameRow, NameType};
 
 use graphql_core::{
     loader::StoreByIdLoader, simple_generic_errors::NodeError,
@@ -27,18 +27,18 @@ pub enum GenderInput {
 }
 
 impl GenderInput {
-    pub fn to_domain(self) -> Gender {
+    pub fn to_domain(self) -> GenderRepo {
         match self {
-            GenderInput::Female => Gender::Female,
-            GenderInput::Male => Gender::Male,
-            GenderInput::TransgenderMale => Gender::TransgenderMale,
-            GenderInput::TransgenderMaleHormone => Gender::TransgenderMaleHormone,
-            GenderInput::TransgenderMaleSurgical => Gender::TransgenderMaleSurgical,
-            GenderInput::TransgenderFemale => Gender::TransgenderFemale,
-            GenderInput::TransgenderFemaleHormone => Gender::TransgenderFemaleHormone,
-            GenderInput::TransgenderFemaleSurgical => Gender::TransgenderFemaleSurgical,
-            GenderInput::Unknown => Gender::Unknown,
-            GenderInput::NonBinary => Gender::NonBinary,
+            GenderInput::Female => GenderRepo::Female,
+            GenderInput::Male => GenderRepo::Male,
+            GenderInput::TransgenderMale => GenderRepo::TransgenderMale,
+            GenderInput::TransgenderMaleHormone => GenderRepo::TransgenderMaleHormone,
+            GenderInput::TransgenderMaleSurgical => GenderRepo::TransgenderMaleSurgical,
+            GenderInput::TransgenderFemale => GenderRepo::TransgenderFemale,
+            GenderInput::TransgenderFemaleHormone => GenderRepo::TransgenderFemaleHormone,
+            GenderInput::TransgenderFemaleSurgical => GenderRepo::TransgenderFemaleSurgical,
+            GenderInput::Unknown => GenderRepo::Unknown,
+            GenderInput::NonBinary => GenderRepo::NonBinary,
         }
     }
 }
@@ -102,19 +102,19 @@ pub enum GenderType {
     NonBinary,
 }
 impl GenderType {
-    pub fn from_domain(gender: &Gender) -> Self {
+    pub fn from_domain(gender: &GenderRepo) -> Self {
         match gender {
-            Gender::Female => GenderType::Female,
-            Gender::Male => GenderType::Male,
-            Gender::Transgender => GenderType::Transgender,
-            Gender::TransgenderMale => GenderType::TransgenderMale,
-            Gender::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
-            Gender::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,
-            Gender::TransgenderFemale => GenderType::TransgenderFemale,
-            Gender::TransgenderFemaleHormone => GenderType::TransgenderFemaleHormone,
-            Gender::TransgenderFemaleSurgical => GenderType::TransgenderFemaleSurgical,
-            Gender::Unknown => GenderType::Unknown,
-            Gender::NonBinary => GenderType::NonBinary,
+            GenderRepo::Female => GenderType::Female,
+            GenderRepo::Male => GenderType::Male,
+            GenderRepo::Transgender => GenderType::Transgender,
+            GenderRepo::TransgenderMale => GenderType::TransgenderMale,
+            GenderRepo::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
+            GenderRepo::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,
+            GenderRepo::TransgenderFemale => GenderType::TransgenderFemale,
+            GenderRepo::TransgenderFemaleHormone => GenderType::TransgenderFemaleHormone,
+            GenderRepo::TransgenderFemaleSurgical => GenderType::TransgenderFemaleSurgical,
+            GenderRepo::Unknown => GenderType::Unknown,
+            GenderRepo::NonBinary => GenderType::NonBinary,
         }
     }
 }
@@ -293,7 +293,7 @@ mod test {
                             r.code = "some code".to_string();
                             r.first_name = Some("first_name".to_string());
                             r.last_name = Some("last_name".to_string());
-                            r.gender = Some(Gender::Female);
+                            r.gender = Some(GenderRepo::Female);
                             r.phone = Some("0218738201".to_string());
                             r.charge_code = Some("test".to_string());
                             r.comment = Some("name comment".to_string());

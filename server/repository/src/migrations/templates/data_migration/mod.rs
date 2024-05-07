@@ -33,7 +33,7 @@ impl Migration for V1_00_06 {
         use self::invoice::dsl as invoice_dsl;
         let invoices = invoice_dsl::invoice
             .select((invoice_dsl::id, invoice_dsl::created_datetime))
-            .load::<(String, NaiveDateTime)>(&connection.connection)?;
+            .load::<(String, NaiveDateTime)>(connection.lock().connection())?;
 
         let duration_offset = Duration::days(1);
 
@@ -45,7 +45,7 @@ impl Migration for V1_00_06 {
             diesel::update(invoice_dsl::invoice)
                 .filter(invoice_dsl::id.eq(id))
                 .set(invoice_dsl::created_datetime.eq(new_datetime))
-                .execute(&connection.connection)?;
+                .execute(connection.lock().connection())?;
         }
 
         Ok(())
@@ -145,7 +145,7 @@ async fn migration_1_00_06() {
     let invoices = invoice_dsl::invoice
         .select((invoice_dsl::id, invoice_dsl::created_datetime))
         .order_by(invoice_dsl::id.asc())
-        .load::<(String, NaiveDateTime)>(&connection.connection)
+        .load::<(String, NaiveDateTime)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

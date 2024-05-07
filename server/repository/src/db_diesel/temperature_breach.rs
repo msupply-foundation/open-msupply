@@ -4,7 +4,7 @@ use super::{
     temperature_breach_row::{
         temperature_breach, temperature_breach::dsl as temperature_breach_dsl,
     },
-    DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachRowType,
+    DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachType,
 };
 use diesel::prelude::*;
 
@@ -25,7 +25,7 @@ pub struct TemperatureBreach {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct TemperatureBreachFilter {
     pub id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
+    pub r#type: Option<EqualFilter<TemperatureBreachType>>,
     pub store_id: Option<EqualFilter<String>>,
     pub start_datetime: Option<DatetimeFilter>,
     pub end_datetime: Option<DatetimeFilter>,
@@ -54,7 +54,9 @@ impl<'a> TemperatureBreachRepository<'a> {
 
     pub fn count(&self, filter: Option<TemperatureBreachFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -90,7 +92,7 @@ impl<'a> TemperatureBreachRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<TemperatureBreachRow>(&self.connection.connection)?;
+            .load::<TemperatureBreachRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -154,7 +156,7 @@ fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach 
 impl TemperatureBreachFilter {
     pub fn new() -> TemperatureBreachFilter {
         Self::default()
-        }
+    }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
@@ -181,7 +183,7 @@ impl TemperatureBreachFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<TemperatureBreachRowType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<TemperatureBreachType>) -> Self {
         self.r#type = Some(filter);
         self
     }
@@ -197,7 +199,7 @@ impl TemperatureBreachFilter {
     }
 }
 
-impl TemperatureBreachRowType {
+impl TemperatureBreachType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         EqualFilter {
             equal_to: Some(self.clone()),

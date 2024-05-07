@@ -37,7 +37,9 @@ impl<'a> FormSchemaRepository<'a> {
     pub fn count(&self, filter: Option<FormSchemaFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -68,7 +70,7 @@ impl<'a> FormSchemaRepository<'a> {
         let rows = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<FormSchemaRow>(&self.connection.connection)?;
+            .load::<FormSchemaRow>(self.connection.lock().connection())?;
 
         let mut result = Vec::<FormSchemaJson>::new();
         for row in rows {

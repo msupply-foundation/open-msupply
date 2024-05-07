@@ -1,6 +1,6 @@
 [package]
 name = "repository"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2018"
 
 [lib]
@@ -13,18 +13,19 @@ util = { path = "../util" }
 
 chrono = { workspace = true }
 rand = { workspace = true }
-diesel = { version = "1.4.7", default-features = false, features = [
+diesel = { version = "2.1.5", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
     "32-column-tables",
+    "with-deprecated"
 ] }
-diesel-derive-enum = { version = "1.1.1", default-features = false }
-diesel_migrations = "1.4.0"
+diesel-derive-enum = { version = "2.1.0", default-features = false }
+diesel_migrations = "2.1.0"
 futures-util = "0.3.15"
-libsqlite3-sys = { version = "0.22.2", features = ["bundled"], optional = true }
-# 0.25.4 depends on libsqlite3-sys 0.22.2
-rusqlite = "0.25.4"
+libsqlite3-sys = { version = "0.28.0", features = ["bundled"], optional = true }
+# 0.31.0 depends on libsqlite3-sys 0.28.0
+rusqlite = "0.31.0"
 uuid = { version = "0.8", features = ["v4"] }
 regex = "1.10.3"
 serde = { version = "1.0.126", features = ["derive"] }
@@ -48,7 +49,11 @@ strum = { version = "0.26", features = ["derive"] }
 default = ["sqlite"]
 sqlite = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
 memory = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
-postgres = ["diesel/postgres", "diesel-derive-enum/postgres"]
+postgres = [
+    "diesel/postgres",
+    "diesel/postgres_backend",
+    "diesel-derive-enum/postgres",
+]
 integration_test = []
 
 [build-dependencies]

@@ -3,7 +3,7 @@ use crate::{
 };
 use repository::{EqualFilter, PaginationOption};
 use repository::{
-    Invoice, InvoiceFilter, InvoiceRepository, InvoiceRowType, InvoiceSort, RepositoryError,
+    Invoice, InvoiceFilter, InvoiceRepository, InvoiceSort, InvoiceType, RepositoryError,
 };
 
 pub const MAX_LIMIT: u32 = 1000;
@@ -45,7 +45,7 @@ pub fn get_invoice_by_number(
     ctx: &ServiceContext,
     store_id: &str,
     invoice_number: u32,
-    r#type: InvoiceRowType,
+    r#type: InvoiceType,
 ) -> Result<Option<Invoice>, RepositoryError> {
     let mut result = InvoiceRepository::new(&ctx.connection).query_by_filter(
         InvoiceFilter::new()
@@ -60,7 +60,7 @@ pub fn get_invoice_by_number(
 #[cfg(test)]
 mod test_query {
     use repository::{
-        db_diesel::InvoiceRowType,
+        db_diesel::InvoiceType,
         mock::{mock_unique_number_inbound_shipment, MockDataInserts},
         test_db::setup_all,
     };
@@ -78,12 +78,7 @@ mod test_query {
 
         // Not found
         assert_eq!(
-            service.get_invoice_by_number(
-                &context,
-                "store_a",
-                200,
-                InvoiceRowType::OutboundShipment
-            ),
+            service.get_invoice_by_number(&context, "store_a", 200, InvoiceType::OutboundShipment),
             Ok(None)
         );
 
@@ -95,7 +90,7 @@ mod test_query {
                 &context,
                 "store_a",
                 invoice_to_find.invoice_number as u32,
-                InvoiceRowType::OutboundShipment,
+                InvoiceType::OutboundShipment,
             ),
             Ok(None)
         );
@@ -106,7 +101,7 @@ mod test_query {
                 &context,
                 "store_a",
                 invoice_to_find.invoice_number as u32,
-                InvoiceRowType::InboundShipment,
+                InvoiceType::InboundShipment,
             )
             .unwrap()
             .unwrap();

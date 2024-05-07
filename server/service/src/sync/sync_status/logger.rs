@@ -1,6 +1,6 @@
 use log::{error, info};
 use repository::{
-    RepositoryError, StorageConnection, SyncLogRow, SyncLogRowErrorCode, SyncLogRowRepository,
+    RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogRow, SyncLogRowRepository,
 };
 use thiserror::Error;
 use util::format_error;
@@ -306,7 +306,7 @@ impl SyncLogError {
         match &sync_error {
             SyncError::V6NotConfigured
             | SyncError::SyncApiV6CreatingError(SyncApiV6CreatingError::CannotParseSyncUrl(_, _)) => {
-                Self::new(SyncLogRowErrorCode::CentralV6NotConfigured, sync_error)
+                Self::new(SyncApiErrorCode::CentralV6NotConfigured, sync_error)
             }
 
             // Sync Api Error
@@ -336,12 +336,12 @@ impl SyncLogError {
 
             // Integration timeout reached
             SyncError::WaitForIntegrationError(_) | SyncError::WaitForIntegrationErrorV6(_) => {
-                Self::new(SyncLogRowErrorCode::IntegrationTimeoutReached, sync_error)
+                Self::new(SyncApiErrorCode::IntegrationTimeoutReached, sync_error)
             }
 
             // Error during integration
             SyncError::IntegrationError(_) => {
-                Self::new(SyncLogRowErrorCode::IntegrationError, sync_error)
+                Self::new(SyncApiErrorCode::IntegrationError, sync_error)
             }
 
             // Internal errors
@@ -360,9 +360,8 @@ impl SyncLogError {
             // map connection errors
             SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))
             | SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ConnectionError { .. }) => {
-                return Self::new(SyncLogRowErrorCode::ConnectionError, sync_error)
+                return Self::new(SyncApiErrorCode::ConnectionError, sync_error)
             }
-
             // Internal errors
             _ => return Self::message_only(sync_error),
         };
@@ -380,7 +379,7 @@ impl SyncLogError {
         }
     }
 
-    fn new<T: std::error::Error>(code: SyncLogRowErrorCode, error: &T) -> Self {
+    fn new<T: std::error::Error>(code: SyncApiErrorCode, error: &T) -> Self {
         Self {
             message: format_error(error),
             code: Some(code),
@@ -388,9 +387,9 @@ impl SyncLogError {
     }
 }
 
-fn v5_to_sync_log_error_code(code: &SyncErrorCodeV5) -> Option<SyncLogRowErrorCode> {
+fn v5_to_sync_log_error_code(code: &SyncErrorCodeV5) -> Option<SyncApiErrorCode> {
+    use SyncApiErrorCode as to;
     use SyncErrorCodeV5 as from;
-    use SyncLogRowErrorCode as to;
 
     let log_error_code = match code {
         from::SiteNameNotFound => to::SiteNameNotFound,
@@ -415,7 +414,7 @@ mod test {
         sync_status::{logger::SyncLoggerError, SyncLogError},
         synchroniser::SyncError,
     };
-    use repository::{RepositoryError, SyncLogRowErrorCode};
+    use repository::{RepositoryError, SyncApiErrorCode};
     use reqwest::{Client, StatusCode, Url};
     use serde_json::json;
     use url::ParseError;
@@ -439,10 +438,7 @@ mod test {
             SyncApiError::new_test(reqwest_error().await.into()),
         ));
         let sync_log_error = SyncLogError::from_sync_error(&sync_error);
-        assert_eq!(
-            sync_log_error.code,
-            Some(SyncLogRowErrorCode::ConnectionError)
-        );
+        assert_eq!(sync_log_error.code, Some(SyncApiErrorCode::ConnectionError));
         // RemotePullError -> ResponseParsingError
         let sync_error = SyncError::RemotePullError(RemotePullError::SyncApiError(
             SyncApiError::new_test(Variant::ResponseParsingError(reqwest_error().await.into())),
@@ -490,7 +486,7 @@ mod test {
             sync_log_error,
             SyncLogError {
                 message: format_error(&sync_error),
-                code: Some(SyncLogRowErrorCode::IntegrationTimeoutReached)
+                code: Some(SyncApiErrorCode::IntegrationTimeoutReached)
             }
         );
         // CentralPullError -> MappedError::ParsedError -> Other
@@ -528,7 +524,7 @@ mod test {
             sync_log_error,
             SyncLogError {
                 message: format_error(&sync_error),
-                code: Some(SyncLogRowErrorCode::HardwareIdMismatch)
+                code: Some(SyncApiErrorCode::HardwareIdMismatch)
             }
         );
     }

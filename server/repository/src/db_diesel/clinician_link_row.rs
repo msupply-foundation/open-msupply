@@ -23,7 +23,7 @@ allow_tables_to_appear_in_same_query!(clinician_link, program);
 allow_tables_to_appear_in_same_query!(clinician_link, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
-#[table_name = "clinician_link"]
+#[diesel(table_name = clinician_link)]
 pub struct ClinicianLinkRow {
     pub id: String,
     pub clinician_id: String,
@@ -45,7 +45,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
             .on_conflict(clinician_link::id)
             .do_update()
             .set(clinician_link_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -53,7 +53,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
     pub fn upsert_one(&self, clinician_link_row: &ClinicianLinkRow) -> Result<(), RepositoryError> {
         diesel::replace_into(clinician_link_dsl::clinician_link)
             .values(clinician_link_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -66,7 +66,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
             .values(clinician_link_row)
             .on_conflict(clinician_link::id)
             .do_nothing()
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -77,12 +77,12 @@ impl<'a> ClinicianLinkRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::insert_or_ignore_into(clinician_link_dsl::clinician_link)
             .values(clinician_link_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub async fn find_all(&self) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
-        let result = clinician_link_dsl::clinician_link.load(&self.connection.connection);
+    pub async fn find_all(&mut self) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
+        let result = clinician_link_dsl::clinician_link.load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -92,7 +92,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
     ) -> Result<Option<ClinicianLinkRow>, RepositoryError> {
         let result = clinician_link_dsl::clinician_link
             .filter(clinician_link::id.eq(clinician_link_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -103,7 +103,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
     ) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
         let result = clinician_link_dsl::clinician_link
             .filter(clinician_link::id.eq_any(clinician_link_ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -113,7 +113,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
     ) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
         let result = clinician_link_dsl::clinician_link
             .filter(clinician_link::clinician_id.eq(clinician_id))
-            .load::<ClinicianLinkRow>(&self.connection.connection)?;
+            .load::<ClinicianLinkRow>(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -121,7 +121,7 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         diesel::delete(
             clinician_link_dsl::clinician_link.filter(clinician_link::id.eq(clinician_link_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

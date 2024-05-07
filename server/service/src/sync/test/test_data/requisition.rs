@@ -4,8 +4,8 @@ use crate::sync::translations::requisition::{
 };
 use chrono::NaiveDate;
 use repository::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowDelete,
+    requisition_row::{RequisitionStatus, RequisitionType},
+    ApprovalStatusType, RequisitionRow, RequisitionRowDelete,
 };
 use serde_json::json;
 
@@ -60,8 +60,8 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
             requisition_number: 8,
             name_link_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
-            r#type: RequisitionRowType::Request,
-            status: RequisitionRowStatus::Sent,
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Sent,
             created_datetime: NaiveDate::from_ymd_opt(2020, 7, 10)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -120,7 +120,7 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
             ),
             finalised_datetime: None,
             max_months_of_stock: Some(5.0),
-            om_status: Some(RequisitionRowStatus::Sent),
+            om_status: Some(RequisitionStatus::Sent),
             om_colour: None,
             expected_delivery_date: None,
             approval_status: None,
@@ -173,8 +173,8 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             requisition_number: 1,
             name_link_id: "name_store_b".to_string(),
             store_id: "store_b".to_string(),
-            r#type: RequisitionRowType::Response,
-            status: RequisitionRowStatus::Finalised,
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::Finalised,
             created_datetime: NaiveDate::from_ymd_opt(2020, 7, 9)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -193,7 +193,7 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
-            approval_status: Some(RequisitionRowApprovalStatus::None),
+            approval_status: Some(ApprovalStatusType::None),
             program_id: Some("missing_program".to_string()),
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
@@ -233,7 +233,7 @@ fn requisition_response_push_record() -> TestSyncOutgoingRecord {
                     .unwrap()
             ),
             max_months_of_stock: Some(10.0),
-            om_status: Some(RequisitionRowStatus::Finalised),
+            om_status: Some(RequisitionStatus::Finalised),
             om_colour: None,
             expected_delivery_date: None,
             approval_status: Some(LegacyAuthorisationStatus::None),
@@ -293,8 +293,8 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             requisition_number: 1,
             name_link_id: "name_store_b".to_string(),
             store_id: "store_b".to_string(),
-            r#type: RequisitionRowType::Response,
-            status: RequisitionRowStatus::New,
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
             created_datetime: NaiveDate::from_ymd_opt(2020, 7, 9)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -318,7 +318,7 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
             max_months_of_stock: 10.0,
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
-            approval_status: Some(RequisitionRowApprovalStatus::Approved),
+            approval_status: Some(ApprovalStatusType::Approved),
             program_id: None,
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
@@ -364,7 +364,7 @@ fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
             ),
             expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 3, 26).unwrap()),
             max_months_of_stock: Some(10.0),
-            om_status: Some(RequisitionRowStatus::New),
+            om_status: Some(RequisitionStatus::New),
             om_colour: Some("Colour".to_string()),
             approval_status: Some(LegacyAuthorisationStatus::Authorised),
             orderType: Some("Normal".to_string()),
@@ -423,8 +423,8 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
             requisition_number: 8,
             name_link_id: "name_store_a".to_string(),
             store_id: "store_b".to_string(),
-            r#type: RequisitionRowType::Request,
-            status: RequisitionRowStatus::Sent,
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Sent,
             created_datetime: NaiveDate::from_ymd_opt(2020, 7, 10)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -483,7 +483,7 @@ fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
             ),
             finalised_datetime: None,
             max_months_of_stock: Some(5.0),
-            om_status: Some(RequisitionRowStatus::Sent),
+            om_status: Some(RequisitionStatus::Sent),
             om_colour: None,
             expected_delivery_date: None,
             approval_status: None,

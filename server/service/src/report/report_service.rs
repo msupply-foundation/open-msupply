@@ -498,7 +498,7 @@ mod report_service_test {
     use std::collections::HashMap;
 
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ReportContext, ReportRow, ReportRowRepository,
+        mock::MockDataInserts, test_db::setup_all, ContextType, ReportRow, ReportRowRepository,
         ReportType,
     };
 
@@ -568,7 +568,7 @@ mod report_service_test {
             name: "Report 1".to_string(),
             r#type: ReportType::OmSupply,
             template: serde_json::to_string(&report_1).unwrap(),
-            context: ReportContext::InboundShipment,
+            context: ContextType::InboundShipment,
             comment: None,
             sub_context: None,
             argument_schema_id: None,
@@ -579,7 +579,7 @@ mod report_service_test {
             name: "Report base 1".to_string(),
             r#type: ReportType::OmSupply,
             template: serde_json::to_string(&report_base_1).unwrap(),
-            context: ReportContext::Resource,
+            context: ContextType::Resource,
             comment: None,
             sub_context: None,
             argument_schema_id: None,

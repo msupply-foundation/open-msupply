@@ -1,6 +1,4 @@
-use repository::{
-    InvoiceLine, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType, StorageConnection,
-};
+use repository::{InvoiceLine, InvoiceRow, InvoiceType, ItemRow, ItemType, StorageConnection};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -27,14 +25,14 @@ pub fn validate(
     } else {
         line.item_row.clone()
     };
-    if item.r#type != ItemRowType::Service {
+    if item.r#type != ItemType::Service {
         return Err(UpdateInboundShipmentServiceLineError::NotAServiceItem);
     }
 
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

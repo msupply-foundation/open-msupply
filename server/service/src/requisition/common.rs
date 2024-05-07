@@ -3,8 +3,7 @@ use repository::{
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
 use repository::{
-    EqualFilter, Requisition, RequisitionFilter, RequisitionRepository,
-    RequisitionRowApprovalStatus,
+    ApprovalStatusType, EqualFilter, Requisition, RequisitionFilter, RequisitionRepository,
 };
 use util::inline_edit;
 
@@ -51,9 +50,9 @@ pub fn check_approval_status(requisition_row: &RequisitionRow) -> bool {
     // TODO Rework once plugins are implemented
     if let Some(approval_status) = &requisition_row.approval_status {
         if requisition_row.program_id.is_some()
-            && (*approval_status == RequisitionRowApprovalStatus::Pending
-                || *approval_status == RequisitionRowApprovalStatus::Denied
-                || *approval_status == RequisitionRowApprovalStatus::DeniedByAnother)
+            && (*approval_status == ApprovalStatusType::Pending
+                || *approval_status == ApprovalStatusType::Denied
+                || *approval_status == ApprovalStatusType::DeniedByAnother)
         {
             return true;
         } else {

@@ -6,7 +6,7 @@ use crate::{
         validate::{check_item_exists, check_line_does_not_exist, check_number_of_packs},
     },
 };
-use repository::{InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, ItemRow, StorageConnection};
 
 use super::{InsertInboundShipmentLine, InsertInboundShipmentLineError};
 
@@ -40,7 +40,7 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     };
-    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

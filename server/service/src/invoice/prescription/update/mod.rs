@@ -1,5 +1,5 @@
 use repository::{
-    Invoice, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
+    Invoice, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -102,22 +102,20 @@ pub fn update_prescription(
 }
 
 impl UpdatePrescriptionStatus {
-    pub fn full_status(&self) -> InvoiceRowStatus {
+    pub fn full_status(&self) -> InvoiceStatus {
         match self {
-            UpdatePrescriptionStatus::Picked => InvoiceRowStatus::Picked,
-            UpdatePrescriptionStatus::Verified => InvoiceRowStatus::Verified,
+            UpdatePrescriptionStatus::Picked => InvoiceStatus::Picked,
+            UpdatePrescriptionStatus::Verified => InvoiceStatus::Verified,
         }
     }
 
-    pub fn full_status_option(
-        status: &Option<UpdatePrescriptionStatus>,
-    ) -> Option<InvoiceRowStatus> {
+    pub fn full_status_option(status: &Option<UpdatePrescriptionStatus>) -> Option<InvoiceStatus> {
         status.as_ref().map(|status| status.full_status())
     }
 }
 
 impl UpdatePrescription {
-    pub fn full_status(&self) -> Option<InvoiceRowStatus> {
+    pub fn full_status(&self) -> Option<InvoiceStatus> {
         self.status.as_ref().map(|status| status.full_status())
     }
 }
@@ -138,9 +136,8 @@ mod test {
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, ClinicianRow, ClinicianStoreJoinRow,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-        InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, StockLineRow,
-        StockLineRowRepository,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
     };
     use util::{assert_matches, inline_edit, inline_init};
 
@@ -160,8 +157,8 @@ mod test {
                 r.id = String::from("prescription_no_stock");
                 r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
-                r.r#type = InvoiceRowType::Prescription;
-                r.status = InvoiceRowStatus::New;
+                r.r#type = InvoiceType::Prescription;
+                r.status = InvoiceStatus::New;
                 r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 7)
                     .unwrap()
                     .and_hms_milli_opt(15, 30, 0, 0)
@@ -183,7 +180,7 @@ mod test {
                 r.item_name = String::from("Item A");
                 r.item_code = String::from("item_a_code");
                 r.batch = None;
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
             })
         }
 
@@ -278,7 +275,7 @@ mod test {
                 r.id = "test_prescription_pricing".to_string();
                 r.name_link_id = mock_patient().id;
                 r.store_id = mock_store_a().id;
-                r.r#type = InvoiceRowType::Prescription;
+                r.r#type = InvoiceType::Prescription;
             })
         }
         fn clinician() -> ClinicianRow {

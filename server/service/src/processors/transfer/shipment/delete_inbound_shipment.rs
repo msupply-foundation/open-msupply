@@ -1,6 +1,6 @@
 use repository::{
-    ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
-    InvoiceRowType, RepositoryError, StorageConnection,
+    ActivityLogType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+    RepositoryError, StorageConnection,
 };
 
 use crate::{activity_log::system_activity_log_entry, invoice::common::get_lines_for_invoice};
@@ -50,12 +50,12 @@ impl ShipmentTransferProcessor for DeleteInboundShipmentProcessor {
         // 4.
         if !matches!(
             inbound_shipment.invoice_row.r#type,
-            InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn
+            InvoiceType::InboundShipment | InvoiceType::InboundReturn
         ) {
             return Ok(None);
         }
         // 5.
-        if inbound_shipment.invoice_row.status != InvoiceRowStatus::Picked {
+        if inbound_shipment.invoice_row.status != InvoiceStatus::Picked {
             return Ok(None);
         }
 

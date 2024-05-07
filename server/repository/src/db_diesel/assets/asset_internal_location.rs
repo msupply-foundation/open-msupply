@@ -57,7 +57,9 @@ impl<'a> AssetInternalLocationRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
@@ -101,7 +103,8 @@ impl<'a> AssetInternalLocationRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetInternalLocationRow>(&self.connection.connection)?;
+        let result =
+            final_query.load::<AssetInternalLocationRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -151,18 +154,13 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_location_repository() {
         // Prepare
-        let (_, storage_connection, _, _) = test_db::setup_all(
+        let (_, mut storage_connection, _, _) = test_db::setup_all(
             "test_asset_location_query_repository",
             MockDataInserts::none().assets().locations(),
         )
         .await;
 
         // Create a asset location join
-        let asset_internal_location_repository =
-            AssetInternalLocationRepository::new(&storage_connection);
-        let asset_internal_location_row_repository =
-            AssetInternalLocationRowRepository::new(&storage_connection);
-
         let asset_location_id = "test_id".to_string();
         let asset_location = AssetInternalLocationRow {
             id: asset_location_id.clone(),
@@ -170,12 +168,12 @@ mod tests {
             location_id: mock_location_1().id,
         };
 
-        asset_internal_location_row_repository
+        AssetInternalLocationRowRepository::new(&mut storage_connection)
             .insert_one(&asset_location)
             .unwrap();
 
         // Query by id
-        let result = asset_internal_location_repository
+        let result = AssetInternalLocationRepository::new(&mut storage_connection)
             .query_one(
                 AssetInternalLocationFilter::new().id(EqualFilter::equal_to(&asset_location_id)),
             )

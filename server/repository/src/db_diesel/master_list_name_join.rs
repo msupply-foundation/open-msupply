@@ -16,7 +16,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "master_list_name_join"]
+#[diesel(table_name = master_list_name_join)]
 pub struct MasterListNameJoinRow {
     pub id: String,
     pub master_list_id: String,
@@ -44,7 +44,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -52,7 +52,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
     pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list_name_join)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -62,7 +62,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
     ) -> Result<MasterListNameJoinRow, RepositoryError> {
         let result = master_list_name_join
             .filter(id.eq(record_id))
-            .first(&self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -72,14 +72,14 @@ impl<'a> MasterListNameJoinRepository<'a> {
     ) -> Result<Option<MasterListNameJoinRow>, RepositoryError> {
         let result = master_list_name_join
             .filter(id.eq(record_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, record_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(master_list_name_join.filter(id.eq(record_id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

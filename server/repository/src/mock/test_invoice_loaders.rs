@@ -2,8 +2,8 @@ use chrono::NaiveDate;
 use util::inline_init;
 
 use crate::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, RequisitionRow,
+    requisition_row::{RequisitionStatus, RequisitionType},
+    InvoiceRow, InvoiceStatus, InvoiceType, RequisitionRow,
 };
 
 use super::{mock_name_store_b, mock_store_a, MockData};
@@ -22,8 +22,8 @@ pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
         r.requisition_number = 1;
         r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Request;
-        r.status = RequisitionRowStatus::Draft;
+        r.r#type = RequisitionType::Request;
+        r.status = RequisitionStatus::Draft;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -40,8 +40,8 @@ pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
         r.store_id = mock_store_a().id;
         r.invoice_number = 1;
         r.requisition_id = Some(mock_invoice_loader_requisition1().id);
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::Picked;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::Picked;
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
@@ -55,8 +55,8 @@ pub fn mock_invoice_loader_invoice2() -> InvoiceRow {
         r.name_link_id = mock_name_store_b().id;
         r.store_id = mock_store_a().id;
         r.invoice_number = 1;
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::Picked;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::Picked;
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)

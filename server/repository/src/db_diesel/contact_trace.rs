@@ -13,8 +13,8 @@ use crate::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
         apply_sort_no_case, apply_string_filter,
     },
-    DBType, DateFilter, DatetimeFilter, DocumentRow, EqualFilter, Gender, Pagination, ProgramRow,
-    RepositoryError, Sort, StringFilter,
+    DBType, DateFilter, DatetimeFilter, DocumentRow, EqualFilter, GenderType, Pagination,
+    ProgramRow, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -32,7 +32,7 @@ pub struct ContactTraceFilter {
     pub contact_trace_id: Option<StringFilter>,
     pub first_name: Option<StringFilter>,
     pub last_name: Option<StringFilter>,
-    pub gender: Option<EqualFilter<Gender>>,
+    pub gender: Option<EqualFilter<GenderType>>,
     pub date_of_birth: Option<DateFilter>,
 }
 
@@ -119,7 +119,9 @@ impl<'a> ContactTraceRepository<'a> {
     pub fn count(&self, filter: Option<ContactTraceFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -178,7 +180,7 @@ impl<'a> ContactTraceRepository<'a> {
         //    diesel::debug_query::<DBType, _>(&final_query).to_string()
         //);
         let result = final_query
-            .load::<ContactTraceJoin>(&self.connection.connection)?
+            .load::<ContactTraceJoin>(self.connection.lock().connection())?
             .into_iter()
             .map(|row| ContactTrace {
                 contact_trace: row.0,

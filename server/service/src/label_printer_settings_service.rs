@@ -1,4 +1,4 @@
-use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 
 use crate::{service_provider::ServiceContext, settings::LabelPrinterSettingNode};
 
@@ -11,7 +11,7 @@ pub trait LabelPrinterSettingsServiceTrait: Sync + Send {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         let label_printer_settings =
-            match key_value_store.get_string(KeyValueType::SettingsLabelPrinter)? {
+            match key_value_store.get_string(KeyType::SettingsLabelPrinter)? {
                 Some(value) => match serde_json::from_str::<LabelPrinterSettingNode>(&value) {
                     Ok(settings) => Some(settings),
                     Err(_) => None,
@@ -30,7 +30,7 @@ pub trait LabelPrinterSettingsServiceTrait: Sync + Send {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
         let serialised = serde_json::to_string(settings)?;
 
-        key_value_store.set_string(KeyValueType::SettingsLabelPrinter, Some(serialised))?;
+        key_value_store.set_string(KeyType::SettingsLabelPrinter, Some(serialised))?;
 
         Ok(())
     }

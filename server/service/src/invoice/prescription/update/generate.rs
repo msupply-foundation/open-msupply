@@ -2,7 +2,7 @@ use chrono::Utc;
 
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceRow,
-    InvoiceRowStatus, RepositoryError, StockLineRow, StorageConnection,
+    InvoiceStatus, RepositoryError, StockLineRow, StorageConnection,
 };
 
 use crate::invoice::common::{
@@ -78,8 +78,8 @@ fn should_update_batches_total_number_of_packs(
         let invoice_status_index = invoice.status.index();
         let new_invoice_status_index = new_invoice_status.index();
 
-        new_invoice_status_index >= InvoiceRowStatus::Picked.index()
-            && invoice_status_index < InvoiceRowStatus::Picked.index()
+        new_invoice_status_index >= InvoiceStatus::Picked.index()
+            && invoice_status_index < InvoiceStatus::Picked.index()
     } else {
         false
     }
@@ -98,15 +98,15 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePresc
     let current_datetime = Utc::now().naive_utc();
 
     match (&invoice.status, new_status) {
-        (InvoiceRowStatus::Verified, _) => {}
-        (InvoiceRowStatus::New, UpdatePrescriptionStatus::Verified) => {
+        (InvoiceStatus::Verified, _) => {}
+        (InvoiceStatus::New, UpdatePrescriptionStatus::Verified) => {
             invoice.picked_datetime = Some(current_datetime);
             invoice.verified_datetime = Some(current_datetime)
         }
-        (InvoiceRowStatus::New, UpdatePrescriptionStatus::Picked) => {
+        (InvoiceStatus::New, UpdatePrescriptionStatus::Picked) => {
             invoice.picked_datetime = Some(current_datetime);
         }
-        (InvoiceRowStatus::Picked, UpdatePrescriptionStatus::Verified) => {
+        (InvoiceStatus::Picked, UpdatePrescriptionStatus::Verified) => {
             invoice.verified_datetime = Some(current_datetime)
         }
         _ => {}
@@ -120,7 +120,7 @@ fn lines_to_trim(
     status: &Option<UpdatePrescriptionStatus>,
 ) -> Result<Option<Vec<InvoiceLineRow>>, RepositoryError> {
     // Status sequence for outbound shipment: New, Picked, Verified
-    if invoice.status == InvoiceRowStatus::Verified {
+    if invoice.status == InvoiceStatus::Verified {
         return Ok(None);
     }
 
@@ -129,7 +129,7 @@ fn lines_to_trim(
         None => return Ok(None),
     };
 
-    if new_prescription_status != InvoiceRowStatus::Verified {
+    if new_prescription_status != InvoiceStatus::Verified {
         return Ok(None);
     }
 

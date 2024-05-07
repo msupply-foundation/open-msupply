@@ -65,7 +65,7 @@ async fn remove_sqlite_check_stocktake() {
     let stocktakes = stocktake_dsl::stocktake
         .select((stocktake_dsl::id, stocktake_dsl::status))
         .order_by(stocktake_dsl::id.asc())
-        .load::<(String, String)>(&connection.connection)
+        .load::<(String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

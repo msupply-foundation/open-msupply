@@ -1,4 +1,4 @@
-use repository::{Language, UserAccountRow};
+use repository::{LanguageType, UserAccountRow};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -102,7 +102,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 username: "user1".to_string(),
                 hashed_password: "".to_string(),
                 email: Some("user1@test.com".to_string()),
-                language: Language::English,
+                language: LanguageType::English,
                 first_name: Some("User1".to_string()),
                 last_name: Some("Test".to_string()),
                 phone_number: None,
@@ -118,7 +118,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 username: "user2".to_string(),
                 hashed_password: "".to_string(),
                 email: Some("user2@test.com".to_string()),
-                language: Language::French,
+                language: LanguageType::French,
                 first_name: Some("User2".to_string()),
                 last_name: Some("Test".to_string()),
                 phone_number: None,

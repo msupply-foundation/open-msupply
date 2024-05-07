@@ -207,7 +207,7 @@ mod test {
             mock_store_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, ItemRow, ItemRowType, RepositoryError, StockLineRow,
+        InvoiceLineRow, ItemRow, ItemType, RepositoryError, StockLineRow,
     };
 
     type ServiceInput = super::GenerateOutboundReturnLinesInput;
@@ -407,7 +407,7 @@ mod test {
         fn test_item() -> ItemRow {
             ItemRow {
                 id: "test_item".to_string(),
-                r#type: ItemRowType::Stock,
+                r#type: ItemType::Stock,
                 default_pack_size: 1,
                 ..Default::default()
             }

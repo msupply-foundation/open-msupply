@@ -1,4 +1,4 @@
-use repository::SyncLogRowErrorCode;
+use repository::SyncApiErrorCode;
 
 pub mod logger;
 pub mod status;
@@ -7,10 +7,10 @@ pub mod status;
 mod test;
 
 /// SyncError is captured in database as a full error stringified error in `message`
-/// and a mapped `code` as SyncLogRowErrorCode. Only errors relevant to user are captured
+/// and a mapped `code` as SyncApiErrorCode. Only errors relevant to user are captured
 /// as a mapped type
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct SyncLogError {
     pub message: String,
-    pub code: Option<SyncLogRowErrorCode>,
+    pub code: Option<SyncApiErrorCode>,
 }

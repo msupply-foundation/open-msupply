@@ -8,7 +8,7 @@ use actix_web::{
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     mock::{insert_extra_mock_data, mock_store_a, mock_store_b, MockData, MockDataInserts},
-    ChangelogRepository, KeyValueStoreRow, KeyValueType, LocationRow,
+    ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;
 use util::{assert_matches, inline_edit, inline_init};
@@ -103,7 +103,7 @@ async fn sync_status() {
         &connection,
         inline_init(|r: &mut MockData| {
             r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                r.id = KeyValueType::SettingsSyncSiteId;
+                r.id = KeyType::SettingsSyncSiteId;
                 r.value_int = Some(mock_store_b().site_id);
             })];
             r.locations = (1..=3)

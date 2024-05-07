@@ -1,8 +1,8 @@
 use chrono::{Duration, NaiveDateTime, NaiveTime, Utc};
 use repository::{
     ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, Requisition,
-    StorageConnection, StoreRowRepository,
+    InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, Requisition, StorageConnection,
+    StoreRowRepository,
 };
 use util::uuid::uuid;
 
@@ -65,15 +65,15 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         // 2.
         // Also get type for new invoice
         let new_invoice_type = match outbound_shipment.invoice_row.r#type {
-            InvoiceRowType::OutboundShipment => InboundInvoiceType::InboundShipment,
-            InvoiceRowType::OutboundReturn => InboundInvoiceType::InboundReturn,
+            InvoiceType::OutboundShipment => InboundInvoiceType::InboundShipment,
+            InvoiceType::OutboundReturn => InboundInvoiceType::InboundReturn,
             _ => return Ok(None),
         };
 
         // 3.
         if !matches!(
             outbound_shipment.invoice_row.status,
-            InvoiceRowStatus::Shipped | InvoiceRowStatus::Picked
+            InvoiceStatus::Shipped | InvoiceStatus::Picked
         ) {
             return Ok(None);
         }
@@ -161,9 +161,9 @@ fn generate_inbound_shipment(
     let outbound_shipment_row = &outbound_shipment.invoice_row;
 
     let status = match &outbound_shipment_row.status {
-        InvoiceRowStatus::Picked => InvoiceRowStatus::Picked,
-        InvoiceRowStatus::Shipped => InvoiceRowStatus::Shipped,
-        _ => InvoiceRowStatus::New,
+        InvoiceStatus::Picked => InvoiceStatus::Picked,
+        InvoiceStatus::Shipped => InvoiceStatus::Shipped,
+        _ => InvoiceStatus::New,
     };
 
     let request_requisition_id = request_requisition
@@ -205,8 +205,8 @@ fn generate_inbound_shipment(
             &store_id,
         )?,
         r#type: match r#type {
-            InboundInvoiceType::InboundReturn => InvoiceRowType::InboundReturn,
-            InboundInvoiceType::InboundShipment => InvoiceRowType::InboundShipment,
+            InboundInvoiceType::InboundReturn => InvoiceType::InboundReturn,
+            InboundInvoiceType::InboundShipment => InvoiceType::InboundShipment,
         },
         name_link_id,
         store_id,

@@ -1,7 +1,8 @@
 #[macro_use]
 extern crate diesel;
-#[macro_use]
-extern crate diesel_migrations;
+use diesel_migrations::{
+    embed_migrations, EmbeddedMigrations, HarnessWithOutput, MigrationHarness,
+};
 
 pub mod database_settings;
 pub mod db_diesel;
@@ -23,15 +24,17 @@ mod tests;
 sql_function!(fn lower(x: Text) -> Text);
 
 #[cfg(feature = "postgres")]
-embed_migrations!("./migrations/postgres");
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/postgres");
 #[cfg(not(feature = "postgres"))]
-embed_migrations!("./migrations/sqlite");
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/sqlite");
 
 pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
     let mut boxed_buffer = Box::<Vec<u8>>::default();
-    embedded_migrations::run_with_output(&connection.connection, &mut boxed_buffer)
+
+    HarnessWithOutput::new(connection.lock().connection(), &mut boxed_buffer)
+        .run_pending_migrations(MIGRATIONS)
         .map_err(|e| e.to_string())?;
-    // Using log::info for migrations result will make sure they don't appear in test
+
     log::info!(
         "{}",
         str::from_utf8(&boxed_buffer).map_err(|e| e.to_string())?

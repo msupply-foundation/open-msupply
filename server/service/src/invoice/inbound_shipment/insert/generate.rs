@@ -1,7 +1,7 @@
 use chrono::Utc;
 
 use repository::{
-    CurrencyFilter, CurrencyRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, Name,
+    CurrencyFilter, CurrencyRepository, InvoiceRow, InvoiceStatus, InvoiceType, Name,
     NumberRowType, RepositoryError, StorageConnection,
 };
 
@@ -34,13 +34,13 @@ pub fn generate(
         user_id: Some(user_id.to_string()),
         name_link_id: other_party_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
-        r#type: InvoiceRowType::InboundShipment,
+        r#type: InvoiceType::InboundShipment,
         comment,
         their_reference,
         invoice_number: next_number(connection, &NumberRowType::InboundShipment, store_id)?,
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
-        status: InvoiceRowStatus::New,
+        status: InvoiceStatus::New,
         on_hold: on_hold.unwrap_or(false),
         colour,
         // Default

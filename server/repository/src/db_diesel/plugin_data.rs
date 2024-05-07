@@ -45,7 +45,9 @@ impl<'a> PluginDataRepository<'a> {
 
     pub fn count(&self, filter: Option<PluginDataFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -85,7 +87,7 @@ impl<'a> PluginDataRepository<'a> {
         let results = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<PluginDataRow>(&self.connection.connection)?;
+            .load::<PluginDataRow>(self.connection.lock().connection())?;
 
         Ok(results.into_iter().map(to_domain).collect())
     }

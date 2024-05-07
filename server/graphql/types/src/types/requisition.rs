@@ -11,8 +11,8 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    NameRow, PeriodRow, Requisition, RequisitionRowApprovalStatus,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
+    ApprovalStatusType, NameRow, PeriodRow, Requisition,
 };
 use service::ListResult;
 
@@ -280,16 +280,16 @@ impl RequisitionConnector {
 }
 
 impl RequisitionNodeType {
-    pub fn to_domain(self) -> RequisitionRowType {
+    pub fn to_domain(self) -> RequisitionType {
         use RequisitionNodeType::*;
         match self {
-            Request => RequisitionRowType::Request,
-            Response => RequisitionRowType::Response,
+            Request => RequisitionType::Request,
+            Response => RequisitionType::Response,
         }
     }
 
-    pub fn from_domain(r#type: &RequisitionRowType) -> RequisitionNodeType {
-        use RequisitionRowType::*;
+    pub fn from_domain(r#type: &RequisitionType) -> RequisitionNodeType {
+        use RequisitionType::*;
         match r#type {
             Request => RequisitionNodeType::Request,
             Response => RequisitionNodeType::Response,
@@ -298,8 +298,8 @@ impl RequisitionNodeType {
 }
 
 impl RequisitionNodeApprovalStatus {
-    fn from_domain(status: &RequisitionRowApprovalStatus) -> Self {
-        use RequisitionRowApprovalStatus::*;
+    fn from_domain(status: &ApprovalStatusType) -> Self {
+        use ApprovalStatusType::*;
         match status {
             None => Self::None,
             Approved => Self::Approved,
@@ -313,18 +313,18 @@ impl RequisitionNodeApprovalStatus {
 }
 
 impl RequisitionNodeStatus {
-    pub fn to_domain(self) -> RequisitionRowStatus {
+    pub fn to_domain(self) -> RequisitionStatus {
         use RequisitionNodeStatus::*;
         match self {
-            Draft => RequisitionRowStatus::Draft,
-            New => RequisitionRowStatus::New,
-            Sent => RequisitionRowStatus::Sent,
-            Finalised => RequisitionRowStatus::Finalised,
+            Draft => RequisitionStatus::Draft,
+            New => RequisitionStatus::New,
+            Sent => RequisitionStatus::Sent,
+            Finalised => RequisitionStatus::Finalised,
         }
     }
 
-    pub fn from_domain(status: &RequisitionRowStatus) -> RequisitionNodeStatus {
-        use RequisitionRowStatus::*;
+    pub fn from_domain(status: &RequisitionStatus) -> RequisitionNodeStatus {
+        use RequisitionStatus::*;
         match status {
             Draft => RequisitionNodeStatus::Draft,
             New => RequisitionNodeStatus::New,

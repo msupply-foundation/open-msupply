@@ -72,7 +72,7 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncBufferAction, SyncBufferRowRepository,
+        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
     };
 
     #[actix_rt::test]
@@ -81,7 +81,7 @@ mod tests {
             SyncBufferRow {
                 record_id: "clinician_b_merge".to_string(),
                 table_name: "clinician".to_string(),
-                action: SyncBufferAction::Merge,
+                action: SyncAction::Merge,
                 data: r#"{
                         "mergeIdToKeep": "clinician_b",
                         "mergeIdToDelete": "clinician_a"
@@ -92,7 +92,7 @@ mod tests {
             SyncBufferRow {
                 record_id: "clinician_c_merge".to_string(),
                 table_name: "clinician".to_string(),
-                action: SyncBufferAction::Merge,
+                action: SyncAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "clinician_c",
                       "mergeIdToDelete": "clinician_b"

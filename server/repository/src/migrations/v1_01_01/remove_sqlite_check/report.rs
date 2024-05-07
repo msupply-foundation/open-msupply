@@ -66,7 +66,7 @@ async fn remove_sqlite_check_report() {
     let reports = report_dsl::report
         .select((report_dsl::id, report_dsl::type_, report_dsl::context))
         .order_by(report_dsl::id.asc())
-        .load::<(String, String, String)>(&connection.connection)
+        .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

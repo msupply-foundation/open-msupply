@@ -142,7 +142,7 @@ mod test {
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType,
         ReturnReasonRow,
     };
 
@@ -153,8 +153,8 @@ mod test {
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceRowType::InboundReturn,
-                status: InvoiceRowStatus::New,
+                r#type: InvoiceType::InboundReturn,
+                status: InvoiceStatus::New,
                 ..Default::default()
             }
         }
@@ -169,7 +169,7 @@ mod test {
         fn verified_return() -> InvoiceRow {
             InvoiceRow {
                 id: "verified_return".to_string(),
-                status: InvoiceRowStatus::Verified,
+                status: InvoiceStatus::Verified,
                 ..base_test_return()
             }
         }

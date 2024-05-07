@@ -1,5 +1,5 @@
 use repository::{
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
     RepositoryError, StorageConnection,
 };
 
@@ -50,7 +50,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
         // 2.
         if !matches!(
             outbound_shipment.invoice_row.r#type,
-            InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn
+            InvoiceType::OutboundShipment | InvoiceType::OutboundReturn
         ) {
             return Ok(None);
         }
@@ -60,11 +60,11 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
             None => return Ok(None),
         };
         // 4.
-        if inbound_shipment.invoice_row.status != InvoiceRowStatus::Picked {
+        if inbound_shipment.invoice_row.status != InvoiceStatus::Picked {
             return Ok(None);
         }
         // 5.
-        if outbound_shipment.invoice_row.status != InvoiceRowStatus::Shipped {
+        if outbound_shipment.invoice_row.status != InvoiceStatus::Shipped {
             return Ok(None);
         }
 
@@ -95,7 +95,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
 
         let updated_inbound_shipment = InvoiceRow {
             // 6.
-            status: InvoiceRowStatus::Shipped,
+            status: InvoiceStatus::Shipped,
             shipped_datetime: outbound_shipment.invoice_row.shipped_datetime,
             ..inbound_shipment.invoice_row.clone()
         };

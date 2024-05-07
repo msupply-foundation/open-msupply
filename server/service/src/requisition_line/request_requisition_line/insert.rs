@@ -11,7 +11,7 @@ use crate::{
 };
 
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
     StorageConnection,
 };
@@ -85,11 +85,11 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionRowStatus::Draft {
+    if requisition_row.status != RequisitionStatus::Draft {
         return Err(OutError::CannotEditRequisition);
     }
 
-    if requisition_row.r#type != RequisitionRowType::Request {
+    if requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
     }
 

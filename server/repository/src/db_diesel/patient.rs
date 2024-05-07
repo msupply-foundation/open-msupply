@@ -10,7 +10,7 @@ use crate::{
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Gender, NameType, Pagination, ProgramEnrolmentFilter,
+    DateFilter, EqualFilter, GenderType, NameType, Pagination, ProgramEnrolmentFilter,
     ProgramEnrolmentRepository, Sort, StringFilter,
 };
 
@@ -27,7 +27,7 @@ pub struct PatientFilter {
     pub code_2: Option<StringFilter>,
     pub first_name: Option<StringFilter>,
     pub last_name: Option<StringFilter>,
-    pub gender: Option<EqualFilter<Gender>>,
+    pub gender: Option<EqualFilter<GenderType>>,
     pub date_of_birth: Option<DateFilter>,
     pub date_of_death: Option<DateFilter>,
     pub phone: Option<StringFilter>,
@@ -81,7 +81,9 @@ impl<'a> PatientRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter, allowed_ctx);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -151,7 +153,7 @@ impl<'a> PatientRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<NameRow>(&self.connection.connection)?;
+        let result = final_query.load::<NameRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }
@@ -164,7 +166,8 @@ impl<'a> PatientRepository<'a> {
         allowed_ctx: Option<&[String]>,
     ) -> BoxedNameQuery {
         let mut query = name_dsl::name.into_boxed();
-
+        // Note, below are some OR filters which needs to go first to work
+        // TODO: able to make this more robust in Diesel 2?
         if let Some(f) = filter {
             let PatientFilter {
                 id,
@@ -250,6 +253,8 @@ impl<'a> PatientRepository<'a> {
             apply_string_filter!(query, email, name_dsl::email);
         };
 
+        // Only return active (not deleted) patients
+        query = query.filter(name_dsl::deleted_datetime.is_null());
         apply_equal_filter!(
             query,
             Some(NameType::equal_to(&NameType::Patient)),
@@ -301,7 +306,7 @@ impl PatientFilter {
         self
     }
 
-    pub fn gender(mut self, filter: EqualFilter<Gender>) -> Self {
+    pub fn gender(mut self, filter: EqualFilter<GenderType>) -> Self {
         self.gender = Some(filter);
         self
     }
@@ -363,9 +368,9 @@ mod tests {
             MockDataInserts::none().names().stores().name_store_joins(),
         )
         .await;
-        let repo = PatientRepository::new(&connection);
+
         // Make sure we don't return names that are not patients
-        let result = repo
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("code2")),
                 None,
@@ -373,16 +378,17 @@ mod tests {
             .unwrap();
         assert_eq!(result.first(), None);
 
-        let name_row_repo = NameRowRepository::new(&connection);
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
-        name_row_repo.upsert_one(&patient_row).unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
 
-        let result = repo
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
                 None,
@@ -406,10 +412,9 @@ mod tests {
                 .programs(),
         )
         .await;
-        let repo = PatientRepository::new(&connection);
 
         // add name and name_store_join
-        let name_row_repo = NameRowRepository::new(&connection);
+
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.name = "test_name".to_string();
@@ -417,7 +422,9 @@ mod tests {
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
-        name_row_repo.upsert_one(&patient_row).unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
 
         // test identifier OR
         let patient_row_a = inline_init(|row: &mut NameRow| {
@@ -443,9 +450,15 @@ mod tests {
             row.code = "code333".to_string();
             row.national_health_number = Some("patient_c_nhn".to_string());
         });
-        name_row_repo.upsert_one(&patient_row_a).unwrap();
-        name_row_repo.upsert_one(&patient_row_b).unwrap();
-        name_row_repo.upsert_one(&patient_row_c).unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row_a)
+            .unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row_b)
+            .unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row_c)
+            .unwrap();
 
         // Test identifier search
         ProgramEnrolmentRowRepository::new(&connection)
@@ -460,6 +473,8 @@ mod tests {
                 status: Some("Active".to_string()),
             })
             .unwrap();
+
+        let repo = PatientRepository::new(&connection);
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("codePatient")),
@@ -541,17 +556,17 @@ mod tests {
                 .programs(),
         )
         .await;
-        let repo = PatientRepository::new(&connection);
 
         // add name and name_store_join
-        let name_row_repo = NameRowRepository::new(&connection);
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
-        name_row_repo.upsert_one(&patient_row).unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
 
         // Searching by program enrolment id requires correct context access
         ProgramEnrolmentRowRepository::new(&connection)
@@ -566,6 +581,7 @@ mod tests {
                 status: Some("Active".to_string()),
             })
             .unwrap();
+        let repo = PatientRepository::new(&connection);
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
@@ -586,17 +602,17 @@ mod tests {
     async fn test_name_date_of_death() {
         let (_, connection, _, _) =
             test_db::setup_all("test_name_date_of_death", MockDataInserts::none()).await;
-        let repo = PatientRepository::new(&connection);
 
-        let name_row_repo = NameRowRepository::new(&connection);
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
         });
-        name_row_repo.upsert_one(&patient_row).unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
 
         // Query if patient is still alive if date of death is not set
-        let result = repo
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
                     NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
@@ -612,9 +628,11 @@ mod tests {
             row.r#type = NameType::Patient;
             row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap())
         });
-        name_row_repo.upsert_one(&patient_row).unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
         // Query if patient is not alive after date_of_death
-        let result = repo
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
                     NaiveDate::from_ymd_opt(2023, 9, 22).unwrap(),
@@ -624,7 +642,7 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), 0);
         // Query if patient is still alive before date_of_death
-        let result = repo
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
                     NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),

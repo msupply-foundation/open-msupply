@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
     Pagination, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineSort,
     StockLineSortField, StorageConnection,
 };
@@ -228,6 +228,6 @@ fn get_allocated_lines(
             .invoice_id(EqualFilter::equal_to(
                 &unallocated_line.invoice_line_row.invoice_id,
             ))
-            .r#type(InvoiceLineRowType::StockOut.equal_to()),
+            .r#type(InvoiceLineType::StockOut.equal_to()),
     )
 }

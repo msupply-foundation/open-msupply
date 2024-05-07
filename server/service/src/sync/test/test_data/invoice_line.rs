@@ -6,7 +6,7 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{
     mock::{mock_item_a, mock_stock_line_a},
-    InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineRowType,
+    InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
 };
 use serde_json::json;
 const TABLE_NAME: &str = "trans_line";
@@ -88,7 +88,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             total_before_tax: 10.0 * 700.36363636,
             total_after_tax: 10.0 * 700.36363636,
             tax: None,
-            r#type: InvoiceLineRowType::StockIn,
+            r#type: InvoiceLineType::StockIn,
             number_of_packs: 700.36363636,
             note: None,
             inventory_adjustment_reason_id: None,
@@ -203,7 +203,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             total_before_tax: 2.0 * 1000.9124798,
             total_after_tax: 2.0 * 1000.9124798,
             tax: None,
-            r#type: InvoiceLineRowType::StockOut,
+            r#type: InvoiceLineType::StockOut,
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
@@ -321,7 +321,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             total_before_tax: 105.4,
             total_after_tax: 130.5,
             tax: Some(33.3),
-            r#type: InvoiceLineRowType::StockOut,
+            r#type: InvoiceLineType::StockOut,
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
@@ -439,7 +439,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             total_before_tax: 105.4,
             total_after_tax: 130.5,
             tax: None,
-            r#type: InvoiceLineRowType::StockOut,
+            r#type: InvoiceLineType::StockOut,
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,

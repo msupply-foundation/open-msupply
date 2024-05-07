@@ -34,7 +34,9 @@ impl<'a> RequisitionLineRepository<'a> {
 
     pub fn count(&self, filter: Option<RequisitionLineFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter)?;
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
@@ -59,7 +61,7 @@ impl<'a> RequisitionLineRepository<'a> {
 
         query = query.order(requisition_line_dsl::id.asc());
 
-        let result = query.load::<RequisitionLineJoin>(&self.connection.connection)?;
+        let result = query.load::<RequisitionLineJoin>(self.connection.lock().connection())?;
 
         Ok(result
             .into_iter()

@@ -42,7 +42,9 @@ impl<'a> PackVariantRepository<'a> {
     pub fn count(&self, filter: Option<PackVariantFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -89,7 +91,7 @@ impl<'a> PackVariantRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<PackVariant>(&self.connection.connection)?;
+            .load::<PackVariant>(self.connection.lock().connection())?;
 
         Ok(result)
     }

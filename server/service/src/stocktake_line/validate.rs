@@ -3,7 +3,7 @@ use repository::{
         InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
         InventoryAdjustmentReasonRepository,
     },
-    EqualFilter, InventoryAdjustmentReasonType, RepositoryError, StockLineRow, StocktakeLine,
+    EqualFilter, InventoryAdjustmentType, RepositoryError, StockLineRow, StocktakeLine,
     StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StorageConnection,
 };
 
@@ -37,13 +37,13 @@ pub fn check_active_adjustment_reasons(
     let inventory_adjustment_reasons = if stocktake_reduction_amount < 0.0 {
         InventoryAdjustmentReasonRepository::new(&connection).query_by_filter(
             InventoryAdjustmentReasonFilter::new()
-                .r#type(InventoryAdjustmentReasonType::Positive.equal_to())
+                .r#type(InventoryAdjustmentType::Positive.equal_to())
                 .is_active(true),
         )?
     } else {
         InventoryAdjustmentReasonRepository::new(&connection).query_by_filter(
             InventoryAdjustmentReasonFilter::new()
-                .r#type(InventoryAdjustmentReasonType::Negative.equal_to())
+                .r#type(InventoryAdjustmentType::Negative.equal_to())
                 .is_active(true),
         )?
     };
@@ -64,7 +64,7 @@ pub fn check_reason_is_valid(
         if let Some(reason_id) = &inventory_adjustment_reason_id {
             let reason = InventoryAdjustmentReasonRepository::new(&connection).query_by_filter(
                 InventoryAdjustmentReasonFilter::new()
-                    .r#type(InventoryAdjustmentReasonType::Positive.equal_to())
+                    .r#type(InventoryAdjustmentType::Positive.equal_to())
                     .is_active(true)
                     .id(EqualFilter::equal_to(&reason_id)),
             )?;
@@ -73,7 +73,7 @@ pub fn check_reason_is_valid(
     } else if let Some(reason_id) = &inventory_adjustment_reason_id {
         let reason = InventoryAdjustmentReasonRepository::new(&connection).query_by_filter(
             InventoryAdjustmentReasonFilter::new()
-                .r#type(InventoryAdjustmentReasonType::Negative.equal_to())
+                .r#type(InventoryAdjustmentType::Negative.equal_to())
                 .is_active(true)
                 .id(EqualFilter::equal_to(&reason_id)),
         )?;

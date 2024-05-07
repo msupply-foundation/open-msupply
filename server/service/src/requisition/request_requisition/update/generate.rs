@@ -5,7 +5,7 @@ use crate::requisition::{
 };
 use chrono::Utc;
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionRowStatus},
+    requisition_row::{RequisitionRow, RequisitionStatus},
     EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, StorageConnection,
 };
@@ -44,7 +44,7 @@ pub fn generate(
     let updated_requisition_row = inline_edit(&existing, |mut u| {
         // Only sent status is available in UpdateRequestRequisitionStatus
         u.status = if update_status.is_some() {
-            RequisitionRowStatus::Sent
+            RequisitionStatus::Sent
         } else {
             u.status
         };

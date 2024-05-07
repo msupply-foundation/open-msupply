@@ -1,9 +1,9 @@
 use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
+    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
     StorageConnection,
 };
 
-pub fn check_invoice_type(invoice: &InvoiceRow, r#type: InvoiceRowType) -> bool {
+pub fn check_invoice_type(invoice: &InvoiceRow, r#type: InvoiceType) -> bool {
     if invoice.r#type == r#type {
         return true;
     }
@@ -17,7 +17,7 @@ pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> bool {
     false
 }
 
-pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRowStatus>) -> bool {
+pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceStatus>) -> bool {
     if let Some(new_status) = status_option {
         if new_status != invoice.status {
             return true;
@@ -29,33 +29,35 @@ pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRo
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     let status = invoice.status.clone();
     let is_editable = match &invoice.r#type {
-        InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match status {
-            InvoiceRowStatus::New => true,
-            InvoiceRowStatus::Allocated => true,
-            InvoiceRowStatus::Picked => true,
-            InvoiceRowStatus::Shipped => false,
-            InvoiceRowStatus::Delivered => false,
-            InvoiceRowStatus::Verified => false,
+        InvoiceType::OutboundShipment | InvoiceType::OutboundReturn => match status {
+            InvoiceStatus::New => true,
+            InvoiceStatus::Allocated => true,
+            InvoiceStatus::Picked => true,
+            InvoiceStatus::Shipped => false,
+            InvoiceStatus::Delivered => false,
+            InvoiceStatus::Verified => false,
         },
-        InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn => match status {
-            InvoiceRowStatus::New => true,
-            InvoiceRowStatus::Shipped => true,
-            InvoiceRowStatus::Delivered => true,
-            InvoiceRowStatus::Allocated => false,
-            InvoiceRowStatus::Picked => false,
-            InvoiceRowStatus::Verified => false,
+        InvoiceType::InboundShipment | InvoiceType::InboundReturn => match status {
+            InvoiceStatus::New => true,
+            InvoiceStatus::Shipped => true,
+            InvoiceStatus::Delivered => true,
+            InvoiceStatus::Allocated => false,
+            InvoiceStatus::Picked => false,
+            InvoiceStatus::Verified => false,
         },
-        InvoiceRowType::Prescription => match status {
-            InvoiceRowStatus::New => true,
-            InvoiceRowStatus::Allocated => true,
-            InvoiceRowStatus::Picked => true,
-            InvoiceRowStatus::Shipped => false,
-            InvoiceRowStatus::Delivered => false,
-            InvoiceRowStatus::Verified => false,
+        InvoiceType::Prescription => match status {
+            InvoiceStatus::New => true,
+            InvoiceStatus::Allocated => true,
+            InvoiceStatus::Picked => true,
+            InvoiceStatus::Shipped => false,
+            InvoiceStatus::Delivered => false,
+            InvoiceStatus::Verified => false,
         },
-        InvoiceRowType::InventoryAddition
-        | InvoiceRowType::InventoryReduction
-        | InvoiceRowType::Repack => false,
+        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => match status {
+            InvoiceStatus::New => true,
+            _ => false,
+        },
+        InvoiceType::Repack => false,
     };
 
     if is_editable {
@@ -71,11 +73,11 @@ pub enum InvoiceRowStatusError {
 
 pub fn check_invoice_status(
     invoice: &InvoiceRow,
-    status_option: Option<InvoiceRowStatus>,
+    status_option: Option<InvoiceStatus>,
     on_hold_option: &Option<bool>,
 ) -> Result<(), InvoiceRowStatusError> {
     if let Some(new_status) = status_option {
-        let existing_status: InvoiceRowStatus = invoice.status.clone();
+        let existing_status: InvoiceStatus = invoice.status.clone();
         // When we update invoice, error will trigger if
         // * invoice is currently on hold and is not being change to be not on hold
         let is_not_on_hold = !invoice.on_hold || !on_hold_option.unwrap_or(true);

@@ -8,8 +8,8 @@ pub(crate) mod update_request_requisition_status;
 pub(crate) mod test;
 
 use repository::{
-    ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, KeyValueType, RepositoryError, Requisition, StorageConnection,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, EqualFilter, KeyType,
+    RepositoryError, Requisition, RowActionType, StorageConnection,
 };
 use thiserror::Error;
 
@@ -76,14 +76,14 @@ pub(crate) fn process_requisition_transfers(
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
-    let cursor_controller = CursorController::new(KeyValueType::RequisitionTransferProcessorCursor);
+    let cursor_controller = CursorController::new(KeyType::RequisitionTransferProcessorCursor);
     // For transfers, changelog MUST be filtered by records where name_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
         .table_name(ChangelogTableName::Requisition.equal_to())
         .name_id(EqualFilter::equal_any(active_stores.name_ids()))
         // Filter out deletes
-        .action(ChangelogAction::Upsert.equal_to());
+        .action(RowActionType::Upsert.equal_to());
 
     loop {
         let cursor = cursor_controller
@@ -106,11 +106,11 @@ pub(crate) fn process_requisition_transfers(
 
             // Prepare record
             let (requisition, linked_requisition) = match &log.row_action {
-                ChangelogAction::Upsert => {
+                RowActionType::Upsert => {
                     get_requisition_and_linked_requisition(&ctx.connection, &log.record_id)
                         .map_err(Error::GetRequisitionAndLinkedRequisitionError)?
                 }
-                ChangelogAction::Delete => continue,
+                RowActionType::Delete => continue,
             };
 
             let record = RequisitionTransferProcessorRecord {

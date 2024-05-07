@@ -36,10 +36,10 @@ pub enum StorePreferenceType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
-#[table_name = "store_preference"]
+#[diesel(table_name = store_preference)]
 pub struct StorePreferenceRow {
     pub id: String, // store_id
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: StorePreferenceType,
     pub pack_to_one: bool,
     pub response_requisition_requires_authorisation: bool,
@@ -80,7 +80,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
             .on_conflict(store_preference_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -88,14 +88,14 @@ impl<'a> StorePreferenceRowRepository<'a> {
     pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(store_preference_dsl::store_preference)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StorePreferenceRow>, RepositoryError> {
         let result = store_preference_dsl::store_preference
             .filter(store_preference_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }
@@ -106,7 +106,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
     ) -> Result<Vec<StorePreferenceRow>, RepositoryError> {
         let result = store_preference_dsl::store_preference
             .filter(store_preference_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 }
