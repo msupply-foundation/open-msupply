@@ -22,7 +22,7 @@ pub struct InsertInput {
     pub item_id: Option<String>,
     name: Option<String>,
     total_before_tax: f64,
-    tax: Option<f64>,
+    tax_percentage: Option<f64>,
     note: Option<String>,
 }
 
@@ -85,7 +85,7 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            tax,
+            tax_percentage,
             note,
         } = self;
 
@@ -95,7 +95,7 @@ impl InsertInput {
             item_id,
             name,
             total_before_tax,
-            tax,
+            tax_percentage,
             note,
         }
     }
@@ -342,7 +342,7 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: 0.1,
-                    tax: Some(5.0),
+                    tax_percentage: Some(5.0),
                     note: Some("note".to_string())
                 }
             );
@@ -358,7 +358,7 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "tax": 5.0,
+            "taxPercentage": 5.0,
             "note": "note"
           },
           "storeId": "store_a"

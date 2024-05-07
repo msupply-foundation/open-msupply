@@ -8,6 +8,7 @@ import {
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
+  ArrayUtils,
   Box,
   Formatter,
   useIsCentralServerApi,
@@ -176,6 +177,9 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           <Row label={t('label.cold-storage-location')}>
             {locations ? (
               <AutocompleteMulti
+                isOptionEqualToValue={(option, value) =>
+                  option.value === value.value
+                }
                 defaultValue={defaultLocations}
                 filterSelectedOptions
                 getOptionLabel={option => option.label}
@@ -188,8 +192,8 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
                   }[]
                 ) => {
                   onChange({
-                    locationIds: newSelectedLocations.map(
-                      location => location.value
+                    locationIds: ArrayUtils.dedupe(
+                      newSelectedLocations.map(location => location.value)
                     ),
                   });
                 }}

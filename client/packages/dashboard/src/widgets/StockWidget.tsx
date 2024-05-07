@@ -79,7 +79,7 @@ export const StockWidget: React.FC = () => {
                 otherPartyId,
               },
               { onError }
-            ).then(requisitionNumber => {
+            ).then(({ requisitionNumber }) => {
               navigate(
                 RouteBuilder.create(AppRoute.Replenishment)
                   .addPart(AppRoute.InternalOrder)

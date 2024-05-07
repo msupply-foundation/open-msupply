@@ -7,7 +7,7 @@ import {
   LoadingButton,
   RadioIcon,
   Typography,
-  noOtherVariants,
+  useAuthContext,
   useFormatDateTime,
   useNativeClient,
   useTranslation,
@@ -65,37 +65,6 @@ const useHostSync = () => {
   };
 };
 
-const useUpdateUser = () => {
-  const { data: lastSuccessfulSync } = useSync.utils.lastSuccessfulUserSync();
-  const [error, setError] = useState<string | null>(null);
-  const { mutateAsync: updateUser, isLoading } = useSync.sync.updateUser();
-  const t = useTranslation('app');
-
-  return {
-    lastSuccessfulSync,
-    error,
-    isLoading,
-    updateUser: async () => {
-      setError(null);
-      try {
-        const update = await updateUser();
-
-        switch (update.__typename) {
-          case 'UpdateUserNode':
-            // Sync date will be updated through cache invalidation
-            return;
-          case 'ConnectionError':
-            return setError(t('error.connection-error'));
-          default:
-            noOtherVariants(update);
-        }
-      } catch (error) {
-        setError(String(error));
-      }
-    },
-  };
-};
-
 export const Sync = () => {
   const t = useTranslation('app');
   const {
@@ -107,11 +76,11 @@ export const Sync = () => {
     onManualSync,
   } = useHostSync();
   const {
-    isLoading: updateUserIsLoading,
+    updateUserIsLoading,
     lastSuccessfulSync,
     updateUser,
-    error: updateUserError,
-  } = useUpdateUser();
+    updateUserError,
+  } = useAuthContext();
 
   const sync = async () => {
     await updateUser();

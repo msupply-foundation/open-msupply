@@ -29,7 +29,7 @@ table! {
         sell_price_per_pack -> Double,
         total_before_tax -> Double,
         total_after_tax -> Double,
-        tax -> Nullable<Double>,
+        tax_percentage -> Nullable<Double>,
         #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
         number_of_packs -> Double,
         note -> Nullable<Text>,
@@ -83,8 +83,8 @@ pub struct InvoiceLineRow {
     pub total_before_tax: f64,
     pub total_after_tax: f64,
     /// Optional column to store line a line specific tax value
-    pub tax: Option<f64>,
-    #[diesel(column_name =type_)]
+    pub tax_percentage: Option<f64>,
+    #[diesel(column_name = "type_")]
     pub r#type: InvoiceLineType,
     pub number_of_packs: f64,
     pub note: Option<String>,
@@ -154,7 +154,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
         diesel::update(invoice_line)
             .filter(id.eq(record_id))
             .set((
-                tax.eq(tax_input),
+                tax_percentage.eq(tax_input),
                 total_after_tax.eq(total_after_tax_calculation),
             ))
             .execute(self.connection.lock().connection())?;

@@ -69,7 +69,7 @@ pub fn generate(
         colour: None,
         comment: None,
         their_reference: None,
-        tax: None,
+        tax_percentage: None,
         name_store_id: None,
         transport_reference: None,
         allocated_datetime: None,
@@ -99,7 +99,7 @@ pub fn generate(
         r#type: StockInType::InventoryAddition,
         note: None,
         total_before_tax: None,
-        tax: None,
+        tax_percentage: None,
         barcode,
     };
 
