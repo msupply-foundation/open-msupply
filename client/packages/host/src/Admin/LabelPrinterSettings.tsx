@@ -106,9 +106,7 @@ export const LabelPrinterSettings = () => {
           <NumericTextInput
             value={draft.port}
             noFormatting
-            onChange={port => {
-              if (port !== undefined) onChange({ port });
-            }}
+            onChange={port => onChange({ port })}
           />
         }
         title={t('settings.printer-port')}

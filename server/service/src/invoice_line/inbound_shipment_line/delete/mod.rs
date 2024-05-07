@@ -117,8 +117,8 @@ mod test {
                 r.pack_size = 1;
                 r.total_before_tax = 0.87;
                 r.total_after_tax = 1.0;
-                r.tax = Some(15.0);
-                r.r#type = InvoiceLineType::StockOut;
+                r.tax_percentage = Some(15.0);
+                r.r#type = InvoiceLineRowType::StockOut;
                 r.number_of_packs = 10.0;
             })
         }

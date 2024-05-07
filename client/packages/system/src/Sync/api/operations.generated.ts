@@ -48,18 +48,6 @@ export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never; }>
 
 export type ManualSyncMutation = { __typename: 'Mutations', manualSync: string };
 
-export type UpdateUserFragment = { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null };
-
-export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
-
-
-export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'ConnectionError' } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
-
-export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{ [key: string]: never; }>;
-
-
-export type LastSuccessfulUserSyncQuery = { __typename: 'Queries', lastSuccessfulUserSync: { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
-
 export const SyncSettingsFragmentDoc = gql`
     fragment SyncSettings on SyncSettingsNode {
   __typename
@@ -129,11 +117,6 @@ export const FullSyncStatusFragmentDoc = gql`
     ${SyncErrorFragmentDoc}
 ${SyncStatusWithProgressFragmentDoc}
 ${SyncStatusFragmentDoc}`;
-export const UpdateUserFragmentDoc = gql`
-    fragment UpdateUser on UpdateUserNode {
-  lastSuccessfulSync
-}
-    `;
 export const SyncSettingsDocument = gql`
     query syncSettings {
   syncSettings {
@@ -189,24 +172,6 @@ export const ManualSyncDocument = gql`
   manualSync
 }
     `;
-export const UpdateUserDocument = gql`
-    mutation updateUser {
-  updateUser {
-    __typename
-    ... on UpdateUserNode {
-      ...UpdateUser
-    }
-  }
-}
-    ${UpdateUserFragmentDoc}`;
-export const LastSuccessfulUserSyncDocument = gql`
-    query lastSuccessfulUserSync {
-  lastSuccessfulUserSync {
-    __typename
-    ...UpdateUser
-  }
-}
-    ${UpdateUserFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -232,12 +197,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     manualSync(variables?: ManualSyncMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ManualSyncMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<ManualSyncMutation>(ManualSyncDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'manualSync', 'mutation');
-    },
-    updateUser(variables?: UpdateUserMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateUserMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateUserMutation>(UpdateUserDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateUser', 'mutation');
-    },
-    lastSuccessfulUserSync(variables?: LastSuccessfulUserSyncQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LastSuccessfulUserSyncQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LastSuccessfulUserSyncQuery>(LastSuccessfulUserSyncDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'lastSuccessfulUserSync', 'query');
     }
   };
 }
@@ -338,37 +297,5 @@ export const mockSyncStatusQuery = (resolver: ResponseResolver<GraphQLRequest<Sy
 export const mockManualSyncMutation = (resolver: ResponseResolver<GraphQLRequest<ManualSyncMutationVariables>, GraphQLContext<ManualSyncMutation>, any>) =>
   graphql.mutation<ManualSyncMutation, ManualSyncMutationVariables>(
     'manualSync',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateUserMutation((req, res, ctx) => {
- *   return res(
- *     ctx.data({ updateUser })
- *   )
- * })
- */
-export const mockUpdateUserMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateUserMutationVariables>, GraphQLContext<UpdateUserMutation>, any>) =>
-  graphql.mutation<UpdateUserMutation, UpdateUserMutationVariables>(
-    'updateUser',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLastSuccessfulUserSyncQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ lastSuccessfulUserSync })
- *   )
- * })
- */
-export const mockLastSuccessfulUserSyncQuery = (resolver: ResponseResolver<GraphQLRequest<LastSuccessfulUserSyncQueryVariables>, GraphQLContext<LastSuccessfulUserSyncQuery>, any>) =>
-  graphql.query<LastSuccessfulUserSyncQuery, LastSuccessfulUserSyncQueryVariables>(
-    'lastSuccessfulUserSync',
     resolver
   )
