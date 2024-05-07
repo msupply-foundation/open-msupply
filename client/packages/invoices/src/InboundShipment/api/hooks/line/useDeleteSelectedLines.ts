@@ -2,6 +2,7 @@ import {
   useTableStore,
   useTranslation,
   useDeleteConfirmation,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { useIsInboundDisabled } from '../utils/useIsInboundDisabled';
 import { useDeleteInboundLines } from './useDeleteInboundLines';
@@ -36,9 +37,35 @@ export const useDeleteSelectedLines = (): (() => void) => {
     }) || [];
 
   const onDelete = async () => {
-    await mutateAsync(selectedRows).catch(err => {
+    const result = await mutateAsync(selectedRows).catch(err => {
       throw err;
     });
+    const deletedLines = result.batchInboundShipment.deleteInboundShipmentLines;
+    if (!deletedLines) {
+      return;
+    }
+    for (const line of deletedLines) {
+      if (line.response.__typename !== 'DeleteResponse') {
+        switch (line.response.error.__typename) {
+          case 'BatchIsReserved':
+            const row = selectedRows.find(it => it.id === line.id);
+            throw Error(
+              t('label.inbound-shipment-cant-delete-reserved-line', {
+                batch: row?.batch ?? '',
+                itemCode: row?.item.code ?? '?',
+              })
+            );
+            break;
+          case 'CannotEditInvoice':
+          case 'ForeignKeyError':
+          case 'RecordNotFound':
+            // We don't have an error message for it return the original message
+            throw Error(line.response.error.description);
+          default:
+            noOtherVariants(line.response.error);
+        }
+      }
+    }
   };
 
   const confirmAndDelete = useDeleteConfirmation({
@@ -52,7 +79,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: t('label.cant-delete-disabled'),
+      cantDelete: (err: Error) => err.message,
     },
   });
 
