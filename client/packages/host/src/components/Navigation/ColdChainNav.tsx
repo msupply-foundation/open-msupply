@@ -33,12 +33,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
         text={t('cold-chain')}
         inactive
       />
-      <Collapse
-        in={isActive}
-        sx={{
-          marginBottom: 2,
-        }}
-      >
+      <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={visible}

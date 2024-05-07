@@ -35,7 +35,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
         text={t('dispensary')}
         inactive
       />
-      <Collapse in={isActive} sx={{ marginBottom: 2 }}>
+      <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={visible}
