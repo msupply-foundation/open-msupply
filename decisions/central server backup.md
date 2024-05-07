@@ -1,88 +1,45 @@
-# Migrations
+# Central server back up
 
-- *Date*: 2022-10-19
-- *Deciders*: Mark Prins, James Brunskill, Andrei Evguenov
-- *Status*: DECIDED
-- *Outcome*: Option 2
-- *Related Material*: [Database migration Issue](https://github.com/openmsupply/open-msupply/issues/704)
+- *Date*: 
+- *Deciders*: 
+- *Status*: 
+- *Outcome*: 
+
+## Intro
+
+Remote sites are backed up by synchronisation to the central server. 
+mSupply central server is backed up on a schedule, it also contains journal (write ahead log of sort) of the changes since last backup. 
+We started to use omSupply central server functionality, which now included both central and remote data, which is syncrhonised from remote site to omSupply central server, but not to mSupply central server.
+
+### 1 - mSupply and omSupply central backups align
+It's quite important that backups for both servers are bundled (both backed up at the same time), as per below example (consider v5 = Supply and v6 = omSupply):
+
+v6 record (A) references v5 record (B). If v5 backup is before B was created but v6 backup is after A was created, we could have broken reference on A record.
+
+### 2 - Remote sites ahead of omSupply central backups
+
+If omSupply central data is lost there is a chance that after restore, remote sites data would be ahead of omSupply central data, for example:
+
+v6 cursors is 100 on remote site, last backup of omSupply central site is taken when change log latest cursor is 90. After omSupply central data restore, change log latest cursor would be at 90, if 10 more records are added to change log on central, they will not find their was to remote sites since remote site will be asking for change logs > 100. 
+
+### 3 - Partial corruption
+
+There is a use case where either mSupply or omSupply central becomes corrupted (rather then the whole machine, where both would be corrupted).
 
 ## Requirements
 
-1. Update schema without re-initialising database
-2. Migrate data
-   a. Before and/or after schema update
-   b. Without schema update (just data migration)
-3. Do above only for the migrations that are applicable from the current database version to current app version (don't re-run old migrations)
-4. Record migration results
-5. Easy way to explore full schema (all of the migrations applied, for a particular version)
-6. Test data migrations
-7. Should work with RC versions
-8. (maybe) Consolidate common sql for PG/Sqlite (we have quite a few duplicate sql statements)
-9. (maybe) Use strongly typed diesel db if possible, for data migrations
-10. Migration code needs to run in isolation (no production code should run in parallel)
-
-## Examples/Extra
-
-### 2.a 
-
-There might be a need to do multiple schema and data updates within one version upgrade. For example if a required field is added that needs to be populated with some value derived from existing database values, we would want to:
-* add schema without the constraint
-* add the values 
-* add the constraint
-
-Another example is when sync buffer was consolidated:
-* Add new sync buffer
-* Copy rows from remote and central to the new sync buffer (see proposed solution, that touches on `9.`)
-* Remove old sync buffer
-
-Above can also be done by keeping existing sync buffer in memory than doing one schema migration with adding and removing sync buffer then populating new sync buffer from memory. 
-
-I think it's better to keep migrations flexible, without a particular pattern of operation sequence.
-
-### 2.b
-
-If we add a new field/table in central and remote is not up to date, the field/table will still be synced and recorded in sync buffer. And when we update to a new version of remote that has this new field/table we can just crawl through sync buffer and try to re-integrate this new field/table. This avoids needing to re-sync this info, and we can avoid implementing this mechanism
-
-Remote data should be safe with above example, as central shouldn't be updating foreign data.
-
-### 4.
-
-General data about migration result should be logged for debugging purposes, and on migration failure we can't guarantee correct behaviour of the app, so we would need to either disable server and not allow it to start again or revert to previous data version and inform the admin/user that app can be downgraded. 
-
-I think ability to revert to previous version (on failure) allows for system to be available to the users in timely manner, in case errors in migration occur.
-
-This might be quite difficult for Android, but look like there is a way (https://blog.esper.io/adb-29-how-to-downgrade-rollback-app/)/
-
-It was noted that long transaction rollbacks have been problematic in the past (in other systems). Would need to make sure user is aware of the migration progress and could potentially do a backup/restore vs transaction and rollback.
-
-### 6.
-
-This could be tricky especially if we want to use diesel db strong typing. I think this in necessary and very important, we've had some major failures in the past with data migrations.
-
-### 7.
-
-Say we are on version 1.01, and are working on version 1.02, before deployment we should be able to:
-* Make an RC version, say 1.02-RC1
-* Test upgrade of 1.01 database  to 1.02-RC1 (just by replacing binary)
-* RC versions should not be upgradable, if you open RC version and there is a version mismatch then user should be warned that version are incompatible (this is to avoid additions to migrations that won't run or won't be tested). To extend above example, if in 1.02-RC1 we find a bug in migration, then we fix it, and create 1.02-RC2, if we try to open 1.02-RC1 with 1.02-RC2 we should have an error saying they are not compatible
-* When we happy with 1.02, it's released and 1.01 would be upgradable to 1.02
-
-In one sentance, to avoid extra use cases during development, RC versions are only compatible with the same RC version (shouldn't be able to upgrade RC version).
-
-### 9.
-
-Since our diesel type from previous version wont' be compatible with new version we might need to resolve to using raw sql statements to migrate data, I would prefer if we copy and paste data types from pre migrated version to do data migrations (see example in proposed solutions)
-
-### 10.
-
-Would assume that we always run migrations on startup and that production code will not run until migrations are finished. There would need to be an indication that server is under maintenance and indication of migration progress in UI
+1. Reduce chance of loosing data by automated backup of omSupply central server
+2. A mechanism to align mSupply and omSupply central server data, or reduction of misalignment impact
+3. A mechanism to align omSupply remote and omSupply central server data, or reduciont of misalignment impact
+4. Partial corruption needs to be considered and
 
 ## Options
 
-### Option 1 - Migrate with SQL
+### Option 1 - Postgres backup with WAL
 
-Migrate data directly with SQL statements.
-Version number would need to be in migration folder name
+Whenever mSupply is backed up, omSupply back up is triggered (using pg dump of the whole database), both backups are bundled into single archive. Make sure that postgres instance is using WAL, which is also backed up.
+
+If server data becomes corrupt 
 
 *Pros:*
 - Keeps with existing
