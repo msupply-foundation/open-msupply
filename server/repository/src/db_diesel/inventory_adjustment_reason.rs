@@ -11,7 +11,7 @@ use util::inline_init;
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentType,
 };
 
 use crate::{EqualFilter, Pagination, Sort};
@@ -24,7 +24,7 @@ pub struct InventoryAdjustmentReason {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct InventoryAdjustmentReasonFilter {
     pub id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<InventoryAdjustmentReasonType>>,
+    pub r#type: Option<EqualFilter<InventoryAdjustmentType>>,
     pub is_active: Option<bool>,
 }
 
@@ -51,7 +51,9 @@ impl<'a> InventoryAdjustmentReasonRepository<'a> {
         filter: Option<InventoryAdjustmentReasonFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -85,7 +87,7 @@ impl<'a> InventoryAdjustmentReasonRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<InventoryAdjustmentReasonRow>(&self.connection.connection)?;
+            .load::<InventoryAdjustmentReasonRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -127,7 +129,7 @@ impl InventoryAdjustmentReasonFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<InventoryAdjustmentReasonType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<InventoryAdjustmentType>) -> Self {
         self.r#type = Some(filter);
         self
     }
@@ -138,7 +140,7 @@ impl InventoryAdjustmentReasonFilter {
     }
 }
 
-impl InventoryAdjustmentReasonType {
+impl InventoryAdjustmentType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }

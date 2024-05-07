@@ -25,6 +25,7 @@ mod name_link_row;
 mod report_query;
 pub mod sync_file_reference;
 pub mod sync_file_reference_row;
+pub mod ledger;
 
 mod clinician_link_row;
 pub mod encounter_row;
@@ -241,7 +242,7 @@ impl From<DieselError> for RepositoryError {
                     DieselDatabaseErrorKind::SerializationFailure => {
                         Error::as_db_error("SERIALIZATION_FAILURE", extra)
                     }
-                    DieselDatabaseErrorKind::__Unknown => Error::as_db_error("UNKNOWN", extra),
+                    _ => Error::as_db_error("UNKNOWN", extra),
                 }
             }
             DieselError::NotFound => RepositoryError::NotFound,

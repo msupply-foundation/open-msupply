@@ -18,7 +18,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[table_name = "master_list"]
+#[diesel(table_name = master_list)]
 pub struct MasterListRow {
     pub id: String,
     pub name: String,
@@ -46,7 +46,7 @@ impl<'a> MasterListRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -54,7 +54,7 @@ impl<'a> MasterListRowRepository<'a> {
     pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -64,14 +64,14 @@ impl<'a> MasterListRowRepository<'a> {
     ) -> Result<Option<MasterListRow>, RepositoryError> {
         let result = master_list
             .filter(id.eq(master_list_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, master_list_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(master_list.filter(id.eq(master_list_id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

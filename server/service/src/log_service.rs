@@ -1,6 +1,6 @@
 use anyhow::Error;
 use flate2::read::GzDecoder;
-use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 use std::{
     fs::{self, File},
     io::Read,
@@ -59,7 +59,7 @@ pub trait LogServiceTrait: Send + Sync {
     fn get_log_level(&self, ctx: &ServiceContext) -> Result<Option<Level>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        let log_level = key_value_store.get_string(KeyValueType::LogLevel)?;
+        let log_level = key_value_store.get_string(KeyType::LogLevel)?;
 
         let level = match log_level {
             Some(log_level) => match log_level.as_str() {
@@ -91,7 +91,7 @@ pub trait LogServiceTrait: Send + Sync {
             Level::Trace => "trace",
         };
 
-        key_value_store.set_string(KeyValueType::LogLevel, Some(log_level.to_string()))?;
+        key_value_store.set_string(KeyType::LogLevel, Some(log_level.to_string()))?;
         simple_log::update_log_level(log_level).expect("Couldn't update log level");
 
         Ok(())
@@ -100,7 +100,7 @@ pub trait LogServiceTrait: Send + Sync {
     fn get_log_directory(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        let log_directory = key_value_store.get_string(KeyValueType::LogDirectory)?;
+        let log_directory = key_value_store.get_string(KeyType::LogDirectory)?;
 
         Ok(log_directory.unwrap_or(Default::default()))
     }
@@ -112,7 +112,7 @@ pub trait LogServiceTrait: Send + Sync {
     ) -> Result<(), RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        key_value_store.set_string(KeyValueType::LogDirectory, log_directory)?;
+        key_value_store.set_string(KeyType::LogDirectory, log_directory)?;
 
         Ok(())
     }
@@ -120,7 +120,7 @@ pub trait LogServiceTrait: Send + Sync {
     fn get_log_file_name(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        let log_file_name = key_value_store.get_string(KeyValueType::LogFileName)?;
+        let log_file_name = key_value_store.get_string(KeyType::LogFileName)?;
 
         Ok(log_file_name.unwrap_or(Default::default()))
     }
@@ -132,7 +132,7 @@ pub trait LogServiceTrait: Send + Sync {
     ) -> Result<(), RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
-        key_value_store.set_string(KeyValueType::LogFileName, log_file_name)?;
+        key_value_store.set_string(KeyType::LogFileName, log_file_name)?;
 
         Ok(())
     }

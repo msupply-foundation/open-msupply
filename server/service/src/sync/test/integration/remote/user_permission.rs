@@ -5,7 +5,7 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 
-use repository::{ContextRow, Permission, UserPermissionRow, UserPermissionRowDelete};
+use repository::{ContextRow, PermissionType, UserPermissionRow, UserPermissionRowDelete};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -33,7 +33,7 @@ impl SyncRecordTester for UserPermissionTester {
             id: uuid(),
             user_id: "test_user".to_string(),
             store_id: Some(store_id.clone()),
-            permission: Permission::DocumentMutate,
+            permission: PermissionType::DocumentMutate,
             context_id: Some(context.id.clone()),
         };
         let user_permission_row_1_json = json!({
@@ -48,7 +48,7 @@ impl SyncRecordTester for UserPermissionTester {
             id: uuid(),
             user_id: "test_user".to_string(),
             store_id: Some(store_id),
-            permission: Permission::DocumentQuery,
+            permission: PermissionType::DocumentQuery,
             context_id: Some(context.id.clone()),
         };
         let user_permission_row_2_json = json!({

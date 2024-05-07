@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use crate::{InvoiceRow, InvoiceStatus, InvoiceType};
 
 use super::MockData;
 
@@ -11,8 +11,8 @@ pub fn mock_inbound_shipment_invoice_count_service_a() -> InvoiceRow {
         r.name_link_id = String::from("name_store_b");
         r.store_id = String::from("store_a");
         r.invoice_number = 4;
-        r.r#type = InvoiceRowType::InboundShipment;
-        r.status = InvoiceRowStatus::New;
+        r.r#type = InvoiceType::InboundShipment;
+        r.status = InvoiceStatus::New;
         r.comment = Some("Sort comment test Ac".to_owned());
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 7)
@@ -28,8 +28,8 @@ pub fn mock_inbound_shipment_invoice_count_service_b() -> InvoiceRow {
         r.name_link_id = String::from("name_store_b");
         r.store_id = String::from("store_a");
         r.invoice_number = 4;
-        r.r#type = InvoiceRowType::InboundShipment;
-        r.status = InvoiceRowStatus::New;
+        r.r#type = InvoiceType::InboundShipment;
+        r.status = InvoiceStatus::New;
         r.comment = Some("Sort comment test Ac".to_owned());
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 12, 8)

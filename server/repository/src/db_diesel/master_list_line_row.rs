@@ -21,7 +21,7 @@ allow_tables_to_appear_in_same_query!(master_list_line, item_link);
 allow_tables_to_appear_in_same_query!(master_list_line, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "master_list_line"]
+#[diesel(table_name = master_list_line)]
 pub struct MasterListLineRow {
     pub id: String,
     pub item_link_id: String,
@@ -44,7 +44,7 @@ impl<'a> MasterListLineRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -52,7 +52,7 @@ impl<'a> MasterListLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list_line)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -62,7 +62,7 @@ impl<'a> MasterListLineRowRepository<'a> {
     ) -> Result<MasterListLineRow, RepositoryError> {
         let result = master_list_line
             .filter(id.eq(line_id))
-            .first(&self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -72,14 +72,14 @@ impl<'a> MasterListLineRowRepository<'a> {
     ) -> Result<Option<MasterListLineRow>, RepositoryError> {
         let result = master_list_line
             .filter(id.eq(line_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, line_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(master_list_line.filter(id.eq(line_id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

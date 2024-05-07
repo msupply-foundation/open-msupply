@@ -20,7 +20,7 @@ use super::{
 };
 
 use repository::{
-    ChangelogRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
+    ChangelogRepository, KeyType, RepositoryError, StorageConnection, SyncBufferRow,
     SyncBufferRowRepository,
 };
 use thiserror::Error;
@@ -80,6 +80,18 @@ impl SynchroniserV6 {
         })
     }
 
+    /// Update push cursor after initial sync, i.e. set it to the end of the just received data
+    /// so we only push new data to the central server
+    pub(crate) fn advance_push_cursor(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<(), RepositoryError> {
+        let cursor = ChangelogRepository::new(connection).latest_cursor()?;
+
+        CursorController::new(KeyType::SyncPushCursorV6).update(connection, cursor + 1)?;
+        Ok(())
+    }
+
     pub(crate) async fn pull<'a>(
         &self,
         connection: &StorageConnection,
@@ -87,7 +99,7 @@ impl SynchroniserV6 {
         is_initialised: bool,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), CentralPullErrorV6> {
-        let cursor_controller = CursorController::new(KeyValueType::SyncPullCursorV6);
+        let cursor_controller = CursorController::new(KeyType::SyncPullCursorV6);
         // TODO protection from infinite loop
         loop {
             let cursor = cursor_controller.get(&connection)?;
@@ -133,7 +145,7 @@ impl SynchroniserV6 {
     ) -> Result<(), RemotePushErrorV6> {
         let changelog_repo = ChangelogRepository::new(connection);
         let change_log_filter = get_sync_push_changelogs_filter(connection)?;
-        let cursor_controller = CursorController::new(KeyValueType::SyncPushCursorV6);
+        let cursor_controller = CursorController::new(KeyType::SyncPushCursorV6);
 
         loop {
             // TODO inside transaction

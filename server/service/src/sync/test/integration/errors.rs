@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, StorageConnectionManager, SyncLogRowErrorCode};
+    use repository::{mock::MockDataInserts, StorageConnectionManager, SyncApiErrorCode};
     use reqwest::StatusCode;
     use std::{io::Error, path::PathBuf, sync::Arc};
     use util::assert_matches;
@@ -77,8 +77,10 @@ mod tests {
             .update_sync_settings(&service_context, &sync_settings)
             .unwrap();
 
+        let hardware_id = service_provider.app_data_service.get_hardware_id().unwrap();
+
         let synchroniser =
-            get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, "id1");
+            get_synchroniser_with_hardware_id(&connection_manager, &sync_settings, &hardware_id);
         synchroniser.sync().await.unwrap();
 
         // Change hardware id
@@ -111,7 +113,7 @@ mod tests {
         assert_matches!(
             status.error,
             Some(SyncLogError {
-                code: Some(SyncLogRowErrorCode::HardwareIdMismatch),
+                code: Some(SyncApiErrorCode::HardwareIdMismatch),
                 ..
             })
         )

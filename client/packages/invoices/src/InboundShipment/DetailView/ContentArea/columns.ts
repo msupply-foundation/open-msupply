@@ -10,11 +10,19 @@ import {
   TooltipTextCell,
   useColumnUtils,
   CurrencyCell,
+  ColumnDescription,
 } from '@openmsupply-client/common';
-import { getPackVariantCell } from '@openmsupply-client/system';
+import {
+  getPackVariantCell,
+  useIsPackVariantsEnabled,
+} from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
+
+type InboundShipmentColumnDescription = ColumnDescription<
+  InboundLineFragment | InboundItem
+>;
 
 const getUnitQuantity = (row: InboundLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -27,6 +35,8 @@ export const useInboundShipmentColumns = () => {
   const getSellPrice = (row: InboundLineFragment) =>
     isInboundPlaceholderRow(row) ? 0 : row.sellPricePerPack;
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
+
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
@@ -122,26 +132,63 @@ export const useInboundShipmentColumns = () => {
         },
       ],
 
-      {
-        key: 'packUnit',
-        label: 'label.pack',
-        sortable: false,
-        Cell: getPackVariantCell({
-          getItemId: row => {
-            if ('lines' in row) return '';
-            else return row?.item?.id;
-          },
-          getPackSizes: row => {
-            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-            else return [row?.packSize ?? 1];
-          },
-          getUnitName: row => {
-            if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
-            else return row?.item?.unitName ?? null;
-          },
-        }),
-        width: 130,
-      },
+      ...((isPackVariantsEnabled
+        ? [
+            {
+              key: 'packUnit',
+              label: 'label.pack',
+              sortable: false,
+              Cell: getPackVariantCell({
+                getItemId: row => {
+                  if ('lines' in row) return '';
+                  else return row?.item?.id;
+                },
+                getPackSizes: row => {
+                  if ('lines' in row)
+                    return row.lines.map(l => l.packSize ?? 1);
+                  else return [row?.packSize ?? 1];
+                },
+                getUnitName: row => {
+                  if ('lines' in row)
+                    return row.lines[0]?.item?.unitName ?? null;
+                  else return row?.item?.unitName ?? null;
+                },
+              }),
+              width: 130,
+            },
+          ]
+        : [
+            [
+              'itemUnit',
+              {
+                getSortValue: row =>
+                  getColumnPropertyAsString(row, [
+                    { path: ['lines', 'item', 'unitName'] },
+                    { path: ['item', 'unitName'], default: '' },
+                  ]),
+                accessor: ({ rowData }) =>
+                  getColumnProperty(rowData, [
+                    { path: ['lines', 'item', 'unitName'] },
+                    { path: ['item', 'unitName'], default: '' },
+                  ]),
+              },
+            ],
+            [
+              'packSize',
+              {
+                accessor: ({ rowData }) =>
+                  getColumnProperty(rowData, [
+                    { path: ['lines', 'packSize'], default: '' },
+                    { path: ['packSize'], default: '' },
+                  ]),
+                getSortValue: row =>
+                  getColumnPropertyAsString(row, [
+                    { path: ['lines', 'packSize'], default: '' },
+                    { path: ['packSize'], default: '' },
+                  ]),
+              },
+            ],
+          ]) as InboundShipmentColumnDescription[]),
       [
         'numberOfPacks',
         {
@@ -225,22 +272,29 @@ export const useInboundShipmentColumns = () => {
   return { columns, sortBy };
 };
 
-export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
-  useColumns<InboundLineFragment>([
+export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
+
+  return useColumns<InboundLineFragment>([
     'batch',
     'expiryDate',
     'location',
-    {
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: getPackVariantCell({
-        getItemId: row => row?.item?.id,
-        getPackSizes: row => [row?.packSize ?? 1],
-        getUnitName: row => row?.item?.unitName ?? null,
-      }),
-      width: 130,
-    },
+    ...(isPackVariantsEnabled
+      ? [
+          {
+            key: 'packUnit',
+            label: 'label.pack',
+            sortable: false,
+            Cell: getPackVariantCell({
+              getItemId: row => row?.item?.id,
+              getPackSizes: row => [row?.packSize ?? 1],
+              getUnitName: row => row?.item?.unitName ?? null,
+            }),
+            width: 130,
+          } as ColumnDescription<InboundLineFragment>,
+        ]
+      : ['packSize' as ColumnDescription<InboundLineFragment>]),
     'numberOfPacks',
     'costPricePerPack',
   ]);
+};

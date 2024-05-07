@@ -1,6 +1,6 @@
 use repository::{
     CurrencyFilter, CurrencyRepository, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, MasterList, MasterListFilter,
+    InvoiceLineRepository, InvoiceLineType, InvoiceRow, MasterList, MasterListFilter,
     MasterListRepository, NameLinkRowRepository, RepositoryError, StockLineRow, StorageConnection,
 };
 use util::inline_edit;
@@ -117,7 +117,7 @@ pub fn generate_batches_total_number_of_packs_update(
         .query_by_filter(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(invoice_id))
-                .r#type(InvoiceLineRowType::StockOut.equal_to()),
+                .r#type(InvoiceLineType::StockOut.equal_to()),
         )
         .map_err(InvoiceLineHasNoStockLine::DatabaseError)?;
 

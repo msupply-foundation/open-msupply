@@ -16,7 +16,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{ClinicianRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, PricingRow};
+use repository::{ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, PricingRow};
 
 use repository::Invoice;
 use serde::Serialize;
@@ -444,22 +444,22 @@ impl InvoiceConnector {
 }
 
 impl InvoiceNodeType {
-    pub fn to_domain(self) -> InvoiceRowType {
+    pub fn to_domain(self) -> InvoiceType {
         use InvoiceNodeType::*;
         match self {
-            OutboundShipment => InvoiceRowType::OutboundShipment,
-            InboundShipment => InvoiceRowType::InboundShipment,
-            Prescription => InvoiceRowType::Prescription,
-            InventoryAddition => InvoiceRowType::InventoryAddition,
-            InventoryReduction => InvoiceRowType::InventoryReduction,
-            Repack => InvoiceRowType::Repack,
-            OutboundReturn => InvoiceRowType::OutboundReturn,
-            InboundReturn => InvoiceRowType::InboundReturn,
+            OutboundShipment => InvoiceType::OutboundShipment,
+            InboundShipment => InvoiceType::InboundShipment,
+            Prescription => InvoiceType::Prescription,
+            InventoryAddition => InvoiceType::InventoryAddition,
+            InventoryReduction => InvoiceType::InventoryReduction,
+            Repack => InvoiceType::Repack,
+            OutboundReturn => InvoiceType::OutboundReturn,
+            InboundReturn => InvoiceType::InboundReturn,
         }
     }
 
-    pub fn from_domain(r#type: &InvoiceRowType) -> InvoiceNodeType {
-        use InvoiceRowType::*;
+    pub fn from_domain(r#type: &InvoiceType) -> InvoiceNodeType {
+        use InvoiceType::*;
         match r#type {
             OutboundShipment => InvoiceNodeType::OutboundShipment,
             InboundShipment => InvoiceNodeType::InboundShipment,
@@ -474,20 +474,20 @@ impl InvoiceNodeType {
 }
 
 impl InvoiceNodeStatus {
-    pub fn to_domain(self) -> InvoiceRowStatus {
+    pub fn to_domain(self) -> InvoiceStatus {
         use InvoiceNodeStatus::*;
         match self {
-            New => InvoiceRowStatus::New,
-            Allocated => InvoiceRowStatus::Allocated,
-            Picked => InvoiceRowStatus::Picked,
-            Shipped => InvoiceRowStatus::Shipped,
-            Delivered => InvoiceRowStatus::Delivered,
-            Verified => InvoiceRowStatus::Verified,
+            New => InvoiceStatus::New,
+            Allocated => InvoiceStatus::Allocated,
+            Picked => InvoiceStatus::Picked,
+            Shipped => InvoiceStatus::Shipped,
+            Delivered => InvoiceStatus::Delivered,
+            Verified => InvoiceStatus::Verified,
         }
     }
 
-    pub fn from_domain(status: &InvoiceRowStatus) -> InvoiceNodeStatus {
-        use InvoiceRowStatus::*;
+    pub fn from_domain(status: &InvoiceStatus) -> InvoiceNodeStatus {
+        use InvoiceStatus::*;
         match status {
             New => InvoiceNodeStatus::New,
             Allocated => InvoiceNodeStatus::Allocated,
@@ -510,7 +510,7 @@ mod test {
             currency_a, mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
             MockDataInserts,
         },
-        Invoice, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
+        Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -538,7 +538,7 @@ mod test {
                 r.total_after_tax = 110.0;
                 r.total_before_tax = 100.0;
                 r.tax = Some(10.0);
-                r.r#type = InvoiceLineRowType::Service;
+                r.r#type = InvoiceLineType::Service;
             })
         }
         fn line2() -> InvoiceLineRow {
@@ -549,7 +549,7 @@ mod test {
                 r.total_after_tax = 50.0;
                 r.total_before_tax = 50.0;
                 r.tax = None;
-                r.r#type = InvoiceLineRowType::StockIn;
+                r.r#type = InvoiceLineType::StockIn;
             })
         }
         fn line3() -> InvoiceLineRow {
@@ -560,7 +560,7 @@ mod test {
                 r.total_after_tax = 105.0;
                 r.total_before_tax = 100.0;
                 r.tax = Some(5.0);
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
             })
         }
 

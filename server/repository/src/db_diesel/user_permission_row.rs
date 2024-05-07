@@ -14,14 +14,14 @@ table! {
       id -> Text,
       user_id -> Text,
       store_id -> Nullable<Text>,
-      permission -> crate::db_diesel::user_permission_row::PermissionMapping,
+      permission -> crate::db_diesel::user_permission_row::PermissionTypeMapping,
       context_id -> Nullable<Text>,
     }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum Permission {
+pub enum PermissionType {
     ServerAdmin,
 
     /// User has access to the store this permission is associated with.
@@ -82,13 +82,13 @@ pub enum Permission {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "user_permission"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = user_permission)]
 pub struct UserPermissionRow {
     pub id: String,
     pub user_id: String,
     pub store_id: Option<String>,
-    pub permission: Permission,
+    pub permission: PermissionType,
     /// An optional resource associated with this permission.
     /// The resource value is only used for certain Permission variants.
     pub context_id: Option<String>,
@@ -110,7 +110,7 @@ impl<'a> UserPermissionRowRepository<'a> {
             .on_conflict(user_permission_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -118,14 +118,14 @@ impl<'a> UserPermissionRowRepository<'a> {
     pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_permission_dsl::user_permission)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserPermissionRow>, RepositoryError> {
         let result = user_permission_dsl::user_permission
             .filter(user_permission_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -134,13 +134,13 @@ impl<'a> UserPermissionRowRepository<'a> {
         diesel::delete(
             user_permission_dsl::user_permission.filter(user_permission_dsl::user_id.eq(user_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

@@ -1,5 +1,5 @@
 use repository::{
-    requisition_row::RequisitionRowType, RepositoryError, Requisition, RequisitionFilter,
+    requisition_row::RequisitionType, RepositoryError, Requisition, RequisitionFilter,
     RequisitionRepository, RequisitionSort,
 };
 use repository::{EqualFilter, PaginationOption};
@@ -47,7 +47,7 @@ pub fn get_requisition_by_number(
     ctx: &ServiceContext,
     store_id: &str,
     requisition_number: u32,
-    r#type: RequisitionRowType,
+    r#type: RequisitionType,
 ) -> Result<Option<Requisition>, RepositoryError> {
     let mut result = RequisitionRepository::new(&ctx.connection).query_by_filter(
         RequisitionFilter::new()

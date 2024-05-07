@@ -3,7 +3,7 @@ use crate::invoice_line::ShipmentTaxUpdate;
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::{Invoice, LocationMovementRowRepository};
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
+    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -82,7 +82,7 @@ pub fn update_inbound_shipment(
                 }
             }
 
-            if update_invoice.status == InvoiceRowStatus::Verified {
+            if update_invoice.status == InvoiceStatus::Verified {
                 if let Some(movements) = location_movements {
                     for movement in movements {
                         LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
@@ -162,16 +162,16 @@ where
 }
 
 impl UpdateInboundShipmentStatus {
-    pub fn full_status(&self) -> InvoiceRowStatus {
+    pub fn full_status(&self) -> InvoiceStatus {
         match self {
-            UpdateInboundShipmentStatus::Delivered => InvoiceRowStatus::Delivered,
-            UpdateInboundShipmentStatus::Verified => InvoiceRowStatus::Verified,
+            UpdateInboundShipmentStatus::Delivered => InvoiceStatus::Delivered,
+            UpdateInboundShipmentStatus::Verified => InvoiceStatus::Verified,
         }
     }
 }
 
 impl UpdateInboundShipment {
-    pub fn full_status(&self) -> Option<InvoiceRowStatus> {
+    pub fn full_status(&self) -> Option<InvoiceStatus> {
         self.status.as_ref().map(|status| status.full_status())
     }
 }
@@ -189,8 +189,8 @@ mod test {
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
-        InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
-        InvoiceRowStatus, InvoiceRowType, NameRow, NameStoreJoinRow, StockLineRowRepository,
+        InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+        InvoiceType, NameRow, NameStoreJoinRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -357,8 +357,8 @@ mod test {
                 r.name_link_id = "supplier".to_string();
                 r.store_id = "store_a".to_string();
                 r.invoice_number = 123;
-                r.r#type = InvoiceRowType::InboundShipment;
-                r.status = InvoiceRowStatus::New;
+                r.r#type = InvoiceType::InboundShipment;
+                r.status = InvoiceStatus::New;
                 r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
                     .unwrap()
                     .and_hms_milli_opt(20, 30, 0, 0)
@@ -373,7 +373,7 @@ mod test {
                 r.item_link_id = "item_a".to_string();
                 r.pack_size = 1;
                 r.number_of_packs = 1.0;
-                r.r#type = InvoiceLineRowType::StockIn;
+                r.r#type = InvoiceLineType::StockIn;
             })
         }
 
@@ -495,7 +495,7 @@ mod test {
             inline_edit(&invoice, |mut u| {
                 u.tax = Some(10.0);
                 u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceRowStatus::Delivered;
+                u.status = InvoiceStatus::Delivered;
                 u
             })
         );
@@ -657,7 +657,7 @@ mod test {
                 u.currency_id = Some("currency_a".to_string());
                 u.currency_rate = 1.0;
                 u.user_id = Some(mock_user_account_a().id);
-                u.status = InvoiceRowStatus::Delivered;
+                u.status = InvoiceStatus::Delivered;
                 u
             })
         );
@@ -866,7 +866,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.status = InvoiceRowStatus::Verified;
+                u.status = InvoiceStatus::Verified;
                 u.on_hold = true;
                 u
             })

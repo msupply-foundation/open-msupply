@@ -64,7 +64,9 @@ impl<'a> TemperatureLogRepository<'a> {
 
     pub fn count(&self, filter: Option<TemperatureLogFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -107,7 +109,7 @@ impl<'a> TemperatureLogRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<TemperatureLogRow>(&self.connection.connection)?;
+        let result = final_query.load::<TemperatureLogRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

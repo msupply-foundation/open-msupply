@@ -54,7 +54,9 @@ impl<'a> RequisitionRepository<'a> {
 
     pub fn count(&self, filter: Option<RequisitionFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter)?;
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -128,7 +130,7 @@ impl<'a> RequisitionRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<RequisitionJoin>(&self.connection.connection)?;
+            .load::<RequisitionJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

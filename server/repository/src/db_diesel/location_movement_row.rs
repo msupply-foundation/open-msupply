@@ -24,7 +24,7 @@ joinable!(location_movement -> stock_line (stock_line_id));
 joinable!(location_movement -> location (location_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "location_movement"]
+#[diesel(table_name = location_movement)]
 pub struct LocationMovementRow {
     pub id: String,
     pub store_id: String,
@@ -50,7 +50,7 @@ impl<'a> LocationMovementRowRepository<'a> {
             .on_conflict(location_movement_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -58,14 +58,14 @@ impl<'a> LocationMovementRowRepository<'a> {
     pub fn upsert_one(&self, row: &LocationMovementRow) -> Result<(), RepositoryError> {
         diesel::replace_into(location_movement_dsl::location_movement)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationMovementRow>, RepositoryError> {
         let result = location_movement_dsl::location_movement
             .filter(location_movement_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -74,7 +74,7 @@ impl<'a> LocationMovementRowRepository<'a> {
         diesel::delete(
             location_movement_dsl::location_movement.filter(location_movement_dsl::id.eq(id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

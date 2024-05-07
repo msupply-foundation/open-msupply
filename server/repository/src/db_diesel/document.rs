@@ -77,7 +77,7 @@ pub enum DocumentStatus {
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[cfg_attr(test, derive(Default))]
-#[table_name = "document"]
+#[diesel(table_name = document)]
 pub struct DocumentRow {
     /// The document data hash
     pub id: String,
@@ -90,7 +90,7 @@ pub struct DocumentRow {
     /// The timestamp of this document version
     pub datetime: NaiveDateTime,
     /// Type of the containing data
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: String,
     /// The actual document data
     pub data: String,
@@ -236,14 +236,14 @@ impl<'a> DocumentRepository<'a> {
     fn _insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(document_is_sync_update::table.find(id))
             .set(document_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
@@ -251,7 +251,7 @@ impl<'a> DocumentRepository<'a> {
     pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         self.toggle_is_sync_update(&doc.id, false)?;
         Ok(())
     }
@@ -261,7 +261,7 @@ impl<'a> DocumentRepository<'a> {
         let row: Option<DocumentJoin> = document::dsl::document
             .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
             .filter(document::dsl::id.eq(document_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
 
         Ok(match row {
@@ -282,7 +282,7 @@ impl<'a> DocumentRepository<'a> {
         let result = document_is_sync_update::table
             .find(id)
             .select(document_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -290,7 +290,9 @@ impl<'a> DocumentRepository<'a> {
     pub fn count(&self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
         let query = create_latest_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     /// Get the latest version of some documents
@@ -330,7 +332,7 @@ impl<'a> DocumentRepository<'a> {
         let rows: Vec<DocumentJoin> = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
 
         let mut result = Vec::<Document>::new();
         for row in rows {
@@ -375,7 +377,7 @@ impl<'a> DocumentRepository<'a> {
         }
         let rows: Vec<DocumentJoin> = query
             .order(document::dsl::datetime.desc())
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
 
         let mut result = Vec::<Document>::new();
         for row in rows {

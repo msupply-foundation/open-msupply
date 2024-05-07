@@ -19,7 +19,7 @@ table! {
         cursor -> BigInt,
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
-        row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
+        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
@@ -32,7 +32,7 @@ table! {
         cursor -> BigInt,
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
-        row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
+        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
@@ -44,15 +44,13 @@ joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
 #[cfg(not(feature = "postgres"))]
-no_arg_sql_function!(
-    last_insert_rowid,
-    diesel::sql_types::BigInt,
-    "Represents the SQL last_insert_row() function"
+sql_function!(
+    fn last_insert_rowid() -> BigInt
 );
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ChangelogAction {
+pub enum RowActionType {
     #[default]
     Upsert,
     Delete,
@@ -150,23 +148,23 @@ impl ChangelogTableName {
 }
 
 #[derive(Debug, PartialEq, Insertable, Default)]
-#[table_name = "changelog"]
+#[diesel(table_name = changelog)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
-    pub row_action: ChangelogAction,
+    pub row_action: RowActionType,
     pub name_link_id: Option<String>,
     pub store_id: Option<String>,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
-#[table_name = "changelog"]
+#[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
     pub table_name: ChangelogTableName,
     pub record_id: String,
-    pub row_action: ChangelogAction,
-    #[column_name = "name_link_id"]
+    pub row_action: RowActionType,
+    #[diesel(column_name = "name_link_id")]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
@@ -179,7 +177,7 @@ pub struct ChangelogFilter {
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub record_id: Option<EqualFilter<String>>,
-    pub action: Option<EqualFilter<ChangelogAction>>,
+    pub action: Option<EqualFilter<RowActionType>>,
     pub is_sync_update: Option<EqualFilter<bool>>,
     pub source_site_id: Option<EqualFilter<i32>>,
 }
@@ -208,7 +206,9 @@ impl<'a> ChangelogRepository<'a> {
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_query(earliest, filter).limit(limit.into());
+        let query = create_filtered_query(earliest, filter)
+            .order(changelog_deduped::dsl::cursor.asc())
+            .limit(limit.into());
 
         // // Debug diesel query
         // println!(
@@ -216,7 +216,7 @@ impl<'a> ChangelogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result: Vec<ChangelogJoin> = query.load(&self.connection.connection)?;
+        let result: Vec<ChangelogJoin> = query.load(self.connection.lock().connection())?;
         Ok(result
             .into_iter()
             .map(|(change_log_row, name_link_row)| ChangelogRow {
@@ -239,7 +239,7 @@ impl<'a> ChangelogRepository<'a> {
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_query(earliest, filter)
             .count()
-            .get_result::<i64>(&self.connection.connection)?;
+            .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
     }
 
@@ -260,7 +260,7 @@ impl<'a> ChangelogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result: Vec<ChangelogJoin> = query.load(&self.connection.connection)?;
+        let result: Vec<ChangelogJoin> = query.load(self.connection.lock().connection())?;
         Ok(result
             .into_iter()
             .map(|(change_log_row, name_link_row)| ChangelogRow {
@@ -287,7 +287,7 @@ impl<'a> ChangelogRepository<'a> {
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
             .count()
-            .get_result::<i64>(&self.connection.connection)?;
+            .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
     }
 
@@ -296,7 +296,7 @@ impl<'a> ChangelogRepository<'a> {
     pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
         let result = changelog::table
             .select(diesel::dsl::max(changelog::cursor))
-            .first::<Option<i64>>(&self.connection.connection)?;
+            .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
     }
 
@@ -304,7 +304,7 @@ impl<'a> ChangelogRepository<'a> {
     pub fn delete(&self, cursor_ge: i64) -> Result<(), RepositoryError> {
         diesel::delete(changelog::dsl::changelog)
             .filter(changelog::dsl::cursor.ge(cursor_ge))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -314,7 +314,7 @@ impl<'a> ChangelogRepository<'a> {
         diesel::update(changelog::table)
             .set(changelog::is_sync_update.eq(false))
             .filter(changelog::cursor.gt(from_cursor as i64))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -329,7 +329,7 @@ impl<'a> ChangelogRepository<'a> {
                 changelog::is_sync_update.eq(true),
             ))
             .filter(changelog::cursor.eq(cursor_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -341,7 +341,7 @@ impl<'a> ChangelogRepository<'a> {
         let cursor_id = diesel::insert_into(changelog::table)
             .values(row)
             .returning(changelog::cursor)
-            .get_results(&self.connection.connection)?
+            .get_results(self.connection.lock().connection())?
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
 
@@ -354,9 +354,9 @@ impl<'a> ChangelogRepository<'a> {
         // SQLite docs say this is safe if you don't have different threads sharing a single connection
         diesel::insert_into(changelog::table)
             .values(row)
-            .execute(&self.connection.connection)?;
-        let cursor_id =
-            diesel::select(last_insert_rowid).get_result::<i64>(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
+        let cursor_id = diesel::select(last_insert_rowid())
+            .get_result::<i64>(self.connection.lock().connection())?;
         Ok(cursor_id)
     }
 }
@@ -468,7 +468,7 @@ fn create_filtered_outgoing_sync_query(
 impl Default for ChangelogRow {
     fn default() -> Self {
         Self {
-            row_action: ChangelogAction::Upsert,
+            row_action: RowActionType::Upsert,
             table_name: ChangelogTableName::Invoice,
             // Default
             cursor: Default::default(),
@@ -506,7 +506,7 @@ impl ChangelogFilter {
         self
     }
 
-    pub fn action(mut self, filter: EqualFilter<ChangelogAction>) -> Self {
+    pub fn action(mut self, filter: EqualFilter<RowActionType>) -> Self {
         self.action = Some(filter);
         self
     }
@@ -528,7 +528,7 @@ impl ChangelogTableName {
     }
 }
 
-impl ChangelogAction {
+impl RowActionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }

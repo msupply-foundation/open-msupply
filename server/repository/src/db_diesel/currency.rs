@@ -42,7 +42,9 @@ impl<'a> CurrencyRepository<'a> {
 
     pub fn count(&self, filter: Option<CurrencyFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -74,7 +76,7 @@ impl<'a> CurrencyRepository<'a> {
             query = query.order(currency_dsl::code.asc())
         }
 
-        let result = query.load::<CurrencyRow>(&self.connection.connection)?;
+        let result = query.load::<CurrencyRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

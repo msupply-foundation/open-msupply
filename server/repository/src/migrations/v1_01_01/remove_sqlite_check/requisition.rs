@@ -69,7 +69,7 @@ async fn remove_sqlite_check_requisition() {
             requisition_dsl::status,
         ))
         .order_by(requisition_dsl::id.asc())
-        .load::<(String, String, String)>(&connection.connection)
+        .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

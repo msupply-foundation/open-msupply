@@ -1,7 +1,7 @@
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    EqualFilter, ItemLinkRow, ItemRow, ItemRowType, Pagination, Sort,
+    EqualFilter, ItemLinkRow, ItemRow, ItemType, Pagination, Sort,
 };
 
 use super::{
@@ -30,7 +30,7 @@ pub struct MasterListLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub master_list_id: Option<EqualFilter<String>>,
-    pub item_type: Option<EqualFilter<ItemRowType>>,
+    pub item_type: Option<EqualFilter<ItemType>>,
 }
 
 pub enum MasterListLineSortField {
@@ -53,7 +53,9 @@ impl<'a> MasterListLineRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter)?;
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -65,7 +67,7 @@ impl<'a> MasterListLineRepository<'a> {
 
         query = query.order(master_list_line_dsl::id.asc());
 
-        let result = query.load::<MasterListLineJoin>(&self.connection.connection)?;
+        let result = query.load::<MasterListLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -95,7 +97,7 @@ impl<'a> MasterListLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<MasterListLineJoin>(&self.connection.connection)?;
+            .load::<MasterListLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -156,7 +158,7 @@ impl MasterListLineFilter {
         self
     }
 
-    pub fn item_type(mut self, filter: EqualFilter<ItemRowType>) -> Self {
+    pub fn item_type(mut self, filter: EqualFilter<ItemType>) -> Self {
         self.item_type = Some(filter);
         self
     }

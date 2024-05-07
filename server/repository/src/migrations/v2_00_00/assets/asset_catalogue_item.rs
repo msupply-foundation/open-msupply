@@ -1,3 +1,4 @@
+use crate::migrations::DATETIME;
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
@@ -13,6 +14,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             asset_catalogue_type_id TEXT NOT NULL REFERENCES asset_catalogue_type(id),
             manufacturer TEXT,
             model TEXT NOT NULL,
+            deleted_datetime {DATETIME},
             UNIQUE (code)
         );
         "#,

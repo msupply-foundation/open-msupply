@@ -1,6 +1,7 @@
 use super::{
-    item_link_row::item_link, location_row::location::dsl as location_dsl,
-    name_link_row::name_link, store_row::store, RepositoryError, StorageConnection,
+    assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
+    location_row::location::dsl as location_dsl, name_link_row::name_link, store_row::store,
+    RepositoryError, StorageConnection,
 };
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
@@ -18,9 +19,10 @@ table! {
 joinable!(location -> store (store_id));
 allow_tables_to_appear_in_same_query!(location, item_link);
 allow_tables_to_appear_in_same_query!(location, name_link);
+allow_tables_to_appear_in_same_query!(location, asset_internal_location);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "location"]
+#[diesel(table_name = location)]
 pub struct LocationRow {
     pub id: String,
     pub name: String,
@@ -45,7 +47,7 @@ impl<'a> LocationRowRepository<'a> {
             .on_conflict(location_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -53,14 +55,14 @@ impl<'a> LocationRowRepository<'a> {
     pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
         diesel::replace_into(location_dsl::location)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
         match location_dsl::location
             .filter(location_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
         {
             Ok(row) => Ok(Some(row)),
             Err(diesel::result::Error::NotFound) => Ok(None),
@@ -71,12 +73,12 @@ impl<'a> LocationRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationRow>, RepositoryError> {
         Ok(location_dsl::location
             .filter(location_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(location_dsl::location.filter(location_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

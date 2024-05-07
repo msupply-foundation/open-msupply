@@ -67,7 +67,7 @@ async fn remove_sqlite_check_invoice() {
     let invoices = invoice_dsl::invoice
         .select((invoice_dsl::id, invoice_dsl::type_, invoice_dsl::status))
         .order_by(invoice_dsl::id.asc())
-        .load::<(String, String, String)>(&connection.connection)
+        .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

@@ -75,12 +75,18 @@ impl<'a> ProgramSupplierRepository<'a> {
         let query = query.select((
             // Same as NameRepository
             name_dsl::name::all_columns(),
-            name_link_dsl::name_link::all_columns(),
-            name_store_join_dsl::name_store_join::all_columns(),
-            store_dsl::store::all_columns(),
-            program_dsl::program::all_columns(),
+            name_link_dsl::name_link::all_columns()
+                .nullable()
+                .assume_not_null(),
+            name_store_join_dsl::name_store_join::all_columns()
+                .nullable()
+                .assume_not_null(),
+            store_dsl::store::all_columns().nullable().assume_not_null(),
+            program_dsl::program::all_columns()
+                .nullable()
+                .assume_not_null(),
         ));
-        let result = query.load::<ProgramSupplierJoin>(&self.connection.connection)?;
+        let result = query.load::<ProgramSupplierJoin>(self.connection.lock().connection())?;
 
         Ok(result
             .into_iter()
@@ -253,14 +259,12 @@ mod test {
 
         // TEST 1 without master list join for store 1 and without name_store_join for store 2
         // should result in nothing (since name1 is not store)
-        let repo = ProgramSupplierRepository::new(&connection);
-
         let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(vec![
             program1.id.clone(),
             program2.id.clone(),
         ]));
 
-        let result = repo.query(&store3.id, filter);
+        let result = ProgramSupplierRepository::new(&connection).query(&store3.id, filter);
 
         assert_eq!(result, Ok(Vec::new()));
 
@@ -275,7 +279,7 @@ mod test {
             .upsert_one(&master_list_name_join2)
             .unwrap();
 
-        let result = repo.query(&store3.id, filter);
+        let result = ProgramSupplierRepository::new(&connection).query(&store3.id, filter);
 
         assert_eq!(
             result,
@@ -300,7 +304,9 @@ mod test {
             .upsert_one(&name_store_join3)
             .unwrap();
 
-        let mut result = repo.query(&store3.id, filter).unwrap();
+        let mut result = ProgramSupplierRepository::new(&connection)
+            .query(&store3.id, filter)
+            .unwrap();
         result.sort_by(|a, b| a.supplier.name_row.id.cmp(&b.supplier.name_row.id));
 
         assert_eq!(

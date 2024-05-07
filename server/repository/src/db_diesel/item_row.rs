@@ -15,7 +15,7 @@ table! {
         code -> Text,
         unit_id -> Nullable<Text>,
         default_pack_size -> Integer,
-        #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemRowTypeMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemTypeMapping,
         // TODO, this is temporary, remove
         legacy_record -> Text,
         is_active -> Bool,
@@ -36,22 +36,22 @@ allow_tables_to_appear_in_same_query!(item, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ItemRowType {
+pub enum ItemType {
     Stock,
     Service,
     NonStock,
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
-#[table_name = "item"]
+#[diesel(table_name = item)]
 pub struct ItemRow {
     pub id: String,
     pub name: String,
     pub code: String,
     pub unit_id: Option<String>,
     pub default_pack_size: i32,
-    #[column_name = "type_"]
-    pub r#type: ItemRowType,
+    #[diesel(column_name = type_)]
+    pub r#type: ItemType,
     // TODO, this is temporary, remove
     pub legacy_record: String,
     pub is_active: bool,
@@ -65,7 +65,7 @@ impl Default for ItemRow {
             code: Default::default(),
             unit_id: Default::default(),
             default_pack_size: Default::default(),
-            r#type: ItemRowType::Stock,
+            r#type: ItemType::Stock,
             legacy_record: Default::default(),
             is_active: true,
         }
@@ -100,7 +100,7 @@ impl<'a> ItemRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(item_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         insert_or_ignore_item_link(&self.connection, item_row)?;
         Ok(())
@@ -110,7 +110,7 @@ impl<'a> ItemRowRepository<'a> {
     pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::replace_into(item)
             .values(item_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
@@ -119,14 +119,14 @@ impl<'a> ItemRowRepository<'a> {
     pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
     }
 
-    pub async fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {
-        let result = item.load(&self.connection.connection);
+    pub async fn find_all(&mut self) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = item.load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -140,7 +140,7 @@ impl<'a> ItemRowRepository<'a> {
     fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq(item_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -148,14 +148,14 @@ impl<'a> ItemRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(item.filter(id.eq(item_id)))
             .set(is_active.eq(false))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

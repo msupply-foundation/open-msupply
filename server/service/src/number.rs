@@ -1,6 +1,6 @@
 use repository::{
-    InvoiceRowRepository, InvoiceRowType, NumberRowRepository, NumberRowType, RepositoryError,
-    RequisitionRowRepository, RequisitionRowType, StocktakeRowRepository, StorageConnection,
+    InvoiceRowRepository, InvoiceType, NumberRowRepository, NumberRowType, RepositoryError,
+    RequisitionRowRepository, RequisitionType, StocktakeRowRepository, StorageConnection,
 };
 
 /// Get next number for record type and store
@@ -23,28 +23,28 @@ pub fn next_number(
 
         let max_number = match r#type {
             NumberRowType::InboundShipment => InvoiceRowRepository::new(connection_tx)
-                .find_max_invoice_number(InvoiceRowType::InboundShipment, store_id)?,
+                .find_max_invoice_number(InvoiceType::InboundShipment, store_id)?,
             NumberRowType::OutboundShipment => InvoiceRowRepository::new(connection_tx)
-                .find_max_invoice_number(InvoiceRowType::OutboundShipment, store_id)?,
+                .find_max_invoice_number(InvoiceType::OutboundShipment, store_id)?,
             NumberRowType::InventoryAddition => InvoiceRowRepository::new(connection_tx)
-                .find_max_invoice_number(InvoiceRowType::InventoryAddition, store_id)?,
+                .find_max_invoice_number(InvoiceType::InventoryAddition, store_id)?,
             NumberRowType::Repack => InvoiceRowRepository::new(connection_tx)
-                .find_max_invoice_number(InvoiceRowType::Repack, store_id)?,
+                .find_max_invoice_number(InvoiceType::Repack, store_id)?,
             NumberRowType::InventoryReduction => InvoiceRowRepository::new(connection_tx)
-                .find_max_invoice_number(InvoiceRowType::InventoryReduction, store_id)?,
+                .find_max_invoice_number(InvoiceType::InventoryReduction, store_id)?,
             NumberRowType::Prescription => InvoiceRowRepository::new(connection_tx)
-                .find_max_invoice_number(InvoiceRowType::Prescription, store_id)?,
+                .find_max_invoice_number(InvoiceType::Prescription, store_id)?,
             NumberRowType::RequestRequisition => RequisitionRowRepository::new(connection_tx)
-                .find_max_requisition_number(RequisitionRowType::Request, store_id)?,
+                .find_max_requisition_number(RequisitionType::Request, store_id)?,
             NumberRowType::ResponseRequisition => RequisitionRowRepository::new(connection_tx)
-                .find_max_requisition_number(RequisitionRowType::Response, store_id)?,
+                .find_max_requisition_number(RequisitionType::Response, store_id)?,
             NumberRowType::Stocktake => {
                 StocktakeRowRepository::new(connection_tx).find_max_stocktake_number(store_id)?
             }
             NumberRowType::InboundReturn => InvoiceRowRepository::new(&connection_tx)
-                .find_max_invoice_number(InvoiceRowType::InboundReturn, store_id)?,
+                .find_max_invoice_number(InvoiceType::InboundReturn, store_id)?,
             NumberRowType::OutboundReturn => InvoiceRowRepository::new(&connection_tx)
-                .find_max_invoice_number(InvoiceRowType::OutboundReturn, store_id)?,
+                .find_max_invoice_number(InvoiceType::OutboundReturn, store_id)?,
             NumberRowType::Program(_) => {
                 let next_number =
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
@@ -70,7 +70,7 @@ mod test {
             mock_outbound_shipment_number_store_a, mock_store_c, MockData, MockDataInserts,
         },
         test_db::{self, setup_all, setup_all_with_data},
-        InvoiceRow, InvoiceRowType, NumberRowType, RepositoryError, TransactionError,
+        InvoiceRow, InvoiceType, NumberRowType, RepositoryError, TransactionError,
     };
     use util::inline_init;
 
@@ -87,7 +87,7 @@ mod test {
                 r.id = "invoice1".to_string();
                 r.name_link_id = mock_name_c().id;
                 r.store_id = mock_store_c().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
                 r.invoice_number = 100;
             })
         }
@@ -171,6 +171,14 @@ mod test {
         assert_eq!(result, 1);
     }
 
+    /// Note: this test is disabled when running tests using in 'memory' sqlite.
+    /// When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response
+    /// when two threads try to write using the shared cache concurrently
+    /// https://sqlite.org/rescode.html#locked
+    /// We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this
+    /// test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
+    /// If we were to use shared cache in production, we'd probably need to use a mutex (or
+    /// similar) to protect the database connection.
     #[actix_rt::test]
     #[cfg(not(feature = "memory"))]
     async fn test_concurrent_next_number() {
@@ -180,23 +188,15 @@ mod test {
         )
         .await;
 
-        // Note: this test is disabled when running tests using in 'memory' sqlite.
-        // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
-        // https://sqlite.org/rescode.html#locked
-        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivelant available for shared cache connections (SQLITE_LOCKED).
-        // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
-
-        /*
-            Test Scenario
-
-            Process A starts a transaction, and gets the next number, then waits before commiting the transaction
-            Concurrently Process B tries to get the next number
-            (Note: This test did fail with previous implementation of next number on postgres)
-        */
+        // Test Scenario
+        //
+        // Process A starts a transaction, and gets the next number, then waits before committing
+        // the transaction.
+        // Concurrently Process B tries to get the next number
+        // (Note: This test did fail with previous implementation of next number on postgres)
 
         // Part 1: Both threads will try to add a new number row (first time this number type has been used)
         // This should result in 1 insert and 1 update.
-
         let manager_a = connection_manager.clone();
         let process_a = std::thread::spawn(move || {
             let connection = manager_a.connection().unwrap();

@@ -7,7 +7,7 @@ use repository::{
     SensorType, StorageConnection, TemperatureBreach, TemperatureBreachConfig,
     TemperatureBreachConfigFilter, TemperatureBreachConfigRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachFilter, TemperatureBreachRepository,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType, TemperatureLog,
     TemperatureLogFilter, TemperatureLogRepository, TemperatureLogRow, TemperatureLogRowRepository,
 };
 use serde::Serialize;
@@ -17,12 +17,12 @@ use util::uuid::uuid;
 
 use temperature_sensor::*;
 
-fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachRowType {
+pub fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachType {
     match breach_type {
-        BreachType::ColdConsecutive => TemperatureBreachRowType::ColdConsecutive,
-        BreachType::ColdCumulative => TemperatureBreachRowType::ColdCumulative,
-        BreachType::HotConsecutive => TemperatureBreachRowType::HotConsecutive,
-        BreachType::HotCumulative => TemperatureBreachRowType::HotCumulative,
+        BreachType::ColdConsecutive => TemperatureBreachType::ColdConsecutive,
+        BreachType::ColdCumulative => TemperatureBreachType::ColdCumulative,
+        BreachType::HotConsecutive => TemperatureBreachType::HotConsecutive,
+        BreachType::HotCumulative => TemperatureBreachType::HotCumulative,
     }
 }
 
@@ -50,7 +50,7 @@ fn get_matching_sensor_breach_config(
     connection: &StorageConnection,
     store_id: &str,
     temperature_breach_config: &temperature_sensor::TemperatureBreachConfig,
-    breach_type: &TemperatureBreachRowType,
+    breach_type: &TemperatureBreachType,
 ) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
     let filter = TemperatureBreachConfigFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
@@ -72,7 +72,7 @@ fn get_matching_sensor_breach(
     connection: &StorageConnection,
     sensor_id: &str,
     start_datetime: NaiveDateTime,
-    breach_type: &TemperatureBreachRowType,
+    breach_type: &TemperatureBreachType,
 ) -> Result<Option<TemperatureBreach>, RepositoryError> {
     let filter = TemperatureBreachFilter::new()
         .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
@@ -464,8 +464,8 @@ fn integrate_sensor_data(
 }
 
 // First of all consecutive and then cumulative
-fn breach_sort_weight(breach: &TemperatureBreachRowType) -> u8 {
-    use TemperatureBreachRowType::*;
+fn breach_sort_weight(breach: &TemperatureBreachType) -> u8 {
+    use TemperatureBreachType::*;
     match breach {
         ColdConsecutive => 1,
         HotConsecutive => 2,
@@ -498,7 +498,7 @@ mod test {
     use repository::{
         mock::{mock_store_a, MockDataInserts},
         Pagination, Sort, TemperatureBreachFilter, TemperatureBreachRepository,
-        TemperatureBreachRow, TemperatureBreachRowType, TemperatureLogRepository,
+        TemperatureBreachRow, TemperatureBreachType, TemperatureLogRepository,
         TemperatureLogSortField,
     };
     use temperature_sensor as ts;
@@ -679,7 +679,7 @@ mod test {
             vec![
                 TemperatureBreachRow {
                     duration_milliseconds: ((1 * 60) + 19) * 60 * 1000,
-                    r#type: TemperatureBreachRowType::HotConsecutive,
+                    r#type: TemperatureBreachType::HotConsecutive,
                     threshold_minimum: -273.0,
                     threshold_maximum: 8.0,
                     threshold_duration_milliseconds: 5 * 60 * 1000,
@@ -689,7 +689,7 @@ mod test {
                 },
                 TemperatureBreachRow {
                     duration_milliseconds: ((3 * 60) + 19) * 60 * 1000,
-                    r#type: TemperatureBreachRowType::HotCumulative,
+                    r#type: TemperatureBreachType::HotCumulative,
                     threshold_minimum: -273.0,
                     threshold_maximum: 8.0,
                     threshold_duration_milliseconds: 60 * 60 * 1000,
@@ -794,7 +794,7 @@ mod test {
             vec![
                 TemperatureBreachRow {
                     duration_milliseconds: (29) * 60 * 1000,
-                    r#type: TemperatureBreachRowType::ColdConsecutive,
+                    r#type: TemperatureBreachType::ColdConsecutive,
                     threshold_minimum: 2.0,
                     threshold_maximum: 100.0,
                     threshold_duration_milliseconds: 5 * 60 * 1000,
@@ -805,7 +805,7 @@ mod test {
                 s1_breaches[0].clone(), // Hot consecutive didn't change
                 TemperatureBreachRow {
                     duration_milliseconds: ((2 * 60) + 15 + 1) * 60 * 1000,
-                    r#type: TemperatureBreachRowType::ColdCumulative,
+                    r#type: TemperatureBreachType::ColdCumulative,
                     threshold_minimum: 2.0,
                     threshold_maximum: 100.0,
                     threshold_duration_milliseconds: 60 * 60 * 1000,

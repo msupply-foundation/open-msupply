@@ -132,7 +132,7 @@ fn upsert_temperature_log(
                         sensor_id: log.sensor_id.clone(),
                         threshold_duration_milliseconds: 0,
                         duration_milliseconds: 0,
-                        r#type: repository::TemperatureBreachRowType::HotConsecutive,
+                        r#type: repository::TemperatureBreachType::HotConsecutive,
                         start_datetime: NaiveDateTime::from_timestamp_millis(log.unix_timestamp)
                             .unwrap_or_default(),
                         end_datetime: None,

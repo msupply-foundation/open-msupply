@@ -5,7 +5,7 @@ use crate::sync::{
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::{InvoiceRow, InvoiceRowDelete, InvoiceRowStatus, InvoiceRowType};
+use repository::{InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType};
 use serde_json::json;
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
@@ -107,8 +107,8 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             name_link_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
             invoice_number: 1,
-            r#type: InvoiceRowType::InboundShipment,
-            status: InvoiceRowStatus::Delivered,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::Delivered,
             on_hold: false,
             comment: None,
             their_reference: None,
@@ -182,8 +182,8 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
                     + Duration::seconds(47046),
             ),
             verified_datetime: None,
-            om_status: Some(InvoiceRowStatus::Delivered),
-            om_type: Some(InvoiceRowType::InboundShipment),
+            om_status: Some(InvoiceStatus::Delivered),
+            om_type: Some(InvoiceType::InboundShipment),
             om_colour: None,
             tax: Some(0.0),
             clinician_id: None,
@@ -282,8 +282,8 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             name_link_id: "name_store_b".to_string(),
             name_store_id: Some("store_b".to_string()),
             invoice_number: 4,
-            r#type: InvoiceRowType::OutboundShipment,
-            status: InvoiceRowStatus::Shipped,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::Shipped,
             on_hold: false,
             comment: None,
             their_reference: None,
@@ -346,8 +346,8 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            om_status: Some(InvoiceRowStatus::Shipped),
-            om_type: Some(InvoiceRowType::OutboundShipment),
+            om_status: Some(InvoiceStatus::Shipped),
+            om_type: Some(InvoiceType::OutboundShipment),
             om_colour: None,
             tax: Some(0.0),
             clinician_id: None,
@@ -456,8 +456,8 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             name_link_id: "name_store_b".to_string(),
             name_store_id: Some("store_b".to_string()),
             invoice_number: 4,
-            r#type: InvoiceRowType::InventoryAddition,
-            status: InvoiceRowStatus::Shipped,
+            r#type: InvoiceType::InventoryAddition,
+            status: InvoiceStatus::Shipped,
             on_hold: false,
             comment: None,
             their_reference: None,
@@ -569,8 +569,8 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
                     .and_hms_opt(14, 33, 0)
                     .unwrap()
             ),
-            om_status: Some(InvoiceRowStatus::Shipped),
-            om_type: Some(InvoiceRowType::InventoryAddition),
+            om_status: Some(InvoiceStatus::Shipped),
+            om_type: Some(InvoiceType::InventoryAddition),
             om_colour: Some("SomeColour".to_string()),
             tax: Some(0.0),
             clinician_id: None,
@@ -679,8 +679,8 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             store_id: "store_b".to_string(),
             name_link_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
             invoice_number: 1,
-            r#type: InvoiceRowType::InventoryAddition,
-            status: InvoiceRowStatus::Verified,
+            r#type: InvoiceType::InventoryAddition,
+            status: InvoiceStatus::Verified,
             created_datetime: NaiveDate::from_ymd_opt(2023, 1, 16)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -726,8 +726,8 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             _type: LegacyTransactType::Si,
             status: LegacyTransactStatus::Fn,
             tax: Some(0.0),
-            om_status: Some(InvoiceRowStatus::Verified),
-            om_type: Some(InvoiceRowType::InventoryAddition),
+            om_status: Some(InvoiceStatus::Verified),
+            om_type: Some(InvoiceType::InventoryAddition),
             entry_date: NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),
             entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             confirm_date: Some(NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),),
@@ -865,8 +865,8 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             store_id: "store_b".to_string(),
             name_link_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
             invoice_number: 2,
-            r#type: InvoiceRowType::InventoryReduction,
-            status: InvoiceRowStatus::Verified,
+            r#type: InvoiceType::InventoryReduction,
+            status: InvoiceStatus::Verified,
             created_datetime: NaiveDate::from_ymd_opt(2023, 1, 16)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -912,8 +912,8 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             _type: LegacyTransactType::Sc,
             status: LegacyTransactStatus::Fn,
             tax: Some(0.0),
-            om_status: Some(InvoiceRowStatus::Verified),
-            om_type: Some(InvoiceRowType::InventoryReduction),
+            om_status: Some(InvoiceStatus::Verified),
+            om_type: Some(InvoiceType::InventoryReduction),
             entry_date: NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),
             entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             confirm_date: Some(NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),),
@@ -1047,8 +1047,8 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             name_link_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
             invoice_number: 1,
-            r#type: InvoiceRowType::Prescription,
-            status: InvoiceRowStatus::Picked,
+            r#type: InvoiceType::Prescription,
+            status: InvoiceStatus::Picked,
             on_hold: false,
             comment: None,
             their_reference: None,
@@ -1122,8 +1122,8 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            om_status: Some(InvoiceRowStatus::Picked),
-            om_type: Some(InvoiceRowType::Prescription),
+            om_status: Some(InvoiceStatus::Picked),
+            om_type: Some(InvoiceType::Prescription),
             om_colour: None,
             tax: Some(0.0),
             clinician_id: None,

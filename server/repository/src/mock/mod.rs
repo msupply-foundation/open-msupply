@@ -700,13 +700,13 @@ pub fn insert_mock_data(
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
         if inserts.names {
-            let name_repo = NameRowRepository::new(connection);
             for row in &mock_data.names {
-                name_repo.upsert_one(row).unwrap();
+                NameRowRepository::new(connection).upsert_one(row).unwrap();
             }
-            let name_link_repo = NameLinkRowRepository::new(connection);
             for row in &mock_data.name_links {
-                name_link_repo.upsert_one(row).unwrap();
+                NameLinkRowRepository::new(connection)
+                    .upsert_one(row)
+                    .unwrap();
             }
         }
 
@@ -781,12 +781,9 @@ pub fn insert_mock_data(
         }
 
         if inserts.items {
-            let item_repo = ItemRowRepository::new(connection);
-            let item_link_repo = ItemLinkRowRepository::new(connection);
-
             for row in &mock_data.items {
-                item_repo.upsert_one(row).unwrap();
-                item_link_repo
+                ItemRowRepository::new(connection).upsert_one(row).unwrap();
+                ItemLinkRowRepository::new(connection)
                     .upsert_one(&mock_item_link_from_item(row))
                     .unwrap();
             }

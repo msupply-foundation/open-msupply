@@ -15,7 +15,7 @@ use repository::{
         TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
         TemperatureBreachSortField,
     },
-    DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachRowType,
+    DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachType,
 };
 use service::{
     cold_chain::query_temperature_breach::get_max_or_min_breach_temperature, usize_to_u32,
@@ -162,9 +162,9 @@ impl TemperatureBreachNode {
 }
 
 impl TemperatureBreachNodeType {
-    pub fn from_domain(from: &TemperatureBreachRowType) -> TemperatureBreachNodeType {
+    pub fn from_domain(from: &TemperatureBreachType) -> TemperatureBreachNodeType {
         use TemperatureBreachNodeType as to;
-        use TemperatureBreachRowType as from;
+        use TemperatureBreachType as from;
 
         match from {
             from::ColdConsecutive => to::ColdConsecutive,
@@ -177,9 +177,9 @@ impl TemperatureBreachNodeType {
         }
     }
 
-    pub fn to_domain(self) -> TemperatureBreachRowType {
+    pub fn to_domain(self) -> TemperatureBreachType {
         use TemperatureBreachNodeType as from;
-        use TemperatureBreachRowType as to;
+        use TemperatureBreachType as to;
 
         match self {
             from::ColdConsecutive => to::ColdConsecutive,

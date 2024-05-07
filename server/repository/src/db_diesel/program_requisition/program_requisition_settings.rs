@@ -74,7 +74,8 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result = query.load::<ProgramRequisitionSettingsJoin>(&self.connection.connection)?;
+        let result =
+            query.load::<ProgramRequisitionSettingsJoin>(self.connection.lock().connection())?;
 
         Ok(result
             .into_iter()

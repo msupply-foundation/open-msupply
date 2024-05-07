@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::IntegrationOperation,
 };
-use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType};
+use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentType};
 
 use serde_json::json;
 use util::uuid::uuid;
@@ -17,28 +17,28 @@ impl SyncRecordTester for InventoryAdjustmentReasonTester {
         // STEP 1 - insert
         let pos_1 = InventoryAdjustmentReasonRow {
             id: uuid(),
-            r#type: InventoryAdjustmentReasonType::Positive,
+            r#type: InventoryAdjustmentType::Positive,
             is_active: true,
             reason: "POS 1".to_string(),
         };
 
         let pos_2 = InventoryAdjustmentReasonRow {
             id: uuid(),
-            r#type: InventoryAdjustmentReasonType::Positive,
+            r#type: InventoryAdjustmentType::Positive,
             is_active: false,
             reason: "POS 2".to_string(),
         };
 
         let neg_1 = InventoryAdjustmentReasonRow {
             id: uuid(),
-            r#type: InventoryAdjustmentReasonType::Negative,
+            r#type: InventoryAdjustmentType::Negative,
             is_active: false,
             reason: "NEG 1".to_string(),
         };
 
         let neg_2 = InventoryAdjustmentReasonRow {
             id: uuid(),
-            r#type: InventoryAdjustmentReasonType::Negative,
+            r#type: InventoryAdjustmentType::Negative,
             is_active: true,
             reason: "NEG 2".to_string(),
         };

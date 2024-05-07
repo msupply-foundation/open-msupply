@@ -41,8 +41,8 @@ impl SyncRecordTester for InvoiceRecordTester {
             store_id: store_id.to_string(),
             user_id: Some("user 1".to_string()),
             invoice_number: 8,
-            r#type: InvoiceRowType::InboundShipment,
-            status: InvoiceRowStatus::New,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
             on_hold: false,
             comment: None,
             their_reference: None,
@@ -69,7 +69,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),
             invoice_id: base_invoice_row.id.clone(),
-            r#type: InvoiceLineRowType::StockIn,
+            r#type: InvoiceLineType::StockIn,
             item_link_id: uuid(),
             item_name: uuid(),
             item_code: uuid(),
@@ -94,59 +94,59 @@ impl SyncRecordTester for InvoiceRecordTester {
 
         let invoice_row_2 = inline_edit(&base_invoice_row, |mut d| {
             d.id = uuid();
-            d.r#type = InvoiceRowType::OutboundShipment;
-            d.status = InvoiceRowStatus::Allocated;
+            d.r#type = InvoiceType::OutboundShipment;
+            d.status = InvoiceStatus::Allocated;
             d
         });
         let invoice_line_row_2 = inline_edit(&base_invoice_line_row, |mut d| {
             d.id = uuid();
             d.invoice_id = invoice_row_2.id.clone();
-            d.r#type = InvoiceLineRowType::UnallocatedStock;
+            d.r#type = InvoiceLineType::UnallocatedStock;
             d
         });
         let invoice_line_row_3 = inline_edit(&base_invoice_line_row, |mut d| {
             d.id = uuid();
             d.invoice_id = invoice_row_2.id.clone();
-            d.r#type = InvoiceLineRowType::Service;
+            d.r#type = InvoiceLineType::Service;
             d
         });
         let invoice_line_row_4 = inline_edit(&base_invoice_line_row, |mut d| {
             d.id = uuid();
             d.invoice_id = invoice_row_2.id.clone();
-            d.r#type = InvoiceLineRowType::StockIn;
+            d.r#type = InvoiceLineType::StockIn;
             d
         });
         let invoice_line_row_5 = inline_edit(&base_invoice_line_row, |mut d| {
             d.id = uuid();
             d.invoice_id = invoice_row_2.id.clone();
-            d.r#type = InvoiceLineRowType::StockOut;
+            d.r#type = InvoiceLineType::StockOut;
             d.inventory_adjustment_reason_id = None;
             d
         });
         let invoice_row_3 = inline_edit(&base_invoice_row, |mut d| {
             d.id = uuid();
-            d.r#type = InvoiceRowType::OutboundShipment;
-            d.status = InvoiceRowStatus::Shipped;
+            d.r#type = InvoiceType::OutboundShipment;
+            d.status = InvoiceStatus::Shipped;
             d
         });
 
         let invoice_row_4 = inline_edit(&base_invoice_row, |mut d| {
             d.id = uuid();
-            d.r#type = InvoiceRowType::OutboundShipment;
-            d.status = InvoiceRowStatus::Delivered;
+            d.r#type = InvoiceType::OutboundShipment;
+            d.status = InvoiceStatus::Delivered;
             d
         });
         // Inventory adjustments should link to correct name
         let invoice_row_5 = inline_edit(&base_invoice_row, |mut d| {
             d.id = uuid();
-            d.r#type = InvoiceRowType::InventoryAddition;
-            d.status = InvoiceRowStatus::Picked;
+            d.r#type = InvoiceType::InventoryAddition;
+            d.status = InvoiceStatus::Picked;
             d
         });
         let invoice_row_6 = inline_edit(&base_invoice_row, |mut d| {
             d.id = uuid();
-            d.r#type = InvoiceRowType::InventoryReduction;
-            d.status = InvoiceRowStatus::Picked;
+            d.r#type = InvoiceType::InventoryReduction;
+            d.status = InvoiceStatus::Picked;
             d
         });
 
@@ -217,8 +217,8 @@ impl SyncRecordTester for InvoiceRecordTester {
 
         let invoice_row_1 = inline_edit(&invoice_row_1, |mut d| {
             d.user_id = Some("test user 2".to_string());
-            d.r#type = InvoiceRowType::InboundShipment;
-            d.status = InvoiceRowStatus::Verified;
+            d.r#type = InvoiceType::InboundShipment;
+            d.status = InvoiceStatus::Verified;
             d.on_hold = true;
             d.comment = Some("invoice comment".to_string());
             d.their_reference = Some("invoice their ref".to_string());
@@ -249,7 +249,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         });
 
         let invoice_line_row_1 = inline_edit(&invoice_line_row_1, |mut d| {
-            d.r#type = InvoiceLineRowType::StockOut;
+            d.r#type = InvoiceLineType::StockOut;
             d.stock_line_id = Some(stock_line_row.id.clone());
             d.location_id = None;
             d.batch = Some("invoice line batch".to_string());

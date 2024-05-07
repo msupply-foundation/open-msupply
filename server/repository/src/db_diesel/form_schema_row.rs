@@ -15,11 +15,11 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[table_name = "form_schema"]
+#[diesel(table_name = form_schema)]
 pub struct FormSchemaRow {
     /// The json schema id
     pub id: String,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: String,
     pub json_schema: String,
     pub ui_schema: String,
@@ -90,7 +90,7 @@ impl<'a> FormSchemaRowRepository<'a> {
             .on_conflict(form_schema::dsl::id)
             .do_update()
             .set(&row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -99,7 +99,7 @@ impl<'a> FormSchemaRowRepository<'a> {
         let row = row_from_schema(schema)?;
         diesel::replace_into(form_schema::dsl::form_schema)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -109,7 +109,7 @@ impl<'a> FormSchemaRowRepository<'a> {
     ) -> Result<Option<FormSchemaJson>, RepositoryError> {
         let row = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq(schema_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         match row {
             Some(row) => Ok(Some(schema_from_row(row)?)),
@@ -120,7 +120,7 @@ impl<'a> FormSchemaRowRepository<'a> {
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<FormSchemaJson>, RepositoryError> {
         let rows: Vec<FormSchemaRow> = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         let mut result = Vec::<FormSchemaJson>::new();
         for row in rows {
             result.push(schema_from_row(row)?);

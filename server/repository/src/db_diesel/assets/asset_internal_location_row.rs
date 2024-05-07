@@ -15,7 +15,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
-#[table_name = "asset_internal_location"]
+#[diesel(table_name = asset_internal_location)]
 pub struct AssetInternalLocationRow {
     pub id: String,
     pub asset_id: String,
@@ -41,7 +41,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_internal_location_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -52,7 +52,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_internal_location)
             .values(asset_internal_location_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -62,7 +62,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_internal_location)
             .values(asset_internal_location_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -72,7 +72,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
         let result = asset_internal_location
             .filter(location_id.eq(some_location_id))
-            .load(&self.connection.connection);
+            .load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -82,7 +82,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
         let result = asset_internal_location
             .filter(asset_id.eq(some_asset_id))
-            .load(&self.connection.connection);
+            .load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -92,7 +92,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     ) -> Result<Option<AssetInternalLocationRow>, RepositoryError> {
         let result = asset_internal_location
             .filter(id.eq(asset_internal_location_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -100,7 +100,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     pub fn delete(&self, asset_internal_location_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(asset_internal_location)
             .filter(id.eq(asset_internal_location_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -110,7 +110,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::delete(asset_internal_location)
             .filter(asset_id.eq(asset_id_to_delete_locations))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

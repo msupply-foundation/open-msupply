@@ -47,7 +47,7 @@ impl Migration for V1_07_00 {
         invoice_add_currency_fields::migrate(connection)?;
 
         // We don't want merge-migration updates to sync back.
-        run_without_change_log_updates(connection, || {
+        run_without_change_log_updates(connection, |connection| {
             item_add_is_active::migrate(connection)?;
             unit_add_is_active::migrate(connection)?;
             // Item link migrations
@@ -342,12 +342,12 @@ async fn migration_1_07_00_merge() {
 
     let old_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
         .order(stock_on_hand_dsl::item_id.asc())
-        .load(&connection.connection)
+        .load(connection.lock().connection())
         .unwrap();
 
     let old_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
         .order(stock_movement_dsl::id.asc())
-        .load(&connection.connection)
+        .load(connection.lock().connection())
         .unwrap();
 
     migrate(&connection, Some(version.clone())).unwrap();
@@ -373,21 +373,21 @@ async fn migration_1_07_00_merge() {
     ];
     let migration_item_links: Vec<ItemLinkRow> = item_link_dsl::item_link
         .order(item_link_dsl::id)
-        .load(&connection.connection)
+        .load(connection.lock().connection())
         .unwrap();
     assert_eq!(expected_item_links, migration_item_links);
 
     // Tests the view rewrite works correctly and implicitly that the stock_line.item_link_id got populated
     let new_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
         .order(stock_on_hand_dsl::item_id.asc())
-        .load(&connection.connection)
+        .load(connection.lock().connection())
         .unwrap();
     assert_eq!(old_soh, new_soh);
 
     // Tests the view rewrites work correctly and implicitly that the invoice_line.item_link_id got populated
     let new_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
         .order(stock_movement_dsl::id.asc())
-        .load(&connection.connection)
+        .load(connection.lock().connection())
         .unwrap();
     assert_eq!(old_stock_movements, new_stock_movements);
 
@@ -443,7 +443,7 @@ async fn migration_1_07_00_merge() {
     ];
     let updated_requisition_lines: Vec<RequisitionLineRow> = requisition_line_dsl::requisition_line
         .order(requisition_line_dsl::id.asc())
-        .load(&connection.connection)
+        .load(connection.lock().connection())
         .unwrap();
 
     assert_eq!(expected_requisition_lines, updated_requisition_lines);

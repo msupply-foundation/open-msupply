@@ -1,6 +1,6 @@
 use crate::service_provider::ServiceContext;
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
+    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -37,7 +37,7 @@ pub fn delete_stock_out_line(
                 stock_line.available_number_of_packs += line.number_of_packs;
 
                 let invoice = invoice_repository.find_one_by_id(&line.invoice_id)?;
-                if invoice.status == InvoiceRowStatus::Picked {
+                if invoice.status == InvoiceStatus::Picked {
                     stock_line.total_number_of_packs += line.number_of_packs;
                 }
 
@@ -78,7 +78,7 @@ mod test {
             mock_store_b, mock_store_c, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
         StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
@@ -169,7 +169,7 @@ mod test {
     async fn delete_outbound_shipment_line_success() {
         fn outbound_shipment_no_lines_allocated() -> InvoiceRow {
             inline_edit(&mock_outbound_shipment_no_lines(), |mut u| {
-                u.status = InvoiceRowStatus::Allocated;
+                u.status = InvoiceStatus::Allocated;
                 u
             })
         }
@@ -188,7 +188,7 @@ mod test {
                 r.total_before_tax = 0.87;
                 r.total_after_tax = 1.0;
                 r.tax = Some(15.0);
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
                 r.number_of_packs = 10.0;
             })
         }

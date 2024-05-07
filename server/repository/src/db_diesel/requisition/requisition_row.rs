@@ -22,8 +22,8 @@ table! {
         name_link_id -> Text,
         store_id -> Text,
         user_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionRowTypeMapping,
-        #[sql_name = "status"] status -> crate::db_diesel::requisition::requisition_row::RequisitionRowStatusMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
+        #[sql_name = "status"] status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
@@ -33,7 +33,7 @@ table! {
         their_reference -> Nullable<Text>,
         max_months_of_stock -> Double,
         min_months_of_stock -> Double,
-        approval_status -> Nullable<crate::db_diesel::requisition::requisition_row::RequisitionRowApprovalStatusMapping>,
+        approval_status -> Nullable<crate::db_diesel::requisition::requisition_row::ApprovalStatusTypeMapping>,
         linked_requisition_id -> Nullable<Text>,
         program_id -> Nullable<Text>,
         period_id -> Nullable<Text>,
@@ -59,14 +59,14 @@ allow_tables_to_appear_in_same_query!(requisition, item_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum RequisitionRowType {
+pub enum RequisitionType {
     Request,
     Response,
 }
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum RequisitionRowStatus {
+pub enum RequisitionStatus {
     Draft,
     New,
     Sent,
@@ -75,7 +75,7 @@ pub enum RequisitionRowStatus {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum RequisitionRowApprovalStatus {
+pub enum ApprovalStatusType {
     None,
     Approved,
     Pending,
@@ -86,17 +86,17 @@ pub enum RequisitionRowApprovalStatus {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "requisition"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = requisition)]
 pub struct RequisitionRow {
     pub id: String,
     pub requisition_number: i64,
     pub name_link_id: String,
     pub store_id: String,
     pub user_id: Option<String>,
-    #[column_name = "type_"]
-    pub r#type: RequisitionRowType,
-    pub status: RequisitionRowStatus,
+    #[diesel(column_name = type_)]
+    pub r#type: RequisitionType,
+    pub status: RequisitionStatus,
     pub created_datetime: NaiveDateTime,
     pub sent_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
@@ -106,7 +106,7 @@ pub struct RequisitionRow {
     pub their_reference: Option<String>,
     pub max_months_of_stock: f64,
     pub min_months_of_stock: f64,
-    pub approval_status: Option<RequisitionRowApprovalStatus>,
+    pub approval_status: Option<ApprovalStatusType>,
     pub linked_requisition_id: Option<String>,
     pub program_id: Option<String>,
     pub period_id: Option<String>,
@@ -116,8 +116,8 @@ pub struct RequisitionRow {
 impl Default for RequisitionRow {
     fn default() -> Self {
         Self {
-            r#type: RequisitionRowType::Request,
-            status: RequisitionRowStatus::Draft,
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Draft,
             created_datetime: Defaults::naive_date_time(),
             // Defaults
             id: Default::default(),
@@ -158,7 +158,7 @@ impl<'a> RequisitionRowRepository<'a> {
             .on_conflict(requisition_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -166,14 +166,14 @@ impl<'a> RequisitionRowRepository<'a> {
     fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_dsl::requisition)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(requisition_is_sync_update::table.find(id))
             .set(requisition_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
@@ -186,21 +186,21 @@ impl<'a> RequisitionRowRepository<'a> {
 
     pub fn delete(&self, requisition_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(requisition_dsl::requisition.filter(requisition_dsl::id.eq(requisition_id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
         let result = requisition_dsl::requisition
             .filter(requisition_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_max_requisition_number(
         &self,
-        r#type: RequisitionRowType,
+        r#type: RequisitionType,
         store_id: &str,
     ) -> Result<Option<i64>, RepositoryError> {
         let result = requisition_dsl::requisition
@@ -210,7 +210,7 @@ impl<'a> RequisitionRowRepository<'a> {
                     .and(requisition_dsl::store_id.eq(store_id)),
             )
             .select(max(requisition_dsl::requisition_number))
-            .first(&self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -226,7 +226,7 @@ impl<'a> RequisitionRowRepository<'a> {
         let result = requisition_is_sync_update::table
             .find(id)
             .select(requisition_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -269,7 +269,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all,
-        RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository,
+        ApprovalStatusType, RequisitionRow, RequisitionRowRepository,
     };
     use strum::IntoEnumIterator;
 
@@ -283,7 +283,7 @@ mod test {
 
         let repo = RequisitionRowRepository::new(&connection);
         // Try upsert all variants of RequisitionRowApprovalStatus, confirm that diesel enums match postgres
-        for variant in RequisitionRowApprovalStatus::iter() {
+        for variant in ApprovalStatusType::iter() {
             let row = RequisitionRow {
                 approval_status: Some(variant),
                 ..mock_request_draft_requisition_all_fields().requisition

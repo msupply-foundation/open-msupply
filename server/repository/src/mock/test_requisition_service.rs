@@ -2,9 +2,9 @@ use chrono::NaiveDate;
 use util::inline_init;
 
 use crate::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    MasterListRow, RequisitionLineRow, RequisitionRow, RequisitionRowApprovalStatus,
+    requisition_row::{RequisitionStatus, RequisitionType},
+    ApprovalStatusType, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+    MasterListRow, RequisitionLineRow, RequisitionRow,
 };
 
 use super::{
@@ -69,8 +69,8 @@ pub fn mock_requisition_for_number_test() -> RequisitionRow {
         r.requisition_number = 111111111;
         r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Request;
-        r.status = RequisitionRowStatus::Draft;
+        r.r#type = RequisitionType::Request;
+        r.status = RequisitionStatus::Draft;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -86,8 +86,8 @@ pub fn mock_draft_request_requisition_for_update_test() -> RequisitionRow {
         r.requisition_number = 3;
         r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Request;
-        r.status = RequisitionRowStatus::Draft;
+        r.r#type = RequisitionType::Request;
+        r.status = RequisitionStatus::Draft;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -103,8 +103,8 @@ pub fn mock_sent_request_requisition() -> RequisitionRow {
         r.requisition_number = 3;
         r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Request;
-        r.status = RequisitionRowStatus::Sent;
+        r.r#type = RequisitionType::Request;
+        r.status = RequisitionStatus::Sent;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -132,8 +132,8 @@ pub fn mock_finalised_response_requisition() -> RequisitionRow {
         r.requisition_number = 3;
         r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Response;
-        r.status = RequisitionRowStatus::Finalised;
+        r.r#type = RequisitionType::Response;
+        r.status = RequisitionStatus::Finalised;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -161,8 +161,8 @@ pub fn mock_new_response_requisition_for_update_test() -> RequisitionRow {
         r.requisition_number = 3;
         r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Response;
-        r.status = RequisitionRowStatus::New;
+        r.r#type = RequisitionType::Response;
+        r.status = RequisitionStatus::New;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -178,8 +178,8 @@ pub fn mock_new_response_requisition() -> RequisitionRow {
         r.requisition_number = 3;
         r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Response;
-        r.status = RequisitionRowStatus::New;
+        r.r#type = RequisitionType::Response;
+        r.status = RequisitionStatus::New;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -208,8 +208,8 @@ pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisi
             r.requisition_number = 10;
             r.name_link_id = "name_a".to_owned();
             r.store_id = mock_store_a().id;
-            r.r#type = RequisitionRowType::Response;
-            r.status = RequisitionRowStatus::Draft;
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -241,8 +241,8 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             r.requisition_number = 3;
             r.name_link_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
-            r.r#type = RequisitionRowType::Request;
-            r.status = RequisitionRowStatus::Draft;
+            r.r#type = RequisitionType::Request;
+            r.status = RequisitionStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -316,8 +316,8 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             r.requisition_number = 3;
             r.name_link_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
-            r.r#type = RequisitionRowType::Response;
-            r.status = RequisitionRowStatus::New;
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -361,8 +361,8 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
             r.store_id = "store_a".to_owned();
             r.invoice_number = 20;
             r.requisition_id = Some(mock_new_response_requisition_test().requisition.id);
-            r.r#type = InvoiceRowType::OutboundShipment;
-            r.status = InvoiceRowStatus::New;
+            r.r#type = InvoiceType::OutboundShipment;
+            r.status = InvoiceStatus::New;
             r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
@@ -373,7 +373,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
                 line: InvoiceLineRow {
                     id: line1_id.clone(),
                     invoice_id: invoice_id.clone(),
-                    r#type: InvoiceLineRowType::StockOut,
+                    r#type: InvoiceLineType::StockOut,
                     pack_size: 2,
                     number_of_packs: 2.0,
                     item_link_id: mock_item_a().id,
@@ -399,7 +399,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
                 line: InvoiceLineRow {
                     id: line2_id.clone(),
                     invoice_id: invoice_id.clone(),
-                    r#type: InvoiceLineRowType::UnallocatedStock,
+                    r#type: InvoiceLineType::UnallocatedStock,
                     pack_size: 1,
                     number_of_packs: 2.0,
                     item_link_id: mock_item_a().id,
@@ -431,8 +431,8 @@ pub fn mock_request_program_requisition() -> RequisitionRow {
         r.requisition_number = 3;
         r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Request;
-        r.status = RequisitionRowStatus::Draft;
+        r.r#type = RequisitionType::Request;
+        r.status = RequisitionStatus::Draft;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -452,9 +452,9 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
             r.requisition_number = 10;
             r.name_link_id = "name_a".to_owned();
             r.store_id = mock_store_a().id;
-            r.r#type = RequisitionRowType::Response;
-            r.status = RequisitionRowStatus::New;
-            r.approval_status = Some(RequisitionRowApprovalStatus::Pending);
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
+            r.approval_status = Some(ApprovalStatusType::Pending);
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)

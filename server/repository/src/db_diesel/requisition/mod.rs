@@ -13,8 +13,8 @@ pub struct RequisitionFilter {
     pub id: Option<EqualFilter<String>>,
     pub user_id: Option<EqualFilter<String>>,
     pub requisition_number: Option<EqualFilter<i64>>,
-    pub r#type: Option<EqualFilter<RequisitionRowType>>,
-    pub status: Option<EqualFilter<RequisitionRowStatus>>,
+    pub r#type: Option<EqualFilter<RequisitionType>>,
+    pub status: Option<EqualFilter<RequisitionStatus>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub sent_datetime: Option<DatetimeFilter>,
     pub finalised_datetime: Option<DatetimeFilter>,
@@ -68,7 +68,7 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn status(mut self, filter: EqualFilter<RequisitionRowStatus>) -> Self {
+    pub fn status(mut self, filter: EqualFilter<RequisitionStatus>) -> Self {
         self.status = Some(filter);
         self
     }
@@ -88,7 +88,7 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<RequisitionRowType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<RequisitionType>) -> Self {
         self.r#type = Some(filter);
         self
     }
@@ -147,7 +147,7 @@ impl RequisitionFilter {
     }
 }
 
-impl RequisitionRowStatus {
+impl RequisitionStatus {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
@@ -157,7 +157,7 @@ impl RequisitionRowStatus {
     }
 }
 
-impl RequisitionRowType {
+impl RequisitionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }

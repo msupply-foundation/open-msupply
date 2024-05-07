@@ -42,8 +42,8 @@ joinable!(stocktake_line -> inventory_adjustment_reason (inventory_adjustment_re
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "stocktake_line"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = stocktake_line)]
 pub struct StocktakeLineRow {
     pub id: String,
     pub stocktake_id: String,
@@ -83,7 +83,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
             .on_conflict(stocktake_line_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -91,20 +91,20 @@ impl<'a> StocktakeLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stocktake_line_dsl::stocktake_line)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(stocktake_line_dsl::stocktake_line.filter(stocktake_line_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeLineRow>, RepositoryError> {
         let result = stocktake_line_dsl::stocktake_line
             .filter(stocktake_line_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }
@@ -115,7 +115,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
     ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
         let result = stocktake_line_dsl::stocktake_line
             .filter(stocktake_line_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 }

@@ -18,7 +18,7 @@ table! {
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
-#[table_name = "asset_class"]
+#[diesel(table_name = asset_class)]
 pub struct AssetClassRow {
     pub id: String,
     pub name: String,
@@ -40,7 +40,7 @@ impl<'a> AssetClassRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_class_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -48,19 +48,19 @@ impl<'a> AssetClassRowRepository<'a> {
     pub fn upsert_one(&self, asset_class_row: &AssetClassRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_class)
             .values(asset_class_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn insert_one(&self, asset_class_row: &AssetClassRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_class)
             .values(asset_class_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_all(&self) -> Result<Vec<AssetClassRow>, RepositoryError> {
-        let result = asset_class.load(&self.connection.connection);
+    pub fn find_all(&mut self) -> Result<Vec<AssetClassRow>, RepositoryError> {
+        let result = asset_class.load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -70,7 +70,7 @@ impl<'a> AssetClassRowRepository<'a> {
     ) -> Result<Option<AssetClassRow>, RepositoryError> {
         let result = asset_class
             .filter(id.eq(asset_class_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -78,7 +78,7 @@ impl<'a> AssetClassRowRepository<'a> {
     pub fn delete(&self, asset_class_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(asset_class)
             .filter(id.eq(asset_class_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

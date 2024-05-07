@@ -6,7 +6,7 @@ use chrono::NaiveDate;
 use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
-use repository::{CurrencyFilter, Language, StoreMode, User, UserStore};
+use repository::{CurrencyFilter, LanguageType as LanguageTypeRepo, StoreMode, User, UserStore};
 use service::permission::permissions;
 
 pub struct UserStoreNode {
@@ -176,16 +176,16 @@ impl UserNode {
 }
 
 impl LanguageType {
-    fn from_domain(from: &Language) -> Self {
+    fn from_domain(from: &LanguageTypeRepo) -> Self {
         match from {
-            Language::English => Self::English,
-            Language::French => Self::French,
-            Language::Spanish => Self::Spanish,
-            Language::Laos => Self::Laos,
-            Language::Khmer => Self::Khmer,
-            Language::Portuguese => Self::Portuguese,
-            Language::Russian => Self::Russian,
-            Language::Tetum => Self::Tetum,
+            LanguageTypeRepo::English => Self::English,
+            LanguageTypeRepo::French => Self::French,
+            LanguageTypeRepo::Spanish => Self::Spanish,
+            LanguageTypeRepo::Laos => Self::Laos,
+            LanguageTypeRepo::Khmer => Self::Khmer,
+            LanguageTypeRepo::Portuguese => Self::Portuguese,
+            LanguageTypeRepo::Russian => Self::Russian,
+            LanguageTypeRepo::Tetum => Self::Tetum,
         }
     }
 }

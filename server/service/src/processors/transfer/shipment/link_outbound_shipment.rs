@@ -1,5 +1,5 @@
 use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceRowType, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceRowRepository, InvoiceType, RepositoryError, StorageConnection,
 };
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
@@ -39,7 +39,7 @@ impl ShipmentTransferProcessor for LinkOutboundShipmentProcessor {
         // 2.
         if !matches!(
             inbound_shipment.invoice_row.r#type,
-            InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn
+            InvoiceType::InboundShipment | InvoiceType::InboundReturn
         ) {
             return Ok(None);
         }

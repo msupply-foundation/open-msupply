@@ -32,7 +32,8 @@ impl<'a> AssetCataloguePropertyRepository<'a> {
         // // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
-        let result = query.load::<AssetCataloguePropertyRow>(&self.connection.connection)?;
+        let result =
+            query.load::<AssetCataloguePropertyRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection,
+    EqualFilter, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
     TransactionError, User, UserAccountRow, UserAccountRowRepository, UserFilter,
     UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
     UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
@@ -159,7 +159,7 @@ impl<'a> UserAccountService<'a> {
     pub fn find_user(&self, user_id: &str) -> Result<Option<User>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(self.connection);
         let site_id = key_value_store
-            .get_i32(KeyValueType::SettingsSyncSiteId)?
+            .get_i32(KeyType::SettingsSyncSiteId)?
             .unwrap(); //TODO relocate to service
 
         let repo = UserRepository::new(self.connection);
@@ -202,7 +202,7 @@ mod user_account_test {
     use repository::{
         mock::{mock_user_account_a, mock_user_account_b, MockDataInserts},
         test_db::{self, setup_all},
-        Permission,
+        PermissionType,
     };
     use util::{assert_matches, inline_edit};
 
@@ -299,7 +299,7 @@ mod user_account_test {
                         id: "new_permission".to_string(),
                         user_id: mock_user_account_a().id,
                         store_id: Some("store_b".to_string()),
-                        permission: Permission::InboundShipmentMutate,
+                        permission: PermissionType::InboundShipmentMutate,
                         context_id: None,
                     }],
                 }],

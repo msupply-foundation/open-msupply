@@ -6,7 +6,7 @@ use crate::{
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // Drop affected views
     sql!(
-        &connection,
+        connection,
         r#"
             DROP VIEW invoice_stats;
             DROP VIEW consumption;
@@ -106,7 +106,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     // Recreate views
     sql!(
-        &connection,
+        connection,
         r#"
             CREATE VIEW invoice_line_stock_movement AS 
             SELECT

@@ -1,11 +1,11 @@
 use diesel::Expression;
 
-diesel_postfix_operator!(AscNoCase, " COLLATE NOCASE ASC NULLS FIRST", ());
-diesel_postfix_operator!(DescNoCase, " COLLATE NOCASE DESC NULLS LAST", ());
-diesel_postfix_operator!(AscNullsFirst, " ASC NULLS FIRST", ());
-diesel_postfix_operator!(DescNullsLast, " DESC NULLS LAST", ());
-diesel_postfix_operator!(AscNullsLast, " ASC NULLS LAST", ());
-diesel_postfix_operator!(DescNullsFirst, " DESC NULLS FIRST", ());
+diesel::postfix_operator!(AscNoCase, " COLLATE NOCASE ASC NULLS FIRST");
+diesel::postfix_operator!(DescNoCase, " COLLATE NOCASE DESC NULLS LAST");
+diesel::postfix_operator!(AscNullsFirst, " ASC NULLS FIRST");
+diesel::postfix_operator!(DescNullsLast, " DESC NULLS LAST");
+diesel::postfix_operator!(AscNullsLast, " ASC NULLS LAST");
+diesel::postfix_operator!(DescNullsFirst, " DESC NULLS FIRST");
 
 // Expression extensions for order by
 pub trait OrderByExtensions: Sized {
@@ -193,7 +193,7 @@ mod tests {
         let sql = debug_query::<Sqlite, _>(&query).to_string();
         assert_eq!(
             sql,
-            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` WHERE coalesce(`item`.`expiry_date`, ?) = ? -- binds: [9999-12-31, 2023-12-31]"#
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` WHERE (coalesce(`item`.`expiry_date`, ?) = ?) -- binds: [9999-12-31, 2023-12-31]"#
         );
     }
 }

@@ -82,9 +82,16 @@ impl<'a> StockLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
+        query = apply_item_filter(
+            query,
+            filter,
+            &self.connection,
+            store_id.unwrap_or_default(),
+        );
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -147,7 +154,7 @@ impl<'a> StockLineRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<StockLineJoin>(&self.connection.connection)?;
+        let result = final_query.load::<StockLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

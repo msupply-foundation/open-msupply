@@ -1,6 +1,6 @@
 use super::{document::document, program_row::program, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Gender};
+use crate::{repository_error::RepositoryError, GenderType};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -16,7 +16,7 @@ table! {
       contact_patient_link_id -> Nullable<Text>,
       first_name -> Nullable<Text>,
       last_name -> Nullable<Text>,
-      gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+      gender -> Nullable<crate::db_diesel::name_row::GenderTypeMapping>,
       date_of_birth -> Nullable<Date>,
       store_id -> Nullable<Text>,
       relationship -> Nullable<Text>,
@@ -24,8 +24,8 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "contact_trace"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = contact_trace)]
 struct ContactTraceRawRow {
     pub id: String,
     pub program_id: String,
@@ -40,7 +40,7 @@ struct ContactTraceRawRow {
     pub contact_patient_link_id: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub date_of_birth: Option<NaiveDate>,
     pub store_id: Option<String>,
     pub relationship: Option<String>,
@@ -57,7 +57,7 @@ table! {
       contact_patient_id -> Nullable<Text>,
       first_name -> Nullable<Text>,
       last_name -> Nullable<Text>,
-      gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+      gender -> Nullable<crate::db_diesel::name_row::GenderTypeMapping>,
       date_of_birth -> Nullable<Date>,
       store_id -> Nullable<Text>,
       relationship -> Nullable<Text>,
@@ -84,7 +84,7 @@ pub struct ContactTraceRow {
     pub contact_patient_id: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub date_of_birth: Option<NaiveDate>,
     pub store_id: Option<String>,
     pub relationship: Option<String>,
@@ -142,7 +142,7 @@ impl<'a> ContactTraceRowRepository<'a> {
             .on_conflict(contact_trace::dsl::id)
             .do_update()
             .set(row.to_raw())
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -150,14 +150,14 @@ impl<'a> ContactTraceRowRepository<'a> {
     pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub async fn insert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
@@ -173,7 +173,7 @@ mod tests {
             document_a, mock_merged_patient_name_link, mock_program_a, mock_store_a,
             MockDataInserts,
         },
-        test_db, Gender, Pagination,
+        test_db, GenderType, Pagination,
     };
 
     use super::ContactTraceRowRepository;
@@ -183,8 +183,6 @@ mod tests {
     async fn test_contact_trace_name_links() {
         let (_, connection, _, _) =
             test_db::setup_all("test_contact_trace_name_links", MockDataInserts::all()).await;
-        let row_repo = ContactTraceRowRepository::new(&connection);
-        let repo = ContactTraceRepository::new(&connection);
 
         let patient_link = mock_merged_patient_name_link();
         let row = ContactTraceRow {
@@ -201,18 +199,20 @@ mod tests {
             contact_patient_id: Some(patient_link.id.clone()),
             first_name: Some("first".to_string()),
             last_name: Some("last".to_string()),
-            gender: Some(Gender::Female),
+            gender: Some(GenderType::Female),
             date_of_birth: Some(NaiveDate::from_ymd_opt(2000, 1, 15).unwrap()),
             store_id: Some(mock_store_a().id),
             relationship: Some("rel".to_string()),
         };
-        row_repo.upsert_one(&row).unwrap();
+        ContactTraceRowRepository::new(&connection)
+            .upsert_one(&row)
+            .unwrap();
 
         // the query result should point to the actual name_ids
         let mut expected = row;
         expected.patient_id = patient_link.name_id.clone();
         expected.contact_patient_id = Some(patient_link.name_id.clone());
-        let contact_trace = repo
+        let contact_trace = ContactTraceRepository::new(&connection)
             .query(Pagination::all(), None, None)
             .unwrap()
             .pop()

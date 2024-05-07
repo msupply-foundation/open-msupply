@@ -38,8 +38,8 @@ allow_tables_to_appear_in_same_query!(stock_line, item_link);
 allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "stock_line"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = stock_line)]
 pub struct StockLineRow {
     pub id: String,
     pub item_link_id: String,
@@ -74,7 +74,7 @@ impl<'a> StockLineRowRepository<'a> {
             .on_conflict(stock_line_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -82,34 +82,34 @@ impl<'a> StockLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stock_line_dsl::stock_line)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(stock_line_dsl::stock_line.filter(stock_line_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
         let result = stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq(stock_line_id))
-            .first(&self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLineRow>, RepositoryError> {
         stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq_any(ids))
-            .load::<StockLineRow>(&self.connection.connection)
+            .load::<StockLineRow>(self.connection.lock().connection())
             .map_err(RepositoryError::from)
     }
 
     pub fn find_one_by_id_option(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
         let result = stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -117,7 +117,7 @@ impl<'a> StockLineRowRepository<'a> {
     pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
         stock_line_dsl::stock_line
             .filter(stock_line_dsl::store_id.eq(store_id))
-            .load::<StockLineRow>(&self.connection.connection)
+            .load::<StockLineRow>(self.connection.lock().connection())
             .map_err(RepositoryError::from)
     }
 }

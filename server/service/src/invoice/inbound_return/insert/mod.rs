@@ -133,8 +133,8 @@ mod test {
             mock_outbound_shipment_e, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-        InvoiceRowType, NameRow, NameStoreJoinRow, ReturnReasonRow,
+        InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+        NameRow, NameStoreJoinRow, ReturnReasonRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -347,8 +347,8 @@ mod test {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "returnable_outbound_shipment".to_string();
                 r.currency_id = Some(currency_a().id);
-                r.r#type = InvoiceRowType::OutboundShipment;
-                r.status = InvoiceRowStatus::Verified;
+                r.r#type = InvoiceType::OutboundShipment;
+                r.status = InvoiceStatus::Verified;
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_customer_a().id;
             })

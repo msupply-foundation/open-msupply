@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::IntegrationOperation,
 };
-use repository::{ReportContext, ReportRow, ReportRowDelete, ReportType};
+use repository::{ContextType, ReportRow, ReportRowDelete, ReportType};
 use serde_json::json;
 use util::{inline_init, uuid::uuid};
 
@@ -19,7 +19,7 @@ impl SyncRecordTester for ReportTester {
             name: uuid(),
             r#type: ReportType::OmSupply,
             template: "".to_string(),
-            context: ReportContext::InboundShipment,
+            context: ContextType::InboundShipment,
             comment: Some(uuid()),
             sub_context: None,
             argument_schema_id: None,
@@ -34,7 +34,7 @@ impl SyncRecordTester for ReportTester {
 
         let report_row2 = inline_init(|r: &mut ReportRow| {
             r.id = uuid();
-            r.context = ReportContext::OutboundShipment
+            r.context = ContextType::OutboundShipment
         });
         let report_json2 = json!({
             "ID": report_row2.id,
@@ -44,7 +44,7 @@ impl SyncRecordTester for ReportTester {
 
         let report_row3 = inline_init(|r: &mut ReportRow| {
             r.id = uuid();
-            r.context = ReportContext::Requisition
+            r.context = ContextType::Requisition
         });
         let report_json3 = json!({
             "ID": report_row3.id,
@@ -54,7 +54,7 @@ impl SyncRecordTester for ReportTester {
 
         let report_row4 = inline_init(|r: &mut ReportRow| {
             r.id = uuid();
-            r.context = ReportContext::Stocktake
+            r.context = ContextType::Stocktake
         });
         let report_json4 = json!({
             "ID": report_row4.id,

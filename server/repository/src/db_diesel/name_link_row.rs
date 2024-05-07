@@ -13,7 +13,7 @@ table! {
 joinable!(name_link -> name (name_id));
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
-#[table_name = "name_link"]
+#[diesel(table_name = name_link)]
 pub struct NameLinkRow {
     pub id: String,
     pub name_id: String,
@@ -35,7 +35,7 @@ impl<'a> NameLinkRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -43,7 +43,7 @@ impl<'a> NameLinkRowRepository<'a> {
     pub fn upsert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_link)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -53,7 +53,7 @@ impl<'a> NameLinkRowRepository<'a> {
             .values(row)
             .on_conflict(name_link::id)
             .do_nothing()
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -61,14 +61,14 @@ impl<'a> NameLinkRowRepository<'a> {
     pub fn insert_one_or_ignore(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_or_ignore_into(name_link)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub async fn insert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_link)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -78,7 +78,7 @@ impl<'a> NameLinkRowRepository<'a> {
     ) -> Result<Option<NameLinkRow>, RepositoryError> {
         let result = name_link
             .filter(name_link::id.eq(name_link_id))
-            .first::<NameLinkRow>(&self.connection.connection)
+            .first::<NameLinkRow>(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -86,7 +86,7 @@ impl<'a> NameLinkRowRepository<'a> {
     pub fn find_many_by_name_id(&self, name: &str) -> Result<Vec<NameLinkRow>, RepositoryError> {
         let result = name_link
             .filter(name_id.eq(name))
-            .load::<NameLinkRow>(&self.connection.connection)?;
+            .load::<NameLinkRow>(self.connection.lock().connection())?;
         Ok(result)
     }
 }

@@ -103,7 +103,7 @@ mod test {
     };
     use repository::{
         mock::{mock_empty_draft_inbound_shipment, mock_item_a, MockDataInserts},
-        InvoiceLine, InvoiceLineRow, InvoiceLineRowType, StorageConnectionManager,
+        InvoiceLine, InvoiceLineRow, InvoiceLineType, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -295,7 +295,7 @@ mod test {
                     r.id = String::from("inbound_shipment_line_a");
                     r.invoice_id = String::from("inbound_shipment_c");
                     r.item_link_id = String::from("item_a");
-                    r.r#type = InvoiceLineRowType::StockIn;
+                    r.r#type = InvoiceLineType::StockIn;
                 }),
                 invoice_row: mock_empty_draft_inbound_shipment(),
                 item_row: mock_item_a(),

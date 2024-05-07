@@ -57,7 +57,9 @@ impl<'a> DocumentRegistryRepository<'a> {
     pub fn count(&self, filter: Option<DocumentRegistryFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -92,7 +94,7 @@ impl<'a> DocumentRegistryRepository<'a> {
         let result: Result<Vec<DocumentRegistry>, RepositoryError> = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<DocumentRegistrySchemaJoin>(&self.connection.connection)?
+            .load::<DocumentRegistrySchemaJoin>(self.connection.lock().connection())?
             .into_iter()
             .map(to_domain)
             .collect();

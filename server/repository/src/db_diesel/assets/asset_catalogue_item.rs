@@ -55,7 +55,9 @@ impl<'a> AssetCatalogueItemRepository<'a> {
     pub fn count(&self, filter: Option<AssetCatalogueItemFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -92,13 +94,15 @@ impl<'a> AssetCatalogueItemRepository<'a> {
             query = query.order(asset_catalogue_item_dsl::id.asc())
         }
 
+        query = query.filter(asset_catalogue_item_dsl::deleted_datetime.is_null());
+
         // // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<AssetCatalogueItemRow>(&self.connection.connection)?;
+            .load::<AssetCatalogueItemRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

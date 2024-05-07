@@ -11,7 +11,7 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow,
-    TemperatureBreachRowRepository, TemperatureBreachRowType,
+    TemperatureBreachRowRepository, TemperatureBreachType,
 };
 use serde::{Deserialize, Serialize};
 
@@ -201,23 +201,23 @@ impl SyncTranslation for TemperatureBreachTranslation {
     }
 }
 
-pub fn from_legacy_breach_type(t: &LegacyTemperatureBreachType) -> TemperatureBreachRowType {
+pub fn from_legacy_breach_type(t: &LegacyTemperatureBreachType) -> TemperatureBreachType {
     match t {
-        LegacyTemperatureBreachType::ColdConsecutive => TemperatureBreachRowType::ColdConsecutive,
-        LegacyTemperatureBreachType::HotConsecutive => TemperatureBreachRowType::HotConsecutive,
-        LegacyTemperatureBreachType::ColdCumulative => TemperatureBreachRowType::ColdCumulative,
-        LegacyTemperatureBreachType::HotCumulative => TemperatureBreachRowType::HotCumulative,
-        LegacyTemperatureBreachType::Excursion => TemperatureBreachRowType::Excursion,
+        LegacyTemperatureBreachType::ColdConsecutive => TemperatureBreachType::ColdConsecutive,
+        LegacyTemperatureBreachType::HotConsecutive => TemperatureBreachType::HotConsecutive,
+        LegacyTemperatureBreachType::ColdCumulative => TemperatureBreachType::ColdCumulative,
+        LegacyTemperatureBreachType::HotCumulative => TemperatureBreachType::HotCumulative,
+        LegacyTemperatureBreachType::Excursion => TemperatureBreachType::Excursion,
     }
 }
 
-pub fn to_legacy_breach_type(t: &TemperatureBreachRowType) -> LegacyTemperatureBreachType {
+pub fn to_legacy_breach_type(t: &TemperatureBreachType) -> LegacyTemperatureBreachType {
     match t {
-        TemperatureBreachRowType::ColdConsecutive => LegacyTemperatureBreachType::ColdConsecutive,
-        TemperatureBreachRowType::HotConsecutive => LegacyTemperatureBreachType::HotConsecutive,
-        TemperatureBreachRowType::ColdCumulative => LegacyTemperatureBreachType::ColdCumulative,
-        TemperatureBreachRowType::HotCumulative => LegacyTemperatureBreachType::HotCumulative,
-        TemperatureBreachRowType::Excursion => LegacyTemperatureBreachType::Excursion,
+        TemperatureBreachType::ColdConsecutive => LegacyTemperatureBreachType::ColdConsecutive,
+        TemperatureBreachType::HotConsecutive => LegacyTemperatureBreachType::HotConsecutive,
+        TemperatureBreachType::ColdCumulative => LegacyTemperatureBreachType::ColdCumulative,
+        TemperatureBreachType::HotCumulative => LegacyTemperatureBreachType::HotCumulative,
+        TemperatureBreachType::Excursion => LegacyTemperatureBreachType::Excursion,
     }
 }
 

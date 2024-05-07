@@ -6,7 +6,7 @@ mod test {
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::MockDataInserts;
     use repository::mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a};
-    use repository::InvoiceRowType;
+    use repository::InvoiceType;
     use repository::{Invoice, RepositoryError, StorageConnectionManager};
     use serde_json::json;
     use service::invoice::InvoiceServiceTrait;
@@ -14,7 +14,7 @@ mod test {
 
     use crate::InvoiceQueries;
     type GetInvoiceByNumber =
-        dyn Fn(u32, InvoiceRowType) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
+        dyn Fn(u32, InvoiceType) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<GetInvoiceByNumber>);
 
@@ -24,7 +24,7 @@ mod test {
             _: &ServiceContext,
             _: &str,
             invoice_number: u32,
-            r#type: InvoiceRowType,
+            r#type: InvoiceType,
         ) -> Result<Option<Invoice>, RepositoryError> {
             self.0(invoice_number, r#type)
         }

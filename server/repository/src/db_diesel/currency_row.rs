@@ -18,8 +18,8 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "currency"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = currency)]
 pub struct CurrencyRow {
     pub id: String,
     pub rate: f64,
@@ -45,7 +45,7 @@ impl<'a> CurrencyRowRepository<'a> {
             .on_conflict(currency_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -53,7 +53,7 @@ impl<'a> CurrencyRowRepository<'a> {
     pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::replace_into(currency_dsl::currency)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -63,7 +63,7 @@ impl<'a> CurrencyRowRepository<'a> {
     ) -> Result<Option<CurrencyRow>, RepositoryError> {
         let result = currency_dsl::currency
             .filter(currency_dsl::id.eq(currency_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -71,7 +71,7 @@ impl<'a> CurrencyRowRepository<'a> {
     pub fn delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
         diesel::update(currency_dsl::currency.filter(currency_dsl::id.eq(currency_id)))
             .set(currency_dsl::is_active.eq(false))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

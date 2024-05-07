@@ -3,7 +3,7 @@ use crate::{activity_log::system_activity_log_entry, number::next_number};
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use repository::{
     ActivityLogType, NumberRowType, RepositoryError, RequisitionRow, RequisitionRowRepository,
-    RequisitionRowStatus, RequisitionRowType, StorageConnection,
+    RequisitionStatus, RequisitionType, StorageConnection,
 };
 
 const DESCRIPTION: &str =
@@ -37,11 +37,11 @@ impl RequisitionTransferProcessor for AssignRequisitionNumberProcessor {
         } = &record_for_processing;
 
         // 2.
-        if request_requisition.requisition_row.r#type != RequisitionRowType::Request {
+        if request_requisition.requisition_row.r#type != RequisitionType::Request {
             return Ok(None);
         }
         // 3.
-        if request_requisition.requisition_row.status != RequisitionRowStatus::Sent {
+        if request_requisition.requisition_row.status != RequisitionStatus::Sent {
             return Ok(None);
         }
         // 4.

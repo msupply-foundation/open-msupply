@@ -48,7 +48,7 @@ export const ReplenishmentNav: FC = () => {
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.OutboundReturn)
               .build()}
-            text={t('outbound-return')}
+            text={t('outbound-returns')}
           />
           <AppNavLink
             end

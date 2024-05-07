@@ -50,11 +50,11 @@ impl<'a> TranslationAndIntegration<'a> {
             let source_site_id = sync_record.source_site_id.clone();
 
             let mut translation_result = match sync_record.action {
-                SyncBufferAction::Upsert => translator
+                SyncAction::Upsert => translator
                     .try_translate_from_upsert_sync_record(self.connection, sync_record)?,
-                SyncBufferAction::Delete => translator
+                SyncAction::Delete => translator
                     .try_translate_from_delete_sync_record(self.connection, sync_record)?,
-                SyncBufferAction::Merge => {
+                SyncAction::Merge => {
                     translator.try_translate_from_merge_sync_record(self.connection, sync_record)?
                 }
             };
@@ -199,7 +199,13 @@ pub(crate) fn integrate(
     integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
     // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
-    let start_nested_transaction = { connection.transaction_level.get() > 0 };
+    let start_nested_transaction = {
+        connection
+            .lock()
+            .transaction_level::<RepositoryError>()
+            .map_err(|e| e.to_inner_error())?
+            > 0
+    };
 
     for integration_record in integration_records.iter() {
         // Integrate every record in a sub transaction. This is mainly for Postgres where the
