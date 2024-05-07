@@ -1,15 +1,14 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Grid, Tooltip, Typography } from '@mui/material';
 import React, { FC } from 'react';
 import { ErrorBoundaryFallbackProps } from './types';
 import { UnhappyMan } from '@common/icons';
-import { useTranslation } from '@common/intl';
 import { BaseButton } from '../buttons';
+import { useTranslation } from '@openmsupply-client/common';
 
 export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
   onClearError,
 }) => {
   const t = useTranslation();
-
   return (
     <Box
       display="flex"
@@ -23,7 +22,19 @@ export const GenericErrorFallback: FC<ErrorBoundaryFallbackProps> = ({
       <Typography style={{ padding: 20 }} variant="h3">
         {t('error.something-wrong')}
       </Typography>
-      <BaseButton onClick={onClearError}>{t('button.try-again')}</BaseButton>
+      <Grid container gap={1} justifyContent="center">
+        <BaseButton onClick={onClearError}>{t('button.try-again')}</BaseButton>
+        <Tooltip title={window.location.origin}>
+          <BaseButton
+            onClick={() => {
+              onClearError;
+              window.location.href = window.location.origin;
+            }}
+          >
+            {t('button.dashboard')}
+          </BaseButton>
+        </Tooltip>
+      </Grid>
     </Box>
   );
 };
