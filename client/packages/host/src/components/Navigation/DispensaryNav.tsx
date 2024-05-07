@@ -26,7 +26,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
   const isProgramModule = store?.preferences.omProgramModule;
 
   return (
-    <AppNavSection isActive={visible} to={AppRoute.Dispensary}>
+    <AppNavSection isActive={isActive} to={AppRoute.Dispensary}>
       <AppNavLink
         visible={visible}
         end={false}
