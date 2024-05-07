@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{InvoiceRow, InvoiceRowStatus, StockLineRow, StorageConnection};
+use repository::{InvoiceRow, InvoiceStatus, StockLineRow, StorageConnection};
 
 use crate::invoice::common::{
     generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
@@ -66,7 +66,7 @@ pub fn generate(
 
 fn changed_status(
     status: &Option<UpdateOutboundReturnStatus>,
-    existing_status: &InvoiceRowStatus,
+    existing_status: &InvoiceStatus,
 ) -> Option<UpdateOutboundReturnStatus> {
     let new_status = match status {
         Some(status) => status,
@@ -95,21 +95,21 @@ fn set_new_status_datetime(
     // Status sequence for outbound return: New, Picked, Shipped
     match (&outbound_return.status, new_status) {
         // From Shipped to Any, ignore
-        (InvoiceRowStatus::Shipped, _) => {}
+        (InvoiceStatus::Shipped, _) => {}
 
         // From New to Picked
-        (InvoiceRowStatus::New, UpdateOutboundReturnStatus::Picked) => {
+        (InvoiceStatus::New, UpdateOutboundReturnStatus::Picked) => {
             outbound_return.picked_datetime = Some(current_datetime);
         }
 
         // From New to Shipped
-        (InvoiceRowStatus::New, UpdateOutboundReturnStatus::Shipped) => {
+        (InvoiceStatus::New, UpdateOutboundReturnStatus::Shipped) => {
             outbound_return.picked_datetime = Some(current_datetime.clone());
             outbound_return.shipped_datetime = Some(current_datetime)
         }
 
         // From Picked to Shipped
-        (InvoiceRowStatus::Picked, UpdateOutboundReturnStatus::Shipped) => {
+        (InvoiceStatus::Picked, UpdateOutboundReturnStatus::Shipped) => {
             outbound_return.shipped_datetime = Some(current_datetime)
         }
         _ => {}
@@ -117,7 +117,7 @@ fn set_new_status_datetime(
 }
 
 fn should_update_stock_lines_total_number_of_packs(
-    existing_status: &InvoiceRowStatus,
+    existing_status: &InvoiceStatus,
     status: &Option<UpdateOutboundReturnStatus>,
 ) -> bool {
     let new_status = match changed_status(status, existing_status) {
@@ -128,7 +128,7 @@ fn should_update_stock_lines_total_number_of_packs(
     match (existing_status, new_status) {
         (
             // From New to Picked, or New to Shipped
-            InvoiceRowStatus::New,
+            InvoiceStatus::New,
             UpdateOutboundReturnStatus::Picked | UpdateOutboundReturnStatus::Shipped,
         ) => true,
         _ => false,

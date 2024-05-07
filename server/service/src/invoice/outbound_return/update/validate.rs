@@ -1,4 +1,4 @@
-use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
@@ -23,7 +23,7 @@ pub fn validate(
     if !check_invoice_is_editable(&return_row) {
         return Err(ReturnIsNotEditable);
     }
-    if !check_invoice_type(&return_row, InvoiceRowType::OutboundReturn) {
+    if !check_invoice_type(&return_row, InvoiceType::OutboundReturn) {
         return Err(NotAnOutboundReturn);
     }
 

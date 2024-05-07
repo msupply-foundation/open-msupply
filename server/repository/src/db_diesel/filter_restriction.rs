@@ -66,7 +66,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_string_filter_restrict_results() {
         // Prepare
-        let (_, storage_connection, _, _) = test_db::setup_all_with_data(
+        let (_, mut storage_connection, _, _) = test_db::setup_all_with_data(
             "test_string_filter_restrict_results",
             MockDataInserts::none()
                 .names()
@@ -83,7 +83,7 @@ mod tests {
             }),
         )
         .await;
-        let repository = InvoiceRepository::new(&storage_connection);
+        let repository = InvoiceRepository::new(&mut storage_connection);
 
         let allowed = vec![
             mock_invoice_a().user_id.unwrap(),

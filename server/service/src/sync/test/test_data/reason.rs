@@ -1,5 +1,5 @@
 use crate::sync::test::TestSyncIncomingRecord;
-use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType, ReturnReasonRow};
+use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentType, ReturnReasonRow};
 
 const INVENTORY_ADJUSTMENT_REASON_1: (&str, &str) = (
     "positive_adjustment",
@@ -27,7 +27,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             INVENTORY_ADJUSTMENT_REASON_1,
             InventoryAdjustmentReasonRow {
                 id: INVENTORY_ADJUSTMENT_REASON_1.0.to_string(),
-                r#type: InventoryAdjustmentReasonType::Positive,
+                r#type: InventoryAdjustmentType::Positive,
                 is_active: true,
                 reason: "Found".to_string(),
             },

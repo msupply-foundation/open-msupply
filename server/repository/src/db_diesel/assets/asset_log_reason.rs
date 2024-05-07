@@ -58,7 +58,9 @@ impl<'a> AssetLogReasonRepository<'a> {
     pub fn count(&self, filter: Option<AssetLogReasonFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
@@ -106,7 +108,7 @@ impl<'a> AssetLogReasonRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetLogReason>(&self.connection.connection)?;
+        let result = final_query.load::<AssetLogReason>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use log::info;
-use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 use thiserror::Error;
 use util::format_error;
 
@@ -68,20 +68,14 @@ impl SiteInfoTrait for SiteInfoService {
         let repo = KeyValueStoreRepository::new(&ctx.connection);
 
         // If site uuid is in database check against new site uuid
-        if let Some(site_uuid) = repo.get_string(KeyValueType::SettingsSyncSiteUuid)? {
+        if let Some(site_uuid) = repo.get_string(KeyType::SettingsSyncSiteUuid)? {
             if site_uuid != site_info.id {
                 return Err(Error::SiteUUIDIsBeingChanged(site_uuid, site_info.id));
             }
         }
 
-        repo.set_string(
-            KeyValueType::SettingsSyncSiteUuid,
-            Some(site_info.id.clone()),
-        )?;
-        repo.set_i32(
-            KeyValueType::SettingsSyncSiteId,
-            Some(site_info.site_id.clone()),
-        )?;
+        repo.set_string(KeyType::SettingsSyncSiteUuid, Some(site_info.id.clone()))?;
+        repo.set_i32(KeyType::SettingsSyncSiteId, Some(site_info.site_id.clone()))?;
 
         info!("Received site info");
 
@@ -89,8 +83,8 @@ impl SiteInfoTrait for SiteInfoService {
     }
 
     fn get_site_id(&self, ctx: &ServiceContext) -> Result<Option<i32>, RepositoryError> {
-        let site_id = KeyValueStoreRepository::new(&ctx.connection)
-            .get_i32(KeyValueType::SettingsSyncSiteId)?;
+        let site_id =
+            KeyValueStoreRepository::new(&ctx.connection).get_i32(KeyType::SettingsSyncSiteId)?;
 
         Ok(site_id)
     }

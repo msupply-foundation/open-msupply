@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use util::inline_init;
 
-use crate::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use crate::{InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType};
 
 use super::MockData;
 
@@ -25,8 +25,8 @@ pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
         r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_c".to_owned();
         r.invoice_number = 1;
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::New;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::New;
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
@@ -51,7 +51,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
         total_before_tax: 0.0,
         total_after_tax: 0.0,
         tax: None,
-        r#type: InvoiceLineRowType::UnallocatedStock,
+        r#type: InvoiceLineType::UnallocatedStock,
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -68,8 +68,8 @@ pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
         r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.invoice_number = 2;
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::New;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::New;
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
@@ -94,7 +94,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
         total_before_tax: 0.0,
         total_after_tax: 0.0,
         tax: None,
-        r#type: InvoiceLineRowType::UnallocatedStock,
+        r#type: InvoiceLineType::UnallocatedStock,
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -109,8 +109,8 @@ pub fn mock_allocated_invoice() -> InvoiceRow {
         r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.invoice_number = 1;
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::Allocated;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::Allocated;
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)

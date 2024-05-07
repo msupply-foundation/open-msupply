@@ -157,7 +157,7 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, SyncBufferAction, SyncBufferRowRepository,
+        mock::MockDataInserts, test_db::setup_all, SyncAction, SyncBufferRowRepository,
     };
 
     #[actix_rt::test]
@@ -166,7 +166,7 @@ mod tests {
             SyncBufferRow {
                 record_id: "name_b".to_string(),
                 table_name: "name".to_string(),
-                action: SyncBufferAction::Merge,
+                action: SyncAction::Merge,
                 data: r#"{
                         "mergeIdToKeep": "name_b",
                         "mergeIdToDelete": "name_a"
@@ -177,7 +177,7 @@ mod tests {
             SyncBufferRow {
                 record_id: "name_c".to_string(),
                 table_name: "name".to_string(),
-                action: SyncBufferAction::Merge,
+                action: SyncAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "name_c",
                       "mergeIdToDelete": "name_b"
@@ -273,7 +273,7 @@ mod tests {
             SyncBufferRow {
                 record_id: "name3_merge".to_string(),
                 table_name: "name".to_string(),
-                action: SyncBufferAction::Merge,
+                action: SyncAction::Merge,
                 data: r#"{
                         "mergeIdToKeep": "name2",
                         "mergeIdToDelete": "name3"
@@ -284,7 +284,7 @@ mod tests {
             SyncBufferRow {
                 record_id: "name2_merge".to_string(),
                 table_name: "name".to_string(),
-                action: SyncBufferAction::Merge,
+                action: SyncAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "name_a",
                       "mergeIdToDelete": "name2"
@@ -296,7 +296,7 @@ mod tests {
                 // name_a is visible to name_store_a. This merge is test if the name_store_join is deleted, rather than letting the store have it's own name visible
                 record_id: "name_a_merge".to_string(),
                 table_name: "name".to_string(),
-                action: SyncBufferAction::Merge,
+                action: SyncAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "name_store_a",
                       "mergeIdToDelete": "name_a"

@@ -22,7 +22,7 @@ use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 use repository::PaginationOption;
 use repository::{
-    requisition_row::RequisitionRowType, Invoice, RepositoryError, Requisition, RequisitionFilter,
+    requisition_row::RequisitionType, Invoice, RepositoryError, Requisition, RequisitionFilter,
     RequisitionLine, RequisitionSort,
 };
 
@@ -59,7 +59,7 @@ pub trait RequisitionServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         requisition_number: u32,
-        r#type: RequisitionRowType,
+        r#type: RequisitionType,
     ) -> Result<Option<Requisition>, RepositoryError> {
         get_requisition_by_number(ctx, store_id, requisition_number, r#type)
     }

@@ -1,8 +1,8 @@
 use chrono::Utc;
 
 use repository::{
-    CurrencyFilter, CurrencyRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    NumberRowType, RepositoryError, StorageConnection,
+    CurrencyFilter, CurrencyRepository, InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType,
+    RepositoryError, StorageConnection,
 };
 
 use crate::number::next_number;
@@ -26,11 +26,11 @@ pub fn generate(
         user_id: Some(user_id.to_string()),
         name_link_id: patient_id,
         name_store_id: None,
-        r#type: InvoiceRowType::Prescription,
+        r#type: InvoiceType::Prescription,
         invoice_number: next_number(connection, &NumberRowType::Prescription, store_id)?,
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
-        status: InvoiceRowStatus::New,
+        status: InvoiceStatus::New,
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,

@@ -4,7 +4,7 @@ use crate::invoice::{
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::{ClinicianRowRepository, RepositoryError};
-use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 use super::{UpdatePrescription, UpdatePrescriptionError};
 
@@ -22,7 +22,7 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(InvoiceIsNotEditable);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::Prescription) {
+    if !check_invoice_type(&invoice, InvoiceType::Prescription) {
         return Err(NotAPrescriptionInvoice);
     }
     if !check_clinician_exists(connection, &patch.clinician_id)? {

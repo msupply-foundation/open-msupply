@@ -5,7 +5,7 @@ use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::NaiveDateTime;
 use repository::{
     temperature_breach::TemperatureBreach, RepositoryError, StorageConnection,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachRowType,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType,
 };
 
 #[derive(PartialEq, Debug)]
@@ -22,7 +22,7 @@ pub enum UpdateTemperatureBreachError {
 pub struct UpdateTemperatureBreach {
     pub id: String,
     pub duration_milliseconds: i32,
-    pub r#type: TemperatureBreachRowType,
+    pub r#type: TemperatureBreachType,
     pub sensor_id: String,
     pub location_id: Option<String>,
     pub start_datetime: NaiveDateTime,

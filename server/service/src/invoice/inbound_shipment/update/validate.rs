@@ -4,7 +4,7 @@ use crate::invoice::{
     check_status_change, check_store, InvoiceRowStatusError,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use repository::{InvoiceRow, InvoiceRowType, Name, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
 
 use super::{UpdateInboundShipment, UpdateInboundShipmentError};
 
@@ -22,7 +22,7 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
 

@@ -1,4 +1,4 @@
-use repository::{InvoiceRow, InvoiceRowStatus, ItemRow, StockLine, StorageConnection};
+use repository::{InvoiceRow, InvoiceStatus, ItemRow, StockLine, StorageConnection};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -29,9 +29,7 @@ pub fn validate(
     let invoice =
         check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
-    if invoice.status != InvoiceRowStatus::New
-        && !check_number_of_packs(Some(input.number_of_packs))
-    {
+    if invoice.status != InvoiceStatus::New && !check_number_of_packs(Some(input.number_of_packs)) {
         return Err(NumberOfPacksBelowOne);
     }
 

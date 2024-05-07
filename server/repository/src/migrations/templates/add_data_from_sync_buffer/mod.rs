@@ -14,14 +14,14 @@ table! {
     sync_buffer (record_id) {
         record_id -> Text,
         table_name -> Text,
-        action -> crate::migrations::templates::add_data_from_sync_buffer::SyncBufferActionMapping,
+        action -> crate::migrations::templates::add_data_from_sync_buffer::SyncActionMapping,
         data -> Text,
     }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum SyncBufferAction {
+pub enum SyncAction {
     Upsert,
 }
 
@@ -61,10 +61,10 @@ impl Migration for V1_00_08 {
             .select((sync_buffer_dsl::record_id, sync_buffer_dsl::data))
             .filter(
                 sync_buffer_dsl::action
-                    .eq(SyncBufferAction::Upsert)
+                    .eq(SyncAction::Upsert)
                     .and(sync_buffer_dsl::table_name.eq("store")),
             )
-            .load::<(String, String)>(&connection.connection)?;
+            .load::<(String, String)>(connection.lock().connection())?;
 
         for (id, data) in sync_buffer_rows {
             let legacy_row = serde_json::from_str::<LegacyStoreRow>(&data)
@@ -73,7 +73,7 @@ impl Migration for V1_00_08 {
             diesel::update(store_dsl::store)
                 .filter(store_dsl::id.eq(id))
                 .set(store_dsl::disabled.eq(legacy_row.disabled))
-                .execute(&connection.connection)?;
+                .execute(connection.lock().connection())?;
         }
 
         Ok(())
@@ -229,7 +229,7 @@ async fn migration_1_00_08() {
     let stores = store_dsl::store
         .select((store_dsl::id, store_dsl::disabled))
         .order_by(store_dsl::id.asc())
-        .load::<(String, bool)>(&connection.connection)
+        .load::<(String, bool)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

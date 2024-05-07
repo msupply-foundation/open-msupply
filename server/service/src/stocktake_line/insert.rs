@@ -333,8 +333,8 @@ mod stocktake_line_test {
         },
         test_db::setup_all_with_data,
         EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository,
-        InventoryAdjustmentReasonType, InvoiceLineRow, InvoiceRow, InvoiceRowStatus,
-        InvoiceRowType, StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow,
+        InventoryAdjustmentType, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType,
+        StockLineFilter, StockLineRepository, StockLineRow, StocktakeLineRow,
     };
     use util::{inline_init, uuid::uuid};
 
@@ -350,7 +350,7 @@ mod stocktake_line_test {
             inline_init(|r: &mut InventoryAdjustmentReasonRow| {
                 r.id = "positive_reason".to_string();
                 r.is_active = true;
-                r.r#type = InventoryAdjustmentReasonType::Positive;
+                r.r#type = InventoryAdjustmentType::Positive;
                 r.reason = "Found".to_string();
             })
         }
@@ -359,7 +359,7 @@ mod stocktake_line_test {
             inline_init(|r: &mut InventoryAdjustmentReasonRow| {
                 r.id = "negative_reason".to_string();
                 r.is_active = true;
-                r.r#type = InventoryAdjustmentReasonType::Negative;
+                r.r#type = InventoryAdjustmentType::Negative;
                 r.reason = "Lost".to_string();
             })
         }
@@ -398,8 +398,8 @@ mod stocktake_line_test {
                 r.name_link_id = "name_store_b".to_string();
                 r.store_id = "store_a".to_string();
                 r.invoice_number = 15;
-                r.r#type = InvoiceRowType::OutboundShipment;
-                r.status = InvoiceRowStatus::New;
+                r.r#type = InvoiceType::OutboundShipment;
+                r.status = InvoiceStatus::New;
                 r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
                     .unwrap()
                     .and_hms_milli_opt(20, 30, 0, 0)

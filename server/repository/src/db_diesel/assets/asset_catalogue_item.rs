@@ -55,7 +55,9 @@ impl<'a> AssetCatalogueItemRepository<'a> {
     pub fn count(&self, filter: Option<AssetCatalogueItemFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -100,7 +102,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<AssetCatalogueItemRow>(&self.connection.connection)?;
+            .load::<AssetCatalogueItemRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

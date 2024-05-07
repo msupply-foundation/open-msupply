@@ -1,7 +1,6 @@
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use repository::{
-    RepositoryError, RequisitionRow, RequisitionRowRepository, RequisitionRowType,
-    StorageConnection,
+    RepositoryError, RequisitionRow, RequisitionRowRepository, RequisitionType, StorageConnection,
 };
 
 const DESCRIPTION: &str = "Link request requisition to response requisition";
@@ -34,7 +33,7 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
             ..
         } = &record_for_processing;
         // 2.
-        if response_requisition.requisition_row.r#type != RequisitionRowType::Response {
+        if response_requisition.requisition_row.r#type != RequisitionType::Response {
             return Ok(None);
         }
         // 3.

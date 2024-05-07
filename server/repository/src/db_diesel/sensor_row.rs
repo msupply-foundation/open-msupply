@@ -48,8 +48,8 @@ pub fn get_sensor_type(serial: &str) -> SensorType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "sensor"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = sensor)]
 pub struct SensorRow {
     pub id: String,
     pub name: String,
@@ -60,7 +60,7 @@ pub struct SensorRow {
     pub log_interval: Option<i32>,
     pub is_active: bool,
     pub last_connection_datetime: Option<NaiveDateTime>,
-    #[column_name = "type_"]
+    #[diesel(column_name = "type_")]
     pub r#type: SensorType,
 }
 
@@ -96,7 +96,7 @@ impl<'a> SensorRowRepository<'a> {
             .on_conflict(sensor_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -104,7 +104,7 @@ impl<'a> SensorRowRepository<'a> {
     pub fn _upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sensor_dsl::sensor)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -116,7 +116,7 @@ impl<'a> SensorRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SensorRow>, RepositoryError> {
         let result = sensor_dsl::sensor
             .filter(sensor_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -124,7 +124,7 @@ impl<'a> SensorRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SensorRow>, RepositoryError> {
         Ok(sensor_dsl::sensor
             .filter(sensor_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
+            .load(self.connection.lock().connection())?)
     }
 }
 

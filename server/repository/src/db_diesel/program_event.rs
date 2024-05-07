@@ -162,7 +162,9 @@ impl<'a> ProgramEventRepository<'a> {
     pub fn count(&self, filter: Option<ProgramEventFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -212,7 +214,7 @@ impl<'a> ProgramEventRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEventJoin>(&self.connection.connection)?
+            .load::<ProgramEventJoin>(self.connection.lock().connection())?
             .into_iter()
             .map(|it| ProgramEvent {
                 program_event_row: it.0,
@@ -234,8 +236,7 @@ impl<'a> ProgramEventRepository<'a> {
             );
         }
         query = apply_program_event_filters!(query, Some(filter));
-
-        query.execute(&self.connection.connection)?;
+        query.execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

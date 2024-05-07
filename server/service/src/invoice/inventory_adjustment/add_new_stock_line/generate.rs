@@ -2,7 +2,7 @@ use chrono::Utc;
 
 use repository::NameRowRepository;
 use repository::{
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
 };
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::uuid::uuid;
@@ -56,11 +56,11 @@ pub fn generate(
         id: invoice_id.clone(),
         user_id: Some(user_id.to_string()),
         name_link_id: inventory_adjustment_name.id,
-        r#type: InvoiceRowType::InventoryAddition,
+        r#type: InvoiceType::InventoryAddition,
         invoice_number,
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
-        status: InvoiceRowStatus::New,
+        status: InvoiceStatus::New,
         original_shipment_id: None,
         // Default
         currency_id: None,

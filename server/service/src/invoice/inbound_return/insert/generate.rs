@@ -2,7 +2,7 @@ use chrono::Utc;
 
 use repository::{CurrencyFilter, CurrencyRepository, Name};
 use repository::{
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
 };
 
 use crate::invoice_line::stock_in_line::insert::InsertStockInLine;
@@ -41,12 +41,12 @@ pub fn generate(
         id: invoice_id.clone(),
         user_id: Some(user_id.to_string()),
         name_link_id: other_party_id,
-        r#type: InvoiceRowType::InboundReturn,
+        r#type: InvoiceType::InboundReturn,
         invoice_number: next_number(connection, &NumberRowType::InboundReturn, store_id)?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
-        status: InvoiceRowStatus::New,
+        status: InvoiceStatus::New,
         original_shipment_id: outbound_shipment_id,
         // Default
         currency_id: Some(currency.currency_row.id),

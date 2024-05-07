@@ -55,7 +55,9 @@ impl<'a> MasterListRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -156,7 +158,7 @@ impl<'a> MasterListRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<MasterListRow>(&self.connection.connection)?;
+            .load::<MasterListRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }

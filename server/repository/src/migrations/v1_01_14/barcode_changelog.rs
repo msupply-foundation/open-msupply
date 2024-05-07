@@ -32,7 +32,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     let barcode_ids = barcode_dsl::barcode
         .select(barcode::id)
-        .load::<String>(&connection.connection)?;
+        .load::<String>(connection.lock().connection())?;
 
     // Delete all changelogs for table barcode where record_id is not found
     // in barcode table and changelog is of upsert type
@@ -43,7 +43,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 .and(changelog_dsl::row_action.eq("UPSERT"))
                 .and(changelog_dsl::record_id.ne_all(barcode_ids)),
         )
-        .execute(&connection.connection)?;
+        .execute(connection.lock().connection())?;
 
     Ok(())
 }
@@ -135,13 +135,13 @@ async fn migration_1_01_1_barcode_changelog() {
             barcode_dsl::gtin.eq("gtin_3"),
             barcode_dsl::item_id.eq("item"),
         ))
-        .execute(&connection.connection)
+        .execute(connection.lock().connection())
         .unwrap();
 
     let barcode_ids = barcode_dsl::barcode
         .select(barcode_dsl::id)
         .order_by(barcode_dsl::id.asc())
-        .load::<String>(&connection.connection)
+        .load::<String>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(
@@ -155,7 +155,7 @@ async fn migration_1_01_1_barcode_changelog() {
         .distinct()
         .filter(changelog_dsl::table_name.eq("barcode"))
         .order_by(changelog_dsl::record_id.asc())
-        .load::<String>(&connection.connection)
+        .load::<String>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(
@@ -179,7 +179,7 @@ async fn migration_1_01_1_barcode_changelog() {
         .distinct()
         .filter(changelog_dsl::table_name.eq("barcode"))
         .order_by(changelog_dsl::record_id.asc())
-        .load::<String>(&connection.connection)
+        .load::<String>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

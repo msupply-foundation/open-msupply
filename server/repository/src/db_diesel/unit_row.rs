@@ -13,7 +13,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[table_name = "unit"]
+#[diesel(table_name = unit)]
 pub struct UnitRow {
     pub id: String,
     pub name: String,
@@ -38,7 +38,7 @@ impl<'a> UnitRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -46,21 +46,21 @@ impl<'a> UnitRowRepository<'a> {
     pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::replace_into(unit)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub async fn find_active_by_id(&self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
-            .first(&self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_one_by_id_option(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -68,7 +68,7 @@ impl<'a> UnitRowRepository<'a> {
     pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id).and(is_active.eq(false)))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -76,7 +76,7 @@ impl<'a> UnitRowRepository<'a> {
     pub fn delete(&self, unit_id: &str) -> Result<(), RepositoryError> {
         diesel::update(unit.filter(id.eq(unit_id)))
             .set(is_active.eq(false))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

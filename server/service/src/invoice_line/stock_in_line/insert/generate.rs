@@ -9,7 +9,7 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    BarcodeRow, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow,
+    BarcodeRow, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow,
     RepositoryError, StockLineRow, StorageConnection,
 };
 
@@ -112,7 +112,7 @@ fn generate_line(
         expiry_date,
         sell_price_per_pack,
         cost_price_per_pack,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs,
         item_name,
         item_code,
@@ -129,7 +129,7 @@ fn generate_line(
 
 fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
     match stock_in_type {
-        StockInType::InboundReturn => existing_invoice_row.status != InvoiceRowStatus::New,
+        StockInType::InboundReturn => existing_invoice_row.status != InvoiceStatus::New,
         StockInType::InventoryAddition => true,
     }
 }

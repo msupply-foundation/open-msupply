@@ -1,4 +1,4 @@
-use repository::InvoiceRowType;
+use repository::InvoiceType;
 
 pub mod insert;
 pub use self::insert::*;
@@ -20,11 +20,11 @@ pub enum StockOutType {
 }
 
 impl StockOutType {
-    pub fn to_domain(&self) -> InvoiceRowType {
+    pub fn to_domain(&self) -> InvoiceType {
         match self {
-            StockOutType::OutboundShipment => InvoiceRowType::OutboundShipment,
-            StockOutType::Prescription => InvoiceRowType::Prescription,
-            StockOutType::OutboundReturn => InvoiceRowType::OutboundReturn,
+            StockOutType::OutboundShipment => InvoiceType::OutboundShipment,
+            StockOutType::Prescription => InvoiceType::Prescription,
+            StockOutType::OutboundReturn => InvoiceType::OutboundReturn,
         }
     }
 }

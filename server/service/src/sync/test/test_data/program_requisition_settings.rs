@@ -4,7 +4,7 @@ use repository::{
         mock_period_schedule_2,
     },
     ContextRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
-    SyncBufferAction, SyncBufferRow,
+    SyncAction, SyncBufferRow,
 };
 
 use crate::sync::{
@@ -198,7 +198,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 table_name: TABLE_NAME.to_string(),
                 record_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                 data: MASTER_LIST_WITH_PROGRAM_1.1.to_owned(),
-                action: SyncBufferAction::Upsert,
+                action: SyncAction::Upsert,
                 ..Default::default()
             },
             extra_data: None,
@@ -226,7 +226,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 table_name: TABLE_NAME.to_string(),
                 record_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                 data: MASTER_LIST_WITH_PROGRAM_2.1.to_owned(),
-                action: SyncBufferAction::Upsert,
+                action: SyncAction::Upsert,
                 ..Default::default()
             },
             extra_data: None,

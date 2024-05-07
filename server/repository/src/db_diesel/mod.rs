@@ -244,7 +244,7 @@ impl From<DieselError> for RepositoryError {
                     DieselDatabaseErrorKind::SerializationFailure => {
                         Error::as_db_error("SERIALIZATION_FAILURE", extra)
                     }
-                    DieselDatabaseErrorKind::__Unknown => Error::as_db_error("UNKNOWN", extra),
+                    _ => Error::as_db_error("UNKNOWN", extra),
                 }
             }
             DieselError::NotFound => RepositoryError::NotFound,

@@ -50,7 +50,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // Create a context row for every existing program and update the program row
     let programs = program::dsl::program
         .select((program::dsl::id, program::dsl::name))
-        .load::<(String, String)>(&connection.connection)?;
+        .load::<(String, String)>(connection.lock().connection())?;
 
     for (program_id, program_name) in programs {
         diesel::insert_into(context::dsl::context)
@@ -58,12 +58,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 context::dsl::id.eq(program_id),
                 context::dsl::name.eq(program_name),
             ))
-            .execute(&connection.connection)?;
+            .execute(connection.lock().connection())?;
     }
 
     diesel::update(program::dsl::program)
         .set(program::dsl::context_id.eq(program::dsl::id))
-        .execute(&connection.connection)?;
+        .execute(connection.lock().connection())?;
 
     #[cfg(feature = "postgres")]
     sql!(
@@ -193,7 +193,7 @@ async fn migration_context_program_upgrade() {
             program::dsl::name.eq("program_1_name"),
             program::dsl::master_list_id.eq("master_list_1"),
         ))
-        .execute(&connection.connection)
+        .execute(connection.lock().connection())
         .unwrap();
 
     diesel::insert_into(program::dsl::program)
@@ -202,14 +202,14 @@ async fn migration_context_program_upgrade() {
             program::dsl::name.eq("program_2_name"),
             program::dsl::master_list_id.eq("master_list_2"),
         ))
-        .execute(&connection.connection)
+        .execute(connection.lock().connection())
         .unwrap();
 
     migrate(&connection).unwrap();
 
     let programs = program::dsl::program
         .select((program::dsl::id, program::dsl::name))
-        .load::<(String, String)>(&connection.connection)
+        .load::<(String, String)>(connection.lock().connection())
         .unwrap();
 
     assert!(!programs.is_empty());
@@ -218,7 +218,7 @@ async fn migration_context_program_upgrade() {
         let context_name: String = context::dsl::context
             .select(context::dsl::name)
             .filter(context::dsl::id.eq(program_id))
-            .first(&connection.connection)
+            .first(connection.lock().connection())
             .optional()
             .unwrap()
             .unwrap();

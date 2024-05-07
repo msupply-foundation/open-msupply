@@ -1,5 +1,5 @@
 use crate::TemperatureBreachRow;
-use crate::TemperatureBreachRowType;
+use crate::TemperatureBreachType;
 use chrono::{Duration, NaiveDate};
 
 // hot breach sensor 1 in store a
@@ -7,7 +7,7 @@ pub fn mock_temperature_breach_1() -> TemperatureBreachRow {
     TemperatureBreachRow {
         id: "temperature_breach_1".to_owned(),
         unacknowledged: true,
-        r#type: TemperatureBreachRowType::HotConsecutive,
+        r#type: TemperatureBreachType::HotConsecutive,
         store_id: "store_a".to_string(),
         threshold_minimum: 8.0,
         threshold_maximum: 100.0,
@@ -36,7 +36,7 @@ pub fn mock_temperature_breach_acknowledged() -> TemperatureBreachRow {
     TemperatureBreachRow {
         id: "temperature_breach_acknowledged".to_owned(),
         unacknowledged: false,
-        r#type: TemperatureBreachRowType::HotConsecutive,
+        r#type: TemperatureBreachType::HotConsecutive,
         store_id: "store_a".to_string(),
         threshold_minimum: 8.0,
         threshold_maximum: 100.0,
@@ -65,7 +65,7 @@ pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
     TemperatureBreachRow {
         id: "temperature_breach_2".to_owned(),
         unacknowledged: true,
-        r#type: TemperatureBreachRowType::ColdConsecutive,
+        r#type: TemperatureBreachType::ColdConsecutive,
         store_id: "store_b".to_string(),
         threshold_minimum: -273.0,
         threshold_maximum: 2.0,

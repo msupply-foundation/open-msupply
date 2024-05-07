@@ -130,17 +130,17 @@ fn get_exclude_date_fields() -> Vec<TableAndFieldName> {
 
 #[derive(QueryableByName, Debug, PartialEq)]
 struct IdAndTimestamp {
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     id: String,
-    #[sql_type = "Timestamp"]
+    #[diesel(sql_type = Timestamp)]
     dt: NaiveDateTime,
 }
 
 #[derive(QueryableByName, Debug, PartialEq)]
 struct IdAndDate {
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     id: String,
-    #[sql_type = "Date"]
+    #[diesel(sql_type = Date)]
     d: NaiveDate,
 }
 #[derive(Debug, PartialEq)]
@@ -246,7 +246,7 @@ impl<'a> RefreshDatesRepository<'a> {
             field_name, table_name
         );
 
-        Ok(sql_query(query).load::<IdAndTimestamp>(&self.connection.connection)?)
+        Ok(sql_query(query).load::<IdAndTimestamp>(self.connection.lock().connection())?)
     }
 
     fn update_timestamps(
@@ -269,7 +269,7 @@ impl<'a> RefreshDatesRepository<'a> {
                 id
             );
 
-            sql_query(&query).execute(&self.connection.connection)?;
+            sql_query(&query).execute(self.connection.lock().connection())?;
         }
 
         Ok(())
@@ -285,7 +285,7 @@ impl<'a> RefreshDatesRepository<'a> {
             field_name, table_name
         );
 
-        Ok(sql_query(query).load::<IdAndDate>(&self.connection.connection)?)
+        Ok(sql_query(query).load::<IdAndDate>(self.connection.lock().connection())?)
     }
 
     fn update_dates(
@@ -308,7 +308,7 @@ impl<'a> RefreshDatesRepository<'a> {
                 id
             );
 
-            sql_query(&query).execute(&self.connection.connection)?;
+            sql_query(&query).execute(self.connection.lock().connection())?;
         }
 
         Ok(())
@@ -325,7 +325,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
-#[table_name = "serialize_helper"]
+#[diesel(table_name = serialize_helper)]
 pub struct SerializeHelper {
     pub id: String,
     pub d: Option<NaiveDate>,
@@ -656,9 +656,9 @@ mod tests {
 
     #[derive(QueryableByName, Debug, PartialEq)]
     struct TableNameAndFieldRow {
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         table_name: String,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         column_name: String,
     }
 
@@ -685,7 +685,7 @@ mod tests {
             "#;
 
         let schema_table_and_fields = sql_query(query)
-            .load::<TableNameAndFieldRow>(&connection.connection)
+            .load::<TableNameAndFieldRow>(connection.lock().connection())
             .unwrap();
 
         let mut defined_table_and_fields = get_timestamp_fields();
@@ -731,7 +731,7 @@ mod tests {
         "#;
 
         let schema_table_and_fields = sql_query(query)
-            .load::<TableNameAndFieldRow>(&connection.connection)
+            .load::<TableNameAndFieldRow>(connection.lock().connection())
             .unwrap();
 
         let mut defined_table_and_fields = get_date_fields();

@@ -81,8 +81,8 @@ mod item_count_service_test {
     use chrono::{Duration, Utc};
     use repository::{
         mock::{common::FullMockMasterList, currency_a, mock_store_b, MockData, MockDataInserts},
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
-        InvoiceRowRepository, InvoiceRowType, ItemRow, ItemRowType, MasterListLineRow,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceType, ItemRow, ItemType, MasterListLineRow,
         MasterListNameJoinRow, MasterListRow, StockLineRow, StockLineRowRepository,
     };
     use util::inline_init;
@@ -103,27 +103,27 @@ mod item_count_service_test {
                 items: vec![
                     ItemRow {
                         id: "item1".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item2".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item3".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item4".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item5".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                 ],
@@ -184,27 +184,27 @@ mod item_count_service_test {
                 items: vec![
                     ItemRow {
                         id: "item1".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item2".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item3".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item4".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item5".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                 ],
@@ -332,27 +332,27 @@ mod item_count_service_test {
                 items: vec![
                     ItemRow {
                         id: "item1".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item2".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item3".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item4".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                     ItemRow {
                         id: "item5".to_string(),
-                        r#type: ItemRowType::Stock,
+                        r#type: ItemType::Stock,
                         ..ItemRow::default()
                     },
                 ],
@@ -411,7 +411,7 @@ mod item_count_service_test {
                     name_store_id: Some("store_a".to_string()),
                     store_id: mock_store_b().id,
                     picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
-                    r#type: InvoiceRowType::OutboundShipment,
+                    r#type: InvoiceType::OutboundShipment,
                     currency_id: Some(currency_a().id),
                     ..InvoiceRow::default()
                 }],
@@ -421,7 +421,7 @@ mod item_count_service_test {
                     item_link_id: "item2".to_string(),
                     number_of_packs: 5.0,
                     pack_size: 1,
-                    r#type: InvoiceLineRowType::StockOut,
+                    r#type: InvoiceLineType::StockOut,
                     ..InvoiceLineRow::default()
                 }],
                 ..MockData::default()
@@ -446,7 +446,7 @@ mod item_count_service_test {
                 r.name_store_id = Some("store_a".to_string());
                 r.store_id = "store_b".to_string();
                 r.picked_datetime = Some(Utc::now().naive_utc() - Duration::days(10));
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             }))
             .unwrap();
 
@@ -457,7 +457,7 @@ mod item_count_service_test {
                 r.item_link_id = "item1".to_string();
                 r.number_of_packs = 20.0;
                 r.pack_size = 1;
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
             }))
             .unwrap();
 

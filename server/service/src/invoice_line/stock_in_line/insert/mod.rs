@@ -121,7 +121,7 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StorePreferenceRow,
+        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow,
         StorePreferenceRowRepository,
     };
     use util::{inline_edit, inline_init};
@@ -141,10 +141,10 @@ mod test {
         fn verified_inbound_return() -> InvoiceRow {
             InvoiceRow {
                 id: "verified_inbound_return".to_string(),
-                status: InvoiceRowStatus::Verified,
+                status: InvoiceStatus::Verified,
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_b().id,
-                r#type: InvoiceRowType::InboundReturn,
+                r#type: InvoiceType::InboundReturn,
                 ..Default::default()
             }
         }

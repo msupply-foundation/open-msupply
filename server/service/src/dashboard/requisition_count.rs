@@ -1,6 +1,6 @@
 use repository::{
-    EqualFilter, RepositoryError, RequisitionFilter, RequisitionRepository, RequisitionRowStatus,
-    RequisitionRowType,
+    EqualFilter, RepositoryError, RequisitionFilter, RequisitionRepository, RequisitionStatus,
+    RequisitionType,
 };
 
 use crate::service_provider::ServiceContext;
@@ -35,8 +35,8 @@ impl RequisitionCountServiceTrait for RequisitionCountService {
         repo.count(Some(
             RequisitionFilter::new()
                 .store_id(EqualFilter::equal_to(store_id))
-                .r#type(RequisitionRowType::Response.equal_to())
-                .status(RequisitionRowStatus::New.equal_to()),
+                .r#type(RequisitionType::Response.equal_to())
+                .status(RequisitionStatus::New.equal_to()),
         ))
     }
 
@@ -49,8 +49,8 @@ impl RequisitionCountServiceTrait for RequisitionCountService {
         repo.count(Some(
             RequisitionFilter::new()
                 .store_id(EqualFilter::equal_to(store_id))
-                .r#type(RequisitionRowType::Request.equal_to())
-                .status(RequisitionRowStatus::Draft.equal_to()),
+                .r#type(RequisitionType::Request.equal_to())
+                .status(RequisitionStatus::Draft.equal_to()),
         ))
     }
 }

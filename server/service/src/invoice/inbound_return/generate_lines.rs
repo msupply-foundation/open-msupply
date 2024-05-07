@@ -2,7 +2,7 @@ use crate::{service_provider::ServiceContext, ListError, ListResult};
 use chrono::NaiveDate;
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceRowType, ItemRow,
+    InvoiceType, ItemRow,
 };
 use util::uuid::uuid;
 
@@ -68,7 +68,7 @@ fn get_existing_return_lines(
     let existing_invoice_lines = invoice_line_repo.query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(return_id))
-            .invoice_type(InvoiceRowType::InboundReturn.equal_to())
+            .invoice_type(InvoiceType::InboundReturn.equal_to())
             .item_id(EqualFilter::equal_to(item_id)),
     )?;
 

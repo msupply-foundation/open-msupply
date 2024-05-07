@@ -7,7 +7,7 @@ use diesel::sql_types::*;
 #[cfg(feature = "postgres")]
 #[derive(QueryableByName, Debug, PartialEq)]
 pub struct JsonDataRow {
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     data: String,
 }
 
@@ -74,7 +74,8 @@ pub fn query_json(
     };
 
     // do the query
-    let pg_connection = &connection.connection;
+    let mut guard = connection.lock();
+    let pg_connection = guard.connection();
     let statement_name = format!("statement_{}", small_uuid());
     let json_row_sql_query = format!(
         "PREPARE {} AS
@@ -151,12 +152,18 @@ pub fn query_json(
             serde_json::Value::Object(_) => statement.raw_bind_parameter(p, Null)?,
         };
     }
+
+    let mut column_names = vec![];
+    for c in 0..statement.column_count() {
+        let name = statement.column_name(c)?.to_string();
+        column_names.push(name);
+    }
     let rows = statement.raw_query();
     let rows = rows.mapped(|row| {
         let mut object = serde_json::Map::<String, serde_json::Value>::new();
-        for c in 0..row.column_count() {
+        for c in 0..column_names.len() {
             let value = row.get_ref(c)?;
-            let name = row.column_name(c)?.to_string();
+            let name = column_names[c].clone();
             match value.data_type() {
                 rusqlite::types::Type::Null => {
                     object.insert(name, serde_json::Value::Null);

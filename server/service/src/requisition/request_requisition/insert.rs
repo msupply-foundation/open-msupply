@@ -7,7 +7,7 @@ use crate::{
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionRowRepository,
     StorageConnection,
 };
@@ -122,8 +122,8 @@ fn generate(
         requisition_number: next_number(connection, &NumberRowType::RequestRequisition, store_id)?,
         name_link_id: other_party_id,
         store_id: store_id.to_owned(),
-        r#type: RequisitionRowType::Request,
-        status: RequisitionRowStatus::Draft,
+        r#type: RequisitionType::Request,
+        status: RequisitionStatus::Draft,
         created_datetime: Utc::now().naive_utc(),
         colour,
         comment,

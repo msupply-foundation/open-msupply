@@ -30,7 +30,7 @@ table! {
         total_before_tax -> Double,
         total_after_tax -> Double,
         tax -> Nullable<Double>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineRowTypeMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
         number_of_packs -> Double,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
@@ -50,22 +50,22 @@ allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum InvoiceLineRowType {
+pub enum InvoiceLineType {
     StockIn,
     StockOut,
     UnallocatedStock,
     Service,
 }
 
-impl Default for InvoiceLineRowType {
+impl Default for InvoiceLineType {
     fn default() -> Self {
         Self::StockIn
     }
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "invoice_line"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = invoice_line)]
 pub struct InvoiceLineRow {
     pub id: String,
     pub invoice_id: String,
@@ -84,8 +84,8 @@ pub struct InvoiceLineRow {
     pub total_after_tax: f64,
     /// Optional column to store line a line specific tax value
     pub tax: Option<f64>,
-    #[column_name = "type_"]
-    pub r#type: InvoiceLineRowType,
+    #[diesel(column_name =type_)]
+    pub r#type: InvoiceLineType,
     pub number_of_packs: f64,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
@@ -109,7 +109,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -117,7 +117,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice_line)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -129,7 +129,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
         diesel::update(invoice_line)
             .filter(id.eq(record_id))
             .set(inventory_adjustment_reason_id.eq(reason_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -141,7 +141,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
         diesel::update(invoice_line)
             .filter(id.eq(record_id))
             .set(return_reason_id.eq(reason_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -157,7 +157,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
                 tax.eq(tax_input),
                 total_after_tax.eq(total_after_tax_calculation),
             ))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -171,27 +171,27 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .set(
                 foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
             )
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(invoice_line.filter(id.eq(invoice_line_id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
         let result = invoice_line
             .filter(id.eq(record_id))
-            .first(&self.connection.connection);
+            .first(self.connection.lock().connection());
         result.map_err(RepositoryError::from)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
             .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -202,7 +202,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
             .filter(id.eq(invoice_line_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -215,7 +215,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(invoice_line
             .filter(invoice_id.eq(invoice_id_param))
             .filter(stock_line_id.eq(stock_line_id_param))
-            .load(&self.connection.connection)?)
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn find_many_by_invoice_id(
@@ -224,7 +224,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
             .filter(invoice_id.eq(invoice_id_param))
-            .get_results(&self.connection.connection)?;
+            .get_results(self.connection.lock().connection())?;
         Ok(result)
     }
 }

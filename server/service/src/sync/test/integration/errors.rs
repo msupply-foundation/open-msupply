@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, StorageConnectionManager, SyncLogRowErrorCode};
+    use repository::{mock::MockDataInserts, StorageConnectionManager, SyncApiErrorCode};
     use reqwest::StatusCode;
     use std::{io::Error, path::PathBuf, sync::Arc};
     use util::assert_matches;
@@ -113,7 +113,7 @@ mod tests {
         assert_matches!(
             status.error,
             Some(SyncLogError {
-                code: Some(SyncLogRowErrorCode::HardwareIdMismatch),
+                code: Some(SyncApiErrorCode::HardwareIdMismatch),
                 ..
             })
         )

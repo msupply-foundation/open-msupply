@@ -1,10 +1,21 @@
 use crate::{
+    db_diesel::temperature_log_row::temperature_log,
     db_diesel::temperature_log_row::temperature_log::dsl as temperature_log_dsl, DBType,
     RepositoryError, StorageConnection, TemperatureLogFilter, TemperatureLogRepository,
 };
 use diesel::prelude::*;
 
 use super::temperature_chart_row::*;
+
+#[derive(Debug, PartialEq)]
+pub struct TemperatureChartRow {
+    pub interval_id: String,
+    pub average_temperature: f64,
+    pub sensor_id: String,
+    pub breach_ids: Vec<String>,
+}
+
+allow_tables_to_appear_in_same_query!(temperature_log, temperature_chart);
 
 pub struct TemperatureChartRepository<'a> {
     connection: &'a StorageConnection,
@@ -23,30 +34,34 @@ impl<'a> TemperatureChartRepository<'a> {
         intervals: Vec<Interval>,
         temperature_log_filter: Option<TemperatureLogFilter>,
     ) -> Result<Vec<TemperatureChartRow>, RepositoryError> {
-        let mut query = TemperatureChart {
+        let mut query = temperature_chart::table {
             intervals: intervals.clone(),
         }
+        .group_by((temperature_chart::IntervalId, temperature_chart::SensorId))
         .into_boxed::<DBType>();
 
         if temperature_log_filter.is_some() {
             let temperature_log_ids =
                 TemperatureLogRepository::create_filtered_query(temperature_log_filter)
                     .select(temperature_log_dsl::id);
-            query = query.filter(TemperatureLogId.eq_any(temperature_log_ids));
+            query = query.filter(temperature_chart::TemperatureLogId.eq_any(temperature_log_ids));
         };
 
-        let query = query
-            .select((IntervalId, AverageTemperature, SensorId, BreachIds))
-            .group_by((IntervalId, SensorId));
+        let query = query.select((
+            temperature_chart::IntervalId,
+            temperature_chart::AverageTemperature,
+            temperature_chart::SensorId,
+            temperature_chart::BreachIds,
+        ));
 
         // Order by sensor
-        let query = query.order_by(SensorId.asc());
+        let query = query.order_by(temperature_chart::SensorId.asc());
 
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let chart_data = query
-            .load::<QueryResult>(&self.connection.connection)?
+            .load::<QueryResult>(self.connection.lock().connection())?
             .into_iter()
             .map(TemperatureChartRow::from)
             .collect::<Result<_, _>>()?;

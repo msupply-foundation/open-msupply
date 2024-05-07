@@ -8,7 +8,7 @@ use crate::{
         },
     },
 };
-use repository::{InvoiceLine, InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
+use repository::{InvoiceLine, InvoiceRow, InvoiceType, ItemRow, StorageConnection};
 
 use super::{UpdateInboundShipmentLine, UpdateInboundShipmentLineError};
 
@@ -33,7 +33,7 @@ pub fn validate(
 
     let invoice =
         check_invoice_exists(&line_row.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
-    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

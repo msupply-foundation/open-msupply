@@ -1,4 +1,4 @@
-use repository::{InvoiceLineRow, InvoiceRowType, StockLineRow};
+use repository::{InvoiceLineRow, InvoiceType, StockLineRow};
 use util::uuid::uuid;
 
 pub mod delete;
@@ -16,10 +16,10 @@ pub enum StockInType {
 }
 
 impl StockInType {
-    pub fn to_domain(&self) -> InvoiceRowType {
+    pub fn to_domain(&self) -> InvoiceType {
         match self {
-            StockInType::InboundReturn => InvoiceRowType::InboundReturn,
-            StockInType::InventoryAddition => InvoiceRowType::InventoryAddition,
+            StockInType::InboundReturn => InvoiceType::InboundReturn,
+            StockInType::InventoryAddition => InvoiceType::InventoryAddition,
         }
     }
 }

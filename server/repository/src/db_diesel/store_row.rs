@@ -34,7 +34,7 @@ allow_tables_to_appear_in_same_query!(store, name_link);
 allow_tables_to_appear_in_same_query!(store, item_link);
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[table_name = "store"]
+#[diesel(table_name = store)]
 pub struct StoreRow {
     pub id: String,
     /// The store's name will never change, for this reason use the actual name_id instead of a
@@ -69,7 +69,7 @@ impl<'a> StoreRowRepository<'a> {
             .on_conflict(store_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -77,21 +77,21 @@ impl<'a> StoreRowRepository<'a> {
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         diesel::replace_into(store_dsl::store)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_dsl::store)
             .values(store_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
         let result = store_dsl::store
             .filter(store_dsl::id.eq(store_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -99,7 +99,7 @@ impl<'a> StoreRowRepository<'a> {
     pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
         let result = store_dsl::store
             .filter(store_dsl::name_id.eq(name_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -107,18 +107,18 @@ impl<'a> StoreRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store_dsl::store
             .filter(store_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
-    pub fn all(&self) -> Result<Vec<StoreRow>, RepositoryError> {
-        let result = store_dsl::store.load(&self.connection.connection)?;
+    pub fn all(&mut self) -> Result<Vec<StoreRow>, RepositoryError> {
+        let result = store_dsl::store.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(store_dsl::store.filter(store_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

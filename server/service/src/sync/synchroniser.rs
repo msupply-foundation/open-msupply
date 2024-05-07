@@ -3,7 +3,7 @@ use crate::{
     sync::{sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
-use repository::{RepositoryError, StorageConnection, SyncBufferAction};
+use repository::{RepositoryError, StorageConnection, SyncAction};
 
 use std::sync::Arc;
 use thiserror::Error;
@@ -326,14 +326,14 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
-            SyncBufferAction::Upsert,
+            SyncAction::Upsert,
             &table_order,
             source_site_id,
         )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
-            SyncBufferAction::Delete,
+            SyncAction::Delete,
             &table_order,
             source_site_id,
         )?;
@@ -354,7 +354,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
             )?;
 
         let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
-            SyncBufferAction::Merge,
+            SyncAction::Merge,
             &table_order,
             source_site_id,
         )?;

@@ -39,7 +39,9 @@ impl<'a> PeriodScheduleRepository<'a> {
 
     pub fn count(&self, filter: Option<PeriodScheduleFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -66,7 +68,7 @@ impl<'a> PeriodScheduleRepository<'a> {
             }
         };
 
-        let result = query.load::<PeriodScheduleRow>(&self.connection.connection)?;
+        let result = query.load::<PeriodScheduleRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }

@@ -118,7 +118,9 @@ impl<'a> ProgramEnrolmentRepository<'a> {
     pub fn count(&self, filter: Option<ProgramEnrolmentFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
@@ -161,7 +163,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEnrolmentJoin>(&self.connection.connection)?;
+            .load::<ProgramEnrolmentJoin>(self.connection.lock().connection())?;
         let result = result
             .into_iter()
             .map(|(row, program_row, (_, patient_row))| ProgramEnrolment {

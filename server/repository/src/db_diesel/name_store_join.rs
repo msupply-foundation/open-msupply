@@ -35,7 +35,7 @@ table! {
 }
 
 #[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Clone, Default)]
-#[table_name = "name_store_join"]
+#[diesel(table_name = name_store_join)]
 pub struct NameStoreJoinRow {
     pub id: String,
     pub name_link_id: String,
@@ -78,7 +78,7 @@ impl<'a> NameStoreJoinRepository<'a> {
             .on_conflict(name_store_join_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -86,14 +86,14 @@ impl<'a> NameStoreJoinRepository<'a> {
     fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_store_join_dsl::name_store_join)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(name_store_join_is_sync_update::table.find(id))
             .set(name_store_join_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
@@ -107,14 +107,14 @@ impl<'a> NameStoreJoinRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameStoreJoinRow>, RepositoryError> {
         let result = name_store_join_dsl::name_store_join
             .filter(name_store_join_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name_store_join_dsl::name_store_join.filter(name_store_join_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -131,7 +131,7 @@ impl<'a> NameStoreJoinRepository<'a> {
     ) -> Result<Vec<NameStoreJoin>, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        let result = query.load::<NameStoreJoins>(&self.connection.connection)?;
+        let result = query.load::<NameStoreJoins>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -148,7 +148,7 @@ impl<'a> NameStoreJoinRepository<'a> {
         let result = name_store_join_is_sync_update::table
             .find(id)
             .select(name_store_join_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }

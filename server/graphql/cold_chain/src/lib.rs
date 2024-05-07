@@ -532,8 +532,7 @@ mod test_breaches {
     use repository::{
         mock::MockDataInserts,
         temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort},
-        StorageConnection, StorageConnectionManager, TemperatureBreachRow,
-        TemperatureBreachRowType,
+        StorageConnection, StorageConnectionManager, TemperatureBreachRow, TemperatureBreachType,
     };
     use serde_json::json;
 
@@ -607,7 +606,7 @@ mod test_breaches {
                         id: "acknowledged_temperature_breach".to_owned(),
                         duration_milliseconds: 3600,
                         unacknowledged: false,
-                        r#type: TemperatureBreachRowType::ColdConsecutive,
+                        r#type: TemperatureBreachType::ColdConsecutive,
                         store_id: "store_a".to_string(),
                         location_id: None,
                         threshold_minimum: -273.0,
@@ -692,7 +691,7 @@ mod test_notifications {
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::{
         mock::MockDataInserts, temperature_breach::TemperatureBreach, StorageConnection,
-        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
+        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachType,
     };
     use repository::{
         PaginationOption, TemperatureBreachFilter, TemperatureBreachSort, TemperatureExcursion,
@@ -791,7 +790,7 @@ mod test_notifications {
                         id: "acknowledged_temperature_breach".to_owned(),
                         duration_milliseconds: 3600,
                         unacknowledged: false,
-                        r#type: TemperatureBreachRowType::ColdConsecutive,
+                        r#type: TemperatureBreachType::ColdConsecutive,
                         store_id: "store_a".to_string(),
                         location_id: None,
                         threshold_minimum: -273.0,

@@ -26,7 +26,7 @@ allow_tables_to_appear_in_same_query!(program_event, name_link);
 allow_tables_to_appear_in_same_query!(program_event, name);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "program_event"]
+#[diesel(table_name = program_event)]
 pub struct ProgramEventRow {
     /// The row id
     pub id: String,
@@ -58,7 +58,7 @@ pub struct ProgramEventRow {
     /// However, the status of a specific encounter is tied to a specific document.
     pub document_name: Option<String>,
     /// The type of the event data
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: String,
     /// The event data
     pub data: Option<String>,
@@ -76,7 +76,7 @@ impl<'a> ProgramEventRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramEventRow>, RepositoryError> {
         let result = program_event::dsl::program_event
             .filter(program_event::dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -88,7 +88,7 @@ impl<'a> ProgramEventRowRepository<'a> {
             .on_conflict(program_event::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -96,7 +96,7 @@ impl<'a> ProgramEventRowRepository<'a> {
     pub fn upsert_one(&self, row: &ProgramEventRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_event::dsl::program_event)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

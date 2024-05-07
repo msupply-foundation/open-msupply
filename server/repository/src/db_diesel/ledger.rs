@@ -1,6 +1,6 @@
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
-    EqualFilter, InvoiceRowType, Pagination, RepositoryError, Sort,
+    EqualFilter, InvoiceType, Pagination, RepositoryError, Sort,
 };
 
 use super::{ledger::ledger::dsl as ledger_dsl, StorageConnection};
@@ -18,7 +18,7 @@ table! {
         store_id -> Text,
         quantity -> BigInt,
         datetime -> Timestamp,
-        invoice_type -> crate::db_diesel::invoice_row::InvoiceRowTypeMapping,
+        invoice_type -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
         inventory_adjustment_reason -> Nullable<Text>,
         return_reason ->  Nullable<Text>,
     }
@@ -33,7 +33,7 @@ pub struct LedgerRow {
     pub store_id: String,
     pub quantity: i64,
     pub datetime: NaiveDateTime,
-    pub invoice_type: InvoiceRowType,
+    pub invoice_type: InvoiceType,
     pub inventory_adjustment_reason: Option<String>,
     pub return_reason: Option<String>,
 }
@@ -129,7 +129,7 @@ impl<'a> LedgerRepository<'a> {
         let result = final_query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<LedgerRow>(&self.connection.connection)?;
+            .load::<LedgerRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }

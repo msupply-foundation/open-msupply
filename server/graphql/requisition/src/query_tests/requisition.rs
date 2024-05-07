@@ -6,7 +6,7 @@ mod graphql {
     };
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition_all_fields, MockDataInserts},
-        requisition_row::{RequisitionRowStatus, RequisitionRowType},
+        requisition_row::{RequisitionStatus, RequisitionType},
         DateFilter, Requisition, RequisitionFilter, RequisitionSort, RequisitionSortField,
         StorageConnectionManager,
     };
@@ -197,8 +197,8 @@ mod graphql {
                 Some(EqualFilter::not_equal_to("user_id_not_equal_to"))
             );
             assert_eq!(requisition_number, Some(EqualFilter::equal_to_i64(20)));
-            assert_eq!(r#type, Some(RequisitionRowType::Request.equal_to()));
-            assert_eq!(status, Some(RequisitionRowStatus::Draft.equal_to()));
+            assert_eq!(r#type, Some(RequisitionType::Request.equal_to()));
+            assert_eq!(status, Some(RequisitionStatus::Draft.equal_to()));
             assert_eq!(
                 created_datetime,
                 Some(DatetimeFilter::equal_to(

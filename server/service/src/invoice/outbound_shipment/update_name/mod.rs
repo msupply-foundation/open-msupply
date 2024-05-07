@@ -93,8 +93,8 @@ mod test {
             mock_store_c, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-        InvoiceRowStatus, InvoiceRowType, NameRow, NameStoreJoinRow,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+        InvoiceType, NameRow, NameStoreJoinRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -228,8 +228,8 @@ mod test {
                 r.id = "test_invoice_pricing".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_c().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
-                r.status = InvoiceRowStatus::Picked;
+                r.r#type = InvoiceType::OutboundShipment;
+                r.status = InvoiceStatus::Picked;
             })
         }
 

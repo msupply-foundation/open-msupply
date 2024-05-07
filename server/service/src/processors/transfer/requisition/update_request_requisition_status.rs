@@ -1,5 +1,5 @@
 use repository::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionStatus, RequisitionType},
     ActivityLogType, RepositoryError, RequisitionRow, RequisitionRowRepository, StorageConnection,
 };
 
@@ -38,7 +38,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionStatusProcessor {
             ..
         } = &record_for_processing;
         // 2.
-        if response_requisition.requisition_row.r#type != RequisitionRowType::Response {
+        if response_requisition.requisition_row.r#type != RequisitionType::Response {
             return Ok(None);
         }
         // 3.
@@ -47,18 +47,18 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionStatusProcessor {
             None => return Ok(None),
         };
         // 4.
-        if request_requisition.requisition_row.status == RequisitionRowStatus::Finalised {
+        if request_requisition.requisition_row.status == RequisitionStatus::Finalised {
             return Ok(None);
         }
         // 5.
-        if response_requisition.requisition_row.status != RequisitionRowStatus::Finalised {
+        if response_requisition.requisition_row.status != RequisitionStatus::Finalised {
             return Ok(None);
         }
 
         // Execute
         let updated_request_requisition = RequisitionRow {
             // 6.
-            status: RequisitionRowStatus::Finalised,
+            status: RequisitionStatus::Finalised,
             finalised_datetime: response_requisition.requisition_row.finalised_datetime,
             ..request_requisition.requisition_row.clone()
         };

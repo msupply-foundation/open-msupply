@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 table! {
     inventory_adjustment_reason (id) {
         id -> Text,
-        #[sql_name = "type"] type_ -> crate::db_diesel::inventory_adjustment_reason_row::InventoryAdjustmentReasonTypeMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::inventory_adjustment_reason_row::InventoryAdjustmentTypeMapping,
         is_active -> Bool,
         reason -> Text,
     }
@@ -20,18 +20,18 @@ table! {
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum InventoryAdjustmentReasonType {
+pub enum InventoryAdjustmentType {
     Positive,
     Negative,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "inventory_adjustment_reason"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = inventory_adjustment_reason)]
 pub struct InventoryAdjustmentReasonRow {
     pub id: String,
-    #[column_name = "type_"]
-    pub r#type: InventoryAdjustmentReasonType,
+    #[diesel(column_name = type_)]
+    pub r#type: InventoryAdjustmentType,
     pub is_active: bool,
     pub reason: String,
 }
@@ -39,7 +39,7 @@ pub struct InventoryAdjustmentReasonRow {
 impl Default for InventoryAdjustmentReasonRow {
     fn default() -> Self {
         Self {
-            r#type: InventoryAdjustmentReasonType::Positive,
+            r#type: InventoryAdjustmentType::Positive,
             id: Default::default(),
             is_active: false,
             reason: Default::default(),
@@ -63,7 +63,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
             .on_conflict(inventory_adjustment_reason_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -71,7 +71,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
         diesel::replace_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -81,7 +81,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     ) -> Result<Option<InventoryAdjustmentReasonRow>, RepositoryError> {
         let result = inventory_adjustment_reason_dsl::inventory_adjustment_reason
             .filter(inventory_adjustment_reason_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -89,7 +89,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     pub fn delete(&self, inventory_adjustment_reason_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .filter(inventory_adjustment_reason_dsl::id.eq(inventory_adjustment_reason_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

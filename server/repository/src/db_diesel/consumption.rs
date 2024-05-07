@@ -89,7 +89,7 @@ impl<'a> ConsumptionRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<ConsumptionRow>(&self.connection.connection)?)
+        Ok(query.load::<ConsumptionRow>(self.connection.lock().connection())?)
     }
 }
 

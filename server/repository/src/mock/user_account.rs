@@ -1,4 +1,4 @@
-use crate::{Permission, UserAccountRow, UserPermissionRow, UserStoreJoinRow};
+use crate::{PermissionType, UserAccountRow, UserPermissionRow, UserStoreJoinRow};
 
 // users
 
@@ -66,7 +66,7 @@ pub fn mock_user_permission_a1() -> UserPermissionRow {
         id: "user_permission_a1".to_string(),
         user_id: "user_account_a".to_string(),
         store_id: Some("store_a".to_string()),
-        permission: Permission::StocktakeMutate,
+        permission: PermissionType::StocktakeMutate,
         context_id: None,
     }
 }
@@ -76,7 +76,7 @@ pub fn mock_user_permission_a2() -> UserPermissionRow {
         id: "user_permission_a2".to_string(),
         user_id: "user_account_a".to_string(),
         store_id: Some("store_a".to_string()),
-        permission: Permission::RequisitionQuery,
+        permission: PermissionType::RequisitionQuery,
         context_id: None,
     }
 }
@@ -86,7 +86,7 @@ pub fn mock_user_permission_a3() -> UserPermissionRow {
         id: "user_permission_a3".to_string(),
         user_id: "user_account_a".to_string(),
         store_id: Some("store_a".to_string()),
-        permission: Permission::DocumentQuery,
+        permission: PermissionType::DocumentQuery,
         context_id: Some("program_a".to_string()),
     }
 }
@@ -96,7 +96,7 @@ pub fn mock_user_permission_b1() -> UserPermissionRow {
         id: "user_permission_b1".to_string(),
         user_id: "user_account_b".to_string(),
         store_id: Some("store_a".to_string()),
-        permission: Permission::OutboundShipmentQuery,
+        permission: PermissionType::OutboundShipmentQuery,
         context_id: None,
     }
 }

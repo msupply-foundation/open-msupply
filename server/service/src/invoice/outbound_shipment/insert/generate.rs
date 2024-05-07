@@ -2,7 +2,7 @@ use chrono::Utc;
 
 use repository::{CurrencyFilter, CurrencyRepository, Name};
 use repository::{
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
 };
 
 use crate::number::next_number;
@@ -26,14 +26,14 @@ pub fn generate(
         id: input.id,
         user_id: Some(user_id.to_string()),
         name_link_id: input.other_party_id,
-        r#type: InvoiceRowType::OutboundShipment,
+        r#type: InvoiceType::OutboundShipment,
         comment: input.comment,
         their_reference: input.their_reference,
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
-        status: InvoiceRowStatus::New,
+        status: InvoiceStatus::New,
         on_hold: input.on_hold.unwrap_or(false),
         colour: input.colour,
         // Default

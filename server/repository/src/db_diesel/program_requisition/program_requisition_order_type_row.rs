@@ -22,7 +22,7 @@ use crate::{Delete, Upsert};
 joinable!(program_requisition_order_type -> program_requisition_settings (program_requisition_settings_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "program_requisition_order_type"]
+#[diesel(table_name = program_requisition_order_type)]
 pub struct ProgramRequisitionOrderTypeRow {
     pub id: String,
     pub program_requisition_settings_id: String,
@@ -48,7 +48,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
             .on_conflict(program_requisition_order_type_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -56,7 +56,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_requisition_order_type_dsl::program_requisition_order_type)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -66,7 +66,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
             .filter(program_requisition_order_type_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -77,7 +77,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     ) -> Result<Vec<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
             .filter(program_requisition_order_type_dsl::program_requisition_settings_id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
 
         Ok(result)
     }
@@ -87,7 +87,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
             program_requisition_order_type_dsl::program_requisition_order_type
                 .filter(program_requisition_order_type_dsl::id.eq(order_type_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

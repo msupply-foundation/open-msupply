@@ -38,7 +38,7 @@ pub enum StocktakeStatus {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
-#[table_name = "stocktake"]
+#[diesel(table_name = stocktake)]
 pub struct StocktakeRow {
     pub id: String,
     pub store_id: String,
@@ -99,7 +99,7 @@ impl<'a> StocktakeRowRepository<'a> {
             .on_conflict(stocktake_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -107,20 +107,20 @@ impl<'a> StocktakeRowRepository<'a> {
     pub fn upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stocktake_dsl::stocktake)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(stocktake_dsl::stocktake.filter(stocktake_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeRow>, RepositoryError> {
         let result = stocktake_dsl::stocktake
             .filter(stocktake_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }
@@ -128,7 +128,7 @@ impl<'a> StocktakeRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StocktakeRow>, RepositoryError> {
         let result = stocktake_dsl::stocktake
             .filter(stocktake_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -139,7 +139,7 @@ impl<'a> StocktakeRowRepository<'a> {
         let result = stocktake_dsl::stocktake
             .filter(stocktake_dsl::store_id.eq(store_id))
             .select(max(stocktake_dsl::stocktake_number))
-            .first(&self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 }

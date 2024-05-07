@@ -64,7 +64,7 @@ impl<'a> StockOnHandRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<StockOnHandRow>(&self.connection.connection)?)
+        Ok(query.load::<StockOnHandRow>(self.connection.lock().connection())?)
     }
 }
 

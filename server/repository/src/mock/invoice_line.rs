@@ -1,4 +1,4 @@
-use crate::{mock::mock_prescription_a, InvoiceLineRow, InvoiceLineRowType};
+use crate::{mock::mock_prescription_a, InvoiceLineRow, InvoiceLineType};
 
 use chrono::NaiveDate;
 use util::inline_init;
@@ -26,7 +26,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 0.87,
         total_after_tax: 1.0,
         tax: Some(15.0),
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 10.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -50,7 +50,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 1.74,
         total_after_tax: 2.0,
         tax: Some(15.0),
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 4.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -81,7 +81,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 3.0,
         total_after_tax: 3.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 3.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -105,7 +105,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 4.0,
         total_after_tax: 4.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 5.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -136,7 +136,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 27.0,
         total_after_tax: 27.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 3.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -160,7 +160,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 34.0,
         total_after_tax: 34.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -191,7 +191,7 @@ pub fn mock_outbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 22.0,
         total_after_tax: 22.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 2.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -219,7 +219,7 @@ pub fn mock_outbound_shipment_no_stock_line() -> Vec<InvoiceLineRow> {
         total_before_tax: 22.0,
         total_after_tax: 22.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs: 2.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -247,7 +247,7 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 5.0,
         total_after_tax: 5.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -271,7 +271,7 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 6.0,
         total_after_tax: 6.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -302,7 +302,7 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 7.0,
         total_after_tax: 7.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -326,7 +326,7 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 8.0,
         total_after_tax: 8.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -357,7 +357,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 21.0,
         total_after_tax: 21.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 3.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -381,7 +381,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 8.0,
         total_after_tax: 8.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 2.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -405,7 +405,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 8.0,
         total_after_tax: 8.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 2.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -437,7 +437,7 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 14.0,
         total_after_tax: 14.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 7.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -461,7 +461,7 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         total_before_tax: 270.0,
         total_after_tax: 270.0,
         tax: None,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs: 2.0,
         note: None,
         inventory_adjustment_reason_id: None,
@@ -490,7 +490,7 @@ pub fn mock_prescription_a_invoice_line_a() -> InvoiceLineRow {
         l.number_of_packs = 5.0;
         l.total_before_tax = 10.0;
         l.total_after_tax = 10.0;
-        l.r#type = InvoiceLineRowType::StockOut
+        l.r#type = InvoiceLineType::StockOut
     })
 }
 
@@ -507,7 +507,7 @@ pub fn mock_prescription_a_invoice_line_b() -> InvoiceLineRow {
         l.number_of_packs = 10.0;
         l.total_before_tax = 50.0;
         l.total_after_tax = 50.0;
-        l.r#type = InvoiceLineRowType::StockOut
+        l.r#type = InvoiceLineType::StockOut
     })
 }
 
@@ -520,7 +520,7 @@ pub fn mock_outbound_return_a_invoice_line_a() -> InvoiceLineRow {
         l.item_code = "item_b_code".to_string();
         l.note = Some("return_comment".to_string());
         l.number_of_packs = 4.0;
-        l.r#type = InvoiceLineRowType::StockOut
+        l.r#type = InvoiceLineType::StockOut
     })
 }
 pub fn mock_outbound_return_a_invoice_line_b() -> InvoiceLineRow {
@@ -531,7 +531,7 @@ pub fn mock_outbound_return_a_invoice_line_b() -> InvoiceLineRow {
         l.stock_line_id = Some(mock_stock_line_b().id);
         l.item_code = "item_b_code".to_string();
         l.note = Some("return_comment".to_string());
-        l.r#type = InvoiceLineRowType::StockOut
+        l.r#type = InvoiceLineType::StockOut
     })
 }
 pub fn mock_outbound_return_b_invoice_line_a() -> InvoiceLineRow {
@@ -543,7 +543,7 @@ pub fn mock_outbound_return_b_invoice_line_a() -> InvoiceLineRow {
         l.item_code = "item_a_code".to_string();
         l.note = Some("return_comment".to_string());
         l.number_of_packs = 5.0;
-        l.r#type = InvoiceLineRowType::StockOut
+        l.r#type = InvoiceLineType::StockOut
     })
 }
 
@@ -556,7 +556,7 @@ pub fn mock_inbound_return_a_invoice_line_a() -> InvoiceLineRow {
         l.stock_line_id = Some(mock_stock_line_a().id);
         l.note = Some("return_comment_line_a".to_string());
         l.number_of_packs = 30.0;
-        l.r#type = InvoiceLineRowType::StockIn
+        l.r#type = InvoiceLineType::StockIn
     })
 }
 
@@ -569,7 +569,7 @@ pub fn mock_inbound_return_a_invoice_line_b() -> InvoiceLineRow {
         l.stock_line_id = Some(mock_item_b_lines()[0].id.clone());
         l.note = Some("return_comment_line_b".to_string());
         l.number_of_packs = 1.0;
-        l.r#type = InvoiceLineRowType::StockIn
+        l.r#type = InvoiceLineType::StockIn
     })
 }
 
@@ -582,7 +582,7 @@ pub fn mock_inbound_return_b_invoice_line_a() -> InvoiceLineRow {
         l.note = Some("return_comment_line_a".to_string());
         l.number_of_packs = 5.0;
         l.batch = Some("test_batch".to_string());
-        l.r#type = InvoiceLineRowType::StockIn
+        l.r#type = InvoiceLineType::StockIn
     })
 }
 

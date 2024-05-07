@@ -1,6 +1,6 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
+    ActivityLogType, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
 };
 use repository::{RepositoryError, StockLine};
 
@@ -76,7 +76,7 @@ pub fn add_new_stock_line(
             let verified_datetime = Utc::now().naive_utc();
 
             let verified_invoice = InvoiceRow {
-                status: InvoiceRowStatus::Verified,
+                status: InvoiceStatus::Verified,
                 verified_datetime: Some(verified_datetime),
                 ..invoice
             };
@@ -120,8 +120,8 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType, InvoiceFilter,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, InvoiceRowStatus,
+        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentType, InvoiceFilter,
+        InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, InvoiceStatus,
     };
     use util::inline_edit;
 
@@ -142,7 +142,7 @@ mod test {
                 id: "addition".to_string(),
                 reason: "test addition".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentReasonType::Positive,
+                r#type: InventoryAdjustmentType::Positive,
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
@@ -224,7 +224,7 @@ mod test {
                 id: "addition".to_string(),
                 reason: "test addition".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentReasonType::Positive,
+                r#type: InventoryAdjustmentType::Positive,
             }
         }
         let (_, connection, connection_manager, _) = setup_all_with_data(
@@ -297,7 +297,7 @@ mod test {
         assert_eq!(
             invoice_row,
             inline_edit(&invoice_row, |mut u| {
-                u.status = InvoiceRowStatus::Verified;
+                u.status = InvoiceStatus::Verified;
                 u
             })
         );

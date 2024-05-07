@@ -28,7 +28,7 @@ allow_tables_to_appear_in_same_query!(program_enrolment, program);
 allow_tables_to_appear_in_same_query!(program_enrolment, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[table_name = "program_enrolment"]
+#[diesel(table_name = program_enrolment)]
 pub struct ProgramEnrolmentRow {
     /// The row id
     pub id: String,
@@ -59,7 +59,7 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
         let result = program_enrolment::dsl::program_enrolment
             .filter(program_enrolment::dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -71,7 +71,7 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
             .on_conflict(program_enrolment::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -79,7 +79,7 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
     pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_enrolment::dsl::program_enrolment)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

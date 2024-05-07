@@ -47,8 +47,8 @@ allow_tables_to_appear_in_same_query!(encounter, name_link);
 allow_tables_to_appear_in_same_query!(encounter, name);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "encounter"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = encounter)]
 pub struct EncounterRow {
     pub id: String,
     /// Encounter document type
@@ -82,7 +82,7 @@ impl<'a> EncounterRowRepository<'a> {
             .on_conflict(encounter::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -90,14 +90,14 @@ impl<'a> EncounterRowRepository<'a> {
     pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
         diesel::replace_into(encounter::dsl::encounter)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<EncounterRow>, RepositoryError> {
         let result = encounter::dsl::encounter
             .filter(encounter::dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }

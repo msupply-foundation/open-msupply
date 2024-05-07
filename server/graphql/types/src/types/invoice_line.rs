@@ -8,7 +8,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineRowType, ItemRow};
+use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineType, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -21,23 +21,23 @@ pub enum InvoiceLineNodeType {
     Service,
 }
 impl InvoiceLineNodeType {
-    pub fn from_domain(domain_type: &InvoiceLineRowType) -> Self {
+    pub fn from_domain(domain_type: &InvoiceLineType) -> Self {
         use InvoiceLineNodeType::*;
         match domain_type {
-            InvoiceLineRowType::StockIn => StockIn,
-            InvoiceLineRowType::StockOut => StockOut,
-            InvoiceLineRowType::UnallocatedStock => UnallocatedStock,
-            InvoiceLineRowType::Service => Service,
+            InvoiceLineType::StockIn => StockIn,
+            InvoiceLineType::StockOut => StockOut,
+            InvoiceLineType::UnallocatedStock => UnallocatedStock,
+            InvoiceLineType::Service => Service,
         }
     }
 
-    pub fn to_domain(self) -> InvoiceLineRowType {
+    pub fn to_domain(self) -> InvoiceLineType {
         use InvoiceLineNodeType::*;
         match self {
-            StockIn => InvoiceLineRowType::StockIn,
-            StockOut => InvoiceLineRowType::StockOut,
-            UnallocatedStock => InvoiceLineRowType::UnallocatedStock,
-            Service => InvoiceLineRowType::Service,
+            StockIn => InvoiceLineType::StockIn,
+            StockOut => InvoiceLineType::StockOut,
+            UnallocatedStock => InvoiceLineType::UnallocatedStock,
+            Service => InvoiceLineType::Service,
         }
     }
 }
@@ -228,8 +228,8 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
-        ItemRow, LocationRow,
+        mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineType, InvoiceRow, ItemRow,
+        LocationRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -257,7 +257,7 @@ mod test {
                         invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
                             r.id = "line_id".to_string();
                             r.invoice_id = "line_invoice_id".to_string();
-                            r.r#type = InvoiceLineRowType::Service;
+                            r.r#type = InvoiceLineType::Service;
                             r.item_link_id = "line_item_id".to_string();
                             r.item_name = "line_item_name".to_string();
                             r.item_code = "line_item_code".to_string();
@@ -345,7 +345,7 @@ mod test {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax = Some(10.0);
-                            r.r#type = InvoiceLineRowType::StockIn
+                            r.r#type = InvoiceLineType::StockIn
                         })
                     }),
                 }
@@ -357,7 +357,7 @@ mod test {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax = Some(5.0);
-                            r.r#type = InvoiceLineRowType::StockOut
+                            r.r#type = InvoiceLineType::StockOut
                         })
                     }),
                 }
@@ -369,7 +369,7 @@ mod test {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax = None;
-                            r.r#type = InvoiceLineRowType::Service
+                            r.r#type = InvoiceLineType::Service
                         })
                     }),
                 }

@@ -1,11 +1,11 @@
 use chrono::Utc;
 
 use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, LocationMovementRow,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType, LocationMovementRow,
     Name, RepositoryError,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, StockLineRow,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
     StorageConnection,
 };
 use util::uuid::uuid;
@@ -130,8 +130,8 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
         let invoice_status_index = invoice.status.index();
         let new_invoice_status_index = new_invoice_status.index();
 
-        new_invoice_status_index >= InvoiceRowStatus::Delivered.index()
-            && invoice_status_index < InvoiceRowStatus::Delivered.index()
+        new_invoice_status_index >= InvoiceStatus::Delivered.index()
+            && invoice_status_index < InvoiceStatus::Delivered.index()
     } else {
         false
     }
@@ -145,7 +145,7 @@ fn generate_tax_update_for_lines(
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(invoice_id))
-            .r#type(InvoiceLineRowType::StockIn.equal_to()),
+            .r#type(InvoiceLineType::StockIn.equal_to()),
     )?;
 
     let mut result = Vec::new();
@@ -169,7 +169,7 @@ fn generate_currency_update_for_lines(
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(invoice_id))
-            .r#type(InvoiceLineRowType::StockIn.equal_to()),
+            .r#type(InvoiceLineType::StockIn.equal_to()),
     )?;
 
     let mut result = Vec::new();
@@ -194,7 +194,7 @@ fn empty_lines_to_trim(
     status: &Option<UpdateInboundShipmentStatus>,
 ) -> Result<Option<Vec<InvoiceLineRow>>, RepositoryError> {
     // Status sequence for inbound shipment: New, Picked, Shipped, Delivered, Verified
-    if invoice.status != InvoiceRowStatus::New {
+    if invoice.status != InvoiceStatus::New {
         return Ok(None);
     }
 
@@ -203,7 +203,7 @@ fn empty_lines_to_trim(
         None => return Ok(None),
     };
 
-    if new_invoice_status == InvoiceRowStatus::New {
+    if new_invoice_status == InvoiceStatus::New {
         return Ok(None);
     }
 
@@ -213,7 +213,7 @@ fn empty_lines_to_trim(
     let lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
-            .r#type(InvoiceLineRowType::StockIn.equal_to())
+            .r#type(InvoiceLineType::StockIn.equal_to())
             .number_of_packs(EqualFilter::equal_to_f64(0.0)),
     )?;
 
@@ -231,16 +231,16 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
         let invoice_status_index = invoice.status.clone().index();
         let new_invoice_status_index = new_invoice_status.index();
 
-        let is_status_update = |status: InvoiceRowStatus| {
+        let is_status_update = |status: InvoiceStatus| {
             new_invoice_status_index >= status.index()
                 && invoice_status_index < new_invoice_status_index
         };
 
-        if is_status_update(InvoiceRowStatus::Delivered) {
+        if is_status_update(InvoiceStatus::Delivered) {
             invoice.delivered_datetime = Some(current_datetime);
         }
 
-        if is_status_update(InvoiceRowStatus::Verified) {
+        if is_status_update(InvoiceStatus::Verified) {
             invoice.verified_datetime = Some(current_datetime);
         }
     }

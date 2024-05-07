@@ -1,4 +1,4 @@
-use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError};
 
 use crate::{
     service_provider::ServiceContext,
@@ -20,20 +20,20 @@ pub trait DisplaySettingsServiceTrait: Sync + Send {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         let custom_logo_hash = key_value_store
-            .get_string(KeyValueType::SettingsDisplayCustomLogoHash)?
+            .get_string(KeyType::SettingsDisplayCustomLogoHash)?
             .unwrap_or("".to_string());
         let custom_theme_hash = key_value_store
-            .get_string(KeyValueType::SettingsDisplayCustomThemeHash)?
+            .get_string(KeyType::SettingsDisplayCustomThemeHash)?
             .unwrap_or("".to_string());
 
         let custom_logo = key_value_store
-            .get_string(KeyValueType::SettingsDisplayCustomLogo)?
+            .get_string(KeyType::SettingsDisplayCustomLogo)?
             .map(|value| DisplaySettingNode {
                 value,
                 hash: custom_logo_hash,
             });
         let custom_theme = key_value_store
-            .get_string(KeyValueType::SettingsDisplayCustomTheme)?
+            .get_string(KeyType::SettingsDisplayCustomTheme)?
             .map(|value| DisplaySettingNode {
                 value,
                 hash: custom_theme_hash,
@@ -61,27 +61,23 @@ pub trait DisplaySettingsServiceTrait: Sync + Send {
 
             if let Some(logo) = &settings.custom_logo {
                 key_value_store.set_string(
-                    KeyValueType::SettingsDisplayCustomLogo,
+                    KeyType::SettingsDisplayCustomLogo,
                     settings.custom_logo.clone(),
                 )?;
                 let logo_hash = Some(sha256(logo));
-                key_value_store.set_string(
-                    KeyValueType::SettingsDisplayCustomLogoHash,
-                    logo_hash.clone(),
-                )?;
+                key_value_store
+                    .set_string(KeyType::SettingsDisplayCustomLogoHash, logo_hash.clone())?;
                 update_result.logo = logo_hash;
             }
 
             if let Some(theme) = &settings.custom_theme {
                 key_value_store.set_string(
-                    KeyValueType::SettingsDisplayCustomTheme,
+                    KeyType::SettingsDisplayCustomTheme,
                     settings.custom_theme.clone(),
                 )?;
                 let theme_hash = Some(sha256(theme));
-                key_value_store.set_string(
-                    KeyValueType::SettingsDisplayCustomThemeHash,
-                    theme_hash.clone(),
-                )?;
+                key_value_store
+                    .set_string(KeyType::SettingsDisplayCustomThemeHash, theme_hash.clone())?;
                 update_result.theme = theme_hash;
             }
 
