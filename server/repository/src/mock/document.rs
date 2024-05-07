@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 
 use crate::{Document, DocumentStatus};
 
@@ -11,7 +11,7 @@ pub fn document_a() -> Document {
         parent_ids: vec![],
         user_id: String::from("user_account_a"),
         datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-            NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
+            DateTime::from_timestamp(6000, 0).unwrap().naive_utc(),
             Utc,
         ),
         r#type: String::from("testing_document"),
