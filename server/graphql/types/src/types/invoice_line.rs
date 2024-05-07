@@ -345,7 +345,7 @@ mod test {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax_percentage = Some(10.0);
-                            r.r#type = InvoiceLineRowType::StockIn
+                            r.r#type = InvoiceLineType::StockIn
                         })
                     }),
                 }
@@ -357,7 +357,7 @@ mod test {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax_percentage = Some(5.0);
-                            r.r#type = InvoiceLineRowType::StockOut
+                            r.r#type = InvoiceLineType::StockOut
                         })
                     }),
                 }
@@ -369,7 +369,7 @@ mod test {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
                             r.tax_percentage = None;
-                            r.r#type = InvoiceLineRowType::Service
+                            r.r#type = InvoiceLineType::Service
                         })
                     }),
                 }

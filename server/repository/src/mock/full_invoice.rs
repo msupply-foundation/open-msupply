@@ -44,7 +44,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.total_before_tax = 278.26;
                     r.total_after_tax = 320.0;
                     r.tax_percentage = Some(15.0);
-                    r.r#type = InvoiceLineRowType::StockOut;
+                    r.r#type = InvoiceLineType::StockOut;
                     r.number_of_packs = 10.0;
                 }),
                 stock_line: inline_init(|r: &mut StockLineRow| {
