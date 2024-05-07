@@ -48,10 +48,11 @@ export const useDeleteSelectedLines = (): (() => void) => {
       if (line.response.__typename !== 'DeleteResponse') {
         switch (line.response.error.__typename) {
           case 'BatchIsReserved':
+            const row = selectedRows.find(it => it.id === line.id);
             throw Error(
               t('label.inbound-shipment-cant-delete-reserved-line', {
-                itemCode:
-                  selectedRows.find(it => it.id === line.id)?.item.code ?? '?',
+                batch: row?.batch ?? '',
+                itemCode: row?.item.code ?? '?',
               })
             );
             break;
