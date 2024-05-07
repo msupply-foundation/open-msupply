@@ -199,7 +199,16 @@ export const BatchTable: FC<
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
         'StockLineReducedBelowZero',
-      Cell: props => <NumberInputCell {...props} decimalLimit={2} min={0} />,
+      Cell: props => (
+        <NumberInputCell
+          {...props}
+          decimalLimit={2}
+          min={0}
+          // "Formatting" changes null/undefined (uncounted) value to 0
+          // but we want uncounted to render an empty input cell
+          noFormatting={typeof props.rowData.countedNumberOfPacks !== 'number'}
+        />
+      ),
       setter: patch => {
         // If counted number of packs was changed to result in no adjustment we
         // should remove inventoryAdjustmentReason, otherwise could have a
