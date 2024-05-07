@@ -24,7 +24,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
   const visible = store?.preferences.vaccineModule ?? false;
 
   return (
-    <AppNavSection isActive={visible} to={AppRoute.Coldchain}>
+    <AppNavSection isActive={isActive} to={AppRoute.Coldchain}>
       <AppNavLink
         visible={visible}
         end={false}
