@@ -14,6 +14,7 @@ import {
 import {
   BasicSpinner,
   Column,
+  useLocalStorage,
   useRegisterActions,
 } from '@openmsupply-client/common';
 
@@ -108,6 +109,34 @@ const RenderRows = <T extends RecordWithId>({
   );
 };
 
+const useHiddenColumnStorage = (tableId: string) => {
+  const [hiddenColsData, setHiddenColsData] =
+    useLocalStorage('/columns/hidden');
+
+  const hiddenColumns = hiddenColsData?.[tableId] ?? [];
+
+  const getStoredDisplayColumnKeys = <T extends RecordWithId>(
+    columns: Column<T>[]
+  ) =>
+    columns
+      .filter(col => !hiddenColumns.includes(String(col.key)))
+      .map(col => String(col.key));
+
+  const setStoredHiddenColumns = <T extends RecordWithId>(
+    columns: Column<T>[]
+  ) =>
+    setHiddenColsData({
+      ...hiddenColsData,
+      [tableId]: columns.map(col => col.key as string),
+    });
+
+  return {
+    hiddenColumns,
+    getStoredDisplayColumnKeys,
+    setStoredHiddenColumns,
+  };
+};
+
 const DataTableComponent = <T extends RecordWithId>({
   id,
   ExpandContent,
@@ -131,11 +160,22 @@ const DataTableComponent = <T extends RecordWithId>({
   const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
-  const [displayColumns, setDisplayColumns] = useState(columns);
+  const { getStoredDisplayColumnKeys, setStoredHiddenColumns } =
+    useHiddenColumnStorage(id);
+  const [displayColumnKeys, setDisplayColumnKeys] = useState(
+    getStoredDisplayColumnKeys(columns)
+  );
+  // const columnHash = useRef(
+  //   columns
+  //     .map(col => col.key)
+  //     .sort()
+  //     .join('')
+  // );
+
+  // console.log('columnHash', columnHash);
   const columnsToDisplay = React.useMemo(
-    () =>
-      columns.filter(c => displayColumns.map(({ key }) => key).includes(c.key)),
-    [displayColumns, columns]
+    () => columns.filter(c => displayColumnKeys.includes(String(c.key))),
+    [displayColumnKeys, columns]
   );
 
   useRegisterActions([
@@ -182,9 +222,24 @@ const DataTableComponent = <T extends RecordWithId>({
 
   // if the columns array changes, such as when a plugin column is added
   // reset the display columns to the full set
-  useEffect(() => {
-    setDisplayColumns(columns);
-  }, [columns]);
+  // useEffect(() => {
+  //   const newColumnsHash = columns
+  //     .map(col => col.key)
+  //     .sort()
+  //     .join('');
+  //   console.log('NEW', newColumnsHash);
+  //   console.log('OLD', columnHash.current);
+  //   if (newColumnsHash !== columnHash.current)
+  //     handleColumnDisplayChange(columns.map(col => String(col.key)));
+  //   columnHash.current = newColumnsHash;
+  // }, [columns]);
+
+  const handleColumnDisplayChange = (colKeys: string[]) => {
+    setStoredHiddenColumns(
+      columns.filter(col => !colKeys.includes(String(col.key)))
+    );
+    setDisplayColumnKeys(colKeys);
+  };
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -252,8 +307,8 @@ const DataTableComponent = <T extends RecordWithId>({
               >
                 <ColumnPicker
                   columns={columns}
-                  onChange={setDisplayColumns}
-                  tableKey={id}
+                  displayColumnKeys={displayColumnKeys}
+                  onChange={handleColumnDisplayChange}
                 />
               </TableCell>
             )}
