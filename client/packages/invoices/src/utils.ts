@@ -10,6 +10,7 @@ import {
   ArrayUtils,
   Formatter,
   TypedTFunction,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
@@ -178,11 +179,21 @@ export const isOutboundDisabled = (
 
 export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   const isManuallyCreated = !inbound.linkedShipment?.id;
-  return isManuallyCreated
-    ? inbound.status === InvoiceNodeStatus.Verified
-    : inbound.status === InvoiceNodeStatus.Picked ||
-        inbound.status === InvoiceNodeStatus.Shipped ||
-        inbound.status === InvoiceNodeStatus.Verified;
+  if (isManuallyCreated) {
+    return inbound.status === InvoiceNodeStatus.Verified;
+  }
+  switch (inbound.status) {
+    case InvoiceNodeStatus.New:
+    case InvoiceNodeStatus.Allocated:
+    case InvoiceNodeStatus.Picked:
+    case InvoiceNodeStatus.Shipped:
+      return false;
+    case InvoiceNodeStatus.Delivered:
+    case InvoiceNodeStatus.Verified:
+      return true;
+    default:
+      return noOtherVariants(inbound.status);
+  }
 };
 
 export const isInboundReturnDisabled = (
