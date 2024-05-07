@@ -106,6 +106,10 @@ const AssetListComponent: FC = () => {
       sortable: false,
     },
     {
+      key: 'installationDate',
+      label: 'label.installation-date',
+    },
+    {
       key: 'notes',
       label: 'label.notes',
       sortable: false,
