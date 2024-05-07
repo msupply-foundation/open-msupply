@@ -42,7 +42,8 @@ export const DateTimePickerInput: FC<
   const t = useTranslation();
   const { getLocale } = useIntlUtils();
   const dateParseOptions = { locale: getLocale() };
-  const format = props.format ?? showTime ? 'P p' : 'P';
+  const format =
+    props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
 
   // Max/Min should be restricted by the UI, but it's not restricting TIME input
   // (only Date component). So this function will enforce the max/min after

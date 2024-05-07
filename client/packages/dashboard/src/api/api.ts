@@ -13,8 +13,8 @@ export const getDashboardQueries = (
         daysTillExpired: 30,
       });
       return {
-        expired: result?.stockCounts.expired ?? 0,
-        expiringSoon: result?.stockCounts.expiringSoon ?? 0,
+        expired: result?.stockCounts?.expired ?? 0,
+        expiringSoon: result?.stockCounts?.expiringSoon ?? 0,
       };
     },
     itemCounts: async (lowStockThreshold: number) => {
