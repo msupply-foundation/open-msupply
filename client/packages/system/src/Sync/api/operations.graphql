@@ -106,23 +106,3 @@ query syncStatus {
 mutation manualSync {
   manualSync
 }
-
-fragment UpdateUser on UpdateUserNode {
-  lastSuccessfulSync
-}
-
-mutation updateUser {
-  updateUser {
-    __typename
-    ... on UpdateUserNode {
-      ...UpdateUser
-    }
-  }
-}
-
-query lastSuccessfulUserSync {
-  lastSuccessfulUserSync {
-    __typename
-    ...UpdateUser
-  }
-}

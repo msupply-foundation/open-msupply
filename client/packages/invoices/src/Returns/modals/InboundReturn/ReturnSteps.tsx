@@ -68,7 +68,12 @@ export const ReturnSteps = ({
   return (
     <TabContext value={currentTab}>
       <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-      {addDraftLine && <AddBatchButton addDraftLine={addDraftLine} />}
+      {addDraftLine && (
+        <AddBatchButton
+          addDraftLine={addDraftLine}
+          disabled={currentTab !== Tabs.Quantity}
+        />
+      )}
       <TabPanel value={Tabs.Quantity}>
         {zeroQuantityAlert && (
           <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
