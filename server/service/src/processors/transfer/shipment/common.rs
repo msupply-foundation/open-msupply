@@ -39,7 +39,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                  r#type,
                  total_after_tax: _,
                  total_before_tax: _,
-                 tax,
+                 tax_percentage,
                  inventory_adjustment_reason_id: _,
                  return_reason_id,
                  foreign_currency_price_before_tax,
@@ -58,7 +58,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                     // TODO clarify this
                     total_before_tax: cost_price_per_pack * number_of_packs,
                     total_after_tax: (cost_price_per_pack * number_of_packs)
-                        * (1.0 + tax.unwrap_or(0.0) / 100.0),
+                        * (1.0 + tax_percentage.unwrap_or(0.0) / 100.0),
                     cost_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineRowType::Service => InvoiceLineRowType::Service,
@@ -66,7 +66,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                     },
                     number_of_packs,
                     note,
-                    tax,
+                    tax_percentage,
                     foreign_currency_price_before_tax,
                     return_reason_id,
                     // Default

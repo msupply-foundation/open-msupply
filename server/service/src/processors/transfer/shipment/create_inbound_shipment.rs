@@ -221,7 +221,7 @@ fn generate_inbound_shipment(
         shipped_datetime: outbound_shipment_row.shipped_datetime,
         transport_reference: outbound_shipment_row.transport_reference.clone(),
         comment: Some(formatted_comment),
-        tax: outbound_shipment_row.tax,
+        tax_percentage: outbound_shipment_row.tax_percentage,
         currency_id: outbound_shipment_row.currency_id.clone(),
         currency_rate: outbound_shipment_row.currency_rate,
         original_shipment_id,

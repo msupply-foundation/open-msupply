@@ -156,7 +156,7 @@ fn generate_new_line(
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         total_before_tax: None,
-        tax: None,
+        tax_percentage: None,
         note: None,
     }
 }

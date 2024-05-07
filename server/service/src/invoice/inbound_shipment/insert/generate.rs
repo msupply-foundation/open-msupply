@@ -46,7 +46,7 @@ pub fn generate(
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
-        tax: None,
+        tax_percentage: None,
         transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
