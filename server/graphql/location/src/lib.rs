@@ -37,11 +37,12 @@ impl LocationQueries {
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
-        // always filter by store_id
-        let filter = filter
-            .map(LocationFilter::from)
-            .unwrap_or_default()
-            .store_id(EqualFilter::equal_to(&store_id));
+        // always filter by store_id if a store_id filter isn't provided
+        let mut filter = filter.map(LocationFilter::from).unwrap_or_default();
+
+        if filter.store_id.is_none() {
+            filter = filter.store_id(EqualFilter::equal_to(&store_id));
+        }
 
         let locations = service_provider
             .location_service
