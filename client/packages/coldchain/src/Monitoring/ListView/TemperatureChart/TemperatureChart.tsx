@@ -7,12 +7,12 @@ import {
   CartesianGrid,
   ChartTooltip,
   ComposedChart,
+  Dot,
   FilterByWithBoolean,
   Legend,
   Line,
   NothingHere,
   ResponsiveContainer,
-  TooltipProps,
   Typography,
   XAxis,
   YAxis,
@@ -20,7 +20,6 @@ import {
   useUrlQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { Entry, TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopover } from './BreachPopover';
 import { BreachDot, DotProps, ChartSeries } from './types';
 import { BreachIndicator } from './BreachIndicator';
@@ -28,15 +27,13 @@ import { Toolbar } from '../TemperatureLog/Toolbar';
 import { useFormatTemperature } from '../../../common';
 import { TemperatureLogFragment } from '../../api';
 import { useTemperatureLogs } from '../../api/TemperatureLog/hooks/document/useTemperatureLogs';
-
-import { scaleTime } from 'd3-scale';
-import { Dot, XAxisProps } from 'recharts';
+import { TemperatureTooltip } from './TemperatureTooltip';
 
 const NUMBER_OF_HORIZONTAL_LINES = 4;
 const BREACH_MIN = 2;
 const BREACH_MAX = 8;
 const BREACH_RANGE = 2;
-const MAX_DATA_POINTS = 8640; // 30days for 1 sensor at a 5 minute interval
+const MAX_DATA_POINTS = 8640; // 30 days for 1 sensor at a 5 minute interval
 
 const transformData = (
   temperatureLogs: TemperatureLogFragment[],
@@ -46,10 +43,9 @@ const transformData = (
 
   const isBreach: Record<string, boolean> = {};
 
-  for (let i = 0; i < temperatureLogs.length; i++) {
-    const log = temperatureLogs[i];
+  temperatureLogs.forEach(log => {
     if (!log?.sensor) {
-      continue;
+      return;
     }
     const sensorId = log.sensor.id;
     const sensorName = log.sensor.name;
@@ -86,7 +82,7 @@ const transformData = (
         breachId,
       });
     }
-  }
+  });
 
   return sensorData;
 };
@@ -180,7 +176,7 @@ const Chart = ({
       const to = customDate(new Date(), 'yyyy-MM-dd HH:mm');
       updateQuery({ datetime: { from, to } });
     }
-  }, []);
+  }, [customDate, updateQuery, urlQuery]);
 
   // shows a breach icon if there is a breach
   // and nothing otherwise
@@ -216,57 +212,9 @@ const Chart = ({
     return <NothingHere body={t('error.no-temperature-logs')} />;
   }
 
-  const TemperatureTooltip = ({
-    active,
-    payload,
-    label,
-  }: TooltipProps<number, string>) => {
-    if (!active || !payload) {
-      return null;
-    }
-    // Payload looks something like this
-    /*
-    [
-    {
-        "name": "Sensor 1",
-        "strokeDasharray": "7 2",
-        "fill": "#922DD0",
-        "stroke": "#922DD0",
-        "strokeWidth": 1,
-        "dataKey": "temperature",
-        "color": "#922DD0",
-        "value": 23.5,
-        "payload": {
-            "datetime": "2024-02-08T04:10:12.000Z",
-            "temperature": 23.5
-        }
-    }
-    ]
-    */
-
-    const entries: Entry[] = payload?.map(entry => {
-      return {
-        name: entry.name ?? '',
-        value: formatTemperature(entry.value),
-        id: entry.name ?? '' + entry.value,
-        color: entry.color,
-      };
-    });
-
-    return <TemperatureTooltipLayout entries={entries} label={label} />;
-  };
-
   const series = transformData(data, theme.palette.chart.lines);
   const breachConfig = generateBreachConfig(startTime, endTime);
-
   const { ticks, yAxisDomain } = yAxisTicks(data, BREACH_MIN, BREACH_MAX);
-  const timeScale = scaleTime().domain([startTime, endTime]);
-  const xAxisArgs: XAxisProps = {
-    domain: timeScale.domain().map(date => date.valueOf()),
-    scale: timeScale,
-    type: 'number',
-    ticks: timeScale.ticks(9).map(date => date.valueOf()),
-  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomisedTick = ({ x, y, payload }: any) => {
@@ -299,7 +247,9 @@ const Chart = ({
     );
   };
 
-  return (
+  return !series.length ? (
+    <NothingHere body={t('error.no-temperature-logs')} />
+  ) : (
     <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
       <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
         {t('heading.chart')}
@@ -314,11 +264,11 @@ const Chart = ({
           <CartesianGrid vertical={false} />
           <XAxis
             dataKey="datetime"
-            tickFormatter={(date: string) => {
-              return dateFormatter(new Date(date));
-            }}
+            tickFormatter={(date: string) => dateFormatter(new Date(date))}
             tick={{ fontSize: 12 }}
-            {...xAxisArgs}
+            type="number"
+            tickCount={9}
+            domain={[startTime.valueOf(), endTime.valueOf()]}
             allowDuplicatedCategory={false}
           />
           <YAxis ticks={ticks} tick={<CustomisedTick />} domain={yAxisDomain} />
@@ -354,19 +304,10 @@ const Chart = ({
               dot={({ key, ...rest }) => (
                 <TemperatureLineDot {...rest} key={`${sensor.id}_${key}`} />
               )}
-              activeDot={({
-                cx,
-                cy,
-                stroke,
-                payload,
-                fill,
-                r,
-                strokeWidth,
-              }) => {
-                if (payload?.breachId) {
-                  return <></>;
-                }
-                return (
+              activeDot={({ cx, cy, stroke, payload, fill, r, strokeWidth }) =>
+                payload?.breachId ? (
+                  <></>
+                ) : (
                   <Dot
                     cx={cx}
                     cy={cy}
@@ -375,8 +316,8 @@ const Chart = ({
                     fill={fill}
                     strokeWidth={strokeWidth}
                   ></Dot>
-                );
-              }}
+                )
+              }
               isAnimationActive={false}
             />
           ))}
