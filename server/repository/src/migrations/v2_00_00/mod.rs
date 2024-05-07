@@ -9,6 +9,7 @@ mod central_omsupply;
 mod currency_add_is_active;
 mod inventory_adjustment_logtype;
 mod inventory_adjustment_permissions;
+mod invoice_rename_tax;
 mod linked_shipment;
 mod name_created_datetime;
 mod pack_variant;
@@ -45,6 +46,7 @@ impl Migration for V2_00_00 {
         requisition_line_add_item_name::migrate(connection)?;
         stock_on_hand_add_item_name::migrate(connection)?;
         currency_add_is_active::migrate(connection)?;
+        invoice_rename_tax::migrate(connection)?;
         stocktake_line_add_item_name::migrate(connection)?;
         name_created_datetime::migrate(connection)?;
         Ok(())

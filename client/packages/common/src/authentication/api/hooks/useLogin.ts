@@ -41,7 +41,7 @@ const skipNoStoreRequests = (documentNode?: DocumentNode) => {
 };
 
 // mostly this is as a migration fix - previous format is a single object, not an array
-const getMostRecentCredentials = (
+export const getMostRecentCredentials = (
   mostRecentlyUsedCredentials:
     | AuthenticationCredentials
     | AuthenticationCredentials[]
@@ -56,6 +56,27 @@ const getMostRecentCredentials = (
     return [mostRecentlyUsedCredentials];
 
   return [];
+};
+
+// returns MRU store, if set
+// or the first store in the list
+export const getStore = async (
+  userDetails?: Partial<UserNode>,
+  mostRecentCredentials?: AuthenticationCredentials[]
+) => {
+  const defaultStore = userDetails?.defaultStore;
+  const stores = userDetails?.stores?.nodes;
+  const mru = mostRecentCredentials?.find(
+    item => item.username.toLowerCase() === userDetails?.username?.toLowerCase()
+  );
+
+  if (mru?.store && stores?.some(store => store.id === mru?.store?.id)) {
+    return stores.find(store => store.id === mru.store?.id) ?? mru.store;
+  }
+
+  if (!!defaultStore) return defaultStore;
+
+  return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
 };
 
 export const useLogin = (
@@ -88,25 +109,6 @@ export const useLogin = (
     setMRUCredentials(newMRU);
   };
 
-  // returns MRU store, if set
-  // or the first store in the list
-  const getStore = async (userDetails?: Partial<UserNode>) => {
-    const defaultStore = userDetails?.defaultStore;
-    const stores = userDetails?.stores?.nodes;
-    const mru = mostRecentCredentials?.find(
-      item =>
-        item.username.toLowerCase() === userDetails?.username?.toLowerCase()
-    );
-
-    if (mru?.store && stores?.some(store => store.id === mru?.store?.id)) {
-      return stores.find(store => store.id === mru.store?.id) ?? mru.store;
-    }
-
-    if (!!defaultStore) return defaultStore;
-
-    return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
-  };
-
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
     if (LocalStorage.getItem('/error/auth') === AuthError.ServerError) return;
 
@@ -131,7 +133,7 @@ export const useLogin = (
     setHeader('Authorization', `Bearer ${token}`);
     const userDetails = await getUserDetails(token);
     queryClient.setQueryData(api.keys.me(token), userDetails);
-    const store = await getStore(userDetails);
+    const store = await getStore(userDetails, mostRecentCredentials);
     const permissions = await getUserPermissions(token, store);
     setSkipRequest(skipNoStoreRequests);
 

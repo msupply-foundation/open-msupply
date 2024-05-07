@@ -107,7 +107,7 @@ fn generate_line(
         id: _,
         item_id: _,
         total_before_tax,
-        tax,
+        tax_percentage,
         r#type: _,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
@@ -127,7 +127,9 @@ fn generate_line(
     update_line.cost_price_per_pack =
         cost_price_per_pack.unwrap_or(update_line.cost_price_per_pack);
     update_line.number_of_packs = number_of_packs.unwrap_or(update_line.number_of_packs);
-    update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
+    update_line.tax_percentage = tax_percentage
+        .map(|tax| tax.percentage)
+        .unwrap_or(update_line.tax_percentage);
     update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
         update_line.total_before_tax,
@@ -150,7 +152,7 @@ fn generate_line(
     };
 
     update_line.total_after_tax =
-        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax_percentage);
 
     Ok(update_line)
 }

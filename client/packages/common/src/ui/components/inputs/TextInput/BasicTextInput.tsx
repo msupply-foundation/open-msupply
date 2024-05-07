@@ -79,7 +79,9 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
             },
           }}
           inputProps={
-            props.disabled ? { style: { textOverflow: 'ellipsis' } } : {}
+            props.disabled
+              ? { style: { textOverflow: 'ellipsis' } }
+              : { inputMode: props.inputMode }
           }
           {...props}
         />

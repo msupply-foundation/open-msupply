@@ -44,7 +44,7 @@ pub fn generate(
             stock_line_id: line.stock_line_id,
             note: line.note,
             r#type: Some(StockOutType::OutboundReturn),
-            tax: None,
+            tax_percentage: None,
             total_before_tax: None,
         })
         .collect();

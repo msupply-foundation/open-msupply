@@ -4,7 +4,7 @@ use repository::{RepositoryError, UserAccountRow, UserAccountRowRepository};
 
 use crate::{
     auth_data::AuthData,
-    login::{FetchUserError, LoginError, LoginFailure, LoginInput, LoginService},
+    login::{FetchUserError, LoginError, LoginFailure, LoginInput, LoginService, UpdateUserError},
     service_provider::ServiceProvider,
 };
 
@@ -34,6 +34,11 @@ impl SyncUser {
             )))?
             .username;
         let password = get_password(&auth_data, &user_id);
+        if password.is_empty() {
+            return Err(LoginError::UpdateUserError(
+                UpdateUserError::MissingCredentials,
+            ));
+        }
 
         match LoginService::fetch_user_from_central(&LoginInput {
             username,
