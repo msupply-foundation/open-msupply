@@ -13,7 +13,6 @@ import {
   Line,
   NothingHere,
   ResponsiveContainer,
-  TooltipProps,
   Typography,
   XAxis,
   YAxis,
@@ -21,7 +20,6 @@ import {
   useUrlQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { Entry, TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopover } from './BreachPopover';
 import { BreachDot, DotProps, ChartSeries } from './types';
 import { BreachIndicator } from './BreachIndicator';
@@ -29,6 +27,7 @@ import { Toolbar } from '../TemperatureLog/Toolbar';
 import { useFormatTemperature } from '../../../common';
 import { TemperatureLogFragment } from '../../api';
 import { useTemperatureLogs } from '../../api/TemperatureLog/hooks/document/useTemperatureLogs';
+import { TemperatureTooltip } from './TemperatureTooltip';
 
 const NUMBER_OF_HORIZONTAL_LINES = 4;
 const BREACH_MIN = 2;
@@ -207,46 +206,6 @@ const Chart = ({
   if (!data) {
     return <NothingHere body={t('error.no-temperature-logs')} />;
   }
-
-  const TemperatureTooltip = ({
-    active,
-    payload,
-    label,
-  }: TooltipProps<number, string>) => {
-    if (!active || !payload) {
-      return null;
-    }
-    // Payload looks something like this
-    /*
-    [
-    {
-        "name": "Sensor 1",
-        "strokeDasharray": "7 2",
-        "fill": "#922DD0",
-        "stroke": "#922DD0",
-        "strokeWidth": 1,
-        "dataKey": "temperature",
-        "color": "#922DD0",
-        "value": 23.5,
-        "payload": {
-            "datetime": "2024-02-08T04:10:12.000Z",
-            "temperature": 23.5
-        }
-    }
-    ]
-    */
-
-    const entries: Entry[] = payload?.map(entry => {
-      return {
-        name: entry.name ?? '',
-        value: formatTemperature(entry.value),
-        id: entry.name ?? '' + entry.value,
-        color: entry.color,
-      };
-    });
-
-    return <TemperatureTooltipLayout entries={entries} label={label} />;
-  };
 
   const series = transformData(data, theme.palette.chart.lines);
   const breachConfig = generateBreachConfig(startTime, endTime);
