@@ -84,7 +84,7 @@ pub struct InvoiceLineRow {
     pub total_after_tax: f64,
     /// Optional column to store line a line specific tax value
     pub tax_percentage: Option<f64>,
-    #[column_name = "type_"]
+    #[diesel(column_name = "type_")]
     pub r#type: InvoiceLineType,
     pub number_of_packs: f64,
     pub note: Option<String>,
