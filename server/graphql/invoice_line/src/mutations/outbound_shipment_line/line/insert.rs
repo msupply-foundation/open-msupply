@@ -24,7 +24,7 @@ pub struct InsertInput {
     pub stock_line_id: String,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
-    pub tax: Option<f64>,
+    pub tax_percentage: Option<f64>,
 }
 
 #[derive(SimpleObject)]
@@ -91,7 +91,7 @@ impl InsertInput {
             stock_line_id,
             number_of_packs,
             total_before_tax,
-            tax,
+            tax_percentage,
         } = self;
 
         ServiceInput {
@@ -101,7 +101,7 @@ impl InsertInput {
             stock_line_id,
             number_of_packs,
             total_before_tax,
-            tax,
+            tax_percentage,
             note: None,
         }
     }
@@ -532,7 +532,7 @@ mod test {
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
                     r#type: Some(StockOutType::OutboundShipment),
-                    tax: Some(5.0),
+                    tax_percentage: Some(5.0),
                     note: None,
                 }
             );
@@ -552,7 +552,7 @@ mod test {
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
-                "tax": 5.0
+                "taxPercentage": 5.0
             },
             "storeId": "store_a"
         });
