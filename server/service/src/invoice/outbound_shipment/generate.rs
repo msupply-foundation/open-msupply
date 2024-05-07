@@ -30,7 +30,7 @@ pub fn generate_unallocated_invoice_lines(
                     total_before_tax: 0.0,
                     total_after_tax: 0.0,
                     tax_percentage: None,
-                    r#type: InvoiceLineRowType::UnallocatedStock,
+                    r#type: InvoiceLineType::UnallocatedStock,
                     number_of_packs: 0.0,
                     note: None,
                     inventory_adjustment_reason_id: None,

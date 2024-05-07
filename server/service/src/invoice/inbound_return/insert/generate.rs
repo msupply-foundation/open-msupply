@@ -108,7 +108,6 @@ pub fn generate(
                 sell_price_per_pack: 0.0,
                 total_before_tax: None,
                 tax_percentage: None,
-                r#type: StockInType::InboundReturn,
                 stock_line_id: None,
                 barcode: None,
                 stock_on_hold: false,

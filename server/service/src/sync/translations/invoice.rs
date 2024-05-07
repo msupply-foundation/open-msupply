@@ -410,7 +410,7 @@ impl SyncTranslation for InvoiceTranslation {
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
             tax_percentage,
-            mode: if r#type == InvoiceRowType::Prescription {
+            mode: if r#type == InvoiceType::Prescription {
                 TransactMode::Dispensary
             } else {
                 TransactMode::Store

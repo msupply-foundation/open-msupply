@@ -538,7 +538,7 @@ mod test {
                 r.total_after_tax = 110.0;
                 r.total_before_tax = 100.0;
                 r.tax_percentage = Some(10.0);
-                r.r#type = InvoiceLineRowType::Service;
+                r.r#type = InvoiceLineType::Service;
             })
         }
         fn line2() -> InvoiceLineRow {
@@ -549,7 +549,7 @@ mod test {
                 r.total_after_tax = 50.0;
                 r.total_before_tax = 50.0;
                 r.tax_percentage = None;
-                r.r#type = InvoiceLineRowType::StockIn;
+                r.r#type = InvoiceLineType::StockIn;
             })
         }
         fn line3() -> InvoiceLineRow {
@@ -560,7 +560,7 @@ mod test {
                 r.total_after_tax = 105.0;
                 r.total_before_tax = 100.0;
                 r.tax_percentage = Some(5.0);
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
             })
         }
 
