@@ -8,7 +8,7 @@ use crate::{
     SingleRecordError,
 };
 
-pub const MAX_LIMIT: u32 = 1000;
+pub const MAX_LIMIT: u32 = 8640;
 pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_temperature_logs(

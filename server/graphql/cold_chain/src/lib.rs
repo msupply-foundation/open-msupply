@@ -1,9 +1,7 @@
 pub mod mutations;
-pub(crate) mod temperature_chart;
 pub(crate) mod types;
 
 use async_graphql::*;
-use chrono::{DateTime, Utc};
 use graphql_core::{
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -16,7 +14,6 @@ use repository::{
 };
 use repository::{temperature_log::TemperatureLogFilter, TemperatureBreachSort};
 use service::auth::{Resource, ResourceAccessRequest};
-use temperature_chart::TemperatureChartResponse;
 use types::{
     sensor::{SensorConnector, SensorFilterInput, SensorsResponse},
     temperature_breach::{
@@ -217,25 +214,6 @@ impl ColdChainQueries {
         Ok(SensorsResponse::Response(SensorConnector::from_domain(
             sensors,
         )))
-    }
-
-    pub async fn temperature_chart(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Must be before toDatetime")] from_datetime: DateTime<Utc>,
-        #[graphql(desc = "Must be after fromDatetime")] to_datetime: DateTime<Utc>,
-        #[graphql(desc = "Minimum 3 and maximum 100")] number_of_data_points: i32,
-        filter: Option<TemperatureLogFilterInput>,
-    ) -> Result<TemperatureChartResponse> {
-        temperature_chart::temperature_chart(
-            ctx,
-            store_id,
-            from_datetime,
-            to_datetime,
-            number_of_data_points,
-            filter,
-        )
     }
 }
 
