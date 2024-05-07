@@ -1,5 +1,12 @@
 import { useTheme } from '@common/styles';
-import { Box, Typography, useFormatDateTime } from '@openmsupply-client/common';
+import {
+  Box,
+  TooltipProps,
+  Typography,
+  useFormatDateTime,
+} from '@openmsupply-client/common';
+import { useFormatTemperature } from '../../../common';
+
 import React from 'react';
 
 export type Entry = {
@@ -9,18 +16,49 @@ export type Entry = {
   value: string;
 };
 
-interface TemperatureTooltipLayoutProps {
-  entries: Entry[];
-  label: string;
-}
-
-export const TemperatureTooltipLayout = ({
-  entries,
+// Payload looks something like this
+/*
+  [
+  {
+      "name": "Sensor 1",
+      "strokeDasharray": "7 2",
+      "fill": "#922DD0",
+      "stroke": "#922DD0",
+      "strokeWidth": 1,
+      "dataKey": "temperature",
+      "color": "#922DD0",
+      "value": 23.5,
+      "payload": {
+          "datetime": "2024-02-08T04:10:12.000Z",
+          "temperature": 23.5
+      }
+  }
+  ]
+  */
+export const TemperatureTooltip = ({
+  active,
+  payload,
   label,
-}: TemperatureTooltipLayoutProps) => {
+}: TooltipProps<number, string>) => {
   const theme = useTheme();
   const { dayMonthTime } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
+  const formatTemp = useFormatTemperature();
+
+  if (!active || !payload) {
+    return null;
+  }
+
+  const formatTemperature = (value: number | null | undefined) =>
+    !!value ? `${formatTemp(value)}` : '-';
+  const entries: Entry[] = payload?.map(entry => {
+    return {
+      name: entry.name ?? '',
+      value: formatTemperature(entry.value),
+      id: entry.name ?? '' + entry.value,
+      color: entry.color,
+    };
+  });
 
   return (
     <Box
