@@ -56,9 +56,14 @@ const transformData = (
     const sensorIndex = sensorData.findIndex(sensor => sensor.id === sensorId);
 
     let breachId = undefined;
-    if (log.temperatureBreach && !isBreach[log.sensor.id]) {
-      breachId = log.temperatureBreach.id;
-      isBreach[log.sensor.id] = true;
+    if (log.temperatureBreach) {
+      if (!isBreach[log.sensor.id]) {
+        // only add the breach on the first point for the breach
+        breachId = log.temperatureBreach.id;
+        isBreach[log.sensor.id] = true;
+      }
+    } else {
+      isBreach[log.sensor.id] = false;
     }
 
     if (sensorIndex === -1) {
