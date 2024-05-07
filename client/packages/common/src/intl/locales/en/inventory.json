@@ -54,6 +54,7 @@
   "label.new-num-packs": "New number of packs",
   "label.packs-available": "Packs available",
   "label.packs-to-repack": "Number of packs to repack",
+  "label.uncounted": "[uncounted]",
   "message.no-supplier": "Inventory Adjustment",
   "messages.changed-location_one": "Location changed for 1 line",
   "messages.changed-location_other": "Location changed for {{ count }} lines",
