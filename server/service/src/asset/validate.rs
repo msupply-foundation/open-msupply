@@ -8,8 +8,11 @@ use repository::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
+    location::{LocationFilter, LocationRepository},
     EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
+
+use super::update::UpdateAssetError;
 
 pub fn check_asset_exists(
     id: &str,
@@ -65,6 +68,22 @@ pub fn check_locations_are_assigned(
             .location_id(EqualFilter::equal_any(location_ids))
             .asset_id(EqualFilter::not_equal_to(asset_id)),
     )
+}
+
+pub fn check_locations_belong_to_store(
+    location_ids: Vec<String>,
+    store_id: &str,
+    connection: &StorageConnection,
+) -> Result<(), UpdateAssetError> {
+    let locations = LocationRepository::new(connection).query_by_filter(
+        LocationFilter::new()
+            .id(EqualFilter::equal_any(location_ids))
+            .store_id(EqualFilter::not_equal_to(store_id)),
+    )?;
+    if !locations.is_empty() {
+        return Err(UpdateAssetError::LocationDoesNotBelongToStore);
+    }
+    Ok(())
 }
 
 pub fn check_asset_log_reason_exists(
