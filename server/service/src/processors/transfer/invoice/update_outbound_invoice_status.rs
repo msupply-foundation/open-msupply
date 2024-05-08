@@ -5,7 +5,7 @@ use repository::{
 
 use crate::{
     activity_log::{log_type_from_invoice_status, system_activity_log_entry},
-    processors::transfer::shipment::Operation,
+    processors::transfer::invoice::Operation,
 };
 
 use super::{ShipmentTransferProcessor, ShipmentTransferProcessorRecord};

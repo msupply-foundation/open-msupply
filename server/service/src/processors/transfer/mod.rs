@@ -4,8 +4,8 @@ use repository::{
 };
 use thiserror::Error;
 
+pub(crate) mod invoice;
 pub(crate) mod requisition;
-pub(crate) mod shipment;
 
 #[derive(Error, Debug)]
 pub(crate) enum GetRequisitionAndLinkedRequisitionError {
@@ -80,7 +80,7 @@ pub(crate) fn get_linked_original_shipment(
             Some(linked_shipment)
         }
         // It's possible that shipments have been linked, but the linked_invoice_id hasn't propagated back
-        // to our original shipment yet. So we check if there is any shipment that has a linked_invoice_id 
+        // to our original shipment yet. So we check if there is any shipment that has a linked_invoice_id
         // which matches our original shipment
         None => repo
             .query_one(InvoiceFilter::new_match_linked_invoice_id(

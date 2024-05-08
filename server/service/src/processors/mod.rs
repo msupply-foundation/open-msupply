@@ -6,10 +6,10 @@ use tokio::task::JoinHandle;
 
 use crate::service_provider::ServiceProvider;
 
+use self::transfer::invoice::ProcessShipmentTransfersError;
 use self::transfer::requisition::ProcessRequisitionTransfersError;
-use self::transfer::shipment::ProcessShipmentTransfersError;
 use self::transfer::{
-    requisition::process_requisition_transfers, shipment::process_shipment_transfers,
+    invoice::process_shipment_transfers, requisition::process_requisition_transfers,
 };
 
 #[cfg(test)]
