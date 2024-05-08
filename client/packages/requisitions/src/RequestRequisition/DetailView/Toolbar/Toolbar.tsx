@@ -128,8 +128,9 @@ export const Toolbar: FC = () => {
         item
         display="flex"
         gap={1}
+        alignItems="flex-end"
         justifyContent="flex-end"
-        sx={{ marginTop: 2, height: 37 }}
+        sx={{ marginTop: 2 }}
       >
         <SearchBar
           placeholder={t('placeholder.filter-items')}
