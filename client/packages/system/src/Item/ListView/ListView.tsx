@@ -50,6 +50,7 @@ const ItemListComponent: FC = () => {
           getUnitName: r => r.unitName || null,
         }),
         width: 130,
+        sortable: false,
       },
       [
         'stockOnHand',
