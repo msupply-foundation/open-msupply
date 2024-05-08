@@ -80,12 +80,6 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                 },
               ],
             },
-            {
-              type: 'boolean',
-              name: t('label.unacknowledged'),
-              urlParameter: 'unacknowledged',
-              isDefault: true,
-            },
           ]}
         />
       </Box>

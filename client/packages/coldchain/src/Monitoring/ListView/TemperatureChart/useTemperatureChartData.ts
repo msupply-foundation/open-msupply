@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTheme } from '@common/styles';
 import { DateUtils } from '@common/intl';
 import { Sensor } from './types';
-import { FilterController } from '@common/hooks';
+import { useUrlQueryParams } from '@common/hooks';
 import {
   TemperatureChartFragment,
   useTemperatureChart,
@@ -56,26 +56,26 @@ const useFilterDates = (
   );
 };
 
-export const useTemperatureChartData = (filter: FilterController) => {
+export const useTemperatureChartData = () => {
   const theme = useTheme();
-  // const { filter } = useUrlQueryParams({
-  //   filters: [
-  //     {
-  //       key: 'datetime',
-  //       condition: 'between',
-  //     },
-  //     {
-  //       key: 'sensor.name',
-  //     },
-  //     {
-  //       key: 'location.code',
-  //     },
-  //     {
-  //       key: 'temperatureBreach.type',
-  //       condition: 'equalTo',
-  //     },
-  //   ],
-  // });
+  const { filter } = useUrlQueryParams({
+    filters: [
+      {
+        key: 'datetime',
+        condition: 'between',
+      },
+      {
+        key: 'sensor.name',
+      },
+      {
+        key: 'location.code',
+      },
+      {
+        key: 'temperatureBreach.type',
+        condition: 'equalTo',
+      },
+    ],
+  });
 
   // passing the datetime filters as well as the to/from datetimes
   // will result in no data
@@ -134,6 +134,7 @@ export const useTemperatureChartData = (filter: FilterController) => {
   ];
 
   return {
+    filter,
     hasData: !!data?.sensors && data?.sensors?.length > 0,
     isLoading,
     sensors,
