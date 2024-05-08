@@ -48,6 +48,7 @@ export const ErrorAlert = () => {
     }
 
     if (error === AuthError.PermissionDenied) {
+      toggleOff();
       setTimeout(removeError, 200);
       return;
     }
