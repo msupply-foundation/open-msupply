@@ -33,13 +33,13 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
 
   useEffect(() => {
     const parts = pathname.split('/');
-    const newUrlParts: UrlPart[] = [];
+    const urlParts: UrlPart[] = [];
     parts.reduce((fullPath, part, index) => {
       if (part === '') return '';
       const path = `${fullPath}/${part}`;
 
       if (index > 1 || topLevelPaths.includes(part))
-        newUrlParts.push({
+        urlParts.push({
           path,
           key: `${part}` as unknown as LocaleKey,
           value: part,
@@ -47,7 +47,7 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
       return path;
     }, '');
 
-    setUrlParts(newUrlParts);
+    setUrlParts(urlParts);
     setSuffix(undefined);
   }, [pathname]);
 
