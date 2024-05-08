@@ -2,13 +2,13 @@ use crate::{
     cursor_controller::CursorController,
     processors::transfer::{
         get_linked_original_shipment, get_requisition_and_linked_requisition,
-        shipment::{
+        invoice::{
             assign_invoice_number::AssignInvoiceNumberProcessor,
-            create_inbound_shipment::CreateInboundShipmentProcessor,
-            delete_inbound_shipment::DeleteInboundShipmentProcessor,
-            link_outbound_shipment::LinkOutboundShipmentProcessor,
-            update_inbound_shipment::UpdateInboundShipmentProcessor,
-            update_outbound_shipment_status::UpdateOutboundShipmentStatusProcessor,
+            create_inbound_invoice::CreateInboundShipmentProcessor,
+            delete_inbound_invoice::DeleteInboundShipmentProcessor,
+            link_outbound_invoice::LinkOutboundShipmentProcessor,
+            update_inbound_invoice::UpdateInboundShipmentProcessor,
+            update_outbound_invoice_status::UpdateOutboundShipmentStatusProcessor,
         },
     },
     service_provider::ServiceProvider,
@@ -25,11 +25,11 @@ use super::{GetLinkedOriginalShipmentError, GetRequisitionAndLinkedRequisitionEr
 
 pub(crate) mod assign_invoice_number;
 pub(crate) mod common;
-pub(crate) mod create_inbound_shipment;
-pub(crate) mod delete_inbound_shipment;
-pub(crate) mod link_outbound_shipment;
-pub(crate) mod update_inbound_shipment;
-pub(crate) mod update_outbound_shipment_status;
+pub(crate) mod create_inbound_invoice;
+pub(crate) mod delete_inbound_invoice;
+pub(crate) mod link_outbound_invoice;
+pub(crate) mod update_inbound_invoice;
+pub(crate) mod update_outbound_invoice_status;
 
 #[cfg(test)]
 #[cfg(not(feature = "memory"))]
