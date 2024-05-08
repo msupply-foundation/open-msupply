@@ -4,7 +4,6 @@ import uniqBy from 'lodash/uniqBy';
 import keyBy from 'lodash/keyBy';
 import uniq from 'lodash/uniq';
 import flatMap from 'lodash/flatMap';
-import isEqual from 'lodash/isEqual';
 
 export const ArrayUtils = {
   ifTheSameElseDefault: <T, K extends keyof T, J>(
@@ -55,5 +54,4 @@ export const ArrayUtils = {
   uniqBy,
   keyBy,
   flatMap,
-  isEqual,
 };
