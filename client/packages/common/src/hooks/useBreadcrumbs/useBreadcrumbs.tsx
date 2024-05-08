@@ -46,7 +46,6 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
         });
       return path;
     }, '');
-
     setUrlParts(urlParts);
     setSuffix(undefined);
   }, [pathname]);
