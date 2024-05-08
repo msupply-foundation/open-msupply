@@ -123,7 +123,7 @@ export const CreateAssetModal = ({
 
   const catalogueItems = ArrayUtils.flatMap(
     catalogueItemData?.pages,
-    page => page.nodes
+    page => page?.nodes ?? []
   );
 
   const selectedCatalogueItem = catalogueItems.find(

@@ -138,6 +138,30 @@ Standard semver rules apply:
 2. MINOR version when you add functionality in a backwards compatible manner
 3. PATCH version when you make backwards compatible bug fixes
 
+### Error handling
+
+When running the website in development mode (e.g. `yarn start`) you will see errors are displayed, not by the error boundary, but by another screen which shows additional detail.
+If you want to see the error boundary instead (for example, when testing the boundary!) you will need to disable the dev overlay:
+
+In `/packages/host/webpack.config.js`:
+
+```
+  // update the devServer entry, to add the overlay: false
+  devServer: {
+    ...
+    client: {
+      overlay: false,
+    },
+  }
+
+  // and update the ReactRefresh plugin also:
+
+  new ReactRefreshWebpackPlugin({ overlay: false }),
+
+```
+
+There is typically no need though, as you can press escape to close the overlay and see the error boundary in action.
+
 ## Queries
 
 We're using [React Query](https://react-query.tanstack.com/overview) to query the server and manage a local cache of queries.

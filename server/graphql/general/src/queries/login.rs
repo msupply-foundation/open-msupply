@@ -31,6 +31,14 @@ impl InvalidCredentials {
     }
 }
 
+pub struct MissingCredentials;
+#[Object]
+impl MissingCredentials {
+    pub async fn description(&self) -> &str {
+        "Missing credentials"
+    }
+}
+
 pub struct AccountBlocked {
     pub timeout_remaining: u64,
 }

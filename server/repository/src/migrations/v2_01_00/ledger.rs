@@ -38,7 +38,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 invoice_line.sell_price_per_pack,
                 invoice_line.total_before_tax,
                 invoice_line.total_after_tax,
-                invoice_line.tax,
+                invoice_line.tax_percentage,
                 invoice_line.number_of_packs,
                 invoice_line.pack_size,
                 invoice_line.note,
