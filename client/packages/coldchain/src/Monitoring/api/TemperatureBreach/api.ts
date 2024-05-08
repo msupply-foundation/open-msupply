@@ -2,7 +2,6 @@ import { SortBy } from '@common/hooks';
 import { Sdk, TemperatureBreachFragment } from './operations.generated';
 import {
   DatetimeFilterInput,
-  InputMaybe,
   RecordPatch,
   TemperatureBreachFilterInput,
   TemperatureBreachSortFieldInput,
@@ -13,19 +12,8 @@ export type ListParams = {
   offset: number;
   sortBy: SortBy<TemperatureBreachFragment>;
   filterBy:
-    | TemperatureBreachFilterInput
-    | null
-    | Partial<TemperatureBreachFilterInput & datetimeQueryParams>
-    | any;
-};
-
-type datetimeQueryParams = {
-  datetime?: InputMaybe<DatetimeFilterInput>;
-};
-
-type dualDatetimeQueryParams = {
-  endDatetime?: InputMaybe<DatetimeFilterInput> | undefined;
-  startDatetime?: InputMaybe<DatetimeFilterInput> | undefined;
+    | (TemperatureBreachFilterInput & { datetime?: DatetimeFilterInput })
+    | null;
 };
 
 export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
@@ -33,45 +21,30 @@ export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
     list:
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
-        // renaming query params to matchin temperature breach query which includes a start and end date filter
-        // this will filter so that any filters beginning before the filter end date and/or starting after the
-        // start date will be included
-        const startDatetime: dualDatetimeQueryParams =
-          filterBy?.['datetime']?.['afterOrEqualTo'];
-        const endDatetime: DatetimeFilterInput | undefined =
-          filterBy?.['datetime']?.['beforeOrEqualTo'];
+        const key =
+          sortBy.key === 'datetime' || sortBy.key === 'temperature'
+            ? TemperatureBreachSortFieldInput.StartDatetime
+            : (sortBy.key as TemperatureBreachSortFieldInput);
 
-        let filterByWithTwoDates:
-          | Partial<
-              | (TemperatureBreachFilterInput & dualDatetimeQueryParams)
-              | datetimeQueryParams
-            >
-          | null
-          | any = startDatetime
-          ? {
-              endDatetime: { afterOrEqualTo: startDatetime },
-              ...filterBy,
-            }
-          : filterBy;
-        filterByWithTwoDates = endDatetime
-          ? {
-              startDatetime: { beforeOrEqualTo: endDatetime },
-              ...filterByWithTwoDates,
-            }
-          : filterByWithTwoDates;
-        if (filterByWithTwoDates) {
-          delete filterByWithTwoDates['datetime'];
+        let filter = undefined;
+        if (filterBy !== null) {
+          const { datetime, ...rest } = filterBy;
+          if (!!datetime) {
+            filter = {
+              ...rest,
+              startDatetime: datetime,
+            };
+          }
         }
-        const filterByInput =
-          filterByWithTwoDates as TemperatureBreachFilterInput;
+
         const result = await sdk.temperature_breaches({
           storeId,
           page: { offset, first },
           sort: {
-            key: sortBy.key as TemperatureBreachSortFieldInput,
+            key,
             desc: !!sortBy.isDesc,
           },
-          filter: filterByInput,
+          filter,
         });
 
         return result?.temperatureBreaches;
