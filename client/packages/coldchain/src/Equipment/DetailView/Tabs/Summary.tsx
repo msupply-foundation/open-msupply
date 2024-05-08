@@ -131,6 +131,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     <Box display="flex" flex={1}>
       <Container>
         <Section heading={t('heading.asset-identification')}>
+          {isCentralServer && (
+            <Row label={t('label.store')}>
+              <StoreSearchInput
+                clearable
+                fullWidth
+                value={draft?.store ?? undefined}
+                onChange={onStoreChange}
+                onInputChange={onStoreInputChange}
+              />
+            </Row>
+          )}
           <Row label={t('label.category')}>
             <BasicTextInput
               value={draft.assetCategory?.name ?? ''}
@@ -201,17 +212,6 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               />
             ) : null}
           </Row>
-          {isCentralServer && (
-            <Row label={t('label.store')}>
-              <StoreSearchInput
-                clearable
-                fullWidth
-                value={draft?.store ?? undefined}
-                onChange={onStoreChange}
-                onInputChange={onStoreInputChange}
-              />
-            </Row>
-          )}
         </Section>
       </Container>
       <Box
