@@ -15,11 +15,7 @@ import {
   useNavigate,
   useQueryClient,
 } from '@openmsupply-client/common';
-import {
-  useTemperatureLog,
-  useTemperatureBreach,
-  useTemperatureChart,
-} from '../api';
+import { useTemperatureLog, useTemperatureBreach } from '../api';
 import { useSensor } from '../../Sensor/api';
 
 export const AppBarButtons = () => {
@@ -32,7 +28,6 @@ export const AppBarButtons = () => {
   const sensorApi = useSensor.utils.api();
   const logApi = useTemperatureLog.utils.api();
   const breachApi = useTemperatureBreach.utils.api();
-  const chartApi = useTemperatureChart.utils.api();
   const navigate = useNavigate();
   const getConfirmation = useConfirmationModal({
     message: t('messages.new-sensor'),
@@ -72,7 +67,6 @@ export const AppBarButtons = () => {
 
       // forces a refetch of logs, breach, chart data and sensors
       queryClient.invalidateQueries(breachApi.keys.base());
-      queryClient.invalidateQueries(chartApi.keys.base());
       queryClient.invalidateQueries(logApi.keys.base());
       queryClient.invalidateQueries(sensorApi.keys.base());
 
