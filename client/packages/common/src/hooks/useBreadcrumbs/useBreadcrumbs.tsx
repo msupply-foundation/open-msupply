@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LocaleKey } from '@common/intl';
 import { create } from 'zustand';
-import { ArrayUtils } from '../../utils/arrays';
 
 export interface UrlPart {
   disabled?: boolean;
@@ -48,10 +47,8 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
       return path;
     }, '');
 
-    if (!ArrayUtils.isEqual(urlParts, newUrlParts)) {
-      setUrlParts(newUrlParts);
-      setSuffix(undefined);
-    }
+    setUrlParts(newUrlParts);
+    setSuffix(undefined);
   }, [pathname]);
 
   const navigateUpOne = () => {
