@@ -128,6 +128,7 @@ export const Toolbar: FC = () => {
         item
         display="flex"
         gap={1}
+        alignItems="flex-end"
         justifyContent="flex-end"
         sx={{ marginTop: 2 }}
       >
