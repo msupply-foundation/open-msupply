@@ -4,11 +4,11 @@ use crate::{
         get_linked_original_shipment, get_requisition_and_linked_requisition,
         invoice::{
             assign_invoice_number::AssignInvoiceNumberProcessor,
-            create_inbound_invoice::CreateInboundShipmentProcessor,
-            delete_inbound_invoice::DeleteInboundShipmentProcessor,
-            link_outbound_invoice::LinkOutboundShipmentProcessor,
-            update_inbound_invoice::UpdateInboundShipmentProcessor,
-            update_outbound_invoice_status::UpdateOutboundShipmentStatusProcessor,
+            create_inbound_invoice::CreateInboundInvoiceProcessor,
+            delete_inbound_invoice::DeleteInboundInvoiceProcessor,
+            link_outbound_invoice::LinkOutboundInvoiceProcessor,
+            update_inbound_invoice::UpdateInboundInvoiceProcessor,
+            update_outbound_invoice_status::UpdateOutboundInvoiceStatusProcessor,
         },
     },
     service_provider::ServiceProvider,
@@ -41,13 +41,13 @@ const CHANGELOG_BATCH_SIZE: u32 = 20;
 enum Operation {
     Delete {
         /// Linked invoice, where (changelog.record_id = linked_invoice.linked_invoice_id)
-        linked_shipment: Option<Invoice>,
+        linked_invoice: Option<Invoice>,
     },
     Upsert {
-        shipment: Invoice,
+        invoice: Invoice,
         /// Linked invoice, both relations are checked
         /// (invoice.id = linked_invoice.linked_invoice_id OR invoice.linked_invoice_id = linked_invoice.id)
-        linked_shipment: Option<Invoice>,
+        linked_invoice: Option<Invoice>,
         /// Requisition for linked shipment, required for linking inbound shipment to request requisition
         /// could be Some() even if linked_shipment is None
         ///
@@ -70,13 +70,13 @@ enum Operation {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct ShipmentTransferProcessorRecord {
+pub(crate) struct InvoiceTransferProcessorRecord {
     operation: Operation,
     other_party_store_id: String,
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum ProcessShipmentTransfersError {
+pub(crate) enum ProcessInvoiceTransfersError {
     #[error("Problem getting upsert operation {0}")]
     GetUpsertOperationError(GetUpsertOperationError),
     #[error("Problem getting delete operation {0}")]
@@ -93,16 +93,16 @@ pub(crate) enum ProcessShipmentTransfersError {
     NameIsNotAnActiveStore(ChangelogRow),
 }
 
-pub(crate) fn process_shipment_transfers(
+pub(crate) fn process_invoice_transfers(
     service_provider: &ServiceProvider,
-) -> Result<(), ProcessShipmentTransfersError> {
-    use ProcessShipmentTransfersError as Error;
-    let processors: Vec<Box<dyn ShipmentTransferProcessor>> = vec![
-        Box::new(CreateInboundShipmentProcessor),
-        Box::new(LinkOutboundShipmentProcessor),
-        Box::new(UpdateInboundShipmentProcessor),
-        Box::new(UpdateOutboundShipmentStatusProcessor),
-        Box::new(DeleteInboundShipmentProcessor),
+) -> Result<(), ProcessInvoiceTransfersError> {
+    use ProcessInvoiceTransfersError as Error;
+    let processors: Vec<Box<dyn InvoiceTransferProcessor>> = vec![
+        Box::new(CreateInboundInvoiceProcessor),
+        Box::new(LinkOutboundInvoiceProcessor),
+        Box::new(UpdateInboundInvoiceProcessor),
+        Box::new(UpdateOutboundInvoiceStatusProcessor),
+        Box::new(DeleteInboundInvoiceProcessor),
         Box::new(AssignInvoiceNumberProcessor),
     ];
 
@@ -148,7 +148,7 @@ pub(crate) fn process_shipment_transfers(
                     .map_err(Error::GetDeleteOperationError)?,
             };
 
-            let record = ShipmentTransferProcessorRecord {
+            let record = InvoiceTransferProcessorRecord {
                 operation,
                 other_party_store_id: active_stores
                     .get_store_id_for_name_id(name_id)
@@ -175,13 +175,13 @@ pub(crate) fn process_shipment_transfers(
 
 #[derive(Error, Debug)]
 pub(crate) enum GetUpsertOperationError {
-    #[error("Shipment not found {0:?}")]
-    ShipmentNotFound(ChangelogRow),
-    #[error("Database error while fetching shipment with id {0} {1:?}")]
+    #[error("Invoice not found {0:?}")]
+    InvoiceNotFound(ChangelogRow),
+    #[error("Database error while fetching invoice with id {0} {1:?}")]
     DatabaseError(String, RepositoryError),
-    #[error("Error while fetching shipment operation {0:?} {1}")]
+    #[error("Error while fetching invoice operation {0:?} {1}")]
     GetRequisitionAndLinkedRequisitionError(ChangelogRow, GetRequisitionAndLinkedRequisitionError),
-    #[error("Error while fetching shipment operation {0:?} {1}")]
+    #[error("Error while fetching invoice operation {0:?} {1}")]
     GetLinkedOriginalShipmentError(ChangelogRow, GetLinkedOriginalShipmentError),
 }
 
@@ -192,23 +192,23 @@ fn get_upsert_operation(
     use GetUpsertOperationError::*;
     let repo = InvoiceRepository::new(connection);
 
-    let shipment = repo
+    let invoice = repo
         .query_one(InvoiceFilter::by_id(&changelog_row.record_id))
         .map_err(|e| DatabaseError(changelog_row.record_id.clone(), e))?
-        .ok_or_else(|| ShipmentNotFound(changelog_row.clone()))?;
+        .ok_or_else(|| InvoiceNotFound(changelog_row.clone()))?;
 
-    let linked_shipment = match &shipment.invoice_row.linked_invoice_id {
+    let linked_invoice = match &invoice.invoice_row.linked_invoice_id {
         Some(id) => repo
             .query_one(InvoiceFilter::by_id(id))
             .map_err(|e| DatabaseError(id.to_string(), e))?,
         None => repo
             .query_one(InvoiceFilter::new_match_linked_invoice_id(
-                &shipment.invoice_row.id,
+                &invoice.invoice_row.id,
             ))
-            .map_err(|e| DatabaseError(shipment.invoice_row.id.clone(), e))?,
+            .map_err(|e| DatabaseError(invoice.invoice_row.id.clone(), e))?,
     };
 
-    let linked_shipment_requisition = match &shipment.invoice_row.requisition_id {
+    let linked_shipment_requisition = match &invoice.invoice_row.requisition_id {
         Some(requisition_id) => {
             let (_, linked_requisition) =
                 get_requisition_and_linked_requisition(connection, requisition_id).map_err(
@@ -219,7 +219,7 @@ fn get_upsert_operation(
         None => None,
     };
 
-    let linked_original_shipment = match &shipment.invoice_row.original_shipment_id {
+    let linked_original_shipment = match &invoice.invoice_row.original_shipment_id {
         Some(original_shipment_id) => {
             let linked_original_shipment =
                 get_linked_original_shipment(connection, original_shipment_id)
@@ -230,8 +230,8 @@ fn get_upsert_operation(
     };
 
     Ok(Operation::Upsert {
-        shipment,
-        linked_shipment,
+        invoice,
+        linked_invoice,
         linked_shipment_requisition,
         linked_original_shipment,
     })
@@ -241,24 +241,24 @@ fn get_delete_operation(
     connection: &StorageConnection,
     changelog_row: &ChangelogRow,
 ) -> Result<Operation, RepositoryError> {
-    let linked_shipment = InvoiceRepository::new(connection).query_one(
+    let linked_invoice = InvoiceRepository::new(connection).query_one(
         InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(&changelog_row.record_id)),
     )?;
 
-    Ok(Operation::Delete { linked_shipment })
+    Ok(Operation::Delete { linked_invoice })
 }
 
 #[derive(Error, Debug)]
 #[error("Database error in processor ({0}) {1:?}")]
 pub(crate) struct ProcessorError(String, RepositoryError);
 
-trait ShipmentTransferProcessor {
+trait InvoiceTransferProcessor {
     fn get_description(&self) -> String;
 
     fn try_process_record_common(
         &self,
         connection: &StorageConnection,
-        record: &ShipmentTransferProcessorRecord,
+        record: &InvoiceTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
         let result = connection
             .transaction_sync(|connection| self.try_process_record(connection, record))
@@ -271,10 +271,10 @@ trait ShipmentTransferProcessor {
         Ok(result)
     }
 
-    /// Caller MUST guarantee that source shipment.name_id is a store active on this site
+    /// Caller MUST guarantee that source invoice.name_id is a store active on this site
     fn try_process_record(
         &self,
         connection: &StorageConnection,
-        record: &ShipmentTransferProcessorRecord,
+        record: &InvoiceTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError>;
 }

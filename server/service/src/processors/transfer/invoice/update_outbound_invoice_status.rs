@@ -8,93 +8,93 @@ use crate::{
     processors::transfer::invoice::Operation,
 };
 
-use super::{ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
+use super::{InvoiceTransferProcessor, InvoiceTransferProcessorRecord};
 
-const DESCRIPTION: &str = "Update outbound shipment status from inbound shipment";
+const DESCRIPTION: &str = "Update outbound invoice status from inbound invoice";
 
-pub(crate) struct UpdateOutboundShipmentStatusProcessor;
+pub(crate) struct UpdateOutboundInvoiceStatusProcessor;
 
-impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
+impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
     }
 
-    /// Outbound shipment status will be updated when all below conditions are met:
+    /// Outbound invoice status will be updated when all below conditions are met:
     ///
-    /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Inbound shipment or Inbound Return
-    /// 3. Linked shipment exists (the outbound shipment)
-    /// 4. Linked outbound shipment status is not Verified (this is the last status possible)
-    /// 5. Linked outbound shipment status is not source inbound shipment status
-    /// 6. Source shipment is from mSupply thus the status will be `New`. Shouldn't happen for OMS since
+    /// 1. Source invoice name_id is for a store that is active on current site (transfer processor driver guarantees this)
+    /// 2. Source invoice is Inbound shipment or Inbound Return
+    /// 3. Linked invoice exists (the outbound invoice)
+    /// 4. Linked outbound invoice status is not Verified (this is the last status possible)
+    /// 5. Linked outbound invoice status is not source inbound invoice status
+    /// 6. Source invoice is from mSupply thus the status will be `New`. Shouldn't happen for OMS since
     ///  OMS will follow OMS status sequence
     ///
     /// Can only run two times (one for Delivered and one for Verified status):
-    /// 7. Because linked outbound shipment status will be updated to source inbound shipment status and `5.` will never be true again
-    ///    and business rules guarantee that Inbound shipment can only change status to Delivered and Verified
+    /// 7. Because linked outbound invoice status will be updated to source inbound invoice status and `5.` will never be true again
+    ///    and business rules guarantee that Inbound invoice can only change status to Delivered and Verified
     ///    and status cannot be changed backwards
     fn try_process_record(
         &self,
         connection: &StorageConnection,
-        record_for_processing: &ShipmentTransferProcessorRecord,
+        record_for_processing: &InvoiceTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (inbound_shipment, linked_shipment) = match &record_for_processing.operation {
+        let (inbound_invoice, linked_invoice) = match &record_for_processing.operation {
             Operation::Upsert {
-                shipment,
-                linked_shipment,
+                invoice,
+                linked_invoice,
                 ..
-            } => (shipment, linked_shipment),
+            } => (invoice, linked_invoice),
             _ => return Ok(None),
         };
         // 2.
         if !matches!(
-            inbound_shipment.invoice_row.r#type,
+            inbound_invoice.invoice_row.r#type,
             InvoiceType::InboundShipment | InvoiceType::InboundReturn
         ) {
             return Ok(None);
         }
         // 3.
-        let outbound_shipment = match &linked_shipment {
-            Some(linked_shipment) => linked_shipment,
+        let outbound_invoice = match &linked_invoice {
+            Some(linked_invoice) => linked_invoice,
             None => return Ok(None),
         };
         // 4.
-        if outbound_shipment.invoice_row.status == InvoiceStatus::Verified {
+        if outbound_invoice.invoice_row.status == InvoiceStatus::Verified {
             return Ok(None);
         }
         // 5.
-        if outbound_shipment.invoice_row.status == inbound_shipment.invoice_row.status {
+        if outbound_invoice.invoice_row.status == inbound_invoice.invoice_row.status {
             return Ok(None);
         }
         // 6.
-        if inbound_shipment.invoice_row.status == InvoiceStatus::New {
+        if inbound_invoice.invoice_row.status == InvoiceStatus::New {
             return Ok(None);
         }
 
         // Execute
-        let updated_outbound_shipment = InvoiceRow {
+        let updated_outbound_invoice = InvoiceRow {
             // 7.
-            status: inbound_shipment.invoice_row.status.clone(),
-            delivered_datetime: inbound_shipment.invoice_row.delivered_datetime,
-            verified_datetime: inbound_shipment.invoice_row.verified_datetime,
-            ..outbound_shipment.invoice_row.clone()
+            status: inbound_invoice.invoice_row.status.clone(),
+            delivered_datetime: inbound_invoice.invoice_row.delivered_datetime,
+            verified_datetime: inbound_invoice.invoice_row.verified_datetime,
+            ..outbound_invoice.invoice_row.clone()
         };
 
-        InvoiceRowRepository::new(connection).upsert_one(&updated_outbound_shipment)?;
+        InvoiceRowRepository::new(connection).upsert_one(&updated_outbound_invoice)?;
 
         system_activity_log_entry(
             connection,
-            log_type_from_invoice_status(&updated_outbound_shipment.status, false),
-            &updated_outbound_shipment.store_id,
-            &updated_outbound_shipment.id,
+            log_type_from_invoice_status(&updated_outbound_invoice.status, false),
+            &updated_outbound_invoice.store_id,
+            &updated_outbound_invoice.id,
         )?;
 
         let result = format!(
-            "shipment ({}) source shipment {}) status ({:?})",
-            updated_outbound_shipment.id,
-            inbound_shipment.invoice_row.id,
-            updated_outbound_shipment.status
+            "invoice ({}) source invoice {}) status ({:?})",
+            updated_outbound_invoice.id,
+            inbound_invoice.invoice_row.id,
+            updated_outbound_invoice.status
         );
 
         Ok(Some(result))

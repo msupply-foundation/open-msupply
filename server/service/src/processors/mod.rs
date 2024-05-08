@@ -6,10 +6,10 @@ use tokio::task::JoinHandle;
 
 use crate::service_provider::ServiceProvider;
 
-use self::transfer::invoice::ProcessShipmentTransfersError;
+use self::transfer::invoice::ProcessInvoiceTransfersError;
 use self::transfer::requisition::ProcessRequisitionTransfersError;
 use self::transfer::{
-    invoice::process_shipment_transfers, requisition::process_requisition_transfers,
+    invoice::process_invoice_transfers, requisition::process_requisition_transfers,
 };
 
 #[cfg(test)]
@@ -34,7 +34,7 @@ pub struct Processors {
 #[derive(Debug, Error)]
 enum ProcessorsError {
     #[error("Error in shipment transfer processor ({0})")]
-    ShipmentTransfer(ProcessShipmentTransfersError),
+    ShipmentTransfer(ProcessInvoiceTransfersError),
     #[error("Error in requisition transfer processor ({0})")]
     RequisitionTransfer(ProcessRequisitionTransfersError),
     #[error("Error when waiting for the process queue to be processed")]
@@ -84,7 +84,7 @@ impl Processors {
                         process_requisition_transfers(&service_provider).map_err(ProcessorsError::RequisitionTransfer)
                     },
                     Some(_) = shipment_transfer.recv() => {
-                        process_shipment_transfers(&service_provider).map_err(ProcessorsError::ShipmentTransfer)
+                        process_invoice_transfers(&service_provider).map_err(ProcessorsError::ShipmentTransfer)
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
