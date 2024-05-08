@@ -14,6 +14,7 @@ import {
   BasicSpinner,
   DocumentRegistryCategoryNode,
   useNavigate,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -108,6 +109,7 @@ const PatientDetailView = ({
     });
   const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
   const navigate = useNavigate();
+  const { setSuffix } = useBreadcrumbs();
 
   const patientRegistry = patientRegistries?.nodes[0];
   const isCreatingPatient = !!createNewPatient;
@@ -223,6 +225,10 @@ const PatientDetailView = ({
   useEffect(() => {
     onEdit(isDirty);
   }, [isDirty, onEdit]);
+
+  useEffect(() => {
+    if (isCreatingPatient) setSuffix(t('label.new-patient'));
+  }, [isCreatingPatient, setSuffix]);
 
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: save,
