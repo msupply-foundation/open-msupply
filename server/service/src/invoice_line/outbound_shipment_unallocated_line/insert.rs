@@ -113,7 +113,7 @@ fn generate(
         // Default
         total_before_tax: 0.0,
         total_after_tax: 0.0,
-        tax: None,
+        tax_percentage: None,
         note: None,
         location_id: None,
         batch: None,
@@ -344,7 +344,7 @@ mod test_insert {
                 item_code: item.code.clone(),
                 total_before_tax: 0.0,
                 total_after_tax: 0.0,
-                tax: None,
+                tax_percentage: None,
                 note: None,
                 location_id: None,
                 batch: None,

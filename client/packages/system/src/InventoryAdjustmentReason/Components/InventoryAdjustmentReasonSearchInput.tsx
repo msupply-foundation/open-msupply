@@ -77,7 +77,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
             }}
             sx={{ minWidth: width }}
             error={isError}
-            required={isRequired}
+            required={isRequired && !isDisabled}
           />
         )}
         options={defaultOptionMapper(reasons, 'reason')}

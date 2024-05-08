@@ -5,3 +5,4 @@ export * from './useRefreshToken';
 export * from './useLogin';
 export * from './useGetUserPermissions';
 export * from './useIsCentralServer';
+export * from './useUpdateUser';

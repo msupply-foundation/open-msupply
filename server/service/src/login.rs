@@ -40,6 +40,7 @@ pub enum FetchUserError {
 }
 #[derive(Debug)]
 pub enum UpdateUserError {
+    MissingCredentials,
     PasswordHashError(BcryptError),
     DatabaseError(RepositoryError),
 }

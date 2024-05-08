@@ -469,7 +469,7 @@ mod test {
                 u.their_reference = their_reference;
                 u.colour = colour;
                 u.transport_reference = transport_reference;
-                u.tax = tax.map(|tax| tax.percentage.unwrap());
+                u.tax_percentage = tax.map(|tax| tax.percentage.unwrap());
                 u
             })
         );

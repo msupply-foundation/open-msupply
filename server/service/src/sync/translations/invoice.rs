@@ -132,7 +132,8 @@ pub struct LegacyTransactRow {
     pub confirm_time: NaiveTime,
 
     pub mode: TransactMode,
-    pub tax: Option<f64>,
+    #[serde(rename = "tax_rate")]
+    pub tax_percentage: Option<f64>,
 
     #[serde(default)]
     #[serde(rename = "om_created_datetime")]
@@ -294,7 +295,7 @@ impl SyncTranslation for InvoiceTranslation {
             on_hold: data.hold,
             comment: data.comment,
             their_reference: data.their_ref,
-            tax: data.tax,
+            tax_percentage: data.tax_percentage,
             currency_id,
             currency_rate: data.currency_rate,
             clinician_link_id: data.clinician_id,
@@ -368,7 +369,7 @@ impl SyncTranslation for InvoiceTranslation {
                     requisition_id,
                     linked_invoice_id,
                     transport_reference,
-                    tax,
+                    tax_percentage,
                     clinician_link_id: _,
                     currency_id,
                     currency_rate,
@@ -408,7 +409,7 @@ impl SyncTranslation for InvoiceTranslation {
                 .map(|delivered_datetime| date_from_date_time(&delivered_datetime)),
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
-            tax,
+            tax_percentage,
             mode: if r#type == InvoiceType::Prescription {
                 TransactMode::Dispensary
             } else {
