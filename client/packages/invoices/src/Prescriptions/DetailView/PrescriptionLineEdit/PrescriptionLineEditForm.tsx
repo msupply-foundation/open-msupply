@@ -146,6 +146,10 @@ export const PrescriptionLineEditForm: React.FC<
   };
 
   const handleIssueQuantityChange = (inputQuantity?: number) => {
+    // this method is also called onBlur... check that there actually has been a change
+    // in quantity (to prevent triggering auto allocation if only focus has moved)
+    if (inputQuantity === issueQuantity) return;
+
     const quantity = inputQuantity === undefined ? 0 : inputQuantity;
     setIssueQuantity(quantity);
     allocate(quantity, Number(packSizeController.selected?.value));
