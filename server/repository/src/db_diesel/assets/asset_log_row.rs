@@ -1,9 +1,9 @@
 use super::asset_log_row::asset_log::dsl::*;
 
-use crate::asset_row::AssetRowRepository;
+use crate::asset_row::{asset, AssetRowRepository};
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, EqualFilter, RepositoryError,
-    RowActionType, StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
@@ -38,6 +38,8 @@ table! {
     }
 }
 
+joinable!(latest_asset_log -> asset (asset_id));
+
 #[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -49,19 +51,6 @@ pub enum AssetLogStatus {
     FunctioningButNeedsAttention,
     NotFunctioning,
     Decommissioned,
-}
-
-impl AssetLogStatus {
-    pub fn equal_to(&self) -> EqualFilter<AssetLogStatus> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            equal_any_or_null: None,
-            is_null: None,
-        }
-    }
 }
 
 #[derive(
