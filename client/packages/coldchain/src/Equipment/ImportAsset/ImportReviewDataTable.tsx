@@ -15,11 +15,9 @@ import { ImportRow } from './EquipmentImportModal';
 
 interface ImportReviewDataTableProps {
   importRows: ImportRow[];
-  showWarnings: boolean;
 }
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
-  showWarnings,
 }) => {
   const t = useTranslation('coldchain');
   const isCentralServer = useIsCentralServerApi();
@@ -52,6 +50,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       accessor: ({ rowData }) => rowData.store?.code,
     });
   }
+
   columnDescriptions.push({
     key: 'serialNumber',
     width: 100,
@@ -73,21 +72,12 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     label: 'label.asset-notes',
     Cell: TooltipTextCell,
   });
-  if (showWarnings) {
-    columnDescriptions.push({
-      key: 'warningMessage',
-      label: 'label.warning-message',
-      width: 150,
-      Cell: TooltipTextCell,
-    });
-  } else {
-    columnDescriptions.push({
-      key: 'errorMessage',
-      label: 'label.error-message',
-      width: 150,
-      Cell: TooltipTextCell,
-    });
-  }
+  columnDescriptions.push({
+    key: 'errorMessage',
+    label: 'label.error-message',
+    width: 150,
+    Cell: TooltipTextCell,
+  });
 
   const columns = useColumns<ImportRow>(columnDescriptions, {}, []);
 

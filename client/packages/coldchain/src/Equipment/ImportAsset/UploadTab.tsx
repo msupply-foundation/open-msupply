@@ -29,7 +29,6 @@ import {
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;
-  setWarningMessage: (value: React.SetStateAction<string>) => void;
   onUploadComplete: () => void;
   catalogueItemData?: AssetCatalogueItemFragment[];
 }
@@ -53,7 +52,6 @@ function getImportHelpers<T, P>(
     id: FnUtils.generateUUID(),
   } as T;
   const rowErrors: string[] = [];
-  const rowWarnings: string[] = [];
 
   const addCell = (
     key: keyof T,
@@ -86,39 +84,6 @@ function getImportHelpers<T, P>(
       return;
     }
 
-    addCell(key, localeKey, formatter);
-  };
-
-  const addSoftRequired = (
-    key: keyof T,
-    localeKey: LocaleKey,
-    formatter?: (value: string) => unknown
-  ) => {
-    const prop = t(localeKey) as keyof P;
-    const value = row[prop] ?? '';
-
-    if (value === undefined || (value as string).trim() === '') {
-      rowWarnings.push(
-        t('warning.field-not-parsed', {
-          field: t(localeKey),
-        })
-      );
-      return;
-    }
-
-    if (
-      formatter &&
-      value &&
-      (formatter(value as string) === undefined ||
-        formatter(value as string) === null)
-    ) {
-      rowWarnings.push(
-        t('warning.field-not-parsed', {
-          field: t(localeKey),
-        })
-      );
-      return;
-    }
     addCell(key, localeKey, formatter);
   };
 
@@ -166,22 +131,12 @@ function getImportHelpers<T, P>(
     addCell(key, localeKey, formatter);
   }
 
-  return {
-    addLookup,
-    addCell,
-    addRequired,
-    addSoftRequired,
-    addUnique,
-    importRow,
-    rowErrors,
-    rowWarnings,
-  };
+  return { addLookup, addCell, addRequired, addUnique, importRow, rowErrors };
 }
 
 export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   tab,
   setErrorMessage,
-  setWarningMessage,
   setEquipment,
   onUploadComplete,
   catalogueItemData,
@@ -248,15 +203,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     let hasErrors = false;
 
     data.data.forEach((row, index) => {
-      const {
-        addLookup,
-        addCell,
-        addUnique,
-        importRow,
-        rowErrors,
-        rowWarnings,
-        addSoftRequired,
-      } = getImportHelpers(row, rows, index, t);
+      const { addLookup, addCell, addUnique, importRow, rowErrors } =
+        getImportHelpers(row, rows, index, t);
       const lookupCode = (item: { code: string | null | undefined }) =>
         item.code;
       const lookupStore = (store: { code: string }) => store.code;
@@ -278,22 +226,13 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         );
       }
       addCell('notes', 'label.asset-notes');
-      addSoftRequired(
-        'installationDate',
-        'label.installation-date',
-        formatDate
-      );
+      addCell('installationDate', 'label.installation-date', formatDate);
       addCell('serialNumber', 'label.serial');
       importRow.errorMessage = rowErrors.join(',');
-      importRow.warningMessage = rowWarnings.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
-      const hasWarnings = rowWarnings.length > 0;
       rows.push(importRow);
       if (hasErrors) {
         setErrorMessage(t('messages.import-error-on-upload'));
-      }
-      if (hasWarnings) {
-        setWarningMessage(t('messages.import-warning-on-upload'));
       }
     });
     EquipmentBuffer.push(...rows);

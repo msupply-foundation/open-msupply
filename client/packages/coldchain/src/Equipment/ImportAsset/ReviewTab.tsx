@@ -5,18 +5,13 @@ import { ImportReviewDataTable } from './ImportReviewDataTable';
 
 interface EquipmentReviewTabProps {
   uploadedRows: ImportRow[];
-  showWarnings: boolean;
 }
 
 export const EquipmentReviewTab: FC<ImportPanel & EquipmentReviewTabProps> = ({
-  showWarnings,
   tab,
   uploadedRows,
 }) => (
   <ImportPanel tab={tab}>
-    <ImportReviewDataTable
-      importRows={uploadedRows}
-      showWarnings={showWarnings}
-    />
+    <ImportReviewDataTable importRows={uploadedRows} />
   </ImportPanel>
 );

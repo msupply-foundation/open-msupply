@@ -50,7 +50,6 @@ export type ImportRow = {
   id: string;
   notes: string;
   errorMessage: string;
-  warningMessage: string;
   store: StoreRowFragment | null | undefined;
 };
 
@@ -119,8 +118,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
-  const [warningMessage, setWarningMessage] = useState<string>(() => '');
-
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
   const {
@@ -246,7 +243,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const exportNotReady = !(
     bufferedEquipment.length >= 0 && errorMessage.length > 0
   );
-  const showWarnings = errorMessage.length == 0 && warningMessage.length > 0;
 
   const importSteps = [
     { label: t('label.upload'), description: '', clickable: true },
@@ -312,14 +308,12 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
                 catalogueItemData={catalogueItemData?.nodes}
                 setEquipment={setBufferedEquipment}
                 setErrorMessage={setErrorMessage}
-                setWarningMessage={setWarningMessage}
                 onUploadComplete={() => {
                   changeTab(Tabs.Review);
                 }}
               />
             </QueryParamsProvider>
             <EquipmentReviewTab
-              showWarnings={showWarnings}
               tab={Tabs.Review}
               uploadedRows={bufferedEquipment}
             />
