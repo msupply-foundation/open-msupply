@@ -14,8 +14,8 @@ export const useColumnDisplayState = <T extends RecordWithId>(
   const [columnDisplayState, setColumnDisplayState] = useState<
     Record<string, boolean>
   >(
-    // Builds an object with all the column keys as the properties and its
-    // visible state as the value.
+    // Builds an object with all the column keys as the properties and their
+    // visible states as the values.
     // e.g. { name: true, itemCode: false, expiryDate: true... }
     Object.fromEntries([
       ...hiddenColKeys.map(colKey => [colKey, false]),
