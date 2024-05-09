@@ -13,10 +13,10 @@ declare const FEATURE_PACK_VARIANTS: boolean;
 // because web app in development mode may be accessed by clients on different machine (i.e. when debugging Android app)
 
 const isProductionBuild = process.env['NODE_ENV'] === 'production';
-const { port, hostname, protocol } = window.location;
+const { hostname, protocol } = window.location;
 
 const defaultDevelopmentApiHost = `${protocol}//${hostname}:8000`;
-const productionApiHost = `${protocol}//${hostname}:${port}`;
+const productionApiHost = `${protocol}//${hostname}:8000`;
 
 const developmentApiHost =
   (typeof API_HOST !== 'undefined' && API_HOST) || defaultDevelopmentApiHost;

@@ -61,6 +61,7 @@ const StockListComponent: FC = () => {
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
   });
+
   const EditStockLineCell = <T extends StockLineRowFragment>({
     rowData,
     isDisabled,

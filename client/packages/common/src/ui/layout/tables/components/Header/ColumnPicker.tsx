@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import {
   IconButton,
   Tooltip,
@@ -17,14 +17,14 @@ import { LocaleKey, useTranslation } from '@common/intl';
 
 interface ColumnPickerProps<T extends RecordWithId> {
   columns: Column<T>[];
-  displayColumnKeys: string[];
-  onChange: (columnKeys: string[]) => void;
+  columnDisplayState: Record<string, boolean>;
+  toggleColumn: (colKey: string) => void;
 }
 
 export const ColumnPicker = <T extends RecordWithId>({
   columns,
-  displayColumnKeys,
-  onChange,
+  columnDisplayState,
+  toggleColumn,
 }: ColumnPickerProps<T>) => {
   const t = useTranslation();
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
@@ -34,11 +34,6 @@ export const ColumnPicker = <T extends RecordWithId>({
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
 
-  const isVisible = useCallback(
-    (column: Column<T>) => displayColumnKeys.includes(String(column.key)),
-    [displayColumnKeys]
-  );
-
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -47,22 +42,15 @@ export const ColumnPicker = <T extends RecordWithId>({
     setAnchorEl(null);
   };
 
-  const toggleColumn = (column: Column<T>) => {
-    if (isVisible(column))
-      onChange(displayColumnKeys.filter(key => key !== column.key));
-    else onChange([...displayColumnKeys, String(column.key)]);
-  };
-
   return (
     <>
       <Tooltip title={t('table.show-columns')}>
         <IconButton onClick={handleClick} aria-describedby={id}>
           <ColumnsIcon
             sx={{
-              color:
-                displayColumnKeys.length !== columns.length
-                  ? 'secondary.main'
-                  : undefined,
+              color: !Object.values(columnDisplayState).every(val => val)
+                ? 'secondary.main'
+                : undefined,
             }}
           />
         </IconButton>
@@ -90,8 +78,10 @@ export const ColumnPicker = <T extends RecordWithId>({
             .map(column => (
               <FormControlLabel
                 key={String(column.key)}
-                checked={isVisible(column)}
-                control={<Checkbox onClick={() => toggleColumn(column)} />}
+                checked={columnDisplayState[column.key] ?? true}
+                control={
+                  <Checkbox onClick={() => toggleColumn(String(column.key))} />
+                }
                 label={t(column.label as LocaleKey)}
               />
             ))}
