@@ -1,7 +1,7 @@
 use super::{
     location::set_asset_location,
     query::get_asset,
-    validate::{check_asset_exists, check_locations_are_assigned},
+    validate::{check_asset_exists, check_locations_are_assigned, check_locations_belong_to_store},
 };
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
@@ -24,6 +24,7 @@ pub enum UpdateAssetError {
     UpdatedRecordNotFound,
     DatabaseError(RepositoryError),
     LocationsAlreadyAssigned,
+    LocationDoesNotBelongToStore,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -94,9 +95,9 @@ pub fn validate(
         }
     }
 
-    // Check locations aren't assigned to other assets already
     match &input.location_ids {
         Some(location_ids) => {
+            // Check locations aren't assigned to other assets already
             match check_locations_are_assigned(location_ids.to_vec(), &input.id, connection) {
                 Ok(locations) => {
                     if !locations.is_empty() {
@@ -106,6 +107,17 @@ pub fn validate(
                 Err(repository_error) => {
                     return Err(UpdateAssetError::DatabaseError(repository_error))
                 }
+            }
+
+            // Check the asset belongs to the current store
+            let store_id = match asset_row.store_id {
+                Some(ref store_id) => store_id,
+                None => return Err(UpdateAssetError::LocationDoesNotBelongToStore),
+            };
+
+            match check_locations_belong_to_store(location_ids.to_vec(), store_id, connection) {
+                Ok(_) => (),
+                Err(error) => return Err(error),
             }
         }
         None => (),
