@@ -9,6 +9,10 @@ use diesel::{
 };
 
 use crate::{
+    asset_log_row::{
+        latest_asset_log::{self, dsl as latest_asset_log_dsl},
+        AssetLogRow, AssetLogStatus,
+    },
     db_diesel::store_row::store::{self, dsl as store_dsl},
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
@@ -19,7 +23,7 @@ use crate::{
 
 pub type Asset = AssetRow;
 
-type AssetJoin = (AssetRow, Option<StoreRow>);
+type AssetJoin = (AssetRow, Option<StoreRow>, Option<AssetLogRow>);
 
 pub enum AssetSortField {
     SerialNumber,
@@ -47,6 +51,7 @@ pub struct AssetFilter {
     pub replacement_date: Option<DateFilter>,
     pub is_non_catalogue: Option<bool>,
     pub store: Option<StringFilter>,
+    pub functional_status: Option<EqualFilter<AssetLogStatus>>,
 }
 
 impl AssetFilter {
@@ -192,16 +197,25 @@ impl<'a> AssetRepository<'a> {
     }
 }
 
-fn to_domain((asset_row, _): AssetJoin) -> Asset {
+fn to_domain((asset_row, _, _): AssetJoin) -> Asset {
     asset_row
 }
 
-type BoxedAssetQuery = IntoBoxed<'static, LeftJoin<asset::table, store::table>, DBType>;
+type BoxedAssetQuery = IntoBoxed<
+    'static,
+    LeftJoin<LeftJoin<asset::table, store::table>, latest_asset_log::table>,
+    DBType,
+>;
 
 // IntoBoxed<'static, asset::table, DBType>;
 
 fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
-    let mut query = asset_dsl::asset.left_join(store_dsl::store).into_boxed();
+    let mut query = asset_dsl::asset
+        .left_join(store_dsl::store)
+        .left_join(latest_asset_log_dsl::latest_asset_log)
+        .into_boxed();
+
+    query = query.filter(asset_dsl::deleted_datetime.is_null()); // Don't include any deleted items
 
     if let Some(f) = filter {
         let AssetFilter {
@@ -217,6 +231,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             replacement_date,
             is_non_catalogue,
             store,
+            functional_status,
         } = f;
 
         apply_equal_filter!(query, id, asset_dsl::id);
@@ -245,8 +260,17 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             apply_string_filter!(sub_query, store, store_dsl::code);
             query = query.filter(asset_dsl::store_id.eq_any(sub_query.nullable()));
         }
+
+        if functional_status.is_some() {
+            let mut sub_query = latest_asset_log_dsl::latest_asset_log
+                .select(latest_asset_log_dsl::asset_id)
+                .into_boxed();
+            apply_equal_filter!(sub_query, functional_status, latest_asset_log_dsl::status);
+            query = query.filter(asset_dsl::id.eq_any(sub_query));
+        }
     }
-    query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items
+
+    query
 }
 
 #[cfg(test)]

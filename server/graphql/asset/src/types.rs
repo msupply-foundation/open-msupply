@@ -73,6 +73,7 @@ pub struct AssetFilterInput {
     pub installation_date: Option<DateFilterInput>,
     pub replacement_date: Option<DateFilterInput>,
     pub store: Option<StringFilterInput>,
+    pub functional_status: Option<EqualFilterStatusInput>,
 }
 
 impl From<AssetFilterInput> for AssetFilter {
@@ -90,6 +91,9 @@ impl From<AssetFilterInput> for AssetFilter {
             replacement_date: f.replacement_date.map(DateFilter::from),
             is_non_catalogue: f.is_non_catalogue,
             store: f.store.map(StringFilter::from),
+            functional_status: f
+                .functional_status
+                .map(|t| map_filter!(t, AssetLogStatusInput::to_domain)),
         }
     }
 }
