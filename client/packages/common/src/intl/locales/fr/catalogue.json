@@ -27,5 +27,21 @@
   "title.pricing": "Tarification",
   "title.stock-on-hand": "Stock disponible",
   "error.no-items": "Aucun article à afficher.",
-  "error.no-master-lists": "Aucune liste maîtresse à afficher."
+  "error.no-master-lists": "Aucune liste maîtresse à afficher.",
+  "error.cannot-add-with-no-abbreviation-and-name": "Impossible d'ajouter une variante sans abréviation ni nom",
+  "button.new-catalogue-item": "Nouvel article catalogue",
+  "error.pack-variant-exists": "Une variante de conditionnement avec la même taille de conditionnement existe déjà pour l'article",
+  "filename.asset-categories": "Catégories d'actif",
+  "label.class": "Classe",
+  "label.status": "Statut",
+  "label.create-pack-variant": "Créer une variante de conditionnement",
+  "label.general": "Général",
+  "label.manufacturer": "Fabricant",
+  "label.master-lists": "Listes maîtresses",
+  "label.model": "Modèle",
+  "label.pack-variants": "Variantes de conditionnement",
+  "error.cannot-add-pack-size-of-zero": "Impossible d'ajouter une variante avec un conditionnement égal à zéro",
+  "error.no-pack-variants": "Cet article n'a aucun conditionnement configuré.",
+  "label.category": "Catégorie",
+  "label.reason": "Motif"
 }
