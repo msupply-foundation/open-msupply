@@ -75,7 +75,7 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
                   target="_blank"
                   rel="noopener"
                   sx={{
-                    // Make it look like another disabled text input consistence with other text
+                    // Make it look like another disabled text input consistent with other text
                     // input components in this modal
                     width: '100%',
                     minHeight: '34.13',
