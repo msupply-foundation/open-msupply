@@ -10,9 +10,13 @@ export const useColumnDisplayState = <T extends RecordWithId>(
   const [hiddenColsStorage, setHiddenColsStorage] =
     useLocalStorage('/columns/hidden');
   const hiddenColKeys = hiddenColsStorage?.[tableId] ?? [];
+
   const [columnDisplayState, setColumnDisplayState] = useState<
     Record<string, boolean>
   >(
+    // Builds an object with all the column keys as the properties and its
+    // visible state as the value.
+    // e.g. { name: true, itemCode: false, expiryDate: true... }
     Object.fromEntries([
       ...hiddenColKeys.map(colKey => [colKey, false]),
       ...initialColumns
@@ -25,6 +29,9 @@ export const useColumnDisplayState = <T extends RecordWithId>(
     const newState = {
       ...columnDisplayState,
       [colKey]:
+        // If the column is not in the state object (i.e. column appeared after
+        // initial load as a plugin), we assume it to be "on", so we turn it off
+        // here.
         columnDisplayState[colKey] === undefined
           ? false
           : !columnDisplayState[colKey],
