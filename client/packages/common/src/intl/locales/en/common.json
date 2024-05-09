@@ -157,6 +157,7 @@
   "label.catalogue-item-code": "Catalogue item code",
   "label.asset-notes": "Notes",
   "label.error-message": "Error message",
+  "label.warning-message": "Warning",
   "label.app-version": "Version:",
   "label.approval-comment": "Approval Comment",
   "label.approved-packs": "Approved packs",
