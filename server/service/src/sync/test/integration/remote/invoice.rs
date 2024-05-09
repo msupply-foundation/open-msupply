@@ -31,6 +31,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             code: "NZD".to_string(),
             is_home_currency: true,
             date_updated: None,
+            is_active: true,
         };
         // test option (inventory adjustment reason)
         let inventory_adjustment_reason_id = uuid();
@@ -63,7 +64,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             currency_id: Some(currency_row.id.clone()),
             currency_rate: 1.0,
             // Tax on invoice/transact is not nullable in mSupply
-            tax: Some(0.0),
+            tax_percentage: Some(0.0),
             original_shipment_id: None,
         };
         let base_invoice_line_row = InvoiceLineRow {
@@ -82,7 +83,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             sell_price_per_pack: 10.0,
             total_before_tax: 8.0,
             total_after_tax: 12.0,
-            tax: Some(10.0),
+            tax_percentage: Some(10.0),
             number_of_packs: 10.129,
             note: None,
             inventory_adjustment_reason_id: Some(inventory_adjustment_reason_id.clone()),
@@ -259,7 +260,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.sell_price_per_pack = 15.0;
             d.total_before_tax = 10.0;
             d.total_after_tax = 15.0;
-            d.tax = Some(0.0);
+            d.tax_percentage = Some(0.0);
             d.number_of_packs = 15.120;
             d.note = Some("invoice line note".to_string());
             d.inventory_adjustment_reason_id = None;

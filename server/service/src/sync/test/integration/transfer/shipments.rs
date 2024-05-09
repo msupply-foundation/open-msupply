@@ -26,6 +26,7 @@ async fn integration_sync_shipment_transfers_normal() {
         r.code = String::from("USD");
         r.rate = 1.0;
         r.is_home_currency = true;
+        r.is_active = true;
     });
 
     let SyncIntegrationTransferContext {
@@ -189,6 +190,7 @@ async fn integration_sync_shipment_transfers_delete() {
         r.code = String::from("USD");
         r.rate = 1.0;
         r.is_home_currency = true;
+        r.is_active = true;
     });
 
     let SyncIntegrationTransferContext {
@@ -298,6 +300,7 @@ async fn integration_sync_shipment_transfers_initialise() {
         r.code = String::from("USD");
         r.rate = 1.0;
         r.is_home_currency = true;
+        r.is_active = true;
     });
 
     let SyncIntegrationTransferContext {
