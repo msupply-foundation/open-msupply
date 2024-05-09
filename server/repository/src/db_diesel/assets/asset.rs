@@ -207,8 +207,6 @@ type BoxedAssetQuery = IntoBoxed<
     DBType,
 >;
 
-// IntoBoxed<'static, asset::table, DBType>;
-
 fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
     let mut query = asset_dsl::asset
         .left_join(store_dsl::store)
