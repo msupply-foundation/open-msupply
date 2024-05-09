@@ -46,6 +46,8 @@ pub enum AssetSortFieldInput {
     InstallationDate,
     ReplacementDate,
     ModifiedDatetime,
+    AssetNumber,
+    Store,
 }
 
 #[derive(InputObject)]
@@ -407,6 +409,8 @@ impl AssetSortInput {
             from::InstallationDate => to::InstallationDate,
             from::ReplacementDate => to::ReplacementDate,
             from::ModifiedDatetime => to::ModifiedDatetime,
+            from::AssetNumber => to::AssetNumber,
+            from::Store => to::Store,
         };
 
         AssetSort {
