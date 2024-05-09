@@ -66,11 +66,14 @@ export const Login = () => {
       );
       return `${t('error.account-blocked')} ${formattedTime}`;
     }
+    if (error.message === 'InvalidCredentials') {
+      return t('error.login');
+    }
     if (error?.stdError === 'Internal error') {
       return t('error.internal-error');
     }
 
-    return t('error.login');
+    return t('error.connection-error');
   }, [error, timeoutRemaining, customDate, t]);
 
   useEffect(() => {
