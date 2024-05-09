@@ -3,7 +3,7 @@ use serde_json::json;
 use util::{inline_init, uuid::uuid};
 
 use crate::{
-    processors::transfer::shipment::test::ShipmentTransferTester,
+    processors::transfer::invoice::test::InvoiceTransferTester,
     sync::test::integration::transfer::{new_instance_of_existing_site, sync_and_delay},
 };
 
@@ -49,7 +49,7 @@ async fn integration_sync_return_transfers_normal() {
     .await;
 
     let test = async move {
-        let mut tester = ShipmentTransferTester::new(
+        let mut tester = InvoiceTransferTester::new(
             &site_receiving_return.store,
             &returning_site.store,
             None,
@@ -233,7 +233,7 @@ async fn integration_sync_return_transfers_delete() {
     .await;
 
     let test = async move {
-        let mut tester = ShipmentTransferTester::new(
+        let mut tester = InvoiceTransferTester::new(
             &site_receiving_return.store,
             &returning_site.store,
             None,
@@ -364,7 +364,7 @@ async fn integration_sync_return_transfers_initialise() {
     .await;
 
     let test = async move {
-        let mut tester = ShipmentTransferTester::new(
+        let mut tester = InvoiceTransferTester::new(
             &site_receiving_return.store,
             &returning_site.store,
             None,
