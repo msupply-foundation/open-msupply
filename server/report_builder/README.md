@@ -42,6 +42,19 @@ Note: don't upload sensitive data to online encoders.
   Json files can contain some other information that can be accessed in the Tera template (through the `res` object, see example dir).
   For example, instead of hard coding the timezone, as done in the example, the timeszone string could also stored in a json data file.
 
+- **`manifest.json`**
+  Manifest file to specify various report metadata.
+  The manifest file is added to the `res` object as a normal resource and thus can be accessed from within the Tera template.
+  The manifest file must have the following structure:
+
+```ts
+// manifest.json
+{
+  // Report context type
+  "context": "PATIENT" | "DISPENSARY" | ...
+}
+```
+
 ## Usage
 
 To build the report builder from the Rust source code run the following command in the `report_builder` directory:
