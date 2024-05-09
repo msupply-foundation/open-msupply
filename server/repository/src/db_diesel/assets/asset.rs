@@ -3,18 +3,23 @@ use super::asset_row::{
     AssetRow,
 };
 
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{IntoBoxed, LeftJoin},
+    prelude::*,
+};
 
 use crate::{
-    db_diesel::store_row::store::dsl as store_dsl,
+    db_diesel::store_row::store::{self, dsl as store_dsl},
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, DateFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
+    DBType, DateFilter, EqualFilter, Pagination, Sort, StorageConnection, StoreRow, StringFilter,
 };
 
 pub type Asset = AssetRow;
+
+type AssetJoin = (AssetRow, Option<StoreRow>);
 
 pub enum AssetSortField {
     SerialNumber,
@@ -22,6 +27,8 @@ pub enum AssetSortField {
     ReplacementDate,
     ModifiedDatetime,
     Notes,
+    AssetNumber,
+    Store,
 }
 
 pub type AssetSort = Sort<AssetSortField>;
@@ -158,6 +165,12 @@ impl<'a> AssetRepository<'a> {
                 AssetSortField::Notes => {
                     apply_sort!(query, sort, asset_dsl::notes)
                 }
+                AssetSortField::AssetNumber => {
+                    apply_sort_no_case!(query, sort, asset_dsl::asset_number)
+                }
+                AssetSortField::Store => {
+                    apply_sort_no_case!(query, sort, store_dsl::code)
+                }
             }
         } else {
             query = query.order(asset_dsl::id.asc())
@@ -173,20 +186,22 @@ impl<'a> AssetRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<Asset>(self.connection.lock().connection())?;
+        let result = final_query.load::<AssetJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain(asset_row: AssetRow) -> Asset {
+fn to_domain((asset_row, _): AssetJoin) -> Asset {
     asset_row
 }
 
-type BoxedAssetQuery = IntoBoxed<'static, asset::table, DBType>;
+type BoxedAssetQuery = IntoBoxed<'static, LeftJoin<asset::table, store::table>, DBType>;
+
+// IntoBoxed<'static, asset::table, DBType>;
 
 fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
-    let mut query = asset_dsl::asset.into_boxed();
+    let mut query = asset_dsl::asset.left_join(store_dsl::store).into_boxed();
 
     if let Some(f) = filter {
         let AssetFilter {
