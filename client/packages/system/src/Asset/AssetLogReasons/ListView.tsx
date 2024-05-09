@@ -35,15 +35,15 @@ const AssetListComponent: FC = () => {
   const columns = useColumns<AssetLogReasonFragment>(
     [
       {
-        key: 'reason',
-        label: 'label.reason',
-        sortable: false,
-      },
-      {
         key: 'status',
         label: 'label.status',
         sortable: false,
         accessor: ({ rowData }) => parseStatus(rowData.assetLogStatus, t),
+      },
+      {
+        key: 'reason',
+        label: 'label.reason',
+        sortable: false,
       },
       'selection',
     ],
