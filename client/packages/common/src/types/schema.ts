@@ -432,6 +432,7 @@ export type AssetFilterInput = {
   catalogueItemId?: InputMaybe<EqualFilterStringInput>;
   categoryId?: InputMaybe<EqualFilterStringInput>;
   classId?: InputMaybe<EqualFilterStringInput>;
+  functionalStatus?: InputMaybe<EqualFilterStatusInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   installationDate?: InputMaybe<DateFilterInput>;
   isNonCatalogue?: InputMaybe<Scalars['Boolean']['input']>;
