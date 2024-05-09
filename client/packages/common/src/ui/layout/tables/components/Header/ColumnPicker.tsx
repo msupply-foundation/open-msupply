@@ -48,7 +48,7 @@ export const ColumnPicker = <T extends RecordWithId>({
         <IconButton onClick={handleClick} aria-describedby={id}>
           <ColumnsIcon
             sx={{
-              color: !Object.values(columnDisplayState).every(val => val)
+              color: !columns.every(c => columnDisplayState[String(c.key)])
                 ? 'secondary.main'
                 : undefined,
             }}
@@ -73,7 +73,7 @@ export const ColumnPicker = <T extends RecordWithId>({
           <Typography style={{ fontWeight: 700 }}>
             {t('table.show-columns')}
           </Typography>
-          {Object.values(columns)
+          {columns
             .filter(c => !!c.label)
             .map(column => (
               <FormControlLabel
