@@ -43,6 +43,18 @@ query PrintReportDefinition($storeId: String!, $name: String, $report: JSON!, $d
 }
 "#;
 
+const STORES_QUERY: &str = r#"
+  query stores($storeName: String) {
+    stores(filter: {name: {equalTo: $storeName}}) {
+      ... on StoreConnector {
+        nodes {
+          id
+        }
+      }
+    }
+  }
+"#;
+
 #[derive(Debug, Serialize, Deserialize)]
 struct Config {
     url: String,
@@ -78,6 +90,38 @@ fn token_request(url: Url, config: &Config) -> anyhow::Result<String> {
         )));
     }
     Ok(auth_token["token"].as_str().unwrap().to_string())
+}
+
+fn fetch_store_id(url: Url, token: &str, store_name: &str) -> anyhow::Result<String> {
+    let body = serde_json::json!({
+      "query": STORES_QUERY,
+      "variables": {
+        "storeName": store_name
+      }
+    });
+    let response = reqwest::blocking::Client::new()
+        .post(url)
+        .bearer_auth(token)
+        .json(&body)
+        .send()?;
+    let status = response.status();
+    let gql_result: GraphQlResponse = response.json()?;
+    let store_id: &Option<&str> = &gql_result
+        .data
+        .get("stores")
+        .and_then(|d| d.get("nodes"))
+        .and_then(|s| s.as_array())
+        .and_then(|a| a.get(0))
+        .and_then(|s| s.get("id"))
+        .and_then(|s| s.as_str());
+    let Some(store_id) = store_id else {
+        return Err(anyhow::Error::msg(format!(
+            "Can't find store: {:?}\n{:#?}",
+            store_name, gql_result
+        )));
+    };
+
+    Ok(store_id.to_string())
 }
 
 fn print_request(
@@ -164,7 +208,8 @@ fn fetch_file(
 
 pub fn print_report(
     config_path: String,
-    store_id: String,
+    store_id: Option<String>,
+    store_name: Option<String>,
     output_filename: Option<String>,
     report_file: String,
     data_id: Option<String>,
@@ -206,6 +251,18 @@ pub fn print_report(
             err
         ))
     })?;
+
+    let store_id = if let Some(store_id) = store_id {
+        store_id
+    } else {
+        let Some(store_name) = store_name else {
+            return Err(anyhow::Error::msg(format!(
+                "Either store_id or store_name must be specified"
+            )));
+        };
+        println!("> Fetch store id for {store_name}");
+        fetch_store_id(gql_url.clone(), &token, &store_name)?
+    };
 
     println!("> Send report print request ");
     let file_name = output_filename.as_ref().and_then(|p| {
