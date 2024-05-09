@@ -75,14 +75,10 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
                   target="_blank"
                   rel="noopener"
                   sx={{
-                    // truncate long links
-                    overflow: 'hidden',
-                    textWrap: 'nowrap',
-                    textOverflow: 'ellipsis',
                     // Make it look like another disabled text input consistence with other text
                     // input components in this modal
-                    width: '198',
-                    height: '34.13',
+                    width: '100%',
+                    minHeight: '34.13',
                     backgroundColor: theme => theme.palette.background.toolbar,
                     borderRadius: '8px',
                     padding: '4px 8px',
