@@ -1,14 +1,10 @@
 use super::asset_log_row::asset_log::dsl::*;
 
 use crate::asset_row::AssetRowRepository;
-use crate::ChangeLogInsertRow;
-use crate::ChangelogRepository;
-use crate::ChangelogTableName;
-use crate::EqualFilter;
-use crate::RepositoryError;
-use crate::RowActionType;
-use crate::StorageConnection;
-use crate::Upsert;
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, EqualFilter, RepositoryError,
+    RowActionType, StorageConnection, Upsert,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;

@@ -2,16 +2,13 @@ use super::asset_row::asset::dsl::*;
 
 use serde::{Deserialize, Serialize};
 
-use crate::ChangeLogInsertRow;
-use crate::ChangelogRepository;
-use crate::ChangelogTableName;
-use crate::RepositoryError;
-use crate::RowActionType;
-use crate::StorageConnection;
-use crate::Upsert;
+use crate::db_diesel::store_row::store;
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
+    StorageConnection, Upsert,
+};
 
-use chrono::NaiveDate;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 
 table! {
@@ -32,6 +29,8 @@ table! {
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
+
+joinable!(asset -> store (store_id));
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
