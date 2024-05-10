@@ -4,7 +4,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use anyhow::Context;
-use chrono::NaiveDateTime;
+use chrono::DateTime;
 use log::error;
 use mime_guess::mime;
 use repository::RepositoryError;
@@ -113,8 +113,9 @@ fn upsert_temperature_log(
     let sensor = sensor_service
         .get_sensor(ctx, log.sensor_id.clone())
         .map_err(|e| anyhow::anyhow!("Unable to get sensor {:?}", e))?;
-    let datetime = NaiveDateTime::from_timestamp_opt(log.unix_timestamp, 0)
-        .context(format!("Unable to parse timestamp {}", log.unix_timestamp))?;
+    let datetime = DateTime::from_timestamp(log.unix_timestamp, 0)
+        .context(format!("Unable to parse timestamp {}", log.unix_timestamp))?
+        .naive_utc();
 
     // If we have a temperature log with a breachid, we need to make sure the breach exists first, if it doesn't we create a temporary record so we don't loose data.
     match &log.temperature_breach_id {
@@ -133,8 +134,9 @@ fn upsert_temperature_log(
                         threshold_duration_milliseconds: 0,
                         duration_milliseconds: 0,
                         r#type: repository::TemperatureBreachType::HotConsecutive,
-                        start_datetime: NaiveDateTime::from_timestamp_millis(log.unix_timestamp)
-                            .unwrap_or_default(),
+                        start_datetime: DateTime::from_timestamp_millis(log.unix_timestamp)
+                            .unwrap_or_default()
+                            .naive_utc(),
                         end_datetime: None,
                         unacknowledged: true,
                         threshold_minimum: 0.0,
