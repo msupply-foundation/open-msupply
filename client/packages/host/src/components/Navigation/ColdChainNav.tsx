@@ -59,14 +59,6 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
               .build()}
             text={t('equipment')}
           />
-          <AppNavLink
-            visible={visible}
-            end
-            to={RouteBuilder.create(AppRoute.Coldchain)
-              .addPart(AppRoute.Equipment)
-              .build()}
-            text={t('equipment')}
-          />
         </List>
       </Collapse>
     </AppNavSection>
