@@ -48,6 +48,7 @@ export const PatientSummary: FC = () => {
       setSuffix(
         `${getLocalisedFullName(patient?.firstName, patient?.lastName)}`
       );
+    else setSuffix(t('label.new-patient'));
   }, [patient]);
 
   return (
