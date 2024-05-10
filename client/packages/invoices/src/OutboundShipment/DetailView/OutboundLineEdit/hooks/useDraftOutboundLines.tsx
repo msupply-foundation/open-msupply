@@ -17,6 +17,7 @@ import {
   createStockOutPlaceholderRow,
   issueStock,
 } from '../../../../StockOut/utils';
+import uniqBy from 'lodash/uniqBy';
 
 export const useDraftOutboundLines = (
   item: DraftItem | null
@@ -32,21 +33,34 @@ export const useDraftOutboundLines = (
   const [draftStockOutLines, setDraftStockOutLines] = useState<
     DraftStockOutLine[]
   >([]);
-  const noStockLines = !data?.nodes.length;
 
   useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
     // Check placed in since last else in the map is needed to show placeholder row,
     // but also causes a placeholder row to be created when there is no stock lines.
-    if (!item || noStockLines) {
+    if (!item) {
       return setDraftStockOutLines([]);
     }
 
     if (!data) return;
 
+    // Stock lines (data.nodes) are coming from availableStockLines from itemNode
+    // these are filtered by totalNumberOfPacks > 0 but it's possible to issue all of the packs
+    // from the batch in picked status, need to make sure these are not hidden
+    const invoiceLineStockLines = (lines ?? []).flatMap(l =>
+      l.stockLine ? [l.stockLine] : []
+    );
+    const stockLines = uniqBy([...data.nodes, ...invoiceLineStockLines], 'id');
+
+    const noStockLines = stockLines.length == 0;
+
+    if (noStockLines) {
+      return setDraftStockOutLines([]);
+    }
+
     setDraftStockOutLines(() => {
-      const rows = data.nodes
+      const rows = stockLines
         .map(batch => {
           const invoiceLine = lines?.find(
             ({ stockLine }) => stockLine?.id === batch.id

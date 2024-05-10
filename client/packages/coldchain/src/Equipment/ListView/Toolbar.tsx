@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
+  AssetLogStatusInput,
   Box,
   DeleteIcon,
   DropdownMenu,
@@ -26,12 +27,13 @@ export const Toolbar = () => {
     classId: { equalTo: CCE_CLASS_ID },
   });
   const { data: typeData } = useAssetData.utils.types();
-  const t = useTranslation('catalogue');
+  const t = useTranslation(['catalogue', 'coldchain']);
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['classId', 'categoryId', 'typeId'],
   });
   const [categories, setCategories] = useState<ReferenceData[]>([]);
   const [types, setTypes] = useState<ReferenceData[]>([]);
+
   const onDelete = useAssets.document.deleteAssets();
   const isCentralServer = useIsCentralServerApi();
 
@@ -63,6 +65,36 @@ export const Toolbar = () => {
     },
     {
       type: 'enum',
+      name: t('label.functional-status'),
+      urlParameter: 'functionalStatus',
+      options: [
+        {
+          label: t('status.decommissioned', { ns: 'coldchain' }),
+          value: AssetLogStatusInput.Decommissioned,
+        },
+        {
+          label: t('status.functioning', { ns: 'coldchain' }),
+          value: AssetLogStatusInput.Functioning,
+        },
+        {
+          label: t('status.functioning-but-needs-attention', {
+            ns: 'coldchain',
+          }),
+          value: AssetLogStatusInput.FunctioningButNeedsAttention,
+        },
+        {
+          label: t('status.not-functioning', { ns: 'coldchain' }),
+          value: AssetLogStatusInput.NotFunctioning,
+        },
+        {
+          label: t('status.not-in-use', { ns: 'coldchain' }),
+          value: AssetLogStatusInput.NotInUse,
+        },
+      ],
+      isDefault: true,
+    },
+    {
+      type: 'enum',
       name: t('label.category'),
       urlParameter: 'categoryId',
       options: mapIdNameToOptions(categories),
@@ -77,8 +109,8 @@ export const Toolbar = () => {
     },
     {
       type: 'text',
-      name: t('label.code'),
-      urlParameter: 'code',
+      name: t('label.asset-number'),
+      urlParameter: 'assetNumber',
       isDefault: true,
     },
     {

@@ -17,3 +17,10 @@ export const useUserPermissions = () => {
   const api = useAuthApi();
   return useMutation(api.get.permissions);
 };
+
+export const useLastSuccessfulUserSync = () => {
+  const api = useAuthApi();
+  return useQuery(api.keys.userSync(), api.get.lastSuccessfulUserSync, {
+    cacheTime: 0,
+  });
+};

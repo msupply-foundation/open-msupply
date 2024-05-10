@@ -13,6 +13,7 @@ import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { useGql } from '../api';
 import { createRegisteredContext } from 'react-singleton-context';
+import { useUpdateUserInfo } from './hooks/useUpdateUserInfo';
 
 // Also determines auth cookie lifetime
 export const INACTIVITY_TIMEOUT_MINUTES = 60;
@@ -60,6 +61,10 @@ interface AuthControl {
   token: string;
   user?: User;
   userHasPermission: (permission: UserPermission) => boolean;
+  updateUserIsLoading: boolean;
+  lastSuccessfulSync?: string | null;
+  updateUserError?: string | null;
+  updateUser: () => Promise<void>;
 }
 
 export const getAuthCookie = (): AuthCookie => {
@@ -92,6 +97,8 @@ const authControl = {
   storeId: 'store-id',
   token: '',
   userHasPermission: (_permission: UserPermission) => false,
+  updateUserIsLoading: false,
+  updateUser: () => new Promise<void>(() => {}),
 };
 
 const AuthContext = createRegisteredContext<AuthControl>(
@@ -119,7 +126,6 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   });
   const { setHeader } = useGql();
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
-
   // initialise the auth header with the cookie value i.e. on page refresh
   setHeader('Authorization', `Bearer ${authCookie?.token}`);
   const setStore = async (store: UserStoreNodeFragment) => {
@@ -137,6 +143,13 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     setAuthCookie(newCookie);
     setCookie(newCookie);
   };
+
+  const {
+    isLoading: updateUserIsLoading,
+    lastSuccessfulSync,
+    updateUser,
+    error: updateUserError,
+  } = useUpdateUserInfo(setCookie, cookie);
 
   const logout = () => {
     Cookies.remove('auth');
@@ -161,6 +174,10 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       setStore,
       setError,
       userHasPermission,
+      updateUserIsLoading,
+      lastSuccessfulSync,
+      updateUserError,
+      updateUser,
     }),
     [
       login,

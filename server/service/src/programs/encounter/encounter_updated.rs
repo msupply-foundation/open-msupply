@@ -43,13 +43,16 @@ pub(crate) fn update_encounter_row_and_events(
     )?;
 
     if is_deleted {
-        ProgramEventService {}.upsert_events(
-            con,
-            patient_id.to_string(),
-            base_time,
-            &document.context_id,
-            vec![],
-        )?;
+        // delete events from previous base time
+        if let Some(previous_base_time) = previous_base_time {
+            ProgramEventService {}.upsert_events(
+                con,
+                patient_id.to_string(),
+                previous_base_time,
+                &document.context_id,
+                vec![],
+            )?;
+        }
     } else {
         update_program_events(
             con,
@@ -117,7 +120,7 @@ fn update_encounter_row(
 
 #[cfg(test)]
 mod encounter_document_updated_test {
-    use chrono::{Timelike, Utc};
+    use chrono::{DateTime, Timelike, Utc};
     use repository::{
         mock::{
             context_program_a, mock_form_schema_simplified_encounter,
@@ -166,7 +169,9 @@ mod encounter_document_updated_test {
                 vec![program_context.clone()],
             )
             .unwrap();
-        let encounter = service_provider
+
+        let insert_and_delete = |insert_time: i64, delete_time: i64| {
+            let encounter = service_provider
             .encounter_service
             .insert_encounter(
                 &context,
@@ -176,8 +181,8 @@ mod encounter_document_updated_test {
                     patient_id: patient.id.clone(),
                     r#type: "TestEncounter".to_string(),
                     data: json!({
-                        "createdDatetime": Utc::now().with_nanosecond(0).unwrap().to_rfc3339(),
-                        "startDatetime": Utc::now().with_nanosecond(0).unwrap().to_rfc3339(),
+                        "createdDatetime": DateTime::from_timestamp(insert_time, 0).unwrap().to_rfc3339(),
+                        "startDatetime": DateTime::from_timestamp(insert_time, 0).unwrap().to_rfc3339(),
                         "extension": {
                             "test": true
                         }
@@ -188,29 +193,29 @@ mod encounter_document_updated_test {
                 vec![program_context.clone()],
             )
             .unwrap();
-        let events = service_provider
-            .program_event_service
-            .events(
-                &context,
-                None,
-                Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(&patient.id))),
-                None,
-                None,
-            )
-            .unwrap();
-        assert_eq!(events.count, 1);
-        assert_eq!(
-            &events.rows[0]
-                .program_event_row
-                .data
-                .as_ref()
-                .unwrap()
-                .as_str(),
-            &"Test"
-        );
+            let events = service_provider
+                .program_event_service
+                .events(
+                    &context,
+                    None,
+                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(&patient.id))),
+                    None,
+                    None,
+                )
+                .unwrap();
+            assert_eq!(events.count, 1);
+            assert_eq!(
+                &events.rows[0]
+                    .program_event_row
+                    .data
+                    .as_ref()
+                    .unwrap()
+                    .as_str(),
+                &"Test"
+            );
 
-        // delete encounter should remove the events
-        service_provider
+            // delete encounter should remove the events
+            service_provider
             .encounter_service
             .update_encounter(
                 &context,
@@ -220,8 +225,8 @@ mod encounter_document_updated_test {
                     r#type: "TestEncounter".to_string(),
                     parent: encounter.id,
                     data: json!({
-                        "createdDatetime": Utc::now().with_nanosecond(0).unwrap().to_rfc3339(),
-                        "startDatetime": Utc::now().with_nanosecond(0).unwrap().to_rfc3339(),
+                        "createdDatetime": DateTime::from_timestamp(delete_time, 0).unwrap().to_rfc3339(),
+                        "startDatetime": DateTime::from_timestamp(delete_time, 0).unwrap().to_rfc3339(),
                         "extension": {
                             "test": true
                         },
@@ -232,16 +237,24 @@ mod encounter_document_updated_test {
                 vec![program_context.clone()],
             )
             .unwrap();
-        let events = service_provider
-            .program_event_service
-            .events(
-                &context,
-                None,
-                Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(&patient.id))),
-                None,
-                None,
-            )
-            .unwrap();
-        assert_eq!(events.count, 0);
+            let events = service_provider
+                .program_event_service
+                .events(
+                    &context,
+                    None,
+                    Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(&patient.id))),
+                    None,
+                    None,
+                )
+                .unwrap();
+            assert_eq!(events.count, 0);
+        };
+
+        // quite unrealistic but test anyway:
+        insert_and_delete(2000, 2000);
+        // common case; insert time < delete time:
+        insert_and_delete(3000, 3001);
+        // for good measure test insert time > delete time:
+        insert_and_delete(4002, 4001);
     }
 }

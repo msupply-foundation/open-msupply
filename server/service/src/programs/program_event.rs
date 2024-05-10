@@ -330,7 +330,7 @@ impl ProgramEventServiceTrait for ProgramEventService {}
 
 #[cfg(test)]
 mod test {
-    use chrono::NaiveTime;
+    use chrono::{DateTime, NaiveTime};
     use repository::{
         mock::{mock_program_a, MockDataInserts},
         test_db::setup_all,
@@ -346,7 +346,7 @@ mod test {
             let events = $service
                 .active_events(
                     &$ctx,
-                    NaiveDateTime::from_timestamp_opt($at, 0).unwrap(),
+                    DateTime::from_timestamp($at, 0).unwrap().naive_utc(),
                     None,
                     Some(ProgramEventFilter::new()),
                     None,
@@ -399,10 +399,10 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                DateTime::from_timestamp(10, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![event(
-                    NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                    DateTime::from_timestamp(10, 0).unwrap().naive_utc(),
                     "data1",
                 )],
             )
@@ -417,10 +417,10 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
+                DateTime::from_timestamp(20, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![event(
-                    NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
+                    DateTime::from_timestamp(30, 0).unwrap().naive_utc(),
                     "data2",
                 )],
             )
@@ -437,10 +437,10 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
+                DateTime::from_timestamp(25, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![event(
-                    NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
+                    DateTime::from_timestamp(35, 0).unwrap().naive_utc(),
                     "data3",
                 )],
             )
@@ -453,10 +453,10 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
+                DateTime::from_timestamp(40, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
+                    active_start_datetime: DateTime::from_timestamp(40, 0).unwrap().naive_utc(),
                     document_type: "DocType2".to_string(),
                     document_name: None,
                     r#type: "status".to_string(),
@@ -489,10 +489,10 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                DateTime::from_timestamp(10, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![event(
-                    NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                    DateTime::from_timestamp(10, 0).unwrap().naive_utc(),
                     "data1",
                 )],
             )
@@ -507,10 +507,10 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![event(
-                    NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                    DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                     "data2",
                 )],
             )
@@ -540,11 +540,11 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                DateTime::from_timestamp(10, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(10, 0).unwrap(), "G1_1"),
-                    event(NaiveDateTime::from_timestamp_opt(20, 0).unwrap(), "G1_2"),
+                    event(DateTime::from_timestamp(10, 0).unwrap().naive_utc(), "G1_1"),
+                    event(DateTime::from_timestamp(20, 0).unwrap().naive_utc(), "G1_2"),
                 ],
             )
             .unwrap();
@@ -560,11 +560,11 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                DateTime::from_timestamp(10, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(15, 0).unwrap(), "G1_3"),
-                    event(NaiveDateTime::from_timestamp_opt(30, 0).unwrap(), "G1_4"),
+                    event(DateTime::from_timestamp(15, 0).unwrap().naive_utc(), "G1_3"),
+                    event(DateTime::from_timestamp(30, 0).unwrap().naive_utc(), "G1_4"),
                 ],
             )
             .unwrap();
@@ -583,11 +583,11 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
+                DateTime::from_timestamp(25, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(35, 0).unwrap(), "G2_1"),
-                    event(NaiveDateTime::from_timestamp_opt(40, 0).unwrap(), "G2_2"),
+                    event(DateTime::from_timestamp(35, 0).unwrap().naive_utc(), "G2_1"),
+                    event(DateTime::from_timestamp(40, 0).unwrap().naive_utc(), "G2_2"),
                 ],
             )
             .unwrap();
@@ -614,18 +614,18 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![
                     EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                        active_start_datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                         document_type: "DocType".to_string(),
                         document_name: None,
                         r#type: "status".to_string(),
                         name: Some("data1".to_string()),
                     },
                     EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                        active_start_datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                         document_type: "DocType".to_string(),
                         document_name: None,
                         r#type: "status2".to_string(),
@@ -640,7 +640,7 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![],
             )
@@ -671,11 +671,11 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                DateTime::from_timestamp(10, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(15, 0).unwrap(), "G1_1"),
-                    event(NaiveDateTime::from_timestamp_opt(30, 0).unwrap(), "G1_2"),
+                    event(DateTime::from_timestamp(15, 0).unwrap().naive_utc(), "G1_1"),
+                    event(DateTime::from_timestamp(30, 0).unwrap().naive_utc(), "G1_2"),
                 ],
             )
             .unwrap();
@@ -683,11 +683,11 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
+                DateTime::from_timestamp(25, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(35, 0).unwrap(), "G2_1"),
-                    event(NaiveDateTime::from_timestamp_opt(40, 0).unwrap(), "G2_2"),
+                    event(DateTime::from_timestamp(35, 0).unwrap().naive_utc(), "G2_1"),
+                    event(DateTime::from_timestamp(40, 0).unwrap().naive_utc(), "G2_2"),
                 ],
             )
             .unwrap();
@@ -701,7 +701,7 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
+                DateTime::from_timestamp(25, 0).unwrap().naive_utc(),
                 &mock_program_a().context_id,
                 vec![],
             )

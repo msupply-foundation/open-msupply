@@ -128,7 +128,11 @@ export const Toolbar: FC<{
             >
               {t('button.return-lines')}
             </DropdownMenuItem>
-            <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+            <DropdownMenuItem
+              disabled={isDisabled}
+              IconComponent={DeleteIcon}
+              onClick={onDelete}
+            >
               {t('button.delete-lines')}
             </DropdownMenuItem>
             <DropdownMenuItem

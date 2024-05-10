@@ -125,6 +125,7 @@ fn map_error(error: ServiceError) -> Result<UpdateAssetErrorInterface> {
         // Standard Graphql Errors
         ServiceError::AssetDoesNotExist => BadUserInput(formatted_error),
         ServiceError::AssetDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
+        ServiceError::LocationDoesNotBelongToStore => BadUserInput(formatted_error),
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::SerialNumberAlreadyExists => BadUserInput(formatted_error),
