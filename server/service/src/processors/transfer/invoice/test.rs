@@ -132,7 +132,7 @@ async fn invoice_transfers() {
             // manually trigger because inserting the shipment didn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
-                .shipment_transfer
+                .invoice_transfer
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
@@ -158,7 +158,7 @@ async fn invoice_transfers() {
             // manually trigger because inserting the return doesn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
-                .shipment_transfer
+                .invoice_transfer
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
@@ -356,7 +356,7 @@ async fn invoice_transfers_with_merged_name() {
             // manually trigger because inserting the shipment didn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
-                .shipment_transfer
+                .invoice_transfer
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
@@ -383,7 +383,7 @@ async fn invoice_transfers_with_merged_name() {
             // manually trigger because inserting the return doesn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
-                .shipment_transfer
+                .invoice_transfer
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;

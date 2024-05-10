@@ -228,7 +228,7 @@ async fn integration_sync_return_transfers_delete() {
                 {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
             ]
         }),
-        "shipment_transfers_delete",
+        "return_transfers_delete",
     )
     .await;
 
@@ -326,7 +326,7 @@ async fn integration_sync_return_transfers_delete() {
 #[actix_rt::test]
 async fn integration_sync_return_transfers_initialise() {
     // util::init_logger(util::LogLevel::Info);
-    let identifier = "shipment_transfers_initialise";
+    let identifier = "return_transfers_initialise";
 
     let item1 = inline_init(|r: &mut ItemRow| {
         r.id = uuid();
