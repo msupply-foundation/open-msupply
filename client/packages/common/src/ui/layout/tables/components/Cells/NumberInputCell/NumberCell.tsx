@@ -11,7 +11,7 @@ export const NumberCell = <T extends RecordWithId>({
   column,
   rowData,
   isError,
-  defaultValue,
+  defaultValue = '',
 }: CellProps<T> & {
   defaultValue?: string | number;
 }) => {
@@ -19,9 +19,7 @@ export const NumberCell = <T extends RecordWithId>({
   const formattedValue = useFormatNumber().round(value, 2);
 
   const displayValue =
-    (value === undefined || value === null) && !!defaultValue
-      ? defaultValue
-      : formattedValue;
+    value === undefined || value === null ? defaultValue : formattedValue;
 
   return (
     <Box
