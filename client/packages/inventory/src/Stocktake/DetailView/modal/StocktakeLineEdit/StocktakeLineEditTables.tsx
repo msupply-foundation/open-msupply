@@ -200,17 +200,7 @@ export const BatchTable: FC<
         errorsContext.getError(rowData)?.__typename ===
         'StockLineReducedBelowZero',
       Cell: props => {
-        const value = props.rowData.countedNumberOfPacks;
-        return (
-          <NumberInputCell
-            {...props}
-            decimalLimit={2}
-            min={0}
-            // "Formatting" changes null/undefined (uncounted) value to 0
-            // but we want uncounted to render an empty input cell
-            noFormatting={value === null || value === undefined}
-          />
-        );
+        return <NumberInputCell {...props} decimalLimit={2} min={0} />;
       },
       setter: patch => {
         // If counted number of packs was changed to result in no adjustment we
@@ -223,7 +213,7 @@ export const BatchTable: FC<
             : patch.inventoryAdjustmentReason;
         update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
       },
-      accessor: ({ rowData }) => rowData.countedNumberOfPacks ?? '',
+      accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },
     [
       expiryDateColumn,
