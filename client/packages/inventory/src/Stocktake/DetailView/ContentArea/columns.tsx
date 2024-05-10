@@ -66,7 +66,7 @@ export const useStocktakeColumns = ({
   StocktakeLineFragment | StocktakeSummaryItem
 >[] => {
   const { getError } = useStocktakeLineErrorContext();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const isPackVariantsEnabled = useIsPackVariantsEnabled();
