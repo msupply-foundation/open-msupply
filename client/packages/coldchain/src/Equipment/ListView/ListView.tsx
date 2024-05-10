@@ -55,14 +55,12 @@ const AssetListComponent: FC = () => {
       key: 'store',
       label: 'label.store',
       accessor: ({ rowData }) => rowData.store?.code,
-      sortable: false,
     });
 
   columnsToCreate.push(
     {
       key: 'assetNumber',
       width: 150,
-      sortable: false,
       label: 'label.asset-number',
     },
     {

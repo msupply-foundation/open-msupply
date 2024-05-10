@@ -31,6 +31,8 @@ const assetParsers = {
       installationDate: AssetSortFieldInput.InstallationDate,
       replacementData: AssetSortFieldInput.ReplacementDate,
       serialNumber: AssetSortFieldInput.SerialNumber,
+      store: AssetSortFieldInput.Store,
+      assetNumber: AssetSortFieldInput.AssetNumber,
     };
 
     return fields[sortBy.key] ?? AssetSortFieldInput.InstallationDate;
