@@ -25,10 +25,10 @@ impl Upsert for DocumentUpsert {
     }
 
     fn assert_upserted(&self, con: &StorageConnection) {
-      assert_eq!(
-          DocumentRepository::new(con).find_one_by_id(&self.0.id),
-          Ok(Some(self.0.clone()))
-      );
+        assert_eq!(
+            DocumentRepository::new(con).find_one_by_id(&self.0.id),
+            Ok(Some(self.0.clone()))
+        );
     }
 }
 
@@ -156,7 +156,7 @@ fn update_contact_trace(
 
 #[cfg(test)]
 mod integrate_document_test {
-    use chrono::{DateTime, NaiveDateTime, Utc};
+    use chrono::{DateTime, Utc};
     use repository::{
         mock::{context_program_a, document_registry_b, mock_patient, MockDataInserts},
         test_db::setup_all,
@@ -188,7 +188,7 @@ mod integrate_document_test {
                 parent_ids: vec![],
                 user_id: "me".to_string(),
                 datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                    NaiveDateTime::from_timestamp_opt(50000, 0).unwrap(),
+                    DateTime::from_timestamp(50000, 0).unwrap().naive_utc(),
                     Utc,
                 ),
                 r#type: document_registry_b().document_type,
@@ -230,7 +230,7 @@ mod integrate_document_test {
                 parent_ids: vec![],
                 user_id: "me".to_string(),
                 datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                    NaiveDateTime::from_timestamp_opt(20000, 0).unwrap(),
+                    DateTime::from_timestamp(20000, 0).unwrap().naive_utc(),
                     Utc,
                 ),
                 r#type: document_registry_b().document_type,
@@ -272,7 +272,7 @@ mod integrate_document_test {
                 parent_ids: vec![],
                 user_id: "me".to_string(),
                 datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                    NaiveDateTime::from_timestamp_opt(100000, 0).unwrap(),
+                    DateTime::from_timestamp(100000, 0).unwrap().naive_utc(),
                     Utc,
                 ),
                 r#type: document_registry_b().document_type,

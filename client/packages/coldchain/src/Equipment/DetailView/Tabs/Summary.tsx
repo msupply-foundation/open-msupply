@@ -8,6 +8,7 @@ import {
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
+  ArrayUtils,
   Box,
   Formatter,
   useIsCentralServerApi,
@@ -130,6 +131,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     <Box display="flex" flex={1}>
       <Container>
         <Section heading={t('heading.asset-identification')}>
+          {isCentralServer && (
+            <Row label={t('label.store')}>
+              <StoreSearchInput
+                clearable
+                fullWidth
+                value={draft?.store ?? undefined}
+                onChange={onStoreChange}
+                onInputChange={onStoreInputChange}
+              />
+            </Row>
+          )}
           <Row label={t('label.category')}>
             <BasicTextInput
               value={draft.assetCategory?.name ?? ''}
@@ -176,6 +188,9 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           <Row label={t('label.cold-storage-location')}>
             {locations ? (
               <AutocompleteMulti
+                isOptionEqualToValue={(option, value) =>
+                  option.value === value.value
+                }
                 defaultValue={defaultLocations}
                 filterSelectedOptions
                 getOptionLabel={option => option.label}
@@ -188,8 +203,8 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
                   }[]
                 ) => {
                   onChange({
-                    locationIds: newSelectedLocations.map(
-                      location => location.value
+                    locationIds: ArrayUtils.dedupe(
+                      newSelectedLocations.map(location => location.value)
                     ),
                   });
                 }}
@@ -197,17 +212,6 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               />
             ) : null}
           </Row>
-          {isCentralServer && (
-            <Row label={t('label.store')}>
-              <StoreSearchInput
-                clearable
-                fullWidth
-                value={draft?.store ?? undefined}
-                onChange={onStoreChange}
-                onInputChange={onStoreInputChange}
-              />
-            </Row>
-          )}
         </Section>
       </Container>
       <Box

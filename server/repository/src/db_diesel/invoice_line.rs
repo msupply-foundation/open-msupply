@@ -332,9 +332,9 @@ impl InvoiceLine {
                 0.0
             },
             service_total_after_tax: if is_service { row.total_after_tax } else { 0.0 },
-            tax_percentage: row.tax,
+            tax_percentage: row.tax_percentage,
             foreign_currency_total_after_tax: row.foreign_currency_price_before_tax.map(|price| {
-                row.tax
+                row.tax_percentage
                     .map(|tax| price + (price * tax / 100.0))
                     .unwrap_or(price)
             }),

@@ -5,6 +5,7 @@ import {
   BasicSpinner,
   useBufferState,
   ModalTabs,
+  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
 import { ResponseLineEditForm } from './ResponseLineEditForm';
 import { useResponse, ResponseLineFragment } from '../../api';
@@ -36,6 +37,8 @@ export const ResponseLineEdit = ({
     numberOfPacksFromQuantity,
     variantsControl,
   } = usePackVariant(draft.itemId, draft.item.unitName ?? null);
+
+  const height = useKeyboardHeightAdjustment(600);
 
   const tabs = [
     {
@@ -107,7 +110,7 @@ export const ResponseLineEdit = ({
           }}
         />
       }
-      height={600}
+      height={height}
       width={1024}
     >
       {!isLoading ? (

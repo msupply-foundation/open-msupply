@@ -3,18 +3,27 @@ use super::asset_row::{
     AssetRow,
 };
 
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{IntoBoxed, LeftJoin},
+    prelude::*,
+};
 
 use crate::{
-    db_diesel::store_row::store::dsl as store_dsl,
+    asset_log_row::{
+        latest_asset_log::{self, dsl as latest_asset_log_dsl},
+        AssetLogRow, AssetLogStatus,
+    },
+    db_diesel::store_row::store::{self, dsl as store_dsl},
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, DateFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
+    DBType, DateFilter, EqualFilter, Pagination, Sort, StorageConnection, StoreRow, StringFilter,
 };
 
 pub type Asset = AssetRow;
+
+type AssetJoin = (AssetRow, Option<StoreRow>, Option<AssetLogRow>);
 
 pub enum AssetSortField {
     SerialNumber,
@@ -22,6 +31,8 @@ pub enum AssetSortField {
     ReplacementDate,
     ModifiedDatetime,
     Notes,
+    AssetNumber,
+    Store,
 }
 
 pub type AssetSort = Sort<AssetSortField>;
@@ -40,6 +51,7 @@ pub struct AssetFilter {
     pub replacement_date: Option<DateFilter>,
     pub is_non_catalogue: Option<bool>,
     pub store: Option<StringFilter>,
+    pub functional_status: Option<EqualFilter<AssetLogStatus>>,
 }
 
 impl AssetFilter {
@@ -158,6 +170,12 @@ impl<'a> AssetRepository<'a> {
                 AssetSortField::Notes => {
                     apply_sort!(query, sort, asset_dsl::notes)
                 }
+                AssetSortField::AssetNumber => {
+                    apply_sort_no_case!(query, sort, asset_dsl::asset_number)
+                }
+                AssetSortField::Store => {
+                    apply_sort_no_case!(query, sort, store_dsl::code)
+                }
             }
         } else {
             query = query.order(asset_dsl::id.asc())
@@ -173,20 +191,29 @@ impl<'a> AssetRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<Asset>(self.connection.lock().connection())?;
+        let result = final_query.load::<AssetJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain(asset_row: AssetRow) -> Asset {
+fn to_domain((asset_row, _, _): AssetJoin) -> Asset {
     asset_row
 }
 
-type BoxedAssetQuery = IntoBoxed<'static, asset::table, DBType>;
+type BoxedAssetQuery = IntoBoxed<
+    'static,
+    LeftJoin<LeftJoin<asset::table, store::table>, latest_asset_log::table>,
+    DBType,
+>;
 
 fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
-    let mut query = asset_dsl::asset.into_boxed();
+    let mut query = asset_dsl::asset
+        .left_join(store_dsl::store)
+        .left_join(latest_asset_log_dsl::latest_asset_log)
+        .into_boxed();
+
+    query = query.filter(asset_dsl::deleted_datetime.is_null()); // Don't include any deleted items
 
     if let Some(f) = filter {
         let AssetFilter {
@@ -202,6 +229,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             replacement_date,
             is_non_catalogue,
             store,
+            functional_status,
         } = f;
 
         apply_equal_filter!(query, id, asset_dsl::id);
@@ -230,8 +258,17 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             apply_string_filter!(sub_query, store, store_dsl::code);
             query = query.filter(asset_dsl::store_id.eq_any(sub_query.nullable()));
         }
+
+        if functional_status.is_some() {
+            let mut sub_query = latest_asset_log_dsl::latest_asset_log
+                .select(latest_asset_log_dsl::asset_id)
+                .into_boxed();
+            apply_equal_filter!(sub_query, functional_status, latest_asset_log_dsl::status);
+            query = query.filter(asset_dsl::id.eq_any(sub_query));
+        }
     }
-    query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items
+
+    query
 }
 
 #[cfg(test)]

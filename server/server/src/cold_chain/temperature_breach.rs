@@ -6,7 +6,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use anyhow::Context;
-use chrono::NaiveDateTime;
+use chrono::DateTime;
 use log::error;
 use mime_guess::mime;
 use repository::{RepositoryError, TemperatureBreachType};
@@ -130,11 +130,12 @@ fn upsert_temperature_breach(
     let sensor = sensor_service
         .get_sensor(ctx, breach.sensor_id.clone())
         .map_err(|e| anyhow::anyhow!("Unable to get sensor {:?}", e))?;
-    let start_datetime = NaiveDateTime::from_timestamp_opt(breach.start_unix_timestamp, 0)
+    let start_datetime = DateTime::from_timestamp(breach.start_unix_timestamp, 0)
         .context(format!(
             "Unable to parse timestamp {}",
             breach.start_unix_timestamp
-        ))?;
+        ))?
+        .naive_utc();
 
     let duration_milliseconds: i32 = match breach.end_unix_timestamp {
         Some(end_unix_timestamp) => ((end_unix_timestamp - breach.start_unix_timestamp) * 1000)
@@ -144,7 +145,9 @@ fn upsert_temperature_breach(
     };
 
     let end_datetime = match breach.end_unix_timestamp {
-        Some(end_unix_timestamp) => NaiveDateTime::from_timestamp_opt(end_unix_timestamp, 0),
+        Some(end_unix_timestamp) => {
+            DateTime::from_timestamp(end_unix_timestamp, 0).map(|dt| dt.naive_utc())
+        }
         None => None,
     };
 

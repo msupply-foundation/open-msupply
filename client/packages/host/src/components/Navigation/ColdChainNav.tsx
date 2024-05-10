@@ -24,7 +24,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
   const visible = store?.preferences.vaccineModule ?? false;
 
   return (
-    <AppNavSection isActive={visible} to={AppRoute.Coldchain}>
+    <AppNavSection isActive={isActive} to={AppRoute.Coldchain}>
       <AppNavLink
         visible={visible}
         end={false}
@@ -33,12 +33,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
         text={t('cold-chain')}
         inactive
       />
-      <Collapse
-        in={isActive}
-        sx={{
-          marginBottom: 2,
-        }}
-      >
+      <Collapse in={isActive}>
         <List>
           <AppNavLink
             visible={visible}

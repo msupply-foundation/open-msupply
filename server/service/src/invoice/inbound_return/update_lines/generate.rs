@@ -64,7 +64,7 @@ pub fn generate(
                 location: None,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
-                tax: None,
+                tax_percentage: None,
                 total_before_tax: None,
                 barcode: None,
                 stock_line_id: None,
@@ -100,7 +100,7 @@ pub fn generate(
                 location: None,
                 cost_price_per_pack: None,
                 sell_price_per_pack: None,
-                tax: None,
+                tax_percentage: None,
                 total_before_tax: None,
             },
         )

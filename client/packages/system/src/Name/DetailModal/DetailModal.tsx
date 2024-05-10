@@ -68,16 +68,26 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
             <DetailInputWithLabelRow
               label={t('label.website')}
               inputProps={{ value: data?.website, disabled: isDisabled }}
+              inputAlignment="start"
               DisabledInput={
-                <>
-                  <MuiLink
-                    href={data.website ?? undefined}
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    {data.website}
-                  </MuiLink>
-                </>
+                <MuiLink
+                  href={data.website ?? undefined}
+                  target="_blank"
+                  rel="noopener"
+                  sx={{
+                    // Make it look like another disabled text input consistent with other text
+                    // input components in this modal
+                    width: '100%',
+                    minHeight: '34.13',
+                    backgroundColor: theme => theme.palette.background.toolbar,
+                    borderRadius: '8px',
+                    padding: '4px 8px',
+                    // This is to match the width of BasicTextInput (from the required *):
+                    marginRight: '2',
+                  }}
+                >
+                  {data.website}
+                </MuiLink>
               }
             />
           </DetailSection>
