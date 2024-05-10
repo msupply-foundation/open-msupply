@@ -2,6 +2,7 @@ use super::asset_row::asset::dsl::*;
 
 use serde::{Deserialize, Serialize};
 
+use crate::asset_log_row::latest_asset_log;
 use crate::db_diesel::store_row::store;
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -31,6 +32,7 @@ table! {
 }
 
 joinable!(asset -> store (store_id));
+allow_tables_to_appear_in_same_query!(latest_asset_log, asset, store);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
