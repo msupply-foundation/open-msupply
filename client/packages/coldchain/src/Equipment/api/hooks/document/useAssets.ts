@@ -14,6 +14,7 @@ export const useAssets = () => {
       { key: 'typeId', condition: 'equalTo' },
       { key: 'isNonCatalogue', condition: '=' },
       { key: 'store' },
+      { key: 'functionalStatus', condition: 'equalTo' },
     ],
   });
   const api = useAssetApi();
