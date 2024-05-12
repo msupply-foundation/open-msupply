@@ -9,6 +9,7 @@ export interface ClickPopoverProps {
   Popover: React.FC<Partial<PropsWithChildren<BasePopoverProps>>>;
   show: MouseEventHandler<HTMLDivElement | HTMLButtonElement>;
   hide: () => void;
+  className?: string;
 }
 
 export const ClickPopover: React.FC<PropsWithChildren<ClickPopoverProps>> = ({
@@ -18,9 +19,10 @@ export const ClickPopover: React.FC<PropsWithChildren<ClickPopoverProps>> = ({
   show,
   hide,
   Popover,
+  className,
 }) => (
   <>
-    <div style={{ cursor: 'pointer' }} onClick={show}>
+    <div style={{ cursor: 'pointer' }} onClick={show} className={className}>
       {children}
     </div>
     <Popover placement={placement}>
