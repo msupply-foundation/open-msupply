@@ -23,6 +23,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const languageButtons = languageOptions.map(l => (
     <FlatButton
       label={l.label}
+      name={l.value}
       disabled={l.value === currentLanguage}
       onClick={() => {
         changeLanguage(l.value);
@@ -43,6 +44,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   ));
   return (
     <PaperClickPopover
+      className="language-selector"
       placement="top"
       width={300}
       Content={
