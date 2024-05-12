@@ -95,13 +95,13 @@ mod tests {
 
         assert_matches!(
             error,
-            SyncError::RemotePushError(RemotePushError::SyncApiError(SyncApiError {
+            SyncError::SyncApiError(SyncApiError {
                 source: SyncApiErrorVariantV5::ParsedError {
                     status: StatusCode::UNAUTHORIZED,
                     ..
                 },
                 ..
-            }))
+            })
         );
         // Check that error is recorded in logs
         let status = service_provider

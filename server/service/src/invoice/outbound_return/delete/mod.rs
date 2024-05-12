@@ -55,7 +55,7 @@ pub fn delete_outbound_return(
         .map_err(|error: TransactionError<DeleteOutboundReturnError>| error.to_inner_error())?;
 
     ctx.processors_trigger
-        .trigger_shipment_transfer_processors();
+        .trigger_invoice_transfer_processors();
 
     Ok(invoice_id)
 }
