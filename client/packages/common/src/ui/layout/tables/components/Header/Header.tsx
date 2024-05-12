@@ -5,6 +5,7 @@ import { InfoOutlineIcon, SortDescIcon } from '@common/icons';
 import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
 import { useTranslation } from '@common/intl';
+import { tooltipPlacement } from '../tooltipPlacement';
 
 export const HeaderRow: FC<PropsWithChildren<{ dense?: boolean }>> = ({
   dense,
@@ -117,13 +118,6 @@ export const HeaderCell = <T extends RecordWithId>({
     child
   );
 
-  const tooltipPlacement =
-    align === 'left'
-      ? 'bottom-start'
-      : align === 'right'
-      ? 'bottom-end'
-      : 'bottom';
-
   return (
     <TableCell
       role="columnheader"
@@ -147,7 +141,7 @@ export const HeaderCell = <T extends RecordWithId>({
     >
       <Tooltip
         title={tooltip}
-        placement={tooltipPlacement}
+        placement={tooltipPlacement(align)}
         style={{ whiteSpace: 'pre-line' }}
       >
         {HeaderLabel}
