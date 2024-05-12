@@ -137,9 +137,10 @@ const DataTableComponent = <T extends RecordWithId>({
     columns
   );
 
-  const columnsToDisplay = React.useMemo(() => {
-    return columns.filter(c => columnDisplayState[String(c.key)] ?? true);
-  }, [columns, columnDisplayState]);
+  const columnsToDisplay = React.useMemo(
+    () => columns.filter(c => columnDisplayState[String(c.key)] ?? true),
+    [columns, columnDisplayState]
+  );
 
   useRegisterActions([
     {

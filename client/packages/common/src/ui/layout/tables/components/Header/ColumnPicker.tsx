@@ -48,12 +48,8 @@ export const ColumnPicker = <T extends RecordWithId>({
         <IconButton onClick={handleClick} aria-describedby={id}>
           <ColumnsIcon
             sx={{
-              color: !columns.every(
-                c =>
-                  columnDisplayState[String(c.key)] ||
-                  // If a column has no state (undefined), it must be a new
-                  // column, so we treat it as visible
-                  columnDisplayState[String(c.key)] === undefined
+              color: columns.some(
+                c => columnDisplayState[String(c.key)] === false
               )
                 ? 'secondary.main'
                 : undefined,
