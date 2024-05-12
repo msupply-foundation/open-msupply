@@ -2,7 +2,6 @@ import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useTranslation,
-  Box,
   MiniTable,
   createQueryParamsStore,
   NothingHere,
@@ -105,25 +104,23 @@ export const ContentArea: FC<ContentAreaProps> = ({
   return isLoading ? (
     <BasicSpinner />
   ) : (
-    <Box flexDirection="column" flex={1} display="flex">
-      <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
-        onRowClick={onRowClick}
-        ExpandContent={Expando}
-        isRowAnimated={true}
-        columns={columns}
-        data={rows}
-        id="stocktake-detail"
-        noDataElement={
-          <NothingHere
-            body={t('error.no-stocktake-items')}
-            onCreate={isDisabled ? undefined : onAddItem}
-            buttonText={t('button.add-item')}
-          />
-        }
-        enableColumnSelection
-        pagination={{ ...pagination, total: totalLineCount }}
-        onChangePage={updatePaginationQuery}
-      />
-    </Box>
+    <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
+      onRowClick={onRowClick}
+      ExpandContent={Expando}
+      isRowAnimated={true}
+      columns={columns}
+      data={rows}
+      id="stocktake-detail"
+      noDataElement={
+        <NothingHere
+          body={t('error.no-stocktake-items')}
+          onCreate={isDisabled ? undefined : onAddItem}
+          buttonText={t('button.add-item')}
+        />
+      }
+      enableColumnSelection
+      pagination={{ ...pagination, total: totalLineCount }}
+      onChangePage={updatePaginationQuery}
+    />
   );
 };
