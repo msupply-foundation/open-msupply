@@ -280,6 +280,7 @@ const DataTableComponent = <T extends RecordWithId>({
           display: 'flex',
           flexDirection: 'column',
           position: 'sticky',
+          left: 0,
           insetBlockEnd: 0,
           backgroundColor: 'white',
           justifyContent: 'flex-end',
