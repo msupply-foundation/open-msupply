@@ -280,8 +280,7 @@ impl Synchroniser {
 
         ctx.processors_trigger
             .trigger_requisition_transfer_processors();
-        ctx.processors_trigger
-            .trigger_shipment_transfer_processors();
+        ctx.processors_trigger.trigger_invoice_transfer_processors();
 
         Ok(())
     }
