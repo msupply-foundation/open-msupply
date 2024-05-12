@@ -64,19 +64,20 @@ export const HeaderCell = <T extends RecordWithId>({
 
   const columnLabel =
     column.label === '' ? '' : t(column.label, column.labelProps);
-  const tooltip = (
-    <>
-      {!!description && <div>{t(description)}</div>}
-      {sortable ? (
-        <div>
-          {t('label.click-to-sort')}
-          {` ${columnLabel}`}
-        </div>
-      ) : (
-        columnLabel
-      )}
-    </>
-  );
+  const tooltip =
+    !description && !sortable && !columnLabel ? null : (
+      <>
+        {!!description && <div>{t(description)}</div>}
+        {sortable ? (
+          <div>
+            {t('label.click-to-sort')}
+            {` ${columnLabel}`}
+          </div>
+        ) : (
+          columnLabel
+        )}
+      </>
+    );
 
   const infoIcon = !!description ? (
     <InfoOutlineIcon
