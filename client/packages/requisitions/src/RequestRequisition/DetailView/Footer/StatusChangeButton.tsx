@@ -141,13 +141,17 @@ export const StatusChangeButton = () => {
   const { selectedOption, getConfirmation, lines } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
-  const t = useTranslation('app');
-  const noLines = lines?.totalCount === 0;
+  const t = useTranslation(['app', 'replenishment']);
+  const cantSend =
+    lines?.totalCount === 0 ||
+    lines?.nodes.some(line => line.requestedQuantity === 0);
 
   const showPermissionDenied = useDisabledNotificationToast(
     t('auth.permission-denied')
   );
-  const showNoLines = useDisabledNotificationToast(t('messages.no-lines'));
+  const showCantSend = useDisabledNotificationToast(
+    t('messages.cant-send-order', { ns: 'replenishment' })
+  );
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -159,7 +163,7 @@ export const StatusChangeButton = () => {
 
   const onClick = () => {
     if (!hasPermission) return showPermissionDenied();
-    if (noLines) return showNoLines();
+    if (cantSend) return showCantSend();
 
     getConfirmation();
   };
