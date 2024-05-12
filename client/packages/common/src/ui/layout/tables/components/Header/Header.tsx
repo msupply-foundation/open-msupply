@@ -117,6 +117,13 @@ export const HeaderCell = <T extends RecordWithId>({
     child
   );
 
+  const tooltipPlacement =
+    align === 'left'
+      ? 'bottom-start'
+      : align === 'right'
+      ? 'bottom-end'
+      : 'bottom';
+
   return (
     <TableCell
       role="columnheader"
@@ -140,7 +147,7 @@ export const HeaderCell = <T extends RecordWithId>({
     >
       <Tooltip
         title={tooltip}
-        placement="bottom"
+        placement={tooltipPlacement}
         style={{ whiteSpace: 'pre-line' }}
       >
         {HeaderLabel}
