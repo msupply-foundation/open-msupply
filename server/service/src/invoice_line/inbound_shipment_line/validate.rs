@@ -3,9 +3,9 @@ use repository::{
     StorageConnection,
 };
 
-pub fn check_pack_size(pack_size_option: Option<u32>) -> bool {
+pub fn check_pack_size(pack_size_option: Option<f64>) -> bool {
     if let Some(pack_size) = pack_size_option {
-        if pack_size < 1 {
+        if pack_size < 1.0 {
             return false;
         }
     }

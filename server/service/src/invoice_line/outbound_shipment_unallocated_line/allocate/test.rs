@@ -66,7 +66,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 20.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -75,7 +75,7 @@ mod test {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 2;
+                r.pack_size = 2.0;
                 r.available_number_of_packs = 30.0;
             })
         }
@@ -86,7 +86,7 @@ mod test {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_b().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 2;
+                r.pack_size = 2.0;
                 r.available_number_of_packs = 30.0;
             })
         }
@@ -97,7 +97,7 @@ mod test {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_b().id;
-                r.pack_size = 2;
+                r.pack_size = 2.0;
                 r.available_number_of_packs = 30.0;
             })
         }
@@ -147,7 +147,7 @@ mod test {
             new_line,
             inline_edit(&new_line, |mut u| {
                 u.number_of_packs = 10.0;
-                u.pack_size = 2;
+                u.pack_size = 2.0;
                 u
             })
         );
@@ -171,7 +171,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 50.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -180,7 +180,7 @@ mod test {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 3;
+                r.pack_size = 3.0;
                 r.available_number_of_packs = 10.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 1, 1).unwrap());
             })
@@ -191,7 +191,7 @@ mod test {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 3;
+                r.pack_size = 3.0;
                 r.available_number_of_packs = 2.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
             })
@@ -202,7 +202,7 @@ mod test {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 2.0;
                 r.expiry_date = None;
             })
@@ -249,7 +249,7 @@ mod test {
             new_line1,
             inline_edit(&new_line1, |mut u| {
                 u.number_of_packs = 10.0;
-                u.pack_size = 3;
+                u.pack_size = 3.0;
                 u
             })
         );
@@ -262,7 +262,7 @@ mod test {
             new_line2,
             inline_edit(&new_line2, |mut u| {
                 u.number_of_packs = 2.0;
-                u.pack_size = 3;
+                u.pack_size = 3.0;
                 u
             })
         );
@@ -275,7 +275,7 @@ mod test {
             new_line3,
             inline_edit(&new_line3, |mut u| {
                 u.number_of_packs = 2.0;
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u
             })
         );
@@ -311,7 +311,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 3.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -320,7 +320,7 @@ mod test {
                 r.id = id.to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 1.0;
             })
         }
@@ -464,7 +464,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 50.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -473,7 +473,7 @@ mod test {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 30.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
             })
@@ -487,7 +487,7 @@ mod test {
                 r.stock_line_id = Some(stock_line().id);
                 r.r#type = InvoiceLineType::StockOut;
                 r.number_of_packs = 2.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -496,7 +496,7 @@ mod test {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 5.0;
             })
         }
@@ -509,7 +509,7 @@ mod test {
                 r.stock_line_id = Some(stock_line2().id);
                 r.r#type = InvoiceLineType::StockOut;
                 r.number_of_packs = 10.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -518,7 +518,7 @@ mod test {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 100.0;
             })
         }
@@ -601,7 +601,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 1.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -610,7 +610,7 @@ mod test {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 3;
+                r.pack_size = 3.0;
                 r.available_number_of_packs = 3.0;
             })
         }
@@ -660,7 +660,7 @@ mod test {
             new_line,
             inline_edit(&new_line, |mut u| {
                 u.number_of_packs = 1.0;
-                u.pack_size = 3;
+                u.pack_size = 3.0;
                 u
             })
         );

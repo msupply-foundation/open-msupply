@@ -78,8 +78,8 @@ pub fn response_store_stats(
     )?;
 
     let incoming_stock = invoice_lines.iter().fold(0, |sum, invoice_line| {
-        sum + invoice_line.invoice_line_row.number_of_packs as i32
-            * invoice_line.invoice_line_row.pack_size
+        sum + (invoice_line.invoice_line_row.number_of_packs
+            * invoice_line.invoice_line_row.pack_size) as i32
     });
 
     let response_requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(

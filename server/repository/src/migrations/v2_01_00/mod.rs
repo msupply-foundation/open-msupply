@@ -14,7 +14,9 @@ impl Migration for V2_01_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        ledger::migrate(connection)?;
+        // ledger is migrated in decimal_pack_size because there overlapping views needed to be
+        // re-created
+        // ledger::migrate(connection)?;
         pg_enums::migrate(connection)?;
         decimal_pack_size::migrate(connection)?;
         Ok(())

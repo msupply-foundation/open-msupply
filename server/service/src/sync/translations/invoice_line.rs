@@ -55,7 +55,7 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     #[serde(rename = "cost_price")]
     pub cost_price_per_pack: f64,
     #[serde(rename = "sell_price")]

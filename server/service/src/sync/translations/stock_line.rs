@@ -31,7 +31,7 @@ pub struct LegacyStockLineRow {
     pub hold: bool,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_ID: Option<String>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub available: f64,
     pub quantity: f64,
     pub cost_price: f64,

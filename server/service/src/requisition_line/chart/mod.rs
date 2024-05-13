@@ -289,13 +289,13 @@ mod test {
                     r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
                     r.item_link_id = mock_item_a().id;
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
             })
         }
@@ -535,13 +535,13 @@ mod test {
                     r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
                     r.item_link_id = mock_item_a().id;
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
             })
         }

@@ -320,7 +320,7 @@ mod test {
                         id: "new_line_id".to_string(),
                         item_id: mock_item_a().id,
                         number_of_packs: 1.0,
-                        pack_size: 1,
+                        pack_size: 1.0,
                         reason_id: Some("does_not_exist".to_string()),
                         ..Default::default()
                     }],
@@ -383,7 +383,7 @@ mod test {
                             reason_id: Some(return_reason().id),
                             number_of_packs: 1.0,
                             item_id: mock_item_a().id,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             ..Default::default()
                         },
                         InboundReturnLineInput {
@@ -391,7 +391,7 @@ mod test {
                             reason_id: Some(return_reason().id),
                             number_of_packs: 0.0,
                             item_id: mock_item_b().id,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             ..Default::default()
                         },
                     ];

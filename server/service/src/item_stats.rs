@@ -106,7 +106,7 @@ impl ItemStats {
         for consumption_row in consumption_rows.into_iter() {
             let item_total_consumption = consumption_map
                 .entry(consumption_row.item_id.clone())
-                .or_insert(0);
+                .or_insert(0.0);
             *item_total_consumption += consumption_row.quantity;
         }
 

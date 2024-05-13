@@ -7,7 +7,6 @@ use crate::{
         generate::convert_invoice_line_to_single_pack, generate_batch,
     },
     store_preference::get_store_preferences,
-    u32_to_i32,
 };
 use repository::{
     InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow,
@@ -108,7 +107,7 @@ fn generate_line(
 ) -> Result<InvoiceLineRow, RepositoryError> {
     let mut update_line = current_line;
 
-    update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
+    update_line.pack_size = pack_size.unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
     update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);
     update_line.expiry_date = expiry_date.or(update_line.expiry_date);

@@ -75,8 +75,8 @@ impl InboundReturnLineNode {
         &self.return_line.expiry_date
     }
 
-    pub async fn pack_size(&self) -> &i32 {
-        &self.return_line.pack_size
+    pub async fn pack_size(&self) -> f64 {
+        self.return_line.pack_size
     }
     // TODO should ideally come from invoice line
     pub async fn item_code(&self) -> &str {

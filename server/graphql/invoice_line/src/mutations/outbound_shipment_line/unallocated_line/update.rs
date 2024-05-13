@@ -18,7 +18,7 @@ use service::{
 #[graphql(name = "UpdateOutboundShipmentUnallocatedLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub quantity: u32,
+    pub quantity: f64,
 }
 
 #[derive(Interface)]

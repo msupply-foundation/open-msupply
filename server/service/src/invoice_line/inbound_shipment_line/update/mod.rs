@@ -21,7 +21,7 @@ pub struct UpdateInboundShipmentLine {
     pub id: String,
     pub item_id: Option<String>,
     pub location: Option<NullableUpdate<String>>,
-    pub pack_size: Option<u32>,
+    pub pack_size: Option<f64>,
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -191,7 +191,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some("invalid".to_string());
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -205,7 +205,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
-                    r.pack_size = Some(0);
+                    r.pack_size = Some(0.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -219,7 +219,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(-1.0);
                 }),
             ),
@@ -233,7 +233,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_b_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -247,7 +247,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -262,7 +262,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -290,7 +290,7 @@ mod test {
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
-                    r.pack_size = Some(2);
+                    r.pack_size = Some(2.0);
                     r.number_of_packs = Some(3.0);
                 }),
             )
@@ -305,7 +305,7 @@ mod test {
             inline_edit(&inbound_line_update, |mut u| {
                 u.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                 u.item_link_id = mock_item_a().id.clone();
-                u.pack_size = 2;
+                u.pack_size = 2.0;
                 u.number_of_packs = 3.0;
                 u
             })
@@ -326,7 +326,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
-                    r.pack_size = Some(20);
+                    r.pack_size = Some(20.0);
                     r.number_of_packs = Some(20.0);
                     r.sell_price_per_pack = Some(100.0);
                     r.cost_price_per_pack = Some(60.0);
@@ -342,7 +342,7 @@ mod test {
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
                 u.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u.number_of_packs = 400.0;
                 u.sell_price_per_pack = 5.0;
                 u.cost_price_per_pack = 3.0;

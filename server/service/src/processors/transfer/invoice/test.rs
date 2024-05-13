@@ -524,7 +524,7 @@ impl InvoiceTransferTester {
             r.item_link_id = item1.id.clone();
             r.batch = Some(uuid());
             r.expiry_date = Some(NaiveDate::from_ymd_opt(2025, 3, 1).unwrap());
-            r.pack_size = 10;
+            r.pack_size = 10.0;
             r.total_number_of_packs = 200.0;
             r.available_number_of_packs = 200.0;
         });
@@ -551,7 +551,7 @@ impl InvoiceTransferTester {
             r.store_id = outbound_store.id.clone();
             r.item_link_id = item2.id.clone();
             r.batch = Some(uuid());
-            r.pack_size = 10;
+            r.pack_size = 10.0;
             r.total_number_of_packs = 200.0;
             r.available_number_of_packs = 200.0;
             r.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 1, 5).unwrap());
@@ -578,7 +578,7 @@ impl InvoiceTransferTester {
             r.id = uuid();
             r.invoice_id = outbound_shipment.id.clone();
             r.r#type = InvoiceLineType::UnallocatedStock;
-            r.pack_size = 1;
+            r.pack_size = 1.0;
             r.number_of_packs = 10.0;
             r.item_link_id = item2.id.clone();
             r.item_name = item2.name.clone();
