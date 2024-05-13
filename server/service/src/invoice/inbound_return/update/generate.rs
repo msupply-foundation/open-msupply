@@ -88,9 +88,9 @@ pub fn should_create_batches(
 
     match (existing_status, new_status) {
         (
-            // From New/Picked/Shipped to Delivered
+            // From New/Picked/Shipped to Delivered/Verified
             InvoiceRowStatus::New | InvoiceRowStatus::Picked | InvoiceRowStatus::Shipped,
-            UpdateInboundReturnStatus::Delivered,
+            UpdateInboundReturnStatus::Delivered | UpdateInboundReturnStatus::Verified,
         ) => true,
         _ => false,
     }
