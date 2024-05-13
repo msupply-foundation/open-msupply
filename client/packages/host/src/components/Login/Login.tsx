@@ -57,6 +57,14 @@ export const Login = () => {
 
   const loginError: { error: string; hint?: string } = useMemo(() => {
     if (!error) return { error: '' };
+
+    if (error.message === 'ConnectionError') {
+      return {
+        error: t('error.connection-error'),
+        hint: t('error.connection-error-hint'),
+      };
+    }
+
     if (error.message === 'AccountBlocked') {
       if (timeoutRemaining < 1000) return { error: '' };
 
@@ -66,15 +74,18 @@ export const Login = () => {
       );
       return { error: `${t('error.account-blocked')} ${formattedTime}` };
     }
-    if (error.message === 'ConnectionError') {
-      return {
-        error: t('error.connection-error'),
-        hint: t('error.connection-error-hint'),
-      };
-    }
+
     if (error.message === 'InvalidCredentials') {
       return { error: t('error.login') };
     }
+
+    if (error.message === 'NoSiteAccess') {
+      return {
+        error: t('error.unable-to-login'),
+        hint: t('error.no-site-access'),
+      };
+    }
+
     if (error?.stdError === 'Internal error') {
       return { error: t('error.internal-error') };
     }
