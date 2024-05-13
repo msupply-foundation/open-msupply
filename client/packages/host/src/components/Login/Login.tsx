@@ -55,25 +55,28 @@ export const Login = () => {
     }
   }, [error]);
 
-  const loginErrorMessage = useMemo(() => {
-    if (!error) return '';
+  const loginError: { error: string; hint?: string } = useMemo(() => {
+    if (!error) return { error: '' };
     if (error.message === 'AccountBlocked') {
-      if (timeoutRemaining < 1000) return '';
+      if (timeoutRemaining < 1000) return { error: '' };
 
       const formattedTime = customDate(
         new Date(0, 0, 0, 0, 0, 0, timeoutRemaining),
         'm:ss'
       );
-      return `${t('error.account-blocked')} ${formattedTime}`;
+      return { error: `${t('error.account-blocked')} ${formattedTime}` };
     }
     if (error.message === 'InvalidCredentials') {
-      return t('error.login');
+      return { error: t('error.login') };
     }
     if (error?.stdError === 'Internal error') {
-      return t('error.internal-error');
+      return { error: t('error.internal-error') };
     }
 
-    return t('error.connection-error');
+    return {
+      error: t('error.connection-error'),
+      hint: 'Check your network connection',
+    };
   }, [error, timeoutRemaining, customDate, t]);
 
   useEffect(() => {
@@ -137,10 +140,11 @@ export const Login = () => {
       }
       ErrorMessage={
         error &&
-        loginErrorMessage !== '' && (
+        loginError.error !== '' && (
           <ErrorWithDetails
-            error={loginErrorMessage}
             details={error.detail || ''}
+            error={loginError.error}
+            hint={loginError.hint}
           />
         )
       }
