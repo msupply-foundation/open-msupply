@@ -19,10 +19,6 @@ export const ErrorWithDetails: React.FC<ErrorWithDetailsProps> = ({
   hint,
 }) => {
   const TooltipContents = () => {
-    if (!details && !hint) {
-      return null;
-    }
-
     const sx = { color: 'inherit', fontSize: 'inherit' };
 
     return (
@@ -37,7 +33,7 @@ export const ErrorWithDetails: React.FC<ErrorWithDetailsProps> = ({
   };
 
   return (
-    <Tooltip title={<TooltipContents />}>
+    <Tooltip title={!details && !hint ? null : <TooltipContents />}>
       <Box
         display="flex"
         sx={{ color: 'error.main' }}
