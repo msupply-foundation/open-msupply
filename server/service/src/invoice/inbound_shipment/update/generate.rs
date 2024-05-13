@@ -126,14 +126,19 @@ pub(crate) fn generate(
 }
 
 pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment) -> bool {
-    if let Some(new_invoice_status) = patch.full_status() {
-        let invoice_status_index = invoice.status.index();
-        let new_invoice_status_index = new_invoice_status.index();
+    let existing_status = &invoice.status;
+    let new_status = match changed_status(patch.status.to_owned(), existing_status) {
+        Some(status) => status,
+        None => return false, // Status has not been updated
+    };
 
-        new_invoice_status_index >= InvoiceStatus::Delivered.index()
-            && invoice_status_index < InvoiceStatus::Delivered.index()
-    } else {
-        false
+    match (existing_status, new_status) {
+        (
+            // From New/Picked/Shipped to Delivered/Verified
+            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
+            UpdateInboundShipmentStatus::Delivered | UpdateInboundShipmentStatus::Verified,
+        ) => true,
+        _ => false,
     }
 }
 
@@ -226,24 +231,50 @@ fn empty_lines_to_trim(
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipment) {
-    if let Some(new_invoice_status) = patch.full_status() {
-        let current_datetime = Utc::now().naive_utc();
-        let invoice_status_index = invoice.status.clone().index();
-        let new_invoice_status_index = new_invoice_status.index();
+    let new_status = match changed_status(patch.status.to_owned(), &invoice.status) {
+        Some(status) => status,
+        None => return, // There's no status to update
+    };
 
-        let is_status_update = |status: InvoiceStatus| {
-            new_invoice_status_index >= status.index()
-                && invoice_status_index < new_invoice_status_index
-        };
-
-        if is_status_update(InvoiceStatus::Delivered) {
+    let current_datetime = Utc::now().naive_utc();
+    match (&invoice.status, new_status) {
+        // From New/Picked/Shipped to Delivered
+        (
+            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
+            UpdateInboundShipmentStatus::Delivered,
+        ) => {
             invoice.delivered_datetime = Some(current_datetime);
         }
 
-        if is_status_update(InvoiceStatus::Verified) {
+        // From New/Picked/Shipped/Delivered to Verified
+        (
+            InvoiceStatus::New
+            | InvoiceStatus::Picked
+            | InvoiceStatus::Shipped
+            | InvoiceStatus::Delivered,
+            UpdateInboundShipmentStatus::Verified,
+        ) => {
             invoice.verified_datetime = Some(current_datetime);
         }
+        _ => {}
     }
+}
+
+fn changed_status(
+    status: Option<UpdateInboundShipmentStatus>,
+    existing_status: &InvoiceStatus,
+) -> Option<UpdateInboundShipmentStatus> {
+    let new_status = match status {
+        Some(status) => status,
+        None => return None, // Status is not changing
+    };
+
+    if &new_status.full_status() == existing_status {
+        // The invoice already has this status, there's nothing to do.
+        return None;
+    }
+
+    Some(new_status)
 }
 
 pub fn generate_lines_and_stock_lines(
