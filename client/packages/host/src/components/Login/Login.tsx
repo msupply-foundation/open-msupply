@@ -66,6 +66,12 @@ export const Login = () => {
       );
       return { error: `${t('error.account-blocked')} ${formattedTime}` };
     }
+    if (error.message === 'ConnectionError') {
+      return {
+        error: t('error.connection-error'),
+        hint: t('error.connection-error-hint'),
+      };
+    }
     if (error.message === 'InvalidCredentials') {
       return { error: t('error.login') };
     }
@@ -74,8 +80,7 @@ export const Login = () => {
     }
 
     return {
-      error: t('error.connection-error'),
-      hint: 'Check your network connection',
+      error: t('error.authentication-error'),
     };
   }, [error, timeoutRemaining, customDate, t]);
 

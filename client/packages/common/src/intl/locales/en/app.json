@@ -48,6 +48,7 @@
   "error.sync-api-incompatible-hint": "The mSupply Central Server needs to be upgraded to a newer version before you can connect - please contact support@msupply.org.nz",
   "error.authentication-error": "The server has returned an error",
   "error.connection-error": "Unable to connect to server",
+  "error.connection-error-hint": "Check your network connection",
   "error.internal-error": "The server experienced a problem.",
   "error.integration-timeout-reached": "The central server took too long integrating pushed records. Please retry later.",
   "error.invalid-url": "Invalid url",

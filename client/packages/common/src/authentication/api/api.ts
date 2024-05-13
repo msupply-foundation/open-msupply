@@ -79,10 +79,15 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         if ('message' in error) {
           console.error(error.message);
         }
+
+        const errorMessage = error.message.includes('Network request failed')
+          ? 'ConnectionError'
+          : t('error.authentication-error');
+
         return {
           token: '',
           error: {
-            message: t('error.authentication-error'),
+            message: errorMessage,
             detail: error.message,
             stdError: error.stdError,
           },
