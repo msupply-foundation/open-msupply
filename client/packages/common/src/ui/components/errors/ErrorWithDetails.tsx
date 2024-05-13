@@ -18,22 +18,20 @@ export const ErrorWithDetails: React.FC<ErrorWithDetailsProps> = ({
   details,
   hint,
 }) => {
-  const sx = { color: 'inherit', fontSize: 'inherit' };
   const TooltipContents = () => {
     if (!details && !hint) {
       return null;
     }
 
+    const sx = { color: 'inherit', fontSize: 'inherit' };
+
     return (
       <Box display="flex" flexDirection="column" gap={1}>
-        {!!hint && <Typography sx={sx}>{hint}</Typography>}
-
-        {!!details && (
-          <Box>
-            <Typography sx={sx}>Error Details:</Typography>
-            <Typography sx={sx}>{details}</Typography>
-          </Box>
+        {!!hint && (
+          <Typography sx={{ fontWeight: 'bold', ...sx }}>{hint}</Typography>
         )}
+
+        {!!details && <Typography sx={sx}>{details}</Typography>}
       </Box>
     );
   };
