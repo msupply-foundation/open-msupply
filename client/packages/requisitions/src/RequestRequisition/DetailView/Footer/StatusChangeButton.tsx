@@ -144,7 +144,7 @@ export const StatusChangeButton = () => {
   const t = useTranslation(['app', 'replenishment']);
   const cantSend =
     lines?.totalCount === 0 ||
-    lines?.nodes.some(line => line.requestedQuantity === 0);
+    lines?.nodes.every(line => line.requestedQuantity === 0);
 
   const showPermissionDenied = useDisabledNotificationToast(
     t('auth.permission-denied')
