@@ -49,15 +49,16 @@ pub struct LoginService {}
 
 #[derive(Debug)]
 pub enum LoginFailure {
-    /// Either user does not exit or wrong password
+    /// Either user does not exist or wrong password
     InvalidCredentials,
     /// User account is blocked due to too many failed login attempts
     AccountBlocked(u64),
+    /// User account does not have login rights to any stores on this site
+    NoSiteAccess,
 }
 
 #[derive(Debug)]
 pub enum LoginError {
-    /// Either user does not exit or wrong password
     LoginFailure(LoginFailure),
     FailedToGenerateToken(JWTIssuingError),
     FetchUserError(FetchUserError),
@@ -154,6 +155,14 @@ impl LoginService {
                 });
             }
         };
+
+        // Check that the logged in user has access to at least one store on the site
+        match user_service.find_user(&user_account.id) {
+            Ok(Some(_)) => (),
+            Ok(None) => return Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess)),
+            Err(err) => return Err(err.into()),
+        };
+
         service_ctx.user_id = user_account.id.clone();
 
         activity_log_entry(
