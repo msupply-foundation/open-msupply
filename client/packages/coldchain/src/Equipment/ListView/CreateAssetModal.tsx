@@ -69,13 +69,7 @@ const InputRow = ({
 
 const parseInsertError = (e: unknown) => {
   const message = (e as Error).message;
-  if (
-    message.includes('DatabaseError(') ||
-    message.includes('UniqueViolation(') ||
-    message.includes('asset_asset_number_key') ||
-    message.includes('duplicate key') ||
-    message.includes('AssetNumberAlreadyExists')
-  ) {
+  if (message.includes('AssetNumberAlreadyExists')) {
     return 'error.cce-asset-number-already-used';
   }
 
