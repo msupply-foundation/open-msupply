@@ -60,7 +60,7 @@ pub fn linked_line_1() -> InvoiceLineRow {
         r.id = "linked_line_1".to_string();
         r.item_link_id = line_to_supply_q2().item_link_id;
         r.r#type = InvoiceLineType::UnallocatedStock;
-        r.pack_size = 1;
+        r.pack_size = 1.0;
         r.number_of_packs = 3.0;
     })
 }
@@ -80,7 +80,7 @@ pub fn linked_line_2() -> InvoiceLineRow {
         r.id = "linked_line_2".to_string();
         r.item_link_id = line_to_supply_q1().item_link_id;
         r.r#type = InvoiceLineType::UnallocatedStock;
-        r.pack_size = 1;
+        r.pack_size = 1.0;
         r.number_of_packs = 3.0;
     })
 }
@@ -90,7 +90,7 @@ pub fn linked_line_3() -> InvoiceLineRow {
         r.id = "linked_line_3".to_string();
         r.item_link_id = line_to_supply_q1().item_link_id;
         r.r#type = InvoiceLineType::StockOut;
-        r.pack_size = 3;
+        r.pack_size = 3.0;
         r.number_of_packs = 2.0;
     })
 }
@@ -109,7 +109,7 @@ pub fn linked_line_4() -> InvoiceLineRow {
         r.id = "linked_line_4".to_string();
         r.item_link_id = line_to_supply_q0().item_link_id;
         r.r#type = InvoiceLineType::UnallocatedStock;
-        r.pack_size = 2;
+        r.pack_size = 2.0;
         r.number_of_packs = 1.0;
     })
 }

@@ -15,7 +15,7 @@ use super::{
 pub struct InsertRepack {
     pub stock_line_id: String,
     pub number_of_packs: f64,
-    pub new_pack_size: i32,
+    pub new_pack_size: f64,
     pub new_location_id: Option<String>,
 }
 
@@ -147,7 +147,7 @@ mod test {
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = mock_stock_line_a().id.clone();
                     r.number_of_packs = 9.0;
-                    r.new_pack_size = 2;
+                    r.new_pack_size = 2.0;
                 })
             ),
             Err(ServiceError::CannotHaveFractionalPack)
@@ -168,7 +168,7 @@ mod test {
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = mock_stock_line_b().id.clone();
                     r.number_of_packs = 40.0;
-                    r.new_pack_size = 2;
+                    r.new_pack_size = 2.0;
                 })
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))
@@ -188,7 +188,7 @@ mod test {
             id: "stock_line_a".to_string(),
             item_link_id: "item_a".to_string(),
             store_id: mock_store_a().id.clone(),
-            pack_size: 5,
+            pack_size: 5.0,
             cost_price_per_pack: 0.20,
             sell_price_per_pack: 0.50,
             available_number_of_packs: 100.0,
@@ -250,7 +250,7 @@ mod test {
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = mock_stock_line_a().id.clone();
                     r.number_of_packs = 8.0;
-                    r.new_pack_size = 2;
+                    r.new_pack_size = 2.0;
                 }),
             )
             .unwrap();
@@ -279,7 +279,7 @@ mod test {
                 location_id: mock_stock_line_a().location_id,
                 batch: mock_stock_line_a().batch,
                 expiry_date: mock_stock_line_a().expiry_date,
-                pack_size: 2,
+                pack_size: 2.0,
                 cost_price_per_pack: mock_stock_line_a().cost_price_per_pack * 2.0,
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * 2.0,
                 total_before_tax: (mock_stock_line_a().cost_price_per_pack * 2.0) * 4.0,
@@ -322,7 +322,7 @@ mod test {
                 supplier_link_id: mock_stock_line_a().supplier_link_id,
                 available_number_of_packs: 4.0,
                 total_number_of_packs: 4.0,
-                pack_size: 2,
+                pack_size: 2.0,
                 cost_price_per_pack: mock_stock_line_a().cost_price_per_pack * 2.0,
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * 2.0,
                 ..Default::default()
@@ -344,7 +344,7 @@ mod test {
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = stock_line_a.id.clone();
                     r.number_of_packs = 6.0;
-                    r.new_pack_size = 6;
+                    r.new_pack_size = 6.0;
                 }),
             )
             .unwrap();
@@ -368,7 +368,7 @@ mod test {
                 id: new_stock.id.clone(),
                 available_number_of_packs: 5.0,
                 total_number_of_packs: 5.0,
-                pack_size: 6,
+                pack_size: 6.0,
                 cost_price_per_pack: stock_line_a.cost_price_per_pack * difference,
                 sell_price_per_pack: stock_line_a.sell_price_per_pack * difference,
                 ..stock_line_a.clone()
@@ -390,7 +390,7 @@ mod test {
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = mock_stock_line_a().id.clone();
                     r.number_of_packs = 22.0;
-                    r.new_pack_size = 11;
+                    r.new_pack_size = 11.0;
                 }),
             )
             .unwrap();
@@ -414,7 +414,7 @@ mod test {
                 id: new_stock.id.clone(),
                 available_number_of_packs: 2.0,
                 total_number_of_packs: 2.0,
-                pack_size: 11,
+                pack_size: 11.0,
                 cost_price_per_pack: mock_stock_line_a().cost_price_per_pack * difference,
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * difference,
                 ..mock_stock_line_a()
@@ -436,7 +436,7 @@ mod test {
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = mock_stock_line_si_d()[1].id.clone();
                     r.number_of_packs = 1.0;
-                    r.new_pack_size = 1;
+                    r.new_pack_size = 1.0;
                 }),
             )
             .unwrap();
@@ -462,7 +462,7 @@ mod test {
                 id: new_stock.id.clone(),
                 available_number_of_packs: 3.0,
                 total_number_of_packs: 3.0,
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: mock_stock_line_si_d()[1].cost_price_per_pack / 3.0,
                 sell_price_per_pack: (mock_stock_line_si_d()[1].sell_price_per_pack / 3.0).round(),
                 ..mock_stock_line_si_d()[1].clone()
@@ -484,7 +484,7 @@ mod test {
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = mock_stock_line_ci_c()[1].id.clone();
                     r.number_of_packs = 3.0;
-                    r.new_pack_size = 3;
+                    r.new_pack_size = 3.0;
                     r.new_location_id = Some(mock_location_1().id);
                 }),
             )
@@ -509,7 +509,7 @@ mod test {
                 location_id: Some(mock_location_1().id),
                 available_number_of_packs: 7.0,
                 total_number_of_packs: 7.0,
-                pack_size: 3,
+                pack_size: 3.0,
                 cost_price_per_pack: mock_stock_line_ci_c()[1].cost_price_per_pack * difference,
                 sell_price_per_pack: mock_stock_line_ci_c()[1].sell_price_per_pack * difference,
                 ..mock_stock_line_ci_c()[1].clone()

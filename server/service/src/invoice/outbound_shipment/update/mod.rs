@@ -340,7 +340,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.number_of_packs = 0.0;
             })
         }
@@ -555,7 +555,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.available_number_of_packs = 8.0;
                 r.total_number_of_packs = 10.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.item_link_id = mock_item_a().id;
             })
         }

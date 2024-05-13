@@ -38,7 +38,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.item_link_id = String::from("item_a");
                     r.item_name = String::from("Item A");
                     r.item_code = String::from("item_a_code");
-                    r.pack_size = 4;
+                    r.pack_size = 4.0;
                     r.cost_price_per_pack = 43.0;
                     r.sell_price_per_pack = 32.0;
                     r.total_before_tax = 278.26;
@@ -52,7 +52,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.item_link_id = String::from("item_a");
                     r.store_id = String::from("store_c");
                     r.available_number_of_packs = 20.0;
-                    r.pack_size = 4;
+                    r.pack_size = 4.0;
                     r.cost_price_per_pack = 43.0;
                     r.sell_price_per_pack = 32.0;
                     r.total_number_of_packs = 30.0;
@@ -66,7 +66,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.item_link_id = String::from("item_a");
                     r.item_name = String::from("Item A");
                     r.item_code = String::from("item_a_code");
-                    r.pack_size = 2;
+                    r.pack_size = 2.0;
                     r.cost_price_per_pack = 41.0;
                     r.sell_price_per_pack = 21.0;
                     r.total_before_tax = 210.0;
@@ -79,7 +79,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.item_link_id = String::from("item_a");
                     r.store_id = String::from("store_c");
                     r.available_number_of_packs = 10.0;
-                    r.pack_size = 2;
+                    r.pack_size = 2.0;
                     r.cost_price_per_pack = 41.0;
                     r.sell_price_per_pack = 21.0;
                     r.total_number_of_packs = 12.0;
