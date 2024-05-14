@@ -15,7 +15,6 @@ import {
   CircularProgress,
   useNotification,
   Tooltip,
-  useDebounceCallback,
   NumericTextInput,
   BufferedTextInput,
 } from '@openmsupply-client/common';
@@ -76,14 +75,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     }
   };
 
-  console.log('draft', draft);
-
-  const debouncedUpdate = useDebounceCallback(
-    (patch: Partial<StockLineRowFragment>) => onUpdate(patch),
-    [onUpdate],
-    500
-  );
-
   useEffect(() => {
     function handleKeyDown(this: HTMLElement, ev: KeyboardEvent) {
       if (ev.ctrlKey && ev.key === 's') {
@@ -133,7 +124,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
               autoFocus={!packEditable}
               defaultValue={draft.costPricePerPack}
               onChangeNumber={costPricePerPack =>
-                debouncedUpdate({ costPricePerPack })
+                onUpdate({ costPricePerPack })
               }
             />
           }
@@ -144,7 +135,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
             <CurrencyInput
               defaultValue={draft.sellPricePerPack}
               onChangeNumber={sellPricePerPack =>
-                debouncedUpdate({ sellPricePerPack })
+                onUpdate({ sellPricePerPack })
               }
             />
           }
