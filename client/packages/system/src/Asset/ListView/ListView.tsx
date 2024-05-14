@@ -15,6 +15,7 @@ import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
+import { EditableInput } from './EditableInput';
 
 const AssetListComponent: FC = () => {
   const {
@@ -60,7 +61,7 @@ const AssetListComponent: FC = () => {
         label: 'label.manufacturer',
       },
       {
-        Cell: TooltipTextCell,
+        Cell: EditableInput,
         key: 'model',
         label: 'label.model',
         width: 200,
@@ -87,6 +88,8 @@ const AssetListComponent: FC = () => {
     [sortBy]
   );
 
+  const handleClick = () => {};
+
   return (
     <>
       <AssetCatalogueItemImportModal
@@ -103,6 +106,9 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
+        onRowClick={() => {
+          handleClick;
+        }}
         // onRowClick={row => {
         //   navigate(`/catalogue/assets/${row.id}`);
         // }}
