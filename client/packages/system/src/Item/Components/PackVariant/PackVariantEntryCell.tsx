@@ -66,15 +66,17 @@ export const PackVariantEntryCell =
         <NumericTextInput
           focusOnRender={shouldFocusInput}
           min={1}
+          defaultValue={1}
           value={packSize}
           onChange={newValue => {
             // newValue could be undefined, while the user is inputting
             // (e.g. they clear the field to enter a new pack size)
-            // In that case, we temporarily update the column value to 0 (so we don't have any `NaN`s)
+            // In that case, we keep the packSize local state as undefined
+            // but set the row value to 1 (so we always have valid state to save)
 
-            // NumericTextInput onBlur will reset the value to our min (1) if the field is empty!
+            // NumericTextInput will reset to our default (1) on blur if the field is empty!
             setPackSize(newValue);
-            updater({ ...rowData, [column.key]: newValue || 0 });
+            updater({ ...rowData, [column.key]: newValue ?? 1 });
           }}
           disabled={disabled}
         />
