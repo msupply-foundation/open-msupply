@@ -864,6 +864,9 @@ mod test {
             .find_one_by_id(&stock_line_id)
             .unwrap();
 
+        // Ensure delivered time not updated by status change to verified
+        assert_eq!(invoice.delivered_datetime, None);
+
         assert!(invoice.verified_datetime.unwrap() > now);
         assert!(invoice.verified_datetime.unwrap() < end_time);
         assert_eq!(
