@@ -177,6 +177,7 @@ export const isOutboundDisabled = (
   );
 };
 
+/** Returns true if the inbound shipment cannot be edited */
 export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   const isManuallyCreated = !inbound.linkedShipment?.id;
   if (isManuallyCreated) {
@@ -185,12 +186,32 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   switch (inbound.status) {
     case InvoiceNodeStatus.New:
     case InvoiceNodeStatus.Allocated:
+      return false;
     case InvoiceNodeStatus.Picked:
     case InvoiceNodeStatus.Shipped:
-      return false;
     case InvoiceNodeStatus.Delivered:
     case InvoiceNodeStatus.Verified:
       return true;
+    default:
+      return noOtherVariants(inbound.status);
+  }
+};
+
+/** Returns true if the inbound shipment ban be put on hold */
+export const isInboundHoldable = (inbound: InboundRowFragment): boolean => {
+  const isManuallyCreated = !inbound.linkedShipment?.id;
+  if (isManuallyCreated) {
+    return inbound.status !== InvoiceNodeStatus.Verified;
+  }
+  switch (inbound.status) {
+    case InvoiceNodeStatus.New:
+    case InvoiceNodeStatus.Allocated:
+    case InvoiceNodeStatus.Picked:
+    case InvoiceNodeStatus.Shipped:
+      return true;
+    case InvoiceNodeStatus.Delivered:
+    case InvoiceNodeStatus.Verified:
+      return false;
     default:
       return noOtherVariants(inbound.status);
   }
