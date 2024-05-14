@@ -30,12 +30,14 @@ import { StyledInputRow } from './StyledInputRow';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
+  loading: boolean;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   plugins?: JSX.Element[];
   packEditable?: boolean;
 }
 export const StockLineForm: FC<StockLineFormProps> = ({
   draft,
+  loading,
   onUpdate,
   plugins,
   packEditable,
@@ -74,6 +76,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     }
   };
 
+  console.log('draft', draft);
+
   const debouncedUpdate = useDebounceCallback(
     (patch: Partial<StockLineRowFragment>) => onUpdate(patch),
     [onUpdate],
@@ -89,6 +93,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     document.body.addEventListener('keydown', handleKeyDown);
     return () => document.body.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  if (loading) return <p>LOADING....</p>;
 
   return (
     <Grid
