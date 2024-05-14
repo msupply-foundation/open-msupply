@@ -156,7 +156,10 @@ impl<'a> UserAccountService<'a> {
             )
     }
 
-    pub fn find_user(&self, user_id: &str) -> Result<Option<User>, RepositoryError> {
+    pub fn find_user_active_on_this_site(
+        &self,
+        user_id: &str,
+    ) -> Result<Option<User>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(self.connection);
         let site_id = key_value_store
             .get_i32(KeyType::SettingsSyncSiteId)?
