@@ -10,6 +10,7 @@ pub fn mock_store_a() -> StoreRow {
         s.id = "store_a".to_string();
         s.name_id = "name_store_a".to_string();
         s.code = "code".to_string();
+        s.site_id = 100;
         s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
     })
 }
