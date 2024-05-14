@@ -267,10 +267,9 @@ export const RequestLineEditForm = ({
                     )}
                     width={100}
                     onChange={quantity => {
-                      if (quantity === undefined) return;
                       update({
                         requestedQuantity:
-                          quantity * currentItem.defaultPackSize,
+                          (quantity ?? 0) * currentItem.defaultPackSize,
                       });
                     }}
                   />
