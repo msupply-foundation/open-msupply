@@ -197,25 +197,9 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   }
 };
 
-/** Returns true if the inbound shipment ban be put on hold */
-export const isInboundHoldable = (inbound: InboundRowFragment): boolean => {
-  const isManuallyCreated = !inbound.linkedShipment?.id;
-  if (isManuallyCreated) {
-    return inbound.status !== InvoiceNodeStatus.Verified;
-  }
-  switch (inbound.status) {
-    case InvoiceNodeStatus.New:
-    case InvoiceNodeStatus.Allocated:
-    case InvoiceNodeStatus.Picked:
-    case InvoiceNodeStatus.Shipped:
-      return true;
-    case InvoiceNodeStatus.Delivered:
-    case InvoiceNodeStatus.Verified:
-      return false;
-    default:
-      return noOtherVariants(inbound.status);
-  }
-};
+/** Returns true if the inbound shipment can be put on hold */
+export const isInboundHoldable = (inbound: InboundRowFragment): boolean =>
+  inbound.status !== InvoiceNodeStatus.Verified;
 
 export const isInboundReturnDisabled = (
   inboundReturn: InboundReturnRowFragment
