@@ -68,8 +68,13 @@ export const PackVariantEntryCell =
           min={1}
           value={packSize}
           onChange={newValue => {
+            // newValue could be undefined, while the user is inputting
+            // (e.g. they clear the field to enter a new pack size)
+            // In that case, we temporarily update the column value to 0 (so we don't have any `NaN`s)
+
+            // NumericTextInput onBlur will reset the value to our min (1) if the field is empty!
             setPackSize(newValue);
-            updater({ ...rowData, [column.key]: newValue || 1 });
+            updater({ ...rowData, [column.key]: newValue || 0 });
           }}
           disabled={disabled}
         />
