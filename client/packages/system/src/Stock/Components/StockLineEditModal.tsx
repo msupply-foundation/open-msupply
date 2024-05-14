@@ -12,7 +12,7 @@ import {
   usePluginElements,
   PluginEventListener,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment, useStock } from '../api';
+import { StockLineRowFragment, useStock, useStockLine } from '../api';
 import { ActivityLogList } from '../../ActivityLog';
 import { StockLineForm } from './StockLineForm';
 import { InventoryAdjustmentForm } from './InventoryAdjustment';
@@ -21,42 +21,8 @@ import { LedgerForm } from './Ledger';
 interface StockLineEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-
   stockLine: StockLineRowFragment;
 }
-
-interface UseDraftStockLineControl {
-  draft: StockLineRowFragment;
-  onUpdate: (patch: Partial<StockLineRowFragment>) => void;
-  onSave: () => Promise<void>;
-  isLoading: boolean;
-}
-
-const useDraftStockLine = (
-  seed: StockLineRowFragment
-): UseDraftStockLineControl => {
-  const [stockLine, setStockLine] = useState<StockLineRowFragment>({ ...seed });
-  const { mutate, isLoading } = useStock.line.update();
-
-  useEffect(() => {
-    setStockLine(seed);
-  }, [seed]);
-
-  const onUpdate = (patch: Partial<StockLineRowFragment>) => {
-    const newStockLine = { ...stockLine, ...patch };
-    if (ObjUtils.isEqual(stockLine, newStockLine)) return;
-    setStockLine(newStockLine);
-  };
-
-  const onSave = async () => mutate(stockLine);
-
-  return {
-    draft: stockLine,
-    onUpdate,
-    onSave,
-    isLoading,
-  };
-};
 
 export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   stockLine,
@@ -70,7 +36,12 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
     message: t('messages.confirm-save-stock-line'),
   });
 
-  const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
+  const {
+    query: { isLoading },
+    draft,
+    updatePatch,
+    update,
+  } = useStockLine(stockLine.id);
   const { dispatchEvent, addEventListener, removeEventListener } =
     usePluginEvents();
   const [hasChanged, setHasChanged] = useState(false);
@@ -82,13 +53,18 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   const tabs = [
     {
       Component: (
-        <StockLineForm draft={draft} onUpdate={onUpdate} plugins={plugins} />
+        <StockLineForm
+          loading={isLoading}
+          draft={draft}
+          onUpdate={updatePatch}
+          plugins={plugins}
+        />
       ),
       value: 'label.details',
     },
     {
       Component: (
-        <InventoryAdjustmentForm stockLine={draft} onUpdate={onUpdate} />
+        <InventoryAdjustmentForm stockLine={draft} onUpdate={updatePatch} />
       ),
       value: 'label.adjust',
     },
@@ -127,7 +103,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
           onClick={() =>
             getConfirmation({
               onConfirm: async () => {
-                await onSave();
+                await update();
                 dispatchEvent('onSaveStockEditForm', new Event(draft.id));
                 onClose();
               },
