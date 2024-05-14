@@ -12,6 +12,7 @@ import {
   NumberCell,
   CurrencyCell,
   ColumnDescription,
+  NumUtils,
 } from '@openmsupply-client/common';
 import {
   getPackVariantCell,
@@ -205,7 +206,10 @@ export const usePrescriptionColumn = ({
             const { lines } = rowData;
             return ArrayUtils.getUnitQuantity(lines);
           } else {
-            return rowData.packSize * rowData.numberOfPacks;
+            return NumUtils.floatMultiply(
+              rowData.packSize,
+              rowData.numberOfPacks
+            );
           }
         },
         getSortValue: rowData => {
@@ -213,7 +217,10 @@ export const usePrescriptionColumn = ({
             const { lines } = rowData;
             return ArrayUtils.getUnitQuantity(lines);
           } else {
-            return rowData.packSize * rowData.numberOfPacks;
+            return NumUtils.floatMultiply(
+              rowData.packSize,
+              rowData.numberOfPacks
+            );
           }
         },
       },

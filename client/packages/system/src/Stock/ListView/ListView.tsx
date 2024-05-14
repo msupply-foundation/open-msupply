@@ -17,6 +17,7 @@ import {
   ColumnDescription,
   usePluginColumns,
   TooltipTextCell,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { RepackModal, StockLineEditModal } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
@@ -168,7 +169,7 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          rowData.totalNumberOfPacks * rowData.packSize,
+          NumUtils.floatMultiply(rowData.totalNumberOfPacks, rowData.packSize),
         label: 'label.soh',
         description: 'description.soh',
         sortable: false,
