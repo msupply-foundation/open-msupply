@@ -36,7 +36,7 @@ const defaultDraftStockLine = {
 };
 
 export function useStockLine(id?: string) {
-  const [patch, setPatch] = useState<Partial<DraftStockLine>>({ id: id ?? '' });
+  const [patch, setPatch] = useState<Partial<DraftStockLine>>({});
   const { data, isLoading, error } = useGet(id ?? '');
   const { mutateAsync: createMutation } = useCreate();
   const { mutateAsync: updateMutation } = useUpdate(id ?? '');
@@ -149,16 +149,18 @@ const useUpdate = (id: string) => {
     sellPricePerPack,
     costPricePerPack,
     onHold,
+    location,
   }: Partial<DraftStockLine>) => {
     const result = await stockApi.updateStockLine({
       input: {
+        id,
         barcode,
         batch,
         costPricePerPack,
         expiryDate,
-        id,
         onHold,
         sellPricePerPack,
+        location: setNullableInput('id', location),
       },
       storeId,
     });
