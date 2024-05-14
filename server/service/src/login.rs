@@ -487,7 +487,9 @@ mod test {
 
     use httpmock::{Method::POST, MockServer};
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, EqualFilter, UserFilter, UserPermissionFilter,
+        mock::{mock_store_a, MockDataInserts},
+        test_db::setup_all,
+        EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
     use util::assert_matches;
@@ -522,6 +524,8 @@ mod test {
         let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();
         let expected_user_info = expected.user_info.unwrap();
 
+        let key_value_store = KeyValueStoreRepository::new(&context.connection);
+
         {
             let mock_server = MockServer::start();
             mock_server.mock(|when, then| {
@@ -530,6 +534,10 @@ mod test {
             });
 
             let central_server_url = mock_server.base_url();
+
+            key_value_store
+                .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+                .unwrap();
 
             LoginService::login(
                 &service_provider,
@@ -638,6 +646,38 @@ mod test {
             assert_matches!(
                 result,
                 Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
+        }
+        // If login is correct but user is not active on this site, get NoSiteAccess error
+        {
+            // Login user only has access to store_a, which has site_id 100
+            key_value_store
+                .set_i32(KeyType::SettingsSyncSiteId, Some(1))
+                .unwrap();
+
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(200).body(LOGIN_V4_RESPONSE_1);
+            });
+
+            let central_server_url = mock_server.base_url();
+
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: "Gryffindor".to_string(),
+                    password: "password".to_string(),
+                    central_server_url,
+                },
+                0,
+            )
+            .await;
+
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess))
             );
         }
         // If central server is not accessible after trying to login with old password, make sure old password does not work
