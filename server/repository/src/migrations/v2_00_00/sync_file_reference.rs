@@ -17,7 +17,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             'DOWNLOAD'
         );
         "#,
-    );
+    )?;
     const SYNC_FILE_STATUS_ENUM_TYPE: &str = if cfg!(feature = "postgres") {
         "sync_file_status"
     } else {

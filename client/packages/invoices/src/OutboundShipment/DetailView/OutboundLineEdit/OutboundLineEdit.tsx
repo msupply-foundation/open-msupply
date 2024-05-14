@@ -244,6 +244,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           packSizeController={packSizeController}
           onChangeItem={(item: ItemRowFragment | null) => {
             if (status === InvoiceNodeStatus.New) setIsDirty(true);
+            setIsAutoAllocated(false);
             setCurrentItem(item);
           }}
           item={currentItem}

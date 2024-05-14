@@ -2253,7 +2253,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Int']['input'];
   sellPricePerPack: Scalars['Float']['input'];
-  tax?: InputMaybe<Scalars['Float']['input']>;
+  taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -2288,7 +2288,7 @@ export type InsertInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<Scalars['Float']['input']>;
+  taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax: Scalars['Float']['input'];
 };
 
@@ -2363,7 +2363,7 @@ export type InsertOutboundShipmentLineInput = {
   invoiceId: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
-  tax?: InputMaybe<Scalars['Float']['input']>;
+  taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -2398,7 +2398,7 @@ export type InsertOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<Scalars['Float']['input']>;
+  taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax: Scalars['Float']['input'];
 };
 
@@ -3191,6 +3191,7 @@ export type LocationFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type LocationInUse = DeleteLocationErrorInterface & {
@@ -4893,7 +4894,6 @@ export type Queries = {
   syncSettings?: Maybe<SyncSettingsNode>;
   /** Query omSupply "temperature_breach" entries */
   temperatureBreaches: TemperatureBreachesResponse;
-  temperatureChart: TemperatureChartResponse;
   /** Query omSupply "temperature_log" entries */
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
@@ -5421,15 +5421,6 @@ export type QueriesTemperatureBreachesArgs = {
 };
 
 
-export type QueriesTemperatureChartArgs = {
-  filter?: InputMaybe<TemperatureLogFilterInput>;
-  fromDatetime: Scalars['DateTime']['input'];
-  numberOfDataPoints: Scalars['Int']['input'];
-  storeId: Scalars['String']['input'];
-  toDatetime: Scalars['DateTime']['input'];
-};
-
-
 export type QueriesTemperatureLogsArgs = {
   filter?: InputMaybe<TemperatureLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -5848,12 +5839,6 @@ export type ReturnReasonSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ReturnReasonSortFieldInput;
-};
-
-export type SensorAxisNode = {
-  __typename: 'SensorAxisNode';
-  points: Array<TemperaturePointNode>;
-  sensor?: Maybe<SensorNode>;
 };
 
 export type SensorConnector = {
@@ -6406,13 +6391,6 @@ export type TemperatureBreachSortInput = {
 
 export type TemperatureBreachesResponse = TemperatureBreachConnector;
 
-export type TemperatureChartNode = {
-  __typename: 'TemperatureChartNode';
-  sensors: Array<SensorAxisNode>;
-};
-
-export type TemperatureChartResponse = TemperatureChartNode;
-
 export type TemperatureExcursionConnector = {
   __typename: 'TemperatureExcursionConnector';
   nodes: Array<TemperatureExcursionNode>;
@@ -6478,13 +6456,6 @@ export type TemperatureNotificationConnector = {
 };
 
 export type TemperatureNotificationsResponse = TemperatureNotificationConnector;
-
-export type TemperaturePointNode = {
-  __typename: 'TemperaturePointNode';
-  breachIds?: Maybe<Array<Scalars['String']['output']>>;
-  midPoint: Scalars['DateTime']['output'];
-  temperature?: Maybe<Scalars['Float']['output']>;
-};
 
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename: 'TokenExpired';

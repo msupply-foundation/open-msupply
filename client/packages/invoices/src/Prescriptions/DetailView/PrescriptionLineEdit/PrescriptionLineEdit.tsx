@@ -215,6 +215,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
           packSizeController={packSizeController}
           onChangeItem={(item: ItemRowFragment | null) => {
             if (status === InvoiceNodeStatus.New) setIsDirty(true);
+            setIsAutoAllocated(false);
             setCurrentItem(item);
           }}
           item={currentItem}

@@ -117,7 +117,7 @@
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
     "@capacitor/core": "^5.2.2",
-    "@mui/x-date-pickers": "^6.10.2",
+    "@mui/x-date-pickers": "^7.3.2",
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",
     "lerna": "^7.1.4",

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTheme } from '@common/styles';
 import { CircleAlertIcon } from '@common/icons';
-import { BreachDot, Log } from './types';
+import { BreachDot, DataPoint } from './types';
 
 export const BreachIndicator = ({
   cx,
@@ -11,19 +11,19 @@ export const BreachIndicator = ({
 }: {
   cx: number;
   cy: number;
-  payload: Log;
+  payload: DataPoint;
   setCurrentBreach: (breach: BreachDot) => void;
 }) => {
   const theme = useTheme();
 
-  if (!payload.breach) return null;
-  const { breach } = payload;
+  const { breachId } = payload;
+  if (!breachId) return null;
 
   return (
     <CircleAlertIcon
       onClick={event =>
         setCurrentBreach({
-          breach,
+          breachId,
           position: event.currentTarget.getBoundingClientRect(),
         })
       }

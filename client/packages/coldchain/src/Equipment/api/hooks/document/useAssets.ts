@@ -6,7 +6,7 @@ export const useAssets = () => {
     filters: [
       { key: 'notes' },
       { key: 'model' },
-      { key: 'code' },
+      { key: 'assetNumber' },
       { key: 'installationDate', condition: 'equalTo' },
       { key: 'replacementDate', condition: 'equalTo' },
       { key: 'serialNumber' },

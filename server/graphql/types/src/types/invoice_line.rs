@@ -132,7 +132,7 @@ impl InvoiceLineNode {
     }
 
     pub async fn tax_percentage(&self) -> &Option<f64> {
-        &self.row().tax
+        &self.row().tax_percentage
     }
     pub async fn foreign_currency_price_before_tax(&self) -> &Option<f64> {
         &self.row().foreign_currency_price_before_tax
@@ -344,7 +344,7 @@ mod test {
                         record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
-                            r.tax = Some(10.0);
+                            r.tax_percentage = Some(10.0);
                             r.r#type = InvoiceLineRowType::StockIn
                         })
                     }),
@@ -356,7 +356,7 @@ mod test {
                         record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
-                            r.tax = Some(5.0);
+                            r.tax_percentage = Some(5.0);
                             r.r#type = InvoiceLineRowType::StockOut
                         })
                     }),
@@ -368,7 +368,7 @@ mod test {
                         record.invoice_line_row = inline_init(|r: &mut InvoiceLineRow| {
                             r.total_before_tax = 1.0;
                             r.total_after_tax = 2.0;
-                            r.tax = None;
+                            r.tax_percentage = None;
                             r.r#type = InvoiceLineRowType::Service
                         })
                     }),

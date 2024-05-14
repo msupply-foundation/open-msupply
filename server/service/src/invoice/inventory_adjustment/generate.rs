@@ -58,7 +58,7 @@ pub fn generate(
         colour: None,
         comment: None,
         their_reference: None,
-        tax: None,
+        tax_percentage: None,
         name_store_id: None,
         transport_reference: None,
         allocated_datetime: None,
@@ -97,7 +97,7 @@ pub fn generate(
         sell_price_per_pack,
         total_before_tax: 0.0,
         total_after_tax: 0.0,
-        tax: None,
+        tax_percentage: None,
         r#type: match adjustment_type {
             AdjustmentType::Addition => InvoiceLineRowType::StockIn,
             AdjustmentType::Reduction => InvoiceLineRowType::StockOut,
