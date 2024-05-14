@@ -49,14 +49,7 @@ export const PackVariantEntryCell =
       }
     }, []);
 
-    const updater = useDebounceCallback(
-      (newValue: number) => {
-        setPackSize(newValue);
-        column.setter({ ...rowData, [column.key]: newValue });
-      },
-      [column.setter],
-      500
-    );
+    const updater = useDebounceCallback(column.setter, [column.setter], 250);
     const disabled = isDisabled || getIsDisabled?.(rowData) || false;
 
     // Make sure manual pack size is auto selected on load if packSize does not
@@ -72,14 +65,11 @@ export const PackVariantEntryCell =
       return (
         <NumericTextInput
           focusOnRender={shouldFocusInput}
+          min={1}
           value={packSize}
           onChange={newValue => {
-            // newValue could be undefined. Here we (briefly) set packSize to the newValue
-            // regardless of if it is undefined, to allow e.g. changing 1 to 2
             setPackSize(newValue);
-
-            // Updater is debounced, but will set an undefined packSize back to 1
-            updater(newValue || 1);
+            updater({ ...rowData, [column.key]: newValue || 1 });
           }}
           disabled={disabled}
         />
@@ -126,7 +116,7 @@ export const PackVariantEntryCell =
             setPackSize(newPackSize);
             setIsEnterPackSize(isEnterPackSizeSelected);
             setShouldFocusInput(isEnterPackSizeSelected);
-            updater(newPackSize);
+            updater({ ...rowData, [column.key]: newPackSize });
           }}
           disabled={disabled}
         />
