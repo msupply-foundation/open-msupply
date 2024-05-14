@@ -147,6 +147,10 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   );
 
   const handleIssueQuantityChange = (quantity: number | undefined) => {
+    // this method is also called onBlur... check that there actually has been a change
+    // in quantity (to prevent triggering auto allocation if only focus has moved)
+    if (quantity === issueQuantity) return;
+
     setIssueQuantity(quantity ?? 0);
     setOkDisabled(true);
     debouncedAllocate(

@@ -306,7 +306,7 @@ fn generate_stock_line_update(
             sell_price_per_pack: stock_line.sell_price_per_pack,
             total_before_tax: 0.0,
             total_after_tax: 0.0,
-            tax: None,
+            tax_percentage: None,
             number_of_packs: quantity_change,
             note: stock_line.note.clone(),
             inventory_adjustment_reason_id: stocktake_line
@@ -417,7 +417,7 @@ fn generate_new_stock_line(
             sell_price_per_pack,
             total_before_tax: 0.0,
             total_after_tax: 0.0,
-            tax: None,
+            tax_percentage: None,
             number_of_packs: counted_number_of_packs,
             note: row.note,
             inventory_adjustment_reason_id: row.inventory_adjustment_reason_id,
@@ -650,7 +650,7 @@ fn generate(
         colour: None,
         requisition_id: None,
         linked_invoice_id: None,
-        tax: None,
+        tax_percentage: None,
         clinician_link_id: None,
         original_shipment_id: None,
     };

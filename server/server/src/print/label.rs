@@ -142,7 +142,7 @@ impl HostResponse {
             label_length: 0,
         };
         let lines: Vec<&str> = data.split('\n').collect();
-        if lines.len() != 3 {
+        if lines.len() < 3 {
             return invalid_response;
         }
         let line1_parts: Vec<&str> = lines[0].split(',').collect();

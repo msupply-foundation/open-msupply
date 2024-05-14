@@ -55,7 +55,7 @@ pub fn generate(
         colour: None,
         comment: None,
         their_reference: None,
-        tax: None,
+        tax_percentage: None,
         transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
@@ -81,7 +81,7 @@ pub fn generate(
             number_of_packs: line.number_of_packs.clone(),
             note: line.note.clone(),
             r#type: Some(StockOutType::OutboundReturn),
-            tax: None,
+            tax_percentage: None,
             total_before_tax: None,
         })
         .collect();

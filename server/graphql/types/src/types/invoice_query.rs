@@ -244,7 +244,7 @@ impl InvoiceNode {
             stock_total_after_tax: 0.0,
             service_total_before_tax: 0.0,
             service_total_after_tax: 0.0,
-            tax_percentage: self.row().tax,
+            tax_percentage: self.row().tax_percentage,
             foreign_currency_total_after_tax: None,
         };
 
@@ -256,7 +256,7 @@ impl InvoiceNode {
     }
 
     pub async fn tax_percentage(&self) -> &Option<f64> {
-        &self.row().tax
+        &self.row().tax_percentage
     }
 
     pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
@@ -537,7 +537,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.total_after_tax = 110.0;
                 r.total_before_tax = 100.0;
-                r.tax = Some(10.0);
+                r.tax_percentage = Some(10.0);
                 r.r#type = InvoiceLineRowType::Service;
             })
         }
@@ -548,7 +548,7 @@ mod test {
                 r.item_link_id = mock_item_b().id;
                 r.total_after_tax = 50.0;
                 r.total_before_tax = 50.0;
-                r.tax = None;
+                r.tax_percentage = None;
                 r.r#type = InvoiceLineRowType::StockIn;
             })
         }
@@ -559,7 +559,7 @@ mod test {
                 r.item_link_id = mock_item_c().id;
                 r.total_after_tax = 105.0;
                 r.total_before_tax = 100.0;
-                r.tax = Some(5.0);
+                r.tax_percentage = Some(5.0);
                 r.r#type = InvoiceLineRowType::StockOut;
             })
         }

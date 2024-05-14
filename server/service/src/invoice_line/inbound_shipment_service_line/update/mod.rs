@@ -268,7 +268,7 @@ mod test {
                 u.item_link_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 1.0;
-                u.tax = Some(10.0);
+                u.tax_percentage = Some(10.0);
                 u.note = Some("note".to_string());
                 u
             })

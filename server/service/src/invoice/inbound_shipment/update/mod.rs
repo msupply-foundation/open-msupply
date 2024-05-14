@@ -92,7 +92,11 @@ pub fn update_inbound_shipment(
 
             if let Some(update_tax) = update_tax_for_lines {
                 for line in update_tax {
-                    invoice_line_repository.update_tax(&line.id, line.tax, line.total_after_tax)?;
+                    invoice_line_repository.update_tax(
+                        &line.id,
+                        line.tax_percentage,
+                        line.total_after_tax,
+                    )?;
                 }
             }
 
@@ -441,7 +445,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.tax = Some(0.0);
+                u.tax_percentage = Some(0.0);
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
@@ -493,7 +497,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.tax = Some(10.0);
+                u.tax_percentage = Some(10.0);
                 u.user_id = Some(mock_user_account_a().id);
                 u.status = InvoiceRowStatus::Delivered;
                 u
