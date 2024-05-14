@@ -64,7 +64,7 @@ export interface Column<T extends RecordWithId> {
   key: keyof T | GenericColumnKey | string;
   accessor: ColumnDataAccessor<T>;
 
-  label: LocaleKey | '';
+  label: LocaleKey | '' | number;
   labelProps: Record<string, unknown>;
   description: LocaleKey | '';
 
