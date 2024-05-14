@@ -157,7 +157,7 @@ impl LoginService {
         };
 
         // Check that the logged in user has access to at least one store on the site
-        match user_service.find_user(&user_account.id) {
+        match user_service.find_user_active_on_this_site(&user_account.id) {
             Ok(Some(_)) => (),
             Ok(None) => return Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess)),
             Err(err) => return Err(err.into()),

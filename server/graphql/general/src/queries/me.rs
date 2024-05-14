@@ -25,7 +25,7 @@ pub fn me(ctx: &Context<'_>) -> Result<UserResponse> {
     let service_provider = ctx.service_provider();
     let service_ctx = service_provider.context("".to_string(), user.user_id.clone())?;
     let user_service = UserAccountService::new(&service_ctx.connection);
-    let user = match user_service.find_user(&user.user_id) {
+    let user = match user_service.find_user_active_on_this_site(&user.user_id) {
         Ok(Some(user)) => user,
         Ok(None) => {
             return Err(StandardGraphqlError::InternalError(

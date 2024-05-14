@@ -58,7 +58,7 @@ pub fn validate_access(
 ) -> Result<(String, String), AuthError> {
     let user_service = UserAccountService::new(&service_context.connection);
     let validated_user = validate_auth(auth_data, &token)?;
-    let store_id = match user_service.find_user(&validated_user.user_id)? {
+    let store_id = match user_service.find_user_active_on_this_site(&validated_user.user_id)? {
         Some(user) => {
             let store_id = match user.default_store() {
                 Some(store) => store.store_row.id.clone(),
