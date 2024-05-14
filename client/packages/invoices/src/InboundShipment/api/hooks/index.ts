@@ -33,6 +33,7 @@ export const useInbound = {
     addFromMasterList: Utils.useAddFromMasterList,
     api: Utils.useInboundApi,
     isDisabled: Utils.useIsInboundDisabled,
+    isHoldable: Utils.useIsInboundHoldable,
     isStatusChangeDisabled: Utils.useIsStatusChangeDisabled,
     selectedLines: Utils.useSelectedLines,
   },
