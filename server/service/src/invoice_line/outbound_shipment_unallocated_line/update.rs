@@ -72,7 +72,7 @@ fn generate(
     }: UpdateOutboundShipmentUnallocatedLine,
     mut line: InvoiceLineRow,
 ) -> Result<InvoiceLineRow, UpdateOutboundShipmentUnallocatedLineError> {
-    line.number_of_packs = quantity as f64;
+    line.number_of_packs = quantity;
 
     Ok(line)
 }
