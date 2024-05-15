@@ -80,7 +80,7 @@ pub fn generate(
             stock_line_id: line.stock_line_id.clone(),
             number_of_packs: line.number_of_packs.clone(),
             note: line.note.clone(),
-            r#type: Some(StockOutType::OutboundReturn),
+            r#type: StockOutType::OutboundReturn,
             tax_percentage: None,
             total_before_tax: None,
         })

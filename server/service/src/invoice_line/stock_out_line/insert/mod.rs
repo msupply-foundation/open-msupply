@@ -11,7 +11,7 @@ use super::StockOutType;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct InsertStockOutLine {
     pub id: String,
-    pub r#type: Option<StockOutType>,
+    pub r#type: StockOutType,
     pub invoice_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
@@ -25,7 +25,6 @@ pub enum InsertStockOutLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
-    NoInvoiceType,
     InvoiceTypeDoesNotMatch,
     NotThisStoreInvoice,
     CannotEditFinalised,
@@ -120,7 +119,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -135,7 +134,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound shipment line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = "new invoice id".to_string();
                     r.number_of_packs = 1.0;
                     r.stock_line_id = mock_item_b_lines()[0].id.clone();
@@ -150,7 +149,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = "invalid".to_string();
                     r.number_of_packs = 1.0;
                 }),
@@ -165,7 +164,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.stock_line_id = "item_b_line_a".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
@@ -182,7 +181,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -199,7 +198,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -216,7 +215,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -235,7 +234,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -255,7 +254,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -298,7 +297,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -349,7 +348,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new allocated invoice line".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -389,7 +388,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new picked invoice line".to_string();
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -428,7 +427,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new prescription line id".to_string();
-                    r.r#type = Some(StockOutType::Prescription);
+                    r.r#type = StockOutType::Prescription;
                     r.invoice_id = mock_prescription_a().id;
                     r.stock_line_id = mock_stock_line_a().id.clone();
                     r.number_of_packs = 1.0;

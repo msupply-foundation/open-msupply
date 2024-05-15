@@ -151,7 +151,7 @@ fn generate_new_line(
     let stock_line_row = &stock_line.stock_line_row;
     InsertStockOutLine {
         id: uuid::uuid(),
-        r#type: Some(StockOutType::OutboundShipment),
+        r#type: StockOutType::OutboundShipment,
         invoice_id: invoice_id.to_string(),
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
