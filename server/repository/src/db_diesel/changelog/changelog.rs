@@ -471,12 +471,24 @@ fn create_filtered_outgoing_sync_query(
     query
 }
 
-/// Postgres has Read Committed isolation level, we need to prevent other tx to add rows while
-/// reading the changelogs.
-/// For example, if changelog contains [1, 3, 4, 5] while another tx is about to add a changelog
-/// row with cursor = 2.
-/// We need to wait for this changelog to be added before doing the changelogs() query, otherwise
-/// the changelog cursor will be set to 5 and the changelog 2 will be missed.
+/// Runs some DB operation with a fully locked `changelog` table.
+/// This only applies for for Postgres and does nothing for Sqlite.
+///
+/// Motivation:
+/// When querying changelog entries, ongoing transactions might continue adding changelog entries
+/// to the queried range of changelogs.
+/// This is because Postgres has Read Committed isolation level (instead of Serialized in Sqlite).
+/// However, we assume that there will be no new changelog entries in the queried range in the
+/// future, e.g. when updating the cursor position.
+///
+/// For example, a changelog may contain [1, 3, 4, 5] while another (slow) tx is about to commit a
+/// changelog row with cursor = 2.
+/// We need to wait for this changelog 2 to be added before doing the changelogs() query, otherwise
+/// we might update the latest changelog cursor to 5 and the changelog with cursor = 2 will be left
+/// unhandled when continuing from the latest cursor position.
+///
+/// Locking the changelog table will wait for ongoing writers and will prevent new writers while
+/// reading the changelog.
 fn with_locked_changelog_table<T, F>(
     connection: &StorageConnection,
     f: F,
