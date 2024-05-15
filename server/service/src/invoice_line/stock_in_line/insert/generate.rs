@@ -40,10 +40,9 @@ pub fn generate(
 
     let barcode_option = generate_barcode(&input, connection)?;
 
-    let new_batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
-        let new_batch = generate_batch(
-            // If a stock line id is included in the input, use it
-            input.stock_line_id.is_some(),
+    let batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
+        let batch = generate_batch(
+            input.stock_line_id,
             new_line.clone(),
             StockLineInput {
                 store_id: existing_invoice_row.store_id.clone(),
@@ -53,11 +52,11 @@ pub fn generate(
             },
         );
         // If a new stock line has been created, update the stock_line_id on the invoice line
-        new_line.stock_line_id = Some(new_batch.id.clone());
+        new_line.stock_line_id = Some(batch.id.clone());
 
         let new_batch = match store_preferences.pack_to_one {
-            true => convert_stock_line_to_single_pack(new_batch),
-            false => new_batch,
+            true => convert_stock_line_to_single_pack(batch),
+            false => batch,
         };
 
         Some(new_batch)
@@ -68,7 +67,7 @@ pub fn generate(
     Ok(GenerateResult {
         invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
         invoice_line: new_line,
-        stock_line: new_batch_option,
+        stock_line: batch_option,
         barcode: barcode_option,
     })
 }
