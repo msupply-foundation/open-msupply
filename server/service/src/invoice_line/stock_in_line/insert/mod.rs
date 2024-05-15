@@ -34,6 +34,7 @@ pub struct InsertStockInLine {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub r#type: StockInType,
+    /// If None, new stock line will be generated
     pub stock_line_id: Option<String>,
     pub barcode: Option<String>,
     pub stock_on_hold: bool,

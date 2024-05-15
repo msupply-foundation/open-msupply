@@ -52,10 +52,15 @@ pub fn generate(
     };
 
     let upsert_batch_option = if existing_invoice_row.status != InvoiceStatus::New {
+        // There will be a batch_to_delete_id if the item has changed
+        // If item has changed, we want a new stock line, otherwise keep existing
+        let stock_line_id = match batch_to_delete_id {
+            Some(_) => None, // will generate new stock line
+            None => update_line.stock_line_id.clone(),
+        };
+
         let new_batch = generate_batch(
-            // There will be a batch_to_delete_id if the item has changed
-            // If item has changed, we want a new stock line, otherwise keep existing
-            batch_to_delete_id.is_none(),
+            stock_line_id,
             update_line.clone(),
             StockLineInput {
                 store_id: existing_invoice_row.store_id.clone(),

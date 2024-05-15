@@ -32,9 +32,8 @@ pub struct StockLineInput {
 }
 
 pub fn generate_batch(
-    keep_existing_batch: bool,
+    stock_line_id: Option<String>,
     InvoiceLineRow {
-        stock_line_id,
         item_link_id,
         pack_size,
         batch,
@@ -53,10 +52,10 @@ pub fn generate_batch(
         supplier_link_id,
     }: StockLineInput,
 ) -> StockLineRow {
-    // Generate new id if requested via parameter or if stock_line_id is not already set on line
-    let stock_line_id = match (stock_line_id, keep_existing_batch) {
-        (Some(stock_line_id), true) => stock_line_id,
-        _ => uuid(),
+    // Generate new stock line id if not provided
+    let stock_line_id = match stock_line_id {
+        Some(stock_line_id) => stock_line_id,
+        None => uuid(),
     };
 
     StockLineRow {
