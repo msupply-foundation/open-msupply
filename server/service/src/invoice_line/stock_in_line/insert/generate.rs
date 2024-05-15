@@ -1,9 +1,9 @@
 use crate::{
     barcode::{self, BarcodeInput},
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
-    invoice_line::{
-        convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack,
-        stock_in_line::{generate_batch, StockInType, StockLineInput},
+    invoice_line::stock_in_line::{
+        convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack, generate_batch,
+        StockInType, StockLineInput,
     },
     store_preference::get_store_preferences,
     u32_to_i32,
@@ -128,7 +128,9 @@ fn generate_line(
 
 fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
     match stock_in_type {
-        StockInType::InboundReturn => existing_invoice_row.status != InvoiceStatus::New,
+        StockInType::InboundShipment | StockInType::InboundReturn => {
+            existing_invoice_row.status != InvoiceStatus::New
+        }
         StockInType::InventoryAddition => true,
     }
 }

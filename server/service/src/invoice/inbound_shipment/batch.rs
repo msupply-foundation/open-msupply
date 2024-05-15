@@ -2,18 +2,16 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
     invoice_line::{
-        inbound_shipment_line::{
-            delete_inbound_shipment_line, insert_inbound_shipment_line,
-            update_inbound_shipment_line,
-            DeleteInboundShipmentLine, DeleteInboundShipmentLineError, InsertInboundShipmentLine,
-            InsertInboundShipmentLineError, UpdateInboundShipmentLine,
-            UpdateInboundShipmentLineError,
-        },
         inbound_shipment_service_line::{
             delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
             update_inbound_shipment_service_line, DeleteInboundShipmentServiceLineError,
             InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError,
             UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError,
+        },
+        stock_in_line::{
+            delete_stock_in_line, insert_stock_in_line, update_stock_in_line, DeleteStockInLine,
+            DeleteStockInLineError, InsertStockInLine, InsertStockInLineError, UpdateStockInLine,
+            UpdateStockInLineError,
         },
     },
     service_provider::ServiceContext,
@@ -29,12 +27,12 @@ use super::{
 #[derive(Clone)]
 pub struct BatchInboundShipment {
     pub insert_shipment: Option<Vec<InsertInboundShipment>>,
-    pub insert_line: Option<Vec<InsertInboundShipmentLine>>,
-    pub update_line: Option<Vec<UpdateInboundShipmentLine>>,
-    pub delete_line: Option<Vec<DeleteInboundShipmentLine>>,
+    pub insert_line: Option<Vec<InsertStockInLine>>,
+    pub update_line: Option<Vec<UpdateStockInLine>>,
+    pub delete_line: Option<Vec<DeleteStockInLine>>,
     pub insert_service_line: Option<Vec<InsertInboundShipmentServiceLine>>,
     pub update_service_line: Option<Vec<UpdateInboundShipmentServiceLine>>,
-    pub delete_service_line: Option<Vec<DeleteInboundShipmentLine>>,
+    pub delete_service_line: Option<Vec<DeleteStockInLine>>,
     pub update_shipment: Option<Vec<UpdateInboundShipment>>,
     pub delete_shipment: Option<Vec<DeleteInboundShipment>>,
     pub continue_on_error: Option<bool>,
@@ -42,14 +40,12 @@ pub struct BatchInboundShipment {
 
 pub type InsertShipmentsResult =
     Vec<InputWithResult<InsertInboundShipment, Result<Invoice, InsertInboundShipmentError>>>;
-pub type InsertLinesResult = Vec<
-    InputWithResult<InsertInboundShipmentLine, Result<InvoiceLine, InsertInboundShipmentLineError>>,
->;
-pub type UpdateLinesResult = Vec<
-    InputWithResult<UpdateInboundShipmentLine, Result<InvoiceLine, UpdateInboundShipmentLineError>>,
->;
+pub type InsertLinesResult =
+    Vec<InputWithResult<InsertStockInLine, Result<InvoiceLine, InsertStockInLineError>>>;
+pub type UpdateLinesResult =
+    Vec<InputWithResult<UpdateStockInLine, Result<InvoiceLine, UpdateStockInLineError>>>;
 pub type DeleteLinesResult =
-    Vec<InputWithResult<DeleteInboundShipmentLine, Result<String, DeleteInboundShipmentLineError>>>;
+    Vec<InputWithResult<DeleteStockInLine, Result<String, DeleteStockInLineError>>>;
 pub type InsertServiceLinesResult = Vec<
     InputWithResult<
         InsertInboundShipmentServiceLine,
@@ -62,12 +58,8 @@ pub type UpdateServiceLinesResult = Vec<
         Result<InvoiceLine, UpdateInboundShipmentServiceLineError>,
     >,
 >;
-pub type DeleteServiceLinesResult = Vec<
-    InputWithResult<
-        DeleteInboundShipmentLine,
-        Result<String, DeleteInboundShipmentServiceLineError>,
-    >,
->;
+pub type DeleteServiceLinesResult =
+    Vec<InputWithResult<DeleteStockInLine, Result<String, DeleteInboundShipmentServiceLineError>>>;
 pub type UpdateShipmentsResult =
     Vec<InputWithResult<UpdateInboundShipment, Result<Invoice, UpdateInboundShipmentError>>>;
 pub type DeleteShipmentsResult =
@@ -110,21 +102,21 @@ pub fn batch_inbound_shipment(
             // Normal Line
 
             let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.insert_line, insert_inbound_shipment_line);
+                .do_mutations_with_user_id(input.insert_line, insert_stock_in_line);
             results.insert_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
             let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.update_line, update_inbound_shipment_line);
+                .do_mutations_with_user_id(input.update_line, update_stock_in_line);
             results.update_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
 
             let (has_errors, result) = mutations_processor
-                .do_mutations_with_user_id(input.delete_line, delete_inbound_shipment_line);
+                .do_mutations_with_user_id(input.delete_line, delete_stock_in_line);
             results.delete_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -205,7 +197,7 @@ mod test {
             BatchInboundShipment, DeleteInboundShipment, DeleteInboundShipmentError,
             InsertInboundShipment,
         },
-        invoice_line::inbound_shipment_line::InsertInboundShipmentLine,
+        invoice_line::stock_in_line::{InsertStockInLine, StockInType},
         service_provider::ServiceProvider,
         InputWithResult,
     };
@@ -230,15 +222,14 @@ mod test {
                 input.id = "new_id".to_string();
                 input.other_party_id = mock_name_a().id;
             })]),
-            insert_line: Some(vec![inline_init(
-                |input: &mut InsertInboundShipmentLine| {
-                    input.invoice_id = "new_id".to_string();
-                    input.id = "new_line_id".to_string();
-                    input.item_id = mock_item_a().id;
-                    input.pack_size = 1;
-                    input.number_of_packs = 1.0;
-                },
-            )]),
+            insert_line: Some(vec![inline_init(|input: &mut InsertStockInLine| {
+                input.invoice_id = "new_id".to_string();
+                input.id = "new_line_id".to_string();
+                input.item_id = mock_item_a().id;
+                input.pack_size = 1;
+                input.number_of_packs = 1.0;
+                input.r#type = StockInType::InboundShipment;
+            })]),
             update_line: None,
             delete_line: None,
             update_shipment: None,
