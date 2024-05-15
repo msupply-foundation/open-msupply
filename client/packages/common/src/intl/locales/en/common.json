@@ -5,7 +5,7 @@
   "approval-status.denied": "Denied",
   "approval-status.none": "None",
   "approval-status.pending": "Pending",
-  "auth.not-a-central-server": "Operation is only permitted on central server!",
+  "auth.not-a-central-server": "Operation is only permitted on central server",
   "auth.permission-denied": "Permission denied",
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Add Item",
