@@ -1,31 +1,34 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   Box,
   FnUtils,
   LoadingButton,
   PlusCircleIcon,
+  RecordPatch,
   useTranslation,
 } from '@openmsupply-client/common';
-import { IndicatorsTableProps } from './IndicatorsDemographics';
+import { Row } from './IndicatorsDemographics';
 
-export const Toolbar: FC<IndicatorsTableProps> = props => {
-  const { setRows, save } = props;
+interface IndicatorsTableProps {
+  rows: Row[];
+  patch: (patch: RecordPatch<Row>) => void;
+  save: () => void;
+}
+
+export const Toolbar = ({ patch, save }: IndicatorsTableProps) => {
   const t = useTranslation('common');
 
   const handleClick = () => {
     const id = FnUtils.generateUUID();
-    setRows(oldRows => [
-      ...oldRows,
-      {
-        id,
-        name: 'new',
-        percentage: 0,
-        year: 0,
-        year1: 0,
-        isNew: true,
-      },
-    ]);
+    patch({
+      id,
+      name: 'new',
+      percentage: 0,
+      year: 0,
+      year1: 0,
+      isNew: true,
+    });
   };
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>

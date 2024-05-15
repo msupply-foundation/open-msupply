@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { Input } from '@common/components';
-import { ColumnDefinition, RecordWithId } from 'packages/common/src';
+import { BasicTextInput } from '@common/components';
+import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
   name?: number | null;
@@ -18,7 +18,7 @@ export const nameColumn = <
           `The default setter of the NameAndColor column was called.
         Have you forgotten to provide a custom setter?
         When setting up your columns, you should provide a setter function
-        const columns = useColumns([ gercentageColumn(), { setter }])
+        const columns = useColumns([ percentageColumn(), { setter }])
         `
         );
       }
@@ -35,7 +35,7 @@ export const nameColumn = <
         }}
       >
         <>
-          <Input
+          <BasicTextInput
             disabled={isDisabled}
             defaultValue={column.accessor({ rowData })}
             onBlur={e => {
