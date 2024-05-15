@@ -1,7 +1,7 @@
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_batch,
+        stock_in_line::check_batch,
         validate::{
             check_line_belongs_to_invoice, check_line_not_associated_with_stocktake,
             check_line_row_exists_option,

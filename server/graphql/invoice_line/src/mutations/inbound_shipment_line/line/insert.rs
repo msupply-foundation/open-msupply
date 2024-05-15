@@ -9,8 +9,8 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::inbound_shipment_line::{
-    InsertInboundShipmentLine as ServiceInput, InsertInboundShipmentLineError as ServiceError,
+use service::invoice_line::stock_in_line::{
+    InsertStockInLine as ServiceInput, InsertStockInLineError as ServiceError, StockInType,
 };
 use service::NullableUpdate;
 
@@ -59,7 +59,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .invoice_line_service
-            .insert_inbound_shipment_line(&service_context, input.to_domain()),
+            .insert_stock_in_line(&service_context, input.to_domain()),
     )
 }
 
@@ -103,6 +103,11 @@ impl InsertInput {
             number_of_packs,
             total_before_tax,
             tax_percentage,
+            r#type: StockInType::InboundShipment,
+            note: None,
+            stock_line_id: None,
+            barcode: None,
+            stock_on_hold: false,
         }
     }
 }
@@ -137,15 +142,17 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
 
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
-        ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::NumberOfPacksBelowZero => BadUserInput(formatted_error),
-        ServiceError::PackSizeBelowOne => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::ItemNotFound => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::NotThisStoreInvoice
+        | ServiceError::LineAlreadyExists
+        | ServiceError::NotAStockIn
+        // TODO: bad?
+        | ServiceError::NumberOfPacksBelowOne
+        | ServiceError::PackSizeBelowOne
+        | ServiceError::LocationDoesNotExist
+        | ServiceError::ItemNotFound => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -168,9 +175,9 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            inbound_shipment_line::{
-                InsertInboundShipmentLine as ServiceInput,
-                InsertInboundShipmentLineError as ServiceError,
+            stock_in_line::{
+                InsertStockInLine as ServiceInput, InsertStockInLineError as ServiceError,
+                StockInType,
             },
             InvoiceLineServiceTrait,
         },
@@ -185,7 +192,7 @@ mod test {
     pub struct TestService(pub Box<InsertLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn insert_inbound_shipment_line(
+        fn insert_stock_in_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -294,7 +301,7 @@ mod test {
         );
 
         //NotAnInboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAStockIn)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -318,7 +325,7 @@ mod test {
         );
 
         //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -434,7 +441,12 @@ mod test {
                     expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
-                    tax_percentage: Some(5.0)
+                    tax_percentage: Some(5.0),
+                    r#type: StockInType::InboundShipment,
+                    note: None,
+                    stock_line_id: None,
+                    barcode: None,
+                    stock_on_hold: false
                 }
             );
             Ok(InvoiceLine {

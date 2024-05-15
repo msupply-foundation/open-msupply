@@ -7,8 +7,8 @@ use validate::validate;
 use crate::{
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
-    invoice_line::inbound_shipment_line::{
-        delete_inbound_shipment_line, DeleteInboundShipmentLine, DeleteInboundShipmentLineError,
+    invoice_line::stock_in_line::{
+        delete_stock_in_line, DeleteStockInLine, DeleteStockInLineError, StockInType,
     },
     service_provider::ServiceContext,
     WithDBError,
@@ -32,10 +32,11 @@ pub fn delete_inbound_shipment(
 
             let lines = get_lines_for_invoice(connection, &input.id)?;
             for line in lines {
-                delete_inbound_shipment_line(
+                delete_stock_in_line(
                     ctx,
-                    DeleteInboundShipmentLine {
+                    DeleteStockInLine {
                         id: line.invoice_line_row.id.clone(),
+                        r#type: StockInType::InboundShipment,
                     },
                 )
                 .map_err(|error| DeleteInboundShipmentError::LineDeleteError {
@@ -71,7 +72,7 @@ pub enum DeleteInboundShipmentError {
     CannotEditFinalised,
     LineDeleteError {
         line_id: String,
-        error: DeleteInboundShipmentLineError,
+        error: DeleteStockInLineError,
     },
 }
 
@@ -109,7 +110,7 @@ mod test {
         invoice::inbound_shipment::{
             DeleteInboundShipment, DeleteInboundShipmentError as ServiceError,
         },
-        invoice_line::inbound_shipment_line::DeleteInboundShipmentLineError,
+        invoice_line::stock_in_line::DeleteStockInLineError,
         service_provider::ServiceProvider,
     };
 
@@ -167,7 +168,7 @@ mod test {
             ),
             Err(ServiceError::LineDeleteError {
                 line_id: "inbound_shipment_a_line_a".to_string(),
-                error: DeleteInboundShipmentLineError::BatchIsReserved
+                error: DeleteStockInLineError::BatchIsReserved
             })
         );
 

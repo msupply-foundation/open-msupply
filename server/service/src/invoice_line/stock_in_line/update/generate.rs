@@ -3,9 +3,8 @@ use crate::{
         calculate_foreign_currency_total, calculate_total_after_tax,
         generate_invoice_user_id_update,
     },
-    invoice_line::{
-        inbound_shipment_line::generate::convert_invoice_line_to_single_pack,
-        stock_in_line::{generate_batch, StockLineInput},
+    invoice_line::stock_in_line::{
+        convert_invoice_line_to_single_pack, generate_batch, StockLineInput,
     },
     store_preference::get_store_preferences,
     u32_to_i32,
