@@ -118,6 +118,7 @@ impl UpdateInput {
                 })
             }),
             r#type: StockInType::InboundShipment,
+            // Default
             note: None,
         }
     }
@@ -478,10 +479,10 @@ mod test {
                     sell_price_per_pack: Some(1.0),
                     expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                     number_of_packs: Some(1.0),
+                    r#type: StockInType::InboundShipment,
                     total_before_tax: None,
                     tax_percentage: None,
                     note: None,
-                    r#type: StockInType::InboundShipment,
                 }
             );
             Ok(InvoiceLine {

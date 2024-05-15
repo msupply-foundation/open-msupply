@@ -104,6 +104,7 @@ impl InsertInput {
             total_before_tax,
             tax_percentage,
             r#type: StockInType::InboundShipment,
+            // Default
             note: None,
             stock_line_id: None,
             barcode: None,
@@ -145,7 +146,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::NotThisStoreInvoice
         | ServiceError::LineAlreadyExists
         | ServiceError::NotAStockIn
-        // TODO: bad?
         | ServiceError::NumberOfPacksBelowOne
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
