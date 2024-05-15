@@ -169,8 +169,10 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
         }}
         onBlur={() => {
           const parsed = parse(textValue ?? '');
-          onChange(Number.isNaN(parsed) ? undefined : parsed);
-          setTextValue(formatValue(value));
+          const val = Number.isNaN(parsed) ? defaultValue : parsed;
+
+          onChange(val);
+          setTextValue(formatValue(val));
         }}
         onFocus={e => e.target.select()}
         {...props}
