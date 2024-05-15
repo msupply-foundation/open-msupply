@@ -865,7 +865,10 @@ mod test {
             .unwrap();
 
         // Ensure delivered time not updated by status change to verified
-        assert_eq!(invoice.delivered_datetime, None);
+        assert_eq!(
+            invoice.delivered_datetime,
+            mock_inbound_shipment_a().delivered_datetime
+        );
 
         assert!(invoice.verified_datetime.unwrap() > now);
         assert!(invoice.verified_datetime.unwrap() < end_time);
