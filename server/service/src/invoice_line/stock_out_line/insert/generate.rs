@@ -3,7 +3,10 @@ use repository::{
     StockLine, StockLineRow, StorageConnection,
 };
 
-use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
+use crate::{
+    invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
+    invoice_line::StockOutType,
+};
 
 use super::{InsertStockOutLine, InsertStockOutLineError};
 
@@ -14,7 +17,8 @@ pub fn generate(
     batch: StockLine,
     invoice: InvoiceRow,
 ) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
-    let adjust_total_number_of_packs = invoice.status == InvoiceStatus::Picked;
+    let adjust_total_number_of_packs =
+        should_adjust_total_number_of_packs(invoice.status.clone(), input.r#type.clone().unwrap());
 
     let update_batch = generate_batch_update(
         &input,
@@ -114,4 +118,11 @@ fn generate_line(
         return_reason_id: None,
         foreign_currency_price_before_tax,
     })
+}
+
+fn should_adjust_total_number_of_packs(status: InvoiceStatus, r#type: StockOutType) -> bool {
+    match r#type {
+        StockOutType::InventoryReduction => true,
+        _ => status == InvoiceStatus::Picked,
+    }
 }

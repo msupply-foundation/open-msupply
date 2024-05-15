@@ -1,15 +1,31 @@
 use chrono::Utc;
 
-use repository::{InvoiceLineRow, InvoiceLineType, NameRowRepository, StockLine, StockLineRow};
 use repository::{
-    InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
+    BarcodeRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError,
+    StorageConnection,
 };
+use repository::{NameRowRepository, StockLine, StockLineRow};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::uuid::uuid;
 
+use crate::invoice::inventory_adjustment::UpdateInventoryAdjustmentReason;
+use crate::invoice_line::stock_in_line::{InsertStockInLine, StockInType};
+use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
 use crate::number::next_number;
+use crate::{i32_to_u32, NullableUpdate};
 
 use super::{AdjustmentType, InsertInventoryAdjustment};
+
+pub enum InsertStockInOrOutLine {
+    StockIn(InsertStockInLine),
+    StockOut(InsertStockOutLine),
+}
+
+pub struct GenerateResult {
+    pub invoice: InvoiceRow,
+    pub insert_stock_in_or_out_line: InsertStockInOrOutLine,
+    pub update_inventory_adjustment_reason: UpdateInventoryAdjustmentReason,
+}
 
 pub fn generate(
     connection: &StorageConnection,
@@ -22,7 +38,7 @@ pub fn generate(
         inventory_adjustment_reason_id,
     }: InsertInventoryAdjustment,
     stock_line: StockLine,
-) -> Result<(InvoiceRow, InvoiceLineRow, StockLineRow), RepositoryError> {
+) -> Result<GenerateResult, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
 
     let inventory_adjustment_name = NameRowRepository::new(connection)
@@ -79,45 +95,72 @@ pub fn generate(
         cost_price_per_pack,
         sell_price_per_pack,
         note,
+        on_hold,
+        barcode_id,
         ..
     } = stock_line.stock_line_row.clone();
 
-    let invoice_line = InvoiceLineRow {
-        id: uuid(),
-        invoice_id: invoice.id.clone(),
-        item_link_id: stock_line.item_row.id,
-        item_name: stock_line.item_row.name,
-        item_code: stock_line.item_row.code,
-        stock_line_id: Some(stock_line_id),
-        location_id,
-        batch,
-        expiry_date,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        total_before_tax: 0.0,
-        total_after_tax: 0.0,
-        tax_percentage: None,
-        r#type: match adjustment_type {
-            AdjustmentType::Addition => InvoiceLineType::StockIn,
-            AdjustmentType::Reduction => InvoiceLineType::StockOut,
-        },
-        number_of_packs: adjustment,
-        note,
-        inventory_adjustment_reason_id,
-        return_reason_id: None,
-        foreign_currency_price_before_tax: None,
+    // Get gtin from existing barcode row if it exists
+    let barcode = match barcode_id {
+        Some(barcode_id) => BarcodeRowRepository::new(connection)
+            .find_one_by_id(&barcode_id)?
+            .map(|barcode_row| barcode_row.gtin),
+        None => None,
     };
 
-    let mut updated_stock_line = stock_line.stock_line_row;
+    let invoice_id = invoice.id.clone();
+    let invoice_line_id = uuid();
 
-    let delta = match adjustment_type {
-        AdjustmentType::Addition => adjustment,
-        AdjustmentType::Reduction => -adjustment,
+    let insert_stock_in_or_out_line = match adjustment_type {
+        AdjustmentType::Addition => InsertStockInOrOutLine::StockIn(InsertStockInLine {
+            r#type: StockInType::InventoryAddition,
+            id: invoice_line_id.clone(),
+            invoice_id,
+            stock_line_id: Some(stock_line_id),
+            // TODO: hm yeah this is a PROB
+            // ugh but inv line aint gonna know
+            // idk at this point may need a 3rd..
+            // NAH take from inv for new sl ah gem
+            number_of_packs: adjustment,
+            // From existing stock line
+            item_id: stock_line.item_row.id,
+            location: location_id.map(|id| NullableUpdate { value: Some(id) }),
+            pack_size: i32_to_u32(pack_size),
+            batch,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            expiry_date,
+            stock_on_hold: on_hold,
+            barcode,
+            // TODO: `note` currently gets applied to both stock line and invoice line
+            // passing through here so completing an inventory adjustment will not
+            // clear any stock line note -- if we want a different note in IA invoice line
+            // we will need to add another field here
+            note,
+            // Default
+            total_before_tax: None,
+            tax_percentage: None,
+        }),
+        AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
+            r#type: Some(StockOutType::InventoryReduction),
+            id: invoice_line_id.clone(),
+            invoice_id,
+            stock_line_id,
+            note,
+            number_of_packs: adjustment,
+            total_before_tax: None,
+            tax_percentage: None,
+        }),
     };
 
-    updated_stock_line.available_number_of_packs += delta;
-    updated_stock_line.total_number_of_packs += delta;
+    let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {
+        reason_id: inventory_adjustment_reason_id,
+        invoice_line_id,
+    };
 
-    Ok((invoice, invoice_line, updated_stock_line))
+    Ok(GenerateResult {
+        invoice,
+        insert_stock_in_or_out_line,
+        update_inventory_adjustment_reason,
+    })
 }
