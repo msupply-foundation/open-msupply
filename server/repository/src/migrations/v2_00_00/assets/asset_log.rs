@@ -28,7 +28,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE TABLE asset_log (
             id TEXT NOT NULL PRIMARY KEY,
             asset_id TEXT NOT NULL REFERENCES asset(id),
-            user_id TEXT NOT NULL REFERENCES user_account(id),
+            user_id TEXT NOT NULL,
             status {ASSET_LOG_STATUS_ENUM_TYPE},
             reason_id TEXT REFERENCES asset_log_reason(id),
             comment TEXT,
