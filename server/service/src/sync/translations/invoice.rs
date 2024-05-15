@@ -566,9 +566,6 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
             _ => {}
         },
         InvoiceType::Repack => match data.status {
-            LegacyTransactStatus::Cn => {
-                mapping.verified_datetime = confirm_datetime;
-            }
             LegacyTransactStatus::Fn => {
                 mapping.verified_datetime = confirm_datetime;
             }
@@ -632,15 +629,19 @@ fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Optio
             LegacyTransactStatus::Fn => InvoiceStatus::Verified,
             _ => return None,
         },
-        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction | InvoiceType::Repack => {
-            match data.status {
-                LegacyTransactStatus::Nw => InvoiceStatus::New,
-                LegacyTransactStatus::Sg => InvoiceStatus::New,
-                LegacyTransactStatus::Cn => InvoiceStatus::Verified,
-                LegacyTransactStatus::Fn => InvoiceStatus::Verified,
-                _ => return None,
-            }
-        }
+        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => match data.status {
+            LegacyTransactStatus::Nw => InvoiceStatus::New,
+            LegacyTransactStatus::Sg => InvoiceStatus::New,
+            LegacyTransactStatus::Cn => InvoiceStatus::Verified,
+            LegacyTransactStatus::Fn => InvoiceStatus::Verified,
+            _ => return None,
+        },
+        // mSupply will alert users to finalise any repacks if they have un-finalised repacks
+        // before they migrate to Open mSupply.
+        InvoiceType::Repack => match data.status {
+            LegacyTransactStatus::Fn => InvoiceStatus::Verified,
+            _ => return None,
+        },
     };
     Some(status)
 }
