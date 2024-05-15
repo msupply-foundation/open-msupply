@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { Input } from '@common/components';
+import { BasicTextInput } from '@common/components';
 import { ColumnDefinition, RecordWithId } from 'packages/common/src';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
@@ -35,7 +35,7 @@ export const percentageColumn = <
         }}
       >
         <>
-          <Input
+          <BasicTextInput
             disabled={isDisabled}
             defaultValue={column.accessor({ rowData })}
             onBlur={e => {

@@ -4,6 +4,8 @@ import { Toolbar } from './Toolbar';
 import {
   ColumnAlign,
   DataTable,
+  NumUtils,
+  RecordPatch,
   TableProvider,
   createTableStore,
   useColumns,
@@ -13,26 +15,20 @@ import {
 import { percentageColumn } from './PercentageColumn';
 import { nameColumn } from './NameColumn';
 
-export interface IndicatorsTableProps {
-  rows: Row[];
-  setRows: React.Dispatch<React.SetStateAction<Row[]>>;
-  save: () => void;
-}
+// enum RowModes {
+//   Edit,
+//   View,
+// }
 
-export enum RowModes {
-  Edit,
-  View,
-}
-
-export interface RowModesModel {
-  id: string;
-  mode: RowModes;
-}
+// interface RowModesModel {
+//   id: string;
+//   mode: RowModes;
+// }
 
 export interface Row {
   isNew: boolean;
   id: string;
-  percentage: number;
+  percentage?: number | null;
   name: string;
   year: number;
   year1: number;
@@ -71,9 +67,19 @@ const rows: Row[] = [
 const currentYear = new Date().getFullYear();
 
 export const IndicatorsDemographicsComponent: FC = () => {
-  const [draft, setDraft] = useState<Row[]>(rows);
-  const [currentRow, setCurrentRow] = useState<Row>();
-  console.info('current row: ', currentRow);
+  const draftRows: Record<string, Row> = {};
+  rows.forEach(row => (draftRows[row.id] = { ...row }));
+  const [draft, setDraft] = useState<Record<string, Row>>(draftRows);
+  const setter = (patch: RecordPatch<Row>) => {
+    const percentage = !patch.percentage ? 0 : patch.percentage / 100;
+    const updatedPatch = {
+      ...patch,
+      // as an example.. the calculation will be on the % and using the base value not the patch.year
+      year: NumUtils.round(percentage * (patch.year ?? 0)),
+      year1: NumUtils.round(percentage * (patch.year1 ?? 0)),
+    } as Row;
+    setDraft({ ...draft, [patch.id]: updatedPatch });
+  };
 
   // do some maths on recalculate after inputting changed values:
   // const handleCalculate = () => {};
@@ -84,12 +90,8 @@ export const IndicatorsDemographicsComponent: FC = () => {
   };
 
   const columns = useColumns([
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    [percentageColumn(), { setter: setCurrentRow }],
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    [nameColumn(), { setter: setCurrentRow }],
+    [percentageColumn(), { setter }],
+    [nameColumn(), { setter }],
     {
       key: 'year',
       width: 180,
@@ -107,9 +109,9 @@ export const IndicatorsDemographicsComponent: FC = () => {
   return (
     <>
       <AppBarButtons></AppBarButtons>
-      <Toolbar rows={rows} setRows={setDraft} save={save}></Toolbar>
+      <Toolbar rows={rows} patch={setter} save={save}></Toolbar>
       <DataTable
-        data={draft}
+        data={Object.values(draft)}
         columns={columns}
         id={'indicators-demographics-table'}
         // enableColumnSelection={true}
