@@ -18,7 +18,7 @@ pub fn generate(
     invoice: InvoiceRow,
 ) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
     let adjust_total_number_of_packs =
-        should_adjust_total_number_of_packs(invoice.status.clone(), input.r#type.clone().unwrap());
+        should_adjust_total_number_of_packs(invoice.status.clone(), &input.r#type);
 
     let update_batch = generate_batch_update(
         &input,
@@ -120,7 +120,7 @@ fn generate_line(
     })
 }
 
-fn should_adjust_total_number_of_packs(status: InvoiceStatus, r#type: StockOutType) -> bool {
+fn should_adjust_total_number_of_packs(status: InvoiceStatus, r#type: &StockOutType) -> bool {
     match r#type {
         StockOutType::InventoryReduction => true,
         _ => status == InvoiceStatus::Picked,

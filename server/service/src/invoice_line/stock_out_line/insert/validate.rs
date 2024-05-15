@@ -49,12 +49,8 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
-    if let Some(r#type) = &input.r#type {
-        if !check_invoice_type(&invoice, r#type.to_domain()) {
-            return Err(InvoiceTypeDoesNotMatch);
-        }
-    } else {
-        return Err(NoInvoiceType);
+    if !check_invoice_type(&invoice, input.r#type.to_domain()) {
+        return Err(InvoiceTypeDoesNotMatch);
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);

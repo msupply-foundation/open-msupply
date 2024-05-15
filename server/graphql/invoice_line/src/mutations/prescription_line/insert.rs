@@ -133,7 +133,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         // Standard Graphql Errors
         NotThisStoreInvoice
-        | NoInvoiceType
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
         | NumberOfPacksBelowOne => StandardGraphqlError::BadUserInput(formatted_error),
@@ -157,7 +156,7 @@ impl InsertInput {
 
         ServiceInput {
             id,
-            r#type: Some(StockOutType::Prescription),
+            r#type: StockOutType::Prescription,
             invoice_id,
             stock_line_id,
             number_of_packs,
@@ -524,7 +523,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "new id".to_string(),
-                    r#type: Some(StockOutType::Prescription),
+                    r#type: StockOutType::Prescription,
                     invoice_id: "invoice input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,

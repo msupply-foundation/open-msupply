@@ -43,7 +43,7 @@ pub fn generate(
             number_of_packs: line.number_of_packs,
             stock_line_id: line.stock_line_id,
             note: line.note,
-            r#type: Some(StockOutType::OutboundReturn),
+            r#type: StockOutType::OutboundReturn,
             tax_percentage: None,
             total_before_tax: None,
         })

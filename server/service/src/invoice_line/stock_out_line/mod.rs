@@ -12,8 +12,9 @@ pub use self::delete::*;
 pub mod validate;
 pub use self::validate::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub enum StockOutType {
+    #[default]
     OutboundShipment,
     OutboundReturn,
     Prescription,

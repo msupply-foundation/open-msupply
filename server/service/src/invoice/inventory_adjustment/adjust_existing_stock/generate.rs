@@ -142,7 +142,7 @@ pub fn generate(
             tax_percentage: None,
         }),
         AdjustmentType::Reduction => InsertStockInOrOutLine::StockOut(InsertStockOutLine {
-            r#type: Some(StockOutType::InventoryReduction),
+            r#type: StockOutType::InventoryReduction,
             id: invoice_line_id.clone(),
             invoice_id,
             stock_line_id,
