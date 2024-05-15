@@ -50,6 +50,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             id: uuid(),
             requisition_id: requisition_row_1.id.clone(),
             item_link_id: uuid(),
+            item_name: "test item".to_string(),
             requested_quantity: 50,
             suggested_quantity: 10,
             supply_quantity: 5,

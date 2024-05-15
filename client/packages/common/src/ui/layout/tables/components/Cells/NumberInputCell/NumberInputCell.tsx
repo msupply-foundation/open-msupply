@@ -47,6 +47,7 @@ export const NumberInputCell = <T extends RecordWithId>({
       }}
       onChange={num => {
         const newValue = num === undefined ? min : num;
+        if (buffer === newValue) return;
         setBuffer(newValue);
         updater({ ...rowData, [column.key]: Number(newValue) });
       }}
