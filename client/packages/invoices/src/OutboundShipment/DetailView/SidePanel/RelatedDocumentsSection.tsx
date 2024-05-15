@@ -23,7 +23,7 @@ const RelatedDocumentsSectionComponent = () => {
     let tooltip = t('messages.customer-requisition-created-on', {
       date: d(createdDatetime),
     });
-    if (username && username !== 'unknown') {
+    if (username) {
       tooltip += ` ${t('messages.by-user', { username })}`;
     }
 
@@ -36,7 +36,12 @@ const RelatedDocumentsSectionComponent = () => {
         {!requisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
-          <Tooltip title={getTooltip(requisition.createdDatetime, requisition.user?.username)}>
+          <Tooltip
+            title={getTooltip(
+              requisition.createdDatetime,
+              requisition.user?.username ?? '-'
+            )}
+          >
             <Grid item>
               <PanelRow>
                 <PanelLabel>{t('label.requisition')}</PanelLabel>
