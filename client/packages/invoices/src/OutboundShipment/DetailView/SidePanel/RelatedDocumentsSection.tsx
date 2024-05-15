@@ -23,11 +23,7 @@ const RelatedDocumentsSectionComponent = () => {
     let tooltip = t('messages.customer-requisition-created-on', {
       date: d(createdDatetime),
     });
-    if (username) {
-      tooltip += ` ${t('messages.by-user', { username })}`;
-    }
-
-    return tooltip;
+    return (tooltip += ` ${t('messages.by-user', { username })}`);
   };
 
   return (
