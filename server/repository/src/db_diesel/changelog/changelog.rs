@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter,
-    NameLinkRow, RepositoryError, StorageConnection,
+    LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
     helper_types::{IntoBoxed, LeftJoin},
@@ -206,30 +206,33 @@ impl<'a> ChangelogRepository<'a> {
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_query(earliest, filter)
-            .order(changelog_deduped::dsl::cursor.asc())
-            .limit(limit.into());
+        let result = with_locked_changelog_table(self.connection, |locked_con| {
+            let query = create_filtered_query(earliest, filter)
+                .order(changelog_deduped::dsl::cursor.asc())
+                .limit(limit.into());
 
-        // // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-        // );
+            // // Debug diesel query
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+            // );
 
-        let result: Vec<ChangelogJoin> = query.load(self.connection.lock().connection())?;
-        Ok(result
-            .into_iter()
-            .map(|(change_log_row, name_link_row)| ChangelogRow {
-                cursor: change_log_row.cursor,
-                table_name: change_log_row.table_name,
-                record_id: change_log_row.record_id,
-                row_action: change_log_row.row_action,
-                name_id: name_link_row.map(|r| r.name_id),
-                store_id: change_log_row.store_id,
-                is_sync_update: change_log_row.is_sync_update,
-                source_site_id: change_log_row.source_site_id,
-            })
-            .collect())
+            let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
+            Ok(result
+                .into_iter()
+                .map(|(change_log_row, name_link_row)| ChangelogRow {
+                    cursor: change_log_row.cursor,
+                    table_name: change_log_row.table_name,
+                    record_id: change_log_row.record_id,
+                    row_action: change_log_row.row_action,
+                    name_id: name_link_row.map(|r| r.name_id),
+                    store_id: change_log_row.store_id,
+                    is_sync_update: change_log_row.is_sync_update,
+                    source_site_id: change_log_row.source_site_id,
+                })
+                .collect())
+        })?;
+        Ok(result)
     }
 
     pub fn count(
@@ -250,30 +253,33 @@ impl<'a> ChangelogRepository<'a> {
         sync_site_id: i32,
         is_initialized: bool,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
-            .order(changelog_deduped::cursor.asc())
-            .limit(batch_size.into());
+        let result = with_locked_changelog_table(self.connection, |locked_con| {
+            let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
+                .order(changelog_deduped::cursor.asc())
+                .limit(batch_size.into());
 
-        // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-        // );
+            // Debug diesel query
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+            // );
 
-        let result: Vec<ChangelogJoin> = query.load(self.connection.lock().connection())?;
-        Ok(result
-            .into_iter()
-            .map(|(change_log_row, name_link_row)| ChangelogRow {
-                cursor: change_log_row.cursor,
-                table_name: change_log_row.table_name,
-                record_id: change_log_row.record_id,
-                row_action: change_log_row.row_action,
-                name_id: name_link_row.map(|r| r.name_id),
-                store_id: change_log_row.store_id,
-                is_sync_update: change_log_row.is_sync_update,
-                source_site_id: change_log_row.source_site_id,
-            })
-            .collect())
+            let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
+            Ok(result
+                .into_iter()
+                .map(|(change_log_row, name_link_row)| ChangelogRow {
+                    cursor: change_log_row.cursor,
+                    table_name: change_log_row.table_name,
+                    record_id: change_log_row.record_id,
+                    row_action: change_log_row.row_action,
+                    name_id: name_link_row.map(|r| r.name_id),
+                    store_id: change_log_row.store_id,
+                    is_sync_update: change_log_row.is_sync_update,
+                    source_site_id: change_log_row.source_site_id,
+                })
+                .collect())
+        })?;
+        Ok(result)
     }
 
     /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
@@ -310,6 +316,7 @@ impl<'a> ChangelogRepository<'a> {
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via
     // PullUpsertRecord (but not through sync)
+    #[cfg(test)]
     pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
         diesel::update(changelog::table)
             .set(changelog::is_sync_update.eq(false))
@@ -462,6 +469,40 @@ fn create_filtered_outgoing_sync_query(
     );
 
     query
+}
+
+/// Postgres has Read Committed isolation level, we need to prevent other tx to add rows while
+/// reading the changelogs.
+/// For example, if changelog contains [1, 3, 4, 5] while another tx is about to add a changelog
+/// row with cursor = 2.
+/// We need to wait for this changelog to be added before doing the changelogs() query, otherwise
+/// the changelog cursor will be set to 5 and the changelog 2 will be missed.
+fn with_locked_changelog_table<T, F>(
+    connection: &StorageConnection,
+    f: F,
+) -> Result<T, RepositoryError>
+where
+    F: FnOnce(&mut LockedConnection) -> Result<T, RepositoryError>,
+{
+    if cfg!(feature = "postgres") {
+        use diesel::connection::SimpleConnection;
+        let result = connection.transaction_sync_etc(
+            |con| {
+                let mut locked_con = con.lock();
+                locked_con
+                    .connection()
+                    .batch_execute("LOCK TABLE ONLY changelog IN ACCESS EXCLUSIVE MODE")?;
+
+                f(&mut locked_con)
+            },
+            false,
+        )?;
+
+        Ok(result)
+    } else {
+        let mut locked_con = connection.lock();
+        f(&mut locked_con)
+    }
 }
 
 // Only used in tests (cfg flag doesn't seem to work for inline_init even in tests)
