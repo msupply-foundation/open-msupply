@@ -211,7 +211,7 @@ export const BatchTable: FC<
             : patch.inventoryAdjustmentReason;
         update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
       },
-      accessor: ({ rowData }) => rowData.countedNumberOfPacks ?? '',
+      accessor: ({ rowData }) => rowData.countedNumberOfPacks,
     },
     [
       expiryDateColumn,

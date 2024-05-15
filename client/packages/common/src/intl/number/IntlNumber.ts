@@ -13,7 +13,7 @@ export const useFormatNumber = () => {
       value: number | undefined,
       options?: Intl.NumberFormatOptions & { locale?: SupportedLocales }
     ) => {
-      if (value === undefined) return '';
+      if (value === undefined || value === null) return '';
       const locale = options?.locale ?? currentLanguage;
       return new Intl.NumberFormat(locale, {
         maximumFractionDigits: MAX_FRACTION_DIGITS,
