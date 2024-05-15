@@ -27,6 +27,10 @@ export const Toolbar = ({ patch, save }: IndicatorsTableProps) => {
       percentage: 0,
       year: 0,
       year1: 0,
+      year2: 0,
+      year3: 0,
+      year4: 0,
+      year5: 0,
       isNew: true,
     });
   };
