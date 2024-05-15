@@ -246,6 +246,9 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(20, 30, 0, 0)
             .unwrap();
+        r.delivered_datetime = NaiveDate::from_ymd_opt(1970, 1, 3)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0);
     })
 }
 
