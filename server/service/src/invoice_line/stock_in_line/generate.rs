@@ -25,10 +25,12 @@ pub fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> Invo
     }
 }
 pub struct StockLineInput {
+    pub stock_line_id: Option<String>,
     pub store_id: String,
     pub on_hold: bool,
     pub barcode_id: Option<String>,
     pub supplier_link_id: String,
+    pub overwrite_stock_levels: bool,
 }
 
 struct StockLevels {
@@ -38,7 +40,6 @@ struct StockLevels {
 
 pub fn generate_batch(
     connection: &StorageConnection,
-    stock_line_id: Option<String>,
     InvoiceLineRow {
         item_link_id,
         pack_size,
@@ -52,10 +53,12 @@ pub fn generate_batch(
         ..
     }: InvoiceLineRow,
     StockLineInput {
+        stock_line_id,
         store_id,
         on_hold,
         barcode_id,
         supplier_link_id,
+        overwrite_stock_levels,
     }: StockLineInput,
 ) -> Result<StockLineRow, RepositoryError> {
     // Generate new stock line id if not provided
@@ -71,7 +74,11 @@ pub fn generate_batch(
     let StockLevels {
         available_number_of_packs,
         total_number_of_packs,
-    } = get_updated_stock_levels(&existing_stock_line, number_of_packs);
+    } = get_updated_stock_levels(
+        &existing_stock_line,
+        number_of_packs,
+        overwrite_stock_levels,
+    );
 
     // Use existing barcode id if exists
     let barcode_id = barcode_id.or_else(|| {
@@ -104,14 +111,15 @@ pub fn generate_batch(
 fn get_updated_stock_levels(
     existing_stock_line: &Option<StockLineRow>,
     introduced_number_of_packs: f64,
+    overwrite_stock_levels: bool,
 ) -> StockLevels {
-    match existing_stock_line {
-        Some(stock_line) => StockLevels {
+    match (existing_stock_line, overwrite_stock_levels) {
+        (Some(stock_line), false) => StockLevels {
             available_number_of_packs: stock_line.available_number_of_packs
                 + introduced_number_of_packs,
             total_number_of_packs: stock_line.total_number_of_packs + introduced_number_of_packs,
         },
-        None => StockLevels {
+        _ => StockLevels {
             available_number_of_packs: introduced_number_of_packs,
             total_number_of_packs: introduced_number_of_packs,
         },
