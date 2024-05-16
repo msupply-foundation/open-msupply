@@ -1,8 +1,8 @@
 use super::asset_property_row::asset_property::dsl::*;
 
-use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
+use crate::types::PropertyValueType;
 use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
@@ -13,22 +13,15 @@ use crate::Upsert;
 
 use diesel::prelude::*;
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum AssetPropertyValueType {
-    #[default]
-    String,
-    Boolean,
-    Integer,
-    Float,
-}
-
 table! {
     asset_property (id) {
         id -> Text,
         name -> Text,
-        value_type -> crate::db_diesel::asset_property_row::AssetPropertyValueTypeMapping,
+        description -> Text,
+        asset_class_id -> Nullable<Text>,
+        asset_category_id -> Nullable<Text>,
+        asset_type_id -> Nullable<Text>,
+        value_type -> crate::db_diesel::assets::types::PropertyValueTypeMapping,
         allowed_values -> Nullable<Text>,
     }
 }
@@ -41,7 +34,11 @@ table! {
 pub struct AssetPropertyRow {
     pub id: String,
     pub name: String,
-    pub value_type: AssetPropertyValueType,
+    pub description: String,
+    pub asset_class_id: Option<String>,
+    pub asset_category_id: Option<String>,
+    pub asset_type_id: Option<String>,
+    pub value_type: PropertyValueType,
     pub allowed_values: Option<String>,
 }
 
