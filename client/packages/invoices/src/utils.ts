@@ -10,6 +10,7 @@ import {
   ArrayUtils,
   Formatter,
   TypedTFunction,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
@@ -176,14 +177,29 @@ export const isOutboundDisabled = (
   );
 };
 
+/** Returns true if the inbound shipment cannot be edited */
 export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
   const isManuallyCreated = !inbound.linkedShipment?.id;
-  return isManuallyCreated
-    ? inbound.status === InvoiceNodeStatus.Verified
-    : inbound.status === InvoiceNodeStatus.Picked ||
-        inbound.status === InvoiceNodeStatus.Shipped ||
-        inbound.status === InvoiceNodeStatus.Verified;
+  if (isManuallyCreated) {
+    return inbound.status === InvoiceNodeStatus.Verified;
+  }
+  switch (inbound.status) {
+    case InvoiceNodeStatus.New:
+    case InvoiceNodeStatus.Allocated:
+      return false;
+    case InvoiceNodeStatus.Picked:
+    case InvoiceNodeStatus.Shipped:
+    case InvoiceNodeStatus.Delivered:
+    case InvoiceNodeStatus.Verified:
+      return true;
+    default:
+      return noOtherVariants(inbound.status);
+  }
 };
+
+/** Returns true if the inbound shipment can be put on hold */
+export const isInboundHoldable = (inbound: InboundRowFragment): boolean =>
+  inbound.status !== InvoiceNodeStatus.Verified;
 
 export const isInboundReturnDisabled = (
   inboundReturn: InboundReturnRowFragment

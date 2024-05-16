@@ -41,13 +41,13 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                 {
                   type: 'dateTime',
                   name: t('label.from-start-datetime'),
-                  urlParameter: 'startDatetime',
+                  urlParameter: 'datetime',
                   range: 'from',
                 },
                 {
                   type: 'dateTime',
                   name: t('label.to-start-datetime'),
-                  urlParameter: 'startDatetime',
+                  urlParameter: 'datetime',
                   range: 'to',
                 },
               ],

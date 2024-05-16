@@ -173,7 +173,8 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
         onBlur={() => {
           if (isDirty) {
             const parsed = parse(textValue ?? '');
-            const val = Number.isNaN(parsed) ? undefined : parsed;
+            const val = Number.isNaN(parsed) ? defaultValue : parsed;
+
             onChange(val);
             setTextValue(formatValue(val));
           }
