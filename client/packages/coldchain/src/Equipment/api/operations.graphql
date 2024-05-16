@@ -54,6 +54,15 @@ fragment Asset on AssetNode {
     totalCount
   }
   properties
+  catalogProperties {
+    id
+    name
+    valueString
+    valueFloat
+    valueBool
+    valueInt
+    valueType
+  }
   modifiedDatetime
   notes
   replacementDate

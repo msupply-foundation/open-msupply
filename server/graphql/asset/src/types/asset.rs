@@ -17,6 +17,7 @@ use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnector};
 
+use repository::asset_catalogue_item_property::AssetCatalogueItemPropertyValue;
 use repository::assets::asset::AssetSortField;
 
 use repository::{
@@ -26,7 +27,9 @@ use repository::{
 use repository::{DateFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
-use super::{AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput};
+use super::{
+    AssetCatalogueItemPropertyValueNode, AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -198,31 +201,29 @@ impl AssetNode {
         Ok(documents)
     }
 
-    // pub async fn properties(
-    //     &self,
-    //     ctx: &Context<'_>,
-    // ) -> Result<Vec<AssetCatalogueItemPropertyValueNode>> {
-    //     let properties = match &self.row().catalogue_item_id {
-    //         Some(catalogue_item_id) => {
-    //             let loader = ctx.get_loader::<DataLoader<AssetCatalogueItemPropertyLoader>>();
-    //             let result_option = loader.load_one(catalogue_item_id.to_string()).await?;
+    pub async fn catalog_properties(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<AssetCatalogueItemPropertyValueNode>> {
+        let properties = match &self.row().catalogue_item_id {
+            Some(catalogue_item_id) => {
+                let loader = ctx.get_loader::<DataLoader<AssetCatalogueItemPropertyLoader>>();
+                let result_option = loader.load_one(catalogue_item_id.to_string()).await?;
 
-    //             result_option
-    //                 .unwrap_or(Vec::<AssetCatalogueItemPropertyValue>::new())
-    //                 .iter()
-    //                 .map(|p| AssetCatalogueItemPropertyValueNode::from_domain(p.to_owned()))
-    //                 .into_iter()
-    //                 .collect()
-    //         }
-    //         None => vec![],
-    //     };
+                result_option
+                    .unwrap_or(Vec::<AssetCatalogueItemPropertyValue>::new())
+                    .iter()
+                    .map(|p| AssetCatalogueItemPropertyValueNode::from_domain(p.to_owned()))
+                    .into_iter()
+                    .collect()
+            }
+            None => vec![],
+        };
 
-    //     Ok(properties)
-    // }
+        Ok(properties)
+    }
 
     pub async fn properties(&self) -> Result<String> {
-        // TODO: Merge properties with catalogue item properties
-
         let asset_properties = match &self.row().properties {
             Some(properties) => properties.to_owned(),
             None => return Ok("{}".to_string()), // Empty JSON object
