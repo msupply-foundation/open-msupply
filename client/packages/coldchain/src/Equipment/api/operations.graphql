@@ -53,15 +53,7 @@ fragment Asset on AssetNode {
     }
     totalCount
   }
-  properties {
-    id
-    name
-    valueString
-    valueFloat
-    valueBool
-    valueInt
-    valueType
-  }
+  properties
   modifiedDatetime
   notes
   replacementDate
