@@ -27,15 +27,9 @@ use super::{
     translations::{all_translators, pull_integration_order},
 };
 
-/// Don't use transaction on init. USE_PARENT_TX must still be true to use a transaction
-const NO_PARENT_TX_ON_INIT: bool = if cfg!(feature = "postgres") {
-    // Postgres is very slow with many safe points (when catching record errors in a transaction).
-    // Speedup init by avoiding safe points:
-    true
-} else {
-    false
-};
-/// Wrap every record integration into a transaction (if tx are used, see above)
+/// How many records should be integrated in a transaction.
+const BATCH_SIZE: usize = if cfg!(feature = "postgres") { 64 } else { 500 };
+/// Wrap every record integration into a transaction
 const USE_RECORD_TX: bool = if cfg!(feature = "postgres") {
     true
 } else {
@@ -267,15 +261,15 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let execute_in_transaction = if NO_PARENT_TX_ON_INIT {
-            is_initialised
-        } else {
-            true
-        };
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
-            execute_in_transaction,
-            USE_RECORD_TX && execute_in_transaction,
+            USE_RECORD_TX,
+            // During first init, integrate record in batches (to speedup init)
+            if is_initialised {
+                None
+            } else {
+                Some(BATCH_SIZE)
+            },
             // Only pass in logger during initialisation
             match is_initialised {
                 false => Some(logger),
@@ -308,10 +302,11 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
+/// If batch_size is None integrate everything in a single tx
 pub fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
-    execute_in_transaction: bool,
     records_in_tx: bool,
+    batch_size: Option<usize>,
     logger: Option<&mut SyncLogger<'a>>,
     source_site_id: Option<i32>,
 ) -> Result<
@@ -361,7 +356,9 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
+                connection,
                 records_in_tx,
+                batch_size,
                 upsert_sync_buffer_records.clone(),
                 &translators,
                 logger,
@@ -370,7 +367,9 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
+                connection,
                 records_in_tx,
+                batch_size,
                 delete_sync_buffer_records.clone(),
                 &translators,
                 None,
@@ -381,9 +380,12 @@ pub fn integrate_and_translate_sync_buffer<'a>(
             &table_order,
             source_site_id,
         )?;
+
         let merge_integration_result: TranslationAndIntegrationResults =
             translation_and_integration.translate_and_integrate_sync_records(
+                connection,
                 records_in_tx,
+                batch_size,
                 merge_sync_buffer_records,
                 &translators,
                 None,
@@ -396,7 +398,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         ))
     };
 
-    let result = if execute_in_transaction {
+    let result = if batch_size.is_none() {
         connection
             .transaction_sync(integrate_and_translate)
             .map_err::<RepositoryError, _>(|e| e.to_inner_error())

@@ -298,7 +298,7 @@ async fn main() -> anyhow::Result<()> {
             integrate_and_translate_sync_buffer(
                 &ctx.connection,
                 false,
-                true,
+                None,
                 Some(&mut logger),
                 None,
             )?;
