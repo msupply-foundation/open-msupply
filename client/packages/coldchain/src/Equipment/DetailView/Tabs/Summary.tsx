@@ -127,11 +127,6 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     if (reason === 'clear') onChange({ store: null });
   };
 
-  Object.keys(draft.parsedProperties).map(key => {
-    console.log(key);
-    console.log(draft.parsedProperties[key]);
-  });
-
   return (
     <Box display="flex" flex={1}>
       <Container>
