@@ -434,7 +434,7 @@ mod test {
 
         let return_row = updated_return.invoice_row;
         // Status has been updated
-        assert_eq!(return_row.status, InvoiceRowStatus::Verified);
+        assert_eq!(return_row.status, InvoiceStatus::Verified);
         assert!(return_row.verified_datetime.is_some());
 
         let invoice_lines = invoice_line_repo
