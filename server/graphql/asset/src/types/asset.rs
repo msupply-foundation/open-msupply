@@ -17,7 +17,6 @@ use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnector};
 
-use repository::asset_catalogue_item_property::AssetCatalogueItemPropertyValue;
 use repository::assets::asset::AssetSortField;
 
 use repository::{
@@ -27,9 +26,7 @@ use repository::{
 use repository::{DateFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
-use super::{
-    AssetCatalogueItemPropertyValueNode, AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput,
-};
+use super::{AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -223,11 +220,14 @@ impl AssetNode {
     //     Ok(properties)
     // }
 
-    pub async fn properties(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+    pub async fn properties(&self) -> Result<String> {
         // TODO: Merge properties with catalogue item properties
 
-        let asset_properties = &self.row().properties;
-        Ok(asset_properties.to_owned())
+        let asset_properties = match &self.row().properties {
+            Some(properties) => properties.to_owned(),
+            None => return Ok("{}".to_string()), // Empty JSON object
+        };
+        Ok(asset_properties)
     }
 
     pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {
