@@ -285,6 +285,19 @@ export type AssetCatalogueItemPropertyNode = {
   valueString?: Maybe<Scalars['String']['output']>;
 };
 
+export type AssetCatalogueItemPropertyValueNode = {
+  __typename: 'AssetCatalogueItemPropertyValueNode';
+  catalogueItemId: Scalars['String']['output'];
+  cataloguePropertyId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  valueBool?: Maybe<Scalars['Boolean']['output']>;
+  valueFloat?: Maybe<Scalars['Float']['output']>;
+  valueInt?: Maybe<Scalars['Int']['output']>;
+  valueString?: Maybe<Scalars['String']['output']>;
+  valueType: PropertyNodeValueType;
+};
+
 export type AssetCatalogueItemResponse = AssetCatalogueItemNode | NodeError;
 
 export enum AssetCatalogueItemSortFieldInput {
@@ -541,6 +554,7 @@ export type AssetNode = {
   assetClass?: Maybe<AssetClassNode>;
   assetNumber?: Maybe<Scalars['String']['output']>;
   assetType?: Maybe<AssetTypeNode>;
+  catalogProperties: Array<AssetCatalogueItemPropertyValueNode>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
