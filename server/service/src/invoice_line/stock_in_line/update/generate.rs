@@ -59,6 +59,7 @@ pub fn generate(
         };
 
         let new_batch = generate_batch(
+            connection,
             stock_line_id,
             update_line.clone(),
             StockLineInput {
@@ -67,7 +68,7 @@ pub fn generate(
                 on_hold: false,
                 barcode_id: None,
             },
-        );
+        )?;
         update_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
     } else {

@@ -1,8 +1,7 @@
 use chrono::Utc;
 
 use repository::{
-    BarcodeRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError,
-    StorageConnection,
+    InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
 };
 use repository::{NameRowRepository, StockLine, StockLineRow};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -96,17 +95,8 @@ pub fn generate(
         sell_price_per_pack,
         note,
         on_hold,
-        barcode_id,
         ..
     } = stock_line.stock_line_row.clone();
-
-    // Get gtin from existing barcode row if it exists
-    let barcode = match barcode_id {
-        Some(barcode_id) => BarcodeRowRepository::new(connection)
-            .find_one_by_id(&barcode_id)?
-            .map(|barcode_row| barcode_row.gtin),
-        None => None,
-    };
 
     let invoice_id = invoice.id.clone();
     let invoice_line_id = uuid();
@@ -117,10 +107,6 @@ pub fn generate(
             id: invoice_line_id.clone(),
             invoice_id,
             stock_line_id: Some(stock_line_id),
-            // TODO: hm yeah this is a PROB
-            // ugh but inv line aint gonna know
-            // idk at this point may need a 3rd..
-            // NAH take from inv for new sl ah gem
             number_of_packs: adjustment,
             // From existing stock line
             item_id: stock_line.item_row.id,
@@ -131,13 +117,14 @@ pub fn generate(
             sell_price_per_pack,
             expiry_date,
             stock_on_hold: on_hold,
-            barcode,
-            // TODO: `note` currently gets applied to both stock line and invoice line
-            // passing through here so completing an inventory adjustment will not
-            // clear any stock line note -- if we want a different note in IA invoice line
-            // we will need to add another field here
+            // TODO: `note` currently gets applied to both stock line and invoice line.
+            // We pass it through here so completing an inventory adjustment will not
+            // clear any stock line note, but this means any existing stock line note will
+            // be applied to the inventory adjustment invoice line.
+            // If we want a different note invoice line, StockIn needs another field
             note,
             // Default
+            barcode: None,
             total_before_tax: None,
             tax_percentage: None,
         }),

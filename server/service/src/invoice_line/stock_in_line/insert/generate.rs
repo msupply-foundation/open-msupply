@@ -42,6 +42,7 @@ pub fn generate(
 
     let batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
         let batch = generate_batch(
+            connection,
             input.stock_line_id,
             new_line.clone(),
             StockLineInput {
@@ -50,7 +51,7 @@ pub fn generate(
                 on_hold: input.stock_on_hold,
                 barcode_id: barcode_option.clone().map(|b| b.id.clone()),
             },
-        );
+        )?;
         // If a new stock line has been created, update the stock_line_id on the invoice line
         new_line.stock_line_id = Some(batch.id.clone());
 
