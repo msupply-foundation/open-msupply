@@ -16,8 +16,8 @@ use diesel::prelude::*;
 table! {
     asset_property (id) {
         id -> Text,
+        key -> Text,
         name -> Text,
-        description -> Text,
         asset_class_id -> Nullable<Text>,
         asset_category_id -> Nullable<Text>,
         asset_type_id -> Nullable<Text>,
@@ -33,8 +33,8 @@ table! {
 #[diesel(treat_none_as_null = true)]
 pub struct AssetPropertyRow {
     pub id: String,
+    pub key: String,
     pub name: String,
-    pub description: String,
     pub asset_class_id: Option<String>,
     pub asset_category_id: Option<String>,
     pub asset_type_id: Option<String>,
