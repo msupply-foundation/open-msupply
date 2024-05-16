@@ -7,207 +7,107 @@
 
 ## Intro
 
-Remote sites are backed up by synchronisation to the central server. 
+Prior to omSupply central server, we didn't need to consider omSupply backups because remote sites are backed up by synchronisation to mSupply central server.
 mSupply central server is backed up on a schedule, it also contains journal (write ahead log of sort) of the changes since last backup. 
-We started to use omSupply central server functionality, which now included both central and remote data, which is syncrhonised from remote site to omSupply central server, but not to mSupply central server.
+Now that we've started to use omSupply central server functionality, we need a strategy for backup up of remote and central data for omSupply central servers.
 
-### 1 - mSupply and omSupply central backups align
-It's quite important that backups for both servers are bundled (both backed up at the same time), as per below example (consider v5 = Supply and v6 = omSupply):
+## Existing mSupply backup
 
-v6 record (A) references v5 record (B). If v5 backup is before B was created but v6 backup is after A was created, we could have broken reference on A record.
+We back up mSupply via a scheduled snapshot + journal file since last backup. 
+There is UI to configure all of the parameters of the backup in mSupply.
+We use cloud services to hold the backup, in case of full local failure.
 
-### 2 - Remote sites ahead of omSupply central backups
+We've restored mSupply central server data from latest local backup + current journal, on a number of ocassions. I beleive we had to use remote backups saved in cloud a couple of time.
 
-If omSupply central data is lost there is a chance that after restore, remote sites data would be ahead of omSupply central data, for example:
+Encryption for mSupply data happens at the cloud provider end
 
-v6 cursors is 100 on remote site, last backup of omSupply central site is taken when change log latest cursor is 90. After omSupply central data restore, change log latest cursor would be at 90, if 10 more records are added to change log on central, they will not find their was to remote sites since remote site will be asking for change logs > 100. 
+## Problem Space
 
-### 3 - Partial corruption
+### (A) Need to be able to:
 
-There is a use case where either mSupply or omSupply central becomes corrupted (rather then the whole machine, where both would be corrupted).
+1. Store local backup of omSupply central database
+2. Store local backup of omSupply central files 
+3. Send 1 and 2 to a cloud service to hold remote version of backups
+4. Restore 1 and 2 with reasonable speed, consistency and recency
 
-## Requirements
+### (B) Other areas of consideration
 
-1. Reduce chance of loosing data by automated backup of omSupply central server
-2. A mechanism to align mSupply and omSupply central server data, or reduction of misalignment impact
-3. A mechanism to align omSupply remote and omSupply central server data, or reduciont of misalignment impact
-4. Partial corruption needs to be considered and
+1. When data is stored remotely, it needs to be safe from prying eye (encrypted)
+2. We also have Grafana installed on most central instances, and I think we've been using the same postgres instance for both omSupply central and Grafana
+3. Deal with or have a strategy to deal with misalignment of sync data between omSupply remote sites, omSupply central and mSupply central. Consider that omSupply or mSupply central data is restored, but there is some missalignment in recency, resulting in scenariors below
+
+|  scenario | mSupply Central (MC) | omSupply Central (OMC) | omSupply Remote (OMR) | Side effect                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|:---------:|:--------------------:|:----------------------:|:---------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|   B.3.1   |          old         |         recent         |         recent        | Loss of data while restore of OMR data (via sync initialisation), due to missing data for that site on MC. OMC and OMR may miss some central data being added, since their cursor for that data would be ahead of central_change_log on MC. Some OMR remote records that are pushed to OMC may be related to central records on MC that are not present anymore, thus when OMR is re-initialised some constraints may fail. |
+|   B.3.2   |        recent        |           old          |         recent        | Loss of data while restore of OMR (via sync initialisation), due to missing data for that site on OMC. Some data being pushed OMC from OMR may not be integrated due to missing relation dependencies (that were pushed previously but are now missing). Some new OMC central data may not travel to OMR since the cursor of OMR for central data would be ahead of current OMC                                             |
+|   B.3.3   |        recent        |         recent         |          old          | This would require some restore of backup on omSupply remote site, which is not something we recommend or support (if remote site data is lost, you should re-initialise)                                                                                                                                                                                                                                                   |
+|   B.3.4   |          old         |           old          |         recent        | Combined effects of B.3.1 and B.3.2                                                                                                                                                                                                                                         
+## About WAL
+
+[Full description here](https://www.postgresql.org/docs/current/continuous-archiving.html#BACKUP-ARCHIVING-WAL). In summary, postgres has write ahead log (like journal in mSupply), and it can be used to restore a backup to a particular point. Like mSupply we can take an old backup, and look at WALs since that backup until now and restore that backup up to now. Unlike mSupply, postgres will 'cycle' through a few WAL files, which will typcically be around 16mb, and re-use them. Archiving of WAL can be enabled so that before WAL file is re-used, it can be backed up (you can specify a comman line or script for postgres to call when it archive even is triggerd). For WAL to work in backups, should use `pg_basebackup` for backup snapshot, `pg_dump` won't work with WAL.
 
 ## Options
 
-### Option 1 - Postgres backup with WAL
+### Option 1 - pg_dump or pg_basebackup via mSupply
 
-Whenever mSupply is backed up, omSupply back up is triggered (using pg dump of the whole database), both backups are bundled into single archive. Make sure that postgres instance is using WAL, which is also backed up.
+pg_dump on a schedule, mSupply can do it while doing it's own backup, can save backup in the same place it stores it's own backups so that A.3 would happen automatically
 
-If server data becomes corrupt 
+_Pros:_
 
-*Pros:*
-- Keeps with existing
+- Quite simple
+- A.3 is handled automatically (using the same mechanism as mSupply)
+- Backup configurations in UI/UX in mSupply
+- Restore should be reasonably fast
+- Can deal with A.2 at the same time
 
-*Cons:*
-- Would be hard to insert a test for a particular version
-- For more complex data migration SQL is pretty hard to read / change
-- Couldn't quite do `8.`
-- Less visibility to the `internals` and quite rigid (i.e. does it happen in transaction ?)
+_Cons:_
 
-### Option 2 - Our own migration mechanism
+- A bit of code to implement and test in mSupply
+- Would only be as recent as the last schedule time
+- With pg_dump can't use WAL archiving but with pg_basebackup we can
+- omSupply central would probably need to live on the same machine as mSupply
 
-Write our own migration code, following visitor pattern. Since schema migrations are just sql statements, we can run raw sql to accomplish the task. Migration should run within transaction to allow reverting upgrade as per **4**. Visitor implementation should be simple, it should be able to tell the caller that this migration is need and have a method that runs migration (which just take in connection). The driver of migrations can set the version after each successful migration.
 
-#### Example - Driver
+### Option 2 - WAL Archiving
 
-```rust
-const VERSION = "1.03.00";
+Setup backup via WAL archiving. As part of omSupply central, our support staff can setup archiving and take pg_basebackup. Archiving can zip and password protect WAL. Can structure backup folders to allow for A.3
 
-fn migrate(con: &StorageConnection, version: Option<u32>) -> anyhow::Error {
-    // This method can be called in tests with required version, None for version would mean it will update to current version
-    let version = version.unwrap_or(VERSION)
+_Pros:_
 
-    let migrations: Vec<Box<dyn Migration>> = vec![V1_02, V1_03];
+- Can reduce the chance of B.3 related to OMC recency
+- Upskilling support staff to be able to work with postgres WAL backups
+- No UI to implement
 
-    // if version(con) is above VERSION, warn user that version mismatch
+_Cons:_
 
-    for migration in migrations {
-        let current_db_version = version(con); // Version is stored in key value store
-        let migration_version = migration.version();
-        // If VERSION is below migration_version panic (forgot to update VERSION but new migration was added)
-        let version = migration.version();
-        if current_db_version < version {
-            let result = con.tx(|_| {
-                migration.migrate(con)?;
-                increment_version(con, version); // Version is stored in key value store
-            });
-            // Do something with result
-        }
-    }
-    increment_version(con, from_text_version(version)); // Current version
-}
-```
+- Would need archiving and unarchive scripts, that would also need to deal with file backup
+- Restoring is more techincal and may take longer
+- Need a mechanism for periodic snapshot backup (to optimise space and speed of restore)
+- Upskilling support staff to be able to work with postgres WAL backups
 
-#### Example - Migration without data
+### Option 3 - Base backup via omSupply
 
-```rust 
-impl Migration for V1_05 {
-  fn version() -> u32 {
-    from_text_version("1.05.00")
-  }
+Pg base backup can be done [via low level API (sql statements)]https://www.postgresql.org/docs/current/continuous-archiving.html#BACKUP-LOWLEVEL-BASE-BACKUP by omSupply server. With configurations and scheduling built into omSupply
 
-  fn migrate(connection: &StorageConnection) -> anyhow::Error {
-    sql_query(r#"
-        CREATE NEW TABLE(
-            # table here
-        )
-    "#).execute(&connection)?;
-  }
-}
-```
+_Pros:_
 
-### Example - Migration with data and test
+- Should be reasonably simple
+- A.3 is handled automatically (using the same mechanism as mSupply)
+- Backup configurations in UI/UX in omSupply
+- Restore should be reasonably fast
+- Can deal with A.2 at the same time
 
-```rust
+_Cons:_
 
-const prepare = r#"
-   CREATE TABLE buffer (
-    # something here
-   )
-"#;
+- A bit of code to implement and test in omSupply
+- Would only be as recent as the last schedule time
 
-const finalised = r#"
-   DELETE TABLE remote_buffer;
-   DELETE TABLE central_buffer;
-"#;
-
-// Since this won't exist in code base anymore, have to copy paste from deleted, similar if table definitions were changed
-
-table! {
-    remote_buffer (id) {
-        id -> Text,
-        thing -> Nullable<Text>,
-    }
-}
-// Since this won't exist in code base anymore, have to copy paste from deleted, similar if table definitions were changed
-table! {
-    central_buffer (id) {
-        id -> Text,
-        thing -> Nullable<Text>,
-    }
-}
-// Since this won't exist in code base anymore, have to copy paste from deleted, similar if table definitions were changed
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[table_name = "remote_buffer"]
-pub struct RemoteBuffer {
-    pub id: String,
-    pub thing: Option<String>,
-}
-// Since this won't exist in code base anymore, have to copy paste from deleted, similar if table definitions were changed
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[table_name = "central_buffer"]
-pub struct RemoteBuffer {
-    pub id: String,
-    pub thing: Option<String>,
-}
-
-// NOTE: Re above, another way would be to move the whole repository to migration scripts (when that repository is deleted/changed)
-
-struct V1_02;
-
-impl Migration for V1_02 {
-  fn version() -> u32 {
-    from_text_version("1.03.01")
-  }
-
-  fn migrate(connection: &StorageConnection) -> anyhow::Error {
-    sql_query(&prepare).execute(&connection)?;
-    
-   let remote: Vec<RemoteBuffer> =  remote_buffer::dsl.load(connection);
-   let central: Vec<RemoteBuffer> =  remote_buffer::dsl.load(connection);
-   // Since buffer repository will now exist in code base, can use it from repository
-   BufferRepository::new(connection).upsert_many(remote.iter().map(/* translate to new Buffer */));
-   BufferRepository::new(connection).upsert_many(central.iter().map(/* translate to new Buffer */));
-
-    sql_query(&finalised).execute(&connection)?;
-  }
-}
-
-#[test]
-fn test() {
-   let con = init_database("test");
-   migrate(con, V1_01.version());
-
-   diesel::insert_into(remote_buffer::dsl::remote_buffer).values(&RemoteBuffer {
-    // Some mock values
-   }).execute(&con)?;
-
-   diesel::insert_into(central_buffer::dsl::central_buffer).values(&CentralBuffer {
-    // Some mock values
-   }).execute(&con)?;
-
-   migrate(con, V1_02.version());
-
-   assert_eq!(BufferRepository::new(connection).all(), vec![Buffer {/* some mock values */}, Buffer {/* some mock values */}];
-}
-```
-
-Above should explain how most of the requirements are met, `8.` can be met using cfg flags for pg/sqlite if they differ. If they differ only slightly like `item_stats/up.sql`, we can replace the difference (once again with cfg flags)
-
-It should be very easy to navigate to any given migration if they are located in their own file or directory. 
-
-`5.` can be dealt with by exporting to `schema spy` for each version, and hosting on github actions.
-`4.` As for logging, can be logged to files for now (but we do want further issue/discussion about logging) {insert issue here}
-
-*Pros:*
-- Ability to add tests (at the very least to avoid manual vaidation that data migrations work)
-- Flexibility and visibility of migration mechanism (can do more complex migrations, use transactions etc..)
-- Data manipulation consistency (as in we use diesel for most data manipulations now, can continue down that path for data migrations)
-
-*Cons:*
-- A bit more work upfront
-- Sligtly more overhead (although I think this is negligible)
+Could increase the size of WAL if we backup daily, this way we can still integrate latest backup with current WAL (but current WAL will not be stored remotely)
 
 ## Decision
 
-I suggest to go with `Option 2`, I don't think there is much work to make it happen (2-3 hours for the core and half a day to fill the gaps like logging etc..)
+I am leaning towards Option 3 for now, followed by Option 2 in the future. Option 3 require a bit of coding, but I think would be easier for support staff to administer and we can still integrate local WAL
 
-## Mobile Considerations
+## Consequences
 
-We want to display an error somehow if migration fails, not actually sure what happens right now if there is say database error during startup. Could potentially have another graphql schema `migration`, and another table to record migration results, similar to sync status.
+B.2 Hasn't really been discussed, I am not sure if it needs to be considered in this KDD, since we may decide to combine Grafana and omSupply backups or keep them separate. Either way it shouldn't affect backup strategy. Although if we want restoration of omSpply database to be quicker and backup size to be smaller, we should consider keeping them on separate instances.
