@@ -586,3 +586,62 @@ impl RowActionType {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
 }
+
+#[cfg(test)]
+mod test {
+    use tokio::sync::oneshot;
+    use util::inline_init;
+
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogRepository, ClinicianRow,
+        ClinicianRowRepository, RepositoryError, TransactionError,
+    };
+
+    /// Example from with_locked_changelog_table() comment
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_late_changelog_rows() {
+        let (_, connection, connection_manager, _) =
+            setup_all("test_late_changelog_rows", MockDataInserts::none()).await;
+
+        ClinicianRowRepository::new(&connection)
+            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
+                r.id = String::from("1");
+                r.is_active = true;
+            }))
+            .unwrap();
+
+        let (sender, receiver) = oneshot::channel::<()>();
+        let manager_2 = connection_manager.clone();
+        let process_2 = tokio::spawn(async move {
+            let connection = manager_2.connection().unwrap();
+            let result: Result<(), TransactionError<RepositoryError>> = connection
+                .transaction_sync(|con| {
+                    ClinicianRowRepository::new(con)
+                        .upsert_one(&inline_init(|r: &mut ClinicianRow| {
+                            r.id = String::from("2");
+                            r.is_active = true;
+                        }))
+                        .unwrap();
+                    sender.send(()).unwrap();
+                    std::thread::sleep(core::time::Duration::from_millis(100));
+                    Ok(())
+                });
+            result
+        });
+        receiver.await.unwrap();
+        ClinicianRowRepository::new(&connection)
+            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
+                r.id = String::from("3");
+                r.is_active = true;
+            }))
+            .unwrap();
+
+        let changelogs = ChangelogRepository::new(&connection)
+            .changelogs(0, 10, None)
+            .unwrap();
+        assert_eq!(changelogs.len(), 3);
+
+        // being good and awaiting the task to finish orderly and check it did run fine
+        process_2.await.unwrap().unwrap();
+    }
+}
