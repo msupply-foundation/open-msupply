@@ -15,8 +15,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TABLE asset_property (
                 id TEXT NOT NULL PRIMARY KEY,
+                key TEXT NOT NULL,
                 name TEXT NOT NULL,
-                description TEXT NOT NULL,
                 asset_class_id TEXT,
                 asset_category_id TEXT,
                 asset_type_id TEXT,

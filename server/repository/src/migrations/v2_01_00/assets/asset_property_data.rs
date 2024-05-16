@@ -5,7 +5,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-        INSERT INTO asset_property (id, name, description, value_type, allowed_values) VALUES ('external_dimensions', 'external_dimensions', 'External dimensions - WxDxH (in cm)', 'STRING', NULL);
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values) VALUES ('external_dimensions', 'external_dimensions', 'External dimensions - WxDxH (in cm)', 'STRING', NULL);
         "#,
     )?;
     Ok(())

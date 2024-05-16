@@ -10,8 +10,8 @@ const ASSET_PROPERTY1: (&str, &str) = (
     r#"{
         "id": "59d20a10-0555-4e65-9c36-2c86e50e5abc",
         "asset_category_id": "02cbea92-d5bf-4832-863b-c04e093a7760", 
-        "name": "favourite_colour",
-        "description": "Your favourite colour",
+        "key": "favourite_colour",
+        "name": "Your favourite colour",
         "value_type": "STRING",
         "allowed_values": "Blue,Yellow"
     }"#,
@@ -23,8 +23,8 @@ fn asset_property1() -> AssetPropertyRow {
         asset_class_id: None,
         asset_category_id: Some("02cbea92-d5bf-4832-863b-c04e093a7760".to_string()), // Refrigerators and freezers
         asset_type_id: None,
-        name: "favourite_colour".to_string(),
-        description: "Your favourite colour".to_string(),
+        key: "favourite_colour".to_string(),
+        name: "Your favourite colour".to_string(),
         value_type: PropertyValueType::String,
         allowed_values: Some("Blue,Yellow".to_string()),
     }

@@ -15,6 +15,7 @@ pub mod asset_log;
 pub mod asset_log_reason;
 pub mod asset_log_reason_row;
 pub mod asset_log_row;
+pub mod asset_property;
 pub mod asset_property_row;
 pub mod asset_row;
 pub mod asset_type;
