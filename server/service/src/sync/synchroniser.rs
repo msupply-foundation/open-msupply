@@ -27,6 +27,21 @@ use super::{
     translations::{all_translators, pull_integration_order},
 };
 
+/// Don't use transaction on init. USE_PARENT_TX must still be true to use a transaction
+const NO_PARENT_TX_ON_INIT: bool = if cfg!(feature = "postgres") {
+    // Postgres is very slow with many safe points (when catching record errors in a transaction).
+    // Speedup init by avoiding safe points:
+    true
+} else {
+    false
+};
+/// Wrap every record integration into a transaction (if tx are used, see above)
+const USE_RECORD_TX: bool = if cfg!(feature = "postgres") {
+    true
+} else {
+    false
+};
+
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
 pub struct Synchroniser {
@@ -252,9 +267,15 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
+        let execute_in_transaction = if NO_PARENT_TX_ON_INIT {
+            is_initialised
+        } else {
+            true
+        };
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
-            is_initialised,
+            execute_in_transaction,
+            USE_RECORD_TX && execute_in_transaction,
             // Only pass in logger during initialisation
             match is_initialised {
                 false => Some(logger),
@@ -290,6 +311,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
     execute_in_transaction: bool,
+    records_in_tx: bool,
     logger: Option<&mut SyncLogger<'a>>,
     source_site_id: Option<i32>,
 ) -> Result<
@@ -339,6 +361,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
+                records_in_tx,
                 upsert_sync_buffer_records.clone(),
                 &translators,
                 logger,
@@ -347,6 +370,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
+                records_in_tx,
                 delete_sync_buffer_records.clone(),
                 &translators,
                 None,
@@ -359,6 +383,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         )?;
         let merge_integration_result: TranslationAndIntegrationResults =
             translation_and_integration.translate_and_integrate_sync_records(
+                records_in_tx,
                 merge_sync_buffer_records,
                 &translators,
                 None,

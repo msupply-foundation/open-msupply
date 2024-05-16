@@ -85,6 +85,7 @@ impl<'a> TranslationAndIntegration<'a> {
 
     pub(crate) fn translate_and_integrate_sync_records(
         &self,
+        records_in_tx: bool,
         sync_records: Vec<SyncBufferRow>,
         translators: &Vec<Box<dyn SyncTranslation>>,
         mut logger: Option<&mut SyncLogger>,
@@ -141,7 +142,8 @@ impl<'a> TranslationAndIntegration<'a> {
             };
 
             // Integrate
-            let integration_result = integrate(self.connection, &integration_records);
+            let integration_result =
+                integrate(self.connection, records_in_tx, &integration_records);
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
@@ -196,21 +198,13 @@ impl IntegrationOperation {
 
 pub(crate) fn integrate(
     connection: &StorageConnection,
+    records_in_tx: bool,
     integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
-    // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
-    let start_nested_transaction = {
-        connection
-            .lock()
-            .transaction_level::<RepositoryError>()
-            .map_err(|e| e.to_inner_error())?
-            > 0
-    };
-
     for integration_record in integration_records.iter() {
         // Integrate every record in a sub transaction. This is mainly for Postgres where the
         // whole transaction fails when there is a DB error (not a problem in sqlite).
-        if start_nested_transaction {
+        if records_in_tx {
             connection
                 .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
                 .map_err(|e| e.to_inner_error())?;
@@ -257,6 +251,7 @@ mod test {
                 // Doesn't fail
                 let result = integrate(
                     connection,
+                    true,
                     &[IntegrationOperation::upsert(inline_init(
                         |r: &mut UnitRow| {
                             r.id = "unit".to_string();
@@ -266,9 +261,10 @@ mod test {
 
                 assert_eq!(result, Ok(()));
 
-                // Fails due to referencial constraint
+                // Fails due to referential constraint
                 let result = integrate(
                     connection,
+                    true,
                     &[IntegrationOperation::upsert(inline_init(
                         |r: &mut ItemRow| {
                             r.id = "item".to_string();
