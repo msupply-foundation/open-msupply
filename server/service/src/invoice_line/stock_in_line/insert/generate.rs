@@ -43,13 +43,18 @@ pub fn generate(
     let batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
         let batch = generate_batch(
             connection,
-            input.stock_line_id,
             new_line.clone(),
             StockLineInput {
+                stock_line_id: input.stock_line_id,
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_link_id: existing_invoice_row.name_link_id.clone(),
                 on_hold: input.stock_on_hold,
                 barcode_id: barcode_option.clone().map(|b| b.id.clone()),
+                overwrite_stock_levels: match &input.r#type {
+                    // adjusting existing stock, we want to add to existing stock levels
+                    StockInType::InventoryAddition => false,
+                    _ => true,
+                },
             },
         )?;
         // If a new stock line has been created, update the stock_line_id on the invoice line

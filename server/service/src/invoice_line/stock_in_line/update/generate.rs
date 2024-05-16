@@ -60,13 +60,14 @@ pub fn generate(
 
         let new_batch = generate_batch(
             connection,
-            stock_line_id,
             update_line.clone(),
             StockLineInput {
+                stock_line_id,
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_link_id: existing_invoice_row.name_link_id.clone(),
                 on_hold: false,
                 barcode_id: None,
+                overwrite_stock_levels: true,
             },
         )?;
         update_line.stock_line_id = Some(new_batch.id.clone());
