@@ -1,7 +1,8 @@
 mod mutations;
 use self::mutations::*;
-mod logs;
-use self::logs::*;
+pub mod logs;
+pub mod property;
+pub mod types;
 
 use async_graphql::*;
 use graphql_core::{
@@ -9,15 +10,9 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-pub mod types;
 use repository::{assets::asset::AssetFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
-use types::AssetLogFilterInput;
-use types::AssetLogReasonFilterInput;
-use types::AssetLogReasonSortInput;
-use types::AssetLogReasonsResponse;
-use types::AssetLogSortInput;
-use types::AssetLogsResponse;
+
 use types::{AssetConnector, AssetFilterInput, AssetSortInput, AssetsResponse};
 
 #[derive(Default, Clone)]
@@ -94,76 +89,6 @@ impl AssetMutations {
         asset_id: String,
     ) -> Result<DeleteAssetResponse> {
         delete_asset(ctx, &store_id, &asset_id)
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct AssetLogQueries;
-
-#[Object]
-impl AssetLogQueries {
-    async fn asset_logs(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        page: Option<PaginationInput>,
-        filter: Option<AssetLogFilterInput>,
-        sort: Option<Vec<AssetLogSortInput>>,
-    ) -> Result<AssetLogsResponse> {
-        asset_logs(ctx, store_id, page, filter, sort)
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct AssetLogMutations;
-
-#[Object]
-impl AssetLogMutations {
-    async fn insert_asset_log(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertAssetLogInput,
-    ) -> Result<InsertAssetLogResponse> {
-        insert_asset_log(ctx, &store_id, input)
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct AssetLogReasonQueries;
-
-#[Object]
-impl AssetLogReasonQueries {
-    async fn asset_log_reasons(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        page: Option<PaginationInput>,
-        filter: Option<AssetLogReasonFilterInput>,
-        sort: Option<Vec<AssetLogReasonSortInput>>,
-    ) -> Result<AssetLogReasonsResponse> {
-        asset_log_reasons(ctx, store_id, page, filter, sort)
-    }
-}
-
-#[derive(Default, Clone)]
-pub struct AssetLogReasonMutations;
-
-#[Object]
-impl AssetLogReasonMutations {
-    async fn insert_asset_log_reason(
-        &self,
-        ctx: &Context<'_>,
-        input: InsertAssetLogReasonInput,
-    ) -> Result<InsertAssetLogReasonResponse> {
-        insert_asset_log_reason(ctx, input)
-    }
-    async fn delete_log_reason(
-        &self,
-        ctx: &Context<'_>,
-        reason_id: String,
-    ) -> Result<DeleteAssetLogReasonResponse> {
-        delete_log_reason(ctx, &reason_id)
     }
 }
 

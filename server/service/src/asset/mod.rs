@@ -6,6 +6,7 @@ use self::insert_log_reason::{
     insert_asset_log_reason, InsertAssetLogReason, InsertAssetLogReasonError,
 };
 use self::query::{get_asset, get_assets};
+use self::query_asset_property::get_asset_properties;
 use self::query_log::{get_asset_log, get_asset_logs};
 use self::query_log_reason::{get_asset_log_reason, get_asset_log_reasons};
 use self::update::{update_asset, UpdateAsset, UpdateAssetError};
@@ -13,6 +14,8 @@ use self::update::{update_asset, UpdateAsset, UpdateAssetError};
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::asset_log_reason::{AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort};
+use repository::asset_property::AssetPropertyFilter;
+use repository::asset_property_row::AssetPropertyRow;
 use repository::assets::asset::{Asset, AssetFilter, AssetSort};
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort};
 use repository::{PaginationOption, StorageConnection};
@@ -124,6 +127,14 @@ pub trait AssetServiceTrait: Sync + Send {
         input: InsertAssetLogReason,
     ) -> Result<AssetLogReason, InsertAssetLogReasonError> {
         insert_asset_log_reason(ctx, input)
+    }
+
+    fn get_asset_properties(
+        &self,
+        connection: &StorageConnection,
+        filter: Option<AssetPropertyFilter>,
+    ) -> Result<ListResult<AssetPropertyRow>, ListError> {
+        get_asset_properties(connection, filter)
     }
 }
 

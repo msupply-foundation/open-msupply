@@ -23,6 +23,7 @@ import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
 import { ActivityLogList, useLocation } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
+import { isObject } from 'lodash';
 
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
@@ -73,11 +74,17 @@ export const EquipmentDetailView = () => {
 
   useEffect(() => {
     if (!data) return;
+    let properties = JSON.parse(data.properties);
+    if (!properties || !isObject(properties)) {
+      // Invalid properties, reset to empty object
+      properties = {};
+    }
     setDraft({
       ...data,
       locationIds: draft?.locationIds
         ? draft.locationIds
         : data.locations.nodes.map(location => location.id),
+      parsedProperties: properties,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);

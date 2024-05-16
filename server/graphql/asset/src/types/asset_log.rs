@@ -65,8 +65,8 @@ pub struct AssetLogSortInput {
     /// ascending)
     desc: Option<bool>,
 }
-#[derive(InputObject, Clone)]
 
+#[derive(InputObject, Clone)]
 pub struct AssetLogFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub asset_id: Option<EqualFilterStringInput>,

@@ -92,6 +92,7 @@ export enum ActivityLogNodeType {
   AssetLogCreated = 'ASSET_LOG_CREATED',
   AssetLogReasonCreated = 'ASSET_LOG_REASON_CREATED',
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
+  AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
@@ -282,19 +283,6 @@ export type AssetCatalogueItemPropertyNode = {
   valueFloat?: Maybe<Scalars['Float']['output']>;
   valueInt?: Maybe<Scalars['Int']['output']>;
   valueString?: Maybe<Scalars['String']['output']>;
-};
-
-export type AssetCatalogueItemPropertyValueNode = {
-  __typename: 'AssetCatalogueItemPropertyValueNode';
-  catalogueItemId: Scalars['String']['output'];
-  cataloguePropertyId: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  valueBool?: Maybe<Scalars['Boolean']['output']>;
-  valueFloat?: Maybe<Scalars['Float']['output']>;
-  valueInt?: Maybe<Scalars['Int']['output']>;
-  valueString?: Maybe<Scalars['String']['output']>;
-  valueType: PropertyNodeValueType;
 };
 
 export type AssetCatalogueItemResponse = AssetCatalogueItemNode | NodeError;
@@ -562,12 +550,29 @@ export type AssetNode = {
   locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
-  properties: Array<AssetCatalogueItemPropertyValueNode>;
+  properties: Scalars['String']['output'];
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
   statusLog?: Maybe<AssetLogNode>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+};
+
+export type AssetPropertiesResponse = AssetPropertyConnector;
+
+export type AssetPropertyConnector = {
+  __typename: 'AssetPropertyConnector';
+  nodes: Array<AssetPropertyNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetPropertyFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type AssetPropertyNode = {
+  __typename: 'AssetPropertyNode';
+  id: Scalars['String']['output'];
 };
 
 export enum AssetSortFieldInput {
@@ -4816,6 +4821,7 @@ export type Queries = {
   assetClasses: AssetClassesResponse;
   assetLogReasons: AssetLogReasonsResponse;
   assetLogs: AssetLogsResponse;
+  assetProperties: AssetPropertiesResponse;
   assetType: AssetTypeResponse;
   assetTypes: AssetTypesResponse;
   /** Query omSupply "assets" entries */
@@ -5010,6 +5016,12 @@ export type QueriesAssetLogsArgs = {
   filter?: InputMaybe<AssetLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetLogSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetPropertiesArgs = {
+  filter?: InputMaybe<AssetPropertyFilterInput>;
   storeId: Scalars['String']['input'];
 };
 

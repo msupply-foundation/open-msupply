@@ -4,3 +4,5 @@ pub mod asset;
 pub use asset::*;
 pub mod asset_catalogue_item;
 pub use asset_catalogue_item::*;
+pub mod asset_property;
+pub use asset_property::*;
