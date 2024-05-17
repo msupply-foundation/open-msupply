@@ -93,6 +93,13 @@ fragment Asset on AssetNode {
   assetCategory {
     name
   }
+  donorNameId
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  warrantyStart
+  warrantyEnd
 }
 
 fragment ColdchainAssetLog on AssetLogNode {

@@ -559,6 +559,8 @@ export type AssetNode = {
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
+  donor?: Maybe<NameNode>;
+  donorNameId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
@@ -570,6 +572,13 @@ export type AssetNode = {
   statusLog?: Maybe<AssetLogNode>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+  warrantyEnd?: Maybe<Scalars['NaiveDate']['output']>;
+  warrantyStart?: Maybe<Scalars['NaiveDate']['output']>;
+};
+
+
+export type AssetNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type AssetPropertiesResponse = AssetPropertyConnector;
@@ -2121,13 +2130,17 @@ export type InsertAssetInput = {
   catalogueItemId?: InputMaybe<Scalars['String']['input']>;
   categoryId?: InputMaybe<Scalars['String']['input']>;
   classId?: InputMaybe<Scalars['String']['input']>;
+  donorNameId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
+  properties?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
   storeId?: InputMaybe<Scalars['String']['input']>;
   typeId?: InputMaybe<Scalars['String']['input']>;
+  warrantyEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
+  warrantyStart?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type InsertAssetLogError = {
@@ -6579,13 +6592,17 @@ export type UpdateAssetErrorInterface = {
 export type UpdateAssetInput = {
   assetNumber?: InputMaybe<Scalars['String']['input']>;
   catalogueItemId?: InputMaybe<NullableStringUpdate>;
+  donorNameId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
   locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
   notes?: InputMaybe<Scalars['String']['input']>;
+  properties?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
   storeId?: InputMaybe<NullableStringUpdate>;
+  warrantyEnd?: InputMaybe<NullableDateUpdate>;
+  warrantyStart?: InputMaybe<NullableDateUpdate>;
 };
 
 export type UpdateAssetResponse = AssetNode | UpdateAssetError;
