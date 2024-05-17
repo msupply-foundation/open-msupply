@@ -14,7 +14,6 @@ import {
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
-import { formatPropertyValue } from '../../utils';
 import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 interface SummaryProps {
@@ -266,37 +265,6 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
         </Section>
-        {draft.catalogProperties.length === 0 ? null : (
-          <Section heading={t('label.catalogue-properties')}>
-            {draft.catalogProperties.map(property => (
-              <Row key={property.id} label={property.name}>
-                <BasicTextInput
-                  value={formatPropertyValue(property, t)}
-                  disabled
-                  fullWidth
-                />
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {!draft.parsedProperties ? null : (
-          <Section heading={t('label.asset-properties')}>
-            {Object.keys(draft.parsedProperties).map(key => (
-              <Row
-                key={key}
-                label={draft.parsedProperties[key]?.toString() ?? ''}
-              >
-                <BasicTextInput
-                  value={draft.parsedProperties[key]}
-                  disabled
-                  fullWidth
-                />
-              </Row>
-            ))}
-          </Section>
-        )}
-
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput
