@@ -155,9 +155,16 @@ fn generate_new_line(
         invoice_id: invoice_id.to_string(),
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
+        // Default
         total_before_tax: None,
         tax_percentage: None,
         note: None,
+        location_id: None,
+        batch: None,
+        pack_size: None,
+        expiry_date: None,
+        cost_price_per_pack: None,
+        sell_price_per_pack: None,
     }
 }
 
