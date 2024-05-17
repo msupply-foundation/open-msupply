@@ -432,6 +432,7 @@ export type AssetFilterInput = {
   catalogueItemId?: InputMaybe<EqualFilterStringInput>;
   categoryId?: InputMaybe<EqualFilterStringInput>;
   classId?: InputMaybe<EqualFilterStringInput>;
+  functionalStatus?: InputMaybe<EqualFilterStatusInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   installationDate?: InputMaybe<DateFilterInput>;
   isNonCatalogue?: InputMaybe<Scalars['Boolean']['input']>;
@@ -570,10 +571,12 @@ export type AssetNode = {
 };
 
 export enum AssetSortFieldInput {
+  AssetNumber = 'assetNumber',
   InstallationDate = 'installationDate',
   ModifiedDatetime = 'modifiedDatetime',
   ReplacementDate = 'replacementDate',
-  SerialNumber = 'serialNumber'
+  SerialNumber = 'serialNumber',
+  Store = 'store'
 }
 
 export type AssetSortInput = {
@@ -2642,15 +2645,6 @@ export type InsertRequestRequisitionResponseWithId = {
   response: InsertRequestRequisitionResponse;
 };
 
-export type InsertStockLineError = {
-  __typename: 'InsertStockLineError';
-  error: InsertStockLineErrorInterface;
-};
-
-export type InsertStockLineErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
@@ -2667,7 +2661,7 @@ export type InsertStockLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
 };
 
-export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
+export type InsertStockLineLineResponse = StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -3188,7 +3182,7 @@ export type LedgerNode = {
   name: Scalars['String']['output'];
   quantity: Scalars['Int']['output'];
   reason?: Maybe<Scalars['String']['output']>;
-  stockLineId: Scalars['String']['output'];
+  stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
 };
 
@@ -3196,7 +3190,6 @@ export type LedgerResponse = LedgerConnector;
 
 export enum LedgerSortFieldInput {
   Datetime = 'datetime',
-  Id = 'id',
   InvoiceType = 'invoiceType',
   ItemId = 'itemId',
   Name = 'name',
@@ -3237,6 +3230,7 @@ export type LocationFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type LocationInUse = DeleteLocationErrorInterface & {
@@ -4248,6 +4242,11 @@ export type NoRefreshTokenProvided = RefreshTokenErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type NoSiteAccess = AuthTokenErrorInterface & {
+  __typename: 'NoSiteAccess';
+  description: Scalars['String']['output'];
+};
+
 /** Generic Error Wrapper */
 export type NodeError = {
   __typename: 'NodeError';
@@ -4940,7 +4939,6 @@ export type Queries = {
   syncSettings?: Maybe<SyncSettingsNode>;
   /** Query omSupply "temperature_breach" entries */
   temperatureBreaches: TemperatureBreachesResponse;
-  temperatureChart: TemperatureChartResponse;
   /** Query omSupply "temperature_log" entries */
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
@@ -5475,15 +5473,6 @@ export type QueriesTemperatureBreachesArgs = {
 };
 
 
-export type QueriesTemperatureChartArgs = {
-  filter?: InputMaybe<TemperatureLogFilterInput>;
-  fromDatetime: Scalars['DateTime']['input'];
-  numberOfDataPoints: Scalars['Int']['input'];
-  storeId: Scalars['String']['input'];
-  toDatetime: Scalars['DateTime']['input'];
-};
-
-
 export type QueriesTemperatureLogsArgs = {
   filter?: InputMaybe<TemperatureLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -5518,7 +5507,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAsse
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertStockLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -5902,12 +5891,6 @@ export type ReturnReasonSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ReturnReasonSortFieldInput;
-};
-
-export type SensorAxisNode = {
-  __typename: 'SensorAxisNode';
-  points: Array<TemperaturePointNode>;
-  sensor?: Maybe<SensorNode>;
 };
 
 export type SensorConnector = {
@@ -6460,13 +6443,6 @@ export type TemperatureBreachSortInput = {
 
 export type TemperatureBreachesResponse = TemperatureBreachConnector;
 
-export type TemperatureChartNode = {
-  __typename: 'TemperatureChartNode';
-  sensors: Array<SensorAxisNode>;
-};
-
-export type TemperatureChartResponse = TemperatureChartNode;
-
 export type TemperatureExcursionConnector = {
   __typename: 'TemperatureExcursionConnector';
   nodes: Array<TemperatureExcursionNode>;
@@ -6532,13 +6508,6 @@ export type TemperatureNotificationConnector = {
 };
 
 export type TemperatureNotificationsResponse = TemperatureNotificationConnector;
-
-export type TemperaturePointNode = {
-  __typename: 'TemperaturePointNode';
-  breachIds?: Maybe<Array<Scalars['String']['output']>>;
-  midPoint: Scalars['DateTime']['output'];
-  temperature?: Maybe<Scalars['Float']['output']>;
-};
 
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename: 'TokenExpired';

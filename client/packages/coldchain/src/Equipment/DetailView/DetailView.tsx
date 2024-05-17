@@ -34,7 +34,7 @@ export const EquipmentDetailView = () => {
         key: 'name',
         direction: 'asc',
       },
-      filterBy: { assignedToAsset: false },
+      filterBy: { assignedToAsset: false, storeId: { equalTo: data?.storeId } },
     });
   const navigate = useNavigate();
   const t = useTranslation('coldchain');

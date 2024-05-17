@@ -51,6 +51,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             national_health_number: None,
             date_of_death: None,
             custom_data_string: Some(r#"{"check":"check"}"#.to_string()),
+            deleted_datetime: None,
         };
         let name_json1 = json!({
             "ID": name_row1.id,

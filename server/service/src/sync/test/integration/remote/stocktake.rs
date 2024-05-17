@@ -33,6 +33,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             code: "NZD".to_string(),
             is_home_currency: true,
             date_updated: None,
+            is_active: true,
         };
         let stocktake_row = StocktakeRow {
             id: uuid(),
@@ -61,6 +62,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             snapshot_number_of_packs: 100.13,
             counted_number_of_packs: None,
             item_link_id: uuid(),
+            item_name: "test item".to_string(),
             batch: None,
             expiry_date: None,
             pack_size: Some(0),
@@ -93,7 +95,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.name_link_id = new_site_properties.name_id.clone();
             r.store_id = store_id.clone();
             r.name_store_id = Some(store_id.clone());
-            r.tax = Some(0.0);
+            r.tax_percentage = Some(0.0);
             r.currency_id = Some(currency_row.id.clone());
         });
 

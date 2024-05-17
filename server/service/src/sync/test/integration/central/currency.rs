@@ -21,6 +21,7 @@ impl SyncRecordTester for CurrencyTester {
             code: "NZD".to_string(),
             is_home_currency: true,
             date_updated: None,
+            is_active: true,
         };
         let currency_json1 = json!({
             "ID": currency_row1.id,
@@ -35,6 +36,7 @@ impl SyncRecordTester for CurrencyTester {
             code: "USD".to_string(),
             is_home_currency: false,
             date_updated: None,
+            is_active: true,
         };
         let currency_json2 = json!({
             "ID": currency_row2.id,

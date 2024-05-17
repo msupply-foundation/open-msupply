@@ -20,6 +20,7 @@ export const PaperClickPopover: FC<
   height,
   show,
   hide,
+  className,
 }) => {
   return (
     <ClickPopover
@@ -27,6 +28,7 @@ export const PaperClickPopover: FC<
       show={show}
       Popover={Popover}
       placement={placement}
+      className={className}
       Content={
         <Paper
           sx={{

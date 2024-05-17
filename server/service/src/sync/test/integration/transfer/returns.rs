@@ -3,7 +3,7 @@ use serde_json::json;
 use util::{inline_init, uuid::uuid};
 
 use crate::{
-    processors::transfer::shipment::test::ShipmentTransferTester,
+    processors::transfer::invoice::test::InvoiceTransferTester,
     sync::test::integration::transfer::{new_instance_of_existing_site, sync_and_delay},
 };
 
@@ -26,6 +26,7 @@ async fn integration_sync_return_transfers_normal() {
         r.code = String::from("USD");
         r.rate = 1.0;
         r.is_home_currency = true;
+        r.is_active = true;
     });
 
     let SyncIntegrationTransferContext {
@@ -48,7 +49,7 @@ async fn integration_sync_return_transfers_normal() {
     .await;
 
     let test = async move {
-        let mut tester = ShipmentTransferTester::new(
+        let mut tester = InvoiceTransferTester::new(
             &site_receiving_return.store,
             &returning_site.store,
             None,
@@ -209,6 +210,7 @@ async fn integration_sync_return_transfers_delete() {
         r.code = String::from("USD");
         r.rate = 1.0;
         r.is_home_currency = true;
+        r.is_active = true;
     });
 
     let SyncIntegrationTransferContext {
@@ -226,12 +228,12 @@ async fn integration_sync_return_transfers_delete() {
                 {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
             ]
         }),
-        "shipment_transfers_delete",
+        "return_transfers_delete",
     )
     .await;
 
     let test = async move {
-        let mut tester = ShipmentTransferTester::new(
+        let mut tester = InvoiceTransferTester::new(
             &site_receiving_return.store,
             &returning_site.store,
             None,
@@ -324,7 +326,7 @@ async fn integration_sync_return_transfers_delete() {
 #[actix_rt::test]
 async fn integration_sync_return_transfers_initialise() {
     // util::init_logger(util::LogLevel::Info);
-    let identifier = "shipment_transfers_initialise";
+    let identifier = "return_transfers_initialise";
 
     let item1 = inline_init(|r: &mut ItemRow| {
         r.id = uuid();
@@ -339,6 +341,7 @@ async fn integration_sync_return_transfers_initialise() {
         r.code = String::from("USD");
         r.rate = 1.0;
         r.is_home_currency = true;
+        r.is_active = true;
     });
 
     let SyncIntegrationTransferContext {
@@ -361,7 +364,7 @@ async fn integration_sync_return_transfers_initialise() {
     .await;
 
     let test = async move {
-        let mut tester = ShipmentTransferTester::new(
+        let mut tester = InvoiceTransferTester::new(
             &site_receiving_return.store,
             &returning_site.store,
             None,

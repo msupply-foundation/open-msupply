@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 import {
   IconButton,
   Tooltip,
@@ -12,40 +12,27 @@ import {
   Column,
   ColumnsIcon,
   RecordWithId,
-  useLocalStorage,
 } from '@openmsupply-client/common';
 import { LocaleKey, useTranslation } from '@common/intl';
 
 interface ColumnPickerProps<T extends RecordWithId> {
   columns: Column<T>[];
-  tableKey: string;
-  onChange: (columns: Column<T>[]) => void;
+  columnDisplayState: Record<string, boolean>;
+  toggleColumn: (colKey: string) => void;
 }
 
 export const ColumnPicker = <T extends RecordWithId>({
-  tableKey,
   columns,
-  onChange,
+  columnDisplayState,
+  toggleColumn,
 }: ColumnPickerProps<T>) => {
   const t = useTranslation();
-  const [hiddenColumnsConfig, setHiddenColumnsConfig] =
-    useLocalStorage('/columns/hidden');
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
     null
   );
 
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
-
-  const getHiddenColumns = useCallback(
-    () => hiddenColumnsConfig?.[tableKey] ?? [],
-    [hiddenColumnsConfig, tableKey]
-  );
-
-  const isVisible = useCallback(
-    (column: Column<T>) => !getHiddenColumns()?.includes(String(column.key)),
-    [getHiddenColumns]
-  );
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -55,30 +42,17 @@ export const ColumnPicker = <T extends RecordWithId>({
     setAnchorEl(null);
   };
 
-  const toggleColumn = (column: Column<T>) => {
-    const hidden = getHiddenColumns();
-    const updatedColumns = isVisible(column)
-      ? [...hidden, String(column.key)]
-      : hidden.filter(key => key !== column.key);
-
-    setHiddenColumnsConfig({
-      ...hiddenColumnsConfig,
-      [tableKey]: updatedColumns,
-    });
-  };
-
-  useEffect(() => {
-    onChange(columns.filter(isVisible));
-  }, [columns, onChange, isVisible]);
-
   return (
     <>
       <Tooltip title={t('table.show-columns')}>
         <IconButton onClick={handleClick} aria-describedby={id}>
           <ColumnsIcon
             sx={{
-              color:
-                getHiddenColumns().length > 0 ? 'secondary.main' : undefined,
+              color: columns.some(
+                c => columnDisplayState[String(c.key)] === false
+              )
+                ? 'secondary.main'
+                : undefined,
             }}
           />
         </IconButton>
@@ -101,13 +75,15 @@ export const ColumnPicker = <T extends RecordWithId>({
           <Typography style={{ fontWeight: 700 }}>
             {t('table.show-columns')}
           </Typography>
-          {Object.values(columns)
+          {columns
             .filter(c => !!c.label)
             .map(column => (
               <FormControlLabel
                 key={String(column.key)}
-                checked={isVisible(column)}
-                control={<Checkbox onClick={() => toggleColumn(column)} />}
+                checked={columnDisplayState[column.key] ?? true}
+                control={
+                  <Checkbox onClick={() => toggleColumn(String(column.key))} />
+                }
                 label={t(column.label as LocaleKey)}
               />
             ))}

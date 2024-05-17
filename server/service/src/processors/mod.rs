@@ -6,10 +6,10 @@ use tokio::task::JoinHandle;
 
 use crate::service_provider::ServiceProvider;
 
+use self::transfer::invoice::ProcessInvoiceTransfersError;
 use self::transfer::requisition::ProcessRequisitionTransfersError;
-use self::transfer::shipment::ProcessShipmentTransfersError;
 use self::transfer::{
-    requisition::process_requisition_transfers, shipment::process_shipment_transfers,
+    invoice::process_invoice_transfers, requisition::process_requisition_transfers,
 };
 
 #[cfg(test)]
@@ -21,20 +21,20 @@ const CHANNEL_BUFFER_SIZE: usize = 30;
 #[derive(Clone)]
 pub struct ProcessorsTrigger {
     requisition_transfer: Sender<()>,
-    shipment_transfer: Sender<()>,
+    invoice_transfer: Sender<()>,
     await_process_queue: Sender<oneshot::Sender<()>>,
 }
 
 pub struct Processors {
     requisition_transfer: Receiver<()>,
-    shipment_transfer: Receiver<()>,
+    invoice_transfer: Receiver<()>,
     await_process_queue: Receiver<oneshot::Sender<()>>,
 }
 
 #[derive(Debug, Error)]
 enum ProcessorsError {
-    #[error("Error in shipment transfer processor ({0})")]
-    ShipmentTransfer(ProcessShipmentTransfersError),
+    #[error("Error in invoice transfer processor ({0})")]
+    InvoiceTransfer(ProcessInvoiceTransfersError),
     #[error("Error in requisition transfer processor ({0})")]
     RequisitionTransfer(ProcessRequisitionTransfersError),
     #[error("Error when waiting for the process queue to be processed")]
@@ -46,7 +46,7 @@ impl Processors {
         let (requisition_transfer_sender, requisition_transfer_receiver) =
             mpsc::channel(CHANNEL_BUFFER_SIZE);
 
-        let (shipment_transfer_sender, shipment_transfer_receiver) =
+        let (invoice_transfer_sender, invoice_transfer_receiver) =
             mpsc::channel(CHANNEL_BUFFER_SIZE);
 
         let (request_check_sender, request_check_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
@@ -54,12 +54,12 @@ impl Processors {
         (
             ProcessorsTrigger {
                 requisition_transfer: requisition_transfer_sender,
-                shipment_transfer: shipment_transfer_sender,
+                invoice_transfer: invoice_transfer_sender,
                 await_process_queue: request_check_sender,
             },
             Processors {
                 requisition_transfer: requisition_transfer_receiver,
-                shipment_transfer: shipment_transfer_receiver,
+                invoice_transfer: invoice_transfer_receiver,
                 await_process_queue: request_check_receiver,
             },
         )
@@ -68,7 +68,7 @@ impl Processors {
     pub fn spawn(self, service_provider: Arc<ServiceProvider>) -> JoinHandle<()> {
         let Processors {
             mut requisition_transfer,
-            mut shipment_transfer,
+            mut invoice_transfer,
             mut await_process_queue,
         } = self;
 
@@ -83,8 +83,8 @@ impl Processors {
                     Some(_) = requisition_transfer.recv() => {
                         process_requisition_transfers(&service_provider).map_err(ProcessorsError::RequisitionTransfer)
                     },
-                    Some(_) = shipment_transfer.recv() => {
-                        process_shipment_transfers(&service_provider).map_err(ProcessorsError::ShipmentTransfer)
+                    Some(_) = invoice_transfer.recv() => {
+                        process_invoice_transfers(&service_provider).map_err(ProcessorsError::InvoiceTransfer)
                     },
                     Some(sender) = await_process_queue.recv() => {
                         sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
@@ -111,12 +111,9 @@ impl ProcessorsTrigger {
         }
     }
 
-    pub(crate) fn trigger_shipment_transfer_processors(&self) {
-        if let Err(error) = self.shipment_transfer.try_send(()) {
-            log::error!(
-                "Problem triggering shipment transfer processor {:#?}",
-                error
-            )
+    pub(crate) fn trigger_invoice_transfer_processors(&self) {
+        if let Err(error) = self.invoice_transfer.try_send(()) {
+            log::error!("Problem triggering invoice transfer processor {:#?}", error)
         }
     }
 
@@ -147,7 +144,7 @@ impl ProcessorsTrigger {
     pub(crate) fn new_void() -> ProcessorsTrigger {
         ProcessorsTrigger {
             requisition_transfer: mpsc::channel(1).0,
-            shipment_transfer: mpsc::channel(1).0,
+            invoice_transfer: mpsc::channel(1).0,
             await_process_queue: mpsc::channel(1).0,
         }
     }
