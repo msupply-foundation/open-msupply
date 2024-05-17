@@ -35,27 +35,27 @@ fn generate_batch_update(
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
 ) -> StockLineRow {
-    let mut update_batch = batch;
-
     let reduction = input.number_of_packs;
 
-    update_batch.available_number_of_packs -= reduction;
+    let mut updated_batch = StockLineRow {
+        available_number_of_packs: batch.available_number_of_packs - reduction,
+        location_id: input.location_id.or(batch.location_id),
+        batch: input.batch.or(batch.batch),
+        expiry_date: input.expiry_date.or(batch.expiry_date),
+        pack_size: input.pack_size.unwrap_or(batch.pack_size),
+        cost_price_per_pack: input
+            .cost_price_per_pack
+            .unwrap_or(batch.cost_price_per_pack),
+        sell_price_per_pack: input
+            .sell_price_per_pack
+            .unwrap_or(batch.sell_price_per_pack),
+        ..batch
+    };
+
     if adjust_total_number_of_packs {
-        update_batch.total_number_of_packs -= reduction;
+        updated_batch.total_number_of_packs -= reduction;
     }
-
-    update_batch.location_id = input.location_id.or(update_batch.location_id);
-    update_batch.batch = input.batch.or(update_batch.batch);
-    update_batch.expiry_date = input.expiry_date.or(update_batch.expiry_date);
-    update_batch.pack_size = input.pack_size.unwrap_or(update_batch.pack_size);
-    update_batch.cost_price_per_pack = input
-        .cost_price_per_pack
-        .unwrap_or(update_batch.cost_price_per_pack);
-    update_batch.sell_price_per_pack = input
-        .sell_price_per_pack
-        .unwrap_or(update_batch.sell_price_per_pack);
-
-    update_batch
+    updated_batch
 }
 
 fn generate_line(
