@@ -7,9 +7,11 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    login::{FetchUserError, LoginError, LoginFailure},
+    login::{FetchUserError, LoginError, LoginFailure, UpdateUserError as LoginUpdateUserError},
     sync::sync_user::SyncUser,
 };
+
+use crate::{InvalidCredentials, MissingCredentials};
 
 pub struct UpdateUserNode {
     pub last_successful_sync: Option<NaiveDateTime>,
@@ -23,11 +25,24 @@ impl UpdateUserNode {
     }
 }
 
+#[derive(Interface)]
+#[graphql(field(name = "description", type = "&str"))]
+pub enum UpdateUserErrorInterface {
+    ConnectionError(ConnectionError),
+    InvalidCredentials(InvalidCredentials),
+    MissingCredentials(MissingCredentials),
+}
+
+#[derive(SimpleObject)]
+pub struct UpdateUserError {
+    pub error: UpdateUserErrorInterface,
+}
+
 #[derive(Union)]
 #[graphql(name = "UpdateUserResponse")]
 pub enum UpdateResponse {
     Response(UpdateUserNode),
-    ConnectionError(ConnectionError),
+    Error(UpdateUserError),
 }
 
 pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
@@ -47,12 +62,24 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
             let formatted_error = format!("{:#?}", error);
             let graphql_error = match error {
                 LoginError::FetchUserError(FetchUserError::ConnectionError(_)) => {
-                    return Ok(UpdateResponse::ConnectionError(ConnectionError))
+                    return Ok(UpdateResponse::Error(UpdateUserError {
+                        error: UpdateUserErrorInterface::ConnectionError(ConnectionError),
+                    }))
+                }
+                LoginError::LoginFailure(LoginFailure::InvalidCredentials) => {
+                    return Ok(UpdateResponse::Error(UpdateUserError {
+                        error: UpdateUserErrorInterface::InvalidCredentials(InvalidCredentials),
+                    }))
+                }
+                LoginError::UpdateUserError(LoginUpdateUserError::MissingCredentials) => {
+                    return Ok(UpdateResponse::Error(UpdateUserError {
+                        error: UpdateUserErrorInterface::MissingCredentials(MissingCredentials),
+                    }));
                 }
                 LoginError::FetchUserError(_)
                 | LoginError::UpdateUserError(_)
-                | LoginError::LoginFailure(LoginFailure::InvalidCredentials)
                 | LoginError::LoginFailure(LoginFailure::AccountBlocked(_))
+                | LoginError::LoginFailure(LoginFailure::NoSiteAccess)
                 | LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FailedToGenerateToken(_) => {

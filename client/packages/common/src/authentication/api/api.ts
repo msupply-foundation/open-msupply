@@ -79,10 +79,15 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         if ('message' in error) {
           console.error(error.message);
         }
+
+        const errorMessage = error.message.includes('Network request failed')
+          ? 'ConnectionError'
+          : 'UnknownError';
+
         return {
           token: '',
           error: {
-            message: t('error.authentication-error'),
+            message: errorMessage,
             detail: error.message,
             stdError: error.stdError,
           },
@@ -131,6 +136,15 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         console.error(e);
         return { nodes: [] };
       }
+    },
+    lastSuccessfulUserSync: async () => {
+      return (await sdk.lastSuccessfulUserSync()).lastSuccessfulUserSync
+        .lastSuccessfulSync;
+    },
+    updateUser: async () => {
+      const result = await sdk.updateUser();
+
+      return result.updateUser;
     },
   },
 });

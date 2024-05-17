@@ -92,7 +92,11 @@ pub fn update_inbound_shipment(
 
             if let Some(update_tax) = update_tax_for_lines {
                 for line in update_tax {
-                    invoice_line_repository.update_tax(&line.id, line.tax, line.total_after_tax)?;
+                    invoice_line_repository.update_tax(
+                        &line.id,
+                        line.tax_percentage,
+                        line.total_after_tax,
+                    )?;
                 }
             }
 
@@ -119,8 +123,7 @@ pub fn update_inbound_shipment(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_shipment_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
 
     Ok(invoice)
 }
@@ -441,7 +444,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.tax = Some(0.0);
+                u.tax_percentage = Some(0.0);
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
@@ -493,7 +496,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.tax = Some(10.0);
+                u.tax_percentage = Some(10.0);
                 u.user_id = Some(mock_user_account_a().id);
                 u.status = InvoiceStatus::Delivered;
                 u
@@ -860,6 +863,12 @@ mod test {
         let stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
             .unwrap();
+
+        // Ensure delivered time not updated by status change to verified
+        assert_eq!(
+            invoice.delivered_datetime,
+            mock_inbound_shipment_a().delivered_datetime
+        );
 
         assert!(invoice.verified_datetime.unwrap() > now);
         assert!(invoice.verified_datetime.unwrap() < end_time);

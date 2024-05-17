@@ -25,6 +25,10 @@ query authToken($username: String!, $password: String!) {
           __typename
           description
         }
+        ... on NoSiteAccess {
+          __typename
+          description
+        }
         ... on AccountBlocked {
           __typename
           description
@@ -133,5 +137,43 @@ query storePreferences($storeId: String!) {
     requestRequisitionRequiresAuthorisation
     packToOne
     id
+  }
+}
+
+fragment UpdateUser on UpdateUserNode {
+  lastSuccessfulSync
+}
+
+mutation updateUser {
+  updateUser {
+    __typename
+    ... on UpdateUserNode {
+      ...UpdateUser
+    }
+    ... on UpdateUserError {
+      __typename
+      error {
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on ConnectionError {
+          __typename
+          description
+        }
+        ... on MissingCredentials {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}
+
+query lastSuccessfulUserSync {
+  lastSuccessfulUserSync {
+    __typename
+    ...UpdateUser
   }
 }

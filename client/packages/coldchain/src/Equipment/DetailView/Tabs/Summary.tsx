@@ -8,8 +8,10 @@ import {
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
+  ArrayUtils,
   Box,
   Formatter,
+  useAuthContext,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
@@ -98,6 +100,7 @@ const Row = ({
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const t = useTranslation('coldchain');
   const { localisedDate } = useFormatDateTime();
+  const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
 
   if (!draft) return null;
@@ -130,6 +133,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     <Box display="flex" flex={1}>
       <Container>
         <Section heading={t('heading.asset-identification')}>
+          {isCentralServer && (
+            <Row label={t('label.store')}>
+              <StoreSearchInput
+                clearable
+                fullWidth
+                value={draft?.store ?? undefined}
+                onChange={onStoreChange}
+                onInputChange={onStoreInputChange}
+              />
+            </Row>
+          )}
           <Row label={t('label.category')}>
             <BasicTextInput
               value={draft.assetCategory?.name ?? ''}
@@ -172,43 +186,37 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
         </Section>
-        <Section heading={t('heading.cold-chain')}>
-          <Row label={t('label.cold-storage-location')}>
-            {locations ? (
-              <AutocompleteMulti
-                defaultValue={defaultLocations}
-                filterSelectedOptions
-                getOptionLabel={option => option.label}
-                inputProps={{ fullWidth: true }}
-                onChange={(
-                  _event,
-                  newSelectedLocations: {
-                    label: string;
-                    value: string;
-                  }[]
-                ) => {
-                  onChange({
-                    locationIds: newSelectedLocations.map(
-                      location => location.value
-                    ),
-                  });
-                }}
-                options={locations}
-              />
-            ) : null}
-          </Row>
-          {isCentralServer && (
-            <Row label={t('label.store')}>
-              <StoreSearchInput
-                clearable
-                fullWidth
-                value={draft?.store ?? undefined}
-                onChange={onStoreChange}
-                onInputChange={onStoreInputChange}
-              />
+        {(!isCentralServer || draft.storeId == storeId) && (
+          <Section heading={t('heading.cold-chain')}>
+            <Row label={t('label.cold-storage-location')}>
+              {locations ? (
+                <AutocompleteMulti
+                  isOptionEqualToValue={(option, value) =>
+                    option.value === value.value
+                  }
+                  defaultValue={defaultLocations}
+                  filterSelectedOptions
+                  getOptionLabel={option => option.label}
+                  inputProps={{ fullWidth: true }}
+                  onChange={(
+                    _event,
+                    newSelectedLocations: {
+                      label: string;
+                      value: string;
+                    }[]
+                  ) => {
+                    onChange({
+                      locationIds: ArrayUtils.dedupe(
+                        newSelectedLocations.map(location => location.value)
+                      ),
+                    });
+                  }}
+                  options={locations}
+                />
+              ) : null}
             </Row>
-          )}
-        </Section>
+          </Section>
+        )}
       </Container>
       <Box
         marginTop={4}

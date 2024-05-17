@@ -35,15 +35,6 @@ export const getSyncQueries = (sdk: Sdk) => ({
     });
     return result?.updateSyncSettings;
   },
-  lastSuccessfulUserSync: async () => {
-    return (await sdk.lastSuccessfulUserSync()).lastSuccessfulUserSync
-      .lastSuccessfulSync;
-  },
-  updateUser: async () => {
-    const result = await sdk.updateUser();
-
-    return result.updateUser;
-  },
 });
 
 // In typescript it's allowed to have excess properties on object
@@ -79,11 +70,23 @@ export function mapSyncError(
     [SyncErrorVariant.Unknown]: defaultKey || 'error.unknown-sync-error',
   };
 
+  const getHint = () => {
+    switch (error.variant) {
+      case SyncErrorVariant.ApiVersionIncompatible:
+        return t('error.sync-api-incompatible-hint');
+      case SyncErrorVariant.CentralV6NotConfigured:
+        return t('error.v6-server-not-configured-hint');
+      default:
+        return undefined;
+    }
+  };
+
   return {
     error:
       t(errorMapping[error.variant]) ||
       defaultKey ||
       'error.unknown-sync-error',
     details: error.fullError,
+    hint: getHint(),
   };
 }

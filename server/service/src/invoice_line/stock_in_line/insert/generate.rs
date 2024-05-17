@@ -1,17 +1,26 @@
 use crate::{
+    barcode::{self, BarcodeInput},
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
     invoice_line::{
-        convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack, generate_batch,
+        convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack,
+        stock_in_line::{generate_batch, StockInType, StockLineInput},
     },
     store_preference::get_store_preferences,
     u32_to_i32,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
-    StockLineRow, StorageConnection,
+    BarcodeRow, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow,
+    RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::InsertStockInLine;
+
+pub struct GenerateResult {
+    pub invoice: Option<InvoiceRow>,
+    pub invoice_line: InvoiceLineRow,
+    pub stock_line: Option<StockLineRow>,
+    pub barcode: Option<BarcodeRow>,
+}
 
 pub fn generate(
     connection: &StorageConnection,
@@ -19,23 +28,31 @@ pub fn generate(
     input: InsertStockInLine,
     item_row: ItemRow,
     existing_invoice_row: InvoiceRow,
-) -> Result<(Option<InvoiceRow>, InvoiceLineRow, Option<StockLineRow>), RepositoryError> {
+) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
-    let new_line = generate_line(input, item_row, existing_invoice_row.clone());
+    let new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone());
 
     let mut new_line = match store_preferences.pack_to_one {
         true => convert_invoice_line_to_single_pack(new_line),
         false => new_line,
     };
 
-    let new_batch_option = if existing_invoice_row.status != InvoiceStatus::New {
+    let barcode_option = generate_barcode(&input, connection)?;
+
+    let new_batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
         let new_batch = generate_batch(
-            &existing_invoice_row.store_id,
+            // If a stock line id is included in the input, use it
+            input.stock_line_id.is_some(),
             new_line.clone(),
-            false,
-            &existing_invoice_row.name_link_id,
+            StockLineInput {
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                on_hold: input.stock_on_hold,
+                barcode_id: barcode_option.clone().map(|b| b.id.clone()),
+            },
         );
+        // If a new stock line has been created, update the stock_line_id on the invoice line
         new_line.stock_line_id = Some(new_batch.id.clone());
 
         let new_batch = match store_preferences.pack_to_one {
@@ -48,11 +65,12 @@ pub fn generate(
         None
     };
 
-    Ok((
-        generate_invoice_user_id_update(user_id, existing_invoice_row),
-        new_line,
-        new_batch_option,
-    ))
+    Ok(GenerateResult {
+        invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
+        invoice_line: new_line,
+        stock_line: new_batch_option,
+        barcode: barcode_option,
+    })
 }
 
 fn generate_line(
@@ -69,7 +87,10 @@ fn generate_line(
         location,
         total_before_tax,
         note,
-        tax: _,
+        stock_line_id,
+        barcode: _,
+        stock_on_hold: _,
+        tax_percentage: _,
         r#type: _,
     }: InsertStockInLine,
     ItemRow {
@@ -77,10 +98,10 @@ fn generate_line(
         code: item_code,
         ..
     }: ItemRow,
-    InvoiceRow { tax, .. }: InvoiceRow,
+    InvoiceRow { tax_percentage, .. }: InvoiceRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
-    let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
+    let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     InvoiceLineRow {
         id,
         invoice_id,
@@ -95,13 +116,50 @@ fn generate_line(
         number_of_packs,
         item_name,
         item_code,
-        stock_line_id: None,
+        stock_line_id,
         total_before_tax,
         total_after_tax,
-        tax,
+        tax_percentage,
         note,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
     }
+}
+
+fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
+    match stock_in_type {
+        StockInType::InboundReturn => existing_invoice_row.status != InvoiceStatus::New,
+        StockInType::InventoryAddition => true,
+    }
+}
+
+fn generate_barcode(
+    input: &InsertStockInLine,
+    connection: &StorageConnection,
+) -> Result<Option<BarcodeRow>, RepositoryError> {
+    let gtin = &input.barcode;
+
+    let barcode = match gtin {
+        Some(gtin) => {
+            // don't create barcode if gtin is empty
+            if gtin == "" {
+                return Ok(None);
+            }
+
+            let barcode_row = barcode::generate(
+                connection,
+                BarcodeInput {
+                    gtin: gtin.clone(),
+                    item_id: input.item_id.clone(),
+                    pack_size: Some(u32_to_i32(input.pack_size.clone())),
+                },
+            )?;
+
+            Some(barcode_row)
+        }
+        None => None,
+    };
+
+    Ok(barcode)
 }

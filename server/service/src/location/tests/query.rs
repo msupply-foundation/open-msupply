@@ -2,7 +2,7 @@
 mod query {
     use repository::{
         location::{LocationFilter, LocationSortField},
-        mock::{mock_asset_a, mock_location_1, MockDataInserts},
+        mock::{mock_asset_b, mock_location_1, MockDataInserts},
         test_db::setup_all,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
@@ -203,7 +203,7 @@ mod query {
             .update_asset(
                 &context,
                 UpdateAsset {
-                    id: mock_asset_a().id,
+                    id: mock_asset_b().id, // Using mock_asset_b as it has the same store as mock_location_1
                     location_ids: Some(vec![mock_location_1().id]),
                     ..Default::default()
                 },

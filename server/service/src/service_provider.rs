@@ -54,7 +54,6 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     system_user::create_system_user,
-    temperature_chart::{TemperatureChartService, TemperatureChartServiceTrait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     ListError, ListResult,
 };
@@ -73,7 +72,6 @@ pub struct ServiceProvider {
     pub sensor_service: Box<dyn SensorServiceTrait>,
     pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
     pub cold_chain_service: Box<dyn ColdChainServiceTrait>,
-    pub temperature_chart_service: Box<dyn TemperatureChartServiceTrait>,
 
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
@@ -170,7 +168,6 @@ impl ServiceProvider {
             location_service: Box::new(LocationService {}),
             sensor_service: Box::new(SensorService {}),
             cold_chain_service: Box::new(ColdChainService {}),
-            temperature_chart_service: Box::new(TemperatureChartService),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),

@@ -51,7 +51,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => {
 
 interface RequestLineEditFormLayoutProps {
   Left: React.ReactElement;
-  Middle: React.ReactElement;
+  Middle: React.ReactElement | null;
   Right: React.ReactElement;
   Top: React.ReactElement;
 }
@@ -210,74 +210,76 @@ export const RequestLineEditForm = ({
         </>
       }
       Middle={
-        <>
-          {isPacksEnabled && (
-            <Box display="flex" justifyContent="flex-end" alignItems="center">
-              <Switch
-                label={t('label.units')}
-                checked={isPacks}
-                onChange={(_event, checked) => setIsPacks(checked)}
-                size="small"
-              />
-              <Box paddingLeft={2} paddingRight={2}>
-                {t('label.packs')}
+        currentItem ? (
+          <>
+            {isPacksEnabled && (
+              <Box display="flex" justifyContent="flex-end" alignItems="center">
+                <Switch
+                  label={t('label.units')}
+                  checked={isPacks}
+                  onChange={(_event, checked) => setIsPacks(checked)}
+                  size="small"
+                />
+                <Box paddingLeft={2} paddingRight={2}>
+                  {t('label.packs')}
+                </Box>
               </Box>
-            </Box>
-          )}
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                width={100}
-                value={numberOfPacksFromQuantity(
-                  draftLine?.suggestedQuantity ?? 0
-                )}
-                disabled
-              />
-            }
-            labelWidth="750px"
-            label={t('label.suggested-quantity')}
-          />
-          <InputWithLabelRow
-            Input={
-              <NumericTextInput
-                autoFocus
-                value={numberOfPacksFromQuantity(requestedQuantity)}
-                disabled={isPacks}
-                width={100}
-                onChange={q =>
-                  update({
-                    requestedQuantity: q && numberOfPacksToTotalQuantity(q),
-                  })
-                }
-              />
-            }
-            labelWidth="750px"
-            label={t('label.order-quantity')}
-          />
-          {isPacksEnabled && (
+            )}
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  width={100}
+                  value={numberOfPacksFromQuantity(
+                    draftLine?.suggestedQuantity ?? 0
+                  )}
+                  disabled
+                />
+              }
+              labelWidth="750px"
+              label={t('label.suggested-quantity')}
+            />
             <InputWithLabelRow
               Input={
                 <NumericTextInput
                   autoFocus
-                  disabled={!isPacks}
-                  value={NumUtils.round(
-                    requestedQuantity / currentItem.defaultPackSize,
-                    2
-                  )}
+                  value={numberOfPacksFromQuantity(requestedQuantity)}
+                  disabled={isPacks}
                   width={100}
-                  onChange={quantity => {
-                    if (quantity === undefined) return;
+                  onChange={q =>
                     update({
-                      requestedQuantity: quantity * currentItem.defaultPackSize,
-                    });
-                  }}
+                      requestedQuantity: q && numberOfPacksToTotalQuantity(q),
+                    })
+                  }
                 />
               }
               labelWidth="750px"
-              label={t('label.requested-packs')}
+              label={t('label.order-quantity')}
             />
-          )}
-        </>
+            {isPacksEnabled && (
+              <InputWithLabelRow
+                Input={
+                  <NumericTextInput
+                    autoFocus
+                    disabled={!isPacks}
+                    value={NumUtils.round(
+                      requestedQuantity / currentItem.defaultPackSize,
+                      2
+                    )}
+                    width={100}
+                    onChange={quantity => {
+                      update({
+                        requestedQuantity:
+                          (quantity ?? 0) * currentItem.defaultPackSize,
+                      });
+                    }}
+                  />
+                }
+                labelWidth="750px"
+                label={t('label.requested-packs')}
+              />
+            )}
+          </>
+        ) : null
       }
       Right={
         <>

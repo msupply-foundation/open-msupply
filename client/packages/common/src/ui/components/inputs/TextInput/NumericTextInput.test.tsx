@@ -91,4 +91,48 @@ describe('Test NumericTextInput component', () => {
     fireEvent.blur(input);
     expect(input).toHaveValue('1.100');
   });
+
+  it('should handle negative number input', async () => {
+    const { getByRole } = render(<TestNumericTextInput allowNegative />);
+    const input = getByRole('textbox');
+
+    fireEvent.change(input, { target: { value: '-' } });
+    expect(input).toHaveValue('-');
+    fireEvent.change(input, { target: { value: '-5' } });
+    expect(input).toHaveValue('-5');
+    fireEvent.blur(input);
+    expect(input).toHaveValue('-5');
+  });
+
+  it('should handle removing input', async () => {
+    const { getByRole } = render(<TestNumericTextInput />);
+    const input = getByRole('textbox');
+
+    fireEvent.change(input, { target: { value: '500' } });
+    expect(input).toHaveValue('500');
+    fireEvent.change(input, { target: { value: '' } });
+    expect(input).toHaveValue('');
+    fireEvent.blur(input);
+    expect(input).toHaveValue('');
+  });
+
+  it('should format large numbers', async () => {
+    const { getByRole } = render(<TestNumericTextInput />);
+    const input = getByRole('textbox');
+
+    fireEvent.change(input, { target: { value: '1000' } });
+    expect(input).toHaveValue('1,000');
+    fireEvent.blur(input);
+    expect(input).toHaveValue('1,000');
+  });
+
+  it('should not format large numbers when explicitly prevented', async () => {
+    const { getByRole } = render(<TestNumericTextInput noFormatting />);
+    const input = getByRole('textbox');
+
+    fireEvent.change(input, { target: { value: '1000' } });
+    expect(input).toHaveValue('1000');
+    fireEvent.blur(input);
+    expect(input).toHaveValue('1000');
+  });
 });

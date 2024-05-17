@@ -243,7 +243,7 @@ impl<'a> ProgramEventRepository<'a> {
 
 #[cfg(test)]
 mod test {
-    use chrono::NaiveDateTime;
+    use chrono::DateTime;
 
     use crate::{
         mock::{context_program_a, mock_patient, mock_patient_b, MockDataInserts},
@@ -260,9 +260,9 @@ mod test {
         row_repo
             .upsert_one(&ProgramEventRow {
                 id: "event1".to_string(),
-                datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                active_end_datetime: NaiveDateTime::from_timestamp_opt(1000, 0).unwrap(),
+                datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
+                active_start_datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
+                active_end_datetime: DateTime::from_timestamp(1000, 0).unwrap().naive_utc(),
                 patient_link_id: Some(mock_patient().id),
                 context_id: context_program_a().id,
                 document_type: "type1".to_string(),
@@ -274,9 +274,9 @@ mod test {
         row_repo
             .upsert_one(&ProgramEventRow {
                 id: "event2".to_string(),
-                datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                active_end_datetime: NaiveDateTime::from_timestamp_opt(1000, 0).unwrap(),
+                datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
+                active_start_datetime: DateTime::from_timestamp(5, 0).unwrap().naive_utc(),
+                active_end_datetime: DateTime::from_timestamp(1000, 0).unwrap().naive_utc(),
                 patient_link_id: Some(mock_patient_b().id),
                 context_id: context_program_a().id,
                 document_type: "type2".to_string(),
