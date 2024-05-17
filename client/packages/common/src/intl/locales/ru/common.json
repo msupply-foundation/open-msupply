@@ -62,5 +62,7 @@
   "label.reason": "Причина",
   "label.category": "Категория",
   "label.class": "Класс",
-  "label.status": "Статус"
+  "label.status": "Статус",
+  "label.manufacturer": "Производитель",
+  "label.model": "Модель"
 }
