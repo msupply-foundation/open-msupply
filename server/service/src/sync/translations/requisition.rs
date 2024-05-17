@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{DateTime, NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
@@ -380,7 +380,11 @@ fn from_legacy_sent_datetime(
     match r#type {
         RequisitionType::Request => {
             if last_modified_at > 0 {
-                Some(NaiveDateTime::from_timestamp_opt(last_modified_at, 0).unwrap())
+                Some(
+                    DateTime::from_timestamp(last_modified_at, 0)
+                        .unwrap()
+                        .naive_utc(),
+                )
             } else {
                 None
             }
@@ -397,7 +401,11 @@ fn from_legacy_finalised_datetime(
         RequisitionType::Request => None,
         RequisitionType::Response => {
             if last_modified_at > 0 {
-                Some(NaiveDateTime::from_timestamp_opt(last_modified_at, 0).unwrap())
+                Some(
+                    DateTime::from_timestamp(last_modified_at, 0)
+                        .unwrap()
+                        .naive_utc(),
+                )
             } else {
                 None
             }
@@ -411,8 +419,12 @@ fn to_legacy_last_modified_at(
     finalised_datetime: Option<NaiveDateTime>,
 ) -> i64 {
     match r#type {
-        RequisitionType::Request => sent_datetime.map(|time| time.timestamp()).unwrap_or(0),
-        RequisitionType::Response => finalised_datetime.map(|time| time.timestamp()).unwrap_or(0),
+        RequisitionType::Request => sent_datetime
+            .map(|time| time.and_utc().timestamp())
+            .unwrap_or(0),
+        RequisitionType::Response => finalised_datetime
+            .map(|time| time.and_utc().timestamp())
+            .unwrap_or(0),
     }
 }
 

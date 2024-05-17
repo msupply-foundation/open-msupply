@@ -39,7 +39,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
     encounter.document.data?.notes?.[0]?.text ?? ''
   );
   const [createdBy, setCreatedBy] = useState(
-    encounter?.document?.data?.createdBy?.username ?? ''
+    encounter?.document?.data?.createdBy?.username ?? '-'
   );
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();

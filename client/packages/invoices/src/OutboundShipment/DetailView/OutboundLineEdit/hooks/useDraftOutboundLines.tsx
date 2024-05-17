@@ -81,14 +81,10 @@ export const useDraftOutboundLines = (
         .sort(SortUtils.byExpiryAsc);
 
       if (status === InvoiceNodeStatus.New) {
-        let placeholder = lines?.find(
+        const placeholder = lines?.find(
           ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
         );
-        if (!placeholder) {
-          placeholder = draftStockOutLines.find(
-            ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
-          );
-        }
+
         if (placeholder) {
           const placeHolderItem = lines?.find(l => l.item.id === item.id)?.item;
           if (!!placeHolderItem) placeholder.item = placeHolderItem;

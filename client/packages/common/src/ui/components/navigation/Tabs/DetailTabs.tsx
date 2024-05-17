@@ -23,11 +23,15 @@ export type TabDefinition = {
 interface DetailTabsProps {
   tabs: TabDefinition[];
   requiresConfirmation?: (tab: string) => boolean;
+  overwriteQuery?: boolean;
+  restoreTabQuery?: boolean;
 }
 
 export const DetailTabs: FC<DetailTabsProps> = ({
   tabs,
   requiresConfirmation = () => false,
+  overwriteQuery = true,
+  restoreTabQuery = true,
 }) => {
   const isValidTab = useCallback(
     (tab?: string): tab is string =>
@@ -69,14 +73,16 @@ export const DetailTabs: FC<DetailTabsProps> = ({
 
   const onChange = (_: React.SyntheticEvent, tab: string) => {
     const tabConfirm = tabs.find(({ value }) => value === currentTab);
+
     // restore the query params for the tab
-    const query: UrlQueryObject =
-      tabQueryParams[tab] ?? getDefaultTabQueryParams(tab);
+    const query: UrlQueryObject = restoreTabQuery
+      ? tabQueryParams[tab] ?? getDefaultTabQueryParams(tab)
+      : { tab };
 
     if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
-      showConfirmation(() => updateQuery(query, true));
+      showConfirmation(() => updateQuery(query, overwriteQuery));
     } else {
-      updateQuery(query, true);
+      updateQuery(query, overwriteQuery);
     }
   };
 

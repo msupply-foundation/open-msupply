@@ -114,7 +114,7 @@ async fn invoice_transfers() {
             let ctx = service_provider.basic_context().unwrap();
 
             // Without delete
-            let mut tester = ShipmentTransferTester::new(
+            let mut tester = InvoiceTransferTester::new(
                 &outbound_store,
                 &inbound_store,
                 Some(&outbound_store_name),
@@ -132,7 +132,7 @@ async fn invoice_transfers() {
             // manually trigger because inserting the shipment didn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
-                .shipment_transfer
+                .invoice_transfer
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
@@ -158,7 +158,7 @@ async fn invoice_transfers() {
             // manually trigger because inserting the return doesn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
-                .shipment_transfer
+                .invoice_transfer
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
@@ -180,7 +180,7 @@ async fn invoice_transfers() {
             tester.check_outbound_return_status_matches_inbound_return(&ctx.connection);
 
             // With delete -- SHIPMENT
-            let mut tester = ShipmentTransferTester::new(
+            let mut tester = InvoiceTransferTester::new(
                 &outbound_store,
                 &inbound_store,
                 Some(&outbound_store_name),
@@ -204,7 +204,7 @@ async fn invoice_transfers() {
             tester.check_inbound_shipment_deleted(&ctx.connection);
 
             // With delete -- RETURN
-            let mut tester = ShipmentTransferTester::new(
+            let mut tester = InvoiceTransferTester::new(
                 &outbound_store,
                 &inbound_store,
                 Some(&outbound_store_name),
@@ -342,7 +342,7 @@ async fn invoice_transfers_with_merged_name() {
             let ctx = service_provider.basic_context().unwrap();
 
             // Without delete
-            let mut tester = ShipmentTransferTester::new(
+            let mut tester = InvoiceTransferTester::new(
                 &outbound_store,
                 &inbound_store,
                 Some(&outbound_store_name),
@@ -356,7 +356,7 @@ async fn invoice_transfers_with_merged_name() {
             // manually trigger because inserting the shipment didn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
-                .shipment_transfer
+                .invoice_transfer
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
@@ -383,7 +383,7 @@ async fn invoice_transfers_with_merged_name() {
             // manually trigger because inserting the return doesn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
-                .shipment_transfer
+                .invoice_transfer
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
@@ -405,7 +405,7 @@ async fn invoice_transfers_with_merged_name() {
             tester.check_outbound_return_status_matches_inbound_return(&ctx.connection);
 
             // With delete -- SHIPMENT
-            let mut tester = ShipmentTransferTester::new(
+            let mut tester = InvoiceTransferTester::new(
                 &outbound_store,
                 &inbound_store,
                 Some(&outbound_store_name),
@@ -429,7 +429,7 @@ async fn invoice_transfers_with_merged_name() {
             tester.check_inbound_shipment_deleted(&ctx.connection);
 
             // With delete -- RETURN
-            let mut tester = ShipmentTransferTester::new(
+            let mut tester = InvoiceTransferTester::new(
                 &outbound_store,
                 &inbound_store,
                 Some(&outbound_store_name),
@@ -464,7 +464,7 @@ async fn invoice_transfers_with_merged_name() {
     };
 }
 
-pub(crate) struct ShipmentTransferTester {
+pub(crate) struct InvoiceTransferTester {
     // TODO linked requisitions ?
     outbound_store: StoreRow,
     inbound_store: StoreRow,
@@ -481,7 +481,7 @@ pub(crate) struct ShipmentTransferTester {
     extra_mock_data: MockData,
 }
 
-impl ShipmentTransferTester {
+impl InvoiceTransferTester {
     pub(crate) fn new(
         outbound_store: &StoreRow,
         inbound_store: &StoreRow,
@@ -489,7 +489,7 @@ impl ShipmentTransferTester {
         inbound_name: Option<&NameRow>,
         item1: &ItemRow,
         item2: &ItemRow,
-    ) -> ShipmentTransferTester {
+    ) -> InvoiceTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
             r.name_link_id = outbound_store.name_id.clone();
@@ -617,7 +617,7 @@ impl ShipmentTransferTester {
             r.location_id = Some(location.id.clone());
         });
 
-        ShipmentTransferTester {
+        InvoiceTransferTester {
             outbound_store: outbound_store.clone(),
             inbound_store: inbound_store.clone(),
             request_requisition,

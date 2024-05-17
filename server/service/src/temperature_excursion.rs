@@ -58,7 +58,7 @@ fn temperature_excursions(
                 continue;
             }
 
-            let duration = Utc::now().timestamp() - row.datetime.timestamp();
+            let duration = Utc::now().timestamp() - row.datetime.and_utc().timestamp();
             if duration > row.duration {
                 excursion_data.push(TemperatureExcursion {
                     id: row.id.clone(),
@@ -210,13 +210,13 @@ mod test {
             .unwrap()
             .date()
             .and_time(NaiveTime::from_hms_opt(2, 00, 7).unwrap());
-        let duration1 = today.timestamp() - datetime1.timestamp();
+        let duration1 = today.and_utc().timestamp() - datetime1.and_utc().timestamp();
         let datetime2 = today
             .checked_sub_days(Days::new(7))
             .unwrap()
             .date()
             .and_time(NaiveTime::from_hms_opt(12, 00, 00).unwrap());
-        let duration2 = today.timestamp() - datetime2.timestamp();
+        let duration2 = today.and_utc().timestamp() - datetime2.and_utc().timestamp();
 
         assert_eq!(
             result,

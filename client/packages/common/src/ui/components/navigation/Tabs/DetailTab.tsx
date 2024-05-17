@@ -11,6 +11,7 @@ const StyledTabPanel = styled(TabPanel)({
   height: '100%',
   flex: 1,
   padding: 0,
+  width: '100%',
 });
 
 const StyledTabContainer = styled(Box)(({ theme }) => ({
