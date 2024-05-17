@@ -24,7 +24,7 @@ pub enum InsertAssetError {
     AssetNumberAlreadyExists,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
