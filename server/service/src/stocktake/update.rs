@@ -239,33 +239,29 @@ fn generate_stock_in_out_or_update(
     stocktake_line: &StocktakeLine,
     stock_line: &StockLineRow,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
-    let stocktake_line_row = stocktake_line.line.to_owned();
+    let row = stocktake_line.line.to_owned();
 
-    let counted_number_of_packs = stocktake_line_row
+    let counted_number_of_packs = row
         .counted_number_of_packs
         .unwrap_or(stocktake_line.line.snapshot_number_of_packs);
-    let delta = counted_number_of_packs - stocktake_line_row.snapshot_number_of_packs;
+    let delta = counted_number_of_packs - row.snapshot_number_of_packs;
 
     let stock_line_row = stock_line.to_owned();
 
-    let pack_size = stocktake_line_row
-        .pack_size
-        .unwrap_or(stock_line_row.pack_size);
-    let expiry_date = stocktake_line_row
-        .expiry_date
-        .or(stock_line_row.expiry_date);
-    let cost_price_per_pack = stocktake_line_row
+    let pack_size = row.pack_size.unwrap_or(stock_line_row.pack_size);
+    let expiry_date = row.expiry_date.or(stock_line_row.expiry_date);
+    let cost_price_per_pack = row
         .cost_price_per_pack
         .unwrap_or(stock_line_row.cost_price_per_pack);
-    let sell_price_per_pack = stocktake_line_row
+    let sell_price_per_pack = row
         .sell_price_per_pack
         .unwrap_or(stock_line_row.sell_price_per_pack);
 
     // If no change in stock quantity, we just update the stock line (no inventory adjustment)
     if delta == 0.0 {
         let updated_stock_line = StockLineRow {
-            location_id: stocktake_line_row.location_id,
-            batch: stocktake_line_row.batch,
+            location_id: row.location_id,
+            batch: row.batch,
             pack_size,
             cost_price_per_pack,
             sell_price_per_pack,
@@ -285,12 +281,12 @@ fn generate_stock_in_out_or_update(
     let quantity_change = f64::abs(delta);
     let invoice_line_id = uuid();
 
-    let update_inventory_adjustment_reason = stocktake_line_row
-        .inventory_adjustment_reason_id
-        .clone()
-        .map(|reason_id| UpdateInventoryAdjustmentReason {
-            reason_id: Some(reason_id),
-            invoice_line_id: invoice_line_id.clone(),
+    let update_inventory_adjustment_reason =
+        row.inventory_adjustment_reason_id.clone().map(|reason_id| {
+            UpdateInventoryAdjustmentReason {
+                reason_id: Some(reason_id),
+                invoice_line_id: invoice_line_id.clone(),
+            }
         });
 
     let stock_in_or_out_line = if delta > 0.0 {
@@ -299,11 +295,9 @@ fn generate_stock_in_out_or_update(
             id: invoice_line_id,
             invoice_id: inventory_addition_id.to_string(),
             number_of_packs: quantity_change,
-            location: stocktake_line_row
-                .location_id
-                .map(|id| NullableUpdate { value: Some(id) }),
+            location: row.location_id.map(|id| NullableUpdate { value: Some(id) }),
             pack_size: i32_to_u32(pack_size),
-            batch: stocktake_line_row.batch,
+            batch: row.batch,
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
@@ -325,10 +319,10 @@ fn generate_stock_in_out_or_update(
             stock_line_id: stock_line_row.id,
             number_of_packs: quantity_change,
             note: stock_line_row.note,
-            location_id: stocktake_line_row.location_id,
-            batch: stocktake_line_row.batch,
-            pack_size: stocktake_line_row.pack_size,
-            expiry_date: stocktake_line_row.expiry_date,
+            location_id: row.location_id,
+            batch: row.batch,
+            pack_size: row.pack_size,
+            expiry_date: row.expiry_date,
             cost_price_per_pack: None,
             sell_price_per_pack: None,
             total_before_tax: None,
