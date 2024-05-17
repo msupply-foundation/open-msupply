@@ -677,13 +677,13 @@ fn generate(
 
     Ok(StocktakeGenerateJob {
         stocktake: stocktake.clone(),
-        stock_lines,
         stocktake_lines: stocktake_line_updates,
         inventory_addition,
         inventory_reduction,
         inventory_addition_lines,
         inventory_reduction_lines,
         inventory_adjustment_reason_updates,
+        stock_lines,
         location_movements: Some(location_movements),
         stocktake_lines_to_trim: unallocated_lines_to_trim(connection, &stocktake, &ctx.store_id)?,
     })

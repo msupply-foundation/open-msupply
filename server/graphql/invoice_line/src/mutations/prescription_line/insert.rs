@@ -160,9 +160,16 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
+            note,
+            // Default
             total_before_tax: None,
             tax_percentage: None,
-            note,
+            location_id: None,
+            batch: None,
+            pack_size: None,
+            expiry_date: None,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
         }
     }
 }
@@ -530,6 +537,12 @@ mod test {
                     total_before_tax: None,
                     note: None,
                     tax_percentage: None,
+                    location_id: None,
+                    batch: None,
+                    pack_size: None,
+                    expiry_date: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None
                 }
             );
             Ok(InvoiceLine {
