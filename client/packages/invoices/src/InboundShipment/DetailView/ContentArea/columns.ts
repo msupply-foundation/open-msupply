@@ -11,6 +11,7 @@ import {
   useColumnUtils,
   CurrencyCell,
   ColumnDescription,
+  NumUtils,
 } from '@openmsupply-client/common';
 import {
   getPackVariantCell,
@@ -25,7 +26,7 @@ type InboundShipmentColumnDescription = ColumnDescription<
 >;
 
 const getUnitQuantity = (row: InboundLineFragment) =>
-  row.packSize * row.numberOfPacks;
+  NumUtils.floatMultiply(row.packSize, row.numberOfPacks);
 
 export const useInboundShipmentColumns = () => {
   const {
