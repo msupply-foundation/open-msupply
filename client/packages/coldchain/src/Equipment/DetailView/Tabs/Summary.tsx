@@ -183,6 +183,26 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
+          <Row label={t('label.warranty-start-date')}>
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(draft.warrantyStart)}
+              format="P"
+              onChange={date =>
+                onChange({ warrantyStart: Formatter.naiveDate(date) })
+              }
+              textFieldProps={{ fullWidth: true }}
+            />
+          </Row>
+          <Row label={t('label.warranty-end-date')}>
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(draft.warrantyEnd)}
+              format="P"
+              onChange={date =>
+                onChange({ warrantyEnd: Formatter.naiveDate(date) })
+              }
+              textFieldProps={{ fullWidth: true }}
+            />
+          </Row>
         </Section>
         <Section heading={t('heading.cold-chain')}>
           <Row label={t('label.cold-storage-location')}>

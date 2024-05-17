@@ -64,6 +64,10 @@ const assetParsers = {
     serialNumber: setNullableInput('serialNumber', input),
     storeId: setNullableInput('id', input.store),
     locationIds: input.locationIds,
+    properties: JSON.stringify(input.parsedProperties),
+    donorNameId: setNullableInput('donorNameId', input),
+    warrantyStart: setNullableInput('warrantyStart', input),
+    warrantyEnd: setNullableInput('warrantyEnd', input),
   }),
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',
