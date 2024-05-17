@@ -102,7 +102,14 @@ impl InsertInput {
             number_of_packs,
             total_before_tax,
             tax_percentage,
+            // Default
             note: None,
+            location_id: None,
+            batch: None,
+            pack_size: None,
+            expiry_date: None,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
         }
     }
 }
@@ -533,6 +540,12 @@ mod test {
                     r#type: StockOutType::OutboundShipment,
                     tax_percentage: Some(5.0),
                     note: None,
+                    location_id: None,
+                    batch: None,
+                    pack_size: None,
+                    expiry_date: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None
                 }
             );
             Ok(InvoiceLine {
