@@ -37,6 +37,10 @@ pub struct InsertAsset {
     pub type_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
+    pub properties: Option<String>,
+    pub donor_name_id: Option<String>,
+    pub warranty_start: Option<NaiveDate>,
+    pub warranty_end: Option<NaiveDate>,
 }
 
 pub fn insert_asset(
@@ -122,6 +126,10 @@ pub fn generate(
         category_id,
         class_id,
         type_id,
+        properties,
+        donor_name_id,
+        warranty_start,
+        warranty_end,
     }: InsertAsset,
 ) -> AssetRow {
     AssetRow {
@@ -139,7 +147,10 @@ pub fn generate(
         asset_category_id: Some(category_id.unwrap_or_default()),
         asset_class_id: Some(class_id.unwrap_or_default()),
         asset_type_id: Some(type_id.unwrap_or_default()),
-        properties: None, //TODO
+        properties,
+        donor_name_id,
+        warranty_start,
+        warranty_end,
     }
 }
 
