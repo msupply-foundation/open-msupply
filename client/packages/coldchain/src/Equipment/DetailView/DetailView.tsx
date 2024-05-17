@@ -24,6 +24,7 @@ import { Documents } from './Tabs/Documents';
 import { ActivityLogList, useLocation } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 import { isObject } from 'lodash';
+import { Details } from './Tabs/Details';
 
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
@@ -103,6 +104,10 @@ export const EquipmentDetailView = () => {
         <Summary onChange={onChange} draft={draft} locations={locations} />
       ),
       value: 'Summary',
+    },
+    {
+      Component: <Details onChange={onChange} draft={draft} />,
+      value: 'Details',
     },
     {
       Component: draft === undefined ? null : <StatusLogs assetId={draft.id} />,
