@@ -55,22 +55,44 @@ export const Login = () => {
     }
   }, [error]);
 
-  const loginErrorMessage = useMemo(() => {
-    if (!error) return '';
+  const loginError: { error: string; hint?: string } = useMemo(() => {
+    if (!error) return { error: '' };
+
+    if (error.message === 'ConnectionError') {
+      return {
+        error: t('error.connection-error'),
+        hint: t('error.connection-error-hint'),
+      };
+    }
+
     if (error.message === 'AccountBlocked') {
-      if (timeoutRemaining < 1000) return '';
+      if (timeoutRemaining < 1000) return { error: '' };
 
       const formattedTime = customDate(
         new Date(0, 0, 0, 0, 0, 0, timeoutRemaining),
         'm:ss'
       );
-      return `${t('error.account-blocked')} ${formattedTime}`;
-    }
-    if (error?.stdError === 'Internal error') {
-      return t('error.internal-error');
+      return { error: `${t('error.account-blocked')} ${formattedTime}` };
     }
 
-    return t('error.login');
+    if (error.message === 'InvalidCredentials') {
+      return { error: t('error.login') };
+    }
+
+    if (error.message === 'NoSiteAccess') {
+      return {
+        error: t('error.unable-to-login'),
+        hint: t('error.no-site-access'),
+      };
+    }
+
+    if (error?.stdError === 'Internal error') {
+      return { error: t('error.internal-error') };
+    }
+
+    return {
+      error: t('error.authentication-error'),
+    };
   }, [error, timeoutRemaining, customDate, t]);
 
   useEffect(() => {
@@ -103,6 +125,7 @@ export const Login = () => {
           onChange={e => setUsername(e.target.value)}
           inputProps={{
             autoComplete: 'username',
+            name: 'username',
           }}
           autoFocus
         />
@@ -117,6 +140,7 @@ export const Login = () => {
           onChange={e => setPassword(e.target.value)}
           inputProps={{
             autoComplete: 'current-password',
+            name: 'password',
           }}
           inputRef={passwordRef}
         />
@@ -134,10 +158,11 @@ export const Login = () => {
       }
       ErrorMessage={
         error &&
-        loginErrorMessage !== '' && (
+        loginError.error !== '' && (
           <ErrorWithDetails
-            error={loginErrorMessage}
             details={error.detail || ''}
+            error={loginError.error}
+            hint={loginError.hint}
           />
         )
       }

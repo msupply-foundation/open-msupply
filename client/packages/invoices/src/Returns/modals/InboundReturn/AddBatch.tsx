@@ -9,16 +9,18 @@ import { useReturns } from '../..';
 
 export const AddBatchButton = ({
   addDraftLine,
+  disabled,
 }: {
   addDraftLine: () => void;
+  disabled?: boolean;
 }) => {
   const t = useTranslation(['distribution']);
-  const isDisabled = useReturns.utils.inboundIsDisabled();
+  const returnIsDisabled = useReturns.utils.inboundIsDisabled();
 
   return (
     <Box flex={1} justifyContent="flex-end" display="flex">
       <ButtonWithIcon
-        disabled={isDisabled}
+        disabled={disabled ?? returnIsDisabled}
         color="primary"
         variant="outlined"
         onClick={addDraftLine}

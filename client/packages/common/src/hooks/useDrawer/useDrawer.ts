@@ -35,9 +35,14 @@ export const useDrawer = create<DrawerController>(set => {
         }
         return state;
       }),
-    onExpand: (clickedNavPath?: string) =>
+    onExpand: (newClickedNavPath?: string) =>
       set(state => {
         const hoverOpen = state.isOpen ? state.hoverOpen : true;
+        // reset expansion if clicked again
+        const clickedNavPath =
+          newClickedNavPath === state.clickedNavPath
+            ? undefined
+            : newClickedNavPath;
         return { ...state, hoverOpen, clickedNavPath, isOpen: true };
       }),
   };

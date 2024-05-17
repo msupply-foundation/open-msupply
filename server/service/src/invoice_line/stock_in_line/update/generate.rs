@@ -3,8 +3,9 @@ use crate::{
         calculate_foreign_currency_total, calculate_total_after_tax,
         generate_invoice_user_id_update,
     },
-    invoice_line::inbound_shipment_line::{
-        generate::convert_invoice_line_to_single_pack, generate_batch,
+    invoice_line::{
+        inbound_shipment_line::generate::convert_invoice_line_to_single_pack,
+        stock_in_line::{generate_batch, StockLineInput},
     },
     store_preference::get_store_preferences,
     u32_to_i32,
@@ -52,10 +53,16 @@ pub fn generate(
 
     let upsert_batch_option = if existing_invoice_row.status != InvoiceStatus::New {
         let new_batch = generate_batch(
-            &existing_invoice_row.store_id,
-            update_line.clone(),
+            // There will be a batch_to_delete_id if the item has changed
+            // If item has changed, we want a new stock line, otherwise keep existing
             batch_to_delete_id.is_none(),
-            &existing_invoice_row.name_link_id,
+            update_line.clone(),
+            StockLineInput {
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                on_hold: false,
+                barcode_id: None,
+            },
         );
         update_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
@@ -100,7 +107,7 @@ fn generate_line(
         id: _,
         item_id: _,
         total_before_tax,
-        tax,
+        tax_percentage,
         r#type: _,
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
@@ -120,7 +127,9 @@ fn generate_line(
     update_line.cost_price_per_pack =
         cost_price_per_pack.unwrap_or(update_line.cost_price_per_pack);
     update_line.number_of_packs = number_of_packs.unwrap_or(update_line.number_of_packs);
-    update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
+    update_line.tax_percentage = tax_percentage
+        .map(|tax| tax.percentage)
+        .unwrap_or(update_line.tax_percentage);
     update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
         update_line.total_before_tax,
@@ -143,7 +152,7 @@ fn generate_line(
     };
 
     update_line.total_after_tax =
-        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax_percentage);
 
     Ok(update_line)
 }

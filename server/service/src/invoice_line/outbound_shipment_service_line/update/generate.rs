@@ -51,7 +51,7 @@ pub fn generate(
     }
 
     if let Some(tax) = input_tax {
-        update_line.tax = tax.percentage;
+        update_line.tax_percentage = tax.percentage;
     }
 
     if let Some(note) = input_note {
@@ -59,7 +59,7 @@ pub fn generate(
     }
 
     update_line.total_after_tax =
-        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax_percentage);
 
     update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,

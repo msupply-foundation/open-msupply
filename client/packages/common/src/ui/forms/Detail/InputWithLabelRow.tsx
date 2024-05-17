@@ -27,8 +27,8 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   labelWidthPercentage = 40,
   inputAlignment = 'end',
   inputProps,
-  Input = <BasicTextInput {...inputProps} />,
-  DisabledInput = <BasicTextInput {...inputProps} />,
+  Input = <BasicTextInput fullWidth {...inputProps} />,
+  DisabledInput = <BasicTextInput fullWidth {...inputProps} />,
   labelProps,
 }) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};

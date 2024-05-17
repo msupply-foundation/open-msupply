@@ -23,11 +23,27 @@ impl AuthToken {
     }
 }
 
+pub struct NoSiteAccess;
+#[Object]
+impl NoSiteAccess {
+    pub async fn description(&self) -> &str {
+        "User account does not have access to any stores on this site"
+    }
+}
+
 pub struct InvalidCredentials;
 #[Object]
 impl InvalidCredentials {
     pub async fn description(&self) -> &str {
         "Invalid credentials"
+    }
+}
+
+pub struct MissingCredentials;
+#[Object]
+impl MissingCredentials {
+    pub async fn description(&self) -> &str {
+        "Missing credentials"
     }
 }
 
@@ -51,6 +67,7 @@ impl AccountBlocked {
 pub enum AuthTokenErrorInterface {
     InvalidCredentials(InvalidCredentials),
     AccountBlocked(AccountBlocked),
+    NoSiteAccess(NoSiteAccess),
 }
 
 #[derive(SimpleObject)]
@@ -101,6 +118,11 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                         error: AuthTokenErrorInterface::AccountBlocked(AccountBlocked {
                             timeout_remaining,
                         }),
+                    }))
+                }
+                LoginError::LoginFailure(LoginFailure::NoSiteAccess) => {
+                    return Ok(AuthTokenResponse::Error(AuthTokenError {
+                        error: AuthTokenErrorInterface::NoSiteAccess(NoSiteAccess),
                     }))
                 }
                 LoginError::FailedToGenerateToken(_) => {

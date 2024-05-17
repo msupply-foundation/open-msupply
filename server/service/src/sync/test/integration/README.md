@@ -44,35 +44,30 @@ Only data that needs to be present on central server site is a new sync site (th
 
 ## 4 `Open mSupply central server`
 
-* Another instance of omSupply should be running as central server, in order to set omSupply instance as central server, you will need to check "Site is open mSupply central server" against the site and enter correct This site url agains the site in mSupply->Special->Synchronisation->{Site}
-* And graphql API should be 'open' (without token), thus 'APP_SERVER__DEBUG_NO_ACCESS_CONTROL' env variable should be set to `true`
+- Another instance of omSupply should be running as central server, in order to set omSupply instance as central server, you will need to check "Site is open mSupply central server" against the site and enter correct This site url agains the site in mSupply->Special->Synchronisation->{Site}
+- And graphql API should be 'open' (without token), thus 'APP_SERVER\_\_DEBUG_NO_ACCESS_CONTROL' env variable should be set to `true`
 
 In case you are wondering, the APP env variables translate to settings in [configuration .yaml](https://github.com/msupply-foundation/open-msupply/blob/1b8b9237863eef1a764be3973d563e6d84358827/server/configuration/example.yaml#L7) files, and override them
 
 Here is the full command line I used, for this setting "test" site `Site is open mSupply central server` is ticked and `This site url` is set to "http://localhost:2055"
 
 ```bash
-APP_SERVER__PORT=2055 APP_DATABASE__DATABASE_NAME="central_test" APP_SYNC__URL="http://localhost:2048" APP_SYNC__INTERVAL_SECONDS=30 APP_SERVER__DEBUG_NO_ACCESS_CONTROL=TRUE APP_SYNC__PASSWORD_SHA256="d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1" APP_SYNC__USERNAME="test" cargo run 
+APP_SERVER__PORT=2055 APP_DATABASE__DATABASE_NAME="central_test" APP_SYNC__URL="http://localhost:2048" APP_SYNC__INTERVAL_SECONDS=30 APP_SERVER__DEBUG_NO_ACCESS_CONTROL=TRUE APP_SYNC__PASSWORD_SHA256="d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1" APP_SYNC__USERNAME="test" cargo run
 ```
 
 In this case d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 = pass
 
-## 5 `run tests` 
+## 5 `run tests`
 
 Via cli: `SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test integration_sync  --features integration_test`
 
 If you've set configurations in rust analyzer, can use inlay hint play and debug buttons in:
-* integration/remote/test
-* integration/central/test
-* integration/transfer/requisition
-* integration/transfer/shipment
-* integration/omsupply_central/test
 
 # How do they work (Central, Remote and open mSupply central)
 
 There is a common `SyncRecordTester` trait with a `test_step_data` method returning a vector of TestData.
 Each TestData struct contains the test data required for the various testing steps.
-`TestData` is composed of upserts and deletes of central data, IntegrationRecords and graphql instructions to mutation records on openmSupply central server. 
+`TestData` is composed of upserts and deletes of central data, IntegrationRecords and graphql instructions to mutation records on openmSupply central server.
 
 We have the ability to update and delete central data records directly on the original mSupply server (for test purposes, see syncV5API_test_upsert/delete in mSupply). Two endpoints are used for this `sync/v5/test/upsert` and `sync/v5/test/delete`
 
@@ -115,15 +110,16 @@ For each step:
 ## Open mSupply Central
 
 For each step:
-* Upsert central data specified in TestData
-* Request and wait for sync of open mSupply central server (which will sync the central data we just created in original mSupply central server)
-* Perform graphql data mutations on open mSupply central server
-* Sync (remote site)
-* Check IntegratonRecords in TestData against database
+
+- Upsert central data specified in TestData
+- Request and wait for sync of open mSupply central server (which will sync the central data we just created in original mSupply central server)
+- Perform graphql data mutations on open mSupply central server
+- Sync (remote site)
+- Check IntegrationRecords in TestData against database
 
 # How do they work (Transfers)
 
-Using `RequisitionTransferTester` and `ShipmentTransferTester` defined in transfer processors unit test.
+Using `RequisitionTransferTester` and `InvoiceTransferTester` defined in transfer processors unit test.
 
 These structs implement test methods that need to be run sequentially. They create, update, delete source and destination records and test that corresponding transfer records have been changed accordingly. Each of those methods accept connection or service provider to allow the operation to be executed on a chosen site.
 
@@ -146,6 +142,5 @@ Transfer integration test follow this pattern:
 Full test including integration can be run with:
 
 ```bash
-SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test --features integration_test,postgres 
+SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test --features integration_test,postgres
 ```
-

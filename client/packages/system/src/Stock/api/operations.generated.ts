@@ -13,7 +13,7 @@ export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: s
 
 export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string };
 
-export type LedgerRowFragment = { __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId: string, storeId: string };
+export type LedgerRowFragment = { __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId?: string | null, storeId: string };
 
 export type StockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -43,7 +43,7 @@ export type LedgerQueryVariables = Types.Exact<{
 }>;
 
 
-export type LedgerQuery = { __typename: 'Queries', ledger: { __typename: 'LedgerConnector', totalCount: number, nodes: Array<{ __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId: string, storeId: string }> } };
+export type LedgerQuery = { __typename: 'Queries', ledger: { __typename: 'LedgerConnector', totalCount: number, nodes: Array<{ __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId?: string | null, storeId: string }> } };
 
 export type UpdateStockLineMutationVariables = Types.Exact<{
   input: Types.UpdateStockLineInput;
@@ -91,7 +91,7 @@ export type InsertStockLineMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertStockLineMutation = { __typename: 'Mutations', insertStockLine: { __typename: 'InsertStockLineError' } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } };
+export type InsertStockLineMutation = { __typename: 'Mutations', insertStockLine: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } };
 
 export const StockLineRowFragmentDoc = gql`
     fragment StockLineRow on StockLineNode {

@@ -5,7 +5,6 @@ import {
   DateUtils,
   Formatter,
   TextWithLabelRow,
-  BasicTextInput,
   CurrencyInput,
   ExpiryDateInput,
   useTranslation,
@@ -18,6 +17,7 @@ import {
   Tooltip,
   useDebounceCallback,
   NumericTextInput,
+  BufferedTextInput,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -55,7 +55,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     draft.item.unitName ?? null
   );
   const packUnit = asPackVariant(draft.packSize);
-
   const scanBarcode = async () => {
     try {
       const result = await startScan();
@@ -158,9 +157,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         <StyledInputRow
           label={t('label.batch')}
           Input={
-            <BasicTextInput
-              defaultValue={draft.batch ?? ''}
-              onChange={e => debouncedUpdate({ batch: e.target.value })}
+            <BufferedTextInput
+              value={draft.batch ?? ''}
+              onChange={e => onUpdate({ batch: e.target.value })}
             />
           }
         />
@@ -225,9 +224,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           label={t('label.barcode')}
           Input={
             <Box display="flex" style={{ width: 162 }}>
-              <BasicTextInput
-                defaultValue={draft.barcode ?? ''}
-                onChange={e => debouncedUpdate({ barcode: e.target.value })}
+              <BufferedTextInput
+                value={draft.barcode ?? ''}
+                onChange={e => onUpdate({ barcode: e.target.value })}
               />
               {isEnabled && (
                 <Tooltip

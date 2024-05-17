@@ -117,7 +117,7 @@ pub fn update_outbound_shipment(
         .map_err(|error| error.to_inner_error())?;
 
     ctx.processors_trigger
-        .trigger_shipment_transfer_processors();
+        .trigger_invoice_transfer_processors();
 
     Ok(invoice)
 }
@@ -469,7 +469,7 @@ mod test {
                 u.their_reference = their_reference;
                 u.colour = colour;
                 u.transport_reference = transport_reference;
-                u.tax = tax.map(|tax| tax.percentage.unwrap());
+                u.tax_percentage = tax.map(|tax| tax.percentage.unwrap());
                 u
             })
         );

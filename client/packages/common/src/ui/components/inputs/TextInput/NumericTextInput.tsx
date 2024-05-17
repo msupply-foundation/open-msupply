@@ -55,11 +55,12 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       (val: number | undefined) =>
         noFormatting
           ? val === undefined
-            ? undefined
+            ? ''
             : String(val)
           : format(val, { minimumFractionDigits: decimalMin }),
       [decimalMin, format, noFormatting]
     );
+    const [isDirty, setIsDirty] = useState(false);
     const [textValue, setTextValue] = useState(
       formatValue(value ?? defaultValue)
     );
@@ -67,14 +68,17 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
     const isFirstRender = useRef(true);
 
     const isInputIncomplete = useCallback(
-      (value: string) =>
-        new RegExp(
+      (value: string) => {
+        if (value === '-') return true;
+
+        return new RegExp(
           // Checks for a trailing `.` or a `0` (not necessarily immediately)
           // after a `.`
           `^\\d*${RegexUtils.escapeChars(
             decimal
           )}$|\\d*${RegexUtils.escapeChars(decimal)}\\d*0$`
-        ).test(value),
+        ).test(value);
+      },
       [decimal]
     );
 
@@ -114,8 +118,11 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           '& .MuiInput-input': { textAlign: 'right', width: `${width}px` },
           ...sx,
         }}
+        inputMode="numeric"
         InputProps={InputProps}
         onChange={e => {
+          if (!isDirty) setIsDirty(true);
+
           const input = e.target.value
             // Remove separators
             .replace(new RegExp(`\\${separator}`, 'g'), '')
@@ -164,8 +171,13 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           onChange(newNum);
         }}
         onBlur={() => {
-          onChange(Number(parse(textValue ?? '')) ?? undefined);
-          setTextValue(formatValue(value));
+          if (isDirty) {
+            const parsed = parse(textValue ?? '');
+            const val = Number.isNaN(parsed) ? defaultValue : parsed;
+
+            onChange(val);
+            setTextValue(formatValue(val));
+          }
         }}
         onFocus={e => e.target.select()}
         {...props}
