@@ -49,6 +49,10 @@ const assetParsers = {
     serialNumber: input.serialNumber,
     storeId: input.store?.id,
     typeId: input.typeId,
+    properties: JSON.stringify(input.parsedProperties),
+    donorNameId: input.donorNameId,
+    warrantyStart: input.warrantyStart,
+    warrantyEnd: input.warrantyEnd,
   }),
   toUpdate: (input: Partial<DraftAsset>): UpdateAssetInput => ({
     id: input.id ?? '',
