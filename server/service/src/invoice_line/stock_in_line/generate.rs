@@ -80,12 +80,15 @@ pub fn generate_batch(
         overwrite_stock_levels,
     );
 
-    // Use existing barcode id if exists
-    let barcode_id = barcode_id.or_else(|| {
-        existing_stock_line
-            .map(|stock_line| stock_line.barcode_id)
-            .flatten()
-    });
+    let (barcode_id, supplier_link_id) = match existing_stock_line {
+        Some(stock_line) => (
+            // if no new barcode, use the existing one if exists
+            barcode_id.or(stock_line.barcode_id),
+            // if stock_line already has supplier, use that
+            stock_line.supplier_link_id.or(Some(supplier_link_id)),
+        ),
+        None => (barcode_id, Some(supplier_link_id)),
+    };
 
     let stock_line_row = StockLineRow {
         id: stock_line_id,
@@ -100,7 +103,7 @@ pub fn generate_batch(
         total_number_of_packs,
         expiry_date,
         note,
-        supplier_link_id: Some(supplier_link_id),
+        supplier_link_id,
         on_hold,
         barcode_id,
     };

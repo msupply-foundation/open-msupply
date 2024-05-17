@@ -21,17 +21,17 @@ pub fn generate(
         should_adjust_total_number_of_packs(invoice.status.clone(), &input.r#type);
 
     let update_batch = generate_batch_update(
-        &input,
+        input.clone(),
         batch.stock_line_row.clone(),
         adjust_total_number_of_packs,
     );
-    let new_line = generate_line(connection, input, item_row, batch, invoice)?;
+    let new_line = generate_line(connection, input, item_row, update_batch.clone(), invoice)?;
 
     Ok((new_line, update_batch))
 }
 
 fn generate_batch_update(
-    input: &InsertStockOutLine,
+    input: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
 ) -> StockLineRow {
@@ -43,6 +43,17 @@ fn generate_batch_update(
     if adjust_total_number_of_packs {
         update_batch.total_number_of_packs -= reduction;
     }
+
+    update_batch.location_id = input.location_id.or(update_batch.location_id);
+    update_batch.batch = input.batch.or(update_batch.batch);
+    update_batch.expiry_date = input.expiry_date.or(update_batch.expiry_date);
+    update_batch.pack_size = input.pack_size.unwrap_or(update_batch.pack_size);
+    update_batch.cost_price_per_pack = input
+        .cost_price_per_pack
+        .unwrap_or(update_batch.cost_price_per_pack);
+    update_batch.sell_price_per_pack = input
+        .sell_price_per_pack
+        .unwrap_or(update_batch.sell_price_per_pack);
 
     update_batch
 }
@@ -56,8 +67,14 @@ fn generate_line(
         stock_line_id,
         number_of_packs,
         total_before_tax,
-        tax_percentage: _,
         note,
+        tax_percentage: _,
+        location_id: _,
+        batch: _,
+        pack_size: _,
+        expiry_date: _,
+        cost_price_per_pack: _,
+        sell_price_per_pack: _,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -65,20 +82,16 @@ fn generate_line(
         code: item_code,
         ..
     }: ItemRow,
-    StockLine {
-        stock_line_row:
-            StockLineRow {
-                sell_price_per_pack,
-                cost_price_per_pack,
-                pack_size,
-                batch,
-                expiry_date,
-                location_id,
-                note: _,
-                ..
-            },
+    StockLineRow {
+        sell_price_per_pack,
+        cost_price_per_pack,
+        pack_size,
+        batch,
+        expiry_date,
+        location_id,
+        note: _,
         ..
-    }: StockLine,
+    }: StockLineRow,
     InvoiceRow {
         tax_percentage,
         currency_id,

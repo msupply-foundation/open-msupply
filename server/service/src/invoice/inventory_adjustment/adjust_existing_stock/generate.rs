@@ -135,8 +135,15 @@ pub fn generate(
             stock_line_id,
             note,
             number_of_packs: adjustment,
+            // Default
             total_before_tax: None,
             tax_percentage: None,
+            location_id: None,
+            batch: None,
+            pack_size: None,
+            expiry_date: None,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
         }),
     };
 

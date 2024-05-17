@@ -1,4 +1,5 @@
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use chrono::NaiveDate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
 mod generate;
@@ -18,6 +19,12 @@ pub struct InsertStockOutLine {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub note: Option<String>,
+    pub location_id: Option<String>,
+    pub batch: Option<String>,
+    pub pack_size: Option<i32>,
+    pub expiry_date: Option<NaiveDate>,
+    pub cost_price_per_pack: Option<f64>,
+    pub sell_price_per_pack: Option<f64>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
