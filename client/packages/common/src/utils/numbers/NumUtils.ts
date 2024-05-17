@@ -35,8 +35,8 @@ export const NumUtils = {
    * while floatMultiply(110.4, 29) = 3201.6
    */
   floatMultiply: (left: number, right: number): number => {
-    // Use a hacky(?) correction factor of 10:
-    return (10 * left * right) / 10;
+    // Use a hacky(?) correction factor of 100:
+    return (100 * left * right) / 100;
   },
   /**
    * This constant should be used for values that are potentially send to a backend API that expects
