@@ -103,7 +103,7 @@ Explore API available on `http://localhost:8000/graphql` with build in playgroun
 
 Open mSupply server can be launched in both modes, this is controlled via `Site is open mSupply central server` configuration in legacy mSupply site settings, more info in [Sync Docs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/README.md#open-msupply-central-server) and [Integration Test Docs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/test/integration/README.md#4-open-msupply-central-server).
 
-From version 2.0 omSupply would require both legacy and omSupply central server for full configuration/syncrhonisation. To start both omSupply central and omSupply remote:
+From version 2.0 omSupply would require both legacy and omSupply central server for full configuration/synchronisation. To start both omSupply central and omSupply remote:
 - Create two sites as per [above "Set up sync with mSupply central" instructions](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/test/integration/README.md#4-open-msupply-central-server)
 - Configure one site to be central server by checking `Site is open mSupply central server` and entering the URL with which remote sites can reach this site in the field `This site url`
 - `cargo run` twice but change port, database and sync settings in yaml file or overwrite with env variables
