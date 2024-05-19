@@ -28,6 +28,15 @@ use super::{
 };
 
 /// How many records should be integrated in a transaction.
+///
+/// Postgres has performance problems with too many safe points within a transaction, thus the
+/// smaller batch size.
+/// https://www.cybertec-postgresql.com/en/subtransactions-and-performance-in-postgresql
+///
+/// Sqlite only has the SERIALIZABLE isolation level which means a long-running integration
+/// transaction would block all other database requests.
+/// For this reason we want to limit the batch size to allow the sync status query to provide sync
+/// feedback.
 const BATCH_SIZE: usize = if cfg!(feature = "postgres") { 64 } else { 500 };
 /// Wrap every record integration into a transaction
 const USE_RECORD_TX: bool = if cfg!(feature = "postgres") {
