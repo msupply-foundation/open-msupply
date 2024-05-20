@@ -123,6 +123,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                 <Row key={property.key} label={property.name}>
                   <PropertyInput
                     valueType={property.valueType}
+                    allowedValues={property.allowedValues?.split(',')}
                     value={draft.parsedProperties[property.key]}
                     onChange={v =>
                       onChange({
