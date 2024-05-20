@@ -336,8 +336,8 @@ impl SyncTranslation for RequisitionTranslation {
                 Some(status) => status,
                 None => {
                     return Ok(PushTranslateResult::Ignored(format!(
-                        "Unsupported requisition status: {:?}",
-                        status
+                        "Unsupported requisition status: {:?} (type: {:?}) row id: {}",
+                        status, r#type, changelog.record_id
                     )))
                 }
             },
