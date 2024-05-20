@@ -69,6 +69,7 @@
   "label.current-status": "Current Status",
   "label.documents": "Documents",
   "label.error-message": "Error message",
+  "label.warning-message": "Warning",
   "label.hot-consecutive": "Hot Consecutive",
   "label.hot-cumulative": "Hot Cumulative",
   "label.import": "Import",
@@ -141,5 +142,7 @@
   "status.not-in-use": "Not in use",
   "title.new-sensor": "New sensor added",
   "title.sensor-details": "Sensor Details",
+  "warning.field-not-parsed": "{{field}} not parsed",
+  "messages.import-warning-on-upload": "Warning some values failed to parse. Please fix or these will be ignored on upload",
   "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported."
 }

@@ -12,6 +12,7 @@ import {
   useConfirmOnLeaving,
   TableProvider,
   createTableStore,
+  ObjUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -23,7 +24,6 @@ import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
 import { ActivityLogList, useLocation } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
-import { isObject } from 'lodash';
 import { Details } from './Tabs/Details';
 
 export const EquipmentDetailView = () => {
@@ -76,7 +76,7 @@ export const EquipmentDetailView = () => {
   useEffect(() => {
     if (!data) return;
     let properties = JSON.parse(data.properties);
-    if (!properties || !isObject(properties)) {
+    if (!properties || !ObjUtils.isObject(properties)) {
       // Invalid properties, reset to empty object
       properties = {};
     }

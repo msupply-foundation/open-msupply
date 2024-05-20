@@ -1,6 +1,6 @@
 use crate::{
     db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter,
-    NameLinkRow, RepositoryError, StorageConnection,
+    LockedConnection, NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
     helper_types::{IntoBoxed, LeftJoin},
@@ -208,30 +208,33 @@ impl<'a> ChangelogRepository<'a> {
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_query(earliest, filter)
-            .order(changelog_deduped::dsl::cursor.asc())
-            .limit(limit.into());
+        let result = with_locked_changelog_table(self.connection, |locked_con| {
+            let query = create_filtered_query(earliest, filter)
+                .order(changelog_deduped::dsl::cursor.asc())
+                .limit(limit.into());
 
-        // // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-        // );
+            // // Debug diesel query
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+            // );
 
-        let result: Vec<ChangelogJoin> = query.load(self.connection.lock().connection())?;
-        Ok(result
-            .into_iter()
-            .map(|(change_log_row, name_link_row)| ChangelogRow {
-                cursor: change_log_row.cursor,
-                table_name: change_log_row.table_name,
-                record_id: change_log_row.record_id,
-                row_action: change_log_row.row_action,
-                name_id: name_link_row.map(|r| r.name_id),
-                store_id: change_log_row.store_id,
-                is_sync_update: change_log_row.is_sync_update,
-                source_site_id: change_log_row.source_site_id,
-            })
-            .collect())
+            let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
+            Ok(result
+                .into_iter()
+                .map(|(change_log_row, name_link_row)| ChangelogRow {
+                    cursor: change_log_row.cursor,
+                    table_name: change_log_row.table_name,
+                    record_id: change_log_row.record_id,
+                    row_action: change_log_row.row_action,
+                    name_id: name_link_row.map(|r| r.name_id),
+                    store_id: change_log_row.store_id,
+                    is_sync_update: change_log_row.is_sync_update,
+                    source_site_id: change_log_row.source_site_id,
+                })
+                .collect())
+        })?;
+        Ok(result)
     }
 
     pub fn count(
@@ -252,30 +255,33 @@ impl<'a> ChangelogRepository<'a> {
         sync_site_id: i32,
         is_initialized: bool,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
-            .order(changelog_deduped::cursor.asc())
-            .limit(batch_size.into());
+        let result = with_locked_changelog_table(self.connection, |locked_con| {
+            let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
+                .order(changelog_deduped::cursor.asc())
+                .limit(batch_size.into());
 
-        // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-        // );
+            // Debug diesel query
+            // println!(
+            //     "{}",
+            //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+            // );
 
-        let result: Vec<ChangelogJoin> = query.load(self.connection.lock().connection())?;
-        Ok(result
-            .into_iter()
-            .map(|(change_log_row, name_link_row)| ChangelogRow {
-                cursor: change_log_row.cursor,
-                table_name: change_log_row.table_name,
-                record_id: change_log_row.record_id,
-                row_action: change_log_row.row_action,
-                name_id: name_link_row.map(|r| r.name_id),
-                store_id: change_log_row.store_id,
-                is_sync_update: change_log_row.is_sync_update,
-                source_site_id: change_log_row.source_site_id,
-            })
-            .collect())
+            let result: Vec<ChangelogJoin> = query.load(locked_con.connection())?;
+            Ok(result
+                .into_iter()
+                .map(|(change_log_row, name_link_row)| ChangelogRow {
+                    cursor: change_log_row.cursor,
+                    table_name: change_log_row.table_name,
+                    record_id: change_log_row.record_id,
+                    row_action: change_log_row.row_action,
+                    name_id: name_link_row.map(|r| r.name_id),
+                    store_id: change_log_row.store_id,
+                    is_sync_update: change_log_row.is_sync_update,
+                    source_site_id: change_log_row.source_site_id,
+                })
+                .collect())
+        })?;
+        Ok(result)
     }
 
     /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
@@ -312,6 +318,7 @@ impl<'a> ChangelogRepository<'a> {
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via
     // PullUpsertRecord (but not through sync)
+    #[cfg(test)]
     pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
         diesel::update(changelog::table)
             .set(changelog::is_sync_update.eq(false))
@@ -466,6 +473,52 @@ fn create_filtered_outgoing_sync_query(
     query
 }
 
+/// Runs some DB operation with a fully locked `changelog` table.
+/// This only applies for for Postgres and does nothing for Sqlite.
+///
+/// Motivation:
+/// When querying changelog entries, ongoing transactions might continue adding changelog entries
+/// to the queried range of changelogs.
+/// This is because Postgres has Read Committed isolation level (instead of Serialized in Sqlite).
+/// However, we assume that there will be no new changelog entries in the queried range in the
+/// future, e.g. when updating the cursor position.
+///
+/// For example, a changelog may contain [1, 3, 4, 5] while another (slow) tx is about to commit a
+/// changelog row with cursor = 2.
+/// We need to wait for this changelog 2 to be added before doing the changelogs() query, otherwise
+/// we might update the latest changelog cursor to 5 and the changelog with cursor = 2 will be left
+/// unhandled when continuing from the latest cursor position.
+///
+/// Locking the changelog table will wait for ongoing writers and will prevent new writers while
+/// reading the changelog.
+fn with_locked_changelog_table<T, F>(
+    connection: &StorageConnection,
+    f: F,
+) -> Result<T, RepositoryError>
+where
+    F: FnOnce(&mut LockedConnection) -> Result<T, RepositoryError>,
+{
+    if cfg!(feature = "postgres") {
+        use diesel::connection::SimpleConnection;
+        let result = connection.transaction_sync_etc(
+            |con| {
+                let mut locked_con = con.lock();
+                locked_con
+                    .connection()
+                    .batch_execute("LOCK TABLE ONLY changelog IN ACCESS EXCLUSIVE MODE")?;
+
+                f(&mut locked_con)
+            },
+            false,
+        )?;
+
+        Ok(result)
+    } else {
+        let mut locked_con = connection.lock();
+        f(&mut locked_con)
+    }
+}
+
 // Only used in tests (cfg flag doesn't seem to work for inline_init even in tests)
 impl Default for ChangelogRow {
     fn default() -> Self {
@@ -533,5 +586,64 @@ impl ChangelogTableName {
 impl RowActionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use tokio::sync::oneshot;
+    use util::inline_init;
+
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogRepository, ClinicianRow,
+        ClinicianRowRepository, RepositoryError, TransactionError,
+    };
+
+    /// Example from with_locked_changelog_table() comment
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_late_changelog_rows() {
+        let (_, connection, connection_manager, _) =
+            setup_all("test_late_changelog_rows", MockDataInserts::none()).await;
+
+        ClinicianRowRepository::new(&connection)
+            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
+                r.id = String::from("1");
+                r.is_active = true;
+            }))
+            .unwrap();
+
+        let (sender, receiver) = oneshot::channel::<()>();
+        let manager_2 = connection_manager.clone();
+        let process_2 = tokio::spawn(async move {
+            let connection = manager_2.connection().unwrap();
+            let result: Result<(), TransactionError<RepositoryError>> = connection
+                .transaction_sync(|con| {
+                    ClinicianRowRepository::new(con)
+                        .upsert_one(&inline_init(|r: &mut ClinicianRow| {
+                            r.id = String::from("2");
+                            r.is_active = true;
+                        }))
+                        .unwrap();
+                    sender.send(()).unwrap();
+                    std::thread::sleep(core::time::Duration::from_millis(100));
+                    Ok(())
+                });
+            result
+        });
+        receiver.await.unwrap();
+        ClinicianRowRepository::new(&connection)
+            .upsert_one(&inline_init(|r: &mut ClinicianRow| {
+                r.id = String::from("3");
+                r.is_active = true;
+            }))
+            .unwrap();
+
+        let changelogs = ChangelogRepository::new(&connection)
+            .changelogs(0, 10, None)
+            .unwrap();
+        assert_eq!(changelogs.len(), 3);
+
+        // being good and awaiting the task to finish orderly and check it did run fine
+        process_2.await.unwrap().unwrap();
     }
 }

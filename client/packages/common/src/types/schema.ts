@@ -4290,6 +4290,11 @@ export type NoRefreshTokenProvided = RefreshTokenErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type NoSiteAccess = AuthTokenErrorInterface & {
+  __typename: 'NoSiteAccess';
+  description: Scalars['String']['output'];
+};
+
 /** Generic Error Wrapper */
 export type NodeError = {
   __typename: 'NodeError';
