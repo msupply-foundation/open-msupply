@@ -17,6 +17,8 @@ import {
   ColumnDescription,
   usePluginColumns,
   TooltipTextCell,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { RepackModal, StockLineEditModal } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
@@ -26,6 +28,7 @@ import {
   useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
+import { AppRoute } from 'packages/config/src';
 
 const StockListComponent: FC = () => {
   const {
@@ -46,6 +49,7 @@ const StockListComponent: FC = () => {
       },
     ],
   });
+  const navigate = useNavigate();
   const queryParams = {
     filterBy,
     offset,
@@ -57,7 +61,7 @@ const StockListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const { data, isLoading, isError } = useStock.line.list(queryParams);
-  const [repackId, setRepackId] = React.useState<string | null>(null);
+  // const [repackId, setRepackId] = React.useState<string | null>(null);
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
   });
@@ -196,31 +200,31 @@ const StockListComponent: FC = () => {
     [sortBy, pluginColumns]
   );
 
-  const { isOpen, entity, onClose, onOpen } =
-    useEditModal<StockLineRowFragment>();
+  // const { isOpen, entity, onClose, onOpen } =
+  //   useEditModal<StockLineRowFragment>();
 
-  const repackModalController = useToggle();
+  // const repackModalController = useToggle();
 
-  const stockLine = entity
-    ? data?.nodes.find(({ id }) => id === entity.id)
-    : undefined;
+  // const stockLine = entity
+  //   ? data?.nodes.find(({ id }) => id === entity.id)
+  //   : undefined;
 
   return (
     <>
-      {repackModalController.isOn && (
+      {/* {repackModalController.isOn && (
         <RepackModal
           isOpen={repackModalController.isOn}
           onClose={repackModalController.toggleOff}
           stockLine={data?.nodes.find(({ id }) => id === repackId) ?? null}
         />
-      )}
-      {isOpen && stockLine && (
+      )} */}
+      {/* {isOpen && stockLine && (
         <StockLineEditModal
           isOpen={isOpen}
           onClose={onClose}
           stockLine={stockLine}
         />
-      )}
+      )} */}
       <Toolbar filter={filter} />
       <AppBarButtons />
       <DataTable
@@ -233,7 +237,14 @@ const StockListComponent: FC = () => {
         isError={isError}
         isLoading={isLoading}
         enableColumnSelection
-        onRowClick={onOpen}
+        onRowClick={stockline => {
+          navigate(
+            RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.Stock)
+              .addPart(stockline.id)
+              .build()
+          );
+        }}
       />
     </>
   );

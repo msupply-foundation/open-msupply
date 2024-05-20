@@ -17,6 +17,8 @@ import {
   useBreadcrumbs,
   useQuery,
   useParams,
+  useConfirmationModal,
+  useNotification,
 } from '@openmsupply-client/common';
 import {
   ItemRowFragment,
@@ -39,40 +41,6 @@ import { StockLineForm } from '../Components/StockLineForm';
 import { InventoryAdjustmentForm } from '../Components/InventoryAdjustment';
 import { LedgerForm } from '../Components/Ledger';
 
-const DetailViewComponent = ({
-  //   stocktake,
-  isDisabled,
-  onOpen,
-}: {
-  //   stocktake: StocktakeFragment;
-  isDisabled: boolean;
-  onOpen: () => void;
-}) => {
-  const { HighlightStyles } = useRowHighlight();
-
-  return (
-    <>
-      <HighlightStyles />
-      {/* <AppBarButtons onAddItem={() => onOpen()} /> */}
-
-      <Footer
-        isSaving={false}
-        showSaveConfirmation={() => {}}
-        showCancelConfirmation={() => {}}
-      />
-      {/* <SidePanel /> */}
-
-      {/* <Toolbar /> */}
-
-      {/* <StocktakeTabs
-        id={stocktake?.id}
-        onOpen={onOpen}
-        isDisabled={isDisabled}
-      /> */}
-    </>
-  );
-};
-
 interface StockLineEditProps {
   stockLine: StockLineRowFragment;
 }
@@ -84,12 +52,16 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
   const {
     query: { data, isLoading },
     draft,
+    resetDraft,
     updatePatch,
+    isDirty,
+    update: { update, isUpdating, updateError },
   } = useStockLine(id);
   const { HighlightStyles } = useRowHighlight();
   const { dispatchEvent, addEventListener, removeEventListener } =
     usePluginEvents();
   const [hasChanged, setHasChanged] = useState(false);
+  const { success, error } = useNotification();
 
   const t = useTranslation('inventory');
   //   const navigate = useNavigate();
@@ -104,24 +76,54 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
     data: stockLine,
   });
 
+  const showSaveConfirmation = useConfirmationModal({
+    onConfirm: () =>
+      update()
+        .then(() => {
+          const successSnack = success(t('success.data-saved'));
+          successSnack();
+        })
+        .catch(err => {
+          const errorSnack = success(err.message);
+          errorSnack();
+        }),
+    message: t('messages.confirm-save-generic'),
+    title: t('heading.are-you-sure'),
+  });
+
+  const showCancelConfirmation = useConfirmationModal({
+    onConfirm: resetDraft,
+    message: t('messages.confirm-cancel-generic'),
+    title: t('heading.are-you-sure'),
+  });
+
   const tabs = [
     {
       Component: (
         <StockLineForm
           loading={isLoading}
           draft={draft}
-          onUpdate={updatePatch}
+          onUpdate={newData => {
+            updatePatch(newData);
+            setHasChanged(true);
+          }}
           plugins={plugins}
+          footerProps={{
+            isSaving: isUpdating,
+            showSaveConfirmation,
+            showCancelConfirmation,
+            isDirty,
+          }}
         />
       ),
       value: t('label.details'),
     },
-    {
-      Component: (
-        <InventoryAdjustmentForm stockLine={draft} onUpdate={updatePatch} />
-      ),
-      value: t('label.adjust'),
-    },
+    // {
+    //   Component: (
+    //     <InventoryAdjustmentForm stockLine={draft} onUpdate={updatePatch} />
+    //   ),
+    //   value: t('label.adjust'),
+    // },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: t('label.log'),
@@ -150,14 +152,6 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
       <HighlightStyles />
       <AppBarButtons onAddItem={() => {}} />
       {/* <Toolbar /> */}
-
-      <Footer
-        isSaving={false}
-        showSaveConfirmation={() => {}}
-        showCancelConfirmation={() => {}}
-      />
-      {/* <SidePanel /> */}
-
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />
       </TableProvider>

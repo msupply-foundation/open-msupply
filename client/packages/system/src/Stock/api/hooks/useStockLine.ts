@@ -37,17 +37,24 @@ const defaultDraftStockLine = {
 
 export function useStockLine(id?: string) {
   const [patch, setPatch] = useState<Partial<DraftStockLine>>({});
+  const [isDirty, setIsDirty] = useState(false);
   const { data, isLoading, error } = useGet(id ?? '');
-  const { mutateAsync: createMutation } = useCreate();
-  const { mutateAsync: updateMutation } = useUpdate(id ?? '');
+  const {
+    mutateAsync: createMutation,
+    isLoading: isCreating,
+    error: createError,
+  } = useCreate();
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate(id ?? '');
 
   const draft = (
     data
       ? { ...data?.nodes[0], ...patch }
       : { ...defaultDraftStockLine, ...patch }
   ) as DraftStockLine;
-
-  console.log('Draft', draft);
 
   const updatePatch = (newData: Partial<DraftStockLine>) => {
     // Only add changed values to patch
@@ -58,18 +65,30 @@ export function useStockLine(id?: string) {
           )
         )
       : newData;
-    setPatch({ ...patch, ...changedData });
+    if (Object.keys(changedData).length > 0) {
+      setIsDirty(true);
+      setPatch({ ...patch, ...changedData });
+    }
   };
 
-  const create = () => createMutation(draft);
-  const update = () => updateMutation(patch);
+  const resetDraft = () => {
+    if (data) {
+      setPatch({});
+      setIsDirty(false);
+    }
+  };
+
+  const create = () => createMutation(draft).then(() => setIsDirty(false));
+  const update = () => updateMutation(patch).then(() => setIsDirty(false));
 
   return {
     query: { data: data?.nodes[0], isLoading, error },
+    create: { create, isCreating, createError },
+    update: { update, isUpdating, updateError },
     draft,
+    resetDraft,
+    isDirty,
     updatePatch,
-    create,
-    update,
   };
 }
 
@@ -88,7 +107,7 @@ const useGet = (id: string) => {
   };
 
   const query = useQuery({
-    queryKey: ['stock', id],
+    queryKey: [STOCK_LINE, id],
     queryFn,
     enabled: id !== '',
   });
@@ -176,6 +195,6 @@ const useUpdate = (id: string) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([STOCK_LINE]),
+    onSuccess: () => queryClient.invalidateQueries([STOCK_LINE, id]),
   });
 };
