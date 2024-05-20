@@ -29,6 +29,7 @@ use super::{
     translations::translate_changelogs_to_sync_records,
 };
 
+// See ../README.md for when to increment versions!
 static MIN_VERSION: u32 = 1;
 static MAX_VERSION: u32 = 1;
 
