@@ -257,6 +257,8 @@ fragment AssetPropertyRow on AssetPropertyNode {
   id
   key
   name
+  valueType
+  allowedValues
 }
 
 query assetProperties($filter: AssetPropertyFilterInput!, $storeId: String!) {

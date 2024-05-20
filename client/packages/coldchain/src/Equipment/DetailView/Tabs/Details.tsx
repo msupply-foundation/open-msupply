@@ -10,6 +10,7 @@ import { Box } from '@openmsupply-client/common';
 import { formatPropertyValue } from '../../utils';
 import { DraftAsset } from '../../types';
 import { useAssets } from '../../api';
+import { PropertyInput } from '../../Components/PropertyInput';
 interface DetailsProps {
   draft?: DraftAsset;
   onChange: (patch: Partial<DraftAsset>) => void;
@@ -120,14 +121,14 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
             {assetProperties &&
               assetProperties.nodes.map(property => (
                 <Row key={property.key} label={property.name}>
-                  <BasicTextInput
+                  <PropertyInput
+                    valueType={property.valueType}
                     value={draft.parsedProperties[property.key]}
-                    fullWidth
-                    onChange={e =>
+                    onChange={v =>
                       onChange({
                         parsedProperties: {
                           ...draft.parsedProperties,
-                          [property.key]: e.target.value,
+                          [property.key]: v ?? null,
                         },
                       })
                     }

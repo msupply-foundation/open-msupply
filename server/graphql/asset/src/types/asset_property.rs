@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_asset_catalogue::types::asset_catalogue_property::PropertyNodeValueType;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 
 use graphql_core::simple_generic_errors::NodeError;
@@ -62,6 +63,12 @@ impl AssetPropertyNode {
     }
     pub async fn asset_type_id(&self) -> Option<String> {
         self.row().asset_type_id.clone()
+    }
+    pub async fn value_type(&self) -> PropertyNodeValueType {
+        PropertyNodeValueType::from_domain(&self.row().value_type)
+    }
+    pub async fn allowed_values(&self) -> &Option<String> {
+        &self.row().allowed_values
     }
 }
 
