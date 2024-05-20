@@ -18,3 +18,4 @@ Upsert
 upserted
 upserts
 zustand
+parseable
