@@ -15,7 +15,12 @@ import {
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
-import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
+import {
+  DonorSearchInput,
+  NameRowFragment,
+  StoreRowFragment,
+  StoreSearchInput,
+} from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 interface SummaryProps {
   draft?: DraftAsset;
@@ -277,6 +282,14 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
               multiline
               rows={4}
+            />
+          </Row>
+        </Section>
+        <Section heading={t('label.donor')}>
+          <Row label={t('label.donor')}>
+            <DonorSearchInput
+              value={draft.donor as NameRowFragment} // TODO: Fix this?
+              onChange={e => onChange({ donor: e })}
             />
           </Row>
         </Section>

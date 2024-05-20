@@ -178,13 +178,13 @@ mod graphql {
                 is_visible,
                 is_system_name,
                 r#type,
-
                 phone,
                 address1,
                 address2,
                 country,
                 email,
                 is_patient: _,
+                is_donor,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
