@@ -17,11 +17,14 @@ use crate::sync::api_v6::SyncApiV6;
 use crate::sync::settings::SYNC_V5_VERSION;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
 
-use super::api_v6::{SyncApiErrorV6, SyncApiV6CreatingError};
 use super::settings::SyncSettings;
 use super::{
     api::SyncApiV5CreatingError,
     api_v6::{SyncApiErrorVariantV6, SyncParsedErrorV6},
+};
+use super::{
+    api_v6::{SyncApiErrorV6, SyncApiV6CreatingError},
+    settings::SYNC_V6_VERSION,
 };
 
 pub static MAX_UPLOAD_ATTEMPTS: i32 = 7 * 24; // 7 days * 24 hours Retry sending for up to for 1 week before giving up
@@ -72,7 +75,7 @@ impl FileSynchroniser {
         // Create SyncApiV6 instance
         let sync_v5_settings =
             SyncApiV5::new_settings(&settings, &service_provider, SYNC_V5_VERSION)?;
-        let sync_api_v6 = SyncApiV6::new(sync_v6_url, &sync_v5_settings)?;
+        let sync_api_v6 = SyncApiV6::new(sync_v6_url, &sync_v5_settings, SYNC_V6_VERSION)?;
 
         Ok(Self {
             sync_api_v6,
