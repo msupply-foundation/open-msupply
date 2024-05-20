@@ -112,15 +112,15 @@ impl<'a> TranslationAndIntegration<'a> {
                     }
                 };
 
-            let mut integration_records = vec![];
-            let mut ignored = Vec::new();
+            let mut integration_records = Vec::new();
+            let mut ignored = false;
             for pull_translation_result in pull_translation_results {
                 match pull_translation_result {
                     PullTranslateResult::IntegrationOperations(mut operations) => {
                         integration_records.append(&mut operations)
                     }
                     PullTranslateResult::Ignored(ignore_message) => {
-                        ignored.push(ignore_message.clone());
+                        ignored = true;
                         // note, this might get cleared if other translator produced some ops
                         self.sync_buffer.record_integration_error(
                             &sync_record,
@@ -138,8 +138,12 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
             }
 
+            if ignored {
+                continue;
+            }
+
             // Record translator not found error in sync buffer and in result, continue to next sync_record
-            if integration_records.is_empty() && ignored.is_empty() {
+            if integration_records.is_empty() {
                 let error = anyhow::anyhow!("Translator for record not found");
                 self.sync_buffer
                     .record_integration_error(&sync_record, &error)?;
@@ -278,7 +282,7 @@ mod test {
 
                 assert_eq!(result, Ok(()));
 
-                // Fails due to referencial constraint
+                // Fails due to referential constraint
                 let result = integrate(
                     connection,
                     &[IntegrationOperation::upsert(inline_init(
