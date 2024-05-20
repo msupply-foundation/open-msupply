@@ -18,6 +18,8 @@ import {
   NumericTextInput,
   BufferedTextInput,
   DetailContainer,
+  PartialBy,
+  ConfirmationModalState,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -27,6 +29,7 @@ import {
   useIsPackVariantsEnabled,
 } from '../..';
 import { StyledInputRow } from './StyledInputRow';
+import { Footer } from '../DetailView/Footer';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -34,6 +37,16 @@ interface StockLineFormProps {
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   plugins?: JSX.Element[];
   packEditable?: boolean;
+  footerProps: {
+    isSaving: boolean;
+    showSaveConfirmation: (
+      params: Partial<PartialBy<ConfirmationModalState, 'open'>> | undefined
+    ) => void;
+    showCancelConfirmation: (
+      params: Partial<PartialBy<ConfirmationModalState, 'open'>> | undefined
+    ) => void;
+    isDirty: boolean;
+  };
 }
 export const StockLineForm: FC<StockLineFormProps> = ({
   draft,
@@ -41,6 +54,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   onUpdate,
   plugins,
   packEditable,
+  footerProps,
 }) => {
   const t = useTranslation('inventory');
   const { error } = useNotification();
@@ -261,6 +275,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           />
         </Grid>
       </Grid>
+      <Footer {...footerProps} />
     </DetailContainer>
   );
 };

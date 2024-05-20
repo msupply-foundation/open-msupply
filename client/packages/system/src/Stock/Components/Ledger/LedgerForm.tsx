@@ -1,7 +1,6 @@
 import React, { FC, useState } from 'react';
 import {
   useTranslation,
-  Box,
   TableProvider,
   createTableStore,
   DataTable,
@@ -27,18 +26,16 @@ export const LedgerForm: FC<LedgerFormProps> = ({ stockLine }) => {
   });
 
   return (
-    <Box display="flex" sx={{ overflowY: 'auto', maxHeight: 400 }}>
-      <TableProvider createStore={createTableStore}>
-        <DataTable
-          id="stockline-ledger"
-          columns={columns}
-          data={data?.nodes}
-          isLoading={isLoading}
-          isError={isError}
-          noDataMessage={t('messages.no-ledger')}
-          overflowX="auto"
-        />
-      </TableProvider>
-    </Box>
+    <TableProvider createStore={createTableStore}>
+      <DataTable
+        id="stockline-ledger"
+        columns={columns}
+        data={data?.nodes}
+        isLoading={isLoading}
+        isError={isError}
+        noDataMessage={t('messages.no-ledger')}
+        overflowX="auto"
+      />
+    </TableProvider>
   );
 };

@@ -37,7 +37,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
     query: { isLoading },
     draft,
     updatePatch,
-    create,
+    create: { create },
   } = useStockLine();
 
   const isDisabled =
