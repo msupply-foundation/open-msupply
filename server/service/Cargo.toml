@@ -55,6 +55,7 @@ actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 httpmock = "0.6.6"
 tokio = { version = "1.21.1", features = ["macros", "rt-multi-thread", "time"] }
+assert_approx_eq = "1"
 
 [features]
 default = ["sqlite"]
