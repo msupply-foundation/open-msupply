@@ -50,12 +50,6 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
         let name_store_joins = NameStoreJoinRepository::new(connection)
             .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.ID)))?;
 
-        if name_store_joins.is_empty() {
-            return Ok(PullTranslateResult::Ignored(
-                "Name store joins not found for name".to_string(),
-            ));
-        }
-
         let upserts = name_store_joins
             .into_iter()
             .map(|r| NameStoreJoinRow {
