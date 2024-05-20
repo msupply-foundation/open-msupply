@@ -10,6 +10,7 @@ use crate::{
     demographic_projection_row::DemographicProjectionRow,
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
+    Pagination,
 };
 
 use crate::{EqualFilter, Sort};
@@ -53,11 +54,13 @@ impl<'a> DemographicProjectionRepository<'a> {
         &self,
         filter: DemographicProjectionFilter,
     ) -> Result<Vec<DemographicProjection>, RepositoryError> {
-        self.query(Some(filter), None)
+        self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
         &self,
+        pagination: Pagination,
+
         filter: Option<DemographicProjectionFilter>,
         sort: Option<DemographicProjectionSort>,
     ) -> Result<Vec<DemographicProjection>, RepositoryError> {
@@ -71,8 +74,12 @@ impl<'a> DemographicProjectionRepository<'a> {
         } else {
             query = query.order(demographic_projection_dsl::id.asc())
         }
+        let final_query = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64);
 
-        let result = query.load::<DemographicProjectionRow>(self.connection.lock().connection())?;
+        let result =
+            final_query.load::<DemographicProjectionRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
