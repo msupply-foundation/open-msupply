@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  BasicSpinner,
   BasicTextInput,
   InputWithLabelRow,
   Typography,
@@ -8,6 +9,7 @@ import { useTranslation } from '@common/intl';
 import { Box } from '@openmsupply-client/common';
 import { formatPropertyValue } from '../../utils';
 import { DraftAsset } from '../../types';
+import { useAssets } from '../../api';
 interface DetailsProps {
   draft?: DraftAsset;
   onChange: (patch: Partial<DraftAsset>) => void;
@@ -86,6 +88,12 @@ const Row = ({
 export const Details = ({ draft, onChange }: DetailsProps) => {
   const t = useTranslation('coldchain');
 
+  const { data: assetProperties, isLoading } = useAssets.properties.list({
+    assetCategoryId: { equalAnyOrNull: [draft?.assetCategory?.id ?? ''] },
+    assetClassId: { equalAnyOrNull: [draft?.assetClass?.id ?? ''] },
+    assetTypeId: { equalAnyOrNull: [draft?.assetType?.id ?? ''] },
+  });
+
   if (!draft) return null;
 
   return (
@@ -106,21 +114,26 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
         )}
       </Container>
       <Container>
+        {isLoading ? <BasicSpinner /> : null}
         {!draft.parsedProperties ? null : (
           <Section heading={t('label.asset-properties')}>
-            {Object.keys(draft.parsedProperties).map(key => (
-              <Row key={key} label={key}>
-                <BasicTextInput
-                  value={draft.parsedProperties[key]}
-                  // TODO: Look up the property name from the property key
-                  // disabled
-                  fullWidth
-                  onChange={e =>
-                    onChange({ parsedProperties: { [key]: e.target.value } })
-                  }
-                />
-              </Row>
-            ))}
+            {assetProperties &&
+              assetProperties.nodes.map(property => (
+                <Row key={property.key} label={property.name}>
+                  <BasicTextInput
+                    value={draft.parsedProperties[property.key]}
+                    fullWidth
+                    onChange={e =>
+                      onChange({
+                        parsedProperties: {
+                          ...draft.parsedProperties,
+                          [property.key]: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                </Row>
+              ))}
           </Section>
         )}
       </Container>

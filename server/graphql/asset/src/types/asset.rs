@@ -15,7 +15,6 @@ use graphql_core::loader::{
 use graphql_core::loader::{AssetStatusLogLoader, NameByIdLoader};
 use graphql_core::loader::{NameByIdLoaderInput, SyncFileReferenceLoader};
 use graphql_core::simple_generic_errors::NodeError;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, NameNode, StoreNode, SyncFileReferenceConnector};
 

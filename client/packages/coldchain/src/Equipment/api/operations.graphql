@@ -85,12 +85,15 @@ fragment Asset on AssetNode {
     model
   }
   assetType {
+    id
     name
   }
   assetClass {
+    id
     name
   }
   assetCategory {
+    id
     name
   }
   donorNameId
@@ -245,6 +248,25 @@ mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
       __typename
       error {
         description
+      }
+    }
+  }
+}
+
+fragment AssetPropertyRow on AssetPropertyNode {
+  id
+  key
+  name
+}
+
+query assetProperties($filter: AssetPropertyFilterInput!, $storeId: String!) {
+  assetProperties(filter: $filter, storeId: $storeId) {
+    ... on AssetPropertyConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetPropertyRow
       }
     }
   }
