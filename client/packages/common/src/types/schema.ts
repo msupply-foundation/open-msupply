@@ -590,12 +590,22 @@ export type AssetPropertyConnector = {
 };
 
 export type AssetPropertyFilterInput = {
+  assetCategoryId?: InputMaybe<EqualFilterStringInput>;
+  assetClassId?: InputMaybe<EqualFilterStringInput>;
+  assetTypeId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  key?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
 };
 
 export type AssetPropertyNode = {
   __typename: 'AssetPropertyNode';
+  assetCategoryId?: Maybe<Scalars['String']['output']>;
+  assetClassId?: Maybe<Scalars['String']['output']>;
+  assetTypeId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export enum AssetSortFieldInput {
@@ -1772,12 +1782,14 @@ export type EqualFilterActivityLogTypeInput = {
 
 export type EqualFilterBigFloatingNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
+  equalAnyOrNull?: InputMaybe<Array<Scalars['Float']['input']>>;
   equalTo?: InputMaybe<Scalars['Float']['input']>;
   notEqualTo?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
+  equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1832,6 +1844,7 @@ export type EqualFilterItemTypeInput = {
 
 export type EqualFilterNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
+  equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1874,6 +1887,7 @@ export type EqualFilterStocktakeStatusInput = {
 
 export type EqualFilterStringInput = {
   equalAny?: InputMaybe<Array<Scalars['String']['input']>>;
+  equalAnyOrNull?: InputMaybe<Array<Scalars['String']['input']>>;
   equalTo?: InputMaybe<Scalars['String']['input']>;
   notEqualTo?: InputMaybe<Scalars['String']['input']>;
 };
