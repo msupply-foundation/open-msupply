@@ -6357,7 +6357,8 @@ export enum SyncErrorVariant {
   SiteHasNoStore = 'SITE_HAS_NO_STORE',
   SiteNameNotFound = 'SITE_NAME_NOT_FOUND',
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
-  Unknown = 'UNKNOWN'
+  Unknown = 'UNKNOWN',
+  V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE'
 }
 
 export type SyncFileReferenceConnector = {

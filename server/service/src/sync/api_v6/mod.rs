@@ -39,7 +39,7 @@ pub enum SyncParsedErrorV6 {
     IntegrationInProgress,
     #[error("Sync file not found, file_id: {0}")]
     SyncFileNotFound(String),
-    #[error("Sync API version not compatible, maxVersion: {0}, minVersion: {1}, received: {2}")]
+    #[error("Sync V6 API version not compatible, maxVersion: {0}, minVersion: {1}, received: {2}")]
     SyncVersionMismatch(u32, u32, u32),
 }
 
