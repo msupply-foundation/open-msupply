@@ -16,7 +16,7 @@ const mapRoute = (route: string): RouteMapping => {
   const inRoute = (sub: string) => new RegExp(`/${sub}/|/${sub}\$`).test(route);
   switch (true) {
     case inRoute('dashboard'):
-      return { title: 'dashboard', docs: '/introduction/dashboard/' };
+      return { title: 'dashboard', docs: '/introduction/introduction' };
     case inRoute('outbound-shipment'):
       return {
         title: 'outbound-shipments',
@@ -51,6 +51,8 @@ const mapRoute = (route: string): RouteMapping => {
       };
     case inRoute('suppliers'):
       return { title: 'suppliers', docs: '/replenishment/suppliers/' };
+    case inRoute('assets'):
+      return { title: 'assets', docs: '/catalogue/assets/' };
     case inRoute('items'):
       return { title: 'items', docs: '/catalogue/items/' };
     case inRoute('master-lists'):
@@ -74,6 +76,15 @@ const mapRoute = (route: string): RouteMapping => {
         title: 'encounter',
         docs: '/programs/program-module/#encounter',
       };
+    case inRoute('monitoring'):
+      return {
+        title: 'monitoring',
+        docs: '/coldchain/monitoring/',
+      };
+    case inRoute('sensors'):
+      return { title: 'sensors', docs: '/coldchain/sensors/' };
+    case inRoute('equipment'):
+      return { title: 'equipment', docs: '/coldchain/equipment/' };
     default:
       return { title: undefined, docs: '/introduction/' };
   }
