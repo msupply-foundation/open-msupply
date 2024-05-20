@@ -76,7 +76,7 @@ export type InsertAssetLogMutationVariables = Types.Exact<{
 
 export type InsertAssetLogMutation = { __typename: 'Mutations', insertAssetLog: { __typename: 'AssetLogNode', id: string, assetId: string } | { __typename: 'InsertAssetLogError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
 
-export type AssetPropertyRowFragment = { __typename: 'AssetPropertyNode', id: string, key: string, name: string };
+export type AssetPropertyRowFragment = { __typename: 'AssetPropertyNode', id: string, key: string, name: string, valueType: Types.PropertyNodeValueType, allowedValues?: string | null };
 
 export type AssetPropertiesQueryVariables = Types.Exact<{
   filter: Types.AssetPropertyFilterInput;
@@ -84,7 +84,7 @@ export type AssetPropertiesQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetPropertiesQuery = { __typename: 'Queries', assetProperties: { __typename: 'AssetPropertyConnector', totalCount: number, nodes: Array<{ __typename: 'AssetPropertyNode', id: string, key: string, name: string }> } };
+export type AssetPropertiesQuery = { __typename: 'Queries', assetProperties: { __typename: 'AssetPropertyConnector', totalCount: number, nodes: Array<{ __typename: 'AssetPropertyNode', id: string, key: string, name: string, valueType: Types.PropertyNodeValueType, allowedValues?: string | null }> } };
 
 export const AssetRowFragmentDoc = gql`
     fragment AssetRow on AssetNode {
@@ -225,6 +225,8 @@ export const AssetPropertyRowFragmentDoc = gql`
   id
   key
   name
+  valueType
+  allowedValues
 }
     `;
 export const AssetsDocument = gql`

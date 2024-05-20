@@ -600,12 +600,14 @@ export type AssetPropertyFilterInput = {
 
 export type AssetPropertyNode = {
   __typename: 'AssetPropertyNode';
+  allowedValues?: Maybe<Scalars['String']['output']>;
   assetCategoryId?: Maybe<Scalars['String']['output']>;
   assetClassId?: Maybe<Scalars['String']['output']>;
   assetTypeId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  valueType: PropertyNodeValueType;
 };
 
 export enum AssetSortFieldInput {
