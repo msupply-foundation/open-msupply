@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod decimal_pack_size;
+mod decimal_requisition_quantities;
 mod ledger;
 mod pg_enums;
 
@@ -19,6 +20,7 @@ impl Migration for V2_01_00 {
         // ledger::migrate(connection)?;
         pg_enums::migrate(connection)?;
         decimal_pack_size::migrate(connection)?;
+        decimal_requisition_quantities::migrate(connection)?;
         Ok(())
     }
 }
