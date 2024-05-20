@@ -46,6 +46,19 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
+    donors: async ({ sortBy }: ListParams) => {
+      const key = nameParsers.toSort(sortBy?.key ?? '');
+
+      const result = await sdk.names({
+        key,
+        desc: !!sortBy?.isDesc,
+        storeId,
+        filter: { isDonor: true },
+        first: 1000,
+      });
+
+      return result?.names;
+    },
     suppliers: async ({ sortBy }: ListParams) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
 
