@@ -77,7 +77,7 @@ const Row = ({
 }) => (
   <Box paddingTop={1.5}>
     <InputWithLabelRow
-      labelWidth="150px"
+      labelWidth="160px"
       label={label}
       labelProps={{
         sx: {
