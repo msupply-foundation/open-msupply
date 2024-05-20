@@ -259,15 +259,24 @@ impl SyncTranslation for InvoiceTranslation {
             .find_one_by_name_id(&data.name_ID)?
             .map(|store_row| store_row.id);
 
-        let invoice_type = invoice_type(&data, &name).ok_or(anyhow::Error::msg(format!(
-            "Unsupported invoice type: {:?} (mode: {:?})",
-            data._type, data.mode
-        )))?;
-        let invoice_status =
-            invoice_status(&invoice_type, &data).ok_or(anyhow::Error::msg(format!(
-                "Unsupported invoice status: {:?} (type: {:?})",
-                data.status, data._type
-            )))?;
+        let invoice_type = match invoice_type(&data, &name) {
+            Some(invoice_type) => invoice_type,
+            None => {
+                return Ok(PullTranslateResult::Ignored(
+                    format!("Unsupported invoice type {:?}", data._type),
+                ))
+            }
+        };
+        let invoice_status = match
+            invoice_status(&invoice_type, &data) {
+                Some(invoice_status) => invoice_status,
+                None => {
+                    return Ok(PullTranslateResult::Ignored(
+                        format!("Unsupported invoice status {:?} (type: {:?}", data.status, data._type),
+                    ))
+            }
+        };
+
         let mapping = map_legacy(&invoice_type, &data);
 
         let currency_id = match data.currency_id {
@@ -340,8 +349,6 @@ impl SyncTranslation for InvoiceTranslation {
         else {
             return Err(anyhow::anyhow!("Invoice not found"));
         };
-
-        // log::info!("Translating invoice row: {:#?}", invoice_row);
 
         let confirm_datetime = to_legacy_confirm_time(&invoice.invoice_row);
 
