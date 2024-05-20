@@ -413,7 +413,7 @@
   "log.changed-to": "to",
   "log.invoice-created": "Created",
   "log.invoice-deleted": "Deleted",
-  "log.invoice-number-allocated": "Invoice number allocated",
+  "log.invoice-number-allocated": "Number allocated",
   "log.invoice-status-allocated": "Status changed to Allocated",
   "log.invoice-status-delivered": "Status changed to Delivered",
   "log.invoice-status-picked": "Status changed to Picked",
