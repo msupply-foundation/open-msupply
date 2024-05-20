@@ -14,7 +14,7 @@ use repository::{
 use crate::static_files::{StaticFile, StaticFileCategory};
 use crate::sync::api::SyncApiV5;
 use crate::sync::api_v6::SyncApiV6;
-use crate::sync::settings::SYNC_VERSION;
+use crate::sync::settings::SYNC_V5_VERSION;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
 
 use super::api_v6::{SyncApiErrorV6, SyncApiV6CreatingError};
@@ -70,7 +70,8 @@ impl FileSynchroniser {
         static_file_service: Arc<StaticFileService>,
     ) -> anyhow::Result<Self> {
         // Create SyncApiV6 instance
-        let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, SYNC_VERSION)?;
+        let sync_v5_settings =
+            SyncApiV5::new_settings(&settings, &service_provider, SYNC_V5_VERSION)?;
         let sync_api_v6 = SyncApiV6::new(sync_v6_url, &sync_v5_settings)?;
 
         Ok(Self {
