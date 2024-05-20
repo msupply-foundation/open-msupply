@@ -250,9 +250,9 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
         </Section>
-        {draft.properties.length === 0 ? null : (
+        {draft.catalogProperties.length === 0 ? null : (
           <Section heading={t('label.catalogue-properties')}>
-            {draft.properties.map(property => (
+            {draft.catalogProperties.map(property => (
               <Row key={property.id} label={property.name}>
                 <BasicTextInput
                   value={formatPropertyValue(property, t)}
@@ -263,6 +263,22 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             ))}
           </Section>
         )}
+
+        {!draft.parsedProperties ? null : (
+          <Section heading={t('label.asset-properties')}>
+            {Object.entries(draft.parsedProperties).map(([key, value]) => (
+              <Row key={key} label={`${value}`}>
+              >
+                <BasicTextInput
+                  value={draft.parsedProperties[key]}
+                  disabled
+                  fullWidth
+                />
+              </Row>
+            ))}
+          </Section>
+        )}
+
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput

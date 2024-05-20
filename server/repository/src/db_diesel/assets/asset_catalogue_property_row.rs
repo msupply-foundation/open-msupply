@@ -1,8 +1,8 @@
 use super::asset_catalogue_property_row::asset_catalogue_property::dsl::*;
 
-use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
+use crate::types::PropertyValueType;
 use crate::ChangeLogInsertRow;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
@@ -13,22 +13,12 @@ use crate::Upsert;
 
 use diesel::prelude::*;
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum PropertyValueType {
-    String,
-    Boolean,
-    Integer,
-    Float,
-}
-
 table! {
     asset_catalogue_property (id) {
         id -> Text,
         asset_category_id -> Text,
         name -> Text,
-        value_type -> crate::db_diesel::asset_catalogue_property_row::PropertyValueTypeMapping,
+        value_type -> crate::db_diesel::assets::types::PropertyValueTypeMapping,
         allowed_values -> Nullable<Text>,
     }
 }

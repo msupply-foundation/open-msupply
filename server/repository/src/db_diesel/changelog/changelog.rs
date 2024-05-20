@@ -94,6 +94,7 @@ pub enum ChangelogTableName {
     Asset,
     AssetLog,
     AssetLogReason,
+    AssetProperty,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -143,6 +144,7 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetLogReason => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetProperty => ChangeLogSyncStyle::Central,
         }
     }
 }

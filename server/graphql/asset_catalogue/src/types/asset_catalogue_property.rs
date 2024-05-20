@@ -3,8 +3,7 @@ use async_graphql::*;
 use graphql_core::simple_generic_errors::NodeError;
 
 use repository::{
-    asset_catalogue_property_row::PropertyValueType,
-    assets::asset_catalogue_property_row::AssetCataloguePropertyRow,
+    assets::asset_catalogue_property_row::AssetCataloguePropertyRow, types::PropertyValueType,
 };
 use serde::Serialize;
 use service::ListResult;

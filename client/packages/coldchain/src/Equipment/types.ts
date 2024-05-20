@@ -5,7 +5,13 @@ export interface LocationIds {
   locationIds: string[];
 }
 
-export type DraftAsset = AssetFragment & LocationIds & { files?: File[] };
+export interface Properties {
+  parsedProperties: Record<string, string | number | boolean | null>;
+}
+
+export type DraftAsset = AssetFragment &
+  LocationIds &
+  Properties & { files?: File[] };
 
 export type PropertyValue = {
   valueString?: string | null;
