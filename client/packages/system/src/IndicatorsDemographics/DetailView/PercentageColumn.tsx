@@ -39,7 +39,8 @@ export const percentageColumn = <
             disabled={isDisabled}
             defaultValue={column.accessor({ rowData })}
             onBlur={e => {
-              column.setter({ ...rowData, percentage: e.target.value });
+              const updatedRowData = { ...rowData };
+              column.setter({ ...updatedRowData, percentage: e.target.value });
             }}
           />
           <Box ml={1} />
