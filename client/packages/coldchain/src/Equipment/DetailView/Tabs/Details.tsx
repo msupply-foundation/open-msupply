@@ -100,44 +100,56 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   return (
     <Box display="flex" flex={1}>
       <Container>
-        {draft.catalogProperties.length === 0 ? null : (
-          <Section heading={t('label.catalogue-properties')}>
-            {draft.catalogProperties.map(property => (
-              <Row key={property.id} label={property.name}>
-                <BasicTextInput
-                  value={formatPropertyValue(property, t)}
-                  disabled
-                  fullWidth
-                />
-              </Row>
-            ))}
-          </Section>
-        )}
-      </Container>
-      <Container>
-        {isLoading ? <BasicSpinner /> : null}
-        {!draft.parsedProperties ? null : (
-          <Section heading={t('label.asset-properties')}>
-            {assetProperties &&
-              assetProperties.nodes.map(property => (
-                <Row key={property.key} label={property.name}>
-                  <PropertyInput
-                    valueType={property.valueType}
-                    allowedValues={property.allowedValues?.split(',')}
-                    value={draft.parsedProperties[property.key]}
-                    onChange={v =>
-                      onChange({
-                        parsedProperties: {
-                          ...draft.parsedProperties,
-                          [property.key]: v ?? null,
-                        },
-                      })
-                    }
+        <Section heading={t('label.catalogue-properties')}>
+          {!draft.catalogProperties || draft.catalogProperties.length == 0 ? (
+            <Typography sx={{ textAlign: 'center' }}>
+              {t('messages.no-properties')}
+            </Typography>
+          ) : (
+            <>
+              {draft.catalogProperties.map(property => (
+                <Row key={property.id} label={property.name}>
+                  <BasicTextInput
+                    value={formatPropertyValue(property, t)}
+                    disabled
+                    fullWidth
                   />
                 </Row>
               ))}
-          </Section>
-        )}
+            </>
+          )}
+        </Section>
+      </Container>
+      <Container>
+        {isLoading ? <BasicSpinner /> : null}
+        <Section heading={t('label.asset-properties')}>
+          {!draft.parsedProperties ? (
+            <Typography sx={{ textAlign: 'center' }}>
+              {t('messages.no-properties')}
+            </Typography>
+          ) : (
+            <>
+              {assetProperties &&
+                assetProperties.nodes.map(property => (
+                  <Row key={property.key} label={property.name}>
+                    <PropertyInput
+                      valueType={property.valueType}
+                      allowedValues={property.allowedValues?.split(',')}
+                      value={draft.parsedProperties[property.key]}
+                      onChange={v =>
+                        onChange({
+                          parsedProperties: {
+                            ...draft.parsedProperties,
+                            [property.key]: v ?? null,
+                          },
+                        })
+                      }
+                    />
+                  </Row>
+                ))}
+            </>
+          )}
+        </Section>
       </Container>
     </Box>
   );
