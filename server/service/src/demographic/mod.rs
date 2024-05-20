@@ -8,6 +8,8 @@ use repository::demographic_indicator::{
 };
 use repository::{PaginationOption, StorageConnection};
 
+pub mod insert_demographic_indicator;
+pub mod insert_demographic_projection;
 pub mod query_demographic_indicator;
 pub mod query_demographic_projection;
 
