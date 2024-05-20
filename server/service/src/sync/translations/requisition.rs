@@ -191,10 +191,15 @@ impl SyncTranslation for RequisitionTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyRequisitionRow>(&sync_record.data)?;
-        let r#type = from_legacy_type(&data.r#type).ok_or(anyhow::Error::msg(format!(
-            "Unsupported requisition type: {:?}",
-            data.r#type
-        )))?;
+        let r#type = match from_legacy_type(&data.r#type) {
+            Some(r#type) => r#type,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported requisition type: {:?}",
+                    data.r#type
+                )))
+            }
+        };
 
         let (
             created_datetime,

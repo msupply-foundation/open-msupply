@@ -115,6 +115,16 @@ impl SyncTranslation for StocktakeTranslation {
             ),
         };
 
+        let status = match stocktake_status(&data.status) {
+            Some(status) => status,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unexpected stocktake status: {:?}",
+                    data.status
+                )))
+            }
+        };
+
         let result = StocktakeRow {
             id: data.ID,
             user_id: data.user_id,
@@ -122,10 +132,7 @@ impl SyncTranslation for StocktakeTranslation {
             stocktake_number: data.serial_number,
             comment: data.comment,
             description: data.Description,
-            status: stocktake_status(&data.status).ok_or(anyhow::Error::msg(format!(
-                "Unexpected stocktake status: {:?}",
-                data.status
-            )))?,
+            status,
             created_datetime,
             finalised_datetime,
             inventory_addition_id: data.inventory_addition_id,
