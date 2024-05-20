@@ -5,7 +5,7 @@ use crate::{
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     const PROPERTY_VALUE_TYPE: &str = if cfg!(feature = "postgres") {
-        "PROPERTY_VALUE_TYPE" // This is created as part of the asset_catalogue_property migration
+        "property_value_type" // This is created as part of the asset_catalogue_property migration
     } else {
         "TEXT"
     };
