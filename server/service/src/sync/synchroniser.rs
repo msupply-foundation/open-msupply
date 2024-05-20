@@ -20,7 +20,7 @@ use super::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
     },
-    settings::{SyncSettings, SYNC_VERSION},
+    settings::{SyncSettings, SYNC_V5_VERSION},
     sync_buffer::SyncBuffer,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
@@ -107,7 +107,7 @@ impl Synchroniser {
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
-        Self::new_with_version(settings, service_provider, SYNC_VERSION)
+        Self::new_with_version(settings, service_provider, SYNC_V5_VERSION)
     }
 
     pub(crate) fn new_with_version(
