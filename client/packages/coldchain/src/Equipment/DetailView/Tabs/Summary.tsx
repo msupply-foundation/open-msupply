@@ -262,10 +262,8 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
 
         {!draft.parsedProperties ? null : (
           <Section heading={t('label.asset-properties')}>
-            {Object.keys(draft.parsedProperties).map(key => (
-              <Row
-                key={key}
-                label={draft.parsedProperties[key]?.toString() ?? ''}
+            {Object.entries(draft.parsedProperties).map(([key, value]) => (
+              <Row key={key} label={`${value}`}>
               >
                 <BasicTextInput
                   value={draft.parsedProperties[key]}
