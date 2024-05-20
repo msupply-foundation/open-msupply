@@ -145,10 +145,14 @@ impl SyncTranslation for InvoiceLineTranslation {
                 }
             });
 
-
         let line_type = match to_invoice_line_type(&r#type) {
             Some(line_type) => line_type,
-            None => return Ok(PullTranslateResult::Ignored("Unsupported line type".to_string())),
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported line type {:?}",
+                    r#type
+                )))
+            }
         };
 
         let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code {
