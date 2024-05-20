@@ -52,7 +52,7 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
 
         if name_store_joins.is_empty() {
             return Ok(PullTranslateResult::Ignored(
-                "Name store joins now found for name".to_string(),
+                "Name store joins not found for name".to_string(),
             ));
         }
 
