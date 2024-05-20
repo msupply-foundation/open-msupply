@@ -121,7 +121,6 @@ impl<'a> TranslationAndIntegration<'a> {
                     }
                     PullTranslateResult::Ignored(ignore_message) => {
                         ignored = true;
-                        // note, this might get cleared if other translator produced some ops
                         self.sync_buffer.record_integration_error(
                             &sync_record,
                             &anyhow::anyhow!("Ignored: {}", ignore_message),
