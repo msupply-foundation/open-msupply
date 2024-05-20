@@ -262,18 +262,19 @@ impl SyncTranslation for InvoiceTranslation {
         let invoice_type = match invoice_type(&data, &name) {
             Some(invoice_type) => invoice_type,
             None => {
-                return Ok(PullTranslateResult::Ignored(
-                    format!("Unsupported invoice type {:?}", data._type),
-                ))
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported invoice type {:?}",
+                    data._type
+                )))
             }
         };
-        let invoice_status = match
-            invoice_status(&invoice_type, &data) {
-                Some(invoice_status) => invoice_status,
-                None => {
-                    return Ok(PullTranslateResult::Ignored(
-                        format!("Unsupported invoice status {:?} (type: {:?}", data.status, data._type),
-                    ))
+        let invoice_status = match invoice_status(&invoice_type, &data) {
+            Some(invoice_status) => invoice_status,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported invoice status {:?} (type: {:?}",
+                    data.status, data._type
+                )))
             }
         };
 
@@ -387,13 +388,25 @@ impl SyncTranslation for InvoiceTranslation {
             ..
         } = invoice;
 
-        let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
-            "Invalid invoice type: {:?}",
-            r#type
-        )))?;
-        let legacy_status = legacy_invoice_status(&r#type, &status).ok_or(anyhow::Error::msg(
-            format!("Invalid invoice status: {:?}", r#status),
-        ))?;
+        let _type = match legacy_invoice_type(&r#type) {
+            Some(_type) => _type,
+            None => {
+                return Ok(PushTranslateResult::Ignored(format!(
+                    "Unsupported invoice type {:?}",
+                    r#type
+                )))
+            }
+        };
+
+        let legacy_status = match legacy_invoice_status(&r#type, &status) {
+            Some(legacy_status) => legacy_status,
+            None => {
+                return Ok(PushTranslateResult::Ignored(format!(
+                    "Unsupported invoice status: {:?}",
+                    status
+                )))
+            }
+        };
 
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
@@ -439,12 +452,6 @@ impl SyncTranslation for InvoiceTranslation {
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
-
-        // log::info!(
-        //     "Translated row {}",
-        //     serde_json::to_string_pretty(&json_record)
-        //         .unwrap_or("Failed to stringify json".to_string())
-        // );
 
         Ok(PushTranslateResult::upsert(
             changelog,
