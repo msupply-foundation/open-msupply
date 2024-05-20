@@ -8,7 +8,7 @@ use diesel::prelude::*;
 
 use crate::{
     demographic_projection_row::DemographicProjectionRow,
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
 };
 
@@ -26,8 +26,6 @@ pub struct DemographicProjectionFilter {
 
 pub enum DemographicProjectionSortField {
     Id,
-    DemographicProjectionCode,
-    IsHomeCurrency,
 }
 
 pub type DemographicProjectionSort = Sort<DemographicProjectionSortField>;

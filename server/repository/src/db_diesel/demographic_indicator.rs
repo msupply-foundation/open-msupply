@@ -8,7 +8,7 @@ use diesel::prelude::*;
 
 use crate::{
     demographic_indicator_row::DemographicIndicatorRow,
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
 };
 
@@ -27,8 +27,7 @@ pub struct DemographicIndicatorFilter {
 
 pub enum DemographicIndicatorSortField {
     Id,
-    DemographicIndicatorCode,
-    IsHomeCurrency,
+    Name,
 }
 
 pub type DemographicIndicatorSort = Sort<DemographicIndicatorSortField>;
@@ -70,19 +69,12 @@ impl<'a> DemographicIndicatorRepository<'a> {
                 DemographicIndicatorSortField::Id => {
                     apply_sort_no_case!(query, sort, demographic_indicator_dsl::id)
                 }
-                DemographicIndicatorSortField::CurrencyCode => {
+                DemographicIndicatorSortField::Name => {
                     apply_sort_no_case!(query, sort, demographic_indicator_dsl::name)
-                }
-                DemographicIndicatorSortField::IsHomeCurrency => {
-                    apply_sort!(
-                        query,
-                        sort,
-                        demographic_indicator_dsl::population_percentage
-                    )
                 }
             }
         } else {
-            query = query.order(demographic_indicator_dsl::population_percentage.asc())
+            query = query.order(demographic_indicator_dsl::name.asc())
         }
 
         let result = query.load::<DemographicIndicatorRow>(self.connection.lock().connection())?;
