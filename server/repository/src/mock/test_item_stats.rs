@@ -86,7 +86,7 @@ pub fn item1_amc_3_months() -> f64 {
 }
 
 pub fn item2_amc_3_months() -> f64 {
-    (30) as f64 / 3.0
+    30.0 / 3.0
 }
 
 pub fn item1_amc_1_months() -> f64 {
@@ -146,8 +146,8 @@ pub fn stock_line3() -> StockLineRow {
     })
 }
 
-pub fn item_1_soh() -> u32 {
-    10 + 20 * 10 + 10
+pub fn item_1_soh() -> f64 {
+    10.0 + 20.0 * 10.0 + 10.0
 }
 
 pub fn stock_line_1_store_b() -> StockLineRow {
@@ -163,8 +163,8 @@ pub fn stock_line_1_store_b() -> StockLineRow {
     })
 }
 
-pub fn item_1_store_b_soh() -> u32 {
-    10
+pub fn item_1_store_b_soh() -> f64 {
+    10.0
 }
 
 pub fn item2() -> ItemRow {
@@ -190,6 +190,6 @@ pub fn stock_line1_item2() -> StockLineRow {
     })
 }
 
-pub fn item_2_soh() -> u32 {
-    2 * 11
+pub fn item_2_soh() -> f64 {
+    2.0 * 11.0
 }

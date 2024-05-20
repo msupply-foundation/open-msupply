@@ -92,20 +92,20 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
                 r.id = line1_id;
                 r.requisition_id = requisition_id.clone();
                 r.item_link_id = mock_item_a().id;
-                r.requested_quantity = 10;
-                r.suggested_quantity = 3;
-                r.available_stock_on_hand = 1;
-                r.average_monthly_consumption = 10;
+                r.requested_quantity = 10.0;
+                r.suggested_quantity = 3.0;
+                r.available_stock_on_hand = 1.0;
+                r.average_monthly_consumption = 10.0;
                 r.item_name = mock_item_a().name;
             }),
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
                 r.requisition_id = requisition_id.clone();
                 r.item_link_id = mock_item_b().id;
-                r.requested_quantity = 15;
-                r.suggested_quantity = 3;
-                r.available_stock_on_hand = 1;
-                r.average_monthly_consumption = 10;
+                r.requested_quantity = 15.0;
+                r.suggested_quantity = 3.0;
+                r.available_stock_on_hand = 1.0;
+                r.average_monthly_consumption = 10.0;
                 r.item_name = mock_item_b().name;
             }),
         ],
@@ -150,10 +150,10 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
             r.id = line1_id;
             r.requisition_id = requisition_id.clone();
             r.item_link_id = mock_item_a().id;
-            r.requested_quantity = 10;
-            r.suggested_quantity = 15;
-            r.available_stock_on_hand = 1;
-            r.average_monthly_consumption = 10;
+            r.requested_quantity = 10.0;
+            r.suggested_quantity = 15.0;
+            r.available_stock_on_hand = 1.0;
+            r.average_monthly_consumption = 10.0;
         })],
     }
 }

@@ -57,7 +57,7 @@ mod tests {
                     "id": &test_item_stats::item2().id,
                     "stats": {
                         "averageMonthlyConsumption":  test_item_stats::item2_amc_3_months(),
-                        "availableStockOnHand":  test_item_stats::item_2_soh(),
+                        "availableStockOnHand":  test_item_stats::item_2_soh() ,
                         "availableMonthsOfStockOnHand": test_item_stats::item_2_soh() as f64 / test_item_stats::item2_amc_3_months()
                     },
                 }]
