@@ -61,53 +61,12 @@ export const GrowthRow = <T extends RecordWithId>({
           }}
         >
           <HeaderRow>
-            {/* <TableCell
-              key={String('year')}
-              role="columnheader"
-              align={align}
-              padding={'none'}
-              sx={{
-                backgroundColor: 'transparent',
-                borderBottom: '0px',
-                paddingLeft: '16px',
-                paddingRight: '16px',
-                width,
-                // minWidth,
-                // maxWidth,
-                fontWeight: 'bold',
-                // fontSize: dense ? '12px' : '14px',
-                verticalAlign: 'bottom',
-              }}
-              aria-label={String(column.key)}
-            >
-              <Box
-                sx={{
-                  flexDirection: 'row',
-                  borderBottom: 'none',
-                  alignItems: 'center',
-                  display: 'flex',
-                }}
-              >
-                {columnHeader && columnHeader.value && columnHeader.id ? (
-                  <BasicTextInput
-                    defaultValue={columnHeader.value}
-                    onBlur={e =>
-                      setData({
-                        id: columnHeader.id,
-                        value: Number(e.target.value),
-                      })
-                    }
-                  />
-                ) : (
-                  <></>
-                )}
-              </Box>
-            </TableCell> */}
             {columns.map(column => {
               const { align, width } = column;
               const columnHeader = Object.values(data).filter(
                 header => header.id == column.key
               )[0];
+              const columnText = column.key == '0';
               return (
                 // <TableCell ></TableCell>
                 <TableCell
@@ -137,6 +96,7 @@ export const GrowthRow = <T extends RecordWithId>({
                       display: 'flex',
                     }}
                   >
+                    {columnText ? <>% Growth on previous year</> : <></>}
                     {columnHeader ? (
                       <BasicTextInput
                         defaultValue={columnHeader.value ?? 0}
