@@ -12,6 +12,7 @@ import {
   useConfirmOnLeaving,
   TableProvider,
   createTableStore,
+  ObjUtils,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -73,11 +74,17 @@ export const EquipmentDetailView = () => {
 
   useEffect(() => {
     if (!data) return;
+    let properties = JSON.parse(data.properties);
+    if (!properties || !ObjUtils.isObject(properties)) {
+      // Invalid properties, reset to empty object
+      properties = {};
+    }
     setDraft({
       ...data,
       locationIds: draft?.locationIds
         ? draft.locationIds
         : data.locations.nodes.map(location => location.id),
+      parsedProperties: properties,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);

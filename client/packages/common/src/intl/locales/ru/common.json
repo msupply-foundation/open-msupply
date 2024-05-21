@@ -58,5 +58,11 @@
   "description.pack-quantity": "Общее количество в упаковках",
   "description.program": "Программы используются для управления группами товаров и графиками пополнения запасов.",
   "heading.edit-item": "Редактировать Товар",
-  "heading.comment": "Комментарий"
+  "heading.comment": "Комментарий",
+  "label.reason": "Причина",
+  "label.category": "Категория",
+  "label.class": "Класс",
+  "label.status": "Статус",
+  "label.manufacturer": "Производитель",
+  "label.model": "Модель"
 }
