@@ -14,6 +14,9 @@ import {
   InvoiceLineNodeType,
   InvoiceSortFieldInput,
   UpdateOutboundShipmentNameInput,
+  InsertOutboundShipmentServiceLineInput,
+  UpdateOutboundShipmentServiceLineInput,
+  DeleteOutboundShipmentServiceLineInput,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
 import { get, isA } from '../../utils';
@@ -137,22 +140,28 @@ const outboundParsers = {
   toDeletePlaceholder: (line: DraftStockOutLine) => ({
     id: line.id,
   }),
-  toInsertServiceCharge: (line: DraftStockOutLine) => ({
+  toInsertServiceCharge: (
+    line: DraftStockOutLine
+  ): InsertOutboundShipmentServiceLineInput => ({
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
-    tax: line.taxPercentage,
+    taxPercentage: line.taxPercentage,
     totalBeforeTax: line.totalBeforeTax,
     note: line.note,
   }),
-  toUpdateServiceCharge: (line: DraftStockOutLine) => ({
+  toUpdateServiceCharge: (
+    line: DraftStockOutLine
+  ): UpdateOutboundShipmentServiceLineInput => ({
     id: line.id,
     itemId: line.item.id,
     tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
     note: line.note,
   }),
-  toDeleteServiceCharge: (line: DraftStockOutLine) => ({
+  toDeleteServiceCharge: (
+    line: DraftStockOutLine
+  ): DeleteOutboundShipmentServiceLineInput => ({
     id: line.id,
   }),
 };

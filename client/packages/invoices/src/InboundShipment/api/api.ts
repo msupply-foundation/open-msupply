@@ -13,6 +13,9 @@ import {
   Formatter,
   UpdateInboundShipmentStatusInput,
   setNullableInput,
+  InsertInboundShipmentServiceLineInput,
+  UpdateInboundShipmentServiceLineInput,
+  DeleteInboundShipmentServiceLineInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -119,22 +122,28 @@ const inboundParsers = {
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
   },
-  toInsertServiceCharge: (line: DraftInboundLine) => ({
+  toInsertServiceCharge: (
+    line: DraftInboundLine
+  ): InsertInboundShipmentServiceLineInput => ({
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    tax: line.taxPercentage,
+    taxPercentage: line.taxPercentage,
     note: line.note,
   }),
-  toUpdateServiceCharge: (line: DraftInboundLine) => ({
+  toUpdateServiceCharge: (
+    line: DraftInboundLine
+  ): UpdateInboundShipmentServiceLineInput => ({
     id: line.id,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
     tax: { percentage: line.taxPercentage },
     note: line.note,
   }),
-  toDeleteServiceCharge: (line: DraftInboundLine) => ({
+  toDeleteServiceCharge: (
+    line: DraftInboundLine
+  ): DeleteInboundShipmentServiceLineInput => ({
     id: line.id,
   }),
 };
