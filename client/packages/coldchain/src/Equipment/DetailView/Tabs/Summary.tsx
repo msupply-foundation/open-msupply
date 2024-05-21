@@ -289,7 +289,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           <Row label={t('label.donor')}>
             <DonorSearchInput
               value={draft.donor as NameRowFragment} // TODO: Fix this?
-              onChange={e => onChange({ donor: e })}
+              onChange={e => onChange({ donor: e, donorNameId: e?.id })}
             />
           </Row>
         </Section>

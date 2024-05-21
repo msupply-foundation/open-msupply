@@ -193,6 +193,7 @@ mod graphql {
 
             assert_eq!(is_customer, Some(true));
             assert_eq!(is_supplier, Some(false));
+            assert_eq!(is_donor, None);
             assert_eq!(is_store, Some(true));
             assert_eq!(store_code, Some(StringFilter::like("store code like")));
             assert_eq!(is_visible, Some(false));
