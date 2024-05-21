@@ -106,5 +106,16 @@
   "messages.supply-to-approved": "Etes vous sûr(e) de vouloir définir les quantités à fournir avec les quantités autorisées pour toutes les lignes ?",
   "button.supply-to-approved": "Fournir Qtés Autorisées",
   "messages.could-not-save": "Sauvegarde impossible",
-  "messages.saved": "Sauvegardé"
+  "messages.saved": "Sauvegardé",
+  "label.quantity": "Quantité",
+  "button.new-return": "Nouveau retour",
+  "error.failed-to-create-return": "Impossible de créer un retour !",
+  "error.return-not-found": "Retour non trouvé",
+  "error.no-inbound-return-items": "Aucun article n'a été ajouté à ce retour.",
+  "heading.confirm-finalise": "Êtes vous sûr(e) de vouloir finaliser ?",
+  "heading.return-items": "Retourner articles",
+  "info.automatic-return-no-edit": "Vous ne pouvez modifier cette transaction que lorsque le statut est confirmé comme \"Livré(e)\"",
+  "button.return-lines": "Créer un retour pour les lignes sélectionnées",
+  "error.no-inbound-returns": "Il n'y a pas de retours client à afficher.",
+  "info.automatic-return": "Ce retour client a été créé automatiquement, suite à un retour fournisseur créé dans un autre dépôt."
 }
