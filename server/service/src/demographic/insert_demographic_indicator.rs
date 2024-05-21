@@ -1,6 +1,4 @@
-use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
-};
+use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::{
     DemographicIndicatorRow, DemographicIndicatorRowRepository, RepositoryError, StorageConnection,
 };
