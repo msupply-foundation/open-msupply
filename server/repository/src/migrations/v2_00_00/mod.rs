@@ -43,13 +43,13 @@ impl Migration for V2_00_00 {
         user_change_last_synced_to_optional::migrate(connection)?;
         inventory_adjustment_logtype::migrate(connection)?;
         report_views::migrate(connection)?;
-        run_without_change_log_updates(connection, || {
+        run_without_change_log_updates(connection, |_| {
             requisition_line_add_item_name::migrate(connection)
         })?;
         stock_on_hand_add_item_name::migrate(connection)?;
         currency_add_is_active::migrate(connection)?;
         invoice_rename_tax::migrate(connection)?;
-        run_without_change_log_updates(connection, || {
+        run_without_change_log_updates(connection, |_| {
             stocktake_line_add_item_name::migrate(connection)
         })?;
         name_created_datetime::migrate(connection)?;
