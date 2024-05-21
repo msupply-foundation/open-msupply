@@ -62,7 +62,7 @@ export const RequestRequisitionListView: FC = () => {
     {
       key: 'requisitionNumber',
       label: 'label.number',
-      width: 75,
+      width: 90,
     },
     ['createdDatetime', { width: 150 }],
     {

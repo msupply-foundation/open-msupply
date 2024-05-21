@@ -92,6 +92,7 @@ export enum ActivityLogNodeType {
   AssetLogCreated = 'ASSET_LOG_CREATED',
   AssetLogReasonCreated = 'ASSET_LOG_REASON_CREATED',
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
+  AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
@@ -553,6 +554,7 @@ export type AssetNode = {
   assetClass?: Maybe<AssetClassNode>;
   assetNumber?: Maybe<Scalars['String']['output']>;
   assetType?: Maybe<AssetTypeNode>;
+  catalogProperties: Array<AssetCatalogueItemPropertyValueNode>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
@@ -562,12 +564,29 @@ export type AssetNode = {
   locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
-  properties: Array<AssetCatalogueItemPropertyValueNode>;
+  properties: Scalars['String']['output'];
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
   statusLog?: Maybe<AssetLogNode>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+};
+
+export type AssetPropertiesResponse = AssetPropertyConnector;
+
+export type AssetPropertyConnector = {
+  __typename: 'AssetPropertyConnector';
+  nodes: Array<AssetPropertyNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetPropertyFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type AssetPropertyNode = {
+  __typename: 'AssetPropertyNode';
+  id: Scalars['String']['output'];
 };
 
 export enum AssetSortFieldInput {
@@ -4821,6 +4840,7 @@ export type Queries = {
   assetClasses: AssetClassesResponse;
   assetLogReasons: AssetLogReasonsResponse;
   assetLogs: AssetLogsResponse;
+  assetProperties: AssetPropertiesResponse;
   assetType: AssetTypeResponse;
   assetTypes: AssetTypesResponse;
   /** Query omSupply "assets" entries */
@@ -5015,6 +5035,12 @@ export type QueriesAssetLogsArgs = {
   filter?: InputMaybe<AssetLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetLogSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetPropertiesArgs = {
+  filter?: InputMaybe<AssetPropertyFilterInput>;
   storeId: Scalars['String']['input'];
 };
 

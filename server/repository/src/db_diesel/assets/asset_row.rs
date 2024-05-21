@@ -28,6 +28,7 @@ table! {
         created_datetime -> Timestamp,
         modified_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
+        properties -> Nullable<Text>,
     }
 }
 
@@ -56,6 +57,7 @@ pub struct AssetRow {
     pub created_datetime: NaiveDateTime,
     pub modified_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
+    pub properties: Option<String>,
 }
 
 pub struct AssetRowRepository<'a> {

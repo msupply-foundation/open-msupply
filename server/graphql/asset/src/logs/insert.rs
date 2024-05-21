@@ -133,7 +133,7 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    use crate::AssetLogMutations;
+    use crate::logs::AssetLogMutations;
 
     type InsertAssetLogMethod =
         dyn Fn(InsertAssetLog) -> Result<AssetLog, InsertAssetLogError> + Sync + Send;

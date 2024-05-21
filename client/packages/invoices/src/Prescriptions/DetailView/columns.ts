@@ -125,6 +125,7 @@ export const usePrescriptionColumn = ({
     [
       'location',
       {
+        width: 100,
         getSortValue: row =>
           getColumnPropertyAsString(row, [
             { path: ['lines', 'location', 'code'] },

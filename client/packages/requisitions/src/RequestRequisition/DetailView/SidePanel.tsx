@@ -44,7 +44,7 @@ const AdditionalInfoSection: FC = () => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          <PanelField>{user?.username}</PanelField>
+          <PanelField>{user?.username ?? '-'}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
         <PanelRow>
@@ -98,11 +98,7 @@ const RelatedDocumentsSection: FC = () => {
       date: d(new Date(createdDatetime)),
     });
 
-    if (username && username !== 'unknown') {
-      tooltip += ` ${t('messages.by-user', { username })}`;
-    }
-
-    return tooltip;
+    return (tooltip += ` ${t('messages.by-user', { username })}`);
   };
 
   return (
@@ -116,7 +112,7 @@ const RelatedDocumentsSection: FC = () => {
             key={shipment.id}
             title={getTooltip(
               shipment.createdDatetime,
-              shipment.user?.username
+              shipment.user?.username ?? '-'
             )}
           >
             <Grid item>
