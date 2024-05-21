@@ -4,7 +4,6 @@ import {
   createTableStore,
   useTranslation,
   DetailTabs,
-  useRowHighlight,
   // usePluginElements,
   // usePluginEvents,
   // PluginEventListener,
@@ -29,7 +28,6 @@ export const StockLineDetailView: React.FC = () => {
     isDirty,
     update: { update, isUpdating },
   } = useStockLine(id);
-  const { HighlightStyles } = useRowHighlight();
   // const { dispatchEvent, addEventListener, removeEventListener } =
   //   usePluginEvents();
   // const [hasChanged, setHasChanged] = useState(false);
@@ -118,7 +116,6 @@ export const StockLineDetailView: React.FC = () => {
 
   return (
     <>
-      <HighlightStyles />
       <AppBarButtons />
       {/* <Toolbar /> */}
       <TableProvider createStore={createTableStore}>
