@@ -14,9 +14,11 @@ import { getNameOptionRenderer } from '../NameOptionRenderer';
 
 export const DonorSearchInput: FC<NameSearchInputProps> = ({
   onChange,
+  onInputChange,
   width = 250,
   value,
   disabled = false,
+  clearable = false,
 }) => {
   const { data, isLoading } = useName.document.donors();
   const [buffer, setBuffer] = useBufferState(value);
@@ -26,7 +28,7 @@ export const DonorSearchInput: FC<NameSearchInputProps> = ({
   return (
     <Autocomplete
       disabled={disabled}
-      clearable={false}
+      clearable={clearable}
       value={buffer && { ...buffer, label: buffer.name }}
       filterOptionConfig={basicFilterOptions}
       loading={isLoading}
@@ -34,6 +36,7 @@ export const DonorSearchInput: FC<NameSearchInputProps> = ({
         setBuffer(name);
         name && onChange(name);
       }}
+      onInputChange={onInputChange}
       options={data?.nodes ?? []}
       renderOption={NameOptionRenderer}
       getOptionLabel={(option: NameRowFragment) => option.name}
