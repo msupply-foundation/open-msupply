@@ -34,9 +34,7 @@ export const StockLineDetailView: React.FC = () => {
   //   usePluginEvents();
   // const [hasChanged, setHasChanged] = useState(false);
   const { success, error } = useNotification();
-
   const t = useTranslation('inventory');
-  //   const navigate = useNavigate();
   const { setSuffix } = useBreadcrumbs();
 
   useEffect(() => {
