@@ -37,13 +37,17 @@ interface StockLineFormProps {
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   plugins?: JSX.Element[];
   packEditable?: boolean;
-  footerProps: {
+  footerProps?: {
     isSaving: boolean;
     showSaveConfirmation: (
-      params: Partial<PartialBy<ConfirmationModalState, 'open'>> | undefined
+      paramPatch?:
+        | Partial<PartialBy<ConfirmationModalState, 'open'>>
+        | undefined
     ) => void;
     showCancelConfirmation: (
-      params: Partial<PartialBy<ConfirmationModalState, 'open'>> | undefined
+      paramPatch?:
+        | Partial<PartialBy<ConfirmationModalState, 'open'>>
+        | undefined
     ) => void;
     isDirty: boolean;
   };
@@ -113,7 +117,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         width="100%"
         flexWrap="nowrap"
         maxWidth={900}
-        gap={10}
+        gap={footerProps ? 10 : undefined}
       >
         <Grid
           container
@@ -275,7 +279,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           />
         </Grid>
       </Grid>
-      <Footer {...footerProps} />
+      {footerProps && <Footer {...footerProps} />}
     </DetailContainer>
   );
 };

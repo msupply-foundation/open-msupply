@@ -1,53 +1,25 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
-  useEditModal,
-  DetailViewSkeleton,
-  AlertModal,
-  RouteBuilder,
-  useNavigate,
   useTranslation,
   DetailTabs,
   useRowHighlight,
-  usePluginElements,
-  usePluginEvents,
-  PluginEventListener,
-  ObjUtils,
+  // usePluginElements,
+  // usePluginEvents,
+  // PluginEventListener,
   useBreadcrumbs,
-  useQuery,
   useParams,
   useConfirmationModal,
   useNotification,
 } from '@openmsupply-client/common';
-import {
-  ItemRowFragment,
-  ActivityLogList,
-  StockLineRowFragment,
-} from '@openmsupply-client/system';
-import { Toolbar } from './Toolbar';
-import { Footer } from './Footer';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
-// import { SidePanel } from './SidePanel';
-// import { StocktakeSummaryItem } from '../../types';
-// import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
-// import { ContentArea } from './ContentArea';
-// import { AppRoute } from '@openmsupply-client/config';
-// import { StocktakeFragment, StocktakeLineFragment, useStocktake } from '../api';
-// import { StocktakeLineErrorProvider } from '../context';
-// import { isStocktakeDisabled } from '../../utils';
-import { StockLineRowFragment, useStock, useStockLine } from '../api';
+import { useStockLine } from '../api';
 import { StockLineForm } from '../Components/StockLineForm';
-import { InventoryAdjustmentForm } from '../Components/InventoryAdjustment';
 import { LedgerForm } from '../Components/Ledger';
 
-interface StockLineEditProps {
-  stockLine: StockLineRowFragment;
-}
-
-export const StockLineDetailView: React.FC<StockLineEditProps> = ({
-  stockLine,
-}) => {
+export const StockLineDetailView: React.FC = () => {
   const { id } = useParams();
   const {
     query: { data, isLoading },
@@ -55,12 +27,12 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
     resetDraft,
     updatePatch,
     isDirty,
-    update: { update, isUpdating, updateError },
+    update: { update, isUpdating },
   } = useStockLine(id);
   const { HighlightStyles } = useRowHighlight();
-  const { dispatchEvent, addEventListener, removeEventListener } =
-    usePluginEvents();
-  const [hasChanged, setHasChanged] = useState(false);
+  // const { dispatchEvent, addEventListener, removeEventListener } =
+  //   usePluginEvents();
+  // const [hasChanged, setHasChanged] = useState(false);
   const { success, error } = useNotification();
 
   const t = useTranslation('inventory');
@@ -68,13 +40,14 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
   const { setSuffix } = useBreadcrumbs();
 
   useEffect(() => {
+    if (!data) return;
     setSuffix(data?.item.name ?? '');
   }, [data]);
 
-  const plugins = usePluginElements({
-    type: 'StockEditForm',
-    data: stockLine,
-  });
+  // const plugins = usePluginElements({
+  //   type: 'StockEditForm',
+  //   data: stockLine,
+  // });
 
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: () =>
@@ -84,7 +57,7 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
           successSnack();
         })
         .catch(err => {
-          const errorSnack = success(err.message);
+          const errorSnack = error(err.message);
           errorSnack();
         }),
     message: t('messages.confirm-save-generic'),
@@ -103,11 +76,8 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
         <StockLineForm
           loading={isLoading}
           draft={draft}
-          onUpdate={newData => {
-            updatePatch(newData);
-            setHasChanged(true);
-          }}
-          plugins={plugins}
+          onUpdate={updatePatch}
+          // plugins={plugins}
           footerProps={{
             isSaving: isUpdating,
             showSaveConfirmation,
@@ -118,6 +88,7 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
       ),
       value: t('label.details'),
     },
+    // TO-DO: Add Inv Adjustment to Modal
     // {
     //   Component: (
     //     <InventoryAdjustmentForm stockLine={draft} onUpdate={updatePatch} />
@@ -134,23 +105,23 @@ export const StockLineDetailView: React.FC<StockLineEditProps> = ({
     },
   ];
 
-  const onChange = () => setHasChanged(true);
+  // const onChange = () => setHasChanged(true);
 
-  useEffect(() => {
-    const listener: PluginEventListener = {
-      eventType: 'onChangeStockEditForm',
-      listener: onChange,
-    };
+  // useEffect(() => {
+  //   const listener: PluginEventListener = {
+  //     eventType: 'onChangeStockEditForm',
+  //     listener: onChange,
+  //   };
 
-    addEventListener(listener);
+  //   addEventListener(listener);
 
-    return () => removeEventListener(listener);
-  }, [addEventListener, removeEventListener]);
+  //   return () => removeEventListener(listener);
+  // }, [addEventListener, removeEventListener]);
 
   return (
     <>
       <HighlightStyles />
-      <AppBarButtons onAddItem={() => {}} />
+      <AppBarButtons />
       {/* <Toolbar /> */}
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />
