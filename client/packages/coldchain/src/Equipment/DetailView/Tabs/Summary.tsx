@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AutocompleteMulti,
   BasicTextInput,
+  Checkbox,
   DateTimePickerInput,
   InputWithLabelRow,
   Typography,
@@ -279,6 +280,12 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               value={draft.statusLog?.reason?.reason ?? '-'}
               disabled
               fullWidth
+            />
+          </Row>
+          <Row label={t('label.needs-replacement')}>
+            <Checkbox
+              checked={draft.needsReplacement as boolean}
+              onChange={e => onChange({ needsReplacement: e.target.checked })}
             />
           </Row>
         </Section>

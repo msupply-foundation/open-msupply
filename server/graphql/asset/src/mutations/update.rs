@@ -60,6 +60,7 @@ pub struct UpdateAssetInput {
     pub donor_name_id: Option<NullableUpdateInput<String>>,
     pub warranty_start: Option<NullableUpdateInput<NaiveDate>>,
     pub warranty_end: Option<NullableUpdateInput<NaiveDate>>,
+    pub needs_replacement: Option<bool>,
 }
 
 impl From<UpdateAssetInput> for UpdateAsset {
@@ -78,6 +79,7 @@ impl From<UpdateAssetInput> for UpdateAsset {
             donor_name_id,
             warranty_start,
             warranty_end,
+            needs_replacement,
         }: UpdateAssetInput,
     ) -> Self {
         UpdateAsset {
@@ -110,6 +112,7 @@ impl From<UpdateAssetInput> for UpdateAsset {
             warranty_end: warranty_end.map(|warranty_end| NullableUpdate {
                 value: warranty_end.value,
             }),
+            needs_replacement,
         }
     }
 }
