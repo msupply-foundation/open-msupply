@@ -288,7 +288,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         <Section heading={t('label.donor')}>
           <Row label={t('label.donor')}>
             <DonorSearchInput
-              value={draft.donor as NameRowFragment} // TODO: Fix this?
+              value={draft.donor as NameRowFragment} // Using as NameRowFragment is ok, because the comparison function is based on the id
               onChange={e => onChange({ donor: e, donorNameId: e?.id })}
             />
           </Row>
