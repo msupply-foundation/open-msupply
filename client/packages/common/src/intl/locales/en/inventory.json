@@ -3,6 +3,7 @@
   "button.new-stock": "New Stock",
   "button.reduce-lines-to-zero": "Reduce lines to 0",
   "button.repack": "Repack",
+  "button.adjust": "Adjust",
   "error.cant-save": "There was a problem saving.",
   "error.no-locations": "There are no Locations to display.",
   "error.no-stock": "There is no stock to display.",
