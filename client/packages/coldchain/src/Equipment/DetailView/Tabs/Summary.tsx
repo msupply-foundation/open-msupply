@@ -133,6 +133,14 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     if (reason === 'clear') onChange({ store: null });
   };
 
+  const onDonorInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') onChange({ donor: null, donorNameId: null });
+  };
+
   return (
     <Box display="flex" flex={1}>
       <Container>
@@ -290,6 +298,8 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             <DonorSearchInput
               value={draft.donor as NameRowFragment} // Using as NameRowFragment is ok, because the comparison function is based on the id
               onChange={e => onChange({ donor: e, donorNameId: e?.id })}
+              onInputChange={onDonorInputChange}
+              clearable
             />
           </Row>
         </Section>
