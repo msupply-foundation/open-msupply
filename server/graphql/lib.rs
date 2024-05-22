@@ -28,6 +28,7 @@ use graphql_asset::{
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
+use graphql_demographic::DemographicIndicatorQueries;
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -108,6 +109,7 @@ pub struct Queries(
     pub AssetQueries,
     pub AssetLogQueries,
     pub AssetLogReasonQueries,
+    pub DemographicIndicatorQueries,
 );
 
 impl Queries {
@@ -133,6 +135,7 @@ impl Queries {
             AssetQueries,
             AssetLogQueries,
             AssetLogReasonQueries,
+            DemographicIndicatorQueries,
         )
     }
 }

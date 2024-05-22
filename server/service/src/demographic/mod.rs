@@ -22,7 +22,7 @@ use repository::demographic_projection::{
     DemographicProjection, DemographicProjectionFilter, DemographicProjectionSort,
 };
 
-pub trait DemographicIndicatorTrait: Sync + Send {
+pub trait DemographicServiceTrait: Sync + Send {
     fn get_demographic_indicators(
         &self,
         connection: &StorageConnection,
@@ -59,3 +59,7 @@ pub trait DemographicIndicatorTrait: Sync + Send {
         get_demographic_projection(ctx, id)
     }
 }
+
+pub struct DemographicService {}
+
+impl DemographicServiceTrait for DemographicService {}
