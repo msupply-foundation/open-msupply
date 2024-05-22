@@ -13,6 +13,7 @@ const ASSET_CATALOGUE_PROPERTY1: (&str, &str) = (
         "id": "854d8e25-d265-4884-aea3-8f13de3b55fb",
         "category_id": "02cbea92-d5bf-4832-863b-c04e093a7760",
         "name": "Energy source",
+        "key": "energy_source",
         "value_type": "STRING",
         "allowed_values": "Electricity,Solar,Passive,Kerosene,Gas"
     }"#,
@@ -23,6 +24,7 @@ fn asset_catalogue_property1() -> AssetCataloguePropertyRow {
         id: ASSET_CATALOGUE_PROPERTY1.0.to_string(),
         category_id: "02cbea92-d5bf-4832-863b-c04e093a7760".to_string(),
         name: "Energy source".to_string(),
+        key: "energy_source".to_string(),
         value_type: PropertyValueType::String,
         allowed_values: Some("Electricity,Solar,Passive,Kerosene,Gas".to_string()),
     }
