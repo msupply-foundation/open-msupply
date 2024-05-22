@@ -91,7 +91,7 @@
   "label.site": "Site :",
   "messages.change-server": "Changer de serveur",
   "error.sync-api-incompatible": "La version de l'API Sync n'est pas compatible",
-  "assets": "Actifs",
+  "assets": "Équipements",
   "equipment": "Equipement",
   "error.unable-to-connect-to-printer": "Impossible de se connecter à l'imprimante.",
   "error.v6-server-not-configured": "Serveur central V6 non configuré",
