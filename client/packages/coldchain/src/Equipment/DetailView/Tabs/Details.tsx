@@ -7,7 +7,6 @@ import {
 } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { Box } from '@openmsupply-client/common';
-import { formatPropertyValue } from '../../utils';
 import { DraftAsset } from '../../types';
 import { useAssets } from '../../api';
 import { PropertyInput } from '../../Components/PropertyInput';
@@ -101,19 +100,16 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
     <Box display="flex" flex={1}>
       <Container>
         <Section heading={t('label.catalogue-properties')}>
-          {!draft.catalogProperties || draft.catalogProperties.length == 0 ? (
+          {!draft.catalogProperties ||
+          Object.keys(draft.catalogProperties).length == 0 ? (
             <Typography sx={{ textAlign: 'center' }}>
               {t('messages.no-properties')}
             </Typography>
           ) : (
             <>
-              {draft.catalogProperties.map(property => (
-                <Row key={property.id} label={property.name}>
-                  <BasicTextInput
-                    value={formatPropertyValue(property, t)}
-                    disabled
-                    fullWidth
-                  />
+              {Object.entries(draft.parsedProperties).map(([key, value]) => (
+                <Row key={key} label={`${value}`}>
+                  <BasicTextInput value={value} disabled fullWidth />
                 </Row>
               ))}
             </>

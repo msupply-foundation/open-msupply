@@ -271,31 +271,8 @@ export type AssetCatalogueItemNode = {
   id: Scalars['String']['output'];
   manufacturer?: Maybe<Scalars['String']['output']>;
   model: Scalars['String']['output'];
+  properties: Scalars['String']['output'];
   subCatalogue: Scalars['String']['output'];
-};
-
-export type AssetCatalogueItemPropertyNode = {
-  __typename: 'AssetCatalogueItemPropertyNode';
-  catalogueItemId: Scalars['String']['output'];
-  cataloguePropertyId: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  valueBool?: Maybe<Scalars['Boolean']['output']>;
-  valueFloat?: Maybe<Scalars['Float']['output']>;
-  valueInt?: Maybe<Scalars['Int']['output']>;
-  valueString?: Maybe<Scalars['String']['output']>;
-};
-
-export type AssetCatalogueItemPropertyValueNode = {
-  __typename: 'AssetCatalogueItemPropertyValueNode';
-  catalogueItemId: Scalars['String']['output'];
-  cataloguePropertyId: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  valueBool?: Maybe<Scalars['Boolean']['output']>;
-  valueFloat?: Maybe<Scalars['Float']['output']>;
-  valueInt?: Maybe<Scalars['Int']['output']>;
-  valueString?: Maybe<Scalars['String']['output']>;
-  valueType: PropertyNodeValueType;
 };
 
 export type AssetCatalogueItemResponse = AssetCatalogueItemNode | NodeError;
@@ -318,7 +295,6 @@ export type AssetCatalogueMutations = {
   __typename: 'AssetCatalogueMutations';
   deleteAssetCatalogueItem: DeleteAssetCatalogueItemResponse;
   insertAssetCatalogueItem: InsertAssetCatalogueItemResponse;
-  insertAssetCatalogueItemProperty: InsertAssetCatalogueItemPropertyResponse;
 };
 
 
@@ -329,12 +305,6 @@ export type AssetCatalogueMutationsDeleteAssetCatalogueItemArgs = {
 
 export type AssetCatalogueMutationsInsertAssetCatalogueItemArgs = {
   input: InsertAssetCatalogueItemInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type AssetCatalogueMutationsInsertAssetCatalogueItemPropertyArgs = {
-  input: InsertAssetCatalogueItemPropertyInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -354,6 +324,7 @@ export type AssetCataloguePropertyNode = {
   allowedValues?: Maybe<Scalars['String']['output']>;
   categoryId: Scalars['String']['output'];
   id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
   name: Scalars['String']['output'];
   valueType: PropertyNodeValueType;
 };
@@ -554,7 +525,7 @@ export type AssetNode = {
   assetClass?: Maybe<AssetClassNode>;
   assetNumber?: Maybe<Scalars['String']['output']>;
   assetType?: Maybe<AssetTypeNode>;
-  catalogProperties: Array<AssetCatalogueItemPropertyValueNode>;
+  catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
@@ -1149,7 +1120,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetCatalogueItemPropertyErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -2105,30 +2076,10 @@ export type InsertAssetCatalogueItemInput = {
   id: Scalars['String']['input'];
   manufacturer?: InputMaybe<Scalars['String']['input']>;
   model: Scalars['String']['input'];
+  properties?: InputMaybe<Scalars['String']['input']>;
   subCatalogue: Scalars['String']['input'];
   typeId: Scalars['String']['input'];
 };
-
-export type InsertAssetCatalogueItemPropertyError = {
-  __typename: 'InsertAssetCatalogueItemPropertyError';
-  error: InsertAssetCatalogueItemPropertyErrorInterface;
-};
-
-export type InsertAssetCatalogueItemPropertyErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type InsertAssetCatalogueItemPropertyInput = {
-  catalogueItemId: Scalars['String']['input'];
-  cataloguePropertyId: Scalars['String']['input'];
-  id: Scalars['String']['input'];
-  valueBool?: InputMaybe<Scalars['Boolean']['input']>;
-  valueFloat?: InputMaybe<Scalars['Float']['input']>;
-  valueInt?: InputMaybe<Scalars['Int']['input']>;
-  valueString?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type InsertAssetCatalogueItemPropertyResponse = AssetCatalogueItemPropertyNode | InsertAssetCatalogueItemPropertyError;
 
 export type InsertAssetCatalogueItemResponse = AssetCatalogueItemNode | InsertAssetCatalogueItemError;
 
@@ -2765,7 +2716,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetCatalogueItemPropertyErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -5554,7 +5505,7 @@ export type RawDocumentNode = {
   type: Scalars['String']['output'];
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetCatalogueItemPropertyErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
