@@ -66,5 +66,21 @@
   "error.unable-to-scan": "Impossible de lire le code-barre : {{error}}",
   "messages.no-items-with-stock": "Aucun article avec du stock disponible",
   "stocktake-comment-items-have-stock-template": "Créé(e) pour tous les articles en stock",
-  "label.items-with-stock": "Articles avec du stock"
+  "label.items-with-stock": "Articles avec du stock",
+  "button.change-location": "Changer l'emplacement des lignes",
+  "button.new-stock": "Ajouter du stock",
+  "button.reduce-lines-to-zero": "Réduire les lignes à 0",
+  "label.adjust-by": "par",
+  "label.current-num-of-packs": "Nombre de boites actuel",
+  "label.decrease-qty": "Réduire Quantité",
+  "label.direction": "Direction d'ajustement",
+  "label.increase-qty": "Augmenter quantité",
+  "label.items-expiring-before": "Articles expirant avant",
+  "button.repack": "Reconditionnement",
+  "error.repack-cannot-be-fractional": "Impossible de reconditionner dans un conditionnement fractionnaire",
+  "error.repack-has-stock-reduced-below-zero": "Impossible de reconditionner la ligne de stock. Le nouveau nombre de boîtes dépasse le nombre de boîtes de la ligne de stock.",
+  "label.code-or-name": "Code ou nom",
+  "label.from-expiry": "A partir de la date d'expiration",
+  "label.to-expiry": "Juqu'à la date d'expiration",
+  "label.new": "Nouveau"
 }
