@@ -95,7 +95,7 @@
   "equipment": "Equipement",
   "error.unable-to-connect-to-printer": "Impossible de se connecter à l'imprimante.",
   "error.v6-server-not-configured": "Serveur central V6 non configuré",
-  "inbound-return": "Retours entrants",
+  "inbound-return": "Retour client",
   "label.central-server": "Serveur central",
   "settings.label-printing": "Impression d'étiquette",
   "settings.printer-address": "Adresse IP",
@@ -122,5 +122,16 @@
   "error.sync-api-incompatible-hint": "Le serveur central mSupply doit être mis à jour vers une version plus récente avant que vous puissiez vous connecter - veuillez contacter support@msupply.org.nz",
   "error.connection-error-hint": "Vérifier votre connection internet",
   "cmdk.goto-prescriptions": "Aller à : Ordonnances",
-  "cmdk.goto-patients": "Aller à : Patients"
+  "cmdk.goto-patients": "Aller à : Patients",
+  "error.no-site-access": "Votre compte n'a accès à aucun dépôt sur ce site",
+  "error.unable-to-login": "Impossible de se connecter",
+  "error.v6-server-not-configured-hint": "Vérifier l'URL du serveur central",
+  "inbound-returns": "Retours client",
+  "inventory-addition": "Ajout de stock",
+  "inventory-reduction": "Réduction de stock",
+  "outbound-returns": "Retours fournisseur",
+  "contact-trace": "Traçage des contacts",
+  "prescriptions": "Ordonnances",
+  "monitoring": "Surveillance",
+  "encounter": "Visites"
 }
