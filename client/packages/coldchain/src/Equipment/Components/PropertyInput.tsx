@@ -1,3 +1,4 @@
+import React, { FC } from 'react';
 import {
   Autocomplete,
   BasicTextInput,
@@ -5,14 +6,23 @@ import {
   NumericTextInput,
 } from '@common/components';
 import { PropertyNodeValueType } from '@common/types';
-import React, { FC } from 'react';
 
-export type PropertyInput = {
+type PropertyValue = string | number | boolean | undefined;
+type PropertyInput = {
   valueType: PropertyNodeValueType;
   allowedValues?: string[];
-  value: string | number | boolean | undefined | null;
-  onChange: (value: string | number | boolean | undefined) => void;
+  value: PropertyValue | null;
+  onChange: (value: PropertyValue) => void;
 };
+
+const mapValueToOption = (value: PropertyValue | null) =>
+  value === null
+    ? undefined
+    : {
+        label: value as string,
+        id: value as string,
+        value,
+      };
 
 export const PropertyInput: FC<PropertyInput> = ({
   valueType,
@@ -44,19 +54,10 @@ export const PropertyInput: FC<PropertyInput> = ({
       );
     case PropertyNodeValueType.String:
       if (allowedValues && allowedValues.length > 0) {
-        const valueOption = {
-          label: value as string,
-          id: value as string,
-          value: value as string,
-        };
         return (
           <Autocomplete
-            options={allowedValues.map(value => ({
-              label: value,
-              id: value,
-              value,
-            }))}
-            value={valueOption}
+            options={allowedValues.map(mapValueToOption)}
+            value={mapValueToOption(value)}
             onChange={(_, value) => {
               onChange(value?.value);
             }}
