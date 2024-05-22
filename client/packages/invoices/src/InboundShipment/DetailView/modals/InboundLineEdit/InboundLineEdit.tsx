@@ -34,6 +34,7 @@ interface InboundLineEditProps {
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
+  const { error } = useNotification();
   const { variantsControl } = usePackVariant(String(item?.id), null);
   const { data: lines } = useInbound.lines.list(item?.id ?? '');
   const { id } = useInbound.document.fields('id');
@@ -95,8 +96,15 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
   );
 
   const saveLines = async () => {
-    if (isDirty) await mutateAsync(draftLines);
-    setIsDirty(false);
+    if (isDirty) {
+      const { errorMessage } = await mutateAsync(draftLines);
+
+      if (errorMessage) {
+        error(errorMessage)();
+      }
+
+      setIsDirty(false);
+    }
   };
 
   return {
