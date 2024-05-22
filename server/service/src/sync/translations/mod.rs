@@ -1,7 +1,6 @@
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
-pub(crate) mod asset_catalogue_item_property;
 pub(crate) mod asset_catalogue_property;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
@@ -115,7 +114,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         asset_category::boxed(),
         asset_type::boxed(),
         asset_catalogue_item::boxed(),
-        asset_catalogue_item_property::boxed(),
         asset_catalogue_property::boxed(),
         asset_log::boxed(),
         asset_log_reason::boxed(),

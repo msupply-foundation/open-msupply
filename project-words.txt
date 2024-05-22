@@ -19,3 +19,5 @@ upserted
 upserts
 zustand
 Waterpack
+anymap
+thiserror
