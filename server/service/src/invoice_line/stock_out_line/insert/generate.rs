@@ -39,8 +39,6 @@ fn generate_batch_update(
         cost_price_per_pack,
         sell_price_per_pack,
         number_of_packs,
-        // note also exists on stock_line, is the note for invoice_line only
-        // or should it also be transferred to stock line ?
         note: _,
         id: _,
         r#type: _,

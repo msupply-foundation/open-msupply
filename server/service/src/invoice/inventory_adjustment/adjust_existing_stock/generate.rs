@@ -117,11 +117,6 @@ pub fn generate(
             sell_price_per_pack,
             expiry_date,
             stock_on_hold: on_hold,
-            // TODO: `note` currently gets applied to both stock line and invoice line.
-            // We pass it through here so completing an inventory adjustment will not
-            // clear any stock line note, but this means any existing stock line note will
-            // be applied to the inventory adjustment invoice line.
-            // If we want a different note invoice line, StockIn needs another field
             note,
             // Default
             barcode: None,
