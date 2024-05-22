@@ -30,7 +30,7 @@ use super::{
 };
 
 // See ../README.md for when to increment versions!
-static MIN_VERSION: u32 = 1;
+static MIN_VERSION: u32 = 0;
 static MAX_VERSION: u32 = 1;
 
 /// Send Records to a remote open-mSupply Server
