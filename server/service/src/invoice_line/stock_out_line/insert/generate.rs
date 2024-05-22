@@ -31,30 +31,46 @@ pub fn generate(
 }
 
 fn generate_batch_update(
-    input: InsertStockOutLine,
+    InsertStockOutLine {
+        location_id,
+        batch: input_batch_name,
+        pack_size,
+        expiry_date,
+        cost_price_per_pack,
+        sell_price_per_pack,
+        number_of_packs,
+        // note also exists on stock_line, is the note for invoice_line only
+        // or should it also be transferred to stock line ?
+        note: _,
+        id: _,
+        r#type: _,
+        invoice_id: _,
+        stock_line_id: _,
+        total_before_tax: _,
+        tax_percentage: _,
+    }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
 ) -> StockLineRow {
-    let reduction = input.number_of_packs;
+    let available_reduction = number_of_packs;
+    let total_reduction = if adjust_total_number_of_packs {
+        number_of_packs
+    } else {
+        0.0
+    };
 
-    let mut updated_batch = StockLineRow {
-        available_number_of_packs: batch.available_number_of_packs - reduction,
-        location_id: input.location_id.or(batch.location_id),
-        batch: input.batch.or(batch.batch),
-        expiry_date: input.expiry_date.or(batch.expiry_date),
-        pack_size: input.pack_size.unwrap_or(batch.pack_size),
-        cost_price_per_pack: input
-            .cost_price_per_pack
-            .unwrap_or(batch.cost_price_per_pack),
-        sell_price_per_pack: input
-            .sell_price_per_pack
-            .unwrap_or(batch.sell_price_per_pack),
+    let updated_batch = StockLineRow {
+        available_number_of_packs: batch.available_number_of_packs - available_reduction,
+        total_number_of_packs: batch.total_number_of_packs - total_reduction,
+        location_id: location_id.or(batch.location_id),
+        batch: input_batch_name.or(batch.batch),
+        expiry_date: expiry_date.or(batch.expiry_date),
+        pack_size: pack_size.unwrap_or(batch.pack_size),
+        cost_price_per_pack: cost_price_per_pack.unwrap_or(batch.cost_price_per_pack),
+        sell_price_per_pack: sell_price_per_pack.unwrap_or(batch.sell_price_per_pack),
         ..batch
     };
 
-    if adjust_total_number_of_packs {
-        updated_batch.total_number_of_packs -= reduction;
-    }
     updated_batch
 }
 
