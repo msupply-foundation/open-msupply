@@ -29,6 +29,10 @@ use super::{
     translations::translate_changelogs_to_sync_records,
 };
 
+// See ../README.md for when to increment versions!
+static MIN_VERSION: u32 = 0;
+static MAX_VERSION: u32 = 1;
+
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(
     service_provider: &ServiceProvider,
@@ -37,6 +41,7 @@ pub async fn pull(
         batch_size,
         sync_v5_settings,
         is_initialised,
+        sync_v6_version,
     }: SyncPullRequestV6,
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -44,6 +49,15 @@ pub async fn pull(
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
     // Check credentials again mSupply central server
     let response = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -111,6 +125,7 @@ pub async fn push(
     SyncPushRequestV6 {
         batch,
         sync_v5_settings,
+        sync_v6_version,
     }: SyncPushRequestV6,
 ) -> Result<SyncPushSuccessV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -118,6 +133,15 @@ pub async fn push(
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
     // Check credentials again mSupply central server
     let response = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -164,12 +188,23 @@ pub async fn push(
 }
 
 pub async fn get_site_status(
-    SiteStatusRequestV6 { sync_v5_settings }: SiteStatusRequestV6,
+    SiteStatusRequestV6 {
+        sync_v5_settings,
+        sync_v6_version,
+    }: SiteStatusRequestV6,
 ) -> Result<SiteStatusV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
+    }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
     }
 
     let response = SyncApiV5::new(sync_v5_settings)
@@ -216,6 +251,7 @@ pub async fn download_file(
         table_name,
         record_id,
         sync_v5_settings,
+        sync_v6_version,
     }: SyncDownloadFileRequestV6,
 ) -> Result<(actix_files::NamedFile, StaticFile), SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -230,6 +266,15 @@ pub async fn download_file(
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
     // Check credentials again mSupply central server
     let _ = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -258,6 +303,7 @@ pub async fn upload_file(
     SyncUploadFileRequestV6 {
         file_id,
         sync_v5_settings,
+        sync_v6_version,
     }: SyncUploadFileRequestV6,
     file_part: TempFile,
 ) -> Result<(), SyncParsedErrorV6> {
@@ -268,6 +314,15 @@ pub async fn upload_file(
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
     // Check credentials again mSupply central server
     let _ = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -317,4 +372,8 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
     } else {
         sites_being_integrated.retain(|id| *id != site_id);
     }
+}
+
+fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
+    MIN_VERSION <= sync_v6_version && sync_v6_version <= MAX_VERSION
 }

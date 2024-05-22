@@ -46,6 +46,8 @@
   "equipment": "Equipment",
   "error.sync-api-incompatible": "Sync API version is not compatible",
   "error.sync-api-incompatible-hint": "The mSupply Central Server needs to be upgraded to a newer version before you can connect - please contact support@msupply.org.nz",
+  "error.sync-v6-api-incompatible": "Sync V6 API version is not compatible",
+  "error.sync-v6-api-incompatible-hint": "The Open mSupply Central Server needs to be upgraded to a newer version before you can connect - please contact support@msupply.org.nz",
   "error.authentication-error": "The server has returned an error",
   "error.connection-error": "Unable to connect to server",
   "error.connection-error-hint": "Check your network connection",

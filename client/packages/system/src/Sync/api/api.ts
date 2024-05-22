@@ -66,6 +66,8 @@ export function mapSyncError(
     [SyncErrorVariant.InvalidUrl]: 'error.invalid-url',
     [SyncErrorVariant.ApiVersionIncompatible]: 'error.sync-api-incompatible',
     [SyncErrorVariant.CentralV6NotConfigured]: 'error.v6-server-not-configured',
+    [SyncErrorVariant.V6ApiVersionIncompatible]:
+      'error.sync-v6-api-incompatible',
     [SyncErrorVariant.IntegrationError]: 'error.internal-error',
     [SyncErrorVariant.Unknown]: defaultKey || 'error.unknown-sync-error',
   };
@@ -76,6 +78,8 @@ export function mapSyncError(
         return t('error.sync-api-incompatible-hint');
       case SyncErrorVariant.CentralV6NotConfigured:
         return t('error.v6-server-not-configured-hint');
+      case SyncErrorVariant.V6ApiVersionIncompatible:
+        return t('error.sync-v6-api-incompatible-hint');
       default:
         return undefined;
     }
