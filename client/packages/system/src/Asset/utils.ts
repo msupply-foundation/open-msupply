@@ -91,11 +91,7 @@ export const importRowToCsv = (
   includeErrors = true,
   properties?: string[]
 ) => {
-  const props =
-    properties ??
-    Object.values(catalogueItems[0]?.properties ?? {}).map(
-      property => property.name
-    );
+  const props = properties ?? Object.keys(catalogueItems[0]?.properties ?? {});
   const fields = assetCatalogueItemFields(t).concat(props);
   if (includeErrors) fields.push(t('label.error-message'));
 
@@ -108,9 +104,7 @@ export const importRowToCsv = (
       node.model,
       node.class,
       node.category,
-    ].concat(
-      Object.values(node?.properties ?? {}).map(property => property.value)
-    );
+    ].concat(props.map(key => node.properties?.[key] ?? ''));
     row.push(node.errorMessage);
     return row;
   });

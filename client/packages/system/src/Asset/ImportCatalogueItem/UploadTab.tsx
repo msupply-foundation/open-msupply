@@ -66,7 +66,7 @@ const processProperties = (
   t: TypedTFunction<LocaleKey>
 ) => {
   properties?.forEach(property => {
-    const value = row[property.name];
+    const value = row[property.name] ?? row[property.key];
 
     if (!!value?.trim()) {
       if (!!property.allowedValues) {
@@ -91,18 +91,15 @@ const processProperties = (
               })
             );
           }
-          importRow.properties[property.id] = { ...property, value };
+          importRow.properties[property.key] = value;
           break;
         case 'BOOLEAN':
           const isTrue =
             value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
-          importRow.properties[property.id] = {
-            ...property,
-            value: isTrue ? 'true' : 'false',
-          };
+          importRow.properties[property.key] = isTrue ? 'true' : 'false';
           break;
         default:
-          importRow.properties[property.id] = { ...property, value };
+          importRow.properties[property.key] = value;
       }
     }
   });

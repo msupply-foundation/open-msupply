@@ -46,6 +46,9 @@ impl AssetCataloguePropertyNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
+    pub async fn key(&self) -> &str {
+        &self.row().key
+    }
     pub async fn name(&self) -> &str {
         &self.row().name
     }
