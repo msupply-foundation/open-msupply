@@ -22,18 +22,10 @@ pub mod outbound_shipment_unallocated_line;
 use self::outbound_shipment_unallocated_line::*;
 
 pub mod stock_out_line;
-use self::stock_in_line::delete_stock_in_line;
-use self::stock_in_line::insert_stock_in_line;
-use self::stock_in_line::update_stock_in_line;
-use self::stock_in_line::DeleteStockInLine;
-use self::stock_in_line::DeleteStockInLineError;
-use self::stock_in_line::InsertStockInLine;
-use self::stock_in_line::InsertStockInLineError;
-use self::stock_in_line::UpdateStockInLine;
-use self::stock_in_line::UpdateStockInLineError;
 use self::stock_out_line::*;
 
 pub mod stock_in_line;
+use self::stock_in_line::*;
 
 pub mod update_return_reason_id;
 use self::update_return_reason_id::*;
