@@ -48,9 +48,6 @@ pub struct LegacyStocktakeRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub inventory_reduction_id: Option<String>,
 
-    // Ignore invad_reductions_ID for V1
-    // #[serde(deserialize_with = "empty_str_as_option_string")]
-    // invad_reductions_ID: Option<String>,
     pub serial_number: i64,
     #[serde(serialize_with = "date_to_isostring")]
     pub stock_take_created_date: NaiveDate,
