@@ -130,8 +130,8 @@
   "inventory-addition": "Ajout de stock",
   "inventory-reduction": "Réduction de stock",
   "outbound-returns": "Retours fournisseur",
-  "contact-trace": "Traçage des contacts",
+  "contact-trace": "Recherche des contacts",
   "prescriptions": "Ordonnances",
-  "monitoring": "Surveillance",
+  "monitoring": "Contrôle",
   "encounter": "Visites"
 }
