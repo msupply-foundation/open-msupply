@@ -8,9 +8,9 @@ use diesel::prelude::*;
 
 use crate::{
     demographic_indicator_row::DemographicIndicatorRow,
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    Pagination,
+    Pagination, StringFilter,
 };
 
 use crate::{EqualFilter, Sort};
@@ -23,7 +23,7 @@ pub struct DemographicIndicator {
 #[derive(Clone, Default)]
 pub struct DemographicIndicatorFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
 }
 
 pub enum DemographicIndicatorSortField {
@@ -97,7 +97,7 @@ fn create_filtered_query(filter: Option<DemographicIndicatorFilter>) -> BoxedLog
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, demographic_indicator_dsl::id);
-        apply_equal_filter!(query, filter.name, demographic_indicator_dsl::name);
+        apply_string_filter!(query, filter.name, demographic_indicator_dsl::name);
     }
     query
 }
@@ -117,7 +117,7 @@ impl DemographicIndicatorFilter {
         self.id = Some(filter);
         self
     }
-    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }

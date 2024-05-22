@@ -53,6 +53,7 @@ pub enum UserPermission {
     AssetMutate,
     AssetQuery,
     AssetCatalogueItemMutate,
+    DemographicQuery,
 }
 
 #[Object]
@@ -136,6 +137,7 @@ impl UserPermission {
             PermissionType::AssetMutate => UserPermission::AssetMutate,
             PermissionType::AssetQuery => UserPermission::AssetQuery,
             PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
+            PermissionType::DemographicQuery => UserPermission::DemographicQuery,
         }
     }
 
@@ -181,6 +183,7 @@ impl UserPermission {
             UserPermission::AssetMutate => PermissionType::AssetMutate,
             UserPermission::AssetQuery => PermissionType::AssetQuery,
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
+            UserPermission::DemographicQuery => PermissionType::DemographicQuery,
         }
     }
 }
