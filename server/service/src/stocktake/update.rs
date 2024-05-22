@@ -230,6 +230,17 @@ struct StockLineJob {
     location_movement: Option<LocationMovementRow>,
     update_inventory_adjustment_reason: Option<UpdateInventoryAdjustmentReason>,
 }
+
+fn generate_update_inventory_adjustment_reason(
+    invoice_line_id: String,
+    inventory_adjustment_reason_id: Option<String>,
+) -> Option<UpdateInventoryAdjustmentReason> {
+    inventory_adjustment_reason_id.map(|reason_id| UpdateInventoryAdjustmentReason {
+        reason_id: Some(reason_id),
+        invoice_line_id,
+    })
+}
+
 /// Returns new stock line and matching invoice line
 fn generate_stock_in_out_or_update(
     connection: &StorageConnection,
@@ -281,13 +292,10 @@ fn generate_stock_in_out_or_update(
     let quantity_change = f64::abs(delta);
     let invoice_line_id = uuid();
 
-    let update_inventory_adjustment_reason =
-        row.inventory_adjustment_reason_id.clone().map(|reason_id| {
-            UpdateInventoryAdjustmentReason {
-                reason_id: Some(reason_id),
-                invoice_line_id: invoice_line_id.clone(),
-            }
-        });
+    let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
+        invoice_line_id.clone(),
+        row.inventory_adjustment_reason_id,
+    );
 
     let stock_in_or_out_line = if delta > 0.0 {
         StockChange::StockIn(InsertStockInLine {
@@ -377,13 +385,10 @@ fn generate_new_stock_line(
     let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
     let invoice_line_id = uuid();
 
-    let update_inventory_adjustment_reason =
-        row.inventory_adjustment_reason_id.clone().map(|reason_id| {
-            UpdateInventoryAdjustmentReason {
-                reason_id: Some(reason_id),
-                invoice_line_id: invoice_line_id.clone(),
-            }
-        });
+    let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
+        invoice_line_id.clone(),
+        row.inventory_adjustment_reason_id,
+    );
 
     let stock_in_line = StockChange::StockIn(InsertStockInLine {
         r#type: StockInType::InventoryAddition,
