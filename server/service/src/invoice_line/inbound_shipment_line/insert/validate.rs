@@ -3,7 +3,10 @@ use crate::{
     invoice_line::{
         check_location_exists,
         inbound_shipment_line::check_pack_size,
-        validate::{check_item_exists, check_line_does_not_exist, check_number_of_packs},
+        validate::{
+            check_invoice_not_on_hold, check_item_exists, check_line_does_not_exist,
+            check_number_of_packs,
+        },
     },
 };
 use repository::{InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
@@ -45,6 +48,9 @@ pub fn validate(
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
+    }
+    if !check_invoice_not_on_hold(&invoice) {
+        return Err(InvoiceOnHold);
     }
 
     // TODO: StockLineDoesNotBelongToCurrentStore

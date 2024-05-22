@@ -73,6 +73,7 @@ pub enum InsertInboundShipmentLineError {
     PackSizeBelowOne,
     NumberOfPacksBelowOne,
     NewlyCreatedLineDoesNotExist,
+    InvoiceOnHold,
 }
 
 impl From<RepositoryError> for InsertInboundShipmentLineError {

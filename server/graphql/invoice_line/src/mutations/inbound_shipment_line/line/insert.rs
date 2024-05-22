@@ -143,6 +143,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
         ServiceError::PackSizeBelowOne => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::InvoiceOnHold => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),

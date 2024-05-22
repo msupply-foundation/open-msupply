@@ -129,6 +129,9 @@ export const isOutboundDisabled = (outbound: OutboundRowFragment): boolean => {
 };
 
 export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
+  if (inbound.onHold) {
+    return true;
+  }
   const isManuallyCreated = !inbound.linkedShipment?.id;
   return isManuallyCreated
     ? inbound.status === InvoiceNodeStatus.Verified

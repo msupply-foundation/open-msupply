@@ -3,8 +3,8 @@ use crate::{
     invoice_line::{
         check_batch, check_location_exists, check_pack_size,
         validate::{
-            check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
-            check_number_of_packs,
+            check_invoice_not_on_hold, check_item_exists, check_line_belongs_to_invoice,
+            check_line_exists_option, check_number_of_packs,
         },
     },
 };
@@ -41,6 +41,9 @@ pub fn validate(
     }
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
+    }
+    if !check_invoice_not_on_hold(&invoice) {
+        return Err(InvoiceOnHold);
     }
 
     if !check_batch(line_row, connection)? {

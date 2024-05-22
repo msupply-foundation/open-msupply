@@ -84,6 +84,7 @@ pub enum UpdateInboundShipmentLineError {
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
+    InvoiceOnHold,
 }
 
 impl From<RepositoryError> for UpdateInboundShipmentLineError {

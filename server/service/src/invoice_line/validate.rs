@@ -26,6 +26,10 @@ pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     return true;
 }
 
+pub fn check_invoice_not_on_hold(invoice: &InvoiceRow) -> bool {
+    !invoice.on_hold
+}
+
 pub fn check_item_exists(
     connection: &StorageConnection,
     id: &str,
