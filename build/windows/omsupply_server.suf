@@ -4444,7 +4444,7 @@ g_HandleSystemReboot();
 <CustomSegSizeMode>0</CustomSegSizeMode>
 <Platform>1</Platform>
 <CollectLaunchUserInfo>0</CollectLaunchUserInfo>
-<CodeSignSetups>1</CodeSignSetups>
+<CodeSignSetups>0</CodeSignSetups>
 <CodeSignLocation>C:\Program Files (x86)\Windows Kits\8.0\bin\x64\signtool.exe</CodeSignLocation>
 <CodeSignWithSHA256>1</CodeSignWithSHA256>
 <CodeSignCertificateFileSHA256>C:\mSupply_installer_codesigning\mSupply_installer_code_signing.pfx</CodeSignCertificateFileSHA256>
