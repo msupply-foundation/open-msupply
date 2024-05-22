@@ -17,6 +17,7 @@ table! {
     asset_catalogue_property (id) {
         id -> Text,
         asset_category_id -> Text,
+        key -> Text,
         name -> Text,
         value_type -> crate::db_diesel::assets::types::PropertyValueTypeMapping,
         allowed_values -> Nullable<Text>,
@@ -24,7 +25,7 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
 #[diesel(table_name = asset_catalogue_property)]
 #[diesel(treat_none_as_null = true)]
@@ -32,21 +33,10 @@ pub struct AssetCataloguePropertyRow {
     pub id: String,
     #[diesel(column_name = asset_category_id)]
     pub category_id: String,
+    pub key: String,
     pub name: String,
     pub value_type: PropertyValueType,
     pub allowed_values: Option<String>,
-}
-
-impl Default for AssetCataloguePropertyRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            category_id: Default::default(),
-            name: Default::default(),
-            value_type: PropertyValueType::String,
-            allowed_values: Default::default(),
-        }
-    }
 }
 
 pub struct AssetCataloguePropertyRowRepository<'a> {
