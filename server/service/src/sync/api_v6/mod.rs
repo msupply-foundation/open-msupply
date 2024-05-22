@@ -153,10 +153,6 @@ impl From<PushSyncRecord> for SyncRecordV6 {
     }
 }
 
-fn default_sync_v6_version() -> u32 {
-    1
-}
-
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncPullRequestV6 {
@@ -164,7 +160,7 @@ pub struct SyncPullRequestV6 {
     pub(crate) batch_size: u32,
     pub(crate) sync_v5_settings: SyncApiSettings,
     pub(crate) is_initialised: bool,
-    #[serde(default = "default_sync_v6_version")]
+    #[serde(default)]
     pub(crate) sync_v6_version: u32,
 }
 
@@ -173,7 +169,7 @@ pub struct SyncPullRequestV6 {
 pub struct SyncPushRequestV6 {
     pub(crate) batch: SyncBatchV6,
     pub(crate) sync_v5_settings: SyncApiSettings,
-    #[serde(default = "default_sync_v6_version")]
+    #[serde(default)]
     pub(crate) sync_v6_version: u32,
 }
 
@@ -181,7 +177,7 @@ pub struct SyncPushRequestV6 {
 #[serde(rename_all = "camelCase")]
 pub struct SiteStatusRequestV6 {
     pub(crate) sync_v5_settings: SyncApiSettings,
-    #[serde(default = "default_sync_v6_version")]
+    #[serde(default)]
     pub(crate) sync_v6_version: u32,
 }
 
@@ -197,7 +193,7 @@ pub struct SyncDownloadFileRequestV6 {
     pub(crate) record_id: String,
     pub(crate) id: String,
     pub(crate) sync_v5_settings: SyncApiSettings,
-    #[serde(default = "default_sync_v6_version")]
+    #[serde(default)]
     pub(crate) sync_v6_version: u32,
 }
 
@@ -205,7 +201,7 @@ pub struct SyncDownloadFileRequestV6 {
 pub struct SyncUploadFileRequestV6 {
     pub file_id: String,
     pub sync_v5_settings: SyncApiSettings,
-    #[serde(default = "default_sync_v6_version")]
+    #[serde(default)]
     pub(crate) sync_v6_version: u32,
 }
 
