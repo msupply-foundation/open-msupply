@@ -43,5 +43,18 @@
   "error.cannot-add-pack-size-of-zero": "Impossible d'ajouter une variante avec un conditionnement égal à zéro",
   "error.no-pack-variants": "Cet article n'a aucun conditionnement configuré.",
   "label.category": "Catégorie",
-  "label.reason": "Motif"
+  "label.reason": "Motif",
+  "button.manage-asset-log-reasons": "Gérer les raisons du statut des équipements",
+  "label.create-log-reason": "Créer une raison",
+  "label.edit-pack-variant": "Editer la variante de conditionnement",
+  "label.new-pack-variant": "Nouvelle variante de conditionnement",
+  "messages.confirm-delete-pack-variants_one": "Cela supprimera définitivement une variante de conditionnement.",
+  "messages.confirm-delete-pack-variant": "Cela supprimera {{packVariantName}} de la liste des variantes de conditionnement.",
+  "messages.confirm-delete-pack-variants_other": "Cela supprimera définitivement {{count}} variantes de conditionnement.",
+  "messages.deleted-pack-variant_one": "{{count}} variantes supprimées",
+  "messages.deleted-pack-variant_other": "{{count}} variantes supprimées",
+  "messages.deleted-reasons_one": "{{count}} raison supprimée",
+  "messages.deleted-reasons_few": "{{count}} raisons supprimées",
+  "messages.deleted-reasons_many": "{{count}} raisons supprimées",
+  "messages.deleted-reasons_other": "{{count}} raisons supprimées"
 }
