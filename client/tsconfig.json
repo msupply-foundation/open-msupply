@@ -28,6 +28,10 @@
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
+    "prefer-const": ["error", {
+      "destructuring": "any",
+      "ignoreReadBeforeAssign": true
+    }],
 
     "noUnusedLocals": true,
     "noUnusedParameters": true,
