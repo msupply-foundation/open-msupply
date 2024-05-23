@@ -18,8 +18,6 @@ import {
   NumericTextInput,
   BufferedTextInput,
   DetailContainer,
-  PartialBy,
-  ConfirmationModalState,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -29,7 +27,6 @@ import {
   useIsPackVariantsEnabled,
 } from '../..';
 import { StyledInputRow } from './StyledInputRow';
-import { Footer } from '../DetailView/Footer';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
@@ -37,20 +34,7 @@ interface StockLineFormProps {
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   plugins?: JSX.Element[];
   packEditable?: boolean;
-  footerProps?: {
-    isSaving: boolean;
-    showSaveConfirmation: (
-      paramPatch?:
-        | Partial<PartialBy<ConfirmationModalState, 'open'>>
-        | undefined
-    ) => void;
-    showCancelConfirmation: (
-      paramPatch?:
-        | Partial<PartialBy<ConfirmationModalState, 'open'>>
-        | undefined
-    ) => void;
-    isDirty: boolean;
-  };
+  isInModal?: boolean;
 }
 export const StockLineForm: FC<StockLineFormProps> = ({
   draft,
@@ -58,7 +42,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   onUpdate,
   plugins,
   packEditable,
-  footerProps,
+  isInModal = false,
 }) => {
   const t = useTranslation('inventory');
   const { error } = useNotification();
@@ -117,7 +101,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         width="100%"
         flexWrap="nowrap"
         maxWidth={900}
-        gap={footerProps ? 10 : undefined}
+        gap={isInModal ? undefined : 10}
       >
         <Grid
           container
@@ -279,7 +263,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           />
         </Grid>
       </Grid>
-      {footerProps && <Footer {...footerProps} />}
+      {/* {footerProps && <Footer {...footerProps} />} */}
     </DetailContainer>
   );
 };

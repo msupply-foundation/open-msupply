@@ -98,6 +98,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
               loading={isLoading}
               onUpdate={updatePatch}
               packEditable
+              isInModal
             />
 
             <Grid item width={'50%'}>
