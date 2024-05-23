@@ -2,13 +2,13 @@
 name: Bug report
 about: Create a report for a bug or to help us improve
 title: A brief clear title describing the bug from a user's perspective
-labels: bug, needs triage
-assignees: ''
-
+labels: bug, needs triage, needs daily triage
+assignees: ""
 ---
 
 ## What went wrong? 😲
-<!-- Provide a clear and concise description of what the bug is. Screenshots are helpful! --> 
+
+<!-- Provide a clear and concise description of what the bug is. Screenshots are helpful! -->
 
 ## Expected behaviour 🤔
 
@@ -22,7 +22,9 @@ Steps to reproduce the behaviour:
 4. See error
 
 ## Your environment 🌱
+
 <!-- e.g. 1.2.3 -->
+
 - Open mSupply Version:
 - Legacy mSupply Central Server Version:
 <!-- e.g. android, browser (extra points if you tell us which one), desktop (windows), desktop (macOS), server (windows) -->

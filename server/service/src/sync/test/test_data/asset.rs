@@ -34,6 +34,7 @@ fn asset1() -> AssetRow {
         created_datetime: Defaults::naive_date_time(),
         modified_datetime: Defaults::naive_date_time(),
         deleted_datetime: None,
+        properties: None,
     }
 }
 

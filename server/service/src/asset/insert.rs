@@ -139,6 +139,7 @@ pub fn generate(
         asset_category_id: Some(category_id.unwrap_or_default()),
         asset_class_id: Some(class_id.unwrap_or_default()),
         asset_type_id: Some(type_id.unwrap_or_default()),
+        properties: None, //TODO
     }
 }
 

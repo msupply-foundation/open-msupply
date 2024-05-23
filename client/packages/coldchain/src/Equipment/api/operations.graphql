@@ -53,7 +53,8 @@ fragment Asset on AssetNode {
     }
     totalCount
   }
-  properties {
+  properties
+  catalogProperties {
     id
     name
     valueString

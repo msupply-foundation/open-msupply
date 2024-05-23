@@ -43,7 +43,7 @@ export const ListView: FC = () => {
   return (
     <>
       <AppBarButtons />
-      <DetailTabs tabs={tabs} />
+      <DetailTabs tabs={tabs} overwriteQuery={false} restoreTabQuery={false} />
     </>
   );
 };
