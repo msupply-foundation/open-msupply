@@ -15,7 +15,9 @@ import { DetailModal } from '../DetailModal';
 import { useName, NameRowFragment } from '../api';
 import { NameRenderer } from '../Components';
 
-const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
+const NameListComponent: FC<{
+  type: 'customer' | 'supplier' | 'facilities';
+}> = ({ type }) => {
   const [selectedId, setSelectedId] = useState<string>('');
   const {
     updateSortQuery,
@@ -84,9 +86,9 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   );
 };
 
-export const NameListView: FC<{ type: 'customer' | 'supplier' }> = ({
-  type,
-}) => (
+export const NameListView: FC<{
+  type: 'customer' | 'supplier' | 'facilities';
+}> = ({ type }) => (
   <TableProvider createStore={createTableStore}>
     <NameListComponent type={type} />
   </TableProvider>
