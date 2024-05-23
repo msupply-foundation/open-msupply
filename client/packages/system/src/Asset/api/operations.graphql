@@ -19,11 +19,11 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   properties
 }
 
-fragment AssetCatalogueProperty on AssetCataloguePropertyNode {
+fragment AssetProperty on AssetPropertyNode {
   id
   key
-  allowedValues
   name
+  allowedValues
   valueType
 }
 
@@ -123,17 +123,14 @@ query assetCategories(
   }
 }
 
-query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
-  assetCatalogueProperties(filter: $filter) {
-    ... on AssetCataloguePropertyConnector {
+query assetProperties($filter: AssetPropertyFilterInput) {
+  assetProperties(filter: $filter) {
+    ... on AssetPropertyConnector {
       __typename
       nodes {
         __typename
-        ...AssetCatalogueProperty
+        ...AssetProperty
       }
-    }
-    ... on NodeError {
-      __typename
     }
   }
 }

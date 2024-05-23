@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   BasicSpinner,
-  BasicTextInput,
   InputWithLabelRow,
   Typography,
 } from '@common/components';
@@ -67,7 +66,7 @@ const Row = ({
 }) => (
   <Box paddingTop={1.5}>
     <InputWithLabelRow
-      labelWidth="150px"
+      labelWidth="180px"
       label={label}
       labelProps={{
         sx: {
@@ -97,25 +96,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   if (!draft) return null;
 
   return (
-    <Box display="flex" flex={1}>
-      <Container>
-        <Section heading={t('label.catalogue-properties')}>
-          {!draft.catalogProperties ||
-          Object.keys(draft.catalogProperties).length == 0 ? (
-            <Typography sx={{ textAlign: 'center' }}>
-              {t('messages.no-properties')}
-            </Typography>
-          ) : (
-            <>
-              {Object.entries(draft.parsedProperties).map(([key, value]) => (
-                <Row key={key} label={`${value}`}>
-                  <BasicTextInput value={value} disabled fullWidth />
-                </Row>
-              ))}
-            </>
-          )}
-        </Section>
-      </Container>
+    <Box display="flex" flex={3}>
       <Container>
         {isLoading ? <BasicSpinner /> : null}
         <Section heading={t('label.asset-properties')}>
@@ -126,23 +107,34 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
           ) : (
             <>
               {assetProperties &&
-                assetProperties.nodes.map(property => (
-                  <Row key={property.key} label={property.name}>
-                    <PropertyInput
-                      valueType={property.valueType}
-                      allowedValues={property.allowedValues?.split(',')}
-                      value={draft.parsedProperties[property.key]}
-                      onChange={v =>
-                        onChange({
-                          parsedProperties: {
-                            ...draft.parsedProperties,
-                            [property.key]: v ?? null,
-                          },
-                        })
-                      }
-                    />
-                  </Row>
-                ))}
+                assetProperties.map(property => {
+                  const isCatalogue =
+                    draft.catalogProperties?.hasOwnProperty(property.key) ??
+                    false;
+                  const value =
+                    draft.parsedCatalogProperties?.[property.key] ??
+                    draft.parsedProperties?.[property.key] ??
+                    null;
+
+                  return (
+                    <Row key={property.key} label={property.name}>
+                      <PropertyInput
+                        valueType={property.valueType}
+                        allowedValues={property.allowedValues?.split(',')}
+                        value={value}
+                        onChange={v =>
+                          onChange({
+                            parsedProperties: {
+                              ...draft.parsedProperties,
+                              [property.key]: v ?? null,
+                            },
+                          })
+                        }
+                        isCatalogue={isCatalogue}
+                      />
+                    </Row>
+                  );
+                })}
             </>
           )}
         </Section>

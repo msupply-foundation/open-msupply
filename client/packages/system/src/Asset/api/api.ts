@@ -11,7 +11,7 @@ import {
   AssetLogStatusInput,
   AssetLogReasonFilterInput,
   InsertAssetCatalogueItemInput,
-  AssetCataloguePropertyFilterInput,
+  AssetPropertyFilterInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
 
@@ -145,18 +145,13 @@ export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
 
       return types;
     },
-    properties: async (
-      filter: AssetCataloguePropertyFilterInput | undefined
-    ) => {
-      const result = await sdk.assetCatalogueProperties({
+    properties: async (filter: AssetPropertyFilterInput | undefined) => {
+      const result = await sdk.assetProperties({
         filter,
       });
 
-      if (
-        result?.assetCatalogueProperties?.__typename ===
-        'AssetCataloguePropertyConnector'
-      ) {
-        return result?.assetCatalogueProperties?.nodes;
+      if (result?.assetProperties?.__typename === 'AssetPropertyConnector') {
+        return result?.assetProperties?.nodes;
       }
 
       throw new Error('Unable to fetch properties');
@@ -217,5 +212,21 @@ export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
     }
 
     throw new Error('Could not delete asset catalogue item');
+  },
+});
+
+export const getAssetPropertyQueries = (sdk: Sdk) => ({
+  get: {
+    properties: async (filter: AssetPropertyFilterInput | undefined) => {
+      const result = await sdk.assetProperties({
+        filter,
+      });
+
+      if (result?.assetProperties?.__typename === 'AssetPropertyConnector') {
+        return result?.assetProperties?.nodes;
+      }
+
+      throw new Error('Unable to fetch properties');
+    },
   },
 });
