@@ -1,7 +1,7 @@
 import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { useNameApi } from '../utils/useNameApi';
 
-export const useNames = (type: 'customer' | 'supplier' | 'facilities') => {
+export const useNames = (type: 'customer' | 'supplier') => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
   });

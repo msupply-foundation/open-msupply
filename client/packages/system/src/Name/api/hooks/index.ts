@@ -9,5 +9,6 @@ export const useName = {
     internalSuppliers: Document.useInternalSuppliers,
     list: Document.useNames,
     suppliers: Document.useSuppliers,
+    facilities: Document.useFacilities,
   },
 };
