@@ -7,6 +7,7 @@ import {
   AppNavLink,
   AppNavSection,
   SettingsIcon,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -16,10 +17,13 @@ export const ManageNav: FC = () => {
     RouteBuilder.create(AppRoute.Manage).addWildCard().build()
   );
   const t = useTranslation('app');
+  const isCentralServer = useIsCentralServerApi();
+  const visible = isCentralServer;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
       <AppNavLink
+        visible={visible}
         end={false}
         to={AppRoute.Manage}
         icon={<SettingsIcon color="primary" fontSize="small" />}
@@ -29,6 +33,7 @@ export const ManageNav: FC = () => {
       <Collapse in={isActive}>
         <List>
           <AppNavLink
+            visible={visible}
             end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Facilities)
