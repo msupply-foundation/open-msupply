@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, subCatalogue: string, properties: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
-export type AssetCataloguePropertyFragment = { __typename: 'AssetCataloguePropertyNode', id: string, key: string, allowedValues?: string | null, name: string, valueType: Types.PropertyNodeValueType };
+export type AssetPropertyFragment = { __typename: 'AssetPropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType };
 
 export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, status?: Types.StatusType | null, type?: string | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null };
 
@@ -53,12 +53,12 @@ export type AssetCategoriesQueryVariables = Types.Exact<{
 
 export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { __typename: 'AssetCategoryConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCategoryNode', id: string, name: string, classId: string }> } };
 
-export type AssetCataloguePropertiesQueryVariables = Types.Exact<{
-  filter?: Types.InputMaybe<Types.AssetCataloguePropertyFilterInput>;
+export type AssetPropertiesQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.AssetPropertyFilterInput>;
 }>;
 
 
-export type AssetCataloguePropertiesQuery = { __typename: 'Queries', assetCatalogueProperties: { __typename: 'AssetCataloguePropertyConnector', nodes: Array<{ __typename: 'AssetCataloguePropertyNode', id: string, key: string, allowedValues?: string | null, name: string, valueType: Types.PropertyNodeValueType }> } | { __typename: 'NodeError' } };
+export type AssetPropertiesQuery = { __typename: 'Queries', assetProperties: { __typename: 'AssetPropertyConnector', nodes: Array<{ __typename: 'AssetPropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType }> } };
 
 export type AssetLogReasonsQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.AssetLogReasonFilterInput>;
@@ -120,12 +120,12 @@ export const AssetCatalogueItemFragmentDoc = gql`
   properties
 }
     `;
-export const AssetCataloguePropertyFragmentDoc = gql`
-    fragment AssetCatalogueProperty on AssetCataloguePropertyNode {
+export const AssetPropertyFragmentDoc = gql`
+    fragment AssetProperty on AssetPropertyNode {
   id
   key
-  allowedValues
   name
+  allowedValues
   valueType
 }
     `;
@@ -223,22 +223,19 @@ export const AssetCategoriesDocument = gql`
   }
 }
     `;
-export const AssetCataloguePropertiesDocument = gql`
-    query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
-  assetCatalogueProperties(filter: $filter) {
-    ... on AssetCataloguePropertyConnector {
+export const AssetPropertiesDocument = gql`
+    query assetProperties($filter: AssetPropertyFilterInput) {
+  assetProperties(filter: $filter) {
+    ... on AssetPropertyConnector {
       __typename
       nodes {
         __typename
-        ...AssetCatalogueProperty
+        ...AssetProperty
       }
-    }
-    ... on NodeError {
-      __typename
     }
   }
 }
-    ${AssetCataloguePropertyFragmentDoc}`;
+    ${AssetPropertyFragmentDoc}`;
 export const AssetLogReasonsDocument = gql`
     query assetLogReasons($filter: AssetLogReasonFilterInput, $sort: AssetLogReasonSortInput, $storeId: String!) {
   assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
@@ -369,8 +366,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     assetCategories(variables?: AssetCategoriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCategoriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetCategoriesQuery>(AssetCategoriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCategories', 'query');
     },
-    assetCatalogueProperties(variables?: AssetCataloguePropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCataloguePropertiesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetCataloguePropertiesQuery>(AssetCataloguePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueProperties', 'query');
+    assetProperties(variables?: AssetPropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetPropertiesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetPropertiesQuery>(AssetPropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetProperties', 'query');
     },
     assetLogReasons(variables: AssetLogReasonsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetLogReasonsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetLogReasonsQuery>(AssetLogReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLogReasons', 'query');
@@ -480,16 +477,16 @@ export const mockAssetCategoriesQuery = (resolver: ResponseResolver<GraphQLReque
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockAssetCataloguePropertiesQuery((req, res, ctx) => {
+ * mockAssetPropertiesQuery((req, res, ctx) => {
  *   const { filter } = req.variables;
  *   return res(
- *     ctx.data({ assetCatalogueProperties })
+ *     ctx.data({ assetProperties })
  *   )
  * })
  */
-export const mockAssetCataloguePropertiesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetCataloguePropertiesQueryVariables>, GraphQLContext<AssetCataloguePropertiesQuery>, any>) =>
-  graphql.query<AssetCataloguePropertiesQuery, AssetCataloguePropertiesQueryVariables>(
-    'assetCatalogueProperties',
+export const mockAssetPropertiesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetPropertiesQueryVariables>, GraphQLContext<AssetPropertiesQuery>, any>) =>
+  graphql.query<AssetPropertiesQuery, AssetPropertiesQueryVariables>(
+    'assetProperties',
     resolver
   )
 

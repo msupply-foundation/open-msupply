@@ -308,29 +308,6 @@ export type AssetCatalogueMutationsInsertAssetCatalogueItemArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type AssetCataloguePropertyConnector = {
-  __typename: 'AssetCataloguePropertyConnector';
-  nodes: Array<AssetCataloguePropertyNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type AssetCataloguePropertyFilterInput = {
-  categoryId?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-};
-
-export type AssetCataloguePropertyNode = {
-  __typename: 'AssetCataloguePropertyNode';
-  allowedValues?: Maybe<Scalars['String']['output']>;
-  categoryId: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  key: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  valueType: PropertyNodeValueType;
-};
-
-export type AssetCataloguePropertyResponse = AssetCataloguePropertyConnector | NodeError;
-
 export type AssetCategoriesResponse = AssetCategoryConnector;
 
 export type AssetCategoryConnector = {
@@ -4815,7 +4792,6 @@ export type Queries = {
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
-  assetCatalogueProperties: AssetCataloguePropertyResponse;
   assetCategories: AssetCategoriesResponse;
   assetCategory: AssetCategoryResponse;
   assetClass: AssetClassResponse;
@@ -4976,11 +4952,6 @@ export type QueriesAssetCatalogueItemsArgs = {
 };
 
 
-export type QueriesAssetCataloguePropertiesArgs = {
-  filter?: InputMaybe<AssetCataloguePropertyFilterInput>;
-};
-
-
 export type QueriesAssetCategoriesArgs = {
   filter?: InputMaybe<AssetCategoryFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -5023,7 +4994,6 @@ export type QueriesAssetLogsArgs = {
 
 export type QueriesAssetPropertiesArgs = {
   filter?: InputMaybe<AssetPropertyFilterInput>;
-  storeId: Scalars['String']['input'];
 };
 
 

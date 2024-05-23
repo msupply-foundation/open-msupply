@@ -7,7 +7,7 @@ export const useAssetData = {
     classes: Utils.useAssetClasses,
     categories: Utils.useAssetCategories,
     types: Utils.useAssetTypes,
-    properties: Utils.useAssetCatalogueProperties,
+    properties: Utils.useAssetProperties,
   },
 
   document: {

@@ -76,16 +76,6 @@ export type InsertAssetLogMutationVariables = Types.Exact<{
 
 export type InsertAssetLogMutation = { __typename: 'Mutations', insertAssetLog: { __typename: 'AssetLogNode', id: string, assetId: string } | { __typename: 'InsertAssetLogError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
 
-export type AssetPropertyRowFragment = { __typename: 'AssetPropertyNode', id: string, key: string, name: string, valueType: Types.PropertyNodeValueType, allowedValues?: string | null };
-
-export type AssetPropertiesQueryVariables = Types.Exact<{
-  filter: Types.AssetPropertyFilterInput;
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-
-export type AssetPropertiesQuery = { __typename: 'Queries', assetProperties: { __typename: 'AssetPropertyConnector', totalCount: number, nodes: Array<{ __typename: 'AssetPropertyNode', id: string, key: string, name: string, valueType: Types.PropertyNodeValueType, allowedValues?: string | null }> } };
-
 export const AssetRowFragmentDoc = gql`
     fragment AssetRow on AssetNode {
   __typename
@@ -212,15 +202,6 @@ export const ColdchainAssetLogFragmentDoc = gql`
   }
 }
     `;
-export const AssetPropertyRowFragmentDoc = gql`
-    fragment AssetPropertyRow on AssetPropertyNode {
-  id
-  key
-  name
-  valueType
-  allowedValues
-}
-    `;
 export const AssetsDocument = gql`
     query assets($desc: Boolean, $filter: AssetFilterInput!, $first: Int, $key: AssetSortFieldInput!, $offset: Int, $storeId: String!) {
   assets(
@@ -342,20 +323,6 @@ export const InsertAssetLogDocument = gql`
   }
 }
     `;
-export const AssetPropertiesDocument = gql`
-    query assetProperties($filter: AssetPropertyFilterInput!, $storeId: String!) {
-  assetProperties(filter: $filter, storeId: $storeId) {
-    ... on AssetPropertyConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        ...AssetPropertyRow
-      }
-    }
-  }
-}
-    ${AssetPropertyRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -387,9 +354,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertAssetLog(variables: InsertAssetLogMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetLogMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogMutation>(InsertAssetLogDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLog', 'mutation');
-    },
-    assetProperties(variables: AssetPropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetPropertiesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetPropertiesQuery>(AssetPropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetProperties', 'query');
     }
   };
 }
@@ -527,22 +491,5 @@ export const mockUpdateAssetMutation = (resolver: ResponseResolver<GraphQLReques
 export const mockInsertAssetLogMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetLogMutationVariables>, GraphQLContext<InsertAssetLogMutation>, any>) =>
   graphql.mutation<InsertAssetLogMutation, InsertAssetLogMutationVariables>(
     'insertAssetLog',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAssetPropertiesQuery((req, res, ctx) => {
- *   const { filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ assetProperties })
- *   )
- * })
- */
-export const mockAssetPropertiesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetPropertiesQueryVariables>, GraphQLContext<AssetPropertiesQuery>, any>) =>
-  graphql.query<AssetPropertiesQuery, AssetPropertiesQueryVariables>(
-    'assetProperties',
     resolver
   )

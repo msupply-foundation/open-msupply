@@ -244,24 +244,3 @@ mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
     }
   }
 }
-
-fragment AssetPropertyRow on AssetPropertyNode {
-  id
-  key
-  name
-  valueType
-  allowedValues
-}
-
-query assetProperties($filter: AssetPropertyFilterInput!, $storeId: String!) {
-  assetProperties(filter: $filter, storeId: $storeId) {
-    ... on AssetPropertyConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        ...AssetPropertyRow
-      }
-    }
-  }
-}
