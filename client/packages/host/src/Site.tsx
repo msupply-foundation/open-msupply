@@ -30,6 +30,7 @@ import {
   InventoryRouter,
   DispensaryRouter,
   ColdChainRouter,
+  ManageRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -134,6 +135,12 @@ export const Site: FC = () => {
                         .addWildCard()
                         .build()}
                       element={<Sync />}
+                    />
+                    <Route
+                      path={RouteBuilder.create(AppRoute.Manage)
+                        .addWildCard()
+                        .build()}
+                      element={<ManageRouter />}
                     />
                     <Route
                       path="/"
