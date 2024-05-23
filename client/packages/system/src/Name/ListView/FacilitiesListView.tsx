@@ -6,6 +6,8 @@ import {
   createTableStore,
   NothingHere,
   useUrlQueryParams,
+  DotCell,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { useName, NameRowFragment } from '../api';
 import { NameRenderer } from '../Components';
@@ -30,6 +32,30 @@ const FacilitiesListComponent = () => {
         width: 100,
       },
       'name',
+      {
+        key: 'isSupplier',
+        label: 'label.supplier',
+        align: ColumnAlign.Center,
+        Cell: DotCell,
+        width: 75,
+        sortable: false,
+      },
+      {
+        key: 'isCustomer',
+        label: 'label.customer',
+        align: ColumnAlign.Center,
+        Cell: DotCell,
+        width: 75,
+        sortable: false,
+      },
+      {
+        key: 'isDonor',
+        label: 'label.donor',
+        align: ColumnAlign.Center,
+        Cell: DotCell,
+        width: 75,
+        sortable: false,
+      },
     ],
     {
       sortBy,
