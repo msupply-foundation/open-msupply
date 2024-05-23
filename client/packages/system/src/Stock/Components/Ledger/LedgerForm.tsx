@@ -10,10 +10,10 @@ import { LedgerRowFragment, StockLineRowFragment } from '../../api';
 import { useStockLedger } from '../../api/hooks/useStockLedger';
 import { ColumnKey, useLedgerColumns } from './useLedgerColumns';
 
-interface LedgerFormProps {
+interface LedgerTableProps {
   stockLine: StockLineRowFragment;
 }
-export const LedgerForm: FC<LedgerFormProps> = ({ stockLine }) => {
+export const LedgerTable: FC<LedgerTableProps> = ({ stockLine }) => {
   const t = useTranslation('inventory');
 
   const [sortBy, setSortBy] = useState<SortBy<LedgerRowFragment>>({

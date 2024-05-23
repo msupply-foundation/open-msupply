@@ -11,12 +11,14 @@ import {
   useParams,
   useConfirmationModal,
   useNotification,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
 import { useStockLine } from '../api';
 import { StockLineForm } from '../Components/StockLineForm';
-import { LedgerForm } from '../Components/Ledger';
+import { LedgerTable } from '../Components/Ledger';
+import { Footer } from './Footer';
 
 export const StockLineDetailView: React.FC = () => {
   const { id } = useParams();
@@ -31,6 +33,9 @@ export const StockLineDetailView: React.FC = () => {
   // const { dispatchEvent, addEventListener, removeEventListener } =
   //   usePluginEvents();
   // const [hasChanged, setHasChanged] = useState(false);
+  const {
+    urlQuery: { tab },
+  } = useUrlQuery();
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
   const { setSuffix } = useBreadcrumbs();
@@ -74,12 +79,6 @@ export const StockLineDetailView: React.FC = () => {
           draft={draft}
           onUpdate={updatePatch}
           // plugins={plugins}
-          footerProps={{
-            isSaving: isUpdating,
-            showSaveConfirmation,
-            showCancelConfirmation,
-            isDirty,
-          }}
         />
       ),
       value: t('label.details'),
@@ -96,7 +95,7 @@ export const StockLineDetailView: React.FC = () => {
       value: t('label.log'),
     },
     {
-      Component: <LedgerForm stockLine={draft} />,
+      Component: <LedgerTable stockLine={draft} />,
       value: t('label.ledger'),
     },
   ];
@@ -114,12 +113,19 @@ export const StockLineDetailView: React.FC = () => {
   //   return () => removeEventListener(listener);
   // }, [addEventListener, removeEventListener]);
 
+  const footerProps = {
+    isSaving: isUpdating,
+    showSaveConfirmation,
+    showCancelConfirmation,
+    isDirty,
+  };
+
   return (
     <>
       <AppBarButtons />
-      {/* <Toolbar /> */}
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />
+        {(tab === t('label.details') || !tab) && <Footer {...footerProps} />}
       </TableProvider>
     </>
   );

@@ -21,7 +21,7 @@ import {
   useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 const StockListComponent: FC = () => {
   const {
