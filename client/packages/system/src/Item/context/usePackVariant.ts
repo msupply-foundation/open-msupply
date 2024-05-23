@@ -79,6 +79,10 @@ export const useIsPackVariantsEnabled = () => {
   // return Object.keys(items).length > 0;
 };
 
+export const useIsDemographicsEnabled = () => {
+  return Environment.FEATURE_DEMOGRAPHIC_INDICATORS;
+};
+
 export const usePackVariant = (
   itemId: string,
   variantName: string | null
