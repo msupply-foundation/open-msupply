@@ -10,6 +10,7 @@ import {
   TableProvider,
   createTableStore,
   useColumns,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 
 import { percentageColumn } from './PercentageColumn';
@@ -86,6 +87,13 @@ const headerData: HeaderValue[] = [
 const currentYear = new Date().getFullYear();
 
 export const IndicatorsDemographicsComponent: FC = () => {
+  const {
+    updateSortQuery,
+    queryParams: { sortBy },
+  } = useUrlQueryParams({
+    initialSort: { key: 'percentage', dir: 'desc' },
+  });
+
   const draftRows: Record<string, Row> = {};
   rows.forEach(row => (draftRows[row.id] = { ...row }));
   const draftHeaders: Record<string, HeaderValue> = {};
@@ -109,7 +117,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
 
     const updatedRow = calculateAcrossRow({ ...patch } as Row, headerDraft);
 
-    setDraft({ ...updatedDraft, [parseInt(patch.id)]: updatedRow });
+    setDraft({ ...updatedDraft, [patch.id]: updatedRow });
   };
 
   // generic function for handling percentage change, and then re calculating the values of that year
@@ -184,7 +192,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
     }
   };
 
-  // TODO ave draft to DB
+  // TODO save draft to DB
   const save = () => {
     console.info('api calling save to DB');
   };
@@ -235,7 +243,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
         label: currentYear + 5,
       },
     ],
-    {},
+    { sortBy, onChangeSortBy: updateSortQuery },
     [draft]
   );
 

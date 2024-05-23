@@ -37,10 +37,13 @@ export const percentageColumn = <
         <>
           <BasicTextInput
             disabled={isDisabled}
-            defaultValue={column.accessor({ rowData })}
+            defaultValue={column.accessor({ rowData }) as number}
             onBlur={e => {
               const updatedRowData = { ...rowData };
-              column.setter({ ...updatedRowData, percentage: e.target.value });
+              column.setter({
+                ...updatedRowData,
+                percentage: e.target.value,
+              });
             }}
           />
           <Box ml={1} />
