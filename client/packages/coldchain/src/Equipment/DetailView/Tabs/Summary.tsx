@@ -11,6 +11,7 @@ import {
   ArrayUtils,
   Box,
   Formatter,
+  useAuthContext,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
@@ -99,6 +100,7 @@ const Row = ({
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const t = useTranslation('coldchain');
   const { localisedDate } = useFormatDateTime();
+  const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
 
   if (!draft) return null;
@@ -184,35 +186,37 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
         </Section>
-        <Section heading={t('heading.cold-chain')}>
-          <Row label={t('label.cold-storage-location')}>
-            {locations ? (
-              <AutocompleteMulti
-                isOptionEqualToValue={(option, value) =>
-                  option.value === value.value
-                }
-                defaultValue={defaultLocations}
-                filterSelectedOptions
-                getOptionLabel={option => option.label}
-                inputProps={{ fullWidth: true }}
-                onChange={(
-                  _event,
-                  newSelectedLocations: {
-                    label: string;
-                    value: string;
-                  }[]
-                ) => {
-                  onChange({
-                    locationIds: ArrayUtils.dedupe(
-                      newSelectedLocations.map(location => location.value)
-                    ),
-                  });
-                }}
-                options={locations}
-              />
-            ) : null}
-          </Row>
-        </Section>
+        {(!isCentralServer || draft.storeId == storeId) && (
+          <Section heading={t('heading.cold-chain')}>
+            <Row label={t('label.cold-storage-location')}>
+              {locations ? (
+                <AutocompleteMulti
+                  isOptionEqualToValue={(option, value) =>
+                    option.value === value.value
+                  }
+                  defaultValue={defaultLocations}
+                  filterSelectedOptions
+                  getOptionLabel={option => option.label}
+                  inputProps={{ fullWidth: true }}
+                  onChange={(
+                    _event,
+                    newSelectedLocations: {
+                      label: string;
+                      value: string;
+                    }[]
+                  ) => {
+                    onChange({
+                      locationIds: ArrayUtils.dedupe(
+                        newSelectedLocations.map(location => location.value)
+                      ),
+                    });
+                  }}
+                  options={locations}
+                />
+              ) : null}
+            </Row>
+          </Section>
+        )}
       </Container>
       <Box
         marginTop={4}
@@ -246,9 +250,9 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
         </Section>
-        {draft.properties.length === 0 ? null : (
+        {draft.catalogProperties.length === 0 ? null : (
           <Section heading={t('label.catalogue-properties')}>
-            {draft.properties.map(property => (
+            {draft.catalogProperties.map(property => (
               <Row key={property.id} label={property.name}>
                 <BasicTextInput
                   value={formatPropertyValue(property, t)}
@@ -259,6 +263,21 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             ))}
           </Section>
         )}
+
+        {!draft.parsedProperties ? null : (
+          <Section heading={t('label.asset-properties')}>
+            {Object.entries(draft.parsedProperties).map(([key, value]) => (
+              <Row key={key} label={`${value}`}>
+                <BasicTextInput
+                  value={draft.parsedProperties[key]}
+                  disabled
+                  fullWidth
+                />
+              </Row>
+            ))}
+          </Section>
+        )}
+
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput

@@ -1,6 +1,7 @@
 import { SortBy } from '@common/hooks';
 import { Sdk, TemperatureBreachFragment } from './operations.generated';
 import {
+  DatetimeFilterInput,
   RecordPatch,
   TemperatureBreachFilterInput,
   TemperatureBreachSortFieldInput,
@@ -10,7 +11,9 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<TemperatureBreachFragment>;
-  filterBy: TemperatureBreachFilterInput | null;
+  filterBy:
+    | (TemperatureBreachFilterInput & { datetime?: DatetimeFilterInput })
+    | null;
 };
 
 export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
@@ -18,14 +21,30 @@ export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
     list:
       ({ first, offset, sortBy, filterBy }: ListParams) =>
       async () => {
+        const key =
+          sortBy.key === 'datetime' || sortBy.key === 'temperature'
+            ? TemperatureBreachSortFieldInput.StartDatetime
+            : (sortBy.key as TemperatureBreachSortFieldInput);
+
+        let filter = undefined;
+        if (filterBy !== null) {
+          const { datetime, ...rest } = filterBy;
+          if (!!datetime) {
+            filter = {
+              ...rest,
+              startDatetime: datetime,
+            };
+          }
+        }
+
         const result = await sdk.temperature_breaches({
           storeId,
           page: { offset, first },
           sort: {
-            key: sortBy.key as TemperatureBreachSortFieldInput,
+            key,
             desc: !!sortBy.isDesc,
           },
-          filter: filterBy,
+          filter,
         });
 
         return result?.temperatureBreaches;
