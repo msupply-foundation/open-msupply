@@ -284,7 +284,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
           <Row label={t('label.needs-replacement')}>
             <Checkbox
-              checked={draft.needsReplacement as boolean}
+              checked={Boolean(draft.needsReplacement)}
               onChange={e => onChange({ needsReplacement: e.target.checked })}
             />
           </Row>
