@@ -6,7 +6,7 @@ import {
 import { Sdk, NameRowFragment } from './operations.generated';
 
 export type ListParams = {
-  type?: 'supplier' | 'customer' | 'facilities';
+  type?: 'supplier' | 'customer';
   first?: number;
   offset?: number;
   sortBy?: SortBy<NameRowFragment>;
@@ -78,7 +78,32 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
+    facilities: async ({
+      first,
+      offset,
+      sortBy,
+    }: ListParams): Promise<{
+      nodes: NameRowFragment[];
+      totalCount: number;
+    }> => {
+      const key =
+        sortBy?.key === 'name'
+          ? NameSortFieldInput.Name
+          : NameSortFieldInput.Code;
 
+      const result = await sdk.names({
+        first,
+        offset,
+        key,
+        desc: !!sortBy?.isDesc,
+        storeId,
+        filter: {
+          type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
+        },
+      });
+
+      return result?.names;
+    },
     list: async ({
       type = 'supplier',
       first,
@@ -93,12 +118,6 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
           ? NameSortFieldInput.Name
           : NameSortFieldInput.Code;
 
-      const typeFilter = {
-        supplier: { isSupplier: true },
-        customer: { isCustomer: true },
-        facilities: {},
-      }[type];
-
       const result = await sdk.names({
         first,
         offset,
@@ -106,7 +125,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         desc: !!sortBy?.isDesc,
         storeId,
         filter: {
-          ...typeFilter,
+          [type === 'customer' ? 'isCustomer' : 'isSupplier']: true,
           type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
         },
       });
