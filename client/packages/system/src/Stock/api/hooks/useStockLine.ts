@@ -78,8 +78,15 @@ export function useStockLine(id?: string) {
     }
   };
 
-  const create = () => createMutation(draft).then(() => setIsDirty(false));
-  const update = () => updateMutation(patch).then(() => setIsDirty(false));
+  const create = async () => {
+    const result = await createMutation(draft);
+    setIsDirty(false);
+    return result;
+  };
+  const update = async () => {
+    updateMutation(patch);
+    setIsDirty(false);
+  };
 
   return {
     query: { data: data?.nodes[0], isLoading, error },

@@ -10,6 +10,8 @@ import {
   Box,
   useNotification,
   AdjustmentTypeInput,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
@@ -18,6 +20,7 @@ import {
   StockItemSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface NewStockLineModalProps {
   isOpen: boolean;
@@ -29,6 +32,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   onClose,
 }) => {
   const t = useTranslation('inventory');
+  const navigate = useNavigate();
   const { success } = useNotification();
 
   const { Modal } = useDialog({ isOpen, onClose });
@@ -45,10 +49,16 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
 
   const save = async () => {
     try {
-      await create();
+      const result = await create();
       const successSnack = success(t('messages.stock-line-saved'));
       successSnack();
       onClose();
+      navigate(
+        RouteBuilder.create(AppRoute.Inventory)
+          .addPart(AppRoute.Stock)
+          .addPart(result.insertStockLine.id)
+          .build()
+      );
     } catch {
       // todo
     }
