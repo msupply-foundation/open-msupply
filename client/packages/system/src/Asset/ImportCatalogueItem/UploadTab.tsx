@@ -67,7 +67,6 @@ const processProperties = (
 ) => {
   properties?.forEach(property => {
     const value = row[property.name] ?? row[property.key];
-
     if (!!value?.trim()) {
       if (!!property.allowedValues) {
         const allowedValues = property.allowedValues.split(',');
@@ -157,9 +156,11 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
     if (csvFile) {
       setIsLoading(true);
       Papa.parse(csvFile, {
+        delimiter: ',',
         header: true,
         worker: true,
         skipEmptyLines: true,
+        fastMode: false,
         chunkSize: 100 * 1024, // 100kb
         chunk: processUploadedDataChunk,
         complete: () => {
@@ -174,7 +175,19 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
 
   const processUploadedDataChunk = (data: ParseResult<ParsedImport>) => {
     if (!data.data || !Array.isArray(data.data)) {
-      setErrorMessage(t('messages.import-error'));
+      setErrorMessage(
+        t('messages.upload-error', {
+          error: t('messages.no-data-found'),
+        })
+      );
+    }
+
+    if (data.errors.length > 0) {
+      setErrorMessage(
+        t('messages.upload-error', {
+          error: data.errors[0]?.message + ' ROW: ' + data.errors[0]?.row,
+        })
+      );
     }
 
     const csvRows = data.data;
