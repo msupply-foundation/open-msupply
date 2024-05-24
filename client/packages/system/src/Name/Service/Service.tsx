@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { NameListView } from '../ListView';
-import { FacilitiesListView } from '../ListView/FacilitiesListView';
+import { FacilitiesListView } from '../ListView/Facilities/ListView';
 
 export const Service: FC = () => {
   const customersRoute = RouteBuilder.create(AppRoute.Customer).build();

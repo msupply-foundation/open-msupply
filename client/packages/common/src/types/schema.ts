@@ -4160,6 +4160,8 @@ export type NameFilterInput = {
   address2?: InputMaybe<StringFilterInput>;
   /** Filter by code */
   code?: InputMaybe<StringFilterInput>;
+  /** Search filter across name or code */
+  codeOrName?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
   email?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;

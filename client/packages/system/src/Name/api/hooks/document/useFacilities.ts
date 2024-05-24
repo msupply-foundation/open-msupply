@@ -3,13 +3,10 @@ import { useNameApi } from '../utils/useNameApi';
 
 export const useFacilities = () => {
   const api = useNameApi();
-  const {
-    queryParams: { first, offset, sortBy },
-  } = useUrlQueryParams({
+  const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
+    filters: [{ key: 'codeOrName' }],
   });
-
-  const queryParams = { first, offset, sortBy };
 
   return useQuery(api.keys.paramList(queryParams), () =>
     api.get.facilities(queryParams)
