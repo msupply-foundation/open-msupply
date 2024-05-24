@@ -9,11 +9,13 @@ import {
   DotCell,
   ColumnAlign,
 } from '@openmsupply-client/common';
-import { useName, NameRowFragment } from '../api';
-import { NameRenderer } from '../Components';
+import { useName, NameRowFragment } from '../../api';
+import { NameRenderer } from '../../Components';
+import { Toolbar } from './Toolbar';
 
 const FacilitiesListComponent = () => {
   const {
+    filter,
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
@@ -66,6 +68,7 @@ const FacilitiesListComponent = () => {
 
   return (
     <>
+      <Toolbar filter={filter} />
       <DataTable
         id="name-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
