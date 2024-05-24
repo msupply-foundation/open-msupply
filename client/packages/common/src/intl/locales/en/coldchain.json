@@ -103,6 +103,8 @@
   "messages.error-generic_other": "{{count}} errors",
   "messages.error-no-file-selected": "No file selected",
   "messages.fridge-tag-import-successful": "Success! {{numberOfLogs}} logs and {{numberOfBreaches}} breaches imported.",
+  "messages.upload-error": "Error with uploaded file {{ error }}",
+  "messages.no-data-found": "No data found",
   "messages.import-error": "Some or all assets failed to import. Click export to download a csv file with rows which caused an error. Error free rows will have been imported",
   "messages.import-error-on-upload": "Import error on upload. Please fix errors and re upload",
   "messages.import-generic": "import successful",

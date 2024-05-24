@@ -44,6 +44,7 @@ const itemParsers = {
     classId: input.assetClassId,
     categoryId: input.assetCategoryId,
     typeId: input.assetTypeId,
+    properties: input.properties,
   }),
 };
 
