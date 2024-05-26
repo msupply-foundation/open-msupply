@@ -565,6 +565,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   properties: Scalars['String']['output'];
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -2149,6 +2150,7 @@ export type InsertAssetInput = {
   donorNameId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  needsReplacement?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   properties?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -4194,6 +4196,8 @@ export type NameFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by donor property */
+  isDonor?: InputMaybe<Scalars['Boolean']['input']>;
   isPatient?: InputMaybe<Scalars['Boolean']['input']>;
   /** Is this name a store */
   isStore?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6618,6 +6622,7 @@ export type UpdateAssetInput = {
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
   locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  needsReplacement?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   properties?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;

@@ -1,3 +1,4 @@
+export * from './DonorSearchInput';
 export * from './SupplierSearchInput';
 export * from './SupplierSearchModal';
 export * from './CustomerSearchInput';
