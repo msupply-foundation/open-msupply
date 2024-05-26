@@ -43,13 +43,11 @@ export const Footer: FC<FooterProps> = ({
             gap={2}
             marginLeft="auto"
           >
-            {isDirty && (
-              <DialogButton
-                variant="cancel"
-                disabled={isSaving}
-                onClick={() => showCancelConfirmation()}
-              />
-            )}
+            <DialogButton
+              variant="cancel"
+              disabled={!isDirty}
+              onClick={() => showCancelConfirmation()}
+            />
             <LoadingButton
               color="secondary"
               disabled={!isDirty}

@@ -32,7 +32,6 @@ export const StockLineDetailView: React.FC = () => {
   } = useStockLine(id);
   // const { dispatchEvent, addEventListener, removeEventListener } =
   //   usePluginEvents();
-  // const [hasChanged, setHasChanged] = useState(false);
   const {
     urlQuery: { tab },
   } = useUrlQuery();
@@ -99,8 +98,6 @@ export const StockLineDetailView: React.FC = () => {
       value: t('label.ledger'),
     },
   ];
-
-  // const onChange = () => setHasChanged(true);
 
   // useEffect(() => {
   //   const listener: PluginEventListener = {

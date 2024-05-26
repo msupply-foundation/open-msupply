@@ -16,7 +16,7 @@ export interface DraftStockLine extends StockLineRowFragment {
   inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null;
 }
 
-const defaultDraftStockLine = {
+const defaultDraftStockLine: DraftStockLine = {
   __typename: 'StockLineNode',
   id: '',
   itemId: '',
