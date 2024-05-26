@@ -1,4 +1,6 @@
-use repository::asset_catalogue_property_row::{AssetCataloguePropertyRow, PropertyValueType};
+use repository::{
+    asset_catalogue_property_row::AssetCataloguePropertyRow, types::PropertyValueType,
+};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};

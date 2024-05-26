@@ -43,6 +43,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       multiplier = 10,
       value,
       noFormatting = false,
+      fullWidth,
       ...props
     },
     ref
@@ -115,7 +116,10 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       <BasicTextInput
         ref={ref}
         sx={{
-          '& .MuiInput-input': { textAlign: 'right', width: `${width}px` },
+          '& .MuiInput-input': {
+            textAlign: 'right',
+            width: fullWidth ? undefined : `${width}px`,
+          },
           ...sx,
         }}
         inputMode="numeric"
@@ -180,6 +184,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           }
         }}
         onFocus={e => e.target.select()}
+        fullWidth={fullWidth}
         {...props}
         value={textValue}
       />

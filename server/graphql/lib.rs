@@ -10,6 +10,7 @@ use actix_web::{guard, HttpRequest};
 use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+use graphql_asset::property::AssetPropertiesQueries;
 use graphql_batch_mutations::BatchMutations;
 use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
@@ -22,7 +23,7 @@ use graphql_general::{
 };
 
 use graphql_asset::{
-    AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries,
+    logs::{AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries},
     AssetMutations, AssetQueries,
 };
 use graphql_asset_catalogue::AssetCatalogueMutations;
@@ -109,6 +110,7 @@ pub struct Queries(
     pub AssetQueries,
     pub AssetLogQueries,
     pub AssetLogReasonQueries,
+    pub AssetPropertiesQueries,
     pub DemographicIndicatorQueries,
 );
 
@@ -135,6 +137,7 @@ impl Queries {
             AssetQueries,
             AssetLogQueries,
             AssetLogReasonQueries,
+            AssetPropertiesQueries,
             DemographicIndicatorQueries,
         )
     }
