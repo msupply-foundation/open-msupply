@@ -12,7 +12,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         CREATE TABLE demographic_indicator (
             id TEXT NOT NULL PRIMARY KEY,
-            name TEXT NOT NULL,
+            name TEXT NOT NULL NOT NULL,
+            base_year SMALLINT NOT NULL,
+            base_population {DOUBLE},
             population_percentage {DOUBLE} NOT NULL,
             year_1_projection {DOUBLE} NOT NULL,
             year_2_projection {DOUBLE} NOT NULL,
@@ -28,7 +30,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         CREATE TABLE demographic_projection (
             id TEXT NOT NULL PRIMARY KEY,
-            population_percentage {DOUBLE} NOT NULL,
+            base_year SMALLINT NOT NULL,
             year_1 {DOUBLE} NOT NULL,
             year_2 {DOUBLE} NOT NULL,
             year_3 {DOUBLE} NOT NULL,

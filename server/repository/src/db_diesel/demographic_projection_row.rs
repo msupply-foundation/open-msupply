@@ -12,6 +12,7 @@ use diesel::prelude::*;
 table! {
     demographic_projection(id) {
         id -> Text,
+        base_year -> SmallInt,
         year_1 -> Double,
         year_2 -> Double,
         year_3 -> Double,
@@ -24,6 +25,7 @@ table! {
 #[diesel(table_name = demographic_projection)]
 pub struct DemographicProjectionRow {
     pub id: String,
+    pub base_year: i16,
     pub year_1: f64,
     pub year_2: f64,
     pub year_3: f64,

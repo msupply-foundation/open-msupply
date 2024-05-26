@@ -16,6 +16,8 @@ pub enum InsertDemographicIndicatorError {
 pub struct InsertDemographicIndicator {
     pub id: String,
     pub name: Option<String>,
+    pub base_year: Option<i16>,
+    pub base_population: Option<f64>,
     pub population_percentage: Option<f64>,
     pub year_1_projection: Option<f64>,
     pub year_2_projection: Option<f64>,
@@ -58,6 +60,8 @@ pub fn generate(
     InsertDemographicIndicator {
         id,
         name,
+        base_year,
+        base_population,
         population_percentage,
         year_1_projection,
         year_2_projection,
@@ -69,6 +73,8 @@ pub fn generate(
     DemographicIndicatorRow {
         id,
         name: name.unwrap_or_default(),
+        base_year: base_year.unwrap_or_default(),
+        base_population: base_population.unwrap_or_default(),
         population_percentage: population_percentage.unwrap_or_default(),
         year_1_projection: year_1_projection.unwrap_or_default(),
         year_2_projection: year_2_projection.unwrap_or_default(),
