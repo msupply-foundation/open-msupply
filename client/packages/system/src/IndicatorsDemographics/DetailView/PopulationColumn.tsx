@@ -3,16 +3,16 @@ import { Box } from '@mui/material';
 import { BasicTextInput } from '@common/components';
 import { ColumnDefinition, RecordWithId } from 'packages/common/src';
 
-interface RecordWithIdWithPercentageFields extends RecordWithId {
-  percentage?: number | null;
+interface RecordWithIdWithRequiredFields extends RecordWithId {
+  0?: number | null;
   name?: string;
 }
 
-export const percentageColumn = <
-  T extends RecordWithIdWithPercentageFields,
+export const populationColumn = <
+  T extends RecordWithIdWithRequiredFields,
 >(): ColumnDefinition<T> => {
   return {
-    label: 'label.percentage',
+    label: 'label.population',
     setter: () => {
       if (process.env['NODE_ENV']) {
         throw new Error(
@@ -24,8 +24,8 @@ export const percentageColumn = <
         );
       }
     },
-    accessor: ({ rowData }) => rowData.percentage,
-    key: 'percentage',
+    accessor: ({ rowData }) => rowData[0],
+    key: '0',
     Cell: ({ rowData, column, isDisabled }) => (
       <Box
         sx={{
@@ -37,13 +37,13 @@ export const percentageColumn = <
       >
         <>
           <BasicTextInput
-            disabled={isDisabled || rowData.name == 'General Population'}
+            disabled={isDisabled || rowData.name != 'General Population'}
             defaultValue={column.accessor({ rowData }) as number}
             onBlur={e => {
               const updatedRowData = { ...rowData };
               column.setter({
                 ...updatedRowData,
-                percentage: e.target.value,
+                0: parseInt(e.target.value),
               });
             }}
           />

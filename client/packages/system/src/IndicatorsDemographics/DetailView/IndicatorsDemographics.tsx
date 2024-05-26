@@ -16,6 +16,7 @@ import {
 import { percentageColumn } from './PercentageColumn';
 import { nameColumn } from './NameColumn';
 import { GrowthRow } from './GrowthRow';
+import { populationColumn } from './PopulationColumn';
 
 export interface Row {
   isNew: boolean;
@@ -102,6 +103,24 @@ export const IndicatorsDemographicsComponent: FC = () => {
   const [headerDraft, setHeaderDraft] =
     useState<Record<string, HeaderValue>>(draftHeaders);
 
+  const PopulationChange = (patch: RecordPatch<Row>) => {
+    const currentDraft = { ...draft, [parseInt(patch.id)]: patch } as Record<
+      string,
+      Row
+    >;
+    let updatedDraft = {} as Record<string, Row>;
+    const indexValue = patch[0] ?? undefined;
+    Object.keys(currentDraft).forEach(rowKey => {
+      const updatedRow = calculateAcrossRow(
+        currentDraft[rowKey] as Row,
+        draftHeaders,
+        indexValue
+      );
+      updatedDraft = { ...updatedDraft, [parseInt(updatedRow.id)]: updatedRow };
+    });
+    setDraft({ ...currentDraft, ...updatedDraft });
+  };
+
   const setter = (patch: RecordPatch<Row>) => {
     const updatedDraft = { ...draft };
 
@@ -140,12 +159,10 @@ export const IndicatorsDemographicsComponent: FC = () => {
     const currentDraft = { ...draft };
     let updatedDraft = {};
     Object.keys(currentDraft).forEach(row => {
-      // console.log('calculating: ', draft[row]);
       const updatedRow = calculateAcrossRow(
         currentDraft[row] as Row,
         updatedHeader
       );
-      // console.log('updatedRow', updatedRow);
       updatedDraft = { ...updatedDraft, [parseInt(updatedRow.id)]: updatedRow };
     });
     setHeaderDraft(updatedHeader);
@@ -154,17 +171,24 @@ export const IndicatorsDemographicsComponent: FC = () => {
 
   const calculateAcrossRow = (
     row: Row,
-    updatedHeader: { [x: string]: HeaderValue }
+    updatedHeader: { [x: string]: HeaderValue },
+    indexValue?: number | undefined
   ) => {
     let updatedRow = row;
     const rowNumberKeys = Object.keys(row).filter(
       key => !isNaN(parseFloat(key))
     );
+
     Object.keys(rowNumberKeys).forEach(key => {
       const columnKey = parseInt(key);
       updatedRow = {
         ...updatedRow,
-        [columnKey]: recursiveCalculate(columnKey, updatedHeader, row),
+        [columnKey]: recursiveCalculate(
+          columnKey,
+          updatedHeader,
+          row,
+          indexValue
+        ),
       };
     });
     return updatedRow;
@@ -174,21 +198,24 @@ export const IndicatorsDemographicsComponent: FC = () => {
   const recursiveCalculate = (
     key: number,
     updatedHeader: { [x: string]: HeaderValue },
-    row: Row
+    row: Row,
+    indexValue: number | undefined
   ): number => {
     const headerValue = updatedHeader[key];
     if (key > 0) {
       return headerValue
         ? (NumUtils.round(
-            recursiveCalculate(key - 1, updatedHeader, row) *
-              (headerValue.value ?? 0)
+            recursiveCalculate(key - 1, updatedHeader, row, indexValue) *
+              ((headerValue.value ?? 0) / 100 + 1)
           ) as number)
         : 0;
     } else {
-      const indexValue = Object.keys(draft)[0];
-      const indexRow = indexValue ? draft[indexValue] : undefined;
+      const indexKey = Object.keys(draft)[0];
+      const indexRow = indexKey ? draft[indexKey] : undefined;
       const number = indexRow ? indexRow[0] : 0;
-      return NumUtils.round(number * ((row?.percentage ?? 0) / 100));
+      return NumUtils.round(
+        (indexValue ?? number) * ((row?.percentage ?? 0) / 100)
+      );
     }
   };
 
@@ -202,44 +229,39 @@ export const IndicatorsDemographicsComponent: FC = () => {
     console.info('re set data to DB saved (cancel all changes)');
   };
 
-  const columns = useColumns(
+  const columns = useColumns<Row>(
     [
       [percentageColumn(), { setter }],
       [nameColumn(), { setter }],
-      {
-        key: '0',
-        width: 180,
-        align: ColumnAlign.Center,
-        label: currentYear,
-      },
+      [populationColumn(), { setter: PopulationChange }],
       {
         key: '1',
-        width: 180,
-        align: ColumnAlign.Center,
+        width: 150,
+        align: ColumnAlign.Left,
         label: currentYear + 1,
       },
       {
         key: '2',
-        width: 180,
-        align: ColumnAlign.Center,
+        width: 150,
+        align: ColumnAlign.Left,
         label: currentYear + 2,
       },
       {
         key: '3',
-        width: 180,
-        align: ColumnAlign.Center,
+        width: 150,
+        align: ColumnAlign.Left,
         label: currentYear + 3,
       },
       {
         key: '4',
-        width: 180,
-        align: ColumnAlign.Center,
+        width: 150,
+        align: ColumnAlign.Left,
         label: currentYear + 4,
       },
       {
         key: '5',
-        width: 180,
-        align: ColumnAlign.Center,
+        width: 150,
+        align: ColumnAlign.Left,
         label: currentYear + 5,
       },
     ],
