@@ -105,7 +105,7 @@ impl SyncTranslation for ReportTranslation {
             LegacyReportContext::Repack => ContextType::Repack,
             LegacyReportContext::Others => {
                 return Ok(PullTranslateResult::Ignored(
-                    "Unknown report context".to_string(),
+                    "Unsupported report context".to_string(),
                 ))
             }
         };

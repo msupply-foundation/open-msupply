@@ -92,6 +92,7 @@ export enum ActivityLogNodeType {
   AssetLogCreated = 'ASSET_LOG_CREATED',
   AssetLogReasonCreated = 'ASSET_LOG_REASON_CREATED',
   AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
+  AssetPropertyCreated = 'ASSET_PROPERTY_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
@@ -553,21 +554,60 @@ export type AssetNode = {
   assetClass?: Maybe<AssetClassNode>;
   assetNumber?: Maybe<Scalars['String']['output']>;
   assetType?: Maybe<AssetTypeNode>;
+  catalogProperties: Array<AssetCatalogueItemPropertyValueNode>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
   documents: SyncFileReferenceConnector;
+  donor?: Maybe<NameNode>;
+  donorNameId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
-  properties: Array<AssetCatalogueItemPropertyValueNode>;
+  properties: Scalars['String']['output'];
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
   statusLog?: Maybe<AssetLogNode>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+  warrantyEnd?: Maybe<Scalars['NaiveDate']['output']>;
+  warrantyStart?: Maybe<Scalars['NaiveDate']['output']>;
+};
+
+
+export type AssetNodeDonorArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type AssetPropertiesResponse = AssetPropertyConnector;
+
+export type AssetPropertyConnector = {
+  __typename: 'AssetPropertyConnector';
+  nodes: Array<AssetPropertyNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetPropertyFilterInput = {
+  assetCategoryId?: InputMaybe<EqualFilterStringInput>;
+  assetClassId?: InputMaybe<EqualFilterStringInput>;
+  assetTypeId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  key?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetPropertyNode = {
+  __typename: 'AssetPropertyNode';
+  allowedValues?: Maybe<Scalars['String']['output']>;
+  assetCategoryId?: Maybe<Scalars['String']['output']>;
+  assetClassId?: Maybe<Scalars['String']['output']>;
+  assetTypeId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  valueType: PropertyNodeValueType;
 };
 
 export enum AssetSortFieldInput {
@@ -1744,12 +1784,14 @@ export type EqualFilterActivityLogTypeInput = {
 
 export type EqualFilterBigFloatingNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
+  equalAnyOrNull?: InputMaybe<Array<Scalars['Float']['input']>>;
   equalTo?: InputMaybe<Scalars['Float']['input']>;
   notEqualTo?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
+  equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1804,6 +1846,7 @@ export type EqualFilterItemTypeInput = {
 
 export type EqualFilterNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
+  equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -1846,6 +1889,7 @@ export type EqualFilterStocktakeStatusInput = {
 
 export type EqualFilterStringInput = {
   equalAny?: InputMaybe<Array<Scalars['String']['input']>>;
+  equalAnyOrNull?: InputMaybe<Array<Scalars['String']['input']>>;
   equalTo?: InputMaybe<Scalars['String']['input']>;
   notEqualTo?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2102,13 +2146,17 @@ export type InsertAssetInput = {
   catalogueItemId?: InputMaybe<Scalars['String']['input']>;
   categoryId?: InputMaybe<Scalars['String']['input']>;
   classId?: InputMaybe<Scalars['String']['input']>;
+  donorNameId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
+  properties?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
   storeId?: InputMaybe<Scalars['String']['input']>;
   typeId?: InputMaybe<Scalars['String']['input']>;
+  warrantyEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
+  warrantyStart?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type InsertAssetLogError = {
@@ -4821,6 +4869,7 @@ export type Queries = {
   assetClasses: AssetClassesResponse;
   assetLogReasons: AssetLogReasonsResponse;
   assetLogs: AssetLogsResponse;
+  assetProperties: AssetPropertiesResponse;
   assetType: AssetTypeResponse;
   assetTypes: AssetTypesResponse;
   /** Query omSupply "assets" entries */
@@ -5015,6 +5064,12 @@ export type QueriesAssetLogsArgs = {
   filter?: InputMaybe<AssetLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetLogSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetPropertiesArgs = {
+  filter?: InputMaybe<AssetPropertyFilterInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6331,7 +6386,8 @@ export enum SyncErrorVariant {
   SiteHasNoStore = 'SITE_HAS_NO_STORE',
   SiteNameNotFound = 'SITE_NAME_NOT_FOUND',
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
-  Unknown = 'UNKNOWN'
+  Unknown = 'UNKNOWN',
+  V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE'
 }
 
 export type SyncFileReferenceConnector = {
@@ -6558,13 +6614,17 @@ export type UpdateAssetErrorInterface = {
 export type UpdateAssetInput = {
   assetNumber?: InputMaybe<Scalars['String']['input']>;
   catalogueItemId?: InputMaybe<NullableStringUpdate>;
+  donorNameId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
   locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
   notes?: InputMaybe<Scalars['String']['input']>;
+  properties?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
   storeId?: InputMaybe<NullableStringUpdate>;
+  warrantyEnd?: InputMaybe<NullableDateUpdate>;
+  warrantyStart?: InputMaybe<NullableDateUpdate>;
 };
 
 export type UpdateAssetResponse = AssetNode | UpdateAssetError;

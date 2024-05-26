@@ -56,6 +56,10 @@ pub struct UpdateAssetInput {
     pub installation_date: Option<NullableUpdateInput<NaiveDate>>,
     pub replacement_date: Option<NullableUpdateInput<NaiveDate>>,
     pub location_ids: Option<Vec<String>>,
+    pub properties: Option<String>,
+    pub donor_name_id: Option<NullableUpdateInput<String>>,
+    pub warranty_start: Option<NullableUpdateInput<NaiveDate>>,
+    pub warranty_end: Option<NullableUpdateInput<NaiveDate>>,
 }
 
 impl From<UpdateAssetInput> for UpdateAsset {
@@ -70,6 +74,10 @@ impl From<UpdateAssetInput> for UpdateAsset {
             installation_date,
             replacement_date,
             location_ids,
+            properties,
+            donor_name_id,
+            warranty_start,
+            warranty_end,
         }: UpdateAssetInput,
     ) -> Self {
         UpdateAsset {
@@ -92,6 +100,16 @@ impl From<UpdateAssetInput> for UpdateAsset {
                 value: replacement_date.value,
             }),
             location_ids,
+            properties,
+            donor_name_id: donor_name_id.map(|donor_name_id| NullableUpdate {
+                value: donor_name_id.value,
+            }),
+            warranty_start: warranty_start.map(|warranty_start| NullableUpdate {
+                value: warranty_start.value,
+            }),
+            warranty_end: warranty_end.map(|warranty_end| NullableUpdate {
+                value: warranty_end.value,
+            }),
         }
     }
 }

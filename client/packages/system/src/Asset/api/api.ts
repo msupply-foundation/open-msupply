@@ -17,10 +17,13 @@ import {
 import {
   Sdk,
   AssetCatalogueItemFragment,
-  AssetPropertyFragment,
+  AssetCataloguePropertyFragment,
 } from './operations.generated';
 
-export type AssetProperty = Omit<AssetPropertyFragment, '__typename'> & {
+export type AssetProperty = Omit<
+  AssetCataloguePropertyFragment,
+  '__typename'
+> & {
   value?: string;
 };
 

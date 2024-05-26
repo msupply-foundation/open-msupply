@@ -20,7 +20,7 @@ export const CurrencyInputCell = <T extends RecordWithId>({
       disabled={isDisabled}
       autoFocus={autoFocus}
       maxWidth={column.width}
-      defaultValue={String(column.accessor({ rowData }))}
+      defaultValue={String(column.accessor({ rowData }) ?? 0)}
       onChangeNumber={newValue =>
         updater({ ...rowData, [column.key]: newValue })
       }

@@ -38,6 +38,10 @@ pub struct UpdateAsset {
     pub installation_date: Option<NullableUpdate<NaiveDate>>,
     pub replacement_date: Option<NullableUpdate<NaiveDate>>,
     pub location_ids: Option<Vec<String>>,
+    pub properties: Option<String>,
+    pub donor_name_id: Option<NullableUpdate<String>>,
+    pub warranty_start: Option<NullableUpdate<NaiveDate>>,
+    pub warranty_end: Option<NullableUpdate<NaiveDate>>,
 }
 
 pub fn update_asset(
@@ -138,6 +142,10 @@ pub fn generate(
         installation_date,
         replacement_date,
         location_ids: _,
+        properties,
+        donor_name_id,
+        warranty_start,
+        warranty_end,
     }: UpdateAsset,
     mut asset_row: AssetRow,
 ) -> AssetRow {
@@ -162,6 +170,22 @@ pub fn generate(
 
     if let Some(replacement_date) = replacement_date {
         asset_row.replacement_date = replacement_date.value;
+    }
+
+    if let Some(properties) = properties {
+        asset_row.properties = Some(properties);
+    }
+
+    if let Some(donor_name_id) = donor_name_id {
+        asset_row.donor_name_id = donor_name_id.value;
+    }
+
+    if let Some(warranty_start) = warranty_start {
+        asset_row.warranty_start = warranty_start.value;
+    }
+
+    if let Some(warranty_end) = warranty_end {
+        asset_row.warranty_end = warranty_end.value;
     }
 
     // Set the modified date time

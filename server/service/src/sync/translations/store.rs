@@ -65,13 +65,13 @@ impl SyncTranslation for StoreTranslation {
         // (i.e. return type) Translation Not Matches, Translation Ignored (with message ?) and Translated records
         if let "HIS" | "DRG" | "SM" = &data.code[..] {
             return Ok(PullTranslateResult::Ignored(
-                "Ignoring not implemented system names".to_string(),
+                "System names not implemented".to_string(),
             ));
         }
 
         if data.name_id.is_empty() {
             return Ok(PullTranslateResult::Ignored(
-                "Ignore stores without name".to_string(),
+                "Store has no name".to_string(),
             ));
         }
 
