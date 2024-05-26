@@ -15,7 +15,6 @@ import {
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
-import { formatPropertyValue } from '../../utils';
 import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 interface SummaryProps {
@@ -79,7 +78,7 @@ const Row = ({
 }) => (
   <Box paddingTop={1.5}>
     <InputWithLabelRow
-      labelWidth="150px"
+      labelWidth="160px"
       label={label}
       labelProps={{
         sx: {
@@ -185,6 +184,26 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
+          <Row label={t('label.warranty-start-date')}>
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(draft.warrantyStart)}
+              format="P"
+              onChange={date =>
+                onChange({ warrantyStart: Formatter.naiveDate(date) })
+              }
+              textFieldProps={{ fullWidth: true }}
+            />
+          </Row>
+          <Row label={t('label.warranty-end-date')}>
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(draft.warrantyEnd)}
+              format="P"
+              onChange={date =>
+                onChange({ warrantyEnd: Formatter.naiveDate(date) })
+              }
+              textFieldProps={{ fullWidth: true }}
+            />
+          </Row>
         </Section>
         {(!isCentralServer || draft.storeId == storeId) && (
           <Section heading={t('heading.cold-chain')}>
@@ -250,34 +269,6 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             />
           </Row>
         </Section>
-        {draft.catalogProperties.length === 0 ? null : (
-          <Section heading={t('label.catalogue-properties')}>
-            {draft.catalogProperties.map(property => (
-              <Row key={property.id} label={property.name}>
-                <BasicTextInput
-                  value={formatPropertyValue(property, t)}
-                  disabled
-                  fullWidth
-                />
-              </Row>
-            ))}
-          </Section>
-        )}
-
-        {!draft.parsedProperties ? null : (
-          <Section heading={t('label.asset-properties')}>
-            {Object.entries(draft.parsedProperties).map(([key, value]) => (
-              <Row key={key} label={`${value}`}>
-                <BasicTextInput
-                  value={draft.parsedProperties[key]}
-                  disabled
-                  fullWidth
-                />
-              </Row>
-            ))}
-          </Section>
-        )}
-
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput

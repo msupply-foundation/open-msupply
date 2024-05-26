@@ -30,5 +30,7 @@
   "heading.create-outbound-shipment": "Создать Исходящую Поставку",
   "heading.edit-item": "Редактировать Товар",
   "heading.supply-to-requested": "Установить снабжение как запрошенное",
-  "heading.supply-to-approved": "Установить снабжение как одобренно"
+  "heading.supply-to-approved": "Установить снабжение как одобренно",
+  "messages.select-rows-to-delete-them": "Выберите строки, чтобы удалить их",
+  "stocktake.description-template": "Создано пользователем {{username}} {{date}}"
 }

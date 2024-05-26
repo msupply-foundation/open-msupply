@@ -18,7 +18,7 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   }
 }
 
-fragment AssetProperty on AssetCataloguePropertyNode {
+fragment AssetCatalogueProperty on AssetCataloguePropertyNode {
   id
   allowedValues
   name
@@ -127,7 +127,7 @@ query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
       __typename
       nodes {
         __typename
-        ...AssetProperty
+        ...AssetCatalogueProperty
       }
     }
     ... on NodeError {
