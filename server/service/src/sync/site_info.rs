@@ -8,7 +8,7 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         api::{SiteInfoV5, SyncApiV5},
-        settings::{SyncSettings, SYNC_VERSION},
+        settings::{SyncSettings, SYNC_V5_VERSION},
     },
 };
 
@@ -58,7 +58,7 @@ impl SiteInfoTrait for SiteInfoService {
         let sync_api_v5 = SyncApiV5::new(SyncApiV5::new_settings(
             &settings,
             &service_provider,
-            SYNC_VERSION,
+            SYNC_V5_VERSION,
         )?)?;
         let ctx = service_provider.basic_context()?;
 

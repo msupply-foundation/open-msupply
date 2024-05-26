@@ -9,6 +9,7 @@ import { Box } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
 import { useAssets } from '../../api';
 import { PropertyInput } from '../../Components/PropertyInput';
+
 interface DetailsProps {
   draft?: DraftAsset;
   onChange: (patch: Partial<DraftAsset>) => void;

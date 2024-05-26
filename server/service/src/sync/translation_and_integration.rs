@@ -4,7 +4,7 @@ use super::{
     translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
 };
 use crate::usize_to_u64;
-use log::warn;
+use log::{debug, warn};
 use repository::*;
 use std::collections::HashMap;
 
@@ -40,7 +40,7 @@ impl<'a> TranslationAndIntegration<'a> {
         &self,
         sync_record: &SyncBufferRow,
         translators: &SyncTranslators,
-    ) -> Result<Option<Vec<IntegrationOperation>>, anyhow::Error> {
+    ) -> Result<Vec<PullTranslateResult>, anyhow::Error> {
         let mut translation_results = Vec::new();
 
         for translator in translators.iter() {
@@ -65,22 +65,10 @@ impl<'a> TranslationAndIntegration<'a> {
                 None => {}
             }
 
-            match translation_result {
-                PullTranslateResult::IntegrationOperations(records) => {
-                    translation_results.push(records)
-                }
-                PullTranslateResult::Ignored(ignore_message) => {
-                    log::debug!("Ignored record in push translation: {}", ignore_message)
-                }
-                PullTranslateResult::NotMatched => {}
-            }
+            translation_results.push(translation_result);
         }
 
-        if translation_results.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(translation_results.into_iter().flatten().collect()))
-        }
+        Ok(translation_results)
     }
 
     pub(crate) fn translate_and_integrate_sync_records(
@@ -107,38 +95,65 @@ impl<'a> TranslationAndIntegration<'a> {
         };
 
         for (number_of_records_integrated, sync_record) in sync_records.into_iter().enumerate() {
-            let translation_result = match self.translate_sync_record(&sync_record, translators) {
-                Ok(translation_result) => translation_result,
-                // Record error in sync buffer and in result, continue to next sync_record
-                Err(translation_error) => {
-                    self.sync_buffer
-                        .record_integration_error(&sync_record, &translation_error)?;
-                    result.insert_error(&sync_record.table_name);
-                    warn!(
-                        "{:?} {:?} {:?}",
-                        translation_error, sync_record.record_id, sync_record.table_name
-                    );
-                    // Next sync_record
-                    continue;
-                }
-            };
+            let pull_translation_results =
+                match self.translate_sync_record(&sync_record, translators) {
+                    Ok(translation_result) => translation_result,
+                    // Record error in sync buffer and in result, continue to next sync_record
+                    Err(translation_error) => {
+                        self.sync_buffer
+                            .record_integration_error(&sync_record, &translation_error)?;
+                        result.insert_error(&sync_record.table_name);
+                        warn!(
+                            "{:?} {:?} {:?}",
+                            translation_error, sync_record.record_id, sync_record.table_name
+                        );
+                        // Next sync_record
+                        continue;
+                    }
+                };
 
-            let integration_records = match translation_result {
-                Some(integration_records) => integration_records,
-                // Record translator not found error in sync buffer and in result, continue to next sync_record
-                None => {
-                    let error = anyhow::anyhow!("Translator for record not found");
-                    self.sync_buffer
-                        .record_integration_error(&sync_record, &error)?;
-                    result.insert_error(&sync_record.table_name);
-                    warn!(
-                        "{:?} {:?} {:?}",
-                        error, sync_record.record_id, sync_record.table_name
-                    );
-                    // Next sync_record
-                    continue;
+            let mut integration_records = Vec::new();
+            let mut ignored = false;
+            for pull_translation_result in pull_translation_results {
+                match pull_translation_result {
+                    PullTranslateResult::IntegrationOperations(mut operations) => {
+                        integration_records.append(&mut operations)
+                    }
+                    PullTranslateResult::Ignored(ignore_message) => {
+                        ignored = true;
+                        self.sync_buffer.record_integration_error(
+                            &sync_record,
+                            &anyhow::anyhow!("Ignored: {}", ignore_message),
+                        )?;
+                        result.insert_error(&sync_record.table_name);
+
+                        debug!(
+                            "Ignored record: {:?} {:?} {:?}",
+                            ignore_message, sync_record.record_id, sync_record.table_name
+                        );
+                        continue;
+                    }
+                    PullTranslateResult::NotMatched => {}
                 }
-            };
+            }
+
+            if ignored {
+                continue;
+            }
+
+            // Record translator not found error in sync buffer and in result, continue to next sync_record
+            if integration_records.is_empty() {
+                let error = anyhow::anyhow!("Translator for record not found");
+                self.sync_buffer
+                    .record_integration_error(&sync_record, &error)?;
+                result.insert_error(&sync_record.table_name);
+                warn!(
+                    "{:?} {:?} {:?}",
+                    error, sync_record.record_id, sync_record.table_name
+                );
+                // Next sync_record
+                continue;
+            }
 
             // Integrate
             let integration_result = integrate(self.connection, &integration_records);
@@ -266,7 +281,7 @@ mod test {
 
                 assert_eq!(result, Ok(()));
 
-                // Fails due to referencial constraint
+                // Fails due to referential constraint
                 let result = integrate(
                     connection,
                     &[IntegrationOperation::upsert(inline_init(

@@ -513,6 +513,7 @@ export type AssetNode = {
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
   properties: Scalars['String']['output'];
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -2077,6 +2078,7 @@ export type InsertAssetInput = {
   donorNameId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  needsReplacement?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   properties?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -6309,7 +6311,8 @@ export enum SyncErrorVariant {
   SiteHasNoStore = 'SITE_HAS_NO_STORE',
   SiteNameNotFound = 'SITE_NAME_NOT_FOUND',
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
-  Unknown = 'UNKNOWN'
+  Unknown = 'UNKNOWN',
+  V6ApiVersionIncompatible = 'V6_API_VERSION_INCOMPATIBLE'
 }
 
 export type SyncFileReferenceConnector = {
@@ -6540,6 +6543,7 @@ export type UpdateAssetInput = {
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
   locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
+  needsReplacement?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   properties?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
