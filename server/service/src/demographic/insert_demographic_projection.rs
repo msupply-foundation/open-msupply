@@ -17,6 +17,7 @@ pub enum InsertDemographicProjectionError {
 #[derive(PartialEq, Debug, Clone)]
 pub struct InsertDemographicProjection {
     pub id: String,
+    pub base_year: Option<i16>,
     pub year_1: Option<f64>,
     pub year_2: Option<f64>,
     pub year_3: Option<f64>,
@@ -50,13 +51,14 @@ pub fn validate(
     _input: &InsertDemographicProjection,
     _connection: &StorageConnection,
 ) -> Result<(), InsertDemographicProjectionError> {
-    // TODO add validation functionality if requirtedd
+    // TODO add validation functionality if required in future
     Ok(())
 }
 
 pub fn generate(
     InsertDemographicProjection {
         id,
+        base_year,
         year_1,
         year_2,
         year_3,
@@ -66,6 +68,7 @@ pub fn generate(
 ) -> DemographicProjectionRow {
     DemographicProjectionRow {
         id,
+        base_year: base_year.unwrap_or_default(),
         year_1: year_1.unwrap_or_default(),
         year_2: year_2.unwrap_or_default(),
         year_3: year_3.unwrap_or_default(),

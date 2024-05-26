@@ -13,6 +13,8 @@ table! {
     demographic_indicator(id) {
         id -> Text,
         name -> Text,
+        base_year -> SmallInt,
+        base_population -> Double,
         population_percentage -> Double,
         year_1_projection -> Double,
         year_2_projection -> Double,
@@ -27,6 +29,8 @@ table! {
 pub struct DemographicIndicatorRow {
     pub id: String,
     pub name: String,
+    pub base_year: i16,
+    pub base_population: f64,
     pub population_percentage: f64,
     pub year_1_projection: f64,
     pub year_2_projection: f64,
