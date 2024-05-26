@@ -650,8 +650,7 @@ fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Optio
             LegacyTransactStatus::Fn => InvoiceStatus::Verified,
             _ => return None,
         },
-        // mSupply will alert users to finalise any repacks if they have un-finalised repacks
-        // before they migrate to Open mSupply.
+        // mSupply will delete any unfinalised repacks before migration
         InvoiceType::Repack => match data.status {
             LegacyTransactStatus::Fn => InvoiceStatus::Verified,
             _ => return None,
