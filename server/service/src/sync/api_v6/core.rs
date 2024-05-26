@@ -8,6 +8,7 @@ use super::*;
 pub(crate) struct SyncApiV6 {
     pub(crate) url: Url,
     pub(crate) sync_v5_settings: SyncApiSettings,
+    pub(crate) sync_v6_version: u32,
 }
 
 #[derive(Error, Debug)]
@@ -22,6 +23,7 @@ impl SyncApiV6 {
     pub fn new(
         url: &str,
         sync_v5_settings: &SyncApiSettings,
+        sync_v6_version: u32,
     ) -> Result<Self, SyncApiV6CreatingError> {
         let mut url = Url::parse(url)
             .map_err(|error| SyncApiV6CreatingError::CannotParseSyncUrl(url.to_string(), error))?;
@@ -31,6 +33,7 @@ impl SyncApiV6 {
         Ok(Self {
             url,
             sync_v5_settings: sync_v5_settings.clone(),
+            sync_v6_version,
         })
     }
 
@@ -43,6 +46,7 @@ impl SyncApiV6 {
         let Self {
             sync_v5_settings,
             url,
+            sync_v6_version,
         } = self;
 
         let route = "pull";
@@ -53,6 +57,7 @@ impl SyncApiV6 {
             batch_size,
             sync_v5_settings: sync_v5_settings.clone(),
             is_initialised,
+            sync_v6_version: sync_v6_version.clone(),
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
@@ -74,6 +79,7 @@ impl SyncApiV6 {
         let Self {
             sync_v5_settings,
             url,
+            sync_v6_version,
         } = self;
 
         let route = "push";
@@ -82,6 +88,7 @@ impl SyncApiV6 {
         let request = SyncPushRequestV6 {
             batch,
             sync_v5_settings: sync_v5_settings.clone(),
+            sync_v6_version: sync_v6_version.clone(),
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
@@ -103,6 +110,7 @@ impl SyncApiV6 {
         let Self {
             sync_v5_settings,
             url,
+            sync_v6_version,
         } = self;
 
         let route = "site_status";
@@ -110,6 +118,7 @@ impl SyncApiV6 {
 
         let request = SiteStatusRequestV6 {
             sync_v5_settings: sync_v5_settings.clone(),
+            sync_v6_version: sync_v6_version.clone(),
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;

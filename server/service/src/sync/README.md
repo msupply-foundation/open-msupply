@@ -158,3 +158,7 @@ When change allows for previous version to still work without logical or syntax 
 - adding a new optional field or a field where default value can be deduced
 - adding a new table
 - adding new optional header
+
+### V6 Versioning
+
+The same versioning pattern also applies to the V6 sync (syncing with Open mSupply Central). The V6 sync version of the remote site is set in [settings.rs](./settings.rs), and checked in [sync_on_central](./sync_on_central/mod.rs)

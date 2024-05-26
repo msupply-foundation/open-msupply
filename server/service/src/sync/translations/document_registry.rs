@@ -16,6 +16,8 @@ enum LegacyDocumentCategory {
     Encounter,
     ContactTrace,
     Custom,
+    #[serde(other)]
+    Others
 }
 
 #[allow(non_snake_case)]
@@ -86,6 +88,11 @@ impl SyncTranslation for DocumentRegistryTranslation {
                 LegacyDocumentCategory::Encounter => DocumentRegistryCategory::Encounter,
                 LegacyDocumentCategory::ContactTrace => DocumentRegistryCategory::ContactTrace,
                 LegacyDocumentCategory::Custom => DocumentRegistryCategory::Custom,
+                LegacyDocumentCategory::Others => {
+                    return Ok(PullTranslateResult::Ignored(
+                        "Unsupported report type".to_string(),
+                    ));
+                }
             },
             name,
             form_schema_id,
