@@ -4,7 +4,7 @@ import { BasicTextInput } from '@common/components';
 import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
-  name?: number | null;
+  name?: number | null | string;
 }
 
 export const nameColumn = <
@@ -36,7 +36,7 @@ export const nameColumn = <
       >
         <>
           <BasicTextInput
-            disabled={isDisabled}
+            disabled={isDisabled || rowData.name == 'General Population'}
             defaultValue={column.accessor({ rowData })}
             onBlur={e => {
               column.setter({ ...rowData, name: e.target.value });
@@ -46,6 +46,6 @@ export const nameColumn = <
         </>
       </Box>
     ),
-    minWidth: 180,
+    minWidth: 200,
   };
 };
