@@ -47,6 +47,24 @@ impl SyncTranslation for MasterListTranslation {
         };
         Ok(PullTranslateResult::upsert(result))
     }
+
+    // Soft deletes was implemented in OG months after program requisitions was
+    // rolled out, so previously hard deleted records may be gone even if they
+    // are linked to program. Recreate these records to keep the FK link.
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let result = MasterListRow {
+            id: sync_record.record_id.clone(),
+            name: "Deleted".to_string(),
+            code: "".to_string(),
+            description: "".to_string(),
+            is_active: false,
+        };
+        Ok(PullTranslateResult::upsert(result))
+    }
 }
 
 #[cfg(test)]
