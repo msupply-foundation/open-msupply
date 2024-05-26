@@ -4194,6 +4194,8 @@ export type NameFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Filter by donor property */
+  isDonor?: InputMaybe<Scalars['Boolean']['input']>;
   isPatient?: InputMaybe<Scalars['Boolean']['input']>;
   /** Is this name a store */
   isStore?: InputMaybe<Scalars['Boolean']['input']>;
