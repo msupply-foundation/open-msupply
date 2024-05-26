@@ -309,6 +309,10 @@ impl AssetNode {
     pub async fn warranty_end(&self) -> &Option<NaiveDate> {
         &self.row().warranty_end
     }
+
+    pub async fn needs_replacement(&self) -> &Option<bool> {
+        &self.row().needs_replacement
+    }
 }
 
 #[derive(Union)]

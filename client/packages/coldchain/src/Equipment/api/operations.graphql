@@ -103,6 +103,7 @@ fragment Asset on AssetNode {
   }
   warrantyStart
   warrantyEnd
+  needsReplacement
 }
 
 fragment ColdchainAssetLog on AssetLogNode {
