@@ -123,8 +123,7 @@ pub fn update_inbound_shipment(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_shipment_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
 
     Ok(invoice)
 }
@@ -864,6 +863,12 @@ mod test {
         let stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
             .unwrap();
+
+        // Ensure delivered time not updated by status change to verified
+        assert_eq!(
+            invoice.delivered_datetime,
+            mock_inbound_shipment_a().delivered_datetime
+        );
 
         assert!(invoice.verified_datetime.unwrap() > now);
         assert!(invoice.verified_datetime.unwrap() < end_time);

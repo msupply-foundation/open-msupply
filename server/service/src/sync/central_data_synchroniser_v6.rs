@@ -59,13 +59,6 @@ pub(crate) enum WaitForSyncOperationErrorV6 {
     TimeoutReached,
 }
 
-#[derive(Error, Debug)]
-#[error("Failed to serialise V6 remote record into sync buffer row, record: '{record:?}'")]
-pub(crate) struct SerialisingToSyncBuffer {
-    source: serde_json::Error,
-    record: serde_json::Value,
-}
-
 pub(crate) struct SynchroniserV6 {
     sync_api_v6: SyncApiV6,
 }
@@ -74,9 +67,10 @@ impl SynchroniserV6 {
     pub(crate) fn new(
         url: &str,
         sync_v5_settings: &SyncApiSettings,
+        sync_v6_version: u32,
     ) -> Result<Self, SyncApiV6CreatingError> {
         Ok(Self {
-            sync_api_v6: SyncApiV6::new(url, sync_v5_settings)?,
+            sync_api_v6: SyncApiV6::new(url, sync_v5_settings, sync_v6_version)?,
         })
     }
 

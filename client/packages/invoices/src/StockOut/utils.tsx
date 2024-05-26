@@ -344,7 +344,6 @@ export const PackQuantityCell = (props: CellProps<DraftStockOutLine>) => (
     {...props}
     max={props.rowData.stockLine?.availableNumberOfPacks}
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
-    min={1}
   />
 );
 

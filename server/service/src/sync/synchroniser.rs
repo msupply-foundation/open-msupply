@@ -20,7 +20,7 @@ use super::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
     },
-    settings::{SyncSettings, SYNC_VERSION},
+    settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
     sync_buffer::SyncBuffer,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
@@ -35,6 +35,7 @@ pub struct Synchroniser {
     central: CentralDataSynchroniser,
     sync_v5_settings: SyncApiSettings,
     remote: RemoteDataSynchroniser,
+    sync_v6_version: u32,
 }
 
 #[derive(Error)]
@@ -107,13 +108,14 @@ impl Synchroniser {
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
-        Self::new_with_version(settings, service_provider, SYNC_VERSION)
+        Self::new_with_version(settings, service_provider, SYNC_V5_VERSION, SYNC_V6_VERSION)
     }
 
     pub(crate) fn new_with_version(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
         sync_version: u32,
+        sync_v6_version: u32,
     ) -> anyhow::Result<Self> {
         let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, sync_version)?;
         let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
@@ -125,6 +127,7 @@ impl Synchroniser {
             service_provider,
             central: CentralDataSynchroniser { sync_api_v5 },
             sync_v5_settings,
+            sync_v6_version,
         })
     }
 
@@ -186,7 +189,8 @@ impl Synchroniser {
             CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
             CentralServerConfig::IsCentralServer => None,
             CentralServerConfig::CentralServerUrl(url) => {
-                let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
+                let v6_sync =
+                    SynchroniserV6::new(&url, &self.sync_v5_settings, self.sync_v6_version)?;
                 Some(v6_sync)
             }
         };
@@ -280,8 +284,7 @@ impl Synchroniser {
 
         ctx.processors_trigger
             .trigger_requisition_transfer_processors();
-        ctx.processors_trigger
-            .trigger_shipment_transfer_processors();
+        ctx.processors_trigger.trigger_invoice_transfer_processors();
 
         Ok(())
     }

@@ -20,7 +20,7 @@ import { importRowToCsv } from '../utils';
 import {
   useAssetData,
   AssetCatalogueItemFragment,
-  AssetPropertyFragment,
+  AssetCataloguePropertyFragment,
 } from '../api';
 
 interface AssetItemUploadTabProps {
@@ -59,7 +59,7 @@ const getCell = (row: ParsedImport, index: AssetColumn) => {
 };
 
 const processProperties = (
-  properties: undefined | AssetPropertyFragment[],
+  properties: undefined | AssetCataloguePropertyFragment[],
   row: ParsedImport,
   importRow: ImportRow,
   rowErrors: string[],

@@ -32,12 +32,13 @@ const useCheckbox = (rowId: string) => {
 };
 
 export const getCheckboxSelectionColumn = <
-  T extends RecordWithId
+  T extends RecordWithId,
 >(): ColumnDefinition<T> => ({
   key: GenericColumnKey.Selection,
   sortable: false,
   align: ColumnAlign.Right,
   width: 60,
+  label: 'table.select-unselect-all-columns',
   Header: () => {
     const { toggleAll, allSelected, someSelected } = useTableStore(state => {
       const allSelected =
