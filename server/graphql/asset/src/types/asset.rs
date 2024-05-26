@@ -2,20 +2,21 @@ use std::vec;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_asset_catalogue::types::asset_catalogue_item::AssetCatalogueItemNode;
 use graphql_asset_catalogue::types::asset_category::AssetCategoryNode;
 use graphql_asset_catalogue::types::asset_class::AssetClassNode;
 use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::loader::AssetStatusLogLoader;
-use graphql_core::loader::SyncFileReferenceLoader;
 use graphql_core::loader::{
     AssetCatalogueItemLoader, AssetCatalogueItemPropertyLoader, AssetCategoryLoader,
     AssetClassLoader, AssetLocationLoader, AssetTypeLoader, StoreByIdLoader,
 };
+use graphql_core::loader::{AssetStatusLogLoader, NameByIdLoader};
+use graphql_core::loader::{NameByIdLoaderInput, SyncFileReferenceLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnector};
+use graphql_types::types::{LocationConnector, NameNode, StoreNode, SyncFileReferenceConnector};
 
 use repository::asset_catalogue_item_property::AssetCatalogueItemPropertyValue;
 use repository::assets::asset::AssetSortField;
@@ -136,12 +137,12 @@ impl AssetNode {
         &self.row().catalogue_item_id
     }
 
-    pub async fn installation_date(&self) -> &Option<chrono::NaiveDate> {
-        &self.row().installation_date
+    pub async fn installation_date(&self) -> Option<chrono::NaiveDate> {
+        self.row().installation_date.clone()
     }
 
-    pub async fn replacement_date(&self) -> &Option<chrono::NaiveDate> {
-        &self.row().replacement_date
+    pub async fn replacement_date(&self) -> Option<chrono::NaiveDate> {
+        self.row().replacement_date.clone()
     }
 
     pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
@@ -278,6 +279,35 @@ impl AssetNode {
             .load_one(asset_id.clone())
             .await?
             .map(AssetLogNode::from_domain))
+    }
+
+    pub async fn donor_name_id(&self) -> &Option<String> {
+        &self.row().donor_name_id
+    }
+
+    pub async fn donor(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let donor_name_id = match &self.row().donor_name_id {
+            Some(donor_name_id) => donor_name_id,
+            None => {
+                return Ok(None);
+            }
+        };
+
+        let response_option = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, &donor_name_id))
+            .await?;
+
+        Ok(response_option.map(NameNode::from_domain))
+    }
+
+    pub async fn warranty_start(&self) -> &Option<NaiveDate> {
+        &self.row().warranty_start
+    }
+
+    pub async fn warranty_end(&self) -> &Option<NaiveDate> {
+        &self.row().warranty_end
     }
 }
 
