@@ -24,6 +24,7 @@ import { ColumnPicker, HeaderCell, HeaderRow } from './components/Header';
 import { RecordWithId } from '@common/types';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { useTableStore } from './context';
+import { useColumnDisplayState } from './hooks';
 
 interface RenderRowsProps<T extends RecordWithId> {
   mRef: React.RefObject<HTMLDivElement>;
@@ -131,11 +132,14 @@ const DataTableComponent = <T extends RecordWithId>({
   const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
-  const [displayColumns, setDisplayColumns] = useState(columns);
+  const { columnDisplayState, toggleColumn } = useColumnDisplayState(
+    id,
+    columns
+  );
+
   const columnsToDisplay = React.useMemo(
-    () =>
-      columns.filter(c => displayColumns.map(({ key }) => key).includes(c.key)),
-    [displayColumns, columns]
+    () => columns.filter(c => columnDisplayState[String(c.key)] ?? true),
+    [columns, columnDisplayState]
   );
 
   useRegisterActions([
@@ -179,12 +183,6 @@ const DataTableComponent = <T extends RecordWithId>({
     const { page, first, total } = pagination;
     if (page * first > total) onChangePage(0);
   }, [pagination]);
-
-  // if the columns array changes, such as when a plugin column is added
-  // reset the display columns to the full set
-  useEffect(() => {
-    setDisplayColumns(columns);
-  }, [columns]);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -252,8 +250,8 @@ const DataTableComponent = <T extends RecordWithId>({
               >
                 <ColumnPicker
                   columns={columns}
-                  onChange={setDisplayColumns}
-                  tableKey={id}
+                  columnDisplayState={columnDisplayState}
+                  toggleColumn={toggleColumn}
                 />
               </TableCell>
             )}

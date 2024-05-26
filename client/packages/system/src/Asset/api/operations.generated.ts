@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, subCatalogue: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
-export type AssetPropertyFragment = { __typename: 'AssetCataloguePropertyNode', id: string, allowedValues?: string | null, name: string, valueType: Types.PropertyNodeValueType };
+export type AssetCataloguePropertyFragment = { __typename: 'AssetCataloguePropertyNode', id: string, allowedValues?: string | null, name: string, valueType: Types.PropertyNodeValueType };
 
 export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, status?: Types.StatusType | null, type?: string | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null };
 
@@ -127,8 +127,8 @@ export const AssetCatalogueItemFragmentDoc = gql`
   }
 }
     `;
-export const AssetPropertyFragmentDoc = gql`
-    fragment AssetProperty on AssetCataloguePropertyNode {
+export const AssetCataloguePropertyFragmentDoc = gql`
+    fragment AssetCatalogueProperty on AssetCataloguePropertyNode {
   id
   allowedValues
   name
@@ -236,7 +236,7 @@ export const AssetCataloguePropertiesDocument = gql`
       __typename
       nodes {
         __typename
-        ...AssetProperty
+        ...AssetCatalogueProperty
       }
     }
     ... on NodeError {
@@ -244,7 +244,7 @@ export const AssetCataloguePropertiesDocument = gql`
     }
   }
 }
-    ${AssetPropertyFragmentDoc}`;
+    ${AssetCataloguePropertyFragmentDoc}`;
 export const AssetLogReasonsDocument = gql`
     query assetLogReasons($filter: AssetLogReasonFilterInput, $sort: AssetLogReasonSortInput, $storeId: String!) {
   assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {

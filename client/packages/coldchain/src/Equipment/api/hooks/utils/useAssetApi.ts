@@ -11,6 +11,8 @@ export const useAssetApi = () => {
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams<AssetFragment>) =>
       [...keys.list(), params] as const,
+    paramListProperties: (params: ListParams<AssetFragment>) =>
+      [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<AssetFragment>) =>
       [...keys.list(), sortBy] as const,
     logs: (assetId: string) => [...keys.base(), assetId, 'logs'] as const,

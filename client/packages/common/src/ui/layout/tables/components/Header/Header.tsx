@@ -5,6 +5,7 @@ import { InfoOutlineIcon, SortDescIcon } from '@common/icons';
 import { RecordWithId } from '@common/types';
 import { useDebounceCallback } from '@common/hooks';
 import { useTranslation } from '@common/intl';
+import { tooltipPlacement } from '../tooltipPlacement';
 
 export const HeaderRow: FC<PropsWithChildren<{ dense?: boolean }>> = ({
   dense,
@@ -68,19 +69,20 @@ export const HeaderCell = <T extends RecordWithId>({
       : typeof column.label === 'number'
       ? column.label
       : t(column.label, column.labelProps);
-  const tooltip = (
-    <>
-      {!!description && <div>{t(description)}</div>}
-      {sortable ? (
-        <div>
-          {t('label.click-to-sort')}
-          {` ${columnLabel}`}
-        </div>
-      ) : (
-        columnLabel
-      )}
-    </>
-  );
+  const tooltip =
+    !description && !sortable && !columnLabel ? null : (
+      <>
+        {!!description && <div>{t(description)}</div>}
+        {sortable ? (
+          <div>
+            {t('label.click-to-sort')}
+            {` ${columnLabel}`}
+          </div>
+        ) : (
+          columnLabel
+        )}
+      </>
+    );
 
   const infoIcon = !!description ? (
     <InfoOutlineIcon
@@ -143,7 +145,7 @@ export const HeaderCell = <T extends RecordWithId>({
     >
       <Tooltip
         title={tooltip}
-        placement="bottom"
+        placement={tooltipPlacement(align)}
         style={{ whiteSpace: 'pre-line' }}
       >
         {HeaderLabel}

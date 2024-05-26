@@ -34,7 +34,7 @@ pub fn print_qr_code(
         ^XA
         ^FO50,{}
         ^BQN,2,4
-        ^FD,{}^FS        
+        ^FDMA,{}^FS        
         {}
         ^XZ"#,
         vertical_offset, code, formatted_message

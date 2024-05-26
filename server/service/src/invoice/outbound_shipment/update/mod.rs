@@ -117,7 +117,7 @@ pub fn update_outbound_shipment(
         .map_err(|error| error.to_inner_error())?;
 
     ctx.processors_trigger
-        .trigger_shipment_transfer_processors();
+        .trigger_invoice_transfer_processors();
 
     Ok(invoice)
 }

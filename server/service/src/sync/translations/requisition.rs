@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{DateTime, NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionStatus, RequisitionType},
     ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
@@ -191,10 +191,15 @@ impl SyncTranslation for RequisitionTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyRequisitionRow>(&sync_record.data)?;
-        let r#type = from_legacy_type(&data.r#type).ok_or(anyhow::Error::msg(format!(
-            "Unsupported requisition type: {:?}",
-            data.r#type
-        )))?;
+        let r#type = match from_legacy_type(&data.r#type) {
+            Some(r#type) => r#type,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported requisition type: {:?}",
+                    data.r#type
+                )))
+            }
+        };
 
         let (
             created_datetime,
@@ -327,12 +332,15 @@ impl SyncTranslation for RequisitionTranslation {
             name_ID: name_row.id,
             store_ID: store_id.clone(),
             r#type: to_legacy_type(&r#type),
-            status: to_legacy_status(&r#type, &status, has_outbound_shipment).ok_or(
-                anyhow::Error::msg(format!(
-                    "Unexpected row requisition status {:?} (type: {:?}), row id:{}",
-                    status, r#type, changelog.record_id
-                )),
-            )?,
+            status: match to_legacy_status(&r#type, &status, has_outbound_shipment) {
+                Some(status) => status,
+                None => {
+                    return Ok(PushTranslateResult::Ignored(format!(
+                        "Unsupported requisition status: {:?} (type: {:?}) row id: {}",
+                        status, r#type, changelog.record_id
+                    )))
+                }
+            },
             om_status: Some(status),
             date_entered: date_from_date_time(&created_datetime),
             created_datetime: Some(created_datetime),
@@ -380,7 +388,11 @@ fn from_legacy_sent_datetime(
     match r#type {
         RequisitionType::Request => {
             if last_modified_at > 0 {
-                Some(NaiveDateTime::from_timestamp_opt(last_modified_at, 0).unwrap())
+                Some(
+                    DateTime::from_timestamp(last_modified_at, 0)
+                        .unwrap()
+                        .naive_utc(),
+                )
             } else {
                 None
             }
@@ -397,7 +409,11 @@ fn from_legacy_finalised_datetime(
         RequisitionType::Request => None,
         RequisitionType::Response => {
             if last_modified_at > 0 {
-                Some(NaiveDateTime::from_timestamp_opt(last_modified_at, 0).unwrap())
+                Some(
+                    DateTime::from_timestamp(last_modified_at, 0)
+                        .unwrap()
+                        .naive_utc(),
+                )
             } else {
                 None
             }
@@ -411,8 +427,12 @@ fn to_legacy_last_modified_at(
     finalised_datetime: Option<NaiveDateTime>,
 ) -> i64 {
     match r#type {
-        RequisitionType::Request => sent_datetime.map(|time| time.timestamp()).unwrap_or(0),
-        RequisitionType::Response => finalised_datetime.map(|time| time.timestamp()).unwrap_or(0),
+        RequisitionType::Request => sent_datetime
+            .map(|time| time.and_utc().timestamp())
+            .unwrap_or(0),
+        RequisitionType::Response => finalised_datetime
+            .map(|time| time.and_utc().timestamp())
+            .unwrap_or(0),
     }
 }
 

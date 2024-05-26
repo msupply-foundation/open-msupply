@@ -9,7 +9,7 @@ import { useInbound } from '../../api';
 export const OnHoldButtonComponent = memo(() => {
   const t = useTranslation('replenishment');
   const { onHold, update } = useInbound.document.fields('onHold');
-  const isDisabled = useInbound.utils.isDisabled();
+  const isHoldable = useInbound.utils.isHoldable();
   const getConfirmation = useConfirmationModal({
     message: t(
       onHold
@@ -22,7 +22,7 @@ export const OnHoldButtonComponent = memo(() => {
 
   return (
     <ToggleButton
-      disabled={isDisabled}
+      disabled={!isHoldable}
       value={onHold}
       selected={onHold}
       onClick={() => getConfirmation()}

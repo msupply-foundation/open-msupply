@@ -229,7 +229,7 @@ fn insert_document(
 
 #[cfg(test)]
 mod document_service_test {
-    use chrono::{DateTime, NaiveDateTime, Utc};
+    use chrono::{DateTime, Utc};
     use repository::{
         mock::{
             context_program_a, mock_form_schema_empty, mock_form_schema_simple, MockDataInserts,
@@ -266,7 +266,7 @@ mod document_service_test {
                 parents: vec![],
                 author: "me".to_string(),
                 datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                    NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                    DateTime::from_timestamp(5000, 0).unwrap().naive_utc(),
                     Utc,
                 ),
                 r#type: "test_data".to_string(),
@@ -294,7 +294,7 @@ mod document_service_test {
                     parents: vec![],
                     author: "me".to_string(),
                     datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                        NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                        DateTime::from_timestamp(5000, 0).unwrap().naive_utc(),
                         Utc,
                     ),
                     r#type: "test_data".to_string(),
@@ -320,7 +320,7 @@ mod document_service_test {
                 parents: vec!["invalid".to_string()],
                 author: "me".to_string(),
                 datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                    NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
+                    DateTime::from_timestamp(6000, 0).unwrap().naive_utc(),
                     Utc,
                 ),
                 r#type: "test_data".to_string(),
@@ -345,7 +345,7 @@ mod document_service_test {
                     parents: vec![v1.id.clone()],
                     author: "me".to_string(),
                     datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                        NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
+                        DateTime::from_timestamp(6000, 0).unwrap().naive_utc(),
                         Utc,
                     ),
                     r#type: "test_data".to_string(),
@@ -374,7 +374,7 @@ mod document_service_test {
                     parents: vec![],
                     author: "me".to_string(),
                     datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                        NaiveDateTime::from_timestamp_opt(8000, 0).unwrap(),
+                        DateTime::from_timestamp(8000, 0).unwrap().naive_utc(),
                         Utc,
                     ),
                     r#type: "test_data2".to_string(),
@@ -418,7 +418,7 @@ mod document_service_test {
                     parents: vec![],
                     author: "me".to_string(),
                     datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                        NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                        DateTime::from_timestamp(5000, 0).unwrap().naive_utc(),
                         Utc,
                     ),
                     r#type: "test_data".to_string(),
@@ -444,7 +444,7 @@ mod document_service_test {
                 parents: vec![],
                 author: "me".to_string(),
                 datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                    NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                    DateTime::from_timestamp(5000, 0).unwrap().naive_utc(),
                     Utc,
                 ),
                 r#type: "test_data".to_string(),
@@ -473,7 +473,7 @@ mod document_service_test {
                 parents: vec![],
                 author: "me".to_string(),
                 datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                    NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                    DateTime::from_timestamp(5000, 0).unwrap().naive_utc(),
                     Utc,
                 ),
                 r#type: "test_data".to_string(),
@@ -503,7 +503,7 @@ mod document_service_test {
                     parents: vec![],
                     author: "me".to_string(),
                     datetime: DateTime::<Utc>::from_naive_utc_and_offset(
-                        NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
+                        DateTime::from_timestamp(5000, 0).unwrap().naive_utc(),
                         Utc,
                     ),
                     r#type: "test_data".to_string(),
