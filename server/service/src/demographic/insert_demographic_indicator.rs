@@ -7,7 +7,7 @@ use super::query_demographic_indicator::get_demographic_indicator;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertDemographicIndicatorError {
-    AssetAlreadyExists,
+    DemographicIndicatorAlreadyExists,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
@@ -52,7 +52,10 @@ pub fn validate(
     _input: &InsertDemographicIndicator,
     _connection: &StorageConnection,
 ) -> Result<(), InsertDemographicIndicatorError> {
-    // TODO add validation functionality if requirtedd
+    // TODO add validation functionality if required
+
+    //maybe something like:
+    // if !CentralServerConfig::is_central_server() {
     Ok(())
 }
 
