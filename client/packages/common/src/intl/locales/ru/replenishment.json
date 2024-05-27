@@ -24,5 +24,7 @@
   "heading.return-items": "Возврат Товаров",
   "heading.sub-total": "Промежуточный Итог",
   "heading.total": "Итого",
-  "label.shipment": "Поставка"
+  "label.shipment": "Поставка",
+  "button.return-lines": "Обработать возврат выбранных строк",
+  "button.requested-to-suggested": "Использовать Рекомендуемые Количества"
 }
