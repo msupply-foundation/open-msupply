@@ -248,9 +248,9 @@ export const AppDrawer: React.FC = () => {
           />
           <SyncNavLink />
           <AppNavLink
-            to={AppRoute.Admin}
+            to={AppRoute.Settings}
             icon={<SettingsIcon fontSize="small" color="primary" />}
-            text={t('admin')}
+            text={t('settings')}
             visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink

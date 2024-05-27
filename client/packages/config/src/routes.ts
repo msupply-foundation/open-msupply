@@ -46,7 +46,7 @@ export enum AppRoute {
 
   Sync = 'sync',
 
-  Admin = 'admin',
+  Settings = 'settings',
 
   Logout = 'logout',
 
