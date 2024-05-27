@@ -1,1 +1,19 @@
-{}
+{
+    "button-save-as-visited": "Сохранить как Посещенное",
+    "button.add-contact-trace": "Добавить Контакт",
+    "button.add-encounter": "Добавить Встречу",
+    "button.add-program": "Добавить Программу",
+    "button.link-contact-to-patient": "Привязать к Пациенту",
+    "button.new-patient": "Новый Пациент",
+    "button.new-prescription": "Новый Рецепт",
+    "button.unlink-patient": "Отвязать Пациента",
+    "error.contact-trace-not-created": "Невозможно создать отслеживание контактов",
+    "error.encounter-not-created": "Невозможно создать встречу",
+    "error.encounter-not-found": "Встреча не найдена.",
+    "error.failed-to-create-prescription": "Не удалось создать рецепт!",
+    "error.no-prescriptions": "Нет Рецептов для отображения.",
+    "error.prescription-not-found": "Рецепт не найден.",
+    "filename.patients": "пациенты",
+    "filename.prescriptions": "Рецепты",
+    "button.edit-linked-patient": "Редактировать Привязанного Пациента"
+}
