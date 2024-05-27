@@ -199,6 +199,7 @@ impl AssetNode {
         Ok(documents)
     }
 
+    /// Returns a JSON string of the asset catalogue properties e.g {"property_key": "value"}
     pub async fn catalog_properties(&self, ctx: &Context<'_>) -> Result<Option<String>> {
         let catalogue_item_id = match &self.row().catalogue_item_id {
             Some(catalogue_item_id) => catalogue_item_id,
@@ -213,6 +214,7 @@ impl AssetNode {
             .unwrap_or(None))
     }
 
+    /// Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"}
     pub async fn properties(&self) -> String {
         let asset_properties = match &self.row().properties {
             Some(properties) => properties.to_owned(),
