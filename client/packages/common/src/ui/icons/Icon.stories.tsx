@@ -172,7 +172,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
-    { icon: <BarChart2Icon {...args} />, name: 'TrendingUp' },
+    { icon: <BarChart2Icon {...args} />, name: 'BarChart2Icon' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UploadIcon {...args} />, name: 'Upload' },
     { icon: <UserCircleIcon {...args} />, name: 'UserCircle' },
