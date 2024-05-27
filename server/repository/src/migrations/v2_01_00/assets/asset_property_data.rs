@@ -85,19 +85,5 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#,
     )?;
 
-    /*
-        Asset Properties for Insulated Containers (asset_category_id: 02cbea92-d5bf-4832-863b-c04e093a7760)
-        Temperature monitoring device (integrated, external or none)
-        Voltage stabilizer (integrated, external or none)
-    */
-
-    sql!(
-        connection,
-        r#"
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('temperature_monitoring_device-ic', 'temperature_monitoring_device', 'Temperature monitoring device', 'STRING', 'Integrated, External, None', 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('voltage_stabilizer-ic', 'voltage_stabilizer', 'Voltage stabilizer', 'STRING', 'Integrated, External, None', 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
-        "#,
-    )?;
-
     Ok(())
 }

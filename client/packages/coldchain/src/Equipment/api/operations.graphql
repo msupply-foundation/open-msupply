@@ -54,15 +54,7 @@ fragment Asset on AssetNode {
     totalCount
   }
   properties
-  catalogProperties {
-    id
-    name
-    valueString
-    valueFloat
-    valueBool
-    valueInt
-    valueType
-  }
+  catalogProperties
   modifiedDatetime
   notes
   replacementDate
@@ -249,27 +241,6 @@ mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
       __typename
       error {
         description
-      }
-    }
-  }
-}
-
-fragment AssetPropertyRow on AssetPropertyNode {
-  id
-  key
-  name
-  valueType
-  allowedValues
-}
-
-query assetProperties($filter: AssetPropertyFilterInput!, $storeId: String!) {
-  assetProperties(filter: $filter, storeId: $storeId) {
-    ... on AssetPropertyConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        ...AssetPropertyRow
       }
     }
   }
