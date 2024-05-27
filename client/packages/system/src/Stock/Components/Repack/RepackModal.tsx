@@ -21,42 +21,20 @@ import {
 import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
 import {
-  Repack,
   ReportRowFragment,
   ReportSelector,
   useActivityLog,
   useReport,
-  useStock,
 } from '@openmsupply-client/system';
 import { RepackFragment } from '../../api';
 import { useRepackColumns } from './column';
+import { useRepackEdit } from '../../api/hooks/useRepack';
 
 interface RepackModalControlProps {
   isOpen: boolean;
   onClose: () => void;
   stockLine: StockLineNode;
 }
-
-const useDraftRepack = (seed: Repack) => {
-  const [repack, setRepack] = useState<Repack>(() => ({ ...seed }));
-  const { mutateAsync, isLoading, isError } = useStock.repack.insert(
-    seed.stockLineId ?? ''
-  );
-
-  const onChange = (patch: Partial<Repack>) => {
-    setRepack({ ...repack, ...patch });
-  };
-
-  const onInsert = async () => mutateAsync(repack);
-
-  return {
-    onChange,
-    onInsert,
-    isLoading,
-    draft: repack,
-    isError,
-  };
-};
 
 export const RepackModal: FC<RepackModalControlProps> = ({
   isOpen,
@@ -75,26 +53,23 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     numberOfPacks: 0,
   };
 
-  const { data, isError, isLoading } = useStock.repack.list(
-    stockLine?.id ?? ''
-  );
   const { data: logData } = useActivityLog.document.listByRecord(
     stockLine?.id ?? ''
   );
 
-  const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
+  const { repacks, isError, isLoading, draft, onChange, onInsert } =
+    useRepackEdit(defaultRepack);
   const { columns } = useRepackColumns();
   // only display the message if there are lines to click on
   // if there are no lines, the 'click new' message is displayed closer to the action
-  const displayMessage =
-    invoiceId == undefined && !isNew && !!data?.nodes.length;
+  const displayMessage = invoiceId == undefined && !isNew && !!repacks?.length;
   const showRepackDetail = invoiceId || isNew;
   const showLogEvent = !!logData?.nodes.length;
 
   const { print, isPrinting } = useReport.utils.print();
 
   const printReport = (report: ReportRowFragment) => {
-    if (!data) return;
+    if (!repacks) return;
     print({ reportId: report.id, dataId: invoiceId || '' });
   };
 
@@ -223,7 +198,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 <DataTable
                   id="repack-list"
                   columns={columns}
-                  data={data?.nodes}
+                  data={repacks}
                   isLoading={isLoading}
                   isError={isError}
                   noDataMessage={t('messages.no-repacks')}
