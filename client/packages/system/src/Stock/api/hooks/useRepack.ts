@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@openmsupply-client/common';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { useState } from 'react';
 import { Repack } from '../../types';
-import { REPACK_LIST, STOCK_LINE } from './keys';
+import { STOCK_LINE, LIST } from './keys';
 
 export const useRepack = (invoiceId: string) => {
   const { stockApi, storeId } = useStockGraphQL();
@@ -71,7 +71,7 @@ export const useRepackEdit = (init: Repack) => {
     mutationFn,
     onSuccess: () => {
       // Stock list needs to be re-fetched to load new repacked stock line
-      queryClient.invalidateQueries([STOCK_LINE, storeId, REPACK_LIST]);
+      queryClient.invalidateQueries([STOCK_LINE, storeId, LIST]);
       // Repack list also needs to be re-fetched on insert to show new repack
       // line
       queryClient.invalidateQueries([STOCK_LINE, storeId, repack.stockLineId]);

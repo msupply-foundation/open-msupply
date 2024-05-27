@@ -13,22 +13,19 @@ import {
   ButtonWithIcon,
   useEditModal,
 } from '@openmsupply-client/common';
-import { useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
+import { useExportStockList } from '../api/hooks/useExportStockList';
 
 export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { fetchAsync, isLoading } = useStock.line.listAll({
-    key: 'itemName',
-    direction: 'asc',
-  });
+  const { fetchAllStock, isLoading } = useExportStockList();
 
   const { isOpen, onClose, onOpen } = useEditModal();
 
   const csvExport = async () => {
-    const data = await fetchAsync();
+    const { data } = await fetchAllStock();
     if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
