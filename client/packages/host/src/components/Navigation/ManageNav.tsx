@@ -6,9 +6,9 @@ import {
   RouteBuilder,
   AppNavLink,
   AppNavSection,
-  SettingsIcon,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
+import { SlidersIcon } from '@common/icons';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
@@ -26,7 +26,7 @@ export const ManageNav: FC = () => {
         visible={visible}
         end={false}
         to={AppRoute.Manage}
-        icon={<SettingsIcon color="primary" fontSize="small" />}
+        icon={<SlidersIcon color="primary" fontSize="small" />}
         text={t('manage')}
         inactive
       />

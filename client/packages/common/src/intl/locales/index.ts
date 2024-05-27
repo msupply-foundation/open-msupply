@@ -39,5 +39,5 @@ export type LocaleKey =
   | WithOrWithoutPlural<keyof typeof dispensary>
   | WithOrWithoutPlural<keyof typeof programs>
   | WithOrWithoutPlural<keyof typeof coldchain>
-  | WithOrWithoutPlural<keyof typeof manage>
-  | WithOrWithoutPlural<keyof typeof plugin>;
+  | WithOrWithoutPlural<keyof typeof plugin>
+  | WithOrWithoutPlural<keyof typeof manage>;

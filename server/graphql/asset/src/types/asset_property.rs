@@ -1,23 +1,56 @@
 use async_graphql::*;
-use graphql_core::generic_filters::EqualFilterStringInput;
+use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 
 use graphql_core::simple_generic_errors::NodeError;
 
 use repository::assets::asset_property::AssetPropertyFilter;
 use repository::db_diesel::assets::asset_property_row::AssetPropertyRow;
 
-use repository::EqualFilter;
+use repository::types::PropertyValueType;
+use repository::{EqualFilter, StringFilter};
+use serde::Serialize;
 use service::ListResult;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum PropertyNodeValueType {
+    String,
+    Boolean,
+    Integer,
+    Float,
+}
+
+impl PropertyNodeValueType {
+    pub fn from_domain(value_type: &PropertyValueType) -> PropertyNodeValueType {
+        use PropertyValueType::*;
+        match value_type {
+            String => PropertyNodeValueType::String,
+            Boolean => PropertyNodeValueType::Boolean,
+            Integer => PropertyNodeValueType::Integer,
+            Float => PropertyNodeValueType::Float,
+        }
+    }
+}
 
 #[derive(InputObject, Clone)]
 pub struct AssetPropertyFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub key: Option<EqualFilterStringInput>,
+    pub name: Option<StringFilterInput>,
+    pub asset_class_id: Option<EqualFilterStringInput>,
+    pub asset_category_id: Option<EqualFilterStringInput>,
+    pub asset_type_id: Option<EqualFilterStringInput>,
 }
 
 impl From<AssetPropertyFilterInput> for AssetPropertyFilter {
     fn from(f: AssetPropertyFilterInput) -> Self {
         AssetPropertyFilter {
             id: f.id.map(EqualFilter::from),
+            key: f.key.map(EqualFilter::from),
+            name: f.name.map(StringFilter::from),
+            asset_class_id: f.asset_class_id.map(EqualFilter::from),
+            asset_category_id: f.asset_category_id.map(EqualFilter::from),
+            asset_type_id: f.asset_type_id.map(EqualFilter::from),
         }
     }
 }
@@ -38,7 +71,27 @@ impl AssetPropertyNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
-    //TODO: Add more fields here
+    pub async fn key(&self) -> &str {
+        &self.row().key
+    }
+    pub async fn name(&self) -> &str {
+        &self.row().name
+    }
+    pub async fn asset_class_id(&self) -> Option<String> {
+        self.row().asset_class_id.clone()
+    }
+    pub async fn asset_category_id(&self) -> Option<String> {
+        self.row().asset_category_id.clone()
+    }
+    pub async fn asset_type_id(&self) -> Option<String> {
+        self.row().asset_type_id.clone()
+    }
+    pub async fn value_type(&self) -> PropertyNodeValueType {
+        PropertyNodeValueType::from_domain(&self.row().value_type)
+    }
+    pub async fn allowed_values(&self) -> &Option<String> {
+        &self.row().allowed_values
+    }
 }
 
 #[derive(Union)]

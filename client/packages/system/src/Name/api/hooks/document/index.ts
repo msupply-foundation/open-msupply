@@ -4,6 +4,7 @@ import { useInternalSuppliers } from './useInternalSuppliers';
 import { useName } from './useName';
 import { useNames } from './useNames';
 import { useFacilities } from './useFacilities';
+import { useDonors } from './useDonors';
 
 export const Document = {
   useCustomers,
@@ -12,4 +13,5 @@ export const Document = {
   useInternalSuppliers,
   useName,
   useNames,
+  useDonors,
 };

@@ -96,6 +96,7 @@
   "login.heading": "Simple.\nPowerful.\nPharmaceutical\nManagement.",
   "login.store-changed": "Welcome to the {{store}} store",
   "manage": "Manage",
+  "settings": "Settings",
   "settings.label-printing": "Label Printing",
   "settings.printer-address": "IP address",
   "settings.printer-label-height": "Label height",

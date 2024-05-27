@@ -34,6 +34,7 @@ pub struct EqualFilterInput<T: InputType> {
     pub equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
     pub not_equal_to: Option<T>,
+    pub equal_any_or_null: Option<Vec<T>>,
 }
 
 pub type EqualFilterStringInput = EqualFilterInput<String>;
@@ -52,7 +53,9 @@ impl<I: InputType> EqualFilterInput<I> {
             equal_any: self
                 .equal_any
                 .map(|inputs| inputs.into_iter().map(&to_domain).collect()),
-            equal_any_or_null: None,
+            equal_any_or_null: self
+                .equal_any_or_null
+                .map(|inputs| inputs.into_iter().map(&to_domain).collect()),
             not_equal_all: None,
             is_null: None,
         }
@@ -68,13 +71,14 @@ where
             equal_to,
             equal_any,
             not_equal_to,
+            equal_any_or_null,
         }: EqualFilterInput<T>,
     ) -> Self {
         EqualFilter {
             equal_to,
             equal_any,
             not_equal_to,
-            equal_any_or_null: None,
+            equal_any_or_null,
             not_equal_all: None,
             is_null: None,
         }
