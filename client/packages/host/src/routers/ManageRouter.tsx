@@ -12,9 +12,9 @@ const fullFacilitiesPath = RouteBuilder.create(AppRoute.Manage)
   .build();
 
 export const ManageRouter: FC = () => {
-  const gotoCustomers = useMatch(fullFacilitiesPath);
+  const gotoFacilities = useMatch(fullFacilitiesPath);
 
-  if (gotoCustomers) {
+  if (gotoFacilities) {
     return <NameService />;
   }
 
