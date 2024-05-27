@@ -22,6 +22,7 @@ import { StockLineForm } from '../Components/StockLineForm';
 import { LedgerTable } from '../Components/Ledger';
 import { Footer } from './Footer';
 import { RepackModal } from '../Components';
+import { InventoryAdjustmentModal } from '../Components';
 
 export const StockLineDetailView: React.FC = () => {
   const { id } = useParams();
@@ -43,6 +44,7 @@ export const StockLineDetailView: React.FC = () => {
   const { setSuffix } = useBreadcrumbs();
 
   const repackModalController = useToggle();
+  const adjustmentModalController = useToggle();
 
   useEffect(() => {
     if (!data) return;
@@ -87,13 +89,6 @@ export const StockLineDetailView: React.FC = () => {
       ),
       value: t('label.details'),
     },
-    // TO-DO: Add Inv Adjustment to Modal
-    // {
-    //   Component: (
-    //     <InventoryAdjustmentForm stockLine={draft} onUpdate={updatePatch} />
-    //   ),
-    //   value: t('label.adjust'),
-    // },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: t('label.log'),
@@ -131,9 +126,16 @@ export const StockLineDetailView: React.FC = () => {
           stockLine={data as StockLineNode}
         />
       )}
+      {adjustmentModalController.isOn && (
+        <InventoryAdjustmentModal
+          stockLine={data as StockLineNode}
+          isOpen={adjustmentModalController.isOn}
+          onClose={adjustmentModalController.toggleOff}
+        />
+      )}
       <AppBarButtons
-        openRepack={() => repackModalController.toggleOn()}
-        openAdjust={() => {}}
+        openRepack={repackModalController.toggleOn}
+        openAdjust={adjustmentModalController.toggleOn}
       />
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />
