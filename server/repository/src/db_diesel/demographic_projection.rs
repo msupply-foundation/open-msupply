@@ -13,12 +13,9 @@ use crate::{
     Pagination,
 };
 
-use crate::{EqualFilter, Sort};
+pub type DemographicProjection = DemographicProjectionRow;
 
-#[derive(PartialEq, Debug, Clone)]
-pub struct DemographicProjection {
-    pub demographic_projection_row: DemographicProjectionRow,
-}
+use crate::{EqualFilter, Sort};
 
 #[derive(Clone, Default)]
 pub struct DemographicProjectionFilter {
@@ -97,9 +94,7 @@ fn create_filtered_query(filter: Option<DemographicProjectionFilter>) -> BoxedLo
 }
 
 pub fn to_domain(demographic_projection_row: DemographicProjectionRow) -> DemographicProjection {
-    DemographicProjection {
-        demographic_projection_row,
-    }
+    demographic_projection_row
 }
 
 impl DemographicProjectionFilter {

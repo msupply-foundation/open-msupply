@@ -17,6 +17,7 @@ pub enum UpdateDemographicProjectionError {
 
 pub struct UpdateDemographicProjection {
     pub id: String,
+    pub base_year: Option<i16>,
     pub year_1: Option<f64>,
     pub year_2: Option<f64>,
     pub year_3: Option<f64>,
@@ -41,7 +42,7 @@ pub fn update_demographic_projection(
                 .map_err(UpdateDemographicProjectionError::from)
         })
         .map_err(|error| error.to_inner_error())?;
-    Ok(demographic_projection.demographic_projection_row)
+    Ok(demographic_projection)
 }
 
 pub fn validate(
@@ -62,6 +63,7 @@ pub fn validate(
 pub fn generate(
     UpdateDemographicProjection {
         id: _,
+        base_year,
         year_1,
         year_2,
         year_3,
@@ -70,6 +72,9 @@ pub fn generate(
     }: UpdateDemographicProjection,
     mut demographic_projection_row: DemographicProjectionRow,
 ) -> DemographicProjectionRow {
+    if let Some(base_year) = base_year {
+        demographic_projection_row.base_year = base_year;
+    }
     if let Some(year_1) = year_1 {
         demographic_projection_row.year_1 = year_1;
     }

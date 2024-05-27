@@ -6,6 +6,8 @@ use graphql_core::{
     ContextExt,
 };
 
+pub mod mutations;
+pub use mutations::*;
 pub mod types;
 use repository::{DemographicIndicatorFilter, DemographicProjectionFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
@@ -38,7 +40,7 @@ impl DemographicIndicatorQueries {
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context("".to_string(), user.user_id)?;
 
-        let assets = service_provider
+        let demographic_indicators = service_provider
             .demographic_service
             .get_demographic_indicators(
                 &service_context.connection,
@@ -51,7 +53,7 @@ impl DemographicIndicatorQueries {
             .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(DemographicIndicatorsResponse::Response(
-            DemographicIndicatorConnector::from_domain(assets),
+            DemographicIndicatorConnector::from_domain(demographic_indicators),
         ))
     }
 
@@ -87,5 +89,43 @@ impl DemographicIndicatorQueries {
         Ok(DemographicProjectionsResponse::Response(
             DemographicProjectionConnector::from_domain(assets),
         ))
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct DemographicMutations;
+
+#[Object]
+impl DemographicMutations {
+    async fn insert_demographic_indicator(
+        &self,
+        ctx: &Context<'_>,
+        input: InsertDemographicIndicatorInput,
+    ) -> Result<InsertDemographicIndicatorResponse> {
+        insert_demographic_indicator(ctx, input)
+    }
+
+    async fn insert_demographic_projection(
+        &self,
+        ctx: &Context<'_>,
+        input: InsertDemographicProjectionInput,
+    ) -> Result<InsertDemographicProjectionResponse> {
+        insert_demographic_projection(ctx, input)
+    }
+
+    async fn update_demographic_indicator(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateDemographicIndicatorInput,
+    ) -> Result<UpdateDemographicIndicatorResponse> {
+        update_demographic_indicator(ctx, input)
+    }
+
+    async fn update_demographic_projection(
+        &self,
+        ctx: &Context<'_>,
+        input: UpdateDemographicProjectionInput,
+    ) -> Result<UpdateDemographicProjectionResponse> {
+        update_demographic_projection(ctx, input)
     }
 }

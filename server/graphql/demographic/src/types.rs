@@ -1,10 +1,10 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 use repository::{
-    DemographicIndicator, DemographicIndicatorFilter, DemographicIndicatorRow,
-    DemographicIndicatorSort, DemographicIndicatorSortField, DemographicProjection,
-    DemographicProjectionFilter, DemographicProjectionRow, DemographicProjectionSort,
-    DemographicProjectionSortField, EqualFilter, StringFilter,
+    DemographicIndicatorFilter, DemographicIndicatorRow, DemographicIndicatorSort,
+    DemographicIndicatorSortField, DemographicProjection, DemographicProjectionFilter,
+    DemographicProjectionRow, DemographicProjectionSort, DemographicProjectionSortField,
+    EqualFilter, StringFilter,
 };
 use service::{usize_to_u32, ListResult};
 
@@ -102,7 +102,7 @@ impl DemographicProjectionConnector {
 }
 #[derive(PartialEq, Debug)]
 pub struct DemographicIndicatorNode {
-    pub demographic_indicator: DemographicIndicator,
+    pub demographic_indicator: DemographicIndicatorRow,
 }
 
 #[Object]
@@ -135,14 +135,14 @@ impl DemographicIndicatorNode {
 }
 
 impl DemographicIndicatorNode {
-    pub fn from_domain(demographic_indicator: DemographicIndicator) -> DemographicIndicatorNode {
+    pub fn from_domain(demographic_indicator: DemographicIndicatorRow) -> DemographicIndicatorNode {
         DemographicIndicatorNode {
             demographic_indicator,
         }
     }
 
     pub fn row(&self) -> &DemographicIndicatorRow {
-        &self.demographic_indicator.demographic_indicator_row
+        &self.demographic_indicator
     }
 }
 
@@ -180,13 +180,13 @@ impl DemographicProjectionNode {
         }
     }
     pub fn row(&self) -> &DemographicProjectionRow {
-        &self.demographic_projection.demographic_projection_row
+        &self.demographic_projection
     }
 }
 
 impl DemographicIndicatorConnector {
     pub fn from_domain(
-        demographic_indicators: ListResult<DemographicIndicator>,
+        demographic_indicators: ListResult<DemographicIndicatorRow>,
     ) -> DemographicIndicatorConnector {
         DemographicIndicatorConnector {
             total_count: demographic_indicators.count,
@@ -199,7 +199,7 @@ impl DemographicIndicatorConnector {
     }
 
     pub fn from_vec(
-        demographic_indicators: Vec<DemographicIndicator>,
+        demographic_indicators: Vec<DemographicIndicatorRow>,
     ) -> DemographicIndicatorConnector {
         DemographicIndicatorConnector {
             total_count: usize_to_u32(demographic_indicators.len()),

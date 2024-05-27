@@ -18,6 +18,8 @@ pub enum UpdateDemographicIndicatorError {
 pub struct UpdateDemographicIndicator {
     pub id: String,
     pub name: Option<String>,
+    pub base_year: Option<i16>,
+    pub base_population: Option<f64>,
     pub population_percentage: Option<f64>,
     pub year_1_projection: Option<f64>,
     pub year_2_projection: Option<f64>,
@@ -43,7 +45,7 @@ pub fn update_demographic_indicator(
                 .map_err(UpdateDemographicIndicatorError::from)
         })
         .map_err(|error| error.to_inner_error())?;
-    Ok(demographic_indicator.demographic_indicator_row)
+    Ok(demographic_indicator)
 }
 
 pub fn validate(
@@ -63,17 +65,25 @@ pub fn generate(
     UpdateDemographicIndicator {
         id: _,
         name,
+        base_year,
         population_percentage,
         year_1_projection,
         year_2_projection,
         year_3_projection,
         year_4_projection,
         year_5_projection,
+        base_population,
     }: UpdateDemographicIndicator,
     mut demographic_indicator_row: DemographicIndicatorRow,
 ) -> DemographicIndicatorRow {
     if let Some(name) = name {
         demographic_indicator_row.name = name;
+    }
+    if let Some(base_year) = base_year {
+        demographic_indicator_row.base_year = base_year;
+    }
+    if let Some(base_population) = base_population {
+        demographic_indicator_row.base_population = base_population;
     }
     if let Some(population_percentage) = population_percentage {
         demographic_indicator_row.population_percentage = population_percentage;
