@@ -7,6 +7,7 @@ import {
   setNullableInput,
   InsertAssetLogInput,
   AssetLogSortFieldInput,
+  AssetPropertyFilterInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
@@ -49,6 +50,11 @@ const assetParsers = {
     serialNumber: input.serialNumber,
     storeId: input.store?.id,
     typeId: input.typeId,
+    properties: JSON.stringify(input.parsedProperties),
+    donorNameId: input.donorNameId,
+    warrantyStart: input.warrantyStart,
+    warrantyEnd: input.warrantyEnd,
+    needsReplacement: input.needsReplacement,
   }),
   toUpdate: (input: Partial<DraftAsset>): UpdateAssetInput => ({
     id: input.id ?? '',
@@ -60,6 +66,11 @@ const assetParsers = {
     serialNumber: setNullableInput('serialNumber', input),
     storeId: setNullableInput('id', input.store),
     locationIds: input.locationIds,
+    properties: JSON.stringify(input.parsedProperties),
+    donorNameId: setNullableInput('donorNameId', input),
+    warrantyStart: setNullableInput('warrantyStart', input),
+    warrantyEnd: setNullableInput('warrantyEnd', input),
+    needsReplacement: input.needsReplacement,
   }),
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',
@@ -182,5 +193,23 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not insert asset log');
+  },
+});
+
+export const getAssetPropertyQueries = (sdk: Sdk, storeId: string) => ({
+  get: {
+    list: async (filterBy: AssetPropertyFilterInput) => {
+      const result = await sdk.assetProperties({
+        storeId,
+        filter: {
+          ...filterBy,
+          assetClassId: { equalAnyOrNull: [CCE_CLASS_ID] },
+        },
+      });
+
+      const items = result?.assetProperties;
+
+      return items;
+    },
   },
 });
