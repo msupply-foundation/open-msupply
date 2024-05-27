@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   TableProvider,
   createTableStore,
   useTranslation,
   DetailTabs,
-  // usePluginElements,
-  // usePluginEvents,
-  // PluginEventListener,
+  usePluginElements,
+  usePluginEvents,
+  PluginEventListener,
   useBreadcrumbs,
   useParams,
   useConfirmationModal,
@@ -34,8 +34,8 @@ export const StockLineDetailView: React.FC = () => {
     isDirty,
     update: { update, isUpdating },
   } = useStockLine(id);
-  // const { dispatchEvent, addEventListener, removeEventListener } =
-  //   usePluginEvents();
+  const { dispatchEvent, addEventListener, removeEventListener } =
+    usePluginEvents();
   const {
     urlQuery: { tab },
   } = useUrlQuery();
@@ -46,27 +46,42 @@ export const StockLineDetailView: React.FC = () => {
   const repackModalController = useToggle();
   const adjustmentModalController = useToggle();
 
+  const [hasPluginChanged, setHasPluginChanged] = useState(false);
+  const plugins = usePluginElements({
+    type: 'StockEditForm',
+    data,
+  });
+
   useEffect(() => {
     if (!data) return;
     setSuffix(data?.item.name ?? '');
   }, [data]);
 
-  // const plugins = usePluginElements({
-  //   type: 'StockEditForm',
-  //   data: stockLine,
-  // });
+  const onPluginChange = () => setHasPluginChanged(true);
+  useEffect(() => {
+    const listener: PluginEventListener = {
+      eventType: 'onChangeStockEditForm',
+      listener: onPluginChange,
+    };
+
+    addEventListener(listener);
+
+    return () => removeEventListener(listener);
+  }, [addEventListener, removeEventListener]);
 
   const showSaveConfirmation = useConfirmationModal({
-    onConfirm: () =>
+    onConfirm: () => {
       update()
         .then(() => {
+          dispatchEvent('onSaveStockEditForm', new Event(draft.id));
           const successSnack = success(t('success.data-saved'));
           successSnack();
         })
         .catch(err => {
           const errorSnack = error(err.message);
           errorSnack();
-        }),
+        });
+    },
     message: t('messages.confirm-save-generic'),
     title: t('heading.are-you-sure'),
   });
@@ -84,7 +99,7 @@ export const StockLineDetailView: React.FC = () => {
           loading={isLoading}
           draft={draft}
           onUpdate={updatePatch}
-          // plugins={plugins}
+          plugins={plugins}
         />
       ),
       value: t('label.details'),
@@ -99,22 +114,11 @@ export const StockLineDetailView: React.FC = () => {
     },
   ];
 
-  // useEffect(() => {
-  //   const listener: PluginEventListener = {
-  //     eventType: 'onChangeStockEditForm',
-  //     listener: onChange,
-  //   };
-
-  //   addEventListener(listener);
-
-  //   return () => removeEventListener(listener);
-  // }, [addEventListener, removeEventListener]);
-
   const footerProps = {
     isSaving: isUpdating,
     showSaveConfirmation,
     showCancelConfirmation,
-    isDirty,
+    disabled: isDirty && !hasPluginChanged,
   };
 
   return (

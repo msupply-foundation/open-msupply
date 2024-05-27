@@ -10,7 +10,7 @@ import { FormInputData } from '@openmsupply-client/programs';
 
 interface FooterProps {
   isSaving: boolean;
-  isDirty?: boolean;
+  disabled?: boolean;
   validationError?: string | boolean;
   inputData?: FormInputData;
   showSaveConfirmation: () => void;
@@ -19,7 +19,7 @@ interface FooterProps {
 
 export const Footer: FC<FooterProps> = ({
   isSaving,
-  isDirty,
+  disabled,
   inputData,
   showSaveConfirmation,
   showCancelConfirmation,
@@ -45,12 +45,12 @@ export const Footer: FC<FooterProps> = ({
           >
             <DialogButton
               variant="cancel"
-              disabled={!isDirty}
+              disabled={disabled}
               onClick={() => showCancelConfirmation()}
             />
             <LoadingButton
               color="secondary"
-              disabled={!isDirty}
+              disabled={disabled}
               isLoading={isSaving}
               onClick={showSaveConfirmation}
             >
