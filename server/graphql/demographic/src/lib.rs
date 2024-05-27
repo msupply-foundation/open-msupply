@@ -9,7 +9,10 @@ use graphql_core::{
 pub mod mutations;
 pub use mutations::*;
 pub mod types;
-use repository::{DemographicIndicatorFilter, DemographicProjectionFilter, PaginationOption};
+use repository::{
+    demographic_projection::DemographicProjectionFilter, DemographicIndicatorFilter,
+    PaginationOption,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 use types::{
     DemographicIndicatorConnector, DemographicIndicatorSortInput, DemographicProjectionConnector,

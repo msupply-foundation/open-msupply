@@ -1,10 +1,12 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 use repository::{
+    demographic_projection::{
+        DemographicProjection, DemographicProjectionFilter, DemographicProjectionSort,
+        DemographicProjectionSortField,
+    },
     DemographicIndicatorFilter, DemographicIndicatorRow, DemographicIndicatorSort,
-    DemographicIndicatorSortField, DemographicProjection, DemographicProjectionFilter,
-    DemographicProjectionRow, DemographicProjectionSort, DemographicProjectionSortField,
-    EqualFilter, StringFilter,
+    DemographicIndicatorSortField, DemographicProjectionRow, EqualFilter, StringFilter,
 };
 use service::{usize_to_u32, ListResult};
 
@@ -113,10 +115,15 @@ impl DemographicIndicatorNode {
     pub async fn name(&self) -> &str {
         &self.row().name
     }
+    pub async fn base_year(&self) -> &i16 {
+        &self.row().base_year
+    }
+    pub async fn base_population(&self) -> &f64 {
+        &self.row().base_population
+    }
     pub async fn population_percentage(&self) -> &f64 {
         &self.row().population_percentage
     }
-
     pub async fn year_1_projection(&self) -> &f64 {
         &self.row().year_1_projection
     }
@@ -155,6 +162,9 @@ pub struct DemographicProjectionNode {
 impl DemographicProjectionNode {
     pub async fn id(&self) -> &str {
         &self.row().id
+    }
+    pub async fn base_year(&self) -> &i16 {
+        &self.row().base_year
     }
     pub async fn year_1(&self) -> &f64 {
         &self.row().year_1
