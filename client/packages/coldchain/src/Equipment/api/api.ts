@@ -7,7 +7,6 @@ import {
   setNullableInput,
   InsertAssetLogInput,
   AssetLogSortFieldInput,
-  AssetPropertyFilterInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
@@ -193,23 +192,5 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not insert asset log');
-  },
-});
-
-export const getAssetPropertyQueries = (sdk: Sdk, storeId: string) => ({
-  get: {
-    list: async (filterBy: AssetPropertyFilterInput) => {
-      const result = await sdk.assetProperties({
-        storeId,
-        filter: {
-          ...filterBy,
-          assetClassId: { equalAnyOrNull: [CCE_CLASS_ID] },
-        },
-      });
-
-      const items = result?.assetProperties;
-
-      return items;
-    },
   },
 });

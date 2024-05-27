@@ -80,6 +80,14 @@ impl AssetCatalogueItemNode {
             .await?
             .map(AssetTypeNode::from_domain))
     }
+
+    pub async fn properties(&self) -> Result<String> {
+        let asset_properties = match &self.row().properties {
+            Some(properties) => properties.to_owned(),
+            None => return Ok("{}".to_string()), // Empty JSON object
+        };
+        Ok(asset_properties)
+    }
 }
 
 #[derive(Union)]

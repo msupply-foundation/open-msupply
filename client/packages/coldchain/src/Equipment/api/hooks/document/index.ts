@@ -6,7 +6,7 @@ import { useAssetUpdate } from './useAssetUpdate';
 import { useAssets } from './useAssets';
 import { useAssetsAll } from './useAssetsAll';
 import { useAssetsDelete } from './useAssetsDelete';
-import { useAssetProperties } from './useAssetProperties';
+import { useAssetProperties } from '@openmsupply-client/system/src/Asset/api/hooks/utils/useAssetProperties';
 
 export const Document = {
   useAsset,

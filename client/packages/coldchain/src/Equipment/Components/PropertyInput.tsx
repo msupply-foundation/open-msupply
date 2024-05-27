@@ -13,6 +13,7 @@ type PropertyInput = {
   allowedValues?: string[];
   value: PropertyValue | null;
   onChange: (value: PropertyValue) => void;
+  isCatalogue?: boolean;
 };
 
 const mapValueToOption = (value: PropertyValue | null) =>
@@ -29,6 +30,7 @@ export const PropertyInput: FC<PropertyInput> = ({
   allowedValues,
   value,
   onChange,
+  isCatalogue,
 }) => {
   switch (valueType) {
     case PropertyNodeValueType.Boolean:
@@ -36,6 +38,7 @@ export const PropertyInput: FC<PropertyInput> = ({
         <Checkbox
           checked={value as boolean}
           onChange={e => onChange(e.target.checked)}
+          disabled={isCatalogue}
         />
       );
     case PropertyNodeValueType.Integer:
@@ -50,6 +53,7 @@ export const PropertyInput: FC<PropertyInput> = ({
             onChange(n);
           }}
           decimalLimit={valueType === PropertyNodeValueType.Float ? 5 : 0}
+          disabled={isCatalogue}
         />
       );
     case PropertyNodeValueType.String:
@@ -61,6 +65,7 @@ export const PropertyInput: FC<PropertyInput> = ({
             onChange={(_, value) => {
               onChange(value?.value);
             }}
+            disabled={isCatalogue}
           />
         );
       }
@@ -71,6 +76,7 @@ export const PropertyInput: FC<PropertyInput> = ({
           onChange={e => {
             onChange(e.target.value);
           }}
+          disabled={isCatalogue}
         />
       );
   }
