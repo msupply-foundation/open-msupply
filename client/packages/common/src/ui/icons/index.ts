@@ -65,7 +65,7 @@ export { SuppliersIcon } from './Suppliers';
 export { ThermometerIcon } from './Thermometer';
 export { ToolsIcon } from './Tools';
 export { TranslateIcon } from './Translate';
-export { BarChart2Icon as TrendingUpIcon } from './BarChart2';
+export { BarChart2Icon } from './BarChart2';
 export { TruckIcon } from './Truck';
 export { UnhappyMan } from './UnhappyMan';
 export { UploadIcon } from './Upload';
