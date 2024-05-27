@@ -125,7 +125,6 @@ pub use currency::*;
 pub use currency_row::*;
 pub use demographic_indicator::*;
 pub use demographic_indicator_row::*;
-pub use demographic_projection::*;
 pub use demographic_projection_row::*;
 pub use document::*;
 pub use document_registry::*;
