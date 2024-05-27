@@ -49,6 +49,8 @@ pub struct NameFilterInput {
     pub is_customer: Option<bool>,
     /// Filter by supplier property
     pub is_supplier: Option<bool>,
+    /// Filter by donor property
+    pub is_donor: Option<bool>,
     pub is_patient: Option<bool>,
     /// Is this name a store
     pub is_store: Option<bool>,
@@ -133,6 +135,7 @@ impl NameFilterInput {
             code,
             is_customer,
             is_supplier,
+            is_donor,
             is_store,
             store_code,
             is_visible,
@@ -155,6 +158,7 @@ impl NameFilterInput {
             code_or_name: code_or_name.map(StringFilter::from),
             is_customer,
             is_supplier,
+            is_donor,
             is_store,
             is_visible,
             is_system_name: is_system_name.or(Some(false)),

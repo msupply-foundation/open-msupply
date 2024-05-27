@@ -85,14 +85,25 @@ fragment Asset on AssetNode {
     model
   }
   assetType {
+    id
     name
   }
   assetClass {
+    id
     name
   }
   assetCategory {
+    id
     name
   }
+  donorNameId
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  warrantyStart
+  warrantyEnd
+  needsReplacement
 }
 
 fragment ColdchainAssetLog on AssetLogNode {
@@ -238,6 +249,27 @@ mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
       __typename
       error {
         description
+      }
+    }
+  }
+}
+
+fragment AssetPropertyRow on AssetPropertyNode {
+  id
+  key
+  name
+  valueType
+  allowedValues
+}
+
+query assetProperties($filter: AssetPropertyFilterInput!, $storeId: String!) {
+  assetProperties(filter: $filter, storeId: $storeId) {
+    ... on AssetPropertyConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetPropertyRow
       }
     }
   }
