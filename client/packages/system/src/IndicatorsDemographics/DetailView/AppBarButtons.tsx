@@ -1,8 +1,7 @@
 import React from 'react';
 import {
-  CloseIcon,
+  ButtonWithIcon,
   FnUtils,
-  LoadingButton,
   PlusCircleIcon,
   RecordPatch,
   useTranslation,
@@ -13,16 +12,12 @@ import { AppBarButtonsPortal, Grid } from '@openmsupply-client/common';
 interface IndicatorsAppBarButtonsProps {
   rows: Row[];
   patch: (patch: RecordPatch<Row>) => void;
-  save: () => void;
-  cancel: () => void;
 }
 
 export const AppBarButtonsComponent = ({
   patch,
-  save,
-  cancel,
 }: IndicatorsAppBarButtonsProps) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const handleClick = () => {
     const id = FnUtils.generateUUID();
     patch({
@@ -41,27 +36,11 @@ export const AppBarButtonsComponent = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <LoadingButton
-          startIcon={<PlusCircleIcon />}
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
           onClick={handleClick}
-          isLoading={false}
-        >
-          {t('button.add-new-indicator')}
-        </LoadingButton>
-        <LoadingButton
-          startIcon={<PlusCircleIcon />}
-          onClick={save}
-          isLoading={false}
-        >
-          {t('button.save')}
-        </LoadingButton>
-        <LoadingButton
-          startIcon={<CloseIcon />}
-          onClick={cancel}
-          isLoading={false}
-        >
-          {t('button.cancel')}
-        </LoadingButton>
+          label={t('button.add-new-indicator')}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );

@@ -17,6 +17,7 @@ import { percentageColumn } from './PercentageColumn';
 import { nameColumn } from './NameColumn';
 import { GrowthRow } from './GrowthRow';
 import { populationColumn } from './PopulationColumn';
+import { Footer } from './Footer';
 
 export interface Row {
   isNew: boolean;
@@ -100,10 +101,12 @@ export const IndicatorsDemographicsComponent: FC = () => {
   const draftHeaders: Record<string, HeaderValue> = {};
   headerData.forEach(header => (draftHeaders[header.id] = { ...header }));
   const [draft, setDraft] = useState<Record<string, Row>>(draftRows);
+  const [isDirty, setIsDirty] = useState(false);
   const [headerDraft, setHeaderDraft] =
     useState<Record<string, HeaderValue>>(draftHeaders);
 
   const PopulationChange = (patch: RecordPatch<Row>) => {
+    setIsDirty(true);
     const currentDraft = { ...draft, [parseInt(patch.id)]: patch } as Record<
       string,
       Row
@@ -123,12 +126,12 @@ export const IndicatorsDemographicsComponent: FC = () => {
 
   const setter = (patch: RecordPatch<Row>) => {
     const updatedDraft = { ...draft };
-
     const percentage = Number(!patch.percentage ? 0 : patch.percentage);
-
     const percentageChange = percentage != draft[patch.id]?.percentage;
-    // change state of name only if only name changes
 
+    setIsDirty(true);
+
+    // change state of name only if only name changes
     if (!percentageChange) {
       setDraft({ ...updatedDraft, [patch.id]: { ...patch } as Row });
       return;
@@ -141,6 +144,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
 
   // generic function for handling percentage change, and then re calculating the values of that year
   const handleGrowthChange = (patch: RecordPatch<HeaderValue>) => {
+    setIsDirty(true);
     const updatedHeaderDraft = { ...headerDraft };
     const updatedPatch = {
       ...patch,
@@ -194,7 +198,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
     return updatedRow;
   };
 
-  // calculate the row value based on percentae, headers, and previous row value
+  // calculate the row value based on percentage, headers, and previous row value
   const recursiveCalculate = (
     key: number,
     updatedHeader: { [x: string]: HeaderValue },
@@ -221,11 +225,13 @@ export const IndicatorsDemographicsComponent: FC = () => {
 
   // TODO save draft to DB
   const save = () => {
+    setIsDirty(false);
     console.info('api calling save to DB');
   };
 
   // TODO cancel changes (re call data from DB)
   const cancel = () => {
+    setIsDirty(false);
     console.info('re set data to DB saved (cancel all changes)');
   };
 
@@ -237,32 +243,37 @@ export const IndicatorsDemographicsComponent: FC = () => {
       {
         key: '1',
         width: 150,
-        align: ColumnAlign.Left,
-        label: currentYear + 1,
+        align: ColumnAlign.Right,
+        label: undefined,
+        labelProps: { defaultValue: currentYear + 1 },
       },
       {
         key: '2',
         width: 150,
-        align: ColumnAlign.Left,
-        label: currentYear + 2,
+        align: ColumnAlign.Right,
+        label: undefined,
+        labelProps: { defaultValue: currentYear + 2 },
       },
       {
         key: '3',
         width: 150,
-        align: ColumnAlign.Left,
-        label: currentYear + 3,
+        align: ColumnAlign.Right,
+        label: undefined,
+        labelProps: { defaultValue: currentYear + 3 },
       },
       {
         key: '4',
         width: 150,
-        align: ColumnAlign.Left,
-        label: currentYear + 4,
+        align: ColumnAlign.Right,
+        label: undefined,
+        labelProps: { defaultValue: currentYear + 4 },
       },
       {
         key: '5',
         width: 150,
-        align: ColumnAlign.Left,
-        label: currentYear + 5,
+        align: ColumnAlign.Right,
+        label: undefined,
+        labelProps: { defaultValue: currentYear + 5 },
       },
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
@@ -271,12 +282,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
 
   return (
     <>
-      <AppBarButtons
-        rows={rows}
-        patch={setter}
-        save={save}
-        cancel={cancel}
-      ></AppBarButtons>
+      <AppBarButtons rows={rows} patch={setter}></AppBarButtons>
       <Toolbar></Toolbar>
       <Box>
         <GrowthRow
@@ -291,6 +297,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
           // enableColumnSelection={true}
         ></DataTable>
       </Box>
+      <Footer save={save} cancel={cancel} isDirty={isDirty} />
     </>
   );
 };

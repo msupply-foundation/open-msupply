@@ -1,7 +1,10 @@
 import React from 'react';
-import { Box } from '@mui/material';
 import { BasicTextInput } from '@common/components';
-import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
+import {
+  Box,
+  ColumnDefinition,
+  RecordWithId,
+} from '@openmsupply-client/common';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
   name?: number | null | string;

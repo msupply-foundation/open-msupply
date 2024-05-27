@@ -5,10 +5,8 @@
   "sideEffects": false,
   "private": true,
   "scripts": {
-    "start-local-features": "yarn start-local -- -- --env $1",
-    "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local",
-    "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote",
-    "start-remote-features": "yarn start-remote -- -- --env $1",
+    "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local -- --env $1 _",
+    "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote -- --env $1 _",
     "start": "yarn start-local",
     "build": "lerna run --scope @openmsupply-client/* build",
     "build-stats": "lerna run --scope @openmsupply-client/* build-stats",
