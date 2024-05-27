@@ -12,6 +12,8 @@ import {
   useConfirmationModal,
   useNotification,
   useUrlQuery,
+  useToggle,
+  StockLineNode,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -19,6 +21,7 @@ import { useStockLine } from '../api';
 import { StockLineForm } from '../Components/StockLineForm';
 import { LedgerTable } from '../Components/Ledger';
 import { Footer } from './Footer';
+import { RepackModal } from '../Components';
 
 export const StockLineDetailView: React.FC = () => {
   const { id } = useParams();
@@ -38,6 +41,8 @@ export const StockLineDetailView: React.FC = () => {
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
   const { setSuffix } = useBreadcrumbs();
+
+  const repackModalController = useToggle();
 
   useEffect(() => {
     if (!data) return;
@@ -119,7 +124,17 @@ export const StockLineDetailView: React.FC = () => {
 
   return (
     <>
-      <AppBarButtons />
+      {repackModalController.isOn && data && (
+        <RepackModal
+          isOpen={repackModalController.isOn}
+          onClose={repackModalController.toggleOff}
+          stockLine={data as StockLineNode}
+        />
+      )}
+      <AppBarButtons
+        openRepack={() => repackModalController.toggleOn()}
+        openAdjust={() => {}}
+      />
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />
         {(tab === t('label.details') || !tab) && <Footer {...footerProps} />}
