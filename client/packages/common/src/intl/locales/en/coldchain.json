@@ -127,6 +127,7 @@
   "messages.total-breaches": "Total unacknowledged: {{count}}",
   "messages.total-excursions": "Total excursions: {{count}}",
   "messages.unknown-error": "Unknown error",
+  "messages.catalogue-property": "This property is defined in the catalogue",
   "reason.awaiting-decomissioning": "Awaiting decomissioning",
   "reason.awaiting-decommissioning": "Awaiting decommissioning",
   "reason.awaiting-installation": "Awaiting installation",
