@@ -17,13 +17,7 @@ interface DetailsProps {
 }
 
 const Container = ({ children }: { children: React.ReactNode }) => (
-  <Box
-    display="flex"
-    flex={1}
-    flexDirection="column"
-    alignContent="center"
-    padding={4}
-  >
+  <Box display="flex" flexDirection="column" alignContent="center" padding={4}>
     {children}
   </Box>
 );
@@ -110,7 +104,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   if (!draft) return null;
 
   return (
-    <Box display="flex" flex={3}>
+    <Box display="flex" flex={3} justifyContent={'center'}>
       <Container>
         {isLoading ? <BasicSpinner /> : null}
         <Section heading={t('label.asset-properties')}>
