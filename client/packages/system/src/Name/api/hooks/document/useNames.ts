@@ -12,7 +12,7 @@ export const useNames = (type: 'customer' | 'supplier') => {
         first: queryParams.first,
         offset: queryParams.offset,
         sortBy: queryParams.sortBy,
-        type: type,
+        type,
       })
     ),
   };
