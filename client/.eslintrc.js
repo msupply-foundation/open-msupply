@@ -52,6 +52,13 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
     '@typescript-eslint/no-explicit-any': 'warn',
     'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
+    'prefer-const': [
+      'error',
+      {
+        destructuring: 'any',
+        ignoreReadBeforeAssign: true,
+      },
+    ],
   },
   ignorePatterns: ['**/operations.generated.ts', '**/types/schema.ts'],
 };

@@ -125,7 +125,7 @@ export const Site: FC = () => {
                       element={<ColdChainRouter />}
                     />
                     <Route
-                      path={RouteBuilder.create(AppRoute.Admin)
+                      path={RouteBuilder.create(AppRoute.Settings)
                         .addWildCard()
                         .build()}
                       element={<Settings />}

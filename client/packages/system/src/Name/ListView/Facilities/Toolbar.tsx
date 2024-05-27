@@ -26,7 +26,7 @@ export const Toolbar: FC<ToolbarProps> = ({ filter }) => {
       }}
     >
       <SearchBar
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
+        placeholder={t('placeholder.enter-facility-code-or-name')}
         value={filterString ?? ''}
         onChange={newValue => {
           if (!newValue) {

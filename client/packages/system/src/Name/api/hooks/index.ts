@@ -10,5 +10,6 @@ export const useName = {
     list: Document.useNames,
     suppliers: Document.useSuppliers,
     facilities: Document.useFacilities,
+    donors: Document.useDonors,
   },
 };

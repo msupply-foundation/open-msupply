@@ -5,7 +5,6 @@ import { useAssetsAll } from './useAssetsAll';
 import { useInfiniteAssets } from './useInfiniteAssets';
 import { useAssetItemInsert } from './useAssetItemInsert';
 import { useAssetsDelete } from './useAssetsDelete';
-import { useAssetItemPropertyInsert } from './useAssetItemPropertyInsert';
 
 export const Document = {
   useAsset,
@@ -15,5 +14,4 @@ export const Document = {
   useInfiniteAssets,
   useAssetItemInsert,
   useAssetsDelete,
-  useAssetItemPropertyInsert,
 };
