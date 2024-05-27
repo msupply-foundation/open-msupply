@@ -11,10 +11,10 @@ import {
   LocationRowFragment,
   Repack,
   StockLineFragment,
-  useStock,
 } from '@openmsupply-client/system';
 import { LocationSearchInput } from '../../..';
 import React, { FC, useEffect, useState } from 'react';
+import { useRepack } from '../../api/hooks/useRepack';
 
 const INPUT_WIDTH = 100;
 
@@ -32,7 +32,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
   draft,
 }) => {
   const t = useTranslation('inventory');
-  const { data } = useStock.repack.get(invoiceId ?? '');
+  const { data } = useRepack(invoiceId ?? '');
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
   const { availableNumberOfPacks = 0 } = stockLine ?? {};
   const textProps = { textAlign: 'end' as 'end' | 'start', paddingRight: 3 };
