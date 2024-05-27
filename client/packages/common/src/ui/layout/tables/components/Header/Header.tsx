@@ -64,11 +64,7 @@ export const HeaderCell = <T extends RecordWithId>({
   );
 
   const columnLabel =
-    column.label === ''
-      ? ''
-      : typeof column.label === 'number'
-      ? column.label
-      : t(column.label, column.labelProps);
+    column.label === '' ? '-' : t(column.label, column.labelProps);
   const tooltip =
     !description && !sortable && !columnLabel ? null : (
       <>

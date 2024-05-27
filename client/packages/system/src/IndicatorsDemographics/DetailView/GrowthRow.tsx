@@ -1,14 +1,16 @@
-import { RecordPatch, RecordWithId } from '@common/types';
-import { BasicTextInput, Box, HeaderRow } from 'packages/common/src';
-import { Column } from 'packages/common/src/ui/layout/tables/columns/types';
-import { HeaderValue } from './IndicatorsDemographics';
 import React, { useRef } from 'react';
+import { RecordPatch, RecordWithId } from '@common/types';
 import {
+  BasicTextInput,
+  Box,
+  Column,
+  HeaderRow,
   TableHead,
   TableContainer,
-  Table as MuiTable,
   TableCell,
-} from '@mui/material';
+  Table as MuiTable,
+} from '@openmsupply-client/common';
+import { HeaderValue } from './IndicatorsDemographics';
 
 interface GrowthRowProps<T extends RecordWithId> {
   columns: Column<T>[];
@@ -37,7 +39,7 @@ export const GrowthRow = <T extends RecordWithId>({
 
   // don't show if no data
   if (!data || isLoading || isError) {
-    return <></>;
+    return null;
   }
 
   return (
@@ -66,7 +68,7 @@ export const GrowthRow = <T extends RecordWithId>({
               const columnHeader = Object.values(data).filter(
                 header => header.id == column.key
               )[0];
-              const columnText = column.key == '0';
+              const hasColumnText = column.key == '0';
               return (
                 // <TableCell ></TableCell>
                 <TableCell
@@ -96,7 +98,7 @@ export const GrowthRow = <T extends RecordWithId>({
                       display: 'flex',
                     }}
                   >
-                    {columnText ? <>% Growth on previous year</> : <></>}
+                    {hasColumnText ? <>% Growth on previous year</> : null}
                     {columnHeader ? (
                       <BasicTextInput
                         defaultValue={columnHeader.value ?? 0}
@@ -107,9 +109,7 @@ export const GrowthRow = <T extends RecordWithId>({
                           })
                         }
                       />
-                    ) : (
-                      <></>
-                    )}
+                    ) : null}
                   </Box>
                 </TableCell>
               );
