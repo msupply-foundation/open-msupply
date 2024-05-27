@@ -13,12 +13,9 @@ use crate::{
     Pagination, StringFilter,
 };
 
-use crate::{EqualFilter, Sort};
+pub type DemographicIndicator = DemographicIndicatorRow;
 
-#[derive(PartialEq, Debug, Clone)]
-pub struct DemographicIndicator {
-    pub demographic_indicator_row: DemographicIndicatorRow,
-}
+use crate::{EqualFilter, Sort};
 
 #[derive(Clone, Default)]
 pub struct DemographicIndicatorFilter {
@@ -103,9 +100,7 @@ fn create_filtered_query(filter: Option<DemographicIndicatorFilter>) -> BoxedLog
 }
 
 pub fn to_domain(demographic_indicator_row: DemographicIndicatorRow) -> DemographicIndicator {
-    DemographicIndicator {
-        demographic_indicator_row,
-    }
+    demographic_indicator_row
 }
 
 impl DemographicIndicatorFilter {

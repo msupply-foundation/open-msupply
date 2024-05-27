@@ -9,7 +9,7 @@ use super::query_demographic_projection::get_demographic_projection;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertDemographicProjectionError {
-    AssetAlreadyExists,
+    DemographicProjectionAlreadyExists,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
@@ -44,7 +44,7 @@ pub fn insert_demographic_projection(
                 .map_err(InsertDemographicProjectionError::from)
         })
         .map_err(|error| error.to_inner_error())?;
-    Ok(demographic_projection.demographic_projection_row)
+    Ok(demographic_projection)
 }
 
 pub fn validate(

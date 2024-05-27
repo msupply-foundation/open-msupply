@@ -45,7 +45,7 @@ pub fn insert_demographic_indicator(
                 .map_err(InsertDemographicIndicatorError::from)
         })
         .map_err(|error| error.to_inner_error())?;
-    Ok(demographic_indicator.demographic_indicator_row)
+    Ok(demographic_indicator)
 }
 
 pub fn validate(
