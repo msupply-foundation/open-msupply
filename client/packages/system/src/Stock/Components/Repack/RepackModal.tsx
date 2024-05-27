@@ -191,7 +191,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             <Typography>{t('messages.no-repack-detail')}</Typography>
           </Box>
         )}
-        <Box display="flex" flexDirection="column" height={435}>
+        <Box display="flex" flexDirection="column">
           <Box display="flex" flexDirection="column" flex={1}>
             <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
               <TableProvider createStore={createTableStore}>
