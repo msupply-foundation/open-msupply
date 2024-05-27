@@ -16,6 +16,7 @@ import {
   ReportContext,
   LoadingButton,
   PrinterIcon,
+  StockLineNode,
 } from '@openmsupply-client/common';
 import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
@@ -27,13 +28,13 @@ import {
   useReport,
   useStock,
 } from '@openmsupply-client/system';
-import { RepackFragment, StockLineRowFragment } from '../../api';
+import { RepackFragment } from '../../api';
 import { useRepackColumns } from './column';
 
 interface RepackModalControlProps {
   isOpen: boolean;
   onClose: () => void;
-  stockLine: StockLineRowFragment | null;
+  stockLine: StockLineNode;
 }
 
 const useDraftRepack = (seed: Repack) => {
