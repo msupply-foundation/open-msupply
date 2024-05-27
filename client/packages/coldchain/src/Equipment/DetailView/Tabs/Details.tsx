@@ -6,7 +6,7 @@ import {
   Typography,
 } from '@common/components';
 import { useTranslation } from '@common/intl';
-import { Box } from '@openmsupply-client/common';
+import { ArrayUtils, Box } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
 import { useAssets } from '../../api';
 import { PropertyInput } from '../../Components/PropertyInput';
@@ -115,7 +115,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
           ) : (
             <>
               {assetProperties &&
-                assetProperties.map(property => {
+                ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
                   const isCatalogue =
                     draft.parsedCatalogProperties?.hasOwnProperty(
                       property.key
