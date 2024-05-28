@@ -75,16 +75,10 @@ export const EquipmentDetailView = () => {
 
   useEffect(() => {
     if (!data) return;
-    let assetProperties = JSON.parse(data.properties);
-    if (!assetProperties || !ObjUtils.isObject(assetProperties)) {
-      // Invalid properties, reset to empty object
-      assetProperties = {};
-    }
-    let catalogProperties = JSON.parse(data.catalogProperties ?? '{}');
-    if (!catalogProperties || !ObjUtils.isObject(catalogProperties)) {
-      // Invalid properties, reset to empty object
-      catalogProperties = {};
-    }
+
+    const assetProperties = ObjUtils.parse(data.properties);
+    const catalogProperties = ObjUtils.parse(data.catalogProperties);
+
     setDraft({
       ...data,
       locationIds: draft?.locationIds

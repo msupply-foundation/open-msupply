@@ -146,5 +146,8 @@
   "filename.requests": "внутренние-заказы",
   "heading.add-item": "Добавить Товар",
   "heading.custom-logo": "Пользовательский Логотип",
-  "label.actions": "Действия"
+  "label.actions": "Действия",
+  "label.delete": "Удалить",
+  "label.quantity": "Количество",
+  "label.requisition": "Заявка на закупку"
 }

@@ -1,11 +1,12 @@
 import React from 'react';
 import {
   BasicSpinner,
+  InfoTooltipIcon,
   InputWithLabelRow,
   Typography,
 } from '@common/components';
 import { useTranslation } from '@common/intl';
-import { Box } from '@openmsupply-client/common';
+import { ArrayUtils, Box } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
 import { useAssets } from '../../api';
 import { PropertyInput } from '../../Components/PropertyInput';
@@ -16,13 +17,7 @@ interface DetailsProps {
 }
 
 const Container = ({ children }: { children: React.ReactNode }) => (
-  <Box
-    display="flex"
-    flex={1}
-    flexDirection="column"
-    alignContent="center"
-    padding={4}
-  >
+  <Box display="flex" flexDirection="column" alignContent="center" padding={4}>
     {children}
   </Box>
 );
@@ -60,14 +55,16 @@ const Heading = ({ children }: { children: React.ReactNode }) => (
 
 const Row = ({
   children,
+  tooltip,
   label,
 }: {
   children: React.ReactNode;
+  tooltip?: string;
   label: string;
 }) => (
   <Box paddingTop={1.5}>
     <InputWithLabelRow
-      labelWidth="180px"
+      labelWidth="300px"
       label={label}
       labelProps={{
         sx: {
@@ -77,9 +74,19 @@ const Row = ({
         },
       }}
       Input={
-        <Box sx={{}} flex={1}>
-          {children}
-        </Box>
+        <>
+          <Box sx={{}} flex={1}>
+            {children}{' '}
+          </Box>
+          <Box>
+            {tooltip && (
+              <InfoTooltipIcon
+                iconSx={{ color: 'gray.main' }}
+                title={tooltip}
+              />
+            )}
+          </Box>
+        </>
       }
     />
   </Box>
@@ -97,7 +104,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
   if (!draft) return null;
 
   return (
-    <Box display="flex" flex={3}>
+    <Box display="flex" flex={3} justifyContent={'center'}>
       <Container>
         {isLoading ? <BasicSpinner /> : null}
         <Section heading={t('label.asset-properties')}>
@@ -108,17 +115,26 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
           ) : (
             <>
               {assetProperties &&
-                assetProperties.map(property => {
+                ArrayUtils.uniqBy(assetProperties, 'key').map(property => {
                   const isCatalogue =
-                    draft.catalogProperties?.hasOwnProperty(property.key) ??
-                    false;
+                    draft.parsedCatalogProperties?.hasOwnProperty(
+                      property.key
+                    ) ?? false;
                   const value =
                     draft.parsedCatalogProperties?.[property.key] ??
                     draft.parsedProperties?.[property.key] ??
                     null;
 
                   return (
-                    <Row key={property.key} label={property.name}>
+                    <Row
+                      key={property.key}
+                      label={property.name}
+                      tooltip={
+                        isCatalogue
+                          ? t('messages.catalogue-property')
+                          : undefined
+                      }
+                    >
                       <PropertyInput
                         valueType={property.valueType}
                         allowedValues={property.allowedValues?.split(',')}

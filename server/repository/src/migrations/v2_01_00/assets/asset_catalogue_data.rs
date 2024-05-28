@@ -1,3 +1,4 @@
+use crate::migrations::constants::{COLD_CHAIN_EQUIPMENT_UUID, COLD_ROOMS_AND_FREEZER_ROOMS_UUID};
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
@@ -5,7 +6,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-INSERT INTO asset_category (id, name, asset_class_id) VALUES ('7db32eb6-5929-4dd1-a5e9-01e36baa73ad', 'Cold rooms and freezer rooms', 'fad280b6-8384-41af-84cf-c7b6b4526ef0');
+INSERT INTO asset_category (id, name, asset_class_id) VALUES ('{COLD_ROOMS_AND_FREEZER_ROOMS_UUID}', 'Cold rooms and freezer rooms', '{COLD_CHAIN_EQUIPMENT_UUID}');
         "#,
     )?;
     // Asset Types

@@ -54,6 +54,7 @@ export { SearchIcon } from './Search';
 export { SettingsIcon } from './Settings';
 export { SettingsCircleIcon } from './SettingsCircle';
 export { SidebarIcon } from './Sidebar';
+export { SlidersIcon } from './Sliders';
 export { SnowflakeIcon } from './Snowflake';
 export { SortAscIcon } from './SortAsc';
 export { SortDescIcon } from './SortDesc';
