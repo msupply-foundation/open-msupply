@@ -1,13 +1,16 @@
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use repository::{DemographicIndicatorRow, RepositoryError, StorageConnection};
+use repository::{
+    DemographicIndicatorRow, DemographicIndicatorRowRepository, RepositoryError, StorageConnection,
+};
 
 use super::{
     query_demographic_indicator::get_demographic_indicator,
-    validate::check_demographic_indicator_exists,
+    validate::{check_demographic_indicator_exists, check_year_name_combination_unique},
 };
 #[derive(PartialEq, Debug)]
 
 pub enum UpdateDemographicIndicatorError {
+    DemographicIndicatorAlreadyExistsForThisYear,
     DemographicIndicatorDoesNotExist,
     UpdatedRecordNotFound,
     DatabaseError(RepositoryError),
@@ -35,12 +38,12 @@ pub fn update_demographic_indicator(
     let demographic_indicator = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &input)?;
             let demographic_indicator_row = validate(connection, &input)?;
             let updated_demographic_indicator_row =
                 generate(input.clone(), demographic_indicator_row.clone());
-            // TODO add acitivity logs
-
+            DemographicIndicatorRowRepository::new(connection)
+                .upsert_one(&updated_demographic_indicator_row)?;
+            // TODO add activity logs
             get_demographic_indicator(ctx, updated_demographic_indicator_row.id)
                 .map_err(UpdateDemographicIndicatorError::from)
         })
@@ -52,13 +55,26 @@ pub fn validate(
     connection: &StorageConnection,
     input: &UpdateDemographicIndicator,
 ) -> Result<DemographicIndicatorRow, UpdateDemographicIndicatorError> {
-    let demographioc_indicator_row =
-        match check_demographic_indicator_exists(&input.id, connection)? {
-            Some(demographic_indicator_row) => demographic_indicator_row,
-            None => return Err(UpdateDemographicIndicatorError::DemographicIndicatorDoesNotExist),
-        };
+    let demographic_indicator_row = match check_demographic_indicator_exists(&input.id, connection)?
+    {
+        Some(demographic_indicator_row) => demographic_indicator_row,
+        None => return Err(UpdateDemographicIndicatorError::DemographicIndicatorDoesNotExist),
+    };
+    let base_year = match input.base_year {
+        Some(base_year) => base_year,
+        None => demographic_indicator_row.base_year,
+    };
 
-    Ok(demographioc_indicator_row)
+    let name = match &input.name {
+        Some(name) => name,
+        None => &demographic_indicator_row.name,
+    };
+
+    if !check_year_name_combination_unique(&name, base_year, connection)? {
+        return Err(UpdateDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear);
+    }
+
+    Ok(demographic_indicator_row)
 }
 
 pub fn generate(

@@ -32,12 +32,13 @@ pub fn check_base_year_unique(
 }
 
 pub fn check_year_name_combination_unique(
-    input: &InsertDemographicIndicator,
+    name: &str,
+    base_year: i32,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     let filter = DemographicIndicatorFilter::new()
-        .base_year(EqualFilter::equal_to_i32(input.base_year.to_owned()))
-        .name(StringFilter::equal_to(&input.name));
+        .base_year(EqualFilter::equal_to_i32(base_year.to_owned()))
+        .name(StringFilter::equal_to(name));
     let result = DemographicIndicatorRepository::new(connection).query_by_filter(filter)?;
     Ok(result.len() == 0)
 }
