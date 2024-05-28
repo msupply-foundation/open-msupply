@@ -2,14 +2,16 @@ import React, { FC } from 'react';
 import {
   useTranslation,
   DetailContainer,
-  DetailInputWithLabelRow,
   DetailSection,
-  Grid,
   Box,
   BasicSpinner,
   useDialog,
   DialogButton,
   useKeyboardHeightAdjustment,
+  Typography,
+  PropertyInput,
+  PropertyNodeValueType,
+  InputWithLabelRow,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -20,6 +22,23 @@ interface FacilityEditModalProps {
   onClose: () => void;
 }
 
+const dummyProperties = [
+  {
+    id: 'admin_level',
+    key: 'admin_level',
+    name: 'Administration Level',
+    allowedValues: 'Primary, Service Point',
+    valueType: PropertyNodeValueType.String,
+  },
+  {
+    id: 'facility_type',
+    key: 'facility_type',
+    name: 'Facility Type',
+    allowedValues: 'National Vaccine Store, Regional Vaccine Store',
+    valueType: PropertyNodeValueType.String,
+  },
+];
+
 export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   nameId,
   isOpen,
@@ -27,7 +46,6 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
 }) => {
   const { data, isLoading } = useName.document.get(nameId);
   const t = useTranslation('manage');
-  const isDisabled = true;
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const height = useKeyboardHeightAdjustment(600);
@@ -36,10 +54,10 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
 
   return !!data ? (
     <Modal
-      title={t('label.edit-facility')}
+      title=""
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       height={height}
-      width={1024}
+      width={700}
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
@@ -48,14 +66,74 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
             label={data.name}
             sx={{ fontWeight: 'bold', fontSize: 18 }}
           />
-          <Grid container flex={1} flexDirection="row" gap={4}>
-            <DetailSection title="">
-              <DetailInputWithLabelRow
-                label={t('label.code')}
-                inputProps={{ value: data.code, disabled: isDisabled }}
-              />
-            </DetailSection>
-          </Grid>
+
+          <Box display="flex">
+            <Typography fontWeight="bold">{t('label.code')}:</Typography>
+            <Typography paddingX={1}>{data.code}</Typography>
+          </Box>
+          <DetailSection title="">
+            {/* todo */}
+            {/* {!draft.parsedProperties ? ( */}
+            {false ? (
+              <Typography sx={{ textAlign: 'center' }}>
+                {/* todo */}
+                {t('messages.no-properties')}
+              </Typography>
+            ) : (
+              <Box
+                sx={{
+                  width: '500px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 1,
+                }}
+              >
+                {dummyProperties &&
+                  dummyProperties.map(property => {
+                    const value =
+                      // draft.parsedCatalogProperties?.[property.key] ??
+                      // draft.parsedProperties?.[property.key] ??
+                      null;
+
+                    return (
+                      <InputWithLabelRow
+                        // <DetailInputWithLabelRow
+                        key={property.key}
+                        labelWidth="250px"
+                        label={property.name}
+                        sx={{ width: '100%' }}
+                        labelProps={{
+                          sx: {
+                            maxWidth: '300px',
+                            fontSize: '16px',
+                            paddingRight: 2,
+                            textAlign: 'right',
+                          },
+                        }}
+                        Input={
+                          <Box flex={1}>
+                            <PropertyInput
+                              valueType={property.valueType}
+                              allowedValues={property.allowedValues?.split(',')}
+                              value={value}
+                              onChange={
+                                v => console.log(v)
+                                // onChange({
+                                //   parsedProperties: {
+                                //     ...draft.parsedProperties,
+                                //     [property.key]: v ?? null,
+                                //   },
+                                // })
+                              }
+                            />
+                          </Box>
+                        }
+                      />
+                    );
+                  })}
+              </Box>
+            )}
+          </DetailSection>
         </Box>
       </DetailContainer>
     </Modal>
