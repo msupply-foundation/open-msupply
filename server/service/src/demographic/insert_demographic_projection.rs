@@ -12,12 +12,13 @@ use super::{
 
 #[derive(PartialEq, Debug)]
 pub enum InsertDemographicProjectionError {
+    DemographicProjectionBaseYearAlreadyExists,
     DemographicProjectionAlreadyExists,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertDemographicProjection {
     pub id: String,
     pub base_year: i32,
@@ -56,7 +57,7 @@ pub fn validate(
 ) -> Result<(), InsertDemographicProjectionError> {
     // Check for duplicate base year
     if !check_base_year_unique(input.base_year.clone(), connection)? {
-        return Err(InsertDemographicProjectionError::DemographicProjectionAlreadyExists);
+        return Err(InsertDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists);
     }
 
     if check_demographic_projection_exists(&input.id, connection)?.is_some() {
