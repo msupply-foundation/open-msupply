@@ -1,4 +1,7 @@
-use repository::{MasterListLineRow, MasterListLineRowDelete, StorageConnection, SyncBufferRow};
+use repository::{
+    MasterListLineRow, MasterListLineRowDelete, MasterListRowRepository, StorageConnection,
+    SyncBufferRow,
+};
 
 use serde::Deserialize;
 
@@ -38,7 +41,8 @@ impl SyncTranslation for MasterListLineTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        // TODO, check site ? (should never get delete records for this site, only transfer other half)
+        // TODO, check site ? (should never get delete records for this site,
+        // only transfer other half)
         Ok(PullTranslateResult::delete(MasterListLineRowDelete(
             sync_record.record_id.clone(),
         )))
@@ -46,10 +50,17 @@ impl SyncTranslation for MasterListLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)?;
+        let master_list =
+            MasterListRowRepository::new(connection).find_one_by_id(&data.item_master_ID)?;
+
+        if master_list.is_none() {
+            return Ok(PullTranslateResult::Ignored("Orphaned line".to_string()));
+        }
+
         let result = MasterListLineRow {
             id: data.ID,
             item_link_id: data.item_ID,
