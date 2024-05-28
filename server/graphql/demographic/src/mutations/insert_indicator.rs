@@ -51,7 +51,7 @@ pub struct InsertDemographicIndicatorInput {
     pub name: String,
     pub base_year: i32,
     pub base_population: Option<i32>,
-    pub population_percentage: Option<f32>,
+    pub population_percentage: Option<f64>,
     pub year_1_projection: Option<i32>,
     pub year_2_projection: Option<i32>,
     pub year_3_projection: Option<i32>,
