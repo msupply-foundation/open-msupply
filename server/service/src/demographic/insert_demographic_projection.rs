@@ -6,7 +6,8 @@ use repository::{
 use crate::{service_provider::ServiceContext, SingleRecordError};
 
 use super::{
-    query_demographic_projection::get_demographic_projection, validate::check_base_year_unique,
+    query_demographic_projection::get_demographic_projection,
+    validate::{check_base_year_unique, check_demographic_projection_exists},
 };
 
 #[derive(PartialEq, Debug)]
@@ -55,6 +56,10 @@ pub fn validate(
 ) -> Result<(), InsertDemographicProjectionError> {
     // Check for duplicate base year
     if !check_base_year_unique(input.base_year.clone(), connection)? {
+        return Err(InsertDemographicProjectionError::DemographicProjectionAlreadyExists);
+    }
+
+    if check_demographic_projection_exists(&input.id, connection)?.is_some() {
         return Err(InsertDemographicProjectionError::DemographicProjectionAlreadyExists);
     }
 

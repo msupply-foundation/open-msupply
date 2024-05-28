@@ -96,6 +96,11 @@ fn create_filtered_query(filter: Option<DemographicIndicatorFilter>) -> BoxedLog
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, demographic_indicator_dsl::id);
         apply_string_filter!(query, filter.name, demographic_indicator_dsl::name);
+        apply_equal_filter!(
+            query,
+            filter.base_year,
+            demographic_indicator_dsl::base_year
+        );
     }
     query
 }
