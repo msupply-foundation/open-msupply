@@ -82,7 +82,7 @@ mod tests {
         let translator = MasterListLineTranslation {};
 
         let (_, connection, _, _) =
-            setup_all("test_master_list_line_translation", MockDataInserts::none()).await;
+            setup_all("test_master_list_line_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
