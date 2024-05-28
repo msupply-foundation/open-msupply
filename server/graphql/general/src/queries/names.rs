@@ -70,6 +70,9 @@ pub struct NameFilterInput {
     pub address2: Option<StringFilterInput>,
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
+
+    /// Search filter across name or code
+    pub code_or_name: Option<StringFilterInput>,
 }
 
 #[derive(SimpleObject)]
@@ -144,6 +147,7 @@ impl NameFilterInput {
             country,
             email,
             is_patient,
+            code_or_name,
         } = self;
 
         NameFilter {
@@ -151,6 +155,7 @@ impl NameFilterInput {
             name: name.map(StringFilter::from),
             code: code.map(StringFilter::from),
             store_code: store_code.map(StringFilter::from),
+            code_or_name: code_or_name.map(StringFilter::from),
             is_customer,
             is_supplier,
             is_donor,

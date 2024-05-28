@@ -117,7 +117,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const AssetItemBuffer: AssetItemImportModal.ImportRow[] = [];
-  const { data: properties } = useAssetData.utils.properties(undefined);
+  const { data: properties } = useAssetData.utils.properties();
 
   const csvExample = async () => {
     const exampleRows: ImportRow[] = [

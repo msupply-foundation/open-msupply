@@ -58,6 +58,7 @@ import { SearchIcon } from './Search';
 import { SettingsIcon } from './Settings';
 import { SettingsCircleIcon } from './SettingsCircle';
 import { SidebarIcon } from './Sidebar';
+import { SlidersIcon } from './Sliders';
 import { SnowflakeIcon } from './Snowflake';
 import { SortAscIcon } from './SortAsc';
 import { SortDescIcon } from './SortDesc';
@@ -160,6 +161,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <SettingsIcon {...args} />, name: 'Settings' },
     { icon: <SettingsCircleIcon {...args} />, name: 'SettingsCircle' },
     { icon: <SidebarIcon {...args} />, name: 'Sidebar' },
+    { icon: <SlidersIcon {...args} />, name: 'Sliders' },
     { icon: <SnowflakeIcon {...args} />, name: 'Snowflake' },
     { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
     { icon: <SortDescIcon {...args} />, name: 'SortDesc' },

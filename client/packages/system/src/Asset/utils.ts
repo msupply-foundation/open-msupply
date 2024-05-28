@@ -1,6 +1,6 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetCatalogueItemFragment } from './api';
-import { Formatter } from '@common/utils';
+import { ArrayUtils, Formatter } from '@common/utils';
 import { ImportRow, LineNumber } from './ImportCatalogueItem';
 import { AssetLogStatusInput, StatusType } from '@common/types';
 
@@ -91,7 +91,9 @@ export const importRowToCsv = (
   includeErrors = true,
   properties?: string[]
 ) => {
-  const props = properties ?? Object.keys(catalogueItems[0]?.properties ?? {});
+  const props =
+    properties ??
+    ArrayUtils.dedupe(Object.keys(catalogueItems[0]?.properties ?? {}));
   const fields = assetCatalogueItemFields(t).concat(props);
   if (includeErrors) fields.push(t('label.error-message'));
 
