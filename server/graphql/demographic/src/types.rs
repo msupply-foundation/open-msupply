@@ -127,7 +127,7 @@ impl DemographicIndicatorNode {
     pub async fn base_population(&self) -> &i32 {
         &self.row().base_population
     }
-    pub async fn population_percentage(&self) -> &f32 {
+    pub async fn population_percentage(&self) -> &f64 {
         &self.row().population_percentage
     }
     pub async fn year_1_projection(&self) -> &i32 {
