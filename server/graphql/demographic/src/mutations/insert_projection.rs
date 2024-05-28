@@ -23,7 +23,7 @@ pub fn insert_demographic_projection(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutateDemographic,
             store_id: Some("".to_string()),
         },
     )?;
@@ -48,7 +48,7 @@ pub fn insert_demographic_projection(
 #[derive(InputObject, Clone)]
 pub struct InsertDemographicProjectionInput {
     pub id: String,
-    pub base_year: Option<i32>,
+    pub base_year: i32,
     pub year_1: Option<i32>,
     pub year_2: Option<i32>,
     pub year_3: Option<i32>,

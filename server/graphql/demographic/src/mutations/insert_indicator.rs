@@ -23,7 +23,7 @@ pub fn insert_demographic_indicator(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutateDemographic,
             store_id: Some("".to_string()),
         },
     )?;
@@ -48,8 +48,8 @@ pub fn insert_demographic_indicator(
 #[derive(InputObject, Clone)]
 pub struct InsertDemographicIndicatorInput {
     pub id: String,
-    pub name: Option<String>,
-    pub base_year: Option<i32>,
+    pub name: String,
+    pub base_year: i32,
     pub base_population: Option<i32>,
     pub population_percentage: Option<f32>,
     pub year_1_projection: Option<i32>,
@@ -117,6 +117,9 @@ fn map_error(error: IndicatorServiceError) -> Result<InsertDemographicIndicatorE
     let graphql_error = match error {
         // Standard Graphql Errors
         IndicatorServiceError::DemographicIndicatorAlreadyExists => BadUserInput(formatted_error),
+        IndicatorServiceError::DemographicIndicatorAlreadyExistsForThisYear => {
+            BadUserInput(formatted_error)
+        }
         IndicatorServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         IndicatorServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

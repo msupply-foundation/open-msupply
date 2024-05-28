@@ -11,6 +11,7 @@ use super::{
 #[derive(PartialEq, Debug)]
 pub enum InsertDemographicIndicatorError {
     DemographicIndicatorAlreadyExists,
+    DemographicIndicatorAlreadyExistsForThisYear,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
@@ -55,8 +56,8 @@ pub fn validate(
     input: &InsertDemographicIndicator,
     connection: &StorageConnection,
 ) -> Result<(), InsertDemographicIndicatorError> {
-    if !check_year_name_combination_unique(input, connection) {
-        return Err(Re);
+    if !check_year_name_combination_unique(input, connection)? {
+        return Err(InsertDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear);
     }
 
     Ok(())
