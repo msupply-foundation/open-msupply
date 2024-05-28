@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   useTranslation,
   DetailContainer,
@@ -10,7 +10,6 @@ import {
   useKeyboardHeightAdjustment,
   Typography,
   PropertyInput,
-  PropertyNodeValueType,
   InputWithLabelRow,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
@@ -22,40 +21,47 @@ interface FacilityEditModalProps {
   onClose: () => void;
 }
 
-const dummyProperties = [
-  {
-    id: 'admin_level',
-    key: 'admin_level',
-    name: 'Administration Level',
-    allowedValues: 'Primary, Service Point',
-    valueType: PropertyNodeValueType.String,
-  },
-  {
-    id: 'facility_type',
-    key: 'facility_type',
-    name: 'Facility Type',
-    allowedValues: 'National Vaccine Store, Regional Vaccine Store',
-    valueType: PropertyNodeValueType.String,
-  },
-];
+// todo: next PR - populate existing from name
+const useDraftFacilityProperties = () => {
+  const [draftProperties, setDraftProperties] = useState<
+    Record<string, string | number | boolean | null>
+  >({});
+
+  return {
+    draftProperties,
+    setDraftProperties,
+  };
+};
 
 export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   nameId,
   isOpen,
   onClose,
 }) => {
+  const t = useTranslation();
+
   const { data, isLoading } = useName.document.get(nameId);
-  const t = useTranslation('manage');
+  const { data: properties, isLoading: propertiesLoading } =
+    useName.document.properties();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const height = useKeyboardHeightAdjustment(600);
 
-  if (isLoading) return <BasicSpinner />;
+  const { draftProperties, setDraftProperties } = useDraftFacilityProperties();
+
+  const save = async () => {
+    // TODO
+    console.log(draftProperties);
+    onClose();
+  };
+
+  if (isLoading || propertiesLoading) return <BasicSpinner />;
 
   return !!data ? (
     <Modal
       title=""
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      okButton={<DialogButton variant="ok" onClick={save} />}
       height={height}
       width={700}
     >
@@ -72,65 +78,48 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
             <Typography paddingX={1}>{data.code}</Typography>
           </Box>
           <DetailSection title="">
-            {/* todo */}
-            {/* {!draft.parsedProperties ? ( */}
-            {false ? (
+            {!properties?.length ? (
               <Typography sx={{ textAlign: 'center' }}>
-                {/* todo */}
                 {t('messages.no-properties')}
               </Typography>
             ) : (
               <Box
                 sx={{
                   width: '500px',
-                  display: 'flex',
-                  flexDirection: 'column',
+                  display: 'grid',
                   gap: 1,
                 }}
               >
-                {dummyProperties &&
-                  dummyProperties.map(property => {
-                    const value =
-                      // draft.parsedCatalogProperties?.[property.key] ??
-                      // draft.parsedProperties?.[property.key] ??
-                      null;
-
-                    return (
-                      <InputWithLabelRow
-                        // <DetailInputWithLabelRow
-                        key={property.key}
-                        labelWidth="250px"
-                        label={property.name}
-                        sx={{ width: '100%' }}
-                        labelProps={{
-                          sx: {
-                            maxWidth: '300px',
-                            fontSize: '16px',
-                            paddingRight: 2,
-                            textAlign: 'right',
-                          },
-                        }}
-                        Input={
-                          <Box flex={1}>
-                            <PropertyInput
-                              valueType={property.valueType}
-                              allowedValues={property.allowedValues?.split(',')}
-                              value={value}
-                              onChange={
-                                v => console.log(v)
-                                // onChange({
-                                //   parsedProperties: {
-                                //     ...draft.parsedProperties,
-                                //     [property.key]: v ?? null,
-                                //   },
-                                // })
-                              }
-                            />
-                          </Box>
-                        }
-                      />
-                    );
-                  })}
+                {properties.map(property => (
+                  <InputWithLabelRow
+                    key={property.key}
+                    label={property.name}
+                    sx={{ width: '100%' }}
+                    labelProps={{
+                      sx: {
+                        width: '250px',
+                        fontSize: '16px',
+                        paddingRight: 2,
+                        textAlign: 'right',
+                      },
+                    }}
+                    Input={
+                      <Box flex={1}>
+                        <PropertyInput
+                          valueType={property.valueType}
+                          allowedValues={property.allowedValues?.split(',')}
+                          value={draftProperties[property.key]}
+                          onChange={v =>
+                            setDraftProperties({
+                              ...draftProperties,
+                              [property.key]: v ?? null,
+                            })
+                          }
+                        />
+                      </Box>
+                    }
+                  />
+                ))}
               </Box>
             )}
           </DetailSection>
