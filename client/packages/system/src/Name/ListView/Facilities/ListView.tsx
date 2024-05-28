@@ -84,6 +84,7 @@ const FacilitiesListComponent = () => {
           isOpen={isOpen}
           nameId={selectedId}
           onClose={onClose}
+          setNextFacility={setSelectedId}
         />
       )}
       <DataTable

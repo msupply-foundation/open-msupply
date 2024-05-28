@@ -19,6 +19,7 @@ interface FacilityEditModalProps {
   nameId: string;
   isOpen: boolean;
   onClose: () => void;
+  setNextFacility: (nameId: string) => void;
 }
 
 // todo: next PR - populate existing from name
@@ -37,6 +38,7 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   nameId,
   isOpen,
   onClose,
+  setNextFacility,
 }) => {
   const t = useTranslation();
 
@@ -49,10 +51,11 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
 
   const { draftProperties, setDraftProperties } = useDraftFacilityProperties();
 
+  const nextId = useName.utils.nextFacilityId(nameId);
+
   const save = async () => {
     // TODO
     console.log(draftProperties);
-    onClose();
   };
 
   if (isLoading || propertiesLoading) return <BasicSpinner />;
@@ -61,7 +64,27 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
     <Modal
       title=""
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      okButton={<DialogButton variant="ok" onClick={save} />}
+      okButton={
+        <DialogButton
+          variant="ok"
+          onClick={async () => {
+            await save();
+            onClose();
+          }}
+        />
+      }
+      nextButton={
+        <DialogButton
+          disabled={!nextId}
+          variant="next"
+          onClick={async () => {
+            await save();
+            nextId && setNextFacility(nextId);
+            // Returning true triggers the animation/slide out
+            return true;
+          }}
+        />
+      }
       height={height}
       width={700}
     >
