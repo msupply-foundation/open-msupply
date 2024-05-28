@@ -119,6 +119,9 @@ fn map_error(error: IndicatorServiceError) -> Result<UpdateDemographicIndicatorE
         IndicatorServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),
         IndicatorServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         IndicatorServiceError::DatabaseError(_) => InternalError(formatted_error),
+        IndicatorServiceError::DemographicIndicatorAlreadyExistsForThisYear => {
+            BadUserInput(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

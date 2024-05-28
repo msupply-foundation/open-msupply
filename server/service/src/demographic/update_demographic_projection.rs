@@ -8,6 +8,7 @@ use super::{
 #[derive(PartialEq, Debug)]
 
 pub enum UpdateDemographicProjectionError {
+    DemographicProjectionBaseYearAlreadyExists,
     DemographicProjectionDoesNotExist,
     UpdatedRecordNotFound,
     DatabaseError(RepositoryError),

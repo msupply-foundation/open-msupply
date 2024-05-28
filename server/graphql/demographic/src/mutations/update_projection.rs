@@ -110,6 +110,9 @@ fn map_error(error: ProjectionServiceError) -> Result<UpdateDemographicProjectio
         ProjectionServiceError::DemographicProjectionDoesNotExist => BadUserInput(formatted_error),
         ProjectionServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         ProjectionServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ProjectionServiceError::DemographicProjectionBaseYearAlreadyExists => {
+            BadUserInput(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
