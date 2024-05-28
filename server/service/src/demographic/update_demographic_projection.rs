@@ -17,12 +17,12 @@ pub enum UpdateDemographicProjectionError {
 
 pub struct UpdateDemographicProjection {
     pub id: String,
-    pub base_year: Option<i16>,
-    pub year_1: Option<f64>,
-    pub year_2: Option<f64>,
-    pub year_3: Option<f64>,
-    pub year_4: Option<f64>,
-    pub year_5: Option<f64>,
+    pub base_year: Option<i32>,
+    pub year_1: Option<i32>,
+    pub year_2: Option<i32>,
+    pub year_3: Option<i32>,
+    pub year_4: Option<i32>,
+    pub year_5: Option<i32>,
 }
 
 pub fn update_demographic_projection(

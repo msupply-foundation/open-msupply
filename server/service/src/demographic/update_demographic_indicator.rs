@@ -18,14 +18,14 @@ pub enum UpdateDemographicIndicatorError {
 pub struct UpdateDemographicIndicator {
     pub id: String,
     pub name: Option<String>,
-    pub base_year: Option<i16>,
-    pub base_population: Option<f64>,
-    pub population_percentage: Option<f64>,
-    pub year_1_projection: Option<f64>,
-    pub year_2_projection: Option<f64>,
-    pub year_3_projection: Option<f64>,
-    pub year_4_projection: Option<f64>,
-    pub year_5_projection: Option<f64>,
+    pub base_year: Option<i32>,
+    pub base_population: Option<i32>,
+    pub population_percentage: Option<f32>,
+    pub year_1_projection: Option<i32>,
+    pub year_2_projection: Option<i32>,
+    pub year_3_projection: Option<i32>,
+    pub year_4_projection: Option<i32>,
+    pub year_5_projection: Option<i32>,
 }
 
 pub fn update_demographic_indicator(

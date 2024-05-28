@@ -115,28 +115,28 @@ impl DemographicIndicatorNode {
     pub async fn name(&self) -> &str {
         &self.row().name
     }
-    pub async fn base_year(&self) -> &i16 {
+    pub async fn base_year(&self) -> &i32 {
         &self.row().base_year
     }
-    pub async fn base_population(&self) -> &f64 {
+    pub async fn base_population(&self) -> &i32 {
         &self.row().base_population
     }
-    pub async fn population_percentage(&self) -> &f64 {
+    pub async fn population_percentage(&self) -> &f32 {
         &self.row().population_percentage
     }
-    pub async fn year_1_projection(&self) -> &f64 {
+    pub async fn year_1_projection(&self) -> &i32 {
         &self.row().year_1_projection
     }
-    pub async fn year_2_projection(&self) -> &f64 {
+    pub async fn year_2_projection(&self) -> &i32 {
         &self.row().year_2_projection
     }
-    pub async fn year_3_projection(&self) -> &f64 {
+    pub async fn year_3_projection(&self) -> &i32 {
         &self.row().year_3_projection
     }
-    pub async fn year_4_projection(&self) -> &f64 {
+    pub async fn year_4_projection(&self) -> &i32 {
         &self.row().year_4_projection
     }
-    pub async fn year_5_projection(&self) -> &f64 {
+    pub async fn year_5_projection(&self) -> &i32 {
         &self.row().year_5_projection
     }
 }
@@ -163,22 +163,22 @@ impl DemographicProjectionNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
-    pub async fn base_year(&self) -> &i16 {
+    pub async fn base_year(&self) -> &i32 {
         &self.row().base_year
     }
-    pub async fn year_1(&self) -> &f64 {
+    pub async fn year_1(&self) -> &i32 {
         &self.row().year_1
     }
-    pub async fn year_2(&self) -> &f64 {
+    pub async fn year_2(&self) -> &i32 {
         &self.row().year_2
     }
-    pub async fn year_3(&self) -> &f64 {
+    pub async fn year_3(&self) -> &i32 {
         &self.row().year_3
     }
-    pub async fn year_4(&self) -> &f64 {
+    pub async fn year_4(&self) -> &i32 {
         &self.row().year_4
     }
-    pub async fn year_5(&self) -> &f64 {
+    pub async fn year_5(&self) -> &i32 {
         &self.row().year_5
     }
 }

@@ -3,7 +3,10 @@ use repository::{
     DemographicIndicatorRow, DemographicIndicatorRowRepository, RepositoryError, StorageConnection,
 };
 
-use super::query_demographic_indicator::get_demographic_indicator;
+use super::{
+    query_demographic_indicator::get_demographic_indicator,
+    validate::check_year_name_combination_unique,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertDemographicIndicatorError {
@@ -15,15 +18,15 @@ pub enum InsertDemographicIndicatorError {
 #[derive(PartialEq, Debug, Clone)]
 pub struct InsertDemographicIndicator {
     pub id: String,
-    pub name: Option<String>,
-    pub base_year: Option<i16>,
-    pub base_population: Option<f64>,
-    pub population_percentage: Option<f64>,
-    pub year_1_projection: Option<f64>,
-    pub year_2_projection: Option<f64>,
-    pub year_3_projection: Option<f64>,
-    pub year_4_projection: Option<f64>,
-    pub year_5_projection: Option<f64>,
+    pub name: String,
+    pub base_year: i32,
+    pub base_population: Option<i32>,
+    pub population_percentage: Option<f32>,
+    pub year_1_projection: Option<i32>,
+    pub year_2_projection: Option<i32>,
+    pub year_3_projection: Option<i32>,
+    pub year_4_projection: Option<i32>,
+    pub year_5_projection: Option<i32>,
 }
 
 pub fn insert_demographic_indicator(
@@ -49,13 +52,13 @@ pub fn insert_demographic_indicator(
 }
 
 pub fn validate(
-    _input: &InsertDemographicIndicator,
-    _connection: &StorageConnection,
+    input: &InsertDemographicIndicator,
+    connection: &StorageConnection,
 ) -> Result<(), InsertDemographicIndicatorError> {
-    // TODO add validation functionality if required
+    if !check_year_name_combination_unique(input, connection) {
+        return Err(Re);
+    }
 
-    //maybe something like:
-    // if !CentralServerConfig::is_central_server() {
     Ok(())
 }
 
@@ -75,8 +78,8 @@ pub fn generate(
 ) -> DemographicIndicatorRow {
     DemographicIndicatorRow {
         id,
-        name: name.unwrap_or_default(),
-        base_year: base_year.unwrap_or_default(),
+        name,
+        base_year,
         base_population: base_population.unwrap_or_default(),
         population_percentage: population_percentage.unwrap_or_default(),
         year_1_projection: year_1_projection.unwrap_or_default(),

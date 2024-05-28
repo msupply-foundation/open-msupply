@@ -5,7 +5,9 @@ use repository::{
 
 use crate::{service_provider::ServiceContext, SingleRecordError};
 
-use super::query_demographic_projection::get_demographic_projection;
+use super::{
+    query_demographic_projection::get_demographic_projection, validate::check_base_year_unique,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertDemographicProjectionError {
@@ -17,12 +19,12 @@ pub enum InsertDemographicProjectionError {
 #[derive(PartialEq, Debug, Clone)]
 pub struct InsertDemographicProjection {
     pub id: String,
-    pub base_year: Option<i16>,
-    pub year_1: Option<f64>,
-    pub year_2: Option<f64>,
-    pub year_3: Option<f64>,
-    pub year_4: Option<f64>,
-    pub year_5: Option<f64>,
+    pub base_year: i32,
+    pub year_1: Option<i32>,
+    pub year_2: Option<i32>,
+    pub year_3: Option<i32>,
+    pub year_4: Option<i32>,
+    pub year_5: Option<i32>,
 }
 
 pub fn insert_demographic_projection(
@@ -48,10 +50,14 @@ pub fn insert_demographic_projection(
 }
 
 pub fn validate(
-    _input: &InsertDemographicProjection,
-    _connection: &StorageConnection,
+    input: &InsertDemographicProjection,
+    connection: &StorageConnection,
 ) -> Result<(), InsertDemographicProjectionError> {
-    // TODO add validation functionality if required in future
+    // Check for duplicate base year
+    if !check_base_year_unique(input.base_year.clone(), connection)? {
+        return Err(InsertDemographicProjectionError::DemographicProjectionAlreadyExists);
+    }
+
     Ok(())
 }
 
@@ -68,7 +74,7 @@ pub fn generate(
 ) -> DemographicProjectionRow {
     DemographicProjectionRow {
         id,
-        base_year: base_year.unwrap_or_default(),
+        base_year,
         year_1: year_1.unwrap_or_default(),
         year_2: year_2.unwrap_or_default(),
         year_3: year_3.unwrap_or_default(),
