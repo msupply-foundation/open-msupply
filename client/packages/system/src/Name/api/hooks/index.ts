@@ -13,4 +13,7 @@ export const useName = {
     donors: Document.useDonors,
     properties: Document.useNameProperties,
   },
+  utils: {
+    nextFacilityId: Utils.useNextFacilityId,
+  },
 };
