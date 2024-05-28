@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod assets;
+mod immunisation;
 mod ledger;
 mod pg_enums;
 mod v6_sync_api_error_code;
@@ -19,6 +20,7 @@ impl Migration for V2_01_00 {
         pg_enums::migrate(connection)?;
         assets::migrate_assets(connection)?;
         v6_sync_api_error_code::migrate(connection)?;
+        immunisation::migrate(connection)?;
         Ok(())
     }
 }
