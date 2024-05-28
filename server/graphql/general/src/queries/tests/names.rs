@@ -185,6 +185,7 @@ mod graphql {
                 email,
                 is_patient: _,
                 is_donor,
+                code_or_name: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
