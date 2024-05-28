@@ -23,7 +23,7 @@ pub fn update_demographic_indicator(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutateDemographic,
             store_id: Some("".to_string()),
         },
     )?;

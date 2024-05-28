@@ -1,5 +1,7 @@
 use async_graphql::*;
-use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
+use graphql_core::generic_filters::{
+    EqualFilterNumberInput, EqualFilterStringInput, StringFilterInput,
+};
 use repository::{
     demographic_projection::{
         DemographicProjection, DemographicProjectionFilter, DemographicProjectionSort,
@@ -39,6 +41,7 @@ pub struct DemographicProjectionSortInput {
 pub struct DemographicIndicatorFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
+    pub base_year: Option<EqualFilterNumberInput>,
 }
 
 impl From<DemographicIndicatorFilterInput> for DemographicIndicatorFilter {
@@ -46,6 +49,7 @@ impl From<DemographicIndicatorFilterInput> for DemographicIndicatorFilter {
         DemographicIndicatorFilter {
             id: f.id.map(EqualFilter::from),
             name: f.name.map(StringFilter::from),
+            base_year: f.base_year.map(EqualFilter::from),
         }
     }
 }
@@ -53,12 +57,14 @@ impl From<DemographicIndicatorFilterInput> for DemographicIndicatorFilter {
 #[derive(InputObject, Clone)]
 pub struct DemographicProjectionFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub base_year: Option<EqualFilterNumberInput>,
 }
 
 impl From<DemographicProjectionFilterInput> for DemographicProjectionFilter {
     fn from(f: DemographicProjectionFilterInput) -> Self {
         DemographicProjectionFilter {
             id: f.id.map(EqualFilter::from),
+            base_year: f.base_year.map(EqualFilter::from),
         }
     }
 }

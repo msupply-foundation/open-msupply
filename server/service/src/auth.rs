@@ -120,6 +120,7 @@ pub enum Resource {
     QueryAsset,
     // demographic
     QueryDemographic,
+    MutateDemographic,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -528,7 +529,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryDemographic,
-        PermissionDSL::HasPermission(PermissionType::DemographicQuery),
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+    map.insert(
+        Resource::MutateDemographic,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
     );
 
     map
