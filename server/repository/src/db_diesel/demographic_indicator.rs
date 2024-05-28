@@ -21,6 +21,7 @@ use crate::{EqualFilter, Sort};
 pub struct DemographicIndicatorFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
+    pub base_year: Option<EqualFilter<i32>>,
 }
 
 pub enum DemographicIndicatorSortField {
@@ -114,6 +115,10 @@ impl DemographicIndicatorFilter {
     }
     pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
+        self
+    }
+    pub fn base_year(mut self, filter: EqualFilter<i32>) -> Self {
+        self.base_year = Some(filter);
         self
     }
 }

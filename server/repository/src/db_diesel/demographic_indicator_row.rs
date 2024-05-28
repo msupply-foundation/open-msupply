@@ -3,8 +3,6 @@ use super::{
     StorageConnection,
 };
 
-use crate::Upsert;
-
 use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
@@ -13,14 +11,14 @@ table! {
     demographic_indicator(id) {
         id -> Text,
         name -> Text,
-        base_year -> SmallInt,
-        base_population -> Double,
-        population_percentage -> Double,
-        year_1_projection -> Double,
-        year_2_projection -> Double,
-        year_3_projection -> Double,
-        year_4_projection -> Double,
-        year_5_projection -> Double,
+        base_year -> Integer,
+        base_population -> Integer,
+        population_percentage -> Float,
+        year_1_projection -> Integer,
+        year_2_projection -> Integer,
+        year_3_projection -> Integer,
+        year_4_projection -> Integer,
+        year_5_projection -> Integer,
     }
 }
 
@@ -29,14 +27,14 @@ table! {
 pub struct DemographicIndicatorRow {
     pub id: String,
     pub name: String,
-    pub base_year: i16,
-    pub base_population: f64,
-    pub population_percentage: f64,
-    pub year_1_projection: f64,
-    pub year_2_projection: f64,
-    pub year_3_projection: f64,
-    pub year_4_projection: f64,
-    pub year_5_projection: f64,
+    pub base_year: i32,
+    pub base_population: i32,
+    pub population_percentage: f32,
+    pub year_1_projection: i32,
+    pub year_2_projection: i32,
+    pub year_3_projection: i32,
+    pub year_4_projection: i32,
+    pub year_5_projection: i32,
 }
 
 pub struct DemographicIndicatorRowRepository<'a> {
@@ -76,19 +74,5 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
-    }
-}
-
-impl Upsert for DemographicIndicatorRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        DemographicIndicatorRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            DemographicIndicatorRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }

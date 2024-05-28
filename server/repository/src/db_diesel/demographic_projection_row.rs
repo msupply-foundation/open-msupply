@@ -3,8 +3,6 @@ use super::{
     StorageConnection,
 };
 
-use crate::Upsert;
-
 use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
@@ -12,12 +10,12 @@ use diesel::prelude::*;
 table! {
     demographic_projection(id) {
         id -> Text,
-        base_year -> SmallInt,
-        year_1 -> Double,
-        year_2 -> Double,
-        year_3 -> Double,
-        year_4 -> Double,
-        year_5 -> Double,
+        base_year -> Integer,
+        year_1 -> Integer,
+        year_2 -> Integer,
+        year_3 -> Integer,
+        year_4 -> Integer,
+        year_5 -> Integer,
     }
 }
 
@@ -25,12 +23,12 @@ table! {
 #[diesel(table_name = demographic_projection)]
 pub struct DemographicProjectionRow {
     pub id: String,
-    pub base_year: i16,
-    pub year_1: f64,
-    pub year_2: f64,
-    pub year_3: f64,
-    pub year_4: f64,
-    pub year_5: f64,
+    pub base_year: i32,
+    pub year_1: i32,
+    pub year_2: i32,
+    pub year_3: i32,
+    pub year_4: i32,
+    pub year_5: i32,
 }
 
 pub struct DemographicProjectionRowRepository<'a> {
@@ -70,19 +68,5 @@ impl<'a> DemographicProjectionRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
-    }
-}
-
-impl Upsert for DemographicProjectionRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        DemographicProjectionRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            DemographicProjectionRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
     }
 }
