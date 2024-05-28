@@ -90,6 +90,11 @@ fn create_filtered_query(filter: Option<DemographicProjectionFilter>) -> BoxedLo
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, demographic_projection_dsl::id);
+        apply_equal_filter!(
+            query,
+            filter.base_year,
+            demographic_projection_dsl::base_year
+        );
     }
     query
 }
