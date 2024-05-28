@@ -11,13 +11,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     /*
     Asset Properties for Cold/Freezer rooms (asset_category_id: 7db32eb6-5929-4dd1-a5e9-01e36baa73ad)
-    Storage capacity +5 °C (in litres)
-    Storage capacity -20 °C (in litres)
-    Storage capacity -70 °C (in litres)
-    Waterpack storage capacity (in Kg)
-    Waterpack freezing capacity per 24 hours (in Kg)
-    Energy consumption (stable running, continuous power) (in KW per day)
-    Energy consumption during freezing (in KW per day)
+    Storage capacity +5 °C (litres)
+    Storage capacity -20 °C (litres)
+    Storage capacity -70 °C (litres)
+    Waterpack storage capacity (Kg)
+    Waterpack freezing capacity per 24 hours (Kg)
+    Energy consumption (stable running, continuous power) (KW per day)
+    Energy consumption during freezing (KW per day)
     Hold over time (hours)
     Climate zone
     Freeze protection
@@ -30,13 +30,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_5c-cr', 'storage_capacity_5c', 'Storage capacity +5 °C (in litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_20c-cr', 'storage_capacity_20c', 'Storage capacity -20 °C (in litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_70c-cr', 'storage_capacity_70c', 'Storage capacity -70 °C (in litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('waterpack_storage_capacity-cr', 'waterpack_storage_capacity', 'Waterpack storage capacity (in Kg)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('waterpack_freezing_capacity-cr', 'waterpack_freezing_capacity', 'Waterpack freezing capacity per 24 hours (in Kg)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('energy_consumption_stable-cr', 'energy_consumption_stable', 'Energy consumption (stable running, continuous power) (in KW per day)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('energy_consumption_freezing-cr', 'energy_consumption_freezing', 'Energy consumption during freezing (in KW per day)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_5c-cr', 'storage_capacity_5c', 'Storage capacity +5 °C (litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_20c-cr', 'storage_capacity_20c', 'Storage capacity -20 °C (litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_70c-cr', 'storage_capacity_70c', 'Storage capacity -70 °C (litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('waterpack_storage_capacity-cr', 'waterpack_storage_capacity', 'Waterpack storage capacity (Kg)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('waterpack_freezing_capacity-cr', 'waterpack_freezing_capacity', 'Waterpack freezing capacity per 24 hours (Kg)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('energy_consumption_stable-cr', 'energy_consumption_stable', 'Energy consumption (stable running, continuous power) (KW per day)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('energy_consumption_freezing-cr', 'energy_consumption_freezing', 'Energy consumption during freezing (KW per day)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
         INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('hold_over_time-cr', 'hold_over_time', 'Hold over time (hours)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
         INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('climate_zone-cr', 'climate_zone', 'Climate zone', 'STRING', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
         INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('freeze_protection-cr', 'freeze_protection', 'Freeze protection', 'STRING', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','7db32eb6-5929-4dd1-a5e9-01e36baa73ad');
@@ -49,13 +49,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     /*
     Asset Properties for Fridge/Freezer rooms (asset_category_id: 02cbea92-d5bf-4832-863b-c04e093a7760)
-    Storage capacity +5 °C (in litres)
-    Storage capacity -20 °C (in litres)
-    Storage capacity -70 °C (in litres)
-    Waterpack storage capacity (in Kg)
-    Waterpack freezing capacity per 24 hours (in Kg)
-    Energy consumption (stable running, continuous power) (in KW per day)
-    Energy consumption during freezing (in KW per day)
+    Storage capacity +5 °C (litres)
+    Storage capacity -20 °C (litres)
+    Storage capacity -70 °C (litres)
+    Waterpack storage capacity (Kg)
+    Waterpack freezing capacity per 24 hours (Kg)
+    Energy consumption (stable running, continuous power) ((KW) per day)
+    Energy consumption during freezing ((KW) per day)
     Hold over time (hours)
     Climate zone
     Freeze protection
@@ -68,13 +68,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_5c-fr', 'storage_capacity_5c', 'Storage capacity +5 °C (in litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_20c-fr', 'storage_capacity_20c', 'Storage capacity -20 °C (in litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_70c-fr', 'storage_capacity_70c', 'Storage capacity -70 °C (in litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('waterpack_storage_capacity-fr', 'waterpack_storage_capacity', 'Waterpack storage capacity (in Kg)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('waterpack_freezing_capacity-fr', 'waterpack_freezing_capacity', 'Waterpack freezing capacity per 24 hours (in Kg)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('energy_consumption_stable-fr', 'energy_consumption_stable', 'Energy consumption (stable running, continuous power) (in KW per day)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('energy_consumption_freezing-fr', 'energy_consumption_freezing', 'Energy consumption during freezing (in KW per day)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_5c-fr', 'storage_capacity_5c', 'Storage capacity +5 °C (litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_20c-fr', 'storage_capacity_20c', 'Storage capacity -20 °C (litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('storage_capacity_70c-fr', 'storage_capacity_70c', 'Storage capacity -70 °C (litres)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('waterpack_storage_capacity-fr', 'waterpack_storage_capacity', 'Waterpack storage capacity (Kg)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('waterpack_freezing_capacity-fr', 'waterpack_freezing_capacity', 'Waterpack freezing capacity per 24 hours (Kg)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('energy_consumption_stable-fr', 'energy_consumption_stable', 'Energy consumption (stable running, continuous power) (KW per day)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
+        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('energy_consumption_freezing-fr', 'energy_consumption_freezing', 'Energy consumption during freezing (KW per day)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
         INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('hold_over_time-fr', 'hold_over_time', 'Hold over time (hours)', 'FLOAT', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
         INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('climate_zone-fr', 'climate_zone', 'Climate zone', 'STRING', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
         INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('freeze_protection-fr', 'freeze_protection', 'Freeze protection', 'STRING', NULL, 'fad280b6-8384-41af-84cf-c7b6b4526ef0','02cbea92-d5bf-4832-863b-c04e093a7760');
