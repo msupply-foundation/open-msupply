@@ -14,9 +14,10 @@ use service::{
     settings::Settings,
     sync::{
         api_v7::{
-            SiteStatusRequestV7, SiteStatusResponseV7, SyncDownloadFileRequestV7,
-            SyncParsedErrorV7, SyncPullRequestV7, SyncPullResponseV7, SyncPushRequestV7,
-            SyncPushResponseV7, SyncUploadFileRequestV7, SyncUploadFileResponseV7,
+            SiteInfoRequestV7, SiteInfoResponseV7, SiteStatusRequestV7, SiteStatusResponseV7,
+            SyncDownloadFileRequestV7, SyncParsedErrorV7, SyncPullRequestV7, SyncPullResponseV7,
+            SyncPushRequestV7, SyncPushResponseV7, SyncUploadFileRequestV7,
+            SyncUploadFileResponseV7,
         },
         sync_on_central_v7,
     },
@@ -24,10 +25,11 @@ use service::{
 
 pub fn config_sync_on_central_v7(cfg: &mut web::ServiceConfig) {
     cfg.service(
-        web::scope("central")
+        web::scope("central_v7")
             .wrap(central_server_only())
             .service(pull)
             .service(push)
+            .service(site_info)
             .service(site_status)
             .service(download_file)
             .service(upload_file),
@@ -74,6 +76,24 @@ async fn site_status(
     {
         Ok(result) => SiteStatusResponseV7::Data(result),
         Err(error) => SiteStatusResponseV7::Error(error),
+    };
+
+    Ok(web::Json(response))
+}
+
+#[post("/sync/site_info")]
+async fn site_info(
+    request: Json<SiteInfoRequestV7>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response = match sync_on_central_v7::get_site_info(
+        &service_provider.into_inner(),
+        request.into_inner(),
+    )
+    .await
+    {
+        Ok(result) => SiteInfoResponseV7::Data(result),
+        Err(error) => SiteInfoResponseV7::Error(error),
     };
 
     Ok(web::Json(response))

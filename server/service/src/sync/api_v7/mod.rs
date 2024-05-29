@@ -80,6 +80,13 @@ pub enum SiteStatusResponseV7 {
     Error(SyncParsedErrorV7),
 }
 
+#[derive(Deserialize, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SiteInfoResponseV7 {
+    Data(SiteInfoV7),
+    Error(SyncParsedErrorV7),
+}
+
 #[derive(Error, Debug)]
 #[error("Sync api error, url: '{url}', route: '{route}'")]
 pub struct SyncApiErrorV7 {
@@ -106,6 +113,7 @@ pub(crate) struct SyncRecordV7 {
     pub(crate) record: CommonSyncRecord,
 }
 #[derive(Deserialize, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SyncBatchV7 {
     // Latest changelog cursor in the 'records'
     // being pushed/pulled
@@ -127,6 +135,7 @@ impl From<PushSyncRecord> for SyncRecordV7 {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct SyncV7Settings {
     pub sync_version: u32,
     pub username: String,
@@ -140,6 +149,7 @@ pub struct SyncRequestV7<T> {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PullPayload {
     pub(crate) cursor: u64,
     pub(crate) batch_size: u32,
@@ -152,11 +162,13 @@ pub struct PushPayload {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SiteStatusV7 {
     pub(crate) is_integrating: bool,
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DownloadFilePayload {
     pub(crate) table_name: String,
     pub(crate) record_id: String,
@@ -164,10 +176,25 @@ pub struct DownloadFilePayload {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UploadFilePayload {
     pub file_id: String,
 }
 
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SiteInfoV7 {
+    pub(crate) id: String,
+    pub(crate) site_id: i32,
+    // TODO (?)
+    // pub(crate) initialisation_status: InitialisationStatus,
+    // #[serde(rename = "omSupplyCentralServerUrl")]
+    // pub(crate) central_server_url: String,
+    // #[serde(rename = "isOmSupplyCentralServer")]
+    // pub(crate) is_central_server: bool,
+}
+
+pub type SiteInfoRequestV7 = SyncRequestV7<()>;
 pub type SiteStatusRequestV7 = SyncRequestV7<()>;
 pub type SyncPushRequestV7 = SyncRequestV7<PushPayload>;
 pub type SyncPullRequestV7 = SyncRequestV7<PullPayload>;

@@ -26,7 +26,7 @@ impl SyncApiV7 {
         let mut url = Url::parse(url)
             .map_err(|error| SyncApiV7CreatingError::CannotParseSyncUrl(url.to_string(), error))?;
 
-        url = url.join("central/sync/").unwrap();
+        url = url.join("central_v7/sync/").unwrap();
 
         Ok(Self {
             url,
@@ -123,6 +123,36 @@ impl SyncApiV7 {
         let error = match response_or_err(result).await {
             Ok(SiteStatusResponseV7::Data(data)) => return Ok(data),
             Ok(SiteStatusResponseV7::Error(error)) => error.into(),
+            Err(error) => error.into(),
+        };
+
+        Err(SyncApiErrorV7 {
+            url,
+            route: route.to_string(),
+            source: error,
+        })
+    }
+
+    pub async fn get_site_info(&self) -> Result<SiteInfoV7, SyncApiErrorV7> {
+        let Self {
+            sync_v7_settings,
+            url,
+        } = self;
+
+        let route = "site_info";
+        let url = url.join(route).unwrap();
+
+        // TODO: can we abstract the common bit?
+        let request = SiteInfoRequestV7 {
+            common: sync_v7_settings.clone(),
+            data: (),
+        };
+
+        let result = Client::new().post(url.clone()).json(&request).send().await;
+
+        let error = match response_or_err(result).await {
+            Ok(SiteInfoResponseV7::Data(data)) => return Ok(data),
+            Ok(SiteInfoResponseV7::Error(error)) => error.into(),
             Err(error) => error.into(),
         };
 

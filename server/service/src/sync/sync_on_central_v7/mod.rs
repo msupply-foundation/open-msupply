@@ -23,10 +23,10 @@ use crate::{
 
 use super::{
     api_v7::{
-        DownloadFilePayload, PullPayload, PushPayload, SiteStatusRequestV7, SiteStatusV7,
-        SyncBatchV7, SyncDownloadFileRequestV7, SyncParsedErrorV7, SyncPullRequestV7,
-        SyncPushRequestV7, SyncPushSuccessV7, SyncRecordV7, SyncUploadFileRequestV7,
-        SyncV7Settings, UploadFilePayload,
+        DownloadFilePayload, PullPayload, PushPayload, SiteInfoRequestV7, SiteInfoV7,
+        SiteStatusRequestV7, SiteStatusV7, SyncBatchV7, SyncDownloadFileRequestV7,
+        SyncParsedErrorV7, SyncPullRequestV7, SyncPushRequestV7, SyncPushSuccessV7, SyncRecordV7,
+        SyncUploadFileRequestV7, SyncV7Settings, UploadFilePayload,
     },
     translations::translate_changelogs_to_sync_records,
 };
@@ -51,7 +51,7 @@ pub async fn pull(
     }
 
     let ctx = service_provider.basic_context()?;
-    let site = get_site_info(&ctx, common)?;
+    let site = get_site(&ctx, common)?;
 
     // Site should retry if we are currently integrating records for this site
     if is_integrating(site.site_id) {
@@ -117,7 +117,7 @@ pub async fn push(
     }
 
     let ctx = service_provider.basic_context()?;
-    let site = get_site_info(&ctx, common)?;
+    let site = get_site(&ctx, common)?;
 
     // Site should retry if we are currently integrating records for this site
     if is_integrating(site.site_id) {
@@ -167,11 +167,30 @@ pub async fn get_site_status(
     }
 
     let ctx = service_provider.basic_context()?;
-    let site = get_site_info(&ctx, common)?;
+    let site = get_site(&ctx, common)?;
 
     let is_integrating = is_integrating(site.site_id);
 
     Ok(SiteStatusV7 { is_integrating })
+}
+
+pub async fn get_site_info(
+    service_provider: &ServiceProvider,
+    SiteInfoRequestV7 { common, data: _ }: SiteInfoRequestV7,
+) -> Result<SiteInfoV7, SyncParsedErrorV7> {
+    use SyncParsedErrorV7 as Error;
+
+    if !CentralServerConfig::is_central_server() {
+        return Err(Error::NotACentralServer);
+    }
+
+    let ctx = service_provider.basic_context()?;
+    let site = get_site(&ctx, common)?;
+
+    Ok(SiteInfoV7 {
+        site_id: site.site_id,
+        id: site.id,
+    })
 }
 
 fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) -> () {
@@ -305,7 +324,7 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
     }
 }
 
-fn get_site_info(
+fn get_site(
     ctx: &ServiceContext,
     sync_v7_settings: SyncV7Settings,
 ) -> Result<SiteRow, SyncParsedErrorV7> {

@@ -28,6 +28,7 @@ use service::{
     settings::{is_develop, ServerSettings, Settings},
     sync::{
         file_sync_driver::FileSyncDriver,
+        settings::SyncSettings,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
     },
     token_bucket::TokenBucket,
@@ -35,6 +36,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use util::is_central_server;
 
 mod authentication;
 pub mod certs;
@@ -169,11 +171,7 @@ pub async fn start_server(
             if database_sync_settings.core_site_details_changed(&yaml_sync_settings) {
                 info!("Sync settings in configurations don't match database");
                 info!("Checking sync credentials are for the same site..");
-                service_provider
-                    .site_info_service
-                    .request_and_set_site_info(&service_provider, &yaml_sync_settings)
-                    .await
-                    .unwrap();
+                request_and_set_site_info(&service_provider, &yaml_sync_settings).await;
                 info!("Checking sync credentials are for the same site..done");
             }
             service_provider
@@ -187,11 +185,7 @@ pub async fn start_server(
             info!("Sync settings in configurations and not in database");
             info!("Checking sync credentials..");
             // If fresh sync settings provided in yaml, check credentials against central server and save them in database
-            service_provider
-                .site_info_service
-                .request_and_set_site_info(&service_provider, &yaml_sync_settings)
-                .await
-                .unwrap();
+            request_and_set_site_info(&service_provider, &yaml_sync_settings).await;
             info!("Checking sync credentials..done");
             service_provider
                 .settings
@@ -356,4 +350,25 @@ fn auth_data(
         no_ssl: !certificates.is_https(),
         debug_no_access_control: is_develop() && server_settings.debug_no_access_control,
     })
+}
+
+async fn request_and_set_site_info(
+    service_provider: &ServiceProvider,
+    yaml_sync_settings: &SyncSettings,
+) {
+    if is_central_server() {
+        // COMS gets site info from COGS
+        service_provider
+            .site_info_service
+            .request_and_set_site_info(&service_provider, &yaml_sync_settings)
+            .await
+            .unwrap();
+    } else {
+        // ROMS gets site info from COMS
+        service_provider
+            .site_info_service
+            .request_and_set_site_info_v7(&service_provider, &yaml_sync_settings)
+            .await
+            .unwrap();
+    }
 }
