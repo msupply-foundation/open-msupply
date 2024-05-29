@@ -109,3 +109,6 @@ pub trait DemographicServiceTrait: Sync + Send {
 pub struct DemographicService {}
 
 impl DemographicServiceTrait for DemographicService {}
+
+#[cfg(test)]
+mod tests;
