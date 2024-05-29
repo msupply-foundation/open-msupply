@@ -529,11 +529,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryDemographic,
-        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+        PermissionDSL::NoPermissionRequired,
     );
     map.insert(
         Resource::MutateDemographic,
-        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+        PermissionDSL::NoPermissionRequired,
     );
 
     map
