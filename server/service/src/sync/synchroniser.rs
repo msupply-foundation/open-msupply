@@ -10,10 +10,10 @@ use thiserror::Error;
 use util::format_error;
 
 use super::{
-    api::{SyncApiError, SyncApiSettings, SyncApiV5},
-    api_v6::SyncApiV6CreatingError,
+    api::{SyncApiError, SyncApiV5},
+    api_v7::{SyncApiV7CreatingError, SyncV7Settings},
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
-    data_synchroniser_v7::{PullErrorV7, PushErrorV7, SynchroniserV7, WaitForSyncOperationErrorV6},
+    data_synchroniser_v7::{PullErrorV7, PushErrorV7, SynchroniserV7, WaitForSyncOperationErrorV7},
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
@@ -31,7 +31,7 @@ pub struct Synchroniser {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
-    sync_v5_settings: SyncApiSettings,
+    sync_v7_settings: SyncV7Settings,
     remote: RemoteDataSynchroniser,
 }
 
@@ -39,10 +39,10 @@ pub struct Synchroniser {
 pub(crate) enum SyncError {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiError),
-    #[error("V6 Not configured")]
-    V6NotConfigured,
-    #[error("Failed to create Sync v6 Url")]
-    SyncApiV6CreatingError(#[from] SyncApiV6CreatingError),
+    #[error("V7 Not configured")]
+    V7NotConfigured,
+    #[error("Failed to create Sync v7 Url")]
+    SyncApiV7CreatingError(#[from] SyncApiV7CreatingError),
     #[error("Database error while syncing")]
     DatabaseError(#[from] RepositoryError),
     #[error(transparent)]
@@ -53,13 +53,13 @@ pub(crate) enum SyncError {
     RemotePushError(#[from] RemotePushError),
     #[error("Error while awaiting remote record integration")]
     WaitForIntegrationError(#[from] WaitForSyncOperationError),
-    #[error("Error while awaiting v6 remote record integration")]
-    WaitForIntegrationErrorV6(#[from] WaitForSyncOperationErrorV6),
+    #[error("Error while awaiting v7 remote record integration")]
+    WaitForIntegrationErrorV7(#[from] WaitForSyncOperationErrorV7),
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
-    #[error("Error while pulling central v6 records")]
+    #[error("Error while pulling central v7 records")]
     CentralPullErrorV6(#[from] PullErrorV7),
-    #[error("Error while pushing remote v6 records")]
+    #[error("Error while pushing remote v7 records")]
     RemotePushErrorV6(#[from] PushErrorV7),
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
@@ -122,7 +122,12 @@ impl Synchroniser {
             settings,
             service_provider,
             central: CentralDataSynchroniser { sync_api_v5 },
-            sync_v5_settings,
+            // TODO
+            sync_v7_settings: SyncV7Settings {
+                sync_version: 1,
+                username: sync_v5_settings.username.clone(),
+                password: sync_v5_settings.password_sha256.clone(),
+            },
         })
     }
 
@@ -158,99 +163,103 @@ impl Synchroniser {
 
         CentralServerConfig::set_central_server_config_v7();
 
-        let v6_sync = match CentralServerConfig::get() {
-            CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
+        let v7_sync = match CentralServerConfig::get() {
+            CentralServerConfig::NotConfigured => return Err(SyncError::V7NotConfigured),
             CentralServerConfig::IsCentralServer => None,
             CentralServerConfig::CentralServerUrl(url) => {
-                let v6_sync = SynchroniserV7::new(&url, &self.sync_v5_settings)?;
-                Some(v6_sync)
+                let v7_sync = SynchroniserV7::new(&url, &self.sync_v7_settings)?;
+                Some(v7_sync)
             }
         };
-
-        // TODO: fork COMS sync to COGS
-
-        // Get site info for initialisation status and for omSupply central url required in SynchroniserV6
-        let site_info = self.remote.sync_api_v5.get_site_info().await?;
-        CentralServerConfig::set_central_server_config(&site_info);
 
         // First check sync status
 
         // Remote data was initialised
         let is_initialised = sync_status_service.is_initialised(ctx)?;
 
-        // Initialisation request was sent and successfully processed
-        let is_sync_queue_initialised = sync_status_service.is_sync_queue_initialised(ctx)?;
+        // TODO - separate these lol
 
-        // REQUEST INITIALISATION
-        logger.start_step(SyncStep::PrepareInitial)?;
-        if !is_sync_queue_initialised {
-            self.remote.request_initialisation(&site_info).await?;
-        }
-        logger.done_step(SyncStep::PrepareInitial)?;
+        // V7 sync for ROMS sites
+        if let Some(v7_sync) = v7_sync {
+            // TODO - initialisation for v7 ?
 
-        // First push before pulling, this avoids records being pulled from central server
-        // and overwriting existing records waiting to be pulled
+            // First push before pulling, this avoids records being pulled from central server
+            // and overwriting existing records waiting to be pulled
 
-        // We'll push records to open-mSupply first, then push to Legacy mSupply
-
-        // PUSH V6
-        logger.start_step(SyncStep::PushCentralV6)?;
-        if let (true, Some(v6_sync)) = (is_initialised, &v6_sync) {
-            v6_sync
+            // PUSH
+            logger.start_step(SyncStep::PushCentralV7)?;
+            v7_sync
                 .push(&ctx.connection, batch_size.remote_push, logger)
                 .await?;
 
-            v6_sync
+            v7_sync
                 .wait_for_sync_operation(
                     INTEGRATION_POLL_PERIOD_SECONDS,
                     INTEGRATION_TIMEOUT_SECONDS,
                 )
                 .await?;
-        }
-        logger.done_step(SyncStep::PushCentralV6)?;
+            logger.done_step(SyncStep::PushCentralV7)?;
 
-        // PUSH
-        // Only push if initialised (site data was initialised on central and successfully pulled)
-        logger.start_step(SyncStep::Push)?;
-        if is_initialised {
-            self.remote
-                .push(&ctx.connection, batch_size.remote_push, logger)
-                .await?;
-            self.remote
-                .wait_for_sync_operation(
-                    INTEGRATION_POLL_PERIOD_SECONDS,
-                    INTEGRATION_TIMEOUT_SECONDS,
-                )
-                .await?;
-        }
-        logger.done_step(SyncStep::Push)?;
+            // PULL
+            logger.start_step(SyncStep::PullCentralV7)?;
 
-        // PULL CENTRAL
-        logger.start_step(SyncStep::PullCentral)?;
-        self.central
-            .pull(&ctx.connection, batch_size.central_pull, logger)
-            .await?;
-        logger.done_step(SyncStep::PullCentral)?;
-
-        // PULL REMOTE
-        logger.start_step(SyncStep::PullRemote)?;
-        self.remote
-            .pull(&ctx.connection, batch_size.remote_pull, logger)
-            .await?;
-
-        logger.done_step(SyncStep::PullRemote)?;
-
-        // PULL V6
-        if let Some(v6_sync) = &v6_sync {
-            logger.start_step(SyncStep::PullCentralV6)?;
-
-            v6_sync
+            v7_sync
                 .pull(&ctx.connection, 20, is_initialised, logger)
                 .await?;
 
-            logger.done_step(SyncStep::PullCentralV6)?;
+            logger.done_step(SyncStep::PullCentralV7)?;
+        } else {
+            // V5 sync for COMS
+
+            // Get site info for initialisation status and for omSupply central url required in SynchroniserV6
+            let site_info = self.remote.sync_api_v5.get_site_info().await?;
+
+            // Initialisation request was sent and successfully processed
+            let is_sync_queue_initialised = sync_status_service.is_sync_queue_initialised(ctx)?;
+
+            // REQUEST INITIALISATION
+            logger.start_step(SyncStep::PrepareInitial)?;
+            if !is_sync_queue_initialised {
+                self.remote.request_initialisation(&site_info).await?;
+            }
+            logger.done_step(SyncStep::PrepareInitial)?;
+
+            // First push before pulling, this avoids records being pulled from central server
+            // and overwriting existing records waiting to be pulled
+
+            // PUSH
+            // Only push if initialised (site data was initialised on central and successfully pulled)
+            logger.start_step(SyncStep::Push)?;
+            if is_initialised {
+                self.remote
+                    .push(&ctx.connection, batch_size.remote_push, logger)
+                    .await?;
+                self.remote
+                    .wait_for_sync_operation(
+                        INTEGRATION_POLL_PERIOD_SECONDS,
+                        INTEGRATION_TIMEOUT_SECONDS,
+                    )
+                    .await?;
+            }
+            logger.done_step(SyncStep::Push)?;
+
+            // PULL CENTRAL
+            logger.start_step(SyncStep::PullCentral)?;
+            self.central
+                .pull(&ctx.connection, batch_size.central_pull, logger)
+                .await?;
+            logger.done_step(SyncStep::PullCentral)?;
+
+            // PULL REMOTE
+            logger.start_step(SyncStep::PullRemote)?;
+            self.remote
+                .pull(&ctx.connection, batch_size.remote_pull, logger)
+                .await?;
+
+            logger.done_step(SyncStep::PullRemote)?;
         }
 
+        // SHARED STEP
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 

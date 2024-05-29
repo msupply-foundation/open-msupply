@@ -1,16 +1,13 @@
 use std::time::{Duration, SystemTime};
 
-use crate::{
-    cursor_controller::CursorController,
-    sync::{
-        api_v6::{SyncBatchV6, SyncRecordV6},
-        sync_status::logger::SyncStepProgress,
-    },
-};
+use crate::{cursor_controller::CursorController, sync::sync_status::logger::SyncStepProgress};
 
 use super::{
-    api::{ParsingSyncRecordError, SyncApiSettings},
-    api_v6::{SyncApiErrorV6, SyncApiV6, SyncApiV6CreatingError},
+    api::ParsingSyncRecordError,
+    api_v7::{
+        SyncApiErrorV7, SyncApiV7, SyncApiV7CreatingError, SyncBatchV7, SyncRecordV7,
+        SyncV7Settings,
+    },
     get_sync_push_changelogs_filter,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
@@ -28,7 +25,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub(crate) enum PullErrorV7 {
     #[error(transparent)]
-    SyncApiError(#[from] SyncApiErrorV6),
+    SyncApiError(#[from] SyncApiErrorV7),
     #[error("Failed to save sync buffer or cursor")]
     SaveSyncBufferOrCursorsError(#[from] RepositoryError),
     #[error(transparent)]
@@ -40,7 +37,7 @@ pub(crate) enum PullErrorV7 {
 #[derive(Error, Debug)]
 pub(crate) enum PushErrorV7 {
     #[error(transparent)]
-    SyncApiError(#[from] SyncApiErrorV6),
+    SyncApiError(#[from] SyncApiErrorV7),
     #[error("Database error")]
     DatabaseError(#[from] RepositoryError),
     #[error(transparent)]
@@ -52,31 +49,31 @@ pub(crate) enum PushErrorV7 {
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum WaitForSyncOperationErrorV6 {
+pub(crate) enum WaitForSyncOperationErrorV7 {
     #[error(transparent)]
-    SyncApiError(#[from] SyncApiErrorV6),
+    SyncApiError(#[from] SyncApiErrorV7),
     #[error("Timeout was reached")]
     TimeoutReached,
 }
 
 #[derive(Error, Debug)]
-#[error("Failed to serialise V6 remote record into sync buffer row, record: '{record:?}'")]
+#[error("Failed to serialise V7 remote record into sync buffer row, record: '{record:?}'")]
 pub(crate) struct SerialisingToSyncBuffer {
     source: serde_json::Error,
     record: serde_json::Value,
 }
 
 pub(crate) struct SynchroniserV7 {
-    sync_api_v6: SyncApiV6,
+    sync_api_v7: SyncApiV7,
 }
 
 impl SynchroniserV7 {
     pub(crate) fn new(
         url: &str,
-        sync_v5_settings: &SyncApiSettings,
-    ) -> Result<Self, SyncApiV6CreatingError> {
+        sync_v7_settings: &SyncV7Settings,
+    ) -> Result<Self, SyncApiV7CreatingError> {
         Ok(Self {
-            sync_api_v6: SyncApiV6::new(url, sync_v5_settings)?,
+            sync_api_v7: SyncApiV7::new(url, sync_v7_settings)?,
         })
     }
 
@@ -92,19 +89,19 @@ impl SynchroniserV7 {
         loop {
             let cursor = cursor_controller.get(&connection)?;
 
-            let SyncBatchV6 {
+            let SyncBatchV7 {
                 end_cursor,
                 total_records,
                 records,
                 is_last_batch,
             } = self
-                .sync_api_v6
+                .sync_api_v7
                 .pull(cursor, batch_size, is_initialised)
                 .await?;
 
-            logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
+            logger.progress(SyncStepProgress::PullCentralV7, total_records)?;
 
-            for SyncRecordV6 { cursor, record } in records {
+            for SyncRecordV7 { cursor, record } in records {
                 let buffer_row = record.to_buffer_row(None)?;
 
                 insert_one_and_update_cursor(
@@ -142,7 +139,7 @@ impl SynchroniserV7 {
                 changelog_repo.changelogs(cursor, batch_size, change_log_filter.clone())?;
             let change_logs_total = changelog_repo.count(cursor, change_log_filter.clone())?;
 
-            logger.progress(SyncStepProgress::PushCentralV6, change_logs_total)?;
+            logger.progress(SyncStepProgress::PushCentralV7, change_logs_total)?;
 
             if change_logs_total == 0 {
                 break; // Nothing more to do, break out of the loop
@@ -151,31 +148,31 @@ impl SynchroniserV7 {
             let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
 
             log::info!(
-                "Pushing {}/{} records to v6 central server",
+                "Pushing {}/{} records to v7 central server",
                 changelogs.len(),
                 change_logs_total
             );
             log::debug!("Records: {:#?}", changelogs);
 
-            let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
+            let records: Vec<SyncRecordV7> = translate_changelogs_to_sync_records(
                 connection,
                 changelogs,
                 ToSyncRecordTranslationType::PushToOmSupplyCentralV7,
             )?
             .into_iter()
-            .map(SyncRecordV6::from)
+            .map(SyncRecordV7::from)
             .collect();
 
             let is_last_batch = change_logs_total <= batch_size as u64;
 
-            let batch = SyncBatchV6 {
+            let batch = SyncBatchV7 {
                 total_records: change_logs_total,
                 end_cursor: last_pushed_cursor.unwrap_or(0) as u64,
                 records,
                 is_last_batch,
             };
 
-            self.sync_api_v6.push(batch).await?;
+            self.sync_api_v7.push(batch).await?;
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_pushed_cursor {
@@ -192,7 +189,7 @@ impl SynchroniserV7 {
         &self,
         poll_period_seconds: u64,
         timeout_seconds: u64,
-    ) -> Result<(), WaitForSyncOperationErrorV6> {
+    ) -> Result<(), WaitForSyncOperationErrorV7> {
         let start = SystemTime::now();
         let poll_period = Duration::from_secs(poll_period_seconds);
         let timeout = Duration::from_secs(timeout_seconds);
@@ -200,7 +197,7 @@ impl SynchroniserV7 {
         loop {
             tokio::time::sleep(poll_period).await;
 
-            let response = self.sync_api_v6.get_site_status().await?;
+            let response = self.sync_api_v7.get_site_status().await?;
 
             if !response.is_integrating {
                 log::info!("Central server operation finished");
@@ -210,7 +207,7 @@ impl SynchroniserV7 {
             let elapsed = start.elapsed().unwrap_or(timeout);
 
             if elapsed >= timeout {
-                return Err(WaitForSyncOperationErrorV6::TimeoutReached);
+                return Err(WaitForSyncOperationErrorV7::TimeoutReached);
             }
         }
 
