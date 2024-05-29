@@ -5,7 +5,7 @@ use repository::{
 
 use super::{
     query_demographic_indicator::get_demographic_indicator,
-    validate::check_year_name_combination_unique,
+    validate::{check_demographic_indicator_exists, check_year_name_combination_unique},
 };
 
 #[derive(PartialEq, Debug)]
@@ -16,13 +16,13 @@ pub enum InsertDemographicIndicatorError {
     DatabaseError(RepositoryError),
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertDemographicIndicator {
     pub id: String,
     pub name: String,
     pub base_year: i32,
     pub base_population: Option<i32>,
-    pub population_percentage: Option<f32>,
+    pub population_percentage: Option<f64>,
     pub year_1_projection: Option<i32>,
     pub year_2_projection: Option<i32>,
     pub year_3_projection: Option<i32>,
@@ -56,8 +56,12 @@ pub fn validate(
     input: &InsertDemographicIndicator,
     connection: &StorageConnection,
 ) -> Result<(), InsertDemographicIndicatorError> {
-    if !check_year_name_combination_unique(input, connection)? {
+    if !check_year_name_combination_unique(&input.name, input.base_year, connection)? {
         return Err(InsertDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear);
+    }
+
+    if check_demographic_indicator_exists(&input.id, connection)?.is_some() {
+        return Err(InsertDemographicIndicatorError::DemographicIndicatorAlreadyExists);
     }
 
     Ok(())
