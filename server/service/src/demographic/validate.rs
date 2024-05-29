@@ -6,8 +6,6 @@ use repository::{
     StringFilter,
 };
 
-use super::insert_demographic_indicator::InsertDemographicIndicator;
-
 pub fn check_demographic_indicator_exists(
     id: &str,
     connection: &StorageConnection,
