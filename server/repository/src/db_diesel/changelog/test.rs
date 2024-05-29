@@ -691,3 +691,60 @@ async fn test_changelog_outgoing_sync_records() {
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 }
+
+#[actix_rt::test]
+async fn test_changelog_outgoing_sync_records_transfer() {
+    use std::convert::TryInto;
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_outgoing_sync_records_transfer",
+        MockDataInserts::all(),
+    )
+    .await;
+
+    let repo = ChangelogRepository::new(&connection);
+
+    // Create 2 stores with different oms_site_ids
+
+    let mut storeA = mock_store_a();
+    storeA.oms_site_id = Some(1);
+    storeA.upsert(&connection).unwrap();
+
+    let mut storeB = mock_store_b();
+    storeB.oms_site_id = Some(2);
+    storeB.upsert(&connection).unwrap();
+
+    // If we get a invoice from storeA destined for storeB, it should be sent to storeB (transfer)
+
+    // Create a changelog record for an invoice from storeA
+    let invoice_id = "invoice_id".to_string();
+    let row = InvoiceRow {
+        id: invoice_id.clone(),
+        store_id: storeA.id.clone(),
+        name_link_id: storeB.name_id.clone(), // Name Link ID is essentially the 'Other Party' ID (storeB)
+        ..Default::default()
+    };
+
+    let _cursor_id = row.upsert(&connection).unwrap(); // Cursor does't come back from upsert for invoices (yet)
+
+    // Get latest Cursor
+    let last_cursor = repo.latest_cursor().unwrap();
+
+    // Set the source_site_id (usually this happens during integration step in sync)
+    repo.set_source_site_id_and_is_sync_update(
+        last_cursor.try_into().unwrap(),
+        Some(storeA.oms_site_id.unwrap()),
+    )
+    .unwrap();
+
+    // Now we should have a record to send to storeB
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(last_cursor, 1000, storeB.oms_site_id.unwrap(), true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+
+    // And we should have a record to send to storeA (as it came from there)
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(last_cursor, 1000, storeA.oms_site_id.unwrap(), true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+}
