@@ -156,6 +156,19 @@ impl Synchroniser {
             return Ok(());
         }
 
+        CentralServerConfig::set_central_server_config_v7();
+
+        let v6_sync = match CentralServerConfig::get() {
+            CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
+            CentralServerConfig::IsCentralServer => None,
+            CentralServerConfig::CentralServerUrl(url) => {
+                let v6_sync = SynchroniserV7::new(&url, &self.sync_v5_settings)?;
+                Some(v6_sync)
+            }
+        };
+
+        // TODO: fork COMS sync to COGS
+
         // Get site info for initialisation status and for omSupply central url required in SynchroniserV6
         let site_info = self.remote.sync_api_v5.get_site_info().await?;
         CentralServerConfig::set_central_server_config(&site_info);
@@ -179,15 +192,6 @@ impl Synchroniser {
         // and overwriting existing records waiting to be pulled
 
         // We'll push records to open-mSupply first, then push to Legacy mSupply
-
-        let v6_sync = match CentralServerConfig::get() {
-            CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
-            CentralServerConfig::IsCentralServer => None,
-            CentralServerConfig::CentralServerUrl(url) => {
-                let v6_sync = SynchroniserV7::new(&url, &self.sync_v5_settings)?;
-                Some(v6_sync)
-            }
-        };
 
         // PUSH V6
         logger.start_step(SyncStep::PushCentralV6)?;

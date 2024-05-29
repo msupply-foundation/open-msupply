@@ -39,6 +39,7 @@ use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
+use graphql_site::{SiteMutations, SiteQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
@@ -70,6 +71,31 @@ impl CentralServerMutationNode {
     }
     async fn log_reason(&self) -> AssetLogReasonMutations {
         AssetLogReasonMutations
+    }
+    async fn site(&self) -> SiteMutations {
+        SiteMutations
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct CentralServerQueryNode;
+#[Object]
+impl CentralServerQueryNode {
+    async fn site(&self) -> SiteQueries {
+        SiteQueries
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct CentralServerQueries;
+#[Object]
+impl CentralServerQueries {
+    async fn central_server(&self) -> async_graphql::Result<CentralServerQueryNode> {
+        if !CentralServerConfig::is_central_server() {
+            return Err(StandardGraphqlError::from_str("Not a central server"));
+        };
+
+        Ok(CentralServerQueryNode)
     }
 }
 
@@ -108,6 +134,7 @@ pub struct Queries(
     pub AssetQueries,
     pub AssetLogQueries,
     pub AssetLogReasonQueries,
+    pub CentralServerQueries,
 );
 
 impl Queries {
@@ -133,6 +160,7 @@ impl Queries {
             AssetQueries,
             AssetLogQueries,
             AssetLogReasonQueries,
+            CentralServerQueries,
         )
     }
 }

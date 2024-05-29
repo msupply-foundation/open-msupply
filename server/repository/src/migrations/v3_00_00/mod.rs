@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod central_omsupply;
+mod site;
 
 pub(crate) struct V3_00_00;
 
@@ -13,6 +14,7 @@ impl Migration for V3_00_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         central_omsupply::migrate(connection)?;
+        site::migrate(connection)?;
         Ok(())
     }
 }

@@ -2285,6 +2285,7 @@ dependencies = [
  "graphql_reports",
  "graphql_requisition",
  "graphql_requisition_line",
+ "graphql_site",
  "graphql_stock_line",
  "graphql_stocktake",
  "graphql_stocktake_line",
@@ -2682,6 +2683,25 @@ dependencies = [
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_site"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
  "graphql_core",
  "graphql_types",
  "repository",

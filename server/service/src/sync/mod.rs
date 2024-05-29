@@ -3,6 +3,7 @@ pub(crate) mod test;
 
 pub mod api;
 pub mod api_v6;
+pub mod api_v7;
 pub(crate) mod central_data_synchroniser;
 pub(crate) mod data_synchroniser_v7;
 pub mod file_sync_driver;
@@ -13,6 +14,7 @@ pub mod settings;
 pub mod site_info;
 mod sync_buffer;
 pub mod sync_on_central;
+pub mod sync_on_central_v7;
 pub(crate) mod sync_serde;
 pub mod sync_status;
 pub mod sync_user;
@@ -31,6 +33,7 @@ use repository::{
 };
 
 use thiserror::Error;
+use util::{central_server_url, is_central_server};
 
 use self::api::SiteInfoV5;
 
@@ -133,6 +136,27 @@ impl CentralServerConfig {
 
     fn set_central_server_config(site_info: &SiteInfoV5) {
         let new_config = Self::new(site_info);
+        // Need to drop read before write
+        {
+            let current_config = CENTRAL_SERVER_CONFIG.read().unwrap();
+
+            if new_config == *current_config {
+                return;
+            }
+
+            if !current_config.inner_is_central_server() && new_config.inner_is_central_server() {
+                info!("Running as central");
+            }
+        }
+
+        *CENTRAL_SERVER_CONFIG.write().unwrap() = new_config;
+    }
+
+    fn set_central_server_config_v7() {
+        let new_config: Self = match is_central_server() {
+            true => Self::IsCentralServer,
+            false => Self::CentralServerUrl(central_server_url()),
+        };
         // Need to drop read before write
         {
             let current_config = CENTRAL_SERVER_CONFIG.read().unwrap();
