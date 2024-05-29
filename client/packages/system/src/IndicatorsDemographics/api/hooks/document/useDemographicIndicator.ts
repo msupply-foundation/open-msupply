@@ -1,4 +1,5 @@
 import { useParams, useQuery } from '@openmsupply-client/common';
+import { useDemographicsApi } from '../utils/useDemographicApi';
 
 export const useDemographicIndicatorId = () => {
   const { id = '' } = useParams();
@@ -12,10 +13,10 @@ export const useDemographicIndicator = () => {
 export const useDemographicIndicatorById = (
   demographicIndicatorId: string | undefined
 ) => {
-  const api = useDemographicIndicatorApi();
+  const api = useDemographicsApi();
   return useQuery(
-    api.keys.detail(demographicIndicatorId || ''),
-    () => api.get.demographicIndicatorById(demographicIndicatorId || ''),
+    api.keys.detailIndicator(demographicIndicatorId || ''),
+    () => api.getIndicators.byId(demographicIndicatorId || ''),
     {
       enabled: !!demographicIndicatorId,
     }

@@ -1,6 +1,11 @@
-import { ListParams, SortBy, useGql } from '@openmsupply-client/common';
-import { getDemographicIndicatorQueries } from '../../api';
-export const useDemographicApi = () => {
+import { SortBy, useGql } from '@openmsupply-client/common';
+import { ListParams, getDemographicIndicatorQueries } from '../../api';
+import {
+  DemographicIndicatorFragment,
+  DemographicProjectionFragment,
+  getSdk,
+} from '../../operations.generated';
+export const useDemographicsApi = () => {
   const { client } = useGql();
 
   const keys = {

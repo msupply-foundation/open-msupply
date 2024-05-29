@@ -1,6 +1,7 @@
 use async_graphql::*;
-use graphql_core::generic_filters::{
-    EqualFilterNumberInput, EqualFilterStringInput, StringFilterInput,
+use graphql_core::{
+    generic_filters::{EqualFilterNumberInput, EqualFilterStringInput, StringFilterInput},
+    simple_generic_errors::NodeError,
 };
 use repository::{
     demographic_projection::{
@@ -74,6 +75,12 @@ pub enum DemographicIndicatorsResponse {
     Response(DemographicIndicatorConnector),
 }
 
+#[derive(Union)]
+pub enum DemographicIndicatorResponse {
+    Error(NodeError),
+    Response(DemographicIndicatorNode),
+}
+
 #[derive(SimpleObject)]
 pub struct DemographicIndicatorConnector {
     total_count: u32,
@@ -92,6 +99,12 @@ impl DemographicIndicatorConnector {
 #[derive(Union)]
 pub enum DemographicProjectionsResponse {
     Response(DemographicProjectionConnector),
+}
+
+#[derive(Union)]
+pub enum DemographicProjectionResponse {
+    Error(NodeError),
+    Response(DemographicProjectionNode),
 }
 
 #[derive(SimpleObject)]
