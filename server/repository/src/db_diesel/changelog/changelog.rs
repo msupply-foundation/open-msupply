@@ -481,9 +481,19 @@ fn create_filtered_outgoing_sync_query(
         .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Remote))
         .collect();
 
+    // Transfer Records
+    let transfer_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Transfer))
+        .collect();
+
     let active_stores_for_site = store::table
         .filter(store::site_id.eq(sync_site_id))
         .select(store::id.nullable())
+        .into_boxed();
+
+    let active_names_for_site = store::table
+        .filter(store::site_id.eq(sync_site_id))
+        .select(store::name_id.nullable())
         .into_boxed();
 
     // Filter the query for the matching records for each type
@@ -492,9 +502,16 @@ fn create_filtered_outgoing_sync_query(
             .eq_any(central_sync_table_names)
             .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
             .or(changelog_deduped::table_name
-                .eq_any(remote_sync_table_names)
-                .and(changelog_deduped::store_id.eq_any(active_stores_for_site))),
-        // Any other special cases could be handled here...
+                .eq_any(remote_sync_table_names.clone())
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site)))
+            // .or(changelog_deduped::table_name
+            //     .eq_any(remote_sync_table_names)
+            //     .and(changelog_deduped::name_link_id.eq_any(active_names_for_site.clone()))) // TODO: Can't clone!
+            .or(changelog_deduped::table_name
+                .eq_any(transfer_sync_table_names)
+                .and(changelog_deduped::name_link_id.eq_any(active_names_for_site))), // TODO is there a difference between transfer and remote here? are they the same?
+
+                                                                                      // Any other special cases could be handled here...
     );
 
     query

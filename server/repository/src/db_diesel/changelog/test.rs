@@ -742,9 +742,9 @@ async fn test_changelog_outgoing_sync_records_transfer() {
         .unwrap();
     assert_eq!(outgoing_results.len(), 1);
 
-    // And we should have a record to send to storeA (as it came from there)
+    // And we should not have a record to send to storeA (as it came from there)
     let outgoing_results = repo
         .outgoing_sync_records_from_central(last_cursor, 1000, storeA.oms_site_id.unwrap(), true)
         .unwrap();
-    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results.len(), 0);
 }
