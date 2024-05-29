@@ -15,6 +15,7 @@ util = { path = "../util" }
 graphql_core = { path = "core" }
 
 graphql_asset = { path = "asset" }
+graphql_demographic = {path = "demographic" }
 graphql_general = { path = "general" }
 graphql_cold_chain = { path = "cold_chain" }
 graphql_asset_catalogue = { path = "asset_catalogue" }
