@@ -26,7 +26,7 @@ use repository::{
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub(crate) enum CentralPullErrorV6 {
+pub(crate) enum PullErrorV7 {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiErrorV6),
     #[error("Failed to save sync buffer or cursor")]
@@ -38,7 +38,7 @@ pub(crate) enum CentralPullErrorV6 {
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum RemotePushErrorV6 {
+pub(crate) enum PushErrorV7 {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiErrorV6),
     #[error("Database error")]
@@ -66,11 +66,11 @@ pub(crate) struct SerialisingToSyncBuffer {
     record: serde_json::Value,
 }
 
-pub(crate) struct SynchroniserV6 {
+pub(crate) struct SynchroniserV7 {
     sync_api_v6: SyncApiV6,
 }
 
-impl SynchroniserV6 {
+impl SynchroniserV7 {
     pub(crate) fn new(
         url: &str,
         sync_v5_settings: &SyncApiSettings,
@@ -86,8 +86,8 @@ impl SynchroniserV6 {
         batch_size: u32,
         is_initialised: bool,
         logger: &mut SyncLogger<'a>,
-    ) -> Result<(), CentralPullErrorV6> {
-        let cursor_controller = CursorController::new(KeyValueType::SyncPullCursorV6);
+    ) -> Result<(), PullErrorV7> {
+        let cursor_controller = CursorController::new(KeyValueType::SyncPullCursorV7);
         // TODO protection from infinite loop
         loop {
             let cursor = cursor_controller.get(&connection)?;
@@ -130,10 +130,10 @@ impl SynchroniserV6 {
         connection: &StorageConnection,
         batch_size: u32,
         logger: &mut SyncLogger<'a>,
-    ) -> Result<(), RemotePushErrorV6> {
+    ) -> Result<(), PushErrorV7> {
         let changelog_repo = ChangelogRepository::new(connection);
         let change_log_filter = get_sync_push_changelogs_filter(connection)?;
-        let cursor_controller = CursorController::new(KeyValueType::SyncPushCursorV6);
+        let cursor_controller = CursorController::new(KeyValueType::SyncPushCursorV7);
 
         loop {
             // TODO inside transaction
@@ -160,7 +160,7 @@ impl SynchroniserV6 {
             let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
                 connection,
                 changelogs,
-                ToSyncRecordTranslationType::PushToOmSupplyCentral,
+                ToSyncRecordTranslationType::PushToOmSupplyCentralV7,
             )?
             .into_iter()
             .map(SyncRecordV6::from)

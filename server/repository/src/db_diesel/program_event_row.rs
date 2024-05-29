@@ -25,17 +25,7 @@ joinable!(program_event -> name_link (patient_link_id));
 allow_tables_to_appear_in_same_query!(program_event, name_link);
 allow_tables_to_appear_in_same_query!(program_event, name);
 
-#[derive(
-    Clone,
-    Insertable,
-    Queryable,
-    Debug,
-    PartialEq,
-    Eq,
-    AsChangeset,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset,  serde::Serialize, serde::Deserialize)]
 #[table_name = "program_event"]
 pub struct ProgramEventRow {
     /// The row id

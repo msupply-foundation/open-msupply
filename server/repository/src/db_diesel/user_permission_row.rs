@@ -19,7 +19,7 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum Permission {
     ServerAdmin,
@@ -81,17 +81,7 @@ pub enum Permission {
     AssetCatalogueItemMutate,
 }
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    Debug,
-    PartialEq,
-    Eq,
-    AsChangeset,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "user_permission"]
 pub struct UserPermissionRow {

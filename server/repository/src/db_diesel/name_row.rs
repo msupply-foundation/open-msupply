@@ -107,10 +107,7 @@ impl NameType {
         *self == NameType::Facility || *self == NameType::Store
     }
 }
-
-#[derive(
-    Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "name"]
 pub struct NameRow {

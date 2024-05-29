@@ -50,7 +50,7 @@ no_arg_sql_function!(
     "Represents the SQL last_insert_row() function"
 );
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ChangelogAction {
     #[default]
@@ -61,7 +61,6 @@ pub enum ChangelogAction {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
-    UserPermission,
     MasterList,
     MasterListLine,
     MasterListNameJoin,
@@ -156,16 +155,15 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetLogReason => ChangeLogSyncStyle::Central,
-            ChangelogTableName::User => ChangeLogSyncStyle::Central,
+            ChangelogTableName::MasterList => ChangeLogSyncStyle::Central,
+            ChangelogTableName::MasterListLine => ChangeLogSyncStyle::Central,
+            ChangelogTableName::MasterListNameJoin => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameTag => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameTagJoin => ChangeLogSyncStyle::Central,
             ChangelogTableName::Unit => ChangeLogSyncStyle::Central,
             ChangelogTableName::Item => ChangeLogSyncStyle::Central,
             ChangelogTableName::Store => ChangeLogSyncStyle::Central,
-            ChangelogTableName::MasterList => ChangeLogSyncStyle::Central,
-            ChangelogTableName::MasterListLine => ChangeLogSyncStyle::Central,
-            ChangelogTableName::MasterListNameJoin => ChangeLogSyncStyle::Central,
-            ChangelogTableName::UserPermission => ChangeLogSyncStyle::Central,
+            ChangelogTableName::User => ChangeLogSyncStyle::Central,
         }
     }
 }

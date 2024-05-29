@@ -9,9 +9,7 @@ use crate::sync::{
     api::{SyncApiErrorVariantV5, SyncErrorCodeV5},
     api_v6::{SyncApiErrorVariantV6, SyncApiV6CreatingError, SyncParsedErrorV6},
     central_data_synchroniser::CentralPullError,
-    central_data_synchroniser_v6::{
-        CentralPullErrorV6, RemotePushErrorV6, WaitForSyncOperationErrorV6,
-    },
+    data_synchroniser_v7::{PullErrorV7, PushErrorV7, WaitForSyncOperationErrorV6},
     remote_data_synchroniser::{
         PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
     },
@@ -328,8 +326,8 @@ impl SyncLogError {
             }
 
             // SyncApiErrorV6
-            SyncError::CentralPullErrorV6(CentralPullErrorV6::SyncApiError(error))
-            | SyncError::RemotePushErrorV6(RemotePushErrorV6::SyncApiError(error))
+            SyncError::CentralPullErrorV6(PullErrorV7::SyncApiError(error))
+            | SyncError::RemotePushErrorV6(PushErrorV7::SyncApiError(error))
             | SyncError::WaitForIntegrationErrorV6(WaitForSyncOperationErrorV6::SyncApiError(
                 error,
             )) => Self::from_sync_api_error(SyncApiErrorVariant::V6(&error.source), sync_error),

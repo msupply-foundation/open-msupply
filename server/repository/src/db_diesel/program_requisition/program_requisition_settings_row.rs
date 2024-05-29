@@ -23,17 +23,7 @@ joinable!(program_requisition_settings -> name_tag (name_tag_id));
 joinable!(program_requisition_settings -> program (program_id));
 joinable!(program_requisition_settings -> period_schedule(period_schedule_id));
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    Default,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[table_name = "program_requisition_settings"]
 pub struct ProgramRequisitionSettingsRow {
     pub id: String,

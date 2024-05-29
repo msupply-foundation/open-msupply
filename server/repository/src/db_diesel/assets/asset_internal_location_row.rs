@@ -14,8 +14,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
-#[table_name = "asset_internal_location"]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, serde::Serialize, serde::Deserialize)]#[table_name = "asset_internal_location"]
 pub struct AssetInternalLocationRow {
     pub id: String,
     pub asset_id: String,

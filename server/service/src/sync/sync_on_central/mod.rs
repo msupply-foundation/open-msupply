@@ -82,7 +82,7 @@ pub async fn pull(
     let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
         &ctx.connection,
         changelogs,
-        ToSyncRecordTranslationType::PullFromOmSupplyCentral,
+        ToSyncRecordTranslationType::PullFromOmSupplyCentralV6,
     )
     .map_err(|e| Error::OtherServerError(format_error(&e)))?
     .into_iter()

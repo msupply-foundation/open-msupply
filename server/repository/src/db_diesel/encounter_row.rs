@@ -46,17 +46,7 @@ allow_tables_to_appear_in_same_query!(encounter, clinician);
 allow_tables_to_appear_in_same_query!(encounter, name_link);
 allow_tables_to_appear_in_same_query!(encounter, name);
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    Eq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq,  serde::Serialize, serde::Deserialize)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "encounter"]
 pub struct EncounterRow {

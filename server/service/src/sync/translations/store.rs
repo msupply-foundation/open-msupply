@@ -88,6 +88,7 @@ impl SyncTranslation for StoreTranslation {
             logo: data.logo,
             store_mode,
             created_date: data.created_date,
+            oms_site_id: None,
         };
 
         Ok(PullTranslateResult::upsert(result))

@@ -24,17 +24,7 @@ table! {
 
 }
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    Default,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[table_name = "clinician"]
 pub struct ClinicianRow {
     pub id: String,
@@ -119,10 +109,7 @@ impl<'a> ClinicianRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id_option(
-        &self,
-        row_id: &str,
-    ) -> Result<Option<ClinicianRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError> {
         let result = clinician::dsl::clinician
             .filter(clinician::dsl::id.eq(row_id))
             .first(&self.connection.connection)
@@ -165,7 +152,7 @@ impl Upsert for ClinicianRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            ClinicianRowRepository::new(con).find_one_by_id_option(&self.id),
+            ClinicianRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

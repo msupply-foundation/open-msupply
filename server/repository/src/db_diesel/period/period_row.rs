@@ -1,9 +1,6 @@
 use super::period_row::period::dsl as period_dsl;
 
-use crate::{
-    db_diesel::name_link_row::name_link, repository_error::RepositoryError, StorageConnection,
-    Upsert,
-};
+use crate::{repository_error::RepositoryError, StorageConnection, Upsert, db_diesel::name_link_row::name_link};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -18,17 +15,7 @@ table! {
     }
 }
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    Default,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[table_name = "period"]
 pub struct PeriodRow {
     pub id: String,

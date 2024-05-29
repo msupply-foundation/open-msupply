@@ -56,7 +56,7 @@ fn check_clinician_exists(
     let result = match clinician_id {
         None => true,
         Some(clinician_id) => ClinicianRowRepository::new(connection)
-            .find_one_by_id_option(clinician_id)?
+            .find_one_by_id(clinician_id)?
             .is_some(),
     };
 

@@ -83,16 +83,7 @@ pub enum InvoiceRowStatus {
     Verified,
 }
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "invoice"]
 pub struct InvoiceRow {

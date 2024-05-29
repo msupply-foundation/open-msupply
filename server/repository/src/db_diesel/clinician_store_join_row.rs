@@ -24,17 +24,7 @@ joinable!(clinician_store_join -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(clinician, clinician_store_join);
 allow_tables_to_appear_in_same_query!(clinician_store_join, clinician_link);
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    Default,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[table_name = "clinician_store_join"]
 pub struct ClinicianStoreJoinRow {
     pub id: String,
@@ -83,7 +73,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         row_id: &str,
     ) -> Result<Option<ClinicianStoreJoinRow>, RepositoryError> {
@@ -131,7 +121,7 @@ impl Upsert for ClinicianStoreJoinRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            ClinicianStoreJoinRowRepository::new(con).find_one_by_id_option(&self.id),
+            ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

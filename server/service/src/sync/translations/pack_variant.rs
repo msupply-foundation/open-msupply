@@ -47,7 +47,7 @@ impl SyncTranslation for PackVariantTranslation {
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
         match r#type {
-            ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
+            ToSyncRecordTranslationType::PullFromOmSupplyCentralV6 => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
             _ => false,

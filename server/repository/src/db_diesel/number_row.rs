@@ -90,17 +90,7 @@ impl TryFrom<String> for NumberRowType {
     }
 }
 
-#[derive(
-    Clone,
-    Insertable,
-    Queryable,
-    Debug,
-    PartialEq,
-    Eq,
-    AsChangeset,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset,  serde::Serialize, serde::Deserialize)]
 #[table_name = "number"]
 pub struct NumberRow {
     pub id: String,

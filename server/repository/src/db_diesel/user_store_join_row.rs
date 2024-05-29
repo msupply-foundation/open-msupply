@@ -21,7 +21,6 @@ joinable!(user_store_join -> store (store_id));
 
 allow_tables_to_appear_in_same_query!(user_store_join, user_account);
 allow_tables_to_appear_in_same_query!(user_store_join, store);
-
 #[derive(
     Clone,
     Queryable,

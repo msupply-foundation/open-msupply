@@ -5,7 +5,6 @@ use crate::{lower, repository_error::RepositoryError, Upsert};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
-use serde::{Deserialize, Serialize};
 
 table! {
     user_account (id) {
@@ -22,7 +21,9 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[derive(
+    DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize,
+)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum Language {
@@ -36,9 +37,17 @@ pub enum Language {
     Russian,
     Tetum,
 }
-
 #[derive(
-    Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+    Clone,
+    Queryable,
+    Insertable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 #[table_name = "user_account"]
 pub struct UserAccountRow {

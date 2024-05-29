@@ -33,17 +33,7 @@ joinable!(barcode -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(barcode, item_link);
 allow_tables_to_appear_in_same_query!(barcode, name_link);
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    Default,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "barcode"]
 pub struct BarcodeRow {

@@ -75,16 +75,7 @@ pub enum DocumentStatus {
     Deleted,
 }
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(test, derive(Default))]
 #[table_name = "document"]
 pub struct DocumentRow {

@@ -1,7 +1,6 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
 use crate::{repository_error::RepositoryError, Delete, Upsert};
 use diesel::prelude::*;
-use serde::{Deserialize, Serialize};
 
 table! {
     unit (id) {
@@ -13,9 +12,7 @@ table! {
     }
 }
 
-#[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
-)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default,  serde::Serialize, serde::Deserialize)]
 #[table_name = "unit"]
 pub struct UnitRow {
     pub id: String,

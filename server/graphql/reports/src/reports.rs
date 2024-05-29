@@ -12,6 +12,7 @@ use repository::{
     EqualFilter, PaginationOption, Report, ReportContext as ReportContextDomain, ReportFilter,
     ReportSort, ReportSortField, StringFilter,
 };
+use serde::Deserialize;
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -30,7 +31,7 @@ pub struct ReportSortInput {
     desc: Option<bool>,
 }
 
-#[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ReportContext {
     Asset,

@@ -12,16 +12,7 @@ table! {
     }
 }
 
-#[derive(
-    Clone,
-    Queryable,
-    Insertable,
-    AsChangeset,
-    Debug,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[table_name = "return_reason"]
 pub struct ReturnReasonRow {
     pub id: String,

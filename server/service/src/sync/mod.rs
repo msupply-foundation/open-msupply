@@ -4,7 +4,7 @@ pub(crate) mod test;
 pub mod api;
 pub mod api_v6;
 pub(crate) mod central_data_synchroniser;
-pub(crate) mod central_data_synchroniser_v6;
+pub(crate) mod data_synchroniser_v7;
 pub mod file_sync_driver;
 pub mod file_synchroniser;
 mod integrate_document;
@@ -23,12 +23,12 @@ pub(crate) mod translations;
 
 use std::sync::RwLock;
 
+use crate::service_provider::ServiceProvider;
 use log::info;
 use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository,
 };
-use crate::service_provider::ServiceProvider;
 
 use thiserror::Error;
 
@@ -149,7 +149,6 @@ impl CentralServerConfig {
         *CENTRAL_SERVER_CONFIG.write().unwrap() = new_config;
     }
 }
-
 
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
     let ctx = service_provider.basic_context().unwrap();

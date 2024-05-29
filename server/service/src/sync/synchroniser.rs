@@ -13,9 +13,7 @@ use super::{
     api::{SyncApiError, SyncApiSettings, SyncApiV5},
     api_v6::SyncApiV6CreatingError,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
-    central_data_synchroniser_v6::{
-        CentralPullErrorV6, RemotePushErrorV6, SynchroniserV6, WaitForSyncOperationErrorV6,
-    },
+    data_synchroniser_v7::{PullErrorV7, PushErrorV7, SynchroniserV7, WaitForSyncOperationErrorV6},
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
@@ -60,9 +58,9 @@ pub(crate) enum SyncError {
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
     #[error("Error while pulling central v6 records")]
-    CentralPullErrorV6(#[from] CentralPullErrorV6),
+    CentralPullErrorV6(#[from] PullErrorV7),
     #[error("Error while pushing remote v6 records")]
-    RemotePushErrorV6(#[from] RemotePushErrorV6),
+    RemotePushErrorV6(#[from] PushErrorV7),
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
@@ -186,7 +184,7 @@ impl Synchroniser {
             CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
             CentralServerConfig::IsCentralServer => None,
             CentralServerConfig::CentralServerUrl(url) => {
-                let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
+                let v6_sync = SynchroniserV7::new(&url, &self.sync_v5_settings)?;
                 Some(v6_sync)
             }
         };

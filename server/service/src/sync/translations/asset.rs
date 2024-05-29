@@ -46,10 +46,7 @@ impl SyncTranslation for AssetTranslation {
         r#type: &ToSyncRecordTranslationType,
     ) -> bool {
         match r#type {
-            ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
-                self.change_log_type().as_ref() == Some(&row.table_name)
-            }
-            ToSyncRecordTranslationType::PushToOmSupplyCentral => {
+            ToSyncRecordTranslationType::PullFromOmSupplyCentralV6 => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
             _ => false,
