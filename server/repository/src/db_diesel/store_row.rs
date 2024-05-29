@@ -18,6 +18,7 @@ table! {
         logo -> Nullable<Text>,
         store_mode -> crate::db_diesel::store_row::StoreModeMapping,
         created_date -> Nullable<Date>,
+        oms_site_id -> Nullable<Integer>,
     }
 }
 
@@ -56,6 +57,8 @@ pub struct StoreRow {
     pub logo: Option<String>,
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
+    /// The oms_site_id is used to link the store to the oms site, this is needed as site_id from mSupply won't be used...
+    pub oms_site_id: Option<i32>,
 }
 
 impl Default for StoreMode {
