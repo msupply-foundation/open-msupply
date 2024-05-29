@@ -187,17 +187,20 @@ impl Synchroniser {
             // and overwriting existing records waiting to be pulled
 
             // PUSH
+            // Only push if initialised (site data was initialised on central and successfully pulled)
             logger.start_step(SyncStep::PushCentralV7)?;
-            v7_sync
-                .push(&ctx.connection, batch_size.remote_push, logger)
-                .await?;
+            if is_initialised {
+                v7_sync
+                    .push(&ctx.connection, batch_size.remote_push, logger)
+                    .await?;
 
-            v7_sync
-                .wait_for_sync_operation(
-                    INTEGRATION_POLL_PERIOD_SECONDS,
-                    INTEGRATION_TIMEOUT_SECONDS,
-                )
-                .await?;
+                v7_sync
+                    .wait_for_sync_operation(
+                        INTEGRATION_POLL_PERIOD_SECONDS,
+                        INTEGRATION_TIMEOUT_SECONDS,
+                    )
+                    .await?;
+            }
             logger.done_step(SyncStep::PushCentralV7)?;
 
             // PULL
@@ -211,7 +214,7 @@ impl Synchroniser {
         } else {
             // V5 sync for COMS
 
-            // Get site info for initialisation status and for omSupply central url required in SynchroniserV6
+            // Get site info for initialisation status
             let site_info = self.remote.sync_api_v5.get_site_info().await?;
 
             // Initialisation request was sent and successfully processed
