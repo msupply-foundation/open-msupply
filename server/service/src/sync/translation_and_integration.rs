@@ -292,7 +292,7 @@ impl TranslationAndIntegrationResults {
 mod test {
     use super::*;
     use repository::mock::MockDataInserts;
-    use util::{assert_matches, inline_init};
+    use util::{assert_matches, inline_init, uuid::uuid};
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
@@ -346,5 +346,77 @@ mod test {
             ItemRowRepository::new(&connection).find_active_by_id("item"),
             Ok(None)
         );
+    }
+
+    //#[actix_rt::test]
+    #[allow(dead_code)]
+    async fn bench_error_performance() {
+        let (_, connection, _, _) =
+            test_db::setup_all("bench_error_performance", MockDataInserts::none()).await;
+
+        let insert_batch = |with_error: bool, n: i32, parent_tx: bool, nested_tx: bool| {
+            let mut records = vec![];
+            for _i in 0..n {
+                records.push(inline_init(|r: &mut ItemRow| {
+                    r.id = uuid();
+                    r.unit_id = if with_error {
+                        // Create invalid ItemRow
+                        Some("invalid".to_string())
+                    } else {
+                        None
+                    };
+                }));
+            }
+            let insert = |connection: &StorageConnection| {
+                for record in records {
+                    // ignore errors
+                    if nested_tx {
+                        let _ = connection.transaction_sync(|connection| {
+                            ItemRowRepository::new(connection).upsert_one(&record)
+                        });
+                    } else {
+                        let _ = ItemRowRepository::new(connection).upsert_one(&record);
+                    };
+                }
+            };
+
+            let start = std::time::SystemTime::now();
+            if parent_tx {
+                let _: Result<(), RepositoryError> = connection
+                    .transaction_sync(|con| {
+                        insert(con);
+                        Ok(())
+                    })
+                    .map_err::<RepositoryError, _>(|e| e.to_inner_error());
+            } else {
+                insert(&connection);
+            };
+            println!(
+                "with_error: {with_error}, n: {n}, parent_tx: {parent_tx}, nested_tx: {nested_tx}, Time: {:?}",
+                start.elapsed().unwrap()
+            );
+        };
+
+        let run_all_tx_combinations = |with_error: bool, n: i32| {
+            println!("Batch size: {n}");
+            insert_batch(with_error, n, false, false);
+            insert_batch(with_error, n, false, true);
+            insert_batch(with_error, n, true, false);
+            insert_batch(with_error, n, true, true);
+        };
+        let run = |with_error: bool| {
+            println!("Warm up");
+            insert_batch(with_error, 64, true, true);
+
+            run_all_tx_combinations(with_error, 64);
+            run_all_tx_combinations(with_error, 500);
+            run_all_tx_combinations(with_error, 5000);
+        };
+        println!("With error:");
+        run(true);
+        // For comparison, insert same records without error. Note, later batch will be added to
+        // data from earlier batches which potentially results in a slowdown.
+        println!("Without error:");
+        run(false);
     }
 }
