@@ -4,7 +4,9 @@ use crate::StorageConnection;
 
 mod assets;
 mod ledger;
+mod name_properties;
 mod pg_enums;
+mod property;
 mod v6_sync_api_error_code;
 
 pub(crate) struct V2_01_00;
@@ -19,6 +21,8 @@ impl Migration for V2_01_00 {
         pg_enums::migrate(connection)?;
         assets::migrate_assets(connection)?;
         v6_sync_api_error_code::migrate(connection)?;
+        property::migrate(connection)?;
+        name_properties::migrate_name_properties(connection)?;
         Ok(())
     }
 }
