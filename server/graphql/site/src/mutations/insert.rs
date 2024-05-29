@@ -3,7 +3,8 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{RepositoryError, SiteRow, SiteRowRepository};
+use repository::SiteRow;
+use service::site::{CreateSite, CreateSiteError, SiteService};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertSiteInput")]
@@ -12,6 +13,7 @@ pub struct InsertSiteInput {
     pub site_id: i32,
     pub hardware_id: String,
     pub name: String,
+    pub password: String,
 }
 
 #[derive(Union)]
@@ -20,7 +22,16 @@ pub enum InsertResponse {
     Response(SiteNode),
 }
 
-pub fn insert_site(ctx: &Context<'_>, input: InsertSiteInput) -> Result<InsertResponse> {
+pub fn insert_site(
+    ctx: &Context<'_>,
+    InsertSiteInput {
+        id,
+        site_id,
+        hardware_id,
+        name,
+        password,
+    }: InsertSiteInput,
+) -> Result<InsertResponse> {
     // validate_auth(
     //     ctx,
     //     &ResourceAccessRequest {
@@ -32,14 +43,14 @@ pub fn insert_site(ctx: &Context<'_>, input: InsertSiteInput) -> Result<InsertRe
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    let site_repo = SiteRowRepository::new(&service_context.connection);
+    let site_service = SiteService::new(&service_context.connection);
 
-    let res = site_repo.upsert_one(&SiteRow {
-        id: input.id,
-        site_id: input.site_id,
-        hardware_id: input.hardware_id,
-        name: input.name,
-        hashed_password: "todo".to_string(),
+    let res = site_service.create_site(CreateSite {
+        id,
+        site_id,
+        hardware_id,
+        name,
+        password,
     });
 
     map_response(res)
@@ -74,15 +85,9 @@ impl SiteNode {
     }
 }
 
-fn map_response(from: Result<(), RepositoryError>) -> Result<InsertResponse> {
+fn map_response(from: Result<SiteRow, CreateSiteError>) -> Result<InsertResponse> {
     let result = match from {
-        Ok(()) => InsertResponse::Response(SiteNode::from_domain(SiteRow {
-            id: "".to_string(),
-            site_id: 0,
-            hardware_id: "".to_string(),
-            name: "".to_string(),
-            hashed_password: "".to_string(),
-        })),
+        Ok(site) => InsertResponse::Response(SiteNode::from_domain(site)),
         // todo map error
         Err(error) => Err(StandardGraphqlError::InternalError(format!("{:?}", error)).extend())?,
     };
