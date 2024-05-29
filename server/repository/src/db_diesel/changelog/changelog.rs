@@ -109,41 +109,42 @@ pub enum ChangelogTableName {
 
 #[derive(PartialEq)]
 pub enum ChangeLogSyncStyle {
-    Legacy,
-    Central,
     Remote,
+    Central,
     File,
-    // Transfer,
+    Transfer,
     // Patient??  etc
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
+
+// TODO: Changelog for Central Legacy? E.g. Items etc?
 impl ChangelogTableName {
     pub fn sync_style(&self) -> ChangeLogSyncStyle {
         match self {
-            ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::LocationMovement => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::StockLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Invoice => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::InvoiceLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Stocktake => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::StocktakeLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Requisition => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::RequisitionLine => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::ActivityLog => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::InventoryAdjustmentReason => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Barcode => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Clinician => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::ClinicianStoreJoin => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Name => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::NameStoreJoin => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Document => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Sensor => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::TemperatureBreach => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::TemperatureBreachConfig => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::TemperatureLog => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::Currency => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Number => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Location => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::LocationMovement => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::StockLine => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Invoice => ChangeLogSyncStyle::Transfer,
+            ChangelogTableName::InvoiceLine => ChangeLogSyncStyle::Transfer,
+            ChangelogTableName::Stocktake => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::StocktakeLine => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Requisition => ChangeLogSyncStyle::Transfer,
+            ChangelogTableName::RequisitionLine => ChangeLogSyncStyle::Transfer,
+            ChangelogTableName::ActivityLog => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::InventoryAdjustmentReason => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Barcode => ChangeLogSyncStyle::Remote, //TODO: Confirm
+            ChangelogTableName::Clinician => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::ClinicianStoreJoin => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Name => ChangeLogSyncStyle::Remote, //TODO: Confirm
+            ChangelogTableName::NameStoreJoin => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Document => ChangeLogSyncStyle::Remote, //TODO: Confirm
+            ChangelogTableName::Sensor => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::TemperatureBreach => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::TemperatureBreachConfig => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::TemperatureLog => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Currency => ChangeLogSyncStyle::Central,
             ChangelogTableName::PackVariant => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetClass => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCategory => ChangeLogSyncStyle::Central,
