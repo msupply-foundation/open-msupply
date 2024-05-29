@@ -161,8 +161,12 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
 
 #[derive(Debug)]
 pub(crate) enum IntegrationOperation {
-    Upsert(Box<dyn Upsert>, Option<i32>), // Upsert record, and source_site_id
-    Delete(Box<dyn Delete>),              // Todo: add source site id?
+    Upsert(
+        Box<dyn Upsert>,
+        Option<String>, /* Record Id */
+        Option<i32>,    /* source site id */
+    ), // Upsert record, and source_site_id
+    Delete(Box<dyn Delete>), // Todo: add source site id?
 }
 
 impl IntegrationOperation {
@@ -170,7 +174,7 @@ impl IntegrationOperation {
     where
         U: Upsert + 'static,
     {
-        Self::Upsert(Box::new(upsert), None) // TODO?
+        Self::Upsert(Box::new(upsert), None, None) // TODO?
     }
 
     pub(crate) fn delete<U>(delete: U) -> Self
@@ -212,17 +216,20 @@ impl PullTranslateResult {
         Self::IntegrationOperations(
             upsert
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert), None)) // Source site is added later using add_source_site_id
+                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert), None, None)) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }
 
-    pub(crate) fn add_source_site_id(&mut self, source_site_id: i32) {
+    pub(crate) fn add_source_site_and_record_id(&mut self, sync_buffer: &SyncBufferRow) {
         match self {
             Self::IntegrationOperations(operations) => {
                 for operation in operations {
-                    if let IntegrationOperation::Upsert(_, ref mut site_id) = operation {
-                        *site_id = Some(source_site_id);
+                    if let IntegrationOperation::Upsert(_, ref mut record_id, ref mut site_id) =
+                        operation
+                    {
+                        *record_id = Some(sync_buffer.record_id.clone());
+                        *site_id = sync_buffer.source_site_id.clone();
                     }
                 }
             }

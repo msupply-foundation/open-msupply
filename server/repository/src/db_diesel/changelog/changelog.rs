@@ -352,6 +352,22 @@ impl<'a> ChangelogRepository<'a> {
         Ok(())
     }
 
+    pub fn set_source_site_id_and_is_sync_update_by_record_id(
+        &self,
+        record_id: &str,
+        source_site_id: Option<i32>,
+    ) -> Result<(), RepositoryError> {
+        // This is crude way of updating, updates all change logs for the record
+        diesel::update(changelog::table)
+            .set((
+                changelog::source_site_id.eq(source_site_id),
+                changelog::is_sync_update.eq(true),
+            ))
+            .filter(changelog::record_id.eq(record_id))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
     /// Inserts a changelog record, and returns the cursor of the inserted record
     #[cfg(feature = "postgres")]
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {

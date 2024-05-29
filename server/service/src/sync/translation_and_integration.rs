@@ -47,7 +47,6 @@ impl<'a> TranslationAndIntegration<'a> {
             if !translator.should_translate_from_sync_record(sync_record) {
                 continue;
             }
-            let source_site_id = sync_record.source_site_id.clone();
 
             let mut translation_result = match sync_record.action {
                 SyncBufferAction::Upsert => translator
@@ -59,11 +58,7 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
             };
 
-            // Add source_site_id to translation result if it exists in the sync buffer row
-            match source_site_id {
-                Some(id) => translation_result.add_source_site_id(id),
-                None => {}
-            }
+            translation_result.add_source_site_and_record_id(sync_record);
 
             match translation_result {
                 PullTranslateResult::IntegrationOperations(records) => {
@@ -176,16 +171,28 @@ impl<'a> TranslationAndIntegration<'a> {
 impl IntegrationOperation {
     fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
         match self {
-            IntegrationOperation::Upsert(upsert, source_site_id) => {
+            IntegrationOperation::Upsert(upsert, record_id, source_site_id) => {
                 let cursor_id = upsert.upsert(connection)?;
 
                 // Update the change log if we get a cursor id
-                if let Some(cursor_id) = cursor_id {
-                    ChangelogRepository::new(connection).set_source_site_id_and_is_sync_update(
-                        cursor_id,
-                        source_site_id.to_owned(),
-                    )?;
+                match (cursor_id, record_id) {
+                    (Some(cursor_id), _) => ChangelogRepository::new(connection)
+                        .set_source_site_id_and_is_sync_update(
+                            cursor_id,
+                            source_site_id.to_owned(),
+                        )?,
+                    (_, Some(record_id)) =>
+                    // Update latest change log for record_id
+                    {
+                        ChangelogRepository::new(connection)
+                            .set_source_site_id_and_is_sync_update_by_record_id(
+                                &record_id,
+                                source_site_id.to_owned(),
+                            )?
+                    }
+                    _ => log::error!("Record id missing from integration operation"),
                 }
+
                 Ok(())
             }
 
