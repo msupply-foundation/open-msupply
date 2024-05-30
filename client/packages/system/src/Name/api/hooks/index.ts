@@ -11,5 +11,9 @@ export const useName = {
     suppliers: Document.useSuppliers,
     facilities: Document.useFacilities,
     donors: Document.useDonors,
+    properties: Document.useNameProperties,
+  },
+  utils: {
+    nextFacilityId: Utils.useNextFacilityId,
   },
 };

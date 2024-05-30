@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -8,12 +8,15 @@ import {
   useUrlQueryParams,
   DotCell,
   ColumnAlign,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { useName, NameRowFragment } from '../../api';
 import { NameRenderer } from '../../Components';
 import { Toolbar } from './Toolbar';
+import { FacilityEditModal } from './FacilityEditModal';
 
 const FacilitiesListComponent = () => {
+  const [selectedId, setSelectedId] = useState('');
   const {
     filter,
     updateSortQuery,
@@ -22,6 +25,13 @@ const FacilitiesListComponent = () => {
   } = useUrlQueryParams();
   const { data, isError, isLoading } = useName.document.facilities();
   const pagination = { page, first, offset };
+
+  const { isOpen, onClose, onOpen } = useEditModal<NameRowFragment>();
+
+  const onRowClick = (row: NameRowFragment) => {
+    setSelectedId(row.id);
+    onOpen();
+  };
 
   const columns = useColumns<NameRowFragment>(
     [
@@ -69,6 +79,14 @@ const FacilitiesListComponent = () => {
   return (
     <>
       <Toolbar filter={filter} />
+      {isOpen && (
+        <FacilityEditModal
+          isOpen={isOpen}
+          nameId={selectedId}
+          onClose={onClose}
+          setNextFacility={setSelectedId}
+        />
+      )}
       <DataTable
         id="name-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -78,6 +96,7 @@ const FacilitiesListComponent = () => {
         isLoading={isLoading}
         isError={isError}
         noDataElement={<NothingHere />}
+        onRowClick={onRowClick}
       />
     </>
   );
