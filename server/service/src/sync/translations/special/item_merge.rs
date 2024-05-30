@@ -121,7 +121,7 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, None, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();
@@ -140,7 +140,7 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, true, None, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();
