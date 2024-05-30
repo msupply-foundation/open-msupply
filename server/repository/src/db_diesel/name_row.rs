@@ -65,6 +65,8 @@ table! {
 joinable!(name_oms_fields -> name (id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
+allow_tables_to_appear_in_same_query!(name_oms_fields, item_link);
+allow_tables_to_appear_in_same_query!(name_oms_fields, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
