@@ -73,55 +73,16 @@ impl<'a> TranslationAndIntegration<'a> {
 
     pub(crate) fn translate_and_integrate_sync_records(
         &self,
-        connection: &StorageConnection,
-        records_in_tx: bool,
-        batch_size: Option<usize>,
-        sync_records: Vec<SyncBufferRow>,
+        sync_records: &[SyncBufferRow],
         translators: &Vec<Box<dyn SyncTranslation>>,
         mut logger: Option<&mut SyncLogger>,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
-        let mut position = 0;
+        let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
+        // Try translate
         // Record initial progress (will be set as total progress)
         let total_to_integrate = sync_records.len();
-        let batch_size = match batch_size {
-            Some(batch_size) => batch_size,
-            None => total_to_integrate,
-        };
-        while position < total_to_integrate {
-            let current_batch_size = std::cmp::min(position + batch_size, total_to_integrate);
-            let batch = &sync_records[position..current_batch_size];
-            connection.transaction_sync(|_| {
-                let result = self.translate_and_integrate_sync_records_batch(
-                    records_in_tx,
-                    total_to_integrate,
-                    position,
-                    batch,
-                    translators,
-                    &mut result,
-                    &mut logger,
-                )?;
-                Ok(result)
-            })?;
-            position += batch_size;
-        }
-        Ok(result)
-    }
-
-    fn translate_and_integrate_sync_records_batch(
-        &self,
-        records_in_tx: bool,
-        total_to_integrate: usize,
-        batch_start_index: usize,
-        sync_records: &[SyncBufferRow],
-        translators: &Vec<Box<dyn SyncTranslation>>,
-        result: &mut TranslationAndIntegrationResults,
-        logger: &mut Option<&mut SyncLogger>,
-    ) -> Result<(), RepositoryError> {
-        let step_progress = SyncStepProgress::Integrate;
-
-        // Try translate
 
         // Helper to make below logic less verbose
         let mut record_progress = |progress: usize| -> Result<(), RepositoryError> {
@@ -195,8 +156,7 @@ impl<'a> TranslationAndIntegration<'a> {
             }
 
             // Integrate
-            let integration_result =
-                integrate(self.connection, records_in_tx, &integration_records);
+            let integration_result = integrate(self.connection, &integration_records);
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
@@ -216,18 +176,15 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
             }
 
-            let current_pos = batch_start_index + number_of_records_integrated;
-            if current_pos % PROGRESS_STEP_LEN == 0 {
-                record_progress(total_to_integrate - current_pos)?;
+            if number_of_records_integrated % PROGRESS_STEP_LEN == 0 {
+                record_progress(total_to_integrate - number_of_records_integrated)?;
             }
         }
 
         // Record final progress
-        if total_to_integrate <= batch_start_index + sync_records.len() {
-            record_progress(0)?;
-        }
+        record_progress(0)?;
 
-        Ok(())
+        Ok(result)
     }
 }
 
@@ -254,19 +211,14 @@ impl IntegrationOperation {
 
 pub(crate) fn integrate(
     connection: &StorageConnection,
-    records_in_tx: bool,
     integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
     for integration_record in integration_records.iter() {
         // Integrate every record in a sub transaction. This is mainly for Postgres where the
         // whole transaction fails when there is a DB error (not a problem in sqlite).
-        if records_in_tx {
-            connection
-                .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
-                .map_err(|e| e.to_inner_error())?;
-        } else {
-            integration_record.integrate(connection)?;
-        }
+        connection
+            .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
+            .map_err(|e| e.to_inner_error())?;
     }
 
     Ok(())
@@ -307,7 +259,6 @@ mod test {
                 // Doesn't fail
                 let result = integrate(
                     connection,
-                    true,
                     &[IntegrationOperation::upsert(inline_init(
                         |r: &mut UnitRow| {
                             r.id = "unit".to_string();
@@ -320,7 +271,6 @@ mod test {
                 // Fails due to referential constraint
                 let result = integrate(
                     connection,
-                    true,
                     &[IntegrationOperation::upsert(inline_init(
                         |r: &mut ItemRow| {
                             r.id = "item".to_string();

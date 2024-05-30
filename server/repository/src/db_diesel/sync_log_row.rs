@@ -1,6 +1,7 @@
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use std::sync::RwLock;
 use util::Defaults;
 
 use crate::RepositoryError;
@@ -145,7 +146,7 @@ impl<'a> SyncLogRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_log_dsl::sync_log)
             .values(row)
             .on_conflict(sync_log_dsl::id)
@@ -156,19 +157,51 @@ impl<'a> SyncLogRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_log_dsl::sync_log)
             .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
+    pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
+        row.cache_row();
+        self._upsert_one(row)
+    }
+
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogRow>, RepositoryError> {
         let result = sync_log_dsl::sync_log
             .filter(sync_log_dsl::id.eq(id))
             .first(self.connection.lock().connection())
-            .optional()?;
+            .optional()?
+            .map(SyncLogRow::or_latest_row);
         Ok(result)
+    }
+}
+
+// When starting the integration process an initial SyncLogRow is written to the database.
+// While this initial row is immediately visible, progress updates to this row are done in a
+// long-running transaction, i.e. updates are only visible after the transaction finished.
+//
+// To make progress updates visible in the UI, the latest call to SyncLogRowRepository::upsert_one()
+// is cached in memory.
+// If a database query returns the row for the current integration process, this potentially stale
+// row is replaced with the latest cached row.
+static LATEST_SYNC_LOG: RwLock<Option<SyncLogRow>> = RwLock::new(None);
+impl SyncLogRow {
+    fn cache_row(&self) {
+        *LATEST_SYNC_LOG.write().unwrap() = Some(self.clone());
+    }
+
+    pub(super) fn or_latest_row(self) -> Self {
+        let cached_row = LATEST_SYNC_LOG.read().unwrap();
+        let Some(cached_row) = cached_row.as_ref() else {
+            return self;
+        };
+        match self.id == cached_row.id {
+            true => cached_row.clone(),
+            false => self,
+        }
     }
 }
 
