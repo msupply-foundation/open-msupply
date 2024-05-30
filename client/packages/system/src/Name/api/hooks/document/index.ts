@@ -5,6 +5,7 @@ import { useName } from './useName';
 import { useNames } from './useNames';
 import { useFacilities } from './useFacilities';
 import { useDonors } from './useDonors';
+import { useNameProperties } from './useNameProperties';
 
 export const Document = {
   useCustomers,
@@ -14,4 +15,5 @@ export const Document = {
   useName,
   useNames,
   useDonors,
+  useNameProperties,
 };
