@@ -62,7 +62,7 @@ table! {
         properties -> Nullable<Text>,
     }
 }
-
+joinable!(name_oms_fields -> name (id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
 
