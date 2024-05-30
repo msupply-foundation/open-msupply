@@ -55,6 +55,14 @@ table! {
     }
 }
 
+table! {
+    #[sql_name = "name"]
+    name_oms_fields (id) {
+        id -> Text,
+        properties -> Nullable<Text>,
+    }
+}
+
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
 
@@ -156,6 +164,11 @@ pub struct NameRow {
 
     // Acts as a flag for soft deletion
     pub deleted_datetime: Option<NaiveDateTime>,
+}
+
+pub struct NameOmsFieldsRow {
+    pub id: String,
+    pub properties: Option<String>,
 }
 
 pub struct NameRowRepository<'a> {
@@ -260,6 +273,17 @@ impl<'a> NameRowRepository<'a> {
         insert_or_ignore_name_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
+        Ok(())
+    }
+
+    pub fn update_properties(
+        &self,
+        name_id: &str,
+        properties: &Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(name_oms_fields::table.find(name_id))
+            .set(name_oms_fields::properties.eq(properties))
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
