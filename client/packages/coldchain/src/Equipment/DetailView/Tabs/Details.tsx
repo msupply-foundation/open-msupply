@@ -6,10 +6,9 @@ import {
   Typography,
 } from '@common/components';
 import { useTranslation } from '@common/intl';
-import { ArrayUtils, Box } from '@openmsupply-client/common';
+import { ArrayUtils, Box, PropertyInput } from '@openmsupply-client/common';
 import { DraftAsset } from '../../types';
 import { useAssets } from '../../api';
-import { PropertyInput } from '../../Components/PropertyInput';
 
 interface DetailsProps {
   draft?: DraftAsset;
@@ -147,7 +146,7 @@ export const Details = ({ draft, onChange }: DetailsProps) => {
                             },
                           })
                         }
-                        isCatalogue={isCatalogue}
+                        disabled={isCatalogue}
                       />
                     </Row>
                   );
