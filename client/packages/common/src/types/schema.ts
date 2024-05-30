@@ -502,6 +502,7 @@ export type AssetNode = {
   assetClass?: Maybe<AssetClassNode>;
   assetNumber?: Maybe<Scalars['String']['output']>;
   assetType?: Maybe<AssetTypeNode>;
+  /** Returns a JSON string of the asset catalogue properties e.g {"property_key": "value"} */
   catalogProperties?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
@@ -515,6 +516,7 @@ export type AssetNode = {
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   needsReplacement?: Maybe<Scalars['Boolean']['output']>;
   notes?: Maybe<Scalars['String']['output']>;
+  /** Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"} */
   properties: Scalars['String']['output'];
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
@@ -4190,6 +4192,14 @@ export enum NameNodeType {
   Store = 'STORE'
 }
 
+export type NamePropertyConnector = {
+  __typename: 'NamePropertyConnector';
+  nodes: Array<PropertyNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type NamePropertyResponse = NamePropertyConnector;
+
 export enum NameSortFieldInput {
   Code = 'code',
   Name = 'name'
@@ -4777,6 +4787,15 @@ export type ProgramRequisitionSettingNode = {
   suppliers: Array<NameNode>;
 };
 
+export type PropertyNode = {
+  __typename: 'PropertyNode';
+  allowedValues?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  key: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  valueType: PropertyNodeValueType;
+};
+
 export enum PropertyNodeValueType {
   Boolean = 'BOOLEAN',
   Float = 'FLOAT',
@@ -4865,6 +4884,7 @@ export type Queries = {
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
   me: UserResponse;
+  nameProperties: NamePropertyResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];

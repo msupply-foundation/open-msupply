@@ -6,7 +6,7 @@ use super::{
 
 use crate::{diesel_macros::apply_equal_filter, PropertyRow};
 
-use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination};
+use crate::{repository_error::RepositoryError, DBType, EqualFilter};
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
     prelude::*,
@@ -35,7 +35,6 @@ impl<'a> NamePropertyRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<NamePropertyFilter>) -> Result<i64, RepositoryError> {
-        // TODO (beyond M2), check that store_id matches current store
         let query = Self::create_filtered_query(filter);
 
         Ok(query
@@ -47,32 +46,16 @@ impl<'a> NamePropertyRepository<'a> {
         &self,
         filter: NamePropertyFilter,
     ) -> Result<Vec<NameProperty>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter))
+        self.query(Some(filter))
     }
 
     pub fn query(
         &self,
-        pagination: Pagination,
         filter: Option<NamePropertyFilter>,
-        // sort: Option<NamePropertySort>,
     ) -> Result<Vec<NameProperty>, RepositoryError> {
-        // TODO (beyond M2), check that store_id matches current store
-        let mut query = Self::create_filtered_query(filter);
+        let query = Self::create_filtered_query(filter);
 
-        // if let Some(sort) = sort {
-        //     match sort.key {
-        //         NamePropertySortField::Name => {
-        //             apply_sort_no_case!(query, sort, name_property_dsl::name)
-        //         }
-        //     }
-        // } else {
-        query = query.order(name_property_dsl::id.asc());
-        // }
-
-        let result = query
-            .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<NamePropertyJoin>(self.connection.lock().connection())?;
+        let result = query.load::<NamePropertyJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
