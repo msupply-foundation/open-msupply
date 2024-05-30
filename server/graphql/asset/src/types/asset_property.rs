@@ -3,34 +3,12 @@ use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 
 use graphql_core::simple_generic_errors::NodeError;
 
+use graphql_types::types::PropertyNodeValueType;
 use repository::assets::asset_property::AssetPropertyFilter;
 use repository::db_diesel::assets::asset_property_row::AssetPropertyRow;
 
-use repository::types::PropertyValueType;
 use repository::{EqualFilter, StringFilter};
-use serde::Serialize;
 use service::ListResult;
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum PropertyNodeValueType {
-    String,
-    Boolean,
-    Integer,
-    Float,
-}
-
-impl PropertyNodeValueType {
-    pub fn from_domain(value_type: &PropertyValueType) -> PropertyNodeValueType {
-        use PropertyValueType::*;
-        match value_type {
-            String => PropertyNodeValueType::String,
-            Boolean => PropertyNodeValueType::Boolean,
-            Integer => PropertyNodeValueType::Integer,
-            Float => PropertyNodeValueType::Float,
-        }
-    }
-}
 
 #[derive(InputObject, Clone)]
 pub struct AssetPropertyFilterInput {
