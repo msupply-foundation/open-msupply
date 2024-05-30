@@ -10,6 +10,7 @@ export const useNameApi = () => {
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
     donors: () => [...keys.base(), storeId, 'donors'] as const,
+    properties: () => ['name-properties'] as const,
   };
   const { client } = useGql();
   const queries = getNameQueries(getSdk(client), storeId);
