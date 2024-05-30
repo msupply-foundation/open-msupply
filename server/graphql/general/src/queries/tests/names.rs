@@ -215,6 +215,7 @@ mod graphql {
                     name_row: mock_name_a(),
                     name_store_join_row: None,
                     store_row: None,
+                    properties: None,
                 }],
                 count: 1,
             })
