@@ -56,7 +56,6 @@ impl SyncTranslation for MasterListLineTranslation {
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)?;
         let master_list =
             MasterListRowRepository::new(connection).find_one_by_id(&data.item_master_ID)?;
-
         if master_list.is_none() {
             return Ok(PullTranslateResult::Ignored(
                 "Missing master list".to_string(),
@@ -83,6 +82,7 @@ mod tests {
         use crate::sync::test::test_data::master_list_line as test_data;
         let translator = MasterListLineTranslation {};
 
+        // Using all() because pull_upserts requires master_list from mock data
         let (_, connection, _, _) =
             setup_all("test_master_list_line_translation", MockDataInserts::all()).await;
 
