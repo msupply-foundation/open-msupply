@@ -2,10 +2,12 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod assets;
 mod decimal_pack_size;
 mod decimal_requisition_quantities;
 mod ledger;
 mod pg_enums;
+mod v6_sync_api_error_code;
 
 pub(crate) struct V2_01_00;
 
@@ -21,6 +23,8 @@ impl Migration for V2_01_00 {
         pg_enums::migrate(connection)?;
         decimal_pack_size::migrate(connection)?;
         decimal_requisition_quantities::migrate(connection)?;
+        assets::migrate_assets(connection)?;
+        v6_sync_api_error_code::migrate(connection)?;
         Ok(())
     }
 }

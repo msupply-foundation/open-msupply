@@ -56,6 +56,8 @@ mod query_catalogue_item {
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.catalogue_service;
 
+        static TOTAL_CATALOGUE_ITEM_ROWS: u32 = 168;
+
         // id equal_any
         let mut result = service
             .get_asset_catalogue_items(
@@ -192,7 +194,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 158);
+        assert_eq!(result.count, TOTAL_CATALOGUE_ITEM_ROWS);
 
         // class filter - equal like
         result = service
@@ -204,9 +206,9 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 158);
+        assert_eq!(result.count, TOTAL_CATALOGUE_ITEM_ROWS);
 
-        // class filter - no matches
+        // class filter - empty string matches everything
         let result_1 = service
             .get_asset_catalogue_items(
                 &context.connection,
@@ -215,7 +217,7 @@ mod query_catalogue_item {
                 None,
             )
             .unwrap();
-        assert_eq!(result_1.count, 158);
+        assert_eq!(result_1.count, TOTAL_CATALOGUE_ITEM_ROWS);
 
         // class filter - no matches
         let result = service
@@ -312,6 +314,6 @@ mod query_catalogue_item {
                 }),
             )
             .unwrap();
-        assert_eq!(result.rows[0].code, "E003/002");
+        assert_eq!(result.rows[0].code, "E001/001-C");
     }
 }

@@ -4,6 +4,7 @@ use repository::{
     asset_internal_location_row::AssetInternalLocationRow,
     asset_log_reason_row::{AssetLogReasonRow, AssetLogReasonRowRepository},
     asset_log_row::AssetLogStatus,
+    asset_property_row::{AssetPropertyRow, AssetPropertyRowRepository},
     assets::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
@@ -19,6 +20,13 @@ pub fn check_asset_exists(
     connection: &StorageConnection,
 ) -> Result<Option<AssetRow>, RepositoryError> {
     AssetRowRepository::new(connection).find_one_by_id(id)
+}
+
+pub fn check_asset_property_exists(
+    id: &str,
+    connection: &StorageConnection,
+) -> Result<Option<AssetPropertyRow>, RepositoryError> {
+    AssetPropertyRowRepository::new(connection).find_one_by_id(id)
 }
 
 pub fn check_asset_number_exists(

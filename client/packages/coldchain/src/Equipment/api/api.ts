@@ -49,6 +49,11 @@ const assetParsers = {
     serialNumber: input.serialNumber,
     storeId: input.store?.id,
     typeId: input.typeId,
+    properties: JSON.stringify(input.parsedProperties),
+    donorNameId: input.donorNameId,
+    warrantyStart: input.warrantyStart,
+    warrantyEnd: input.warrantyEnd,
+    needsReplacement: input.needsReplacement,
   }),
   toUpdate: (input: Partial<DraftAsset>): UpdateAssetInput => ({
     id: input.id ?? '',
@@ -60,6 +65,11 @@ const assetParsers = {
     serialNumber: setNullableInput('serialNumber', input),
     storeId: setNullableInput('id', input.store),
     locationIds: input.locationIds,
+    properties: JSON.stringify(input.parsedProperties),
+    donorNameId: setNullableInput('donorNameId', input),
+    warrantyStart: setNullableInput('warrantyStart', input),
+    warrantyEnd: setNullableInput('warrantyEnd', input),
+    needsReplacement: input.needsReplacement,
   }),
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',

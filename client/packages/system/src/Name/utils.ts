@@ -16,9 +16,15 @@ interface NameSearchListProps {
 
 export interface NameSearchInputProps {
   onChange: (name: NameRowFragment) => void;
+  onInputChange?: (
+    event: React.SyntheticEvent,
+    value: string,
+    reason: string
+  ) => void;
   width?: number;
   value: NameRowFragment | null;
   disabled?: boolean;
+  clearable?: boolean;
 }
 
 export const basicFilterOptions = {

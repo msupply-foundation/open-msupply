@@ -3,32 +3,55 @@ import {
   Box,
   AlertIcon,
   Typography,
-  InfoTooltipIcon,
+  Tooltip,
+  InfoIcon,
 } from '@openmsupply-client/common';
 
 export type ErrorWithDetailsProps = {
   error: string;
   details: string;
+  hint?: string;
 };
 
 export const ErrorWithDetails: React.FC<ErrorWithDetailsProps> = ({
   error,
   details,
-}) => (
-  <Box
-    display="flex"
-    sx={{ color: 'error.main' }}
-    gap={1}
-    justifyContent="center"
-  >
-    <Box display="flex" flexWrap="wrap" alignContent="center">
-      <AlertIcon />
-    </Box>
-    <Box sx={{ '& > div': { display: 'inline-block' } }}>
-      <Typography sx={{ color: 'inherit' }} component="span">
-        {error}
-      </Typography>
-      <InfoTooltipIcon title={details} />
-    </Box>
-  </Box>
-);
+  hint,
+}) => {
+  const TooltipContents = () => {
+    const sx = { color: 'inherit', fontSize: 'inherit' };
+
+    return (
+      <Box display="flex" flexDirection="column" gap={1}>
+        {!!hint && (
+          <Typography sx={{ fontWeight: 'bold', ...sx }}>{hint}</Typography>
+        )}
+
+        {!!details && <Typography sx={sx}>{details}</Typography>}
+      </Box>
+    );
+  };
+
+  const showTooltip = !!(details || hint);
+
+  return (
+    <Tooltip title={showTooltip ? <TooltipContents /> : null}>
+      <Box
+        display="flex"
+        sx={{ color: 'error.main' }}
+        gap={1}
+        justifyContent="center"
+      >
+        <Box display="flex" flexWrap="wrap" alignContent="center">
+          <AlertIcon />
+        </Box>
+        <Box sx={{ '& > div': { display: 'inline-block' } }}>
+          <Typography sx={{ color: 'inherit' }} component="span">
+            {error}
+          </Typography>
+          {showTooltip && <InfoIcon fontSize="inherit" />}
+        </Box>
+      </Box>
+    </Tooltip>
+  );
+};

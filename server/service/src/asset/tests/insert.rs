@@ -33,11 +33,7 @@ mod query {
                     asset_number: Some("test_code".to_string()),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()),
-                    installation_date: None,
-                    replacement_date: None,
-                    category_id: None,
-                    class_id: None,
-                    type_id: None,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -63,11 +59,7 @@ mod query {
                     asset_number: Some("test_code".to_string()),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
-                    installation_date: None,
-                    replacement_date: None,
-                    category_id: None,
-                    class_id: None,
-                    type_id: None,
+                    ..Default::default()
                 },
             ),
             Err(InsertAssetError::AssetAlreadyExists)
@@ -84,11 +76,7 @@ mod query {
                     asset_number: Some("test_code".to_string()),
                     serial_number: Some("test_serial_number_2".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
-                    installation_date: None,
-                    replacement_date: None,
-                    category_id: None,
-                    class_id: None,
-                    type_id: None,
+                    ..Default::default()
                 },
             ),
             Err(InsertAssetError::AssetNumberAlreadyExists)
@@ -105,11 +93,7 @@ mod query {
                     asset_number: Some("test_code_2".to_string()),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
-                    installation_date: None,
-                    replacement_date: None,
-                    category_id: None,
-                    class_id: None,
-                    type_id: None,
+                    ..Default::default()
                 },
             ),
             Err(InsertAssetError::SerialNumberAlreadyExists)

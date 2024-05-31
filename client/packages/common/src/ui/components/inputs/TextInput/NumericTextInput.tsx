@@ -43,6 +43,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       multiplier = 10,
       value,
       noFormatting = false,
+      fullWidth,
       ...props
     },
     ref
@@ -60,6 +61,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           : format(val, { minimumFractionDigits: decimalMin }),
       [decimalMin, format, noFormatting]
     );
+    const [isDirty, setIsDirty] = useState(false);
     const [textValue, setTextValue] = useState(
       formatValue(value ?? defaultValue)
     );
@@ -114,12 +116,17 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       <BasicTextInput
         ref={ref}
         sx={{
-          '& .MuiInput-input': { textAlign: 'right', width: `${width}px` },
+          '& .MuiInput-input': {
+            textAlign: 'right',
+            width: fullWidth ? undefined : `${width}px`,
+          },
           ...sx,
         }}
         inputMode="numeric"
         InputProps={InputProps}
         onChange={e => {
+          if (!isDirty) setIsDirty(true);
+
           const input = e.target.value
             // Remove separators
             .replace(new RegExp(`\\${separator}`, 'g'), '')
@@ -168,11 +175,16 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           onChange(newNum);
         }}
         onBlur={() => {
-          const parsed = parse(textValue ?? '');
-          onChange(Number.isNaN(parsed) ? undefined : parsed);
-          setTextValue(formatValue(value));
+          if (isDirty) {
+            const parsed = parse(textValue ?? '');
+            const val = Number.isNaN(parsed) ? defaultValue : parsed;
+
+            onChange(val);
+            setTextValue(formatValue(val));
+          }
         }}
         onFocus={e => e.target.select()}
+        fullWidth={fullWidth}
         {...props}
         value={textValue}
       />

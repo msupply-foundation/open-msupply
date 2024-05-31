@@ -127,7 +127,6 @@ const NumberOfPacksReturnedInputCell: React.FC<
     {...props}
     isRequired
     max={props.rowData.numberOfPacksIssued ?? undefined}
-    min={0}
   />
 );
 const expiryInputColumn =

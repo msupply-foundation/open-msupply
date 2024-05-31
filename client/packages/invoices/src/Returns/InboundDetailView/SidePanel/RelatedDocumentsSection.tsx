@@ -24,9 +24,7 @@ export const RelatedDocumentsSectionComponent = () => {
       date: d(new Date(createdDatetime)),
     });
 
-    return username && username !== 'unknown'
-      ? `${label} ${t('messages.by-user', { username })}`
-      : label;
+    return `${label} ${t('messages.by-user', { username })}`;
   };
 
   return (
@@ -40,7 +38,7 @@ export const RelatedDocumentsSectionComponent = () => {
               <PanelLabel>
                 {getLabel(
                   originalShipment.createdDatetime,
-                  originalShipment.user?.username
+                  originalShipment.user?.username ?? '-'
                 )}
               </PanelLabel>
               <PanelField>

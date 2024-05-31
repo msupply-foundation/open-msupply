@@ -152,6 +152,7 @@ export const useOutboundColumns = ({
             { path: ['lines', 'location', 'code'] },
             { path: ['location', 'code'], default: '' },
           ]),
+        width: 100,
       },
     ],
   ];
