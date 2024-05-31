@@ -5,7 +5,6 @@ import {
   Box,
   ColumnAlign,
   DataTable,
-  NumUtils,
   RecordPatch,
   TableProvider,
   createTableStore,
@@ -18,64 +17,27 @@ import { nameColumn } from './NameColumn';
 import { GrowthRow } from './GrowthRow';
 import { populationColumn } from './PopulationColumn';
 import { Footer } from './Footer';
+import { useDemographicData } from '../api';
+import { recursiveCalculate, toIndicatorFragment } from './utils';
 
 export interface Row {
   isNew: boolean;
   id: string;
   percentage?: number | null;
   name: string;
+  baseYear: number;
+  basePopulation: number;
   0: number;
   1: number;
   2: number;
   3: number;
   4: number;
-  5: number;
 }
 
 export interface HeaderValue {
   id: string;
   value: number;
 }
-
-// arbitrary data until API is written
-const rows: Row[] = [
-  {
-    isNew: false,
-    id: '1',
-    percentage: 100,
-    name: 'General Population',
-    0: 1000000,
-    1: 1100000,
-    2: 1100000,
-    3: 1100000,
-    4: 1100000,
-    5: 1100000,
-  },
-  {
-    isNew: false,
-    id: '2',
-    percentage: 3.4,
-    name: 'Pregnant women',
-    0: 34000,
-    1: 37400,
-    2: 37400,
-    3: 37400,
-    4: 37400,
-    5: 37400,
-  },
-  {
-    isNew: false,
-    id: '3',
-    percentage: 4.1,
-    name: 'New born children',
-    0: 41000,
-    1: 45100,
-    2: 45100,
-    3: 45100,
-    4: 45100,
-    5: 45100,
-  },
-];
 
 // header data (still unsure how this will be stored)
 const headerData: HeaderValue[] = [
@@ -85,6 +47,34 @@ const headerData: HeaderValue[] = [
   { id: '4', value: 1.1 },
   { id: '5', value: 1.0 },
 ];
+
+export const toRow = (row: {
+  __typename?: 'DemographicIndicatorNode';
+  id: string;
+  name: string;
+  baseYear?: number;
+  basePopulation?: number;
+  year1Projection?: number;
+  year2Projection?: number;
+  year3Projection?: number;
+  year4Projection?: number;
+  year5Projection?: number;
+  populationPercentage?: number;
+}): Row => {
+  return {
+    isNew: false,
+    id: row.id,
+    percentage: row.populationPercentage,
+    name: row.name,
+    baseYear: row.baseYear ?? 0,
+    basePopulation: row.basePopulation ?? 0,
+    0: row.year1Projection ?? 0,
+    1: row.year2Projection ?? 0,
+    2: row.year3Projection ?? 0,
+    3: row.year4Projection ?? 0,
+    4: row.year5Projection ?? 0,
+  };
+};
 
 const currentYear = new Date().getFullYear();
 
@@ -96,14 +86,21 @@ export const IndicatorsDemographicsComponent: FC = () => {
     initialSort: { key: 'percentage', dir: 'desc' },
   });
 
+  const { draft, setDraft } = useDemographicData.document.listIndicator();
+
   const draftRows: Record<string, Row> = {};
-  rows.forEach(row => (draftRows[row.id] = { ...row }));
+
   const draftHeaders: Record<string, HeaderValue> = {};
   headerData.forEach(header => (draftHeaders[header.id] = { ...header }));
-  const [draft, setDraft] = useState<Record<string, Row>>(draftRows);
   const [isDirty, setIsDirty] = useState(false);
   const [headerDraft, setHeaderDraft] =
     useState<Record<string, HeaderValue>>(draftHeaders);
+
+  const { insertDemographicIndicator, invalidateQueries } =
+    useDemographicData.document.insertIndicator();
+  const { mutateAsync: updateDemographicIndicator } =
+    useDemographicData.document.updateIndicator();
+  const currentIds = Object.keys(draft);
 
   const PopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
@@ -112,6 +109,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
       Row
     >;
     let updatedDraft = {} as Record<string, Row>;
+    // TODO
     const indexValue = patch[0] ?? undefined;
     Object.keys(currentDraft).forEach(rowKey => {
       const updatedRow = calculateAcrossRow(
@@ -199,34 +197,61 @@ export const IndicatorsDemographicsComponent: FC = () => {
   };
 
   // calculate the row value based on percentage, headers, and previous row value
-  const recursiveCalculate = (
-    key: number,
-    updatedHeader: { [x: string]: HeaderValue },
-    row: Row,
-    indexValue: number | undefined
-  ): number => {
-    const headerValue = updatedHeader[key];
-    if (key > 0) {
-      return headerValue
-        ? (NumUtils.round(
-            recursiveCalculate(key - 1, updatedHeader, row, indexValue) *
-              ((headerValue.value ?? 0) / 100 + 1)
-          ) as number)
-        : 0;
-    } else {
-      const indexKey = Object.keys(draft)[0];
-      const indexRow = indexKey ? draft[indexKey] : undefined;
-      const number = indexRow ? indexRow[0] : 0;
-      return NumUtils.round(
-        (indexValue ?? number) * ((row?.percentage ?? 0) / 100)
-      );
+  // const recursiveCalculate = (
+  //   key: number,
+  //   updatedHeader: { [x: string]: HeaderValue },
+  //   row: Row,
+  //   indexValue: number | undefined
+  // ): number => {
+  //   const headerValue = updatedHeader[key];
+  //   if (key > 0) {
+  //     return headerValue
+  //       ? (NumUtils.round(
+  //           recursiveCalculate(key - 1, updatedHeader, row, indexValue) *
+  //             ((headerValue.value ?? 0) / 100 + 1)
+  //         ) as number)
+  //       : 0;
+  //   } else {
+  //     const indexRow = draft['generalRow'] ?? undefined;
+  //     const number = indexRow ? indexRow.basePopulation : 0;
+  //     return NumUtils.round(
+  //       (indexValue ?? number) * ((row?.percentage ?? 0) / 100)
+  //     );
+  //   }
+  // };
+
+  const insertIndicator = async (row: Row) => {
+    try {
+      await insertDemographicIndicator(toIndicatorFragment(row));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const updateIndicator = async (row: Row) => {
+    try {
+      await updateDemographicIndicator(toIndicatorFragment(row));
+    } catch (e) {
+      console.error(e);
     }
   };
 
   // TODO save draft to DB
-  const save = () => {
+  const save = async () => {
     setIsDirty(false);
-    console.info('api calling save to DB');
+    const remainingRows = Object.keys(draftRows).map(key => draftRows[key]);
+    while (remainingRows.length) {
+      await Promise.all(
+        remainingRows.splice(0).map(async indicator => {
+          const indicatorExists = currentIds?.includes(indicator?.id ?? '');
+          if (indicator != undefined) {
+            indicatorExists
+              ? await updateIndicator(indicator)
+              : await insertIndicator(indicator);
+          }
+        })
+      ).then(() => invalidateQueries());
+    }
   };
 
   // TODO cancel changes (re call data from DB)
@@ -282,7 +307,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
 
   return (
     <>
-      <AppBarButtons rows={rows} patch={setter}></AppBarButtons>
+      <AppBarButtons patch={setter}></AppBarButtons>
       <Toolbar></Toolbar>
       <Box>
         <GrowthRow
