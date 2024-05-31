@@ -40,7 +40,7 @@ const User = ({ user }: { user: ColdchainAssetLogFragment['user'] }) => {
   return (
     <Box display="flex" alignItems="flex-start">
       <Typography sx={{ fontWeight: 'bold', fontSize: '12px' }}>
-        {t('label.user')}: {user?.username}
+        {t('label.user')}: {user?.username ?? '-'}
       </Typography>
       {!!fullName && <Divider />}
       {!!fullName && (
@@ -97,7 +97,7 @@ const StatusLog = ({
     >
       <Box flex={0} display="flex" flexDirection="column" alignItems="center">
         <Connector visible={!isFirst} />
-        <Icon username={log.user?.username} />
+        <Icon username={log.user?.username ?? '-'} />
         <Connector visible={!isLast} />
       </Box>
       <Paper

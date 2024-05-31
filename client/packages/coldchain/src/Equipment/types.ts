@@ -1,16 +1,14 @@
-import { PropertyNodeValueType } from '@common/types';
 import { AssetFragment } from './api';
 
 export interface LocationIds {
   locationIds: string[];
 }
 
-export type DraftAsset = AssetFragment & LocationIds & { files?: File[] };
+export interface Properties {
+  parsedProperties: Record<string, string | number | boolean | null>;
+  parsedCatalogProperties: Record<string, string | number | boolean | null>;
+}
 
-export type PropertyValue = {
-  valueString?: string | null;
-  valueFloat?: number | null;
-  valueBool?: boolean | null;
-  valueInt?: number | null;
-  valueType: PropertyNodeValueType;
-};
+export type DraftAsset = AssetFragment &
+  LocationIds &
+  Properties & { files?: File[] };

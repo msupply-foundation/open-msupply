@@ -14,9 +14,9 @@ export const NumberInputCell = <T extends RecordWithId>({
   rowIndex,
   columnIndex,
   isDisabled = false,
-  // Make the default min=1 as this is the typical implementation
+  // Make the default min=0 as this is the typical implementation
   // in Data Tables
-  min = 1,
+  min = 0,
   max,
   decimalLimit,
   step,

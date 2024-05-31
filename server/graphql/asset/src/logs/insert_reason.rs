@@ -120,7 +120,7 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    use crate::AssetLogReasonMutations;
+    use crate::logs::AssetLogReasonMutations;
 
     type InsertAssetLogReasonMethod = dyn Fn(InsertAssetLogReason) -> Result<AssetLogReason, InsertAssetLogReasonError>
         + Sync

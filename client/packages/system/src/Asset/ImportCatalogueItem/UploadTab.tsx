@@ -66,8 +66,7 @@ const processProperties = (
   t: TypedTFunction<LocaleKey>
 ) => {
   properties?.forEach(property => {
-    const value = row[property.name];
-
+    const value = row[property.name] ?? row[property.key];
     if (!!value?.trim()) {
       if (!!property.allowedValues) {
         const allowedValues = property.allowedValues.split(',');
@@ -91,18 +90,15 @@ const processProperties = (
               })
             );
           }
-          importRow.properties[property.id] = { ...property, value };
+          importRow.properties[property.key] = value;
           break;
         case 'BOOLEAN':
           const isTrue =
             value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
-          importRow.properties[property.id] = {
-            ...property,
-            value: isTrue ? 'true' : 'false',
-          };
+          importRow.properties[property.key] = isTrue ? 'true' : 'false';
           break;
         default:
-          importRow.properties[property.id] = { ...property, value };
+          importRow.properties[property.key] = value;
       }
     }
   });
@@ -160,9 +156,11 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
     if (csvFile) {
       setIsLoading(true);
       Papa.parse(csvFile, {
+        delimiter: ',',
         header: true,
         worker: true,
         skipEmptyLines: true,
+        fastMode: false,
         chunkSize: 100 * 1024, // 100kb
         chunk: processUploadedDataChunk,
         complete: () => {
@@ -177,7 +175,19 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
 
   const processUploadedDataChunk = (data: ParseResult<ParsedImport>) => {
     if (!data.data || !Array.isArray(data.data)) {
-      setErrorMessage(t('messages.import-error'));
+      setErrorMessage(
+        t('messages.upload-error', {
+          error: t('messages.no-data-found'),
+        })
+      );
+    }
+
+    if (data.errors.length > 0) {
+      setErrorMessage(
+        t('messages.upload-error', {
+          error: data.errors[0]?.message + ' ROW: ' + data.errors[0]?.row,
+        })
+      );
     }
 
     const csvRows = data.data;
