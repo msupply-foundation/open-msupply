@@ -58,7 +58,9 @@ impl SyncTranslation for MasterListLineTranslation {
             MasterListRowRepository::new(connection).find_one_by_id(&data.item_master_ID)?;
 
         if master_list.is_none() {
-            return Ok(PullTranslateResult::Ignored("Orphaned line".to_string()));
+            return Ok(PullTranslateResult::Ignored(
+                "Missing master list".to_string(),
+            ));
         }
 
         let result = MasterListLineRow {
