@@ -1,17 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    // immunisation_program
-    sql!(
-        connection,
-        r#"
-        CREATE TABLE immunisation_program (
-            id TEXT PRIMARY KEY NOT NULL,
-            name TEXT NOT NULL
-        );
-        "#
-    )?;
-
     // immunisation
     sql!(
         connection,
@@ -19,7 +8,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE TABLE immunisation (
             id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
-            immunisation_program_id TEXT NOT NULL REFERENCES immunisation_program(id),
+            immunisation_program_id TEXT NOT NULL REFERENCES program(id),
             demographic_indicator_id TEXT NOT NULL,-- TODO FK REFERENCES demographic_indicator(id)
             coverage_rate FLOAT NOT NULL DEFAULT 100,
             is_active BOOL NOT NULL DEFAULT true,
