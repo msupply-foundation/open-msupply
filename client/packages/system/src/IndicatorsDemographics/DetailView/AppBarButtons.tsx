@@ -10,7 +10,6 @@ import { Row } from './IndicatorsDemographics';
 import { AppBarButtonsPortal, Grid } from '@openmsupply-client/common';
 
 interface IndicatorsAppBarButtonsProps {
-  rows: Row[];
   patch: (patch: RecordPatch<Row>) => void;
 }
 
@@ -18,11 +17,12 @@ export const AppBarButtonsComponent = ({
   patch,
 }: IndicatorsAppBarButtonsProps) => {
   const t = useTranslation();
+
   const handleClick = () => {
     const id = FnUtils.generateUUID();
-    patch({
+    const newRow = {
       id,
-      name: 'new',
+      name: 'new134',
       percentage: 0,
       isNew: true,
       0: 0,
@@ -31,7 +31,8 @@ export const AppBarButtonsComponent = ({
       3: 0,
       4: 0,
       5: 0,
-    });
+    };
+    patch({ ...newRow });
   };
   return (
     <AppBarButtonsPortal>

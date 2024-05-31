@@ -3,6 +3,7 @@ fragment DemographicIndicator on DemographicIndicatorNode {
   name
   baseYear
   basePopulation
+  populationPercentage
   year1Projection
   year2Projection
   year3Projection
@@ -127,7 +128,7 @@ mutation updateDemographicIndicator($input: UpdateDemographicIndicatorInput!) {
         ... on DemographicIndicatorNode {
           id
         }
-        ... on InsertDemographicIndicatorError {
+        ... on UpdateDemographicIndicatorError {
           error {
             description
           }

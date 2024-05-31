@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type DemographicIndicatorFragment = { __typename: 'DemographicIndicatorNode', id: string, name: string, baseYear: number, basePopulation: number, year1Projection: number, year2Projection: number, year3Projection: number, year4Projection: number, year5Projection: number };
+export type DemographicIndicatorFragment = { __typename: 'DemographicIndicatorNode', id: string, name: string, baseYear: number, basePopulation: number, populationPercentage: number, year1Projection: number, year2Projection: number, year3Projection: number, year4Projection: number, year5Projection: number };
 
 export type DemographicProjectionFragment = { __typename: 'DemographicProjectionNode', id: string, baseYear: number, year1: number, year2: number, year3: number, year4: number, year5: number };
 
@@ -17,7 +17,7 @@ export type DemographicIndicatorsQueryVariables = Types.Exact<{
 }>;
 
 
-export type DemographicIndicatorsQuery = { __typename: 'Queries', demographicIndicators: { __typename: 'DemographicIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'DemographicIndicatorNode', id: string, name: string, baseYear: number, basePopulation: number, year1Projection: number, year2Projection: number, year3Projection: number, year4Projection: number, year5Projection: number }> } };
+export type DemographicIndicatorsQuery = { __typename: 'Queries', demographicIndicators: { __typename: 'DemographicIndicatorConnector', totalCount: number, nodes: Array<{ __typename: 'DemographicIndicatorNode', id: string, name: string, baseYear: number, basePopulation: number, populationPercentage: number, year1Projection: number, year2Projection: number, year3Projection: number, year4Projection: number, year5Projection: number }> } };
 
 export type DemographicProjectionsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -35,7 +35,7 @@ export type DemographicIndicatorByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type DemographicIndicatorByIdQuery = { __typename: 'Queries', demographicIndicators: { __typename: 'DemographicIndicatorConnector', nodes: Array<{ __typename: 'DemographicIndicatorNode', id: string, name: string, baseYear: number, basePopulation: number, year1Projection: number, year2Projection: number, year3Projection: number, year4Projection: number, year5Projection: number }> } };
+export type DemographicIndicatorByIdQuery = { __typename: 'Queries', demographicIndicators: { __typename: 'DemographicIndicatorConnector', nodes: Array<{ __typename: 'DemographicIndicatorNode', id: string, name: string, baseYear: number, basePopulation: number, populationPercentage: number, year1Projection: number, year2Projection: number, year3Projection: number, year4Projection: number, year5Projection: number }> } };
 
 export type DemographicProjectionByIdQueryVariables = Types.Exact<{
   demographicProjectionId: Types.Scalars['String']['input'];
@@ -78,6 +78,7 @@ export const DemographicIndicatorFragmentDoc = gql`
   name
   baseYear
   basePopulation
+  populationPercentage
   year1Projection
   year2Projection
   year3Projection
@@ -194,7 +195,7 @@ export const UpdateDemographicIndicatorDocument = gql`
         ... on DemographicIndicatorNode {
           id
         }
-        ... on InsertDemographicIndicatorError {
+        ... on UpdateDemographicIndicatorError {
           error {
             description
           }

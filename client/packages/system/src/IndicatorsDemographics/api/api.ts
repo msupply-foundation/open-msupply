@@ -21,7 +21,7 @@ export type ListParams<T> = {
   filterBy?: FilterByWithBoolean | null;
 };
 // Leaving this here as probably want to sort by other values in future ie population percentage
-const itemParsers = {
+const Parsers = {
   toIndicatorSortField: (sortBy: SortBy<DemographicIndicatorFragment>) => {
     const fields: Record<string, DemographicIndicatorSortFieldInput> = {
       id: DemographicIndicatorSortFieldInput.Id,
@@ -34,6 +34,36 @@ const itemParsers = {
       id: DemographicIndicatorSortFieldInput.Id,
     };
     return fields[sortBy.key] ?? DemographicProjectionSortFieldInput.Id;
+  },
+  toInsertIndicator: (
+    input: DemographicIndicatorFragment
+  ): InsertDemographicIndicatorInput => {
+    return {
+      id: input.id,
+      name: input.name,
+      baseYear: input.baseYear,
+      basePopulation: input.basePopulation,
+      year1Projection: input.year1Projection,
+      year2Projection: input.year2Projection,
+      year3Projection: input.year3Projection,
+      year4Projection: input.year4Projection,
+      year5Projection: input.year5Projection,
+    };
+  },
+  toUpdateIndicator: (
+    input: DemographicIndicatorFragment
+  ): UpdateDemographicIndicatorInput => {
+    return {
+      id: input.id,
+      name: input.name,
+      baseYear: input.baseYear,
+      basePopulation: input.basePopulation,
+      year1Projection: input.year1Projection,
+      year2Projection: input.year2Projection,
+      year3Projection: input.year3Projection,
+      year4Projection: input.year4Projection,
+      year5Projection: input.year5Projection,
+    };
   },
 };
 
@@ -62,7 +92,7 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
       const result = await sdk.demographicIndicators({
         first,
         offset,
-        key: itemParsers.toIndicatorSortField(sortBy),
+        key: Parsers.toIndicatorSortField(sortBy),
         desc: sortBy.isDesc,
         filter: filterBy,
       });
@@ -71,7 +101,7 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     },
     listAll: async ({ sortBy }: ListParams<DemographicIndicatorFragment>) => {
       const result = await sdk.demographicIndicators({
-        key: itemParsers.toIndicatorSortField(sortBy),
+        key: Parsers.toIndicatorSortField(sortBy),
         desc: sortBy.isDesc,
       });
 
@@ -120,10 +150,10 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
       return demographicProjections;
     },
   },
-  insertIndicator: async (input: InsertDemographicIndicatorInput) => {
-    const result = await sdk.insertDemographicIndicator({
-      input,
-    });
+  insertIndicator: async (input: DemographicIndicatorFragment) => {
+    const insertInput: InsertDemographicIndicatorInput =
+      Parsers.toInsertIndicator(input);
+    const result = await sdk.insertDemographicIndicator({ input: insertInput });
     if (
       result.centralServer.demographic.insertDemographicIndicator.__typename ===
       'DemographicIndicatorNode'
@@ -132,9 +162,11 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     }
     throw new Error('could not insert demographic indicator');
   },
-  updateIndicator: async (input: UpdateDemographicIndicatorInput) => {
+  updateIndicator: async (input: DemographicIndicatorFragment) => {
+    const updateInput: UpdateDemographicIndicatorInput =
+      Parsers.toUpdateIndicator(input);
     const result = await sdk.updateDemographicIndicator({
-      input,
+      input: updateInput,
     });
     if (
       result.centralServer.demographic.updateDemographicIndicator.__typename ===
