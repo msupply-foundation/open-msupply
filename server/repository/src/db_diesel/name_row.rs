@@ -1,4 +1,8 @@
-use super::{name_row::name::dsl::*, StorageConnection};
+use super::{
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    name_row::name::dsl::*, name_store_join::name_store_join, program_row::program,
+    store_row::store, StorageConnection,
+};
 use crate::{
     item_link, name_link, repository_error::RepositoryError, EqualFilter, NameLinkRow,
     NameLinkRowRepository,
@@ -65,8 +69,16 @@ table! {
 joinable!(name_oms_fields -> name (id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
+allow_tables_to_appear_in_same_query!(name, name_oms_fields);
+// for names query
 allow_tables_to_appear_in_same_query!(name_oms_fields, item_link);
 allow_tables_to_appear_in_same_query!(name_oms_fields, name_link);
+allow_tables_to_appear_in_same_query!(name_oms_fields, store);
+allow_tables_to_appear_in_same_query!(name_oms_fields, name_store_join);
+// for programs query
+allow_tables_to_appear_in_same_query!(name_oms_fields, master_list_name_join);
+allow_tables_to_appear_in_same_query!(name_oms_fields, master_list);
+allow_tables_to_appear_in_same_query!(name_oms_fields, program);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -168,6 +180,9 @@ pub struct NameRow {
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = name_oms_fields)]
 pub struct NameOmsFieldsRow {
     pub id: String,
     pub properties: Option<String>,
