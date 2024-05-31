@@ -31,6 +31,7 @@ pub enum Resource {
     RouteMe,
     // name
     QueryName,
+    MutateNameProperties,
     // location
     QueryLocation,
     MutateLocation,
