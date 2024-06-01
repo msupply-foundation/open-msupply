@@ -14,6 +14,10 @@ const MasterListService = React.lazy(
   () => import('@openmsupply-client/system/src/MasterList/Service/Service')
 );
 
+const ImmunisationService = React.lazy(
+  () => import('@openmsupply-client/system/src/Immunisation/Service/Service')
+);
+
 const fullAssetPath = RouteBuilder.create(AppRoute.Catalogue)
   .addPart(AppRoute.Assets)
   .addWildCard()
@@ -26,6 +30,11 @@ const fullItemPath = RouteBuilder.create(AppRoute.Catalogue)
 
 const fullMasterListPath = RouteBuilder.create(AppRoute.Catalogue)
   .addPart(AppRoute.MasterLists)
+  .addWildCard()
+  .build();
+
+const immunisationFullPath = RouteBuilder.create(AppRoute.Catalogue)
+  .addPart(AppRoute.Immunisations)
   .addWildCard()
   .build();
 
@@ -43,6 +52,10 @@ export const CatalogueRouter: FC = () => {
 
   if (gotoMasterLists) {
     return <MasterListService />;
+  }
+
+  if (immunisationFullPath) {
+    return <ImmunisationService />;
   }
 
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
