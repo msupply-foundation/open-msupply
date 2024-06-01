@@ -5,6 +5,7 @@
   "button.manage-asset-log-reasons": "Manage asset log reasons",
   "error.item-not-found": "Item not found",
   "error.master-list-not-found": "Master list not found",
+  "error.immunisations-not-found": "Immunisations not found",
   "error.no-items": "No items to display.",
   "error.no-master-lists": "No Master Lists to display.",
   "error.no-pack-variants": "This item does not have any pack variants configured.",
