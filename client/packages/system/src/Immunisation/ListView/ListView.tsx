@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -9,9 +9,17 @@ import {
   useTranslation,
   createTableStore,
   createQueryParamsStore,
+  RecordPatch,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+
+export interface Program {
+  id: string;
+  name: string;
+  immunisations: string[];
+  isNew: boolean;
+}
 
 const ImmunisationsListComponent: FC = () => {
   const {
@@ -23,6 +31,9 @@ const ImmunisationsListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
 
+  const draftPrograms: Record<string, Program> = {};
+  const [draft, setDraft] = useState<Record<string, Program>>(draftPrograms);
+
   const columns = useColumns(
     ['name', 'description'],
     {
@@ -32,15 +43,24 @@ const ImmunisationsListComponent: FC = () => {
     [updateSortQuery, sortBy]
   );
 
+  const setter = (patch: RecordPatch<Program>) => {
+    const updatedDraft = { ...draft, [patch.id]: patch } as Record<
+      string,
+      Program
+    >;
+    setDraft({ ...updatedDraft });
+  };
+
   return (
     <>
       <Toolbar />
-      <AppBarButtons />
+      <AppBarButtons patch={setter} />
       <DataTable
         id={'immunisation-list'}
         pagination={{ ...pagination }}
         onChangePage={updatePaginationQuery}
         columns={columns}
+        data={Object.values(draft)}
         isLoading={false}
         onRowClick={row => navigate(row.id)}
         noDataElement={<NothingHere body={t('error.no-master-lists')} />}
