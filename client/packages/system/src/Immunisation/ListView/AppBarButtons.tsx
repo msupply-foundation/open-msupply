@@ -22,7 +22,7 @@ export const AppBarButtons = () => {
           isLoading={false}
           onClick={() => {}}
         >
-          {t('button.add-immunisation')}
+          {t('button.add-new-program')}
         </LoadingButton>
       </Grid>
     </AppBarButtonsPortal>
