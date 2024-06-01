@@ -9,6 +9,7 @@
   "auth.permission-denied": "Permission denied",
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Add Item",
+  "button.add-immunisation": "Add",
   "button.allocate": "Allocate",
   "button.browse-files": "Browse files",
   "button.back": "Back",
