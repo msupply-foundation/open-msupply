@@ -7,10 +7,28 @@ import {
   LoadingButton,
   EnvUtils,
   Platform,
+  RecordPatch,
+  FnUtils,
 } from '@openmsupply-client/common';
+import { Program } from './ListView';
 
-export const AppBarButtons = () => {
-  const t = useTranslation('inventory');
+interface ImmunisationsAppBarButtonsProps {
+  patch: (patch: RecordPatch<Program>) => void;
+}
+
+export const AppBarButtons = ({ patch }: ImmunisationsAppBarButtonsProps) => {
+  const t = useTranslation('catalogue');
+
+  const handleClick = () => {
+    const id = FnUtils.generateUUID();
+    const newProgram = {
+      id,
+      name: 'new name',
+      immunisations: [],
+      isNew: true,
+    };
+    patch({ ...newProgram });
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -20,7 +38,7 @@ export const AppBarButtons = () => {
           startIcon={<DownloadIcon />}
           variant="outlined"
           isLoading={false}
-          onClick={() => {}}
+          onClick={handleClick}
         >
           {t('button.add-new-program')}
         </LoadingButton>
