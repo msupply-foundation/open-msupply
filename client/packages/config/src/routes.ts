@@ -54,6 +54,7 @@ export enum AppRoute {
   Items = 'items',
   Assets = 'assets',
   LogReasons = 'log-reasons',
+  Immunisations = 'immunisations',
 
   PageNotFound = 'page-not-found',
 }
