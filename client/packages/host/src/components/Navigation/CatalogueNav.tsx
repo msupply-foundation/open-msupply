@@ -7,6 +7,7 @@ import {
   AppNavLink,
   ListIcon,
   AppNavSection,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
@@ -16,6 +17,7 @@ export const CatalogueNav: FC = () => {
     RouteBuilder.create(AppRoute.Catalogue).addWildCard().build()
   );
   const t = useTranslation('app');
+  const isCentralServer = useIsCentralServerApi();
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Catalogue}>
@@ -48,6 +50,14 @@ export const CatalogueNav: FC = () => {
               .addPart(AppRoute.MasterLists)
               .build()}
             text={t('master-lists')}
+          />
+          <AppNavLink
+            visible={isCentralServer}
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Immunisations)
+              .build()}
+            text={t('label.programs-immunisations')}
           />
         </List>
       </Collapse>
