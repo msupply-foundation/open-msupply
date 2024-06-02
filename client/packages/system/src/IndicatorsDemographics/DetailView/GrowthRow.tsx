@@ -9,6 +9,8 @@ import {
   TableContainer,
   TableCell,
   Table as MuiTable,
+  BasicSpinner,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { HeaderValue } from './IndicatorsDemographics';
 
@@ -38,8 +40,12 @@ export const GrowthRow = <T extends RecordWithId>({
   const ref = useRef<HTMLDivElement>(null);
 
   // don't show if no data
-  if (!data || isLoading || isError) {
-    return null;
+  if (isLoading) {
+    return <BasicSpinner />;
+  }
+
+  if (!data || isError) {
+    return <NothingHere />;
   }
 
   return (
