@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import {
+  ArrayUtils,
   Box,
   ColumnAlign,
   DataTable,
@@ -78,7 +79,7 @@ export const toRow = (row: {
 
 const currentYear = new Date().getFullYear();
 
-export const IndicatorsDemographicsComponent: FC = () => {
+const IndicatorsDemographicsComponent: FC = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
@@ -90,8 +91,7 @@ export const IndicatorsDemographicsComponent: FC = () => {
 
   const draftRows: Record<string, Row> = {};
 
-  const draftHeaders: Record<string, HeaderValue> = {};
-  headerData.forEach(header => (draftHeaders[header.id] = { ...header }));
+  const draftHeaders = ArrayUtils.toObject(headerData);
   const [isDirty, setIsDirty] = useState(false);
   const [headerDraft, setHeaderDraft] =
     useState<Record<string, HeaderValue>>(draftHeaders);
@@ -196,30 +196,6 @@ export const IndicatorsDemographicsComponent: FC = () => {
     return updatedRow;
   };
 
-  // calculate the row value based on percentage, headers, and previous row value
-  // const recursiveCalculate = (
-  //   key: number,
-  //   updatedHeader: { [x: string]: HeaderValue },
-  //   row: Row,
-  //   indexValue: number | undefined
-  // ): number => {
-  //   const headerValue = updatedHeader[key];
-  //   if (key > 0) {
-  //     return headerValue
-  //       ? (NumUtils.round(
-  //           recursiveCalculate(key - 1, updatedHeader, row, indexValue) *
-  //             ((headerValue.value ?? 0) / 100 + 1)
-  //         ) as number)
-  //       : 0;
-  //   } else {
-  //     const indexRow = draft['generalRow'] ?? undefined;
-  //     const number = indexRow ? indexRow.basePopulation : 0;
-  //     return NumUtils.round(
-  //       (indexValue ?? number) * ((row?.percentage ?? 0) / 100)
-  //     );
-  //   }
-  // };
-
   const insertIndicator = async (row: Row) => {
     try {
       await insertDemographicIndicator(toIndicatorFragment(row));
@@ -236,7 +212,6 @@ export const IndicatorsDemographicsComponent: FC = () => {
     }
   };
 
-  // TODO save draft to DB
   const save = async () => {
     setIsDirty(false);
     const remainingRows = Object.keys(draftRows).map(key => draftRows[key]);

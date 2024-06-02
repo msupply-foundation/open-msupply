@@ -4,6 +4,7 @@ import {
   useTranslation,
   DemographicIndicatorNode,
   uniqBy,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import { useDemographicsApi } from '../utils/useDemographicApi';
 import { Row, toRow } from '../../../DetailView/IndicatorsDemographics';
@@ -44,12 +45,12 @@ export const useDemographicIndicators = () => {
   const [draft, setDraft] = useState<Record<string, Row>>({});
 
   useEffect(() => {
-    const draftRows: Record<string, Row> = {};
     if (!data) {
       return;
     }
     const nodes = uniqBy([...data?.nodes, generalRow], 'id');
-    nodes.forEach(row => (draftRows[row.id] = toRow(row)));
+    const nodesAsRow = nodes.map(row => toRow(row));
+    const draftRows = ArrayUtils.toObject(nodesAsRow);
     setDraft(draftRows);
   }, [data, generalRow]);
 
