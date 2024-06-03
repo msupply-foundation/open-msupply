@@ -22,7 +22,7 @@ export const AppBarButtonsComponent = ({
     const id = FnUtils.generateUUID();
     const newRow = {
       id,
-      name: 'new134',
+      name: '',
       percentage: 0,
       isNew: true,
       0: 0,

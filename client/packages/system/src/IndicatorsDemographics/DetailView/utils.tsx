@@ -34,7 +34,7 @@ export const recursiveCalculate = (
       : 0;
   } else {
     return NumUtils.round(
-      (indexValue ?? row.basePopulation) * ((row?.percentage ?? 0) / 100)
+      (indexValue ?? row.basePopulation ?? 0) * ((row?.percentage ?? 0) / 100)
     );
   }
 };

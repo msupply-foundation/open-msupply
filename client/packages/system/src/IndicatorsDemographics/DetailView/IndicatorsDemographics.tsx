@@ -1,6 +1,5 @@
 import React, { FC, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
-import { Toolbar } from './Toolbar';
 import {
   ArrayUtils,
   Box,
@@ -136,7 +135,6 @@ const IndicatorsDemographicsComponent: FC = () => {
     }
 
     const updatedRow = calculateAcrossRow({ ...patch } as Row, headerDraft);
-
     setDraft({ ...updatedDraft, [patch.id]: updatedRow });
   };
 
@@ -283,7 +281,6 @@ const IndicatorsDemographicsComponent: FC = () => {
   return (
     <>
       <AppBarButtons patch={setter}></AppBarButtons>
-      <Toolbar></Toolbar>
       <Box>
         <GrowthRow
           columns={columns}
@@ -294,7 +291,6 @@ const IndicatorsDemographicsComponent: FC = () => {
           data={Object.values(draft)}
           columns={columns}
           id={'indicators-demographics-table'}
-          // enableColumnSelection={true}
         ></DataTable>
       </Box>
       <Footer save={save} cancel={cancel} isDirty={isDirty} />

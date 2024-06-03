@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import {
-  // useNavigate,
   TableProvider,
   DataTable,
   useColumns,
@@ -35,7 +34,6 @@ const AssetListComponent: FC = () => {
   });
   const { data, isError, isLoading } = useAssetData.document.list();
   const pagination = { page, first, offset };
-  // const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const importModalController = useToggle();
 
@@ -88,8 +86,6 @@ const AssetListComponent: FC = () => {
     [sortBy]
   );
 
-  const handleClick = () => {};
-
   return (
     <>
       <AssetCatalogueItemImportModal
@@ -106,12 +102,6 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={() => {
-          handleClick;
-        }}
-        // onRowClick={row => {
-        //   navigate(`/catalogue/assets/${row.id}`);
-        // }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
         enableColumnSelection
       />

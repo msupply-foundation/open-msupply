@@ -39,11 +39,11 @@ export const GrowthRow = <T extends RecordWithId>({
 }: GrowthRowProps<T>) => {
   const ref = useRef<HTMLDivElement>(null);
 
-  // don't show if no data
   if (isLoading) {
     return <BasicSpinner />;
   }
 
+  // don't show if no data
   if (!data || isError) {
     return <NothingHere />;
   }
@@ -65,18 +65,16 @@ export const GrowthRow = <T extends RecordWithId>({
             position: 'sticky',
             top: 0,
             zIndex: 'tableHeader',
-            // boxShadow: dense ? null : theme => theme.shadows[2],
           }}
         >
           <HeaderRow>
             {columns.map(column => {
               const { align, width } = column;
               const columnHeader = Object.values(data).filter(
-                header => header.id == column.key
+                header => header.id === column.key
               )[0];
-              const hasColumnText = column.key == '0';
+              const hasColumnText = column.key === '0';
               return (
-                // <TableCell ></TableCell>
                 <TableCell
                   key={String(column.key)}
                   role="columnheader"
@@ -88,10 +86,7 @@ export const GrowthRow = <T extends RecordWithId>({
                     paddingLeft: '16px',
                     paddingRight: '16px',
                     width,
-                    // minWidth,
-                    // maxWidth,
                     fontWeight: 'bold',
-                    // fontSize: dense ? '12px' : '14px',
                     verticalAlign: 'bottom',
                   }}
                   aria-label={String(column.key)}
