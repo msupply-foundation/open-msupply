@@ -17,7 +17,7 @@ import { nameColumn } from './NameColumn';
 import { GrowthRow } from './GrowthRow';
 import { populationColumn } from './PopulationColumn';
 import { Footer } from './Footer';
-import { useDemographicData } from '../api';
+import { GENERAL_POPULATION_ID, useDemographicData } from '../api';
 import { recursiveCalculate, toIndicatorFragment } from './utils';
 
 export interface Row {
@@ -60,21 +60,19 @@ export const toRow = (row: {
   year4Projection?: number;
   year5Projection?: number;
   populationPercentage?: number;
-}): Row => {
-  return {
-    isNew: false,
-    id: row.id,
-    percentage: row.populationPercentage,
-    name: row.name,
-    baseYear: row.baseYear ?? 0,
-    basePopulation: row.basePopulation ?? 0,
-    0: row.year1Projection ?? 0,
-    1: row.year2Projection ?? 0,
-    2: row.year3Projection ?? 0,
-    3: row.year4Projection ?? 0,
-    4: row.year5Projection ?? 0,
-  };
-};
+}): Row => ({
+  isNew: false,
+  id: row.id,
+  percentage: row.populationPercentage,
+  name: row.name,
+  baseYear: row.baseYear ?? 0,
+  basePopulation: row.basePopulation ?? 0,
+  0: row.year1Projection ?? 0,
+  1: row.year2Projection ?? 0,
+  2: row.year3Projection ?? 0,
+  3: row.year4Projection ?? 0,
+  4: row.year5Projection ?? 0,
+});
 
 const currentYear = new Date().getFullYear();
 
@@ -103,10 +101,7 @@ const IndicatorsDemographicsComponent: FC = () => {
 
   const PopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
-    const currentDraft = { ...draft, [parseInt(patch.id)]: patch } as Record<
-      string,
-      Row
-    >;
+    const currentDraft = { ...draft, [patch.id]: patch } as Record<string, Row>;
     let updatedDraft = {} as Record<string, Row>;
     // TODO
     const indexValue = patch[0] ?? undefined;
@@ -116,7 +111,7 @@ const IndicatorsDemographicsComponent: FC = () => {
         draftHeaders,
         indexValue
       );
-      updatedDraft = { ...updatedDraft, [parseInt(updatedRow.id)]: updatedRow };
+      updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
     });
     setDraft({ ...currentDraft, ...updatedDraft });
   };
@@ -163,7 +158,7 @@ const IndicatorsDemographicsComponent: FC = () => {
         currentDraft[row] as Row,
         updatedHeader
       );
-      updatedDraft = { ...updatedDraft, [parseInt(updatedRow.id)]: updatedRow };
+      updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
     });
     setHeaderDraft(updatedHeader);
     setDraft({ ...currentDraft, ...updatedDraft });
@@ -175,8 +170,11 @@ const IndicatorsDemographicsComponent: FC = () => {
     indexValue?: number | undefined
   ) => {
     let updatedRow = row;
+    // only update numeric entries
     const rowNumberKeys = Object.keys(row).filter(
-      key => !isNaN(parseFloat(key))
+      key =>
+        !isNaN(parseFloat(key)) &&
+        !(row.id === GENERAL_POPULATION_ID && key == '0')
     );
 
     Object.keys(rowNumberKeys).forEach(key => {
