@@ -1,2 +1,2 @@
 export * from './hooks';
-// export * from './operations.generated';
+export const GENERAL_POPULATION_ID = 'generalRow';

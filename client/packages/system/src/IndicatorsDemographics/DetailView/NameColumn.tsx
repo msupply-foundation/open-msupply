@@ -5,6 +5,7 @@ import {
   ColumnDefinition,
   RecordWithId,
 } from '@openmsupply-client/common';
+import { GENERAL_POPULATION_ID } from '../api';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
   name?: number | null | string;
@@ -38,7 +39,7 @@ export const nameColumn = <
     >
       <>
         <BasicTextInput
-          disabled={isDisabled || rowData.name == 'General Population'}
+          disabled={isDisabled || rowData.id === GENERAL_POPULATION_ID}
           defaultValue={column.accessor({ rowData })}
           onBlur={e => {
             column.setter({ ...rowData, name: e.target.value });

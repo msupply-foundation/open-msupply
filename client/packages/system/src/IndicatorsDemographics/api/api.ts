@@ -96,8 +96,8 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
         desc: sortBy.isDesc,
         filter: filterBy,
       });
-      const demographicIndicators = result?.demographicIndicators;
-      return demographicIndicators;
+
+      return result?.demographicIndicators;
     },
     listAll: async ({ sortBy }: ListParams<DemographicIndicatorFragment>) => {
       const result = await sdk.demographicIndicators({
