@@ -294,6 +294,7 @@ mod test {
 
         let updated_stockline = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -334,6 +335,7 @@ mod test {
 
         let updated_stockline = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_b().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(

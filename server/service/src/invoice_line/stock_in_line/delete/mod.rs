@@ -253,7 +253,7 @@ mod test {
         //test associated stock line has been deleted
         assert_eq!(
             StockLineRowRepository::new(&connection)
-                .find_one_by_id_option(&stock_line().id)
+                .find_one_by_id(&stock_line().id)
                 .unwrap(),
             None
         );

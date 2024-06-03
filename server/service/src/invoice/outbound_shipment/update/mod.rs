@@ -116,8 +116,7 @@ pub fn update_outbound_shipment(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_invoice_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
 
     Ok(invoice)
 }
@@ -612,7 +611,10 @@ mod test {
             u
         });
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id(&new_stock_line.id)
+                .unwrap()
+                .unwrap(),
             new_stock_line
         );
 
@@ -631,7 +633,10 @@ mod test {
 
         // Stock line should not have changed
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id(&new_stock_line.id)
+                .unwrap()
+                .unwrap(),
             new_stock_line
         );
 
@@ -649,7 +654,10 @@ mod test {
         let stock_line_repo = StockLineRowRepository::new(&connection);
         // Stock line should not have changed
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id(&new_stock_line.id)
+                .unwrap()
+                .unwrap(),
             new_stock_line
         );
 
@@ -692,7 +700,10 @@ mod test {
 
         // Stock line total_number_of_packs should have been reduced
         assert_eq!(
-            stock_line_repo.find_one_by_id(&stock_line().id).unwrap(),
+            stock_line_repo
+                .find_one_by_id(&stock_line().id)
+                .unwrap()
+                .unwrap(),
             inline_edit(&stock_line(), |mut u| {
                 u.total_number_of_packs = 8.0;
                 u

@@ -377,6 +377,7 @@ mod repository_test {
         stock_line_repo.upsert_one(&stock_line).unwrap();
         let loaded_item = stock_line_repo
             .find_one_by_id(stock_line.id.as_str())
+            .unwrap()
             .unwrap();
         assert_eq!(stock_line, loaded_item);
     }

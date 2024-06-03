@@ -54,8 +54,7 @@ pub fn delete_outbound_return(
         })
         .map_err(|error: TransactionError<DeleteOutboundReturnError>| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_invoice_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
 
     Ok(invoice_id)
 }
@@ -177,7 +176,10 @@ mod test {
         let stock_line_id = mock_outbound_return_a_invoice_line_a()
             .stock_line_id
             .unwrap();
-        let original_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+        let original_stock_line = stock_line_row_repo
+            .find_one_by_id(&stock_line_id)
+            .unwrap()
+            .unwrap();
 
         service
             .delete_outbound_return(&context, mock_outbound_return_a().id)
@@ -191,7 +193,10 @@ mod test {
             None
         );
 
-        let updated_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+        let updated_stock_line = stock_line_row_repo
+            .find_one_by_id(&stock_line_id)
+            .unwrap()
+            .unwrap();
 
         // test stock has been increased by the num of packs in the outbound return line
         assert_eq!(

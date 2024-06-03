@@ -321,6 +321,7 @@ mod test {
             StockLineRowRepository::new(&connection)
                 .find_one_by_id(stock_line_id)
                 .unwrap()
+                .unwrap()
         };
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
@@ -361,6 +362,7 @@ mod test {
                     .clone()
                     .unwrap(),
             )
+            .unwrap()
             .unwrap()
             .available_number_of_packs;
 
@@ -412,9 +414,11 @@ mod test {
                     .unwrap(),
             )
             .unwrap()
+            .unwrap()
             .available_number_of_packs;
         let new_available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_b().id.clone())
+            .unwrap()
             .unwrap()
             .available_number_of_packs;
         let previous_line = InvoiceLineRowRepository::new(&connection)
@@ -467,6 +471,7 @@ mod test {
                     .clone()
                     .unwrap(),
             )
+            .unwrap()
             .unwrap();
         let previous_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&mock_outbound_shipment_a_invoice_lines()[0].id.clone())
