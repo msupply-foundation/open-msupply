@@ -566,7 +566,7 @@ mod repository_test {
         repo.upsert_one(&master_list_line_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_line_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_line_1, loaded_item);
 
@@ -574,7 +574,7 @@ mod repository_test {
         repo.upsert_one(&master_list_line_upsert_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_line_upsert_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_line_upsert_1, loaded_item);
     }
@@ -601,7 +601,7 @@ mod repository_test {
             .unwrap();
         let loaded_item = MasterListNameJoinRepository::new(&connection)
             .find_one_by_id(master_list_name_join_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_name_join_1, loaded_item);
     }
@@ -1092,7 +1092,7 @@ mod repository_test {
         // Note: this test is disabled when running tests using in 'memory' sqlite.
         // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
         // https://sqlite.org/rescode.html#locked
-        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivelant available for shared cache connections (SQLITE_LOCKED).
+        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
         // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
 
         /*
