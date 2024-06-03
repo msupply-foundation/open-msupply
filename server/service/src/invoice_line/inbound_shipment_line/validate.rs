@@ -27,10 +27,12 @@ pub fn check_batch(
 
 pub fn check_batch_stock_reserved(
     line: &InvoiceLineRow,
-    batch: StockLineRow,
+    batch: Option<StockLineRow>,
 ) -> Result<bool, RepositoryError> {
-    if line.number_of_packs != batch.available_number_of_packs {
-        return Ok(false);
+    if let Some(batch) = batch {
+        if line.number_of_packs != batch.available_number_of_packs {
+            return Ok(false);
+        }
     }
     Ok(true)
 }

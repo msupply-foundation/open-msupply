@@ -520,6 +520,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             stock_lines_delivered.push(stock_line.clone());
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
@@ -559,6 +560,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             stock_lines_verified.push(stock_line.clone());
         }
@@ -682,6 +684,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             stock_lines_delivered.push(stock_line.clone());
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
@@ -721,6 +724,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             stock_lines_verified.push(stock_line.clone());
         }
@@ -770,6 +774,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
         }
@@ -862,6 +867,7 @@ mod test {
             .unwrap();
         let stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
+            .unwrap()
             .unwrap();
 
         // Ensure delivered time not updated by status change to verified

@@ -645,6 +645,7 @@ mod tests {
 
         let stock_line1_result = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line1().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(

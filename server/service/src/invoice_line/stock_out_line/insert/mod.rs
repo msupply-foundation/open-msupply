@@ -278,6 +278,7 @@ mod test {
             StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
                 .unwrap()
+                .unwrap()
         };
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
@@ -290,6 +291,7 @@ mod test {
         // New line on New Outbound invoice
         let available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_si_d()[0].id.clone())
+            .unwrap()
             .unwrap()
             .available_number_of_packs;
 
@@ -333,6 +335,7 @@ mod test {
         let available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_a().id.clone())
             .unwrap()
+            .unwrap()
             .available_number_of_packs;
 
         invoice_service
@@ -373,6 +376,7 @@ mod test {
         // New line on Picked invoice
         let stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_item_b_lines()[0].id.clone())
+            .unwrap()
             .unwrap();
 
         invoice_service
@@ -420,6 +424,7 @@ mod test {
         context.store_id = mock_store_a().id;
         let available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_a().id.clone())
+            .unwrap()
             .unwrap()
             .available_number_of_packs;
 
