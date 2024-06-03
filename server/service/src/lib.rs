@@ -23,6 +23,7 @@ pub mod cursor_controller;
 pub mod dashboard;
 pub mod display_settings_service;
 pub mod document;
+pub mod immunisation;
 pub mod inventory_adjustment_reason;
 pub mod invoice;
 pub mod invoice_line;
