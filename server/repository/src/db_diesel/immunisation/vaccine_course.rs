@@ -21,7 +21,7 @@ pub type VaccineCourseSort = Sort<VaccineCourseSortField>;
 pub struct VaccineCourseFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
-    pub vaccine_course_program_id: Option<EqualFilter<String>>,
+    pub program_id: Option<EqualFilter<String>>,
 }
 
 impl VaccineCourseFilter {
@@ -39,8 +39,8 @@ impl VaccineCourseFilter {
         self
     }
 
-    pub fn vaccine_course_program_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.vaccine_course_program_id = Some(filter);
+    pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.program_id = Some(filter);
         self
     }
 }
@@ -123,16 +123,12 @@ fn create_filtered_query(filter: Option<VaccineCourseFilter>) -> BoxedVaccineCou
         let VaccineCourseFilter {
             id,
             name,
-            vaccine_course_program_id,
+            program_id,
         } = f;
 
         apply_equal_filter!(query, id, vaccine_course_dsl::id);
         apply_string_filter!(query, name, vaccine_course_dsl::name);
-        apply_equal_filter!(
-            query,
-            vaccine_course_program_id,
-            vaccine_course_dsl::vaccine_course_program_id
-        );
+        apply_equal_filter!(query, program_id, vaccine_course_dsl::program_id);
     }
     query
 }

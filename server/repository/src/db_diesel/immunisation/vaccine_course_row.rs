@@ -12,7 +12,7 @@ table! {
     vaccine_course (id) {
         id -> Text,
         name -> Text,
-        vaccine_course_program_id -> Text,
+        program_id -> Text,
         demographic_indicator_id -> Text,
         coverage_rate -> Double,
         is_active -> Bool,
@@ -28,7 +28,7 @@ table! {
 pub struct VaccineCourseRow {
     pub id: String,
     pub name: String,
-    pub vaccine_course_program_id: String,
+    pub program_id: String,
     pub demographic_indicator_id: String,
     pub coverage_rate: f64,
     pub is_active: bool,

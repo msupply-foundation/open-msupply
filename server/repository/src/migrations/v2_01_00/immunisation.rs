@@ -1,14 +1,14 @@
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    // immunisation
+    // vaccine_course
     sql!(
         connection,
         r#"
-        CREATE TABLE immunisation (
+        CREATE TABLE vaccine_course (
             id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
-            immunisation_program_id TEXT NOT NULL REFERENCES program(id),
+            program_id TEXT NOT NULL REFERENCES program(id),
             demographic_indicator_id TEXT NOT NULL,-- TODO FK REFERENCES demographic_indicator(id)
             coverage_rate FLOAT NOT NULL DEFAULT 100,
             is_active BOOL NOT NULL DEFAULT true,
@@ -18,25 +18,25 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#
     )?;
 
-    // immunisation_item
+    // vaccine_course_item
     sql!(
         connection,
         r#"
-        CREATE TABLE immunisation_item (
+        CREATE TABLE vaccine_course_item (
             id TEXT PRIMARY KEY NOT NULL,
-            immunisation_id TEXT NOT NULL REFERENCES immunisation(id),
+            vaccine_course_id TEXT NOT NULL REFERENCES vaccine_course(id),
             item_link_id TEXT NOT NULL REFERENCES item_link(id)
         );
         "#
     )?;
 
-    // immunisation_schedule
+    // vaccine_course_schedule
     sql!(
         connection,
         r#"
-        CREATE TABLE immunisation_schedule (
+        CREATE TABLE vaccine_course_schedule (
             id TEXT PRIMARY KEY NOT NULL,
-            immunisation_id TEXT NOT NULL REFERENCES immunisation(id),
+            vaccine_course_id TEXT NOT NULL REFERENCES vaccine_course(id),
             dose_number INT NOT NULL,
             label INT NOT NULL
         );

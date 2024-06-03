@@ -19,6 +19,7 @@ use crate::{
         document_service::{DocumentService, DocumentServiceTrait},
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
     },
+    immunisation::ImmunisationServiceTrait,
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
@@ -132,6 +133,8 @@ pub struct ServiceProvider {
     pub asset_service: Box<dyn AssetServiceTrait>,
     // Label Printer
     pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
+    // Vaccine Course
+    pub immunisation_service: Box<dyn ImmunisationServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -212,6 +215,7 @@ impl ServiceProvider {
             label_printer_settings_service: Box::new(
                 crate::label_printer_settings_service::LabelPrinterSettingsService {},
             ),
+            immunisation_service: Box::new(crate::immunisation::ImmunisationService {}),
         }
     }
 
