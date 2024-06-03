@@ -2,6 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { BasicTextInput } from '@common/components';
 import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
+import { GENERAL_POPULATION_ID } from '../api';
 
 interface RecordWithIdWithPercentageFields extends RecordWithId {
   percentage?: number | null;
@@ -36,7 +37,7 @@ export const percentageColumn = <
     >
       <>
         <BasicTextInput
-          disabled={isDisabled || rowData.id == '1'}
+          disabled={isDisabled || rowData.id === GENERAL_POPULATION_ID}
           defaultValue={column.accessor({ rowData }) as number}
           onBlur={e => {
             const updatedRowData = { ...rowData };
