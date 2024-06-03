@@ -50,11 +50,9 @@ export function useStockLine(id?: string) {
     error: updateError,
   } = useUpdate(id ?? '');
 
-  const draft = (
-    data
-      ? { ...data?.nodes[0], ...patch }
-      : { ...defaultDraftStockLine, ...patch }
-  ) as DraftStockLine;
+  const draft: DraftStockLine = data
+    ? { ...defaultDraftStockLine, ...data?.nodes[0], ...patch }
+    : { ...defaultDraftStockLine, ...patch };
 
   const updatePatch = (newData: Partial<DraftStockLine>) => {
     // Only add changed values to patch
