@@ -9,7 +9,7 @@ import {
   AppNavSection,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
 export const CatalogueNav: FC = () => {
@@ -51,14 +51,16 @@ export const CatalogueNav: FC = () => {
               .build()}
             text={t('master-lists')}
           />
-          <AppNavLink
-            visible={isCentralServer}
-            end
-            to={RouteBuilder.create(AppRoute.Catalogue)
-              .addPart(AppRoute.Immunisations)
-              .build()}
-            text={t('label.programs-immunisations')}
-          />
+          {Environment.FEATURE_IMMUNISATIONS && (
+            <AppNavLink
+              visible={isCentralServer}
+              end
+              to={RouteBuilder.create(AppRoute.Catalogue)
+                .addPart(AppRoute.Immunisations)
+                .build()}
+              text={t('label.programs-immunisations')}
+            />
+          )}
         </List>
       </Collapse>
     </AppNavSection>
