@@ -3,7 +3,6 @@ import {
   NameSortFieldInput,
   NameNodeType,
   FilterByWithBoolean,
-  PropertyNodeValueType,
 } from '@openmsupply-client/common';
 import { Sdk, NameRowFragment } from './operations.generated';
 
@@ -153,30 +152,12 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       return result?.names;
     },
     properties: async () => {
-      // TODO: Implement with backend
-      // const result = await sdk.nameProperties();
-      // if (result?.nameProperties?.__typename === 'PropertyConnector') {
-      //   return result?.nameProperties?.nodes;
-      // }
-      // throw new Error('Unable to fetch properties');
+      const result = await sdk.nameProperties();
 
-      const dummyProperties = [
-        {
-          id: 'admin_level',
-          key: 'admin_level',
-          name: 'Administration Level',
-          allowedValues: 'Primary, Service Point',
-          valueType: PropertyNodeValueType.String,
-        },
-        {
-          id: 'facility_type',
-          key: 'facility_type',
-          name: 'Facility Type',
-          allowedValues: 'National Vaccine Store, Regional Vaccine Store',
-          valueType: PropertyNodeValueType.String,
-        },
-      ];
-      return Promise.resolve(dummyProperties);
+      if (result?.nameProperties?.__typename === 'NamePropertyConnector') {
+        return result?.nameProperties?.nodes;
+      }
+      throw new Error('Unable to fetch properties');
     },
   },
 });
