@@ -7,9 +7,9 @@ use repository::{
 
 use crate::invoice::check_store;
 use crate::invoice_line::query::get_invoice_line;
+use crate::invoice_line::validate::check_line_exists;
 use crate::{
-    invoice::check_invoice_exists,
-    invoice_line::validate::{check_item_exists, check_line_does_not_exist},
+    invoice::check_invoice_exists, invoice_line::validate::check_item_exists,
     service_provider::ServiceContext,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -60,7 +60,7 @@ fn validate(
     store_id: &str,
     input: &InsertOutboundShipmentUnallocatedLine,
 ) -> Result<ItemRow, OutError> {
-    if !check_line_does_not_exist(connection, &input.id)? {
+    if let Some(_) = check_line_exists(connection, &input.id)? {
         return Err(OutError::LineAlreadyExists);
     }
 
@@ -332,6 +332,7 @@ mod test_insert {
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
                 .find_one_by_id(&result.invoice_line_row.id)
+                .unwrap()
                 .unwrap(),
             InvoiceLineRow {
                 id: "new_line".to_owned(),

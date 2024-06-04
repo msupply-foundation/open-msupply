@@ -696,13 +696,16 @@ mod repository_test {
         let repo = InvoiceLineRowRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.upsert_one(&item1).unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap().unwrap();
         assert_eq!(item1, loaded_item);
 
         // row with optional field
         let item2_optional = data::invoice_line_2();
         repo.upsert_one(&item2_optional).unwrap();
-        let loaded_item = repo.find_one_by_id(item2_optional.id.as_str()).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(item2_optional.id.as_str())
+            .unwrap()
+            .unwrap();
         assert_eq!(item2_optional, loaded_item);
 
         // find_many_by_invoice_id:

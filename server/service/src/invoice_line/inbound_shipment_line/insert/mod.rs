@@ -293,6 +293,7 @@ mod test {
 
         let inbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new invoice line id")
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -334,6 +335,7 @@ mod test {
 
         let inbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new invoice line pack to one")
+            .unwrap()
             .unwrap();
 
         assert_eq!(

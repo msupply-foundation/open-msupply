@@ -312,6 +312,7 @@ mod test {
             .unwrap();
         let new_outbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new outbound line id")
+            .unwrap()
             .unwrap();
         let expected_available_stock =
             available_number_of_packs - new_outbound_line.number_of_packs;
@@ -364,6 +365,7 @@ mod test {
             .unwrap();
         let allocated_outbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new allocated invoice line")
+            .unwrap()
             .unwrap();
         let expected_available_stock =
             available_number_of_packs - allocated_outbound_line.number_of_packs;
@@ -405,6 +407,7 @@ mod test {
             .unwrap();
         let picked_outbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new picked invoice line")
+            .unwrap()
             .unwrap();
         let expected_available_stock =
             stock_line.available_number_of_packs - picked_outbound_line.number_of_packs;
@@ -443,6 +446,7 @@ mod test {
             .unwrap();
         let new_prescription_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new prescription line id")
+            .unwrap()
             .unwrap();
         let expected_available_stock =
             available_number_of_packs - new_prescription_line.number_of_packs;
