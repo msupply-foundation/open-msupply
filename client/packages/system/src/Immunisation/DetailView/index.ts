@@ -1,1 +1,0 @@
-export { ImmunisationDetailView } from './DetailView';

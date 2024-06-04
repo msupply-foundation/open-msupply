@@ -9,10 +9,11 @@ import {
   useTranslation,
   createTableStore,
   createQueryParamsStore,
-  RecordPatch,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { ImmunisationProgramCreateModal } from './ImmunisationProgramCreateModal';
 
 export interface Program {
   id: string;
@@ -21,7 +22,7 @@ export interface Program {
   isNew: boolean;
 }
 
-const ImmunisationsListComponent: FC = () => {
+const ProgramListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -32,7 +33,9 @@ const ImmunisationsListComponent: FC = () => {
   const t = useTranslation('catalogue');
 
   const draftPrograms: Record<string, Program> = {};
-  const [draft, setDraft] = useState<Record<string, Program>>(draftPrograms);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [draft] = useState<Record<string, Program>>(draftPrograms);
 
   const columns = useColumns(
     ['name', 'description'],
@@ -43,18 +46,16 @@ const ImmunisationsListComponent: FC = () => {
     [updateSortQuery, sortBy]
   );
 
-  const setter = (patch: RecordPatch<Program>) => {
-    const updatedDraft = { ...draft, [patch.id]: patch } as Record<
-      string,
-      Program
-    >;
-    setDraft({ ...updatedDraft });
-  };
+  // later create modal will use <InsertImmunisationProgram> type
+  const { isOpen, onClose, onOpen } = useEditModal<any>();
 
   return (
     <>
+      {isOpen && (
+        <ImmunisationProgramCreateModal isOpen={isOpen} onClose={onClose} />
+      )}
       <Toolbar />
-      <AppBarButtons patch={setter} />
+      <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'immunisation-list'}
         pagination={{ ...pagination }}
@@ -69,13 +70,13 @@ const ImmunisationsListComponent: FC = () => {
   );
 };
 
-export const ImmunisationsListView: FC = () => (
+export const ProgramListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore({
       initialSortBy: { key: 'name' },
     })}
   >
-    <ImmunisationsListComponent />
+    <ProgramListComponent />
   </TableProvider>
 );
