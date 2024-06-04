@@ -32,6 +32,7 @@ export const useDemographicIndicators = () => {
     if (!data) {
       return;
     }
+
     // generate index row dynamically from basePopulation and baseYear
     const generalRow: DemographicIndicatorNode = {
       __typename: 'DemographicIndicatorNode',
@@ -39,6 +40,9 @@ export const useDemographicIndicators = () => {
       populationPercentage: 100,
       name: t('label.general-population'),
       baseYear: data?.nodes[0]?.baseYear ?? 2024,
+      // calculate basePopulation based on first matching row's base population
+      // later we could save generalPopulationRows in the database which are unique for anygivenyear? Their id could be something
+      // like GENERAL_POPULATION_ID_<year>
       basePopulation: data?.nodes[0]?.basePopulation ?? 0,
       year1Projection: 0,
       year2Projection: 0,

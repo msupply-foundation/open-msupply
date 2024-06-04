@@ -85,11 +85,13 @@ const IndicatorsDemographicsComponent: FC = () => {
   });
 
   const { draft, setDraft } = useDemographicData.document.listIndicator();
+  const [indexPopulation, setIndexPopulation] = useState<number>();
 
   const draftRows: Record<string, Row> = {};
 
   const draftHeaders = ArrayUtils.toObject(headerData);
   const [isDirty, setIsDirty] = useState(false);
+
   const [headerDraft, setHeaderDraft] =
     useState<Record<string, HeaderValue>>(draftHeaders);
 
@@ -104,12 +106,17 @@ const IndicatorsDemographicsComponent: FC = () => {
     const currentDraft = { ...draft, [patch.id]: patch } as Record<string, Row>;
     let updatedDraft = {} as Record<string, Row>;
     // TODO
-    const indexValue = patch[0] ?? undefined;
+    const indexPopulationChange =
+      patch.basePopulation !== draft[patch.id]?.basePopulation &&
+      patch.id === GENERAL_POPULATION_ID;
+    if (indexPopulationChange) {
+      setIndexPopulation(patch.basePopulation);
+    }
     Object.keys(currentDraft).forEach(rowKey => {
       const updatedRow = calculateAcrossRow(
         currentDraft[rowKey] as Row,
         draftHeaders,
-        indexValue
+        indexPopulationChange ? patch.basePopulation : indexPopulation
       );
       updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
     });
@@ -129,7 +136,11 @@ const IndicatorsDemographicsComponent: FC = () => {
       return;
     }
 
-    const updatedRow = calculateAcrossRow({ ...patch } as Row, headerDraft);
+    const updatedRow = calculateAcrossRow(
+      { ...patch } as Row,
+      headerDraft,
+      indexPopulation
+    );
     setDraft({ ...updatedDraft, [patch.id]: updatedRow });
   };
 
@@ -156,7 +167,8 @@ const IndicatorsDemographicsComponent: FC = () => {
     Object.keys(currentDraft).forEach(row => {
       const updatedRow = calculateAcrossRow(
         currentDraft[row] as Row,
-        updatedHeader
+        updatedHeader,
+        indexPopulation
       );
       updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
     });
@@ -170,14 +182,15 @@ const IndicatorsDemographicsComponent: FC = () => {
     indexValue?: number | undefined
   ) => {
     let updatedRow = row;
+
     // only update numeric entries
     const rowNumberKeys = Object.keys(row).filter(
       key =>
         !isNaN(parseFloat(key)) &&
-        !(row.id === GENERAL_POPULATION_ID && key == '0')
+        !(row.id === GENERAL_POPULATION_ID && parseFloat(key) == 0)
     );
 
-    Object.keys(rowNumberKeys).forEach(key => {
+    Object.values(rowNumberKeys).forEach(key => {
       const columnKey = parseInt(key);
       updatedRow = {
         ...updatedRow,
@@ -189,6 +202,11 @@ const IndicatorsDemographicsComponent: FC = () => {
         ),
       };
     });
+    // for case where general population is changed, set this value in row
+    if (row.id === GENERAL_POPULATION_ID) {
+      updatedRow = { ...updatedRow, [0]: indexValue ?? indexPopulation ?? 0 };
+    }
+
     return updatedRow;
   };
 
@@ -263,13 +281,6 @@ const IndicatorsDemographicsComponent: FC = () => {
         align: ColumnAlign.Right,
         label: undefined,
         labelProps: { defaultValue: currentYear + 4 },
-      },
-      {
-        key: '5',
-        width: 150,
-        align: ColumnAlign.Right,
-        label: undefined,
-        labelProps: { defaultValue: currentYear + 5 },
       },
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
