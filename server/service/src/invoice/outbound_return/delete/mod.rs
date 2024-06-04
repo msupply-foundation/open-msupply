@@ -188,7 +188,7 @@ mod test {
         // test entry has been deleted
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id_option(&mock_outbound_return_a().id)
+                .find_one_by_id(&mock_outbound_return_a().id)
                 .unwrap(),
             None
         );

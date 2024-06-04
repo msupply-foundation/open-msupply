@@ -632,6 +632,7 @@ mod repository_test {
             .unwrap();
         let loaded_item = InvoiceRowRepository::new(&connection)
             .find_one_by_id(item1.id.as_str())
+            .unwrap()
             .unwrap();
         assert_eq!(item1, loaded_item);
 

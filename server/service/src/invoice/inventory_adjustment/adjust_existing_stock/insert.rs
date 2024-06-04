@@ -290,6 +290,7 @@ mod test {
 
         let retrieved_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&created_invoice.invoice_row.id)
+            .unwrap()
             .unwrap();
 
         let updated_stockline = StockLineRowRepository::new(&connection)
@@ -331,6 +332,7 @@ mod test {
 
         let retrieved_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&created_invoice.invoice_row.id)
+            .unwrap()
             .unwrap();
 
         let updated_stockline = StockLineRowRepository::new(&connection)
