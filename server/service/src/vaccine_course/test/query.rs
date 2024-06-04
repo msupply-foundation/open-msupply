@@ -9,7 +9,7 @@ mod query {
         },
     };
 
-    use crate::vaccine_course::vaccine_course::insert::InsertVaccineCourse;
+    use crate::vaccine_course::insert::InsertVaccineCourse;
     use crate::{service_provider::ServiceProvider, SingleRecordError};
 
     #[actix_rt::test]

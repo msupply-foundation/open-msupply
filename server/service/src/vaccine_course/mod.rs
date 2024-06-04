@@ -9,10 +9,14 @@ use repository::{
     PaginationOption, StorageConnection,
 };
 
-pub mod vaccine_course;
+pub mod insert;
+pub mod query;
 mod validate;
 
-use vaccine_course::query::{get_vaccine_course, get_vaccine_courses};
+#[cfg(test)]
+mod test;
+
+use query::{get_vaccine_course, get_vaccine_courses};
 
 pub trait VaccineCourseServiceTrait: Sync + Send {
     fn get_vaccine_courses(
@@ -36,9 +40,9 @@ pub trait VaccineCourseServiceTrait: Sync + Send {
     fn insert_vaccine_course(
         &self,
         ctx: &ServiceContext,
-        input: vaccine_course::insert::InsertVaccineCourse,
-    ) -> Result<VaccineCourseRow, vaccine_course::insert::InsertVaccineCourseError> {
-        vaccine_course::insert::insert_vaccine_course(ctx, input)
+        input: insert::InsertVaccineCourse,
+    ) -> Result<VaccineCourseRow, insert::InsertVaccineCourseError> {
+        insert::insert_vaccine_course(ctx, input)
     }
 }
 
