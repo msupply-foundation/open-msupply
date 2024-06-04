@@ -9,8 +9,8 @@ use graphql_asset_catalogue::types::asset_class::AssetClassNode;
 use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
 use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetCatalogueItemPropertyLoader, AssetCategoryLoader,
-    AssetClassLoader, AssetLocationLoader, AssetTypeLoader, StoreByIdLoader,
+    AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetLocationLoader,
+    AssetTypeLoader, StoreByIdLoader,
 };
 use graphql_core::loader::{AssetStatusLogLoader, NameByIdLoader};
 use graphql_core::loader::{NameByIdLoaderInput, SyncFileReferenceLoader};
@@ -18,7 +18,6 @@ use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, NameNode, StoreNode, SyncFileReferenceConnector};
 
-use repository::asset_catalogue_item_property::AssetCatalogueItemPropertyValue;
 use repository::assets::asset::AssetSortField;
 
 use repository::{
@@ -28,9 +27,7 @@ use repository::{
 use repository::{DateFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
-use super::{
-    AssetCatalogueItemPropertyValueNode, AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput,
-};
+use super::{AssetLogNode, AssetLogStatusInput, EqualFilterStatusInput};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -202,34 +199,28 @@ impl AssetNode {
         Ok(documents)
     }
 
-    pub async fn catalog_properties(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Vec<AssetCatalogueItemPropertyValueNode>> {
-        let properties = match &self.row().catalogue_item_id {
-            Some(catalogue_item_id) => {
-                let loader = ctx.get_loader::<DataLoader<AssetCatalogueItemPropertyLoader>>();
-                let result_option = loader.load_one(catalogue_item_id.to_string()).await?;
-
-                result_option
-                    .unwrap_or(Vec::<AssetCatalogueItemPropertyValue>::new())
-                    .iter()
-                    .map(|p| AssetCatalogueItemPropertyValueNode::from_domain(p.to_owned()))
-                    .into_iter()
-                    .collect()
-            }
-            None => vec![],
+    /// Returns a JSON string of the asset catalogue properties e.g {"property_key": "value"}
+    pub async fn catalog_properties(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        let catalogue_item_id = match &self.row().catalogue_item_id {
+            Some(catalogue_item_id) => catalogue_item_id,
+            None => return Ok(None),
         };
 
-        Ok(properties)
+        let loader = ctx.get_loader::<DataLoader<AssetCatalogueItemLoader>>();
+        let catalog_item = loader.load_one(catalogue_item_id.clone()).await?;
+
+        Ok(catalog_item
+            .map(|item| item.properties.clone())
+            .unwrap_or(None))
     }
 
-    pub async fn properties(&self) -> Result<String> {
+    /// Returns a JSON string of the asset properties (defined on the asset itself) e.g {"property_key": "value"}
+    pub async fn properties(&self) -> String {
         let asset_properties = match &self.row().properties {
             Some(properties) => properties.to_owned(),
-            None => return Ok("{}".to_string()), // Empty JSON object
+            None => "{}".to_string(), // Empty JSON object
         };
-        Ok(asset_properties)
+        asset_properties
     }
 
     pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {
