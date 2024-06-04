@@ -8,17 +8,12 @@ import {
   NothingHere,
   useUrlQueryParams,
   DateUtils,
-  useEditModal,
-  IconButton,
-  CellProps,
-  useToggle,
-  StockIcon,
-  ColumnAlign,
   ColumnDescription,
   usePluginColumns,
   TooltipTextCell,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
-import { RepackModal, StockLineEditModal } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import {
@@ -26,6 +21,7 @@ import {
   useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
+import { AppRoute } from '@openmsupply-client/config';
 
 const StockListComponent: FC = () => {
   const {
@@ -46,6 +42,7 @@ const StockListComponent: FC = () => {
       },
     ],
   });
+  const navigate = useNavigate();
   const queryParams = {
     filterBy,
     offset,
@@ -57,35 +54,9 @@ const StockListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const { data, isLoading, isError } = useStock.line.list(queryParams);
-  const [repackId, setRepackId] = React.useState<string | null>(null);
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
   });
-  const EditStockLineCell = <T extends StockLineRowFragment>({
-    rowData,
-    isDisabled,
-  }: CellProps<T>): React.ReactElement<CellProps<T>> => (
-    <IconButton
-      label={t('button.repack')}
-      height="16px"
-      disabled={isDisabled}
-      icon={
-        <StockIcon
-          sx={{
-            color: 'primary.main',
-            width: '12px',
-            cursor: 'pointer',
-          }}
-        />
-      }
-      onClick={e => {
-        e.stopPropagation();
-        repackModalController.toggleOn();
-        setRepackId(rowData.id);
-      }}
-    />
-  );
-
   const packSizeAndUnitColumns: ColumnDescription<StockLineRowFragment>[] =
     isPackVariantsEnabled
       ? [
@@ -115,14 +86,6 @@ const StockListComponent: FC = () => {
         ];
 
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
-    {
-      key: 'edit',
-      label: 'label.repack',
-      Cell: EditStockLineCell,
-      width: 75,
-      sortable: false,
-      align: ColumnAlign.Center,
-    },
     [
       'itemCode',
       {
@@ -196,31 +159,8 @@ const StockListComponent: FC = () => {
     [sortBy, pluginColumns]
   );
 
-  const { isOpen, entity, onClose, onOpen } =
-    useEditModal<StockLineRowFragment>();
-
-  const repackModalController = useToggle();
-
-  const stockLine = entity
-    ? data?.nodes.find(({ id }) => id === entity.id)
-    : undefined;
-
   return (
     <>
-      {repackModalController.isOn && (
-        <RepackModal
-          isOpen={repackModalController.isOn}
-          onClose={repackModalController.toggleOff}
-          stockLine={data?.nodes.find(({ id }) => id === repackId) ?? null}
-        />
-      )}
-      {isOpen && stockLine && (
-        <StockLineEditModal
-          isOpen={isOpen}
-          onClose={onClose}
-          stockLine={stockLine}
-        />
-      )}
       <Toolbar filter={filter} />
       <AppBarButtons />
       <DataTable
@@ -233,7 +173,14 @@ const StockListComponent: FC = () => {
         isError={isError}
         isLoading={isLoading}
         enableColumnSelection
-        onRowClick={onOpen}
+        onRowClick={stockline => {
+          navigate(
+            RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.Stock)
+              .addPart(stockline.id)
+              .build()
+          );
+        }}
       />
     </>
   );
