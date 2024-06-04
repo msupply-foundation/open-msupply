@@ -51,7 +51,7 @@ export const CatalogueNav: FC = () => {
               .build()}
             text={t('master-lists')}
           />
-          {Environment.FEATURE_IMMUNISATIONS && (
+          {Environment.FEATURE_GAPS && (
             <AppNavLink
               visible={isCentralServer}
               end

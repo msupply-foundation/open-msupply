@@ -6,8 +6,8 @@ import {
   NothingHere,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ImmunisationsListView } from '../ListView';
-import { ImmunisationDetailView } from '../DetailView';
+import { ProgramListView } from '../ListView';
+import { ProgramView } from '../ProgramView';
 import { Environment } from '@openmsupply-client/config';
 
 export const ImmunisationService: FC = () => {
@@ -17,14 +17,14 @@ export const ImmunisationService: FC = () => {
   const immunisationRoute = RouteBuilder.create(AppRoute.Immunisations)
     .addPart(':id')
     .build();
-  if (!Environment.FEATURE_IMMUNISATIONS) {
+  if (!Environment.FEATURE_GAPS) {
     return <NothingHere />;
   }
 
   return (
     <Routes>
-      <Route path={immunisationsRoute} element={<ImmunisationsListView />} />
-      <Route path={immunisationRoute} element={<ImmunisationDetailView />} />
+      <Route path={immunisationsRoute} element={<ProgramListView />} />
+      <Route path={immunisationRoute} element={<ProgramView />} />
     </Routes>
   );
 };
