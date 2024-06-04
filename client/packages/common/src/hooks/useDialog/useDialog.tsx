@@ -239,7 +239,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
                 <div>{slideConfig.in && children}</div>
               </Slide>
             ) : (
-              <>{children}</>
+              <div>{children}</div>
             )}
           </DialogContent>
           <DialogActions
