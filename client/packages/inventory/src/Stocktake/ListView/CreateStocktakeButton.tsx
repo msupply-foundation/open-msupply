@@ -13,7 +13,11 @@ import { PlusCircleIcon } from '@common/icons';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
-import { useMasterList, useLocation } from '@openmsupply-client/system';
+import {
+  useMasterList,
+  useLocation,
+  useStockList,
+} from '@openmsupply-client/system';
 import {
   Box,
   FnUtils,
@@ -21,7 +25,6 @@ import {
   InsertStocktakeInput,
   useAuthContext,
 } from '@openmsupply-client/common';
-import { useStockList } from 'packages/system/src/Stock/api/hooks/useStockList';
 
 const LABEL_FLEX = '0 0 150px';
 

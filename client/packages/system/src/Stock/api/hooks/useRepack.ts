@@ -2,15 +2,43 @@ import { useMutation, useQuery } from '@openmsupply-client/common';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { useState } from 'react';
 import { Repack } from '../../types';
-import { STOCK_LINE, LIST } from './keys';
+import { STOCK_LINE, LIST, STOCK } from './keys';
 
-export const useRepack = (invoiceId: string) => {
-  const { stockApi, storeId } = useStockGraphQL();
+type UseRepackProps = { stockLineId?: string; invoiceId?: string };
 
+export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
+  const { stockApi, storeId, queryClient } = useStockGraphQL();
+  const [draft, setDraft] = useState<Repack>({
+    stockLineId,
+    newPackSize: 0,
+    numberOfPacks: 0,
+  });
+
+  // FETCH LIST
+  const queryListFn = async () => {
+    const result = await stockApi.repacksByStockLine({
+      storeId,
+      stockLineId: stockLineId ?? '',
+    });
+
+    return result.repacksByStockLine;
+  };
+
+  const {
+    data: listData,
+    isError: isListError,
+    isLoading: isListLoading,
+  } = useQuery({
+    queryKey: [STOCK_LINE, storeId, stockLineId],
+    queryFn: queryListFn,
+    enabled: !!stockLineId,
+  });
+
+  // FETCH SINGLE
   const queryFn = async () => {
     const result = await stockApi.repack({
       storeId,
-      invoiceId,
+      invoiceId: invoiceId ?? '',
     });
 
     if (result.repack.__typename === 'RepackNode') {
@@ -18,49 +46,25 @@ export const useRepack = (invoiceId: string) => {
     }
   };
 
-  const query = useQuery({
-    queryKey: ['stock', invoiceId],
-    queryFn,
-    enabled: invoiceId !== '',
-  });
-
-  return query;
-};
-
-export const useRepackEdit = (init: Repack) => {
-  const { stockApi, storeId, queryClient } = useStockGraphQL();
-  const [repack, setRepack] = useState<Repack>({ ...init });
-  const stockLineId = repack.stockLineId ?? '';
-
-  // FETCH
-  const queryFn = async () => {
-    const result = await stockApi.repacksByStockLine({
-      storeId,
-      stockLineId,
-    });
-
-    return result.repacksByStockLine;
-  };
-
   const { data, isError, isLoading } = useQuery({
-    queryKey: [STOCK_LINE, storeId, stockLineId],
+    queryKey: [STOCK, invoiceId],
     queryFn,
-    enabled: stockLineId !== '',
+    enabled: !!invoiceId,
   });
 
   // UPDATE
   const onChange = (patch: Partial<Repack>) => {
-    setRepack({ ...repack, ...patch });
+    setDraft({ ...draft, ...patch });
   };
 
   const mutationFn = async () => {
     const result = await stockApi.insertRepack({
       storeId,
       input: {
-        stockLineId: repack.stockLineId ?? '',
-        newPackSize: repack.newPackSize ?? 0,
-        numberOfPacks: repack.numberOfPacks ?? 0,
-        newLocationId: repack.newLocationId ?? undefined,
+        stockLineId: draft.stockLineId ?? '',
+        newPackSize: draft.newPackSize ?? 0,
+        numberOfPacks: draft.numberOfPacks ?? 0,
+        newLocationId: draft.newLocationId ?? undefined,
       },
     });
 
@@ -74,18 +78,22 @@ export const useRepackEdit = (init: Repack) => {
       queryClient.invalidateQueries([STOCK_LINE, storeId, LIST]);
       // Repack list also needs to be re-fetched on insert to show new repack
       // line
-      queryClient.invalidateQueries([STOCK_LINE, storeId, repack.stockLineId]);
+      queryClient.invalidateQueries([STOCK_LINE, storeId, draft.stockLineId]);
     },
   });
 
   return {
     // Fetch
-    repacks: data ? data?.nodes : undefined,
-    isError,
-    isLoading,
-    // Update
-    draft: repack,
+    list: {
+      repacks: listData ? listData?.nodes : undefined,
+      isError: isListError,
+      isLoading: isListLoading,
+    },
+    repack: { repackData: data, isLoading, isError },
+    // Update draft
+    draft: draft,
     onChange,
+    // Create
     onInsert: mutation.mutateAsync,
   };
 };

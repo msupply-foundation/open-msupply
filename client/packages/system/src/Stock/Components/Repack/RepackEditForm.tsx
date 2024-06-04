@@ -6,6 +6,7 @@ import {
   NumericTextInput,
   TextWithLabelRow,
   useTranslation,
+  RepackNode,
 } from '@openmsupply-client/common';
 import {
   LocationRowFragment,
@@ -14,34 +15,32 @@ import {
 } from '@openmsupply-client/system';
 import { LocationSearchInput } from '../../..';
 import React, { FC, useEffect, useState } from 'react';
-import { useRepack } from '../../api/hooks/useRepack';
 
 const INPUT_WIDTH = 100;
 
 interface RepackEditFormProps {
-  invoiceId?: string;
   stockLine: StockLineFragment | null;
   onChange: (repack: Repack) => void;
   draft: Repack;
+  repackData?: RepackNode;
 }
 
 export const RepackEditForm: FC<RepackEditFormProps> = ({
-  invoiceId,
   onChange,
   stockLine,
   draft,
+  repackData,
 }) => {
   const t = useTranslation('inventory');
-  const { data } = useRepack(invoiceId ?? '');
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
   const { availableNumberOfPacks = 0 } = stockLine ?? {};
   const textProps = { textAlign: 'end' as 'end' | 'start', paddingRight: 3 };
   const labelProps = { sx: { width: 0 } };
-  const isNew = !invoiceId;
+  const isNew = !repackData;
 
   useEffect(() => {
     setLocation(null);
-  }, [data]);
+  }, [repackData]);
 
   return (
     <Box justifyContent="center">
@@ -69,7 +68,9 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                 }
                 width={INPUT_WIDTH}
                 value={
-                  isNew ? draft.numberOfPacks : data?.from.numberOfPacks ?? 0
+                  isNew
+                    ? draft.numberOfPacks
+                    : repackData?.from.numberOfPacks ?? 0
                 }
                 max={availableNumberOfPacks}
                 disabled={!isNew}
@@ -81,7 +82,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
             text={
               isNew
                 ? String(stockLine?.packSize ?? '')
-                : String(data?.from.packSize ?? '')
+                : String(repackData?.from.packSize ?? '')
             }
             textProps={textProps}
             labelProps={labelProps}
@@ -91,7 +92,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
             text={
               isNew
                 ? String(stockLine?.location?.name ?? '-')
-                : String(data?.to.location?.name ?? '-')
+                : String(repackData?.to.location?.name ?? '-')
             }
             textProps={textProps}
             labelProps={labelProps}
@@ -121,7 +122,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                     ((draft.numberOfPacks ?? 0) * (stockLine?.packSize ?? 0)) /
                     (draft.newPackSize || 1)
                   ).toFixed(2)
-                : String(data?.to.numberOfPacks ?? '')
+                : String(repackData?.to.numberOfPacks ?? '')
             }
             textProps={textProps}
             labelProps={labelProps}
@@ -137,7 +138,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                   })
                 }
                 width={INPUT_WIDTH}
-                value={isNew ? draft.newPackSize : data?.to.packSize ?? 0}
+                value={isNew ? draft.newPackSize : repackData?.to.packSize ?? 0}
                 disabled={!isNew}
               />
             }
