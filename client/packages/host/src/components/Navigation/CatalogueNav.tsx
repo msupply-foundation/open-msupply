@@ -9,7 +9,7 @@ import {
   AppNavSection,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
 export const CatalogueNav: FC = () => {
@@ -52,7 +52,7 @@ export const CatalogueNav: FC = () => {
             text={t('master-lists')}
           />
           <AppNavLink
-            visible={isCentralServer}
+            visible={isCentralServer && Environment.FEATURE_GAPS}
             end
             to={RouteBuilder.create(AppRoute.Catalogue)
               .addPart(AppRoute.Immunisations)
