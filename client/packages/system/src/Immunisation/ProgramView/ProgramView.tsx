@@ -1,29 +1,78 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   TableProvider,
   createTableStore,
   useBreadcrumbs,
   NothingHere,
   createQueryParamsStore,
+  DataTable,
+  useNavigate,
+  useTranslation,
+  useUrlQueryParams,
+  useColumns,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
+import { AppBarButtons } from './AppBarButtons';
 
 // dummy data
 const data = {
-  name: 'data',
+  name: 'some program name',
 };
 
+export interface Immunisation {
+  id: string;
+  name: string;
+  vaccines: string[];
+  isNew: boolean;
+}
+
 export const ProgramComponent: FC = () => {
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
+  const pagination = { page, first, offset };
+  const navigate = useNavigate();
+  const t = useTranslation('catalogue');
   const { setSuffix } = useBreadcrumbs();
+
+  const draftProgram: Record<string, Immunisation> = {};
+
+  const [draft] = useState(draftProgram);
+
+  const columns = useColumns(
+    [
+      'name',
+      { key: 'targetDemographic', label: 'label.target-demographic' },
+      { key: 'doses', label: 'label.doses' },
+    ],
+    {
+      onChangeSortBy: updateSortQuery,
+      sortBy,
+    },
+    [updateSortQuery, sortBy]
+  );
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
   }, [setSuffix]);
 
   return !!data ? (
-    <TableProvider createStore={createTableStore}>
+    <>
       <Toolbar />
-    </TableProvider>
+      <AppBarButtons />
+      <DataTable
+        id={'Program list'}
+        pagination={{ ...pagination }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={Object.values(draft)}
+        isLoading={false}
+        onRowClick={row => navigate(row.id)}
+        noDataElement={<NothingHere body={t('error.no-master-lists')} />}
+      />
+    </>
   ) : (
     <NothingHere />
   );
