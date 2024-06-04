@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   FnUtils,
+  isEqual,
   setNullableInput,
   useMutation,
   useQuery,
@@ -50,25 +51,20 @@ export function useStockLine(id?: string) {
     error: updateError,
   } = useUpdate(id ?? '');
 
-  const draft = (
-    data
-      ? { ...data?.nodes[0], ...patch }
-      : { ...defaultDraftStockLine, ...patch }
-  ) as DraftStockLine;
+  const draft: DraftStockLine = data
+    ? { ...defaultDraftStockLine, ...data?.nodes[0], ...patch }
+    : { ...defaultDraftStockLine, ...patch };
 
   const updatePatch = (newData: Partial<DraftStockLine>) => {
-    // Only add changed values to patch
-    const changedData = data
-      ? Object.fromEntries(
-          Object.entries(newData).filter(
-            ([key, value]) => value !== draft[key as keyof DraftStockLine]
-          )
-        )
-      : newData;
-    if (Object.keys(changedData).length > 0) {
-      setIsDirty(true);
-      setPatch({ ...patch, ...changedData });
-    }
+    const newPatch = { ...patch, ...newData };
+    setPatch(newPatch);
+
+    // Ensures that UI doesn't show in "dirty" state if nothing actually
+    // different from the saved data
+    const updatedData = { ...data?.nodes[0], ...newPatch };
+    if (isEqual(data?.nodes[0], updatedData)) setIsDirty(false);
+    else setIsDirty(true);
+    return;
   };
 
   const resetDraft = () => {

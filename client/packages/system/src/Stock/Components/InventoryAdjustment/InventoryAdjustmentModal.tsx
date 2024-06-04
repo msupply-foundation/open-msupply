@@ -53,13 +53,13 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
     <Modal
       sx={{ maxWidth: 'unset', minWidth: 700, minHeight: 575 }}
       slideAnimation={false}
-      title={t('title.stock-line-details')}
+      title={t('title.adjustment-details')}
       okButton={
         <DialogButton variant="ok" disabled={saveDisabled} onClick={save} />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <Box display="flex">
+      <Box display="flex" paddingRight={4} gap={2}>
         <Box display="flex" flexDirection="column" padding={2} gap={2} flex={1}>
           <TextWithLabelRow
             label={t('label.pack')}
