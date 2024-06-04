@@ -1,6 +1,6 @@
 use repository::{RepositoryError, ReturnReasonRow, ReturnReasonRowRepository, StorageConnection};
 
-use crate::invoice_line::validate::check_line_exists_option;
+use crate::invoice_line::validate::check_line_exists;
 
 use super::{UpdateLineReturnReason, UpdateLineReturnReasonError};
 
@@ -8,7 +8,7 @@ pub fn validate(
     connection: &StorageConnection,
     input: &UpdateLineReturnReason,
 ) -> Result<(), UpdateLineReturnReasonError> {
-    check_line_exists_option(connection, &input.line_id)?
+    check_line_exists(connection, &input.line_id)?
         .ok_or(UpdateLineReturnReasonError::LineDoesNotExist)?;
 
     if let Some(reason_id) = input.reason_id.as_ref() {

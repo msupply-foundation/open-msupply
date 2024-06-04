@@ -564,6 +564,7 @@ mod test {
 
         let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("inbound_shipment_c")
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -592,6 +593,7 @@ mod test {
 
         let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("inbound_shipment_c")
+            .unwrap()
             .unwrap();
 
         assert_eq!(new_invoice.name_store_id, None);

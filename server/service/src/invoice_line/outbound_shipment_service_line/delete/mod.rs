@@ -158,7 +158,7 @@ mod test {
 
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option(&mock_draft_outbound_service_line().id)
+                .find_one_by_id(&mock_draft_outbound_service_line().id)
                 .unwrap(),
             None
         );

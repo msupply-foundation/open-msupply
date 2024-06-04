@@ -413,6 +413,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -439,6 +440,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice_test().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -491,6 +493,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice_test().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -520,6 +523,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             stock_lines_delivered.push(stock_line.clone());
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
@@ -541,6 +545,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice_test().id)
+            .unwrap()
             .unwrap();
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
@@ -559,6 +564,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             stock_lines_verified.push(stock_line.clone());
         }
@@ -597,6 +603,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice_test().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -652,6 +659,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice_test().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -682,6 +690,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             stock_lines_delivered.push(stock_line.clone());
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
@@ -702,6 +711,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice_test().id)
+            .unwrap()
             .unwrap();
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
@@ -721,6 +731,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             stock_lines_verified.push(stock_line.clone());
         }
@@ -741,6 +752,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_c().id)
+            .unwrap()
             .unwrap();
         let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
@@ -770,6 +782,7 @@ mod test {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
+                .unwrap()
                 .unwrap();
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
         }
@@ -806,6 +819,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -830,6 +844,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(invoice.name_store_id, None);
@@ -853,6 +868,7 @@ mod test {
             .unwrap();
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_inbound_shipment_a().id)
+            .unwrap()
             .unwrap();
         let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_inbound_shipment_a().id)
@@ -862,6 +878,7 @@ mod test {
             .unwrap();
         let stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
+            .unwrap()
             .unwrap();
 
         // Ensure delivered time not updated by status change to verified
