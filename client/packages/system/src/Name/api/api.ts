@@ -151,5 +151,13 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
+    properties: async () => {
+      const result = await sdk.nameProperties();
+
+      if (result?.nameProperties?.__typename === 'NamePropertyConnector') {
+        return result?.nameProperties?.nodes;
+      }
+      throw new Error('Unable to fetch properties');
+    },
   },
 });
