@@ -355,7 +355,7 @@ mod test {
         .await;
 
         assert_eq!(
-            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            InvoiceLineRowRepository::new(&connection).find_one_by_id(&invoice_line().id),
             Ok(Some(invoice_line()))
         );
 
@@ -374,7 +374,7 @@ mod test {
         assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
 
         assert_eq!(
-            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            InvoiceLineRowRepository::new(&connection).find_one_by_id(&invoice_line().id),
             Ok(None)
         );
     }

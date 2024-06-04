@@ -340,7 +340,7 @@ mod test {
 
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option("new_line_id")
+                .find_one_by_id("new_line_id")
                 .unwrap(),
             None
         );
@@ -359,7 +359,7 @@ mod test {
 
         assert_ne!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option("new_line_id")
+                .find_one_by_id("new_line_id")
                 .unwrap(),
             None
         );

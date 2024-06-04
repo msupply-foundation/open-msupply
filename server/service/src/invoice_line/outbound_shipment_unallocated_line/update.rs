@@ -1,6 +1,6 @@
 use crate::{
     invoice::{check_invoice_exists, check_store},
-    invoice_line::{query::get_invoice_line, validate::check_line_row_exists_option},
+    invoice_line::{query::get_invoice_line, validate::check_line_row_exists},
     service_provider::ServiceContext,
 };
 use repository::{
@@ -50,7 +50,7 @@ fn validate(
     input: &UpdateOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLineRow, OutError> {
     let invoice_line =
-        check_line_row_exists_option(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
+        check_line_row_exists(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
 
     if invoice_line.r#type != InvoiceLineType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);
@@ -179,6 +179,7 @@ mod test_update {
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
                 .find_one_by_id(&result.invoice_line_row.id)
+                .unwrap()
                 .unwrap(),
             line_to_update
         )
