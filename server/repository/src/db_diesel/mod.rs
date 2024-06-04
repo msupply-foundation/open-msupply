@@ -33,7 +33,6 @@ mod filter_restriction;
 mod filter_sort_pagination;
 pub mod form_schema;
 mod form_schema_row;
-pub mod immunisation;
 pub mod inventory_adjustment_reason;
 mod inventory_adjustment_reason_row;
 pub mod invoice;
@@ -107,6 +106,7 @@ pub mod user_permission;
 mod user_permission_row;
 mod user_row;
 mod user_store_join_row;
+pub mod vaccine_course;
 
 pub use activity_log_row::*;
 pub use assets::*;

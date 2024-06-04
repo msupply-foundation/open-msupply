@@ -1,11 +1,11 @@
 use super::query::get_vaccine_course;
 use crate::{
-    activity_log::activity_log_entry, immunisation::validate::check_vaccine_course_exists,
-    service_provider::ServiceContext, SingleRecordError,
+    activity_log::activity_log_entry, service_provider::ServiceContext,
+    vaccine_course::validate::check_vaccine_course_exists, SingleRecordError,
 };
 
 use repository::{
-    immunisation::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+    vaccine_course::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     ActivityLogType, RepositoryError, StorageConnection,
 };
 

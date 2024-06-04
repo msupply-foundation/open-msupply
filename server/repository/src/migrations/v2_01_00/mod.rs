@@ -3,10 +3,10 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod assets;
-mod immunisation;
 mod ledger;
 mod pg_enums;
 mod v6_sync_api_error_code;
+mod vaccine_course;
 
 pub(crate) struct V2_01_00;
 
@@ -20,7 +20,7 @@ impl Migration for V2_01_00 {
         pg_enums::migrate(connection)?;
         assets::migrate_assets(connection)?;
         v6_sync_api_error_code::migrate(connection)?;
-        immunisation::migrate(connection)?;
+        vaccine_course::migrate(connection)?;
         Ok(())
     }
 }

@@ -23,7 +23,6 @@ pub mod cursor_controller;
 pub mod dashboard;
 pub mod display_settings_service;
 pub mod document;
-pub mod immunisation;
 pub mod inventory_adjustment_reason;
 pub mod invoice;
 pub mod invoice_line;
@@ -66,6 +65,7 @@ pub mod temperature_excursion;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
+pub mod vaccine_course;
 pub mod validate;
 
 #[cfg(test)]

@@ -1,7 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::simple_generic_errors::NodeError;
-use repository::immunisation::vaccine_course_row::VaccineCourseRow;
+use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]

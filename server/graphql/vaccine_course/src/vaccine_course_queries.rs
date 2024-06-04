@@ -5,13 +5,13 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::immunisation::vaccine_course::{
+use repository::vaccine_course::vaccine_course::{
     VaccineCourseFilter, VaccineCourseSort, VaccineCourseSortField,
 };
 use repository::{EqualFilter, PaginationOption, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    immunisation::vaccine_course::query::{get_vaccine_course, get_vaccine_courses},
+    vaccine_course::vaccine_course::query::{get_vaccine_course, get_vaccine_courses},
 };
 
 use crate::types::vaccine_course::{
@@ -19,7 +19,7 @@ use crate::types::vaccine_course::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::immunisation::vaccine_course::VaccineCourseSortField")]
+#[graphql(remote = "repository::vaccine_course::vaccine_course::VaccineCourseSortField")]
 #[graphql(rename_items = "camelCase")]
 
 pub enum VaccineCourseSortFieldInput {

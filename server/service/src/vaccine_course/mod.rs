@@ -2,7 +2,7 @@ use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 
 use repository::{
-    immunisation::{
+    vaccine_course::{
         vaccine_course::{VaccineCourseFilter, VaccineCourseSort},
         vaccine_course_row::VaccineCourseRow,
     },
@@ -14,7 +14,7 @@ mod validate;
 
 use vaccine_course::query::{get_vaccine_course, get_vaccine_courses};
 
-pub trait ImmunisationServiceTrait: Sync + Send {
+pub trait VaccineCourseServiceTrait: Sync + Send {
     fn get_vaccine_courses(
         &self,
         connection: &StorageConnection,
@@ -42,5 +42,5 @@ pub trait ImmunisationServiceTrait: Sync + Send {
     }
 }
 
-pub struct ImmunisationService {}
-impl ImmunisationServiceTrait for ImmunisationService {}
+pub struct VaccineCourseService {}
+impl VaccineCourseServiceTrait for VaccineCourseService {}
