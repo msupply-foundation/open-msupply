@@ -36,6 +36,14 @@ fragment Name on NameNode {
   }
 }
 
+fragment Property on PropertyNode {
+  id
+  key
+  name
+  allowedValues
+  valueType
+}
+
 query names(
   $storeId: String!
   $key: NameSortFieldInput!
@@ -68,6 +76,18 @@ query nameById($storeId: String!, $nameId: String!) {
         ...Name
       }
       totalCount
+    }
+  }
+}
+
+query nameProperties {
+  nameProperties {
+    ... on NamePropertyConnector {
+      __typename
+      nodes {
+        __typename
+        ...Property
+      }
     }
   }
 }

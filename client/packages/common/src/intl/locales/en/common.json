@@ -481,6 +481,7 @@
   "messages.no-data-available": "No data available",
   "messages.no-lines": "Cannot change the status because there are no lines",
   "messages.no-log-entries": "No log entries available",
+  "messages.no-properties": "No properties defined",
   "messages.no-scanners-found": "No scanners found",
   "messages.not-applicable": "N/A",
   "messages.not-initialised": "[ Not configured ]",

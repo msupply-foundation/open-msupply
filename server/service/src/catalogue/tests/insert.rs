@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::{
+        migrations::constants::{COLD_CHAIN_EQUIPMENT_UUID, REFRIGERATORS_AND_FREEZERS_UUID},
         mock::{mock_store_a, MockDataInserts},
         test_db::setup_all,
     };
@@ -18,6 +19,8 @@ mod query {
         )
         .await;
 
+        const REFRIGERATORS_UUID: &str = "fd79171f-5da8-4801-b299-9426f34310a8";
+
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let ctx = service_provider
             .context(mock_store_a().id, "".to_string())
@@ -32,13 +35,14 @@ mod query {
                 InsertAssetCatalogueItem {
                     id: id.clone(),
                     sub_catalogue: "General".to_string(),
-                    category_id: "02cbea92-d5bf-4832-863b-c04e093a7760".to_string(), // Refrigerators and Freezers
-                    class_id: "fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string(), // Cold chain equipment
+                    category_id: REFRIGERATORS_AND_FREEZERS_UUID.to_string(),
+                    class_id: COLD_CHAIN_EQUIPMENT_UUID.to_string(),
                     code: "G1".to_string(),
                     manufacturer: Some("Fisher & Paykel".to_string()),
                     model: "Kelvinator".to_string(),
-                    type_id: "fd79171f-5da8-4801-b299-9426f34310a8".to_string(), // Fridge
-                },
+                    type_id: REFRIGERATORS_UUID.to_string(),
+                    properties: None,
+                }, // Fridge
             )
             .unwrap();
 
@@ -49,12 +53,13 @@ mod query {
                 InsertAssetCatalogueItem {
                     id: id.clone(),
                     sub_catalogue: "General".to_string(),
-                    category_id: "02cbea92-d5bf-4832-863b-c04e093a7760".to_string(), // Refrigerators and Freezers
-                    class_id: "fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string(), // Cold chain equipment
+                    category_id: "REFRIGERATORS_AND_FREEZERS_UUID".to_string(),
+                    class_id: COLD_CHAIN_EQUIPMENT_UUID.to_string(),
                     code: "G1".to_string(),
                     manufacturer: Some("Fisher & Paykel".to_string()),
                     model: "Kelvinator".to_string(),
-                    type_id: "fd79171f-5da8-4801-b299-9426f34310a8".to_string(), // Fridge
+                    type_id: REFRIGERATORS_UUID.to_string(),
+                    properties: None
                 },
             ),
             Err(InsertAssetCatalogueItemError::ItemAlreadyExists)
@@ -67,12 +72,13 @@ mod query {
                 InsertAssetCatalogueItem {
                     id: "new_id".to_string(),
                     sub_catalogue: "General".to_string(),
-                    category_id: "02cbea92-d5bf-4832-863b-c04e093a7760".to_string(), // Refrigerators and Freezers
-                    class_id: "fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string(), // Cold chain equipment
+                    category_id: REFRIGERATORS_AND_FREEZERS_UUID.to_string(),
+                    class_id: COLD_CHAIN_EQUIPMENT_UUID.to_string(),
                     code: "G1".to_string(),
                     manufacturer: Some("Fisher & Paykel".to_string()),
                     model: "Kelvinator".to_string(),
-                    type_id: "fd79171f-5da8-4801-b299-9426f34310a8".to_string(), // Fridge
+                    type_id: REFRIGERATORS_UUID.to_string(),
+                    properties: None
                 },
             ),
             Err(InsertAssetCatalogueItemError::CodeAlreadyExists)
@@ -85,12 +91,13 @@ mod query {
                 InsertAssetCatalogueItem {
                     id: "new_id".to_string(),
                     sub_catalogue: "General".to_string(),
-                    category_id: "02cbea92-d5bf-4832-863b-c04e093a7760".to_string(), // Refrigerators and Freezers
-                    class_id: "fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string(), // Cold chain equipment
+                    category_id: REFRIGERATORS_AND_FREEZERS_UUID.to_string(),
+                    class_id: COLD_CHAIN_EQUIPMENT_UUID.to_string(),
                     code: "NewCode".to_string(),
                     manufacturer: Some("Fisher & Paykel".to_string()),
                     model: "Kelvinator".to_string(),
-                    type_id: "fd79171f-5da8-4801-b299-9426f34310a8".to_string(), // Fridge
+                    type_id: REFRIGERATORS_UUID.to_string(),
+                    properties: None
                 },
             ),
             Err(InsertAssetCatalogueItemError::ManufacturerAndModelAlreadyExist)

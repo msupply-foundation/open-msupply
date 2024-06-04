@@ -7,7 +7,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{
+        apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
+    },
     repository_error::RepositoryError,
     EqualFilter, NameLinkRow, NameType, Pagination, Sort, StringFilter,
 };
@@ -46,6 +48,8 @@ pub struct NameFilter {
     pub address2: Option<StringFilter>,
     pub country: Option<StringFilter>,
     pub email: Option<StringFilter>,
+
+    pub code_or_name: Option<StringFilter>,
 }
 
 impl EqualFilter<NameType> {
@@ -187,7 +191,14 @@ impl<'a> NameRepository<'a> {
                 country,
                 email,
                 is_patient,
+                code_or_name,
             } = f;
+
+            // or filter need to be applied before and filters
+            if code_or_name.is_some() {
+                apply_string_filter!(query, code_or_name.clone(), name_dsl::code);
+                apply_string_or_filter!(query, code_or_name, name_dsl::name_);
+            }
 
             apply_equal_filter!(query, id, name_dsl::id);
             apply_string_filter!(query, code, name_dsl::code);
@@ -340,6 +351,11 @@ impl NameFilter {
         self.r#type = Some(filter);
         self
     }
+
+    pub fn code_or_name(mut self, filter: StringFilter) -> Self {
+        self.code_or_name = Some(filter);
+        self
+    }
 }
 
 impl Name {
@@ -379,15 +395,12 @@ impl Name {
 }
 
 impl NameType {
-    pub fn equal_to(&self) -> EqualFilter<NameType> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            equal_any_or_null: None,
-            is_null: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 }
 
