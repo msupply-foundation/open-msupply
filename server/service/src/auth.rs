@@ -118,6 +118,8 @@ pub enum Resource {
     MutateAsset,
     MutateAssetCatalogueItem,
     QueryAsset,
+    MutateVaccineCourse,
+    QueryVaccineCourse,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -523,6 +525,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::QueryAsset,
         PermissionDSL::HasPermission(PermissionType::AssetQuery),
+    );
+    map.insert(
+        Resource::MutateVaccineCourse,
+        PermissionDSL::HasPermission(PermissionType::VaccineCourseMutate),
+    );
+    map.insert(
+        Resource::QueryVaccineCourse,
+        PermissionDSL::NoPermissionRequired,
     );
 
     map

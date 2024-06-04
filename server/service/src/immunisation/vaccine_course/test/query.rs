@@ -34,12 +34,12 @@ mod query {
             .unwrap();
 
         assert_eq!(
-            service.get_vaccine_course(&context, "invalid_id".to_owned()),
+            service.get_vaccine_course(&context.connection, "invalid_id".to_owned()),
             Err(SingleRecordError::NotFound("invalid_id".to_owned()))
         );
 
         let result = service
-            .get_vaccine_course(&context, vaccine_course_insert.id.clone())
+            .get_vaccine_course(&context.connection, vaccine_course_insert.id.clone())
             .unwrap();
 
         assert_eq!(result.id, vaccine_course_insert.id);

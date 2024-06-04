@@ -27,10 +27,10 @@ pub trait ImmunisationServiceTrait: Sync + Send {
 
     fn get_vaccine_course(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         id: String,
     ) -> Result<VaccineCourseRow, SingleRecordError> {
-        get_vaccine_course(ctx, id)
+        get_vaccine_course(connection, id)
     }
 
     fn insert_vaccine_course(

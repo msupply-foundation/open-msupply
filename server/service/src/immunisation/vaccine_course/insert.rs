@@ -43,7 +43,8 @@ pub fn insert_vaccine_course(
                 None,
             )?;
 
-            get_vaccine_course(ctx, new_vaccine_course.id).map_err(InsertVaccineCourseError::from)
+            get_vaccine_course(&ctx.connection, new_vaccine_course.id)
+                .map_err(InsertVaccineCourseError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(vaccine_course)
