@@ -11,7 +11,7 @@ use repository::vaccine_course::vaccine_course::{
 use repository::{EqualFilter, PaginationOption, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    vaccine_course::vaccine_course::query::{get_vaccine_course, get_vaccine_courses},
+    vaccine_course::query::{get_vaccine_course, get_vaccine_courses},
 };
 
 use crate::types::vaccine_course::{

@@ -8,9 +8,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    vaccine_course::vaccine_course::insert::{
-        InsertVaccineCourse, InsertVaccineCourseError as ServiceError,
-    },
+    vaccine_course::insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
 };
 
 use crate::types::vaccine_course::VaccineCourseNode;
