@@ -1,8 +1,13 @@
 import React, { FC } from 'react';
-import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
-import { ImmunisationsListView } from '../ListView';
-import { ImmunisationDetailView } from '../DetailView';
+import {
+  RouteBuilder,
+  Routes,
+  Route,
+  NothingHere,
+} from '@openmsupply-client/common';
+import { AppRoute, Environment } from '@openmsupply-client/config';
+import { ProgramListView } from '../ListView';
+import { ProgramView } from '../ProgramView';
 
 export const ImmunisationService: FC = () => {
   const immunisationsRoute = RouteBuilder.create(
@@ -12,10 +17,13 @@ export const ImmunisationService: FC = () => {
     .addPart(':id')
     .build();
 
+  if (!Environment.FEATURE_GAPS) {
+    return <NothingHere />;
+  }
   return (
     <Routes>
-      <Route path={immunisationsRoute} element={<ImmunisationsListView />} />
-      <Route path={immunisationRoute} element={<ImmunisationDetailView />} />
+      <Route path={immunisationsRoute} element={<ProgramListView />} />
+      <Route path={immunisationRoute} element={<ProgramView />} />
     </Routes>
   );
 };
