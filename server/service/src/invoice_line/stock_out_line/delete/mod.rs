@@ -35,12 +35,12 @@ pub fn delete_stock_out_line(
 
                 let mut stock_line = stock_line_repository
                     .find_one_by_id(&stock_line_id)?
-                    .ok_or(DeleteStockOutLineError::DatabaseError(
-                        RepositoryError::NotFound,
-                    ))?;
+                    .ok_or(DeleteStockOutLineError::StockLineDoesNotExist)?;
                 stock_line.available_number_of_packs += line.number_of_packs;
 
-                let invoice = invoice_repository.find_one_by_id(&line.invoice_id)?;
+                let invoice = invoice_repository
+                    .find_one_by_id(&line.invoice_id)?
+                    .ok_or(DeleteStockOutLineError::InvoiceDoesNotExist)?;
                 if invoice.status == InvoiceStatus::Picked {
                     stock_line.total_number_of_packs += line.number_of_packs;
                 }
@@ -56,6 +56,7 @@ pub fn delete_stock_out_line(
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum DeleteStockOutLineError {
+    StockLineDoesNotExist,
     LineDoesNotExist,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,

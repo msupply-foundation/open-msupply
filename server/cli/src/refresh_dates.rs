@@ -609,6 +609,7 @@ mod tests {
 
         let invoice1_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice1().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -624,6 +625,7 @@ mod tests {
 
         let invoice2_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice2().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
