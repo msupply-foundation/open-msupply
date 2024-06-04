@@ -17,7 +17,6 @@ import {
   LoadingButton,
   PrinterIcon,
   StockLineNode,
-  RepackNode,
 } from '@openmsupply-client/common';
 import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
@@ -210,9 +209,20 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             {showRepackDetail && (
               <RepackEditForm
                 onChange={onChange}
-                stockLine={stockLine}
-                draft={draft}
-                repackData={repackData as RepackNode | undefined}
+                data={{
+                  stockLineId: draft?.stockLineId ?? stockLine?.id,
+                  packSize: draft?.packSize ?? stockLine.packSize,
+                  newPackSize: draft?.newPackSize,
+                  numberOfPacks:
+                    draft?.numberOfPacks ?? repackData?.to?.numberOfPacks,
+                  newLocationId: draft?.newLocationId,
+                  availableNumberOfPacks:
+                    draft?.availableNumberOfPacks ??
+                    stockLine?.availableNumberOfPacks,
+                  locationName:
+                    draft?.locationName ?? repackData?.to?.location?.name,
+                }}
+                isNew={!repackData}
               />
             )}
           </Box>

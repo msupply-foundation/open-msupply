@@ -1,14 +1,14 @@
 import { useMutation, useQuery } from '@openmsupply-client/common';
 import { useStockGraphQL } from '../useStockGraphQL';
 import { useState } from 'react';
-import { Repack } from '../../types';
+import { RepackDraft } from '../../types';
 import { STOCK_LINE, LIST, STOCK } from './keys';
 
 type UseRepackProps = { stockLineId?: string; invoiceId?: string };
 
 export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
   const { stockApi, storeId, queryClient } = useStockGraphQL();
-  const [draft, setDraft] = useState<Repack>({
+  const [draft, setDraft] = useState<RepackDraft>({
     stockLineId,
     newPackSize: 0,
     numberOfPacks: 0,
@@ -52,11 +52,12 @@ export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
     enabled: !!invoiceId,
   });
 
-  // UPDATE
-  const onChange = (patch: Partial<Repack>) => {
+  // UPDATE DRAFT
+  const onChange = (patch: Partial<RepackDraft>) => {
     setDraft({ ...draft, ...patch });
   };
 
+  // INSERT NEW
   const mutationFn = async () => {
     const result = await stockApi.insertRepack({
       storeId,
@@ -85,13 +86,13 @@ export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
   return {
     // Fetch
     list: {
-      repacks: listData ? listData?.nodes : undefined,
+      repacks: listData?.nodes,
       isError: isListError,
       isLoading: isListLoading,
     },
     repack: { repackData: data, isLoading, isError },
     // Update draft
-    draft: draft,
+    draft,
     onChange,
     // Create
     onInsert: mutation.mutateAsync,
