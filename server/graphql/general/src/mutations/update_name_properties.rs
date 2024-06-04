@@ -39,7 +39,7 @@
 //         .update_name_properties(&service_context, input.into())
 //     {
 //         Ok(name_properties) => Ok(UpdateNamePropertiesResponse::Response(
-//             AssetNode::from_domain(name_properties),
+//             Propert::from_domain(name_properties),
 //         )),
 //         Err(error) => Ok(UpdateNamePropertiesResponse::Error(
 //             UpdateNamePropertiesError {
