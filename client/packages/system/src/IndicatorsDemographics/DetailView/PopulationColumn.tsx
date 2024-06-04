@@ -43,7 +43,7 @@ export const populationColumn = <
             const updatedRowData = { ...rowData };
             column.setter({
               ...updatedRowData,
-              0: parseInt(e.target.value),
+              basePopulation: parseInt(e.target.value),
             });
           }}
         />
