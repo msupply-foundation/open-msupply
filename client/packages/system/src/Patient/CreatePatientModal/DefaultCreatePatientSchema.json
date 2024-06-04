@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Gender": {
+      "enum": [
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
+      ],
+      "type": "string"
+    },
+
+    "Patient": {
+      "properties": {
+        "dateOfBirth": {
+          "description": "Date of birth",
+          "format": "date",
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/Gender",
+          "description": "Gender unspecified"
+        },
+        "lastName": {
+          "description": "Patient Surname",
+          "type": "string"
+        },
+        "address1": {
+          "description": "Address",
+          "type": "string"
+        },
+        "phone": {
+          "description": "Phone number",
+          "type": "string"
+        }
+      },
+      "required": ["firstName", "lastName"],
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/Patient"
+    }
+  ]
+}
