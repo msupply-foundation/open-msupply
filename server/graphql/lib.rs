@@ -44,6 +44,7 @@ use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
+use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
@@ -71,6 +72,9 @@ impl CentralServerMutationNode {
     }
     async fn log_reason(&self) -> AssetLogReasonMutations {
         AssetLogReasonMutations
+    }
+    async fn vaccine_course(&self) -> VaccineCourseMutations {
+        VaccineCourseMutations
     }
 }
 
@@ -110,6 +114,7 @@ pub struct Queries(
     pub AssetLogQueries,
     pub AssetLogReasonQueries,
     pub AssetPropertiesQueries,
+    pub VaccineCourseQueries,
 );
 
 impl Queries {
@@ -136,6 +141,7 @@ impl Queries {
             AssetLogQueries,
             AssetLogReasonQueries,
             AssetPropertiesQueries,
+            VaccineCourseQueries,
         )
     }
 }
