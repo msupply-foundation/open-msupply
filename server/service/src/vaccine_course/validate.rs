@@ -1,5 +1,5 @@
 use repository::{
-    immunisation::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+    vaccine_course::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     RepositoryError, StorageConnection,
 };
 

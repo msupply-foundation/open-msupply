@@ -1,5 +1,5 @@
 use repository::{
-    immunisation::{
+    vaccine_course::{
         vaccine_course::{VaccineCourseFilter, VaccineCourseRepository, VaccineCourseSort},
         vaccine_course_row::VaccineCourseRow,
     },

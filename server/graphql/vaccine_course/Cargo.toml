@@ -1,5 +1,5 @@
 [package]
-name = "graphql_immunisation"
+name = "graphql_vaccine_course"
 version = "0.1.0"
 edition = "2018"
 

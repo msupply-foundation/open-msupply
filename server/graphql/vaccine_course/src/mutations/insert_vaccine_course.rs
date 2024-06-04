@@ -8,7 +8,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    immunisation::vaccine_course::insert::{
+    vaccine_course::vaccine_course::insert::{
         InsertVaccineCourse, InsertVaccineCourseError as ServiceError,
     },
 };
@@ -32,7 +32,7 @@ pub fn insert_vaccine_course(
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     match service_provider
-        .immunisation_service
+        .vaccine_course_service
         .insert_vaccine_course(&service_context, input.into())
     {
         Ok(asset) => Ok(InsertVaccineCourseResponse::Response(

@@ -3,13 +3,13 @@ mod query {
     use repository::mock::{mock_program_a, MockDataInserts};
     use repository::StringFilter;
     use repository::{
-        immunisation::vaccine_course::{
+        test_db::setup_all,
+        vaccine_course::vaccine_course::{
             VaccineCourseFilter, VaccineCourseSort, VaccineCourseSortField,
         },
-        test_db::setup_all,
     };
 
-    use crate::immunisation::vaccine_course::insert::InsertVaccineCourse;
+    use crate::vaccine_course::vaccine_course::insert::InsertVaccineCourse;
     use crate::{service_provider::ServiceProvider, SingleRecordError};
 
     #[actix_rt::test]
@@ -19,7 +19,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
-        let service = service_provider.immunisation_service;
+        let service = service_provider.vaccine_course_service;
 
         // Create a vaccine course
         let vaccine_course_insert = InsertVaccineCourse {
@@ -52,7 +52,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
-        let service = service_provider.immunisation_service;
+        let service = service_provider.vaccine_course_service;
 
         // Create 2 vaccine courses
         let vaccine_course_insert_a = InsertVaccineCourse {
