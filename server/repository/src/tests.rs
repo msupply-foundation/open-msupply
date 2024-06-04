@@ -966,7 +966,7 @@ mod repository_test {
 
         // Test insert
         let mut update_test_row = mock_draft_request_requisition_line();
-        update_test_row.requested_quantity = 99;
+        update_test_row.requested_quantity = 99.0;
         RequisitionLineRowRepository::new(&connection)
             .upsert_one(&update_test_row)
             .unwrap();
@@ -1008,7 +1008,7 @@ mod repository_test {
                     .requisition_id(EqualFilter::equal_to(
                         &mock_draft_request_requisition_line().requisition_id,
                     ))
-                    .requested_quantity(EqualFilter::equal_to_i32(99)),
+                    .requested_quantity(EqualFilter::equal_to_f64(99.0)),
             )
             .unwrap();
 

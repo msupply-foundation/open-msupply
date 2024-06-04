@@ -70,7 +70,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 }
 
 #[cfg(not(feature = "postgres"))]
-pub(crate) fn rename_pack_size_columns(connection: &StorageConnection) -> anyhow::Result<()> {
+fn rename_pack_size_columns(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"

@@ -25,11 +25,9 @@ export const RelatedDocumentsSectionComponent = () => {
     tooltip = t('messages.internal-order-created-on', {
       date: d(new Date(createdDatetime)),
     });
-    if (user?.username && user.username !== 'unknown') {
-      tooltip += ` ${t('messages.by-user', {
-        username: user?.username,
-      })}`;
-    }
+    tooltip += ` ${t('messages.by-user', {
+      username: user?.username ?? '-',
+    })}`;
   }
 
   return (

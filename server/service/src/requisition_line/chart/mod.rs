@@ -270,7 +270,7 @@ mod test {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 );
-                r.average_monthly_consumption = 333;
+                r.average_monthly_consumption = 333.0;
             })
         }
 
@@ -514,9 +514,9 @@ mod test {
                         .and_hms_opt(12, 10, 11)
                         .unwrap(),
                 );
-                r.average_monthly_consumption = 25 * NUMBER_OF_DAYS_IN_A_MONTH as i32;
-                r.available_stock_on_hand = 30;
-                r.requested_quantity = 100;
+                r.average_monthly_consumption = 25.0 * NUMBER_OF_DAYS_IN_A_MONTH;
+                r.available_stock_on_hand = 30.0;
+                r.requested_quantity = 100.0;
             })
         }
 

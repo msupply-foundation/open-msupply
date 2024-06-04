@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::{io::Write, net::SocketAddr};
 use telnet::{Event, Telnet};
 
-const PRINTER_COMMAND_TIMEOUT: Duration = Duration::new(0, 500);
+const PRINTER_COMMAND_TIMEOUT: Duration = Duration::new(1, 0);
 const PRINTER_CONNECTION_TIMEOUT: Duration = Duration::new(5, 0);
 
 // Note: this file is mostly taken from https://github.com/fearful-symmetry/zebrasend/blob/main/src/cmd/jetdirect.rs
@@ -62,7 +62,6 @@ impl Jetdirect {
                 }
             }
         }
-
         Ok(response)
     }
 

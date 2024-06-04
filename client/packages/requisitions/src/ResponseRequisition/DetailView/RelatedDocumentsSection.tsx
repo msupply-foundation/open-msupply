@@ -37,11 +37,7 @@ export const RelatedDocumentsSection: FC = () => {
       date: d(createdDatetime),
     });
 
-    if (username && username !== 'unknown') {
-      tooltip += ` ${t('messages.by-user', { username })}`;
-    }
-
-    return tooltip;
+    return (tooltip += ` ${t('messages.by-user', { username })}`);
   };
 
   return (
@@ -54,7 +50,7 @@ export const RelatedDocumentsSection: FC = () => {
           <Tooltip
             title={getTooltip(
               shipment.createdDatetime,
-              shipment.user?.username
+              shipment.user?.username ?? '-'
             )}
             key={shipment.id}
           >

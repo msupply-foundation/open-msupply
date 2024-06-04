@@ -85,9 +85,9 @@ pub fn should_create_batches(existing_status: &InvoiceStatus, patch: &UpdateInbo
 
     match (existing_status, new_status) {
         (
-            // From New/Picked/Shipped to Delivered
+            // From New/Picked/Shipped to Delivered/Verified
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundReturnStatus::Delivered,
+            UpdateInboundReturnStatus::Delivered | UpdateInboundReturnStatus::Verified,
         ) => true,
         _ => false,
     }
@@ -110,14 +110,16 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboun
             inbound_return.delivered_datetime = Some(current_datetime);
         }
 
-        // From New/Picked/Shipped/Delivered to Verified
+        // From New/Picked/Shipped to Verified
         (
-            InvoiceStatus::New
-            | InvoiceStatus::Picked
-            | InvoiceStatus::Shipped
-            | InvoiceStatus::Delivered,
+            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
             UpdateInboundReturnStatus::Verified,
         ) => {
+            inbound_return.delivered_datetime = Some(current_datetime);
+            inbound_return.verified_datetime = Some(current_datetime);
+        }
+        // From Delivered to Verified
+        (InvoiceStatus::Delivered, UpdateInboundReturnStatus::Verified) => {
             inbound_return.verified_datetime = Some(current_datetime);
         }
         _ => {}

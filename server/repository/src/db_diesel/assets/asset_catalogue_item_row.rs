@@ -18,6 +18,7 @@ table! {
         manufacturer -> Nullable<Text>,
         model -> Text,
         asset_catalogue_type_id -> Text,
+        properties -> Nullable<Text>,
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
@@ -39,6 +40,7 @@ pub struct AssetCatalogueItemRow {
     pub model: String,
     #[diesel(column_name = "asset_catalogue_type_id")]
     pub type_id: String,
+    pub properties: Option<String>,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
 
