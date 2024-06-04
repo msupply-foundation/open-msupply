@@ -26,14 +26,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           // disabled={isDisabled}
           label={t('button.repack')}
           Icon={<StockIcon />}
-          // TO-DO: Add repack modal
           onClick={openRepack}
         />
         <ButtonWithIcon
           // disabled={isDisabled}
           label={t('button.adjust')}
           Icon={<BarChart2Icon />}
-          // TO-DO: Add adjustment modal
           onClick={openAdjust}
         />
       </Grid>
