@@ -118,7 +118,7 @@ export const StockLineDetailView: React.FC = () => {
     isSaving: isUpdating,
     showSaveConfirmation,
     showCancelConfirmation,
-    disabled: isDirty && !hasPluginChanged,
+    disabled: !isDirty && !hasPluginChanged,
   };
 
   return (
