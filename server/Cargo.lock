@@ -2300,6 +2300,7 @@ dependencies = [
  "graphql_core",
  "graphql_form_schema",
  "graphql_general",
+ "graphql_immunisation",
  "graphql_inventory_adjustment",
  "graphql_invoice",
  "graphql_invoice_line",
@@ -2486,6 +2487,26 @@ dependencies = [
  "graphql_types",
  "repository",
  "reqwest 0.12.3",
+ "serde 1.0.198",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_immunisation"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
  "serde 1.0.198",
  "serde_json",
  "service",
