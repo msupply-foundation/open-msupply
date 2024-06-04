@@ -9,11 +9,14 @@ import {
 } from '@openmsupply-client/common';
 
 interface AppBarButtonProps {
-  //
+  openRepack: () => void;
+  openAdjust: () => void;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({}) => {
-  // const { OpenButton } = useDetailPanel();
+export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
+  openRepack,
+  openAdjust,
+}) => {
   const t = useTranslation('inventory');
 
   return (
@@ -23,18 +26,14 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({}) => {
           // disabled={isDisabled}
           label={t('button.repack')}
           Icon={<StockIcon />}
-          // TO-DO: Add repack modal
-          onClick={() => {}}
+          onClick={openRepack}
         />
         <ButtonWithIcon
           // disabled={isDisabled}
           label={t('button.adjust')}
           Icon={<BarChart2Icon />}
-          // TO-DO: Add adjustment modal
-          onClick={() => {}}
+          onClick={openAdjust}
         />
-
-        {/* {OpenButton} */}
       </Grid>
     </AppBarButtonsPortal>
   );

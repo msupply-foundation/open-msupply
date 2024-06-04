@@ -54,36 +54,9 @@ const StockListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const { data, isLoading, isError } = useStock.line.list(queryParams);
-  // const [repackId, setRepackId] = React.useState<string | null>(null);
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
   });
-  // TO-DO: Move to Stock page
-  // const EditStockLineCell = <T extends StockLineRowFragment>({
-  //   rowData,
-  //   isDisabled,
-  // }: CellProps<T>): React.ReactElement<CellProps<T>> => (
-  //   <IconButton
-  //     label={t('button.repack')}
-  //     height="16px"
-  //     disabled={isDisabled}
-  //     icon={
-  //       <StockIcon
-  //         sx={{
-  //           color: 'primary.main',
-  //           width: '12px',
-  //           cursor: 'pointer',
-  //         }}
-  //       />
-  //     }
-  //     onClick={e => {
-  //       e.stopPropagation();
-  //       repackModalController.toggleOn();
-  //       setRepackId(rowData.id);
-  //     }}
-  //   />
-  // );
-
   const packSizeAndUnitColumns: ColumnDescription<StockLineRowFragment>[] =
     isPackVariantsEnabled
       ? [
@@ -113,14 +86,6 @@ const StockListComponent: FC = () => {
         ];
 
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
-    // {
-    //   key: 'edit',
-    //   label: 'label.repack',
-    //   Cell: EditStockLineCell,
-    //   width: 75,
-    //   sortable: false,
-    //   align: ColumnAlign.Center,
-    // },
     [
       'itemCode',
       {
@@ -194,17 +159,8 @@ const StockListComponent: FC = () => {
     [sortBy, pluginColumns]
   );
 
-  // const repackModalController = useToggle();
-
   return (
     <>
-      {/* {repackModalController.isOn && (
-        <RepackModal
-          isOpen={repackModalController.isOn}
-          onClose={repackModalController.toggleOff}
-          stockLine={data?.nodes.find(({ id }) => id === repackId) ?? null}
-        />
-      )} */}
       <Toolbar filter={filter} />
       <AppBarButtons />
       <DataTable
