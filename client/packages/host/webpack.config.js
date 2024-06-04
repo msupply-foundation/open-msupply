@@ -145,7 +145,7 @@ module.exports = env => {
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({
         FEATURE_PACK_VARIANTS: env.FEATURE_PACK_VARIANTS,
-        FEATURE_IMMUNISATIONS: env.FEATURE_IMMUNISATIONS,
+        FEATURE_GAPS: env.FEATURE_GAPS,
         API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(localPlugins()),
         LANG_VERSION: Date.now(),

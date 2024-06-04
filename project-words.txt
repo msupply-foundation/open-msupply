@@ -6,6 +6,7 @@ conforma
 datasource
 datetime
 joinable
+clearable
 Masterlist
 msupply
 openmsupply
@@ -18,3 +19,6 @@ Upsert
 upserted
 upserts
 zustand
+Waterpack
+anymap
+thiserror

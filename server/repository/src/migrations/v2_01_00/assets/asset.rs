@@ -11,6 +11,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
              ALTER TABLE asset ADD COLUMN donor_name_id TEXT REFERENCES name_link(id);
              ALTER TABLE asset ADD COLUMN warranty_start {DATE};
              ALTER TABLE asset ADD COLUMN warranty_end {DATE};
+             ALTER TABLE asset ADD COLUMN needs_replacement BOOLEAN;
             "#
     )?;
 

@@ -22,7 +22,6 @@ import {
   AssetCatalogueItemFragment,
   useAssetData,
 } from '@openmsupply-client/system';
-import { AssetProperty } from '../api/api';
 
 interface AssetItemImportModalProps {
   isOpen: boolean;
@@ -48,7 +47,7 @@ export type ImportRow = {
   type: string;
   typeId?: string;
   errorMessage?: string;
-  properties: Record<string, AssetProperty>;
+  properties: Record<string, string>;
 };
 
 export type LineNumber = {
@@ -65,6 +64,7 @@ const toInsertAssetItemInput = (row: ImportRow): AssetCatalogueItemFragment => {
     assetClassId: row.classId ?? '',
     assetCategoryId: row.categoryId ?? '',
     assetTypeId: row.typeId ?? '',
+    properties: JSON.stringify(row.properties),
   };
 };
 
@@ -100,9 +100,6 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
 
   const { insertAssetCatalogueItem, invalidateQueries } =
     useAssetData.document.insert();
-
-  const { insertAssetCatalogueItemProperty } =
-    useAssetData.document.insertProperty();
 
   const [bufferedAssetItem, setBufferedAssetItem] = useState<ImportRow[]>(
     () => []
@@ -184,17 +181,6 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
                   });
                   return;
                 }
-
-                await Promise.all(
-                  Object.values(asset.properties).map(async property => {
-                    await insertAssetCatalogueItemProperty({
-                      catalogueItemId: result.id,
-                      property,
-                    });
-                  })
-                );
-
-                invalidateQueries();
               })
               .catch(err => {
                 if (!err) {
@@ -214,6 +200,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
           setImportErrorCount(importErrorRows.length);
         });
       }
+      invalidateQueries();
       if (importErrorRows.length === 0) {
         const importMessage = t('messages.import-generic', {
           count: numberImportRecords,

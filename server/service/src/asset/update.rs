@@ -42,6 +42,7 @@ pub struct UpdateAsset {
     pub donor_name_id: Option<NullableUpdate<String>>,
     pub warranty_start: Option<NullableUpdate<NaiveDate>>,
     pub warranty_end: Option<NullableUpdate<NaiveDate>>,
+    pub needs_replacement: Option<bool>,
 }
 
 pub fn update_asset(
@@ -146,6 +147,7 @@ pub fn generate(
         donor_name_id,
         warranty_start,
         warranty_end,
+        needs_replacement,
     }: UpdateAsset,
     mut asset_row: AssetRow,
 ) -> AssetRow {
@@ -186,6 +188,10 @@ pub fn generate(
 
     if let Some(warranty_end) = warranty_end {
         asset_row.warranty_end = warranty_end.value;
+    }
+
+    if let Some(needs_replacement) = needs_replacement {
+        asset_row.needs_replacement = Some(needs_replacement);
     }
 
     // Set the modified date time
