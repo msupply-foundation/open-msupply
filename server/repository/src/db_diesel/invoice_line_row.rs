@@ -48,19 +48,14 @@ joinable!(invoice_line -> return_reason (return_reason_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineType {
+    #[default]
     StockIn,
     StockOut,
     UnallocatedStock,
     Service,
-}
-
-impl Default for InvoiceLineType {
-    fn default() -> Self {
-        Self::StockIn
-    }
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -181,22 +176,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
-        let result = invoice_line
-            .filter(id.eq(record_id))
-            .first(self.connection.lock().connection());
-        result.map_err(RepositoryError::from)
-    }
-
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
-        let result = invoice_line
-            .filter(id.eq_any(ids))
-            .load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    // TODO replace find_one_by_id with this one
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         invoice_line_id: &str,
     ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
@@ -204,6 +184,13 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .filter(id.eq(invoice_line_id))
             .first(self.connection.lock().connection())
             .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
+        let result = invoice_line
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -238,7 +225,7 @@ impl Delete for InvoiceLineRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            InvoiceLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
@@ -252,7 +239,7 @@ impl Upsert for InvoiceLineRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            InvoiceLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

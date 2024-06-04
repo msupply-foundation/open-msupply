@@ -4,7 +4,7 @@ use repository::{
 
 use crate::{
     invoice::{check_invoice_exists, check_store},
-    invoice_line::validate::check_line_row_exists_option,
+    invoice_line::validate::check_line_row_exists,
     service_provider::ServiceContext,
 };
 
@@ -47,7 +47,7 @@ fn validate(
     input: &DeleteOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLineRow, OutError> {
     let invoice_line =
-        check_line_row_exists_option(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
+        check_line_row_exists(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
 
     if invoice_line.r#type != InvoiceLineType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);
@@ -76,7 +76,7 @@ mod test_delete {
             mock_unallocated_line, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRowRepository, RepositoryError,
+        InvoiceLineRowRepository,
     };
 
     use crate::{
@@ -145,7 +145,7 @@ mod test_delete {
         let service = service_provider.invoice_line_service;
 
         let mut line_to_delete = mock_unallocated_line();
-        // Succesfull delete
+        // Successful delete
         let result = service
             .delete_outbound_shipment_unallocated_line(
                 &context,
@@ -159,7 +159,7 @@ mod test_delete {
         line_to_delete.number_of_packs = 20.0;
         assert_eq!(
             InvoiceLineRowRepository::new(&connection).find_one_by_id(&result),
-            Err(RepositoryError::NotFound)
+            Ok(None)
         )
     }
 }

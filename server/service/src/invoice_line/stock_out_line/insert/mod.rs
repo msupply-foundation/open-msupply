@@ -278,6 +278,7 @@ mod test {
             StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
                 .unwrap()
+                .unwrap()
         };
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
@@ -290,6 +291,7 @@ mod test {
         // New line on New Outbound invoice
         let available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_si_d()[0].id.clone())
+            .unwrap()
             .unwrap()
             .available_number_of_packs;
 
@@ -310,6 +312,7 @@ mod test {
             .unwrap();
         let new_outbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new outbound line id")
+            .unwrap()
             .unwrap();
         let expected_available_stock =
             available_number_of_packs - new_outbound_line.number_of_packs;
@@ -332,6 +335,7 @@ mod test {
         // New line on Allocated Invoice
         let available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_a().id.clone())
+            .unwrap()
             .unwrap()
             .available_number_of_packs;
 
@@ -361,6 +365,7 @@ mod test {
             .unwrap();
         let allocated_outbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new allocated invoice line")
+            .unwrap()
             .unwrap();
         let expected_available_stock =
             available_number_of_packs - allocated_outbound_line.number_of_packs;
@@ -373,6 +378,7 @@ mod test {
         // New line on Picked invoice
         let stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_item_b_lines()[0].id.clone())
+            .unwrap()
             .unwrap();
 
         invoice_service
@@ -401,6 +407,7 @@ mod test {
             .unwrap();
         let picked_outbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new picked invoice line")
+            .unwrap()
             .unwrap();
         let expected_available_stock =
             stock_line.available_number_of_packs - picked_outbound_line.number_of_packs;
@@ -421,6 +428,7 @@ mod test {
         let available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_a().id.clone())
             .unwrap()
+            .unwrap()
             .available_number_of_packs;
 
         service
@@ -438,6 +446,7 @@ mod test {
             .unwrap();
         let new_prescription_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new prescription line id")
+            .unwrap()
             .unwrap();
         let expected_available_stock =
             available_number_of_packs - new_prescription_line.number_of_packs;
