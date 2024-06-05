@@ -70,7 +70,9 @@ pub fn validate(
         None => &demographic_indicator_row.name,
     };
 
-    if !check_year_name_combination_unique(&name, base_year, connection)? {
+    let id = &input.id;
+
+    if !check_year_name_combination_unique(&name, base_year, id, connection)? {
         return Err(UpdateDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear);
     }
 

@@ -148,6 +148,7 @@ module.exports = env => {
         API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(localPlugins()),
         LANG_VERSION: Date.now(),
+        FEATURE_DEMOGRAPHIC_INDICATORS: env.FEATURE_DEMOGRAPHIC_INDICATORS,
       }),
       bundleAnalyzerPlugin,
       new HtmlWebpackPlugin({
