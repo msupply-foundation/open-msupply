@@ -20,7 +20,7 @@ pub struct InsertInboundShipmentLine {
     pub invoice_id: String,
     pub item_id: String,
     pub location: Option<NullableUpdate<String>>,
-    pub pack_size: u32,
+    pub pack_size: f64,
     pub batch: Option<String>,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
@@ -150,7 +150,7 @@ mod test {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = "new invoice id".to_string();
                     r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                 }),
             ),
@@ -165,7 +165,7 @@ mod test {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_outbound_shipment_e().id;
                     r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                 }),
             ),
@@ -185,7 +185,7 @@ mod test {
                         value: Some("invalid".to_string()),
                     });
                     r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                 }),
             ),
@@ -202,7 +202,7 @@ mod test {
                         .invoice_id
                         .clone();
                     r.item_id = "invalid".to_string();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                 }),
             ),
@@ -219,7 +219,7 @@ mod test {
                         .invoice_id
                         .clone();
                     r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 0;
+                    r.pack_size = 0.0;
                     r.number_of_packs = 1.0;
                 }),
             ),
@@ -236,7 +236,7 @@ mod test {
                         .invoice_id
                         .clone();
                     r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = -1.0;
                 }),
             ),
@@ -252,7 +252,7 @@ mod test {
                     r.id = "new invoice line id".to_string();
                     r.invoice_id = mock_inbound_shipment_c().id.clone();
                     r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                 }),
             ),
@@ -285,7 +285,7 @@ mod test {
                         .invoice_id
                         .clone();
                     r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                 }),
             )
@@ -301,7 +301,7 @@ mod test {
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new invoice line id".to_string();
                 u.item_link_id = mock_item_a().id.clone();
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u.number_of_packs = 1.0;
                 u
             })
@@ -326,7 +326,7 @@ mod test {
                         .invoice_id
                         .clone();
                     r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 10;
+                    r.pack_size = 10.0;
                     r.number_of_packs = 20.0;
                     r.sell_price_per_pack = 100.0;
                 }),
@@ -343,7 +343,7 @@ mod test {
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new invoice line pack to one".to_string();
                 u.item_link_id = mock_item_a().id.clone();
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u.number_of_packs = 200.0;
                 u.sell_price_per_pack = 10.0;
                 u

@@ -20,7 +20,7 @@ pub struct ItemStatsFilter {
 #[derive(Clone, Debug, PartialEq)]
 pub struct ItemStats {
     pub average_monthly_consumption: f64,
-    pub available_stock_on_hand: u32,
+    pub available_stock_on_hand: f64,
     pub item_id: String,
     pub item_name: String,
 }
@@ -106,19 +106,19 @@ impl ItemStats {
         for consumption_row in consumption_rows.into_iter() {
             let item_total_consumption = consumption_map
                 .entry(consumption_row.item_id.clone())
-                .or_insert(0);
+                .or_insert(0.0);
             *item_total_consumption += consumption_row.quantity;
         }
 
         stock_on_hand_rows
             .into_iter()
             .map(|stock_on_hand| ItemStats {
-                available_stock_on_hand: stock_on_hand.available_stock_on_hand as u32,
+                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
                 item_id: stock_on_hand.item_id.clone(),
                 item_name: stock_on_hand.item_name.clone(),
                 average_monthly_consumption: consumption_map
                     .get(&stock_on_hand.item_id)
-                    .map(|consumption| *consumption as f64 / amc_lookback_months as f64)
+                    .map(|consumption| *consumption / amc_lookback_months as f64)
                     .unwrap_or_default(),
             })
             .collect()
@@ -128,7 +128,7 @@ impl ItemStats {
         let row = &requisition_line.requisition_line_row;
         ItemStats {
             average_monthly_consumption: row.average_monthly_consumption as f64,
-            available_stock_on_hand: row.available_stock_on_hand as u32,
+            available_stock_on_hand: row.available_stock_on_hand,
             item_id: requisition_line.item_row.id.clone(),
             item_name: requisition_line.item_row.name.clone(),
         }
@@ -178,11 +178,11 @@ mod test {
         assert_eq!(item_stats.len(), 2);
         assert_eq!(
             item_stats[0].available_stock_on_hand,
-            test_item_stats::item_1_soh()
+            test_item_stats::item_1_soh() as f64
         );
         assert_eq!(
             item_stats[1].available_stock_on_hand,
-            test_item_stats::item_2_soh()
+            test_item_stats::item_2_soh() as f64
         );
 
         assert_eq!(
@@ -203,11 +203,11 @@ mod test {
         assert_eq!(item_stats.len(), 2);
         assert_eq!(
             item_stats[0].available_stock_on_hand,
-            test_item_stats::item_1_soh()
+            test_item_stats::item_1_soh() as f64
         );
         assert_eq!(
             item_stats[1].available_stock_on_hand,
-            test_item_stats::item_2_soh()
+            test_item_stats::item_2_soh() as f64
         );
 
         assert_eq!(
@@ -225,10 +225,10 @@ mod test {
         assert_eq!(item_stats.len(), 2);
         assert_eq!(
             item_stats[0].available_stock_on_hand,
-            test_item_stats::item_1_store_b_soh()
+            test_item_stats::item_1_store_b_soh() as f64
         );
         // No stock line check
-        assert_eq!(item_stats[1].available_stock_on_hand, 0);
+        assert_eq!(item_stats[1].available_stock_on_hand, 0.0);
 
         assert_eq!(
             item_stats[0].average_monthly_consumption,

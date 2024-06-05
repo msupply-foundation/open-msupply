@@ -637,7 +637,7 @@ export type BarcodeNode = {
   id: Scalars['String']['output'];
   itemId: Scalars['String']['output'];
   manufacturerId?: Maybe<Scalars['String']['output']>;
-  packSize?: Maybe<Scalars['Int']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
   parentId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2006,7 +2006,7 @@ export type InboundReturnLineInput = {
   itemId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
-  packSize: Scalars['Int']['input'];
+  packSize: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2021,7 +2021,7 @@ export type InboundReturnLineNode = {
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
   numberOfPacksReturned: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
+  packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
@@ -2133,7 +2133,7 @@ export type InsertAssetResponse = AssetNode | InsertAssetError;
 export type InsertBarcodeInput = {
   gtin: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  packSize?: InputMaybe<Scalars['Int']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertBarcodeResponse = BarcodeNode;
@@ -2234,7 +2234,7 @@ export type InsertInboundShipmentLineInput = {
   itemId: Scalars['String']['input'];
   location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks: Scalars['Float']['input'];
-  packSize: Scalars['Int']['input'];
+  packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
@@ -2430,7 +2430,7 @@ export type InsertPackVariantInput = {
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
   longName: Scalars['String']['input'];
-  packSize: Scalars['Int']['input'];
+  packSize: Scalars['Float']['input'];
   shortName: Scalars['String']['input'];
 };
 
@@ -2564,7 +2564,7 @@ export type InsertRepackErrorInterface = {
 
 export type InsertRepackInput = {
   newLocationId?: InputMaybe<Scalars['String']['input']>;
-  newPackSize: Scalars['Int']['input'];
+  newPackSize: Scalars['Float']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
 };
@@ -2605,7 +2605,7 @@ export type InsertRequestRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  requestedQuantity?: InputMaybe<Scalars['Int']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   requisitionId: Scalars['String']['input'];
 };
 
@@ -2637,7 +2637,7 @@ export type InsertStockLineInput = {
   location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks: Scalars['Float']['input'];
   onHold: Scalars['Boolean']['input'];
-  packSize: Scalars['Int']['input'];
+  packSize: Scalars['Float']['input'];
   sellPricePerPack: Scalars['Float']['input'];
 };
 
@@ -2675,7 +2675,7 @@ export type InsertStocktakeLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
-  packSize?: InputMaybe<Scalars['Int']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   stocktakeId: Scalars['String']['input'];
@@ -2841,7 +2841,7 @@ export type InvoiceLineNode = {
   locationName?: Maybe<Scalars['String']['output']>;
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacks: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
+  packSize: Scalars['Float']['output'];
   pricing: PricingNode;
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
@@ -3028,7 +3028,7 @@ export type ItemNode = {
   availableStockOnHand: Scalars['Int']['output'];
   code: Scalars['String']['output'];
   ddd: Scalars['String']['output'];
-  defaultPackSize: Scalars['Int']['output'];
+  defaultPackSize: Scalars['Float']['output'];
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
@@ -3100,7 +3100,7 @@ export type ItemSortInput = {
 export type ItemStatsNode = {
   __typename: 'ItemStatsNode';
   availableMonthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
-  availableStockOnHand: Scalars['Int']['output'];
+  availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
 };
 
@@ -4370,7 +4370,7 @@ export type OutboundReturnLineNode = {
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacksToReturn: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
+  packSize: Scalars['Float']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
 };
@@ -5558,7 +5558,7 @@ export type RepackStockLineNode = {
   __typename: 'RepackStockLineNode';
   location?: Maybe<LocationNode>;
   numberOfPacks: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
+  packSize: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
 };
 
@@ -5623,10 +5623,10 @@ export type RequestRequisitionCounts = {
 
 export type RequestStoreStatsNode = {
   __typename: 'RequestStoreStatsNode';
-  averageMonthlyConsumption: Scalars['Int']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
   maxMonthsOfStock: Scalars['Float']['output'];
-  stockOnHand: Scalars['Int']['output'];
-  suggestedQuantity: Scalars['Int']['output'];
+  stockOnHand: Scalars['Float']['output'];
+  suggestedQuantity: Scalars['Float']['output'];
 };
 
 export type RequisitionConnector = {
@@ -5681,7 +5681,7 @@ export type RequisitionLineNode = {
   /** Quantity already issued in outbound shipments */
   alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
-  approvedQuantity: Scalars['Int']['output'];
+  approvedQuantity: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   /** InboundShipment lines linked to requisitions line */
@@ -5704,14 +5704,14 @@ export type RequisitionLineNode = {
    */
   remainingQuantityToSupply: Scalars['Float']['output'];
   /** Quantity requested */
-  requestedQuantity: Scalars['Int']['output'];
+  requestedQuantity: Scalars['Float']['output'];
   /**
    * Calculated quantity
    * When months_of_stock < requisition.min_months_of_stock, calculated = average_monthly_consumption * requisition.max_months_of_stock - months_of_stock
    */
-  suggestedQuantity: Scalars['Int']['output'];
+  suggestedQuantity: Scalars['Float']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
-  supplyQuantity: Scalars['Int']['output'];
+  supplyQuantity: Scalars['Float']['output'];
 };
 
 
@@ -5854,10 +5854,10 @@ export type ResponseRequisitionStatsNode = {
 export type ResponseStoreStatsNode = {
   __typename: 'ResponseStoreStatsNode';
   incomingStock: Scalars['Int']['output'];
-  otherRequestedQuantity: Scalars['Int']['output'];
-  requestedQuantity: Scalars['Int']['output'];
+  otherRequestedQuantity: Scalars['Float']['output'];
+  requestedQuantity: Scalars['Float']['output'];
   stockOnHand: Scalars['Float']['output'];
-  stockOnOrder: Scalars['Int']['output'];
+  stockOnOrder: Scalars['Float']['output'];
 };
 
 export type ReturnReasonConnector = {
@@ -6034,7 +6034,7 @@ export type StockLineNode = {
   locationName?: Maybe<Scalars['String']['output']>;
   note?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
-  packSize: Scalars['Int']['output'];
+  packSize: Scalars['Float']['output'];
   sellPricePerPack: Scalars['Float']['output'];
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
@@ -6130,7 +6130,7 @@ export type StocktakeLineNode = {
   itemName: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
-  packSize?: Maybe<Scalars['Int']['output']>;
+  packSize?: Maybe<Scalars['Float']['output']>;
   sellPricePerPack?: Maybe<Scalars['Float']['output']>;
   snapshotNumberOfPacks: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
@@ -6700,7 +6700,7 @@ export type UpdateInboundShipmentLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
-  packSize?: InputMaybe<Scalars['Int']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   tax?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
@@ -6918,7 +6918,7 @@ export type UpdateOutboundShipmentUnallocatedLineErrorInterface = {
 
 export type UpdateOutboundShipmentUnallocatedLineInput = {
   id: Scalars['String']['input'];
-  quantity: Scalars['Int']['input'];
+  quantity: Scalars['Float']['input'];
 };
 
 export type UpdateOutboundShipmentUnallocatedLineResponse = InvoiceLineNode | UpdateOutboundShipmentUnallocatedLineError;
@@ -7088,7 +7088,7 @@ export type UpdateRequestRequisitionLineErrorInterface = {
 export type UpdateRequestRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  requestedQuantity?: InputMaybe<Scalars['Int']['input']>;
+  requestedQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateRequestRequisitionLineResponse = RequisitionLineNode | UpdateRequestRequisitionLineError;
@@ -7140,7 +7140,7 @@ export type UpdateResponseRequisitionLineErrorInterface = {
 export type UpdateResponseRequisitionLineInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  supplyQuantity?: InputMaybe<Scalars['Int']['input']>;
+  supplyQuantity?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateResponseRequisitionLineResponse = RequisitionLineNode | UpdateResponseRequisitionLineError;
@@ -7235,7 +7235,7 @@ export type UpdateStocktakeLineInput = {
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
-  packSize?: InputMaybe<Scalars['Int']['input']>;
+  packSize?: InputMaybe<Scalars['Float']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   snapshotNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
 };
@@ -7411,7 +7411,7 @@ export type VariantNode = {
   isActive: Scalars['Boolean']['output'];
   itemId: Scalars['String']['output'];
   longName: Scalars['String']['output'];
-  packSize: Scalars['Int']['output'];
+  packSize: Scalars['Float']['output'];
   shortName: Scalars['String']['output'];
 };
 
