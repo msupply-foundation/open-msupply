@@ -401,6 +401,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("new_inbound_return_id")
+            .unwrap()
             .unwrap();
 
         assert_eq!(invoice.id, "new_inbound_return_id");
