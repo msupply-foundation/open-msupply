@@ -23,7 +23,7 @@ import { recursiveCalculate, toIndicatorFragment } from './utils';
 export interface Row {
   isNew: boolean;
   id: string;
-  percentage?: number | null;
+  percentage: number;
   name: string;
   baseYear: number;
   basePopulation: number;
@@ -63,7 +63,7 @@ export const toRow = (row: {
 }): Row => ({
   isNew: false,
   id: row.id,
-  percentage: row.populationPercentage,
+  percentage: row.populationPercentage ?? 0,
   name: row.name,
   baseYear: row.baseYear ?? 0,
   basePopulation: row.basePopulation ?? 0,
@@ -87,8 +87,6 @@ const IndicatorsDemographicsComponent: FC = () => {
   const { draft, setDraft } = useDemographicData.document.listIndicator();
   const [indexPopulation, setIndexPopulation] = useState<number>();
 
-  const draftRows: Record<string, Row> = {};
-
   const draftHeaders = ArrayUtils.toObject(headerData);
   const [isDirty, setIsDirty] = useState(false);
 
@@ -99,7 +97,6 @@ const IndicatorsDemographicsComponent: FC = () => {
     useDemographicData.document.insertIndicator();
   const { mutateAsync: updateDemographicIndicator } =
     useDemographicData.document.updateIndicator();
-  const currentIds = Object.keys(draft);
 
   const PopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
@@ -206,6 +203,7 @@ const IndicatorsDemographicsComponent: FC = () => {
     if (row.id === GENERAL_POPULATION_ID) {
       updatedRow = { ...updatedRow, [0]: indexValue ?? indexPopulation ?? 0 };
     }
+    updatedRow = { ...updatedRow, basePopulation: indexPopulation ?? 0 };
 
     return updatedRow;
   };
@@ -228,15 +226,18 @@ const IndicatorsDemographicsComponent: FC = () => {
 
   const save = async () => {
     setIsDirty(false);
-    const remainingRows = Object.keys(draftRows).map(key => draftRows[key]);
+    // save rows excluding generalRow
+
+    const remainingRows = Object.keys(draft)
+      .map(key => draft[key])
+      .filter(row => row?.id !== GENERAL_POPULATION_ID);
     while (remainingRows.length) {
       await Promise.all(
         remainingRows.splice(0).map(async indicator => {
-          const indicatorExists = currentIds?.includes(indicator?.id ?? '');
           if (indicator != undefined) {
-            indicatorExists
-              ? await updateIndicator(indicator)
-              : await insertIndicator(indicator);
+            indicator.isNew
+              ? await insertIndicator(indicator)
+              : await updateIndicator(indicator);
           }
         })
       ).then(() => invalidateQueries());
@@ -289,7 +290,7 @@ const IndicatorsDemographicsComponent: FC = () => {
 
   return (
     <>
-      <AppBarButtons patch={setter}></AppBarButtons>
+      <AppBarButtons patch={setter} rows={Object.values(draft)}></AppBarButtons>
       <Box>
         <GrowthRow
           columns={columns}
