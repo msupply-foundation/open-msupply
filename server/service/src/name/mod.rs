@@ -1,13 +1,13 @@
 use repository::{Name, NameFilter, NameSort, PaginationOption};
+use update::{update_name_properties, UpdateNameProperties, UpdateNamePropertiesError};
 
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 
 use self::query::get_names;
 
 mod query;
-// mod update;
-// mod validate;
-// pub use update::{UpdateName, UpdateNameError};
+pub mod update;
+mod validate;
 
 pub trait NameServiceTrait: Sync + Send {
     fn get_names(
@@ -21,13 +21,14 @@ pub trait NameServiceTrait: Sync + Send {
         get_names(ctx, store_id, pagination, filter, sort)
     }
 
-    // fn update_name_properties(
-    //     &self,
-    //     ctx: &ServiceContext,
-    //     input: UpdateNameProperties,
-    // ) -> Result<Name, UpdateNamePropertiesError> {
-    //     update_name_properties(ctx, input)
-    // }
+    fn update_name_properties(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: UpdateNameProperties,
+    ) -> Result<Name, UpdateNamePropertiesError> {
+        update_name_properties(ctx, store_id, input)
+    }
 }
 
 pub struct NameService {}
