@@ -43,7 +43,7 @@ export const percentageColumn = <
             const updatedRowData = { ...rowData };
             column.setter({
               ...updatedRowData,
-              percentage: e.target.value,
+              percentage: parseInt(e.target.value),
             });
           }}
         />

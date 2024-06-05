@@ -11,10 +11,12 @@ import { AppBarButtonsPortal, Grid } from '@openmsupply-client/common';
 
 interface IndicatorsAppBarButtonsProps {
   patch: (patch: RecordPatch<Row>) => void;
+  rows: Row[];
 }
 
 export const AppBarButtonsComponent = ({
   patch,
+  rows,
 }: IndicatorsAppBarButtonsProps) => {
   const t = useTranslation();
 
@@ -25,6 +27,8 @@ export const AppBarButtonsComponent = ({
       name: '',
       percentage: 0,
       isNew: true,
+      baseYear: rows[0]?.baseYear ?? 0,
+      BasePopulation: rows[0]?.basePopulation ?? 0,
       0: 0,
       1: 0,
       2: 0,
