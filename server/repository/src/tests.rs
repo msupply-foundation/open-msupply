@@ -377,6 +377,7 @@ mod repository_test {
         stock_line_repo.upsert_one(&stock_line).unwrap();
         let loaded_item = stock_line_repo
             .find_one_by_id(stock_line.id.as_str())
+            .unwrap()
             .unwrap();
         assert_eq!(stock_line, loaded_item);
     }
@@ -566,7 +567,7 @@ mod repository_test {
         repo.upsert_one(&master_list_line_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_line_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_line_1, loaded_item);
 
@@ -574,7 +575,7 @@ mod repository_test {
         repo.upsert_one(&master_list_line_upsert_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_line_upsert_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_line_upsert_1, loaded_item);
     }
@@ -601,7 +602,7 @@ mod repository_test {
             .unwrap();
         let loaded_item = MasterListNameJoinRepository::new(&connection)
             .find_one_by_id(master_list_name_join_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_name_join_1, loaded_item);
     }
@@ -631,6 +632,7 @@ mod repository_test {
             .unwrap();
         let loaded_item = InvoiceRowRepository::new(&connection)
             .find_one_by_id(item1.id.as_str())
+            .unwrap()
             .unwrap();
         assert_eq!(item1, loaded_item);
 
@@ -694,13 +696,16 @@ mod repository_test {
         let repo = InvoiceLineRowRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.upsert_one(&item1).unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap().unwrap();
         assert_eq!(item1, loaded_item);
 
         // row with optional field
         let item2_optional = data::invoice_line_2();
         repo.upsert_one(&item2_optional).unwrap();
-        let loaded_item = repo.find_one_by_id(item2_optional.id.as_str()).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(item2_optional.id.as_str())
+            .unwrap()
+            .unwrap();
         assert_eq!(item2_optional, loaded_item);
 
         // find_many_by_invoice_id:
@@ -1092,7 +1097,7 @@ mod repository_test {
         // Note: this test is disabled when running tests using in 'memory' sqlite.
         // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
         // https://sqlite.org/rescode.html#locked
-        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivelant available for shared cache connections (SQLITE_LOCKED).
+        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
         // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
 
         /*

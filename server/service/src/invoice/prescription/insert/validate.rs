@@ -1,5 +1,7 @@
-use crate::invoice::{check_invoice_does_not_exists, InvoiceAlreadyExistsError};
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::{
+    invoice::check_invoice_exists,
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
+};
 use repository::StorageConnection;
 
 use super::{InsertPrescription, InsertPrescriptionError};
@@ -10,10 +12,9 @@ pub fn validate(
     input: &InsertPrescription,
 ) -> Result<(), InsertPrescriptionError> {
     use InsertPrescriptionError::*;
-    check_invoice_does_not_exists(&input.id, connection).map_err(|e| match e {
-        InvoiceAlreadyExistsError::InvoiceAlreadyExists => InvoiceAlreadyExists,
-        InvoiceAlreadyExistsError::RepositoryError(err) => DatabaseError(err),
-    })?;
+    if let Some(_) = check_invoice_exists(&input.id, connection)? {
+        return Err(InvoiceAlreadyExists);
+    }
 
     check_other_party(
         connection,

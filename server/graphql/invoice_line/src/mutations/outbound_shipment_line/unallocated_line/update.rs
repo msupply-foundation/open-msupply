@@ -90,7 +90,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
         }
         ServiceError::InvoiceDoesNotExist => {
-            //TODO: Change all to std error or update check_line_exists_option
+            //TODO: Change all to std error or update check_line_exists
             //https://github.com/openmsupply/open-msupply/pull/366#discussion_r930574975
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,

@@ -794,7 +794,7 @@ impl InvoiceTransferTester {
 
     pub(crate) fn check_outbound_shipment_was_linked(&self, connection: &StorageConnection) {
         let outbound_shipment = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.outbound_shipment.id)
+            .find_one_by_id(&self.outbound_shipment.id)
             .unwrap();
 
         assert!(outbound_shipment.is_some());
@@ -829,7 +829,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceRowRepository::new(connection)
-                .find_one_by_id_option(inbound_shipment_id)
+                .find_one_by_id(inbound_shipment_id)
                 .unwrap(),
             None
         );
@@ -880,7 +880,7 @@ impl InvoiceTransferTester {
 
     pub(crate) fn check_inbound_shipment_was_updated(&mut self, connection: &StorageConnection) {
         let inbound_shipment = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.inbound_shipment.clone().map(|r| r.id).unwrap())
+            .find_one_by_id(&self.inbound_shipment.clone().map(|r| r.id).unwrap())
             .unwrap();
 
         assert!(inbound_shipment.is_some());
@@ -963,7 +963,7 @@ impl InvoiceTransferTester {
         connection: &StorageConnection,
     ) {
         let outbound_shipment = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.outbound_shipment.id)
+            .find_one_by_id(&self.outbound_shipment.id)
             .unwrap();
 
         assert!(outbound_shipment.is_some());
@@ -1070,7 +1070,7 @@ impl InvoiceTransferTester {
 
     pub(crate) fn check_outbound_return_was_linked(&self, connection: &StorageConnection) {
         let outbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.outbound_return.id)
+            .find_one_by_id(&self.outbound_return.id)
             .unwrap();
 
         assert!(outbound_return.is_some());
@@ -1105,7 +1105,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceRowRepository::new(connection)
-                .find_one_by_id_option(inbound_return_id)
+                .find_one_by_id(inbound_return_id)
                 .unwrap(),
             None
         );
@@ -1150,7 +1150,7 @@ impl InvoiceTransferTester {
 
     pub(crate) fn check_inbound_return_was_updated(&mut self, connection: &StorageConnection) {
         let inbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.inbound_return.clone().map(|r| r.id).unwrap())
+            .find_one_by_id(&self.inbound_return.clone().map(|r| r.id).unwrap())
             .unwrap();
 
         assert!(inbound_return.is_some());
@@ -1225,7 +1225,7 @@ impl InvoiceTransferTester {
         connection: &StorageConnection,
     ) {
         let outbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.outbound_return.id)
+            .find_one_by_id(&self.outbound_return.id)
             .unwrap();
 
         assert!(outbound_return.is_some());

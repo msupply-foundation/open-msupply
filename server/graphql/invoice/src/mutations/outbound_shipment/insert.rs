@@ -309,6 +309,7 @@ mod graphql {
 
         let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -336,6 +337,7 @@ mod graphql {
 
         let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(new_invoice.name_store_id, None);

@@ -214,7 +214,7 @@ mod test {
         //test entry has been deleted
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option(&invoice_line_id)
+                .find_one_by_id(&invoice_line_id)
                 .unwrap(),
             None
         );
