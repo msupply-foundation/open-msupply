@@ -3379,12 +3379,6 @@ export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInte
   description: Scalars['String']['output'];
 };
 
-export type MergeRequiredError = UpdateDocumentErrorInterface & {
-  __typename: 'MergeRequiredError';
-  autoMerge?: Maybe<RawDocumentNode>;
-  description: Scalars['String']['output'];
-};
-
 export type MissingCredentials = UpdateUserErrorInterface & {
   __typename: 'MissingCredentials';
   description: Scalars['String']['output'];
@@ -3478,7 +3472,6 @@ export type Mutations = {
   updateAsset: UpdateAssetResponse;
   updateContactTrace: UpdateContactTraceResponse;
   updateDisplaySettings: UpdateDisplaySettingsResponse;
-  updateDocument: UpdateDocumentResponse;
   updateEncounter: UpdateEncounterResponse;
   updateInboundReturn: UpdateInboundReturnResponse;
   updateInboundReturnLines: UpdateInboundReturnLinesResponse;
@@ -3906,12 +3899,6 @@ export type MutationsUpdateContactTraceArgs = {
 
 export type MutationsUpdateDisplaySettingsArgs = {
   input: DisplaySettingsInput;
-};
-
-
-export type MutationsUpdateDocumentArgs = {
-  input: UpdateDocumentInput;
-  storeId: Scalars['String']['input'];
 };
 
 
@@ -5488,17 +5475,6 @@ export type QueriesTemperatureNotificationsArgs = {
   storeId: Scalars['String']['input'];
 };
 
-export type RawDocumentNode = {
-  __typename: 'RawDocumentNode';
-  author: Scalars['String']['output'];
-  data: Scalars['String']['output'];
-  name: Scalars['String']['output'];
-  parents: Array<Scalars['String']['output']>;
-  schemaId?: Maybe<Scalars['String']['output']>;
-  timestamp: Scalars['DateTime']['output'];
-  type: Scalars['String']['output'];
-};
-
 export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
@@ -6598,28 +6574,6 @@ export type UpdateDisplaySettingsError = {
 };
 
 export type UpdateDisplaySettingsResponse = UpdateDisplaySettingsError | UpdateResult;
-
-export type UpdateDocumentError = {
-  __typename: 'UpdateDocumentError';
-  error: UpdateDocumentErrorInterface;
-};
-
-export type UpdateDocumentErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdateDocumentInput = {
-  author: Scalars['String']['input'];
-  data: Scalars['JSON']['input'];
-  name: Scalars['String']['input'];
-  parents: Array<Scalars['String']['input']>;
-  patientId?: InputMaybe<Scalars['String']['input']>;
-  schemaId?: InputMaybe<Scalars['String']['input']>;
-  timestamp: Scalars['DateTime']['input'];
-  type: Scalars['String']['input'];
-};
-
-export type UpdateDocumentResponse = DocumentNode | UpdateDocumentError;
 
 export type UpdateEncounterInput = {
   /** Encounter document data */
