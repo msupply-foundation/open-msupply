@@ -9,9 +9,11 @@ import {
   Platform,
 } from '@openmsupply-client/common';
 
-interface ProgramAppBarButtonsProps {}
+interface ProgramAppBarButtonsProps {
+  onCreate: () => void;
+}
 
-export const AppBarButtons = ({}: ProgramAppBarButtonsProps) => {
+export const AppBarButtons = ({ onCreate }: ProgramAppBarButtonsProps) => {
   const t = useTranslation('catalogue');
 
   return (
@@ -22,9 +24,7 @@ export const AppBarButtons = ({}: ProgramAppBarButtonsProps) => {
           startIcon={<DownloadIcon />}
           variant="outlined"
           isLoading={false}
-          onClick={() => {
-            console.info('create new immunisation');
-          }}
+          onClick={onCreate}
         >
           {t('button.add-new-immunisation')}
         </LoadingButton>
