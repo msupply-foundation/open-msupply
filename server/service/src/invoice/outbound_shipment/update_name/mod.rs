@@ -72,8 +72,7 @@ pub fn update_outbound_shipment_name(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_invoice_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
 
     Ok(invoice)
 }
@@ -304,9 +303,7 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            invoice_row_repo
-                .find_one_by_id_option(&invoice().id)
-                .unwrap(),
+            invoice_row_repo.find_one_by_id(&invoice().id).unwrap(),
             None
         );
         assert_eq!(
@@ -317,7 +314,7 @@ mod test {
         );
         assert_eq!(
             invoice_row_repo
-                .find_one_by_id_option(&updated_invoice.invoice_row.id)
+                .find_one_by_id(&updated_invoice.invoice_row.id)
                 .unwrap()
                 .unwrap(),
             updated_invoice.invoice_row

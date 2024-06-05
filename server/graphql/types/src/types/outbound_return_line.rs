@@ -106,7 +106,7 @@ impl OutboundReturnLineNode {
         self.return_line.available_number_of_packs
     }
 
-    pub async fn pack_size(&self) -> &i32 {
-        &self.stock_line_row().pack_size
+    pub async fn pack_size(&self) -> f64 {
+        self.stock_line_row().pack_size
     }
 }

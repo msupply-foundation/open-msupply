@@ -3,9 +3,9 @@ use repository::{
     StorageConnection,
 };
 
-pub fn check_pack_size(pack_size_option: Option<u32>) -> bool {
+pub fn check_pack_size(pack_size_option: Option<f64>) -> bool {
     if let Some(pack_size) = pack_size_option {
-        if pack_size < 1 {
+        if pack_size < 1.0 {
             return false;
         }
     }
@@ -27,10 +27,12 @@ pub fn check_batch(
 
 pub fn check_batch_stock_reserved(
     line: &InvoiceLineRow,
-    batch: StockLineRow,
+    batch: Option<StockLineRow>,
 ) -> Result<bool, RepositoryError> {
-    if line.number_of_packs != batch.available_number_of_packs {
-        return Ok(false);
+    if let Some(batch) = batch {
+        if line.number_of_packs != batch.available_number_of_packs {
+            return Ok(false);
+        }
     }
     Ok(true)
 }

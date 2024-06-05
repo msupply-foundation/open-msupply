@@ -1,8 +1,7 @@
 use repository::Name;
 use repository::StorageConnection;
 
-use crate::invoice::check_invoice_does_not_exists;
-use crate::invoice::InvoiceAlreadyExistsError;
+use crate::invoice::check_invoice_exists;
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 
 use super::{InsertOutboundShipment, InsertOutboundShipmentError};
@@ -13,10 +12,9 @@ pub fn validate(
     input: &InsertOutboundShipment,
 ) -> Result<Name, InsertOutboundShipmentError> {
     use InsertOutboundShipmentError::*;
-    check_invoice_does_not_exists(&input.id, connection).map_err(|e| match e {
-        InvoiceAlreadyExistsError::InvoiceAlreadyExists => InvoiceAlreadyExists,
-        InvoiceAlreadyExistsError::RepositoryError(err) => DatabaseError(err),
-    })?;
+    if let Some(_) = check_invoice_exists(&input.id, connection)? {
+        return Err(InvoiceAlreadyExists);
+    }
 
     let other_party = check_other_party(
         connection,
