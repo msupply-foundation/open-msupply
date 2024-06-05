@@ -36,7 +36,7 @@ export enum AppRoute {
   MasterLists = 'master-lists',
 
   Manage = 'manage',
-  Programs = 'program',
+  Programs = 'programs',
   Facilities = 'facilities',
 
   Tools = 'tools',

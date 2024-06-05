@@ -8,7 +8,7 @@ import {
   AppNavSection,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 import { PowerIcon } from '@openmsupply-client/common/src/ui/icons/Power';
 
@@ -33,12 +33,12 @@ export const ProgramsNav: FC = () => {
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            visible={visible}
+            visible={isCentralServer && Environment.FEATURE_GAPS}
             end
             to={RouteBuilder.create(AppRoute.Programs)
               .addPart(AppRoute.Immunisations)
               .build()}
-            text={t('immunisations')}
+            text={t('label.programs-immunisations')}
           />
         </List>
       </Collapse>
