@@ -18,7 +18,7 @@ import { GrowthRow } from './GrowthRow';
 import { populationColumn } from './PopulationColumn';
 import { Footer } from './Footer';
 import { GENERAL_POPULATION_ID, useDemographicData } from '../api';
-import { recursiveCalculate, toIndicatorFragment } from './utils';
+import { calculateAcrossRow, toIndicatorFragment } from './utils';
 
 export interface Row {
   isNew: boolean;
@@ -39,7 +39,7 @@ export interface HeaderValue {
   value: number;
 }
 
-// header data (still unsure how this will be stored)
+// header data (not currently stored)
 const headerData: HeaderValue[] = [
   { id: '1', value: 1.1 },
   { id: '2', value: 1.2 },
@@ -83,9 +83,10 @@ const IndicatorsDemographicsComponent: FC = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'percentage', dir: 'desc' },
   });
-
-  const { draft, setDraft } = useDemographicData.document.listIndicator();
   const [indexPopulation, setIndexPopulation] = useState<number>();
+
+  const { draft, setDraft } =
+    useDemographicData.document.listIndicator(headerData);
 
   const draftHeaders = ArrayUtils.toObject(headerData);
   const [isDirty, setIsDirty] = useState(false);
@@ -102,7 +103,6 @@ const IndicatorsDemographicsComponent: FC = () => {
     setIsDirty(true);
     const currentDraft = { ...draft, [patch.id]: patch } as Record<string, Row>;
     let updatedDraft = {} as Record<string, Row>;
-    // TODO
     const indexPopulationChange =
       patch.basePopulation !== draft[patch.id]?.basePopulation &&
       patch.id === GENERAL_POPULATION_ID;
@@ -173,44 +173,11 @@ const IndicatorsDemographicsComponent: FC = () => {
     setDraft({ ...currentDraft, ...updatedDraft });
   };
 
-  const calculateAcrossRow = (
-    row: Row,
-    updatedHeader: { [x: string]: HeaderValue },
-    indexValue?: number | undefined
-  ) => {
-    let updatedRow = row;
-
-    // only update numeric entries
-    const rowNumberKeys = Object.keys(row).filter(
-      key =>
-        !isNaN(parseFloat(key)) &&
-        !(row.id === GENERAL_POPULATION_ID && parseFloat(key) == 0)
-    );
-
-    Object.values(rowNumberKeys).forEach(key => {
-      const columnKey = parseInt(key);
-      updatedRow = {
-        ...updatedRow,
-        [columnKey]: recursiveCalculate(
-          columnKey,
-          updatedHeader,
-          row,
-          indexValue
-        ),
-      };
-    });
-    // for case where general population is changed, set this value in row
-    if (row.id === GENERAL_POPULATION_ID) {
-      updatedRow = { ...updatedRow, [0]: indexValue ?? indexPopulation ?? 0 };
-    }
-    updatedRow = { ...updatedRow, basePopulation: indexPopulation ?? 0 };
-
-    return updatedRow;
-  };
-
   const insertIndicator = async (row: Row) => {
     try {
-      await insertDemographicIndicator(toIndicatorFragment(row));
+      await insertDemographicIndicator(
+        toIndicatorFragment(row, indexPopulation)
+      );
     } catch (e) {
       console.error(e);
     }
@@ -218,7 +185,9 @@ const IndicatorsDemographicsComponent: FC = () => {
 
   const updateIndicator = async (row: Row) => {
     try {
-      await updateDemographicIndicator(toIndicatorFragment(row));
+      await updateDemographicIndicator(
+        toIndicatorFragment(row, indexPopulation)
+      );
     } catch (e) {
       console.error(e);
     }

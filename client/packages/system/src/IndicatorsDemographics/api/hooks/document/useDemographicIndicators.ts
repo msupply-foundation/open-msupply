@@ -7,11 +7,16 @@ import {
   ArrayUtils,
 } from '@openmsupply-client/common';
 import { useDemographicsApi } from '../utils/useDemographicApi';
-import { Row, toRow } from '../../../DetailView/IndicatorsDemographics';
+import {
+  HeaderValue,
+  Row,
+  toRow,
+} from '../../../DetailView/IndicatorsDemographics';
 import { useEffect, useState } from 'react';
 import { GENERAL_POPULATION_ID } from '../..';
+import { calculateAcrossRow } from '../../../DetailView/utils';
 
-export const useDemographicIndicators = () => {
+export const useDemographicIndicators = (headerData: HeaderValue[]) => {
   const t = useTranslation();
 
   const { queryParams } = useUrlQueryParams({
@@ -44,15 +49,23 @@ export const useDemographicIndicators = () => {
       // later we could save generalPopulationRows in the database which are unique for anygivenyear? Their id could be something
       // like GENERAL_POPULATION_ID_<year>
       basePopulation: data?.nodes[0]?.basePopulation ?? 0,
-      year1Projection: 0,
+      year1Projection: data?.nodes[0]?.basePopulation ?? 0,
       year2Projection: 0,
       year3Projection: 0,
       year4Projection: 0,
       year5Projection: 0,
     };
-    const nodes = uniqBy([generalRow, ...data?.nodes], 'id');
+
+    const generalRowCalculated = calculateAcrossRow(
+      toRow(generalRow),
+      ArrayUtils.toObject(headerData),
+      generalRow.basePopulation
+    );
+
+    const nodes = [...data?.nodes];
     const nodesAsRow = nodes.map(row => toRow(row));
-    const draftRows = ArrayUtils.toObject(nodesAsRow);
+    const nodesFiltered = uniqBy([generalRowCalculated, ...nodesAsRow], 'id');
+    const draftRows = ArrayUtils.toObject(nodesFiltered);
     setDraft(draftRows);
   }, [data, t]);
 
