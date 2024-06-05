@@ -18,7 +18,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
         stock_line_id: None,
         batch: Some(String::from("item_a_line_a")),
         expiry_date: Some(NaiveDate::from_ymd_opt(2020, 8, 2).unwrap()),
-        pack_size: 1,
+        pack_size: 1.0,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_before_tax: 2.0,

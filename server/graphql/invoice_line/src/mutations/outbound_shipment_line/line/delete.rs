@@ -98,9 +98,11 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             )))
         }
         // Standard Graphql Errors
-        NotThisInvoiceLine(_) | InvoiceTypeDoesNotMatch | NoInvoiceType | NotThisStoreInvoice => {
-            StandardGraphqlError::BadUserInput(formatted_error)
-        }
+        NotThisInvoiceLine(_)
+        | InvoiceTypeDoesNotMatch
+        | NoInvoiceType
+        | NotThisStoreInvoice
+        | StockLineDoesNotExist => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
     };
 

@@ -149,7 +149,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     lastSuccessfulSync,
     updateUser,
     error: updateUserError,
-  } = useUpdateUserInfo(setCookie, cookie);
+  } = useUpdateUserInfo(setCookie, cookie, mostRecentCredentials);
 
   const logout = () => {
     Cookies.remove('auth');

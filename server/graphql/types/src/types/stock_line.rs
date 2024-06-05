@@ -37,7 +37,7 @@ impl StockLineNode {
     pub async fn batch(&self) -> &Option<String> {
         &self.row().batch
     }
-    pub async fn pack_size(&self) -> i32 {
+    pub async fn pack_size(&self) -> f64 {
         self.row().pack_size
     }
     pub async fn cost_price_per_pack(&self) -> f64 {

@@ -89,6 +89,7 @@ mod test {
 
         let stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
