@@ -1,12 +1,10 @@
 import React from 'react';
 import {
-  DownloadIcon,
+  PlusCircleIcon,
   AppBarButtonsPortal,
   Grid,
   useTranslation,
-  LoadingButton,
-  EnvUtils,
-  Platform,
+  ButtonWithIcon,
 } from '@openmsupply-client/common';
 
 interface ImmunisationsAppBarButtonsProps {
@@ -16,20 +14,20 @@ interface ImmunisationsAppBarButtonsProps {
 export const AppBarButtons = ({
   onCreate,
 }: ImmunisationsAppBarButtonsProps) => {
-  const t = useTranslation('catalogue');
+  const t = useTranslation('coldchain');
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <LoadingButton
-          disabled={EnvUtils.platform === Platform.Android}
-          startIcon={<DownloadIcon />}
+        <ButtonWithIcon
+          startIcon={<PlusCircleIcon />}
           variant="outlined"
-          isLoading={false}
           onClick={onCreate}
+          Icon={<PlusCircleIcon />}
+          label={t('button.add-new-program')}
         >
           {t('button.add-new-program')}
-        </LoadingButton>
+        </ButtonWithIcon>
       </Grid>
     </AppBarButtonsPortal>
   );

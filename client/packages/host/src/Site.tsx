@@ -31,6 +31,7 @@ import {
   DispensaryRouter,
   ColdChainRouter,
   ManageRouter,
+  ProgramsRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -141,6 +142,12 @@ export const Site: FC = () => {
                         .addWildCard()
                         .build()}
                       element={<ManageRouter />}
+                    />
+                    <Route
+                      path={RouteBuilder.create(AppRoute.Programs)
+                        .addWildCard()
+                        .build()}
+                      element={<ProgramsRouter />}
                     />
                     <Route
                       path="/"
