@@ -31,6 +31,7 @@ use crate::{
     pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     processors::ProcessorsTrigger,
+    program::ProgramServiceTrait,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
@@ -132,6 +133,7 @@ pub struct ServiceProvider {
     pub asset_service: Box<dyn AssetServiceTrait>,
     // Label Printer
     pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
+    pub program_service: Box<dyn ProgramServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -212,6 +214,7 @@ impl ServiceProvider {
             label_printer_settings_service: Box::new(
                 crate::label_printer_settings_service::LabelPrinterSettingsService {},
             ),
+            program_service: Box::new(crate::program::ProgramService {}),
         }
     }
 
