@@ -22,14 +22,14 @@ const createNewProgram = (seed?: any | null): any => ({
   ...seed,
 });
 
-interface UseDraftLogReasonControl {
+interface UseDraftImmunisationControl {
   draft: any;
   onUpdate: (patch: Partial<any>) => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
 }
 
-const useDraftProgram = (): UseDraftLogReasonControl => {
+const useDraftProgram = (): UseDraftImmunisationControl => {
   const [program, setProgram] = useState<any>(() => createNewProgram());
 
   const onUpdate = (patch: Partial<any>) => {

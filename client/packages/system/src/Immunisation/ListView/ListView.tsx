@@ -30,7 +30,7 @@ const ProgramListComponent: FC = () => {
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation('coldchain');
 
   // later this will make api call
   const draft: Program[] = [];
@@ -62,7 +62,9 @@ const ProgramListComponent: FC = () => {
         data={Object.values(draft)}
         isLoading={false}
         onRowClick={row => navigate(row.id)}
-        noDataElement={<NothingHere body={t('error.no-master-lists')} />}
+        noDataElement={
+          <NothingHere body={t('error.no-immunisation-programs')} />
+        }
       />
     </>
   );
