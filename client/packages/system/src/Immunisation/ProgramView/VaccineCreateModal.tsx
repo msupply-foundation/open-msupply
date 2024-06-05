@@ -9,6 +9,7 @@ import {
   BasicTextInput,
   Box,
   InputLabel,
+  Autocomplete,
 } from '@openmsupply-client/common';
 
 interface VaccineCreateModalProps {
@@ -19,6 +20,9 @@ interface VaccineCreateModalProps {
 const createNewProgram = (seed?: any | null): any => ({
   id: FnUtils.generateUUID(),
   name: '',
+  demographicGroup: '',
+  coverageRate: '',
+  calculatedDemand: '',
   ...seed,
 });
 
@@ -83,6 +87,33 @@ export const VaccineCreateModal: FC<VaccineCreateModalProps> = ({
               autoFocus
               value={draft.name}
               onChange={e => onUpdate({ name: e.target.value })}
+            />
+            <InputLabel>{t('label.demographic-group')}</InputLabel>
+            <Autocomplete
+              fullWidth
+              autoFocus
+              value={draft.demographicGroup}
+              onChange={(_e, selected) =>
+                onUpdate({ demographicGroup: selected?.valueOf })
+              }
+              options={[
+                { label: 'an option', key: 1 },
+                { label: 'another option', key: 2 },
+              ]}
+            />
+            <InputLabel>{t('label.coverage-rate')}</InputLabel>
+            <BasicTextInput
+              fullWidth
+              autoFocus
+              value={draft.coverageRate}
+              onChange={e => onUpdate({ coverageRate: e.target.value })}
+            />
+            <InputLabel>{t('label.calculated-demand')}</InputLabel>
+            <BasicTextInput
+              fullWidth
+              autoFocus
+              value={draft.calculatedDemand}
+              onChange={e => onUpdate({ calculatedDemand: e.target.value })}
             />
           </Box>
         </Grid>
