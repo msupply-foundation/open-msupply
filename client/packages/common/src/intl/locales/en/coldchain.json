@@ -7,6 +7,7 @@
   "button.upload-assets": "Import",
   "button.view-all-breaches": "View all breaches",
   "button.view-details": "View Details",
+  "error.no-immunisation-programs": "No Immunizations found",
   "error.asset-not-found": "Asset not found",
   "button.create-log-reason": "Create log reason",
   "error.cce-asset-number-already-used": "CCE asset number already in use, please use another number",
