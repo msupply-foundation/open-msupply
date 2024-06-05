@@ -64,6 +64,7 @@ pub enum ActivityLogNodeType {
     AssetLogReasonCreated,
     AssetLogReasonDeleted,
     AssetPropertyCreated,
+    ProgramCreated,
 }
 
 #[Object]
@@ -183,6 +184,7 @@ impl ActivityLogNodeType {
             from::AssetLogReasonCreated => to::AssetLogReasonCreated,
             from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
             from::AssetPropertyCreated => to::AssetPropertyCreated,
+            from::ProgramCreated => to::ProgramCreated,
         }
     }
 
@@ -232,6 +234,7 @@ impl ActivityLogNodeType {
             from::AssetLogReasonCreated => to::AssetLogReasonCreated,
             from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
             from::AssetPropertyCreated => to::AssetPropertyCreated,
+            from::ProgramCreated => to::ProgramCreated,
         }
     }
 }

@@ -44,6 +44,7 @@ pub mod plugin;
 pub mod plugin_data;
 pub mod print;
 pub mod processors;
+pub mod program;
 pub mod programs;
 pub mod repack;
 pub mod report;
