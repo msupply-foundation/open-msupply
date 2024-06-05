@@ -4,4 +4,4 @@ export * from './InventoryNav';
 export * from './ReplenishmentNav';
 export * from './DispensaryNav';
 export * from './ManageNav';
-export * from './ProgramNav';
+export * from './ProgramsNav';
