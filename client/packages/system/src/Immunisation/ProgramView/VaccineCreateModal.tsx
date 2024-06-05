@@ -11,7 +11,7 @@ import {
   InputLabel,
 } from '@openmsupply-client/common';
 
-interface ImmunisationProgramCreateModalProps {
+interface VaccineCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
@@ -22,14 +22,14 @@ const createNewProgram = (seed?: any | null): any => ({
   ...seed,
 });
 
-interface UseDraftProgramControl {
+interface UseDraftVaccineControl {
   draft: any;
   onUpdate: (patch: Partial<any>) => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
 }
 
-const useDraftProgram = (): UseDraftProgramControl => {
+const useDraftProgram = (): UseDraftVaccineControl => {
   const [program, setProgram] = useState<any>(() => createNewProgram());
 
   const onUpdate = (patch: Partial<any>) => {
@@ -50,9 +50,10 @@ const useDraftProgram = (): UseDraftProgramControl => {
   };
 };
 
-export const ImmunisationProgramCreateModal: FC<
-  ImmunisationProgramCreateModalProps
-> = ({ isOpen, onClose }) => {
+export const VaccineCreateModal: FC<VaccineCreateModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['catalogue']);
   const { draft, onUpdate, onSave, isLoading } = useDraftProgram();

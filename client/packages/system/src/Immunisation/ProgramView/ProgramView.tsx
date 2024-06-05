@@ -10,9 +10,11 @@ import {
   useTranslation,
   useUrlQueryParams,
   useColumns,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { VaccineCreateModal } from './VaccineCreateModal';
 
 // dummy data
 const data = {
@@ -58,10 +60,14 @@ export const ProgramComponent: FC = () => {
     setSuffix(data?.name ?? '');
   }, [setSuffix]);
 
+  // create modal will generate vaccine for program. Onclick will navigate for detailed edit
+  const { isOpen, onClose, onOpen } = useEditModal<any>();
+
   return !!data ? (
     <>
+      {isOpen && <VaccineCreateModal isOpen={isOpen} onClose={onClose} />}
       <Toolbar />
-      <AppBarButtons />
+      <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'Program list'}
         pagination={{ ...pagination }}
