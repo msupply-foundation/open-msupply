@@ -8,12 +8,17 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { ProgramListView } from '../ListView';
 import { ProgramView } from '../ProgramView';
+import { ImmunisationDetailView } from '../DetailView';
 
 export const ImmunisationService: FC = () => {
   const immunisationsRoute = RouteBuilder.create(
     AppRoute.Immunisations
   ).build();
   const immunisationRoute = RouteBuilder.create(AppRoute.Immunisations)
+    .addPart(':id')
+    .build();
+  const immunisationDetailRoute = RouteBuilder.create(AppRoute.Immunisations)
+    .addPart(':id')
     .addPart(':id')
     .build();
 
@@ -24,6 +29,10 @@ export const ImmunisationService: FC = () => {
     <Routes>
       <Route path={immunisationsRoute} element={<ProgramListView />} />
       <Route path={immunisationRoute} element={<ProgramView />} />
+      <Route
+        path={immunisationDetailRoute}
+        element={<ImmunisationDetailView />}
+      />
     </Routes>
   );
 };
