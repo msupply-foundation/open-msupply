@@ -475,6 +475,10 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::SetupAssets => {
                 output.insert(PermissionType::AssetCatalogueItemMutate);
             }
+            // TODO: a more relevant permission?
+            Permissions::EditNameCategories => {
+                output.insert(PermissionType::NamePropertiesMutate);
+            }
             _ => continue,
         }
     }
