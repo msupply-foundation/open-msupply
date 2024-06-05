@@ -32,10 +32,8 @@ const ProgramListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
 
-  const draftPrograms: Record<string, Program> = {};
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [draft] = useState<Record<string, Program>>(draftPrograms);
+  // later this will make api call
+  const draft: Program[] = [];
 
   const columns = useColumns(
     ['name', 'description'],
