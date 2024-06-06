@@ -1,8 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueViolation,
-    },
+    simple_generic_errors::RecordAlreadyExist,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -98,6 +96,8 @@ fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
             ))
         }
         // Standard Graphql Errors
+        ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
