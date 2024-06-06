@@ -6,6 +6,7 @@ import { useNames } from './useNames';
 import { useFacilities } from './useFacilities';
 import { useDonors } from './useDonors';
 import { useNameProperties } from './useNameProperties';
+import { useUpdateProperties } from './useUpdateProperties';
 
 export const Document = {
   useCustomers,
@@ -13,6 +14,7 @@ export const Document = {
   useSuppliers,
   useInternalSuppliers,
   useName,
+  useUpdateProperties,
   useNames,
   useDonors,
   useNameProperties,
