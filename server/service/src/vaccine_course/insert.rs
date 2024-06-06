@@ -1,4 +1,7 @@
-use super::query::get_vaccine_course;
+use super::{
+    query::get_vaccine_course,
+    validate::{check_demographic_indicator_exists, check_program_exists},
+};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext,
     vaccine_course::validate::check_vaccine_course_exists, SingleRecordError,
@@ -13,6 +16,8 @@ use repository::{
 pub enum InsertVaccineCourseError {
     VaccineCourseAlreadyExists,
     CreatedRecordNotFound,
+    ProgramDoesNotExist,
+    DemographicIndicatorDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -56,6 +61,14 @@ pub fn validate(
 ) -> Result<(), InsertVaccineCourseError> {
     if check_vaccine_course_exists(&input.id, connection)?.is_some() {
         return Err(InsertVaccineCourseError::VaccineCourseAlreadyExists);
+    }
+
+    if check_program_exists(&input.program_id, connection)?.is_none() {
+        return Err(InsertVaccineCourseError::ProgramDoesNotExist);
+    }
+
+    if check_demographic_indicator_exists(&input.demographic_indicator_id, connection)?.is_none() {
+        return Err(InsertVaccineCourseError::DemographicIndicatorDoesNotExist);
     }
 
     Ok(())
