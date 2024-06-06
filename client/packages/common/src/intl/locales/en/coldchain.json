@@ -16,8 +16,7 @@
   "label.coverage-rate": "Coverage Rate",
   "label.vaccine-items": "Vaccine Items",
   "label.calculated-demand": "Calculated Demand",
-  "label.number-of-doses": "Number of Doses",
-  "label.dose-number": "dose #",
+
   "label.day": "day",
   "label.target-demographic": "Target Demographic",
   "error.no-immunisation-programs": "No Immunization programs found",
