@@ -8,6 +8,7 @@ mod clinician;
 pub mod common;
 mod context;
 mod currency;
+mod demographic;
 mod document;
 mod document_registry;
 mod form_schema;
@@ -61,6 +62,7 @@ pub use clinician::*;
 use common::*;
 pub use context::*;
 pub use currency::*;
+pub use demographic::*;
 pub use document::*;
 pub use document_registry::*;
 pub use form_schema::*;
@@ -560,6 +562,11 @@ impl MockDataInserts {
         self.asset_logs = true;
         self
     }
+
+    pub fn demographic_indicators(mut self) -> Self {
+        self.demographic_indicators = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -636,6 +643,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             clinicians: mock_clinicians(),
             assets: mock_assets(),
             asset_logs: mock_asset_logs(),
+            demographic_indicators: mock_demographic_indicators(),
             ..Default::default()
         },
     );
@@ -1053,6 +1061,13 @@ pub fn insert_mock_data(
         if inserts.asset_logs {
             let repo = AssetLogRowRepository::new(connection);
             for row in &mock_data.asset_logs {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.demographic_indicators {
+            let repo = crate::DemographicIndicatorRowRepository::new(connection);
+            for row in &mock_data.demographic_indicators {
                 repo.upsert_one(row).unwrap();
             }
         }
