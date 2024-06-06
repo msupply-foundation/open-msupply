@@ -37,8 +37,8 @@ import {
 import { Footer } from './Footer';
 import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
-import defaultPatientSchema from '../DefaultPatientSchema.json';
-import defaultPatientUISchema from '../DefaultPatientUISchema.json';
+import defaultPatientSchema from './DefaultPatientSchema.json';
+import defaultPatientUISchema from './DefaultPatientUISchema.json';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,

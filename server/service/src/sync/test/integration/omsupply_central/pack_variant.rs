@@ -29,7 +29,7 @@ impl SyncRecordTester for PackVariantTester {
             item_id: item_id.clone(),
             short_name: uuid(),
             long_name: uuid(),
-            pack_size: 20,
+            pack_size: 20.0,
             is_active: true,
         };
 

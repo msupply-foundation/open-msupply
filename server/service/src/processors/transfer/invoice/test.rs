@@ -525,7 +525,7 @@ impl InvoiceTransferTester {
             r.item_link_id = item1.id.clone();
             r.batch = Some(uuid());
             r.expiry_date = Some(NaiveDate::from_ymd_opt(2025, 3, 1).unwrap());
-            r.pack_size = 10;
+            r.pack_size = 10.0;
             r.total_number_of_packs = 200.0;
             r.available_number_of_packs = 200.0;
         });
@@ -552,7 +552,7 @@ impl InvoiceTransferTester {
             r.store_id = outbound_store.id.clone();
             r.item_link_id = item2.id.clone();
             r.batch = Some(uuid());
-            r.pack_size = 10;
+            r.pack_size = 10.0;
             r.total_number_of_packs = 200.0;
             r.available_number_of_packs = 200.0;
             r.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 1, 5).unwrap());
@@ -579,7 +579,7 @@ impl InvoiceTransferTester {
             r.id = uuid();
             r.invoice_id = outbound_shipment.id.clone();
             r.r#type = InvoiceLineType::UnallocatedStock;
-            r.pack_size = 1;
+            r.pack_size = 1.0;
             r.number_of_packs = 10.0;
             r.item_link_id = item2.id.clone();
             r.item_name = item2.name.clone();
@@ -799,7 +799,7 @@ impl InvoiceTransferTester {
 
     pub(crate) fn check_outbound_shipment_was_linked(&self, connection: &StorageConnection) {
         let outbound_shipment = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.outbound_shipment.id)
+            .find_one_by_id(&self.outbound_shipment.id)
             .unwrap();
 
         assert!(outbound_shipment.is_some());
@@ -834,7 +834,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceRowRepository::new(connection)
-                .find_one_by_id_option(inbound_shipment_id)
+                .find_one_by_id(inbound_shipment_id)
                 .unwrap(),
             None
         );
@@ -885,7 +885,7 @@ impl InvoiceTransferTester {
 
     pub(crate) fn check_inbound_shipment_was_updated(&mut self, connection: &StorageConnection) {
         let inbound_shipment = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.inbound_shipment.clone().map(|r| r.id).unwrap())
+            .find_one_by_id(&self.inbound_shipment.clone().map(|r| r.id).unwrap())
             .unwrap();
 
         assert!(inbound_shipment.is_some());
@@ -968,7 +968,7 @@ impl InvoiceTransferTester {
         connection: &StorageConnection,
     ) {
         let outbound_shipment = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.outbound_shipment.id)
+            .find_one_by_id(&self.outbound_shipment.id)
             .unwrap();
 
         assert!(outbound_shipment.is_some());
@@ -1075,7 +1075,7 @@ impl InvoiceTransferTester {
 
     pub(crate) fn check_outbound_return_was_linked(&self, connection: &StorageConnection) {
         let outbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.outbound_return.id)
+            .find_one_by_id(&self.outbound_return.id)
             .unwrap();
 
         assert!(outbound_return.is_some());
@@ -1110,7 +1110,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceRowRepository::new(connection)
-                .find_one_by_id_option(inbound_return_id)
+                .find_one_by_id(inbound_return_id)
                 .unwrap(),
             None
         );
@@ -1155,7 +1155,7 @@ impl InvoiceTransferTester {
 
     pub(crate) fn check_inbound_return_was_updated(&mut self, connection: &StorageConnection) {
         let inbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.inbound_return.clone().map(|r| r.id).unwrap())
+            .find_one_by_id(&self.inbound_return.clone().map(|r| r.id).unwrap())
             .unwrap();
 
         assert!(inbound_return.is_some());
@@ -1230,7 +1230,7 @@ impl InvoiceTransferTester {
         connection: &StorageConnection,
     ) {
         let outbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id_option(&self.outbound_return.id)
+            .find_one_by_id(&self.outbound_return.id)
             .unwrap();
 
         assert!(outbound_return.is_some());

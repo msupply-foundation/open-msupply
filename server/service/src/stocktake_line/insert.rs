@@ -12,7 +12,6 @@ use crate::{
     service_provider::ServiceContext,
     stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::query::get_stocktake_line,
-    u32_to_i32,
 };
 
 use super::validate::{
@@ -30,7 +29,7 @@ pub struct InsertStocktakeLine {
     pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: Option<u32>,
+    pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
@@ -283,7 +282,7 @@ fn generate(
         item_name,
         batch,
         expiry_date,
-        pack_size: pack_size.map(u32_to_i32),
+        pack_size,
         cost_price_per_pack,
         sell_price_per_pack,
         note,
@@ -370,7 +369,7 @@ mod stocktake_line_test {
                 r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 50.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.cost_price_per_pack = 0.0;
                 r.sell_price_per_pack = 0.0;
                 r.total_number_of_packs = 50.0;
@@ -384,7 +383,7 @@ mod stocktake_line_test {
                 r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 20.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.cost_price_per_pack = 0.0;
                 r.sell_price_per_pack = 0.0;
                 r.total_number_of_packs = 30.0;

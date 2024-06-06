@@ -7,9 +7,9 @@ use repository::{
 
 use crate::invoice::check_store;
 use crate::invoice_line::query::get_invoice_line;
+use crate::invoice_line::validate::check_line_exists;
 use crate::{
-    invoice::check_invoice_exists,
-    invoice_line::validate::{check_item_exists, check_line_does_not_exist},
+    invoice::check_invoice_exists, invoice_line::validate::check_item_exists,
     service_provider::ServiceContext,
 };
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -60,7 +60,7 @@ fn validate(
     store_id: &str,
     input: &InsertOutboundShipmentUnallocatedLine,
 ) -> Result<ItemRow, OutError> {
-    if !check_line_does_not_exist(connection, &input.id)? {
+    if let Some(_) = check_line_exists(connection, &input.id)? {
         return Err(OutError::LineAlreadyExists);
     }
 
@@ -103,7 +103,7 @@ fn generate(
     let new_line = InvoiceLineRow {
         id,
         invoice_id,
-        pack_size: 1,
+        pack_size: 1.0,
         number_of_packs: quantity as f64,
         item_link_id: item_id,
         item_code: item.code,
@@ -332,11 +332,12 @@ mod test_insert {
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
                 .find_one_by_id(&result.invoice_line_row.id)
+                .unwrap()
                 .unwrap(),
             InvoiceLineRow {
                 id: "new_line".to_owned(),
                 invoice_id: invoice_id.clone(),
-                pack_size: 1,
+                pack_size: 1.0,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 4.0,
                 item_link_id: item.id.clone(),
