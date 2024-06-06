@@ -81,6 +81,9 @@ pub enum PermissionType {
     AssetCatalogueItemMutate,
     // Names
     NamePropertiesMutate,
+    // demographics
+    DemographicQuery,
+    VaccineCourseMutate,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]

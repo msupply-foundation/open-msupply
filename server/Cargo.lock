@@ -2304,6 +2304,7 @@ dependencies = [
  "graphql_clinician",
  "graphql_cold_chain",
  "graphql_core",
+ "graphql_demographic",
  "graphql_form_schema",
  "graphql_general",
  "graphql_inventory_adjustment",
@@ -2321,6 +2322,7 @@ dependencies = [
  "graphql_stocktake",
  "graphql_stocktake_line",
  "graphql_types",
+ "graphql_vaccine_course",
  "repository",
  "serde 1.0.198",
  "serde_json",
@@ -2453,6 +2455,26 @@ dependencies = [
  "strum",
  "thiserror",
  "tokio",
+ "util",
+]
+
+[[package]]
+name = "graphql_demographic"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.198",
+ "serde_json",
+ "service",
  "util",
 ]
 
@@ -2794,6 +2816,26 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "repository",
+ "serde 1.0.198",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_vaccine_course"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
  "repository",
  "serde 1.0.198",
  "serde_json",

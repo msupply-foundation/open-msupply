@@ -69,7 +69,8 @@ impl<'a> ProgramSupplierRepository<'a> {
                         .on(master_list_dsl::id.eq(master_list_name_join_dsl::master_list_id)),
                 )
                 .inner_join(
-                    program_dsl::program.on(program_dsl::master_list_id.eq(master_list_dsl::id)),
+                    program_dsl::program
+                        .on(program_dsl::master_list_id.eq(master_list_dsl::id.nullable())),
                 );
 
         apply_equal_filter!(query, program_id_filter, program_dsl::id);
@@ -192,7 +193,7 @@ mod test {
         };
         let program1 = ProgramRow {
             id: "program1".to_string(),
-            master_list_id: master_list1.id.clone(),
+            master_list_id: Some(master_list1.id.clone()),
             context_id: context1.id.clone(),
             ..Default::default()
         };
@@ -209,7 +210,7 @@ mod test {
         };
         let program2 = ProgramRow {
             id: "program2".to_string(),
-            master_list_id: master_list2.id.clone(),
+            master_list_id: Some(master_list2.id.clone()),
             context_id: context2.id.clone(),
             ..Default::default()
         };

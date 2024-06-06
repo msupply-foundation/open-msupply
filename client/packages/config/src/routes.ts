@@ -34,8 +34,10 @@ export enum AppRoute {
   Stocktakes = 'stocktakes',
   Locations = 'locations',
   MasterLists = 'master-lists',
+  IndicatorsDemographics = 'indicators-demographics',
 
   Manage = 'manage',
+  Programs = 'programs',
   Facilities = 'facilities',
 
   Tools = 'tools',
@@ -54,6 +56,7 @@ export enum AppRoute {
   Items = 'items',
   Assets = 'assets',
   LogReasons = 'log-reasons',
+  Immunisations = 'immunisations',
 
   PageNotFound = 'page-not-found',
 }

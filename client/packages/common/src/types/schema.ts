@@ -107,6 +107,7 @@ export enum ActivityLogNodeType {
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
+  ProgramCreated = 'PROGRAM_CREATED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
@@ -125,7 +126,8 @@ export enum ActivityLogNodeType {
   StockOffHold = 'STOCK_OFF_HOLD',
   StockOnHold = 'STOCK_ON_HOLD',
   StockSellPriceChange = 'STOCK_SELL_PRICE_CHANGE',
-  UserLoggedIn = 'USER_LOGGED_IN'
+  UserLoggedIn = 'USER_LOGGED_IN',
+  VaccineCourseCreated = 'VACCINE_COURSE_CREATED'
 }
 
 export type ActivityLogResponse = ActivityLogConnector;
@@ -870,11 +872,25 @@ export type CentralPatientSearchInput = {
 
 export type CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError;
 
+export type CentralProgramsMutations = {
+  __typename: 'CentralProgramsMutations';
+  insertImmunisationProgram: InsertImmunisationProgramResponse;
+};
+
+
+export type CentralProgramsMutationsInsertImmunisationProgramArgs = {
+  input: InsertImmunisationProgramInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
+  demographic: DemographicMutations;
   logReason: AssetLogReasonMutations;
   packVariant: PackVariantMutations;
+  program: CentralProgramsMutations;
+  vaccineCourse: VaccineCourseMutations;
 };
 
 export type ClinicianConnector = {
@@ -1100,7 +1116,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1473,6 +1489,105 @@ export type DeleteStocktakeResponseWithId = {
   id: Scalars['String']['output'];
   response: DeleteStocktakeResponse;
 };
+
+export type DemographicIndicatorConnector = {
+  __typename: 'DemographicIndicatorConnector';
+  nodes: Array<DemographicIndicatorNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DemographicIndicatorFilterInput = {
+  baseYear?: InputMaybe<EqualFilterNumberInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type DemographicIndicatorNode = {
+  __typename: 'DemographicIndicatorNode';
+  basePopulation: Scalars['Int']['output'];
+  baseYear: Scalars['Int']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  populationPercentage: Scalars['Float']['output'];
+  year1Projection: Scalars['Int']['output'];
+  year2Projection: Scalars['Int']['output'];
+  year3Projection: Scalars['Int']['output'];
+  year4Projection: Scalars['Int']['output'];
+  year5Projection: Scalars['Int']['output'];
+};
+
+export enum DemographicIndicatorSortFieldInput {
+  Id = 'id',
+  Name = 'name'
+}
+
+export type DemographicIndicatorSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: DemographicIndicatorSortFieldInput;
+};
+
+export type DemographicIndicatorsResponse = DemographicIndicatorConnector;
+
+export type DemographicMutations = {
+  __typename: 'DemographicMutations';
+  insertDemographicIndicator: InsertDemographicIndicatorResponse;
+  insertDemographicProjection: InsertDemographicProjectionResponse;
+  updateDemographicIndicator: UpdateDemographicIndicatorResponse;
+  updateDemographicProjection: UpdateDemographicProjectionResponse;
+};
+
+
+export type DemographicMutationsInsertDemographicIndicatorArgs = {
+  input: InsertDemographicIndicatorInput;
+};
+
+
+export type DemographicMutationsInsertDemographicProjectionArgs = {
+  input: InsertDemographicProjectionInput;
+};
+
+
+export type DemographicMutationsUpdateDemographicIndicatorArgs = {
+  input: UpdateDemographicIndicatorInput;
+};
+
+
+export type DemographicMutationsUpdateDemographicProjectionArgs = {
+  input: UpdateDemographicProjectionInput;
+};
+
+export type DemographicProjectionConnector = {
+  __typename: 'DemographicProjectionConnector';
+  nodes: Array<DemographicProjectionNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DemographicProjectionFilterInput = {
+  baseYear?: InputMaybe<EqualFilterNumberInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type DemographicProjectionNode = {
+  __typename: 'DemographicProjectionNode';
+  baseYear: Scalars['Int']['output'];
+  id: Scalars['String']['output'];
+  year1: Scalars['Int']['output'];
+  year2: Scalars['Int']['output'];
+  year3: Scalars['Int']['output'];
+  year4: Scalars['Int']['output'];
+  year5: Scalars['Int']['output'];
+};
+
+export enum DemographicProjectionSortFieldInput {
+  Id = 'id'
+}
+
+export type DemographicProjectionSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: DemographicProjectionSortFieldInput;
+};
+
+export type DemographicProjectionsResponse = DemographicProjectionConnector;
 
 export type DisplaySettingNode = {
   __typename: 'DisplaySettingNode';
@@ -2151,6 +2266,51 @@ export type InsertContactTraceInput = {
 
 export type InsertContactTraceResponse = ContactTraceNode;
 
+export type InsertDemographicIndicatorError = {
+  __typename: 'InsertDemographicIndicatorError';
+  error: InsertDemographicIndicatorErrorInterface;
+};
+
+export type InsertDemographicIndicatorErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertDemographicIndicatorInput = {
+  basePopulation?: InputMaybe<Scalars['Int']['input']>;
+  baseYear: Scalars['Int']['input'];
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  populationPercentage?: InputMaybe<Scalars['Float']['input']>;
+  year1Projection?: InputMaybe<Scalars['Int']['input']>;
+  year2Projection?: InputMaybe<Scalars['Int']['input']>;
+  year3Projection?: InputMaybe<Scalars['Int']['input']>;
+  year4Projection?: InputMaybe<Scalars['Int']['input']>;
+  year5Projection?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type InsertDemographicIndicatorResponse = DemographicIndicatorNode | InsertDemographicIndicatorError;
+
+export type InsertDemographicProjectionError = {
+  __typename: 'InsertDemographicProjectionError';
+  error: InsertDemographicProjectionErrorInterface;
+};
+
+export type InsertDemographicProjectionErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertDemographicProjectionInput = {
+  baseYear: Scalars['Int']['input'];
+  id: Scalars['String']['input'];
+  year1?: InputMaybe<Scalars['Int']['input']>;
+  year2?: InputMaybe<Scalars['Int']['input']>;
+  year3?: InputMaybe<Scalars['Int']['input']>;
+  year4?: InputMaybe<Scalars['Int']['input']>;
+  year5?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type InsertDemographicProjectionResponse = DemographicProjectionNode | InsertDemographicProjectionError;
+
 export type InsertDocumentRegistryInput = {
   category: DocumentRegistryCategoryNode;
   contextId: Scalars['String']['input'];
@@ -2186,6 +2346,22 @@ export type InsertFormSchemaInput = {
 };
 
 export type InsertFormSchemaResponse = FormSchemaNode;
+
+export type InsertImmunisationProgramError = {
+  __typename: 'InsertImmunisationProgramError';
+  error: InsertImmunisationProgramErrorInterface;
+};
+
+export type InsertImmunisationProgramErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertImmunisationProgramInput = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type InsertImmunisationProgramResponse = InsertImmunisationProgramError | ProgramNode;
 
 export type InsertInboundReturnError = {
   __typename: 'InsertInboundReturnError';
@@ -2697,7 +2873,25 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InsertVaccineCourseError = {
+  __typename: 'InsertVaccineCourseError';
+  error: InsertVaccineCourseErrorInterface;
+};
+
+export type InsertVaccineCourseErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertVaccineCourseInput = {
+  demographicIndicatorId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  programId: Scalars['String']['input'];
+};
+
+export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
+
+export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -4233,7 +4427,7 @@ export type NameStoreJoinNode = {
 
 export type NamesResponse = NameConnector;
 
-export type NoPermissionForThisStore = InsertAssetErrorInterface & {
+export type NoPermissionForThisStore = InsertAssetErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & {
   __typename: 'NoPermissionForThisStore';
   description: Scalars['String']['output'];
 };
@@ -4648,6 +4842,12 @@ export type PrintReportSortInput = {
   key: Scalars['String']['input'];
 };
 
+export type ProgramConnector = {
+  __typename: 'ProgramConnector';
+  nodes: Array<ProgramNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type ProgramEnrolmentConnector = {
   __typename: 'ProgramEnrolmentConnector';
   nodes: Array<ProgramEnrolmentNode>;
@@ -4774,9 +4974,17 @@ export type ProgramEventSortInput = {
   key: ProgramEventSortFieldInput;
 };
 
+export type ProgramFilterInput = {
+  contextId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
 export type ProgramNode = {
   __typename: 'ProgramNode';
   id: Scalars['String']['output'];
+  isImmunisation: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
 };
 
@@ -4795,6 +5003,22 @@ export type ProgramRequisitionSettingNode = {
   programName: Scalars['String']['output'];
   suppliers: Array<NameNode>;
 };
+
+export enum ProgramSortFieldInput {
+  Name = 'name'
+}
+
+export type ProgramSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ProgramSortFieldInput;
+};
+
+export type ProgramsResponse = ProgramConnector;
 
 export type PropertyNode = {
   __typename: 'PropertyNode';
@@ -4846,6 +5070,8 @@ export type Queries = {
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
+  demographicIndicators: DemographicIndicatorsResponse;
+  demographicProjections: DemographicProjectionsResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -4919,6 +5145,7 @@ export type Queries = {
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
+  programs: ProgramsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -4954,6 +5181,8 @@ export type Queries = {
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
+  vaccineCourse: VaccineCourseResponse;
+  vaccineCourses: VaccineCoursesResponse;
 };
 
 
@@ -5087,6 +5316,20 @@ export type QueriesContactTracesArgs = {
 export type QueriesCurrenciesArgs = {
   filter?: InputMaybe<CurrencyFilterInput>;
   sort?: InputMaybe<Array<CurrencySortInput>>;
+};
+
+
+export type QueriesDemographicIndicatorsArgs = {
+  filter?: InputMaybe<DemographicIndicatorFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<DemographicIndicatorSortInput>>;
+};
+
+
+export type QueriesDemographicProjectionsArgs = {
+  filter?: InputMaybe<DemographicProjectionFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<DemographicProjectionSortInput>>;
 };
 
 
@@ -5339,6 +5582,14 @@ export type QueriesProgramRequisitionSettingsArgs = {
 };
 
 
+export type QueriesProgramsArgs = {
+  filter?: InputMaybe<ProgramFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesRepackArgs = {
   invoiceId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -5497,6 +5748,18 @@ export type QueriesTemperatureNotificationsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+
+export type QueriesVaccineCourseArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesVaccineCoursesArgs = {
+  filter?: InputMaybe<VaccineCourseFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<VaccineCourseSortInput>>;
+};
+
 export type RawDocumentNode = {
   __typename: 'RawDocumentNode';
   author: Scalars['String']['output'];
@@ -5508,7 +5771,7 @@ export type RawDocumentNode = {
   type: Scalars['String']['output'];
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -6552,7 +6815,7 @@ export enum UniqueValueKey {
   Serial = 'serial'
 }
 
-export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;
@@ -6600,6 +6863,51 @@ export type UpdateContactTraceInput = {
 };
 
 export type UpdateContactTraceResponse = ContactTraceNode;
+
+export type UpdateDemographicIndicatorError = {
+  __typename: 'UpdateDemographicIndicatorError';
+  error: UpdateDemographicIndicatorErrorInterface;
+};
+
+export type UpdateDemographicIndicatorErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateDemographicIndicatorInput = {
+  basePopulation?: InputMaybe<Scalars['Int']['input']>;
+  baseYear?: InputMaybe<Scalars['Int']['input']>;
+  id: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  populationPercentage?: InputMaybe<Scalars['Float']['input']>;
+  year1Projection?: InputMaybe<Scalars['Int']['input']>;
+  year2Projection?: InputMaybe<Scalars['Int']['input']>;
+  year3Projection?: InputMaybe<Scalars['Int']['input']>;
+  year4Projection?: InputMaybe<Scalars['Int']['input']>;
+  year5Projection?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateDemographicIndicatorResponse = DemographicIndicatorNode | UpdateDemographicIndicatorError;
+
+export type UpdateDemographicProjectionError = {
+  __typename: 'UpdateDemographicProjectionError';
+  error: UpdateDemographicProjectionErrorInterface;
+};
+
+export type UpdateDemographicProjectionErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateDemographicProjectionInput = {
+  baseYear?: InputMaybe<Scalars['Int']['input']>;
+  id: Scalars['String']['input'];
+  year1?: InputMaybe<Scalars['Int']['input']>;
+  year2?: InputMaybe<Scalars['Int']['input']>;
+  year3?: InputMaybe<Scalars['Int']['input']>;
+  year4?: InputMaybe<Scalars['Int']['input']>;
+  year5?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateDemographicProjectionResponse = DemographicProjectionNode | UpdateDemographicProjectionError;
 
 export type UpdateDisplaySettingsError = {
   __typename: 'UpdateDisplaySettingsError';
@@ -7363,6 +7671,7 @@ export enum UserPermission {
   AssetQuery = 'ASSET_QUERY',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
+  DemographicQuery = 'DEMOGRAPHIC_QUERY',
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
   InboundReturnMutate = 'INBOUND_RETURN_MUTATE',
@@ -7396,7 +7705,8 @@ export enum UserPermission {
   StockLineQuery = 'STOCK_LINE_QUERY',
   StoreAccess = 'STORE_ACCESS',
   TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
-  TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY'
+  TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY',
+  VaccineCourseMutate = 'VACCINE_COURSE_MUTATE'
 }
 
 export type UserResponse = UserNode;
@@ -7430,6 +7740,50 @@ export type UserStorePermissionNode = {
   permissions: Array<UserPermission>;
   storeId: Scalars['String']['output'];
 };
+
+export type VaccineCourseConnector = {
+  __typename: 'VaccineCourseConnector';
+  nodes: Array<VaccineCourseNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type VaccineCourseFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type VaccineCourseMutations = {
+  __typename: 'VaccineCourseMutations';
+  insertVaccineCourse: InsertVaccineCourseResponse;
+};
+
+
+export type VaccineCourseMutationsInsertVaccineCourseArgs = {
+  input: InsertVaccineCourseInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type VaccineCourseNode = {
+  __typename: 'VaccineCourseNode';
+  demographicIndicatorId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  programId: Scalars['String']['output'];
+};
+
+export type VaccineCourseResponse = NodeError | VaccineCourseNode;
+
+export enum VaccineCourseSortFieldInput {
+  Name = 'name'
+}
+
+export type VaccineCourseSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: VaccineCourseSortFieldInput;
+};
+
+export type VaccineCoursesResponse = VaccineCourseConnector;
 
 export type VariantNode = {
   __typename: 'VariantNode';
