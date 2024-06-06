@@ -33,6 +33,7 @@ import {
   DispensaryNav,
   ReplenishmentNav,
   ManageNav,
+  ProgramsNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
@@ -219,6 +220,7 @@ export const AppDrawer: React.FC = () => {
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
           {Environment.FEATURE_GAPS && <ManageNav />}
+          {Environment.FEATURE_GAPS && <ProgramsNav />}
 
           {/* <AppNavLink
             to={AppRoute.Tools}
