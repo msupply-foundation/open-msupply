@@ -22,6 +22,7 @@ graphql_asset_catalogue = { path = "asset_catalogue" }
 graphql_inventory_adjustment = { path = "inventory_adjustment" }
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
+graphql_vaccine_course = { path = "vaccine_course" }
 graphql_location = { path = "location" }
 graphql_pack_variant = { path = "pack_variant" }
 graphql_programs = { path = "programs" }

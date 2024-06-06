@@ -121,6 +121,9 @@ pub enum Resource {
     // demographic
     QueryDemographic,
     MutateDemographic,
+    // vaccine course
+    MutateVaccineCourse,
+    QueryVaccineCourse,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -533,6 +536,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateDemographic,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateVaccineCourse,
+        PermissionDSL::HasPermission(PermissionType::VaccineCourseMutate),
+    );
+    map.insert(
+        Resource::QueryVaccineCourse,
         PermissionDSL::NoPermissionRequired,
     );
 

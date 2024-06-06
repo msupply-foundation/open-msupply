@@ -113,6 +113,7 @@ pub mod user_permission;
 mod user_permission_row;
 mod user_row;
 mod user_store_join_row;
+pub mod vaccine_course;
 
 pub use activity_log_row::*;
 pub use assets::*;

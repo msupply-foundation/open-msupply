@@ -56,6 +56,7 @@ use crate::{
     },
     system_user::create_system_user,
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
 };
 use repository::{
@@ -135,6 +136,8 @@ pub struct ServiceProvider {
     pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
     // Demographic
     pub demographic_service: Box<dyn DemographicServiceTrait>,
+    // Vaccine Course
+    pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -216,6 +219,7 @@ impl ServiceProvider {
                 crate::label_printer_settings_service::LabelPrinterSettingsService {},
             ),
             demographic_service: Box::new(crate::demographic::DemographicService {}),
+            vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
         }
     }
 
