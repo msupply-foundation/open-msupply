@@ -1,4 +1,4 @@
-use super::query::get_program;
+use super::{query::get_program, validate::check_program_name_exists};
 use crate::{
     activity_log::activity_log_entry, program::validate::check_immunisation_program_exists,
     service_provider::ServiceContext, SingleRecordError,
@@ -52,6 +52,9 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(), InsertImmunisationProgramError> {
     if check_immunisation_program_exists(&input.id, connection)?.is_some() {
+        return Err(InsertImmunisationProgramError::ImmunisationProgramAlreadyExists);
+    }
+    if check_program_name_exists(&input.name, connection)?.is_some() {
         return Err(InsertImmunisationProgramError::ImmunisationProgramAlreadyExists);
     }
 

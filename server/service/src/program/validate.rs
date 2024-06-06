@@ -1,4 +1,7 @@
-use repository::{ProgramRow, ProgramRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    ProgramFilter, ProgramRepository, ProgramRow, ProgramRowRepository, RepositoryError,
+    StorageConnection, StringFilter,
+};
 
 pub fn check_immunisation_program_exists(
     id: &str,
@@ -12,4 +15,12 @@ pub fn check_immunisation_program_exists(
         },
         None => Ok(None),
     }
+}
+pub fn check_program_name_exists(
+    name: &str,
+    connection: &StorageConnection,
+) -> Result<Option<ProgramRow>, RepositoryError> {
+    let program = ProgramRepository::new(connection)
+        .query_one(ProgramFilter::new().name(StringFilter::equal_to(name)))?;
+    Ok(program)
 }
