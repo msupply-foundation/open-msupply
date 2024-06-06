@@ -51,7 +51,7 @@
     "recharts": "^2.5.0",
     "stylis": "^4.0.13",
     "stylis-plugin-rtl": "^2.1.1",
-    "uuid": "^9.0.0",
+    "uuidv7": "^1.0.0",
     "zustand": "^4.3.6"
   },
   "devDependencies": {
@@ -59,7 +59,6 @@
     "@types/css-mediaquery": "^0.1.1",
     "@types/dompurify": "^3.0.0",
     "@types/js-cookie": "^3.0.1",
-    "@types/uuid": "^9.0.1",
     "css-mediaquery": "^0.1.2"
   }
 }
