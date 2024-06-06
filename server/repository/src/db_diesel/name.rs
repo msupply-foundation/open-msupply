@@ -1,8 +1,6 @@
 use super::{
     name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{
-        name, name::dsl as name_dsl, name_oms_fields, name_oms_fields::dsl as name_oms_fields_dsl,
-    },
+    name_row::{name, name::dsl as name_dsl, name_oms_fields},
     name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
     store_row::{store, store::dsl as store_dsl},
     DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
@@ -20,8 +18,11 @@ use diesel::{
     dsl::{And, Eq, IntoBoxed, LeftJoin, On},
     helper_types::InnerJoin,
     prelude::*,
+    query_source::Alias,
 };
 use util::{constants::SYSTEM_NAME_CODES, inline_init};
+
+alias!(name_oms_fields as name_oms_fields_alias: OmsFields);
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Name {
@@ -174,7 +175,7 @@ impl<'a> NameRepository<'a> {
                 ),
             )
             .left_join(store_dsl::store)
-            .inner_join(name_oms_fields_dsl::name_oms_fields)
+            .inner_join(name_oms_fields_alias)
             .into_boxed();
 
         if let Some(f) = filter {
@@ -301,7 +302,7 @@ type BoxedNameQuery = IntoBoxed<
             InnerJoin<name::table, LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>>,
             store::table,
         >,
-        name_oms_fields::table,
+        Alias<OmsFields>,
     >,
     DBType,
 >;
