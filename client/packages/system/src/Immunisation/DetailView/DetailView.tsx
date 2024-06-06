@@ -147,10 +147,14 @@ export const ImmunisationDetailView: FC = () => {
   const t = useTranslation('coldchain');
   const { draft, onUpdate, isLoading } = useDraftProgram();
 
-  const dosesColumns = useColumns([
-    { key: 'number', label: 'label.dose-number' },
-    { key: 'day', label: 'label.day' },
-  ]);
+  const dosesColumns = useColumns(
+    [
+      { key: 'number', label: 'label.dose-number' },
+      { key: 'day', label: 'label.day' },
+    ],
+    {},
+    [draft]
+  );
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
@@ -159,6 +163,35 @@ export const ImmunisationDetailView: FC = () => {
   if (isLoading) {
     return <BasicSpinner />;
   }
+
+  const updateSchedule = (value: number | undefined) => {
+    if (!value) {
+      return;
+    }
+    const scheduleSeed = (number: number) => {
+      return {
+        number: number,
+        day: 0,
+      };
+    };
+
+    let rows = draft?.schedule;
+    if (rows.length === value) {
+      return;
+    } else if (value > rows.length) {
+      let toAdd = value - rows.length;
+      while (toAdd > 0) {
+        const number = value - toAdd + 1;
+        rows.push(scheduleSeed(number));
+        toAdd--;
+      }
+    } else {
+      rows = rows.slice(0, value);
+    }
+    onUpdate({ schedule: rows });
+  };
+
+  console.log('draft', draft);
 
   return !!data ? (
     <Box display="flex" flex={1}>
@@ -215,9 +248,12 @@ export const ImmunisationDetailView: FC = () => {
         <Section heading={t('heading.schedule')}>
           <Row label={t('label.number-of-doses')}>
             <NumericTextInput
-              value={draft?.numberOfDoses ?? 1}
+              value={draft?.numberOfDoses}
               fullWidth
-              onChange={value => onUpdate({ numberOfDoses: value })}
+              onChange={value => {
+                onUpdate({ numberOfDoses: value });
+                updateSchedule(value);
+              }}
             />
           </Row>
           <Row label={t('label.dose-number')}>
