@@ -50,7 +50,7 @@ mod tests {
                     "stats": {
                         "averageMonthlyConsumption":  test_item_stats::item1_amc_3_months(),
                         "availableStockOnHand":  test_item_stats::item_1_soh(),
-                        "availableMonthsOfStockOnHand": test_item_stats::item_1_soh() as f64 / test_item_stats::item1_amc_3_months()
+                        "availableMonthsOfStockOnHand": test_item_stats::item_1_soh() / test_item_stats::item1_amc_3_months()
                     }
                 },
                 {
@@ -58,7 +58,7 @@ mod tests {
                     "stats": {
                         "averageMonthlyConsumption":  test_item_stats::item2_amc_3_months(),
                         "availableStockOnHand":  test_item_stats::item_2_soh(),
-                        "availableMonthsOfStockOnHand": test_item_stats::item_2_soh() as f64 / test_item_stats::item2_amc_3_months()
+                        "availableMonthsOfStockOnHand": test_item_stats::item_2_soh() / test_item_stats::item2_amc_3_months()
                     },
                 }]
             }

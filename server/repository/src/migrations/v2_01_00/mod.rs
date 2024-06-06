@@ -4,6 +4,8 @@ use crate::StorageConnection;
 
 mod activity_log;
 mod assets;
+mod decimal_pack_size;
+mod decimal_requisition_quantities;
 mod ledger;
 mod name_properties;
 mod pg_enums;
@@ -20,8 +22,12 @@ impl Migration for V2_01_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         activity_log::migrate(connection)?;
-        ledger::migrate(connection)?;
+        // The ledger is migrated in decimal_pack_size because the same views needed to be
+        // re-created
+        // ledger::migrate(connection)?;
         pg_enums::migrate(connection)?;
+        decimal_pack_size::migrate(connection)?;
+        decimal_requisition_quantities::migrate(connection)?;
         assets::migrate_assets(connection)?;
         v6_sync_api_error_code::migrate(connection)?;
         property::migrate(connection)?;

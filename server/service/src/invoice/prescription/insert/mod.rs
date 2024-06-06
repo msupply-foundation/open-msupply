@@ -227,6 +227,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("new_id")
+            .unwrap()
             .unwrap();
 
         assert_eq!(
