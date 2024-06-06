@@ -30,6 +30,7 @@ pub enum Variant {
     Unknown,
     ApiVersionIncompatible,
     CentralV6NotConfigured,
+    V6ApiVersionIncompatible,
     IntegrationError,
 }
 
@@ -123,6 +124,7 @@ impl SyncErrorNode {
             from::IntegrationTimeoutReached => to::IntegrationTimeoutReached,
             from::ApiVersionIncompatible => to::ApiVersionIncompatible,
             from::CentralV6NotConfigured => to::CentralV6NotConfigured,
+            from::V6ApiVersionIncompatible => to::V6ApiVersionIncompatible,
             from::IntegrationError => to::IntegrationError,
         };
 

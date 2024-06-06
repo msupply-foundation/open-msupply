@@ -20,7 +20,7 @@ pub struct AddNewStockLine {
     pub number_of_packs: f64,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
-    pub pack_size: u32,
+    pub pack_size: f64,
     pub on_hold: bool,
     pub batch: Option<String>,
     pub location: Option<NullableUpdate<String>>,
@@ -207,7 +207,7 @@ mod test {
                 &context,
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
-                    pack_size: 0,
+                    pack_size: 0.0,
                     ..Default::default()
                 }
             ),
@@ -248,7 +248,7 @@ mod test {
                 &context,
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
-                    pack_size: 1,
+                    pack_size: 1.0,
                     number_of_packs: 2.0,
                     item_id: mock_item_a().id,
                     inventory_adjustment_reason_id: Some(addition_reason().id),
@@ -330,7 +330,7 @@ mod test {
             &context,
             AddNewStockLine {
                 stock_line_id: "new".to_string(),
-                pack_size: 1,
+                pack_size: 1.0,
                 number_of_packs: 2.0,
                 item_id: mock_item_a().id,
                 inventory_adjustment_reason_id: None, // Check *no* error when reasons not defined and not provided

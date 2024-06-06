@@ -67,9 +67,10 @@ impl SynchroniserV6 {
     pub(crate) fn new(
         url: &str,
         sync_v5_settings: &SyncApiSettings,
+        sync_v6_version: u32,
     ) -> Result<Self, SyncApiV6CreatingError> {
         Ok(Self {
-            sync_api_v6: SyncApiV6::new(url, sync_v5_settings)?,
+            sync_api_v6: SyncApiV6::new(url, sync_v5_settings, sync_v6_version)?,
         })
     }
 

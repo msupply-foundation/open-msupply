@@ -178,13 +178,14 @@ mod graphql {
                 is_visible,
                 is_system_name,
                 r#type,
-
                 phone,
                 address1,
                 address2,
                 country,
                 email,
                 is_patient: _,
+                is_donor,
+                code_or_name: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
@@ -193,6 +194,7 @@ mod graphql {
 
             assert_eq!(is_customer, Some(true));
             assert_eq!(is_supplier, Some(false));
+            assert_eq!(is_donor, None);
             assert_eq!(is_store, Some(true));
             assert_eq!(store_code, Some(StringFilter::like("store code like")));
             assert_eq!(is_visible, Some(false));

@@ -55,7 +55,7 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     #[serde(rename = "cost_price")]
     pub cost_price_per_pack: f64,
     #[serde(rename = "sell_price")]
@@ -145,10 +145,15 @@ impl SyncTranslation for InvoiceLineTranslation {
                 }
             });
 
-        let line_type = to_invoice_line_type(&r#type).ok_or(anyhow::Error::msg(format!(
-            "Unsupported trans_line type: {:?}",
-            r#type
-        )))?;
+        let line_type = match to_invoice_line_type(&r#type) {
+            Some(line_type) => line_type,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported line type {:?}",
+                    r#type
+                )))
+            }
+        };
 
         let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code {
             Some(item_code) => {

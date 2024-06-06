@@ -16,5 +16,8 @@
   "dashboard": "Tableau de bord",
   "customer-requisition": "Commandes Client",
   "catalogue": "Articles",
-  "outbound-shipments": "Sorties de stock"
+  "outbound-shipments": "Sorties de stock",
+  "assets": "Équipements",
+  "log-reasons": "Raisons",
+  "auth.no-store-assigned": "Votre utilisateur n'est assigné à aucun dépôt. Veuillez vous connecter avec un autre compte utilisateur ou contacter votre administrateur."
 }

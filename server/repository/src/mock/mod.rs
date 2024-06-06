@@ -8,6 +8,7 @@ mod clinician;
 pub mod common;
 mod context;
 mod currency;
+mod demographic;
 mod document;
 mod document_registry;
 mod form_schema;
@@ -61,6 +62,7 @@ pub use clinician::*;
 use common::*;
 pub use context::*;
 pub use currency::*;
+pub use demographic::*;
 pub use document::*;
 pub use document_registry::*;
 pub use form_schema::*;
@@ -111,7 +113,7 @@ use crate::{
     },
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
-    ContextRowRepository, CurrencyRow, Document, DocumentRegistryRow,
+    ContextRowRepository, CurrencyRow, DemographicIndicatorRow, Document, DocumentRegistryRow,
     DocumentRegistryRowRepository, DocumentRepository, FormSchema, FormSchemaRowRepository,
     InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository,
@@ -194,6 +196,7 @@ pub struct MockData {
     pub plugin_data: Vec<PluginDataRow>,
     pub assets: Vec<AssetRow>,
     pub asset_logs: Vec<AssetLogRow>,
+    pub demographic_indicators: Vec<DemographicIndicatorRow>,
 }
 
 impl MockData {
@@ -260,6 +263,7 @@ pub struct MockDataInserts {
     pub plugin_data: bool,
     pub assets: bool,
     pub asset_logs: bool,
+    pub demographic_indicators: bool,
 }
 
 impl MockDataInserts {
@@ -315,6 +319,7 @@ impl MockDataInserts {
             plugin_data: true,
             assets: true,
             asset_logs: true,
+            demographic_indicators: true,
         }
     }
 
@@ -557,6 +562,11 @@ impl MockDataInserts {
         self.asset_logs = true;
         self
     }
+
+    pub fn demographic_indicators(mut self) -> Self {
+        self.demographic_indicators = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -633,6 +643,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             clinicians: mock_clinicians(),
             assets: mock_assets(),
             asset_logs: mock_asset_logs(),
+            demographic_indicators: mock_demographic_indicators(),
             ..Default::default()
         },
     );
@@ -1053,6 +1064,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.demographic_indicators {
+            let repo = crate::DemographicIndicatorRowRepository::new(connection);
+            for row in &mock_data.demographic_indicators {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1112,6 +1130,7 @@ impl MockData {
             mut asset_logs,
             plugin_data: _,
             mut currencies,
+            mut demographic_indicators,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1167,7 +1186,8 @@ impl MockData {
         self.currencies.append(&mut currencies);
         self.assets.append(&mut assets);
         self.asset_logs.append(&mut asset_logs);
-
+        self.demographic_indicators
+            .append(&mut demographic_indicators);
         self
     }
 }

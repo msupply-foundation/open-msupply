@@ -14,7 +14,7 @@ table! {
         gtin -> Text,
         item_id -> Text,
         manufacturer_link_id -> Nullable<Text>,
-        pack_size -> Nullable<Integer>,
+        pack_size -> Nullable<Double>,
         parent_id -> Nullable<Text>,
     }
 }
@@ -41,7 +41,7 @@ pub struct BarcodeRow {
     pub gtin: String,
     pub item_id: String,
     pub manufacturer_link_id: Option<String>,
-    pub pack_size: Option<i32>,
+    pub pack_size: Option<f64>,
     pub parent_id: Option<String>,
 }
 
@@ -146,7 +146,7 @@ mod test {
             r.id = uuid();
             r.gtin = "12345678901234".to_string();
             r.item_id = "item_a".to_string();
-            r.pack_size = Some(1);
+            r.pack_size = Some(1.0);
         })
     }
 
@@ -155,7 +155,7 @@ mod test {
             r.id = uuid();
             r.gtin = "98765432104321".to_string();
             r.item_id = "item_a".to_string();
-            r.pack_size = Some(10);
+            r.pack_size = Some(10.0);
         })
     }
 

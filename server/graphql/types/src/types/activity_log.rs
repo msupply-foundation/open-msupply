@@ -63,6 +63,9 @@ pub enum ActivityLogNodeType {
     AssetCatalogueItemPropertyCreated,
     AssetLogReasonCreated,
     AssetLogReasonDeleted,
+    AssetPropertyCreated,
+    VaccineCourseCreated,
+    ProgramCreated,
 }
 
 #[Object]
@@ -181,6 +184,9 @@ impl ActivityLogNodeType {
             from::AssetCatalogueItemPropertyCreated => to::AssetCatalogueItemPropertyCreated,
             from::AssetLogReasonCreated => to::AssetLogReasonCreated,
             from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
+            from::AssetPropertyCreated => to::AssetPropertyCreated,
+            from::VaccineCourseCreated => to::VaccineCourseCreated,
+            from::ProgramCreated => to::ProgramCreated,
         }
     }
 
@@ -229,6 +235,9 @@ impl ActivityLogNodeType {
             from::AssetCatalogueItemPropertyCreated => to::AssetCatalogueItemPropertyCreated,
             from::AssetLogReasonCreated => to::AssetLogReasonCreated,
             from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
+            from::AssetPropertyCreated => to::AssetPropertyCreated,
+            from::VaccineCourseCreated => to::VaccineCourseCreated,
+            from::ProgramCreated => to::ProgramCreated,
         }
     }
 }

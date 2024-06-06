@@ -10,6 +10,7 @@ use actix_web::{guard, HttpRequest};
 use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+use graphql_asset::property::AssetPropertiesQueries;
 use graphql_batch_mutations::BatchMutations;
 use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
@@ -22,19 +23,20 @@ use graphql_general::{
 };
 
 use graphql_asset::{
-    AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries,
+    logs::{AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries},
     AssetMutations, AssetQueries,
 };
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
+use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
 use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
-use graphql_programs::{ProgramsMutations, ProgramsQueries};
+use graphql_programs::{CentralProgramsMutations, ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
@@ -43,6 +45,7 @@ use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
+use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
@@ -70,6 +73,16 @@ impl CentralServerMutationNode {
     }
     async fn log_reason(&self) -> AssetLogReasonMutations {
         AssetLogReasonMutations
+    }
+    async fn demographic(&self) -> DemographicMutations {
+        DemographicMutations
+    }
+    async fn vaccine_course(&self) -> VaccineCourseMutations {
+        VaccineCourseMutations
+    }
+
+    async fn program(&self) -> CentralProgramsMutations {
+        CentralProgramsMutations
     }
 }
 
@@ -108,6 +121,9 @@ pub struct Queries(
     pub AssetQueries,
     pub AssetLogQueries,
     pub AssetLogReasonQueries,
+    pub AssetPropertiesQueries,
+    pub DemographicIndicatorQueries,
+    pub VaccineCourseQueries,
 );
 
 impl Queries {
@@ -133,6 +149,9 @@ impl Queries {
             AssetQueries,
             AssetLogQueries,
             AssetLogReasonQueries,
+            AssetPropertiesQueries,
+            DemographicIndicatorQueries,
+            VaccineCourseQueries,
         )
     }
 }

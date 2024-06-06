@@ -24,15 +24,16 @@ import {
   UserPermission,
   RouteBuilder,
   useConfirmationModal,
-  useIsCentralServerApi,
 } from '@openmsupply-client/common';
-import { AppRoute, ExternalURL } from '@openmsupply-client/config';
+import { AppRoute, Environment, ExternalURL } from '@openmsupply-client/config';
 import {
   CatalogueNav,
   DistributionNav,
   InventoryNav,
   DispensaryNav,
   ReplenishmentNav,
+  ManageNav,
+  ProgramsNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
@@ -149,7 +150,6 @@ export const AppDrawer: React.FC = () => {
   const { logout, userHasPermission, store } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const isCentralServer = useIsCentralServerApi();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -197,20 +197,6 @@ export const AppDrawer: React.FC = () => {
       isOpen={drawer.isOpen}
     >
       <ToolbarIconContainer>
-        {isCentralServer ? (
-          <Box
-            style={{
-              float: 'left',
-              position: 'absolute',
-              zIndex: 99,
-              top: 40,
-              backgroundColor: '#fff',
-              opacity: 0.75,
-            }}
-          >
-            {t(drawer.isOpen ? 'label.central-server' : 'label.central')}
-          </Box>
-        ) : null}
         <IconButton
           label={t(
             drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
@@ -233,6 +219,8 @@ export const AppDrawer: React.FC = () => {
           <InventoryNav />
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
+          {Environment.FEATURE_GAPS && <ManageNav />}
+          {Environment.FEATURE_GAPS && <ProgramsNav />}
 
           {/* <AppNavLink
             to={AppRoute.Tools}
@@ -262,9 +250,9 @@ export const AppDrawer: React.FC = () => {
           />
           <SyncNavLink />
           <AppNavLink
-            to={AppRoute.Admin}
+            to={AppRoute.Settings}
             icon={<SettingsIcon fontSize="small" color="primary" />}
-            text={t('admin')}
+            text={t('settings')}
             visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink

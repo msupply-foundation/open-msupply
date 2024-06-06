@@ -39,6 +39,8 @@ pub enum SyncParsedErrorV6 {
     IntegrationInProgress,
     #[error("Sync file not found, file_id: {0}")]
     SyncFileNotFound(String),
+    #[error("Sync V6 API version not compatible, minVersion: {0}, maxVersion: {1}, received: {2}")]
+    SyncVersionMismatch(u32, u32, u32),
 }
 
 impl From<anyhow::Error> for SyncParsedErrorV6 {
@@ -150,6 +152,7 @@ impl From<PushSyncRecord> for SyncRecordV6 {
         }
     }
 }
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncPullRequestV6 {
@@ -157,6 +160,8 @@ pub struct SyncPullRequestV6 {
     pub(crate) batch_size: u32,
     pub(crate) sync_v5_settings: SyncApiSettings,
     pub(crate) is_initialised: bool,
+    #[serde(default)]
+    pub(crate) sync_v6_version: u32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -164,12 +169,16 @@ pub struct SyncPullRequestV6 {
 pub struct SyncPushRequestV6 {
     pub(crate) batch: SyncBatchV6,
     pub(crate) sync_v5_settings: SyncApiSettings,
+    #[serde(default)]
+    pub(crate) sync_v6_version: u32,
 }
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SiteStatusRequestV6 {
     pub(crate) sync_v5_settings: SyncApiSettings,
+    #[serde(default)]
+    pub(crate) sync_v6_version: u32,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -184,12 +193,16 @@ pub struct SyncDownloadFileRequestV6 {
     pub(crate) record_id: String,
     pub(crate) id: String,
     pub(crate) sync_v5_settings: SyncApiSettings,
+    #[serde(default)]
+    pub(crate) sync_v6_version: u32,
 }
 
 #[derive(Deserialize, Debug, Serialize)]
 pub struct SyncUploadFileRequestV6 {
     pub file_id: String,
     pub sync_v5_settings: SyncApiSettings,
+    #[serde(default)]
+    pub(crate) sync_v6_version: u32,
 }
 
 #[derive(Deserialize, Debug, Serialize)]

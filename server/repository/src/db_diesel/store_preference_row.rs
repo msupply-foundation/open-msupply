@@ -29,13 +29,14 @@ allow_tables_to_appear_in_same_query!(store_preference, store);
 allow_tables_to_appear_in_same_query!(store_preference, user_store_join);
 allow_tables_to_appear_in_same_query!(store_preference, user_account);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StorePreferenceType {
+    #[default]
     StorePreferences,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
 #[diesel(table_name = store_preference)]
 pub struct StorePreferenceRow {
     pub id: String, // store_id
@@ -47,21 +48,6 @@ pub struct StorePreferenceRow {
     pub om_program_module: bool,
     pub vaccine_module: bool,
     pub issue_in_foreign_currency: bool,
-}
-
-impl Default for StorePreferenceRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            r#type: StorePreferenceType::StorePreferences,
-            pack_to_one: Default::default(),
-            response_requisition_requires_authorisation: Default::default(),
-            request_requisition_requires_authorisation: Default::default(),
-            om_program_module: Default::default(),
-            vaccine_module: Default::default(),
-            issue_in_foreign_currency: Default::default(),
-        }
-    }
 }
 
 pub struct StorePreferenceRowRepository<'a> {
