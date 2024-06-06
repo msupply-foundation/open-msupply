@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{mock_program_a, MockDataInserts};
+    use repository::mock::{mock_demographic_indicator_a, mock_program_a, MockDataInserts};
     use repository::StringFilter;
     use repository::{
         test_db::setup_all,
@@ -26,7 +26,7 @@ mod query {
             id: "vaccine_course_id".to_owned(),
             name: "vaccine_course_name".to_owned(),
             program_id: mock_program_a().id.clone(),
-            demographic_indicator_id: "demographic_indicator_id".to_owned(),
+            demographic_indicator_id: mock_demographic_indicator_a().id.clone(),
         };
 
         let _result = service
@@ -59,7 +59,7 @@ mod query {
             id: "vaccine_course_id".to_owned(),
             name: "vaccine_course_name".to_owned(),
             program_id: mock_program_a().id.clone(),
-            demographic_indicator_id: "demographic_indicator_id".to_owned(),
+            demographic_indicator_id: mock_demographic_indicator_a().id.clone(),
         };
 
         let _result = service
@@ -70,7 +70,7 @@ mod query {
             id: "vaccine_course_id_b".to_owned(),
             name: "vaccine_course_name_b".to_owned(),
             program_id: mock_program_a().id.clone(),
-            demographic_indicator_id: "demographic_indicator_id".to_owned(),
+            demographic_indicator_id: mock_demographic_indicator_a().id.clone(),
         };
 
         let _result = service
