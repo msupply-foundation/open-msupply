@@ -27,7 +27,7 @@ pub struct BarcodeFilter {
     pub id: Option<EqualFilter<String>>,
     pub gtin: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
-    pub pack_size: Option<EqualFilter<i32>>,
+    pub pack_size: Option<EqualFilter<f64>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -133,7 +133,7 @@ impl BarcodeFilter {
         self
     }
 
-    pub fn pack_size(mut self, filter: EqualFilter<i32>) -> Self {
+    pub fn pack_size(mut self, filter: EqualFilter<f64>) -> Self {
         self.pack_size = Some(filter);
         self
     }

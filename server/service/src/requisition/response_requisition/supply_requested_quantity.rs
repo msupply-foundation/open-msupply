@@ -283,7 +283,7 @@ mod test {
             let row = requisition_line_row.requisition_line_row;
             line_repo
                 .upsert_one(&RequisitionLineRow {
-                    approved_quantity: row.requested_quantity + 3,
+                    approved_quantity: row.requested_quantity + 3.0,
                     ..row
                 })
                 .unwrap();

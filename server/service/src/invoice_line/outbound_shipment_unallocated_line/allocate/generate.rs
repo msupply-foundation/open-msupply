@@ -36,9 +36,9 @@ pub fn generate(
     let mut result = GenerateOutput::default();
     let allocated_lines = get_allocated_lines(connection, &unallocated_line)?;
     // Assume pack_size 1 for unallocated line
-    let mut remaining_to_allocate = unallocated_line.invoice_line_row.number_of_packs as i32;
+    let mut remaining_to_allocate = unallocated_line.invoice_line_row.number_of_packs;
     // If nothing remaing to alloacted just remove the line
-    if remaining_to_allocate <= 0 {
+    if remaining_to_allocate <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.invoice_line_row.id,
         });
@@ -89,22 +89,22 @@ pub fn generate(
             )),
         }
 
-        remaining_to_allocate -= packs_to_allocate * stock_line.stock_line_row.pack_size;
+        remaining_to_allocate -= stock_line.stock_line_row.pack_size * packs_to_allocate;
 
-        if remaining_to_allocate <= 0 {
+        if remaining_to_allocate <= 0.0 {
             break;
         }
     }
 
     // If nothing remaining to alloacted just remove the line, otherwise update
-    if remaining_to_allocate <= 0 {
+    if remaining_to_allocate <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.invoice_line_row.id,
         });
     } else {
         result.update_unallocated_line = Some(UpdateOutboundShipmentUnallocatedLine {
             id: unallocated_line.invoice_line_row.id,
-            quantity: remaining_to_allocate as u32,
+            quantity: remaining_to_allocate,
         });
     };
 
@@ -183,20 +183,20 @@ fn try_allocate_existing_line(
         })
 }
 
-fn packs_to_allocate_from_stock_line(remaining_to_allocate: i32, line: &StockLine) -> i32 {
+fn packs_to_allocate_from_stock_line(remaining_to_allocate: f64, line: &StockLine) -> f64 {
     let available_quantity = line.available_quantity();
     let line_row = &line.stock_line_row;
-    if available_quantity < remaining_to_allocate as f64 {
-        return line_row.available_number_of_packs as i32;
+    if available_quantity < remaining_to_allocate {
+        return line_row.available_number_of_packs;
     }
     // We don't want to use fractions for number_of_packs (issue here) - to discuss
     let fractional_number_of_packs = remaining_to_allocate as f64 / line_row.pack_size as f64;
 
     if fraction_is_integer(fractional_number_of_packs) {
-        return fractional_number_of_packs as i32;
+        return fractional_number_of_packs;
     }
 
-    fractional_number_of_packs.floor() as i32 + 1
+    fractional_number_of_packs.floor() + 1.0
 }
 
 fn get_sorted_available_stock_lines(

@@ -270,7 +270,7 @@ mod test {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 );
-                r.average_monthly_consumption = 333;
+                r.average_monthly_consumption = 333.0;
             })
         }
 
@@ -289,13 +289,13 @@ mod test {
                     r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
                     r.item_link_id = mock_item_a().id;
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
             })
         }
@@ -514,9 +514,9 @@ mod test {
                         .and_hms_opt(12, 10, 11)
                         .unwrap(),
                 );
-                r.average_monthly_consumption = 25 * NUMBER_OF_DAYS_IN_A_MONTH as i32;
-                r.available_stock_on_hand = 30;
-                r.requested_quantity = 100;
+                r.average_monthly_consumption = 25.0 * NUMBER_OF_DAYS_IN_A_MONTH;
+                r.available_stock_on_hand = 30.0;
+                r.requested_quantity = 100.0;
             })
         }
 
@@ -535,13 +535,13 @@ mod test {
                     r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
                     r.item_link_id = mock_item_a().id;
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
             })
         }

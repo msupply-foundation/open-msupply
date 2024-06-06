@@ -235,7 +235,7 @@ mod test {
                     input.invoice_id = "new_id".to_string();
                     input.id = "new_line_id".to_string();
                     input.item_id = mock_item_a().id;
-                    input.pack_size = 1;
+                    input.pack_size = 1.0;
                     input.number_of_packs = 1.0;
                 },
             )]),

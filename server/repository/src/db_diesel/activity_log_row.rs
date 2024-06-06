@@ -69,6 +69,7 @@ pub enum ActivityLogType {
     AssetCatalogueItemCreated,
     AssetCatalogueItemPropertyCreated,
     AssetPropertyCreated,
+    VaccineCourseCreated,
     ProgramCreated,
 }
 

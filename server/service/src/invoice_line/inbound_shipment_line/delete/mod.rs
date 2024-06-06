@@ -114,7 +114,7 @@ mod test {
                 r.stock_line_id = Some(String::from("item_a_line_a"));
                 r.batch = Some(String::from("item_a_line_a"));
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(2020, 8, 1).unwrap());
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.total_before_tax = 0.87;
                 r.total_after_tax = 1.0;
                 r.tax_percentage = Some(15.0);

@@ -322,7 +322,7 @@ mod test {
             inline_edit(&new_outbound_line, |mut u| {
                 u.id = "new outbound line id".to_string();
                 u.item_link_id = mock_item_a().id.clone();
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u.number_of_packs = 1.0;
                 u
             })
@@ -456,7 +456,7 @@ mod test {
             inline_edit(&new_prescription_line, |mut u| {
                 u.id = "new prescription line id".to_string();
                 u.item_link_id = mock_item_a().id.clone();
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u.number_of_packs = 1.0;
                 u
             })

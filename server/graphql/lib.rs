@@ -29,6 +29,7 @@ use graphql_asset::{
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
+use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -44,6 +45,7 @@ use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
+use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
@@ -71,6 +73,12 @@ impl CentralServerMutationNode {
     }
     async fn log_reason(&self) -> AssetLogReasonMutations {
         AssetLogReasonMutations
+    }
+    async fn demographic(&self) -> DemographicMutations {
+        DemographicMutations
+    }
+    async fn vaccine_course(&self) -> VaccineCourseMutations {
+        VaccineCourseMutations
     }
 
     async fn program(&self) -> CentralProgramsMutations {
@@ -114,6 +122,8 @@ pub struct Queries(
     pub AssetLogQueries,
     pub AssetLogReasonQueries,
     pub AssetPropertiesQueries,
+    pub DemographicIndicatorQueries,
+    pub VaccineCourseQueries,
 );
 
 impl Queries {
@@ -140,6 +150,8 @@ impl Queries {
             AssetLogQueries,
             AssetLogReasonQueries,
             AssetPropertiesQueries,
+            DemographicIndicatorQueries,
+            VaccineCourseQueries,
         )
     }
 }

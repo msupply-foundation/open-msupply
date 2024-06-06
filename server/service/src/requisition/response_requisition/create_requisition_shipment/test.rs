@@ -146,7 +146,7 @@ mod test_update {
                 &context,
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
                     r.id = mock_new_response_requisition_test().lines[0].id.clone();
-                    r.supply_quantity = Some(100);
+                    r.supply_quantity = Some(100.0);
                 }),
             )
             .unwrap();

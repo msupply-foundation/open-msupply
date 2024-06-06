@@ -13,6 +13,7 @@ use crate::{
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
+    demographic::DemographicServiceTrait,
     display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
     document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
@@ -56,6 +57,7 @@ use crate::{
     },
     system_user::create_system_user,
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
 };
 use repository::{
@@ -133,6 +135,10 @@ pub struct ServiceProvider {
     pub asset_service: Box<dyn AssetServiceTrait>,
     // Label Printer
     pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
+    // Demographic
+    pub demographic_service: Box<dyn DemographicServiceTrait>,
+    // Vaccine Course
+    pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
     pub program_service: Box<dyn ProgramServiceTrait>,
 }
 
@@ -214,6 +220,8 @@ impl ServiceProvider {
             label_printer_settings_service: Box::new(
                 crate::label_printer_settings_service::LabelPrinterSettingsService {},
             ),
+            demographic_service: Box::new(crate::demographic::DemographicService {}),
+            vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
         }
     }
