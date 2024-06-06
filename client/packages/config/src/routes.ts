@@ -37,6 +37,7 @@ export enum AppRoute {
   IndicatorsDemographics = 'indicators-demographics',
 
   Manage = 'manage',
+  Programs = 'programs',
   Facilities = 'facilities',
 
   Tools = 'tools',
@@ -55,6 +56,7 @@ export enum AppRoute {
   Items = 'items',
   Assets = 'assets',
   LogReasons = 'log-reasons',
+  Immunisations = 'immunisations',
 
   PageNotFound = 'page-not-found',
 }
