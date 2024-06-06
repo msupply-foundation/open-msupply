@@ -25,7 +25,6 @@ impl Migration for V2_01_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         store_add_name_link_id::migrate(connection)?;
-        ledger::migrate(connection)?;
         activity_log::migrate(connection)?;
         // The ledger is migrated in decimal_pack_size because the same views needed to be
         // re-created
