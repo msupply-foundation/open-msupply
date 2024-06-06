@@ -77,7 +77,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
         {
             // if the name_store_join is referencing itself, then exclude it
             // this is an invalid configuration which shouldn't be possible.. but is
-            if store.name_id == data.name_id {
+            if store.name_link_id == data.name_id {
                 return Ok(PullTranslateResult::Ignored(
                     "Name store join references itself".to_string(),
                 ));

@@ -31,7 +31,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
 
     /// Inbound invoice will be created when all below conditions are met:
     ///
-    /// 1. Source invoice name_id is for a store that is active on current site (transfer processor driver guarantees this)
+    /// 1. Source invoice name_link_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source invoice is either Outbound shipment or Outbound Return
     /// 3. Source outbound invoice is either Shipped or Picked
     ///    (outbounds can also be New or Allocated, but we only want to generate transfer when it's Shipped or Picked, as per
@@ -153,7 +153,7 @@ fn generate_inbound_invoice(
     r#type: InboundInvoiceType,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
-    let name_link_id = outbound_invoice.store_row.name_id.clone();
+    let name_link_id = outbound_invoice.store_row.name_link_id.clone();
 
     let outbound_invoice_row = &outbound_invoice.invoice_row;
 

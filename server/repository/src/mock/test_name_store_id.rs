@@ -45,7 +45,7 @@ pub fn mock_name_linked_to_store() -> NameRow {
 pub fn mock_store_linked_to_name() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "name_store_id".to_string();
-        s.name_id = "name_linked_to_store_id".to_string();
+        s.name_link_id = "name_linked_to_store_id".to_string();
         s.code = "name_store_code".to_string();
     })
 }
@@ -73,7 +73,7 @@ pub fn mock_name_linked_to_store_a() -> NameRow {
 pub fn mock_store_linked_to_name_a() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "name_store_a_id".to_string();
-        s.name_id = "name_linked_to_store_a_id".to_string();
+        s.name_link_id = "name_linked_to_store_a_id".to_string();
         s.code = "name_store_code_a".to_string();
     })
 }
@@ -142,7 +142,7 @@ pub fn mock_patient_linked_to_store() -> NameRow {
 pub fn mock_store_linked_to_patient() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "patient_store_id".to_string();
-        s.name_id = "patient_linked_to_store_id".to_string();
+        s.name_link_id = "patient_linked_to_store_id".to_string();
         s.code = "patient_store_code".to_string();
     })
 }

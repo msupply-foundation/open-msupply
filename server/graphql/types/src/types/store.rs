@@ -32,13 +32,16 @@ impl StoreNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
+            .load_one(NameByIdLoaderInput::new(
+                &store_id,
+                &self.row().name_link_id,
+            ))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to store ({})",
-                &self.row().name_id,
+                &self.row().name_link_id,
                 &self.row().id
             ))
             .extend(),
@@ -97,7 +100,7 @@ mod test {
         fn store() -> StoreRow {
             inline_init(|r: &mut StoreRow| {
                 r.id = "store".to_string();
-                r.name_id = name().id
+                r.name_link_id = name().id
             })
         }
 

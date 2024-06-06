@@ -17,7 +17,7 @@ mod repository_test {
         pub fn store_1() -> StoreRow {
             inline_init(|s: &mut StoreRow| {
                 s.id = "store1".to_string();
-                s.name_id = "name1".to_string();
+                s.name_link_id = "name1".to_string();
                 s.code = "code1".to_string();
             })
         }
@@ -1092,7 +1092,7 @@ mod repository_test {
         // Note: this test is disabled when running tests using in 'memory' sqlite.
         // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
         // https://sqlite.org/rescode.html#locked
-        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivelant available for shared cache connections (SQLITE_LOCKED).
+        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
         // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
 
         /*
@@ -1110,7 +1110,7 @@ mod repository_test {
             Test Scenario
 
             Process A starts a transaction, does a read, then sleeps for a 1000 milliseconds before continuing to write from within the same transaction.
-            Conncurrently Process B tries to do a similar thing.
+            Concurrently Process B tries to do a similar thing.
         */
         /*
             Expected behaviour for this test in SQLite...

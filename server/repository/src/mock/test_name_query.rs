@@ -24,7 +24,7 @@ pub fn mock_test_name_query() -> MockData {
 pub fn mock_test_name_query_store_1() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "mock_test_name_query_store_1".to_string();
-        s.name_id = mock_name_1().id;
+        s.name_link_id = mock_name_1().id;
         s.code = "mock_test_name_query_store_1_code".to_string();
     })
 }
@@ -32,7 +32,7 @@ pub fn mock_test_name_query_store_1() -> StoreRow {
 pub fn mock_test_name_query_store_2() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "mock_test_name_query_store_2".to_string();
-        s.name_id = mock_name_2().id;
+        s.name_link_id = mock_name_2().id;
         s.code = "mock_test_name_query_store_2_code".to_string();
     })
 }
