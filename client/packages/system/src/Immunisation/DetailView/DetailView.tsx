@@ -179,7 +179,11 @@ export const ImmunisationDetailView: FC = () => {
             />
           </Row>
           <Row label={t('label.coverage-rate')}>
-            <NumericTextInput fullWidth />
+            <NumericTextInput
+              value={draft?.coverageRate ?? 1}
+              fullWidth
+              onChange={value => onUpdate({ coverageRate: value })}
+            />
           </Row>
           <Row label={t('label.vaccine-items')}>
             <AutocompleteMulti
@@ -210,7 +214,11 @@ export const ImmunisationDetailView: FC = () => {
       <Container>
         <Section heading={t('heading.schedule')}>
           <Row label={t('label.number-of-doses')}>
-            <NumericTextInput fullWidth />
+            <NumericTextInput
+              value={draft?.numberOfDoses ?? 1}
+              fullWidth
+              onChange={value => onUpdate({ numberOfDoses: value })}
+            />
           </Row>
           <Row label={t('label.dose-number')}>
             <MiniTable rows={draft?.schedule} columns={dosesColumns} />
