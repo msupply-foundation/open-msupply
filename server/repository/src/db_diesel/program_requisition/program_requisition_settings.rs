@@ -44,8 +44,9 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         let mut query = program_requisition_settings_dsl::program_requisition_settings
             .inner_join(program_dsl::program)
             .inner_join(
-                master_list_dsl::master_list
-                    .on(master_list_dsl::id.eq(program_dsl::master_list_id)),
+                master_list_dsl::master_list.on(master_list_dsl::id
+                    .nullable()
+                    .eq(program_dsl::master_list_id)),
             )
             .into_boxed();
 
@@ -63,7 +64,8 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
 
             if master_list.is_some() {
                 let master_list_ids = MasterListRepository::create_filtered_query(master_list)
-                    .select(master_list_dsl::id);
+                    .select(master_list_dsl::id)
+                    .nullable();
                 query = query.filter(program_dsl::master_list_id.eq_any(master_list_ids));
             }
         }
@@ -146,7 +148,7 @@ mod test {
         };
         let program = ProgramRow {
             id: "program1".to_string(),
-            master_list_id: master_list.id.clone(),
+            master_list_id: Some(master_list.id.clone()),
             context_id: context.id.clone(),
             ..Default::default()
         };

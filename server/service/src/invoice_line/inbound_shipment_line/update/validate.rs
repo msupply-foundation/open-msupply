@@ -3,7 +3,7 @@ use crate::{
     invoice_line::{
         check_batch, check_location_exists, check_pack_size,
         validate::{
-            check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
+            check_item_exists, check_line_belongs_to_invoice, check_line_exists,
             check_number_of_packs,
         },
     },
@@ -19,7 +19,7 @@ pub fn validate(
 ) -> Result<(InvoiceLine, Option<ItemRow>, InvoiceRow), UpdateInboundShipmentLineError> {
     use UpdateInboundShipmentLineError::*;
 
-    let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let line_row = &line.invoice_line_row;
 
     if !check_pack_size(input.pack_size) {

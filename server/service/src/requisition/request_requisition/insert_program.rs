@@ -168,10 +168,11 @@ fn generate(
         linked_requisition_id: None,
     };
 
+    let master_list_id = program.master_list_id.clone().unwrap_or_default();
+
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
-            MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(&program.master_list_id)),
+            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
         )?
         .into_iter()
         .map(|line| line.item_id)

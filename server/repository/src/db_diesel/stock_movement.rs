@@ -13,7 +13,7 @@ table! {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        quantity -> BigInt,
+        quantity -> Double,
         datetime -> Timestamp,
     }
 }
@@ -23,7 +23,7 @@ pub struct StockMovementRow {
     pub id: String,
     pub item_id: String,
     pub store_id: String,
-    pub quantity: i64,
+    pub quantity: f64,
     pub datetime: NaiveDateTime,
 }
 
@@ -156,7 +156,7 @@ mod test {
                     r.invoice_id = invoice_id.clone();
                     r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineType::StockOut;
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
             })
         }
@@ -181,7 +181,7 @@ mod test {
             .join(inline_edit(&stock_movement_point(), |mut u| {
                 // Should not be counted
                 u.invoices[0].picked_datetime = None;
-                u.invoice_lines[0].pack_size = 10;
+                u.invoice_lines[0].pack_size = 10.0;
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u
             }))
@@ -192,7 +192,7 @@ mod test {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 );
-                u.invoice_lines[0].pack_size = 10;
+                u.invoice_lines[0].pack_size = 10.0;
                 u.invoice_lines[0].number_of_packs = 10.0;
                 u
             }))
@@ -276,7 +276,7 @@ mod test {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
-                    quantity: -20,
+                    quantity: -20.0,
                     datetime: NaiveDate::from_ymd_opt(2020, 11, 2)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
@@ -286,7 +286,7 @@ mod test {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
-                    quantity: -(10 * 10),
+                    quantity: -(10.0 * 10.0),
                     datetime: NaiveDate::from_ymd_opt(2020, 11, 3)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
@@ -296,7 +296,7 @@ mod test {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
-                    quantity: 15,
+                    quantity: 15.0,
                     datetime: NaiveDate::from_ymd_opt(2020, 12, 15)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
@@ -306,7 +306,7 @@ mod test {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
-                    quantity: 60,
+                    quantity: 60.0,
                     datetime: NaiveDate::from_ymd_opt(2021, 1, 20)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
@@ -316,7 +316,7 @@ mod test {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
-                    quantity: -50,
+                    quantity: -50.0,
                     datetime: NaiveDate::from_ymd_opt(2021, 2, 1)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)

@@ -110,7 +110,7 @@ pub fn mock_stock_line_stocktake_surplus() -> StockLineRow {
         store_id: String::from("store_a"),
         batch: Some(String::from("item_a_batch_b")),
         available_number_of_packs: 20.0,
-        pack_size: 1,
+        pack_size: 1.0,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_number_of_packs: 30.0,
@@ -156,7 +156,7 @@ pub fn mock_stock_line_stocktake_deficit() -> StockLineRow {
         store_id: String::from("store_a"),
         batch: Some(String::from("item_a_batch_b")),
         available_number_of_packs: 20.0,
-        pack_size: 1,
+        pack_size: 1.0,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_number_of_packs: 30.0,
@@ -257,7 +257,7 @@ pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
         r.item_link_id = mock_item_a().id;
         r.expiry_date = Some(NaiveDate::from_ymd_opt(2022, 12, 14).unwrap());
         r.batch = Some("batch".to_string());
-        r.pack_size = Some(10);
+        r.pack_size = Some(10.0);
         r.cost_price_per_pack = Some(11.0);
         r.sell_price_per_pack = Some(12.0);
         r.note = Some("note".to_string());

@@ -141,6 +141,7 @@ impl From<RepositoryError> for AddFromMasterListError {
 
 #[cfg(test)]
 mod test {
+    use assert_approx_eq::assert_approx_eq;
     use repository::{
         mock::{
             common::FullMockMasterList,
@@ -344,17 +345,16 @@ mod test {
 
         assert_eq!(
             line.requisition_line_row.available_stock_on_hand,
-            test_item_stats::item_1_soh() as i32
+            test_item_stats::item_1_soh()
         );
         assert_eq!(
             line.requisition_line_row.average_monthly_consumption,
-            test_item_stats::item1_amc_3_months() as i32
+            test_item_stats::item1_amc_3_months()
         );
-        assert_eq!(
+        assert_approx_eq!(
             line.requisition_line_row.suggested_quantity,
             // 10 = requisition max_mos
-            test_item_stats::item1_amc_3_months() as i32 * 10
-                - test_item_stats::item_1_soh() as i32
+            test_item_stats::item1_amc_3_months() * 10.0 - test_item_stats::item_1_soh()
         );
 
         let line = lines
@@ -364,17 +364,16 @@ mod test {
 
         assert_eq!(
             line.requisition_line_row.available_stock_on_hand,
-            test_item_stats::item_2_soh() as i32
+            test_item_stats::item_2_soh()
         );
         assert_eq!(
             line.requisition_line_row.average_monthly_consumption,
-            test_item_stats::item2_amc_3_months() as i32
+            test_item_stats::item2_amc_3_months()
         );
         assert_eq!(
             line.requisition_line_row.suggested_quantity,
             // 10 = requisition max_mos
-            test_item_stats::item2_amc_3_months() as i32 * 10
-                - test_item_stats::item_2_soh() as i32
+            test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh()
         );
     }
 }

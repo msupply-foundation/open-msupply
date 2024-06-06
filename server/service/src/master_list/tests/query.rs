@@ -67,5 +67,34 @@ mod query {
             )
             .unwrap();
         assert_eq!(result.count, 0);
+
+        // Test is_program filters
+        let result = service
+            .get_master_lists(
+                &context,
+                None,
+                Some(
+                    MasterListFilter::new()
+                        .name(StringFilter::equal_to("master_list_program_name"))
+                        .is_program(true),
+                ),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.count, 1);
+
+        let result = service
+            .get_master_lists(
+                &context,
+                None,
+                Some(
+                    MasterListFilter::new()
+                        .name(StringFilter::equal_to("master_list_program_name"))
+                        .is_program(false),
+                ),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.count, 0);
     }
 }
