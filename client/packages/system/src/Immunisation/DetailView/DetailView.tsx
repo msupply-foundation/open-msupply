@@ -144,7 +144,7 @@ const useDraftProgram = (): UseDraftProgramControl => {
 
 export const ImmunisationDetailView: FC = () => {
   const { setSuffix } = useBreadcrumbs();
-  const t = useTranslation('catalogue');
+  const t = useTranslation('coldchain');
   const { draft, onUpdate, isLoading } = useDraftProgram();
 
   const dosesColumns = useColumns([
