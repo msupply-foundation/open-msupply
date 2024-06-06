@@ -19,11 +19,11 @@ const data = {
   name: 'some program name',
 };
 
-export interface Immunisation {
+export interface VaccineCourse {
   id: string;
   name: string;
-  vaccines: string[];
-  isNew: boolean;
+  targetDemographicName: string;
+  doses: number;
 }
 
 export const ProgramComponent: FC = () => {
@@ -37,7 +37,7 @@ export const ProgramComponent: FC = () => {
   const t = useTranslation('catalogue');
   const { setSuffix } = useBreadcrumbs();
 
-  const draftProgram: Record<string, Immunisation> = {};
+  const draftProgram: Record<string, VaccineCourse> = {};
 
   const [draft] = useState(draftProgram);
 
