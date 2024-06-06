@@ -79,6 +79,8 @@ pub enum PermissionType {
     AssetQuery,
     AssetMutate,
     AssetCatalogueItemMutate,
+    // demographics
+    DemographicQuery,
     VaccineCourseMutate,
 }
 

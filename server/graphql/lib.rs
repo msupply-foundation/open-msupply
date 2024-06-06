@@ -29,6 +29,7 @@ use graphql_asset::{
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
+use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -73,6 +74,9 @@ impl CentralServerMutationNode {
     async fn log_reason(&self) -> AssetLogReasonMutations {
         AssetLogReasonMutations
     }
+    async fn demographic(&self) -> DemographicMutations {
+        DemographicMutations
+    }
     async fn vaccine_course(&self) -> VaccineCourseMutations {
         VaccineCourseMutations
     }
@@ -114,6 +118,7 @@ pub struct Queries(
     pub AssetLogQueries,
     pub AssetLogReasonQueries,
     pub AssetPropertiesQueries,
+    pub DemographicIndicatorQueries,
     pub VaccineCourseQueries,
 );
 
@@ -141,6 +146,7 @@ impl Queries {
             AssetLogQueries,
             AssetLogReasonQueries,
             AssetPropertiesQueries,
+            DemographicIndicatorQueries,
             VaccineCourseQueries,
         )
     }

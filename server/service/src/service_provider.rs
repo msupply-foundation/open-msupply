@@ -13,6 +13,7 @@ use crate::{
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
+    demographic::DemographicServiceTrait,
     display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
     document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
@@ -133,6 +134,8 @@ pub struct ServiceProvider {
     pub asset_service: Box<dyn AssetServiceTrait>,
     // Label Printer
     pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
+    // Demographic
+    pub demographic_service: Box<dyn DemographicServiceTrait>,
     // Vaccine Course
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
 }
@@ -215,6 +218,7 @@ impl ServiceProvider {
             label_printer_settings_service: Box::new(
                 crate::label_printer_settings_service::LabelPrinterSettingsService {},
             ),
+            demographic_service: Box::new(crate::demographic::DemographicService {}),
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
         }
     }
