@@ -33,8 +33,8 @@ pub fn insert_vaccine_course(
         .vaccine_course_service
         .insert_vaccine_course(&service_context, input.into())
     {
-        Ok(asset) => Ok(InsertVaccineCourseResponse::Response(
-            VaccineCourseNode::from_domain(asset),
+        Ok(vaccine_course) => Ok(InsertVaccineCourseResponse::Response(
+            VaccineCourseNode::from_domain(vaccine_course),
         )),
         Err(error) => Ok(InsertVaccineCourseResponse::Error(
             InsertVaccineCourseError {
@@ -84,9 +84,6 @@ pub enum InsertVaccineCourseResponse {
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertVaccineCourseErrorInterface {
     ItemAlreadyExists(RecordAlreadyExist),
-    UniqueValueViolation(UniqueValueViolation),
-    InternalError(InternalError),
-    DatabaseError(DatabaseError),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
