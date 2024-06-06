@@ -19,7 +19,6 @@ use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
 use graphql_types::types::program_enrolment::ProgramEventFilterInput;
 use graphql_types::types::program_event::ProgramEventResponse;
 use graphql_types::types::program_event::ProgramEventSortInput;
-use graphql_types::types::program_node::ProgramNode;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
@@ -35,7 +34,9 @@ use mutations::encounter::insert::InsertEncounterResponse;
 use mutations::encounter::update::update_encounter;
 use mutations::encounter::update::UpdateEncounterInput;
 use mutations::encounter::update::UpdateEncounterResponse;
+use mutations::immunisation::insert::insert_immunisation_program;
 use mutations::immunisation::insert::InsertImmunisationProgramInput;
+use mutations::immunisation::insert::InsertImmunisationProgramResponse;
 use mutations::insert_document_registry::*;
 use mutations::patient::insert::insert_patient;
 use mutations::patient::insert::InsertPatientInput;
@@ -57,7 +58,6 @@ use mutations::update_document::*;
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
-use service::program::insert_immunisation::InsertImmunisationProgram;
 use service::programs::patient::patient_search_central;
 use types::program::ProgramFilterInput;
 use types::program::ProgramSortInput;
@@ -400,7 +400,7 @@ impl CentralProgramsMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: InsertImmunisationProgramInput,
-    ) -> Result<UpdateContactTraceResponse> {
-        todo!("insert_immunisation_program")
+    ) -> Result<InsertImmunisationProgramResponse> {
+        insert_immunisation_program(ctx, store_id, input)
     }
 }
