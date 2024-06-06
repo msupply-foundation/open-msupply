@@ -6,7 +6,7 @@ use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
-    invoice_line::validate::{check_item_exists, check_line_does_not_exist},
+    invoice_line::validate::{check_item_exists, check_line_exists},
 };
 
 use super::{InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError};
@@ -18,7 +18,7 @@ pub fn validate(
     store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), OutError> {
-    if !check_line_does_not_exist(connection, &input.id)? {
+    if let Some(_) = check_line_exists(connection, &input.id)? {
         return Err(OutError::LineAlreadyExists);
     }
 

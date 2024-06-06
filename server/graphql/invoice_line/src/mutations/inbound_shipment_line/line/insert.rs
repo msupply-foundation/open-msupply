@@ -20,7 +20,7 @@ pub struct InsertInput {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
-    pub pack_size: u32,
+    pub pack_size: f64,
     pub batch: Option<String>,
     pub location: Option<NullableUpdateInput<String>>,
     pub cost_price_per_pack: f64,
@@ -427,7 +427,7 @@ mod test {
                     location: Some(NullableUpdate {
                         value: Some("location input".to_string())
                     }),
-                    pack_size: 2,
+                    pack_size: 2.0,
                     batch: Some("batch".to_string()),
                     cost_price_per_pack: 1.1,
                     sell_price_per_pack: 2.2,

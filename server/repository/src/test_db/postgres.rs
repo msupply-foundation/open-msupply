@@ -83,10 +83,6 @@ async fn setup_with_version_no_template(
     version: Option<Version>,
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
-    use diesel::{PgConnection, RunQueryDsl};
-
-    use crate::get_storage_connection_manager;
-
     let connection_manager =
         ConnectionManager::<PgConnection>::new(&db_settings.connection_string_without_db());
     let pool = Pool::new(connection_manager).expect("Failed to connect to database");

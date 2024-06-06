@@ -78,7 +78,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             location_id: Some(location_row.id.clone()),
             batch: None,
             expiry_date: None,
-            pack_size: 1,
+            pack_size: 1.0,
             cost_price_per_pack: 5.0,
             sell_price_per_pack: 10.0,
             total_before_tax: 8.0,
@@ -204,7 +204,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             r.item_link_id = base_invoice_line_row.item_link_id;
             r.store_id = new_site_properties.store_id.clone();
             r.batch = Some("some batch".to_string());
-            r.pack_size = 20;
+            r.pack_size = 20.0;
             r.cost_price_per_pack = 0.5;
             r.sell_price_per_pack = 0.2;
         });
@@ -255,7 +255,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             d.location_id = None;
             d.batch = Some("invoice line batch".to_string());
             d.expiry_date = NaiveDate::from_ymd_opt(2024, 04, 04);
-            d.pack_size = 10;
+            d.pack_size = 10.0;
             d.cost_price_per_pack = 15.0;
             d.sell_price_per_pack = 15.0;
             d.total_before_tax = 10.0;

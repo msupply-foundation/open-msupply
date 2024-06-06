@@ -25,7 +25,7 @@ import {
   RouteBuilder,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { AppRoute, ExternalURL } from '@openmsupply-client/config';
+import { AppRoute, Environment, ExternalURL } from '@openmsupply-client/config';
 import {
   CatalogueNav,
   DistributionNav,
@@ -218,7 +218,7 @@ export const AppDrawer: React.FC = () => {
           <InventoryNav />
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
-          <ManageNav />
+          {Environment.FEATURE_GAPS && <ManageNav />}
 
           {/* <AppNavLink
             to={AppRoute.Tools}
