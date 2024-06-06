@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{mock_immunisation_program, MockDataInserts};
+    use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
     use repository::{ProgramFilter, ProgramSort, ProgramSortField, StringFilter};
 
