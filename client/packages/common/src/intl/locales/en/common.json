@@ -411,7 +411,7 @@
   "label.verified": "Verified",
   "label.website": "Website",
   "label.number-of-doses": "Number of Doses",
-  "label.dose-number": "dose #",
+  "label.dose-number": "dose#",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "log.changed-from": "From",
   "log.changed-to": "to",
