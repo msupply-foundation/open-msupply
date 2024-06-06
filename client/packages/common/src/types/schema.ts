@@ -107,6 +107,7 @@ export enum ActivityLogNodeType {
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
+  ProgramCreated = 'PROGRAM_CREATED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
@@ -125,7 +126,8 @@ export enum ActivityLogNodeType {
   StockOffHold = 'STOCK_OFF_HOLD',
   StockOnHold = 'STOCK_ON_HOLD',
   StockSellPriceChange = 'STOCK_SELL_PRICE_CHANGE',
-  UserLoggedIn = 'USER_LOGGED_IN'
+  UserLoggedIn = 'USER_LOGGED_IN',
+  VaccineCourseCreated = 'VACCINE_COURSE_CREATED'
 }
 
 export type ActivityLogResponse = ActivityLogConnector;
@@ -870,12 +872,25 @@ export type CentralPatientSearchInput = {
 
 export type CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError;
 
+export type CentralProgramsMutations = {
+  __typename: 'CentralProgramsMutations';
+  insertImmunisationProgram: InsertImmunisationProgramResponse;
+};
+
+
+export type CentralProgramsMutationsInsertImmunisationProgramArgs = {
+  input: InsertImmunisationProgramInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
   demographic: DemographicMutations;
   logReason: AssetLogReasonMutations;
   packVariant: PackVariantMutations;
+  program: CentralProgramsMutations;
+  vaccineCourse: VaccineCourseMutations;
 };
 
 export type ClinicianConnector = {
@@ -1101,7 +1116,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -2332,6 +2347,22 @@ export type InsertFormSchemaInput = {
 
 export type InsertFormSchemaResponse = FormSchemaNode;
 
+export type InsertImmunisationProgramError = {
+  __typename: 'InsertImmunisationProgramError';
+  error: InsertImmunisationProgramErrorInterface;
+};
+
+export type InsertImmunisationProgramErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertImmunisationProgramInput = {
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type InsertImmunisationProgramResponse = InsertImmunisationProgramError | ProgramNode;
+
 export type InsertInboundReturnError = {
   __typename: 'InsertInboundReturnError';
   error: InsertInboundReturnErrorInterface;
@@ -2841,6 +2872,24 @@ export type InsertStocktakeResponseWithId = {
   id: Scalars['String']['output'];
   response: InsertStocktakeResponse;
 };
+
+export type InsertVaccineCourseError = {
+  __typename: 'InsertVaccineCourseError';
+  error: InsertVaccineCourseErrorInterface;
+};
+
+export type InsertVaccineCourseErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertVaccineCourseInput = {
+  demographicIndicatorId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  programId: Scalars['String']['input'];
+};
+
+export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
 
 export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
@@ -4784,6 +4833,12 @@ export type PrintReportSortInput = {
   key: Scalars['String']['input'];
 };
 
+export type ProgramConnector = {
+  __typename: 'ProgramConnector';
+  nodes: Array<ProgramNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type ProgramEnrolmentConnector = {
   __typename: 'ProgramEnrolmentConnector';
   nodes: Array<ProgramEnrolmentNode>;
@@ -4910,9 +4965,17 @@ export type ProgramEventSortInput = {
   key: ProgramEventSortFieldInput;
 };
 
+export type ProgramFilterInput = {
+  contextId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
 export type ProgramNode = {
   __typename: 'ProgramNode';
   id: Scalars['String']['output'];
+  isImmunisation: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
 };
 
@@ -4931,6 +4994,22 @@ export type ProgramRequisitionSettingNode = {
   programName: Scalars['String']['output'];
   suppliers: Array<NameNode>;
 };
+
+export enum ProgramSortFieldInput {
+  Name = 'name'
+}
+
+export type ProgramSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ProgramSortFieldInput;
+};
+
+export type ProgramsResponse = ProgramConnector;
 
 export type PropertyNode = {
   __typename: 'PropertyNode';
@@ -5057,6 +5136,7 @@ export type Queries = {
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
+  programs: ProgramsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -5092,6 +5172,8 @@ export type Queries = {
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
+  vaccineCourse: VaccineCourseResponse;
+  vaccineCourses: VaccineCoursesResponse;
 };
 
 
@@ -5491,6 +5573,14 @@ export type QueriesProgramRequisitionSettingsArgs = {
 };
 
 
+export type QueriesProgramsArgs = {
+  filter?: InputMaybe<ProgramFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesRepackArgs = {
   invoiceId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -5649,6 +5739,18 @@ export type QueriesTemperatureNotificationsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+
+export type QueriesVaccineCourseArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesVaccineCoursesArgs = {
+  filter?: InputMaybe<VaccineCourseFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<VaccineCourseSortInput>>;
+};
+
 export type RawDocumentNode = {
   __typename: 'RawDocumentNode';
   author: Scalars['String']['output'];
@@ -5660,7 +5762,7 @@ export type RawDocumentNode = {
   type: Scalars['String']['output'];
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -7577,7 +7679,8 @@ export enum UserPermission {
   StockLineQuery = 'STOCK_LINE_QUERY',
   StoreAccess = 'STORE_ACCESS',
   TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
-  TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY'
+  TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY',
+  VaccineCourseMutate = 'VACCINE_COURSE_MUTATE'
 }
 
 export type UserResponse = UserNode;
@@ -7611,6 +7714,50 @@ export type UserStorePermissionNode = {
   permissions: Array<UserPermission>;
   storeId: Scalars['String']['output'];
 };
+
+export type VaccineCourseConnector = {
+  __typename: 'VaccineCourseConnector';
+  nodes: Array<VaccineCourseNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type VaccineCourseFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type VaccineCourseMutations = {
+  __typename: 'VaccineCourseMutations';
+  insertVaccineCourse: InsertVaccineCourseResponse;
+};
+
+
+export type VaccineCourseMutationsInsertVaccineCourseArgs = {
+  input: InsertVaccineCourseInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type VaccineCourseNode = {
+  __typename: 'VaccineCourseNode';
+  demographicIndicatorId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  programId: Scalars['String']['output'];
+};
+
+export type VaccineCourseResponse = NodeError | VaccineCourseNode;
+
+export enum VaccineCourseSortFieldInput {
+  Name = 'name'
+}
+
+export type VaccineCourseSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: VaccineCourseSortFieldInput;
+};
+
+export type VaccineCoursesResponse = VaccineCourseConnector;
 
 export type VariantNode = {
   __typename: 'VariantNode';

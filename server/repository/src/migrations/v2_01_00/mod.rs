@@ -10,6 +10,7 @@ mod demographics;
 mod ledger;
 mod name_properties;
 mod pg_enums;
+mod program;
 mod property;
 mod v6_sync_api_error_code;
 mod vaccine_course;
@@ -35,6 +36,7 @@ impl Migration for V2_01_00 {
         name_properties::migrate_name_properties(connection)?;
         demographics::migrate(connection)?;
         vaccine_course::migrate(connection)?;
+        program::migrate(connection)?;
         Ok(())
     }
 }

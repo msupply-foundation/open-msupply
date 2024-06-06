@@ -104,13 +104,14 @@ impl<'a> MasterListRepository<'a> {
             if let Some(is_program) = f.is_program {
                 let program_join_query = program_dsl::program
                     .select(program_dsl::master_list_id)
+                    .filter(program_dsl::master_list_id.is_not_null())
                     .distinct()
                     .into_boxed();
 
                 if is_program {
-                    query = query.filter(master_list_dsl::id.eq_any(program_join_query));
+                    query = query.filter(master_list_dsl::id.nullable().eq_any(program_join_query));
                 } else {
-                    query = query.filter(master_list_dsl::id.ne_all(program_join_query));
+                    query = query.filter(master_list_dsl::id.nullable().ne_all(program_join_query));
                 }
             }
 
@@ -154,6 +155,9 @@ impl<'a> MasterListRepository<'a> {
         } else {
             query = query.order(master_list_dsl::id.asc())
         }
+
+        // Debug diesel query
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result = query
             .offset(pagination.offset as i64)
