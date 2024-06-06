@@ -161,7 +161,7 @@ export const ImmunisationDetailView: FC = () => {
 
   const tryUpdateValue = (value: number | undefined) => {
     if (value === undefined) return;
-    const isValid = Number.isInteger(value) && value >= 0;
+    const isValid = Number.isInteger(value) && value >= 0 && value <= 10;
 
     if (isValid) {
       setValue(value);
@@ -272,9 +272,9 @@ export const ImmunisationDetailView: FC = () => {
               onChange={tryUpdateValue}
             />
           </Row>
-          <Row label={t('label.dose-number')}>
+          <Box paddingTop={1.5}>
             <MiniTable rows={draft?.schedule} columns={dosesColumns} />
-          </Row>
+          </Box>
         </Section>
       </Container>
     </Box>
