@@ -15,7 +15,7 @@ pub struct InboundReturnLine {
     pub item_row: ItemRow,
     pub packs_issued: Option<f64>,
     pub batch: Option<String>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub stock_line_id: Option<String>,
     pub expiry_date: Option<NaiveDate>,
 }

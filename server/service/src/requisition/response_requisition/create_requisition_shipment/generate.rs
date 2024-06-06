@@ -77,7 +77,7 @@ pub fn generate_invoice_lines(
         invoice_line_rows.push(InvoiceLineRow {
             id: uuid(),
             invoice_id: invoice_id.to_owned(),
-            pack_size: 1,
+            pack_size: 1.0,
             number_of_packs: requisition_line_supply_status.remaining_quantity(),
             item_link_id: item_row.id,
             item_code: item_row.code,

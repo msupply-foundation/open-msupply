@@ -221,6 +221,7 @@
   "label.snapshot-num-of-packs": "Pacotes Salvos",
   "label.soh": "Estoque Disponível (ED)",
   "label.status": "Status",
+  "label.percentage": "percentage",
   "label.stock-on-hand": "Estoque Disponível (Restante estimado)",
   "label.stocktake-comment": "Comentário",
   "label.suggested": "Sugerido",

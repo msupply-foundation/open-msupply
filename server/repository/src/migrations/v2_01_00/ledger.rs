@@ -1,10 +1,25 @@
 use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    let (casting, absolute) = if cfg!(feature = "postgres") {
-        ("::BIGINT", "@")
+pub(crate) fn drop_ledger_views(connection: &StorageConnection) -> anyhow::Result<()> {
+    sql!(
+        connection,
+        r#"
+        DROP VIEW IF EXISTS consumption;
+        DROP VIEW IF EXISTS stock_movement;
+        DROP VIEW IF EXISTS outbound_shipment_stock_movement;
+        DROP VIEW IF EXISTS inbound_shipment_stock_movement;
+        DROP VIEW IF EXISTS inventory_adjustment_stock_movement;
+        DROP VIEW IF EXISTS invoice_line_stock_movement;
+        "#
+    )?;
+    Ok(())
+}
+
+pub(crate) fn create_ledger_views(connection: &StorageConnection) -> anyhow::Result<()> {
+    let absolute = if cfg!(feature = "postgres") {
+        "@"
     } else {
-        ("", "abs")
+        "abs"
     };
 
     // Drop all these views, then re-create only the required ones:
@@ -17,13 +32,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-    DROP VIEW IF EXISTS consumption;
-    DROP VIEW IF EXISTS stock_movement;
-    DROP VIEW IF EXISTS outbound_shipment_stock_movement;
-    DROP VIEW IF EXISTS inbound_shipment_stock_movement;
-    DROP VIEW IF EXISTS inventory_adjustment_stock_movement;
-    DROP VIEW IF EXISTS invoice_line_stock_movement;
-
     CREATE VIEW invoice_line_stock_movement AS 
             SELECT
                 invoice_line.id,
@@ -49,8 +57,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 invoice_line.return_reason_id,
                 item_link.item_id AS item_id,
                 CASE
-                    WHEN "type" = 'STOCK_IN' THEN (number_of_packs * pack_size){casting}
-                    WHEN "type" = 'STOCK_OUT' THEN (number_of_packs * pack_size){casting} * -1
+                    WHEN "type" = 'STOCK_IN' THEN (number_of_packs * pack_size)
+                    WHEN "type" = 'STOCK_OUT' THEN (number_of_packs * pack_size) * -1
                 END AS quantity_movement
             FROM
                 invoice_line

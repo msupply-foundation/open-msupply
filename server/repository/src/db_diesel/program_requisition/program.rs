@@ -15,6 +15,7 @@ pub struct ProgramFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub context_id: Option<EqualFilter<String>>,
+    pub is_immunisation: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -92,11 +93,15 @@ fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery
             id,
             name,
             context_id,
+            is_immunisation,
         } = f;
 
         apply_equal_filter!(query, id, program_dsl::id);
         apply_string_filter!(query, name, program_dsl::name);
         apply_equal_filter!(query, context_id, program_dsl::context_id);
+        if let Some(is_immunisation) = is_immunisation {
+            query = query.filter(program_dsl::is_immunisation.eq(is_immunisation));
+        }
     }
 
     query
@@ -119,6 +124,11 @@ impl ProgramFilter {
 
     pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
         self.context_id = Some(filter);
+        self
+    }
+
+    pub fn is_immunisation(mut self, filter: bool) -> Self {
+        self.is_immunisation = Some(filter);
         self
     }
 }

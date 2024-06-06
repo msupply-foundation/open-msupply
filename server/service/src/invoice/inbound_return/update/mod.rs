@@ -333,6 +333,7 @@ mod test {
 
         let stock_line_delivered = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
+            .unwrap()
             .unwrap();
 
         // data from invoice line was added to the new stock line
@@ -383,6 +384,7 @@ mod test {
 
         let stock_line_verified = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
+            .unwrap()
             .unwrap();
 
         // Stock line has not changed
@@ -452,6 +454,7 @@ mod test {
         // check stock line was introduced
         let stock_line = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
+            .unwrap()
             .unwrap();
 
         // data from invoice line was added to the new stock line
