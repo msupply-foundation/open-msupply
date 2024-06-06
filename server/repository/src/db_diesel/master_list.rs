@@ -157,7 +157,7 @@ impl<'a> MasterListRepository<'a> {
         }
 
         // Debug diesel query
-        println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result = query
             .offset(pagination.offset as i64)
