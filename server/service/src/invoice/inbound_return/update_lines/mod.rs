@@ -264,7 +264,7 @@ mod test {
                         inbound_return_id: mock_inbound_return_a().id,
                         inbound_return_lines: vec![InboundReturnLineInput {
                             id: "new_line".to_string(),
-                            pack_size: 0,
+                            pack_size: 0.0,
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
@@ -287,7 +287,7 @@ mod test {
                         inbound_return_id: mock_inbound_return_a().id,
                         inbound_return_lines: vec![InboundReturnLineInput {
                             id: mock_inbound_return_a_invoice_line_a().id,
-                            pack_size: 0,
+                            pack_size: 0.0,
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
@@ -311,7 +311,7 @@ mod test {
                         inbound_return_lines: vec![InboundReturnLineInput {
                             id: "new_line_id".to_string(),
                             number_of_packs: 1.0,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             item_id: mock_item_a().id,
                             reason_id: Some("does_not_exist".to_string()),
                             ..Default::default()
@@ -371,7 +371,7 @@ mod test {
                         InboundReturnLineInput {
                             id: "line1".to_string(), // create
                             number_of_packs: 1.0,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             item_id: mock_item_a().id,
                             reason_id: Some(return_reason().id),
                             ..Default::default()
@@ -379,7 +379,7 @@ mod test {
                         InboundReturnLineInput {
                             id: mock_inbound_return_a_invoice_line_a().id, // update
                             number_of_packs: 2.0,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             item_id: mock_item_a().id,
                             reason_id: Some(return_reason().id),
                             ..Default::default()

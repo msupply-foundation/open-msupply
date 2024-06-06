@@ -22,7 +22,7 @@ pub struct RepackNode {
 pub struct RepackStockLineNode {
     // Repacked number of packs before conversion (for from stock line)
     pub number_of_packs: f64,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub location_id: Option<String>,
     pub stock_line_id: Option<String>,
 }
@@ -75,7 +75,7 @@ impl RepackStockLineNode {
         self.number_of_packs
     }
 
-    async fn pack_size(&self) -> i32 {
+    async fn pack_size(&self) -> f64 {
         self.pack_size
     }
 

@@ -21,6 +21,7 @@ mod common_stock;
 pub mod currency;
 pub mod cursor_controller;
 pub mod dashboard;
+pub mod demographic;
 pub mod display_settings_service;
 pub mod document;
 pub mod inventory_adjustment_reason;
@@ -67,6 +68,7 @@ pub mod temperature_excursion;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
+pub mod vaccine_course;
 pub mod validate;
 
 #[cfg(test)]
@@ -266,10 +268,6 @@ pub fn usize_to_u32(num: usize) -> u32 {
 }
 
 pub fn usize_to_i32(num: usize) -> i32 {
-    num.try_into().unwrap_or(0)
-}
-
-pub fn u32_to_i32(num: u32) -> i32 {
     num.try_into().unwrap_or(0)
 }
 

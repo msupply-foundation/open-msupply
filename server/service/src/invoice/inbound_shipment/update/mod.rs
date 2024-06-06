@@ -374,7 +374,7 @@ mod test {
                 r.id = "invoice_line_for_test".to_string();
                 r.invoice_id = "invoice_test".to_string();
                 r.item_link_id = "item_a".to_string();
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.number_of_packs = 1.0;
                 r.r#type = InvoiceLineType::StockIn;
             })

@@ -62,8 +62,8 @@ impl VariantNode {
         &self.variant.long_name
     }
 
-    pub async fn pack_size(&self) -> &i32 {
-        &self.variant.pack_size
+    pub async fn pack_size(&self) -> f64 {
+        self.variant.pack_size
     }
 
     pub async fn is_active(&self) -> &bool {

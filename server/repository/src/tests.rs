@@ -56,7 +56,7 @@ mod repository_test {
                 store_id: "store1".to_string(),
                 batch: Some("batch1".to_string()),
                 available_number_of_packs: 6.0,
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_number_of_packs: 1.0,
@@ -152,7 +152,7 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 1).unwrap()),
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 1.0,
@@ -177,7 +177,7 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 3).unwrap()),
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 2.0,
@@ -203,7 +203,7 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 5).unwrap()),
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 3.0,
@@ -229,7 +229,7 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2021, 12, 6).unwrap()),
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 10.0,
@@ -971,7 +971,7 @@ mod repository_test {
 
         // Test insert
         let mut update_test_row = mock_draft_request_requisition_line();
-        update_test_row.requested_quantity = 99;
+        update_test_row.requested_quantity = 99.0;
         RequisitionLineRowRepository::new(&connection)
             .upsert_one(&update_test_row)
             .unwrap();
@@ -1013,7 +1013,7 @@ mod repository_test {
                     .requisition_id(EqualFilter::equal_to(
                         &mock_draft_request_requisition_line().requisition_id,
                     ))
-                    .requested_quantity(EqualFilter::equal_to_i32(99)),
+                    .requested_quantity(EqualFilter::equal_to_f64(99.0)),
             )
             .unwrap();
 

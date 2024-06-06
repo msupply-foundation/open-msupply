@@ -103,7 +103,7 @@ fn generate(
     let new_line = InvoiceLineRow {
         id,
         invoice_id,
-        pack_size: 1,
+        pack_size: 1.0,
         number_of_packs: quantity as f64,
         item_link_id: item_id,
         item_code: item.code,
@@ -337,7 +337,7 @@ mod test_insert {
             InvoiceLineRow {
                 id: "new_line".to_owned(),
                 invoice_id: invoice_id.clone(),
-                pack_size: 1,
+                pack_size: 1.0,
                 r#type: InvoiceLineType::UnallocatedStock,
                 number_of_packs: 4.0,
                 item_link_id: item.id.clone(),

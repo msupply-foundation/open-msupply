@@ -24,7 +24,7 @@ table! {
         location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
-        pack_size -> Integer,
+        pack_size -> Double,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
         total_before_tax -> Double,
@@ -71,7 +71,7 @@ pub struct InvoiceLineRow {
     pub location_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub cost_price_per_pack: f64,
     /// Sell price before tax
     pub sell_price_per_pack: f64,

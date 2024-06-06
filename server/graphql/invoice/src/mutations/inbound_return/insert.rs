@@ -29,7 +29,7 @@ pub struct InboundReturnLineInput {
     pub item_id: String,
     pub reason_id: Option<String>,
     pub note: Option<String>,
-    pub pack_size: u32,
+    pub pack_size: f64,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
 }
