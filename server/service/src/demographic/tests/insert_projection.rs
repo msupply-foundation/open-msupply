@@ -15,11 +15,8 @@ mod query {
 
     #[actix_rt::test]
     async fn projection_insert() {
-        let (_, _connection, connection_manager, _) = setup_all(
-            "projection_service_insert",
-            MockDataInserts::none().stores(),
-        )
-        .await;
+        let (_, _connection, connection_manager, _) =
+            setup_all("projection_insert", MockDataInserts::none().stores()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let ctx = service_provider

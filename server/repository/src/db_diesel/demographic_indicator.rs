@@ -105,7 +105,7 @@ fn create_filtered_query(filter: Option<DemographicIndicatorFilter>) -> BoxedLog
     query
 }
 
-pub fn to_domain(demographic_indicator_row: DemographicIndicatorRow) -> DemographicIndicator {
+fn to_domain(demographic_indicator_row: DemographicIndicatorRow) -> DemographicIndicator {
     demographic_indicator_row
 }
 

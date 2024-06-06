@@ -16,7 +16,7 @@ mod query {
     #[actix_rt::test]
     async fn indicator_insert() {
         let (_, _connection, connection_manager, _) =
-            setup_all("indicator_service_insert", MockDataInserts::none().stores()).await;
+            setup_all("indicator_insert", MockDataInserts::none().stores()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let ctx = service_provider
