@@ -149,7 +149,7 @@ mod test {
             id: "line_a_stock_line_a".to_string(),
             item_link_id: mock_item_a().id,
             store_id: mock_store_a().id.clone(),
-            pack_size: 5,
+            pack_size: 5.0,
             cost_price_per_pack: 0.20,
             sell_price_per_pack: 0.50,
             available_number_of_packs: 10.0,
@@ -182,7 +182,7 @@ mod test {
             id: "original_stock_line".to_string(),
             item_link_id: mock_item_a().id,
             store_id: mock_store_a().id.clone(),
-            pack_size: 10,
+            pack_size: 10.0,
             cost_price_per_pack: 0.10,
             sell_price_per_pack: 0.25,
             available_number_of_packs: 10.0,
@@ -272,7 +272,7 @@ mod test {
                 InsertRepack {
                     stock_line_id: original_stock_line.id.clone(),
                     number_of_packs: 6.0,
-                    new_pack_size: 5,
+                    new_pack_size: 5.0,
                     new_location_id: None,
                 },
             )

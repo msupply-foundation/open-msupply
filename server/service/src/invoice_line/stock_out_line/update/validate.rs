@@ -5,9 +5,7 @@ use crate::{
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
         stock_out_line::BatchPair,
-        validate::{
-            check_line_belongs_to_invoice, check_line_exists_option, check_number_of_packs,
-        },
+        validate::{check_line_belongs_to_invoice, check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
 };
@@ -21,7 +19,7 @@ pub fn validate(
 ) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateStockOutLineError> {
     use UpdateStockOutLineError::*;
 
-    let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let line_row = &line.invoice_line_row;
     let invoice =
         check_invoice_exists(&line_row.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;

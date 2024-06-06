@@ -10,7 +10,7 @@ impl ItemStatsNode {
         self.item_stats.average_monthly_consumption
     }
 
-    pub async fn available_stock_on_hand(&self) -> u32 {
+    pub async fn available_stock_on_hand(&self) -> f64 {
         self.item_stats.available_stock_on_hand
     }
 

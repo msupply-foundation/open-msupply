@@ -340,7 +340,7 @@ fn generate_new_stock_line(
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0.0);
     let row = stocktake_line.line;
-    let pack_size = row.pack_size.unwrap_or(0);
+    let pack_size = row.pack_size.unwrap_or(0.0);
     let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
     let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
     let stock_line_id = uuid();
@@ -834,7 +834,7 @@ mod test {
                 r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 20.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.cost_price_per_pack = 0.0;
                 r.sell_price_per_pack = 0.0;
                 r.total_number_of_packs = 20.0;
@@ -1128,6 +1128,7 @@ mod test {
             .unwrap();
         let stock_line = StockLineRowRepository::new(&context.connection)
             .find_one_by_id(&shipment_line.stock_line_id.unwrap())
+            .unwrap()
             .unwrap();
         let stocktake_line = mock_stocktake_line_new_stock_line();
         assert_eq!(stock_line.expiry_date, stocktake_line.expiry_date);

@@ -1,4 +1,5 @@
 use repository::NameRepository;
+use repository::NameType;
 use repository::PaginationOption;
 use repository::{Name, NameFilter, NameSort};
 
@@ -19,8 +20,12 @@ pub fn get_names(
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = NameRepository::new(&ctx.connection);
 
+    let filter = filter
+        .unwrap_or_default()
+        .r#type(NameType::Patient.not_equal_to());
+
     Ok(ListResult {
-        rows: repository.query(store_id, pagination, filter.clone(), sort)?,
-        count: i64_to_u32(repository.count(store_id, filter)?),
+        rows: repository.query(store_id, pagination, Some(filter.clone()), sort)?,
+        count: i64_to_u32(repository.count(store_id, Some(filter))?),
     })
 }

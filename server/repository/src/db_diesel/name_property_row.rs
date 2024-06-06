@@ -19,7 +19,6 @@ table! {
     }
 }
 joinable!(name_property -> property (property_id));
-// TODO: I shouldn't need this??
 allow_tables_to_appear_in_same_query!(name_property, property);
 
 #[derive(
