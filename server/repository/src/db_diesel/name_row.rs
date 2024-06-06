@@ -66,6 +66,9 @@ table! {
         properties -> Nullable<Text>,
     }
 }
+
+// alias!(name_oms_fields as oms_fields: OmsFields);
+
 joinable!(name_oms_fields -> name (id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
@@ -184,7 +187,8 @@ pub struct NameRow {
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = name_oms_fields)]
 pub struct NameOmsFieldsRow {
-    pub id: String,
+    #[diesel(column_name = "id")]
+    pub name_oms_fields_id: String,
     pub properties: Option<String>,
 }
 
