@@ -177,9 +177,10 @@ fn generate_requisition_program(
     };
     let program_row = ProgramRow {
         id: master_list.id.clone(),
-        master_list_id: master_list.id.clone(),
+        master_list_id: Some(master_list.id.clone()),
         name: master_list.description.clone(),
         context_id: context_row.id.clone(),
+        is_immunisation: false,
     };
 
     let mut program_requisition_settings_rows = Vec::new();

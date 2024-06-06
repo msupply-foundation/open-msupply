@@ -11,6 +11,7 @@ import {
   ArrayUtils,
   ColumnAlign,
   ColumnDescription,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { OutboundReturnLineFragment } from '../api';
 import { OutboundReturnItem } from '../../types';
@@ -32,7 +33,7 @@ const expansionColumn = getRowExpandColumn<
 // >();
 
 const getUnitQuantity = (row: OutboundReturnLineFragment) =>
-  row.packSize * row.numberOfPacks;
+  NumUtils.floatMultiply(row.packSize, row.numberOfPacks);
 
 export const useOutboundReturnColumns = ({
   sortBy,

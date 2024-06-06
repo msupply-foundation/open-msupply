@@ -87,7 +87,7 @@ impl InvoiceLineNode {
         )
     }
     // Quantity
-    pub async fn pack_size(&self) -> i32 {
+    pub async fn pack_size(&self) -> f64 {
         self.row().pack_size
     }
     pub async fn number_of_packs(&self) -> f64 {
@@ -261,7 +261,7 @@ mod test {
                             r.item_link_id = "line_item_id".to_string();
                             r.item_name = "line_item_name".to_string();
                             r.item_code = "line_item_code".to_string();
-                            r.pack_size = 1;
+                            r.pack_size = 1.0;
                             r.number_of_packs = 2.0;
                             r.batch = Some("line_batch".to_string());
                             r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
@@ -288,7 +288,7 @@ mod test {
                 "itemId": "line_item_id",
                 "itemName": "line_item_name",
                 "itemCode": "line_item_code",
-                "packSize": 1,
+                "packSize": 1.0,
                 "numberOfPacks": 2.0,
                 "batch": "line_batch",
                 "expiryDate": "2021-01-01",

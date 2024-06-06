@@ -93,9 +93,7 @@ mod graphql {
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
 
     use repository::mock::{MockData, MockDataInserts};
-    use repository::{
-        InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
-    };
+    use repository::{InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType};
     use serde_json::json;
     use util::inline_init;
 
@@ -232,8 +230,8 @@ mod graphql {
         assert_eq!(
             InvoiceRowRepository::new(&connection)
                 .find_one_by_id(&outbound_shipment_no_lines().id)
-                .expect_err("Invoice not deleted"),
-            RepositoryError::NotFound
+                .unwrap(),
+            None
         );
     }
 }
