@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -30,12 +30,10 @@ const ProgramListComponent: FC = () => {
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation('coldchain');
 
-  const draftPrograms: Record<string, Program> = {};
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [draft] = useState<Record<string, Program>>(draftPrograms);
+  // later this will make api call
+  const draft: Program[] = [];
 
   const columns = useColumns(
     ['name', 'description'],
@@ -64,7 +62,9 @@ const ProgramListComponent: FC = () => {
         data={Object.values(draft)}
         isLoading={false}
         onRowClick={row => navigate(row.id)}
-        noDataElement={<NothingHere body={t('error.no-master-lists')} />}
+        noDataElement={
+          <NothingHere body={t('error.no-immunisation-programs')} />
+        }
       />
     </>
   );
