@@ -7,10 +7,10 @@ use repository::{
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct RequestStoreStats {
-    pub stock_on_hand: i32,
-    pub amc: i32,
+    pub stock_on_hand: f64,
+    pub amc: f64,
     pub max_months_of_stock: f64,
-    pub suggested_quantity: i32,
+    pub suggested_quantity: f64,
 }
 
 pub fn customer_store_stats(
@@ -31,10 +31,10 @@ pub fn customer_store_stats(
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct ResponseStoreStats {
     pub stock_on_hand: f64,
-    pub stock_on_order: i32, // Internal Order
+    pub stock_on_order: f64, // Internal Order
     pub incoming_stock: i32, // Linked Inbound - Shipped
-    pub requested_quantity: i32,
-    pub other_requested_quantity: i32,
+    pub requested_quantity: f64,
+    pub other_requested_quantity: f64,
 }
 
 pub fn response_store_stats(
@@ -64,7 +64,7 @@ pub fn response_store_stats(
 
     let stock_on_order = request_requisitions
         .iter()
-        .fold(0, |sum, requisition_line| {
+        .fold(0.0, |sum, requisition_line| {
             sum + requisition_line.requisition_line_row.requested_quantity
         });
 
@@ -78,8 +78,8 @@ pub fn response_store_stats(
     )?;
 
     let incoming_stock = invoice_lines.iter().fold(0, |sum, invoice_line| {
-        sum + invoice_line.invoice_line_row.number_of_packs as i32
-            * invoice_line.invoice_line_row.pack_size
+        sum + (invoice_line.invoice_line_row.number_of_packs
+            * invoice_line.invoice_line_row.pack_size) as i32
     });
 
     let response_requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(
@@ -92,7 +92,7 @@ pub fn response_store_stats(
 
     let other_requested_quantity = (response_requisition_lines
         .iter()
-        .fold(0, |sum, requisition_line| {
+        .fold(0.0, |sum, requisition_line| {
             sum + requisition_line.requisition_line_row.requested_quantity
         }))
         - requisition_line.requisition_line_row.requested_quantity;

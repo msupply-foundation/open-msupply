@@ -25,13 +25,14 @@ import {
   RouteBuilder,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { AppRoute, ExternalURL } from '@openmsupply-client/config';
+import { AppRoute, Environment, ExternalURL } from '@openmsupply-client/config';
 import {
   CatalogueNav,
   DistributionNav,
   InventoryNav,
   DispensaryNav,
   ReplenishmentNav,
+  ManageNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
@@ -217,6 +218,7 @@ export const AppDrawer: React.FC = () => {
           <InventoryNav />
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
+          {Environment.FEATURE_GAPS && <ManageNav />}
 
           {/* <AppNavLink
             to={AppRoute.Tools}
@@ -246,9 +248,9 @@ export const AppDrawer: React.FC = () => {
           />
           <SyncNavLink />
           <AppNavLink
-            to={AppRoute.Admin}
+            to={AppRoute.Settings}
             icon={<SettingsIcon fontSize="small" color="primary" />}
-            text={t('admin')}
+            text={t('settings')}
             visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink

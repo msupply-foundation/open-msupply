@@ -138,7 +138,7 @@ mod test {
             r.id = "requisition_line_one_a".to_string();
             r.requisition_id = "requisition_one".to_string();
             r.item_link_id = "item_d".to_string();
-            r.requested_quantity = 20;
+            r.requested_quantity = 20.0;
         })
     }
 
@@ -147,10 +147,10 @@ mod test {
             r.id = "requisition_line_one_b".to_string();
             r.requisition_id = "requisition_one".to_string();
             r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 15;
-            r.available_stock_on_hand = 10;
-            r.average_monthly_consumption = 50;
-            r.suggested_quantity = 240;
+            r.requested_quantity = 15.0;
+            r.available_stock_on_hand = 10.0;
+            r.average_monthly_consumption = 50.0;
+            r.suggested_quantity = 240.0;
         })
     }
 
@@ -172,7 +172,7 @@ mod test {
             r.id = "requisition_line_two_a".to_string();
             r.requisition_id = "requisition_two".to_string();
             r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 20;
+            r.requested_quantity = 20.0;
         })
     }
 
@@ -194,7 +194,7 @@ mod test {
             r.id = "request_requisition_a_line_a".to_string();
             r.requisition_id = "request_requisition_a".to_string();
             r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 100;
+            r.requested_quantity = 100.0;
         })
     }
 
@@ -216,7 +216,7 @@ mod test {
             r.id = "request_requisition_b_line_a".to_string();
             r.requisition_id = "request_requisition_b".to_string();
             r.item_link_id = "item_e".to_string();
-            r.requested_quantity = 100;
+            r.requested_quantity = 100.0;
         })
     }
 

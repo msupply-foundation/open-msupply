@@ -3,7 +3,7 @@ use crate::{
     invoice_line::{
         check_location_exists,
         inbound_shipment_line::check_pack_size,
-        validate::{check_item_exists, check_line_does_not_exist, check_number_of_packs},
+        validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
 };
 use repository::{InvoiceRow, InvoiceType, ItemRow, StorageConnection};
@@ -17,9 +17,10 @@ pub fn validate(
 ) -> Result<(ItemRow, InvoiceRow), InsertInboundShipmentLineError> {
     use InsertInboundShipmentLineError::*;
 
-    if !check_line_does_not_exist(connection, &input.id)? {
+    if let Some(_) = check_line_exists(connection, &input.id)? {
         return Err(LineAlreadyExists);
     }
+
     if !check_pack_size(Some(input.pack_size)) {
         return Err(PackSizeBelowOne);
     }

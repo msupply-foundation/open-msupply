@@ -21,7 +21,7 @@ pub enum InsertPackVariantError {
 pub struct InsertPackVariant {
     pub id: String,
     pub item_id: String,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub short_name: String,
     pub long_name: String,
 }
@@ -83,7 +83,7 @@ fn validate(
         return Err(InsertPackVariantError::VariantWithPackSizeAlreadyExists);
     }
 
-    if input.pack_size == 0 {
+    if input.pack_size == 0.0 {
         return Err(InsertPackVariantError::CannotAddPackSizeOfZero);
     }
 

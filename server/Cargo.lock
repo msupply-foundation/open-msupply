@@ -602,6 +602,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert_approx_eq"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c07dab4369547dbe5114677b33fbbf724971019f3818172d59a97a61c774ffd"
+
+[[package]]
 name = "astro-dnssd"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5128,6 +5134,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "assert-json-diff",
+ "assert_approx_eq",
  "async-trait",
  "bcrypt",
  "chrono",

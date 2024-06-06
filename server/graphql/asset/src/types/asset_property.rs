@@ -1,9 +1,9 @@
 use async_graphql::*;
-use graphql_asset_catalogue::types::asset_catalogue_property::PropertyNodeValueType;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 
 use graphql_core::simple_generic_errors::NodeError;
 
+use graphql_types::types::PropertyNodeValueType;
 use repository::assets::asset_property::AssetPropertyFilter;
 use repository::db_diesel::assets::asset_property_row::AssetPropertyRow;
 

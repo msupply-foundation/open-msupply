@@ -30,6 +30,8 @@ pub mod database_settings;
 pub use self::database_settings::*;
 pub mod display_settings;
 pub mod initialisation_status;
+pub mod name_property;
+pub use self::name_property::*;
 pub mod requisition_line_chart;
 pub mod response_requisition_line_stats;
 pub mod sync_settings;

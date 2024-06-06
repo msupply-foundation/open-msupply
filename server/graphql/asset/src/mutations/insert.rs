@@ -85,6 +85,7 @@ pub struct InsertAssetInput {
     pub donor_name_id: Option<String>,
     pub warranty_start: Option<NaiveDate>,
     pub warranty_end: Option<NaiveDate>,
+    pub needs_replacement: Option<bool>,
 }
 
 impl From<InsertAssetInput> for InsertAsset {
@@ -105,6 +106,7 @@ impl From<InsertAssetInput> for InsertAsset {
             donor_name_id,
             warranty_start,
             warranty_end,
+            needs_replacement,
         }: InsertAssetInput,
     ) -> Self {
         InsertAsset {
@@ -123,6 +125,7 @@ impl From<InsertAssetInput> for InsertAsset {
             donor_name_id,
             warranty_start,
             warranty_end,
+            needs_replacement,
         }
     }
 }

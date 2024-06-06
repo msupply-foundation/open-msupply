@@ -1,3 +1,5 @@
+// Icons sourced from https://feathericons.com/
+
 export { AlertIcon } from './Alert';
 export { ArrowLeftIcon } from './ArrowLeft';
 export { ArrowRightIcon } from './ArrowRight';
@@ -54,6 +56,7 @@ export { SearchIcon } from './Search';
 export { SettingsIcon } from './Settings';
 export { SettingsCircleIcon } from './SettingsCircle';
 export { SidebarIcon } from './Sidebar';
+export { SlidersIcon } from './Sliders';
 export { SnowflakeIcon } from './Snowflake';
 export { SortAscIcon } from './SortAsc';
 export { SortDescIcon } from './SortDesc';
@@ -63,6 +66,7 @@ export { SuppliersIcon } from './Suppliers';
 export { ThermometerIcon } from './Thermometer';
 export { ToolsIcon } from './Tools';
 export { TranslateIcon } from './Translate';
+export { BarChart2Icon } from './BarChart2';
 export { TruckIcon } from './Truck';
 export { UnhappyMan } from './UnhappyMan';
 export { UploadIcon } from './Upload';

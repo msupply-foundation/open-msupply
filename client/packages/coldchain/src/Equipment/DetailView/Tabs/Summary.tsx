@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AutocompleteMulti,
   BasicTextInput,
+  Checkbox,
   DateTimePickerInput,
   InputWithLabelRow,
   Typography,
@@ -15,7 +16,12 @@ import {
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
-import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
+import {
+  DonorSearchInput,
+  NameRowFragment,
+  StoreRowFragment,
+  StoreSearchInput,
+} from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 interface SummaryProps {
   draft?: DraftAsset;
@@ -126,6 +132,14 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     reason: string
   ) => {
     if (reason === 'clear') onChange({ store: null });
+  };
+
+  const onDonorInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') onChange({ donor: null, donorNameId: null });
   };
 
   return (
@@ -268,6 +282,12 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
             />
           </Row>
+          <Row label={t('label.needs-replacement')}>
+            <Checkbox
+              checked={Boolean(draft.needsReplacement)}
+              onChange={e => onChange({ needsReplacement: e.target.checked })}
+            />
+          </Row>
         </Section>
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
@@ -277,6 +297,16 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
               multiline
               rows={4}
+            />
+          </Row>
+        </Section>
+        <Section heading={t('label.donor')}>
+          <Row label={t('label.donor')}>
+            <DonorSearchInput
+              value={draft.donor as NameRowFragment} // Using as NameRowFragment is ok, because the comparison function is based on the id
+              onChange={e => onChange({ donor: e, donorNameId: e?.id })}
+              onInputChange={onDonorInputChange}
+              clearable
             />
           </Row>
         </Section>
