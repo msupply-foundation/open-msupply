@@ -4,8 +4,8 @@ use crate::{
     invoice_line::{
         inbound_shipment_line::{
             delete_inbound_shipment_line, insert_inbound_shipment_line,
-            update_inbound_shipment_line,
-            DeleteInboundShipmentLine, DeleteInboundShipmentLineError, InsertInboundShipmentLine,
+            update_inbound_shipment_line, DeleteInboundShipmentLine,
+            DeleteInboundShipmentLineError, InsertInboundShipmentLine,
             InsertInboundShipmentLineError, UpdateInboundShipmentLine,
             UpdateInboundShipmentLineError,
         },
@@ -235,7 +235,7 @@ mod test {
                     input.invoice_id = "new_id".to_string();
                     input.id = "new_line_id".to_string();
                     input.item_id = mock_item_a().id;
-                    input.pack_size = 1;
+                    input.pack_size = 1.0;
                     input.number_of_packs = 1.0;
                 },
             )]),
@@ -264,14 +264,14 @@ mod test {
 
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id_option("new_id")
+                .find_one_by_id("new_id")
                 .unwrap(),
             None
         );
 
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option("new_line_id")
+                .find_one_by_id("new_line_id")
                 .unwrap(),
             None
         );
@@ -283,14 +283,14 @@ mod test {
 
         assert_ne!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id_option("new_id")
+                .find_one_by_id("new_id")
                 .unwrap(),
             None
         );
 
         assert_ne!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option("new_line_id")
+                .find_one_by_id("new_line_id")
                 .unwrap(),
             None
         );

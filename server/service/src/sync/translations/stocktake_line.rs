@@ -27,7 +27,7 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
     pub snapshot_qty: f64,
-    pub snapshot_packsize: i32,
+    pub snapshot_packsize: f64,
     pub stock_take_qty: f64,
     pub is_edited: bool,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -181,7 +181,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             item_ID: item.id,
             item_name,
             snapshot_packsize: pack_size
-                .unwrap_or(stock_line.as_ref().map(|it| it.pack_size).unwrap_or(0)),
+                .unwrap_or(stock_line.as_ref().map(|it| it.pack_size).unwrap_or(0.0)),
             Batch: batch,
             expiry: expiry_date,
             cost_price: cost_price_per_pack.unwrap_or(0.0),

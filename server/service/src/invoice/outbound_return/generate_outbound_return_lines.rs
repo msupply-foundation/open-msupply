@@ -408,7 +408,7 @@ mod test {
             ItemRow {
                 id: "test_item".to_string(),
                 r#type: ItemType::Stock,
-                default_pack_size: 1,
+                default_pack_size: 1.0,
                 ..Default::default()
             }
         }

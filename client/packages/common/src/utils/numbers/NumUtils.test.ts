@@ -20,4 +20,9 @@ describe('NumUtils', () => {
     expect(NumUtils.parseString('40', 1, 10)).toBe(10);
     expect(NumUtils.parseString('4.56')).toBe(4.56);
   });
+
+  it('floatMultiply', () => {
+    expect(NumUtils.floatMultiply(110.4, 29)).toBe(3201.6);
+    expect(NumUtils.floatMultiply(1.001, 1000)).toBe(1001);
+  });
 });

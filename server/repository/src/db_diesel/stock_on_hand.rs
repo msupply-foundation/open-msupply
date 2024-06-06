@@ -9,7 +9,7 @@ table! {
         item_id -> Text,
         item_name -> Text,
         store_id -> Text,
-        available_stock_on_hand -> BigInt,
+        available_stock_on_hand -> Double,
     }
 }
 
@@ -19,7 +19,7 @@ pub struct StockOnHandRow {
     pub item_id: String,
     pub item_name: String,
     pub store_id: String,
-    pub available_stock_on_hand: i64,
+    pub available_stock_on_hand: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]

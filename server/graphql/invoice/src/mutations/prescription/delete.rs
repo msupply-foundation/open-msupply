@@ -96,7 +96,7 @@ mod graphql {
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
 
     use repository::mock::{mock_prescription_a, MockDataInserts};
-    use repository::{InvoiceRowRepository, RepositoryError};
+    use repository::InvoiceRowRepository;
     use serde_json::json;
 
     use crate::{InvoiceMutations, InvoiceQueries};
@@ -181,8 +181,8 @@ mod graphql {
         assert_eq!(
             InvoiceRowRepository::new(&connection)
                 .find_one_by_id(&mock_prescription_a().id)
-                .expect_err("Invoice not deleted"),
-            RepositoryError::NotFound
+                .unwrap(),
+            None
         );
     }
 }
