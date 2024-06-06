@@ -232,11 +232,11 @@ impl RequisitionTransferTester {
             r.id = uuid();
             r.requisition_id = request_requisition.id.clone();
             r.item_link_id = item1.id.clone();
-            r.requested_quantity = 2;
-            r.suggested_quantity = 3;
+            r.requested_quantity = 2.0;
+            r.suggested_quantity = 3.0;
             r.comment = Some("line comment".to_string());
-            r.available_stock_on_hand = 1;
-            r.average_monthly_consumption = 1;
+            r.available_stock_on_hand = 1.0;
+            r.average_monthly_consumption = 1.0;
             r.snapshot_datetime = Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -249,10 +249,10 @@ impl RequisitionTransferTester {
             r.id = uuid();
             r.requisition_id = request_requisition.id.clone();
             r.item_link_id = item2.id.clone();
-            r.requested_quantity = 10;
-            r.suggested_quantity = 20;
-            r.available_stock_on_hand = 30;
-            r.average_monthly_consumption = 10;
+            r.requested_quantity = 10.0;
+            r.suggested_quantity = 20.0;
+            r.available_stock_on_hand = 30.0;
+            r.average_monthly_consumption = 10.0;
             r.snapshot_datetime = Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -466,5 +466,5 @@ fn check_line(
         response_line.snapshot_datetime,
         request_line.snapshot_datetime
     );
-    assert_eq!(response_line.supply_quantity, 0);
+    assert_eq!(response_line.supply_quantity, 0.0);
 }

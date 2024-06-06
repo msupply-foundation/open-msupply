@@ -21,7 +21,7 @@ pub struct InsertRequestRequisitionLine {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub requested_quantity: Option<u32>,
+    pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
 }
 
@@ -123,7 +123,7 @@ fn generate(
             .pop()
             .ok_or(OutError::CannotFindItemStatusForRequisitionLine)?;
 
-    new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0) as i32;
+    new_requisition_line.requested_quantity = requested_quantity.unwrap_or(0.0);
     new_requisition_line.id = id;
     new_requisition_line.comment = comment.or(new_requisition_line.comment);
 
@@ -301,7 +301,7 @@ mod test {
                         .id,
                     id: "new requisition line id".to_owned(),
                     item_id: test_item_stats::item2().id,
-                    requested_quantity: Some(20),
+                    requested_quantity: Some(20.0),
                     comment: Some("comment".to_string()),
                 },
             )
@@ -315,11 +315,11 @@ mod test {
         assert_eq!(
             line,
             inline_edit(&line, |mut u| {
-                u.requested_quantity = 20;
-                u.available_stock_on_hand = test_item_stats::item_2_soh() as i32;
-                u.average_monthly_consumption = test_item_stats::item2_amc_3_months() as i32;
-                u.suggested_quantity = test_item_stats::item2_amc_3_months() as i32 * 10
-                    - test_item_stats::item_2_soh() as i32;
+                u.requested_quantity = 20.0;
+                u.available_stock_on_hand = test_item_stats::item_2_soh() as f64;
+                u.average_monthly_consumption = test_item_stats::item2_amc_3_months() as f64;
+                u.suggested_quantity = test_item_stats::item2_amc_3_months() as f64 * 10.0
+                    - test_item_stats::item_2_soh() as f64;
                 u.comment = Some("comment".to_string());
                 u
             })
@@ -332,7 +332,7 @@ mod test {
                 r.requisition_id = mock_request_draft_requisition().id;
                 r.id = "new requisition line id2".to_owned();
                 r.item_id = mock_item_c().id;
-                r.requested_quantity = Some(20);
+                r.requested_quantity = Some(20.0);
             }),
         );
 

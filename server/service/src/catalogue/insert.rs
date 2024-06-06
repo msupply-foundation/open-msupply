@@ -28,6 +28,7 @@ pub struct InsertAssetCatalogueItem {
     pub manufacturer: Option<String>,
     pub model: String,
     pub type_id: String,
+    pub properties: Option<String>,
 }
 
 pub fn insert_asset_catalogue_item(
@@ -104,6 +105,7 @@ pub fn generate(
         manufacturer,
         model,
         type_id,
+        properties,
     }: InsertAssetCatalogueItem,
 ) -> AssetCatalogueItemRow {
     AssetCatalogueItemRow {
@@ -115,6 +117,7 @@ pub fn generate(
         manufacturer,
         model,
         type_id,
+        properties,
         deleted_datetime: None,
     }
 }

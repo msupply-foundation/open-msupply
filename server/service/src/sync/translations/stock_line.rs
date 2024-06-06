@@ -1,8 +1,8 @@
 use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
-        item::ItemTranslation, location::LocationTranslation, name::NameTranslation,
-        store::StoreTranslation,
+        barcode::BarcodeTranslation, item::ItemTranslation, location::LocationTranslation,
+        name::NameTranslation, store::StoreTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -31,7 +31,7 @@ pub struct LegacyStockLineRow {
     pub hold: bool,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_ID: Option<String>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub available: f64,
     pub quantity: f64,
     pub cost_price: f64,
@@ -62,6 +62,7 @@ impl SyncTranslation for StockLineTranslation {
             NameTranslation.table_name(),
             StoreTranslation.table_name(),
             LocationTranslation.table_name(),
+            BarcodeTranslation.table_name(),
         ]
     }
 

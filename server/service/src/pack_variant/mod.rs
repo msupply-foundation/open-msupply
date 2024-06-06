@@ -16,7 +16,7 @@ pub use delete::{DeletePackVariant, DeletePackVariantError};
 pub use insert::{InsertPackVariant, InsertPackVariantError};
 pub use update::{UpdatePackVariant, UpdatePackVariantError};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct ItemPackVariant {
     pub item_id: String,
     pub most_used_pack_variant_id: String,

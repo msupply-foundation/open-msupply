@@ -9,7 +9,7 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceType,
-        RepositoryError, StockLine, StockLineRow,
+        StockLine, StockLineRow,
     };
     use util::{
         constants::stock_line_expiring_soon_offset, date_now, date_now_with_offset, inline_edit,
@@ -66,7 +66,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 20.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -75,7 +75,7 @@ mod test {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 2;
+                r.pack_size = 2.0;
                 r.available_number_of_packs = 30.0;
             })
         }
@@ -86,7 +86,7 @@ mod test {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_b().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 2;
+                r.pack_size = 2.0;
                 r.available_number_of_packs = 30.0;
             })
         }
@@ -97,7 +97,7 @@ mod test {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_b().id;
-                r.pack_size = 2;
+                r.pack_size = 2.0;
                 r.available_number_of_packs = 30.0;
             })
         }
@@ -134,20 +134,18 @@ mod test {
 
         let repo = InvoiceLineRowRepository::new(&connection);
 
-        assert_eq!(
-            repo.find_one_by_id(&result.deletes[0]),
-            Err(RepositoryError::NotFound)
-        );
+        assert_eq!(repo.find_one_by_id(&result.deletes[0]), Ok(None));
 
         let new_line = repo
             .find_one_by_id(&result.inserts[0].invoice_line_row.id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
             new_line,
             inline_edit(&new_line, |mut u| {
                 u.number_of_packs = 10.0;
-                u.pack_size = 2;
+                u.pack_size = 2.0;
                 u
             })
         );
@@ -171,7 +169,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 50.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -180,7 +178,7 @@ mod test {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 3;
+                r.pack_size = 3.0;
                 r.available_number_of_packs = 10.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 1, 1).unwrap());
             })
@@ -191,7 +189,7 @@ mod test {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 3;
+                r.pack_size = 3.0;
                 r.available_number_of_packs = 2.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
             })
@@ -202,7 +200,7 @@ mod test {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 2.0;
                 r.expiry_date = None;
             })
@@ -243,45 +241,49 @@ mod test {
 
         let new_line1 = repo
             .find_one_by_id(&result.inserts[0].invoice_line_row.id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
             new_line1,
             inline_edit(&new_line1, |mut u| {
                 u.number_of_packs = 10.0;
-                u.pack_size = 3;
+                u.pack_size = 3.0;
                 u
             })
         );
 
         let new_line2 = repo
             .find_one_by_id(&result.inserts[1].invoice_line_row.id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
             new_line2,
             inline_edit(&new_line2, |mut u| {
                 u.number_of_packs = 2.0;
-                u.pack_size = 3;
+                u.pack_size = 3.0;
                 u
             })
         );
 
         let new_line3 = repo
             .find_one_by_id(&result.inserts[2].invoice_line_row.id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
             new_line3,
             inline_edit(&new_line3, |mut u| {
                 u.number_of_packs = 2.0;
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u
             })
         );
 
         let updated_uallocated_line = repo
             .find_one_by_id(&result.updates[0].invoice_line_row.id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -311,7 +313,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 3.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -320,7 +322,7 @@ mod test {
                 r.id = id.to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 1.0;
             })
         }
@@ -464,7 +466,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 50.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -473,7 +475,7 @@ mod test {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 30.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
             })
@@ -487,7 +489,7 @@ mod test {
                 r.stock_line_id = Some(stock_line().id);
                 r.r#type = InvoiceLineType::StockOut;
                 r.number_of_packs = 2.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -496,7 +498,7 @@ mod test {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 5.0;
             })
         }
@@ -509,7 +511,7 @@ mod test {
                 r.stock_line_id = Some(stock_line2().id);
                 r.r#type = InvoiceLineType::StockOut;
                 r.number_of_packs = 10.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -518,7 +520,7 @@ mod test {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.available_number_of_packs = 100.0;
             })
         }
@@ -601,7 +603,7 @@ mod test {
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 1.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             })
         }
 
@@ -610,7 +612,7 @@ mod test {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.pack_size = 3;
+                r.pack_size = 3.0;
                 r.available_number_of_packs = 3.0;
             })
         }
@@ -647,20 +649,18 @@ mod test {
 
         let repo = InvoiceLineRowRepository::new(&connection);
 
-        assert_eq!(
-            repo.find_one_by_id(&result.deletes[0]),
-            Err(RepositoryError::NotFound)
-        );
+        assert_eq!(repo.find_one_by_id(&result.deletes[0]), Ok(None));
 
         let new_line = repo
             .find_one_by_id(&result.inserts[0].invoice_line_row.id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
             new_line,
             inline_edit(&new_line, |mut u| {
                 u.number_of_packs = 1.0;
-                u.pack_size = 3;
+                u.pack_size = 3.0;
                 u
             })
         );

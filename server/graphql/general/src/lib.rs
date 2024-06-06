@@ -368,6 +368,10 @@ impl GeneralQueries {
     ) -> Result<Option<LabelPrinterSettingNode>> {
         label_printer_settings(ctx)
     }
+
+    pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
+        name_properties(ctx)
+    }
 }
 
 #[derive(Default, Clone)]
