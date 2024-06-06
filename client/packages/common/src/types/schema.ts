@@ -3488,6 +3488,7 @@ export type Mutations = {
   updateLabelPrinterSettings: UpdateLabelPrinterSettingsResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
+  updateNameProperties: UpdateNamePropertiesResponse;
   updateOutboundReturn: UpdateOutboundReturnResponse;
   updateOutboundReturnLines: UpdateOutboundReturnLinesResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
@@ -3968,6 +3969,12 @@ export type MutationsUpdateLogLevelArgs = {
 };
 
 
+export type MutationsUpdateNamePropertiesArgs = {
+  input: UpdateNamePropertiesInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsUpdateOutboundReturnArgs = {
   input: UpdateOutboundReturnInput;
   storeId: Scalars['String']['input'];
@@ -4177,6 +4184,8 @@ export type NameNode = {
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
+  /** Returns a JSON string of the name properties e.g {"property_key": "value"} */
+  properties: Scalars['String']['output'];
   store?: Maybe<StoreNode>;
   type: NameNodeType;
   website?: Maybe<Scalars['String']['output']>;
@@ -5509,7 +5518,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAsse
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -6782,6 +6791,22 @@ export type UpdateNameErrorInterface = {
   description: Scalars['String']['output'];
 };
 
+export type UpdateNamePropertiesError = {
+  __typename: 'UpdateNamePropertiesError';
+  error: UpdateNamePropertiesErrorInterface;
+};
+
+export type UpdateNamePropertiesErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateNamePropertiesInput = {
+  id: Scalars['String']['input'];
+  properties?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateNamePropertiesResponse = NameNode | UpdateNamePropertiesError;
+
 export type UpdateOutboundReturnInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -7349,6 +7374,7 @@ export enum UserPermission {
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
   LogQuery = 'LOG_QUERY',
+  NamePropertiesMutate = 'NAME_PROPERTIES_MUTATE',
   OutboundReturnMutate = 'OUTBOUND_RETURN_MUTATE',
   OutboundReturnQuery = 'OUTBOUND_RETURN_QUERY',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',

@@ -18,8 +18,6 @@ pub fn update_name_properties(
 ) -> Result<UpdateNamePropertiesResponse> {
     let user = validate_auth(
         ctx,
-        // does this need two queries? If on central,
-        // no store id required, if not, store id required
         &ResourceAccessRequest {
             resource: Resource::MutateNameProperties,
             store_id: Some(store_id.to_string()),

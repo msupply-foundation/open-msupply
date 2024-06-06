@@ -3,6 +3,7 @@ import {
   NameSortFieldInput,
   NameNodeType,
   FilterByWithBoolean,
+  UpdateNamePropertiesInput,
 } from '@openmsupply-client/common';
 import { Sdk, NameRowFragment } from './operations.generated';
 
@@ -159,5 +160,14 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       }
       throw new Error('Unable to fetch properties');
     },
+  },
+  updateNameProperties: async (input: UpdateNamePropertiesInput) => {
+    const result = await sdk.updateNameProperties({ storeId, input });
+
+    if (result.updateNameProperties.__typename === 'NameNode') {
+      return result?.updateNameProperties;
+    }
+
+    throw new Error(result.updateNameProperties.error.description);
   },
 });
