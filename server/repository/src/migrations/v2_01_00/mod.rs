@@ -7,6 +7,7 @@ mod ledger;
 mod name_properties;
 mod pg_enums;
 mod property;
+mod store_add_name_link_id;
 mod v6_sync_api_error_code;
 
 pub(crate) struct V2_01_00;
@@ -17,6 +18,7 @@ impl Migration for V2_01_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        store_add_name_link_id::migrate(connection)?;
         ledger::migrate(connection)?;
         pg_enums::migrate(connection)?;
         assets::migrate_assets(connection)?;
