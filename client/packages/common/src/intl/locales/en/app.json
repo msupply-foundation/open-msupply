@@ -74,6 +74,7 @@
   "error.v6-server-not-configured": "V6 central server not configured",
   "error.v6-server-not-configured-hint": "Check the central server URL",
   "facilities": "Facilities",
+  "immunisations": "Immunizations",
   "heading.password": "Password",
   "heading.server-error": "Server Error",
   "heading.username": "Username",
