@@ -156,6 +156,23 @@ export const ImmunisationDetailView: FC = () => {
     [draft]
   );
 
+  const [buffer, setBuffer] = useState(draft?.numberOfDoses ?? 1);
+  const [value, setValue] = useState(draft?.numberOfDoses ?? 1);
+
+  const tryUpdateValue = (value: number | undefined) => {
+    if (value === undefined) return;
+    const isValid = Number.isInteger(value) && value >= 0;
+
+    if (isValid) {
+      setValue(value);
+      // setError(false);
+      // } else {
+      //   setError(true);
+      // }
+    }
+    setBuffer(value);
+  };
+
   useEffect(() => {
     setSuffix(data?.name ?? '');
   }, [setSuffix]);
@@ -190,8 +207,6 @@ export const ImmunisationDetailView: FC = () => {
     }
     onUpdate({ schedule: rows });
   };
-
-  console.log('draft', draft);
 
   return !!data ? (
     <Box display="flex" flex={1}>
@@ -248,12 +263,13 @@ export const ImmunisationDetailView: FC = () => {
         <Section heading={t('heading.schedule')}>
           <Row label={t('label.number-of-doses')}>
             <NumericTextInput
-              value={draft?.numberOfDoses}
+              value={buffer}
               fullWidth
-              onChange={value => {
+              onBlur={() => {
                 onUpdate({ numberOfDoses: value });
                 updateSchedule(value);
               }}
+              onChange={tryUpdateValue}
             />
           </Row>
           <Row label={t('label.dose-number')}>
