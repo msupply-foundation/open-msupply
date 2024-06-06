@@ -33,7 +33,7 @@ async fn requisition_transfer() {
 
     let request_store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id = request_store_name.id.clone();
+        r.name_link_id = request_store_name.id.clone();
         r.site_id = site_id;
     });
 
@@ -44,7 +44,7 @@ async fn requisition_transfer() {
 
     let response_store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id = response_store_name.id.clone();
+        r.name_link_id = response_store_name.id.clone();
         r.site_id = site_id;
     });
 
@@ -143,14 +143,14 @@ async fn stock_on_deleted_requisitions() {
 
     let store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id = store_name.id.clone();
+        r.name_link_id = store_name.id.clone();
         r.site_id = site_id;
     });
 
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 3,
-        name_link_id: store.name_id.clone(),
+        name_link_id: store.name_link_id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionType::Request,
         ..RequisitionRow::default()
@@ -213,7 +213,7 @@ impl RequisitionTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
             r.requisition_number = 3;
-            r.name_link_id = response_store.name_id.clone();
+            r.name_link_id = response_store.name_link_id.clone();
             r.store_id = request_store.id.clone();
             r.r#type = RequisitionType::Request;
             r.status = RequisitionStatus::Draft;
@@ -326,7 +326,7 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.store_id, self.response_store.id);
         assert_eq!(
             response_requisition.name_link_id,
-            self.request_store.name_id
+            self.request_store.name_link_id
         );
         assert_eq!(
             response_requisition.their_reference,

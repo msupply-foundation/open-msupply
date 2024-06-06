@@ -33,12 +33,12 @@ impl UserStoreNode {
         let loader = ctx.get_loader::<DataLoader<NameRowLoader>>();
 
         let name_row = loader
-            .load_one(self.user_store.store_row.name_id.clone())
+            .load_one(self.user_store.store_row.name_link_id.clone())
             .await?
             .ok_or(
                 StandardGraphqlError::InternalError(format!(
                     "Cannot find name ({}) for store ({})",
-                    self.user_store.store_row.name_id, self.user_store.store_row.id
+                    self.user_store.store_row.name_link_id, self.user_store.store_row.id
                 ))
                 .extend(),
             )?;
