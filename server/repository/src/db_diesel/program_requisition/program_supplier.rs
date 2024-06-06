@@ -95,8 +95,7 @@ impl<'a> ProgramSupplierRepository<'a> {
                     ProgramSupplier {
                         supplier: Name::from_join((
                             name_row,
-                            (name_link_row, Some(name_store_join_row)),
-                            Some(store_row),
+                            (name_link_row, Some(name_store_join_row), Some(store_row)),
                         )),
                         program,
                     }
@@ -140,7 +139,7 @@ mod test {
         };
         let store1 = StoreRow {
             id: "store1".to_string(),
-            name_id: store_name1.id.clone(),
+            name_link_id: store_name1.id.clone(),
             ..Default::default()
         };
         let store_name2 = NameRow {
@@ -150,7 +149,7 @@ mod test {
 
         let store2 = StoreRow {
             id: "store2".to_string(),
-            name_id: store_name2.id.clone(),
+            name_link_id: store_name2.id.clone(),
             ..Default::default()
         };
 
@@ -160,7 +159,7 @@ mod test {
         };
         let store3 = StoreRow {
             id: "store3".to_string(),
-            name_id: store_name3.id.clone(),
+            name_link_id: store_name3.id.clone(),
             ..Default::default()
         };
 
