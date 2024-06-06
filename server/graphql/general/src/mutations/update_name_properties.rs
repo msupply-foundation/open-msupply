@@ -1,9 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{
-        DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound,
-    },
+    simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -74,9 +72,6 @@ pub enum UpdateNamePropertiesResponse {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateNamePropertiesErrorInterface {
     NameNotFound(RecordNotFound),
-    RecordBelongsToAnotherStore(RecordBelongsToAnotherStore),
-    InternalError(InternalError),
-    DatabaseError(DatabaseError),
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateNamePropertiesErrorInterface> {
