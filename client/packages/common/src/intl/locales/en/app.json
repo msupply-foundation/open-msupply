@@ -105,6 +105,7 @@
   "settings.scanner-type": "Scanner Type",
   "logout": "Logout",
   "master-lists": "Master Lists",
+  "indicators-demographics": "Demographics",
   "messages": "Messages",
   "messages.change-server": "Change server",
   "messages.connected-to-printer": "Connected successfully to printer!",

@@ -111,7 +111,7 @@ use crate::{
     },
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
-    ContextRowRepository, CurrencyRow, Document, DocumentRegistryRow,
+    ContextRowRepository, CurrencyRow, DemographicIndicatorRow, Document, DocumentRegistryRow,
     DocumentRegistryRowRepository, DocumentRepository, FormSchema, FormSchemaRowRepository,
     InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository,
@@ -194,6 +194,7 @@ pub struct MockData {
     pub plugin_data: Vec<PluginDataRow>,
     pub assets: Vec<AssetRow>,
     pub asset_logs: Vec<AssetLogRow>,
+    pub demographic_indicators: Vec<DemographicIndicatorRow>,
 }
 
 impl MockData {
@@ -260,6 +261,7 @@ pub struct MockDataInserts {
     pub plugin_data: bool,
     pub assets: bool,
     pub asset_logs: bool,
+    pub demographic_indicators: bool,
 }
 
 impl MockDataInserts {
@@ -315,6 +317,7 @@ impl MockDataInserts {
             plugin_data: true,
             assets: true,
             asset_logs: true,
+            demographic_indicators: true,
         }
     }
 
@@ -1112,6 +1115,7 @@ impl MockData {
             mut asset_logs,
             plugin_data: _,
             mut currencies,
+            mut demographic_indicators,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1167,7 +1171,8 @@ impl MockData {
         self.currencies.append(&mut currencies);
         self.assets.append(&mut assets);
         self.asset_logs.append(&mut asset_logs);
-
+        self.demographic_indicators
+            .append(&mut demographic_indicators);
         self
     }
 }
