@@ -3,29 +3,36 @@ import {
   TableProvider,
   createTableStore,
   useBreadcrumbs,
-  NothingHere,
   createQueryParamsStore,
+  useParams,
+  Typography,
+  InlineSpinner,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
-
-// dummy data
-const data = {
-  name: 'data',
-};
+import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 
 export const ProgramComponent: FC = () => {
   const { setSuffix } = useBreadcrumbs();
+  const { id } = useParams();
+  const {
+    query: { data, isLoading },
+    draft,
+    updatePatch,
+    isDirty,
+    // update: { update, isUpdating },
+  } = useImmunisationProgram(id);
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
-  }, [setSuffix]);
+  }, [setSuffix, data]);
 
-  return !!data ? (
-    <TableProvider createStore={createTableStore}>
-      <Toolbar />
-    </TableProvider>
+  return isLoading ? (
+    <InlineSpinner />
   ) : (
-    <NothingHere />
+    <>
+      <Toolbar draft={draft} onUpdate={updatePatch} isDirty={isDirty} />
+      <Typography variant="body2">Vaccine Course List - Coming soon</Typography>
+    </>
   );
 };
 
@@ -36,6 +43,6 @@ export const ProgramView: FC = () => (
       initialSortBy: { key: 'name' },
     })}
   >
-    <ProgramComponent></ProgramComponent>
+    <ProgramComponent />
   </TableProvider>
 );

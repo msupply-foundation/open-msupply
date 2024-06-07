@@ -80,10 +80,11 @@ export function useImmunisationProgram(id?: string) {
 }
 
 const useGet = (id: string) => {
-  const { api } = useImmunisationGraphQL();
+  const { api, storeId } = useImmunisationGraphQL();
 
   const queryFn = async () => {
     const result = await api.programs({
+      storeId,
       first: 1,
       offset: 0,
       key: ProgramSortFieldInput.Name,

@@ -1,24 +1,46 @@
-import React, { FC } from 'react';
-import { AppBarContentPortal, Grid } from '@openmsupply-client/common';
+import React, { FC, PropsWithChildren } from 'react';
+import {
+  AppBarContentPortal,
+  BaseButton,
+  BasicTextInput,
+  Grid,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { DraftImmunisationProgram } from '../../api/hooks/useImmunisationProgram';
 
-export const Toolbar: FC = () => {
+interface ToolbarProps {
+  onUpdate: (patch: Partial<DraftImmunisationProgram>) => void;
+  draft: DraftImmunisationProgram;
+  isDirty?: boolean;
+}
+
+export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
+  onUpdate,
+  draft,
+  isDirty,
+}: ToolbarProps) => {
+  const t = useTranslation('system');
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid container>
-        <Grid
-          item
-          display="flex"
-          flex={1}
-          flexDirection="column"
-          gap={1}
-        ></Grid>
-        <Grid
-          item
-          flexDirection="column"
-          alignItems="flex-end"
-          display="flex"
-          gap={2}
-        ></Grid>
+        <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
+          <BasicTextInput
+            fullWidth
+            value={draft.name}
+            onChange={e =>
+              onUpdate({
+                name: e.target.value,
+              } as Partial<DraftImmunisationProgram>)
+            }
+            label={t('label.name')}
+            InputLabelProps={{ shrink: true }}
+          />
+          {isDirty && (
+            <BaseButton onClick={() => onUpdate(draft)}>
+              {t('button.save')}
+            </BaseButton>
+          )}
+        </Grid>
       </Grid>
     </AppBarContentPortal>
   );

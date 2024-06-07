@@ -10,6 +10,7 @@ import {
   createTableStore,
   createQueryParamsStore,
   useEditModal,
+  InsertImmunisationProgramInput,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -50,8 +51,8 @@ const ProgramListComponent: FC = () => {
     [updateSortQuery, sortBy]
   );
 
-  // later create modal will use <InsertImmunisationProgram> type
-  const { isOpen, onClose, onOpen } = useEditModal<any>();
+  const { isOpen, onClose, onOpen } =
+    useEditModal<InsertImmunisationProgramInput>();
 
   return (
     <>

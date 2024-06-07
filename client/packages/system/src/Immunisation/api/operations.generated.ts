@@ -41,7 +41,9 @@ export const ProgramsDocument = gql`
     filter: $filter
   ) {
     ... on ProgramConnector {
+      __typename
       nodes {
+        __typename
         ...ImmunisationProgram
       }
       totalCount

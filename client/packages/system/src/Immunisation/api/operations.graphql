@@ -18,7 +18,9 @@ query programs(
     filter: $filter
   ) {
     ... on ProgramConnector {
+      __typename
       nodes {
+        __typename
         ...ImmunisationProgram
       }
       totalCount
