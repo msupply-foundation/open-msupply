@@ -18,14 +18,12 @@ describe('Test NumericTextInput component', () => {
   };
 
   it('should handle decimal number input', async () => {
-    const { getByRole } = render(
-      <TestNumericTextInput decimalLimit={10} data-testid="1234" />
-    );
+    const { getByRole } = render(<TestNumericTextInput decimalLimit={10} />);
     const input = getByRole('textbox');
 
-    await fireEvent.change(input, { target: { value: '1.' } });
+    fireEvent.change(input, { target: { value: '1.' } });
     expect(input).toHaveValue('1.');
-    await fireEvent.blur(input);
+    fireEvent.blur(input);
     expect(input).toHaveValue('1');
 
     fireEvent.change(input, { target: { value: '1.7001' } });
