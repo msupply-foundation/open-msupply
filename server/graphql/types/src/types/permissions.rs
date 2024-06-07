@@ -189,6 +189,7 @@ impl UserPermission {
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
             UserPermission::DemographicQuery => PermissionType::DemographicQuery,
             UserPermission::VaccineCourseMutate => PermissionType::VaccineCourseMutate,
+            UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
         }
     }
 }
