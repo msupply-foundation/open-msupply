@@ -67,7 +67,7 @@ table! {
     }
 }
 
-// alias!(name_oms_fields as oms_fields: OmsFields);
+alias!(name_oms_fields as name_oms_fields_alias: NameOmsFields);
 
 joinable!(name_oms_fields -> name (id));
 allow_tables_to_appear_in_same_query!(name, item_link);
