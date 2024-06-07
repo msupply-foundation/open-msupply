@@ -17,12 +17,14 @@ interface RepackEditFormProps {
   onChange: (repack: Partial<RepackDraft>) => void;
   data: RepackDraft;
   isNew: boolean;
+  availableNumberOfPacks: number;
 }
 
 export const RepackEditForm: FC<RepackEditFormProps> = ({
   onChange,
   data,
   isNew,
+  availableNumberOfPacks,
 }) => {
   const t = useTranslation('inventory');
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
@@ -37,7 +39,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           {isNew && (
             <TextWithLabelRow
               label={t('label.packs-available')}
-              text={String(data.availableNumberOfPacks ?? '')}
+              text={String(availableNumberOfPacks ?? '')}
               textProps={textProps}
               labelProps={labelProps}
             />
@@ -55,7 +57,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                 }
                 width={INPUT_WIDTH}
                 value={data.numberOfPacks}
-                max={data?.availableNumberOfPacks}
+                max={availableNumberOfPacks}
                 disabled={!isNew}
               />
             }
@@ -91,14 +93,10 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           {isNew && <Box height={24} />}
           <TextWithLabelRow
             label={t('label.new-num-packs')}
-            text={
-              isNew
-                ? (
-                    ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
-                    (data.newPackSize || 1)
-                  ).toFixed(2)
-                : String(data?.numberOfPacks ?? '')
-            }
+            text={(
+              ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
+              (data.newPackSize || 1)
+            ).toFixed(2)}
             textProps={textProps}
             labelProps={labelProps}
           />
