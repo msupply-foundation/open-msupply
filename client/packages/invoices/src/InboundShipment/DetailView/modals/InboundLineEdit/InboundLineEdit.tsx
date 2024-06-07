@@ -34,7 +34,6 @@ interface InboundLineEditProps {
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
-  const { error } = useNotification();
   const { variantsControl } = usePackVariant(String(item?.id), null);
   const { data: lines } = useInbound.lines.list(item?.id ?? '');
   const { id } = useInbound.document.fields('id');
@@ -64,7 +63,7 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
     } else {
       setDraftLines([]);
     }
-  }, [lines, item]);
+  }, [lines, item, id, defaultPackSize]);
 
   const addDraftLine = () => {
     if (item) {
@@ -92,7 +91,7 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
         return [...draftLines];
       });
     },
-    [draftLines, setDraftLines]
+    [setDraftLines, setIsDirty]
   );
 
   const saveLines = async () => {
@@ -100,7 +99,7 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
       const { errorMessage } = await mutateAsync(draftLines);
 
       if (errorMessage) {
-        error(errorMessage)();
+        throw new Error(errorMessage);
       }
 
       setIsDirty(false);
@@ -181,7 +180,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                 await saveLines();
                 onClose();
               } catch (e) {
-                error((error as unknown as Error).message);
+                error((e as Error).message)();
               }
             }}
           />
