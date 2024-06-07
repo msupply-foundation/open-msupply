@@ -14,6 +14,7 @@ import {
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { ImmunisationProgramCreateModal } from './ImmunisationProgramCreateModal';
+import { useImmunisationProgramList } from '../api/hooks/useImmunisationProgramList';
 
 export interface Program {
   id: string;
@@ -26,17 +27,22 @@ const ProgramListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
 
-  // later this will make api call
-  const draft: Program[] = [];
+  const queryParams = {
+    filterBy,
+    offset,
+    sortBy,
+    first,
+  };
+  const { data, isLoading, isError } = useImmunisationProgramList(queryParams);
 
   const columns = useColumns(
-    ['name', 'description'],
+    ['name'],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,
@@ -59,8 +65,9 @@ const ProgramListComponent: FC = () => {
         pagination={{ ...pagination }}
         onChangePage={updatePaginationQuery}
         columns={columns}
-        data={Object.values(draft)}
-        isLoading={false}
+        data={data?.nodes ?? []}
+        isLoading={isLoading}
+        isError={isError}
         onRowClick={row => navigate(row.id)}
         noDataElement={
           <NothingHere body={t('error.no-immunisation-programs')} />
