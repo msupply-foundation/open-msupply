@@ -168,6 +168,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       return result?.updateNameProperties;
     }
 
+    // TODO: properly handle structured error
     throw new Error(result.updateNameProperties.error.description);
   },
 });
