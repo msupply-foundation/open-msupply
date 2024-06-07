@@ -10,8 +10,10 @@ import {
   MiniTable,
   NothingHere,
   NumericTextInput,
+  RecordPatch,
   SearchBar,
   Typography,
+  getEditableQuantityColumn,
   useBreadcrumbs,
   useColumns,
   useTranslation,
@@ -22,6 +24,38 @@ import { FC } from 'react';
 // dummy data
 const data = {
   name: 'some immunisation name',
+};
+
+interface Schedule {
+  id: string;
+  number: number;
+  description: string;
+  day: number;
+}
+
+interface Draft {
+  name: string;
+  demographic: string;
+  coverageRate: number;
+  vaccineItems: any[];
+  numberOfDoses: number;
+  schedule: Schedule[];
+}
+
+const seed: Draft = {
+  name: '',
+  demographic: '',
+  coverageRate: 100,
+  vaccineItems: [{}],
+  numberOfDoses: 1,
+  schedule: [
+    {
+      id: FnUtils.generateUUID(),
+      number: 1,
+      day: 1,
+      description: '',
+    },
+  ],
 };
 
 const Section = ({
@@ -81,20 +115,6 @@ const Row = ({
     />
   </Box>
 );
-
-const seed = {
-  name: '',
-  demographic: '',
-  coverageRate: '',
-  vaccineItems: [{}],
-  numberOfDoses: 1,
-  schedule: [
-    {
-      number: 1,
-      day: 1,
-    },
-  ],
-};
 
 const createNewProgram = (seed?: any | null): any => ({
   id: FnUtils.generateUUID(),
@@ -163,8 +183,9 @@ export const VaccineCourseView: FC = () => {
     }
     setBuffer(value);
   };
-  const updateSchedule = (value: number | undefined) => {
-    if (!value) {
+
+  const updateSchedule = (patch: RecordPatch<Schedule>) => {
+    if (!patch) {
       return;
     }
     const scheduleSeed = (number: number) => {
@@ -195,6 +216,7 @@ export const VaccineCourseView: FC = () => {
       { key: 'number', label: 'label.dose-number' },
       { key: 'label', label: 'label.description' },
       { key: 'day', label: 'label.day' },
+      [getEditableQuantityColumn(), { setter: updateSchedule }],
     ],
     {},
     [draft]
