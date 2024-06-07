@@ -28,7 +28,7 @@ export interface VaccineCourse {
   doses: number;
 }
 
-export const ProgramComponent: FC = () => {
+export const ImmunisationProgramComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -84,13 +84,13 @@ export const ProgramComponent: FC = () => {
   );
 };
 
-export const ProgramView: FC = () => (
+export const ImmunisationProgramView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore({
       initialSortBy: { key: 'name' },
     })}
   >
-    <ProgramComponent></ProgramComponent>
+    <ImmunisationProgramComponent></ImmunisationProgramComponent>
   </TableProvider>
 );

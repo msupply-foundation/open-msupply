@@ -142,20 +142,10 @@ const useDraftProgram = (): UseDraftProgramControl => {
   };
 };
 
-export const ImmunisationDetailView: FC = () => {
+export const VaccineCourseView: FC = () => {
   const { setSuffix } = useBreadcrumbs();
   const t = useTranslation('coldchain');
   const { draft, onUpdate, isLoading } = useDraftProgram();
-
-  const dosesColumns = useColumns(
-    [
-      { key: 'number', label: 'label.dose-number' },
-      { key: 'day', label: 'label.day' },
-    ],
-    {},
-    [draft]
-  );
-
   const [buffer, setBuffer] = useState(draft?.numberOfDoses ?? 1);
   const [value, setValue] = useState(draft?.numberOfDoses ?? 1);
 
@@ -172,15 +162,6 @@ export const ImmunisationDetailView: FC = () => {
     }
     setBuffer(value);
   };
-
-  useEffect(() => {
-    setSuffix(data?.name ?? '');
-  }, [setSuffix]);
-
-  if (isLoading) {
-    return <BasicSpinner />;
-  }
-
   const updateSchedule = (value: number | undefined) => {
     if (!value) {
       return;
@@ -207,6 +188,23 @@ export const ImmunisationDetailView: FC = () => {
     }
     onUpdate({ schedule: rows });
   };
+
+  const dosesColumns = useColumns(
+    [
+      { key: 'number', label: 'label.dose-number' },
+      { key: 'day', label: 'label.day' },
+    ],
+    {},
+    [draft]
+  );
+
+  useEffect(() => {
+    setSuffix(data?.name ?? '');
+  }, [setSuffix]);
+
+  if (isLoading) {
+    return <BasicSpinner />;
+  }
 
   return !!data ? (
     <Box display="flex" flex={1}>

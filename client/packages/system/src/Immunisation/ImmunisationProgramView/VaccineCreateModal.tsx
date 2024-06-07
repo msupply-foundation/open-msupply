@@ -59,7 +59,7 @@ export const VaccineCreateModal: FC<VaccineCreateModalProps> = ({
   onClose,
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation(['catalogue']);
+  const t = useTranslation(['coldchain']);
   const { draft, onUpdate, onSave, isLoading } = useDraftProgram();
   const isInvalid = !draft.name.trim();
 
