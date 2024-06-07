@@ -17,7 +17,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 id TEXT NOT NULL PRIMARY KEY,
                 master_list_id TEXT,
                 name TEXT NOT NULL,
-                context_id TEXT NOT NULL,
+                context_id TEXT NOT NULL REFERENCES context(id),
                 is_immunisation BOOLEAN NOT NULL
             );
             INSERT INTO tmp_program SELECT id, master_list_id, name, context_id, false FROM program;
