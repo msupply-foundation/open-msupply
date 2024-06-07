@@ -25,3 +25,24 @@ query programs(
     }
   }
 }
+
+mutation insertImmunisationProgram(
+  $input: InsertImmunisationProgramInput
+  $storeId: String
+) {
+  centralServer {
+    program {
+      insertImmunisationProgram(input: $input, storeId: $storeId) {
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on InsertImmunisationProgramError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}

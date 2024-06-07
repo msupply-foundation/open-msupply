@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
-  //   FnUtils,
+  FnUtils,
   ProgramSortFieldInput,
   isEqual,
-  //   useMutation,
+  useMutation,
   useQuery,
 } from '@openmsupply-client/common';
 import { PROGRAM } from './keys';
@@ -22,11 +22,12 @@ export function useImmunisationProgram(id?: string) {
   const [patch, setPatch] = useState<Partial<DraftImmunisationProgram>>({});
   const [isDirty, setIsDirty] = useState(false);
   const { data, isLoading, error } = useGet(id ?? '');
-  //   const {
-  //     mutateAsync: createMutation,
-  //     isLoading: isCreating,
-  //     error: createError,
-  //   } = useCreate();
+  const {
+    mutateAsync: createMutation,
+    isLoading: isCreating,
+    error: createError,
+  } = useCreate();
+
   //   const {
   //     mutateAsync: updateMutation,
   //     isLoading: isUpdating,
@@ -56,11 +57,12 @@ export function useImmunisationProgram(id?: string) {
     }
   };
 
-  //   const create = async () => {
-  //     const result = await createMutation(draft);
-  //     setIsDirty(false);
-  //     return result;
-  //   };
+  const create = async () => {
+    const result = await createMutation(draft);
+    setIsDirty(false);
+    return result;
+  };
+
   //   const update = async () => {
   //     updateMutation(patch);
   //     setIsDirty(false);
@@ -68,7 +70,7 @@ export function useImmunisationProgram(id?: string) {
 
   return {
     query: { data: data, isLoading, error },
-    // create: { create, isCreating, createError },
+    create: { create, isCreating, createError },
     // update: { update, isUpdating, updateError },
     draft,
     resetDraft,
@@ -103,26 +105,26 @@ const useGet = (id: string) => {
   return query;
 };
 
-// const useCreate = () => {
-//   const { api, storeId, queryClient } = useImmunisationGraphQL();
+const useCreate = () => {
+  const { api, storeId, queryClient } = useImmunisationGraphQL();
 
-//   const mutationFn = async ({}: DraftImmunisationProgram) => {
-//     return await api.insertImmunisationProgram({
-//       storeId,
-//       input: {
-//         id: FnUtils.generateUUID(),
-//         name,
-//       },
-//     });
-//   };
+  const mutationFn = async ({ name }: DraftImmunisationProgram) => {
+    return await api.insertImmunisationProgram({
+      storeId,
+      input: {
+        id: FnUtils.generateUUID(),
+        name,
+      },
+    });
+  };
 
-//   return useMutation({
-//     mutationFn,
-//     onSuccess: () =>
-//       // All Programs need to be re-fetched to include the new one
-//       queryClient.invalidateQueries([PROGRAM]),
-//   });
-// };
+  return useMutation({
+    mutationFn,
+    onSuccess: () =>
+      // All Programs need to be re-fetched to include the new one
+      queryClient.invalidateQueries([PROGRAM]),
+  });
+};
 
 // const useUpdate = (id: string) => {
 //   const { api, storeId, queryClient } = useImmunisationGraphQL();
