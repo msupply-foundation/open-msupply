@@ -1,1 +1,1 @@
-export * from './DetailView';
+export * from './VaccineCourseView';
