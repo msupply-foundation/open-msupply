@@ -1,0 +1,27 @@
+fragment ImmunisationProgram on ProgramNode {
+  id
+  name
+}
+
+query programs(
+  $storeId: String
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      nodes {
+        ...ImmunisationProgram
+      }
+      totalCount
+    }
+  }
+}
