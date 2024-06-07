@@ -7,8 +7,6 @@ use crate::service_provider::ServiceContext;
 
 use super::validate::check_name_exists;
 
-// use super::validate::check_pack_variant_exists;
-
 #[derive(PartialEq, Debug)]
 pub enum UpdateNamePropertiesError {
     NameDoesNotExist,
