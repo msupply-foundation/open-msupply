@@ -16,7 +16,7 @@ table! {
         store_id -> Text,
         location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
-        pack_size -> Integer,
+        pack_size -> Double,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
         available_number_of_packs -> Double,
@@ -46,7 +46,7 @@ pub struct StockLineRow {
     pub store_id: String,
     pub location_id: Option<String>,
     pub batch: Option<String>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub available_number_of_packs: f64,
@@ -92,10 +92,11 @@ impl<'a> StockLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
         let result = stock_line_dsl::stock_line
-            .filter(stock_line_dsl::id.eq(stock_line_id))
-            .first(self.connection.lock().connection())?;
+            .filter(stock_line_dsl::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
         Ok(result)
     }
 
@@ -104,14 +105,6 @@ impl<'a> StockLineRowRepository<'a> {
             .filter(stock_line_dsl::id.eq_any(ids))
             .load::<StockLineRow>(self.connection.lock().connection())
             .map_err(RepositoryError::from)
-    }
-
-    pub fn find_one_by_id_option(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
-        let result = stock_line_dsl::stock_line
-            .filter(stock_line_dsl::id.eq(id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
     }
 
     pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
@@ -132,7 +125,7 @@ impl Delete for StockLineRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            StockLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
@@ -146,7 +139,7 @@ impl Upsert for StockLineRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            StockLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

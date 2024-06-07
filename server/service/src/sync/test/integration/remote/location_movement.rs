@@ -28,7 +28,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             store_id: store_id.clone(),
             location_id: Some(location_row.id.clone()),
             batch: Some("some remote sync test batch".to_string()),
-            pack_size: 5,
+            pack_size: 5.0,
             cost_price_per_pack: 10.0,
             sell_price_per_pack: 15.0,
             available_number_of_packs: 100.3333,

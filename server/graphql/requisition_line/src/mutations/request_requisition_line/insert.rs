@@ -20,7 +20,7 @@ pub struct InsertInput {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub requested_quantity: Option<u32>,
+    pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
 }
 
@@ -392,7 +392,7 @@ mod test {
                     id: "new line id input".to_string(),
                     item_id: mock_item_a().id,
                     requisition_id: "requisition id input".to_string(),
-                    requested_quantity: Some(1),
+                    requested_quantity: Some(1.0),
                     comment: Some("comment".to_string())
                 }
             );

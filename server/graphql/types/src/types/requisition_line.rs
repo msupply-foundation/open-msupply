@@ -61,22 +61,22 @@ impl RequisitionLineNode {
     }
 
     /// Quantity requested
-    pub async fn requested_quantity(&self) -> &i32 {
+    pub async fn requested_quantity(&self) -> &f64 {
         &self.row().requested_quantity
     }
 
     /// Quantity to be supplied in the next shipment, only used in response requisition
-    pub async fn supply_quantity(&self) -> &i32 {
+    pub async fn supply_quantity(&self) -> &f64 {
         &self.row().supply_quantity
     }
 
     /// Calculated quantity
     /// When months_of_stock < requisition.min_months_of_stock, calculated = average_monthly_consumption * requisition.max_months_of_stock - months_of_stock
-    pub async fn suggested_quantity(&self) -> &i32 {
+    pub async fn suggested_quantity(&self) -> &f64 {
         &self.row().suggested_quantity
     }
 
-    pub async fn approved_quantity(&self) -> &i32 {
+    pub async fn approved_quantity(&self) -> &f64 {
         &self.row().approved_quantity
     }
 

@@ -16,7 +16,7 @@ use util::inline_edit;
 #[derive(Debug, PartialEq, Default)]
 pub struct UpdateResponseRequisitionLine {
     pub id: String,
-    pub supply_quantity: Option<u32>,
+    pub supply_quantity: Option<f64>,
     pub comment: Option<String>,
 }
 
@@ -104,7 +104,7 @@ fn generate(
     }: UpdateResponseRequisitionLine,
 ) -> (Option<RequisitionRow>, RequisitionLineRow) {
     let requisition_line_row = inline_edit(&existing, |mut u| {
-        u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity as u32) as i32;
+        u.supply_quantity = updated_supply_quantity.unwrap_or(u.supply_quantity);
         u.comment = updated_comment.or(u.comment);
         u
     });
@@ -234,7 +234,7 @@ mod test {
                 &context,
                 UpdateResponseRequisitionLine {
                     id: test_line.id.clone(),
-                    supply_quantity: Some(99),
+                    supply_quantity: Some(99.0),
                     comment: Some("comment".to_string()),
                 },
             )
@@ -248,7 +248,7 @@ mod test {
         assert_eq!(
             line,
             inline_edit(&test_line, |mut u| {
-                u.supply_quantity = 99;
+                u.supply_quantity = 99.0;
                 u.comment = Some("comment".to_string());
                 u
             })

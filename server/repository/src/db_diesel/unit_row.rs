@@ -57,7 +57,7 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_id_option(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
             .first(self.connection.lock().connection())
@@ -90,7 +90,7 @@ impl Delete for UnitRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
-            UnitRowRepository::new(con).find_one_by_id_option(&self.0),
+            UnitRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(UnitRow {
                 is_active: false,
                 ..
@@ -107,7 +107,7 @@ impl Upsert for UnitRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            UnitRowRepository::new(con).find_one_by_id_option(&self.id),
+            UnitRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

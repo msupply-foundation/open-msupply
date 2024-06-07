@@ -8,6 +8,8 @@ export type NameRowFragment = { __typename: 'NameNode', code: string, id: string
 
 export type NameFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
+export type PropertyFragment = { __typename: 'PropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType };
+
 export type NamesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   key: Types.NameSortFieldInput;
@@ -27,6 +29,11 @@ export type NameByIdQueryVariables = Types.Exact<{
 
 
 export type NameByIdQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+
+export type NamePropertiesQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type NamePropertiesQuery = { __typename: 'Queries', nameProperties: { __typename: 'NamePropertyConnector', nodes: Array<{ __typename: 'PropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType }> } };
 
 export const NameRowFragmentDoc = gql`
     fragment NameRow on NameNode {
@@ -68,6 +75,15 @@ export const NameFragmentDoc = gql`
   }
 }
     `;
+export const PropertyFragmentDoc = gql`
+    fragment Property on PropertyNode {
+  id
+  key
+  name
+  allowedValues
+  valueType
+}
+    `;
 export const NamesDocument = gql`
     query names($storeId: String!, $key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
   names(
@@ -99,6 +115,19 @@ export const NameByIdDocument = gql`
   }
 }
     ${NameFragmentDoc}`;
+export const NamePropertiesDocument = gql`
+    query nameProperties {
+  nameProperties {
+    ... on NamePropertyConnector {
+      __typename
+      nodes {
+        __typename
+        ...Property
+      }
+    }
+  }
+}
+    ${PropertyFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -112,6 +141,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     nameById(variables: NameByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NameByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NameByIdQuery>(NameByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameById', 'query');
+    },
+    nameProperties(variables?: NamePropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NamePropertiesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<NamePropertiesQuery>(NamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameProperties', 'query');
     }
   };
 }
@@ -148,5 +180,21 @@ export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQu
 export const mockNameByIdQuery = (resolver: ResponseResolver<GraphQLRequest<NameByIdQueryVariables>, GraphQLContext<NameByIdQuery>, any>) =>
   graphql.query<NameByIdQuery, NameByIdQueryVariables>(
     'nameById',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockNamePropertiesQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ nameProperties })
+ *   )
+ * })
+ */
+export const mockNamePropertiesQuery = (resolver: ResponseResolver<GraphQLRequest<NamePropertiesQueryVariables>, GraphQLContext<NamePropertiesQuery>, any>) =>
+  graphql.query<NamePropertiesQuery, NamePropertiesQueryVariables>(
+    'nameProperties',
     resolver
   )

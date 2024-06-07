@@ -107,6 +107,8 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("currency", "date_updated"),
         ("asset", "installation_date"),
         ("asset", "replacement_date"),
+        ("asset", "warranty_start"),
+        ("asset", "warranty_end"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -607,6 +609,7 @@ mod tests {
 
         let invoice1_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice1().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -622,6 +625,7 @@ mod tests {
 
         let invoice2_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice2().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -643,6 +647,7 @@ mod tests {
 
         let stock_line1_result = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line1().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(

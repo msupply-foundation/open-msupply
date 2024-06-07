@@ -2,6 +2,8 @@ use super::asset_property_row::{
     asset_property, asset_property::dsl as asset_property_dsl, AssetPropertyRow,
 };
 
+use crate::diesel_macros::apply_string_filter;
+use crate::StringFilter;
 use crate::{diesel_macros::apply_equal_filter, StorageConnection};
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter};
@@ -10,6 +12,11 @@ use diesel::prelude::*;
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct AssetPropertyFilter {
     pub id: Option<EqualFilter<String>>,
+    pub key: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
+    pub asset_class_id: Option<EqualFilter<String>>,
+    pub asset_category_id: Option<EqualFilter<String>>,
+    pub asset_type_id: Option<EqualFilter<String>>,
 }
 
 pub struct AssetPropertyRepository<'a> {
@@ -48,9 +55,25 @@ fn create_filtered_query(
     let mut query = asset_property_dsl::asset_property.into_boxed();
 
     if let Some(f) = filter {
-        let AssetPropertyFilter { id } = f;
+        let AssetPropertyFilter {
+            id,
+            key,
+            name,
+            asset_class_id,
+            asset_category_id,
+            asset_type_id,
+        } = f;
 
         apply_equal_filter!(query, id, asset_property_dsl::id);
+        apply_equal_filter!(query, key, asset_property_dsl::key);
+        apply_string_filter!(query, name, asset_property_dsl::name);
+        apply_equal_filter!(query, asset_class_id, asset_property_dsl::asset_class_id);
+        apply_equal_filter!(
+            query,
+            asset_category_id,
+            asset_property_dsl::asset_category_id
+        );
+        apply_equal_filter!(query, asset_type_id, asset_property_dsl::asset_type_id);
     }
     query
 }

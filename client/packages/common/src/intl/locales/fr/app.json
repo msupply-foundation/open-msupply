@@ -119,7 +119,7 @@
   "easter-egg": "Œuf de Pâques",
   "cmdk.goto-cold-chain-equipment": "Aller à : Equipement de la chaine du froid",
   "cmdk.goto-cold-chain-monitoring": "Aller à : Contrôle chaine du froid",
-  "error.sync-api-incompatible-hint": "Le serveur central mSupply doit être mis à jour vers une version plus récente avant que vous puissiez vous connecter - veuillez contacter support@msupply.org.nz",
+  "error.sync-api-incompatible-hint": "Le serveur central mSupply doit être mis à jour vers une version plus récente avant que vous puissiez vous connecter - veuillez contacter support@msupply.foundation",
   "error.connection-error-hint": "Vérifier votre connection internet",
   "cmdk.goto-prescriptions": "Aller à : Ordonnances",
   "cmdk.goto-patients": "Aller à : Patients",

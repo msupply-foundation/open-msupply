@@ -54,4 +54,9 @@ export const ArrayUtils = {
   uniqBy,
   keyBy,
   flatMap,
+  toObject: <T extends RecordWithId>(arr: T[]) => {
+    const obj: Record<string, T> = {};
+    arr.forEach(t => (obj[t.id] = { ...t }));
+    return obj;
+  },
 };

@@ -56,17 +56,7 @@ impl<'a> MasterListLineRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(
-        &self,
-        line_id: &str,
-    ) -> Result<MasterListLineRow, RepositoryError> {
-        let result = master_list_line
-            .filter(id.eq(line_id))
-            .first(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         line_id: &str,
     ) -> Result<Option<MasterListLineRow>, RepositoryError> {
@@ -92,7 +82,7 @@ impl Upsert for MasterListLineRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            MasterListLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            MasterListLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
@@ -107,7 +97,7 @@ impl Delete for MasterListLineRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            MasterListLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            MasterListLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }

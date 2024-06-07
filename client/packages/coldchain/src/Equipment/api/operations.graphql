@@ -54,15 +54,7 @@ fragment Asset on AssetNode {
     totalCount
   }
   properties
-  catalogProperties {
-    id
-    name
-    valueString
-    valueFloat
-    valueBool
-    valueInt
-    valueType
-  }
+  catalogProperties
   modifiedDatetime
   notes
   replacementDate
@@ -85,14 +77,25 @@ fragment Asset on AssetNode {
     model
   }
   assetType {
+    id
     name
   }
   assetClass {
+    id
     name
   }
   assetCategory {
+    id
     name
   }
+  donorNameId
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  warrantyStart
+  warrantyEnd
+  needsReplacement
 }
 
 fragment ColdchainAssetLog on AssetLogNode {

@@ -7,8 +7,12 @@ import { I18nextProviderProps, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { browserLanguageDetector } from './browserLanguageDetector';
 import { createRegisteredContext } from 'react-singleton-context';
+const appVersion = require('../../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
-declare const LANG_VERSION: string; // Created by webpack DefinePlugin see webpack.config.js
+// Created by webpack DefinePlugin see webpack.config.js
+// Only for web, otherwise default to app version
+declare const LANG_VERSION: string;
+
 const defaultNS = 'common';
 
 type IntlProviderProps = PropsWithChildren<{ isElectron?: boolean }>;
@@ -34,6 +38,9 @@ export const IntlProvider: FC<IntlProviderProps> = ({
       ? 0
       : 7 * 24 * 60 * minuteInMilliseconds; // Cache for 7 days, on rebuild we should get a new language version so we can use a reasonably long cache
 
+    const languageVersion =
+      typeof LANG_VERSION === 'undefined' ? appVersion : LANG_VERSION;
+
     // Electron `main` window translations should be served with relative path
     const loadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
 
@@ -52,7 +59,9 @@ export const IntlProvider: FC<IntlProviderProps> = ({
               /* options for primary backend */
               expirationTime,
               defaultVersion: 'v0.1',
-              versions: { en: LANG_VERSION },
+              versions: {
+                en: languageVersion,
+              },
             },
             {
               /* options for secondary backend */
