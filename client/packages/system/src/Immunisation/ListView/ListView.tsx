@@ -22,7 +22,7 @@ export interface Program {
   isNew: boolean;
 }
 
-const ProgramListComponent: FC = () => {
+const ImmunisationProgramListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -70,13 +70,13 @@ const ProgramListComponent: FC = () => {
   );
 };
 
-export const ProgramListView: FC = () => (
+export const ImmunisationProgramListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore({
       initialSortBy: { key: 'name' },
     })}
   >
-    <ProgramListComponent />
+    <ImmunisationProgramListComponent />
   </TableProvider>
 );
