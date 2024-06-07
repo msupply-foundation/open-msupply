@@ -6,18 +6,22 @@ import {
   NothingHere,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import { ProgramListView } from '../ListView';
-import { ProgramView } from '../ProgramView';
-import { ImmunisationDetailView } from '../DetailView';
+import { ImmunisationProgramListView } from '../ListView';
+import { ImmunisationProgramView } from '../ImmunisationProgramView';
+import { VaccineCourseView } from '../VaccineCourseView';
 
-export const ImmunisationService: FC = () => {
-  const immunisationsRoute = RouteBuilder.create(
-    AppRoute.Immunisations
+export const ImmunisationProgramService: FC = () => {
+  const immunisationProgramsRoute = RouteBuilder.create(
+    AppRoute.ImmunisationPrograms
   ).build();
-  const immunisationRoute = RouteBuilder.create(AppRoute.Immunisations)
+  const immunisationProgramRoute = RouteBuilder.create(
+    AppRoute.ImmunisationPrograms
+  )
     .addPart(':id')
     .build();
-  const immunisationDetailRoute = RouteBuilder.create(AppRoute.Immunisations)
+  const immunisationDetailRoute = RouteBuilder.create(
+    AppRoute.ImmunisationPrograms
+  )
     .addPart(':id')
     .addPart(':id')
     .build();
@@ -27,14 +31,17 @@ export const ImmunisationService: FC = () => {
   }
   return (
     <Routes>
-      <Route path={immunisationsRoute} element={<ProgramListView />} />
-      <Route path={immunisationRoute} element={<ProgramView />} />
       <Route
-        path={immunisationDetailRoute}
-        element={<ImmunisationDetailView />}
+        path={immunisationProgramsRoute}
+        element={<ImmunisationProgramListView />}
       />
+      <Route
+        path={immunisationProgramRoute}
+        element={<ImmunisationProgramView />}
+      />
+      <Route path={immunisationDetailRoute} element={<VaccineCourseView />} />
     </Routes>
   );
 };
 
-export default ImmunisationService;
+export default ImmunisationProgramService;

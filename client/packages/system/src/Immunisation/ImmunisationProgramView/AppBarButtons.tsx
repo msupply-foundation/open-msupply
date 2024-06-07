@@ -11,7 +11,7 @@ interface ProgramAppBarButtonsProps {
   onCreate: () => void;
 }
 
-export const AppBarButtons = ({}: ProgramAppBarButtonsProps) => {
+export const AppBarButtons = ({ onCreate }: ProgramAppBarButtonsProps) => {
   const t = useTranslation('coldchain');
 
   return (
@@ -20,9 +20,7 @@ export const AppBarButtons = ({}: ProgramAppBarButtonsProps) => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.add-new-immunisation')}
-          onClick={() => {
-            console.info('create new immunisation');
-          }}
+          onClick={onCreate}
         />
       </Grid>
     </AppBarButtonsPortal>
