@@ -102,6 +102,29 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     }
   };
 
+  const getFormData = () => {
+    const isNewRepack = !repackData;
+
+    if (isNewRepack) {
+      return {
+        ...draft,
+        locationName: stockLine.location?.name,
+        packSize: stockLine.packSize,
+      };
+    }
+
+    const { numberOfPacks, packSize } = repackData.from;
+    const { packSize: newPackSize, location } = repackData.to;
+    return {
+      stockLineId: stockLine.id,
+      numberOfPacks,
+      packSize,
+      newPackSize,
+      locationName: location?.name,
+      newLocationId: location?.id,
+    };
+  };
+
   return (
     <Modal
       width={900}
@@ -209,20 +232,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             {showRepackDetail && (
               <RepackEditForm
                 onChange={onChange}
-                data={{
-                  stockLineId: draft?.stockLineId ?? stockLine?.id,
-                  packSize: draft?.packSize ?? stockLine.packSize,
-                  newPackSize: draft?.newPackSize,
-                  numberOfPacks:
-                    draft?.numberOfPacks ?? repackData?.to?.numberOfPacks,
-                  newLocationId: draft?.newLocationId,
-                  availableNumberOfPacks:
-                    draft?.availableNumberOfPacks ??
-                    stockLine?.availableNumberOfPacks,
-                  locationName:
-                    draft?.locationName ?? repackData?.to?.location?.name,
-                }}
-                isNew={!repackData}
+                availableNumberOfPacks={stockLine.availableNumberOfPacks}
+                data={getFormData()}
+                isNew={isNew}
               />
             )}
           </Box>
