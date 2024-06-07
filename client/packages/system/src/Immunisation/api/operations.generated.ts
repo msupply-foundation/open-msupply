@@ -18,6 +18,14 @@ export type ProgramsQueryVariables = Types.Exact<{
 
 export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
 
+export type InsertImmunisationProgramMutationVariables = Types.Exact<{
+  input?: Types.InputMaybe<Types.InsertImmunisationProgramInput>;
+  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
+
+
+export type InsertImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', insertImmunisationProgram: { __typename: 'InsertImmunisationProgramError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'ProgramNode', id: string, name: string } } } };
+
 export const ImmunisationProgramFragmentDoc = gql`
     fragment ImmunisationProgram on ProgramNode {
   id
@@ -41,6 +49,25 @@ export const ProgramsDocument = gql`
   }
 }
     ${ImmunisationProgramFragmentDoc}`;
+export const InsertImmunisationProgramDocument = gql`
+    mutation insertImmunisationProgram($input: InsertImmunisationProgramInput, $storeId: String) {
+  centralServer {
+    program {
+      insertImmunisationProgram(input: $input, storeId: $storeId) {
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on InsertImmunisationProgramError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    ${ImmunisationProgramFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -51,6 +78,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query');
+    },
+    insertImmunisationProgram(variables?: InsertImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertImmunisationProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertImmunisationProgramMutation>(InsertImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertImmunisationProgram', 'mutation');
     }
   };
 }
@@ -70,5 +100,22 @@ export type Sdk = ReturnType<typeof getSdk>;
 export const mockProgramsQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramsQueryVariables>, GraphQLContext<ProgramsQuery>, any>) =>
   graphql.query<ProgramsQuery, ProgramsQueryVariables>(
     'programs',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertImmunisationProgramMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockInsertImmunisationProgramMutation = (resolver: ResponseResolver<GraphQLRequest<InsertImmunisationProgramMutationVariables>, GraphQLContext<InsertImmunisationProgramMutation>, any>) =>
+  graphql.mutation<InsertImmunisationProgramMutation, InsertImmunisationProgramMutationVariables>(
+    'insertImmunisationProgram',
     resolver
   )
