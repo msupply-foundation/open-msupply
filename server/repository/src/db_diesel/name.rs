@@ -1,6 +1,6 @@
 use super::{
     name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl, name_oms_fields},
+    name_row::{name, name::dsl as name_dsl},
     name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
     store_row::{store, store::dsl as store_dsl},
     DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
@@ -10,8 +10,10 @@ use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
+    name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameLinkRow, NameOmsFieldsRow, NameType, Pagination, Sort, StringFilter,
+    EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameType, Pagination, Sort,
+    StringFilter,
 };
 
 use diesel::{
@@ -21,8 +23,6 @@ use diesel::{
     query_source::Alias,
 };
 use util::{constants::SYSTEM_NAME_CODES, inline_init};
-
-alias!(name_oms_fields as name_oms_fields_alias: OmsFields);
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Name {
@@ -302,7 +302,7 @@ type BoxedNameQuery = IntoBoxed<
             InnerJoin<name::table, LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>>,
             store::table,
         >,
-        Alias<OmsFields>,
+        Alias<NameOmsFields>,
     >,
     DBType,
 >;
