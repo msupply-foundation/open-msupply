@@ -351,6 +351,7 @@ export const UpdateInboundShipmentDocument = gql`
       }
     }
     ... on InvoiceNode {
+      __typename
       id
       invoiceNumber
     }
@@ -374,6 +375,7 @@ export const DeleteInboundShipmentsDocument = gql`
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
@@ -435,6 +437,7 @@ export const DeleteInboundShipmentLinesDocument = gql`
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
@@ -476,6 +479,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on InvoiceNode {
+          __typename
           id
           invoiceNumber
         }
@@ -495,6 +499,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on InvoiceNode {
+          __typename
           id
           invoiceNumber
         }
@@ -522,6 +527,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
@@ -549,6 +555,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on InvoiceLineNode {
+          __typename
           id
         }
       }
@@ -584,6 +591,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on InvoiceLineNode {
+          __typename
           id
         }
       }
@@ -607,6 +615,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on InvoiceLineNode {
+          __typename
           id
         }
       }
@@ -630,6 +639,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on InvoiceLineNode {
+          __typename
           id
         }
       }
@@ -657,6 +667,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
@@ -688,6 +699,7 @@ export const UpsertInboundShipmentDocument = gql`
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
