@@ -4,8 +4,8 @@
  *
  * A general component for numeric input. Provides a wrapper around
  * <BasicTextInput> to replicate (and extend) the functionality of using a text
- * input with the `type="number"` attribute. We want to avoid this attribute as
- * it causes numerous problems, as outlined here:
+ * input without the `type="number"` attribute. We want to avoid this attribute
+ * as it causes numerous problems, as outlined here:
  * https://stackoverflow.blog/2022/12/26/why-the-number-input-is-the-worst-input/
  *
  * And is officially recommended to avoid by Material-UI:
@@ -101,11 +101,9 @@
  */
 
 import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
-import { StandardTextFieldProps } from '@common/components';
-import { BasicTextInput } from './BasicTextInput';
+import { BasicTextInput, BasicTextInputProps } from './BasicTextInput';
 import { NumUtils, RegexUtils } from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
-import { text } from 'stream/consumers';
 
 export interface NumericInputProps {
   /**
@@ -167,7 +165,7 @@ export interface NumericInputProps {
 }
 
 export type NumericTextInputProps = NumericInputProps &
-  Omit<StandardTextFieldProps, 'onChange'> & {
+  Omit<BasicTextInputProps, 'onChange'> & {
     onChange?: (value: number | undefined) => void;
   };
 
@@ -321,16 +319,16 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           setTextValue(formatValue(newNum));
           onChange(newNum);
         }}
-        onBlur={async () => {
-          // if (isDirty) {
-          // const parsed = parse(textValue ?? '');
-          // const val = Number.isNaN(parsed) ? defaultValue : parsed;
-          // onChange(val);
-          console.log('VAL', value);
-          console.log('FORMAT', formatValue(value));
-          setTextValue(formatValue(value));
-          console.log('textValue', textValue);
-          // }
+        onBlur={() => {
+          if (isDirty) {
+            const parsed = parse(textValue ?? '');
+            const val = Number.isNaN(parsed) ? defaultValue : parsed;
+            // This onChange shouldn't be necessary here -- the component
+            // behaves as expected without it. However, removing it causes some
+            // of the tests fail, so 🤷‍♂️
+            onChange(val);
+            setTextValue(formatValue(val));
+          }
         }}
         onFocus={e => e.target.select()}
         fullWidth={fullWidth}
