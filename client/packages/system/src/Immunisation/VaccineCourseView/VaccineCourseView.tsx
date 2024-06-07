@@ -99,6 +99,7 @@ const seed = {
 const createNewProgram = (seed?: any | null): any => ({
   id: FnUtils.generateUUID(),
   name: '',
+  description: '',
   ...seed,
 });
 
@@ -192,6 +193,7 @@ export const VaccineCourseView: FC = () => {
   const dosesColumns = useColumns(
     [
       { key: 'number', label: 'label.dose-number' },
+      { key: 'label', label: 'label.description' },
       { key: 'day', label: 'label.day' },
     ],
     {},

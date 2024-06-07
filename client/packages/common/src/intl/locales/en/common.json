@@ -413,6 +413,7 @@
   "label.day": "day",
   "label.number-of-doses": "Number of Doses",
   "label.dose-number": "dose #",
+  "label.description": "description",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "log.changed-from": "From",
   "log.changed-to": "to",
