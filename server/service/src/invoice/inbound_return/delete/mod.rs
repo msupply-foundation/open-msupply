@@ -219,7 +219,7 @@ mod test {
         // test entry has been deleted
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id_option(&return_to_delete().id)
+                .find_one_by_id(&return_to_delete().id)
                 .unwrap(),
             None
         );
@@ -227,7 +227,7 @@ mod test {
         // stock has been deleted
         assert_eq!(
             stock_line_row_repo
-                .find_one_by_id_option(&stock_line().id)
+                .find_one_by_id(&stock_line().id)
                 .unwrap(),
             None
         )
