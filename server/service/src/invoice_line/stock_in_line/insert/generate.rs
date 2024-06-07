@@ -6,7 +6,6 @@ use crate::{
         stock_in_line::{generate_batch, StockInType, StockLineInput},
     },
     store_preference::get_store_preferences,
-    u32_to_i32,
 };
 use repository::{
     BarcodeRow, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow,
@@ -107,7 +106,7 @@ fn generate_line(
         invoice_id,
         item_link_id: item_id,
         location_id: location.map(|l| l.value).unwrap_or_default(),
-        pack_size: u32_to_i32(pack_size),
+        pack_size: pack_size,
         batch,
         expiry_date,
         sell_price_per_pack,
@@ -152,7 +151,7 @@ fn generate_barcode(
                 BarcodeInput {
                     gtin: gtin.clone(),
                     item_id: input.item_id.clone(),
-                    pack_size: Some(u32_to_i32(input.pack_size.clone())),
+                    pack_size: Some(input.pack_size),
                 },
             )?;
 

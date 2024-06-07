@@ -69,6 +69,8 @@ pub enum ActivityLogType {
     AssetCatalogueItemCreated,
     AssetCatalogueItemPropertyCreated,
     AssetPropertyCreated,
+    VaccineCourseCreated,
+    ProgramCreated,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

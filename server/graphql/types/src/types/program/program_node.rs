@@ -15,4 +15,8 @@ impl ProgramNode {
     pub async fn name(&self) -> &str {
         &self.program_row.name
     }
+
+    pub async fn is_immunisation(&self) -> bool {
+        self.program_row.is_immunisation
+    }
 }

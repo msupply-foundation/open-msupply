@@ -1,0 +1,54 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Group",
+      "label": "Patient Information",
+      "elements": [
+        {
+          "type": "Control",
+          "scope": "#/properties/firstName",
+          "label": "First Name"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/lastName",
+          "label": "Last Name"
+        },
+        {
+          "type": "Control",
+          "label": "Date of Birth",
+          "scope": "#/properties/dateOfBirth",
+          "options": {
+            "disableFuture": true
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/gender",
+          "label": "Gender",
+          "options": {
+            "show": [
+              ["MALE", "Male"],
+              ["FEMALE", "Female"],
+              ["TRANSGENDER_MALE", "Transgender Male"],
+              ["TRANSGENDER_FEMALE", "Transgender Female"],
+              ["NON_BINARY", "Non-binary"],
+              ["UNKOWN", "Unknown"]
+            ]
+          }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/address1",
+          "label": "Address"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/phone",
+          "label": "Phone"
+        }
+      ]
+    }
+  ]
+}

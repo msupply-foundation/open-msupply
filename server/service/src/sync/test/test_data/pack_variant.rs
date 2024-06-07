@@ -23,7 +23,7 @@ fn pack_variant1() -> PackVariantRow {
         item_id: "item_a".to_string(),
         short_name: "Some short name".to_string(),
         long_name: "Some long name".to_string(),
-        pack_size: 100,
+        pack_size: 100.0,
         is_active: true,
     }
 }

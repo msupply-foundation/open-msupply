@@ -24,9 +24,10 @@ pub fn create_missing_master_list_and_program(
 
     let missing_program = ProgramRow {
         id: MISSING_PROGRAM.to_string(),
-        master_list_id: MISSING_PROGRAM.to_string(),
+        master_list_id: Some(MISSING_PROGRAM.to_string()),
         name: MISSING_PROGRAM.to_string(),
         context_id: MISSING_PROGRAM.to_string(),
+        is_immunisation: false,
     };
 
     let connection = service_provider.connection()?;

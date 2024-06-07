@@ -4,7 +4,7 @@ use crate::{
             insert_stock_out_line, update_stock_out_line, InsertStockOutLine,
             InsertStockOutLineError, UpdateStockOutLine, UpdateStockOutLineError,
         },
-        validate::check_line_exists_option,
+        validate::check_line_exists,
     },
     service_provider::ServiceContext,
 };
@@ -144,7 +144,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
 
 fn validate(connection: &StorageConnection, line_id: &str) -> Result<InvoiceLine, OutError> {
     let invoice_line =
-        check_line_exists_option(connection, line_id)?.ok_or(OutError::LineDoesNotExist)?;
+        check_line_exists(connection, line_id)?.ok_or(OutError::LineDoesNotExist)?;
 
     if invoice_line.invoice_line_row.r#type != InvoiceLineType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);

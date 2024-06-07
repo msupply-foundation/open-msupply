@@ -23,7 +23,7 @@ impl ResponseStoreStatsNode {
         self.response_store_stats.stock_on_hand
     }
 
-    pub async fn stock_on_order(&self) -> i32 {
+    pub async fn stock_on_order(&self) -> f64 {
         self.response_store_stats.stock_on_order
     }
 
@@ -31,22 +31,22 @@ impl ResponseStoreStatsNode {
         self.response_store_stats.incoming_stock
     }
 
-    pub async fn requested_quantity(&self) -> i32 {
+    pub async fn requested_quantity(&self) -> f64 {
         self.response_store_stats.requested_quantity
     }
 
-    pub async fn other_requested_quantity(&self) -> i32 {
+    pub async fn other_requested_quantity(&self) -> f64 {
         self.response_store_stats.other_requested_quantity
     }
 }
 
 #[Object]
 impl RequestStoreStatsNode {
-    pub async fn stock_on_hand(&self) -> i32 {
+    pub async fn stock_on_hand(&self) -> f64 {
         self.request_store_stats.stock_on_hand
     }
 
-    pub async fn average_monthly_consumption(&self) -> i32 {
+    pub async fn average_monthly_consumption(&self) -> f64 {
         self.request_store_stats.amc
     }
 
@@ -54,7 +54,7 @@ impl RequestStoreStatsNode {
         self.request_store_stats.max_months_of_stock
     }
 
-    pub async fn suggested_quantity(&self) -> i32 {
+    pub async fn suggested_quantity(&self) -> f64 {
         self.request_store_stats.suggested_quantity
     }
 }
