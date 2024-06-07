@@ -84,7 +84,7 @@ const NumericTemplate: Story = () => {
               <NumericTextInput
                 value={decimal}
                 defaultValue={5}
-                decimalLimit={10}
+                decimalLimit={3}
                 onChange={setDecimal}
                 min={1}
               />
