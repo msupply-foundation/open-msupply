@@ -29,7 +29,7 @@ impl SyncRecordTester for StockLineRecordTester {
             store_id: store_id.to_string(),
             location_id: Some(location_row.id.clone()),
             batch: Some("some remote sync test batch".to_string()),
-            pack_size: 5,
+            pack_size: 5.0,
             cost_price_per_pack: 10.0,
             sell_price_per_pack: 15.0,
             available_number_of_packs: 100.3333,
@@ -57,7 +57,7 @@ impl SyncRecordTester for StockLineRecordTester {
             d.item_link_id = uuid();
             d.location_id = None;
             d.batch = Some("some remote sync test batch 2".to_string());
-            d.pack_size = 10;
+            d.pack_size = 10.0;
             d.cost_price_per_pack = 15.0;
             d.sell_price_per_pack = 20.0;
             d.available_number_of_packs = 110.393939;

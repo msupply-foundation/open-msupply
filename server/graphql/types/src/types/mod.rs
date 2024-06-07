@@ -70,6 +70,9 @@ pub use self::store_preference::*;
 pub mod repack;
 pub use self::repack::*;
 
+pub mod property;
+pub use self::property::*;
+
 pub mod program;
 pub use self::program::*;
 

@@ -14,9 +14,10 @@ use diesel::prelude::*;
 table! {
     program (id) {
         id -> Text,
-        master_list_id -> Text,
+        master_list_id -> Nullable<Text>,
         name -> Text,
         context_id -> Text,
+        is_immunisation -> Bool,
     }
 }
 
@@ -29,9 +30,10 @@ allow_tables_to_appear_in_same_query!(program, name_link);
 #[diesel(table_name = program)]
 pub struct ProgramRow {
     pub id: String, // Master list id
-    pub master_list_id: String,
+    pub master_list_id: Option<String>,
     pub name: String,
     pub context_id: String,
+    pub is_immunisation: bool,
 }
 
 pub struct ProgramRowRepository<'a> {

@@ -11,7 +11,7 @@ table! {
         item_id -> Text,
         short_name -> Text,
         long_name -> Text,
-        pack_size -> Integer,
+        pack_size -> Double,
         is_active -> Bool,
     }
 }
@@ -26,8 +26,6 @@ joinable!(pack_variant -> item (item_id));
     Debug,
     PartialEq,
     Default,
-    Eq,
-    Ord,
     PartialOrd,
     Serialize,
     Deserialize,
@@ -39,7 +37,7 @@ pub struct PackVariantRow {
     pub item_id: String,
     pub short_name: String,
     pub long_name: String,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub is_active: bool,
 }
 
