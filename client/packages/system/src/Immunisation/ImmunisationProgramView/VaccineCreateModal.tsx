@@ -1,58 +1,20 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   useDialog,
   Grid,
   DialogButton,
   useTranslation,
-  FnUtils,
   InlineSpinner,
   BasicTextInput,
   Box,
   InputLabel,
-  Autocomplete,
 } from '@openmsupply-client/common';
+import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 
 interface VaccineCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const createNewProgram = (seed?: any | null): any => ({
-  id: FnUtils.generateUUID(),
-  name: '',
-  demographicGroup: '',
-  coverageRate: '',
-  calculatedDemand: '',
-  ...seed,
-});
-
-interface UseDraftVaccineControl {
-  draft: any;
-  onUpdate: (patch: Partial<any>) => void;
-  onSave: () => Promise<void>;
-  isLoading: boolean;
-}
-
-const useDraftProgram = (): UseDraftVaccineControl => {
-  const [program, setProgram] = useState<any>(() => createNewProgram());
-
-  const onUpdate = (patch: Partial<any>) => {
-    setProgram({ ...program, ...patch });
-  };
-
-  const onSave = async () => {
-    console.info('TODO insert program mutation');
-  };
-
-  const isLoading = false;
-
-  return {
-    draft: program,
-    onUpdate,
-    onSave,
-    isLoading,
-  };
-};
 
 export const VaccineCreateModal: FC<VaccineCreateModalProps> = ({
   isOpen,
@@ -60,7 +22,12 @@ export const VaccineCreateModal: FC<VaccineCreateModalProps> = ({
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['coldchain']);
-  const { draft, onUpdate, onSave, isLoading } = useDraftProgram();
+  const {
+    query: { isLoading },
+    draft,
+    updatePatch,
+    create: { create },
+  } = useVaccineCourse();
   const isInvalid = !draft.name.trim();
 
   return (
@@ -70,7 +37,7 @@ export const VaccineCreateModal: FC<VaccineCreateModalProps> = ({
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await onSave();
+            await create();
             onClose();
           }}
         />
@@ -86,35 +53,35 @@ export const VaccineCreateModal: FC<VaccineCreateModalProps> = ({
               fullWidth
               autoFocus
               value={draft.name}
-              onChange={e => onUpdate({ name: e.target.value })}
+              onChange={e => updatePatch({ name: e.target.value })}
             />
-            <InputLabel>{t('label.demographic-group')}</InputLabel>
-            <Autocomplete
+            {/* <InputLabel>{t('label.demographic-group')}</InputLabel> */}
+            {/* <Autocomplete
               fullWidth
               autoFocus
-              value={draft.demographicGroup}
+              value={draft.demographicIndicatorId}
               onChange={(_e, selected) =>
-                onUpdate({ demographicGroup: selected?.valueOf })
+                updatePatch({ demographicIndicatorId: selected?.id })
               }
               options={[
-                { label: 'an option', key: 1 },
-                { label: 'another option', key: 2 },
+                { label: 'an option', key: 1, id: 'id' },
+                { label: 'another option', key: 2, id: 'id2' },
               ]}
-            />
-            <InputLabel>{t('label.coverage-rate')}</InputLabel>
+            /> */}
+            {/* <InputLabel>{t('label.coverage-rate')}</InputLabel>
             <BasicTextInput
               fullWidth
               autoFocus
               value={draft.coverageRate}
-              onChange={e => onUpdate({ coverageRate: e.target.value })}
-            />
-            <InputLabel>{t('label.calculated-demand')}</InputLabel>
+              onChange={e => updatePatch({ coverageRate: e.target.value })}
+            /> */}
+            {/* <InputLabel>{t('label.calculated-demand')}</InputLabel>
             <BasicTextInput
               fullWidth
               autoFocus
               value={draft.calculatedDemand}
-              onChange={e => onUpdate({ calculatedDemand: e.target.value })}
-            />
+              onChange={e => updatePatch({ calculatedDemand: e.target.value })}
+            /> */}
           </Box>
         </Grid>
       ) : (

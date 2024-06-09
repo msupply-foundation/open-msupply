@@ -31,7 +31,7 @@ query vaccineCourses(
 }
 
 mutation insertVaccineCourse(
-  $input: insertVaccineCourseInput
+  $input: InsertVaccineCourseInput
   $storeId: String
 ) {
   centralServer {

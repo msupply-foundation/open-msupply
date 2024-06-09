@@ -54,7 +54,7 @@ export const VaccineCoursesDocument = gql`
 }
     ${VaccineCourseFragmentDoc}`;
 export const InsertVaccineCourseDocument = gql`
-    mutation insertVaccineCourse($input: insertVaccineCourseInput, $storeId: String) {
+    mutation insertVaccineCourse($input: InsertVaccineCourseInput, $storeId: String) {
   centralServer {
     vaccineCourse {
       insertVaccineCourse(input: $input, storeId: $storeId) {
