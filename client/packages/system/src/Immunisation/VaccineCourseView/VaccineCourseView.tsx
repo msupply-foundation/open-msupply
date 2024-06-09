@@ -13,13 +13,13 @@ import {
   RecordPatch,
   SearchBar,
   Typography,
-  getEditableQuantityColumn,
   useBreadcrumbs,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
 import React, { useEffect, useState } from 'react';
 import { FC } from 'react';
+import { doseDayColumn } from './DoseDayColumn';
 
 // dummy data
 const data = {
@@ -39,7 +39,7 @@ interface Draft {
   coverageRate: number;
   vaccineItems: any[];
   numberOfDoses: number;
-  schedule: Schedule[];
+  schedule: Record<string, Schedule>;
 }
 
 const seed: Draft = {
@@ -48,14 +48,14 @@ const seed: Draft = {
   coverageRate: 100,
   vaccineItems: [{}],
   numberOfDoses: 1,
-  schedule: [
-    {
-      id: FnUtils.generateUUID(),
+  schedule: {
+    id: {
+      id: 'id',
       number: 1,
       day: 1,
       description: '',
     },
-  ],
+  },
 };
 
 const Section = ({
@@ -184,18 +184,21 @@ export const VaccineCourseView: FC = () => {
     setBuffer(value);
   };
 
-  const updateSchedule = (patch: RecordPatch<Schedule>) => {
-    if (!patch) {
+  const updateSchedule = (value: number) => {
+    if (!value) {
       return;
     }
     const scheduleSeed = (number: number) => {
       return {
+        id: FnUtils.generateUUID(),
         number: number,
+        description: '',
         day: 0,
       };
     };
+    let rows = Object.values(draft?.schedule) as Schedule[];
+    console.log('rows', rows, rows.length, value);
 
-    let rows = draft?.schedule;
     if (rows.length === value) {
       return;
     } else if (value > rows.length) {
@@ -204,11 +207,23 @@ export const VaccineCourseView: FC = () => {
         const number = value - toAdd + 1;
         rows.push(scheduleSeed(number));
         toAdd--;
+        console.log('rows after pushing', rows);
       }
     } else {
       rows = rows.slice(0, value);
     }
-    onUpdate({ schedule: rows });
+
+    const rowsAsObject = ArrayUtils.toObject(rows);
+    console.log('rowsAsObject', rowsAsObject);
+    onUpdate({ schedule: rowsAsObject });
+  };
+
+  const updateDay = (patch: RecordPatch<Schedule>) => {
+    if (!patch) {
+      return;
+    }
+    const schedule = { ...draft.schedule, [patch.id]: patch };
+    console.log('schedule', schedule);
   };
 
   const dosesColumns = useColumns(
@@ -216,7 +231,7 @@ export const VaccineCourseView: FC = () => {
       { key: 'number', label: 'label.dose-number' },
       { key: 'label', label: 'label.description' },
       { key: 'day', label: 'label.day' },
-      [getEditableQuantityColumn(), { setter: updateSchedule }],
+      [doseDayColumn(), { setter: updateDay }],
     ],
     {},
     [draft]
@@ -295,7 +310,10 @@ export const VaccineCourseView: FC = () => {
             />
           </Row>
           <Box paddingTop={1.5}>
-            <MiniTable rows={draft?.schedule} columns={dosesColumns} />
+            <MiniTable
+              rows={Object.values(draft?.schedule) as Schedule[]}
+              columns={dosesColumns}
+            />
           </Box>
         </Section>
       </Container>
