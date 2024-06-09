@@ -20,6 +20,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { FC } from 'react';
 import { doseDayColumn } from './DoseDayColumn';
+import { descriptionColumn } from './DescriptionColumn';
 
 // dummy data
 const data = {
@@ -197,7 +198,6 @@ export const VaccineCourseView: FC = () => {
       };
     };
     let rows = Object.values(draft?.schedule) as Schedule[];
-    console.log('rows', rows, rows.length, value);
 
     if (rows.length === value) {
       return;
@@ -207,14 +207,12 @@ export const VaccineCourseView: FC = () => {
         const number = value - toAdd + 1;
         rows.push(scheduleSeed(number));
         toAdd--;
-        console.log('rows after pushing', rows);
       }
     } else {
       rows = rows.slice(0, value);
     }
 
     const rowsAsObject = ArrayUtils.toObject(rows);
-    console.log('rowsAsObject', rowsAsObject);
     onUpdate({ schedule: rowsAsObject });
   };
 
@@ -223,14 +221,21 @@ export const VaccineCourseView: FC = () => {
       return;
     }
     const schedule = { ...draft.schedule, [patch.id]: patch };
-    console.log('schedule', schedule);
+    onUpdate({ schedule: schedule });
+  };
+
+  const updateDescription = (patch: RecordPatch<Schedule>) => {
+    if (!patch) {
+      return;
+    }
+    const schedule = { ...draft.schedule, [patch.id]: patch };
+    onUpdate({ schedule: schedule });
   };
 
   const dosesColumns = useColumns(
     [
       { key: 'number', label: 'label.dose-number' },
-      { key: 'label', label: 'label.description' },
-      { key: 'day', label: 'label.day' },
+      [descriptionColumn(), { setter: updateDescription }],
       [doseDayColumn(), { setter: updateDay }],
     ],
     {},
