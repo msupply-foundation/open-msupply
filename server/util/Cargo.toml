@@ -8,7 +8,7 @@ path = "src/lib.rs"
 
 [dependencies]
 sha2 = "0.10.2"
-uuid = { version = "1.0.0", features = ["v4"] }
+uuid = { version = "1.8.0", features = ["v7"] }
 chrono = { workspace = true }
 serde = "1.0.126"
 env_logger = "0.8.3"
