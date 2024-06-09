@@ -20,7 +20,7 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   demographicIndicatorId: '',
 };
 
-export function useVaccineCourseProgram(id?: string) {
+export function useVaccineCourse(id?: string) {
   const [patch, setPatch] = useState<Partial<DraftVaccineCourse>>({});
   const [isDirty, setIsDirty] = useState(false);
   const { data, isLoading, error } = useGet(id ?? '');
@@ -105,8 +105,8 @@ const useCreate = () => {
       input: {
         id: FnUtils.generateUUID(),
         name,
-        demographicIndicatorId: '',
-        programId: '',
+        demographicIndicatorId: 'id',
+        programId: 'missing_program',
       },
     });
   };
