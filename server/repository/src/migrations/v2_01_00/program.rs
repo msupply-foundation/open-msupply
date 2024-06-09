@@ -1,3 +1,5 @@
+use util::constants::IMMUNISATION_CONTEXT_ID;
+
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
@@ -29,6 +31,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#
         )?;
     }
+
+    sql!(
+        connection,
+        "INSERT INTO context (id, name) VALUES('{}', 'Immunisation context');",
+        IMMUNISATION_CONTEXT_ID
+    )?;
 
     Ok(())
 }
