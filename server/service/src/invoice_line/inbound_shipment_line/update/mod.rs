@@ -241,6 +241,8 @@ mod test {
         );
 
         // BatchIsReserved
+        // Invoice line is for batch item_a_line_a
+        // 10 packs are reserved, so adjusting num packs to 1 should result in an error
         assert_eq!(
             service.update_inbound_shipment_line(
                 &context,
@@ -351,5 +353,19 @@ mod test {
                 u
             })
         );
+
+        // Invoice line for batch item_a_line_a
+        // 10 packs are reserved, so adjusting num packs to 20 should be fine (still sufficient stock available)
+        assert!(service
+            .update_inbound_shipment_line(
+                &context,
+                inline_init(|r: &mut UpdateInboundShipmentLine| {
+                    r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
+                    r.item_id = Some(mock_item_a().id.clone());
+                    r.pack_size = Some(1.0);
+                    r.number_of_packs = Some(20.0);
+                }),
+            )
+            .is_ok());
     }
 }

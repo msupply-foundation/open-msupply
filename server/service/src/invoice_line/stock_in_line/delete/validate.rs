@@ -31,7 +31,7 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
-    if !check_batch(&line, connection)? {
+    if !check_batch(&line, 0.0, connection)? {
         return Err(BatchIsReserved);
     }
     if !check_line_belongs_to_invoice(&line, &invoice) {

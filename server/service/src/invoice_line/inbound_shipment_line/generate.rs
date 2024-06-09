@@ -56,6 +56,7 @@ pub fn generate_batch(
         pack_size,
         cost_price_per_pack,
         sell_price_per_pack,
+        // TODO: handle adjusting this
         available_number_of_packs: number_of_packs,
         total_number_of_packs: number_of_packs,
         expiry_date,

@@ -43,8 +43,10 @@ pub fn validate(
         return Err(NotThisStoreInvoice);
     }
 
-    if !check_batch(line_row, connection)? {
-        return Err(BatchIsReserved);
+    if let Some(new_total_number_of_packs) = input.number_of_packs {
+        if !check_batch(line_row, new_total_number_of_packs, connection)? {
+            return Err(BatchIsReserved);
+        }
     }
     if let Some(location) = &input.location {
         if !check_location_exists(&location.value, connection)? {
