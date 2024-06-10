@@ -257,17 +257,17 @@ mod tests {
         let count_name_store_join = |id: &str| -> usize {
             name_store_join_repo
                 .query(Some(
-                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&id.to_string())),
+                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(id)),
                 ))
                 .unwrap()
                 .len()
         };
 
         // Ensure the test data is what was expected as when written
-        assert_eq!(count_name_store_join(&"name_a"), 3);
-        assert_eq!(count_name_store_join(&"name2"), 1);
-        assert_eq!(count_name_store_join(&"name3"), 2);
-        assert_eq!(count_name_store_join(&"name_store_a"), 1);
+        assert_eq!(count_name_store_join("name_a"), 3);
+        assert_eq!(count_name_store_join("name2"), 1);
+        assert_eq!(count_name_store_join("name3"), 2);
+        assert_eq!(count_name_store_join("name_store_a"), 1);
 
         let sync_records = vec![
             SyncBufferRow {
@@ -311,9 +311,9 @@ mod tests {
 
         integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
 
-        assert_eq!(count_name_store_join(&"name_a"), 0);
-        assert_eq!(count_name_store_join(&"name2"), 0);
-        assert_eq!(count_name_store_join(&"name3"), 0);
-        assert_eq!(count_name_store_join(&"name_store_a"), 3);
+        assert_eq!(count_name_store_join("name_a"), 0);
+        assert_eq!(count_name_store_join("name2"), 0);
+        assert_eq!(count_name_store_join("name3"), 0);
+        assert_eq!(count_name_store_join("name_store_a"), 3);
     }
 }
