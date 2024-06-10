@@ -1,1 +1,0 @@
-export { ProgramDetailView } from './ProgramDetailView';

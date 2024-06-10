@@ -5,7 +5,6 @@ import {
   useBreadcrumbs,
   createQueryParamsStore,
   useParams,
-  Typography,
   InlineSpinner,
   AppFooterPortal,
   Box,
@@ -14,12 +13,19 @@ import {
   LoadingButton,
   SaveIcon,
   useTranslation,
+  useUrlQueryParams,
+  DataTable,
+  useNavigate,
+  useColumns,
+  NothingHere,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
+import { AppBarButtons } from './AppBarButtons';
 
 export const ProgramComponent: FC = () => {
-  const t = useTranslation('system');
+  const navigate = useNavigate();
+  const t = useTranslation('catalogue');
   const { setSuffix, navigateUpOne } = useBreadcrumbs();
   const { id } = useParams();
   const {
@@ -30,6 +36,26 @@ export const ProgramComponent: FC = () => {
     isDirty,
     update: { update, isUpdating },
   } = useImmunisationProgram(id);
+
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
+  const pagination = { page, first, offset };
+
+  const columns = useColumns(
+    [
+      'name',
+      { key: 'targetDemographic', label: 'label.target-demographic' },
+      { key: 'doses', label: 'label.doses' },
+    ],
+    {
+      onChangeSortBy: updateSortQuery,
+      sortBy,
+    },
+    [updateSortQuery, sortBy]
+  );
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
@@ -45,7 +71,17 @@ export const ProgramComponent: FC = () => {
         error={errorMessage}
         isError={errorMessage != ''}
       />
-      <Typography variant="body2">Vaccine Course List - Coming soon</Typography>
+      <AppBarButtons />
+      <DataTable
+        id={'Vaccine Course List'}
+        pagination={{ ...pagination }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={[]} // TODO Query for Vaccine Courses
+        isLoading={false} // TODO Query for Vaccine Courses
+        onRowClick={row => navigate(row.id)}
+        noDataElement={<NothingHere body={t('error.no-items')} />}
+      />
       <AppFooterPortal
         Content={
           <Box
@@ -84,7 +120,7 @@ export const ProgramComponent: FC = () => {
   );
 };
 
-export const ProgramDetailView: FC = () => (
+export const ImmunisationProgramDetailView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore({
