@@ -25,6 +25,7 @@ export const ProgramComponent: FC = () => {
   const {
     query: { data, isLoading },
     draft,
+    errorMessage,
     updatePatch,
     isDirty,
     update: { update, isUpdating },
@@ -38,7 +39,12 @@ export const ProgramComponent: FC = () => {
     <InlineSpinner />
   ) : (
     <>
-      <Toolbar draft={draft} onUpdate={updatePatch} />
+      <Toolbar
+        draft={draft}
+        onUpdate={updatePatch}
+        error={errorMessage}
+        isError={errorMessage != ''}
+      />
       <Typography variant="body2">Vaccine Course List - Coming soon</Typography>
       <AppFooterPortal
         Content={

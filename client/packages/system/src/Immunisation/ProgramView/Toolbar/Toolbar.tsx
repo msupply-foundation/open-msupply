@@ -10,11 +10,15 @@ import { DraftImmunisationProgram } from '../../api/hooks/useImmunisationProgram
 interface ToolbarProps {
   onUpdate: (patch: Partial<DraftImmunisationProgram>) => void;
   draft: DraftImmunisationProgram;
+  isError: boolean;
+  error: string;
 }
 
 export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
   onUpdate,
   draft,
+  isError,
+  error,
 }: ToolbarProps) => {
   const t = useTranslation('system');
   return (
@@ -31,6 +35,8 @@ export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
             }
             label={t('label.name')}
             InputLabelProps={{ shrink: true }}
+            helperText={isError ? error : ''}
+            error={isError}
           />
         </Grid>
       </Grid>

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
   ProgramSortFieldInput,
   isEqual,
   useMutation,
   useQuery,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { PROGRAM } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
@@ -21,6 +22,7 @@ const defaultDraftImmunisationProgram: DraftImmunisationProgram = {
 export function useImmunisationProgram(id?: string) {
   const [patch, setPatch] = useState<Partial<DraftImmunisationProgram>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { data, isLoading, error } = useGet(id ?? '');
   const {
     mutateAsync: createMutation,
@@ -32,7 +34,7 @@ export function useImmunisationProgram(id?: string) {
     mutateAsync: updateMutation,
     isLoading: isUpdating,
     error: updateError,
-  } = useUpdate(id ?? '');
+  } = useUpdate(id ?? '', setErrorMessage);
 
   const draft: DraftImmunisationProgram = data
     ? { ...defaultDraftImmunisationProgram, ...data, ...patch }
@@ -41,6 +43,8 @@ export function useImmunisationProgram(id?: string) {
   const updatePatch = (newData: Partial<DraftImmunisationProgram>) => {
     const newPatch = { ...patch, ...newData };
     setPatch(newPatch);
+    // Reset error message if user is trying to fix the error
+    setErrorMessage('');
 
     // Ensures that UI doesn't show in "dirty" state if nothing actually
     // different from the saved data
@@ -48,13 +52,6 @@ export function useImmunisationProgram(id?: string) {
     if (isEqual(data, updatedData)) setIsDirty(false);
     else setIsDirty(true);
     return;
-  };
-
-  const resetDraft = () => {
-    if (data) {
-      setPatch({});
-      setIsDirty(false);
-    }
   };
 
   const create = async () => {
@@ -73,7 +70,7 @@ export function useImmunisationProgram(id?: string) {
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     draft,
-    resetDraft,
+    errorMessage,
     isDirty,
     updatePatch,
   };
@@ -127,8 +124,12 @@ const useCreate = () => {
   });
 };
 
-const useUpdate = (id: string) => {
+const useUpdate = (
+  id: string,
+  setErrorMessage: Dispatch<SetStateAction<string>>
+) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const t = useTranslation('system');
 
   const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
     if (!id) {
@@ -138,7 +139,7 @@ const useUpdate = (id: string) => {
       throw new Error('No name provided to update Immunisation Program');
     }
 
-    const result = await api.updateImmunisationProgram({
+    const apiResult = await api.updateImmunisationProgram({
       input: {
         id,
         name,
@@ -146,11 +147,21 @@ const useUpdate = (id: string) => {
       storeId,
     });
 
-    if (
-      result.centralServer.program.updateImmunisationProgram?.__typename ===
-      'ProgramNode'
-    ) {
-      return result.centralServer.program.updateImmunisationProgram;
+    const result = apiResult.centralServer.program.updateImmunisationProgram;
+
+    if (result?.__typename === 'ProgramNode') {
+      return result;
+    }
+
+    if (result?.__typename === 'UpdateImmunisationProgramError') {
+      if (result.error.__typename === 'UniqueValueViolation') {
+        setErrorMessage(
+          t('error.unique-value-violation', { field: result.error.field })
+        );
+      } else {
+        setErrorMessage(result.error.description);
+      }
+      return;
     }
 
     throw new Error('Unable to update Immunisation Program');
