@@ -35,8 +35,7 @@ fn check_stock_line_reduced_to_zero(input: &InsertRepack, stock_line: &StockLine
 }
 
 fn check_packs_are_fractional(input: &InsertRepack, stock_line: &StockLineRow) -> bool {
-    let split_pack =
-        input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
+    let split_pack = input.number_of_packs * stock_line.pack_size / input.new_pack_size;
 
     if split_pack.fract() != 0.0 {
         return true;

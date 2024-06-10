@@ -316,10 +316,10 @@ mod test {
             line,
             inline_edit(&line, |mut u| {
                 u.requested_quantity = 20.0;
-                u.available_stock_on_hand = test_item_stats::item_2_soh() as f64;
-                u.average_monthly_consumption = test_item_stats::item2_amc_3_months() as f64;
-                u.suggested_quantity = test_item_stats::item2_amc_3_months() as f64 * 10.0
-                    - test_item_stats::item_2_soh() as f64;
+                u.available_stock_on_hand = test_item_stats::item_2_soh();
+                u.average_monthly_consumption = test_item_stats::item2_amc_3_months();
+                u.suggested_quantity =
+                    test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh();
                 u.comment = Some("comment".to_string());
                 u
             })
