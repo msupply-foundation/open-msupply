@@ -26,6 +26,14 @@ export type InsertImmunisationProgramMutationVariables = Types.Exact<{
 
 export type InsertImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', insertImmunisationProgram: { __typename: 'InsertImmunisationProgramError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'ProgramNode', id: string, name: string } } } };
 
+export type UpdateImmunisationProgramMutationVariables = Types.Exact<{
+  input?: Types.InputMaybe<Types.UpdateImmunisationProgramInput>;
+  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
+
+
+export type UpdateImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', updateImmunisationProgram: { __typename: 'ProgramNode', id: string, name: string } | { __typename: 'UpdateImmunisationProgramError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } } } };
+
 export const ImmunisationProgramFragmentDoc = gql`
     fragment ImmunisationProgram on ProgramNode {
   id
@@ -70,6 +78,26 @@ export const InsertImmunisationProgramDocument = gql`
   }
 }
     ${ImmunisationProgramFragmentDoc}`;
+export const UpdateImmunisationProgramDocument = gql`
+    mutation updateImmunisationProgram($input: UpdateImmunisationProgramInput, $storeId: String) {
+  centralServer {
+    program {
+      updateImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on UpdateImmunisationProgramError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    ${ImmunisationProgramFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -83,6 +111,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertImmunisationProgram(variables?: InsertImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertImmunisationProgramMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertImmunisationProgramMutation>(InsertImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertImmunisationProgram', 'mutation');
+    },
+    updateImmunisationProgram(variables?: UpdateImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateImmunisationProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateImmunisationProgramMutation>(UpdateImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateImmunisationProgram', 'mutation');
     }
   };
 }
@@ -119,5 +150,22 @@ export const mockProgramsQuery = (resolver: ResponseResolver<GraphQLRequest<Prog
 export const mockInsertImmunisationProgramMutation = (resolver: ResponseResolver<GraphQLRequest<InsertImmunisationProgramMutationVariables>, GraphQLContext<InsertImmunisationProgramMutation>, any>) =>
   graphql.mutation<InsertImmunisationProgramMutation, InsertImmunisationProgramMutationVariables>(
     'insertImmunisationProgram',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateImmunisationProgramMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockUpdateImmunisationProgramMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateImmunisationProgramMutationVariables>, GraphQLContext<UpdateImmunisationProgramMutation>, any>) =>
+  graphql.mutation<UpdateImmunisationProgramMutation, UpdateImmunisationProgramMutationVariables>(
+    'updateImmunisationProgram',
     resolver
   )

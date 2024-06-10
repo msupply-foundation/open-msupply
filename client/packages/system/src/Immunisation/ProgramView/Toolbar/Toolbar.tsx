@@ -4,20 +4,25 @@ import {
   BaseButton,
   BasicTextInput,
   Grid,
+  InlineSpinner,
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftImmunisationProgram } from '../../api/hooks/useImmunisationProgram';
 
 interface ToolbarProps {
   onUpdate: (patch: Partial<DraftImmunisationProgram>) => void;
+  onSave: (patch: Partial<DraftImmunisationProgram>) => void;
   draft: DraftImmunisationProgram;
   isDirty?: boolean;
+  isSaving?: boolean;
 }
 
 export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
   onUpdate,
+  onSave,
   draft,
   isDirty,
+  isSaving,
 }: ToolbarProps) => {
   const t = useTranslation('system');
   return (
@@ -35,11 +40,12 @@ export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
             label={t('label.name')}
             InputLabelProps={{ shrink: true }}
           />
-          {isDirty && (
-            <BaseButton onClick={() => onUpdate(draft)}>
+          {isDirty && !isSaving && (
+            <BaseButton onClick={() => onSave(draft)}>
               {t('button.save')}
             </BaseButton>
           )}
+          {isSaving && <InlineSpinner />}
         </Grid>
       </Grid>
     </AppBarContentPortal>
