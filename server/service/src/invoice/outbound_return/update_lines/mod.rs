@@ -111,8 +111,7 @@ pub fn update_outbound_return_lines(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_invoice_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
 
     Ok(outbound_return)
 }
@@ -271,7 +270,6 @@ mod test {
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineInsertError {
@@ -294,7 +292,6 @@ mod test {
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineUpdateError {
@@ -318,7 +315,6 @@ mod test {
                             reason_id: Some("does_not_exist".to_string()),
                             ..Default::default()
                         }],
-                        ..Default::default()
                     },
                 ),
             Err(ServiceError::LineReturnReasonUpdateError {
@@ -380,7 +376,6 @@ mod test {
                             ..Default::default()
                         },
                     ],
-                    ..Default::default()
                 },
             )
             .unwrap();
