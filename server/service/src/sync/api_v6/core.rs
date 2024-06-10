@@ -57,7 +57,7 @@ impl SyncApiV6 {
             batch_size,
             sync_v5_settings: sync_v5_settings.clone(),
             is_initialised,
-            sync_v6_version: sync_v6_version.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
@@ -88,7 +88,7 @@ impl SyncApiV6 {
         let request = SyncPushRequestV6 {
             batch,
             sync_v5_settings: sync_v5_settings.clone(),
-            sync_v6_version: sync_v6_version.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
@@ -118,7 +118,7 @@ impl SyncApiV6 {
 
         let request = SiteStatusRequestV6 {
             sync_v5_settings: sync_v5_settings.clone(),
-            sync_v6_version: sync_v6_version.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;

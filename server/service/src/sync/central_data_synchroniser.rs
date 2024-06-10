@@ -47,7 +47,7 @@ impl CentralDataSynchroniser {
             logger.progress(SyncStepProgress::PullCentral, max_cursor - cursor)?;
 
             for sync_record in data {
-                cursor = sync_record.cursor.clone();
+                cursor = sync_record.cursor;
                 let buffer_row = sync_record.record.to_buffer_row(None)?;
 
                 insert_one_and_update_cursor(connection, &cursor_controller, &buffer_row, cursor)?;

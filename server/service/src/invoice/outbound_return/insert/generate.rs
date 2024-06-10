@@ -78,7 +78,7 @@ pub fn generate(
             id: line.id.clone(),
             invoice_id: outbound_return.id.clone(),
             stock_line_id: line.stock_line_id.clone(),
-            number_of_packs: line.number_of_packs.clone(),
+            number_of_packs: line.number_of_packs,
             note: line.note.clone(),
             r#type: Some(StockOutType::OutboundReturn),
             tax_percentage: None,

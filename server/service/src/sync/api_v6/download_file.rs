@@ -23,7 +23,7 @@ impl SyncApiV6 {
             table_name: sync_file.table_name.clone(),
             record_id: sync_file.record_id.clone(),
             sync_v5_settings: sync_v5_settings.clone(),
-            sync_v6_version: sync_v6_version.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let request = Client::new().post(url.clone()).json(&request);
