@@ -55,7 +55,7 @@ pub fn insert_request_requisition_line(
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let new_requisition_line_row = generate(ctx, &ctx.store_id, requisition_row, input)?;
 
-            RequisitionLineRowRepository::new(&connection).upsert_one(&new_requisition_line_row)?;
+            RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
 
             get_requisition_line(ctx, &new_requisition_line_row.id)
                 .map_err(|error| OutError::DatabaseError(error))?

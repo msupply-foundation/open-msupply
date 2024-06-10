@@ -303,7 +303,7 @@ pub fn insert_stocktake_line(
                 item_name,
             } = validate(connection, &ctx.store_id, &input)?;
             let new_stocktake_line = generate(stock_line, item_id, item_name, input);
-            StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
+            StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(InsertStocktakeLineError::InternalError(

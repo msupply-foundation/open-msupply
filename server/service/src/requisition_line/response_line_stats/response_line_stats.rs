@@ -45,7 +45,7 @@ pub fn response_store_stats(
     let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
             .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
-            .store_id(EqualFilter::equal_to(&store_id)),
+            .store_id(EqualFilter::equal_to(store_id)),
         None,
     )?;
 

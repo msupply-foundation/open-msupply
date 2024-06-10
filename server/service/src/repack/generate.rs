@@ -35,7 +35,7 @@ pub fn generate(
     } = generate_new_stock_lines(&stock_line.stock_line_row, &input);
 
     let (repack_invoice, repack_invoice_lines) =
-        generate_invoice_and_lines(&ctx, input.number_of_packs, &stock_line, &new_stock_line)?;
+        generate_invoice_and_lines(ctx, input.number_of_packs, &stock_line, &new_stock_line)?;
     let location_movement = if let Some(_) = input.new_location_id {
         Some(generate_location_movement(&ctx.store_id, &new_stock_line))
     } else {

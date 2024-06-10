@@ -53,15 +53,15 @@ pub fn insert_program_request_requisition(
         .transaction_sync(|connection| {
             let (program, order_type) = validate(ctx, &input)?;
             let (new_requisition, requisition_lines) = generate(ctx, program, order_type, input)?;
-            RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
+            RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
 
-            let requisition_line_repo = RequisitionLineRowRepository::new(&connection);
+            let requisition_line_repo = RequisitionLineRowRepository::new(connection);
             for requisition_line in requisition_lines {
                 requisition_line_repo.upsert_one(&requisition_line)?;
             }
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::RequisitionCreated,
                 Some(new_requisition.id.to_owned()),
                 None,

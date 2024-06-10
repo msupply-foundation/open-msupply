@@ -31,7 +31,7 @@ fn get_matching_sensor_serial(
     serial: &str,
 ) -> Result<Vec<Sensor>, RepositoryError> {
     SensorRepository::new(connection)
-        .query_by_filter(SensorFilter::new().serial(EqualFilter::equal_to(&serial)))
+        .query_by_filter(SensorFilter::new().serial(EqualFilter::equal_to(serial)))
 }
 
 fn get_matching_sensor_log(
@@ -204,7 +204,7 @@ fn sensor_add_breach_config_if_new(
     let result = get_matching_sensor_breach_config(
         connection,
         &sensor_row.store_id,
-        &temperature_breach_config,
+        temperature_breach_config,
         &breach_row_type,
     )?;
 
@@ -397,7 +397,7 @@ fn integrate_sensor_data(
     store_id: &str,
     temperature_sensor: temperature_sensor::Sensor,
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
-    let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
+    let new_sensor_id = sensor_add_if_new(connection, store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
@@ -414,7 +414,7 @@ fn integrate_sensor_data(
 
     let temperature_sensor_configs = temperature_sensor.configs.unwrap_or_default();
     for temperature_sensor_config in temperature_sensor_configs.iter() {
-        sensor_add_breach_config_if_new(connection, &sensor_row, &temperature_sensor_config)?;
+        sensor_add_breach_config_if_new(connection, &sensor_row, temperature_sensor_config)?;
     }
 
     let temperature_sensor_breaches = temperature_sensor.breaches.unwrap_or_default();
@@ -443,7 +443,7 @@ fn integrate_sensor_data(
                 connection,
                 &sensor_row,
                 &temperature_sensor_breach,
-                &temperature_sensor_config,
+                temperature_sensor_config,
             )?;
 
             if let Some(upserted_breach) = upserted_breach {
