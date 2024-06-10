@@ -155,7 +155,7 @@ impl Synchroniser {
         let batch_size = &self.settings.batch_size;
         let sync_status_service = &self.service_provider.sync_status_service;
 
-        if self.service_provider.settings.is_sync_disabled(&ctx)? {
+        if self.service_provider.settings.is_sync_disabled(ctx)? {
             // TODO logger ?
             warn!("Sync is disabled, skipping");
             return Ok(());
@@ -380,7 +380,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
             .transaction_sync(integrate_and_translate)
             .map_err::<RepositoryError, _>(|e| e.to_inner_error())
     } else {
-        integrate_and_translate(&connection)
+        integrate_and_translate(connection)
     }?;
 
     Ok(result)

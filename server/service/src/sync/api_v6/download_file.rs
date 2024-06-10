@@ -32,7 +32,7 @@ impl SyncApiV6 {
         let downloaded_file = match download_response_or_err(result).await {
             Err(error) => Err(error),
             Ok(download_response) => static_file_service
-                .download_file_in_chunks(&sync_file, download_response)
+                .download_file_in_chunks(sync_file, download_response)
                 .await
                 .map_err(SyncApiErrorVariantV6::Other),
         }
@@ -46,7 +46,7 @@ impl SyncApiV6 {
     }
 }
 
-// This maps differently as we check for succesfull status and pass on response
+// This maps differently as we check for successful status and pass on response
 async fn download_response_or_err(
     result: Result<Response, reqwest::Error>,
 ) -> Result<Response, SyncApiErrorVariantV6> {

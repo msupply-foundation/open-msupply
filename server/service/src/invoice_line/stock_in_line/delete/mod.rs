@@ -26,7 +26,7 @@ pub fn delete_stock_in_line(
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice_row, line) = validate(&input, &ctx.store_id, &connection)?;
+            let (invoice_row, line) = validate(&input, &ctx.store_id, connection)?;
 
             let delete_batch_id_option = line.stock_line_id.clone();
 

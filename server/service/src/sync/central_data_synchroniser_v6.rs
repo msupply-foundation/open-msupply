@@ -96,7 +96,7 @@ impl SynchroniserV6 {
         let cursor_controller = CursorController::new(KeyType::SyncPullCursorV6);
         // TODO protection from infinite loop
         loop {
-            let cursor = cursor_controller.get(&connection)?;
+            let cursor = cursor_controller.get(connection)?;
 
             let SyncBatchV6 {
                 end_cursor,
@@ -116,7 +116,7 @@ impl SynchroniserV6 {
                 insert_one_and_update_cursor(connection, &cursor_controller, &buffer_row, cursor)?;
             }
 
-            cursor_controller.update(&connection, end_cursor + 1)?;
+            cursor_controller.update(connection, end_cursor + 1)?;
 
             if is_last_batch {
                 break;

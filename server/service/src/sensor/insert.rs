@@ -33,7 +33,7 @@ pub fn insert_sensor(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let new_sensor = generate(&ctx.store_id, input);
-            SensorRowRepository::new(&connection).upsert_one(&new_sensor)?;
+            SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
 
             get_sensor(ctx, new_sensor.id).map_err(InsertSensorError::from)
         })

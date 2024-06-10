@@ -40,7 +40,7 @@ pub fn update_sensor(
         .transaction_sync(|connection| {
             let sensor_row = validate(connection, &ctx.store_id, &input)?;
             let updated_sensor_row = generate(input.clone(), sensor_row.clone());
-            SensorRowRepository::new(&connection).upsert_one(&updated_sensor_row)?;
+            SensorRowRepository::new(connection).upsert_one(&updated_sensor_row)?;
 
             if let Some(location_update) = input.location_id {
                 if sensor_row.location_id == location_update.value {
@@ -103,7 +103,7 @@ pub fn update_sensor_logs_for_breach(
     connection: &StorageConnection,
     breach: &TemperatureBreachRow,
 ) -> Result<(), RepositoryError> {
-    let Some(temperature_log_filter) = get_sensor_logs_filter_for_breach(&breach) else {
+    let Some(temperature_log_filter) = get_sensor_logs_filter_for_breach(breach) else {
         // End time is not set on breach
         return Ok(());
     };
@@ -112,12 +112,11 @@ pub fn update_sensor_logs_for_breach(
     let temperature_log_filter =
         temperature_log_filter.temperature_breach_id(EqualFilter::is_null(true));
 
-    let logs =
-        TemperatureLogRepository::new(&connection).query_by_filter(temperature_log_filter)?;
+    let logs = TemperatureLogRepository::new(connection).query_by_filter(temperature_log_filter)?;
 
     let log_ids = logs.into_iter().map(|l| l.temperature_log_row.id).collect();
 
-    TemperatureLogRowRepository::new(&connection).update_breach_id(&breach.id, &log_ids)
+    TemperatureLogRowRepository::new(connection).update_breach_id(&breach.id, &log_ids)
 }
 
 impl From<RepositoryError> for UpdateSensorError {

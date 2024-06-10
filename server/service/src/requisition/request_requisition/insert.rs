@@ -54,7 +54,7 @@ pub fn insert_request_requisition(
             RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::RequisitionCreated,
                 Some(new_requisition.id.to_owned()),
                 None,

@@ -135,7 +135,7 @@ fn validate(
         return Err(UpdateStocktakeError::CannotEditFinalised);
     }
 
-    if !check_stocktake_is_not_locked(&input, &existing) {
+    if !check_stocktake_is_not_locked(input, &existing) {
         return Err(UpdateStocktakeError::StocktakeIsLocked);
     }
 
@@ -318,7 +318,7 @@ fn generate_stock_line_update(
     };
 
     let location_movement = if counted_number_of_packs <= 0.0 {
-        generate_exit_location_movements(connection, &store_id, updated_line.clone())?
+        generate_exit_location_movements(connection, store_id, updated_line.clone())?
     } else {
         None
     };
@@ -472,7 +472,7 @@ fn generate_exit_location_movements(
                         .exit_datetime(DatetimeFilter::is_null(true))
                         .location_id(EqualFilter::equal_to(&location_id))
                         .stock_line_id(EqualFilter::equal_to(&stock_line.id))
-                        .store_id(EqualFilter::equal_to(&store_id)),
+                        .store_id(EqualFilter::equal_to(store_id)),
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)
@@ -589,12 +589,7 @@ fn generate(
             )?
         } else {
             // create new stock line
-            generate_new_stock_line(
-                connection,
-                &store_id,
-                &inventory_addition_id,
-                stocktake_line,
-            )?
+            generate_new_stock_line(connection, store_id, &inventory_addition_id, stocktake_line)?
         };
         stock_lines.push(stock_line);
         if let Some(shipment_line) = invoice_line {
@@ -703,7 +698,7 @@ pub fn update_stocktake(
             let stocktake_id = input.id.clone();
             let (existing, stocktake_lines, status_changed) =
                 validate(connection, &ctx.store_id, &input)?;
-            let result = generate(&ctx, input, existing, stocktake_lines, status_changed)?;
+            let result = generate(ctx, input, existing, stocktake_lines, status_changed)?;
 
             // write data to the DB
             // write new stock lines
@@ -747,7 +742,7 @@ pub fn update_stocktake(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     ActivityLogType::StocktakeStatusFinalised,
                     Some(stocktake_id.to_owned()),
                     None,

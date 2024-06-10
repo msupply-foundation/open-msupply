@@ -95,11 +95,11 @@ impl SyncApiV5 {
         use util::hash::sha256;
 
         SyncApiV5 {
-            url: Url::parse(&url).unwrap(),
+            url: Url::parse(url).unwrap(),
             settings: SyncApiSettings {
                 server_url: url.to_string(),
                 username: site_name.to_string(),
-                password_sha256: sha256(&password),
+                password_sha256: sha256(password),
                 site_uuid: hardware_id.to_string(),
                 sync_version: SYNC_V5_VERSION.to_string(),
                 app_version: Version::from_package_json().to_string(),

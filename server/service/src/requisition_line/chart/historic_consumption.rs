@@ -50,7 +50,7 @@ pub fn get_historic_consumption_for_item(
             &points.last_date,
         ));
 
-    let consumption_rows = ConsumptionRepository::new(&connection).query(Some(filter))?;
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
     // Calculate historic consumption
     let result = points
         .rows

@@ -36,7 +36,7 @@ pub fn use_suggested_quantity(
             validate(connection, &ctx.store_id, &input)?;
             let update_requisition_line_rows = generate(connection, &input.request_requisition_id)?;
 
-            let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
+            let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
             for requisition_line_row in update_requisition_line_rows {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
