@@ -92,12 +92,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
 
   const columns = useColumns<ReportRowFragment>(
     [
-      {
-        key: 'name',
-        label: 'label.name',
-        width: 300,
-        Cell: TooltipTextCell,
-      },
+    ['name', { width: 300, Cell: TooltipTextCell }],
       {
         accessor: ({ rowData }) => rowData.context,
         key: 'context',
