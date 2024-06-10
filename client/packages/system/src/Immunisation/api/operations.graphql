@@ -1,3 +1,53 @@
+fragment ImmunisationProgram on ProgramNode {
+  id
+  name
+}
+
+query programs(
+  $storeId: String
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...ImmunisationProgram
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertImmunisationProgram(
+  $input: InsertImmunisationProgramInput
+  $storeId: String
+) {
+  centralServer {
+    program {
+      insertImmunisationProgram(input: $input, storeId: $storeId) {
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on InsertImmunisationProgramError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
 fragment VaccineCourse on VaccineCourseNode {
   id
   name
