@@ -20,7 +20,7 @@ interface FacilityEditModalProps {
   nameId: string;
   isOpen: boolean;
   onClose: () => void;
-  setNextFacility: (nameId: string) => void;
+  setNextFacility?: (nameId: string) => void;
 }
 
 const useDraftFacilityProperties = (initialProperties?: string | null) => {
@@ -86,16 +86,18 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
         />
       }
       nextButton={
-        <DialogButton
-          disabled={!nextId}
-          variant="next"
-          onClick={async () => {
-            await save();
-            nextId && setNextFacility(nextId);
-            // Returning true triggers the animation/slide out
-            return true;
-          }}
-        />
+        setNextFacility && (
+          <DialogButton
+            disabled={!nextId}
+            variant="next"
+            onClick={async () => {
+              await save();
+              nextId && setNextFacility(nextId);
+              // Returning true triggers the animation/slide out
+              return true;
+            }}
+          />
+        )
       }
       height={height}
       width={700}

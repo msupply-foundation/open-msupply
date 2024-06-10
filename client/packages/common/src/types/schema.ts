@@ -7724,6 +7724,7 @@ export type UserStoreNode = {
   homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  nameId: Scalars['String']['output'];
   preferences: StorePreferenceNode;
   storeMode: StoreModeNodeType;
 };
