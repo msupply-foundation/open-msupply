@@ -56,7 +56,6 @@ fragment VaccineCourse on VaccineCourseNode {
 }
 
 query vaccineCourses(
-  $storeId: String
   $first: Int
   $offset: Int
   $key: VaccineCourseSortFieldInput!
@@ -64,7 +63,6 @@ query vaccineCourses(
   $filter: VaccineCourseFilterInput
 ) {
   vaccineCourses(
-    storeId: $storeId
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
