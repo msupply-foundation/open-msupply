@@ -22,7 +22,7 @@ pub struct InsertPackVariantInput {
     pub item_id: String,
     pub short_name: String,
     pub long_name: String,
-    pub pack_size: i32,
+    pub pack_size: f64,
 }
 
 #[derive(Union)]

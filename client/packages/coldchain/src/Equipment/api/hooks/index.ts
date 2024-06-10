@@ -21,7 +21,9 @@ export const useAssets = {
     deleteAssets: Document.useAssetsDelete,
     update: Document.useAssetUpdate,
   },
-
+  properties: {
+    list: Document.useAssetProperties,
+  },
   log: {
     insert: Log.useAssetLogInsert,
     list: Log.useAssetLogs,

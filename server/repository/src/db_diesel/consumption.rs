@@ -11,7 +11,7 @@ table! {
         id -> Text,
         item_id -> Text,
         store_id -> Text,
-        quantity -> BigInt,
+        quantity -> Double,
         date -> Date,
     }
 }
@@ -24,7 +24,7 @@ pub struct ConsumptionRow {
     pub id: String,
     pub item_id: String,
     pub store_id: String,
-    pub quantity: i64,
+    pub quantity: f64,
     pub date: NaiveDate,
 }
 

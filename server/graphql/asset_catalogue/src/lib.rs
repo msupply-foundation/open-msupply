@@ -1,24 +1,17 @@
-use asset_catalogue_property_queries::{
-    asset_catalogue_properties, AssetCataloguePropertyFilterInput,
-};
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use mutations::{
-    delete_asset_catalogue_item, insert_asset_catalogue_item, insert_asset_catalogue_item_property,
-    DeleteAssetCatalogueItemResponse, InsertAssetCatalogueItemInput,
-    InsertAssetCatalogueItemPropertyInput, InsertAssetCatalogueItemPropertyResponse,
-    InsertAssetCatalogueItemResponse,
+    delete_asset_catalogue_item, insert_asset_catalogue_item, DeleteAssetCatalogueItemResponse,
+    InsertAssetCatalogueItemInput, InsertAssetCatalogueItemResponse,
 };
 use types::{
     asset_catalogue_item::{AssetCatalogueItemResponse, AssetCatalogueItemsResponse},
-    asset_catalogue_property::AssetCataloguePropertyResponse,
     asset_category::{AssetCategoriesResponse, AssetCategoryResponse},
     asset_class::{AssetClassResponse, AssetClassesResponse},
     asset_type::{AssetTypeResponse, AssetTypesResponse},
 };
 
 pub mod asset_catalogue_item_queries;
-mod asset_catalogue_property_queries;
 use crate::asset_catalogue_item_queries::*;
 pub mod asset_category_queries;
 use crate::asset_category_queries::*;
@@ -104,14 +97,6 @@ impl AssetCatalogueQueries {
     pub async fn asset_type(&self, ctx: &Context<'_>, id: String) -> Result<AssetTypeResponse> {
         asset_type(ctx, id)
     }
-
-    pub async fn asset_catalogue_properties(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "Filter option")] filter: Option<AssetCataloguePropertyFilterInput>,
-    ) -> Result<AssetCataloguePropertyResponse> {
-        asset_catalogue_properties(ctx, filter)
-    }
 }
 
 #[derive(Default, Clone)]
@@ -134,14 +119,5 @@ impl AssetCatalogueMutations {
         asset_catalogue_item_id: String,
     ) -> Result<DeleteAssetCatalogueItemResponse> {
         delete_asset_catalogue_item(ctx, &asset_catalogue_item_id)
-    }
-
-    async fn insert_asset_catalogue_item_property(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertAssetCatalogueItemPropertyInput,
-    ) -> Result<InsertAssetCatalogueItemPropertyResponse> {
-        insert_asset_catalogue_item_property(ctx, &store_id, input)
     }
 }

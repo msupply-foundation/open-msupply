@@ -6,7 +6,7 @@ import {
   UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { Box, useTranslation, BasicSpinner } from '@openmsupply-client/common';
-import { JsonForms } from '@jsonforms/react';
+import { JsonForms, JsonFormsReactProps } from '@jsonforms/react';
 import {
   JsonFormsRendererRegistryEntry,
   JsonSchema,
@@ -122,7 +122,8 @@ const FormComponent = ({
   setError,
   renderers,
   config,
-}: JsonFormsComponentProps) => {
+  onChange,
+}: JsonFormsComponentProps & JsonFormsReactProps) => {
   const { user, store } = useAuthContext();
   const fullConfig: JsonFormsConfig = {
     store,
@@ -169,6 +170,7 @@ const FormComponent = ({
         } else {
           setError?.(false);
         }
+        onChange?.({ errors, data });
       }}
       ajv={handleDefaultsAjv}
     />
@@ -199,7 +201,9 @@ const renderers = [
   ...materialRenderers,
 ];
 
-export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
+export const JsonForm: FC<
+  PropsWithChildren<JsonFormProps> & JsonFormsReactProps
+> = ({
   children,
   data,
   jsonSchema,
@@ -210,6 +214,7 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
   updateData,
   additionalRenderers,
   config,
+  onChange,
 }) => {
   const t = useTranslation();
 
@@ -262,6 +267,7 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
           setError={setError}
           renderers={[...renderers, ...(additionalRenderers ?? [])]}
           config={config}
+          onChange={onChange}
         />
       )}
       {children}

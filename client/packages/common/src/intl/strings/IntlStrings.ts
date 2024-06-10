@@ -30,7 +30,7 @@ export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
           ? { ...opts, returnDetails: false }
           : { returnDetails: false, defaultValue };
 
-      return key ? t(key, options) : '';
+      return key ? t(key, options) : defaultValue || opts?.defaultValue || '';
     },
     [t]
   );

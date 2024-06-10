@@ -1,5 +1,6 @@
 import { LocaleKey } from '@common/intl';
 import { PrintFormat } from '@common/types';
+import { AppRoute } from '@openmsupply-client/config';
 
 export enum Platform {
   Android,
@@ -15,76 +16,78 @@ interface RouteMapping {
 const mapRoute = (route: string): RouteMapping => {
   const inRoute = (sub: string) => new RegExp(`/${sub}/|/${sub}\$`).test(route);
   switch (true) {
-    case inRoute('dashboard'):
+    case inRoute(AppRoute.Dashboard):
       return { title: 'dashboard', docs: '/getting_started/dashboard/' };
-    case inRoute('outbound-shipment'):
+    case inRoute(AppRoute.OutboundShipment):
       return {
         title: 'outbound-shipments',
         docs: '/distribution/outbound-shipments/',
       };
-    case inRoute('customer-requisition'):
+    case inRoute(AppRoute.CustomerRequisition):
       return {
         title: 'customer-requisition',
         docs: '/distribution/requisitions/',
       };
-    case inRoute('customers'):
+    case inRoute(AppRoute.Customer):
       return { title: 'customers', docs: '/distribution/customers/' };
-    case inRoute('inbound-shipment'):
+    case inRoute(AppRoute.InboundShipment):
       return {
         title: 'inbound-shipments',
         docs: '/replenishment/inbound-shipments/',
       };
-    case inRoute('outbound-return'):
+    case inRoute(AppRoute.OutboundReturn):
       return {
         title: 'outbound-return',
         docs: '/replenishment/outbound-returns/',
       };
-    case inRoute('inbound-return'):
+    case inRoute(AppRoute.InboundReturn):
       return {
         title: 'inbound-return',
         docs: '/distribution/inbound-returns/',
       };
-    case inRoute('internal-order'):
+    case inRoute(AppRoute.InternalOrder):
       return {
         title: 'internal-order',
         docs: '/replenishment/internal-orders/',
       };
-    case inRoute('suppliers'):
+    case inRoute(AppRoute.Suppliers):
       return { title: 'suppliers', docs: '/replenishment/suppliers/' };
-    case inRoute('assets'):
+    case inRoute(AppRoute.Assets):
       return { title: 'assets', docs: '/catalogue/assets/' };
-    case inRoute('items'):
+    case inRoute(AppRoute.Items):
       return { title: 'items', docs: '/catalogue/items/' };
-    case inRoute('master-lists'):
+    case inRoute(AppRoute.MasterLists):
       return { title: 'master-lists', docs: '/catalogue/master-list/' };
-    case inRoute('locations'):
+    case inRoute(AppRoute.Locations):
       return { title: 'locations', docs: '/inventory/locations/' };
-    case inRoute('stock'):
+    case inRoute(AppRoute.Stock):
       return { title: 'stock', docs: '/inventory/stock-view/' };
-    case inRoute('stocktakes'):
+    case inRoute(AppRoute.Stocktakes):
       return { title: 'stocktakes', docs: '/inventory/stock-takes/' };
-    case inRoute('sync'):
+    case inRoute(AppRoute.Sync):
       return { title: 'sync', docs: '/sync/synchronisation/' };
-    case inRoute('admin'):
-      return { title: 'admin', docs: '/administration/' };
-    case inRoute('patients'):
+    case inRoute(AppRoute.Settings):
+      return { title: 'settings', docs: '/administration/' };
+    case inRoute(AppRoute.Patients):
       return { title: 'patients', docs: '/dispensary/patients/' };
-    case inRoute('prescription'):
+    case inRoute(AppRoute.Prescription):
       return { title: 'prescription', docs: '/dispensary/prescriptions/' };
-    case inRoute('encounter'):
+    case inRoute(AppRoute.Encounter):
       return {
         title: 'encounter',
         docs: '/programs/program-module/#encounter',
       };
-    case inRoute('monitoring'):
+    case inRoute(AppRoute.Monitoring):
       return {
         title: 'monitoring',
         docs: '/coldchain/monitoring/',
       };
-    case inRoute('sensors'):
+    case inRoute(AppRoute.Sensors):
       return { title: 'sensors', docs: '/coldchain/sensors/' };
-    case inRoute('equipment'):
+    case inRoute(AppRoute.Equipment):
       return { title: 'equipment', docs: '/coldchain/equipment/' };
+    case inRoute(AppRoute.Facilities):
+      return { title: 'facilities', docs: '/manage/facilities/' };
     default:
       return { title: undefined, docs: '/introduction/' };
   }

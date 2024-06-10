@@ -8,7 +8,6 @@ use crate::{
         stock_in_line::{generate_batch, StockLineInput},
     },
     store_preference::get_store_preferences,
-    u32_to_i32,
 };
 use repository::{
     InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow,
@@ -117,7 +116,7 @@ fn generate_line(
 ) -> Result<InvoiceLineRow, RepositoryError> {
     let mut update_line = current_line;
 
-    update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
+    update_line.pack_size = pack_size.unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
     update_line.note = note.or(update_line.note);
     update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);

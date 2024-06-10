@@ -330,6 +330,7 @@ mod test {
 
         let updated_record = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&prescription().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -388,6 +389,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&prescription().id)
+            .unwrap()
             .unwrap();
         let invoice_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id(&invoice.id)
