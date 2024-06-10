@@ -1,7 +1,6 @@
 import React, { FC, PropsWithChildren } from 'react';
 import {
   AppBarContentPortal,
-  BaseButton,
   BasicTextInput,
   Grid,
   useTranslation,
@@ -11,13 +10,15 @@ import { DraftImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 interface ToolbarProps {
   onUpdate: (patch: Partial<DraftImmunisationProgram>) => void;
   draft: DraftImmunisationProgram;
-  isDirty?: boolean;
+  isError: boolean;
+  error: string;
 }
 
 export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
   onUpdate,
   draft,
-  isDirty,
+  isError,
+  error,
 }: ToolbarProps) => {
   const t = useTranslation('system');
   return (
@@ -34,12 +35,9 @@ export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
             }
             label={t('label.name')}
             InputLabelProps={{ shrink: true }}
+            helperText={isError ? error : ''}
+            error={isError}
           />
-          {isDirty && (
-            <BaseButton onClick={() => onUpdate(draft)}>
-              {t('button.save')}
-            </BaseButton>
-          )}
         </Grid>
       </Grid>
     </AppBarContentPortal>
