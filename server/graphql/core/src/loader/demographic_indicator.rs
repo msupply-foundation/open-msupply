@@ -26,7 +26,7 @@ impl Loader<String> for DemographicIndicatorLoader {
 
         Ok(result
             .into_iter()
-            .map(|asset_class| (asset_class.id.clone(), asset_class))
+            .map(|demographic| (demographic.id.clone(), demographic))
             .collect())
     }
 }

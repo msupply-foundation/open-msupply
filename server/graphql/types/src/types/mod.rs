@@ -94,6 +94,12 @@ pub use self::currency::*;
 pub mod sync_file_reference;
 pub use self::sync_file_reference::*;
 
+pub mod vaccine_course;
+pub use self::vaccine_course::*;
+
+pub mod demographic;
+pub use self::demographic::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

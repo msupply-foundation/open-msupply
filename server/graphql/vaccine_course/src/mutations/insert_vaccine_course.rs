@@ -4,12 +4,11 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::VaccineCourseNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
 };
-
-use crate::types::vaccine_course::VaccineCourseNode;
 
 pub fn insert_vaccine_course(
     ctx: &Context<'_>,
