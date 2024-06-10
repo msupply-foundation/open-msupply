@@ -29,3 +29,5 @@ pub const MISSING_PROGRAM: &str = "missing_program";
 pub const PATIENT_TYPE: &str = "Patient";
 /// The default context ID for a patient
 pub const PATIENT_CONTEXT_ID: &str = "Patient";
+// Default context for immunisation
+pub const IMMUNISATION_CONTEXT_ID: &str = "Immunisation";
