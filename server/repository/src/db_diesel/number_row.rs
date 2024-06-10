@@ -257,7 +257,7 @@ mod number_row_mapping_test {
         // The purpose of this test is primarily to remind you to update both the to_string AND try_from functions if any new mappings are added to NumberRowType
         // the try_from function uses a wild card match so theoretically could be missed if you add a new mapping
 
-        for number_row_type in vec![
+        for number_row_type in [
             NumberRowType::Program("EXAMPLE_TEST".to_string()),
             NumberRowType::OutboundReturn,
             NumberRowType::InboundReturn,
