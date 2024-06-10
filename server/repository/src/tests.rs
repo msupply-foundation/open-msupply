@@ -56,7 +56,7 @@ mod repository_test {
                 store_id: "store1".to_string(),
                 batch: Some("batch1".to_string()),
                 available_number_of_packs: 6.0,
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_number_of_packs: 1.0,
@@ -152,7 +152,7 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 1).unwrap()),
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 1.0,
@@ -177,7 +177,7 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 3).unwrap()),
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 2.0,
@@ -203,7 +203,7 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 5).unwrap()),
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 3.0,
@@ -229,7 +229,7 @@ mod repository_test {
                 stock_line_id: None,
                 batch: Some("".to_string()),
                 expiry_date: Some(NaiveDate::from_ymd_opt(2021, 12, 6).unwrap()),
-                pack_size: 1,
+                pack_size: 1.0,
                 cost_price_per_pack: 0.0,
                 sell_price_per_pack: 0.0,
                 total_before_tax: 10.0,
@@ -377,6 +377,7 @@ mod repository_test {
         stock_line_repo.upsert_one(&stock_line).unwrap();
         let loaded_item = stock_line_repo
             .find_one_by_id(stock_line.id.as_str())
+            .unwrap()
             .unwrap();
         assert_eq!(stock_line, loaded_item);
     }
@@ -566,7 +567,7 @@ mod repository_test {
         repo.upsert_one(&master_list_line_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_line_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_line_1, loaded_item);
 
@@ -574,7 +575,7 @@ mod repository_test {
         repo.upsert_one(&master_list_line_upsert_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_line_upsert_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_line_upsert_1, loaded_item);
     }
@@ -601,7 +602,7 @@ mod repository_test {
             .unwrap();
         let loaded_item = MasterListNameJoinRepository::new(&connection)
             .find_one_by_id(master_list_name_join_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_name_join_1, loaded_item);
     }
@@ -631,6 +632,7 @@ mod repository_test {
             .unwrap();
         let loaded_item = InvoiceRowRepository::new(&connection)
             .find_one_by_id(item1.id.as_str())
+            .unwrap()
             .unwrap();
         assert_eq!(item1, loaded_item);
 
@@ -694,13 +696,16 @@ mod repository_test {
         let repo = InvoiceLineRowRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.upsert_one(&item1).unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap().unwrap();
         assert_eq!(item1, loaded_item);
 
         // row with optional field
         let item2_optional = data::invoice_line_2();
         repo.upsert_one(&item2_optional).unwrap();
-        let loaded_item = repo.find_one_by_id(item2_optional.id.as_str()).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(item2_optional.id.as_str())
+            .unwrap()
+            .unwrap();
         assert_eq!(item2_optional, loaded_item);
 
         // find_many_by_invoice_id:
@@ -966,7 +971,7 @@ mod repository_test {
 
         // Test insert
         let mut update_test_row = mock_draft_request_requisition_line();
-        update_test_row.requested_quantity = 99;
+        update_test_row.requested_quantity = 99.0;
         RequisitionLineRowRepository::new(&connection)
             .upsert_one(&update_test_row)
             .unwrap();
@@ -1008,7 +1013,7 @@ mod repository_test {
                     .requisition_id(EqualFilter::equal_to(
                         &mock_draft_request_requisition_line().requisition_id,
                     ))
-                    .requested_quantity(EqualFilter::equal_to_i32(99)),
+                    .requested_quantity(EqualFilter::equal_to_f64(99.0)),
             )
             .unwrap();
 
@@ -1092,7 +1097,7 @@ mod repository_test {
         // Note: this test is disabled when running tests using in 'memory' sqlite.
         // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
         // https://sqlite.org/rescode.html#locked
-        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivelant available for shared cache connections (SQLITE_LOCKED).
+        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
         // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
 
         /*

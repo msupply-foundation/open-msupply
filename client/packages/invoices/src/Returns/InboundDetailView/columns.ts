@@ -10,6 +10,7 @@ import {
   getRowExpandColumn,
   ArrayUtils,
   ColumnDescription,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { InboundReturnLineFragment } from '../api';
 import { InboundReturnItem } from '../../types';
@@ -32,7 +33,7 @@ const expansionColumn = getRowExpandColumn<
 // >();
 
 const getUnitQuantity = (row: InboundReturnLineFragment) =>
-  row.packSize * row.numberOfPacks;
+  NumUtils.floatMultiply(row.packSize, row.numberOfPacks);
 
 export const useInboundReturnColumns = ({
   sortBy,

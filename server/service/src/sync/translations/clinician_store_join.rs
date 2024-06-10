@@ -71,7 +71,7 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             store_id,
             clinician_link_id,
         } = ClinicianStoreJoinRowRepository::new(connection)
-            .find_one_by_id_option(&changelog.record_id)?
+            .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Clinician row ({}) not found",
                 changelog.record_id

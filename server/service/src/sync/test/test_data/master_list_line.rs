@@ -1,15 +1,14 @@
-use repository::{MasterListLineRow, MasterListLineRowDelete};
+use repository::{MasterListLineRow, SyncBufferRow};
+use util::inline_init;
 
-use crate::sync::test::TestSyncIncomingRecord;
-
-const TABLE_NAME: &str = "list_master_line";
+use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
 
 const MASTER_LIST_LINE_1: (&str, &str) = (
     "9B02D0770B544BD1AC7DB99BB85FCDD5",
     r#"{
     "ID": "9B02D0770B544BD1AC7DB99BB85FCDD5",
-    "item_master_ID": "87027C44835B48E6989376F42A58F7E3",
-    "item_ID": "8F252B5884B74888AAB73A0D42C09E7F",
+    "item_master_ID": "item_query_test1",
+    "item_ID": "item_a",
     "imprest_quan": 0,
     "order_number": 1,
     "price": 0
@@ -17,44 +16,41 @@ const MASTER_LIST_LINE_1: (&str, &str) = (
 );
 
 const MASTER_LIST_LINE_2: (&str, &str) = (
-    "master_list_line_2",
+    "orphan",
     r#"{
-    "ID": "master_list_line_2",
-    "item_master_ID": "87027C44835B48E6989376F42A58F7E3",
+    "ID": "9B02D0770B544BD1AC7DB99BB85FCDD5",
+    "item_master_ID": "orphan",
     "item_ID": "8F252B5884B74888AAB73A0D42C09E7F",
     "imprest_quan": 0,
-    "order_number": 2,
+    "order_number": 1,
     "price": 0
   }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
-    vec![
-        TestSyncIncomingRecord::new_pull_upsert(
-            TABLE_NAME,
-            MASTER_LIST_LINE_1,
-            MasterListLineRow {
-                id: "9B02D0770B544BD1AC7DB99BB85FCDD5".to_owned(),
-                item_link_id: "8F252B5884B74888AAB73A0D42C09E7F".to_owned(),
-                master_list_id: "87027C44835B48E6989376F42A58F7E3".to_owned(),
-            },
-        ),
-        TestSyncIncomingRecord::new_pull_upsert(
-            TABLE_NAME,
-            MASTER_LIST_LINE_2,
-            MasterListLineRow {
-                id: "master_list_line_2".to_owned(),
-                item_link_id: "8F252B5884B74888AAB73A0D42C09E7F".to_owned(),
-                master_list_id: "87027C44835B48E6989376F42A58F7E3".to_owned(),
-            },
-        ),
-    ]
+fn master_list_line_a() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        "list_master_line",
+        MASTER_LIST_LINE_1,
+        MasterListLineRow {
+            id: "9B02D0770B544BD1AC7DB99BB85FCDD5".to_owned(),
+            item_link_id: "item_a".to_owned(),
+            master_list_id: "item_query_test1".to_owned(),
+        },
+    )
 }
 
-pub fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
-    vec![TestSyncIncomingRecord::new_pull_delete(
-        TABLE_NAME,
-        MASTER_LIST_LINE_2.0,
-        MasterListLineRowDelete(MASTER_LIST_LINE_2.0.to_string()),
-    )]
+fn master_list_line_b() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord {
+        translated_record: PullTranslateResult::Ignored("Missing master list".to_string()),
+        sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
+            r.table_name = "list_master_line".to_owned();
+            r.record_id = MASTER_LIST_LINE_2.0.to_owned();
+            r.data = MASTER_LIST_LINE_2.1.to_owned();
+        }),
+        extra_data: None,
+    }
+}
+
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![master_list_line_a(), master_list_line_b()]
 }

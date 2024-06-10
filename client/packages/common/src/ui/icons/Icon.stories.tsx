@@ -1,3 +1,5 @@
+// Icons sourced from https://feathericons.com/
+
 import React, { ChangeEvent, useState } from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
@@ -58,6 +60,7 @@ import { SearchIcon } from './Search';
 import { SettingsIcon } from './Settings';
 import { SettingsCircleIcon } from './SettingsCircle';
 import { SidebarIcon } from './Sidebar';
+import { SlidersIcon } from './Sliders';
 import { SnowflakeIcon } from './Snowflake';
 import { SortAscIcon } from './SortAsc';
 import { SortDescIcon } from './SortDesc';
@@ -67,6 +70,7 @@ import { SuppliersIcon } from './Suppliers';
 import { ThermometerIcon } from './Thermometer';
 import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
+import { BarChart2Icon } from './BarChart2';
 import { TruckIcon } from './Truck';
 import { UploadIcon } from './Upload';
 import { UserCircleIcon } from './UserCircle';
@@ -160,6 +164,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <SettingsIcon {...args} />, name: 'Settings' },
     { icon: <SettingsCircleIcon {...args} />, name: 'SettingsCircle' },
     { icon: <SidebarIcon {...args} />, name: 'Sidebar' },
+    { icon: <SlidersIcon {...args} />, name: 'Sliders' },
     { icon: <SnowflakeIcon {...args} />, name: 'Snowflake' },
     { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
     { icon: <SortDescIcon {...args} />, name: 'SortDesc' },
@@ -169,6 +174,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
+    { icon: <BarChart2Icon {...args} />, name: 'BarChart2Icon' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UploadIcon {...args} />, name: 'Upload' },
     { icon: <UserCircleIcon {...args} />, name: 'UserCircle' },

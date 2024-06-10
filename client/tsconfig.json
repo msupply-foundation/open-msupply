@@ -2,21 +2,36 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@common/components": ["packages/common/src/ui/components"],
-      "@common/hooks": ["packages/common/src/hooks"],
-      "@common/icons": ["packages/common/src/ui/icons"],
-      "@common/intl": ["packages/common/src/intl"],
-      "@common/intl/*": ["packages/common/src/intl/*"],
-      "@common/styles": ["packages/common/src/styles"],
-      "@common/types": ["packages/common/src/types"],
-      "@common/utils": ["packages/common/src/utils"]
+      "@common/components": [
+        "packages/common/src/ui/components"
+      ],
+      "@common/hooks": [
+        "packages/common/src/hooks"
+      ],
+      "@common/icons": [
+        "packages/common/src/ui/icons"
+      ],
+      "@common/intl": [
+        "packages/common/src/intl"
+      ],
+      "@common/intl/*": [
+        "packages/common/src/intl/*"
+      ],
+      "@common/styles": [
+        "packages/common/src/styles"
+      ],
+      "@common/types": [
+        "packages/common/src/types"
+      ],
+      "@common/utils": [
+        "packages/common/src/utils"
+      ]
     },
     "resolveJsonModule": true,
     "target": "es2015",
     "module": "esnext",
     "moduleResolution": "node",
     "jsx": "react",
-
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": ".",
@@ -28,21 +43,17 @@
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-    "prefer-const": ["error", {
-      "destructuring": "any",
-      "ignoreReadBeforeAssign": true
-    }],
-
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-
     "noPropertyAccessFromIndexSignature": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./typings", "./node_modules/@types"]
+    "typeRoots": [
+      "./typings",
+      "./node_modules/@types"
+    ]
   }
 }

@@ -37,6 +37,8 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
     });
 
+  const [hasError, setHasError] = useState(false);
+
   const [, setDocumentRegistry] = useState<
     DocumentRegistryFragment | undefined
   >();
@@ -112,15 +114,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       }
       nextButton={
         currentTab !== Tabs.SearchResults ? (
-          <DialogButton
-            variant="next"
-            onClick={onNext}
-            disabled={
-              !createNewPatient?.firstName ||
-              !createNewPatient?.lastName ||
-              !createNewPatient?.code
-            }
-          />
+          <DialogButton variant="next" onClick={onNext} disabled={hasError} />
         ) : undefined
       }
       cancelButton={
@@ -143,7 +137,13 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
           />
           <TabContext value={currentTab}>
             <DetailSection title="">
-              <PatientFormTab value={Tabs.Form} patient={createNewPatient} />
+              <PatientFormTab
+                value={Tabs.Form}
+                patient={createNewPatient}
+                onChange={errors => {
+                  setHasError((errors.errors?.length ?? 0) > 0);
+                }}
+              />
               <PatientResultsTab
                 value={Tabs.SearchResults}
                 patient={createNewPatient}

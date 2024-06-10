@@ -4,7 +4,7 @@ use crate::{
         check_batch,
         validate::{
             check_line_belongs_to_invoice, check_line_not_associated_with_stocktake,
-            check_line_row_exists_option,
+            check_line_row_exists,
         },
     },
 };
@@ -19,7 +19,7 @@ pub fn validate(
 ) -> Result<(InvoiceRow, InvoiceLineRow), DeleteStockInLineError> {
     use DeleteStockInLineError::*;
 
-    let line = check_line_row_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let line = check_line_row_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
     if !check_store(&invoice, store_id) {

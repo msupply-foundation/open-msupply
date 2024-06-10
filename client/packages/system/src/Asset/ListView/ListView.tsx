@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import {
-  // useNavigate,
   TableProvider,
   DataTable,
   useColumns,
@@ -15,6 +14,7 @@ import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
+import { EditableInput } from './EditableInput';
 
 const AssetListComponent: FC = () => {
   const {
@@ -34,7 +34,6 @@ const AssetListComponent: FC = () => {
   });
   const { data, isError, isLoading } = useAssetData.document.list();
   const pagination = { page, first, offset };
-  // const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const importModalController = useToggle();
 
@@ -60,7 +59,7 @@ const AssetListComponent: FC = () => {
         label: 'label.manufacturer',
       },
       {
-        Cell: TooltipTextCell,
+        Cell: EditableInput,
         key: 'model',
         label: 'label.model',
         width: 200,
@@ -103,9 +102,6 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        // onRowClick={row => {
-        //   navigate(`/catalogue/assets/${row.id}`);
-        // }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
         enableColumnSelection
       />

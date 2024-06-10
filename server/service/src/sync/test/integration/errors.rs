@@ -10,7 +10,7 @@ mod tests {
         service_provider::ServiceProvider,
         sync::{
             api::{ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncErrorCodeV5},
-            remote_data_synchroniser::{PostInitialisationError, RemotePushError},
+            remote_data_synchroniser::PostInitialisationError,
             settings::SyncSettings,
             sync_status::SyncLogError,
             synchroniser::{SyncError, Synchroniser},
