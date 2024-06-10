@@ -1,7 +1,9 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordAlreadyExist, UniqueValueViolation},
+    simple_generic_errors::{
+        DatabaseError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
+    },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -36,7 +38,7 @@ pub struct UpdateImmunisationProgramError {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateImmunisationProgramErrorInterface {
-    ProgramAlreadyExists(RecordAlreadyExist),
+    ProgramDoesNotExist(RecordAlreadyExist),
     DuplicateName(UniqueValueViolation),
     DatabaseError(DatabaseError),
 }
@@ -46,8 +48,17 @@ fn map_error(error: ServiceError) -> Result<UpdateImmunisationProgramErrorInterf
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        ServiceError::ImmunisationProgramDoesNotExist => {
+            return Ok(
+                UpdateImmunisationProgramErrorInterface::ProgramDoesNotExist(RecordAlreadyExist {}),
+            )
+        }
+        ServiceError::ImmunisationProgramNameExists => {
+            return Ok(UpdateImmunisationProgramErrorInterface::DuplicateName(
+                UniqueValueViolation(UniqueValueKey::Name),
+            ))
+        }
         // Standard Graphql Errors
-        ServiceError::ImmunisationProgramAlreadyExists => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

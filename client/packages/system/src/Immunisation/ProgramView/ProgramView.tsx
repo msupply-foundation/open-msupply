@@ -19,7 +19,7 @@ export const ProgramComponent: FC = () => {
     draft,
     updatePatch,
     isDirty,
-    // update: { update, isUpdating },
+    update: { update, isUpdating },
   } = useImmunisationProgram(id);
 
   useEffect(() => {
@@ -30,7 +30,13 @@ export const ProgramComponent: FC = () => {
     <InlineSpinner />
   ) : (
     <>
-      <Toolbar draft={draft} onUpdate={updatePatch} isDirty={isDirty} />
+      <Toolbar
+        draft={draft}
+        onUpdate={updatePatch}
+        isDirty={isDirty}
+        onSave={update}
+        isSaving={isUpdating}
+      />
       <Typography variant="body2">Vaccine Course List - Coming soon</Typography>
     </>
   );

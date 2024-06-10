@@ -66,6 +66,7 @@ pub enum ActivityLogNodeType {
     AssetPropertyCreated,
     VaccineCourseCreated,
     ProgramCreated,
+    ProgramUpdated,
 }
 
 #[Object]

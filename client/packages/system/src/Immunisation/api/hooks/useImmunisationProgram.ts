@@ -28,11 +28,11 @@ export function useImmunisationProgram(id?: string) {
     error: createError,
   } = useCreate();
 
-  //   const {
-  //     mutateAsync: updateMutation,
-  //     isLoading: isUpdating,
-  //     error: updateError,
-  //   } = useUpdate(id ?? '');
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate(id ?? '');
 
   const draft: DraftImmunisationProgram = data
     ? { ...defaultDraftImmunisationProgram, ...data, ...patch }
@@ -63,15 +63,15 @@ export function useImmunisationProgram(id?: string) {
     return result;
   };
 
-  //   const update = async () => {
-  //     updateMutation(patch);
-  //     setIsDirty(false);
-  //   };
+  const update = async () => {
+    updateMutation(patch);
+    setIsDirty(false);
+  };
 
   return {
     query: { data: data, isLoading, error },
     create: { create, isCreating, createError },
-    // update: { update, isUpdating, updateError },
+    update: { update, isUpdating, updateError },
     draft,
     resetDraft,
     isDirty,
@@ -127,29 +127,37 @@ const useCreate = () => {
   });
 };
 
-// const useUpdate = (id: string) => {
-//   const { api, storeId, queryClient } = useImmunisationGraphQL();
+const useUpdate = (id: string) => {
+  const { api, storeId, queryClient } = useImmunisationGraphQL();
 
-//   const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
-//     const result = await api.updateImmunisationProgram({
-//       input: {
-//         id,
-//         name,
-//       },
-//       storeId,
-//     });
+  const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
+    if (!id) {
+      throw new Error('No ID provided to update Immunisation Program');
+    }
+    if (!name) {
+      throw new Error('No name provided to update Immunisation Program');
+    }
 
-//     const { updateImmunisationProgram } = result;
+    const result = await api.updateImmunisationProgram({
+      input: {
+        id,
+        name,
+      },
+      storeId,
+    });
 
-//     if (updateImmunisationProgram?.__typename === 'ProgramNode') {
-//       return updateImmunisationProgram;
-//     }
+    if (
+      result.centralServer.program.updateImmunisationProgram?.__typename ===
+      'ProgramNode'
+    ) {
+      return result.centralServer.program.updateImmunisationProgram;
+    }
 
-//     throw new Error('Unable to update Immunisation Program');
-//   };
+    throw new Error('Unable to update Immunisation Program');
+  };
 
-//   return useMutation({
-//     mutationFn,
-//     onSuccess: () => queryClient.invalidateQueries([PROGRAM]),
-//   });
-// };
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([PROGRAM]),
+  });
+};
