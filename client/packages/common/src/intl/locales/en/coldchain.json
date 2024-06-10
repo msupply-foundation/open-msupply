@@ -14,9 +14,10 @@
   "label.immunisation-name": "Immunization Name",
   "label.demographic-group": "Demographic Group",
   "label.coverage-rate": "Coverage Rate",
+  "label.wastage-rate": "Wastage Rate",
   "label.vaccine-items": "Vaccine Items",
   "label.calculated-demand": "Calculated Demand",
-
+  "label.calculate-demand": "Include in demand calculations",
   "label.day": "day",
   "label.target-demographic": "Target Demographic",
   "error.no-immunisation-programs": "No Immunization programs found",

@@ -4,6 +4,7 @@ import {
   BasicSpinner,
   BasicTextInput,
   Box,
+  Checkbox,
   Container,
   FnUtils,
   InputWithLabelRow,
@@ -19,7 +20,6 @@ import {
 } from '@openmsupply-client/common';
 import React, { useEffect, useState } from 'react';
 import { FC } from 'react';
-import { doseDayColumn } from './DoseDayColumn';
 import { descriptionColumn } from './DescriptionColumn';
 
 // dummy data
@@ -37,10 +37,12 @@ interface Schedule {
 interface Draft {
   name: string;
   demographic: string;
+  wastageRate: number;
   coverageRate: number;
   vaccineItems: any[];
   numberOfDoses: number;
   schedule: Record<string, Schedule>;
+  calculateDemand: boolean;
 }
 
 const seed: Draft = {
@@ -49,6 +51,8 @@ const seed: Draft = {
   coverageRate: 100,
   vaccineItems: [{}],
   numberOfDoses: 1,
+  wastageRate: 0,
+  calculateDemand: false,
   schedule: {
     id: {
       id: 'id',
@@ -216,14 +220,6 @@ export const VaccineCourseView: FC = () => {
     onUpdate({ schedule: rowsAsObject });
   };
 
-  const updateDay = (patch: RecordPatch<Schedule>) => {
-    if (!patch) {
-      return;
-    }
-    const schedule = { ...draft.schedule, [patch.id]: patch };
-    onUpdate({ schedule: schedule });
-  };
-
   const updateDescription = (patch: RecordPatch<Schedule>) => {
     if (!patch) {
       return;
@@ -236,7 +232,6 @@ export const VaccineCourseView: FC = () => {
     [
       { key: 'number', label: 'label.dose-number' },
       [descriptionColumn(), { setter: updateDescription }],
-      [doseDayColumn(), { setter: updateDay }],
     ],
     {},
     [draft]
@@ -274,6 +269,19 @@ export const VaccineCourseView: FC = () => {
               fullWidth
               onChange={value => onUpdate({ coverageRate: value })}
             />
+          </Row>
+          <Row label={t('label.wastage-rate')}>
+            <NumericTextInput
+              value={draft?.wastageRate ?? 1}
+              fullWidth
+              onChange={value => onUpdate({ wastageRate: value })}
+            />
+          </Row>
+          <Row label={t('label.calculate-demand')}>
+            <Checkbox
+              value={draft?.calculateDemand ?? false}
+              onChange={value => onUpdate({ calculateDemand: value })}
+            ></Checkbox>
           </Row>
           <Row label={t('label.vaccine-items')}>
             <AutocompleteMulti
@@ -318,6 +326,7 @@ export const VaccineCourseView: FC = () => {
             <MiniTable
               rows={Object.values(draft?.schedule) as Schedule[]}
               columns={dosesColumns}
+              // sx={{ backgroundColour: 'blue' }}
             />
           </Box>
         </Section>
