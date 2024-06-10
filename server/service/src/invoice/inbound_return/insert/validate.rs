@@ -11,7 +11,7 @@ pub fn validate(
     input: &InsertInboundReturn,
 ) -> Result<Name, InsertInboundReturnError> {
     use InsertInboundReturnError::*;
-    if let Some(_) = check_invoice_exists(&input.id, connection)? {
+    if (check_invoice_exists(&input.id, connection)?).is_some() {
         return Err(InvoiceAlreadyExists);
     }
 

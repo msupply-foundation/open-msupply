@@ -70,7 +70,7 @@ fn validate(
     store_id: &str,
     input: &InsertRequestRequisitionLine,
 ) -> Result<RequisitionRow, OutError> {
-    if let Some(_) = check_requisition_line_exists(connection, &input.id)? {
+    if (check_requisition_line_exists(connection, &input.id)?).is_some() {
         return Err(OutError::RequisitionLineAlreadyExists);
     }
 
@@ -93,8 +93,8 @@ fn validate(
         return Err(OutError::NotARequestRequisition);
     }
 
-    if let Some(_) =
-        check_item_exists_in_requisition(connection, &input.requisition_id, &input.item_id)?
+    if (check_item_exists_in_requisition(connection, &input.requisition_id, &input.item_id)?)
+        .is_some()
     {
         return Err(OutError::ItemAlreadyExistInRequisition);
     }

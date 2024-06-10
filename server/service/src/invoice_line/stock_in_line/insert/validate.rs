@@ -15,7 +15,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), InsertStockInLineError> {
     use InsertStockInLineError::*;
-    if let Some(_) = check_line_exists(connection, &input.id)? {
+    if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
     if !check_pack_size(Some(input.pack_size)) {
