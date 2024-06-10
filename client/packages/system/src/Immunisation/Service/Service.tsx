@@ -6,14 +6,16 @@ import {
   NothingHere,
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
-import { ProgramListView } from '../ListView';
-import { ProgramView } from '../ProgramView';
+import { ImmunisationProgramListView } from '../ListView';
+import { ImmunisationProgramView } from '../ImmunisationProgramView';
 
-export const ImmunisationService: FC = () => {
-  const immunisationsRoute = RouteBuilder.create(
-    AppRoute.Immunisations
+export const ImmunisationProgramService: FC = () => {
+  const immunisationProgramsRoute = RouteBuilder.create(
+    AppRoute.ImmunisationPrograms
   ).build();
-  const immunisationRoute = RouteBuilder.create(AppRoute.Immunisations)
+  const immunisationProgramRoute = RouteBuilder.create(
+    AppRoute.ImmunisationPrograms
+  )
     .addPart(':id')
     .build();
 
@@ -22,10 +24,16 @@ export const ImmunisationService: FC = () => {
   }
   return (
     <Routes>
-      <Route path={immunisationsRoute} element={<ProgramListView />} />
-      <Route path={immunisationRoute} element={<ProgramView />} />
+      <Route
+        path={immunisationProgramsRoute}
+        element={<ImmunisationProgramListView />}
+      />
+      <Route
+        path={immunisationProgramRoute}
+        element={<ImmunisationProgramView />}
+      />
     </Routes>
   );
 };
 
-export default ImmunisationService;
+export default ImmunisationProgramService;
