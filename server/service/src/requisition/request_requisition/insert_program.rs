@@ -83,7 +83,7 @@ fn validate(
 ) -> Result<(ProgramRow, ProgramRequisitionOrderTypeRow), OutError> {
     let connection = &ctx.connection;
 
-    if let Some(_) = check_requisition_row_exists(connection, &input.id)? {
+    if (check_requisition_row_exists(connection, &input.id)?).is_some() {
         return Err(OutError::RequisitionAlreadyExists);
     }
 
