@@ -17,7 +17,6 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   id: '',
   name: '',
   programId: '',
-  demographicIndicatorId: '',
 };
 
 export function useVaccineCourse(id?: string) {
@@ -104,7 +103,6 @@ const useCreate = () => {
       input: {
         id: FnUtils.generateUUID(),
         name,
-        demographicIndicatorId: 'id',
         programId: 'missing_program',
       },
     });
