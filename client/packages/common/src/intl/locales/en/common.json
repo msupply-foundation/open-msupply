@@ -375,7 +375,7 @@
   "label.soh": "SOH",
   "label.start-datetime": "Start date / time",
   "label.status": "Status",
-  "label.statuslogs": "Status Logs",
+  "label.statushistory": "Status History",
   "label.stock-on-hand": "SoH (Est. remaining)",
   "label.stocktake-comment": "Comment",
   "label.store": "Store",
