@@ -385,7 +385,7 @@ fn generate_lines_expiring_before(
     let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
-            .expiry_date(DateFilter::before_or_equal_to(date.clone())),
+            .expiry_date(DateFilter::before_or_equal_to(*date)),
         Some(store_id.to_string()),
     )?;
 

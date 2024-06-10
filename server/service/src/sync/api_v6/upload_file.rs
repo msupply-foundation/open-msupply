@@ -34,7 +34,7 @@ impl SyncApiV6 {
         let json_request = SyncUploadFileRequestV6 {
             file_id: sync_file_reference_row.id.clone(),
             sync_v5_settings: sync_v5_settings.clone(),
-            sync_v6_version: sync_v6_version.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let request = client.put(url.clone()).multipart(
