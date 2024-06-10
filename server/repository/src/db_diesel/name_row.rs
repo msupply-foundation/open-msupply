@@ -353,7 +353,10 @@ impl Upsert for NameRow {
 mod test {
     use util::uuid::uuid;
 
-    use crate::{mock::MockDataInserts, test_db::setup_all, NameRow, NameRowRepository};
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameFilter, NameRepository,
+        NameRow, NameRowRepository,
+    };
 
     #[actix_rt::test]
     async fn name_is_sync_update() {
@@ -393,5 +396,51 @@ mod test {
 
         assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
         assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+    }
+
+    #[actix_rt::test]
+    async fn name_sync_update_does_not_overwrite_properties() {
+        let (_, connection, _, _) = setup_all(
+            "name_sync_update_does_not_overwrite_properties",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let row_repo = NameRowRepository::new(&connection);
+
+        let name_repo = NameRepository::new(&connection);
+
+        let row = NameRow {
+            id: uuid(),
+            ..Default::default()
+        };
+
+        // First insert
+        row_repo.upsert_one(&row).unwrap();
+
+        let properties = Some("{\"key\": \"test\"}".to_string());
+
+        // Add properties to name
+        row_repo.update_properties(&row.id, &properties).unwrap();
+
+        let name_filter = NameFilter::new().id(EqualFilter::equal_to(&row.id));
+        let name = name_repo
+            .query_one("store_id", name_filter.clone())
+            .unwrap()
+            .unwrap();
+
+        // Check properties have been set
+        assert_eq!(name.properties, properties);
+
+        // Sync upsert
+        row_repo.sync_upsert_one(&row).unwrap();
+
+        let name = name_repo
+            .query_one("store_id", name_filter)
+            .unwrap()
+            .unwrap();
+
+        // Properties have not been overwritten
+        assert_eq!(name.properties, properties);
     }
 }
