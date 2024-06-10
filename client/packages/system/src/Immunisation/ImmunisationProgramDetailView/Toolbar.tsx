@@ -5,7 +5,7 @@ import {
   Grid,
   useTranslation,
 } from '@openmsupply-client/common';
-import { DraftImmunisationProgram } from '../../api/hooks/useImmunisationProgram';
+import { DraftImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 
 interface ToolbarProps {
   onUpdate: (patch: Partial<DraftImmunisationProgram>) => void;

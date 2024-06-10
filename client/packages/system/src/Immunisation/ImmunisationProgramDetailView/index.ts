@@ -1,0 +1,1 @@
+export { ImmunisationProgramDetailView } from './ImmunisationProgramDetailView';
