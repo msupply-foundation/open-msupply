@@ -1,6 +1,10 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::NodeError;
+use dataloader::DataLoader;
+use graphql_core::{
+    loader::DemographicIndicatorLoader, simple_generic_errors::NodeError, ContextExt,
+};
+use graphql_demographic::types::DemographicIndicatorNode;
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 use service::ListResult;
 
@@ -32,7 +36,18 @@ impl VaccineCourseNode {
     pub async fn demographic_indicator_id(&self) -> &str {
         &self.row().demographic_indicator_id
     }
-    // TODO Loaders for the program and demographic_indicator
+
+    pub async fn demographic_indicator(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<DemographicIndicatorNode>> {
+        let demographic_indicator_id = &self.row().demographic_indicator_id;
+        let loader = ctx.get_loader::<DataLoader<DemographicIndicatorLoader>>();
+        Ok(loader
+            .load_one(demographic_indicator_id.clone())
+            .await?
+            .map(DemographicIndicatorNode::from_domain))
+    }
 }
 
 #[derive(Union)]
