@@ -29,8 +29,8 @@ impl VaccineCourseNode {
         &self.row().program_id
     }
 
-    pub async fn demographic_indicator_id(&self) -> &str {
-        &self.row().demographic_indicator_id
+    pub async fn demographic_indicator_id(&self) -> Option<String> {
+        self.row().demographic_indicator_id.clone()
     }
     // TODO Loaders for the program and demographic_indicator
 }
