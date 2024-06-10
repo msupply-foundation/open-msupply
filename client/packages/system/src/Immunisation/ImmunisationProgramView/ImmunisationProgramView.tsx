@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { VaccineCreateModal } from './VaccineCreateModal';
+import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
 
 // dummy data
 const data = {
@@ -65,7 +65,7 @@ export const ImmunisationProgramComponent: FC = () => {
 
   return !!data ? (
     <>
-      {isOpen && <VaccineCreateModal isOpen={isOpen} onClose={onClose} />}
+      {isOpen && <VaccineCourseCreateModal isOpen={isOpen} onClose={onClose} />}
       <Toolbar />
       <AppBarButtons onCreate={onOpen} />
       <DataTable

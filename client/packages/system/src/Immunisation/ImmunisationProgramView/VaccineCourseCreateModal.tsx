@@ -11,26 +11,26 @@ import {
   InputLabel,
 } from '@openmsupply-client/common';
 
-interface VaccineCreateModalProps {
+interface VaccineCourseCreateModalModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const createNewProgram = (seed?: any | null): any => ({
+const createNewVaccineCourse = (seed?: any | null): any => ({
   id: FnUtils.generateUUID(),
   name: '',
   ...seed,
 });
 
-interface UseDraftVaccineControl {
+interface UseDraftVaccineCourseControl {
   draft: any;
   onUpdate: (patch: Partial<any>) => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
 }
 
-const useDraftProgram = (): UseDraftVaccineControl => {
-  const [program, setProgram] = useState<any>(() => createNewProgram());
+const useDraftProgram = (): UseDraftVaccineCourseControl => {
+  const [program, setProgram] = useState<any>(() => createNewVaccineCourse());
 
   const onUpdate = (patch: Partial<any>) => {
     setProgram({ ...program, ...patch });
@@ -50,10 +50,9 @@ const useDraftProgram = (): UseDraftVaccineControl => {
   };
 };
 
-export const VaccineCreateModal: FC<VaccineCreateModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
+export const VaccineCourseCreateModal: FC<
+  VaccineCourseCreateModalModalProps
+> = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['coldchain']);
   const { draft, onUpdate, onSave, isLoading } = useDraftProgram();
