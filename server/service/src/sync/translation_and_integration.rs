@@ -306,12 +306,16 @@ mod test {
 
         let insert_batch = |with_error: bool, n: i32, parent_tx: bool, nested_tx: bool| {
             let mut records = vec![];
-            for _i in 0..n {
+            for i in 0..n {
                 records.push(inline_init(|r: &mut ItemRow| {
                     r.id = uuid();
                     r.unit_id = if with_error {
                         // Create invalid ItemRow
-                        Some("invalid".to_string())
+                        if i % 2 == 0 {
+                            None
+                        } else {
+                            Some("invalid".to_string())
+                        }
                     } else {
                         None
                     };
@@ -321,9 +325,10 @@ mod test {
                 for record in records {
                     // ignore errors
                     if nested_tx {
-                        let _ = connection.transaction_sync(|connection| {
-                            ItemRowRepository::new(connection).upsert_one(&record)
-                        });
+                        let _ = connection.transaction_sync_etc(
+                            |connection| ItemRowRepository::new(connection).upsert_one(&record),
+                            false,
+                        );
                     } else {
                         let _ = ItemRowRepository::new(connection).upsert_one(&record);
                     };
@@ -360,7 +365,7 @@ mod test {
 
             run_all_tx_combinations(with_error, 64);
             run_all_tx_combinations(with_error, 500);
-            run_all_tx_combinations(with_error, 5000);
+            run_all_tx_combinations(with_error, 10000);
         };
         println!("With error:");
         run(true);
