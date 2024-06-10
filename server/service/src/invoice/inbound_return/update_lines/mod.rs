@@ -268,7 +268,6 @@ mod test {
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineInsertError {
@@ -291,7 +290,6 @@ mod test {
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineUpdateError {
@@ -316,7 +314,6 @@ mod test {
                             reason_id: Some("does_not_exist".to_string()),
                             ..Default::default()
                         }],
-                        ..Default::default()
                     },
                 ),
             Err(ServiceError::LineReturnReasonUpdateError {
@@ -390,7 +387,6 @@ mod test {
                             ..Default::default()
                         },
                     ],
-                    ..Default::default()
                 },
             )
             .unwrap();
