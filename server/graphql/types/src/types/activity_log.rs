@@ -187,6 +187,7 @@ impl ActivityLogNodeType {
             from::AssetPropertyCreated => to::AssetPropertyCreated,
             from::VaccineCourseCreated => to::VaccineCourseCreated,
             from::ProgramCreated => to::ProgramCreated,
+            from::ProgramUpdated => to::ProgramUpdated,
         }
     }
 
@@ -238,6 +239,7 @@ impl ActivityLogNodeType {
             from::AssetPropertyCreated => to::AssetPropertyCreated,
             from::VaccineCourseCreated => to::VaccineCourseCreated,
             from::ProgramCreated => to::ProgramCreated,
+            from::ProgramUpdated => to::ProgramUpdated,
         }
     }
 }

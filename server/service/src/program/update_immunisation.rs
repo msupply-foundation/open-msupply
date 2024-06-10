@@ -7,6 +7,7 @@ use crate::{
 use repository::{
     ActivityLogType, ProgramRow, ProgramRowRepository, RepositoryError, StorageConnection,
 };
+use util::constants::IMMUNISATION_CONTEXT_ID;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateImmunisationProgramError {
