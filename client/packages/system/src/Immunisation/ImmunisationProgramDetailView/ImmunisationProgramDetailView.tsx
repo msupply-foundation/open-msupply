@@ -24,8 +24,15 @@ import { Toolbar } from './Toolbar';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppBarButtons } from './AppBarButtons';
 import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
+import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
 
 export const ProgramComponent: FC = () => {
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
+  const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { setSuffix, navigateUpOne } = useBreadcrumbs();
@@ -39,12 +46,18 @@ export const ProgramComponent: FC = () => {
     update: { update, isUpdating },
   } = useImmunisationProgram(id);
 
+  const queryParams = {
+    filterBy,
+    offset,
+    sortBy,
+    first,
+  };
+
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
-  const pagination = { page, first, offset };
+    data: vaccineCoursesData,
+    isLoading: vaccineCoursesLoading,
+    isError: vaccineCoursesError,
+  } = useVaccineCourseList(queryParams);
 
   const columns = useColumns(
     [
@@ -82,8 +95,9 @@ export const ProgramComponent: FC = () => {
         pagination={{ ...pagination }}
         onChangePage={updatePaginationQuery}
         columns={columns}
-        data={[]} // TODO Query for Vaccine Courses
-        isLoading={false} // TODO Query for Vaccine Courses
+        data={vaccineCoursesData?.nodes ?? []} // TODO Query for Vaccine Courses
+        isLoading={vaccineCoursesLoading}
+        isError={vaccineCoursesError}
         onRowClick={row => navigate(row.id)}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
