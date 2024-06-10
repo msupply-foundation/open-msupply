@@ -47,7 +47,6 @@ pub struct InsertVaccineCourseInput {
     pub id: String,
     pub name: String,
     pub program_id: String,
-    pub demographic_indicator_id: String,
 }
 
 impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
@@ -56,14 +55,12 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
             id,
             name,
             program_id,
-            demographic_indicator_id,
         }: InsertVaccineCourseInput,
     ) -> Self {
         InsertVaccineCourse {
             id,
             name,
             program_id,
-            demographic_indicator_id,
         }
     }
 }
