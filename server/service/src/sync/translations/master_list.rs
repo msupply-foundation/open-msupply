@@ -1,5 +1,6 @@
 use repository::{
-    MasterListRow, MasterListRowRepository, ProgramRowRepository, StorageConnection, SyncBufferRow,
+    MasterListRow, MasterListRowDelete, MasterListRowRepository, ProgramRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -74,9 +75,9 @@ impl SyncTranslation for MasterListTranslation {
             return Ok(PullTranslateResult::upsert(result));
         }
 
-        Ok(PullTranslateResult::Ignored(
-            "Master list not in use".to_string(),
-        ))
+        Ok(PullTranslateResult::delete(MasterListRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
