@@ -146,6 +146,8 @@
   "heading.synchronise-status": "Synchronisation Status",
   "heading.user-sync": "User Synchronisation Status",
   "info.server-restarting": "Server restarting...",
+  "label.doses": "Doses",
+  "label.target-demographic": "Target Demographic",
   "label.abbreviation": "Abbreviation",
   "label.programs-immunisations": "Immunisations",
   "label.actions": "Actions",
