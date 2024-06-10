@@ -106,7 +106,7 @@ fn generate_line(
         invoice_id,
         item_link_id: item_id,
         location_id: location.map(|l| l.value).unwrap_or_default(),
-        pack_size: pack_size,
+        pack_size,
         batch,
         expiry_date,
         sell_price_per_pack,
