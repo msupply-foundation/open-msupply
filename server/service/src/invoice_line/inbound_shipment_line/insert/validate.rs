@@ -17,7 +17,7 @@ pub fn validate(
 ) -> Result<(ItemRow, InvoiceRow), InsertInboundShipmentLineError> {
     use InsertInboundShipmentLineError::*;
 
-    if let Some(_) = check_line_exists(connection, &input.id)? {
+    if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
 
