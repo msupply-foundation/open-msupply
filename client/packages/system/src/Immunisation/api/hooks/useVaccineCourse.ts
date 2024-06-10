@@ -6,7 +6,7 @@ import {
   useMutation,
   useQuery,
 } from '@openmsupply-client/common';
-import { VACCINECOURSES } from './keys';
+import { VACCINE } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
 import { VaccineCourseFragment } from '../operations.generated';
 
@@ -70,11 +70,10 @@ export function useVaccineCourse(id?: string) {
 }
 
 const useGet = (id: string) => {
-  const { api, storeId } = useImmunisationGraphQL();
+  const { api } = useImmunisationGraphQL();
 
   const queryFn = async () => {
     const result = await api.vaccineCourses({
-      storeId,
       first: 1,
       offset: 0,
       key: VaccineCourseSortFieldInput.Name,
@@ -88,7 +87,7 @@ const useGet = (id: string) => {
   };
 
   const query = useQuery({
-    queryKey: [VACCINECOURSES, id],
+    queryKey: [VACCINE, id],
     queryFn,
     enabled: id !== '',
   });
@@ -113,6 +112,6 @@ const useCreate = () => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINECOURSES]),
+    onSuccess: () => queryClient.invalidateQueries([VACCINE]),
   });
 };

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -11,37 +11,50 @@ import {
   useUrlQueryParams,
   useColumns,
   useEditModal,
+  useParams,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { VaccineCreateModal } from './VaccineCreateModal';
-
-// dummy data
-const data = {
-  name: 'some program name',
-};
+import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
+import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
 
 export interface VaccineCourse {
   id: string;
   name: string;
-  targetDemographicName: string;
-  doses: number;
 }
 
 export const ImmunisationProgramComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { setSuffix } = useBreadcrumbs();
+  const { id } = useParams();
+  const {
+    query: { data },
+    draft,
+    updatePatch,
+    isDirty,
+    // update: { update, isUpdating },
+  } = useImmunisationProgram(id);
 
-  const draftProgram: Record<string, VaccineCourse> = {};
+  const queryParams = {
+    filterBy,
+    offset,
+    sortBy,
+    first,
+  };
 
-  const [draft] = useState(draftProgram);
+  const {
+    data: coursesData,
+    isLoading,
+    isError,
+  } = useVaccineCourseList(queryParams);
 
   const columns = useColumns(
     [
@@ -66,15 +79,16 @@ export const ImmunisationProgramComponent: FC = () => {
   return !!data ? (
     <>
       {isOpen && <VaccineCreateModal isOpen={isOpen} onClose={onClose} />}
-      <Toolbar />
+      <Toolbar draft={draft} onUpdate={updatePatch} isDirty={isDirty} />
       <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'Program list'}
         pagination={{ ...pagination }}
         onChangePage={updatePaginationQuery}
         columns={columns}
-        data={Object.values(draft)}
-        isLoading={false}
+        data={coursesData?.nodes as VaccineCourse[]}
+        isLoading={isLoading}
+        isError={isError}
         onRowClick={row => navigate(row.id)}
         noDataElement={<NothingHere body={t('error.no-master-lists')} />}
       />
