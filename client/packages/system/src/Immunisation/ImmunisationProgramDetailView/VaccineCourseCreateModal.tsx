@@ -1,61 +1,32 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   useDialog,
   Grid,
   DialogButton,
   useTranslation,
-  FnUtils,
   InlineSpinner,
   BasicTextInput,
   Box,
   InputLabel,
 } from '@openmsupply-client/common';
+import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 
 interface VaccineCourseCreateModalModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const createNewVaccineCourse = (seed?: any | null): any => ({
-  id: FnUtils.generateUUID(),
-  name: '',
-  ...seed,
-});
-
-interface UseDraftVaccineCourseControl {
-  draft: any;
-  onUpdate: (patch: Partial<any>) => void;
-  onSave: () => Promise<void>;
-  isLoading: boolean;
-}
-
-const useDraftProgram = (): UseDraftVaccineCourseControl => {
-  const [program, setProgram] = useState<any>(() => createNewVaccineCourse());
-
-  const onUpdate = (patch: Partial<any>) => {
-    setProgram({ ...program, ...patch });
-  };
-
-  const onSave = async () => {
-    console.info('TODO insert program mutation');
-  };
-
-  const isLoading = false;
-
-  return {
-    draft: program,
-    onUpdate,
-    onSave,
-    isLoading,
-  };
-};
-
 export const VaccineCourseCreateModal: FC<
   VaccineCourseCreateModalModalProps
 > = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['coldchain']);
-  const { draft, onUpdate, onSave, isLoading } = useDraftProgram();
+  const {
+    query: { isLoading },
+    draft,
+    updatePatch,
+    create: { create },
+  } = useVaccineCourse();
   const isInvalid = !draft.name.trim();
 
   return (
@@ -65,7 +36,7 @@ export const VaccineCourseCreateModal: FC<
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await onSave();
+            await create();
             onClose();
           }}
         />
@@ -81,7 +52,7 @@ export const VaccineCourseCreateModal: FC<
               fullWidth
               autoFocus
               value={draft.name}
-              onChange={e => onUpdate({ name: e.target.value })}
+              onChange={e => updatePatch({ name: e.target.value })}
             />
           </Box>
         </Grid>
