@@ -129,11 +129,11 @@ impl<'a> AssetLogRowRepository<'a> {
             table_name: ChangelogTableName::AssetLog,
             record_id: asset_log_id,
             row_action: action,
-            store_id: store_id,
+            store_id,
             ..Default::default()
         };
 
-        ChangelogRepository::new(&self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetLogRow>, RepositoryError> {

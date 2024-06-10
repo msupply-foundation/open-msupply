@@ -140,7 +140,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             ..Default::default()
         };
 
-        ChangelogRepository::new(&self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(
