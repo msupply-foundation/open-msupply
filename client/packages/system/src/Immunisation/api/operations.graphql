@@ -63,6 +63,10 @@ mutation updateImmunisationProgram(
         ... on UpdateImmunisationProgramError {
           __typename
           error {
+            ... on UniqueValueViolation {
+              __typename
+              field
+            }
             description
           }
         }
