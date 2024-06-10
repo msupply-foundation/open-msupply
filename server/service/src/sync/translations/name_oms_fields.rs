@@ -96,7 +96,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_name_oms_fields_translation() {
-        use crate::sync::test::test_data::name as test_data;
+        use crate::sync::test::test_data::name_oms_fields as test_data;
         let translator = NameOmsFieldsTranslation {};
 
         let (_, connection, _, _) =
