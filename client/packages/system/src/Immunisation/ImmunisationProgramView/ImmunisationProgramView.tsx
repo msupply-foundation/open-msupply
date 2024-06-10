@@ -1,28 +1,32 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   TableProvider,
-  DataTable,
-  useColumns,
-  useUrlQueryParams,
-  useNavigate,
-  NothingHere,
-  useTranslation,
   createTableStore,
+  useBreadcrumbs,
+  NothingHere,
   createQueryParamsStore,
-  useEditModal,
+  DataTable,
+  useNavigate,
+  useTranslation,
+  useUrlQueryParams,
+  useColumns,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { ImmunisationProgramCreateModal } from './ImmunisationProgramCreateModal';
 
-export interface Program {
+// dummy data
+const data = {
+  name: 'some program name',
+};
+
+export interface VaccineCourse {
   id: string;
   name: string;
-  immunisations: string[];
-  isNew: boolean;
+  targetDemographicName: string;
+  doses: number;
 }
 
-const ImmunisationProgramListComponent: FC = () => {
+export const ImmunisationProgramComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -30,13 +34,19 @@ const ImmunisationProgramListComponent: FC = () => {
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('coldchain');
+  const t = useTranslation('catalogue');
+  const { setSuffix } = useBreadcrumbs();
 
-  // later this will make api call
-  const draft: Program[] = [];
+  const draftProgram: Record<string, VaccineCourse> = {};
+
+  const [draft] = useState(draftProgram);
 
   const columns = useColumns(
-    ['name', 'description'],
+    [
+      'name',
+      { key: 'targetDemographic', label: 'label.target-demographic' },
+      { key: 'doses', label: 'label.doses' },
+    ],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,
@@ -44,39 +54,37 @@ const ImmunisationProgramListComponent: FC = () => {
     [updateSortQuery, sortBy]
   );
 
-  // later create modal will use <InsertImmunisationProgram> type
-  const { isOpen, onClose, onOpen } = useEditModal<any>();
+  useEffect(() => {
+    setSuffix(data?.name ?? '');
+  }, [setSuffix]);
 
-  return (
+  return !!data ? (
     <>
-      {isOpen && (
-        <ImmunisationProgramCreateModal isOpen={isOpen} onClose={onClose} />
-      )}
       <Toolbar />
-      <AppBarButtons onCreate={onOpen} />
+      <AppBarButtons />
       <DataTable
-        id={'immunisation-list'}
+        id={'Program list'}
         pagination={{ ...pagination }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={Object.values(draft)}
         isLoading={false}
         onRowClick={row => navigate(row.id)}
-        noDataElement={
-          <NothingHere body={t('error.no-immunisation-programs')} />
-        }
+        noDataElement={<NothingHere body={t('error.no-master-lists')} />}
       />
     </>
+  ) : (
+    <NothingHere />
   );
 };
 
-export const ImmunisationProgramListView: FC = () => (
+export const ImmunisationProgramView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore({
       initialSortBy: { key: 'name' },
     })}
   >
-    <ImmunisationProgramListComponent />
+    <ImmunisationProgramComponent></ImmunisationProgramComponent>
   </TableProvider>
 );
