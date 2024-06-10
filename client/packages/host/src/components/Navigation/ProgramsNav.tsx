@@ -36,7 +36,7 @@ export const ProgramsNav: FC = () => {
             visible={isCentralServer && Environment.FEATURE_GAPS}
             end
             to={RouteBuilder.create(AppRoute.Programs)
-              .addPart(AppRoute.Immunisations)
+              .addPart(AppRoute.ImmunisationPrograms)
               .build()}
             text={t('label.programs-immunisations')}
           />
