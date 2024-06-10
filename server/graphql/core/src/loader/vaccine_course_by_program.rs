@@ -1,8 +1,7 @@
 use repository::vaccine_course::vaccine_course::{VaccineCourseFilter, VaccineCourseRepository};
 use repository::EqualFilter;
 use repository::{
-    vaccine_course::vaccine_course_row::VaccineCourseRow, Pagination, RepositoryError,
-    StorageConnectionManager,
+    vaccine_course::vaccine_course_row::VaccineCourseRow, RepositoryError, StorageConnectionManager,
 };
 
 use async_graphql::dataloader::*;
@@ -22,10 +21,8 @@ impl Loader<String> for VaccineCourseByProgramIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = VaccineCourseRepository::new(&connection);
 
-        let vaccine_courses = repo.query(
-            Pagination::all(),
-            Some(VaccineCourseFilter::new().program_id(EqualFilter::equal_any(ids.to_owned()))),
-            None,
+        let vaccine_courses = repo.query_by_filter(
+            VaccineCourseFilter::new().program_id(EqualFilter::equal_any(ids.to_owned())),
         )?;
 
         let mut map: HashMap<String, Vec<VaccineCourseRow>> = HashMap::new();
