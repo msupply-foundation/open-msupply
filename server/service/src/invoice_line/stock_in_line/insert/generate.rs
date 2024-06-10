@@ -99,7 +99,7 @@ fn generate_line(
     }: ItemRow,
     InvoiceRow { tax_percentage, .. }: InvoiceRow,
 ) -> InvoiceLineRow {
-    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
+    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     InvoiceLineRow {
         id,

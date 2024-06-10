@@ -113,12 +113,7 @@ impl SynchroniserV6 {
             for SyncRecordV6 { cursor, record } in records {
                 let buffer_row = record.to_buffer_row(None)?;
 
-                insert_one_and_update_cursor(
-                    connection,
-                    &cursor_controller,
-                    &buffer_row,
-                    cursor as u64,
-                )?;
+                insert_one_and_update_cursor(connection, &cursor_controller, &buffer_row, cursor)?;
             }
 
             cursor_controller.update(&connection, end_cursor + 1)?;

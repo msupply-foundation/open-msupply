@@ -91,7 +91,7 @@ pub fn get_requisition_line_chart(
     if let Some(last) = consumption_history.last() {
         consumption_history.push(ConsumptionHistory {
             consumption: average_monthly_consumption as u32,
-            average_monthly_consumption: average_monthly_consumption as f64,
+            average_monthly_consumption,
             date: last_day_of_the_month(&date_with_months_offset(&last.date, 1)),
         });
     }
@@ -107,7 +107,7 @@ pub fn get_requisition_line_chart(
         available_stock_on_hand as u32,
         *expected_delivery_date,
         requested_quantity as u32,
-        average_monthly_consumption as f64,
+        average_monthly_consumption,
         stock_evolution_options,
     )?;
 
@@ -149,18 +149,17 @@ impl From<RepositoryError> for OutError {
 impl SuggestedQuantityCalculation {
     pub fn from_requisition_line(from: &RequisitionLine) -> Self {
         let threshold = if from.requisition_row.min_months_of_stock == 0.0 {
-            from.requisition_row.max_months_of_stock as f64
+            from.requisition_row.max_months_of_stock
         } else {
-            from.requisition_row.min_months_of_stock as f64
+            from.requisition_row.min_months_of_stock
         };
         SuggestedQuantityCalculation {
-            average_monthly_consumption: from.requisition_line_row.average_monthly_consumption
-                as f64,
+            average_monthly_consumption: from.requisition_line_row.average_monthly_consumption,
             stock_on_hand: from.requisition_line_row.available_stock_on_hand as u32,
-            minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
+            minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption
                 * threshold,
-            maximum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
-                * from.requisition_row.max_months_of_stock as f64,
+            maximum_stock_on_hand: from.requisition_line_row.average_monthly_consumption
+                * from.requisition_row.max_months_of_stock,
             suggested: from.requisition_line_row.suggested_quantity as u32,
         }
     }

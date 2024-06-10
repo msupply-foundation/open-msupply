@@ -150,7 +150,7 @@ fn calculate_historic_stock_evolution(
             } else {
                 movement
             }
-        }) as f64;
+        });
         // Reverse ledger thus substraction
         running_stock_on_hand -= day_movements;
         result.push(StockEvolution {
