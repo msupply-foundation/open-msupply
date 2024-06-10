@@ -8,7 +8,6 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { ImmunisationProgramListView } from '../ListView';
 import { ImmunisationProgramDetailView } from '../ImmunisationProgramDetailView';
-import { ImmunisationProgramView } from '../ImmunisationProgramView';
 import { VaccineCourseView } from '../VaccineCourseView';
 
 export const ImmunisationProgramService: FC = () => {
