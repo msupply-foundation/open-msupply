@@ -56,7 +56,7 @@ pub fn validate(
     if check_immunisation_program_exists(&input.id, connection)?.is_none() {
         return Err(UpdateImmunisationProgramError::ImmunisationProgramDoesNotExist);
     }
-    if check_program_name_exists(&input.name, connection)?.is_some() {
+    if check_program_name_exists(&input.name, Some(input.id.to_owned()), connection)?.is_some() {
         return Err(UpdateImmunisationProgramError::ImmunisationProgramNameExists);
     }
 
