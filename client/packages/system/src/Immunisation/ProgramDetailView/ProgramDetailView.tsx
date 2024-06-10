@@ -84,7 +84,7 @@ export const ProgramComponent: FC = () => {
   );
 };
 
-export const ProgramView: FC = () => (
+export const ProgramDetailView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore({
