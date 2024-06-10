@@ -7,6 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { ImmunisationProgramListView } from '../ListView';
+import { ImmunisationProgramDetailView } from '../ImmunisationProgramDetailView';
 import { ImmunisationProgramView } from '../ImmunisationProgramView';
 import { VaccineCourseView } from '../VaccineCourseView';
 
@@ -37,7 +38,7 @@ export const ImmunisationProgramService: FC = () => {
       />
       <Route
         path={immunisationProgramRoute}
-        element={<ImmunisationProgramView />}
+        element={<ImmunisationProgramDetailView />}
       />
       <Route path={immunisationDetailRoute} element={<VaccineCourseView />} />
     </Routes>

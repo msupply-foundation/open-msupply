@@ -37,6 +37,9 @@ use mutations::encounter::update::UpdateEncounterResponse;
 use mutations::immunisation::insert::insert_immunisation_program;
 use mutations::immunisation::insert::InsertImmunisationProgramInput;
 use mutations::immunisation::insert::InsertImmunisationProgramResponse;
+use mutations::immunisation::update::update_immunisation_program;
+use mutations::immunisation::update::UpdateImmunisationProgramInput;
+use mutations::immunisation::update::UpdateImmunisationProgramResponse;
 use mutations::insert_document_registry::*;
 use mutations::patient::insert::insert_patient;
 use mutations::patient::insert::InsertPatientInput;
@@ -402,5 +405,14 @@ impl CentralProgramsMutations {
         input: InsertImmunisationProgramInput,
     ) -> Result<InsertImmunisationProgramResponse> {
         insert_immunisation_program(ctx, store_id, input)
+    }
+
+    pub async fn update_immunisation_program(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateImmunisationProgramInput,
+    ) -> Result<UpdateImmunisationProgramResponse> {
+        update_immunisation_program(ctx, store_id, input)
     }
 }

@@ -19,20 +19,15 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 id TEXT NOT NULL PRIMARY KEY,
                 master_list_id TEXT,
                 name TEXT NOT NULL,
-                context_id TEXT NOT NULL,
+                context_id TEXT NOT NULL REFERENCES context(id),
                 is_immunisation BOOLEAN NOT NULL
             );
             INSERT INTO tmp_program SELECT id, master_list_id, name, context_id, false FROM program;
+
+            PRAGMA foreign_keys = OFF;
             DROP TABLE program;
-            CREATE TABLE program (
-                id TEXT NOT NULL PRIMARY KEY,
-                master_list_id TEXT,
-                name TEXT NOT NULL,
-                context_id TEXT NOT NULL,
-                is_immunisation BOOLEAN NOT NULL
-            );
-            INSERT INTO program SELECT id, master_list_id, name, context_id, is_immunisation FROM tmp_program;
-            DROP TABLE tmp_program;
+            ALTER TABLE tmp_program RENAME TO program;
+            PRAGMA foreign_keys = ON;
         "#
         )?;
     }

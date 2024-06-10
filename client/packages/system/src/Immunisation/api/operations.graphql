@@ -48,6 +48,32 @@ mutation insertImmunisationProgram(
     }
   }
 }
+
+mutation updateImmunisationProgram(
+  $input: UpdateImmunisationProgramInput
+  $storeId: String
+) {
+  centralServer {
+    program {
+      updateImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on UpdateImmunisationProgramError {
+          __typename
+          error {
+            ... on UniqueValueViolation {
+              __typename
+              field
+            }
+            description
+          }
+        }
+      }
+    }
+  }
+}
 fragment VaccineCourse on VaccineCourseNode {
   id
   name

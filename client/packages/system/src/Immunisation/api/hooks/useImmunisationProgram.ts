@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
   ProgramSortFieldInput,
   isEqual,
   useMutation,
   useQuery,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { PROGRAM } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
@@ -21,6 +22,7 @@ const defaultDraftImmunisationProgram: DraftImmunisationProgram = {
 export function useImmunisationProgram(id?: string) {
   const [patch, setPatch] = useState<Partial<DraftImmunisationProgram>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { data, isLoading, error } = useGet(id ?? '');
   const {
     mutateAsync: createMutation,
@@ -28,11 +30,11 @@ export function useImmunisationProgram(id?: string) {
     error: createError,
   } = useCreate();
 
-  //   const {
-  //     mutateAsync: updateMutation,
-  //     isLoading: isUpdating,
-  //     error: updateError,
-  //   } = useUpdate(id ?? '');
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate(id ?? '', setErrorMessage);
 
   const draft: DraftImmunisationProgram = data
     ? { ...defaultDraftImmunisationProgram, ...data, ...patch }
@@ -41,6 +43,8 @@ export function useImmunisationProgram(id?: string) {
   const updatePatch = (newData: Partial<DraftImmunisationProgram>) => {
     const newPatch = { ...patch, ...newData };
     setPatch(newPatch);
+    // Reset error message if user is trying to fix the error
+    setErrorMessage('');
 
     // Ensures that UI doesn't show in "dirty" state if nothing actually
     // different from the saved data
@@ -50,30 +54,23 @@ export function useImmunisationProgram(id?: string) {
     return;
   };
 
-  const resetDraft = () => {
-    if (data) {
-      setPatch({});
-      setIsDirty(false);
-    }
-  };
-
   const create = async () => {
     const result = await createMutation(draft);
     setIsDirty(false);
     return result;
   };
 
-  //   const update = async () => {
-  //     updateMutation(patch);
-  //     setIsDirty(false);
-  //   };
+  const update = async () => {
+    updateMutation(patch);
+    setIsDirty(false);
+  };
 
   return {
     query: { data: data, isLoading, error },
     create: { create, isCreating, createError },
-    // update: { update, isUpdating, updateError },
+    update: { update, isUpdating, updateError },
     draft,
-    resetDraft,
+    errorMessage,
     isDirty,
     updatePatch,
   };
@@ -127,29 +124,51 @@ const useCreate = () => {
   });
 };
 
-// const useUpdate = (id: string) => {
-//   const { api, storeId, queryClient } = useImmunisationGraphQL();
+const useUpdate = (
+  id: string,
+  setErrorMessage: Dispatch<SetStateAction<string>>
+) => {
+  const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const t = useTranslation('system');
 
-//   const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
-//     const result = await api.updateImmunisationProgram({
-//       input: {
-//         id,
-//         name,
-//       },
-//       storeId,
-//     });
+  const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
+    if (!id) {
+      throw new Error('No ID provided to update Immunisation Program');
+    }
+    if (!name) {
+      throw new Error('No name provided to update Immunisation Program');
+    }
 
-//     const { updateImmunisationProgram } = result;
+    const apiResult = await api.updateImmunisationProgram({
+      input: {
+        id,
+        name,
+      },
+      storeId,
+    });
 
-//     if (updateImmunisationProgram?.__typename === 'ProgramNode') {
-//       return updateImmunisationProgram;
-//     }
+    const result = apiResult.centralServer.program.updateImmunisationProgram;
 
-//     throw new Error('Unable to update Immunisation Program');
-//   };
+    if (result?.__typename === 'ProgramNode') {
+      return result;
+    }
 
-//   return useMutation({
-//     mutationFn,
-//     onSuccess: () => queryClient.invalidateQueries([PROGRAM]),
-//   });
-// };
+    if (result?.__typename === 'UpdateImmunisationProgramError') {
+      if (result.error.__typename === 'UniqueValueViolation') {
+        setErrorMessage(
+          t('error.unique-value-violation', { field: result.error.field })
+        );
+      } else {
+        setErrorMessage(result.error.description);
+      }
+      return;
+    }
+
+    throw new Error('Unable to update Immunisation Program');
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([PROGRAM]),
+  });
+};
