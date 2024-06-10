@@ -37,6 +37,7 @@ interface Schedule {
 interface Draft {
   name: string;
   demographic: string;
+  wastageRate: number;
   coverageRate: number;
   vaccineItems: any[];
   numberOfDoses: number;
@@ -49,6 +50,7 @@ const seed: Draft = {
   coverageRate: 100,
   vaccineItems: [{}],
   numberOfDoses: 1,
+  wastageRate: 0,
   schedule: {
     id: {
       id: 'id',
@@ -275,6 +277,13 @@ export const VaccineCourseView: FC = () => {
               onChange={value => onUpdate({ coverageRate: value })}
             />
           </Row>
+          <Row label={t('label.wastage-rate')}>
+            <NumericTextInput
+              value={draft?.wastageRate ?? 1}
+              fullWidth
+              onChange={value => onUpdate({ wastageRate: value })}
+            />
+          </Row>
           <Row label={t('label.vaccine-items')}>
             <AutocompleteMulti
               isOptionEqualToValue={(option, value) =>
@@ -318,6 +327,7 @@ export const VaccineCourseView: FC = () => {
             <MiniTable
               rows={Object.values(draft?.schedule) as Schedule[]}
               columns={dosesColumns}
+              // sx={{ backgroundColour: 'blue' }}
             />
           </Box>
         </Section>
