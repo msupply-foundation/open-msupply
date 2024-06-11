@@ -29,21 +29,23 @@ interface UseDraftVaccineCourseControl {
   isLoading: boolean;
 }
 
-const useDraftProgram = (): UseDraftVaccineCourseControl => {
-  const [program, setProgram] = useState<any>(() => createNewVaccineCourse());
+const useDraftVaccineCourse = (): UseDraftVaccineCourseControl => {
+  const [vaccineCourse, setVaccineCourse] = useState<any>(() =>
+    createNewVaccineCourse()
+  );
 
   const onUpdate = (patch: Partial<any>) => {
-    setProgram({ ...program, ...patch });
+    setVaccineCourse({ ...vaccineCourse, ...patch });
   };
 
   const onSave = async () => {
-    console.info('TODO insert program mutation');
+    console.info('TODO insert vaccineCourse mutation');
   };
 
   const isLoading = false;
 
   return {
-    draft: program,
+    draft: vaccineCourse,
     onUpdate,
     onSave,
     isLoading,
@@ -55,7 +57,7 @@ export const VaccineCourseCreateModal: FC<
 > = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation('coldchain');
-  const { draft, onUpdate, onSave, isLoading } = useDraftProgram();
+  const { draft, onUpdate, onSave, isLoading } = useDraftVaccineCourse();
   const isInvalid = !draft.name.trim();
 
   return (
