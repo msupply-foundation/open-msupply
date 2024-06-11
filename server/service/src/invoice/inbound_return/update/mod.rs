@@ -121,10 +121,9 @@ impl UpdateInboundReturnStatus {
 
 impl UpdateInboundReturn {
     pub fn invoice_row_status_option(&self) -> Option<InvoiceStatus> {
-        match &self.status {
-            Some(status) => Some(status.as_invoice_row_status()),
-            None => None,
-        }
+        self.status
+            .as_ref()
+            .map(|status| status.as_invoice_row_status())
     }
 }
 

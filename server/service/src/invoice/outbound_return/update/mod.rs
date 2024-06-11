@@ -106,19 +106,15 @@ impl UpdateOutboundReturnStatus {
     pub fn full_status_option(
         status: &Option<UpdateOutboundReturnStatus>,
     ) -> Option<InvoiceStatus> {
-        match status {
-            Some(status) => Some(status.as_invoice_row_status()),
-            None => None,
-        }
+        status.as_ref().map(|status| status.as_invoice_row_status())
     }
 }
 
 impl UpdateOutboundReturn {
     pub fn full_status(&self) -> Option<InvoiceStatus> {
-        match &self.status {
-            Some(status) => Some(status.as_invoice_row_status()),
-            None => None,
-        }
+        self.status
+            .as_ref()
+            .map(|status| status.as_invoice_row_status())
     }
 }
 #[cfg(test)]
