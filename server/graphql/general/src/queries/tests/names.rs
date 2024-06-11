@@ -14,7 +14,8 @@ mod graphql {
     };
     use serde_json::json;
     use service::{
-        service_provider::{GeneralServiceTrait, ServiceContext, ServiceProvider},
+        name::NameServiceTrait,
+        service_provider::{ServiceContext, ServiceProvider},
         ListError, ListResult,
     };
 
@@ -31,7 +32,7 @@ mod graphql {
 
     pub struct TestService(pub Box<GetName>);
 
-    impl GeneralServiceTrait for TestService {
+    impl NameServiceTrait for TestService {
         fn get_names(
             &self,
             _: &ServiceContext,
@@ -49,7 +50,7 @@ mod graphql {
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.general_service = Box::new(test_service);
+        service_provider.name_service = Box::new(test_service);
         service_provider
     }
 
@@ -215,6 +216,7 @@ mod graphql {
                     name_row: mock_name_a(),
                     name_store_join_row: None,
                     store_row: None,
+                    properties: None,
                 }],
                 count: 1,
             })
