@@ -17,7 +17,6 @@
   "error.duplicate-asset-number": "duplicate asset number in csv",
   "error.duplicated-field": "{{field}} already exists in the import file",
   "error.fetch-notifications": "Unable to display cold chain notifications",
-  "error.field-must-be-specified": "{{field}} must be specified",
   "error.fridge-tag-import": "Unable to import Fridge-tag logs: {{message}}",
   "error.fridge-tag-import-empty": "No data imported",
   "error.invalid-field-value": "{{ value }} isn't a valid {{ field }}",
