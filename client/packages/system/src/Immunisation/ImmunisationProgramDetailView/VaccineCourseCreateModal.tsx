@@ -54,7 +54,7 @@ export const VaccineCourseCreateModal: FC<
   VaccineCourseCreateModalModalProps
 > = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation(['coldchain']);
+  const t = useTranslation('coldchain');
   const { draft, onUpdate, onSave, isLoading } = useDraftProgram();
   const isInvalid = !draft.name.trim();
 
@@ -71,7 +71,7 @@ export const VaccineCourseCreateModal: FC<
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      title={t('label.create-new-program')}
+      title={t('label.add-new-vaccine-course')}
     >
       {!isLoading ? (
         <Grid flexDirection="column" display="flex" gap={2}>
