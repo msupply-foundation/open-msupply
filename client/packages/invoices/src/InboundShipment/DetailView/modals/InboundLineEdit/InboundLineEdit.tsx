@@ -63,7 +63,7 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
     } else {
       setDraftLines([]);
     }
-  }, [lines, item]);
+  }, [lines, item, id, defaultPackSize]);
 
   const addDraftLine = () => {
     if (item) {
@@ -91,12 +91,19 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
         return [...draftLines];
       });
     },
-    [draftLines, setDraftLines]
+    [setDraftLines, setIsDirty]
   );
 
   const saveLines = async () => {
-    if (isDirty) await mutateAsync(draftLines);
-    setIsDirty(false);
+    if (isDirty) {
+      const { errorMessage } = await mutateAsync(draftLines);
+
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+
+      setIsDirty(false);
+    }
   };
 
   return {
@@ -173,7 +180,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
                 await saveLines();
                 onClose();
               } catch (e) {
-                error((error as unknown as Error).message);
+                error((e as Error).message)();
               }
             }}
           />

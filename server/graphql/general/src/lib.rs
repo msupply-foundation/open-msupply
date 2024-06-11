@@ -27,6 +27,9 @@ use mutations::{
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
+    update_name_properties::{
+        update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
+    },
     update_user,
 };
 use queries::{
@@ -436,6 +439,15 @@ impl GeneralMutations {
         input: LabelPrinterSettingsInput,
     ) -> Result<UpdateLabelPrinterSettingsResponse> {
         update_label_printer_settings(ctx, input)
+    }
+
+    pub async fn update_name_properties(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateNamePropertiesInput,
+    ) -> Result<UpdateNamePropertiesResponse> {
+        update_name_properties(ctx, &store_id, input)
     }
 }
 
