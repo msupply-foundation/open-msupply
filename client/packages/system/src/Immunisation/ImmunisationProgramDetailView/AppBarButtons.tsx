@@ -10,7 +10,7 @@ import {
 interface ProgramAppBarButtonsProps {}
 
 export const AppBarButtons = ({}: ProgramAppBarButtonsProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation('catalogue');
 
   return (
     <AppBarButtonsPortal>
