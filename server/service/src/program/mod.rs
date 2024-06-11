@@ -5,6 +5,7 @@ use repository::{PaginationOption, ProgramFilter, ProgramRow, ProgramSort, Stora
 
 pub mod insert_immunisation;
 pub mod query;
+pub mod update_immunisation;
 mod validate;
 
 #[cfg(test)]
@@ -37,6 +38,14 @@ pub trait ProgramServiceTrait: Sync + Send {
         input: insert_immunisation::InsertImmunisationProgram,
     ) -> Result<ProgramRow, insert_immunisation::InsertImmunisationProgramError> {
         insert_immunisation::insert_immunisation_program(ctx, input)
+    }
+
+    fn update_immunisation_program(
+        &self,
+        ctx: &ServiceContext,
+        input: update_immunisation::UpdateImmunisationProgram,
+    ) -> Result<ProgramRow, update_immunisation::UpdateImmunisationProgramError> {
+        update_immunisation::update_immunisation_program(ctx, input)
     }
 }
 

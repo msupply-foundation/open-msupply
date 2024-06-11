@@ -32,18 +32,37 @@ impl VaccineCourseNode {
         &self.row().program_id
     }
 
-    pub async fn demographic_indicator_id(&self) -> &str {
-        &self.row().demographic_indicator_id
+    pub async fn demographic_indicator_id(&self) -> Option<String> {
+        self.row().demographic_indicator_id.clone()
+    }
+
+    pub async fn coverage_rate(&self) -> f64 {
+        self.row().coverage_rate
+    }
+
+    pub async fn is_active(&self) -> bool {
+        self.row().is_active
+    }
+
+    pub async fn wastage_rate(&self) -> f64 {
+        self.row().wastage_rate
+    }
+
+    pub async fn doses(&self) -> i32 {
+        self.row().doses
     }
 
     pub async fn demographic_indicator(
         &self,
         ctx: &Context<'_>,
     ) -> Result<Option<DemographicIndicatorNode>> {
-        let demographic_indicator_id = &self.row().demographic_indicator_id;
+        let demographic_indicator_id = match &self.row().demographic_indicator_id {
+            Some(id) => id,
+            None => return Ok(None),
+        };
         let loader = ctx.get_loader::<DataLoader<DemographicIndicatorLoader>>();
         Ok(loader
-            .load_one(demographic_indicator_id.clone())
+            .load_one(demographic_indicator_id.to_string())
             .await?
             .map(DemographicIndicatorNode::from_domain))
     }

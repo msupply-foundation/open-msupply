@@ -17,10 +17,3 @@ pub fn check_program_exists(
 ) -> Result<Option<ProgramRow>, RepositoryError> {
     ProgramRowRepository::new(connection).find_one_by_id(id)
 }
-
-pub fn check_demographic_indicator_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<Option<DemographicIndicatorRow>, RepositoryError> {
-    DemographicIndicatorRowRepository::new(connection).find_one_by_id(id)
-}

@@ -1,7 +1,4 @@
-use super::{
-    query::get_vaccine_course,
-    validate::{check_demographic_indicator_exists, check_program_exists},
-};
+use super::{query::get_vaccine_course, validate::check_program_exists};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext,
     vaccine_course::validate::check_vaccine_course_exists, SingleRecordError,
@@ -26,7 +23,6 @@ pub struct InsertVaccineCourse {
     pub id: String,
     pub name: String,
     pub program_id: String,
-    pub demographic_indicator_id: String,
 }
 
 pub fn insert_vaccine_course(
@@ -67,10 +63,6 @@ pub fn validate(
         return Err(InsertVaccineCourseError::ProgramDoesNotExist);
     }
 
-    if check_demographic_indicator_exists(&input.demographic_indicator_id, connection)?.is_none() {
-        return Err(InsertVaccineCourseError::DemographicIndicatorDoesNotExist);
-    }
-
     Ok(())
 }
 
@@ -79,14 +71,13 @@ pub fn generate(
         id,
         name,
         program_id,
-        demographic_indicator_id,
     }: InsertVaccineCourse,
 ) -> VaccineCourseRow {
     VaccineCourseRow {
         id,
         name,
         program_id,
-        demographic_indicator_id,
+        demographic_indicator_id: None,
         coverage_rate: 100.0,
         is_active: true,
         wastage_rate: 0.0,

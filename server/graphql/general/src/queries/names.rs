@@ -112,7 +112,7 @@ pub fn get_names(
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
     let names = service_provider
-        .general_service
+        .name_service
         .get_names(
             &service_context,
             &store_id,

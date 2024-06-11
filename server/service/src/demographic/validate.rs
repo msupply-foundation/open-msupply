@@ -32,24 +32,16 @@ pub fn check_base_year_unique(
 pub fn check_year_name_combination_unique(
     name: &str,
     base_year: i32,
-    id: &str,
+    id: Option<String>,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-    let filter = DemographicIndicatorFilter::new()
+    let mut filter = DemographicIndicatorFilter::new()
         .base_year(EqualFilter::equal_to_i32(base_year.to_owned()))
         .name(StringFilter::equal_to(name));
-    let mut result = DemographicIndicatorRepository::new(connection).query_by_filter(filter)?;
-    let result_overlap = match result.len() {
-        0 => true,
-        // return ok if editing this id
-        1 => {
-            if result.pop().unwrap().id == id {
-                true
-            } else {
-                false
-            }
-        }
-        _ => false,
-    };
-    Ok(result_overlap)
+
+    if let Some(id) = id {
+        filter = filter.id(EqualFilter::not_equal_to(&id));
+    }
+    let result = DemographicIndicatorRepository::new(connection).query_by_filter(filter)?;
+    Ok(result.len() == 0)
 }

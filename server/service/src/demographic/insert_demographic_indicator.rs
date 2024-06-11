@@ -56,7 +56,7 @@ pub fn validate(
     input: &InsertDemographicIndicator,
     connection: &StorageConnection,
 ) -> Result<(), InsertDemographicIndicatorError> {
-    if !check_year_name_combination_unique(&input.name, input.base_year, &input.id, connection)? {
+    if !check_year_name_combination_unique(&input.name, input.base_year, None, connection)? {
         return Err(InsertDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear);
     }
 
