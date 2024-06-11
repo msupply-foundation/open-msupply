@@ -129,14 +129,12 @@ const useUpdate = (
   setErrorMessage: Dispatch<SetStateAction<string>>
 ) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
-  const t = useTranslation('system');
+  const t = useTranslation('catalogue');
 
   const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
-    if (!id) {
-      throw new Error('No ID provided to update Immunisation Program');
-    }
     if (!name) {
-      throw new Error('No name provided to update Immunisation Program');
+      setErrorMessage(t('error.field-must-be-specified', { field: 'Name' }));
+      return;
     }
 
     const apiResult = await api.updateImmunisationProgram({

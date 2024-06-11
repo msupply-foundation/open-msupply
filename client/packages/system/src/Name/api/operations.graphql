@@ -34,6 +34,7 @@ fragment Name on NameNode {
     id
     code
   }
+  properties
 }
 
 fragment Property on PropertyNode {
@@ -87,6 +88,24 @@ query nameProperties {
       nodes {
         __typename
         ...Property
+      }
+    }
+  }
+}
+
+mutation updateNameProperties(
+  $storeId: String!
+  $input: UpdateNamePropertiesInput
+) {
+  updateNameProperties(storeId: $storeId, input: $input) {
+    __typename
+    ... on NameNode {
+      ...Name
+    }
+    ... on UpdateNamePropertiesError {
+      error {
+        __typename
+        description
       }
     }
   }

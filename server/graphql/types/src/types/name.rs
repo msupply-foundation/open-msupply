@@ -237,6 +237,15 @@ impl NameNode {
             .custom_data()
             .map_err(|err| StandardGraphqlError::from_error(&err))
     }
+
+    /// Returns a JSON string of the name properties e.g {"property_key": "value"}
+    pub async fn properties(&self) -> String {
+        let name_properties = match &self.name.properties {
+            Some(properties) => properties.to_owned(),
+            None => "{}".to_string(), // Empty JSON object
+        };
+        name_properties
+    }
 }
 
 #[derive(Union)]
@@ -316,6 +325,7 @@ mod test {
                         }),
                         name_store_join_row: None,
                         store_row: None,
+                        properties: None,
                     },
                 }
             }
