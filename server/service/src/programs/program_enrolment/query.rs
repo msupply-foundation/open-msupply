@@ -31,7 +31,7 @@ pub(crate) fn program_enrolments(
     allowed_ctx: Vec<String>,
 ) -> Result<Vec<ProgramEnrolment>, RepositoryError> {
     // restrict query results to allowed entries
-    let mut filter = filter.unwrap_or(ProgramEnrolmentFilter::new());
+    let mut filter = filter.unwrap_or_default();
     filter.program_context_id = Some(
         filter
             .program_context_id
