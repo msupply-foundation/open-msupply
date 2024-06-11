@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { VaccineCourseFragment } from '../operations.generated';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
-import { VACCINE, VACCINELIST } from './keys';
+import { VACCINE, LIST } from './keys';
 
 export type CourseListParams = {
   first?: number;
@@ -29,7 +29,7 @@ export const useVaccineCourseList = (queryParams: CourseListParams) => {
     filterBy,
   } = queryParams;
 
-  const queryKey = [VACCINE, VACCINELIST, sortBy, first, offset, filterBy];
+  const queryKey = [VACCINE, LIST, sortBy, first, offset, filterBy];
   const queryFn = async (): Promise<{
     nodes: VaccineCourseFragment[];
     totalCount: number;
