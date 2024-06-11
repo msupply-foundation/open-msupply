@@ -4,7 +4,7 @@ use repository::vaccine_course::vaccine_course_item_row::VaccineCourseItemRow;
 
 #[derive(PartialEq, Debug)]
 pub struct VaccineCourseItemNode {
-    pub vaccine_course: VaccineCourseItemRow,
+    pub vaccine_course_item: VaccineCourseItemRow,
 }
 
 #[Object]
@@ -15,11 +15,13 @@ impl VaccineCourseItemNode {
 }
 
 impl VaccineCourseItemNode {
-    pub fn from_domain(vaccine_course: VaccineCourseItemRow) -> VaccineCourseItemNode {
-        VaccineCourseItemNode { vaccine_course }
+    pub fn from_domain(vaccine_course_item: VaccineCourseItemRow) -> VaccineCourseItemNode {
+        VaccineCourseItemNode {
+            vaccine_course_item,
+        }
     }
 
     pub fn row(&self) -> &VaccineCourseItemRow {
-        &self.vaccine_course
+        &self.vaccine_course_item
     }
 }
