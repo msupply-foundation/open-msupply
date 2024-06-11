@@ -61,23 +61,10 @@ impl SyncTranslation for NameOmsFieldsTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let name_row = NameRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Name row ({}) not found",
-                changelog.record_id
-            )))?;
-
-        if name_row.deleted_datetime.is_some() {
-            return Ok(PushTranslateResult::Ignored(
-                "Ignore pushing soft deleted name".to_string(),
-            ));
-        }
-
         let row = NameRowRepository::new(connection)
             .find_one_oms_fields_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "NameOmsFields row ({}) not found",
+                "Name row ({}) not found for Name OMS Fields translation",
                 changelog.record_id
             )))?;
 
@@ -104,7 +91,6 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
-            // TODO add match record here
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
