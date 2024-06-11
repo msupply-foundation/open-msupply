@@ -260,6 +260,7 @@ impl InvoiceLineBelongsToAnotherInvoice {
 pub enum UniqueValueKey {
     Code,
     Serial,
+    Name,
 }
 
 pub struct UniqueValueViolation(pub UniqueValueKey);
