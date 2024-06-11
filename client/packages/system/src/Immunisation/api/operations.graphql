@@ -1,6 +1,9 @@
 fragment ImmunisationProgram on ProgramNode {
   id
   name
+  vaccineCourses {
+    name
+  }
 }
 
 query programs(
