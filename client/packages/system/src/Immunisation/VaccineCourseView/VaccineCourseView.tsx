@@ -277,12 +277,7 @@ export const VaccineCourseView: FC = () => {
               onChange={value => onUpdate({ wastageRate: value })}
             />
           </Row>
-          <Row label={t('label.calculate-demand')}>
-            <Checkbox
-              value={draft?.calculateDemand ?? false}
-              onChange={value => onUpdate({ calculateDemand: value })}
-            ></Checkbox>
-          </Row>
+
           <Row label={t('label.vaccine-items')}>
             <AutocompleteMulti
               isOptionEqualToValue={(option, value) =>
@@ -306,6 +301,12 @@ export const VaccineCourseView: FC = () => {
               }}
               options={VaccineOptions}
             />
+          </Row>
+          <Row label={t('label.calculate-demand')}>
+            <Checkbox
+              value={draft?.calculateDemand ?? true}
+              onChange={value => onUpdate({ calculateDemand: value })}
+            ></Checkbox>
           </Row>
         </Section>
       </Container>
