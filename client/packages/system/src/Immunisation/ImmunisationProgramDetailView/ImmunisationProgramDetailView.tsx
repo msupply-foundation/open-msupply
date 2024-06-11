@@ -24,8 +24,16 @@ import { Toolbar } from './Toolbar';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppBarButtons } from './AppBarButtons';
 import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
+import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
+import { DraftVaccineCourse } from '../api/hooks/useVaccineCourse';
 
 export const ProgramComponent: FC = () => {
+  const {
+    updateSortQuery,
+    updatePaginationQuery,
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
+  const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { setSuffix, navigateUpOne } = useBreadcrumbs();
@@ -39,17 +47,23 @@ export const ProgramComponent: FC = () => {
     update: { update, isUpdating },
   } = useImmunisationProgram(id);
 
+  const queryParams = {
+    filterBy: { ...filterBy, programId: { equalTo: id } },
+    offset,
+    sortBy,
+    first,
+  };
+
   const {
-    updateSortQuery,
-    updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
-  const pagination = { page, first, offset };
+    data: vaccineCoursesData,
+    isLoading: vaccineCoursesLoading,
+    isError: vaccineCoursesError,
+  } = useVaccineCourseList(queryParams);
 
   const columns = useColumns(
     [
-      'name',
-      { key: 'targetDemographic', label: 'label.target-demographic' },
+      { key: 'name', label: 'label.name' },
+      { key: 'demographicIndicatorId', label: 'label.target-demographic' },
       { key: 'doses', label: 'label.doses' },
     ],
     {
@@ -63,14 +77,17 @@ export const ProgramComponent: FC = () => {
     setSuffix(data?.name ?? '');
   }, [setSuffix, data]);
 
-  // create modal will generate vaccine for program. Onclick will navigate for detailed edit
-  const { isOpen, onClose, onOpen } = useEditModal<any>();
+  const { isOpen, onClose, onOpen } = useEditModal<DraftVaccineCourse>();
 
   return isLoading ? (
     <InlineSpinner />
   ) : (
     <>
-      <VaccineCourseCreateModal isOpen={isOpen} onClose={onClose} />
+      <VaccineCourseCreateModal
+        isOpen={isOpen}
+        onClose={onClose}
+        programId={id}
+      />
       <Toolbar
         draft={draft}
         onUpdate={updatePatch}
@@ -78,13 +95,15 @@ export const ProgramComponent: FC = () => {
         isError={errorMessage != ''}
       />
       <AppBarButtons onCreate={onOpen} />
+      <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'Vaccine Course List'}
         pagination={{ ...pagination }}
         onChangePage={updatePaginationQuery}
         columns={columns}
-        data={[]} // TODO Query for Vaccine Courses
-        isLoading={false} // TODO Query for Vaccine Courses
+        data={vaccineCoursesData?.nodes ?? []}
+        isLoading={vaccineCoursesLoading}
+        isError={vaccineCoursesError}
         onRowClick={row => navigate(row.id)}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
