@@ -13,6 +13,7 @@ use crate::{
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
+    demographic::DemographicServiceTrait,
     display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
     document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
@@ -27,10 +28,11 @@ use crate::{
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     missing_program::create_missing_master_list_and_program,
-    name::get_names,
+    name::{NameService, NameServiceTrait},
     pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     processors::ProcessorsTrigger,
+    program::ProgramServiceTrait,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
@@ -55,11 +57,12 @@ use crate::{
     },
     system_user::create_system_user,
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
 };
 use repository::{
-    Name, NameFilter, NameSort, PaginationOption, RepositoryError, StorageConnection,
-    StorageConnectionManager, Store, StoreFilter, StoreSort,
+    PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
+    StoreFilter, StoreSort,
 };
 
 pub struct ServiceProvider {
@@ -73,6 +76,7 @@ pub struct ServiceProvider {
     pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
     pub cold_chain_service: Box<dyn ColdChainServiceTrait>,
 
+    pub name_service: Box<dyn NameServiceTrait>,
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stocktake_service: Box<dyn StocktakeServiceTrait>,
@@ -132,6 +136,11 @@ pub struct ServiceProvider {
     pub asset_service: Box<dyn AssetServiceTrait>,
     // Label Printer
     pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
+    // Demographic
+    pub demographic_service: Box<dyn DemographicServiceTrait>,
+    // Vaccine Course
+    pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
+    pub program_service: Box<dyn ProgramServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -212,6 +221,10 @@ impl ServiceProvider {
             label_printer_settings_service: Box::new(
                 crate::label_printer_settings_service::LabelPrinterSettingsService {},
             ),
+            name_service: Box::new(NameService {}),
+            demographic_service: Box::new(crate::demographic::DemographicService {}),
+            vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
+            program_service: Box::new(crate::program::ProgramService {}),
         }
     }
 
@@ -257,17 +270,6 @@ impl ServiceContext {
 }
 
 pub trait GeneralServiceTrait: Sync + Send {
-    fn get_names(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        pagination: Option<PaginationOption>,
-        filter: Option<NameFilter>,
-        sort: Option<NameSort>,
-    ) -> Result<ListResult<Name>, ListError> {
-        get_names(ctx, store_id, pagination, filter, sort)
-    }
-
     fn get_stores(
         &self,
         ctx: &ServiceContext,
