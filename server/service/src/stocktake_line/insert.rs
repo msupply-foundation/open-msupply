@@ -78,11 +78,7 @@ fn check_stock_line_is_unique(
     )?;
     let already_has_stock_line = stocktake_lines.iter().find(|line| {
         if let Some(ref stock_line) = line.stock_line {
-            if stock_line.id == stock_line_id {
-                return true;
-            } else {
-                return false;
-            }
+            return stock_line.id == stock_line_id;
         }
         false
     });
