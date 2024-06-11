@@ -769,11 +769,17 @@ pub struct AuthService {
     pub resource_permissions: HashMap<Resource, PermissionDSL>,
 }
 
-impl AuthService {
-    pub fn new() -> Self {
+impl Default for AuthService {
+    fn default() -> Self {
         AuthService {
             resource_permissions: all_permissions(),
         }
+    }
+}
+
+impl AuthService {
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 

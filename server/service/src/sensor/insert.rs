@@ -88,7 +88,7 @@ pub fn check_sensor_does_not_exist(
     let sensors = SensorRepository::new(connection)
         .query_by_filter(SensorFilter::new().id(EqualFilter::equal_to(id)))?;
 
-    Ok(sensors.len() == 0)
+    Ok(sensors.is_empty())
 }
 
 impl From<RepositoryError> for InsertSensorError {

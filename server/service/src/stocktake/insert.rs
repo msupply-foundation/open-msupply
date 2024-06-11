@@ -198,7 +198,7 @@ fn generate_lines_from_master_list(
             .unwrap()
             .name;
 
-        if stock_lines.len() == 0 {
+        if stock_lines.is_empty() {
             result.push(StocktakeLineRow {
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),

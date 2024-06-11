@@ -81,19 +81,10 @@ pub enum DemographicIndicatorResponse {
     Response(DemographicIndicatorNode),
 }
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Default)]
 pub struct DemographicIndicatorConnector {
     total_count: u32,
     nodes: Vec<DemographicIndicatorNode>,
-}
-
-impl DemographicIndicatorConnector {
-    pub fn new() -> DemographicIndicatorConnector {
-        DemographicIndicatorConnector {
-            total_count: 0,
-            nodes: Vec::<DemographicIndicatorNode>::new(),
-        }
-    }
 }
 
 #[derive(Union)]
@@ -107,20 +98,12 @@ pub enum DemographicProjectionResponse {
     Response(DemographicProjectionNode),
 }
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Default)]
 pub struct DemographicProjectionConnector {
     total_count: u32,
     nodes: Vec<DemographicProjectionNode>,
 }
 
-impl DemographicProjectionConnector {
-    pub fn new() -> DemographicProjectionConnector {
-        DemographicProjectionConnector {
-            total_count: 0,
-            nodes: Vec::<DemographicProjectionNode>::new(),
-        }
-    }
-}
 #[derive(PartialEq, Debug)]
 pub struct DemographicIndicatorNode {
     pub demographic_indicator: DemographicIndicatorRow,

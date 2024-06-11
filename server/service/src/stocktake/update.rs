@@ -146,7 +146,7 @@ fn validate(
 
     let status_changed = input.status.is_some();
     if status_changed {
-        if stocktake_lines.len() == 0 {
+        if stocktake_lines.is_empty() {
             return Err(UpdateStocktakeError::NoLines);
         }
 
