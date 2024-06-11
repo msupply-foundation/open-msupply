@@ -10,22 +10,23 @@ use repository::{
 use util::constants::IMMUNISATION_CONTEXT_ID;
 
 #[derive(PartialEq, Debug)]
-pub enum InsertImmunisationProgramError {
-    ImmunisationProgramAlreadyExists,
+pub enum UpdateImmunisationProgramError {
+    ImmunisationProgramDoesNotExist,
+    ImmunisationProgramNameExists,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
-pub struct InsertImmunisationProgram {
+pub struct UpdateImmunisationProgram {
     pub id: String,
     pub name: String,
 }
 
-pub fn insert_immunisation_program(
+pub fn update_immunisation_program(
     ctx: &ServiceContext,
-    input: InsertImmunisationProgram,
-) -> Result<ProgramRow, InsertImmunisationProgramError> {
+    input: UpdateImmunisationProgram,
+) -> Result<ProgramRow, UpdateImmunisationProgramError> {
     let immunisation_program = ctx
         .connection
         .transaction_sync(|connection| {
@@ -35,34 +36,34 @@ pub fn insert_immunisation_program(
 
             activity_log_entry(
                 ctx,
-                ActivityLogType::ProgramCreated,
+                ActivityLogType::ProgramUpdated,
                 Some(new_immunisation_program.id.clone()),
                 None,
                 None,
             )?;
 
             get_program(&ctx.connection, new_immunisation_program.id)
-                .map_err(InsertImmunisationProgramError::from)
+                .map_err(UpdateImmunisationProgramError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(immunisation_program)
 }
 
 pub fn validate(
-    input: &InsertImmunisationProgram,
+    input: &UpdateImmunisationProgram,
     connection: &StorageConnection,
-) -> Result<(), InsertImmunisationProgramError> {
-    if check_immunisation_program_exists(&input.id, connection)?.is_some() {
-        return Err(InsertImmunisationProgramError::ImmunisationProgramAlreadyExists);
+) -> Result<(), UpdateImmunisationProgramError> {
+    if check_immunisation_program_exists(&input.id, connection)?.is_none() {
+        return Err(UpdateImmunisationProgramError::ImmunisationProgramDoesNotExist);
     }
-    if check_program_name_exists(&input.name, None, connection)?.is_some() {
-        return Err(InsertImmunisationProgramError::ImmunisationProgramAlreadyExists);
+    if check_program_name_exists(&input.name, Some(input.id.to_owned()), connection)?.is_some() {
+        return Err(UpdateImmunisationProgramError::ImmunisationProgramNameExists);
     }
 
     Ok(())
 }
 
-pub fn generate(InsertImmunisationProgram { id, name }: InsertImmunisationProgram) -> ProgramRow {
+pub fn generate(UpdateImmunisationProgram { id, name }: UpdateImmunisationProgram) -> ProgramRow {
     ProgramRow {
         id,
         name,
@@ -72,15 +73,15 @@ pub fn generate(InsertImmunisationProgram { id, name }: InsertImmunisationProgra
     }
 }
 
-impl From<RepositoryError> for InsertImmunisationProgramError {
+impl From<RepositoryError> for UpdateImmunisationProgramError {
     fn from(error: RepositoryError) -> Self {
-        InsertImmunisationProgramError::DatabaseError(error)
+        UpdateImmunisationProgramError::DatabaseError(error)
     }
 }
 
-impl From<SingleRecordError> for InsertImmunisationProgramError {
+impl From<SingleRecordError> for UpdateImmunisationProgramError {
     fn from(error: SingleRecordError) -> Self {
-        use InsertImmunisationProgramError::*;
+        use UpdateImmunisationProgramError::*;
         match error {
             SingleRecordError::DatabaseError(error) => DatabaseError(error),
             SingleRecordError::NotFound(_) => CreatedRecordNotFound,

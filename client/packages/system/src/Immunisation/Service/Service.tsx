@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { ImmunisationProgramListView } from '../ListView';
-import { ImmunisationProgramView } from '../ImmunisationProgramView';
+import { ImmunisationProgramDetailView } from '../ImmunisationProgramDetailView';
 
 export const ImmunisationProgramService: FC = () => {
   const immunisationProgramsRoute = RouteBuilder.create(
@@ -30,7 +30,7 @@ export const ImmunisationProgramService: FC = () => {
       />
       <Route
         path={immunisationProgramRoute}
-        element={<ImmunisationProgramView />}
+        element={<ImmunisationProgramDetailView />}
       />
     </Routes>
   );
