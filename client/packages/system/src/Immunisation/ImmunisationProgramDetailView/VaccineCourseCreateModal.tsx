@@ -1,64 +1,38 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useDialog,
   Grid,
   DialogButton,
   useTranslation,
-  FnUtils,
   InlineSpinner,
   BasicTextInput,
   Box,
   InputLabel,
 } from '@openmsupply-client/common';
+import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 
 interface VaccineCourseCreateModalModalProps {
   isOpen: boolean;
   onClose: () => void;
+  programId: string | undefined;
 }
-
-const createNewVaccineCourse = (seed?: any | null): any => ({
-  id: FnUtils.generateUUID(),
-  name: '',
-  ...seed,
-});
-
-interface UseDraftVaccineCourseControl {
-  draft: any;
-  onUpdate: (patch: Partial<any>) => void;
-  onSave: () => Promise<void>;
-  isLoading: boolean;
-}
-
-const useDraftVaccineCourse = (): UseDraftVaccineCourseControl => {
-  const [vaccineCourse, setVaccineCourse] = useState<any>(() =>
-    createNewVaccineCourse()
-  );
-
-  const onUpdate = (patch: Partial<any>) => {
-    setVaccineCourse({ ...vaccineCourse, ...patch });
-  };
-
-  const onSave = async () => {
-    console.info('TODO insert vaccineCourse mutation');
-  };
-
-  const isLoading = false;
-
-  return {
-    draft: vaccineCourse,
-    onUpdate,
-    onSave,
-    isLoading,
-  };
-};
 
 export const VaccineCourseCreateModal: FC<
   VaccineCourseCreateModalModalProps
-> = ({ isOpen, onClose }) => {
+> = ({ isOpen, onClose, programId }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation('coldchain');
-  const { draft, onUpdate, onSave, isLoading } = useDraftVaccineCourse();
+  const t = useTranslation(['coldchain']);
+  const {
+    query: { isLoading },
+    draft,
+    updatePatch,
+    create: { create },
+  } = useVaccineCourse(programId);
   const isInvalid = !draft.name.trim();
+
+  useEffect(() => {
+    updatePatch({ programId: programId });
+  }, [programId]);
 
   return (
     <Modal
@@ -67,13 +41,13 @@ export const VaccineCourseCreateModal: FC<
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await onSave();
+            await create();
             onClose();
           }}
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      title={t('label.add-new-vaccine-course')}
+      title={t('label.create-new-program')}
     >
       {!isLoading ? (
         <Grid flexDirection="column" display="flex" gap={2}>
@@ -83,7 +57,7 @@ export const VaccineCourseCreateModal: FC<
               fullWidth
               autoFocus
               value={draft.name}
-              onChange={e => onUpdate({ name: e.target.value })}
+              onChange={e => updatePatch({ name: e.target.value })}
             />
           </Box>
         </Grid>
