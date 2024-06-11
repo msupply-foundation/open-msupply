@@ -211,7 +211,7 @@ fn query_reports(
     let repo = ReportRepository::new(&ctx.connection);
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
-        .unwrap_or(ReportFilter::new())
+        .unwrap_or_default()
         .r#type(ReportType::OmSupply.equal_to());
     Ok(repo.query(pagination, Some(filter.clone()), sort)?)
 }

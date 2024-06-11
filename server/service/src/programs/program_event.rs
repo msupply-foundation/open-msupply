@@ -129,7 +129,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         let repository = ProgramEventRepository::new(&ctx.connection);
 
         let filter = if let Some(allowed_ctx) = allowed_ctx {
-            let mut filter = filter.unwrap_or(ProgramEventFilter::new());
+            let mut filter = filter.unwrap_or_default();
             // restrict query results to allowed entries
             filter.context_id = Some(
                 filter
@@ -157,7 +157,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<ProgramEvent>, ListError> {
         let filter = filter
-            .unwrap_or(ProgramEventFilter::new())
+            .unwrap_or_default()
             .active_start_datetime(DatetimeFilter::before_or_equal_to(at))
             .active_end_datetime(DatetimeFilter::after_or_equal_to(
                 // TODO: add an `after` filter
@@ -207,7 +207,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                                 r#type: row.r#type,
                             };
 
-                            map.entry(target).or_insert(vec![]);
+                            map.entry(target).or_default();
                             map
                         },
                     )
@@ -222,7 +222,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                                 r#type: it.r#type,
                             };
 
-                            map.entry(target).or_insert(vec![]).push(StackEvent {
+                            map.entry(target).or_default().push(StackEvent {
                                 // sanitise active_start_datetime to not be small than datetime
                                 active_start_datetime: datetime.max(it.active_start_datetime),
                                 name: it.name,
