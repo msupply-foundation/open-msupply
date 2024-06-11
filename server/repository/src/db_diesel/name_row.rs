@@ -431,7 +431,7 @@ mod test {
         // Check properties have been set
         assert_eq!(name.properties, properties);
 
-        // upsert usual row
+        // upsert name_row
         row_repo.upsert_one(&row).unwrap();
 
         let name = name_repo
