@@ -65,7 +65,7 @@ pub fn update_stock_in_line(
             }
 
             get_invoice_line(ctx, &updated_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

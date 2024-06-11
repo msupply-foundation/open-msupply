@@ -51,7 +51,7 @@ impl SyncUser {
                 let service_ctx =
                     service_provider.context("".to_string(), user_info.user.id.clone())?;
                 LoginService::update_user(&service_ctx, &password, user_info)
-                    .map_err(|e| LoginError::UpdateUserError(e))?;
+                    .map_err(LoginError::UpdateUserError)?;
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => {

@@ -79,7 +79,7 @@ pub fn update_outbound_return(
             }
 
             get_invoice(ctx, None, &input.outbound_return_id)
-                .map_err(|error| UpdateOutboundReturnError::DatabaseError(error))?
+                .map_err(UpdateOutboundReturnError::DatabaseError)?
                 .ok_or(UpdateOutboundReturnError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

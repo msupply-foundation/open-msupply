@@ -106,7 +106,7 @@ impl<'a> UserAccountService<'a> {
 
                 Ok(())
             })
-            .map_err(|error| RepositoryError::from(error))?;
+            .map_err(RepositoryError::from)?;
         Ok(())
     }
 

@@ -35,7 +35,7 @@ pub fn update_return_reason_id(
             invoice_line_repo.update_return_reason_id(&input.line_id, input.reason_id.clone())?;
 
             get_invoice_line(ctx, &input.line_id)
-                .map_err(|error| UpdateLineReturnReasonError::DatabaseError(error))?
+                .map_err(UpdateLineReturnReasonError::DatabaseError)?
                 .ok_or(UpdateLineReturnReasonError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
