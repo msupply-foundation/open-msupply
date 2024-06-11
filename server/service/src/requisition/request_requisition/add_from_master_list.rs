@@ -111,12 +111,12 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    Ok(generate_requisition_lines(
+    generate_requisition_lines(
         ctx,
         store_id,
         &requisition_row,
         items_ids_not_in_requisition,
-    )?)
+    )
 }
 
 pub fn check_master_list_for_store(

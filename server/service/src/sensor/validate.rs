@@ -28,5 +28,5 @@ pub fn check_sensor_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<SensorRow>, RepositoryError> {
-    Ok(SensorRowRepository::new(connection).find_one_by_id(id)?)
+    SensorRowRepository::new(connection).find_one_by_id(id)
 }
