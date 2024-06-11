@@ -19,6 +19,7 @@ Upsert
 upserted
 upserts
 zustand
+parseable
 Waterpack
 anymap
 thiserror

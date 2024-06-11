@@ -7,6 +7,7 @@ use crate::{
 use repository::{
     ActivityLogType, ProgramRow, ProgramRowRepository, RepositoryError, StorageConnection,
 };
+use util::constants::IMMUNISATION_CONTEXT_ID;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertImmunisationProgramError {
@@ -54,7 +55,7 @@ pub fn validate(
     if check_immunisation_program_exists(&input.id, connection)?.is_some() {
         return Err(InsertImmunisationProgramError::ImmunisationProgramAlreadyExists);
     }
-    if check_program_name_exists(&input.name, connection)?.is_some() {
+    if check_program_name_exists(&input.name, None, connection)?.is_some() {
         return Err(InsertImmunisationProgramError::ImmunisationProgramAlreadyExists);
     }
 
@@ -66,7 +67,7 @@ pub fn generate(InsertImmunisationProgram { id, name }: InsertImmunisationProgra
         id,
         name,
         master_list_id: None,
-        context_id: "immunisation".to_string(), // TODO: this could be a parent program id in future?
+        context_id: IMMUNISATION_CONTEXT_ID.to_string(),
         is_immunisation: true,
     }
 }
