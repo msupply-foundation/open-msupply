@@ -7,20 +7,20 @@ import {
   PlusCircleIcon,
 } from '@openmsupply-client/common';
 
-interface ProgramAppBarButtonsProps {}
+interface ProgramAppBarButtonsProps {
+  onCreate: () => void;
+}
 
-export const AppBarButtons = ({}: ProgramAppBarButtonsProps) => {
-  const t = useTranslation('catalogue');
+export const AppBarButtons = ({ onCreate }: ProgramAppBarButtonsProps) => {
+  const t = useTranslation('coldchain');
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={t('button.add-new-vaccine-course')}
-          onClick={() => {
-            alert('Add new vaccine course, coming soon');
-          }}
+          label={t('label.add-new-vaccine-course')}
+          onClick={onCreate}
         />
       </Grid>
     </AppBarButtonsPortal>

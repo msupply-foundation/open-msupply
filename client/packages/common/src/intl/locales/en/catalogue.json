@@ -40,6 +40,7 @@
   "label.volume-per-outer-pack": "Volume per outer pack",
   "label.volume-per-pack": "Volume per pack",
   "label.weight": "Weight",
+  "heading.schedule": "Schedule",
   "messages.click-to-return-to-item-list": "Unable to find an item with that ID. Click OK to return to the list of items.",
   "messages.click-to-return-to-master-lists": "Unable to find a master list with that ID. Click OK to return to the list of master lists",
   "messages.confirm-delete-pack-variant": "This will remove {{packVariantName}} from the list of pack variants.",
@@ -65,6 +66,5 @@
   "title.months-of-stock": "Months of Stock",
   "title.packaging": "Packaging",
   "title.pricing": "Pricing",
-  "title.stock-on-hand": "Available Stock",
-  "button.add-new-vaccine-course": "Add New Vaccine Course"
+  "title.stock-on-hand": "Available Stock"
 }
