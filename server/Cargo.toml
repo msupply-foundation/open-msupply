@@ -34,6 +34,7 @@ actix-files = "0.6.0"
 wrong_self_convention = "allow"
 large_enum_variant = "allow"
 module_inception = "allow"
+bool_assert_comparison = "allow"
 
 [workspace]
 
