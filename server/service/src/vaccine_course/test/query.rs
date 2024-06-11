@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{mock_demographic_indicator_a, mock_program_a, MockDataInserts};
+    use repository::mock::{mock_program_a, MockDataInserts};
     use repository::StringFilter;
     use repository::{
         test_db::setup_all,

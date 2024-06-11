@@ -25,8 +25,8 @@ pub fn mock_new_stock_line_for_stocktake_a() -> StockLineRow {
 }
 
 pub fn test_stocktake_line_data() -> MockData {
-    let mut data: MockData = Default::default();
-
-    data.stock_lines = vec![mock_new_stock_line_for_stocktake_a()];
-    data
+    MockData {
+        stock_lines: vec![mock_new_stock_line_for_stocktake_a()],
+        ..Default::default()
+    }
 }
