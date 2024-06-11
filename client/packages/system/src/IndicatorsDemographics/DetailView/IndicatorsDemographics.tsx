@@ -1,7 +1,6 @@
 import React, { FC, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
 import {
-  ArrayUtils,
   Box,
   ColumnAlign,
   DataTable,
@@ -39,15 +38,6 @@ export interface HeaderValue {
   value: number;
 }
 
-// header data (not currently stored)
-const headerData: HeaderValue[] = [
-  { id: '1', value: 1.1 },
-  { id: '2', value: 1.2 },
-  { id: '3', value: 1.2 },
-  { id: '4', value: 1.1 },
-  { id: '5', value: 1.0 },
-];
-
 export const toRow = (row: {
   __typename?: 'DemographicIndicatorNode';
   id: string;
@@ -84,20 +74,16 @@ const IndicatorsDemographicsComponent: FC = () => {
     initialSort: { key: 'percentage', dir: 'desc' },
   });
   const [indexPopulation, setIndexPopulation] = useState<number>();
-
-  const { draft, setDraft } =
-    useDemographicData.document.listIndicator(headerData);
-
-  const draftHeaders = ArrayUtils.toObject(headerData);
+  const { draft, setDraft, headerData } = useDemographicData.indicator.list();
   const [isDirty, setIsDirty] = useState(false);
 
   const [headerDraft, setHeaderDraft] =
-    useState<Record<string, HeaderValue>>(draftHeaders);
+    useState<Record<string, HeaderValue>>(headerData);
 
   const { insertDemographicIndicator, invalidateQueries } =
-    useDemographicData.document.insertIndicator();
+    useDemographicData.indicator.insert();
   const { mutateAsync: updateDemographicIndicator } =
-    useDemographicData.document.updateIndicator();
+    useDemographicData.indicator.update();
 
   const PopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
@@ -112,7 +98,7 @@ const IndicatorsDemographicsComponent: FC = () => {
     Object.keys(currentDraft).forEach(rowKey => {
       const updatedRow = calculateAcrossRow(
         currentDraft[rowKey] as Row,
-        draftHeaders,
+        headerData,
         indexPopulationChange ? patch.basePopulation : indexPopulation
       );
       updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
