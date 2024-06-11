@@ -10,16 +10,16 @@ import {
 interface ProgramAppBarButtonsProps {}
 
 export const AppBarButtons = ({}: ProgramAppBarButtonsProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation('catalogue');
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
-          label={t('button.add-new-immunisation')}
+          label={t('button.add-new-vaccine-course')}
           onClick={() => {
-            console.info('create new immunisation');
+            alert('Add new vaccine course, coming soon');
           }}
         />
       </Grid>

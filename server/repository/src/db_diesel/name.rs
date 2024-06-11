@@ -10,14 +10,17 @@ use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
     },
+    name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameLinkRow, NameType, Pagination, Sort, StringFilter,
+    EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameType, Pagination, Sort,
+    StringFilter,
 };
 
 use diesel::{
     dsl::{And, Eq, IntoBoxed, LeftJoin, On},
     helper_types::InnerJoin,
     prelude::*,
+    query_source::Alias,
 };
 use util::{constants::SYSTEM_NAME_CODES, inline_init};
 
@@ -26,6 +29,7 @@ pub struct Name {
     pub name_row: NameRow,
     pub name_store_join_row: Option<NameStoreJoinRow>,
     pub store_row: Option<StoreRow>,
+    pub properties: Option<String>,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -74,6 +78,7 @@ pub type NameSort = Sort<NameSortField>;
 type NameAndNameStoreJoin = (
     NameRow,
     (NameLinkRow, Option<NameStoreJoinRow>, Option<StoreRow>),
+    NameOmsFieldsRow,
 );
 
 pub struct NameRepository<'a> {
@@ -170,6 +175,7 @@ impl<'a> NameRepository<'a> {
                     )
                     .left_join(store_dsl::store),
             )
+            .inner_join(name_oms_fields_alias)
             .into_boxed();
 
         if let Some(f) = filter {
@@ -258,12 +264,13 @@ impl<'a> NameRepository<'a> {
 
 impl Name {
     pub fn from_join(
-        (name_row, (_name_link_row, name_store_join_row, store_row)): NameAndNameStoreJoin,
+        (name_row, (_name_link_row, name_store_join_row, store_row), name_oms_fields): NameAndNameStoreJoin,
     ) -> Name {
         Name {
             name_row,
             name_store_join_row,
             store_row,
+            properties: name_oms_fields.properties,
         }
     }
 
@@ -286,8 +293,11 @@ type OnNameStoreJoinToNameLinkJoin =
 type BoxedNameQuery = IntoBoxed<
     'static,
     InnerJoin<
-        name::table,
-        LeftJoin<LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>, store::table>,
+        InnerJoin<
+            name::table,
+            LeftJoin<LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>, store::table>,
+        >,
+        Alias<NameOmsFields>,
     >,
     DBType,
 >;
@@ -441,6 +451,7 @@ mod tests {
                 }),
                 name_store_join_row: None,
                 store_row: None,
+                properties: None,
             });
         }
         (rows, queries)

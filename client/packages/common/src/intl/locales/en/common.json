@@ -146,7 +146,7 @@
   "heading.user-sync": "User Synchronisation Status",
   "info.server-restarting": "Server restarting...",
   "label.abbreviation": "Abbreviation",
-  "label.programs-immunisations": "Immunisations",
+  "label.programs-immunisations": "Immunizations",
   "label.actions": "Actions",
   "label.add-another": "Add another",
   "label.additional-info": "Additional Info",
@@ -375,7 +375,7 @@
   "label.soh": "SOH",
   "label.start-datetime": "Start date / time",
   "label.status": "Status",
-  "label.statuslogs": "Status Logs",
+  "label.statushistory": "Status History",
   "label.stock-on-hand": "SoH (Est. remaining)",
   "label.stocktake-comment": "Comment",
   "label.store": "Store",
@@ -532,5 +532,6 @@
   "title.confirm-delete-encounter": "Delete encounter",
   "warning.caps-lock": "Warning: Caps lock is on",
   "error.record-already-exists": "A record with this id already exists",
-  "error.unique-value-violation": "A record with this {{ field }} already exists"
+  "error.unique-value-violation": "A record with this {{ field }} already exists",
+  "error.field-must-be-specified": "{{field}} must be specified"
 }

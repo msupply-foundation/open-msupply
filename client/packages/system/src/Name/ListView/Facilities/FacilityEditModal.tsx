@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   useTranslation,
   DetailContainer,
@@ -11,6 +11,7 @@ import {
   Typography,
   PropertyInput,
   InputWithLabelRow,
+  ObjUtils,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -22,11 +23,16 @@ interface FacilityEditModalProps {
   setNextFacility: (nameId: string) => void;
 }
 
-// todo: next PR - populate existing from name
-const useDraftFacilityProperties = () => {
+const useDraftFacilityProperties = (initialProperties?: string | null) => {
   const [draftProperties, setDraftProperties] = useState<
     Record<string, string | number | boolean | null>
-  >({});
+  >(ObjUtils.parse(initialProperties));
+
+  useEffect(() => {
+    const parsedProperties = ObjUtils.parse(initialProperties);
+
+    setDraftProperties(parsedProperties);
+  }, [initialProperties]);
 
   return {
     draftProperties,
@@ -45,17 +51,23 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   const { data, isLoading } = useName.document.get(nameId);
   const { data: properties, isLoading: propertiesLoading } =
     useName.document.properties();
+  const { mutateAsync } = useName.document.updateProperties(nameId);
+
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const height = useKeyboardHeightAdjustment(600);
 
-  const { draftProperties, setDraftProperties } = useDraftFacilityProperties();
+  const { draftProperties, setDraftProperties } = useDraftFacilityProperties(
+    data?.properties
+  );
 
   const nextId = useName.utils.nextFacilityId(nameId);
 
   const save = async () => {
-    // TODO
-    console.log(draftProperties);
+    mutateAsync({
+      id: nameId,
+      properties: JSON.stringify(draftProperties),
+    });
   };
 
   if (isLoading || propertiesLoading) return <BasicSpinner />;
