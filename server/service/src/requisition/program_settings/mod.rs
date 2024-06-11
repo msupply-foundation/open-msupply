@@ -310,6 +310,7 @@ mod test {
                             name_row: mock_name_store_b(),
                             name_store_join_row: Some(name_store_join1.clone()),
                             store_row: Some(mock_store_b()),
+                            properties: None,
                         },
                         program: program1.clone(),
                     }]
@@ -334,6 +335,7 @@ mod test {
                             name_row: mock_name_store_c(),
                             name_store_join_row: Some(name_store_join2.clone()),
                             store_row: Some(mock_store_c()),
+                            properties: None,
                         },
                         program: program2.clone(),
                     }]

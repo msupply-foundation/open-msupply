@@ -9,12 +9,20 @@ use crate::{
         program_row::program::dsl as program_dsl, store_row::store::dsl as store_dsl,
     },
     diesel_macros::apply_equal_filter,
+    name_oms_fields, name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, Name, NameFilter, NameLinkRow, NameRepository, NameRow, NameStoreJoinRow,
-    ProgramRow, StorageConnection, StoreRow,
+    EqualFilter, Name, NameFilter, NameLinkRow, NameOmsFieldsRow, NameRepository, NameRow,
+    NameStoreJoinRow, ProgramRow, StorageConnection, StoreRow,
 };
 
-pub type ProgramSupplierJoin = (NameRow, NameLinkRow, NameStoreJoinRow, StoreRow, ProgramRow);
+pub type ProgramSupplierJoin = (
+    NameRow,
+    NameOmsFieldsRow,
+    NameLinkRow,
+    NameStoreJoinRow,
+    StoreRow,
+    ProgramRow,
+);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ProgramSupplier {
@@ -76,6 +84,7 @@ impl<'a> ProgramSupplierRepository<'a> {
         let query = query.select((
             // Same as NameRepository
             name_dsl::name::all_columns(),
+            name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
             name_link_dsl::name_link::all_columns()
                 .nullable()
                 .assume_not_null(),
@@ -92,12 +101,20 @@ impl<'a> ProgramSupplierRepository<'a> {
         Ok(result
             .into_iter()
             .map(
-                |(name_row, name_link_row, name_store_join_row, store_row, program)| {
+                |(
+                    name_row,
+                    name_oms_fields_row,
+                    name_link_row,
+                    name_store_join_row,
+                    store_row,
+                    program,
+                )| {
                     ProgramSupplier {
                         supplier: Name::from_join((
                             name_row,
                             (name_link_row, Some(name_store_join_row)),
                             Some(store_row),
+                            name_oms_fields_row,
                         )),
                         program,
                     }
@@ -289,6 +306,7 @@ mod test {
                     name_row: store_name1.clone(),
                     name_store_join_row: Some(name_store_join2.clone()),
                     store_row: Some(store1.clone()),
+                    properties: None,
                 },
                 program: program1.clone()
             }])
@@ -318,6 +336,7 @@ mod test {
                         name_row: store_name1.clone(),
                         name_store_join_row: Some(name_store_join2.clone()),
                         store_row: Some(store1.clone()),
+                        properties: None,
                     },
                     program: program1.clone()
                 },
@@ -326,6 +345,7 @@ mod test {
                         name_row: store_name2.clone(),
                         name_store_join_row: Some(name_store_join3.clone()),
                         store_row: Some(store2.clone()),
+                        properties: None,
                     },
                     program: program2.clone()
                 }
