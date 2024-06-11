@@ -13,7 +13,6 @@ use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
     activity_log::activity_log_entry,
-    i32_to_u32,
     invoice::inventory_adjustment::UpdateInventoryAdjustmentReason,
     invoice_line::{
         stock_in_line::{
@@ -304,7 +303,7 @@ fn generate_stock_in_out_or_update(
             invoice_id: inventory_addition_id.to_string(),
             number_of_packs: quantity_change,
             location: row.location_id.map(|id| NullableUpdate { value: Some(id) }),
-            pack_size: i32_to_u32(pack_size),
+            pack_size,
             batch: row.batch,
             cost_price_per_pack,
             sell_price_per_pack,
@@ -380,7 +379,7 @@ fn generate_new_stock_line(
         ..row.clone()
     };
 
-    let pack_size = row.pack_size.unwrap_or(0);
+    let pack_size = row.pack_size.unwrap_or(0.0);
     let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
     let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
     let invoice_line_id = uuid();
@@ -399,7 +398,7 @@ fn generate_new_stock_line(
             .location_id
             .clone()
             .map(|id| NullableUpdate { value: Some(id) }),
-        pack_size: i32_to_u32(pack_size),
+        pack_size,
         batch: row.batch,
         cost_price_per_pack,
         sell_price_per_pack,

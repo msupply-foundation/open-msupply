@@ -10,7 +10,7 @@ pub fn convert_stock_line_to_single_pack(stock_line: StockLineRow) -> StockLineR
             * stock_line.pack_size as f64,
         cost_price_per_pack: stock_line.cost_price_per_pack / stock_line.pack_size as f64,
         sell_price_per_pack: stock_line.sell_price_per_pack / stock_line.pack_size as f64,
-        pack_size: 1,
+        pack_size: 1.0,
         ..stock_line
     }
 }
@@ -20,7 +20,7 @@ pub fn convert_invoice_line_to_single_pack(invoice_line: InvoiceLineRow) -> Invo
         number_of_packs: invoice_line.number_of_packs * invoice_line.pack_size as f64,
         sell_price_per_pack: invoice_line.sell_price_per_pack / invoice_line.pack_size as f64,
         cost_price_per_pack: invoice_line.cost_price_per_pack / invoice_line.pack_size as f64,
-        pack_size: 1,
+        pack_size: 1.0,
         ..invoice_line
     }
 }
@@ -68,7 +68,7 @@ pub fn generate_batch(
     };
 
     let existing_stock_line =
-        StockLineRowRepository::new(connection).find_one_by_id_option(&stock_line_id)?;
+        StockLineRowRepository::new(connection).find_one_by_id(&stock_line_id)?;
 
     // Update existing stock level values if stock line already exists
     let StockLevels {

@@ -2,13 +2,6 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
     invoice_line::{
-        inbound_shipment_line::{
-            delete_inbound_shipment_line, insert_inbound_shipment_line,
-            update_inbound_shipment_line, DeleteInboundShipmentLine,
-            DeleteInboundShipmentLineError, InsertInboundShipmentLine,
-            InsertInboundShipmentLineError, UpdateInboundShipmentLine,
-            UpdateInboundShipmentLineError,
-        },
         inbound_shipment_service_line::{
             delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
             update_inbound_shipment_service_line, DeleteInboundShipmentServiceLineError,
@@ -233,7 +226,7 @@ mod test {
                 input.invoice_id = "new_id".to_string();
                 input.id = "new_line_id".to_string();
                 input.item_id = mock_item_a().id;
-                input.pack_size = 1;
+                input.pack_size = 1.0;
                 input.number_of_packs = 1.0;
                 input.r#type = StockInType::InboundShipment;
             })]),
