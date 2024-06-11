@@ -74,3 +74,57 @@ mutation updateImmunisationProgram(
     }
   }
 }
+fragment VaccineCourse on VaccineCourseNode {
+  id
+  name
+  programId
+  demographicIndicatorId
+  doses
+  coverageRate
+  wastageRate
+  isActive
+}
+
+query vaccineCourses(
+  $first: Int
+  $offset: Int
+  $key: VaccineCourseSortFieldInput!
+  $desc: Boolean
+  $filter: VaccineCourseFilterInput
+) {
+  vaccineCourses(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on VaccineCourseConnector {
+      __typename
+      nodes {
+        __typename
+        ...VaccineCourse
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertVaccineCourse(
+  $input: InsertVaccineCourseInput
+  $storeId: String
+) {
+  centralServer {
+    vaccineCourse {
+      insertVaccineCourse(input: $input, storeId: $storeId) {
+        ... on VaccineCourseNode {
+          ...VaccineCourse
+        }
+        ... on InsertVaccineCourseError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
