@@ -26,7 +26,6 @@ mod query {
             id: "vaccine_course_id".to_owned(),
             name: "vaccine_course_name".to_owned(),
             program_id: mock_program_a().id.clone(),
-            demographic_indicator_id: mock_demographic_indicator_a().id.clone(),
         };
 
         let _result = service
@@ -59,7 +58,6 @@ mod query {
             id: "vaccine_course_id".to_owned(),
             name: "vaccine_course_name".to_owned(),
             program_id: mock_program_a().id.clone(),
-            demographic_indicator_id: mock_demographic_indicator_a().id.clone(),
         };
 
         let _result = service
@@ -70,7 +68,6 @@ mod query {
             id: "vaccine_course_id_b".to_owned(),
             name: "vaccine_course_name_b".to_owned(),
             program_id: mock_program_a().id.clone(),
-            demographic_indicator_id: mock_demographic_indicator_a().id.clone(),
         };
 
         let _result = service
