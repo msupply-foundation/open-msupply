@@ -18,9 +18,9 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   name: '',
   programId: '',
   doses: 1,
-  coverageRate: 0,
+  coverageRate: 100,
   wastageRate: 0,
-  isActive: false,
+  isActive: true,
 };
 
 export function useVaccineCourse(id?: string) {
@@ -101,13 +101,13 @@ const useGet = (id: string) => {
 const useCreate = () => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
 
-  const mutationFn = async ({ name }: DraftVaccineCourse) => {
+  const mutationFn = async ({ name, programId }: DraftVaccineCourse) => {
     return await api.insertVaccineCourse({
       storeId,
       input: {
         id: FnUtils.generateUUID(),
         name,
-        programId: 'missing_program',
+        programId,
       },
     });
   };

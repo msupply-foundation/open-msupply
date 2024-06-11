@@ -25,6 +25,7 @@ import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppBarButtons } from './AppBarButtons';
 import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
 import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
+import { DraftVaccineCourse } from '../api/hooks/useVaccineCourse';
 
 export const ProgramComponent: FC = () => {
   const {
@@ -47,7 +48,7 @@ export const ProgramComponent: FC = () => {
   } = useImmunisationProgram(id);
 
   const queryParams = {
-    filterBy,
+    filterBy: { ...filterBy, programId: { equalTo: id } },
     offset,
     sortBy,
     first,
@@ -76,13 +77,17 @@ export const ProgramComponent: FC = () => {
     setSuffix(data?.name ?? '');
   }, [setSuffix, data]);
 
-  const { isOpen, onClose, onOpen } = useEditModal<any>();
+  const { isOpen, onClose, onOpen } = useEditModal<DraftVaccineCourse>();
 
   return isLoading ? (
     <InlineSpinner />
   ) : (
     <>
-      <VaccineCourseCreateModal isOpen={isOpen} onClose={onClose} />
+      <VaccineCourseCreateModal
+        isOpen={isOpen}
+        onClose={onClose}
+        programId={id}
+      />
       <Toolbar
         draft={draft}
         onUpdate={updatePatch}

@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useDialog,
   Grid,
@@ -14,11 +14,12 @@ import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 interface VaccineCourseCreateModalModalProps {
   isOpen: boolean;
   onClose: () => void;
+  programId: string | undefined;
 }
 
 export const VaccineCourseCreateModal: FC<
   VaccineCourseCreateModalModalProps
-> = ({ isOpen, onClose }) => {
+> = ({ isOpen, onClose, programId }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['coldchain']);
   const {
@@ -26,8 +27,12 @@ export const VaccineCourseCreateModal: FC<
     draft,
     updatePatch,
     create: { create },
-  } = useVaccineCourse();
+  } = useVaccineCourse(programId);
   const isInvalid = !draft.name.trim();
+
+  useEffect(() => {
+    updatePatch({ programId: programId });
+  }, [programId]);
 
   return (
     <Modal
