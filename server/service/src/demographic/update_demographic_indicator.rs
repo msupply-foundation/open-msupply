@@ -72,7 +72,7 @@ pub fn validate(
 
     let id = &input.id;
 
-    if !check_year_name_combination_unique(&name, base_year, id, connection)? {
+    if !check_year_name_combination_unique(&name, base_year, Some(id.to_string()), connection)? {
         return Err(UpdateDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear);
     }
 
