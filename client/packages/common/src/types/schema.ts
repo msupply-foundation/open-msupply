@@ -4993,6 +4993,7 @@ export type ProgramNode = {
   id: Scalars['String']['output'];
   isImmunisation: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  vaccineCourses?: Maybe<Array<VaccineCourseNode>>;
 };
 
 export type ProgramRequisitionOrderTypeNode = {
@@ -7777,6 +7778,11 @@ export type VaccineCourseFilterInput = {
   programId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type VaccineCourseItemNode = {
+  __typename: 'VaccineCourseItemNode';
+  id: Scalars['String']['output'];
+};
+
 export type VaccineCourseMutations = {
   __typename: 'VaccineCourseMutations';
   insertVaccineCourse: InsertVaccineCourseResponse;
@@ -7791,16 +7797,24 @@ export type VaccineCourseMutationsInsertVaccineCourseArgs = {
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
   coverageRate: Scalars['Float']['output'];
+  demographicIndicator?: Maybe<DemographicIndicatorNode>;
   demographicIndicatorId?: Maybe<Scalars['String']['output']>;
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   programId: Scalars['String']['output'];
+  vaccineCourseItems?: Maybe<Array<VaccineCourseItemNode>>;
+  vaccineCourseSchedules?: Maybe<Array<VaccineCourseScheduleNode>>;
   wastageRate: Scalars['Float']['output'];
 };
 
 export type VaccineCourseResponse = NodeError | VaccineCourseNode;
+
+export type VaccineCourseScheduleNode = {
+  __typename: 'VaccineCourseScheduleNode';
+  id: Scalars['String']['output'];
+};
 
 export enum VaccineCourseSortFieldInput {
   Name = 'name'
