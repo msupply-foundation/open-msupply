@@ -70,7 +70,8 @@ async fn check_change_log_update() {
         .latest_cursor()
         .unwrap();
     run_without_change_log_updates(&connection, |connection| {
-        Ok(NameRowRepository::new(connection).upsert_one(&name_row)?)
+        NameRowRepository::new(connection).upsert_one(&name_row)?;
+        Ok(())
     })
     .unwrap();
     assert_eq!(
