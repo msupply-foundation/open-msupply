@@ -24,6 +24,16 @@
   "label.inbound-not-delivered": "Bon(s) de livraison pas encore livré(s)",
   "label.more-than-six-months-stock-items_one": "Article avec plus de 6 mois de stock",
   "label.more-than-six-months-stock-items_other": "Articles avec plus de 6 mois de stock",
-  "label.new": "Nouvel(le)",
-  "label.not-sent": "pas encore envoyé(s)"
+  "label.new": "Nouveau",
+  "label.not-sent": "pas encore envoyé(s)",
+  "label.expired_few": "Lots expirés",
+  "label.expired_many": "Lots expirés",
+  "label.items-no-stock_few": "Articles sans stock",
+  "label.items-no-stock_many": "Articles sans stock",
+  "label.low-stock-items_few": "Articles avec moins de 3 mois de stock",
+  "label.low-stock-items_many": "Articles avec mois de 3 mois de stock",
+  "label.more-than-six-months-stock-items_few": "Articles avec plus de 6 mois de stock",
+  "label.more-than-six-months-stock-items_many": "Articles avec plus de 6 mois de stock",
+  "label.total-items_few": "Total articles",
+  "label.total-items_many": "Total articles"
 }

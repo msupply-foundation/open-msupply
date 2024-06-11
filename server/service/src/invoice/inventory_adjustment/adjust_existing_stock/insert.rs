@@ -331,10 +331,12 @@ mod test {
 
         let retrieved_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&created_invoice.invoice_row.id)
+            .unwrap()
             .unwrap();
 
         let updated_stockline = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -371,10 +373,12 @@ mod test {
 
         let retrieved_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&created_invoice.invoice_row.id)
+            .unwrap()
             .unwrap();
 
         let updated_stockline = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_b().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(

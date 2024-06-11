@@ -4,7 +4,7 @@ use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
-        validate::{check_line_does_not_exist, check_number_of_packs},
+        validate::{check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
 };
@@ -18,7 +18,7 @@ pub fn validate(
 ) -> Result<(ItemRow, InvoiceRow, StockLine), InsertStockOutLineError> {
     use InsertStockOutLineError::*;
 
-    if !check_line_does_not_exist(connection, &input.id)? {
+    if let Some(_) = check_line_exists(connection, &input.id)? {
         return Err(LineAlreadyExists);
     }
     let batch =

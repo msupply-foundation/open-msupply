@@ -1,0 +1,158 @@
+fragment DemographicIndicator on DemographicIndicatorNode {
+  id
+  name
+  baseYear
+  basePopulation
+  populationPercentage
+  year1Projection
+  year2Projection
+  year3Projection
+  year4Projection
+  year5Projection
+}
+
+fragment DemographicProjection on DemographicProjectionNode {
+  id
+  baseYear
+  year1
+  year2
+  year3
+  year4
+  year5
+}
+
+query demographicIndicators(
+  $first: Int
+  $offset: Int
+  $key: DemographicIndicatorSortFieldInput!
+  $desc: Boolean
+  $filter: DemographicIndicatorFilterInput
+) {
+  demographicIndicators(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on DemographicIndicatorConnector {
+      nodes {
+        ...DemographicIndicator
+      }
+      totalCount
+    }
+  }
+}
+
+query demographicProjections(
+  $first: Int
+  $offset: Int
+  $key: DemographicProjectionSortFieldInput!
+  $desc: Boolean
+  $filter: DemographicProjectionFilterInput
+) {
+  demographicProjections(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on DemographicProjectionConnector {
+      nodes {
+        ...DemographicProjection
+      }
+      totalCount
+    }
+  }
+}
+
+query demographicIndicatorById($demographicIndicatorId: String!) {
+  demographicIndicators(filter: { id: { equalTo: $demographicIndicatorId } }) {
+    ... on DemographicIndicatorConnector {
+      nodes {
+        ...DemographicIndicator
+      }
+    }
+  }
+}
+
+query demographicProjectionById($demographicProjectionId: String!) {
+  demographicProjections(
+    filter: { id: { equalTo: $demographicProjectionId } }
+  ) {
+    ... on DemographicProjectionConnector {
+      nodes {
+        ...DemographicProjection
+      }
+    }
+  }
+}
+
+mutation insertDemographicIndicator($input: InsertDemographicIndicatorInput!) {
+  centralServer {
+    demographic {
+      insertDemographicIndicator(input: $input) {
+        ... on DemographicIndicatorNode {
+          id
+        }
+        ... on InsertDemographicIndicatorError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation insertDemographicProjection(
+  $input: InsertDemographicProjectionInput!
+) {
+  centralServer {
+    demographic {
+      insertDemographicProjection(input: $input) {
+        ... on DemographicProjectionNode {
+          id
+        }
+        ... on InsertDemographicProjectionError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation updateDemographicIndicator($input: UpdateDemographicIndicatorInput!) {
+  centralServer {
+    demographic {
+      updateDemographicIndicator(input: $input) {
+        ... on DemographicIndicatorNode {
+          id
+        }
+        ... on UpdateDemographicIndicatorError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation updateDemographicProjection(
+  $input: UpdateDemographicProjectionInput!
+) {
+  centralServer {
+    demographic {
+      updateDemographicProjection(input: $input) {
+        ... on DemographicProjectionNode {
+          id
+        }
+        ... on InsertDemographicProjectionError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}

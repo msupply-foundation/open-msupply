@@ -333,6 +333,7 @@ mod test {
 
         let stock_line_delivered = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
+            .unwrap()
             .unwrap();
 
         // data from invoice line was added to the new stock line
@@ -383,9 +384,83 @@ mod test {
 
         let stock_line_verified = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line_id)
+            .unwrap()
             .unwrap();
 
         // Stock line has not changed
         assert_eq!(stock_line_delivered, stock_line_verified);
+    }
+
+    #[actix_rt::test]
+    async fn update_inbound_return_success_new_to_verified() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_inbound_return_success_new_to_verified",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let invoice_id = mock_inbound_return_b().id;
+
+        /* -------
+         * Setting NEW inbound return to VERIFIED
+         */
+        let return_line_filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&mock_inbound_return_b().id));
+
+        let invoice_line_repo = InvoiceLineRepository::new(&connection);
+
+        let invoice_lines = invoice_line_repo
+            .query_by_filter(return_line_filter.clone())
+            .unwrap();
+
+        // Inbound return currently in NEW status, should have no stock lines
+        assert!(invoice_lines
+            .iter()
+            .all(|l| l.invoice_line_row.stock_line_id == None));
+
+        let updated_return = service
+            .update_inbound_return(
+                &context,
+                inline_init(|r: &mut UpdateInboundReturn| {
+                    r.id = invoice_id.clone();
+                    r.status = Some(UpdateInboundReturnStatus::Verified);
+                }),
+            )
+            .unwrap();
+
+        let return_row = updated_return.invoice_row;
+        // Status has been updated
+        assert_eq!(return_row.status, InvoiceStatus::Verified);
+        assert!(return_row.verified_datetime.is_some());
+
+        let invoice_lines = invoice_line_repo
+            .query_by_filter(return_line_filter.clone())
+            .unwrap();
+
+        assert_eq!(invoice_lines.len(), 1);
+
+        let stock_line_id = invoice_lines[0]
+            .invoice_line_row
+            .stock_line_id
+            .clone()
+            .unwrap();
+
+        // check stock line was introduced
+        let stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&stock_line_id)
+            .unwrap()
+            .unwrap();
+
+        // data from invoice line was added to the new stock line
+        assert_eq!(
+            stock_line.batch,
+            mock_inbound_return_b_invoice_line_a().batch
+        );
     }
 }

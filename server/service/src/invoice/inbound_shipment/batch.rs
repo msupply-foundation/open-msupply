@@ -2,6 +2,13 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
     invoice_line::{
+        inbound_shipment_line::{
+            delete_inbound_shipment_line, insert_inbound_shipment_line,
+            update_inbound_shipment_line, DeleteInboundShipmentLine,
+            DeleteInboundShipmentLineError, InsertInboundShipmentLine,
+            InsertInboundShipmentLineError, UpdateInboundShipmentLine,
+            UpdateInboundShipmentLineError,
+        },
         inbound_shipment_service_line::{
             delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
             update_inbound_shipment_service_line, DeleteInboundShipmentServiceLineError,
@@ -255,14 +262,14 @@ mod test {
 
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id_option("new_id")
+                .find_one_by_id("new_id")
                 .unwrap(),
             None
         );
 
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option("new_line_id")
+                .find_one_by_id("new_line_id")
                 .unwrap(),
             None
         );
@@ -274,14 +281,14 @@ mod test {
 
         assert_ne!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id_option("new_id")
+                .find_one_by_id("new_id")
                 .unwrap(),
             None
         );
 
         assert_ne!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option("new_line_id")
+                .find_one_by_id("new_line_id")
                 .unwrap(),
             None
         );

@@ -21,10 +21,11 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StoreMode {
+    #[default]
     Store,
     Dispensary,
 }
@@ -45,12 +46,6 @@ pub struct StoreRow {
     pub logo: Option<String>,
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
-}
-
-impl Default for StoreMode {
-    fn default() -> Self {
-        Self::Store
-    }
 }
 
 pub struct StoreRowRepository<'a> {

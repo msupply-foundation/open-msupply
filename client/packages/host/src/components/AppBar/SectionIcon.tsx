@@ -8,6 +8,7 @@ import {
   ReportsIcon,
   RouteBuilder,
   SettingsIcon,
+  SlidersIcon,
   StockIcon,
   SuppliersIcon,
   ThermometerIcon,
@@ -25,7 +26,7 @@ type Section = {
 
 const getIcon = (section?: AppRoute) => {
   switch (section) {
-    case AppRoute.Admin:
+    case AppRoute.Settings:
       return <SettingsIcon color="primary" fontSize="small" />;
     case AppRoute.Catalogue:
       return <ListIcon color="primary" fontSize="small" />;
@@ -43,6 +44,8 @@ const getIcon = (section?: AppRoute) => {
       return <ReportsIcon color="primary" fontSize="small" />;
     case AppRoute.Sync:
       return <RadioIcon color="primary" fontSize="small" />;
+    case AppRoute.Manage:
+      return <SlidersIcon color="primary" fontSize="small" />;
     default:
       return undefined;
   }
@@ -50,7 +53,7 @@ const getIcon = (section?: AppRoute) => {
 
 const useSection = (): Section | undefined => {
   const routes = [
-    AppRoute.Admin,
+    AppRoute.Settings,
     AppRoute.Catalogue,
     AppRoute.Coldchain,
     AppRoute.Dispensary,
@@ -59,6 +62,7 @@ const useSection = (): Section | undefined => {
     AppRoute.Replenishment,
     AppRoute.Reports,
     AppRoute.Sync,
+    AppRoute.Manage,
   ];
   const location = useLocation();
 

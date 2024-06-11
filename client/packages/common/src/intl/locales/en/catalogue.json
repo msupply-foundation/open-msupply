@@ -20,6 +20,7 @@
   "label.create-pack-variant": "Create Pack Variant",
   "label.ddd": "Defined Daily Dose",
   "label.doses": "Doses",
+  "label.target-demographic": "Target Demographic",
   "label.edit-pack-variant": "Edit Pack Variant",
   "label.general": "General",
   "label.is-vaccine": "Vaccine",
@@ -29,6 +30,7 @@
   "label.model": "Model",
   "label.months": "Months",
   "label.name": "Name",
+  "label.percentage": "Percentage",
   "label.new-pack-variant": "New Pack Variant",
   "label.outer-pack-size": "Outer pack size",
   "label.pack-variants": "Pack Variants",
@@ -63,5 +65,6 @@
   "title.months-of-stock": "Months of Stock",
   "title.packaging": "Packaging",
   "title.pricing": "Pricing",
-  "title.stock-on-hand": "Available Stock"
+  "title.stock-on-hand": "Available Stock",
+  "button.add-new-vaccine-course": "Add New Vaccine Course"
 }

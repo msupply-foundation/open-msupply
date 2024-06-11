@@ -16,7 +16,7 @@ pub fn validate(
 ) -> Result<(InvoiceLine, Option<ItemRow>, InvoiceRow), UpdateStockInLineError> {
     use UpdateStockInLineError::*;
 
-    let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let line_row = &line.invoice_line_row;
 
     if !check_pack_size(input.pack_size.clone()) {

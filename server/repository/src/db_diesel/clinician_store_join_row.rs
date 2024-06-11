@@ -73,7 +73,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         row_id: &str,
     ) -> Result<Option<ClinicianStoreJoinRow>, RepositoryError> {
@@ -121,7 +121,7 @@ impl Upsert for ClinicianStoreJoinRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            ClinicianStoreJoinRowRepository::new(con).find_one_by_id_option(&self.id),
+            ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

@@ -331,8 +331,8 @@ mod test {
         assert_eq!(
             InvoiceRowRepository::new(&connection)
                 .find_one_by_id("deleted id")
-                .expect_err("Invoice doesn't exist"),
-            RepositoryError::NotFound
+                .unwrap(),
+            None
         );
     }
 }

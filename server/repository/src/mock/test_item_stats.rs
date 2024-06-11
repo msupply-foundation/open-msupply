@@ -25,14 +25,14 @@ fn consumption_points() -> MockData {
                 r.invoice_id = invoice_id.clone();
                 r.item_link_id = item().id;
                 r.r#type = InvoiceLineType::StockOut;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             }),
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = format!("{}line2", invoice_id);
                 r.invoice_id = invoice_id.clone();
                 r.item_link_id = item2().id;
                 r.r#type = InvoiceLineType::StockOut;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
             }),
         ];
     })
@@ -52,7 +52,7 @@ pub fn mock_item_stats() -> MockData {
     .join(inline_edit(&consumption_points(), |mut u| {
         u.invoices[0].picked_datetime = Some(Utc::now().naive_utc() - Duration::days(3));
         u.invoice_lines[ITEM1_INDEX].number_of_packs = 5.0;
-        u.invoice_lines[ITEM1_INDEX].pack_size = 3;
+        u.invoice_lines[ITEM1_INDEX].pack_size = 3.0;
         // Don't want item2 invoice line for 1 month calculation
         u.invoice_lines.remove(ITEM2_INDEX);
         u
@@ -86,7 +86,7 @@ pub fn item1_amc_3_months() -> f64 {
 }
 
 pub fn item2_amc_3_months() -> f64 {
-    (30) as f64 / 3.0
+    30.0 / 3.0
 }
 
 pub fn item1_amc_1_months() -> f64 {
@@ -113,7 +113,7 @@ pub fn stock_line1() -> StockLineRow {
         r.id = id.clone();
         r.item_link_id = item().id;
         r.store_id = mock_store_a().id;
-        r.pack_size = 10;
+        r.pack_size = 10.0;
         r.available_number_of_packs = 1.0;
         r.total_number_of_packs = 40.0;
         r.supplier_link_id = Some(String::from("name_store_b"));
@@ -127,7 +127,7 @@ pub fn stock_line2() -> StockLineRow {
         r.item_link_id = item().id;
         r.store_id = mock_store_a().id;
         r.available_number_of_packs = 20.0;
-        r.pack_size = 10;
+        r.pack_size = 10.0;
         r.total_number_of_packs = 40.0;
         r.supplier_link_id = Some(String::from("name_store_b"));
     })
@@ -140,14 +140,14 @@ pub fn stock_line3() -> StockLineRow {
         r.item_link_id = item().id;
         r.store_id = mock_store_a().id;
         r.available_number_of_packs = 10.0;
-        r.pack_size = 1;
+        r.pack_size = 1.0;
         r.total_number_of_packs = 40.0;
         r.supplier_link_id = Some(String::from("name_store_b"));
     })
 }
 
-pub fn item_1_soh() -> u32 {
-    10 + 20 * 10 + 10
+pub fn item_1_soh() -> f64 {
+    10.0 + 20.0 * 10.0 + 10.0
 }
 
 pub fn stock_line_1_store_b() -> StockLineRow {
@@ -157,14 +157,14 @@ pub fn stock_line_1_store_b() -> StockLineRow {
         r.item_link_id = item().id;
         r.store_id = mock_store_b().id;
         r.available_number_of_packs = 1.0;
-        r.pack_size = 10;
+        r.pack_size = 10.0;
         r.total_number_of_packs = 40.0;
         r.supplier_link_id = Some(String::from("name_store_b"));
     })
 }
 
-pub fn item_1_store_b_soh() -> u32 {
-    10
+pub fn item_1_store_b_soh() -> f64 {
+    10.0
 }
 
 pub fn item2() -> ItemRow {
@@ -184,12 +184,12 @@ pub fn stock_line1_item2() -> StockLineRow {
         r.item_link_id = item2().id;
         r.store_id = mock_store_a().id;
         r.available_number_of_packs = 11.0;
-        r.pack_size = 2;
+        r.pack_size = 2.0;
         r.total_number_of_packs = 40.0;
         r.supplier_link_id = Some(String::from("name_store_b"));
     })
 }
 
-pub fn item_2_soh() -> u32 {
-    2 * 11
+pub fn item_2_soh() -> f64 {
+    2.0 * 11.0
 }

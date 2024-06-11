@@ -20,16 +20,16 @@ pub struct LegacyRequisitionLineRow {
     pub item_ID: String,
 
     // requested_quantity
-    pub Cust_stock_order: i32,
-    pub suggested_quantity: i32,
+    pub Cust_stock_order: f64,
+    pub suggested_quantity: f64,
     // supply_quantity
-    pub actualQuan: i32,
+    pub actualQuan: f64,
     // available_stock_on_hand
-    pub stock_on_hand: i32,
+    pub stock_on_hand: f64,
     // average_monthly_consumption: daily_usage * NUMBER_OF_DAYS_IN_A_MONTH
     pub daily_usage: f64,
 
-    pub approved_quantity: i32,
+    pub approved_quantity: f64,
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "authoriser_comment")]
@@ -83,8 +83,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
             available_stock_on_hand: data.stock_on_hand,
-            average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH).ceil()
-                as i32,
+            average_monthly_consumption: (data.daily_usage * NUMBER_OF_DAYS_IN_A_MONTH).ceil(),
             comment: data.comment,
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,

@@ -240,27 +240,27 @@ mod test_update {
             .find_one_by_id(&calculation_requisition.lines[0].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.suggested_quantity, 19);
+        assert_eq!(line.suggested_quantity, 19.0);
 
         // Average monthly consumption = 0
         let line = requisition_line_row_repo
             .find_one_by_id(&calculation_requisition.lines[1].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.suggested_quantity, 0);
+        assert_eq!(line.suggested_quantity, 0.0);
 
         // Above threshold MOS
         let line = requisition_line_row_repo
             .find_one_by_id(&calculation_requisition.lines[2].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.suggested_quantity, 0);
+        assert_eq!(line.suggested_quantity, 0.0);
 
         // Above max MOS
         let line = requisition_line_row_repo
             .find_one_by_id(&calculation_requisition.lines[3].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.suggested_quantity, 0);
+        assert_eq!(line.suggested_quantity, 0.0);
     }
 }

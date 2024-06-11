@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useRegisterActions, useBreadcrumbs } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { UrlPart } from '@common/hooks';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const Breadcrumb = styled(Link)({
   color: 'inherit',
@@ -14,7 +15,7 @@ export const Breadcrumb = styled(Link)({
 });
 
 export const Breadcrumbs = ({
-  topLevelPaths = ['admin', 'sync'],
+  topLevelPaths = [AppRoute.Settings, AppRoute.Sync],
 }: {
   topLevelPaths?: string[];
 }) => {
