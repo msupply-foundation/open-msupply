@@ -69,7 +69,7 @@ pub fn insert_program_request_requisition(
             )?;
 
             get_requisition(ctx, None, &new_requisition.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

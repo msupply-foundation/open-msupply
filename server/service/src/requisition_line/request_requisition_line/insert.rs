@@ -58,7 +58,7 @@ pub fn insert_request_requisition_line(
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
 
             get_requisition_line(ctx, &new_requisition_line_row.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedRequisitionLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

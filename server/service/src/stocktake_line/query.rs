@@ -39,7 +39,7 @@ pub fn get_stocktake_lines(
         .unwrap_or_default()
         .stocktake_id(EqualFilter::equal_to(stocktake_id));
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
-        .map_err(|err| GetStocktakeLinesError::ListError(err))?;
+        .map_err(GetStocktakeLinesError::ListError)?;
     let repository = StocktakeLineRepository::new(&ctx.connection);
 
     Ok(ListResult {

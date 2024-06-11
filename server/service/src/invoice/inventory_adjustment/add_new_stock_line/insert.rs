@@ -63,7 +63,7 @@ pub fn add_new_stock_line(
 
             // Add invoice line (and introduce stock line)
             insert_stock_in_line(ctx, stock_in_line)
-                .map_err(|error| AddNewStockLineError::LineInsertError(error))?;
+                .map_err(AddNewStockLineError::LineInsertError)?;
 
             // Add inventory adjustment reason to the invoice line
             let invoice_line_repo = InvoiceLineRowRepository::new(connection);
