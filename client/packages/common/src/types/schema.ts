@@ -7764,10 +7764,14 @@ export type VaccineCourseMutationsInsertVaccineCourseArgs = {
 
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
+  coverageRate: Scalars['Float']['output'];
   demographicIndicatorId?: Maybe<Scalars['String']['output']>;
+  doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   programId: Scalars['String']['output'];
+  wastageRate: Scalars['Float']['output'];
 };
 
 export type VaccineCourseResponse = NodeError | VaccineCourseNode;

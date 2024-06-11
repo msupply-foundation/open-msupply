@@ -61,8 +61,8 @@ export const ProgramComponent: FC = () => {
 
   const columns = useColumns(
     [
-      'name',
-      { key: 'targetDemographic', label: 'label.target-demographic' },
+      { key: 'name', label: 'label.name' },
+      { key: 'demographicIndicatorId', label: 'label.target-demographic' },
       { key: 'doses', label: 'label.doses' },
     ],
     {
@@ -82,7 +82,7 @@ export const ProgramComponent: FC = () => {
     <InlineSpinner />
   ) : (
     <>
-      {isOpen && <VaccineCourseCreateModal isOpen={isOpen} onClose={onClose} />}
+      <VaccineCourseCreateModal isOpen={isOpen} onClose={onClose} />
       <Toolbar
         draft={draft}
         onUpdate={updatePatch}
@@ -95,7 +95,7 @@ export const ProgramComponent: FC = () => {
         pagination={{ ...pagination }}
         onChangePage={updatePaginationQuery}
         columns={columns}
-        data={vaccineCoursesData?.nodes ?? []} // TODO Query for Vaccine Courses
+        data={vaccineCoursesData?.nodes ?? []}
         isLoading={vaccineCoursesLoading}
         isError={vaccineCoursesError}
         onRowClick={row => navigate(row.id)}

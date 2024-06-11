@@ -32,6 +32,22 @@ impl VaccineCourseNode {
     pub async fn demographic_indicator_id(&self) -> Option<String> {
         self.row().demographic_indicator_id.clone()
     }
+
+    pub async fn coverage_rate(&self) -> f64 {
+        self.row().coverage_rate
+    }
+
+    pub async fn is_active(&self) -> bool {
+        self.row().is_active
+    }
+
+    pub async fn wastage_rate(&self) -> f64 {
+        self.row().wastage_rate
+    }
+
+    pub async fn doses(&self) -> i32 {
+        self.row().doses
+    }
     // TODO Loaders for the program and demographic_indicator
 }
 
