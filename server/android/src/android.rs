@@ -23,6 +23,8 @@ pub mod android {
     static SERVER_BUCKET: Mutex<Option<ServerBucket>> = Mutex::new(None);
 
     #[no_mangle]
+    /// # Safety
+    /// TODO: Add why this is unsafe
     pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
         env: JNIEnv,
         _: JClass,
@@ -81,6 +83,7 @@ pub mod android {
     }
 
     #[no_mangle]
+    /// # Safety
     pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(
         _: JNIEnv,
         _: JClass,

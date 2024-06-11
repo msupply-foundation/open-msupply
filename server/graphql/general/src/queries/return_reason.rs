@@ -54,7 +54,7 @@ pub fn return_reasons(
 
     let connection_manager = ctx.get_connection_manager();
     let items = get_return_reasons(
-        &connection_manager,
+        connection_manager,
         page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),
         // Currently only one sort option is supported, use the first from the list.

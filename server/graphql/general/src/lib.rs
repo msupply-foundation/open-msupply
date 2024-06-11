@@ -347,7 +347,7 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<ReturnReasonSortInput>>,
     ) -> Result<ReturnReasonResponse> {
-        return_reasons(&ctx, page, filter, sort)
+        return_reasons(ctx, page, filter, sort)
     }
 
     /// Generates new inbound return lines in memory, based on outbound return line ids.
@@ -359,7 +359,7 @@ impl GeneralQueries {
         store_id: String,
         input: GenerateInboundReturnLinesInput,
     ) -> Result<GenerateInboundReturnLinesResponse> {
-        generate_inbound_return_lines(&ctx, store_id, input)
+        generate_inbound_return_lines(ctx, store_id, input)
     }
 
     pub async fn label_printer_settings(
