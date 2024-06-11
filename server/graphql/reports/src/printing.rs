@@ -280,7 +280,7 @@ async fn fetch_data(
     if graphql_query.len() > 1 {
         return Err(anyhow::Error::msg("Only one GraphQL query supported"));
     }
-    let mut data = if let Some(ResolvedReportQuery::GraphQlQuery(gql)) = graphql_query.get(0) {
+    let mut data = if let Some(ResolvedReportQuery::GraphQlQuery(gql)) = graphql_query.first() {
         let variables = query_variables(store_id, &data_id, &arguments, &sort, &gql.variables);
         let result = fetch_graphq_data(ctx, gql, variables).await?;
         match result {
