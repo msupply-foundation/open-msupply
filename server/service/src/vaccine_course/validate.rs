@@ -1,7 +1,6 @@
 use repository::{
     vaccine_course::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
-    DemographicIndicatorRow, DemographicIndicatorRowRepository, ProgramRow, ProgramRowRepository,
-    RepositoryError, StorageConnection,
+    ProgramRow, ProgramRowRepository, RepositoryError, StorageConnection,
 };
 
 pub fn check_vaccine_course_exists(
