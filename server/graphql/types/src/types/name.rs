@@ -240,11 +240,10 @@ impl NameNode {
 
     /// Returns a JSON string of the name properties e.g {"property_key": "value"}
     pub async fn properties(&self) -> String {
-        let name_properties = match &self.name.properties {
+        match &self.name.properties {
             Some(properties) => properties.to_owned(),
             None => "{}".to_string(), // Empty JSON object
-        };
-        name_properties
+        }
     }
 }
 
