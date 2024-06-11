@@ -17,6 +17,10 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   id: '',
   name: '',
   programId: '',
+  doses: 1,
+  coverageRate: 0,
+  wastageRate: 0,
+  isActive: false,
 };
 
 export function useVaccineCourse(id?: string) {

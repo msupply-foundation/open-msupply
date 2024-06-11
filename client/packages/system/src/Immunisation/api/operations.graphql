@@ -79,6 +79,10 @@ fragment VaccineCourse on VaccineCourseNode {
   name
   programId
   demographicIndicatorId
+  doses
+  coverageRate
+  wastageRate
+  isActive
 }
 
 query vaccineCourses(
