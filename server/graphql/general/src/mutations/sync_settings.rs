@@ -33,7 +33,7 @@ pub async fn update_sync_settings(
     let database_sync_settings = service_provider
         .settings
         .sync_settings(&service_context)?
-        .ok_or(StandardGraphqlError::from_str(
+        .ok_or(StandardGraphqlError::from_str_slice(
             "Sync settings are missing after initialisation",
         ))?;
 
