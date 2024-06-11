@@ -13,6 +13,7 @@ import {
   useDialog,
   BasicSpinner,
   useDebouncedValue,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { JsonData } from '@openmsupply-client/programs';
 import { useReport, ReportRowFragment } from '../api';
@@ -28,7 +29,7 @@ const PrintingDialog: React.FC<{ isPrinting: boolean }> = ({ isPrinting }) => {
     } else {
       hideDialog();
     }
-  }, [isPrinting]);
+  }, [hideDialog, isPrinting, showDialog]);
 
   return (
     <Modal title="" height={200}>
@@ -91,13 +92,13 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
 
   const columns = useColumns<ReportRowFragment>(
     [
-      'name',
+    ['name', { width: 300, Cell: TooltipTextCell }],
       {
         accessor: ({ rowData }) => rowData.context,
         key: 'context',
         label: 'label.context',
         sortable: false,
-        width: 250,
+        width: 60,
       },
       {
         Cell: ({ rowData }) => (
@@ -118,6 +119,13 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
     [sortBy]
   );
 
+  const printReport = useCallback(
+    (report: ReportRowFragment, args: JsonData | undefined) => {
+      print({ reportId: report.id, dataId: '', args });
+    },
+    [print]
+  );
+
   const onReportSelected = useCallback(
     (report: ReportRowFragment | undefined) => {
       if (report === undefined) {
@@ -129,15 +137,8 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
         printReport(report, undefined);
       }
     },
-    []
+    [printReport]
   );
-
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    print({ reportId: report.id, dataId: '', args });
-  };
 
   return (
     <>
