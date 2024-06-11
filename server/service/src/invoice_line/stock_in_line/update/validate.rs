@@ -1,7 +1,8 @@
 use crate::{
+    check_location_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_batch, check_location_exists, check_pack_size},
+        stock_in_line::{check_batch, check_pack_size},
         validate::{check_item_exists, check_line_belongs_to_invoice, check_line_exists},
     },
 };
@@ -44,10 +45,8 @@ pub fn validate(
     if !check_batch(line_row, connection)? {
         return Err(BatchIsReserved);
     }
-    if let Some(location) = &input.location {
-        if !check_location_exists(&location.value, connection)? {
-            return Err(LocationDoesNotExist);
-        }
+    if !check_location_exists(connection, store_id, &input.location)? {
+        return Err(LocationDoesNotExist);
     }
 
     if !check_line_belongs_to_invoice(line_row, &invoice) {
