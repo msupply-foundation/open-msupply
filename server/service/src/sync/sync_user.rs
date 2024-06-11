@@ -92,7 +92,7 @@ fn get_password(auth_data: &AuthData, user_id: &str) -> String {
     let token_bucket = auth_data
         .token_bucket
         .read()
-        .map_err(|_| return LoginError::InternalError("Concurrent error".to_string()))
+        .map_err(|_| LoginError::InternalError("Concurrent error".to_string()))
         .unwrap();
 
     token_bucket.get_password(user_id)

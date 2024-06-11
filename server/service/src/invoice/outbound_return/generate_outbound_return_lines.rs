@@ -188,14 +188,14 @@ fn outbound_line_from_stock_line_and_invoice_line(
     let number_of_packs_available_to_return =
         stock_line.stock_line_row.available_number_of_packs + number_of_packs;
 
-    return OutboundReturnLine {
+    OutboundReturnLine {
         id,
         note,
         number_of_packs,
         reason_id: return_reason_id,
         available_number_of_packs: number_of_packs_available_to_return,
         stock_line,
-    };
+    }
 }
 #[cfg(test)]
 mod test {

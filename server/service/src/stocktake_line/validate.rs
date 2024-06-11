@@ -24,10 +24,10 @@ pub fn stocktake_reduction_amount(
     stocktake_line: &StocktakeLineRow,
 ) -> f64 {
     if let Some(counted_number_of_packs) = counted_number_of_packs {
-        return stocktake_line.snapshot_number_of_packs - counted_number_of_packs;
+        stocktake_line.snapshot_number_of_packs - counted_number_of_packs
     } else {
-        return 0.0;
-    };
+        0.0
+    }
 }
 
 pub fn check_active_adjustment_reasons(
