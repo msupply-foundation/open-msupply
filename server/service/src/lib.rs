@@ -21,6 +21,7 @@ mod common_stock;
 pub mod currency;
 pub mod cursor_controller;
 pub mod dashboard;
+pub mod demographic;
 pub mod display_settings_service;
 pub mod document;
 pub mod inventory_adjustment_reason;
@@ -44,6 +45,7 @@ pub mod plugin;
 pub mod plugin_data;
 pub mod print;
 pub mod processors;
+pub mod program;
 pub mod programs;
 pub mod repack;
 pub mod report;
@@ -66,6 +68,7 @@ pub mod temperature_excursion;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
+pub mod vaccine_course;
 pub mod validate;
 
 #[cfg(test)]

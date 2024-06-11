@@ -3,14 +3,15 @@ import {
   Gender,
   JsonData,
   JsonForm,
+  JsonFormsReactProps,
   useFormSchema,
   usePatientStore,
 } from '@openmsupply-client/programs';
 import { PatientPanel } from './PatientPanel';
 import { ObjUtils } from '@common/utils';
 
-import defaultPatientSchema from '../DefaultPatientSchema.json';
-import defaultPatientUISchema from '../DefaultPatientUISchema.json';
+import defaultPatientSchema from './DefaultCreatePatientSchema.json';
+import defaultPatientUISchema from './DefaultCreatePatientUISchema.json';
 import { BasicSpinner } from '@openmsupply-client/common';
 import { IdGenerator, idGeneratorTester } from '@openmsupply-client/programs';
 
@@ -25,7 +26,11 @@ type Patient = {
   phone?: string;
 };
 
-export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
+export const PatientFormTab: FC<PatientPanel & JsonFormsReactProps> = ({
+  patient,
+  value,
+  onChange,
+}) => {
   const { updateCreateNewPatient } = usePatientStore();
   const {
     data: patientCreationUI,
@@ -71,6 +76,7 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
         additionalRenderers={[
           { tester: idGeneratorTester, renderer: IdGenerator },
         ]}
+        onChange={onChange}
       />
     </PatientPanel>
   );
