@@ -130,23 +130,13 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     list: async ({
       first,
       offset,
-      sortBy,
       filterBy,
-    }: ListParams<DemographicProjectionFragment>) => {
+    }: Omit<ListParams<DemographicProjectionFragment>, 'sortBy'>) => {
       const result = await sdk.demographicProjections({
         first,
         offset,
         key: DemographicProjectionSortFieldInput.Id,
-        desc: sortBy.isDesc,
         filter: filterBy,
-      });
-      const demographicProjections = result?.demographicProjections;
-      return demographicProjections;
-    },
-    listAll: async ({ sortBy }: ListParams<DemographicProjectionFragment>) => {
-      const result = await sdk.demographicProjections({
-        key: DemographicProjectionSortFieldInput.Id,
-        desc: sortBy.isDesc,
       });
       const demographicProjections = result?.demographicProjections;
       return demographicProjections;
