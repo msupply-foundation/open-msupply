@@ -49,10 +49,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
         INSERT INTO store_new SELECT * FROM store;
 
+        PRAGMA foreign_keys=on;
         DROP TABLE store;
         ALTER TABLE store_new RENAME TO store;
 
-        PRAGMA foreign_keys=on;
 
         CREATE VIEW store_items AS
         SELECT i.id as item_id, sl.store_id, sl.pack_size, sl.available_number_of_packs
