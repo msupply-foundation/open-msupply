@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AutocompleteMulti,
   BasicTextInput,
+  Checkbox,
   DateTimePickerInput,
   InputWithLabelRow,
   Typography,
@@ -11,11 +12,16 @@ import {
   ArrayUtils,
   Box,
   Formatter,
+  useAuthContext,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
-import { formatPropertyValue } from '../../utils';
-import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
+import {
+  DonorSearchInput,
+  NameRowFragment,
+  StoreRowFragment,
+  StoreSearchInput,
+} from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 interface SummaryProps {
   draft?: DraftAsset;
@@ -78,7 +84,7 @@ const Row = ({
 }) => (
   <Box paddingTop={1.5}>
     <InputWithLabelRow
-      labelWidth="150px"
+      labelWidth="160px"
       label={label}
       labelProps={{
         sx: {
@@ -99,6 +105,7 @@ const Row = ({
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const t = useTranslation('coldchain');
   const { localisedDate } = useFormatDateTime();
+  const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
 
   if (!draft) return null;
@@ -125,6 +132,14 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     reason: string
   ) => {
     if (reason === 'clear') onChange({ store: null });
+  };
+
+  const onDonorInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') onChange({ donor: null, donorNameId: null });
   };
 
   return (
@@ -183,36 +198,58 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               textFieldProps={{ fullWidth: true }}
             />
           </Row>
-        </Section>
-        <Section heading={t('heading.cold-chain')}>
-          <Row label={t('label.cold-storage-location')}>
-            {locations ? (
-              <AutocompleteMulti
-                isOptionEqualToValue={(option, value) =>
-                  option.value === value.value
-                }
-                defaultValue={defaultLocations}
-                filterSelectedOptions
-                getOptionLabel={option => option.label}
-                inputProps={{ fullWidth: true }}
-                onChange={(
-                  _event,
-                  newSelectedLocations: {
-                    label: string;
-                    value: string;
-                  }[]
-                ) => {
-                  onChange({
-                    locationIds: ArrayUtils.dedupe(
-                      newSelectedLocations.map(location => location.value)
-                    ),
-                  });
-                }}
-                options={locations}
-              />
-            ) : null}
+          <Row label={t('label.warranty-start-date')}>
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(draft.warrantyStart)}
+              format="P"
+              onChange={date =>
+                onChange({ warrantyStart: Formatter.naiveDate(date) })
+              }
+              textFieldProps={{ fullWidth: true }}
+            />
+          </Row>
+          <Row label={t('label.warranty-end-date')}>
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(draft.warrantyEnd)}
+              format="P"
+              onChange={date =>
+                onChange({ warrantyEnd: Formatter.naiveDate(date) })
+              }
+              textFieldProps={{ fullWidth: true }}
+            />
           </Row>
         </Section>
+        {(!isCentralServer || draft.storeId == storeId) && (
+          <Section heading={t('heading.cold-chain')}>
+            <Row label={t('label.cold-storage-location')}>
+              {locations ? (
+                <AutocompleteMulti
+                  isOptionEqualToValue={(option, value) =>
+                    option.value === value.value
+                  }
+                  defaultValue={defaultLocations}
+                  filterSelectedOptions
+                  getOptionLabel={option => option.label}
+                  inputProps={{ fullWidth: true }}
+                  onChange={(
+                    _event,
+                    newSelectedLocations: {
+                      label: string;
+                      value: string;
+                    }[]
+                  ) => {
+                    onChange({
+                      locationIds: ArrayUtils.dedupe(
+                        newSelectedLocations.map(location => location.value)
+                      ),
+                    });
+                  }}
+                  options={locations}
+                />
+              ) : null}
+            </Row>
+          </Section>
+        )}
       </Container>
       <Box
         marginTop={4}
@@ -245,20 +282,13 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
             />
           </Row>
+          <Row label={t('label.needs-replacement')}>
+            <Checkbox
+              checked={Boolean(draft.needsReplacement)}
+              onChange={e => onChange({ needsReplacement: e.target.checked })}
+            />
+          </Row>
         </Section>
-        {draft.properties.length === 0 ? null : (
-          <Section heading={t('label.catalogue-properties')}>
-            {draft.properties.map(property => (
-              <Row key={property.id} label={property.name}>
-                <BasicTextInput
-                  value={formatPropertyValue(property, t)}
-                  disabled
-                  fullWidth
-                />
-              </Row>
-            ))}
-          </Section>
-        )}
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput
@@ -267,6 +297,16 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
               multiline
               rows={4}
+            />
+          </Row>
+        </Section>
+        <Section heading={t('label.donor')}>
+          <Row label={t('label.donor')}>
+            <DonorSearchInput
+              value={draft.donor as NameRowFragment} // Using as NameRowFragment is ok, because the comparison function is based on the id
+              onChange={e => onChange({ donor: e, donorNameId: e?.id })}
+              onInputChange={onDonorInputChange}
+              clearable
             />
           </Row>
         </Section>

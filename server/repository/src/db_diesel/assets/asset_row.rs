@@ -28,6 +28,11 @@ table! {
         created_datetime -> Timestamp,
         modified_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
+        properties -> Nullable<Text>,
+        donor_name_id -> Nullable<Text>,
+        warranty_start -> Nullable<Date>,
+        warranty_end -> Nullable<Date>,
+        needs_replacement -> Nullable<Bool>,
     }
 }
 
@@ -56,6 +61,11 @@ pub struct AssetRow {
     pub created_datetime: NaiveDateTime,
     pub modified_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
+    pub properties: Option<String>,
+    pub donor_name_id: Option<String>,
+    pub warranty_start: Option<NaiveDate>,
+    pub warranty_end: Option<NaiveDate>,
+    pub needs_replacement: Option<bool>,
 }
 
 pub struct AssetRowRepository<'a> {

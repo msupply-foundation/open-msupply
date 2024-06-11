@@ -27,9 +27,9 @@ const ListView: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'startDatetime', dir: 'desc' },
+    initialSort: { key: 'datetime', dir: 'desc' },
     filters: [
-      { key: 'startDatetime', condition: 'between' },
+      { key: 'datetime', condition: 'between' },
       {
         key: 'sensor.name',
       },
@@ -100,11 +100,12 @@ const ListView: FC = () => {
         sortable: false,
       },
       {
-        key: 'startDatetime',
+        key: 'datetime',
         label: 'label.type-start',
         accessor: ({ rowData }) => {
           return Formatter.csvDateTimeString(rowData.startDatetime);
         },
+        getSortValue: row => row.startDatetime,
       },
       {
         key: 'endDatetime',

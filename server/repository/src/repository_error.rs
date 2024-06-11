@@ -11,7 +11,7 @@ pub enum RepositoryError {
     /// Foreign key constraint is violated
     #[error("foreign key constraint is violated {0}")]
     ForeignKeyViolation(String),
-    /// Actix thred pool canceled
+    /// Actix thread pool cancelled
     #[error("actix thread pool canceled")]
     ThreadPoolCanceled,
     /// Transaction error

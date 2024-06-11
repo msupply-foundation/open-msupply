@@ -24,7 +24,7 @@ pub struct UpdateInput {
     pub id: String,
     pub item_id: Option<String>,
     pub location: Option<NullableUpdateInput<String>>,
-    pub pack_size: Option<u32>,
+    pub pack_size: Option<f64>,
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
@@ -473,7 +473,7 @@ mod test {
                     location: Some(NullableUpdate {
                         value: Some("location 1".to_string())
                     }),
-                    pack_size: Some(1),
+                    pack_size: Some(1.0),
                     batch: Some("batch input".to_string()),
                     cost_price_per_pack: Some(1.0),
                     sell_price_per_pack: Some(1.0),

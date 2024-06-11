@@ -35,7 +35,7 @@ impl BarcodeNode {
             .map(|it| it.id.clone())
     }
 
-    pub async fn pack_size(&self) -> Option<i32> {
+    pub async fn pack_size(&self) -> Option<f64> {
         self.row().pack_size
     }
 
@@ -101,7 +101,7 @@ mod test {
         let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
-            "graphq_test_barcode_node_details",
+            "graphql_test_barcode_node_details",
             MockDataInserts::none(),
         )
         .await;
@@ -116,7 +116,7 @@ mod test {
                                 r.id = "CB81F6CD62C1476F9411362053D49E84".to_string();
                                 r.gtin = "0123456789".to_string();
                                 r.item_id = "AA460A207402434A89B1F6EEAC08DA43".to_string();
-                                r.pack_size = Some(1);
+                                r.pack_size = Some(1.0);
                             })
                         },
                         manufacturer_name_row: None,
@@ -131,7 +131,7 @@ mod test {
                 "id": "CB81F6CD62C1476F9411362053D49E84",
                 "gtin": "0123456789",
                 "itemId": "AA460A207402434A89B1F6EEAC08DA43",
-                "packSize": 1
+                "packSize": 1.0
             }
           }
         );

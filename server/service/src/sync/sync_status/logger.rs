@@ -357,6 +357,10 @@ impl SyncLogError {
                 SyncParsedErrorV6::LegacyServerError(source),
             )) => &source.code,
 
+            SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
+                SyncParsedErrorV6::SyncVersionMismatch(_, _, _),
+            )) => return Self::new(SyncApiErrorCode::V6ApiVersionIncompatible, sync_error),
+
             // map connection errors
             SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))
             | SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ConnectionError { .. }) => {

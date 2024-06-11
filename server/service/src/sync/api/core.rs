@@ -91,7 +91,7 @@ impl SyncApiV5 {
 
     #[cfg(test)]
     pub(crate) fn new_test(url: &str, site_name: &str, password: &str, hardware_id: &str) -> Self {
-        use crate::sync::settings::SYNC_VERSION;
+        use crate::sync::settings::SYNC_V5_VERSION;
         use util::hash::sha256;
 
         SyncApiV5 {
@@ -101,7 +101,7 @@ impl SyncApiV5 {
                 username: site_name.to_string(),
                 password_sha256: sha256(&password),
                 site_uuid: hardware_id.to_string(),
-                sync_version: SYNC_VERSION.to_string(),
+                sync_version: SYNC_V5_VERSION.to_string(),
                 app_version: Version::from_package_json().to_string(),
                 app_name: APP_NAME.to_string(),
             },

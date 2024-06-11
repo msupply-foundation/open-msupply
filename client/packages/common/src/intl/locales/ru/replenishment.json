@@ -14,5 +14,17 @@
   "label.cant-delete-disabled": "Возможно удаление строк только со статусом 'Новый'",
   "button.new-shipment": "Новая Поставка",
   "error.shipment-not-found": "Поставка не найдена",
-  "error.unable-to-calculate": "Невозможно рассчитать"
+  "error.unable-to-calculate": "Невозможно рассчитать",
+  "messages.select-rows-to-delete-them": "Выберите строки, чтобы удалить их",
+  "label.amc": "Среднее Месячное Потребление",
+  "button.new-return": "Новый Возврат",
+  "heading.edit-tax-rate": "Редактировать процентную ставку налога",
+  "error.failed-to-create-return": "Не удалось создать возврат!",
+  "error.return-not-found": "Возврат не найден",
+  "heading.return-items": "Возврат Товаров",
+  "heading.sub-total": "Промежуточный Итог",
+  "heading.total": "Итого",
+  "label.shipment": "Поставка",
+  "button.return-lines": "Обработать возврат выбранных строк",
+  "button.requested-to-suggested": "Использовать Рекомендуемые Количества"
 }

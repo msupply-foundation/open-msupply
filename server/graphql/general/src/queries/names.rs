@@ -49,6 +49,8 @@ pub struct NameFilterInput {
     pub is_customer: Option<bool>,
     /// Filter by supplier property
     pub is_supplier: Option<bool>,
+    /// Filter by donor property
+    pub is_donor: Option<bool>,
     pub is_patient: Option<bool>,
     /// Is this name a store
     pub is_store: Option<bool>,
@@ -68,6 +70,9 @@ pub struct NameFilterInput {
     pub address2: Option<StringFilterInput>,
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
+
+    /// Search filter across name or code
+    pub code_or_name: Option<StringFilterInput>,
 }
 
 #[derive(SimpleObject)]
@@ -107,7 +112,7 @@ pub fn get_names(
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
     let names = service_provider
-        .general_service
+        .name_service
         .get_names(
             &service_context,
             &store_id,
@@ -130,6 +135,7 @@ impl NameFilterInput {
             code,
             is_customer,
             is_supplier,
+            is_donor,
             is_store,
             store_code,
             is_visible,
@@ -141,6 +147,7 @@ impl NameFilterInput {
             country,
             email,
             is_patient,
+            code_or_name,
         } = self;
 
         NameFilter {
@@ -148,8 +155,10 @@ impl NameFilterInput {
             name: name.map(StringFilter::from),
             code: code.map(StringFilter::from),
             store_code: store_code.map(StringFilter::from),
+            code_or_name: code_or_name.map(StringFilter::from),
             is_customer,
             is_supplier,
+            is_donor,
             is_store,
             is_visible,
             is_system_name: is_system_name.or(Some(false)),
