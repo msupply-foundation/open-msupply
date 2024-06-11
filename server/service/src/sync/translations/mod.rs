@@ -212,15 +212,12 @@ impl PullTranslateResult {
     }
 
     pub(crate) fn add_source_site_id(&mut self, source_site_id: i32) {
-        match self {
-            Self::IntegrationOperations(operations) => {
-                for operation in operations {
-                    if let IntegrationOperation::Upsert(_, ref mut site_id) = operation {
-                        *site_id = Some(source_site_id);
-                    }
+        if let Self::IntegrationOperations(operations) = self {
+            for operation in operations {
+                if let IntegrationOperation::Upsert(_, ref mut site_id) = operation {
+                    *site_id = Some(source_site_id);
                 }
             }
-            _ => {}
         }
     }
 

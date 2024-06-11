@@ -579,12 +579,11 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
             }
             _ => {}
         },
-        InvoiceType::Repack => match data.status {
-            LegacyTransactStatus::Fn => {
+        InvoiceType::Repack => {
+            if let LegacyTransactStatus::Fn = data.status {
                 mapping.verified_datetime = confirm_datetime;
             }
-            _ => {}
-        },
+        }
     };
     mapping
 }
