@@ -122,9 +122,9 @@ impl SyncTranslation for NameMergeTranslation {
                     // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
                     // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
                     if (!nsj_keep.name_store_join.name_is_customer
-                        && nsj_keep.name_store_join.name_is_customer)
+                        && nsj_delete.name_store_join.name_is_customer)
                         || (!nsj_keep.name_store_join.name_is_supplier
-                            && nsj_keep.name_store_join.name_is_supplier)
+                            && nsj_delete.name_store_join.name_is_supplier)
                     {
                         operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
                             id: nsj_keep.name_store_join.id.clone(),
