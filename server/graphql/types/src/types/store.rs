@@ -5,7 +5,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Store, StoreRow};
+use repository::{NameRow, Store, StoreRow};
 
 use super::NameNode;
 
@@ -32,16 +32,13 @@ impl StoreNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(
-                &store_id,
-                &self.row().name_link_id,
-            ))
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.name_row().id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to store ({})",
-                &self.row().name_link_id,
+                &self.name_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -69,6 +66,10 @@ impl StoreNode {
 
     pub fn row(&self) -> &StoreRow {
         &self.store.store_row
+    }
+
+    pub fn name_row(&self) -> &NameRow {
+        &self.store.name_row
     }
 }
 
