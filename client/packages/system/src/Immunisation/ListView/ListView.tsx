@@ -56,9 +56,7 @@ const ImmunisationProgramListComponent: FC = () => {
 
   return (
     <>
-      {isOpen && (
-        <ImmunisationProgramCreateModal isOpen={isOpen} onClose={onClose} />
-      )}
+      <ImmunisationProgramCreateModal isOpen={isOpen} onClose={onClose} />
       <Toolbar />
       <AppBarButtons onCreate={onOpen} />
       <DataTable
