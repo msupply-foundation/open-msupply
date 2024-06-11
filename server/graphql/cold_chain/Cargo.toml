@@ -30,3 +30,6 @@ util = { path = "../../util" }
 default = ["sqlite"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
+
+[lints]
+workspace = true
