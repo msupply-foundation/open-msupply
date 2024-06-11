@@ -1,11 +1,16 @@
 use super::{
-    master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_row::name::dsl::*, name_store_join::name_store_join, program_row::program,
-    store_row::store, StorageConnection,
+    master_list_name_join::master_list_name_join,
+    master_list_row::master_list,
+    name_row::{name::dsl::*, name_oms_fields::dsl as name_oms_fields_dsl},
+    name_store_join::name_store_join,
+    program_row::program,
+    store_row::store,
+    StorageConnection,
 };
 use crate::{
-    item_link, name_link, repository_error::RepositoryError, EqualFilter, NameLinkRow,
-    NameLinkRowRepository,
+    item_link, name_link, repository_error::RepositoryError, ChangeLogInsertRow,
+    ChangelogRepository, ChangelogTableName, EqualFilter, NameLinkRow, NameLinkRowRepository,
+    RowActionType,
 };
 use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -183,12 +188,13 @@ pub struct NameRow {
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = name_oms_fields)]
 pub struct NameOmsFieldsRow {
-    #[diesel(column_name = "id")]
-    pub name_oms_fields_id: String,
+    pub id: String,
     pub properties: Option<String>,
 }
 
@@ -223,23 +229,11 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    fn toggle_is_sync_update(
-        &self,
-        name_id: &str,
-        is_sync_update: bool,
-    ) -> Result<(), RepositoryError> {
-        diesel::update(name_is_sync_update::table.find(name_id))
-            .set(name_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(self.connection.lock().connection())?;
-
-        Ok(())
-    }
-
-    pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &NameRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
         insert_or_ignore_name_link(self.connection, row)?;
-        self.toggle_is_sync_update(&row.id, false)?;
-        Ok(())
+
+        self.insert_changelog(row.id.clone(), RowActionType::Upsert, None)
     }
 
     pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
@@ -280,33 +274,59 @@ impl<'a> NameRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn sync_upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        insert_or_ignore_name_link(self.connection, row)?;
-        self.toggle_is_sync_update(&row.id, true)?;
-
-        Ok(())
+    pub fn find_one_oms_fields_by_id(
+        &self,
+        name_id: &str,
+    ) -> Result<Option<NameOmsFieldsRow>, RepositoryError> {
+        let result = name_oms_fields_dsl::name_oms_fields
+            .filter(name_oms_fields_dsl::id.eq(name_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
     }
 
     pub fn update_properties(
         &self,
         name_id: &str,
         properties: &Option<String>,
-    ) -> Result<(), RepositoryError> {
+    ) -> Result<i64, RepositoryError> {
         diesel::update(name_oms_fields::table.find(name_id))
             .set(name_oms_fields::properties.eq(properties))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+
+        self.insert_changelog_oms_fields(name_id.to_owned(), RowActionType::Upsert, None)
     }
 
-    #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, name_id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = name_is_sync_update::table
-            .find(name_id)
-            .select(name_is_sync_update::dsl::is_sync_update)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+    fn insert_changelog(
+        &self,
+        record_id: String,
+        row_action: RowActionType,
+        store_id: Option<String>,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Name,
+            record_id,
+            row_action,
+            store_id,
+            ..Default::default()
+        };
+        ChangelogRepository::new(&self.connection).insert(&row)
+    }
+
+    fn insert_changelog_oms_fields(
+        &self,
+        record_id: String,
+        row_action: RowActionType,
+        store_id: Option<String>,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::NameOmsFields,
+            record_id,
+            row_action,
+            store_id,
+            ..Default::default()
+        };
+        ChangelogRepository::new(&self.connection).insert(&row)
     }
 }
 
@@ -328,13 +348,41 @@ impl Delete for NameRowDelete {
 
 impl Upsert for NameRow {
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameRowRepository::new(con).sync_upsert_one(self)
+        let _changelog_id = NameRowRepository::new(con).upsert_one(self);
+        Ok(())
+    }
+
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let cursor_id = NameRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(cursor_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             NameRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+
+impl Upsert for NameOmsFieldsRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        let _changelog_id =
+            NameRowRepository::new(con).update_properties(&self.id, &self.properties);
+        Ok(())
+    }
+
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let cursor_id =
+            NameRowRepository::new(con).update_properties(&self.id, &self.properties)?;
+        Ok(Some(cursor_id))
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameRowRepository::new(con).find_one_oms_fields_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
@@ -348,46 +396,6 @@ mod test {
         mock::MockDataInserts, test_db::setup_all, EqualFilter, NameFilter, NameRepository,
         NameRow, NameRowRepository,
     };
-
-    #[actix_rt::test]
-    async fn name_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
-            "name_is_sync_update",
-            MockDataInserts::none().items().units(),
-        )
-        .await;
-
-        let repo = NameRowRepository::new(&connection);
-
-        // Two rows, to make sure is_sync_update update only affects one row
-        let row = NameRow {
-            id: uuid(),
-            ..Default::default()
-        };
-        let row2 = NameRow {
-            id: uuid(),
-            ..Default::default()
-        };
-
-        // First insert
-        repo.upsert_one(&row).unwrap();
-        repo.upsert_one(&row2).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Synchronisation upsert
-        repo.sync_upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Normal upsert
-        repo.upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-    }
 
     #[actix_rt::test]
     async fn name_sync_update_does_not_overwrite_properties() {
@@ -423,8 +431,8 @@ mod test {
         // Check properties have been set
         assert_eq!(name.properties, properties);
 
-        // Sync upsert
-        row_repo.sync_upsert_one(&row).unwrap();
+        // upsert name_row
+        row_repo.upsert_one(&row).unwrap();
 
         let name = name_repo
             .query_one("store_id", name_filter)
