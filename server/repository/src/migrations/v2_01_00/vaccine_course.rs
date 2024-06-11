@@ -9,7 +9,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             id TEXT PRIMARY KEY NOT NULL,
             name TEXT NOT NULL,
             program_id TEXT NOT NULL REFERENCES program(id),
-            demographic_indicator_id TEXT NOT NULL REFERENCES demographic_indicator(id),
+            demographic_indicator_id TEXT REFERENCES demographic_indicator(id),
             coverage_rate FLOAT NOT NULL DEFAULT 100,
             is_active BOOL NOT NULL DEFAULT true,
             wastage_rate FLOAT NOT NULL DEFAULT 0,

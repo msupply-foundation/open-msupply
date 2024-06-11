@@ -2891,7 +2891,6 @@ export type InsertVaccineCourseErrorInterface = {
 };
 
 export type InsertVaccineCourseInput = {
-  demographicIndicatorId: Scalars['String']['input'];
   id: Scalars['String']['input'];
   name: Scalars['String']['input'];
   programId: Scalars['String']['input'];
@@ -7791,10 +7790,14 @@ export type VaccineCourseMutationsInsertVaccineCourseArgs = {
 
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
-  demographicIndicatorId: Scalars['String']['output'];
+  coverageRate: Scalars['Float']['output'];
+  demographicIndicatorId?: Maybe<Scalars['String']['output']>;
+  doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   programId: Scalars['String']['output'];
+  wastageRate: Scalars['Float']['output'];
 };
 
 export type VaccineCourseResponse = NodeError | VaccineCourseNode;
