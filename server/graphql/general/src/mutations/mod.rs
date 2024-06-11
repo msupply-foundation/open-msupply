@@ -6,4 +6,5 @@ pub mod label_printer_settings;
 pub mod log;
 pub mod manual_sync;
 pub mod sync_settings;
+pub mod update_name_properties;
 pub mod update_user;
