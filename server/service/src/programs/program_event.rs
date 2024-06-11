@@ -72,7 +72,7 @@ fn remove_event_stack(
             desc: Some(true),
         }),
     )?;
-    let Some(longest) = stack_events.get(0).map(|it| &it.program_event_row) else {
+    let Some(longest) = stack_events.first().map(|it| &it.program_event_row) else {
         // no stack found -> done
         return Ok(());
     };
@@ -253,7 +253,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                     )?;
 
                     let active_end_datetime = if let Some(active_end_datetime) = overlaps
-                        .get(0)
+                        .first()
                         .map(|it| it.program_event_row.active_end_datetime)
                     {
                         active_end_datetime
