@@ -8,8 +8,6 @@ import {
   ExternalNavLink,
   List,
   PowerIcon,
-  // RadioIcon,
-  // ReportsIcon,
   SettingsIcon,
   Theme,
   IconButton,
@@ -25,7 +23,7 @@ import {
   RouteBuilder,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { AppRoute, Environment, ExternalURL } from '@openmsupply-client/config';
+import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
   CatalogueNav,
   DistributionNav,
@@ -215,12 +213,12 @@ export const AppDrawer: React.FC = () => {
           />
           <DistributionNav />
           <ReplenishmentNav />
-          <CatalogueNav />
+          <CatalogueNav store={store} />
           <InventoryNav />
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
-          {Environment.FEATURE_GAPS && <ManageNav />}
-          {Environment.FEATURE_GAPS && <ProgramsNav />}
+          <ManageNav store={store} />
+          <ProgramsNav store={store} />
 
           {/* <AppNavLink
             to={AppRoute.Tools}

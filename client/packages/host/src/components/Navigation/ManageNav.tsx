@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Collapse,
   List,
@@ -7,18 +7,19 @@ import {
   AppNavLink,
   AppNavSection,
   useIsCentralServerApi,
+  UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { SlidersIcon } from '@common/icons';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
-export const ManageNav: FC = () => {
+export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Manage).addWildCard().build()
   );
   const t = useTranslation('app');
   const isCentralServer = useIsCentralServerApi();
-  const visible = isCentralServer;
+  const visible = isCentralServer && store?.preferences.vaccineModule;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
