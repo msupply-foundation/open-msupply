@@ -8,7 +8,7 @@ pub fn check_stocktake_exist(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<StocktakeRow>, RepositoryError> {
-    Ok(StocktakeRowRepository::new(connection).find_one_by_id(id)?)
+    StocktakeRowRepository::new(connection).find_one_by_id(id)
 }
 
 pub fn check_stocktake_not_finalised(status: &StocktakeStatus) -> bool {

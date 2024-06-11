@@ -27,7 +27,7 @@ fn check_reason_exists_option(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<ReturnReasonRow>, RepositoryError> {
-    Ok(ReturnReasonRowRepository::new(connection).find_one_by_id(id)?)
+    ReturnReasonRowRepository::new(connection).find_one_by_id(id)
 }
 
 fn check_reason_is_active(reason: &ReturnReasonRow) -> bool {
