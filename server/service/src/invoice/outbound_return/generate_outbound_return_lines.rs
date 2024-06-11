@@ -87,9 +87,7 @@ fn stock_lines_from_stock_line_ids(
 
     let filter = StockLineFilter::new().id(EqualFilter::equal_any(stock_line_ids.clone()));
 
-    let stock_lines = stock_line_repo.query_by_filter(filter, Some(store_id.to_string()));
-
-    stock_lines
+    stock_line_repo.query_by_filter(filter, Some(store_id.to_string()))
 }
 
 fn stock_lines_for_item_id(
@@ -108,9 +106,7 @@ fn stock_lines_for_item_id(
                 .store_id(EqualFilter::equal_to(store_id))
                 .is_available(true);
 
-            let stock_lines = stock_line_repo.query_by_filter(filter, None);
-
-            stock_lines
+            stock_line_repo.query_by_filter(filter, None)
         }
         None => Ok(vec![]),
     }

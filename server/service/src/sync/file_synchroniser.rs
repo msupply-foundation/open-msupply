@@ -191,8 +191,7 @@ impl FileSynchroniser {
             let retry_at = match error.source {
                 SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncFileNotFound(_)) => {
                     // wait 1 minute before retrying
-                    let retry_at = Utc::now().naive_utc() + Duration::minutes(1);
-                    retry_at
+                    Utc::now().naive_utc() + Duration::minutes(1)
                 }
                 _ => {
                     Utc::now().naive_utc()
