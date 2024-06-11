@@ -21,6 +21,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             connection,
             r#"
             ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'name_property';
+
+            ALTER TYPE permission_type ADD VALUE 'NAME_PROPERTIES_MUTATE';
             "#
         )?;
     }
