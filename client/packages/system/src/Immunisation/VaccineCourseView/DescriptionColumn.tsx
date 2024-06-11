@@ -13,7 +13,7 @@ interface RecordWithIdWithRequiredFields extends RecordWithId {
 export const descriptionColumn = <
   T extends RecordWithIdWithRequiredFields,
 >(): ColumnDefinition<T> => ({
-  label: 'label.description',
+  label: 'label.label',
   setter: () => {
     if (process.env['NODE_ENV']) {
       throw new Error(
