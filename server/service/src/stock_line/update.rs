@@ -177,28 +177,25 @@ fn generate_location_movement(
     let mut movement: Vec<LocationMovementRow> = Vec::new();
     let mut exit_movement;
 
-    match existing.location_id {
-        Some(location_id) => {
-            let filter = LocationMovementRepository::new(connection)
-                .query_by_filter(
-                    LocationMovementFilter::new()
-                        .enter_datetime(DatetimeFilter::is_null(false))
-                        .exit_datetime(DatetimeFilter::is_null(true))
-                        .location_id(EqualFilter::equal_to(&location_id))
-                        .stock_line_id(EqualFilter::equal_to(&existing.id))
-                        .store_id(EqualFilter::equal_to(&store_id)),
-                )?
-                .into_iter()
-                .map(|l| l.location_movement_row)
-                .min_by_key(|l| l.enter_datetime);
+    if let Some(location_id) = existing.location_id {
+        let filter = LocationMovementRepository::new(connection)
+            .query_by_filter(
+                LocationMovementFilter::new()
+                    .enter_datetime(DatetimeFilter::is_null(false))
+                    .exit_datetime(DatetimeFilter::is_null(true))
+                    .location_id(EqualFilter::equal_to(&location_id))
+                    .stock_line_id(EqualFilter::equal_to(&existing.id))
+                    .store_id(EqualFilter::equal_to(&store_id)),
+            )?
+            .into_iter()
+            .map(|l| l.location_movement_row)
+            .min_by_key(|l| l.enter_datetime);
 
-            if filter.is_some() {
-                exit_movement = filter.unwrap();
-                exit_movement.exit_datetime = Some(Utc::now().naive_utc());
-                movement.push(exit_movement);
-            }
+        if let Some(filter) = filter {
+            exit_movement = filter;
+            exit_movement.exit_datetime = Some(Utc::now().naive_utc());
+            movement.push(exit_movement);
         }
-        None => {}
     }
 
     movement.push(LocationMovementRow {

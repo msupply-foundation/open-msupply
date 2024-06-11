@@ -365,11 +365,8 @@ fn tera_templates_from_resolved_template(
 ) -> Option<HashMap<String, TeraTemplate>> {
     let mut templates = HashMap::new();
     for (name, entry) in &report.entries {
-        match entry {
-            ReportDefinitionEntry::TeraTemplate(template) => {
-                templates.insert(name.clone(), template.clone());
-            }
-            _ => {}
+        if let ReportDefinitionEntry::TeraTemplate(template) = entry {
+            templates.insert(name.clone(), template.clone());
         }
     }
     Some(templates)

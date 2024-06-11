@@ -303,12 +303,9 @@ async fn download_sync_file_inner(
     let file_service = StaticFileService::new(&settings.server.base_dir)?;
     let static_file_category = StaticFileCategory::SyncFile(table_name, parent_record_id);
 
-    let file = file_service.find_file(&file_id, static_file_category.clone())?;
-
-    match file {
-        Some(file) => return Ok((NamedFile::open(file.path)?, file.name)),
-        None => {}
-    };
+    if let Some(file) = file_service.find_file(&file_id, static_file_category.clone())? {
+        return Ok((NamedFile::open(file.path)?, file.name));
+    }
 
     let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() else {
         // Not found locally and is central server

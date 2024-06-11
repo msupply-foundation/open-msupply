@@ -59,10 +59,8 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
             };
 
-            // Add source_site_id to translation result if it exists in the sync buffer row
-            match source_site_id {
-                Some(id) => translation_result.add_source_site_id(id),
-                None => {}
+            if let Some(id) = source_site_id {
+                translation_result.add_source_site_id(id);
             }
 
             translation_results.push(translation_result);
