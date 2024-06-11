@@ -150,7 +150,7 @@ async fn delete_sync_file(
         Ok(_) => Ok(HttpResponse::Ok().body("file deleted")),
         Err(err) => {
             log::error!("Error deleting file reference: {}", err);
-            return Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into());
+            Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into())
         }
     }
 }
@@ -327,5 +327,5 @@ async fn download_sync_file_inner(
         .download_file_from_central(&file_id)
         .await?;
 
-    return Ok((NamedFile::open(file.path)?, file.name));
+    Ok((NamedFile::open(file.path)?, file.name))
 }

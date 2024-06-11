@@ -116,11 +116,11 @@ pub fn stocktake_reduction_amount(
 ) -> f64 {
     if let (Some(stock_line), Some(counted_number_of_packs)) = (stock_line, counted_number_of_packs)
     {
-        return stock_line.stock_line_row.total_number_of_packs - counted_number_of_packs;
+        stock_line.stock_line_row.total_number_of_packs - counted_number_of_packs
     } else if stock_line.is_none() && counted_number_of_packs.is_some() {
-        return -counted_number_of_packs.unwrap_or(0.0);
+        -counted_number_of_packs.unwrap_or(0.0)
     } else {
-        return 0.0;
+        0.0
     }
 }
 

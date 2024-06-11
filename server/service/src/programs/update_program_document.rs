@@ -172,7 +172,7 @@ fn is_truthy(value: &Value) -> bool {
     if let Some(float) = value.as_f64() {
         return float != 0.0;
     }
-    return true;
+    true
 }
 
 fn match_condition(condition: &EventCondition, doc: &Document) -> bool {

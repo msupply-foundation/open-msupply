@@ -138,5 +138,5 @@ pub fn empty_lines_to_trim(
     }
 
     let requisition_lines = lines.into_iter().map(|l| l.requisition_line_row).collect();
-    return Ok(Some(requisition_lines));
+    Ok(Some(requisition_lines))
 }

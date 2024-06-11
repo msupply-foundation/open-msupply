@@ -274,12 +274,10 @@ fn resolve_report_definition(
         .iter()
         .map(|query| match fully_loaded_report.entries.get(query) {
             Some(query_entry) => Ok(query_entry),
-            None => {
-                return Err(ReportError::InvalidReportDefinition(format!(
-                    "Invalid query reference: {}",
-                    query
-                )))
-            }
+            None => Err(ReportError::InvalidReportDefinition(format!(
+                "Invalid query reference: {}",
+                query
+            ))),
         })
         .collect::<Result<Vec<_>, ReportError>>()?;
 
