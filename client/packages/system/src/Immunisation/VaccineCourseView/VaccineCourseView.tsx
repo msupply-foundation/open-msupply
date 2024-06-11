@@ -121,14 +121,14 @@ const Row = ({
   </Box>
 );
 
-const createNewProgram = (seed?: any | null): any => ({
+const createNewVaccineCourse = (seed?: any | null): any => ({
   id: FnUtils.generateUUID(),
   name: '',
   description: '',
   ...seed,
 });
 
-interface UseDraftProgramControl {
+interface UseDraftVaccineCourseControl {
   draft: any;
   onUpdate: (patch: Partial<any>) => void;
   onSave: () => Promise<void>;
@@ -147,15 +147,17 @@ const VaccineOptions = [
   },
 ];
 
-const useDraftProgram = (): UseDraftProgramControl => {
-  const [vaccine, setProgram] = useState<any>(() => createNewProgram(seed));
+const useDraftVaccineCourse = (): UseDraftVaccineCourseControl => {
+  const [vaccine, setVaccineCourse] = useState<any>(() =>
+    createNewVaccineCourse(seed)
+  );
 
   const onUpdate = (patch: Partial<any>) => {
-    setProgram({ ...vaccine, ...patch });
+    setVaccineCourse({ ...vaccine, ...patch });
   };
 
   const onSave = async () => {
-    console.info('TODO insert vaccine mutation');
+    console.info('TODO update vaccine course mutation');
   };
 
   const isLoading = false;
@@ -171,7 +173,7 @@ const useDraftProgram = (): UseDraftProgramControl => {
 export const VaccineCourseView: FC = () => {
   const { setSuffix } = useBreadcrumbs();
   const t = useTranslation('coldchain');
-  const { draft, onUpdate, isLoading } = useDraftProgram();
+  const { draft, onUpdate, isLoading } = useDraftVaccineCourse();
   const [buffer, setBuffer] = useState(draft?.numberOfDoses ?? 1);
   const [value, setValue] = useState(draft?.numberOfDoses ?? 1);
 
