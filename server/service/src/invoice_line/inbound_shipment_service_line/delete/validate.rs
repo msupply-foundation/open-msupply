@@ -2,7 +2,7 @@ use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         stock_in_line::DeleteStockInLine,
-        validate::{check_line_belongs_to_invoice, check_line_row_exists_option},
+        validate::{check_line_belongs_to_invoice, check_line_row_exists},
     },
 };
 use repository::{InvoiceLineRow, InvoiceType, StorageConnection};

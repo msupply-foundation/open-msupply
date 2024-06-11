@@ -21,7 +21,7 @@ pub struct InsertStockOutLine {
     pub note: Option<String>,
     pub location_id: Option<String>,
     pub batch: Option<String>,
-    pub pack_size: Option<i32>,
+    pub pack_size: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,

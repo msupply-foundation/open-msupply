@@ -11,7 +11,7 @@ use crate::invoice::inventory_adjustment::UpdateInventoryAdjustmentReason;
 use crate::invoice_line::stock_in_line::{InsertStockInLine, StockInType};
 use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
 use crate::number::next_number;
-use crate::{i32_to_u32, NullableUpdate};
+use crate::NullableUpdate;
 
 use super::{AdjustmentType, InsertInventoryAdjustment};
 
@@ -111,7 +111,7 @@ pub fn generate(
             // From existing stock line
             item_id: stock_line.item_row.id,
             location: location_id.map(|id| NullableUpdate { value: Some(id) }),
-            pack_size: i32_to_u32(pack_size),
+            pack_size,
             batch,
             cost_price_per_pack,
             sell_price_per_pack,
