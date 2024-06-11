@@ -18,10 +18,12 @@ import {
   useNavigate,
   useColumns,
   NothingHere,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppBarButtons } from './AppBarButtons';
+import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
 
 export const ProgramComponent: FC = () => {
   const navigate = useNavigate();
@@ -61,17 +63,21 @@ export const ProgramComponent: FC = () => {
     setSuffix(data?.name ?? '');
   }, [setSuffix, data]);
 
+  // create modal will generate vaccine for program. Onclick will navigate for detailed edit
+  const { isOpen, onClose, onOpen } = useEditModal<any>();
+
   return isLoading ? (
     <InlineSpinner />
   ) : (
     <>
+      <VaccineCourseCreateModal isOpen={isOpen} onClose={onClose} />
       <Toolbar
         draft={draft}
         onUpdate={updatePatch}
         error={errorMessage}
         isError={errorMessage != ''}
       />
-      <AppBarButtons />
+      <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'Vaccine Course List'}
         pagination={{ ...pagination }}
