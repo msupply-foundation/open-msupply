@@ -63,22 +63,24 @@ pub fn update_patient(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
+    let update_patient = inline_init(|n: &mut UpdatePatient| {
+        n.id = id;
+        n.code = code;
+        n.code_2 = code_2;
+        n.first_name = first_name;
+        n.last_name = last_name;
+        n.gender = gender.map(|g| g.to_domain());
+        n.date_of_birth = date_of_birth;
+        n.address1 = address1;
+        n.phone = phone;
+        n.is_deceased = is_deceased;
+        n.date_of_death = date_of_death;
+    });
+
     match service_provider.patient_service.update_patient(
         &service_context,
         service_provider,
-        inline_init(|n: &mut UpdatePatient| {
-            n.id = id;
-            n.code = code;
-            n.code_2 = code_2;
-            n.first_name = first_name;
-            n.last_name = last_name;
-            n.gender = gender.map(|g| g.to_domain());
-            n.date_of_birth = date_of_birth;
-            n.address1 = address1;
-            n.phone = phone;
-            n.is_deceased = is_deceased;
-            n.date_of_death = date_of_death;
-        }),
+        update_patient,
     ) {
         Ok(patient) => Ok(UpdatePatientResponse::Response(PatientNode {
             store_id,
