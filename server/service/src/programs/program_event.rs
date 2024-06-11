@@ -182,7 +182,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         context_id: &str,
         events: Vec<EventInput>,
     ) -> Result<(), RepositoryError> {
-        let result = connection
+        connection
             .transaction_sync(|con| -> Result<(), RepositoryError> {
                 // TODO do we need to lock rows in case events are updated concurrently?
                 let repo = ProgramEventRepository::new(con);
@@ -321,7 +321,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                 Ok(())
             })
             .map_err(|err| err.to_inner_error())?;
-        Ok(result)
+        Ok(())
     }
 }
 

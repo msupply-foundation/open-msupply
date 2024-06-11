@@ -239,7 +239,7 @@ where
 {
     let data = data.as_object()?;
     let parts = path
-        .split(".")
+        .split('.')
         .map(|p| p.to_string())
         .collect::<Vec<String>>();
 
