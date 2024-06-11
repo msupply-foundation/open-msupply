@@ -1,4 +1,7 @@
-use repository::{MasterListRow, StorageConnection, SyncBufferRow};
+use repository::{
+    MasterListRow, MasterListRowDelete, MasterListRowRepository, ProgramRowRepository,
+    StorageConnection, SyncBufferRow,
+};
 
 use serde::Deserialize;
 
@@ -46,6 +49,35 @@ impl SyncTranslation for MasterListTranslation {
             is_active: !data.inactive.unwrap_or(true),
         };
         Ok(PullTranslateResult::upsert(result))
+    }
+
+    // Soft deletes were implemented in OG months after program requisitions was
+    // rolled out, so previously hard deleted records may be gone even if they
+    // are linked to program. Set these records to inactive.
+    fn try_translate_from_delete_sync_record(
+        &self,
+        connection: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let program =
+            ProgramRowRepository::new(connection).find_one_by_id(&sync_record.record_id)?;
+        let master_list =
+            MasterListRowRepository::new(connection).find_one_by_id(&sync_record.record_id)?;
+
+        if let (Some(_), Some(master_list)) = (program, master_list) {
+            let result = MasterListRow {
+                id: master_list.id,
+                name: master_list.name,
+                code: master_list.code,
+                description: master_list.description,
+                is_active: false,
+            };
+            return Ok(PullTranslateResult::upsert(result));
+        }
+
+        Ok(PullTranslateResult::delete(MasterListRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 

@@ -1,4 +1,8 @@
-use super::{name_row::name::dsl::*, StorageConnection};
+use super::{
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    name_row::name::dsl::*, name_store_join::name_store_join, program_row::program,
+    store_row::store, StorageConnection,
+};
 use crate::{
     item_link, name_link, repository_error::RepositoryError, EqualFilter, NameLinkRow,
     NameLinkRowRepository,
@@ -55,8 +59,29 @@ table! {
     }
 }
 
+table! {
+    #[sql_name = "name"]
+    name_oms_fields (id) {
+        id -> Text,
+        properties -> Nullable<Text>,
+    }
+}
+
+alias!(name_oms_fields as name_oms_fields_alias: NameOmsFields);
+
+joinable!(name_oms_fields -> name (id));
 allow_tables_to_appear_in_same_query!(name, item_link);
 allow_tables_to_appear_in_same_query!(name, name_link);
+allow_tables_to_appear_in_same_query!(name, name_oms_fields);
+// for names query
+allow_tables_to_appear_in_same_query!(name_oms_fields, item_link);
+allow_tables_to_appear_in_same_query!(name_oms_fields, name_link);
+allow_tables_to_appear_in_same_query!(name_oms_fields, store);
+allow_tables_to_appear_in_same_query!(name_oms_fields, name_store_join);
+// for programs query
+allow_tables_to_appear_in_same_query!(name_oms_fields, master_list_name_join);
+allow_tables_to_appear_in_same_query!(name_oms_fields, master_list);
+allow_tables_to_appear_in_same_query!(name_oms_fields, program);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -158,6 +183,15 @@ pub struct NameRow {
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = name_oms_fields)]
+pub struct NameOmsFieldsRow {
+    #[diesel(column_name = "id")]
+    pub name_oms_fields_id: String,
+    pub properties: Option<String>,
+}
+
 pub struct NameRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -179,21 +213,12 @@ impl<'a> NameRowRepository<'a> {
         NameRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name)
             .values(name_row)
             .on_conflict(id)
             .do_update()
             .set(name_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(name)
-            .values(name_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -263,6 +288,17 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
+    pub fn update_properties(
+        &self,
+        name_id: &str,
+        properties: &Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(name_oms_fields::table.find(name_id))
+            .set(name_oms_fields::properties.eq(properties))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     #[cfg(test)]
     fn find_is_sync_update_by_id(&self, name_id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = name_is_sync_update::table
@@ -308,7 +344,10 @@ impl Upsert for NameRow {
 mod test {
     use util::uuid::uuid;
 
-    use crate::{mock::MockDataInserts, test_db::setup_all, NameRow, NameRowRepository};
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, EqualFilter, NameFilter, NameRepository,
+        NameRow, NameRowRepository,
+    };
 
     #[actix_rt::test]
     async fn name_is_sync_update() {
@@ -348,5 +387,51 @@ mod test {
 
         assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
         assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+    }
+
+    #[actix_rt::test]
+    async fn name_sync_update_does_not_overwrite_properties() {
+        let (_, connection, _, _) = setup_all(
+            "name_sync_update_does_not_overwrite_properties",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let row_repo = NameRowRepository::new(&connection);
+
+        let name_repo = NameRepository::new(&connection);
+
+        let row = NameRow {
+            id: uuid(),
+            ..Default::default()
+        };
+
+        // First insert
+        row_repo.upsert_one(&row).unwrap();
+
+        let properties = Some("{\"key\": \"test\"}".to_string());
+
+        // Add properties to name
+        row_repo.update_properties(&row.id, &properties).unwrap();
+
+        let name_filter = NameFilter::new().id(EqualFilter::equal_to(&row.id));
+        let name = name_repo
+            .query_one("store_id", name_filter.clone())
+            .unwrap()
+            .unwrap();
+
+        // Check properties have been set
+        assert_eq!(name.properties, properties);
+
+        // Sync upsert
+        row_repo.sync_upsert_one(&row).unwrap();
+
+        let name = name_repo
+            .query_one("store_id", name_filter)
+            .unwrap()
+            .unwrap();
+
+        // Properties have not been overwritten
+        assert_eq!(name.properties, properties);
     }
 }

@@ -279,6 +279,7 @@ mutation updateInboundShipment(
       }
     }
     ... on InvoiceNode {
+      __typename
       id
       invoiceNumber
     }
@@ -304,6 +305,7 @@ mutation deleteInboundShipments(
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
@@ -370,6 +372,7 @@ mutation deleteInboundShipmentLines(
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
@@ -413,6 +416,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on InvoiceNode {
+          __typename
           id
           invoiceNumber
         }
@@ -432,6 +436,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on InvoiceNode {
+          __typename
           id
           invoiceNumber
         }
@@ -459,6 +464,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
@@ -486,6 +492,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on InvoiceLineNode {
+          __typename
           id
         }
       }
@@ -521,6 +528,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on InvoiceLineNode {
+          __typename
           id
         }
       }
@@ -544,6 +552,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on InvoiceLineNode {
+          __typename
           id
         }
       }
@@ -567,6 +576,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on InvoiceLineNode {
+          __typename
           id
         }
       }
@@ -594,6 +604,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }
@@ -625,6 +636,7 @@ mutation upsertInboundShipment(
           }
         }
         ... on DeleteResponse {
+          __typename
           id
         }
       }

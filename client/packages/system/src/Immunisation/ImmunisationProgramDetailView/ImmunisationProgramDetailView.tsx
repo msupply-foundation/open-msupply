@@ -95,6 +95,7 @@ export const ProgramComponent: FC = () => {
         isError={errorMessage != ''}
       />
       <AppBarButtons onCreate={onOpen} />
+      <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'Vaccine Course List'}
         pagination={{ ...pagination }}
