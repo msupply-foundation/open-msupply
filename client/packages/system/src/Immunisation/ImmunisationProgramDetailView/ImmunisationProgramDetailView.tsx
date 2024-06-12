@@ -46,7 +46,7 @@ export const ProgramComponent: FC = () => {
     updatePatch,
     isDirty,
     update: { update, isUpdating },
-  } = useImmunisationProgram(id);
+  } = useImmunisationProgram(t, id);
 
   const queryParams = {
     filterBy: { ...filterBy, programId: { equalTo: id } },
@@ -95,11 +95,13 @@ export const ProgramComponent: FC = () => {
     <InlineSpinner />
   ) : (
     <>
-      <VaccineCourseCreateModal
-        isOpen={isOpen}
-        onClose={onClose}
-        programId={id}
-      />
+      {isOpen && (
+        <VaccineCourseCreateModal
+          isOpen={isOpen}
+          onClose={onClose}
+          programId={id}
+        />
+      )}
       <Toolbar
         draft={draft}
         onUpdate={updatePatch}
