@@ -158,9 +158,11 @@ export const InsertDemographicProjectionDocument = gql`
     demographic {
       insertDemographicProjection(input: $input) {
         ... on DemographicProjectionNode {
+          __typename
           id
         }
         ... on InsertDemographicProjectionError {
+          __typename
           error {
             description
           }
@@ -176,9 +178,11 @@ export const UpdateDemographicIndicatorDocument = gql`
     demographic {
       updateDemographicIndicator(input: $input) {
         ... on DemographicIndicatorNode {
+          __typename
           id
         }
         ... on UpdateDemographicIndicatorError {
+          __typename
           error {
             description
           }
