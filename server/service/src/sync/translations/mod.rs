@@ -23,6 +23,7 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_oms_fields;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
@@ -102,6 +103,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         temperature_log::boxed(),
         pack_variant::boxed(),
         // Special translations
+        name_oms_fields::boxed(),
         special::name_to_name_store_join::boxed(),
         // Merge
         special::name_merge::boxed(),

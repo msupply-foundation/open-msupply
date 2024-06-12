@@ -423,6 +423,7 @@
   "label.dose-number": "Dose #",
   "label.description": "Description",
   "label.label": "Label",
+  "label.vaccine-courses": "Vaccine Courses",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "log.changed-from": "From",
   "log.changed-to": "to",
