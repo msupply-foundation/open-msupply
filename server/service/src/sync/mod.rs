@@ -107,10 +107,7 @@ static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
 
 impl CentralServerConfig {
     fn inner_is_central_server(&self) -> bool {
-        match self {
-            Self::IsCentralServer => true,
-            _ => false,
-        }
+        matches!(self, Self::IsCentralServer)
     }
 
     fn new(site_info: &SiteInfoV5) -> Self {
