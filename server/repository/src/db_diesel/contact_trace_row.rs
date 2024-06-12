@@ -135,21 +135,12 @@ impl<'a> ContactTraceRowRepository<'a> {
         ContactTraceRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
             .on_conflict(contact_trace::dsl::id)
             .do_update()
             .set(row.to_raw())
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(contact_trace::dsl::contact_trace)
-            .values(row.to_raw())
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

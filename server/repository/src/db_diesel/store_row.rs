@@ -57,21 +57,12 @@ impl<'a> StoreRowRepository<'a> {
         StoreRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_dsl::store)
             .values(row)
             .on_conflict(store_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(store_dsl::store)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
