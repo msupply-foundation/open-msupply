@@ -6,9 +6,9 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    ActivityLogType, ApprovalStatusType, ItemRow, NumberRowType, RepositoryError, Requisition,
-    RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection,
+    ActivityLogType, ApprovalStatusType, EqualFilter, ItemRow, NumberRowType, RepositoryError,
+    Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection, StoreFilter,
     StoreRepository,
 };
 use util::uuid::uuid;
