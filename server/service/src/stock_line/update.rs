@@ -138,7 +138,7 @@ fn generate(
 
     let barcode_row = match &barcode {
         // Don't generate row for empty gtin
-        Some(gtin) if gtin == "" => None,
+        Some(gtin) if gtin.is_empty() => None,
         Some(gtin) => Some(barcode::generate(
             connection,
             BarcodeInput {
@@ -152,7 +152,7 @@ fn generate(
 
     let barcode_id = match &barcode {
         // If it'e empty gtin unlink
-        Some(gtin) if gtin == "" => None,
+        Some(gtin) if gtin.is_empty() => None,
         // If gtin not specified keep existing
         None => existing.barcode_id,
         Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
