@@ -214,11 +214,19 @@ pub(crate) fn integrate(
     integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
     for integration_record in integration_records.iter() {
-        // Integrate every record in a sub transaction. This is mainly for Postgres where the
-        // whole transaction fails when there is a DB error (not a problem in sqlite).
-        connection
-            .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
-            .map_err(|e| e.to_inner_error())?;
+        if cfg!(feature = "postgres") {
+            // In Postgres the parent transaction fails when there is a DB error in any of the
+            // statements executed in the transaction. Thus, integrate every record in a nested
+            // transaction to catch potential errors (e.g. foreign key violations).
+            // Note, this is not a problem in Sqlite.
+            connection
+                .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
+                .map_err(|e| e.to_inner_error())?;
+        } else {
+            // For Sqlite, integrating without nested transaction is faster, especially if there are
+            // errors (see the bench_error_performance() test).
+            integration_record.integrate(connection)?;
+        }
     }
 
     Ok(())
@@ -311,7 +319,7 @@ mod test {
                     r.id = uuid();
                     r.unit_id = if with_error {
                         // Create invalid ItemRow
-                        if i % 2 == 0 {
+                        if i % 20 == 0 {
                             None
                         } else {
                             Some("invalid".to_string())
