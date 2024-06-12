@@ -6,15 +6,13 @@ use crate::{
 
 use repository::{
     vaccine_course::{
-        vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
-        vaccine_course_schedule::{VaccineCourseScheduleFilter, VaccineCourseScheduleRepository},
         vaccine_course_schedule_row::{
             VaccineCourseScheduleRow, VaccineCourseScheduleRowRepository,
         },
     },
-    ActivityLogType, EqualFilter, RepositoryError, StorageConnection,
+    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -31,11 +29,32 @@ pub struct VaccineCourseItem {
     pub item_id: String,
 }
 
+impl VaccineCourseItem {
+    fn to_domain(self, vaccine_course_id: String) -> VaccineCourseItemRow {
+        VaccineCourseItemRow {
+            id: self.id,
+            item_link_id: self.item_id, // Todo item_link_id ? https://github.com/msupply-foundation/open-msupply/issues/4129
+            vaccine_course_id,
+        }
+    }
+}
+
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct VaccineCourseSchedule {
     pub id: String,
     pub dose_number: i32,
     pub label: String,
+}
+
+impl VaccineCourseSchedule {
+    fn to_domain(self, vaccine_course_id: String) -> VaccineCourseScheduleRow {
+        VaccineCourseScheduleRow {
+            id: self.id,
+            dose_number: self.dose_number,
+            label: self.label,
+            vaccine_course_id,
+        }
+    }
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -62,71 +81,25 @@ pub fn update_vaccine_course(
             let new_vaccine_course = generate(old_row, input.clone());
             VaccineCourseRowRepository::new(connection).upsert_one(&new_vaccine_course)?;
 
-            // Update the item list
-            let current_items = VaccineCourseItemRepository::new(connection).query_by_filter(
-                VaccineCourseItemFilter::new()
-                    .vaccine_course_id(EqualFilter::equal_to(&new_vaccine_course.id)),
-            )?;
-            // Add any new items, and remove any items that are not in the input
-            let items_to_add = input
-                .clone()
-                .item_ids
-                .iter()
-                .filter(|new_item| !current_items.iter().any(|i| i.id == new_item.id))
-                .map(|new_item| VaccineCourseItemRow {
-                    id: new_item.id.clone(),
-                    vaccine_course_id: new_vaccine_course.id.clone(),
-                    item_link_id: new_item.item_id.clone(), // TODO: Handle item_link_id properly https://github.com/msupply-foundation/open-msupply/issues/4129
-                })
-                .collect::<Vec<_>>();
-            let items_to_remove = current_items.iter().filter(|current_item| {
-                !input
-                    .clone()
-                    .item_ids
-                    .iter()
-                    .any(|new_item| new_item.id == current_item.id)
-            });
+            // Update ITEMS - Delete and recreate all records.
+            // If nothing has changed, we still need to query and compare each record so this is the simplest way
+            let item_repo = VaccineCourseItemRowRepository::new(connection);
+            // Delete the existing vaccine course items
+            item_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
 
-            for item in items_to_add {
-                VaccineCourseItemRowRepository::new(connection).upsert_one(&item)?;
-            }
-            for item in items_to_remove {
-                VaccineCourseItemRowRepository::new(connection).delete(&item.id)?;
+            // Insert the new vaccine course items
+            for item in input.clone().item_ids {
+                item_repo.upsert_one(&item.to_domain(input.clone().id))?;
             }
 
-            // Check the current schedules
-            let current_schedules = VaccineCourseScheduleRepository::new(connection)
-                .query_by_filter(
-                    VaccineCourseScheduleFilter::new()
-                        .vaccine_course_id(EqualFilter::equal_to(&new_vaccine_course.id)),
-                )?;
-            // Add any new schedules, and remove any schedules that are not in the input
-            let schedules_to_add = input
-                .clone()
-                .schedules
-                .iter()
-                .filter(|new_schedule| !current_schedules.iter().any(|s| s.id == new_schedule.id))
-                .map(|new_schedule| VaccineCourseScheduleRow {
-                    id: new_schedule.id.clone(),
-                    vaccine_course_id: new_vaccine_course.id.clone(),
-                    label: new_schedule.label.clone(),
-                    dose_number: new_schedule.dose_number,
-                })
-                .collect::<Vec<_>>();
+            // Update Schedules - Delete and recreate all records.
+            let schedule_repo = VaccineCourseScheduleRowRepository::new(connection);
+            // Delete the existing vaccine course schedules
+            schedule_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
 
-            let schedules_to_remove = current_schedules.iter().filter(|current_schedule| {
-                !input
-                    .clone()
-                    .schedules
-                    .iter()
-                    .any(|new_schedule| new_schedule.id == current_schedule.id)
-            });
-
-            for schedule in schedules_to_add {
-                VaccineCourseScheduleRowRepository::new(connection).upsert_one(&schedule)?;
-            }
-            for schedule in schedules_to_remove {
-                VaccineCourseScheduleRowRepository::new(connection).delete(&schedule.id)?;
+            // Insert the new vaccine course schedules
+            for schedule in input.clone().schedules {
+                schedule_repo.upsert_one(&schedule.to_domain(input.clone().id))?;
             }
 
             activity_log_entry(
