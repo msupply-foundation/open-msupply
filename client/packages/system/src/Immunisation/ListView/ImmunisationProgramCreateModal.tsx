@@ -24,6 +24,7 @@ export const ImmunisationProgramCreateModal: FC<
   const {
     query: { isLoading },
     draft,
+    errorMessage,
     updatePatch,
     create: { create },
   } = useImmunisationProgram(t);
@@ -36,8 +37,8 @@ export const ImmunisationProgramCreateModal: FC<
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await create();
-            onClose();
+            const success = await create();
+            if (success) onClose();
           }}
         />
       }
@@ -53,6 +54,8 @@ export const ImmunisationProgramCreateModal: FC<
               autoFocus
               value={draft.name}
               onChange={e => updatePatch({ name: e.target.value })}
+              helperText={errorMessage}
+              error={!!errorMessage}
             />
           </Box>
         </Grid>

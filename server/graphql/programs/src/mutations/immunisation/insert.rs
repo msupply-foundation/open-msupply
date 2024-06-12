@@ -1,7 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, RecordAlreadyExist},
+    simple_generic_errors::RecordAlreadyExist,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -37,7 +37,6 @@ pub struct InsertImmunisationProgramError {
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertImmunisationProgramErrorInterface {
     ProgramAlreadyExists(RecordAlreadyExist),
-    DatabaseError(DatabaseError),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertImmunisationProgramErrorInterface> {
@@ -45,8 +44,14 @@ fn map_error(error: ServiceError) -> Result<InsertImmunisationProgramErrorInterf
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        // Structured errors
+        ServiceError::ImmunisationProgramAlreadyExists => {
+            return Ok(
+                InsertImmunisationProgramErrorInterface::ProgramAlreadyExists(RecordAlreadyExist),
+            )
+        }
+
         // Standard Graphql Errors
-        ServiceError::ImmunisationProgramAlreadyExists => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
