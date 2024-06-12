@@ -1,1 +1,1 @@
-export * from './InventoryAdjustmentForm';
+export * from './InventoryAdjustmentModal';

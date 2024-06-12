@@ -1,8 +1,6 @@
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
-pub(crate) mod asset_catalogue_item_property;
-pub(crate) mod asset_catalogue_property;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
 pub(crate) mod asset_log;
@@ -25,6 +23,7 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_oms_fields;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
@@ -104,6 +103,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         temperature_log::boxed(),
         pack_variant::boxed(),
         // Special translations
+        name_oms_fields::boxed(),
         special::name_to_name_store_join::boxed(),
         // Merge
         special::name_merge::boxed(),
@@ -115,8 +115,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         asset_category::boxed(),
         asset_type::boxed(),
         asset_catalogue_item::boxed(),
-        asset_catalogue_item_property::boxed(),
-        asset_catalogue_property::boxed(),
         asset_log::boxed(),
         asset_log_reason::boxed(),
         asset_property::boxed(),

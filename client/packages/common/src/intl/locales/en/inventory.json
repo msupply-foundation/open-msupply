@@ -3,6 +3,7 @@
   "button.new-stock": "New Stock",
   "button.reduce-lines-to-zero": "Reduce lines to 0",
   "button.repack": "Repack",
+  "button.adjust": "Adjust",
   "error.cant-save": "There was a problem saving.",
   "error.no-locations": "There are no Locations to display.",
   "error.no-stock": "There is no stock to display.",
@@ -115,5 +116,6 @@
   "stocktake.comment-location-template": "Created using items in location '{{location}}'",
   "stocktake-comment-items-have-stock-template": "Created using items that have stock",
   "title.stock-line-details": "Stock Line Details",
+  "title.adjustment-details": "Adjustment Details",
   "title.repack-details": "Repack Details"
 }

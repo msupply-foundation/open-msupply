@@ -9,6 +9,7 @@ import {
   useTranslation,
   createQueryParamsStore,
   useUrlQueryParams,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -26,7 +27,10 @@ const MasterListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const columns = useColumns<MasterListRowFragment>(
-    ['name', 'description'],
+    [
+      ['name', { width: 300, Cell: TooltipTextCell }],
+      ['description', { minWidth: 100, Cell: TooltipTextCell }],
+    ],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,

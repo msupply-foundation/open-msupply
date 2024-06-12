@@ -70,6 +70,9 @@ pub use self::store_preference::*;
 pub mod repack;
 pub use self::repack::*;
 
+pub mod property;
+pub use self::property::*;
+
 pub mod program;
 pub use self::program::*;
 
@@ -90,6 +93,16 @@ pub use self::currency::*;
 
 pub mod sync_file_reference;
 pub use self::sync_file_reference::*;
+
+pub mod vaccine_course;
+pub use self::vaccine_course::*;
+pub mod vaccine_course_item;
+pub use self::vaccine_course_item::*;
+pub mod vaccine_course_schedule;
+pub use self::vaccine_course_schedule::*;
+
+pub mod demographic;
+pub use self::demographic::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

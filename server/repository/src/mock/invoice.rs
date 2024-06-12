@@ -375,7 +375,7 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
         r.item_link_id = String::from("item_a");
         r.item_name = String::from("Item A");
         r.item_code = String::from("a");
-        r.pack_size = 1;
+        r.pack_size = 1.0;
         r.cost_price_per_pack = 0.0;
         r.sell_price_per_pack = 0.0;
         r.total_before_tax = 0.0;

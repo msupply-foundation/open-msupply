@@ -1,6 +1,6 @@
 import { getAssetQueries, ListParams } from '../../api';
 import {
-  AssetCataloguePropertyFilterInput,
+  AssetPropertyFilterInput,
   AssetTypeFilterInput,
   SortBy,
   useAuthContext,
@@ -31,7 +31,7 @@ export const useAssetApi = () => {
     classes: () => [...keys.base(), 'classes'] as const,
     types: (filter?: AssetTypeFilterInput) =>
       [...keys.base(), filter, 'types'] as const,
-    properties: (filter?: AssetCataloguePropertyFilterInput) =>
+    properties: (filter?: AssetPropertyFilterInput) =>
       [filter, 'properties'] as const,
   };
 

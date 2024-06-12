@@ -1,7 +1,4 @@
-use crate::{
-    migrations::{sql, JSON},
-    StorageConnection,
-};
+use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     const PROPERTY_VALUE_TYPE: &str = if cfg!(feature = "postgres") {
@@ -23,7 +20,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 value_type {PROPERTY_VALUE_TYPE} NOT NULL,
                 allowed_values TEXT
             );
-            ALTER TABLE asset ADD COLUMN properties {JSON};
         "#
     )?;
 
