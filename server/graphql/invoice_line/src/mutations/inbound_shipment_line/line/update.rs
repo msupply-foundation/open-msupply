@@ -112,10 +112,8 @@ impl UpdateInput {
             cost_price_per_pack,
             number_of_packs,
             total_before_tax,
-            tax_percentage: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
+            tax_percentage: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
             }),
             r#type: StockInType::InboundShipment,
             // Default
