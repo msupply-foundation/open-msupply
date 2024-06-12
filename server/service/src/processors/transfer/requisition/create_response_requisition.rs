@@ -9,6 +9,7 @@ use repository::{
     ActivityLogType, ApprovalStatusType, ItemRow, NumberRowType, RepositoryError, Requisition,
     RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection,
+    StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -111,7 +112,11 @@ fn generate_response_requisition(
     record_for_processing: &RequisitionTransferProcessorRecord,
 ) -> Result<RequisitionRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
-    let name_link_id = request_requisition.store_row.name_link_id.clone();
+    let store_name = StoreRepository::new(connection)
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&store_id)))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?
+        .name_row;
 
     let request_requisition_row = &request_requisition.requisition_row;
 
@@ -143,7 +148,7 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_link_id,
+        name_link_id: store_name.id,
         store_id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
