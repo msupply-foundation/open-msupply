@@ -32,7 +32,7 @@ export const VaccineCourseCreateModal: FC<
 
   useEffect(() => {
     updatePatch({ programId: programId });
-  }, [programId]);
+  }, [programId, updatePatch]);
 
   return (
     <Modal
