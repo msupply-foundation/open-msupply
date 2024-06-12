@@ -23,9 +23,7 @@ pub mod android {
     static SERVER_BUCKET: Mutex<Option<ServerBucket>> = Mutex::new(None);
 
     #[no_mangle]
-    /// # Safety
-    /// TODO: Add why this is unsafe
-    pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
         env: JNIEnv,
         _: JClass,
         port: jchar,
@@ -83,11 +81,7 @@ pub mod android {
     }
 
     #[no_mangle]
-    /// # Safety
-    pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(
-        _: JNIEnv,
-        _: JClass,
-    ) {
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(_: JNIEnv, _: JClass) {
         let ServerBucket { off_switch, thread } = SERVER_BUCKET.lock().unwrap().take().unwrap();
         futures::executor::block_on(off_switch.send(())).unwrap();
         thread.join().unwrap();
