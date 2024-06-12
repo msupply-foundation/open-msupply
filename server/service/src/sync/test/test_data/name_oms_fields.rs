@@ -5,9 +5,9 @@ use serde_json::json;
 const TABLE_NAME: &str = "name_oms_fields";
 
 const NAME_OMS_FIELDS_1: (&str, &str) = (
-    "1FB32324AF8049248D929CFB35F25NOF",
+    "name_store_a",
     r#"{
-        "id": "1FB32324AF8049248D929CFB35F25NOF",
+        "id": "name_store_a",
         "properties": "{\"key\":\"test\"}"
 }"#,
 );
