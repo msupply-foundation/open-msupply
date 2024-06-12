@@ -1071,7 +1071,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id.clone();
+                    i.id.clone_from(&stocktake.id);
                     i.is_locked = Some(true);
                     i.comment = Some("New comment".to_string());
                 }),
@@ -1096,7 +1096,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id.clone();
+                    i.id.clone_from(&stocktake.id);
                     i.is_locked = Some(false);
                     i.comment = Some("Comment".to_string());
                 }),
@@ -1147,7 +1147,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id.clone();
+                    i.id.clone_from(&stocktake.id);
                     i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
@@ -1191,7 +1191,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = mock_stocktake_existing_line().id.clone();
+                    i.id.clone_from(&mock_stocktake_existing_line().id);
                     i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
