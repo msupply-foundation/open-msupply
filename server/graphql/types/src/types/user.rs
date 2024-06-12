@@ -29,6 +29,10 @@ impl UserStoreNode {
         &self.user_store.store_row.code
     }
 
+    pub async fn name_id(&self) -> &str {
+        &self.user_store.store_row.name_id
+    }
+
     pub async fn name(&self, ctx: &Context<'_>) -> Result<String> {
         let loader = ctx.get_loader::<DataLoader<NameRowLoader>>();
 
