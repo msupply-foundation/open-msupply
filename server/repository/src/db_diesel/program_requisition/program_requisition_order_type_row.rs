@@ -41,21 +41,12 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         ProgramRequisitionOrderTypeRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_requisition_order_type_dsl::program_requisition_order_type)
             .values(row)
             .on_conflict(program_requisition_order_type_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(program_requisition_order_type_dsl::program_requisition_order_type)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

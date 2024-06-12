@@ -43,21 +43,12 @@ impl<'a> LocationMovementRowRepository<'a> {
         LocationMovementRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &LocationMovementRow) -> Result<(), RepositoryError> {
         diesel::insert_into(location_movement_dsl::location_movement)
             .values(row)
             .on_conflict(location_movement_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &LocationMovementRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(location_movement_dsl::location_movement)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
