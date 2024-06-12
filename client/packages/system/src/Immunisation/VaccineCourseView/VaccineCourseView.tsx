@@ -15,6 +15,7 @@ import {
   NumericTextInput,
   RecordPatch,
   Typography,
+  VaccineCourseItemNode,
   VaccineCourseScheduleNode,
   useBreadcrumbs,
   useColumns,
@@ -26,7 +27,6 @@ import { FC } from 'react';
 import { descriptionColumn } from './DescriptionColumn';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { AppFooterComponent } from './AppFooterComponent';
-import { isDirty } from 'zod';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 
 const getDemographicOptions = (
@@ -100,14 +100,16 @@ const Row = ({
 );
 
 // TODO replace with item querr
-const VaccineOptions = [
+const VaccineOptions: VaccineCourseItemNode[] = [
   {
-    label: 'vaccine 1',
-    value: 'vaccine 1',
+    id: 'vaccine 1',
+    itemId: 'vaccine 1',
+    __typename: 'VaccineCourseItemNode',
   },
   {
-    label: 'vaccine 2',
-    value: 'vaccine 2',
+    id: 'vaccine 2',
+    itemId: 'vaccine 2',
+    __typename: 'VaccineCourseItemNode',
   },
 ];
 
@@ -117,14 +119,21 @@ export const VaccineCourseView: FC = () => {
   const { id } = useParams();
   const {
     draft,
-    update: { update, isUpdating, updateError },
+    update: { update },
     updatePatch,
-    errorMessage,
-    query: { data, isLoading, error },
+    query: { data, isLoading },
+    isDirty,
   } = useVaccineCourse(id);
   const { data: demographicData } = useDemographicIndicators();
   const [buffer, setBuffer] = useState(draft?.doses ?? 1);
   const [value, setValue] = useState(draft?.doses ?? 1);
+
+  const defaultRow: VaccineCourseScheduleNode = {
+    doseNumber: 1,
+    id: FnUtils.generateUUID(),
+    label: t('label.new-row'),
+    __typename: 'VaccineCourseScheduleNode',
+  };
 
   const tryUpdateValue = (value: number | undefined) => {
     if (value === undefined) return;
@@ -132,10 +141,6 @@ export const VaccineCourseView: FC = () => {
 
     if (isValid) {
       setValue(value);
-      // setError(false);
-      // } else {
-      //   setError(true);
-      // }
     }
     setBuffer(value);
   };
@@ -148,12 +153,12 @@ export const VaccineCourseView: FC = () => {
     const scheduleSeed = (number: number) => {
       return {
         id: FnUtils.generateUUID(),
-        number: number,
-        description: '',
-        day: 0,
+        doseNumber: number,
+        label: t('label.new-row'),
       };
     };
-    let rows = Object.values(draft?.vaccineCourseSchedules) as Schedule[];
+    let rows =
+      (draft?.vaccineCourseSchedules as VaccineCourseScheduleNode[]) ?? [];
 
     if (rows.length === value) {
       return;
@@ -161,26 +166,31 @@ export const VaccineCourseView: FC = () => {
       let toAdd = value - rows.length;
       while (toAdd > 0) {
         const number = value - toAdd + 1;
-        rows.push(scheduleSeed(number));
+        rows.push(scheduleSeed(number) as VaccineCourseScheduleNode);
         toAdd--;
       }
     } else {
       rows = rows.slice(0, value);
     }
-
-    const rowsAsObject = ArrayUtils.toObject(rows);
-    updatePatch({ vaccineCourseSchedules: rowsAsObject });
+    updatePatch({ vaccineCourseSchedules: rows });
   };
 
   const updateDescription = (patch: RecordPatch<VaccineCourseScheduleNode>) => {
     if (!patch) {
       return;
     }
-    const schedule = { ...draft.vaccineCourseSchedules, [patch.id]: patch };
-    updatePatch({ vaccineCourseSchedules: schedule });
+    const schedule = {
+      ...ArrayUtils.toObject(draft.vaccineCourseSchedules ?? [defaultRow]),
+      [patch.id]: patch,
+    };
+
+    const scheduleArray = Object.values(
+      schedule
+    ) as VaccineCourseScheduleNode[];
+    updatePatch({ vaccineCourseSchedules: scheduleArray });
   };
 
-  const dosesColumns = useColumns(
+  const dosesColumns = useColumns<VaccineCourseScheduleNode>(
     [
       { key: 'doseNumber', label: 'label.dose-number' },
       [descriptionColumn(), { setter: updateDescription }],
@@ -195,7 +205,7 @@ export const VaccineCourseView: FC = () => {
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
-  }, [setSuffix]);
+  }, [data?.name, setSuffix]);
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -246,22 +256,26 @@ export const VaccineCourseView: FC = () => {
 
           <Row label={t('label.vaccine-items')}>
             <AutocompleteMulti
-              isOptionEqualToValue={(option, value) =>
-                option.value === value.value
-              }
+              isOptionEqualToValue={(option, value) => option.id === value.id}
               filterSelectedOptions
-              getOptionLabel={option => option.label}
+              getOptionLabel={option => option.id}
               inputProps={{ fullWidth: true }}
               onChange={(
                 _event,
                 newSelectedLocations: {
-                  label: string;
-                  value: string;
+                  id: string;
+                  itemId: string;
                 }[]
               ) => {
                 updatePatch({
-                  vaccineItems: ArrayUtils.dedupe(
-                    newSelectedLocations.map(item => item.value)
+                  vaccineCourseItems: ArrayUtils.dedupe(
+                    newSelectedLocations.map(item => {
+                      return {
+                        id: item.id,
+                        itemId: item.itemId,
+                        __typename: 'VaccineCourseItemNode',
+                      };
+                    })
                   ),
                 });
               }}
@@ -270,8 +284,8 @@ export const VaccineCourseView: FC = () => {
           </Row>
           <Row label={t('label.calculate-demand')}>
             <Checkbox
-              value={draft?.calculateDemand ?? true}
-              onChange={value => updatePatch({ calculateDemand: value })}
+              value={draft?.isActive ?? true}
+              onChange={e => updatePatch({ isActive: e.target.checked })}
             ></Checkbox>
           </Row>
         </Section>
@@ -291,14 +305,19 @@ export const VaccineCourseView: FC = () => {
           </Row>
           <Box paddingTop={1.5}>
             <MiniTable
-              rows={draft?.vaccineCourseSchedules ?? []}
+              rows={draft.vaccineCourseSchedules ?? [defaultRow]}
               columns={dosesColumns}
               // sx={{ backgroundColour: 'blue' }}
             />
           </Box>
         </Section>
       </Container>
-      <AppFooterComponent isDirty={isDirty} save={update} cancel={cancel} />
+      <AppFooterComponent
+        isDirty={isDirty}
+        save={update}
+        cancel={cancel}
+        isLoading={isLoading}
+      />
     </Box>
   ) : (
     <NothingHere />

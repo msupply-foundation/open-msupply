@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
-  description?: string;
+  label?: string;
 }
 
 export const descriptionColumn = <
@@ -25,8 +25,8 @@ export const descriptionColumn = <
       );
     }
   },
-  accessor: ({ rowData }) => rowData.description,
-  key: 'description',
+  accessor: ({ rowData }) => rowData.label,
+  key: 'label',
   Cell: ({ rowData, column, isDisabled }) => (
     <Box
       sx={{
@@ -41,7 +41,7 @@ export const descriptionColumn = <
           disabled={isDisabled}
           defaultValue={column.accessor({ rowData })}
           onBlur={e => {
-            column.setter({ ...rowData, description: e.target.value });
+            column.setter({ ...rowData, label: e.target.value });
           }}
         />
         <Box ml={1} />
