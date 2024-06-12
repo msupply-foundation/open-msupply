@@ -110,6 +110,7 @@ pub fn generate(
             number_of_packs: adjustment,
             // From existing stock line
             item_id: stock_line.item_row.id,
+            // ideally this would just be an option for insert, rather than a nullable update?
             location: location_id.map(|id| NullableUpdate { value: Some(id) }),
             pack_size,
             batch,

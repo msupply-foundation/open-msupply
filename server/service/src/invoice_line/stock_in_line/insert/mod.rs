@@ -18,6 +18,10 @@ use self::generate::GenerateResult;
 
 use super::StockInType;
 
+// TODO: future improvement - would be nice to have two variants of this
+// - StockInLine that also creates a new stock line (e.g. inbound shipment)
+// - StockInLine that adjusts existing stock line (e.g. inventory adjustment)
+//  - This one could be accept more `None` values and populate them from the existing stock line
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertStockInLine {
     pub id: String,
