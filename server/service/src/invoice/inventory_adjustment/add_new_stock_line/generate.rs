@@ -7,15 +7,11 @@ use repository::{
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::uuid::uuid;
 
+use crate::invoice::inventory_adjustment::UpdateInventoryAdjustmentReason;
 use crate::invoice_line::stock_in_line::{InsertStockInLine, StockInType};
 use crate::number::next_number;
 
 use super::AddNewStockLine;
-
-pub struct UpdateInventoryAdjustmentReason {
-    pub reason_id: Option<String>,
-    pub invoice_line_id: String,
-}
 
 pub struct GenerateResult {
     pub invoice: InvoiceRow,

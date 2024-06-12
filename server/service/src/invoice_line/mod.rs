@@ -12,9 +12,6 @@ use crate::ListResult;
 pub mod query;
 use self::query::*;
 
-pub mod inbound_shipment_line;
-use self::inbound_shipment_line::*;
-
 pub mod inbound_shipment_service_line;
 use self::inbound_shipment_service_line::*;
 
@@ -28,6 +25,7 @@ pub mod stock_out_line;
 use self::stock_out_line::*;
 
 pub mod stock_in_line;
+use self::stock_in_line::*;
 
 pub mod update_return_reason_id;
 use self::update_return_reason_id::*;
@@ -53,7 +51,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         get_invoice_lines(ctx, store_id, invoice_id, pagination, filter, sort)
     }
 
-    // Stock out: Outbound/Prescription
+    // Stock out: Outbound Shipment/Outbound Return/Prescription
     fn insert_stock_out_line(
         &self,
         ctx: &ServiceContext,
@@ -78,31 +76,32 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         delete_stock_out_line(ctx, input)
     }
 
+    // Stock in: Inbound Shipment/Inbound Return
+    fn insert_stock_in_line(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertStockInLine,
+    ) -> Result<InvoiceLine, InsertStockInLineError> {
+        insert_stock_in_line(ctx, input)
+    }
+
+    fn update_stock_in_line(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateStockInLine,
+    ) -> Result<InvoiceLine, UpdateStockInLineError> {
+        update_stock_in_line(ctx, input)
+    }
+
+    fn delete_stock_in_line(
+        &self,
+        ctx: &ServiceContext,
+        input: DeleteStockInLine,
+    ) -> Result<String, DeleteStockInLineError> {
+        delete_stock_in_line(ctx, input)
+    }
+
     // Inbound
-    fn insert_inbound_shipment_line(
-        &self,
-        ctx: &ServiceContext,
-        input: InsertInboundShipmentLine,
-    ) -> Result<InvoiceLine, InsertInboundShipmentLineError> {
-        insert_inbound_shipment_line(ctx, input)
-    }
-
-    fn update_inbound_shipment_line(
-        &self,
-        ctx: &ServiceContext,
-        input: UpdateInboundShipmentLine,
-    ) -> Result<InvoiceLine, UpdateInboundShipmentLineError> {
-        update_inbound_shipment_line(ctx, input)
-    }
-
-    fn delete_inbound_shipment_line(
-        &self,
-        ctx: &ServiceContext,
-        input: DeleteInboundShipmentLine,
-    ) -> Result<String, DeleteInboundShipmentLineError> {
-        delete_inbound_shipment_line(ctx, input)
-    }
-
     fn insert_inbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
@@ -122,7 +121,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn delete_inbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
-        input: DeleteInboundShipmentLine,
+        input: DeleteStockInLine,
     ) -> Result<String, DeleteInboundShipmentServiceLineError> {
         delete_inbound_shipment_service_line(ctx, input)
     }

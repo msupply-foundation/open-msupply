@@ -3,7 +3,10 @@ use repository::{
     StockLine, StockLineRow, StorageConnection,
 };
 
-use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
+use crate::{
+    invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
+    invoice_line::StockOutType,
+};
 
 use super::{InsertStockOutLine, InsertStockOutLineError};
 
@@ -14,33 +17,59 @@ pub fn generate(
     batch: StockLine,
     invoice: InvoiceRow,
 ) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
-    let adjust_total_number_of_packs = invoice.status == InvoiceStatus::Picked;
+    let adjust_total_number_of_packs =
+        should_adjust_total_number_of_packs(invoice.status.clone(), &input.r#type);
 
     let update_batch = generate_batch_update(
-        &input,
+        input.clone(),
         batch.stock_line_row.clone(),
         adjust_total_number_of_packs,
     );
-    let new_line = generate_line(connection, input, item_row, batch, invoice)?;
+    let new_line = generate_line(connection, input, item_row, update_batch.clone(), invoice)?;
 
     Ok((new_line, update_batch))
 }
 
 fn generate_batch_update(
-    input: &InsertStockOutLine,
+    InsertStockOutLine {
+        location_id,
+        batch: input_batch_name,
+        pack_size,
+        expiry_date,
+        cost_price_per_pack,
+        sell_price_per_pack,
+        number_of_packs,
+        note: _,
+        id: _,
+        r#type: _,
+        invoice_id: _,
+        stock_line_id: _,
+        total_before_tax: _,
+        tax_percentage: _,
+    }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
 ) -> StockLineRow {
-    let mut update_batch = batch;
+    let available_reduction = number_of_packs;
+    let total_reduction = if adjust_total_number_of_packs {
+        number_of_packs
+    } else {
+        0.0
+    };
 
-    let reduction = input.number_of_packs;
+    let updated_batch = StockLineRow {
+        available_number_of_packs: batch.available_number_of_packs - available_reduction,
+        total_number_of_packs: batch.total_number_of_packs - total_reduction,
+        location_id: location_id.or(batch.location_id),
+        batch: input_batch_name.or(batch.batch),
+        expiry_date: expiry_date.or(batch.expiry_date),
+        pack_size: pack_size.unwrap_or(batch.pack_size),
+        cost_price_per_pack: cost_price_per_pack.unwrap_or(batch.cost_price_per_pack),
+        sell_price_per_pack: sell_price_per_pack.unwrap_or(batch.sell_price_per_pack),
+        ..batch
+    };
 
-    update_batch.available_number_of_packs -= reduction;
-    if adjust_total_number_of_packs {
-        update_batch.total_number_of_packs -= reduction;
-    }
-
-    update_batch
+    updated_batch
 }
 
 fn generate_line(
@@ -52,8 +81,14 @@ fn generate_line(
         stock_line_id,
         number_of_packs,
         total_before_tax,
-        tax_percentage: _,
         note,
+        tax_percentage: _,
+        location_id: _,
+        batch: _,
+        pack_size: _,
+        expiry_date: _,
+        cost_price_per_pack: _,
+        sell_price_per_pack: _,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -61,20 +96,16 @@ fn generate_line(
         code: item_code,
         ..
     }: ItemRow,
-    StockLine {
-        stock_line_row:
-            StockLineRow {
-                sell_price_per_pack,
-                cost_price_per_pack,
-                pack_size,
-                batch,
-                expiry_date,
-                location_id,
-                note: _,
-                ..
-            },
+    StockLineRow {
+        sell_price_per_pack,
+        cost_price_per_pack,
+        pack_size,
+        batch,
+        expiry_date,
+        location_id,
+        note: _,
         ..
-    }: StockLine,
+    }: StockLineRow,
     InvoiceRow {
         tax_percentage,
         currency_id,
@@ -114,4 +145,11 @@ fn generate_line(
         return_reason_id: None,
         foreign_currency_price_before_tax,
     })
+}
+
+fn should_adjust_total_number_of_packs(status: InvoiceStatus, r#type: &StockOutType) -> bool {
+    match r#type {
+        StockOutType::InventoryReduction => true,
+        _ => status == InvoiceStatus::Picked,
+    }
 }
