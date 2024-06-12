@@ -5,6 +5,7 @@ import {
   ProgramSortFieldInput,
   TypedTFunction,
   isEqual,
+  noOtherVariants,
   useMutation,
   useQuery,
 } from '@openmsupply-client/common';
@@ -32,7 +33,7 @@ export function useImmunisationProgram(
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
-  } = useCreate();
+  } = useCreate(setErrorMessage, t);
 
   const {
     mutateAsync: updateMutation,
@@ -107,17 +108,35 @@ const useGet = (id: string) => {
   return query;
 };
 
-const useCreate = () => {
+const useCreate = (
+  setErrorMessage: Dispatch<SetStateAction<string>>,
+  t: TypedTFunction<LocaleKey>
+) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
 
   const mutationFn = async ({ name }: DraftImmunisationProgram) => {
-    return await api.insertImmunisationProgram({
+    const apiResult = await api.insertImmunisationProgram({
       storeId,
       input: {
         id: FnUtils.generateUUID(),
         name,
       },
     });
+
+    const result = apiResult.centralServer.program.insertImmunisationProgram;
+
+    if (result?.__typename === 'ProgramNode') return result;
+
+    if (result?.__typename === 'InsertImmunisationProgramError') {
+      if (result.error.__typename === 'RecordAlreadyExist') {
+        setErrorMessage(t('error.program-already-exists'));
+      } else {
+        noOtherVariants(result.error.__typename);
+      }
+      return;
+    }
+
+    throw new Error('Unable to create Immunisation Program');
   };
 
   return useMutation({
