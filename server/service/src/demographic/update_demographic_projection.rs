@@ -6,7 +6,7 @@ use repository::{
 
 use super::{
     query_demographic_projection::get_demographic_projection,
-    validate::{check_base_year_unique, check_demographic_projection_exists},
+    validate::check_demographic_projection_exists,
 };
 #[derive(PartialEq, Debug)]
 
@@ -42,7 +42,7 @@ pub fn update_demographic_projection(
 
             DemographicProjectionRowRepository::new(connection)
                 .upsert_one(&updated_demographic_projection_row)?;
-            // TODO add acitivity logs
+            // TODO add activity logs
 
             get_demographic_projection(ctx, updated_demographic_projection_row.id)
                 .map_err(UpdateDemographicProjectionError::from)
@@ -55,22 +55,15 @@ pub fn validate(
     connection: &StorageConnection,
     input: &UpdateDemographicProjection,
 ) -> Result<DemographicProjectionRow, UpdateDemographicProjectionError> {
-    let demographioc_projection_row =
+    let demographic_projection_row =
         match check_demographic_projection_exists(&input.id, connection)? {
             Some(demographic_projection_row) => demographic_projection_row,
             None => {
                 return Err(UpdateDemographicProjectionError::DemographicProjectionDoesNotExist)
             }
         };
-    if let Some(base_year) = input.base_year {
-        if !check_base_year_unique(base_year, connection)? {
-            return Err(
-                UpdateDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists,
-            );
-        }
-    }
 
-    Ok(demographioc_projection_row)
+    Ok(demographic_projection_row)
 }
 
 pub fn generate(

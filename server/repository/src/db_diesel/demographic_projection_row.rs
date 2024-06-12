@@ -44,7 +44,7 @@ impl<'a> DemographicProjectionRowRepository<'a> {
     pub fn upsert_one(&self, row: &DemographicProjectionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(demographic_projection_dsl::demographic_projection)
             .values(row)
-            .on_conflict(demographic_projection_dsl::id)
+            .on_conflict(demographic_projection::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
