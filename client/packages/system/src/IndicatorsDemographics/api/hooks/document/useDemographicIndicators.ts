@@ -67,7 +67,7 @@ export const useDemographicIndicators = (headerData: HeaderValue[]) => {
     const nodesFiltered = uniqBy([generalRowCalculated, ...nodesAsRow], 'id');
     const draftRows = ArrayUtils.toObject(nodesFiltered);
     setDraft(draftRows);
-  }, [data, t]);
+  }, [data, headerData, t]);
 
   return { draft, setDraft, isLoading };
 };

@@ -90,6 +90,7 @@
   "inventory": "Inventory",
   "items": "Items",
   "label.central-server": "Central server",
+  "label.edit-store-properties": "Edit store properties",
   "label.site": "Site:",
   "loading": "Loading…",
   "locations": "Locations",

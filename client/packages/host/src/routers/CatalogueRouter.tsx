@@ -14,13 +14,6 @@ const MasterListService = React.lazy(
   () => import('@openmsupply-client/system/src/MasterList/Service/Service')
 );
 
-const IndicatorsDemographicsService = React.lazy(
-  () =>
-    import(
-      '@openmsupply-client/system/src/IndicatorsDemographics/Service/Service'
-    )
-);
-
 const fullAssetPath = RouteBuilder.create(AppRoute.Catalogue)
   .addPart(AppRoute.Assets)
   .addWildCard()
@@ -36,16 +29,10 @@ const fullMasterListPath = RouteBuilder.create(AppRoute.Catalogue)
   .addWildCard()
   .build();
 
-const fullIndicatorsDemographicsPath = RouteBuilder.create(AppRoute.Catalogue)
-  .addPart(AppRoute.IndicatorsDemographics)
-  .addWildCard()
-  .build();
-
 export const CatalogueRouter: FC = () => {
   const gotoAssets = useMatch(fullAssetPath);
   const gotoItems = useMatch(fullItemPath);
   const gotoMasterLists = useMatch(fullMasterListPath);
-  const gotoIndicatorsDemographics = useMatch(fullIndicatorsDemographicsPath);
 
   if (gotoAssets) {
     return <AssetService />;
@@ -57,11 +44,6 @@ export const CatalogueRouter: FC = () => {
   if (gotoMasterLists) {
     return <MasterListService />;
   }
-
-  if (gotoIndicatorsDemographics) {
-    return <IndicatorsDemographicsService />;
-  }
-
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
   return <Navigate to={notFoundRoute} />;
 };
