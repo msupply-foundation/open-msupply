@@ -20,13 +20,13 @@ export const ImmunisationProgramCreateModal: FC<
   ImmunisationProgramCreateModalProps
 > = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation(['coldchain']);
+  const t = useTranslation('coldchain');
   const {
     query: { isLoading },
     draft,
     updatePatch,
     create: { create },
-  } = useImmunisationProgram();
+  } = useImmunisationProgram(t);
   const isInvalid = !draft.name.trim();
 
   return (
