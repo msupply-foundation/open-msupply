@@ -113,7 +113,9 @@ fn generate_response_requisition(
 ) -> Result<RequisitionRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let store_name = StoreRepository::new(connection)
-        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&store_id)))?
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(
+            &record_for_processing.requisition.store_row.id,
+        )))?
         .pop()
         .ok_or(RepositoryError::NotFound)?
         .name_row;
