@@ -32,9 +32,9 @@ pub fn insert_asset(
     // add store_id if not inserting from central server
     let asset_input;
     if !CentralServerConfig::is_central_server() {
-        match input.clone().store_id {
+        match &input.store_id {
             Some(input_store_id) => {
-                if input_store_id != store_id.to_owned() {
+                if input_store_id != store_id {
                     return Ok(InsertAssetResponse::Error(InsertAssetError {
                         error: InsertAssetErrorInterface::PermissionError(NoPermissionForThisStore),
                     }));

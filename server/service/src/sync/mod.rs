@@ -44,7 +44,7 @@ pub(crate) struct ActiveStoresOnSite {
 pub(crate) fn get_sync_push_changelogs_filter(
     connection: &StorageConnection,
 ) -> Result<Option<ChangelogFilter>, GetActiveStoresOnSiteError> {
-    let active_stores = ActiveStoresOnSite::get(&connection)?;
+    let active_stores = ActiveStoresOnSite::get(connection)?;
 
     Ok(Some(
         ChangelogFilter::new()

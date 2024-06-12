@@ -9,7 +9,7 @@ use service::ListResult;
 
 pub fn name_properties(ctx: &Context<'_>) -> Result<NamePropertyResponse> {
     let connection_manager = ctx.get_connection_manager();
-    let properties = get_name_properties(&connection_manager, None)
+    let properties = get_name_properties(connection_manager, None)
         .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(NamePropertyResponse::Response(

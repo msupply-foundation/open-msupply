@@ -19,7 +19,7 @@ pub trait TemperatureExcursionServiceTrait: Sync + Send {
                     .unwrap(),
             ));
 
-        let log_data = TemperatureExcursionRepository::new(&connection).query(filter)?;
+        let log_data = TemperatureExcursionRepository::new(connection).query(filter)?;
 
         temperature_excursions(log_data)
     }

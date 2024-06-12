@@ -18,7 +18,7 @@ pub fn validate(
 ) -> Result<(ItemRow, InvoiceRow, StockLine), InsertStockOutLineError> {
     use InsertStockOutLineError::*;
 
-    if let Some(_) = check_line_exists(connection, &input.id)? {
+    if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
     let batch =

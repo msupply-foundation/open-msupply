@@ -40,21 +40,12 @@ impl<'a> NamePropertyRowRepository<'a> {
         NamePropertyRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, name_property_row: &NamePropertyRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_property)
             .values(name_property_row)
             .on_conflict(id)
             .do_update()
             .set(name_property_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, name_property_row: &NamePropertyRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(name_property)
-            .values(name_property_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

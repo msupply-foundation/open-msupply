@@ -213,12 +213,12 @@ export const AppDrawer: React.FC = () => {
           />
           <DistributionNav />
           <ReplenishmentNav />
-          <CatalogueNav store={store} />
+          <CatalogueNav />
           <InventoryNav />
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
-          <ManageNav store={store} />
           <ProgramsNav store={store} />
+          <ManageNav store={store} />
 
           {/* <AppNavLink
             to={AppRoute.Tools}

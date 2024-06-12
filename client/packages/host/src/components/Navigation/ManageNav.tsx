@@ -19,12 +19,12 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   );
   const t = useTranslation('app');
   const isCentralServer = useIsCentralServerApi();
-  const visible = isCentralServer && store?.preferences.vaccineModule;
+  const vaccineModuleEnabled = store?.preferences.vaccineModule;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
       <AppNavLink
-        visible={visible}
+        visible={isCentralServer}
         end={false}
         to={AppRoute.Manage}
         icon={<SlidersIcon color="primary" fontSize="small" />}
@@ -34,12 +34,20 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            visible={visible}
+            visible={isCentralServer}
             end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Facilities)
               .build()}
             text={t('facilities')}
+          />
+          <AppNavLink
+            visible={isCentralServer && vaccineModuleEnabled}
+            end
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.IndicatorsDemographics)
+              .build()}
+            text={t('indicators-demographics')}
           />
         </List>
       </Collapse>

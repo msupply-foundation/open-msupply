@@ -170,10 +170,10 @@ fn generate_lines_from_master_list(
     stocktake_id: &str,
     master_list_id: &str,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
-    let item_ids: Vec<String> = MasterListLineRepository::new(&connection)
+    let item_ids: Vec<String> = MasterListLineRepository::new(connection)
         .query_by_filter(
             MasterListLineFilter::new()
-                .master_list_id(EqualFilter::equal_to(&master_list_id))
+                .master_list_id(EqualFilter::equal_to(master_list_id))
                 .item_type(ItemType::Stock.equal_to()),
         )?
         .into_iter()
@@ -183,7 +183,7 @@ fn generate_lines_from_master_list(
     let mut result = Vec::<StocktakeLineRow>::new();
 
     item_ids.iter().for_each(|item_id| {
-        let stock_lines = StockLineRepository::new(&connection)
+        let stock_lines = StockLineRepository::new(connection)
             .query_by_filter(
                 StockLineFilter::new()
                     .item_id(EqualFilter::equal_to(item_id))
@@ -192,13 +192,13 @@ fn generate_lines_from_master_list(
                 Some(store_id.to_string()),
             )
             .unwrap();
-        let item_name = ItemRowRepository::new(&connection)
+        let item_name = ItemRowRepository::new(connection)
             .find_active_by_id(item_id)
             .unwrap()
             .unwrap()
             .name;
 
-        if stock_lines.len() == 0 {
+        if stock_lines.is_empty() {
             result.push(StocktakeLineRow {
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
@@ -268,9 +268,9 @@ fn generate_lines_from_location(
     stocktake_id: &str,
     location_id: &str,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
-    let stock_lines = StockLineRepository::new(&connection).query_by_filter(
+    let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
-            .location_id(EqualFilter::equal_to(&location_id))
+            .location_id(EqualFilter::equal_to(location_id))
             .store_id(EqualFilter::equal_to(store_id))
             .has_packs_in_store(true),
         Some(store_id.to_string()),
@@ -325,7 +325,7 @@ pub fn generate_lines_with_stock(
     store_id: &str,
     stocktake_id: &str,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
-    let stock_lines = StockLineRepository::new(&connection).query_by_filter(
+    let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
             .has_packs_in_store(true),
@@ -382,10 +382,10 @@ fn generate_lines_expiring_before(
     stocktake_id: &str,
     date: &NaiveDate,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
-    let stock_lines = StockLineRepository::new(&connection).query_by_filter(
+    let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
-            .expiry_date(DateFilter::before_or_equal_to(date.clone())),
+            .expiry_date(DateFilter::before_or_equal_to(*date)),
         Some(store_id.to_string()),
     )?;
 
@@ -442,15 +442,15 @@ pub fn insert_stocktake(
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
             let (new_stocktake, lines) = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
-            StocktakeRowRepository::new(&connection).upsert_one(&new_stocktake)?;
+            StocktakeRowRepository::new(connection).upsert_one(&new_stocktake)?;
 
-            let repo = StocktakeLineRowRepository::new(&connection);
+            let repo = StocktakeLineRowRepository::new(connection);
             for line in lines {
                 repo.upsert_one(&line)?;
             }
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::StocktakeCreated,
                 Some(new_stocktake.id.to_owned()),
                 None,

@@ -70,7 +70,7 @@ pub fn insert_inbound_return(
                 other_party,
             )?;
 
-            InvoiceRowRepository::new(&connection).upsert_one(&inbound_return)?;
+            InvoiceRowRepository::new(connection).upsert_one(&inbound_return)?;
 
             for line in insert_stock_in_lines {
                 insert_stock_in_line(ctx, line.clone()).map_err(|error| {
@@ -91,7 +91,7 @@ pub fn insert_inbound_return(
             }
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceCreated,
                 Some(inbound_return.id.to_owned()),
                 None,

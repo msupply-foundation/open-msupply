@@ -543,7 +543,7 @@ mod test {
             .iter()
             .find(|l| l.stock_line.stock_line_row.id == unavailable_stock_line().id);
 
-        assert!(matches!(existing_line, Some(_)));
+        assert!(existing_line.is_some());
         let existing_line = existing_line.unwrap();
 
         assert_eq!(existing_line.id, item_a_return_line().id);

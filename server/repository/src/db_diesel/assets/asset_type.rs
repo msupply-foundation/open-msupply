@@ -151,7 +151,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_type_query_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) =
+        let (_, storage_connection, _, _) =
             test_db::setup_all("test_asset_type_query_repository", MockDataInserts::none()).await;
 
         // Create a class row
@@ -161,7 +161,7 @@ mod tests {
             id: class_id.clone(),
             name: class_name.clone(),
         };
-        let class_row_repo = AssetClassRowRepository::new(&mut storage_connection);
+        let class_row_repo = AssetClassRowRepository::new(&storage_connection);
         class_row_repo.insert_one(&class_row).unwrap();
 
         // Create a category
@@ -172,7 +172,7 @@ mod tests {
             name: category_name.clone(),
             class_id: class_id.clone(),
         };
-        let category_row_repo = AssetCategoryRowRepository::new(&mut storage_connection);
+        let category_row_repo = AssetCategoryRowRepository::new(&storage_connection);
         category_row_repo.insert_one(&category_row).unwrap();
 
         // Create the type
@@ -181,14 +181,14 @@ mod tests {
 
         // Insert a row
         let _type_row =
-            AssetTypeRowRepository::new(&mut storage_connection).insert_one(&AssetTypeRow {
+            AssetTypeRowRepository::new(&storage_connection).insert_one(&AssetTypeRow {
                 id: id.clone(),
                 name: name.clone(),
                 category_id: category_id.clone(),
             });
 
         // Query by id
-        let t = AssetTypeRepository::new(&mut storage_connection)
+        let t = AssetTypeRepository::new(&storage_connection)
             .query_one(AssetTypeFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
@@ -196,7 +196,7 @@ mod tests {
         assert_eq!(t.name, name);
 
         // Query by name
-        let t = AssetTypeRepository::new(&mut storage_connection)
+        let t = AssetTypeRepository::new(&storage_connection)
             .query_one(AssetTypeFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();

@@ -33,7 +33,7 @@ pub fn insert_sensor(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let new_sensor = generate(&ctx.store_id, input);
-            SensorRowRepository::new(&connection).upsert_one(&new_sensor)?;
+            SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
 
             get_sensor(ctx, new_sensor.id).map_err(InsertSensorError::from)
         })
@@ -88,7 +88,7 @@ pub fn check_sensor_does_not_exist(
     let sensors = SensorRepository::new(connection)
         .query_by_filter(SensorFilter::new().id(EqualFilter::equal_to(id)))?;
 
-    Ok(sensors.len() == 0)
+    Ok(sensors.is_empty())
 }
 
 impl From<RepositoryError> for InsertSensorError {

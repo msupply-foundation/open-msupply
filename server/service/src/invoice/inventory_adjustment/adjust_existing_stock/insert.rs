@@ -269,7 +269,6 @@ mod test {
                         crate::invoice::inventory_adjustment::AdjustmentType::Reduction,
                     adjustment: 50.0,
                     inventory_adjustment_reason_id: Some(reduction_reason().id),
-                    ..Default::default()
                 }
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))

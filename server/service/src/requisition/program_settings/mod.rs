@@ -72,7 +72,6 @@ mod test {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
             name_link_id: mock_name_store_a().id,
-            ..Default::default()
         };
         let name_tag2 = NameTagRow {
             id: "name_tag2".to_string(),
@@ -82,7 +81,6 @@ mod test {
             id: "name_tag_join2".to_string(),
             name_tag_id: name_tag2.id.clone(),
             name_link_id: mock_name_store_a().id,
-            ..Default::default()
         };
 
         // Two programs, with master list both joined to store a
@@ -163,7 +161,6 @@ mod test {
             program_id: program1.id.clone(),
             name_tag_id: name_tag1.id.clone(),
             period_schedule_id: period_schedule1.id.clone(),
-            ..Default::default()
         };
         let order_type1 = ProgramRequisitionOrderTypeRow {
             id: "order_type1".to_string(),
@@ -177,7 +174,6 @@ mod test {
             program_id: program2.id.clone(),
             name_tag_id: name_tag2.id.clone(),
             period_schedule_id: period_schedule2.id.clone(),
-            ..Default::default()
         };
         let order_type2 = ProgramRequisitionOrderTypeRow {
             id: "order_type2".to_string(),
