@@ -26,6 +26,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
 import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
 import { DraftVaccineCourse } from '../api/hooks/useVaccineCourse';
+import { VaccineCourseFragment } from '../api';
 
 export const ProgramComponent: FC = () => {
   const {
@@ -60,10 +61,21 @@ export const ProgramComponent: FC = () => {
     isError: vaccineCoursesError,
   } = useVaccineCourseList(queryParams);
 
-  const columns = useColumns(
+  const columns = useColumns<VaccineCourseFragment>(
     [
       { key: 'name', label: 'label.name' },
-      { key: 'demographicIndicatorId', label: 'label.target-demographic' },
+      {
+        key: 'demographicIndicator',
+        label: 'label.target-demographic',
+
+        sortable: false,
+        accessor: ({ rowData }) => {
+          if (!rowData?.demographicIndicator) {
+            return '-';
+          }
+          return rowData.demographicIndicator.name;
+        },
+      },
       { key: 'doses', label: 'label.doses' },
     ],
     {
@@ -94,7 +106,6 @@ export const ProgramComponent: FC = () => {
         error={errorMessage}
         isError={errorMessage != ''}
       />
-      <AppBarButtons onCreate={onOpen} />
       <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'Vaccine Course List'}

@@ -57,7 +57,6 @@ use mutations::program_patient::insert::*;
 use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
-use mutations::update_document::*;
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
@@ -257,15 +256,6 @@ pub struct ProgramsMutations;
 
 #[Object]
 impl ProgramsMutations {
-    async fn update_document(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdateDocumentInput,
-    ) -> Result<UpdateDocumentResponse> {
-        update_document(ctx, store_id, input)
-    }
-
     async fn insert_document_registry(
         &self,
         ctx: &Context<'_>,

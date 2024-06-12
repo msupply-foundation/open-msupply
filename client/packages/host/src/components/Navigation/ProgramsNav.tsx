@@ -8,9 +8,9 @@ import {
   AppNavSection,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
+import { InvoiceIcon } from '@common/icons';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
-import { PowerIcon } from '@openmsupply-client/common/src/ui/icons/Power';
 
 export const ProgramsNav: FC = () => {
   const { isActive } = useNestedNav(
@@ -26,7 +26,7 @@ export const ProgramsNav: FC = () => {
         visible={visible}
         end={false}
         to={AppRoute.Programs}
-        icon={<PowerIcon color="primary" fontSize="small" />}
+        icon={<InvoiceIcon color="primary" fontSize="small" />}
         text={t('programs')}
         inactive
       />

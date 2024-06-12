@@ -18,7 +18,7 @@ table! {
         requested_quantity -> Double,
         suggested_quantity -> Double,
         supply_quantity -> Double,
-        available_stock_on_hand -> Double ,
+        available_stock_on_hand -> Double,
         average_monthly_consumption -> Double,
         snapshot_datetime -> Nullable<Timestamp>,
         approved_quantity -> Double,
