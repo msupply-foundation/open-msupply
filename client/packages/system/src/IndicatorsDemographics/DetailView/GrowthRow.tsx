@@ -9,7 +9,6 @@ import {
   TableContainer,
   TableCell,
   Table as MuiTable,
-  NothingHere,
   InlineSpinner,
 } from '@openmsupply-client/common';
 import { HeaderData, HeaderValue } from '../types';
@@ -44,7 +43,7 @@ export const GrowthRow = <T extends RecordWithId>({
 
   // don't show if no data
   if (!data || isError) {
-    return <NothingHere />;
+    return null;
   }
 
   return (
