@@ -149,7 +149,34 @@ mod query {
         assert_eq!(schedules.len(), 1);
         assert_eq!(schedules[0].id, schedule1.id);
 
-        // 3 - Remove all items and schedules
+        // 3 - Update the label for a vaccine course
+
+        let schedule1 = VaccineCourseSchedule {
+            label: "Dose 1 Updated".to_owned(),
+            ..schedule1
+        };
+
+        let update = UpdateVaccineCourse {
+            id: vaccine_course_insert_a.id.clone(),
+            name: Some("new_name".to_owned()),
+            item_ids: vec![item1.clone()],
+            schedules: vec![schedule1.clone()],
+            demographic_indicator_id: Some(mock_demographic_indicator_a().id),
+            coverage_rate: 100.0,
+            is_active: true,
+            wastage_rate: 0.1,
+            doses: 0,
+        };
+        let _result = service.update_vaccine_course(&context, update).unwrap();
+
+        // Check there is one schedule for the vaccine_course, and it's the right one
+        let schedules = schedule_repo
+            .query_by_filter(schedule_filter.clone())
+            .unwrap();
+        assert_eq!(schedules.len(), 1);
+        assert_eq!(schedules[0].label, schedule1.label);
+
+        // 4 - Remove all items and schedules
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),

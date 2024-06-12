@@ -80,4 +80,11 @@ impl<'a> VaccineCourseScheduleRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
+
+    pub fn delete_by_vaccine_course_id(&self, course_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(vaccine_course_schedule)
+            .filter(vaccine_course_id.eq(course_id))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 }
