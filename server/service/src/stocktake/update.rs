@@ -118,7 +118,7 @@ fn check_stock_lines_reduced_to_zero(
                         None,
                     )?
                     .pop()
-                    .ok_or_else(|| RepositoryError::NotFound)?;
+                    .ok_or(RepositoryError::NotFound)?;
 
                 lines_reduced_to_zero.push(stock_line.clone())
             }
