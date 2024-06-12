@@ -19,6 +19,7 @@ table! {
         // TODO, this is temporary, remove
         legacy_record -> Text,
         is_active -> Bool,
+        is_vaccine -> Bool,
     }
 }
 
@@ -55,6 +56,7 @@ pub struct ItemRow {
     // TODO, this is temporary, remove
     pub legacy_record: String,
     pub is_active: bool,
+    pub is_vaccine: bool,
 }
 
 impl Default for ItemRow {
@@ -68,6 +70,7 @@ impl Default for ItemRow {
             r#type: ItemType::Stock,
             legacy_record: Default::default(),
             is_active: true,
+            is_vaccine: false,
         }
     }
 }

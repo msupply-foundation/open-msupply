@@ -23,6 +23,7 @@ pub struct LegacyItemRow {
     unit_ID: Option<String>,
     type_of: LegacyItemType,
     default_pack_size: f64,
+    is_vaccine: bool,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemType {
@@ -70,6 +71,7 @@ impl SyncTranslation for ItemTranslation {
             legacy_record: ordered_simple_json(&sync_record.data)?,
             default_pack_size: data.default_pack_size,
             is_active: true,
+            is_vaccine: data.is_vaccine,
         };
 
         Ok(PullTranslateResult::upsert(result))

@@ -36,6 +36,7 @@ const vaccineCourseParsers = {
       label: schedule.label,
     } as VaccineCourseScheduleInput;
   },
+  toItemInput: () => {},
 };
 
 export function useVaccineCourse(id?: string) {

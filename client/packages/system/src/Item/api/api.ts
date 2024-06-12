@@ -110,6 +110,31 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Could not fetch items');
     },
+    itemVaccine: async ({
+      filterBy,
+      first,
+      offset,
+      sortBy,
+    }: ListParams<ItemRowFragment>) => {
+      const result = await sdk.items({
+        key: itemParsers.toSortField(sortBy),
+        first,
+        offset,
+        storeId,
+        filter: {
+          ...filterBy,
+          isVaccine: true,
+        },
+      });
+
+      const { items } = result;
+
+      if (result?.items?.__typename === 'ItemConnector') {
+        return items;
+      }
+
+      throw new Error('Could not fetch items');
+    },
     stockItemsWithStats: async ({
       filterBy,
       first,

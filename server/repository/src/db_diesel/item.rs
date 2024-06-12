@@ -48,6 +48,7 @@ pub struct ItemFilter {
     pub is_visible: Option<bool>,
     pub code_or_name: Option<StringFilter>,
     pub is_active: Option<bool>,
+    pub is_vaccine: Option<bool>,
 }
 
 impl ItemFilter {
@@ -87,6 +88,11 @@ impl ItemFilter {
 
     pub fn is_active(mut self, value: bool) -> Self {
         self.is_active = Some(value);
+        self
+    }
+
+    pub fn is_vaccine(mut self, value: bool) -> Self {
+        self.is_vaccine = Some(value);
         self
     }
 }
@@ -189,6 +195,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             is_visible,
             code_or_name,
             is_active,
+            is_vaccine,
         } = f;
 
         // or filter need to be applied before and filters
@@ -204,6 +211,10 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
 
         if let Some(is_active) = is_active {
             query = query.filter(item_dsl::is_active.eq(is_active));
+        }
+
+        if let Some(is_vaccine) = is_vaccine {
+            query = query.filter(item_dsl::is_vaccine.eq(is_vaccine));
         }
 
         let visible_item_ids = item_link_dsl::item_link

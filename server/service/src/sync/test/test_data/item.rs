@@ -177,11 +177,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 legacy_record: ordered_simple_json(ITEM_1.1).unwrap(),
                 default_pack_size: 1.0,
                 is_active: true,
+                is_vaccine: false,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             (ITEM_2.0, &ordered_simple_json(ITEM_2.1).unwrap()),
+            // TODO update tests to make sure is_vaccine mapped correctly
             ItemRow {
                 id: ITEM_2.0.to_owned(),
                 name: "Non stock items 2".to_owned(),
@@ -191,6 +193,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 legacy_record: ordered_simple_json(ITEM_2.1).unwrap(),
                 default_pack_size: 2.0,
                 is_active: true,
+                is_vaccine: false,
             },
         ),
     ]
