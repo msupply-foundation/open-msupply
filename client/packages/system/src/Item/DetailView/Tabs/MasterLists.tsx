@@ -11,14 +11,15 @@ import {
   createTableStore,
   Box,
   createQueryParamsStore,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 
 const MasterListsTable: FC<{ itemId?: string }> = ({ itemId }) => {
   const { data, isLoading } = useMasterList.document.listByItemId(itemId ?? '');
   const columns = useColumns<MasterListRowFragment>([
-    'code',
-    ['name', { width: 150 }],
-    'description',
+    ['code', { Cell: TooltipTextCell }],
+    ['name', { width: 200, Cell: TooltipTextCell }],
+    ['description', { minWidth: 100, Cell: TooltipTextCell }],
   ]);
 
   if (isLoading) return <BasicSpinner />;

@@ -1,6 +1,5 @@
 use repository::{
-    InvoiceLineRow, LocationRowRepository, RepositoryError, StockLineRow, StockLineRowRepository,
-    StorageConnection,
+    InvoiceLineRow, RepositoryError, StockLineRow, StockLineRowRepository, StorageConnection,
 };
 
 pub fn check_pack_size(pack_size_option: Option<f64>) -> bool {
@@ -31,19 +30,6 @@ pub fn check_batch_stock_reserved(
 ) -> Result<bool, RepositoryError> {
     if let Some(batch) = batch {
         if line.number_of_packs != batch.available_number_of_packs {
-            return Ok(false);
-        }
-    }
-    Ok(true)
-}
-
-pub fn check_location_exists(
-    location_id: &Option<String>,
-    connection: &StorageConnection,
-) -> Result<bool, RepositoryError> {
-    if let Some(location_id) = location_id {
-        let location = LocationRowRepository::new(connection).find_one_by_id(location_id)?;
-        if location.is_none() {
             return Ok(false);
         }
     }
