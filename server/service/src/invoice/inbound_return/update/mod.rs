@@ -60,7 +60,7 @@ pub fn update_inbound_return(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     log_type_from_invoice_status(&updated_return.status, false),
                     Some(updated_return.id.to_owned()),
                     None,

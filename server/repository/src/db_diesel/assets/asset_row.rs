@@ -118,7 +118,7 @@ impl<'a> AssetRowRepository<'a> {
             store_id: row.map(|r| r.store_id).unwrap_or(None),
             ..Default::default()
         };
-        ChangelogRepository::new(&self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetRow>, RepositoryError> {
@@ -147,7 +147,7 @@ impl<'a> AssetRowRepository<'a> {
 
 impl Upsert for AssetRow {
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = AssetRowRepository::new(con).upsert_one(self)?;
+        AssetRowRepository::new(con).upsert_one(self)?;
         Ok(())
     }
 

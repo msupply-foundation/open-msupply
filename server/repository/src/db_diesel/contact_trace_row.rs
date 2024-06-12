@@ -210,8 +210,8 @@ mod tests {
 
         // the query result should point to the actual name_ids
         let mut expected = row;
-        expected.patient_id = patient_link.name_id.clone();
-        expected.contact_patient_id = Some(patient_link.name_id.clone());
+        expected.patient_id.clone_from(&patient_link.name_id);
+        expected.contact_patient_id = Some(patient_link.name_id);
         let contact_trace = ContactTraceRepository::new(&connection)
             .query(Pagination::all(), None, None)
             .unwrap()

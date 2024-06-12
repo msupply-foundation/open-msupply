@@ -167,7 +167,7 @@ mod test {
         for variant in LanguageType::iter() {
             let id = format!("{:?}", variant);
             let result = repo.insert_one(&inline_init(|r: &mut UserAccountRow| {
-                r.id = id.clone();
+                r.id.clone_from(&id);
                 r.language = variant.clone();
             }));
             assert_eq!(result, Ok(()));

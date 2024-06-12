@@ -71,7 +71,7 @@ impl SyncTranslation for AssetTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&row)?,
+            serde_json::to_value(row)?,
         ))
     }
 }

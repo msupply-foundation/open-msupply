@@ -66,7 +66,7 @@ pub fn add_new_stock_line(
                 .map_err(|error| AddNewStockLineError::LineInsertError(error))?;
 
             // Add inventory adjustment reason to the invoice line
-            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
             invoice_line_repo.update_inventory_adjustment_reason_id(
                 &update_inventory_adjustment_reason.invoice_line_id,
                 update_inventory_adjustment_reason.reason_id,

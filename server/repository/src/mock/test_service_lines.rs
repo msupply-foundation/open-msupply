@@ -5,21 +5,22 @@ use crate::{InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType};
 use super::{mock_default_service_item, mock_name_a, MockData};
 
 pub fn mock_test_service_item() -> MockData {
-    let mut result = MockData::default();
-    result.invoices = vec![
-        mock_draft_outbound_with_service_lines(),
-        mock_draft_inbound_shipment_with_service_lines(),
-        mock_draft_outbound_shipped_with_service_lines(),
-        mock_draft_inbound_verified_with_service_lines(),
-        mock_draft_inbound_shipment_no_lines(),
-    ];
-    result.invoice_lines = vec![
-        mock_draft_outbound_service_line(),
-        mock_draft_inbound_service_line(),
-        mock_draft_outbound_shipped_service_line(),
-        mock_draft_inbound_verified_service_line(),
-    ];
-    result
+    MockData {
+        invoices: vec![
+            mock_draft_outbound_with_service_lines(),
+            mock_draft_inbound_shipment_with_service_lines(),
+            mock_draft_outbound_shipped_with_service_lines(),
+            mock_draft_inbound_verified_with_service_lines(),
+            mock_draft_inbound_shipment_no_lines(),
+        ],
+        invoice_lines: vec![
+            mock_draft_outbound_service_line(),
+            mock_draft_inbound_service_line(),
+            mock_draft_outbound_shipped_service_line(),
+            mock_draft_inbound_verified_service_line(),
+        ],
+        ..Default::default()
+    }
 }
 // Outbound
 

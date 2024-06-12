@@ -151,7 +151,7 @@ fn generate_line(
     update_line.total_before_tax = if let Some(total_before_tax) = total_before_tax {
         total_before_tax
     } else if number_of_packs.is_some() || cost_price_per_pack.is_some() {
-        update_line.cost_price_per_pack * update_line.number_of_packs as f64
+        update_line.cost_price_per_pack * update_line.number_of_packs
     } else {
         update_line.total_before_tax
     };

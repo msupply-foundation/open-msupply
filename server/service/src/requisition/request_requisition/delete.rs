@@ -46,7 +46,7 @@ pub fn delete_request_requisition(
 
             // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
             // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
-            let lines = RequisitionLineRepository::new(&connection).query_by_filter(
+            let lines = RequisitionLineRepository::new(connection).query_by_filter(
                 RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&input.id)),
             )?;
             for line in lines {
@@ -65,14 +65,14 @@ pub fn delete_request_requisition(
             }
             // End TODO
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::RequisitionDeleted,
                 Some(input.id.to_owned()),
                 None,
                 None,
             )?;
 
-            match RequisitionRowRepository::new(&connection).delete(&input.id) {
+            match RequisitionRowRepository::new(connection).delete(&input.id) {
                 Ok(_) => Ok(input.id.clone()),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }

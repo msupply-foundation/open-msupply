@@ -52,7 +52,7 @@ fn event_target_filter(target: &EventTarget) -> ProgramEventFilter {
         .document_type(EqualFilter::equal_to(&target.document_type))
         .r#type(EqualFilter::equal_to(&target.r#type));
     if let Some(document_name) = &target.document_name {
-        filter = filter.document_name(EqualFilter::equal_to(&document_name));
+        filter = filter.document_name(EqualFilter::equal_to(document_name));
     }
     filter
 }
@@ -135,7 +135,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                 filter
                     .context_id
                     .unwrap_or_default()
-                    .restrict_results(&allowed_ctx),
+                    .restrict_results(allowed_ctx),
             );
             Some(filter)
         } else {

@@ -24,3 +24,6 @@ server = { path = "../server", default-features = false, features = [
 tokio = { version = "1.17.0", features = ["macros"] }
 android_logger = { version = "0.13.0" }
 simple-log = { version = "1.6" }
+
+[lints.clippy]
+module_inception = "allow"

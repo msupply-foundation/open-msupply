@@ -21,7 +21,7 @@ pub fn delete_outbound_return(
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&id, &ctx.store_id, &connection)?;
+            validate(&id, &ctx.store_id, connection)?;
 
             let lines = get_lines_for_invoice(connection, &id)?;
             for line in lines {
@@ -38,12 +38,12 @@ pub fn delete_outbound_return(
                 })?;
             }
 
-            InvoiceRowRepository::new(&connection)
+            InvoiceRowRepository::new(connection)
                 .delete(&id)
                 .map_err(|error| DeleteOutboundReturnError::DatabaseError(error))?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceDeleted,
                 Some(id.to_owned()),
                 None,

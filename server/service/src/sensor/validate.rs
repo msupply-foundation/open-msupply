@@ -19,7 +19,7 @@ pub fn check_sensor_serial_is_unique(
                     .store_id(EqualFilter::equal_to("store_a")),
             )?;
 
-            Ok(sensors.len() == 0)
+            Ok(sensors.is_empty())
         }
     }
 }

@@ -59,7 +59,7 @@ pub fn delete_stocktake_line(
     ctx.connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &stocktake_line_id)?;
-            StocktakeLineRowRepository::new(&connection).delete(&stocktake_line_id)?;
+            StocktakeLineRowRepository::new(connection).delete(&stocktake_line_id)?;
             Ok(())
         })
         .map_err(|error: TransactionError<DeleteStocktakeLineError>| error.to_inner_error())?;

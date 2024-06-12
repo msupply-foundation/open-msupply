@@ -104,14 +104,14 @@ fn generate_line(
     }: ItemRow,
     InvoiceRow { tax_percentage, .. }: InvoiceRow,
 ) -> InvoiceLineRow {
-    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
+    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     InvoiceLineRow {
         id,
         invoice_id,
         item_link_id: item_id,
         location_id: location.map(|l| l.value).unwrap_or_default(),
-        pack_size: pack_size,
+        pack_size,
         batch,
         expiry_date,
         sell_price_per_pack,
