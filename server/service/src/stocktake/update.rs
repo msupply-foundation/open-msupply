@@ -591,6 +591,8 @@ fn generate(
             Some(StockChange::StockUpdate(stock_line)) => {
                 stock_lines.push(stock_line);
             }
+            // None returned when new stock line was created but with num packs 0
+            // We wouldn't want introduce a new stock line with 0 stock
             None => {}
         }
         if let Some(update_reason) = update_inventory_adjustment_reason {
