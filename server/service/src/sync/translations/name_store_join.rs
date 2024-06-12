@@ -1,7 +1,7 @@
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
     NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete,
-    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository, SyncBufferRow,
+    StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
