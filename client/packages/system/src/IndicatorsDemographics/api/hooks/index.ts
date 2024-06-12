@@ -13,7 +13,6 @@ export const useDemographicData = {
   },
   projection: {
     list: Document.useDemographicProjections,
-    insert: Document.useDemographicProjectionInsert,
-    update: Document.useDemographicProjectionUpdate,
+    upsert: Document.useDemographicProjectionUpsert,
   },
 };

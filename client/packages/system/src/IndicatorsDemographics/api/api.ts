@@ -112,21 +112,6 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     },
   },
   getProjections: {
-    byId: async (demographicProjectionId: string) => {
-      const result = await sdk.demographicProjectionById({
-        demographicProjectionId,
-      });
-      const { demographicProjections } = result;
-      if (
-        demographicProjections?.__typename ===
-          'DemographicProjectionConnector' &&
-        !!demographicProjections.nodes[0]
-      ) {
-        return demographicProjections.nodes[0];
-      } else {
-        throw new Error('Could not find encounter');
-      }
-    },
     list: async ({
       first,
       offset,

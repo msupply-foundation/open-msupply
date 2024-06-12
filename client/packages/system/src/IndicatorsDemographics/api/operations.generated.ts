@@ -37,13 +37,6 @@ export type DemographicIndicatorByIdQueryVariables = Types.Exact<{
 
 export type DemographicIndicatorByIdQuery = { __typename: 'Queries', demographicIndicators: { __typename: 'DemographicIndicatorConnector', nodes: Array<{ __typename: 'DemographicIndicatorNode', id: string, name: string, baseYear: number, basePopulation: number, populationPercentage: number, year1Projection: number, year2Projection: number, year3Projection: number, year4Projection: number, year5Projection: number }> } };
 
-export type DemographicProjectionByIdQueryVariables = Types.Exact<{
-  demographicProjectionId: Types.Scalars['String']['input'];
-}>;
-
-
-export type DemographicProjectionByIdQuery = { __typename: 'Queries', demographicProjections: { __typename: 'DemographicProjectionConnector', nodes: Array<{ __typename: 'DemographicProjectionNode', id: string, baseYear: number, year1: number, year2: number, year3: number, year4: number, year5: number }> } };
-
 export type InsertDemographicIndicatorMutationVariables = Types.Exact<{
   input: Types.InsertDemographicIndicatorInput;
 }>;
@@ -122,6 +115,7 @@ export const DemographicProjectionsDocument = gql`
   ) {
     ... on DemographicProjectionConnector {
       nodes {
+        __typename
         ...DemographicProjection
       }
       totalCount
@@ -140,17 +134,6 @@ export const DemographicIndicatorByIdDocument = gql`
   }
 }
     ${DemographicIndicatorFragmentDoc}`;
-export const DemographicProjectionByIdDocument = gql`
-    query demographicProjectionById($demographicProjectionId: String!) {
-  demographicProjections(filter: {id: {equalTo: $demographicProjectionId}}) {
-    ... on DemographicProjectionConnector {
-      nodes {
-        ...DemographicProjection
-      }
-    }
-  }
-}
-    ${DemographicProjectionFragmentDoc}`;
 export const InsertDemographicIndicatorDocument = gql`
     mutation insertDemographicIndicator($input: InsertDemographicIndicatorInput!) {
   centralServer {
@@ -240,9 +223,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     demographicIndicatorById(variables: DemographicIndicatorByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DemographicIndicatorByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DemographicIndicatorByIdQuery>(DemographicIndicatorByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'demographicIndicatorById', 'query');
     },
-    demographicProjectionById(variables: DemographicProjectionByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DemographicProjectionByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DemographicProjectionByIdQuery>(DemographicProjectionByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'demographicProjectionById', 'query');
-    },
     insertDemographicIndicator(variables: InsertDemographicIndicatorMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertDemographicIndicatorMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertDemographicIndicatorMutation>(InsertDemographicIndicatorDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertDemographicIndicator', 'mutation');
     },
@@ -307,23 +287,6 @@ export const mockDemographicProjectionsQuery = (resolver: ResponseResolver<Graph
 export const mockDemographicIndicatorByIdQuery = (resolver: ResponseResolver<GraphQLRequest<DemographicIndicatorByIdQueryVariables>, GraphQLContext<DemographicIndicatorByIdQuery>, any>) =>
   graphql.query<DemographicIndicatorByIdQuery, DemographicIndicatorByIdQueryVariables>(
     'demographicIndicatorById',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDemographicProjectionByIdQuery((req, res, ctx) => {
- *   const { demographicProjectionId } = req.variables;
- *   return res(
- *     ctx.data({ demographicProjections })
- *   )
- * })
- */
-export const mockDemographicProjectionByIdQuery = (resolver: ResponseResolver<GraphQLRequest<DemographicProjectionByIdQueryVariables>, GraphQLContext<DemographicProjectionByIdQuery>, any>) =>
-  graphql.query<DemographicProjectionByIdQuery, DemographicProjectionByIdQueryVariables>(
-    'demographicProjectionById',
     resolver
   )
 

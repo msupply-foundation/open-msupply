@@ -1,15 +1,18 @@
-import { HeaderValue } from './IndicatorsDemographics';
+import { HeaderData } from '../types';
 import { recursiveCalculate } from './utils';
 
 describe('recursiveCalculate', () => {
   it('calculates index value', () => {
     let key = 0;
-    const headerData = [
-      { id: '1', value: 1.1 },
-      { id: '2', value: 1.2 },
-    ];
-    const draftHeaders: Record<string, HeaderValue> = {};
-    headerData.forEach(header => (draftHeaders[header.id] = { ...header }));
+    const draftHeaders: HeaderData = {
+      id: '',
+      baseYear: 0,
+      1: { id: '1', value: 1.1 },
+      2: { id: '2', value: 1.2 },
+      3: { id: '', value: 0 },
+      4: { id: '', value: 0 },
+      5: { id: '', value: 0 },
+    };
     const row = {
       isNew: false,
       id: '1',

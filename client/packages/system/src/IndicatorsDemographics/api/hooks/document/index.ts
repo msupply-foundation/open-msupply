@@ -3,8 +3,7 @@ import { useDemographicIndicators } from './useDemographicIndicators';
 import { useDemographicIndicatorInsert } from './useDemographicIndicatorInsert';
 import { useDemographicIndicatorUpdate } from './useDemographicIndicatorUpdate';
 import { useDemographicProjections } from './useDemographicProjections';
-import { useDemographicProjectionInsert } from './useDemographicProjectionInsert';
-import { useDemographicProjectionUpdate } from './useDemographicProjectionUpdate';
+import { useDemographicProjectionUpsert } from './useDemographicProjectionUpsert';
 
 export const Document = {
   useDemographicIndicator,
@@ -12,6 +11,5 @@ export const Document = {
   useDemographicIndicatorInsert,
   useDemographicIndicatorUpdate,
   useDemographicProjections,
-  useDemographicProjectionInsert,
-  useDemographicProjectionUpdate,
+  useDemographicProjectionUpsert,
 };
