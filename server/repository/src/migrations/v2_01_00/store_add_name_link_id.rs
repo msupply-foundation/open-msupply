@@ -4,6 +4,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
+        -- Drop views early
+        -- These views are re-created in the decimal_pack_size migration
+        DROP VIEW stock_on_hand;
+        DROP VIEW store_items;
+        DROP VIEW IF EXISTS consumption;
+        -- Recreated below
         DROP VIEW report_store;
     "#,
     )?;
@@ -27,12 +33,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-        -- Drop views early
-        DROP VIEW stock_on_hand;
-        DROP VIEW store_items;
-        -- Consumption is recreated in decimal pack size
-        DROP VIEW IF EXISTS consumption;
-
         CREATE TABLE store_new (
           id TEXT NOT NULL PRIMARY KEY,
           name_link_id TEXT NOT NULL REFERENCES name_link(id),
