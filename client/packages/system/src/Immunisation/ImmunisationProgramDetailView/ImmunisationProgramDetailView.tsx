@@ -95,11 +95,13 @@ export const ProgramComponent: FC = () => {
     <InlineSpinner />
   ) : (
     <>
-      <VaccineCourseCreateModal
-        isOpen={isOpen}
-        onClose={onClose}
-        programId={id}
-      />
+      {isOpen && (
+        <VaccineCourseCreateModal
+          isOpen={isOpen}
+          onClose={onClose}
+          programId={id}
+        />
+      )}
       <Toolbar
         draft={draft}
         onUpdate={updatePatch}
