@@ -9,7 +9,7 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::inbound_shipment_line::DeleteInboundShipmentLine as ServiceInput;
+use service::invoice_line::stock_in_line::{DeleteStockInLine as ServiceInput, StockInType};
 
 #[derive(InputObject)]
 #[graphql(name = "DeleteInboundShipmentServiceLineInput")]
@@ -72,7 +72,10 @@ pub enum DeleteErrorInterface {
 impl DeleteInput {
     pub fn to_domain(self) -> ServiceInput {
         let DeleteInput { id } = self;
-        ServiceInput { id }
+        ServiceInput {
+            id,
+            r#type: StockInType::InboundShipment,
+        }
     }
 }
 
@@ -117,14 +120,14 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            inbound_shipment_line::DeleteInboundShipmentLine,
             inbound_shipment_service_line::DeleteInboundShipmentServiceLineError,
+            stock_in_line::{DeleteStockInLine, StockInType},
             InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    type ServiceInput = DeleteInboundShipmentLine;
+    type ServiceInput = DeleteStockInLine;
     type ServiceError = DeleteInboundShipmentServiceLineError;
 
     type DeleteLineMethod = dyn Fn(ServiceInput) -> Result<String, ServiceError> + Sync + Send;
@@ -292,6 +295,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "delete line id input".to_string(),
+                    r#type: StockInType::InboundShipment
                 }
             );
             Ok("delete line id input".to_string())

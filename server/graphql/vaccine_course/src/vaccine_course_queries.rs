@@ -5,6 +5,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::VaccineCourseNode;
 use repository::vaccine_course::vaccine_course::{
     VaccineCourseFilter, VaccineCourseSort, VaccineCourseSortField,
 };
@@ -15,7 +16,7 @@ use service::{
 };
 
 use crate::types::vaccine_course::{
-    VaccineCourseConnector, VaccineCourseNode, VaccineCourseResponse, VaccineCoursesResponse,
+    VaccineCourseConnector, VaccineCourseResponse, VaccineCoursesResponse,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

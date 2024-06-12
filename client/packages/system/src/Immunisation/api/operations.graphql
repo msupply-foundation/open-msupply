@@ -1,6 +1,9 @@
 fragment ImmunisationProgram on ProgramNode {
   id
   name
+  vaccineCourses {
+    name
+  }
 }
 
 query programs(
@@ -83,6 +86,9 @@ fragment VaccineCourse on VaccineCourseNode {
   coverageRate
   wastageRate
   isActive
+  demographicIndicator {
+    name
+  }
 }
 
 query vaccineCourses(
