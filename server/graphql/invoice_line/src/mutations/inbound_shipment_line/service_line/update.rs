@@ -95,10 +95,8 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
+            tax: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
             }),
             note,
         }
