@@ -12,6 +12,11 @@ impl VaccineCourseItemNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
+
+    pub async fn item_id(&self) -> &str {
+        // TODO Look up item_id
+        &self.row().item_link_id
+    }
 }
 
 impl VaccineCourseItemNode {
