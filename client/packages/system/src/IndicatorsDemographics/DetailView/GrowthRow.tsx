@@ -9,16 +9,16 @@ import {
   TableContainer,
   TableCell,
   Table as MuiTable,
-  BasicSpinner,
   NothingHere,
+  InlineSpinner,
 } from '@openmsupply-client/common';
-import { HeaderValue } from './IndicatorsDemographics';
+import { HeaderData, HeaderValue } from '../types';
 
 interface GrowthRowProps<T extends RecordWithId> {
   columns: Column<T>[];
   isError?: boolean;
   isLoading?: boolean;
-  data: Record<string, HeaderValue>;
+  data?: HeaderData;
   setData: (patch: RecordPatch<HeaderValue>) => void;
   overflowX?:
     | 'auto'
@@ -38,9 +38,8 @@ export const GrowthRow = <T extends RecordWithId>({
   setData,
 }: GrowthRowProps<T>) => {
   const ref = useRef<HTMLDivElement>(null);
-
   if (isLoading) {
-    return <BasicSpinner />;
+    return <InlineSpinner messageKey="loading" />;
   }
 
   // don't show if no data
@@ -71,8 +70,8 @@ export const GrowthRow = <T extends RecordWithId>({
             {columns.map(column => {
               const { align, width } = column;
               const columnHeader = Object.values(data).filter(
-                header => header.id === column.key
-              )[0];
+                header => (header as HeaderValue).id === column.key
+              )[0] as HeaderValue;
               const hasColumnText = column.key === '0';
               return (
                 <TableCell

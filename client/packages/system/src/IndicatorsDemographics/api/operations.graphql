@@ -56,6 +56,7 @@ query demographicProjections(
   ) {
     ... on DemographicProjectionConnector {
       nodes {
+        __typename
         ...DemographicProjection
       }
       totalCount
@@ -68,18 +69,6 @@ query demographicIndicatorById($demographicIndicatorId: String!) {
     ... on DemographicIndicatorConnector {
       nodes {
         ...DemographicIndicator
-      }
-    }
-  }
-}
-
-query demographicProjectionById($demographicProjectionId: String!) {
-  demographicProjections(
-    filter: { id: { equalTo: $demographicProjectionId } }
-  ) {
-    ... on DemographicProjectionConnector {
-      nodes {
-        ...DemographicProjection
       }
     }
   }
