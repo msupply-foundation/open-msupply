@@ -14,7 +14,8 @@ mod graphql {
     };
     use serde_json::json;
     use service::{
-        service_provider::{GeneralServiceTrait, ServiceContext, ServiceProvider},
+        name::NameServiceTrait,
+        service_provider::{ServiceContext, ServiceProvider},
         ListError, ListResult,
     };
 
@@ -31,7 +32,7 @@ mod graphql {
 
     pub struct TestService(pub Box<GetName>);
 
-    impl GeneralServiceTrait for TestService {
+    impl NameServiceTrait for TestService {
         fn get_names(
             &self,
             _: &ServiceContext,
@@ -49,7 +50,7 @@ mod graphql {
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.general_service = Box::new(test_service);
+        service_provider.name_service = Box::new(test_service);
         service_provider
     }
 
@@ -178,13 +179,14 @@ mod graphql {
                 is_visible,
                 is_system_name,
                 r#type,
-
                 phone,
                 address1,
                 address2,
                 country,
                 email,
                 is_patient: _,
+                is_donor,
+                code_or_name: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
@@ -193,6 +195,7 @@ mod graphql {
 
             assert_eq!(is_customer, Some(true));
             assert_eq!(is_supplier, Some(false));
+            assert_eq!(is_donor, None);
             assert_eq!(is_store, Some(true));
             assert_eq!(store_code, Some(StringFilter::like("store code like")));
             assert_eq!(is_visible, Some(false));
@@ -213,6 +216,7 @@ mod graphql {
                     name_row: mock_name_a(),
                     name_store_join_row: None,
                     store_row: None,
+                    properties: None,
                 }],
                 count: 1,
             })

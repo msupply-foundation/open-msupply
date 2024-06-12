@@ -16,13 +16,13 @@ pub struct InsertResult {
     pub id: String,
     pub gtin: String,
     pub item_id: String,
-    pub pack_size: Option<i32>,
+    pub pack_size: Option<f64>,
 }
 
 pub struct BarcodeInput {
     pub gtin: String,
     pub item_id: String,
-    pub pack_size: Option<i32>,
+    pub pack_size: Option<f64>,
 }
 
 #[derive(Debug, PartialEq)]

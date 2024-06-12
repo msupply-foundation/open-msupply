@@ -1,12 +1,11 @@
 use crate::{
     barcode::{self, BarcodeInput},
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
-    invoice_line::{
-        convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack,
-        stock_in_line::{generate_batch, StockInType, StockLineInput},
+    invoice_line::stock_in_line::{
+        convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack, generate_batch,
+        StockInType, StockLineInput,
     },
     store_preference::get_store_preferences,
-    u32_to_i32,
 };
 use repository::{
     BarcodeRow, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow,
@@ -40,24 +39,29 @@ pub fn generate(
 
     let barcode_option = generate_barcode(&input, connection)?;
 
-    let new_batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
-        let new_batch = generate_batch(
-            // If a stock line id is included in the input, use it
-            input.stock_line_id.is_some(),
+    let batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
+        let batch = generate_batch(
+            connection,
             new_line.clone(),
             StockLineInput {
+                stock_line_id: input.stock_line_id,
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_link_id: existing_invoice_row.name_link_id.clone(),
                 on_hold: input.stock_on_hold,
                 barcode_id: barcode_option.clone().map(|b| b.id.clone()),
+                overwrite_stock_levels: match &input.r#type {
+                    // adjusting existing stock, we want to add to existing stock levels
+                    StockInType::InventoryAddition => false,
+                    _ => true,
+                },
             },
-        );
+        )?;
         // If a new stock line has been created, update the stock_line_id on the invoice line
-        new_line.stock_line_id = Some(new_batch.id.clone());
+        new_line.stock_line_id = Some(batch.id.clone());
 
         let new_batch = match store_preferences.pack_to_one {
-            true => convert_stock_line_to_single_pack(new_batch),
-            false => new_batch,
+            true => convert_stock_line_to_single_pack(batch),
+            false => batch,
         };
 
         Some(new_batch)
@@ -68,7 +72,7 @@ pub fn generate(
     Ok(GenerateResult {
         invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
         invoice_line: new_line,
-        stock_line: new_batch_option,
+        stock_line: batch_option,
         barcode: barcode_option,
     })
 }
@@ -107,7 +111,7 @@ fn generate_line(
         invoice_id,
         item_link_id: item_id,
         location_id: location.map(|l| l.value).unwrap_or_default(),
-        pack_size: u32_to_i32(pack_size),
+        pack_size: pack_size,
         batch,
         expiry_date,
         sell_price_per_pack,
@@ -129,7 +133,9 @@ fn generate_line(
 
 fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
     match stock_in_type {
-        StockInType::InboundReturn => existing_invoice_row.status != InvoiceStatus::New,
+        StockInType::InboundShipment | StockInType::InboundReturn => {
+            existing_invoice_row.status != InvoiceStatus::New
+        }
         StockInType::InventoryAddition => true,
     }
 }
@@ -152,7 +158,7 @@ fn generate_barcode(
                 BarcodeInput {
                     gtin: gtin.clone(),
                     item_id: input.item_id.clone(),
-                    pack_size: Some(u32_to_i32(input.pack_size.clone())),
+                    pack_size: Some(input.pack_size),
                 },
             )?;
 

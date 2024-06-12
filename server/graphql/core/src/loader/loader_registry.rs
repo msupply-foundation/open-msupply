@@ -334,11 +334,34 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     ));
+
     loaders.insert(DataLoader::new(
-        AssetCatalogueItemPropertyLoader {
+        DemographicIndicatorLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,
     ));
+
+    loaders.insert(DataLoader::new(
+        VaccineCourseByProgramIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        VaccineCourseItemByVaccineCourseIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        VaccineCourseScheduleByVaccineCourseIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
     loaders
 }

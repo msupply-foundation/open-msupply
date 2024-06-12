@@ -602,6 +602,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert_approx_eq"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c07dab4369547dbe5114677b33fbbf724971019f3818172d59a97a61c774ffd"
+
+[[package]]
 name = "astro-dnssd"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -929,6 +935,12 @@ dependencies = [
  "quote",
  "syn 2.0.59",
 ]
+
+[[package]]
+name = "atomic"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c59bdb34bc650a32731b31bd8f0829cc15d24a708ee31559e0bb34f2bc320cba"
 
 [[package]]
 name = "atomic-waker"
@@ -2298,6 +2310,7 @@ dependencies = [
  "graphql_clinician",
  "graphql_cold_chain",
  "graphql_core",
+ "graphql_demographic",
  "graphql_form_schema",
  "graphql_general",
  "graphql_inventory_adjustment",
@@ -2315,6 +2328,7 @@ dependencies = [
  "graphql_stocktake",
  "graphql_stocktake_line",
  "graphql_types",
+ "graphql_vaccine_course",
  "repository",
  "serde 1.0.198",
  "serde_json",
@@ -2447,6 +2461,26 @@ dependencies = [
  "strum",
  "thiserror",
  "tokio",
+ "util",
+]
+
+[[package]]
+name = "graphql_demographic"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.198",
+ "serde_json",
+ "service",
  "util",
 ]
 
@@ -2788,6 +2822,26 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "repository",
+ "serde 1.0.198",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_vaccine_course"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
  "repository",
  "serde 1.0.198",
  "serde_json",
@@ -5107,6 +5161,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "assert-json-diff",
+ "assert_approx_eq",
  "async-trait",
  "bcrypt",
  "chrono",
@@ -6003,6 +6058,7 @@ version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a183cf7feeba97b4dd1c0d46788634f6221d87fa961b305bed08c851829efcc0"
 dependencies = [
+ "atomic",
  "getrandom",
 ]
 

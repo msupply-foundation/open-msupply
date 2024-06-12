@@ -2,9 +2,8 @@ use chrono::{NaiveDate, Utc};
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
     ActivityLogType, CurrencyFilter, CurrencyRepository, DatetimeFilter, EqualFilter,
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, InvoiceType, ItemLinkRowRepository, ItemRowRepository, LocationMovementRow,
-    LocationMovementRowRepository, NameLinkRowRepository, NameRowRepository, NumberRowType,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+    LocationMovementRow, LocationMovementRowRepository, NameRowRepository, NumberRowType,
     RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
     StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
@@ -13,8 +12,21 @@ use repository::{
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{
-    activity_log::activity_log_entry, number::next_number, service_provider::ServiceContext,
-    stocktake::query::get_stocktake, validate::check_store_id_matches,
+    activity_log::activity_log_entry,
+    invoice::inventory_adjustment::UpdateInventoryAdjustmentReason,
+    invoice_line::{
+        stock_in_line::{
+            insert_stock_in_line, InsertStockInLine, InsertStockInLineError, StockInType,
+        },
+        stock_out_line::{
+            insert_stock_out_line, InsertStockOutLine, InsertStockOutLineError, StockOutType,
+        },
+    },
+    number::next_number,
+    service_provider::ServiceContext,
+    stocktake::query::get_stocktake,
+    validate::check_store_id_matches,
+    NullableUpdate,
 };
 
 use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
@@ -48,6 +60,14 @@ pub enum UpdateStocktakeError {
     StocktakeDoesNotExist,
     CannotEditFinalised,
     StocktakeIsLocked,
+    InsertStockInLineError {
+        line_id: String,
+        error: InsertStockInLineError,
+    },
+    InsertStockOutLineError {
+        line_id: String,
+        error: InsertStockOutLineError,
+    },
     /// Stocktakes doesn't contain any lines
     NoLines,
     /// Holds list of affected stock lines
@@ -179,13 +199,15 @@ pub fn check_stocktake_is_not_locked(input: &UpdateStocktake, existing: &Stockta
 struct StocktakeGenerateJob {
     stocktake: StocktakeRow,
     // list of stocktake lines to be updated, e.g. to link newly created stock_lines during
-    // stocktake finialisation.
+    // stocktake finalisation.
     stocktake_lines: Vec<StocktakeLineRow>,
 
     // new inventory adjustment
     inventory_addition: Option<InvoiceRow>,
     inventory_reduction: Option<InvoiceRow>,
-    inventory_adjustment_lines: Vec<InvoiceLineRow>,
+    inventory_addition_lines: Vec<InsertStockInLine>,
+    inventory_reduction_lines: Vec<InsertStockOutLine>,
+    inventory_adjustment_reason_updates: Vec<UpdateInventoryAdjustmentReason>,
 
     // list of stock_line upserts
     stock_lines: Vec<StockLineRow>,
@@ -194,16 +216,32 @@ struct StocktakeGenerateJob {
     location_movements: Option<Vec<LocationMovementRow>>,
 }
 
+pub enum StockChange {
+    StockIn(InsertStockInLine),
+    StockOut(InsertStockOutLine),
+    StockUpdate(StockLineRow),
+}
+
 /// Contains entities to be updated when a stock line is update/created
 struct StockLineJob {
-    stock_line: StockLineRow,
-    invoice_line: Option<InvoiceLineRow>,
+    stock_in_out_or_update: Option<StockChange>,
     stocktake_line: Option<StocktakeLineRow>,
     location_movement: Option<LocationMovementRow>,
+    update_inventory_adjustment_reason: Option<UpdateInventoryAdjustmentReason>,
+}
+
+fn generate_update_inventory_adjustment_reason(
+    invoice_line_id: String,
+    inventory_adjustment_reason_id: Option<String>,
+) -> Option<UpdateInventoryAdjustmentReason> {
+    inventory_adjustment_reason_id.map(|reason_id| UpdateInventoryAdjustmentReason {
+        reason_id: Some(reason_id),
+        invoice_line_id,
+    })
 }
 
 /// Returns new stock line and matching invoice line
-fn generate_stock_line_update(
+fn generate_stock_in_out_or_update(
     connection: &StorageConnection,
     store_id: &str,
     inventory_addition_id: &str,
@@ -211,235 +249,186 @@ fn generate_stock_line_update(
     stocktake_line: &StocktakeLine,
     stock_line: &StockLineRow,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
-    let counted_number_of_packs = stocktake_line
-        .line
+    let row = stocktake_line.line.to_owned();
+
+    let counted_number_of_packs = row
         .counted_number_of_packs
         .unwrap_or(stocktake_line.line.snapshot_number_of_packs);
-    let delta = counted_number_of_packs - stocktake_line.line.snapshot_number_of_packs;
+    let delta = counted_number_of_packs - row.snapshot_number_of_packs;
 
-    let stock_line_item_id = ItemLinkRowRepository::new(connection)
-        .find_one_by_id(&stock_line.item_link_id)?
-        .ok_or(UpdateStocktakeError::InternalError(format!(
-            "Item link ({}) not found",
-            stock_line.item_link_id
-        )))?
-        .item_id;
-    let stock_line_supplier_id = if let Some(supplier_link_id) = &stock_line.supplier_link_id {
-        Some(
-            NameLinkRowRepository::new(connection)
-                .find_one_by_id(supplier_link_id)?
-                .ok_or(UpdateStocktakeError::InternalError(format!(
-                    "Name link ({}) not found",
-                    supplier_link_id
-                )))?
-                .name_id,
-        )
-    } else {
-        None
+    let stock_line_row = stock_line.to_owned();
+
+    let pack_size = row.pack_size.unwrap_or(stock_line_row.pack_size);
+    let expiry_date = row.expiry_date.or(stock_line_row.expiry_date);
+    let cost_price_per_pack = row
+        .cost_price_per_pack
+        .unwrap_or(stock_line_row.cost_price_per_pack);
+    let sell_price_per_pack = row
+        .sell_price_per_pack
+        .unwrap_or(stock_line_row.sell_price_per_pack);
+
+    // If no change in stock quantity, we just update the stock line (no inventory adjustment)
+    if delta == 0.0 {
+        let updated_stock_line = StockLineRow {
+            location_id: row.location_id,
+            batch: row.batch,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            expiry_date,
+            ..stock_line_row
+        }
+        .to_owned();
+
+        return Ok(StockLineJob {
+            stock_in_out_or_update: Some(StockChange::StockUpdate(updated_stock_line)),
+            stocktake_line: None,
+            location_movement: None,
+            update_inventory_adjustment_reason: None,
+        });
     };
-
-    let updated_line = StockLineRow {
-        id: stock_line.id.clone(),
-        item_link_id: stock_line_item_id.clone(),
-        store_id: stock_line.store_id.clone(),
-        location_id: stocktake_line.line.location_id.clone(),
-        batch: stocktake_line.line.batch.clone(),
-        pack_size: stocktake_line
-            .line
-            .pack_size
-            .unwrap_or(stock_line.pack_size),
-        cost_price_per_pack: stocktake_line
-            .line
-            .cost_price_per_pack
-            .unwrap_or(stock_line.cost_price_per_pack),
-        sell_price_per_pack: stocktake_line
-            .line
-            .sell_price_per_pack
-            .unwrap_or(stock_line.sell_price_per_pack),
-        // TODO might get negative!
-        available_number_of_packs: stock_line.available_number_of_packs + delta,
-        total_number_of_packs: stock_line.total_number_of_packs + delta,
-        expiry_date: stocktake_line.line.expiry_date.or(stock_line.expiry_date),
-        on_hold: stock_line.on_hold,
-        note: stock_line.note.clone(),
-        supplier_link_id: stock_line_supplier_id,
-        barcode_id: stock_line.barcode_id.clone(),
-    };
-
-    let stock_line_item =
-        match ItemRowRepository::new(connection).find_active_by_id(&stock_line_item_id)? {
-            Some(item) => item,
-            None => {
-                return Err(UpdateStocktakeError::InternalError(format!(
-                    "Can't find item {} for existing stocktake line {}!",
-                    &stock_line_item_id, stocktake_line.line.id
-                )))
-            }
-        };
 
     let quantity_change = f64::abs(delta);
-    let shipment_line = if quantity_change > 0.0 {
-        let (invoice_id, r#type) = if delta > 0.0 {
-            (inventory_addition_id.to_string(), InvoiceLineType::StockIn)
-        } else {
-            (
-                inventory_reduction_id.to_string(),
-                InvoiceLineType::StockOut,
-            )
-        };
-        Some(InvoiceLineRow {
-            id: uuid(),
-            r#type,
-            invoice_id,
-            item_link_id: stock_line_item_id,
-            item_name: stock_line_item.name,
-            item_code: stock_line_item.code,
-            stock_line_id: Some(stock_line.id.clone()),
-            location_id: stock_line.location_id.clone(),
-            batch: stock_line.batch.clone(),
-            expiry_date: stock_line.expiry_date,
-            pack_size: stock_line.pack_size,
-            cost_price_per_pack: stock_line.cost_price_per_pack,
-            sell_price_per_pack: stock_line.sell_price_per_pack,
-            total_before_tax: 0.0,
-            total_after_tax: 0.0,
-            tax_percentage: None,
+    let invoice_line_id = uuid();
+
+    let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
+        invoice_line_id.clone(),
+        row.inventory_adjustment_reason_id,
+    );
+
+    let stock_in_or_out_line = if delta > 0.0 {
+        StockChange::StockIn(InsertStockInLine {
+            r#type: StockInType::InventoryAddition,
+            id: invoice_line_id,
+            invoice_id: inventory_addition_id.to_string(),
             number_of_packs: quantity_change,
-            note: stock_line.note.clone(),
-            inventory_adjustment_reason_id: stocktake_line
-                .line
-                .inventory_adjustment_reason_id
-                .clone(),
-            return_reason_id: None,
-            foreign_currency_price_before_tax: None,
+            location: row.location_id.map(|id| NullableUpdate { value: Some(id) }),
+            pack_size,
+            batch: row.batch,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            expiry_date,
+            // From existing stock line
+            stock_line_id: Some(stock_line_row.id),
+            item_id: stock_line_row.item_link_id,
+            stock_on_hold: stock_line_row.on_hold,
+            note: stock_line_row.note,
+            // Default
+            barcode: stock_line_row.barcode_id,
+            total_before_tax: None,
+            tax_percentage: None,
         })
     } else {
-        None
+        StockChange::StockOut(InsertStockOutLine {
+            r#type: StockOutType::InventoryReduction,
+            id: invoice_line_id,
+            invoice_id: inventory_reduction_id.to_string(),
+            stock_line_id: stock_line_row.id,
+            number_of_packs: quantity_change,
+            note: stock_line_row.note,
+            location_id: row.location_id,
+            batch: row.batch,
+            pack_size: row.pack_size,
+            expiry_date: row.expiry_date,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
+            total_before_tax: None,
+            tax_percentage: None,
+        })
     };
 
-    let location_movement = if counted_number_of_packs <= 0.0 {
-        generate_exit_location_movements(connection, &store_id, updated_line.clone())?
+    // if reducing to 0, create movement to exit location
+    let location_movement = if counted_number_of_packs == 0.0 {
+        generate_exit_location_movements(connection, &store_id, stock_line.clone())?
     } else {
         None
     };
 
     Ok(StockLineJob {
-        stock_line: updated_line,
-        invoice_line: shipment_line,
-        stocktake_line: None,
+        stock_in_out_or_update: Some(stock_in_or_out_line),
         location_movement,
+        stocktake_line: None,
+        update_inventory_adjustment_reason,
     })
 }
 
-/// Returns new stock line and matching invoice line
 fn generate_new_stock_line(
-    connection: &StorageConnection,
     store_id: &str,
     inventory_addition_id: &str,
-    stocktake_line: StocktakeLine,
+    stocktake_line: &StocktakeLine,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
-    let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0.0);
-    let row = stocktake_line.line;
-    let pack_size = row.pack_size.unwrap_or(0);
-    let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
-    let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
+    let row = stocktake_line.line.to_owned();
+    let item_id = stocktake_line.item.id.to_owned();
     let stock_line_id = uuid();
 
-    // update the stock_line_id in the existing stocktake_line
-    let updated_stocktake_line = inline_edit(&row, |mut l: StocktakeLineRow| {
-        l.stock_line_id = Some(stock_line_id.clone());
-        l
-    });
+    let counted_number_of_packs = stocktake_line.line.counted_number_of_packs.unwrap_or(0.0);
 
-    let supplier_id = if let Some(supplier_link_id) = stocktake_line
-        .stock_line
-        .as_ref()
-        .and_then(|it| it.supplier_link_id.clone())
-    {
-        Some(
-            NameLinkRowRepository::new(connection)
-                .find_one_by_id(&supplier_link_id)?
-                .ok_or(UpdateStocktakeError::InternalError(format!(
-                    "Name link ({}) not found",
-                    supplier_link_id
-                )))?
-                .name_id,
-        )
-    } else {
-        None
+    // If no counted packs, we shouldn't create a stock line
+    if counted_number_of_packs == 0.0 {
+        return Ok(StockLineJob {
+            stock_in_out_or_update: None,
+            location_movement: None,
+            stocktake_line: None,
+            update_inventory_adjustment_reason: None,
+        });
+    }
+
+    // We're creating a new stock line, so need to update the stocktake line to link to the new stock line
+    let updated_stocktake_line = StocktakeLineRow {
+        stock_line_id: Some(stock_line_id.clone()),
+        ..row.clone()
     };
 
-    let item_id = stocktake_line.item.id;
-    let new_line = StockLineRow {
-        id: stock_line_id,
-        item_link_id: item_id.clone(),
-        store_id: store_id.to_string(),
-        location_id: row.location_id.clone(),
-        batch: row.batch.clone(),
+    let pack_size = row.pack_size.unwrap_or(0.0);
+    let cost_price_per_pack = row.cost_price_per_pack.unwrap_or(0.0);
+    let sell_price_per_pack = row.sell_price_per_pack.unwrap_or(0.0);
+    let invoice_line_id = uuid();
+
+    let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
+        invoice_line_id.clone(),
+        row.inventory_adjustment_reason_id,
+    );
+
+    let stock_in_line = StockChange::StockIn(InsertStockInLine {
+        r#type: StockInType::InventoryAddition,
+        id: invoice_line_id,
+        invoice_id: inventory_addition_id.to_string(),
+        number_of_packs: counted_number_of_packs,
+        location: row
+            .location_id
+            .clone()
+            .map(|id| NullableUpdate { value: Some(id) }),
         pack_size,
+        batch: row.batch,
         cost_price_per_pack,
         sell_price_per_pack,
-        available_number_of_packs: counted_number_of_packs,
-        total_number_of_packs: counted_number_of_packs,
         expiry_date: row.expiry_date,
-        on_hold: false,
-        note: row.note.clone(),
-        supplier_link_id: supplier_id,
-        barcode_id: None,
-    };
+        stock_line_id: Some(stock_line_id.clone()),
+        item_id,
+        note: row.note,
+        // Default
+        stock_on_hold: false,
+        barcode: None,
+        total_before_tax: None,
+        tax_percentage: None,
+    });
 
-    let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
-        Some(item) => item,
-        None => {
-            return Err(UpdateStocktakeError::InternalError(format!(
-                "Can't find item {} for new stocktake line {}!",
-                &item_id, row.id
-            )))
-        }
-    };
-    let shipment_line = if counted_number_of_packs > 0.0 {
-        Some(InvoiceLineRow {
-            id: uuid(),
-            r#type: InvoiceLineType::StockIn,
-            invoice_id: inventory_addition_id.to_string(),
-            item_link_id: item.id,
-            item_name: item.name,
-            item_code: item.code,
-            stock_line_id: Some(new_line.id.clone()),
-            location_id: row.location_id,
-            batch: row.batch,
-            expiry_date: row.expiry_date,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            total_before_tax: 0.0,
-            total_after_tax: 0.0,
-            tax_percentage: None,
-            number_of_packs: counted_number_of_packs,
-            note: row.note,
-            inventory_adjustment_reason_id: row.inventory_adjustment_reason_id,
-            return_reason_id: None,
-            foreign_currency_price_before_tax: None,
-        })
-    } else {
-        None
-    };
-
-    let location_movement = if new_line.location_id.is_some() {
+    // If new stock line has a location, create location movement
+    let location_movement = if row.location_id.is_some() {
         Some(generate_enter_location_movements(
             store_id.to_owned(),
-            new_line.id.to_owned(),
-            new_line.location_id.to_owned(),
+            stock_line_id,
+            row.location_id,
         ))
     } else {
         None
     };
 
     Ok(StockLineJob {
-        stock_line: new_line,
-        invoice_line: shipment_line,
-        stocktake_line: Some(updated_stocktake_line),
+        stock_in_out_or_update: Some(stock_in_line),
         location_movement,
+        stocktake_line: Some(updated_stocktake_line),
+        update_inventory_adjustment_reason,
     })
 }
 
@@ -565,21 +554,22 @@ fn generate(
     let inventory_reduction_id = uuid();
 
     // finalise the stocktake
-    let mut inventory_addition_lines: Vec<InvoiceLineRow> = Vec::new();
-    let mut inventory_reduction_lines: Vec<InvoiceLineRow> = Vec::new();
+    let mut inventory_addition_lines: Vec<InsertStockInLine> = Vec::new();
+    let mut inventory_reduction_lines: Vec<InsertStockOutLine> = Vec::new();
     let mut stock_lines: Vec<StockLineRow> = Vec::new();
+    let mut inventory_adjustment_reason_updates: Vec<UpdateInventoryAdjustmentReason> = Vec::new();
     let mut stocktake_line_updates: Vec<StocktakeLineRow> = Vec::new();
     let mut location_movements: Vec<LocationMovementRow> = Vec::new();
 
     for stocktake_line in stocktake_lines {
         let StockLineJob {
-            stock_line,
-            invoice_line,
             stocktake_line,
             location_movement,
+            stock_in_out_or_update,
+            update_inventory_adjustment_reason,
         } = if let Some(ref stock_line) = stocktake_line.stock_line {
             // adjust existing stock line
-            generate_stock_line_update(
+            generate_stock_in_out_or_update(
                 connection,
                 store_id,
                 &inventory_addition_id,
@@ -589,20 +579,24 @@ fn generate(
             )?
         } else {
             // create new stock line
-            generate_new_stock_line(
-                connection,
-                &store_id,
-                &inventory_addition_id,
-                stocktake_line,
-            )?
+            generate_new_stock_line(&store_id, &inventory_addition_id, &stocktake_line)?
         };
-        stock_lines.push(stock_line);
-        if let Some(shipment_line) = invoice_line {
-            if shipment_line.r#type == InvoiceLineType::StockIn {
-                inventory_addition_lines.push(shipment_line)
-            } else {
-                inventory_reduction_lines.push(shipment_line)
+        match stock_in_out_or_update {
+            Some(StockChange::StockIn(line)) => {
+                inventory_addition_lines.push(line);
             }
+            Some(StockChange::StockOut(line)) => {
+                inventory_reduction_lines.push(line);
+            }
+            Some(StockChange::StockUpdate(stock_line)) => {
+                stock_lines.push(stock_line);
+            }
+            // None returned when new stock line was created but with num packs 0
+            // We wouldn't want introduce a new stock line with 0 stock
+            None => {}
+        }
+        if let Some(update_reason) = update_inventory_adjustment_reason {
+            inventory_adjustment_reason_updates.push(update_reason);
         }
         if let Some(stocktake_line) = stocktake_line {
             stocktake_line_updates.push(stocktake_line);
@@ -629,7 +623,7 @@ fn generate(
         user_id: Some(user_id.to_string()),
         name_link_id: inventory_adjustment_name.id,
         store_id: store_id.to_string(),
-        status: InvoiceStatus::Verified,
+        status: InvoiceStatus::New,
         verified_datetime: Some(now),
         // Default
         currency_id: Some(currency.currency_row.id),
@@ -686,7 +680,9 @@ fn generate(
         stocktake_lines: stocktake_line_updates,
         inventory_addition,
         inventory_reduction,
-        inventory_adjustment_lines: [inventory_addition_lines, inventory_reduction_lines].concat(),
+        inventory_addition_lines,
+        inventory_reduction_lines,
+        inventory_adjustment_reason_updates,
         stock_lines,
         location_movements: Some(location_movements),
         stocktake_lines_to_trim: unallocated_lines_to_trim(connection, &stocktake, &ctx.store_id)?,
@@ -706,30 +702,65 @@ pub fn update_stocktake(
             let result = generate(&ctx, input, existing, stocktake_lines, status_changed)?;
 
             // write data to the DB
-            // write new stock lines
             let stock_line_repo = StockLineRowRepository::new(connection);
+            let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
+            let invoice_row_repo = InvoiceRowRepository::new(connection);
+            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+
+            // write updated stock lines (stock line info has changed, but no inventory adjustment)
             for stock_line in result.stock_lines {
                 stock_line_repo.upsert_one(&stock_line)?;
             }
-            // write updated stocktake lines
-            let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
+            // write inventory adjustment
+            if let Some(inventory_addition) = result.inventory_addition.clone() {
+                invoice_row_repo.upsert_one(&inventory_addition)?;
+            }
+            if let Some(inventory_reduction) = result.inventory_reduction.clone() {
+                invoice_row_repo.upsert_one(&inventory_reduction)?;
+            }
+            // write inventory adjustment lines (and update/introduce stock)
+            for line in result.inventory_addition_lines {
+                let line_id = line.id.clone();
+                insert_stock_in_line(ctx, line).map_err(|error| {
+                    UpdateStocktakeError::InsertStockInLineError { line_id, error }
+                })?;
+            }
+            for line in result.inventory_reduction_lines {
+                let line_id = line.id.clone();
+                insert_stock_out_line(ctx, line).map_err(|error| {
+                    UpdateStocktakeError::InsertStockOutLineError { line_id, error }
+                })?;
+            }
+            // Add inventory adjustment reasons to the invoice lines
+            for update_reason in result.inventory_adjustment_reason_updates {
+                invoice_line_repo.update_inventory_adjustment_reason_id(
+                    &update_reason.invoice_line_id,
+                    update_reason.reason_id,
+                )?;
+            }
+            // write updated stocktake lines (update with stock_line_ids for newly created stock lines)
             for stocktake_line in result.stocktake_lines {
                 stocktake_line_repo.upsert_one(&stocktake_line)?;
             }
-            // write inventory adjustment
+
+            // Set inventory adjustment invoices to Verified after all lines have been added
             if let Some(inventory_addition) = result.inventory_addition {
-                let shipment_repo = InvoiceRowRepository::new(connection);
-                shipment_repo.upsert_one(&inventory_addition)?;
+                let verified_addition = InvoiceRow {
+                    status: InvoiceStatus::Verified,
+                    verified_datetime: Some(Utc::now().naive_utc()),
+                    ..inventory_addition
+                };
+                invoice_row_repo.upsert_one(&verified_addition)?;
             }
             if let Some(inventory_reduction) = result.inventory_reduction {
-                let shipment_repo = InvoiceRowRepository::new(connection);
-                shipment_repo.upsert_one(&inventory_reduction)?;
+                let verified_reduction = InvoiceRow {
+                    status: InvoiceStatus::Verified,
+                    verified_datetime: Some(Utc::now().naive_utc()),
+                    ..inventory_reduction
+                };
+                invoice_row_repo.upsert_one(&verified_reduction)?;
             }
-            // write inventory adjustment lines
-            let shipment_line_repo = InvoiceLineRowRepository::new(connection);
-            for line in result.inventory_adjustment_lines {
-                shipment_line_repo.upsert_one(&line)?;
-            }
+
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
             // trim uncounted stocktake lines
             if let Some(lines_to_trim) = result.stocktake_lines_to_trim {
@@ -790,7 +821,7 @@ mod test {
         StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
         StocktakeRow, StocktakeStatus,
     };
-    use util::{inline_edit, inline_init};
+    use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, inline_init};
 
     use crate::{
         service_provider::ServiceProvider,
@@ -834,7 +865,7 @@ mod test {
                 r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 20.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.cost_price_per_pack = 0.0;
                 r.sell_price_per_pack = 0.0;
                 r.total_number_of_packs = 20.0;
@@ -1128,6 +1159,7 @@ mod test {
             .unwrap();
         let stock_line = StockLineRowRepository::new(&context.connection)
             .find_one_by_id(&shipment_line.stock_line_id.unwrap())
+            .unwrap()
             .unwrap();
         let stocktake_line = mock_stocktake_line_new_stock_line();
         assert_eq!(stock_line.expiry_date, stocktake_line.expiry_date);
@@ -1142,7 +1174,10 @@ mod test {
             stocktake_line.sell_price_per_pack.unwrap()
         );
         assert_eq!(stock_line.note, stocktake_line.note);
-        assert_eq!(stock_line.supplier_link_id, None);
+        assert_eq!(
+            stock_line.supplier_link_id.unwrap(),
+            INVENTORY_ADJUSTMENT_NAME_CODE.to_string()
+        );
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)

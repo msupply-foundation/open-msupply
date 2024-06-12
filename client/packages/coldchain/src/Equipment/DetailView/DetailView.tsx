@@ -24,6 +24,7 @@ import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
 import { ActivityLogList, useLocation } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
+import { Details } from './Tabs/Details';
 
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
@@ -74,17 +75,17 @@ export const EquipmentDetailView = () => {
 
   useEffect(() => {
     if (!data) return;
-    let properties = JSON.parse(data.properties);
-    if (!properties || !ObjUtils.isObject(properties)) {
-      // Invalid properties, reset to empty object
-      properties = {};
-    }
+
+    const assetProperties = ObjUtils.parse(data.properties);
+    const catalogProperties = ObjUtils.parse(data.catalogProperties);
+
     setDraft({
       ...data,
       locationIds: draft?.locationIds
         ? draft.locationIds
         : data.locations.nodes.map(location => location.id),
-      parsedProperties: properties,
+      parsedProperties: assetProperties,
+      parsedCatalogProperties: catalogProperties,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);
@@ -105,8 +106,12 @@ export const EquipmentDetailView = () => {
       value: 'Summary',
     },
     {
+      Component: <Details onChange={onChange} draft={draft} />,
+      value: 'Details',
+    },
+    {
       Component: draft === undefined ? null : <StatusLogs assetId={draft.id} />,
-      value: 'StatusLogs',
+      value: 'StatusHistory',
     },
     {
       Component: draft === undefined ? null : <Documents draft={draft} />,

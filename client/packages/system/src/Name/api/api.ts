@@ -2,6 +2,8 @@ import {
   SortBy,
   NameSortFieldInput,
   NameNodeType,
+  FilterByWithBoolean,
+  UpdateNamePropertiesInput,
 } from '@openmsupply-client/common';
 import { Sdk, NameRowFragment } from './operations.generated';
 
@@ -46,6 +48,17 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
+    donors: async () => {
+      const result = await sdk.names({
+        key: NameSortFieldInput.Name,
+        desc: false,
+        storeId,
+        filter: { isDonor: true },
+        first: 1000,
+      });
+
+      return result?.names;
+    },
     suppliers: async ({ sortBy }: ListParams) => {
       const key = nameParsers.toSort(sortBy?.key ?? '');
 
@@ -78,7 +91,39 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
+    facilities: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: {
+      offset?: number;
+      first?: number;
+      sortBy?: SortBy<NameRowFragment>;
+      filterBy?: FilterByWithBoolean | null;
+    }): Promise<{
+      nodes: NameRowFragment[];
+      totalCount: number;
+    }> => {
+      const key =
+        sortBy?.key === 'name'
+          ? NameSortFieldInput.Name
+          : NameSortFieldInput.Code;
 
+      const result = await sdk.names({
+        first,
+        offset,
+        key,
+        desc: !!sortBy?.isDesc,
+        storeId,
+        filter: {
+          ...filterBy,
+          type: { equalAny: [NameNodeType.Facility, NameNodeType.Store] },
+        },
+      });
+
+      return result?.names;
+    },
     list: async ({
       type = 'supplier',
       first,
@@ -107,5 +152,23 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.names;
     },
+    properties: async () => {
+      const result = await sdk.nameProperties();
+
+      if (result?.nameProperties?.__typename === 'NamePropertyConnector') {
+        return result?.nameProperties?.nodes;
+      }
+      throw new Error('Unable to fetch properties');
+    },
+  },
+  updateNameProperties: async (input: UpdateNamePropertiesInput) => {
+    const result = await sdk.updateNameProperties({ storeId, input });
+
+    if (result.updateNameProperties.__typename === 'NameNode') {
+      return result?.updateNameProperties;
+    }
+
+    // TODO: properly handle structured error
+    throw new Error(result.updateNameProperties.error.description);
   },
 });

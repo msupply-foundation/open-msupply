@@ -21,7 +21,7 @@ pub struct LegacyBarcodeRow {
     #[serde(rename = "manufacturerID")]
     pub manufacturer_id: Option<String>,
     #[serde(rename = "packSize")]
-    pub pack_size: Option<i32>,
+    pub pack_size: Option<f64>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "parentID")]
     pub parent_id: Option<String>,

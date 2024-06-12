@@ -131,5 +131,10 @@
   "error.account-blocked": "Аккаунт заблокирован до окончания срока действия периода блокировки",
   "error.internal-error": "Сервер столкнулся с проблемой.",
   "cmdk.goto-cold-chain-monitoring": "Перейти к: Контроль холодильной цепи",
-  "error.sync-api-incompatible-hint": "Необходимо обновить mSupply Центральный Сервер до более новой версии - пожалуйста, свяжитесь с support@msupply.foundation"
+  "error.sync-api-incompatible-hint": "Необходимо обновить mSupply Центральный Сервер до более новой версии - пожалуйста, свяжитесь с support@msupply.foundation",
+  "error.sync-v6-api-incompatible": "Версия API Sync V6 несовместима",
+  "error.sync-v6-api-incompatible-hint": "Необходимо обновить Open mSupply Центральный Сервер до более новой версии - пожалуйста, свяжитесь с support@msupply.foundation",
+  "facilities": "Объекты",
+  "manage": "Управлять",
+  "settings": "Настройки"
 }

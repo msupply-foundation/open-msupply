@@ -7,7 +7,7 @@ export const useAssetData = {
     classes: Utils.useAssetClasses,
     categories: Utils.useAssetCategories,
     types: Utils.useAssetTypes,
-    properties: Utils.useAssetCatalogueProperties,
+    properties: Utils.useAssetProperties,
   },
 
   document: {
@@ -18,7 +18,6 @@ export const useAssetData = {
 
     fields: Document.useAssetFields,
     insert: Document.useAssetItemInsert,
-    insertProperty: Document.useAssetItemPropertyInsert,
     delete: Document.useAssetsDelete,
   },
 

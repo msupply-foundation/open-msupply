@@ -210,8 +210,8 @@ fn generate_response_requisition_lines(
                 comment: comment.clone(),
                 item_name,
                 // Default
-                supply_quantity: 0,
-                approved_quantity: 0,
+                supply_quantity: 0.0,
+                approved_quantity: 0.0,
                 approval_comment: None,
             },
         )

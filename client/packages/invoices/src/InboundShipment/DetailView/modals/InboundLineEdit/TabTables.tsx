@@ -18,6 +18,7 @@ import {
   Currencies,
   useCurrencyCell,
   useAuthContext,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -120,7 +121,8 @@ export const QuantityTableComponent: FC<
       [
         'unitQuantity',
         {
-          accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+          accessor: ({ rowData }) =>
+            NumUtils.floatMultiply(rowData.packSize, rowData.numberOfPacks),
         },
       ],
     ],

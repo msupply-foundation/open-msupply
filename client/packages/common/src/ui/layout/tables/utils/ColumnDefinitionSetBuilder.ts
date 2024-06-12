@@ -180,12 +180,13 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'heading.description',
     key: 'description',
     width: 250,
+    Cell: TooltipTextCell,
   },
   selection: getCheckboxSelectionColumn(),
   code: {
     label: 'label.code',
     key: 'code',
-    width: 20,
+    width: 100,
     Cell: TooltipTextCell,
   },
   packSize: {

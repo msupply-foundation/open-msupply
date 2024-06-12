@@ -34,6 +34,15 @@ fragment Name on NameNode {
     id
     code
   }
+  properties
+}
+
+fragment Property on PropertyNode {
+  id
+  key
+  name
+  allowedValues
+  valueType
 }
 
 query names(
@@ -68,6 +77,36 @@ query nameById($storeId: String!, $nameId: String!) {
         ...Name
       }
       totalCount
+    }
+  }
+}
+
+query nameProperties {
+  nameProperties {
+    ... on NamePropertyConnector {
+      __typename
+      nodes {
+        __typename
+        ...Property
+      }
+    }
+  }
+}
+
+mutation updateNameProperties(
+  $storeId: String!
+  $input: UpdateNamePropertiesInput
+) {
+  updateNameProperties(storeId: $storeId, input: $input) {
+    __typename
+    ... on NameNode {
+      ...Name
+    }
+    ... on UpdateNamePropertiesError {
+      error {
+        __typename
+        description
+      }
     }
   }
 }
