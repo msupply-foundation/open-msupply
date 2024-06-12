@@ -47,7 +47,7 @@ impl SyncApiV6 {
         let error = match response_or_err(result).await {
             Ok(SyncUploadFileResponseV6::Data(data)) => return Ok(data),
             Ok(SyncUploadFileResponseV6::Error(error)) => error.into(),
-            Err(error) => error.into(),
+            Err(error) => error,
         };
 
         Err(error_with_url(error))

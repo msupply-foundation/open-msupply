@@ -96,7 +96,7 @@ impl SyncApiV6 {
         let error = match response_or_err(result).await {
             Ok(SyncPushResponseV6::Data(data)) => return Ok(data),
             Ok(SyncPushResponseV6::Error(error)) => error.into(),
-            Err(error) => error.into(),
+            Err(error) => error,
         };
 
         Err(SyncApiErrorV6 {
@@ -126,7 +126,7 @@ impl SyncApiV6 {
         let error = match response_or_err(result).await {
             Ok(SiteStatusResponseV6::Data(data)) => return Ok(data),
             Ok(SiteStatusResponseV6::Error(error)) => error.into(),
-            Err(error) => error.into(),
+            Err(error) => error,
         };
 
         Err(SyncApiErrorV6 {
