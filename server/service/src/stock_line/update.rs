@@ -50,8 +50,11 @@ pub fn update_stock_line(
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
-            let (new_stock_line, location_movements, barcode_row) =
-                generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
+            let GenerateResult {
+                new_stock_line,
+                location_movements,
+                barcode_row,
+            } = generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
 
             if let Some(barcode_row) = barcode_row {
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
@@ -97,6 +100,12 @@ fn validate(
     Ok(stock_line)
 }
 
+pub struct GenerateResult {
+    pub new_stock_line: StockLineRow,
+    pub location_movements: Option<Vec<LocationMovementRow>>,
+    pub barcode_row: Option<BarcodeRow>,
+}
+
 fn generate(
     store_id: String,
     connection: &StorageConnection,
@@ -111,14 +120,7 @@ fn generate(
         on_hold,
         barcode,
     }: UpdateStockLine,
-) -> Result<
-    (
-        StockLineRow,
-        Option<Vec<LocationMovementRow>>,
-        Option<BarcodeRow>,
-    ),
-    UpdateStockLineError,
-> {
+) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
     let location_movements = match location.clone() {
         Some(location) => {
@@ -165,7 +167,11 @@ fn generate(
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing.barcode_id = barcode_id;
 
-    Ok((existing, location_movements, barcode_row))
+    Ok(GenerateResult {
+        new_stock_line: existing,
+        location_movements,
+        barcode_row,
+    })
 }
 
 fn generate_location_movement(
