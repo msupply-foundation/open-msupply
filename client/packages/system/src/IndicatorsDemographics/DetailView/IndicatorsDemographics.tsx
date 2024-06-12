@@ -8,6 +8,8 @@ import {
   TableProvider,
   createTableStore,
   useColumns,
+  useNotification,
+  useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 
@@ -64,6 +66,9 @@ const IndicatorsDemographicsComponent: FC = () => {
   const [headerDraft, setHeaderDraft] = useState<HeaderData>();
   const [indexPopulation, setIndexPopulation] = useState<number>();
   const [isDirty, setIsDirty] = useState(false);
+
+  const { error, success } = useNotification();
+  const t = useTranslation();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
   const { data: projections, isLoading: isLoadingProjections } =
@@ -186,11 +191,13 @@ const IndicatorsDemographicsComponent: FC = () => {
           }
         })
       )
-        .then(() => {
+        .then(async () => {
           if (headerDraft !== undefined)
-            upsertProjection(mapProjection(headerDraft));
+            await upsertProjection(mapProjection(headerDraft));
         })
-        .then(() => invalidateQueries());
+        .then(() => success(t('success.data-saved'))())
+        .then(() => invalidateQueries())
+        .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
     }
   };
 

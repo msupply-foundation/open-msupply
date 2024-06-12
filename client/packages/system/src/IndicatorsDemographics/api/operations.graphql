@@ -136,7 +136,7 @@ mutation updateDemographicProjection(
         ... on DemographicProjectionNode {
           id
         }
-        ... on InsertDemographicProjectionError {
+        ... on UpdateDemographicProjectionError {
           error {
             description
           }
