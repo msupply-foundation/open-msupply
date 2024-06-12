@@ -219,8 +219,8 @@ export const AppDrawer: React.FC = () => {
           <InventoryNav />
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
-          {Environment.FEATURE_GAPS && <ManageNav />}
           {Environment.FEATURE_GAPS && <ProgramsNav />}
+          {Environment.FEATURE_GAPS && <ManageNav />}
 
           {/* <AppNavLink
             to={AppRoute.Tools}

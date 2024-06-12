@@ -9,7 +9,7 @@ import {
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { SlidersIcon } from '@common/icons';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
 export const ManageNav: FC = () => {
@@ -18,12 +18,11 @@ export const ManageNav: FC = () => {
   );
   const t = useTranslation('app');
   const isCentralServer = useIsCentralServerApi();
-  const visible = isCentralServer;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Manage}>
       <AppNavLink
-        visible={visible}
+        visible={isCentralServer}
         end={false}
         to={AppRoute.Manage}
         icon={<SlidersIcon color="primary" fontSize="small" />}
@@ -33,12 +32,20 @@ export const ManageNav: FC = () => {
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            visible={visible}
+            visible={isCentralServer}
             end
             to={RouteBuilder.create(AppRoute.Manage)
               .addPart(AppRoute.Facilities)
               .build()}
             text={t('facilities')}
+          />
+          <AppNavLink
+            visible={isCentralServer && Environment.FEATURE_GAPS}
+            end
+            to={RouteBuilder.create(AppRoute.Manage)
+              .addPart(AppRoute.IndicatorsDemographics)
+              .build()}
+            text={t('indicators-demographics')}
           />
         </List>
       </Collapse>
