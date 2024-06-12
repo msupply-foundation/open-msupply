@@ -30,9 +30,9 @@ impl TestSyncIncomingRecord {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::upsert(upsert),
             sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = table_name.to_owned();
-                r.record_id = id_and_data.0.to_owned();
-                r.data = id_and_data.1.to_owned();
+                r.table_name = table_name.to_string();
+                r.record_id = id_and_data.0.to_string();
+                r.data = id_and_data.1.to_string();
                 r.action = SyncAction::Upsert;
             }),
             extra_data: None,
@@ -52,7 +52,7 @@ impl TestSyncIncomingRecord {
         TestSyncIncomingRecord {
             translated_record: PullTranslateResult::deletes(deletes),
             sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = table_name.to_owned();
+                r.table_name = table_name.to_string();
                 r.record_id = id.to_string();
                 r.data = "{}".to_string();
                 r.action = SyncAction::Delete;

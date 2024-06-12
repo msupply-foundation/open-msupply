@@ -327,13 +327,13 @@ mod test {
             updated_lines,
             vec![
                 inline_edit(&invoice_line_a(), |mut l| {
-                    l.id = updated_lines[0].id.clone();
-                    l.invoice_id = updated_invoice.invoice_row.id.clone();
+                    l.id.clone_from(&updated_lines[0].id);
+                    l.invoice_id.clone_from(&updated_invoice.invoice_row.id);
                     l
                 }),
                 inline_edit(&invoice_line_b(), |mut l| {
-                    l.id = updated_lines[1].id.clone();
-                    l.invoice_id = updated_invoice.invoice_row.id.clone();
+                    l.id.clone_from(&updated_lines[1].id);
+                    l.invoice_id.clone_from(&updated_invoice.invoice_row.id);
                     l
                 })
             ]

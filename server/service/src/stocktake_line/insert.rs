@@ -657,7 +657,7 @@ mod stocktake_line_test {
                 &context,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
-                    r.stocktake_id = stocktake_a.id.clone();
+                    r.stocktake_id.clone_from(&stocktake_a.id);
                     r.counted_number_of_packs = Some(50.0);
                     r.stock_line_id = Some(stock_line.id.clone());
                     r.inventory_adjustment_reason_id = Some(positive_reason().id);
@@ -667,7 +667,7 @@ mod stocktake_line_test {
         assert_eq!(
             result.line.clone(),
             inline_init(|r: &mut StocktakeLineRow| {
-                r.id = result.line.id.clone();
+                r.id.clone_from(&result.line.id);
                 r.stocktake_id = stocktake_a.id;
                 r.counted_number_of_packs = Some(50.0);
                 r.stock_line_id = Some(stock_line.id);
@@ -726,7 +726,7 @@ mod stocktake_line_test {
                 &context,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
-                    r.stocktake_id = stocktake_a.id.clone();
+                    r.stocktake_id.clone_from(&stocktake_a.id);
                     r.comment = Some("Some comment".to_string());
                     r.stock_line_id = Some(mock_stock_line_d().id);
                 }),
@@ -735,7 +735,7 @@ mod stocktake_line_test {
         assert_eq!(
             result.line,
             inline_init(|r: &mut StocktakeLineRow| {
-                r.id = result.line.id.clone();
+                r.id.clone_from(&result.line.id);
                 r.stocktake_id = stocktake_a.id;
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;

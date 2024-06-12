@@ -119,11 +119,10 @@ mod test {
             service.insert_stock_out_line(
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
-                    r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_outbound_shipment_a_invoice_lines()[0].id);
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_a_invoice_lines()[0].invoice_id);
                 }),
             ),
             Err(ServiceError::LineAlreadyExists)
@@ -138,7 +137,7 @@ mod test {
                     r.r#type = Some(StockOutType::OutboundShipment);
                     r.invoice_id = "new invoice id".to_string();
                     r.number_of_packs = 1.0;
-                    r.stock_line_id = mock_item_b_lines()[0].id.clone();
+                    r.stock_line_id.clone_from(&mock_item_b_lines()[0].id);
                 }),
             ),
             Err(ServiceError::InvoiceDoesNotExist)
@@ -167,9 +166,8 @@ mod test {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
                     r.stock_line_id = "item_b_line_a".to_string();
-                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_a_invoice_lines()[0].invoice_id);
                     r.number_of_packs = -1.0;
                 }),
             ),
@@ -183,11 +181,11 @@ mod test {
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_a_invoice_lines()[0].invoice_id);
                     r.number_of_packs = 1.0;
-                    r.stock_line_id = mock_stock_line_location_is_on_hold()[0].id.clone();
+                    r.stock_line_id
+                        .clone_from(&mock_stock_line_location_is_on_hold()[0].id);
                 }),
             ),
             Err(ServiceError::LocationIsOnHold)
@@ -200,11 +198,10 @@ mod test {
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_a_invoice_lines()[0].invoice_id);
                     r.number_of_packs = 1.0;
-                    r.stock_line_id = mock_stock_line_on_hold()[0].id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_on_hold()[0].id);
                 }),
             ),
             Err(ServiceError::BatchIsOnHold)
@@ -217,11 +214,10 @@ mod test {
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_a_invoice_lines()[0].invoice_id);
                     r.number_of_packs = 40.0;
-                    r.stock_line_id = mock_stock_line_a().id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
                 }),
             ),
             Err(ServiceError::StockLineAlreadyExistsInInvoice(
@@ -236,11 +232,10 @@ mod test {
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_a_invoice_lines()[0].invoice_id);
                     r.number_of_packs = 8.0;
-                    r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_si_d()[0].id);
                 }),
             ),
             Err(ServiceError::ReductionBelowZero {
@@ -256,11 +251,10 @@ mod test {
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_a_invoice_lines()[0].invoice_id);
                     r.number_of_packs = 1.0;
-                    r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_si_d()[0].id);
                 }),
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -301,10 +295,9 @@ mod test {
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
-                    r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_c_invoice_lines()[0].invoice_id);
+                    r.stock_line_id.clone_from(&mock_stock_line_si_d()[0].id);
                     r.number_of_packs = 1.0;
                     r.total_before_tax = Some(1.0);
                 }),
@@ -321,7 +314,7 @@ mod test {
             new_outbound_line,
             inline_edit(&new_outbound_line, |mut u| {
                 u.id = "new outbound line id".to_string();
-                u.item_link_id = mock_item_a().id.clone();
+                u.item_link_id.clone_from(&mock_item_a().id);
                 u.pack_size = 1.0;
                 u.number_of_packs = 1.0;
                 u
@@ -354,10 +347,9 @@ mod test {
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new allocated invoice line".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
-                    r.stock_line_id = mock_stock_line_a().id.clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_c_invoice_lines()[0].invoice_id);
+                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
                     r.number_of_packs = 2.0;
                     r.total_before_tax = Some(1.0);
                 }),
@@ -396,10 +388,9 @@ mod test {
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new picked invoice line".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
-                    r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
-                        .invoice_id
-                        .clone();
-                    r.stock_line_id = mock_item_b_lines()[0].id.clone();
+                    r.invoice_id
+                        .clone_from(&mock_outbound_shipment_c_invoice_lines()[0].invoice_id);
+                    r.stock_line_id.clone_from(&mock_item_b_lines()[0].id);
                     r.number_of_packs = 2.0;
                     r.total_before_tax = Some(1.0);
                 }),
@@ -438,7 +429,7 @@ mod test {
                     r.id = "new prescription line id".to_string();
                     r.r#type = Some(StockOutType::Prescription);
                     r.invoice_id = mock_prescription_a().id;
-                    r.stock_line_id = mock_stock_line_a().id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
                     r.number_of_packs = 1.0;
                     r.total_before_tax = Some(1.0);
                 }),
@@ -455,7 +446,7 @@ mod test {
             new_prescription_line,
             inline_edit(&new_prescription_line, |mut u| {
                 u.id = "new prescription line id".to_string();
-                u.item_link_id = mock_item_a().id.clone();
+                u.item_link_id.clone_from(&mock_item_a().id);
                 u.pack_size = 1.0;
                 u.number_of_packs = 1.0;
                 u

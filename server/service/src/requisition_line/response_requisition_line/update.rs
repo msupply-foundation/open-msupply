@@ -160,7 +160,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = "invalid".to_owned();
+                    r.id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
@@ -194,7 +194,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_new_response_requisition_test().lines[0].id.clone();
+                    r.id.clone_from(&mock_new_response_requisition_test().lines[0].id);
                 }),
             ),
             Err(ServiceError::NotThisStoreRequisition)
@@ -206,7 +206,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_response_program_requisition().lines[0].id.clone();
+                    r.id.clone_from(&mock_response_program_requisition().lines[0].id);
                 }),
             ),
             Err(ServiceError::CannotEditRequisition)
