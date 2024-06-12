@@ -128,7 +128,8 @@ export enum ActivityLogNodeType {
   StockOnHold = 'STOCK_ON_HOLD',
   StockSellPriceChange = 'STOCK_SELL_PRICE_CHANGE',
   UserLoggedIn = 'USER_LOGGED_IN',
-  VaccineCourseCreated = 'VACCINE_COURSE_CREATED'
+  VaccineCourseCreated = 'VACCINE_COURSE_CREATED',
+  VaccineCourseUpdated = 'VACCINE_COURSE_UPDATED'
 }
 
 export type ActivityLogResponse = ActivityLogConnector;
@@ -1124,7 +1125,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -3217,6 +3218,7 @@ export type ItemFilterInput = {
   codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
@@ -5755,7 +5757,7 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateVaccineCourseErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };

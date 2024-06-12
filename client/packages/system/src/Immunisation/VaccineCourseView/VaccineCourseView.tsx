@@ -125,6 +125,7 @@ export const VaccineCourseView: FC = () => {
     isDirty,
   } = useVaccineCourse(id);
   const { data: demographicData } = useDemographicIndicators();
+
   const [buffer, setBuffer] = useState(draft?.doses ?? 1);
   const [value, setValue] = useState(draft?.doses ?? 1);
 

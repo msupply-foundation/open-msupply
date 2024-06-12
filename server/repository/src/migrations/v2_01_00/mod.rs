@@ -7,6 +7,7 @@ mod assets;
 mod decimal_pack_size;
 mod decimal_requisition_quantities;
 mod demographics;
+mod item_add_is_vaccine;
 mod ledger;
 mod name_properties;
 mod pg_enums;
@@ -37,6 +38,7 @@ impl Migration for V2_01_00 {
         demographics::migrate(connection)?;
         vaccine_course::migrate(connection)?;
         program::migrate(connection)?;
+        item_add_is_vaccine::migrate(connection)?;
         Ok(())
     }
 }
