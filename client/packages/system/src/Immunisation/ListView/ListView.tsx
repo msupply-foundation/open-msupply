@@ -16,6 +16,7 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { ImmunisationProgramCreateModal } from './ImmunisationProgramCreateModal';
 import { useImmunisationProgramList } from '../api/hooks/useImmunisationProgramList';
+import { ImmunisationProgramFragment } from '../api';
 
 export interface Program {
   id: string;
@@ -42,8 +43,21 @@ const ImmunisationProgramListComponent: FC = () => {
   };
   const { data, isLoading, isError } = useImmunisationProgramList(queryParams);
 
-  const columns = useColumns(
-    ['name'],
+  const columns = useColumns<ImmunisationProgramFragment>(
+    [
+      'name',
+      {
+        key: 'vaccine-courses',
+        label: 'label.vaccine-courses',
+        sortable: false,
+        accessor: ({ rowData }) => {
+          if (rowData.vaccineCourses?.length === 0) {
+            return '-';
+          }
+          return rowData.vaccineCourses?.map(n => n.name).join(', ');
+        },
+      },
+    ],
     {
       onChangeSortBy: updateSortQuery,
       sortBy,

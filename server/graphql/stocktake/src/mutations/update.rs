@@ -141,7 +141,9 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::StocktakeDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NoLines => BadUserInput(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::InsertStockInLineError { .. }
+        | ServiceError::InsertStockOutLineError { .. }
+        | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())

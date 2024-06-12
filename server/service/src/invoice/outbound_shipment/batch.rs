@@ -299,7 +299,7 @@ mod test {
             })]),
             insert_line: Some(vec![inline_init(|input: &mut InsertStockOutLine| {
                 input.invoice_id = "new_id".to_string();
-                input.r#type = Some(StockOutType::OutboundShipment);
+                input.r#type = StockOutType::OutboundShipment;
                 input.id = "new_line_id".to_string();
                 input.stock_line_id = mock_stock_line_a().id;
                 input.number_of_packs = 1.0
