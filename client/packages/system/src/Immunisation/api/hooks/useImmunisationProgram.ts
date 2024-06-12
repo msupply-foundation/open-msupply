@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
+  LocaleKey,
   ProgramSortFieldInput,
+  TypedTFunction,
   isEqual,
   useMutation,
   useQuery,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { PROGRAM } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
@@ -19,7 +20,10 @@ const defaultDraftImmunisationProgram: DraftImmunisationProgram = {
   name: '',
 };
 
-export function useImmunisationProgram(id?: string) {
+export function useImmunisationProgram(
+  t: TypedTFunction<LocaleKey>,
+  id?: string
+) {
   const [patch, setPatch] = useState<Partial<DraftImmunisationProgram>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -34,7 +38,7 @@ export function useImmunisationProgram(id?: string) {
     mutateAsync: updateMutation,
     isLoading: isUpdating,
     error: updateError,
-  } = useUpdate(id ?? '', setErrorMessage);
+  } = useUpdate(id ?? '', setErrorMessage, t);
 
   const draft: DraftImmunisationProgram = data
     ? { ...defaultDraftImmunisationProgram, ...data, ...patch }
@@ -66,7 +70,7 @@ export function useImmunisationProgram(id?: string) {
   };
 
   return {
-    query: { data: data, isLoading, error },
+    query: { data, isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     draft,
@@ -126,10 +130,10 @@ const useCreate = () => {
 
 const useUpdate = (
   id: string,
-  setErrorMessage: Dispatch<SetStateAction<string>>
+  setErrorMessage: Dispatch<SetStateAction<string>>,
+  t: TypedTFunction<LocaleKey>
 ) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
-  const t = useTranslation('catalogue');
 
   const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
     if (!name) {
