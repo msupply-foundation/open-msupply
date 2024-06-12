@@ -421,7 +421,7 @@ mod test {
         // Inbound return currently in NEW status, should have no stock lines
         assert!(invoice_lines
             .iter()
-            .all(|l| l.invoice_line_row.stock_line_id == None));
+            .all(|l| l.invoice_line_row.stock_line_id.is_none()));
 
         let updated_return = service
             .update_inbound_return(
