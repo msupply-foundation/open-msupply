@@ -1,13 +1,15 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordAlreadyExist,
+    simple_generic_errors::DatabaseError,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    // vaccine_course::update::{UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError},
+    vaccine_course::update::{
+        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseItem,
+        VaccineCourseSchedule,
+    },
 };
 
 use graphql_types::types::vaccine_course::VaccineCourseNode;
@@ -28,23 +30,19 @@ pub fn update_vaccine_course(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    // match service_provider
-    //     .vaccine_course_service
-    //     .update_vaccine_course(&service_context, input.into())
-    // {
-    //     Ok(vaccine_course) => Ok(UpdateVaccineCourseResponse::Response(
-    //         VaccineCourseNode::from_domain(vaccine_course),
-    //     )),
-    //     Err(error) => Ok(UpdateVaccineCourseResponse::Error(
-    //         UpdateVaccineCourseError {
-    //             error: map_error(error)?,
-    //         },
-    //     )),
-    // }
-
-    Ok(UpdateVaccineCourseResponse::Response(VaccineCourseNode {
-        vaccine_course: VaccineCourseRow::default(),
-    }))
+    match service_provider
+        .vaccine_course_service
+        .update_vaccine_course(&service_context, input.into())
+    {
+        Ok(vaccine_course) => Ok(UpdateVaccineCourseResponse::Response(
+            VaccineCourseNode::from_domain(vaccine_course),
+        )),
+        Err(error) => Ok(UpdateVaccineCourseResponse::Error(
+            UpdateVaccineCourseError {
+                error: map_error(error)?,
+            },
+        )),
+    }
 }
 
 #[derive(InputObject, Clone)]
@@ -73,21 +71,47 @@ pub struct UpdateVaccineCourseInput {
     pub doses: i32,
 }
 
-// impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
-//     fn from(
-//         UpdateVaccineCourseInput {
-//             id,
-//             name,
-//             program_id,
-//         }: UpdateVaccineCourseInput,
-//     ) -> Self {
-//         UpdateVaccineCourse {
-//             id,
-//             name,
-//             program_id,
-//         }
-//     }
-// }
+impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
+    fn from(
+        UpdateVaccineCourseInput {
+            id,
+            name,
+            item_ids,
+            schedules,
+            demographic_indicator_id,
+            coverage_rate,
+            is_active,
+            wastage_rate,
+            doses,
+        }: UpdateVaccineCourseInput,
+    ) -> Self {
+        UpdateVaccineCourse {
+            id,
+            name,
+            item_ids: item_ids
+                .into_iter()
+                .map(|i| VaccineCourseItem {
+                    id: i.id,
+                    item_id: i.item_id,
+                })
+                .collect(),
+            schedules: schedules
+                .into_iter()
+                .map(|s| VaccineCourseSchedule {
+                    id: s.id,
+                    label: s.label,
+                    dose_number: s.dose_number,
+                })
+                .collect(),
+            demographic_indicator_id,
+            coverage_rate,
+            is_active,
+            wastage_rate,
+            doses,
+        }
+    }
+}
+
 #[derive(SimpleObject)]
 pub struct UpdateVaccineCourseError {
     pub error: UpdateVaccineCourseErrorInterface,
@@ -102,26 +126,22 @@ pub enum UpdateVaccineCourseResponse {
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateVaccineCourseErrorInterface {
-    ItemAlreadyExists(RecordAlreadyExist),
+    DatabaseError(DatabaseError),
 }
 
-// fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
-//     use StandardGraphqlError::*;
-//     let formatted_error = format!("{:#?}", error);
+fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
 
-//     let graphql_error = match error {
-//         // Structured Errors
-//         ServiceError::VaccineCourseAlreadyExists => {
-//             return Ok(UpdateVaccineCourseErrorInterface::ItemAlreadyExists(
-//                 RecordAlreadyExist {},
-//             ))
-//         }
-//         // Standard Graphql Errors
-//         ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
-//         ServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),
-//         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
-//         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-//     };
+    let graphql_error = match error {
+        // Structured Errors
+        // None for now...
+        // Standard Graphql Errors
+        ServiceError::VaccineCourseDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
 
-//     Err(graphql_error.extend())
-// }
+    Err(graphql_error.extend())
+}
