@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{mock_program_a, MockDataInserts};
+    use repository::mock::{mock_immunisation_program, MockDataInserts};
     use repository::StringFilter;
     use repository::{
         test_db::setup_all,
@@ -25,7 +25,7 @@ mod query {
         let vaccine_course_insert = InsertVaccineCourse {
             id: "vaccine_course_id".to_owned(),
             name: "vaccine_course_name".to_owned(),
-            program_id: mock_program_a().id.clone(),
+            program_id: mock_immunisation_program().id.clone(),
         };
 
         let _result = service
@@ -57,7 +57,7 @@ mod query {
         let vaccine_course_insert_a = InsertVaccineCourse {
             id: "vaccine_course_id".to_owned(),
             name: "vaccine_course_name".to_owned(),
-            program_id: mock_program_a().id.clone(),
+            program_id: mock_immunisation_program().id.clone(),
         };
 
         let _result = service
@@ -67,7 +67,7 @@ mod query {
         let vaccine_course_insert_b = InsertVaccineCourse {
             id: "vaccine_course_id_b".to_owned(),
             name: "vaccine_course_name_b".to_owned(),
-            program_id: mock_program_a().id.clone(),
+            program_id: mock_immunisation_program().id.clone(),
         };
 
         let _result = service

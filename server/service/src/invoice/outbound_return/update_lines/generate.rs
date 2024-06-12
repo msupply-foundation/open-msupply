@@ -42,9 +42,16 @@ pub fn generate(
             number_of_packs: line.number_of_packs,
             stock_line_id: line.stock_line_id,
             note: line.note,
-            r#type: Some(StockOutType::OutboundReturn),
+            r#type: StockOutType::OutboundReturn,
+            // Default
             tax_percentage: None,
             total_before_tax: None,
+            location_id: None,
+            batch: None,
+            pack_size: None,
+            expiry_date: None,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
         })
         .collect();
 

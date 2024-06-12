@@ -12,15 +12,21 @@ import {
   useTranslation,
   useIsCentralServerApi,
   CentralIcon,
+  SettingsIcon,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
+import { Environment } from '@openmsupply-client/config';
+import { FacilityEditModal } from '@openmsupply-client/system';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
   const t = useTranslation('app');
   const { currentLanguageName } = useIntlUtils();
   const isCentralServer = useIsCentralServerApi();
+  const { isOpen, onClose, onOpen } = useEditModal();
+
   const PaddedCell = styled(Box)({ display: 'flex' });
   const iconStyles = { color: 'inherit', height: '16px', width: '16px' };
   const textStyles = {
@@ -38,6 +44,13 @@ export const Footer: React.FC = () => {
       paddingY={0.75}
       paddingX={0}
     >
+      {isOpen && (
+        <FacilityEditModal
+          nameId={store?.nameId ?? ''}
+          isOpen={isOpen}
+          onClose={onClose}
+        />
+      )}
       <StoreSelector>
         <PaddedCell>
           <HomeIcon sx={iconStyles} />
@@ -46,6 +59,14 @@ export const Footer: React.FC = () => {
           </Tooltip>
         </PaddedCell>
       </StoreSelector>
+      {Environment.FEATURE_GAPS && (
+        <PaddedCell onClick={onOpen}>
+          <SettingsIcon sx={iconStyles} />
+          <Tooltip title={t('label.edit-store-properties')}>
+            <Typography sx={textStyles}>{t('label.edit')}</Typography>
+          </Tooltip>
+        </PaddedCell>
+      )}
       {user ? (
         <PaddedCell>
           <UserIcon sx={iconStyles} />

@@ -7,14 +7,13 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::DemographicIndicatorNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     demographic::insert_demographic_indicator::{
         InsertDemographicIndicator, InsertDemographicIndicatorError as IndicatorServiceError,
     },
 };
-
-use crate::types::DemographicIndicatorNode;
 
 pub fn insert_demographic_indicator(
     ctx: &Context<'_>,
