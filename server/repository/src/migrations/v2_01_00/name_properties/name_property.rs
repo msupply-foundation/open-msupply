@@ -11,7 +11,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TABLE name_property (
                 id TEXT NOT NULL PRIMARY KEY,
-                property_id TEXT NOT NULL REFERENCES property(id)
+                property_id TEXT NOT NULL REFERENCES property(id),
+                remote_editable BOOLEAN NOT NULL
             );
 
             ALTER TABLE name ADD COLUMN properties {JSON};

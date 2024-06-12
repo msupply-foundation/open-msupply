@@ -16,6 +16,7 @@ table! {
     name_property (id) {
         id -> Text,
         property_id -> Text,
+        remote_editable -> Bool,
     }
 }
 joinable!(name_property -> property (property_id));
@@ -29,6 +30,7 @@ allow_tables_to_appear_in_same_query!(name_property, property);
 pub struct NamePropertyRow {
     pub id: String,
     pub property_id: String,
+    pub remote_editable: bool,
 }
 
 pub struct NamePropertyRowRepository<'a> {
