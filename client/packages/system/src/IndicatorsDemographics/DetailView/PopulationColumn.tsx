@@ -16,7 +16,7 @@ export const populationColumn = <
   setter: () => {
     if (process.env['NODE_ENV']) {
       throw new Error(
-        `The default setter of the NameAndColor column was called.
+        `The default setter of the Population column was called.
         Have you forgotten to provide a custom setter?
         When setting up your columns, you should provide a setter function
         const columns = useColumns([ percentageColumn(), { setter }])
