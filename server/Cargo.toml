@@ -36,6 +36,7 @@ large_enum_variant = "allow"
 module_inception = "allow"
 bool_assert_comparison = "allow"
 result_large_err = "allow"
+ptr_arg = "allow"
 
 [workspace]
 

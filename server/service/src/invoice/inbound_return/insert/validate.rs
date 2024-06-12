@@ -47,8 +47,8 @@ pub fn validate(
 }
 
 fn check_outbound_shipment_is_returnable(outbound_shipment: &InvoiceRow) -> bool {
-    match outbound_shipment.status {
-        InvoiceStatus::Shipped | InvoiceStatus::Delivered | InvoiceStatus::Verified => true,
-        _ => false,
-    }
+    matches!(
+        outbound_shipment.status,
+        InvoiceStatus::Shipped | InvoiceStatus::Delivered | InvoiceStatus::Verified
+    )
 }
