@@ -310,7 +310,7 @@ impl<'a> NameRowRepository<'a> {
             store_id,
             ..Default::default()
         };
-        ChangelogRepository::new(&self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     fn insert_changelog_oms_fields(
@@ -326,7 +326,7 @@ impl<'a> NameRowRepository<'a> {
             store_id,
             ..Default::default()
         };
-        ChangelogRepository::new(&self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 }
 

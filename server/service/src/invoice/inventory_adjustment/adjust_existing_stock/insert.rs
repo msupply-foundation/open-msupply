@@ -83,7 +83,7 @@ pub fn insert_inventory_adjustment(
             }
 
             // Add inventory adjustment reason to the invoice line
-            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
             invoice_line_repo.update_inventory_adjustment_reason_id(
                 &update_inventory_adjustment_reason.invoice_line_id,
                 update_inventory_adjustment_reason.reason_id,
