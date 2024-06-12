@@ -45,8 +45,7 @@ fn extract_events(
                     schedule_config
                         .config
                         .datetime_field
-                        .map(|field| extract_naivedatetime_field(&doc.data, &field))
-                        .flatten()
+                        .and_then(|field| extract_naivedatetime_field(&doc.data, &field))
                         .unwrap_or(base_time)
                 };
                 let mut active_start_datetime = start_datetime;
@@ -285,13 +284,11 @@ fn extract_simple_field(data: &Value, path: &str) -> Option<String> {
 
 fn extract_naivedatetime_field(data: &Value, path: &str) -> Option<NaiveDateTime> {
     extract_field(data, path, &|v| {
-        v.as_str()
-            .map(|s| {
-                DateTime::parse_from_rfc3339(s)
-                    .map(|t| Some(t.naive_utc()))
-                    .unwrap_or(None)
-            })
-            .flatten()
+        v.as_str().and_then(|s| {
+            DateTime::parse_from_rfc3339(s)
+                .map(|t| Some(t.naive_utc()))
+                .unwrap_or(None)
+        })
     })
 }
 
