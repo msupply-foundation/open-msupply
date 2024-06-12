@@ -5,6 +5,7 @@ import {
   useTranslation,
   AppFooterPortal,
   LoadingButton,
+  useNotification,
 } from '@openmsupply-client/common';
 import { CloseIcon, SaveIcon } from '@common/icons';
 
@@ -22,6 +23,16 @@ export const AppFooterComponent = ({
   isLoading,
 }: VaccineCoursesFooterProps) => {
   const t = useTranslation('coldchain');
+  const { error, success } = useNotification();
+
+  const onSave = async () => {
+    try {
+      await save();
+      success(t('messages.vaccine-course-saved'));
+    } catch (e) {
+      error('error.vaccine-course-update-failed');
+    }
+  };
 
   return (
     <AppFooterPortal
@@ -47,7 +58,7 @@ export const AppFooterComponent = ({
               isLoading={isLoading}
               disabled={!isDirty}
               onClick={() => {
-                save();
+                onSave();
               }}
               startIcon={<SaveIcon />}
               sx={{ fontSize: '12px' }}
