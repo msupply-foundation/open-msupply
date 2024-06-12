@@ -158,7 +158,7 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
     let doc_contact_details = document_data
         .contact_details
         .as_ref()
-        .and_then(|c| c.first().map(|c| c.clone()))
+        .and_then(|c| c.first().cloned())
         .unwrap_or_default();
     let draft_contact_details = ContactDetails {
         address_1: patient.address1.clone(),
