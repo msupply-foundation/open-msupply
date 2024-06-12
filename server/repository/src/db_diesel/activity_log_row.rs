@@ -72,6 +72,7 @@ pub enum ActivityLogType {
     VaccineCourseCreated,
     ProgramCreated,
     ProgramUpdated,
+    VaccineCourseUpdated,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
