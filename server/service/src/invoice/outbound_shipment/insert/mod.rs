@@ -285,7 +285,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "test_name_store_id_linked".to_string();
-                    r.other_party_id = mock_name_linked_to_store_join().name_link_id.clone();
+                    r.other_party_id
+                        .clone_from(&mock_name_linked_to_store_join().name_link_id);
                 }),
             )
             .unwrap();
@@ -309,7 +310,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "test_name_store_id_not_linked".to_string();
-                    r.other_party_id = mock_name_not_linked_to_store().id.clone();
+                    r.other_party_id
+                        .clone_from(&mock_name_not_linked_to_store().id);
                 }),
             )
             .unwrap();

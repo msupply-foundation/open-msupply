@@ -17,7 +17,7 @@ pub fn mock_test_requisition_line_repository() -> MockData {
 
 pub fn mock_draft_request_requisition_line() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_draft_request_requisition_line".to_owned();
+        r.id = "mock_draft_request_requisition_line".to_string();
         r.requisition_id = mock_request_draft_requisition().id;
         r.item_link_id = mock_item_a().id;
         r.requested_quantity = 10.0;
@@ -29,7 +29,7 @@ pub fn mock_draft_request_requisition_line() -> RequisitionLineRow {
 
 pub fn mock_draft_request_requisition_line2() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_draft_request_requisition_line2".to_owned();
+        r.id = "mock_draft_request_requisition_line2".to_string();
         r.requisition_id = mock_request_draft_requisition().id;
         r.item_link_id = mock_item_a().id;
         r.requested_quantity = 10.0;

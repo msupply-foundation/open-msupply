@@ -175,7 +175,7 @@ mod test {
             service.update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c_invoice_lines()[0].id);
                     r.location = Some(NullableUpdate {
                         value: Some("invalid".to_string()),
                     });
@@ -189,7 +189,7 @@ mod test {
             service.update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c_invoice_lines()[0].id);
                     r.item_id = Some("invalid".to_string());
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
@@ -203,7 +203,7 @@ mod test {
             service.update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c_invoice_lines()[0].id);
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(0.0);
                     r.number_of_packs = Some(1.0);
@@ -217,7 +217,7 @@ mod test {
             service.update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c_invoice_lines()[0].id);
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(-1.0);
@@ -231,7 +231,7 @@ mod test {
             service.update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_b_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_b_invoice_lines()[0].id);
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
@@ -245,7 +245,7 @@ mod test {
             service.update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_a_invoice_lines()[0].id);
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
@@ -260,7 +260,7 @@ mod test {
             service.update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_a_invoice_lines()[0].id);
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
@@ -288,7 +288,7 @@ mod test {
             .update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c_invoice_lines()[0].id);
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(2.0);
                     r.number_of_packs = Some(3.0);
@@ -304,8 +304,8 @@ mod test {
         assert_eq!(
             inbound_line_update,
             inline_edit(&inbound_line_update, |mut u| {
-                u.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
-                u.item_link_id = mock_item_a().id.clone();
+                u.id.clone_from(&mock_inbound_shipment_c_invoice_lines()[0].id);
+                u.item_link_id.clone_from(&mock_item_a().id);
                 u.pack_size = 2.0;
                 u.number_of_packs = 3.0;
                 u
@@ -326,7 +326,7 @@ mod test {
             .update_inbound_shipment_line(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
-                    r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c_invoice_lines()[0].id);
                     r.pack_size = Some(20.0);
                     r.number_of_packs = Some(20.0);
                     r.sell_price_per_pack = Some(100.0);
@@ -343,7 +343,7 @@ mod test {
         assert_eq!(
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
-                u.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
+                u.id.clone_from(&mock_inbound_shipment_c_invoice_lines()[0].id);
                 u.pack_size = 1.0;
                 u.number_of_packs = 400.0;
                 u.sell_price_per_pack = 5.0;

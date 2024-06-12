@@ -262,7 +262,7 @@ mod test {
             service.update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_outbound_shipment_e().id.clone();
+                    r.id.clone_from(&mock_outbound_shipment_e().id);
                     r.other_party_id = Some(mock_name_a().id.clone());
                 })
             ),
@@ -273,7 +273,7 @@ mod test {
             service.update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_b().id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_b().id);
                     r.comment = Some("comment update".to_string());
                 })
             ),
@@ -284,7 +284,7 @@ mod test {
             service.update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_e().id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_e().id);
                     r.status = Some(UpdateInboundShipmentStatus::Delivered);
                 })
             ),
@@ -329,7 +329,7 @@ mod test {
             service.update_inbound_shipment(
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
-                    r.id = mock_inbound_shipment_c().id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c().id);
                 })
             ),
             Err(ServiceError::NotThisStoreInvoice)

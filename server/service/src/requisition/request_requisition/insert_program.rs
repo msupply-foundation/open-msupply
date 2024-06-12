@@ -63,7 +63,7 @@ pub fn insert_program_request_requisition(
             activity_log_entry(
                 ctx,
                 ActivityLogType::RequisitionCreated,
-                Some(new_requisition.id.to_owned()),
+                Some(new_requisition.id.to_string()),
                 None,
                 None,
             )?;
@@ -250,9 +250,9 @@ mod test_insert {
             service.insert_program_request_requisition(
                 &context,
                 inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_owned();
-                    r.other_party_id = mock_name_store_b().id.clone();
-                    r.program_order_type_id = "does_not_exist".to_owned();
+                    r.id = "new_program_request_requisition".to_string();
+                    r.other_party_id.clone_from(&mock_name_store_b().id);
+                    r.program_order_type_id = "does_not_exist".to_string();
                     r.period_id = mock_period().id;
                 })
             ),
@@ -264,8 +264,8 @@ mod test_insert {
             service.insert_program_request_requisition(
                 &context,
                 inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_owned();
-                    r.other_party_id = "invalid".to_owned();
+                    r.id = "new_program_request_requisition".to_string();
+                    r.other_party_id = "invalid".to_string();
                     r.program_order_type_id = mock_program_order_types_a().id;
                     r.period_id = mock_period().id;
                 })
@@ -292,8 +292,8 @@ mod test_insert {
             .insert_program_request_requisition(
                 &context,
                 inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_owned();
-                    r.other_party_id = mock_name_store_b().id.clone();
+                    r.id = "new_program_request_requisition".to_string();
+                    r.other_party_id.clone_from(&mock_name_store_b().id);
                     r.program_order_type_id = mock_program_order_types_a().id;
                     r.period_id = mock_period().id;
                 }),
@@ -321,8 +321,8 @@ mod test_insert {
             service.insert_program_request_requisition(
                 &context,
                 inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "error_program_requisition".to_owned();
-                    r.other_party_id = mock_name_store_b().id.clone();
+                    r.id = "error_program_requisition".to_string();
+                    r.other_party_id.clone_from(&mock_name_store_b().id);
                     r.program_order_type_id = mock_program_order_types_a().id;
                     r.period_id = mock_period().id;
                 }),

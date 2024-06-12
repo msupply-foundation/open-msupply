@@ -174,8 +174,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
         ]),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
             r.table_name = "name".to_string();
-            r.record_id = NAME_1.0.to_owned();
-            r.data = NAME_1.1.to_owned();
+            r.record_id = NAME_1.0.to_string();
+            r.data = NAME_1.1.to_string();
         }),
         extra_data: Some(inline_init(|r: &mut MockData| {
             r.stores = vec![store()];

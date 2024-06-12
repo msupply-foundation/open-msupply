@@ -304,7 +304,7 @@ mod test {
         update_stock_in_line(
             &context,
             inline_init(|r: &mut UpdateStockInLine| {
-                r.id = return_line_id.clone();
+                r.id.clone_from(&return_line_id);
                 r.pack_size = Some(2.0);
                 r.number_of_packs = Some(3.0);
             }),
@@ -319,7 +319,7 @@ mod test {
         assert_eq!(
             inbound_line_update,
             inline_edit(&inbound_line_update, |mut u| {
-                u.id = return_line_id.clone();
+                u.id.clone_from(&return_line_id);
                 u.pack_size = 2.0;
                 u.number_of_packs = 3.0;
                 u
@@ -339,7 +339,7 @@ mod test {
         update_stock_in_line(
             &context,
             inline_init(|r: &mut UpdateStockInLine| {
-                r.id = return_line_id.clone();
+                r.id.clone_from(&return_line_id);
                 r.pack_size = Some(20.0);
                 r.number_of_packs = Some(20.0);
                 r.sell_price_per_pack = Some(100.0);

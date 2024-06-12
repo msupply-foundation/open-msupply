@@ -163,7 +163,7 @@ fn generate_new_stock_lines(stock_line: &StockLineRow, input: &InsertRepack) -> 
             input.number_of_packs * stock_line.pack_size / input.new_pack_size;
         new_line.sell_price_per_pack = stock_line.sell_price_per_pack * difference;
         new_line.cost_price_per_pack = stock_line.cost_price_per_pack * difference;
-        new_line.location_id = input.new_location_id.clone();
+        new_line.location_id.clone_from(&input.new_location_id);
 
         new_line
     };
