@@ -55,6 +55,9 @@ export const ImmunisationProgramCreateModal: FC<
               value={draft.name}
               onChange={e => updatePatch({ name: e.target.value })}
               helperText={errorMessage}
+              FormHelperTextProps={{
+                sx: { color: 'error.main' },
+              }}
               error={!!errorMessage}
             />
           </Box>
