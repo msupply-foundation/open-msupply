@@ -104,11 +104,10 @@ fn validate(
         return Err(OutError::MaxOrdersReachedForPeriod);
     }
 
-    if program_setting
+    if !program_setting
         .suppliers
         .iter()
-        .find(|supplier| supplier.supplier.name_row.id == input.other_party_id)
-        .is_none()
+        .any(|supplier| supplier.supplier.name_row.id == input.other_party_id)
     {
         return Err(OutError::SupplierNotValid);
     }
