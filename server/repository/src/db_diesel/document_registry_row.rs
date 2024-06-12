@@ -56,21 +56,12 @@ impl<'a> DocumentRegistryRowRepository<'a> {
         DocumentRegistryRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
         diesel::insert_into(document_registry_dsl::document_registry)
             .values(row)
             .on_conflict(document_registry_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(document_registry_dsl::document_registry)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

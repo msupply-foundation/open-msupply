@@ -50,7 +50,6 @@ impl<'a> PackVariantRowRepository<'a> {
         PackVariantRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
         diesel::insert_into(pack_variant::dsl::pack_variant)
             .values(row)
@@ -59,14 +58,6 @@ impl<'a> PackVariantRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
 
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(pack_variant::dsl::pack_variant)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
