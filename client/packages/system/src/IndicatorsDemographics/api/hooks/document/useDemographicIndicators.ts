@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
 import { GENERAL_POPULATION_ID } from '../..';
 import { calculateAcrossRow } from '../../../DetailView/utils';
 
-export const useDemographicIndicators = (headerData: HeaderValue[]) => {
+export const useDemographicIndicators = (headerData?: HeaderValue[]) => {
   const t = useTranslation();
 
   const { queryParams } = useUrlQueryParams({
@@ -35,6 +35,12 @@ export const useDemographicIndicators = (headerData: HeaderValue[]) => {
 
   useEffect(() => {
     if (!data) {
+      return;
+    }
+
+    // TODO refactor hook to remove useEffect / make headerData not required so hook useable elsewhere
+
+    if (!headerData) {
       return;
     }
 
@@ -69,5 +75,5 @@ export const useDemographicIndicators = (headerData: HeaderValue[]) => {
     setDraft(draftRows);
   }, [data, t]);
 
-  return { draft, setDraft, isLoading };
+  return { draft, setDraft, isLoading, data };
 };
