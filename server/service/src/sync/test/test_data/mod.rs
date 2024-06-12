@@ -22,6 +22,7 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_oms_fields;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
@@ -70,6 +71,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut barcode::test_pull_upsert_records());
     // Open mSupply Central
     test_records.append(&mut pack_variant::test_pull_upsert_records());
+    test_records.append(&mut name_oms_fields::test_pull_upsert_records());
     test_records.append(&mut asset_class::test_pull_upsert_records());
     test_records.append(&mut asset_category::test_pull_upsert_records());
     test_records.append(&mut asset_type::test_pull_upsert_records());
@@ -166,6 +168,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut asset_log_reason::test_v6_records());
     test_records.append(&mut sync_file_reference::test_v6_records());
     test_records.append(&mut asset_property::test_v6_central_push_records());
+    test_records.append(&mut name_oms_fields::test_v6_central_push_records());
 
     test_records
 }
