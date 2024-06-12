@@ -24,6 +24,8 @@ impl Migration for V2_01_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Note, this migration deletes the consumption view which is recreated in decimal_pack_size
+        // migration, i.e. this migration has to run first.
         store_add_name_link_id::migrate(connection)?;
         activity_log::migrate(connection)?;
         // The ledger is migrated in decimal_pack_size because the same views needed to be

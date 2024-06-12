@@ -14,11 +14,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         -- Adding store.name_link_id
         DROP INDEX index_store_name_id_fkey;
-        ALTER TABLE store
-        ADD COLUMN name_link_id TEXT;
+        ALTER TABLE store ADD COLUMN name_link_id TEXT;
         
-        UPDATE store
-        SET name_link_id = name_id;
+        UPDATE store SET name_link_id = name_id;
 
         ALTER TABLE store ADD CONSTRAINT store_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
         ALTER TABLE store DROP COLUMN name_id;
@@ -32,10 +30,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         -- Drop views early
         DROP VIEW stock_on_hand;
         DROP VIEW store_items;
-        -- consumption is recreated later in this migration
+        -- Consumption is recreated in decimal pack size
         DROP VIEW IF EXISTS consumption;
-
-        PRAGMA foreign_keys=off;
 
         CREATE TABLE store_new (
           id TEXT NOT NULL PRIMARY KEY,
@@ -49,50 +45,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
         INSERT INTO store_new SELECT * FROM store;
 
-        PRAGMA foreign_keys=on;
+        PRAGMA foreign_keys=off;
         DROP TABLE store;
         ALTER TABLE store_new RENAME TO store;
-
-
-        CREATE VIEW store_items AS
-        SELECT i.id as item_id, sl.store_id, sl.pack_size, sl.available_number_of_packs
-        FROM
-          item i
-          LEFT JOIN item_link il ON il.item_id = i.id
-          LEFT JOIN stock_line sl ON sl.item_link_id = il.id
-          LEFT JOIN store s ON s.id = sl.store_id;
-
-        CREATE VIEW stock_on_hand AS
-        SELECT
-          'n/a' AS id,
-          items_and_stores.item_id AS item_id,
-          items_and_stores.item_name AS item_name,
-          items_and_stores.store_id AS store_id,
-          COALESCE(stock.available_stock_on_hand, 0) AS available_stock_on_hand
-        FROM
-          (
-            SELECT
-              item.id AS item_id,
-              item.name AS item_name,
-              store.id AS store_id
-            FROM
-              item,
-              store
-          ) AS items_and_stores
-          LEFT OUTER JOIN (
-            SELECT
-              item_id,
-              store_id,
-              SUM(pack_size * available_number_of_packs) AS available_stock_on_hand
-            FROM
-              store_items
-            WHERE
-              store_items.available_number_of_packs > 0
-            GROUP BY
-              item_id,
-              store_id
-          ) AS stock ON stock.item_id = items_and_stores.item_id
-          AND stock.store_id = items_and_stores.store_id
+        PRAGMA foreign_keys=on;
      "#,
     )?;
 
