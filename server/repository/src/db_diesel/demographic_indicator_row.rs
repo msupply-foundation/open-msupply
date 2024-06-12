@@ -46,21 +46,12 @@ impl<'a> DemographicIndicatorRowRepository<'a> {
         DemographicIndicatorRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &DemographicIndicatorRow) -> Result<(), RepositoryError> {
         diesel::insert_into(demographic_indicator_dsl::demographic_indicator)
             .values(row)
             .on_conflict(demographic_indicator_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &DemographicIndicatorRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(demographic_indicator_dsl::demographic_indicator)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

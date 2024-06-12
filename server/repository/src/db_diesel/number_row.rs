@@ -203,7 +203,6 @@ impl<'a> NumberRowRepository<'a> {
         }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
         diesel::insert_into(number_dsl::number)
             .values(number_row)
@@ -211,20 +210,6 @@ impl<'a> NumberRowRepository<'a> {
             .do_update()
             .set(number_row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
-        let final_query = diesel::replace_into(number_dsl::number).values(number_row);
-
-        // // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
-        // );
-
-        final_query.execute(self.connection.lock().connection())?;
         Ok(())
     }
 

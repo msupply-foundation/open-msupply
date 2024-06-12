@@ -82,7 +82,6 @@ impl<'a> FormSchemaRowRepository<'a> {
         FormSchemaRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::insert_into(form_schema::dsl::form_schema)
@@ -90,15 +89,6 @@ impl<'a> FormSchemaRowRepository<'a> {
             .on_conflict(form_schema::dsl::id)
             .do_update()
             .set(&row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
-        let row = row_from_schema(schema)?;
-        diesel::replace_into(form_schema::dsl::form_schema)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
