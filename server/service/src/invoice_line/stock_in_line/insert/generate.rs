@@ -149,7 +149,7 @@ fn generate_barcode(
     let barcode = match gtin {
         Some(gtin) => {
             // don't create barcode if gtin is empty
-            if gtin == "" {
+            if gtin.is_empty() {
                 return Ok(None);
             }
 

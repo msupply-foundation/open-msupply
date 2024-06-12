@@ -161,7 +161,7 @@ fn is_truthy(value: &Value) -> bool {
         return b;
     }
     if let Some(string) = value.as_str() {
-        return string != "";
+        return !string.is_empty();
     }
     if let Some(int) = value.as_i64() {
         return int != 0;
