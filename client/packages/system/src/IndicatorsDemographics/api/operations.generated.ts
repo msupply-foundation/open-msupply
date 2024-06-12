@@ -196,7 +196,7 @@ export const UpdateDemographicProjectionDocument = gql`
         ... on DemographicProjectionNode {
           id
         }
-        ... on InsertDemographicProjectionError {
+        ... on UpdateDemographicProjectionError {
           error {
             description
           }
