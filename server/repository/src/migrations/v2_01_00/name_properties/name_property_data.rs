@@ -14,14 +14,14 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           ('gas_availability', 'gas_availability', 'Gas Availability', 'STRING', '> 16 hours,8-16 hours,< 8 hours,No availability'),
           ('kerosene_availability', 'kerosene_availability', 'Kerosene Availability', 'STRING', '> 16 hours,8-16 hours,< 8 hours,No availability');
 
-        INSERT INTO name_property (id, property_id) VALUES 
-          ('supply_level', 'supply_level'),
-          ('facility_type', 'facility_type'),
-          ('ownership_type', 'ownership_type'),
-          ('electricity_availability', 'electricity_availability'),
-          ('solar_availability', 'solar_availability'),
-          ('gas_availability', 'gas_availability'),
-          ('kerosene_availability', 'kerosene_availability');
+        INSERT INTO name_property (id, property_id, remote_editable) VALUES 
+          ('supply_level', 'supply_level', false),
+          ('facility_type', 'facility_type', false),
+          ('ownership_type', 'ownership_type', false),
+          ('electricity_availability', 'electricity_availability', true),
+          ('solar_availability', 'solar_availability', true),
+          ('gas_availability', 'gas_availability', true),
+          ('kerosene_availability', 'kerosene_availability', true);
         "#,
     )?;
     Ok(())
