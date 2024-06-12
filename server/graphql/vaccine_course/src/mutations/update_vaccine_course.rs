@@ -55,10 +55,16 @@ pub struct VaccineCourseScheduleInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct VaccineCourseItemInput {
+    pub id: String,
+    pub item_id: String,
+}
+
+#[derive(InputObject, Clone)]
 pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
-    pub item_ids: Vec<String>,
+    pub item_ids: Vec<VaccineCourseItemInput>,
     pub schedules: Vec<VaccineCourseScheduleInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
