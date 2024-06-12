@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
 import {
   ArrayUtils,
@@ -32,6 +32,7 @@ export interface Row {
   2: number;
   3: number;
   4: number;
+  5: number;
 }
 
 export interface HeaderValue {
@@ -45,7 +46,7 @@ const headerData: HeaderValue[] = [
   { id: '2', value: 1.2 },
   { id: '3', value: 1.2 },
   { id: '4', value: 1.1 },
-  { id: '5', value: 1.0 },
+  { id: '5', value: 0.9 },
 ];
 
 export const toRow = (row: {
@@ -60,33 +61,38 @@ export const toRow = (row: {
   year4Projection?: number;
   year5Projection?: number;
   populationPercentage?: number;
-}): Row => ({
-  isNew: false,
-  id: row.id,
-  percentage: row.populationPercentage ?? 0,
-  name: row.name,
-  baseYear: row.baseYear ?? 0,
-  basePopulation: row.basePopulation ?? 0,
-  0: row.year1Projection ?? 0,
-  1: row.year2Projection ?? 0,
-  2: row.year3Projection ?? 0,
-  3: row.year4Projection ?? 0,
-  4: row.year5Projection ?? 0,
-});
+}): Row => {
+  const percentage = row.populationPercentage ?? 0;
+  const basePopulation = row.basePopulation ?? 0;
+  return {
+    isNew: false,
+    id: row.id,
+    percentage,
+    name: row.name,
+    baseYear: row.baseYear ?? 0,
+    basePopulation,
+    0: Math.round((basePopulation * percentage) / 100),
+    1: row.year1Projection ?? 0,
+    2: row.year2Projection ?? 0,
+    3: row.year3Projection ?? 0,
+    4: row.year4Projection ?? 0,
+    5: row.year5Projection ?? 0,
+  };
+};
 
 const currentYear = new Date().getFullYear();
 
-const IndicatorsDemographicsComponent: FC = () => {
+const IndicatorsDemographicsComponent = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({
     initialSort: { key: 'percentage', dir: 'desc' },
   });
-  const [indexPopulation, setIndexPopulation] = useState<number>();
 
   const { draft, setDraft } =
     useDemographicData.document.listIndicator(headerData);
+  const [indexPopulation, setIndexPopulation] = useState<number>();
 
   const draftHeaders = ArrayUtils.toObject(headerData);
   const [isDirty, setIsDirty] = useState(false);
@@ -252,10 +258,24 @@ const IndicatorsDemographicsComponent: FC = () => {
         label: undefined,
         labelProps: { defaultValue: currentYear + 4 },
       },
+      {
+        key: '5',
+        width: 150,
+        align: ColumnAlign.Right,
+        label: undefined,
+        labelProps: { defaultValue: currentYear + 5 },
+      },
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [draft]
   );
+
+  // set the initial value of the index population
+  useEffect(() => {
+    if (indexPopulation === undefined) {
+      setIndexPopulation(draft[GENERAL_POPULATION_ID]?.basePopulation);
+    }
+  }, [draft, indexPopulation]);
 
   return (
     <>
@@ -277,7 +297,7 @@ const IndicatorsDemographicsComponent: FC = () => {
   );
 };
 
-export const IndicatorsDemographics: FC = () => (
+export const IndicatorsDemographics = () => (
   <TableProvider createStore={createTableStore}>
     <IndicatorsDemographicsComponent />
   </TableProvider>
