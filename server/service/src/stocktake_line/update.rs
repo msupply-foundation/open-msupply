@@ -83,7 +83,7 @@ fn validate(
     }
 
     let stocktake_reduction_amount =
-        stocktake_reduction_amount(&input.counted_number_of_packs, &stocktake_line_row);
+        stocktake_reduction_amount(&input.counted_number_of_packs, stocktake_line_row);
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
         && stocktake_reduction_amount != 0.0
@@ -177,7 +177,7 @@ pub fn update_stocktake_line(
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
             let new_stocktake_line = generate(existing, input)?;
-            StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
+            StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(UpdateStocktakeLineError::InternalError(

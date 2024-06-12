@@ -94,7 +94,7 @@ impl FileSynchroniser {
         let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
 
         let sync_file_ref = sync_file_repo
-            .find_one_by_id(&file_id)?
+            .find_one_by_id(file_id)?
             .ok_or(Error::FileDoesNotExist(file_id.to_string()))?;
 
         let download_result = self
@@ -158,7 +158,7 @@ impl FileSynchroniser {
 
         let upload_result = self
             .sync_api_v6
-            .upload_file(&sync_file_reference, &file.name, file_handle)
+            .upload_file(sync_file_reference, &file.name, file_handle)
             .await;
 
         let Err(error) = upload_result

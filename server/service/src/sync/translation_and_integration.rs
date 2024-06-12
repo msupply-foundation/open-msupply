@@ -47,7 +47,7 @@ impl<'a> TranslationAndIntegration<'a> {
             if !translator.should_translate_from_sync_record(sync_record) {
                 continue;
             }
-            let source_site_id = sync_record.source_site_id.clone();
+            let source_site_id = sync_record.source_site_id;
 
             let mut translation_result = match sync_record.action {
                 SyncAction::Upsert => translator

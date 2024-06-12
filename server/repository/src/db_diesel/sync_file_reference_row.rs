@@ -95,7 +95,6 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         SyncFileReferenceRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     fn _upsert_one(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
@@ -105,17 +104,6 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(sync_file_reference_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(
-        &self,
-        sync_file_reference_row: &SyncFileReferenceRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::replace_into(sync_file_reference)
-            .values(sync_file_reference_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -140,7 +128,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             ..Default::default()
         };
 
-        ChangelogRepository::new(&self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(

@@ -33,7 +33,7 @@ impl SyncUser {
                 "Could not find user".to_string(),
             )))?
             .username;
-        let password = get_password(&auth_data, &user_id);
+        let password = get_password(auth_data, user_id);
         if password.is_empty() {
             return Err(LoginError::UpdateUserError(
                 UpdateUserError::MissingCredentials,

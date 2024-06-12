@@ -7,19 +7,15 @@ import {
   AppNavLink,
   ListIcon,
   AppNavSection,
-  useIsCentralServerApi,
-  UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
-export const CatalogueNav = ({ store }: { store?: UserStoreNodeFragment }) => {
+export const CatalogueNav = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Catalogue).addWildCard().build()
   );
   const t = useTranslation('app');
-  const isCentralServer = useIsCentralServerApi();
-  const vaccineModuleEnabled = store?.preferences.vaccineModule;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Catalogue}>
@@ -52,14 +48,6 @@ export const CatalogueNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .addPart(AppRoute.MasterLists)
               .build()}
             text={t('master-lists')}
-          />
-          <AppNavLink
-            visible={isCentralServer && vaccineModuleEnabled}
-            end
-            to={RouteBuilder.create(AppRoute.Catalogue)
-              .addPart(AppRoute.IndicatorsDemographics)
-              .build()}
-            text={t('indicators-demographics')}
           />
         </List>
       </Collapse>

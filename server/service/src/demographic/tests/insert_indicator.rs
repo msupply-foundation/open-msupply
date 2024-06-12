@@ -52,7 +52,7 @@ mod query {
                 InsertDemographicIndicator {
                     id: id.clone(),
                     name: name_2.clone(),
-                    base_year: base_year_2.clone(),
+                    base_year: base_year_2,
                     ..Default::default()
                 },
             ),
@@ -66,7 +66,7 @@ mod query {
                 InsertDemographicIndicator {
                     id: id_2.clone(),
                     name: name_1.clone(),
-                    base_year: base_year_1.clone(),
+                    base_year: base_year_1,
                     ..Default::default()
                 },
             ),
@@ -80,7 +80,7 @@ mod query {
                 InsertDemographicIndicator {
                     id: id_2.clone(),
                     name: name_1.clone(),
-                    base_year: base_year_2.clone(),
+                    base_year: base_year_2,
                     ..Default::default()
                 },
             )

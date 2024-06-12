@@ -57,7 +57,7 @@ pub fn update_stock_line(
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
             }
 
-            StockLineRowRepository::new(&connection).upsert_one(&new_stock_line)?;
+            StockLineRowRepository::new(connection).upsert_one(&new_stock_line)?;
 
             if let Some(location_movements) = location_movements {
                 for movement in location_movements {
@@ -226,7 +226,7 @@ fn log_stock_changes(
         };
 
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockLocationChange,
             Some(new.id.to_owned()),
             previous_location,
@@ -241,7 +241,7 @@ fn log_stock_changes(
         };
 
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockBatchChange,
             Some(new.id.to_owned()),
             previous_batch,
@@ -250,7 +250,7 @@ fn log_stock_changes(
     }
     if existing.cost_price_per_pack != new.cost_price_per_pack {
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockCostPriceChange,
             Some(new.id.to_owned()),
             Some(existing.cost_price_per_pack.to_string()),
@@ -259,7 +259,7 @@ fn log_stock_changes(
     }
     if existing.sell_price_per_pack != new.sell_price_per_pack {
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockSellPriceChange,
             Some(new.id.to_owned()),
             Some(existing.sell_price_per_pack.to_string()),
@@ -274,7 +274,7 @@ fn log_stock_changes(
         };
 
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockExpiryDateChange,
             Some(new.id.to_owned()),
             previous_expiry_date,
@@ -283,7 +283,7 @@ fn log_stock_changes(
     }
     if existing.on_hold != new.on_hold && new.on_hold {
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockOnHold,
             Some(new.id.to_owned()),
             None,
@@ -291,13 +291,7 @@ fn log_stock_changes(
         )?;
     }
     if existing.on_hold != new.on_hold && !new.on_hold {
-        activity_log_entry(
-            &ctx,
-            ActivityLogType::StockOffHold,
-            Some(new.id),
-            None,
-            None,
-        )?;
+        activity_log_entry(ctx, ActivityLogType::StockOffHold, Some(new.id), None, None)?;
     }
 
     Ok(())

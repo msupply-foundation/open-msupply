@@ -54,21 +54,12 @@ impl<'a> PluginDataRowRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::insert_into(plugin_data::table)
             .values(row)
             .on_conflict(plugin_data::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(plugin_data::table)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

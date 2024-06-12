@@ -86,8 +86,8 @@ pub(crate) fn convert_invoice_line_to_single_pack(
     invoice_lines
         .into_iter()
         .map(|mut line| {
-            line.number_of_packs *= line.pack_size as f64;
-            line.cost_price_per_pack /= line.pack_size as f64;
+            line.number_of_packs *= line.pack_size;
+            line.cost_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;
             line
         })

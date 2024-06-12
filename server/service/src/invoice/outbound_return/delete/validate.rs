@@ -11,7 +11,7 @@ pub fn validate(
 ) -> Result<InvoiceRow, DeleteOutboundReturnError> {
     use DeleteOutboundReturnError::*;
 
-    let invoice = check_invoice_exists(&id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let invoice = check_invoice_exists(id, connection)?.ok_or(InvoiceDoesNotExist)?;
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
