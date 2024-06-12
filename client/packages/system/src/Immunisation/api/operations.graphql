@@ -88,6 +88,16 @@ fragment VaccineCourse on VaccineCourseNode {
   isActive
   demographicIndicator {
     name
+    id
+  }
+  vaccineCourseItems {
+    id
+    itemId
+  }
+  vaccineCourseSchedules {
+    id
+    doseNumber
+    label
   }
 }
 
@@ -125,6 +135,29 @@ mutation insertVaccineCourse(
           ...VaccineCourse
         }
         ... on InsertVaccineCourseError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation updateVaccineCourse(
+  $input: UpdateVaccineCourseInput
+  $storeId: String
+) {
+  centralServer {
+    vaccineCourse {
+      updateVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
+        ... on VaccineCourseNode {
+          __typename
+          ...VaccineCourse
+        }
+        ... on UpdateVaccineCourseError {
           __typename
           error {
             description

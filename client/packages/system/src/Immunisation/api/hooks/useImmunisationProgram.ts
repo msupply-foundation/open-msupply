@@ -129,7 +129,7 @@ const useUpdate = (
   setErrorMessage: Dispatch<SetStateAction<string>>
 ) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
-  const t = useTranslation('catalogue');
+  const t = useTranslation('coldchain');
 
   const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
     if (!name) {
@@ -162,7 +162,7 @@ const useUpdate = (
       return;
     }
 
-    throw new Error('Unable to update Immunisation Program');
+    throw new Error(t('error.unable-to-update-immunisation-program'));
   };
 
   return useMutation({

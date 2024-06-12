@@ -1,16 +1,20 @@
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
+  VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
   isEqual,
   useMutation,
   useQuery,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
 import { VaccineCourseFragment } from '../operations.generated';
 
 export interface DraftVaccineCourse extends VaccineCourseFragment {}
+
+export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
 
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
   __typename: 'VaccineCourseNode',
@@ -26,12 +30,19 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
 export function useVaccineCourse(id?: string) {
   const [patch, setPatch] = useState<Partial<DraftVaccineCourse>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { data, isLoading, error } = useGet(id ?? '');
   const {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
   } = useCreate();
+
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate(setErrorMessage);
 
   const draft: DraftVaccineCourse = data
     ? { ...defaultDraftVaccineCourse, ...data, ...patch }
@@ -62,9 +73,17 @@ export function useVaccineCourse(id?: string) {
     return result;
   };
 
+  const update = async () => {
+    const result = await updateMutation(draft);
+    setIsDirty(false);
+    return result;
+  };
+
   return {
     query: { data: data, isLoading, error },
     create: { create, isCreating, createError },
+    update: { update, isUpdating, updateError },
+    errorMessage,
     draft,
     resetDraft,
     isDirty,
@@ -110,6 +129,59 @@ const useCreate = () => {
         programId,
       },
     });
+  };
+
+  // add iterative mutation for vaccine course items
+  // add iterative mutation for schedule
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([VACCINE]),
+  });
+};
+
+const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
+  const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const t = useTranslation('coldchain');
+
+  const mutationFn = async (input: DraftVaccineCourse) => {
+    const apiResult = await api.updateVaccineCourse({
+      input: {
+        id: input.id,
+        name: input.name,
+        demographicIndicatorId: input.demographicIndicatorId,
+        coverageRate: input.coverageRate,
+        isActive: input.isActive,
+        wastageRate: input.wastageRate,
+        doses: input.doses,
+        itemIds: input.vaccineCourseItems ?? [],
+        schedules: input.vaccineCourseSchedules ?? [],
+      },
+      storeId,
+    });
+
+    const result = apiResult.centralServer.vaccineCourse.updateVaccineCourse;
+
+    // add iterative mutation for vaccine course items
+
+    // add iterative mutation for schedule
+
+    if (result?.__typename === 'VaccineCourseNode') {
+      return result;
+    }
+
+    if (result?.__typename === 'UpdateVaccineCourseError') {
+      // if (result.error.__typename === 'UniqueValueViolation') {
+      //   setErrorMessage(
+      //     t('error.unique-value-violation', { field: result.error.description })
+      //   );
+      // } else {
+      setErrorMessage(result.error.description);
+      // }
+      return;
+    }
+
+    throw new Error(t('error.unable-to-update-vaccine-course'));
   };
 
   return useMutation({

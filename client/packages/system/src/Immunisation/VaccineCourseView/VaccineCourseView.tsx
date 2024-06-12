@@ -1,66 +1,44 @@
 import {
   ArrayUtils,
+  Autocomplete,
   AutocompleteMulti,
   BasicSpinner,
   BasicTextInput,
   Box,
   Checkbox,
   Container,
+  DemographicIndicatorNode,
   FnUtils,
   InputWithLabelRow,
   MiniTable,
   NothingHere,
   NumericTextInput,
   RecordPatch,
-  SearchBar,
   Typography,
+  VaccineCourseScheduleNode,
   useBreadcrumbs,
   useColumns,
+  useParams,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FC } from 'react';
 import { descriptionColumn } from './DescriptionColumn';
+import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
+import { AppFooterComponent } from './AppFooterComponent';
+import { isDirty } from 'zod';
+import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 
-// dummy data
-const data = {
-  name: 'some immunisation name',
-};
-
-interface Schedule {
-  id: string;
-  number: number;
-  description: string;
-  day: number;
-}
-
-interface Draft {
-  name: string;
-  demographic: string;
-  wastageRate: number;
-  coverageRate: number;
-  vaccineItems: any[];
-  numberOfDoses: number;
-  schedule: Record<string, Schedule>;
-  calculateDemand: boolean;
-}
-
-const seed: Draft = {
-  name: '',
-  demographic: '',
-  coverageRate: 100,
-  vaccineItems: [{}],
-  numberOfDoses: 1,
-  wastageRate: 0,
-  calculateDemand: false,
-  schedule: {
-    id: {
-      id: 'id',
-      number: 1,
-      day: 1,
-      description: '',
-    },
-  },
+const getDemographicOptions = (
+  demographicIndicators: DemographicIndicatorNode[]
+) => {
+  const options = demographicIndicators.map(indicator => {
+    return {
+      value: indicator.id,
+      label: `${indicator.name} ${indicator.baseYear}`,
+    };
+  });
+  return options;
 };
 
 const Section = ({
@@ -121,21 +99,7 @@ const Row = ({
   </Box>
 );
 
-const createNewVaccineCourse = (seed?: any | null): any => ({
-  id: FnUtils.generateUUID(),
-  name: '',
-  description: '',
-  ...seed,
-});
-
-interface UseDraftVaccineCourseControl {
-  draft: any;
-  onUpdate: (patch: Partial<any>) => void;
-  onSave: () => Promise<void>;
-  isLoading: boolean;
-}
-
-// dummy vaccine items
+// TODO replace with item querr
 const VaccineOptions = [
   {
     label: 'vaccine 1',
@@ -147,35 +111,20 @@ const VaccineOptions = [
   },
 ];
 
-const useDraftVaccineCourse = (): UseDraftVaccineCourseControl => {
-  const [vaccine, setVaccineCourse] = useState<any>(() =>
-    createNewVaccineCourse(seed)
-  );
-
-  const onUpdate = (patch: Partial<any>) => {
-    setVaccineCourse({ ...vaccine, ...patch });
-  };
-
-  const onSave = async () => {
-    console.info('TODO update vaccine course mutation');
-  };
-
-  const isLoading = false;
-
-  return {
-    draft: vaccine,
-    onUpdate,
-    onSave,
-    isLoading,
-  };
-};
-
 export const VaccineCourseView: FC = () => {
-  const { setSuffix } = useBreadcrumbs();
+  const { setSuffix, navigateUpOne } = useBreadcrumbs();
   const t = useTranslation('coldchain');
-  const { draft, onUpdate, isLoading } = useDraftVaccineCourse();
-  const [buffer, setBuffer] = useState(draft?.numberOfDoses ?? 1);
-  const [value, setValue] = useState(draft?.numberOfDoses ?? 1);
+  const { id } = useParams();
+  const {
+    draft,
+    update: { update, isUpdating, updateError },
+    updatePatch,
+    errorMessage,
+    query: { data, isLoading, error },
+  } = useVaccineCourse(id);
+  const { data: demographicData } = useDemographicIndicators();
+  const [buffer, setBuffer] = useState(draft?.doses ?? 1);
+  const [value, setValue] = useState(draft?.doses ?? 1);
 
   const tryUpdateValue = (value: number | undefined) => {
     if (value === undefined) return;
@@ -191,6 +140,7 @@ export const VaccineCourseView: FC = () => {
     setBuffer(value);
   };
 
+  // TODO add placeholder and refactor
   const updateSchedule = (value: number) => {
     if (!value) {
       return;
@@ -203,7 +153,7 @@ export const VaccineCourseView: FC = () => {
         day: 0,
       };
     };
-    let rows = Object.values(draft?.schedule) as Schedule[];
+    let rows = Object.values(draft?.vaccineCourseSchedules) as Schedule[];
 
     if (rows.length === value) {
       return;
@@ -219,29 +169,38 @@ export const VaccineCourseView: FC = () => {
     }
 
     const rowsAsObject = ArrayUtils.toObject(rows);
-    onUpdate({ schedule: rowsAsObject });
+    updatePatch({ vaccineCourseSchedules: rowsAsObject });
   };
 
-  const updateDescription = (patch: RecordPatch<Schedule>) => {
+  const updateDescription = (patch: RecordPatch<VaccineCourseScheduleNode>) => {
     if (!patch) {
       return;
     }
-    const schedule = { ...draft.schedule, [patch.id]: patch };
-    onUpdate({ schedule: schedule });
+    const schedule = { ...draft.vaccineCourseSchedules, [patch.id]: patch };
+    updatePatch({ vaccineCourseSchedules: schedule });
   };
 
   const dosesColumns = useColumns(
     [
-      { key: 'number', label: 'label.dose-number' },
+      { key: 'doseNumber', label: 'label.dose-number' },
       [descriptionColumn(), { setter: updateDescription }],
     ],
     {},
     [draft]
   );
 
+  const cancel = () => {
+    navigateUpOne();
+  };
+
   useEffect(() => {
     setSuffix(data?.name ?? '');
   }, [setSuffix]);
+
+  const options = useMemo(
+    () => getDemographicOptions(demographicData?.nodes ?? []),
+    [demographicData]
+  );
 
   if (isLoading) {
     return <BasicSpinner />;
@@ -255,28 +214,33 @@ export const VaccineCourseView: FC = () => {
             <BasicTextInput
               value={draft?.name ?? ''}
               fullWidth
-              onChange={e => onUpdate({ name: e.target.value })}
+              onChange={e => updatePatch({ name: e.target.value })}
             />
           </Row>
           <Row label={t('label.target-demographic')}>
-            <SearchBar
-              value={draft?.demographic ?? ''}
-              onChange={e => onUpdate({ demographic: e })}
+            <Autocomplete
+              isOptionEqualToValue={option =>
+                option?.value === draft.demographicIndicatorId
+              }
+              onChange={(_e, selected) =>
+                updatePatch({ demographicIndicatorId: selected?.value })
+              }
               placeholder={'demographic'}
+              options={options}
             />
           </Row>
           <Row label={t('label.coverage-rate')}>
             <NumericTextInput
               value={draft?.coverageRate ?? 1}
               fullWidth
-              onChange={value => onUpdate({ coverageRate: value })}
+              onChange={value => updatePatch({ coverageRate: value })}
             />
           </Row>
           <Row label={t('label.wastage-rate')}>
             <NumericTextInput
               value={draft?.wastageRate ?? 1}
               fullWidth
-              onChange={value => onUpdate({ wastageRate: value })}
+              onChange={value => updatePatch({ wastageRate: value })}
             />
           </Row>
 
@@ -295,7 +259,7 @@ export const VaccineCourseView: FC = () => {
                   value: string;
                 }[]
               ) => {
-                onUpdate({
+                updatePatch({
                   vaccineItems: ArrayUtils.dedupe(
                     newSelectedLocations.map(item => item.value)
                   ),
@@ -307,7 +271,7 @@ export const VaccineCourseView: FC = () => {
           <Row label={t('label.calculate-demand')}>
             <Checkbox
               value={draft?.calculateDemand ?? true}
-              onChange={value => onUpdate({ calculateDemand: value })}
+              onChange={value => updatePatch({ calculateDemand: value })}
             ></Checkbox>
           </Row>
         </Section>
@@ -319,7 +283,7 @@ export const VaccineCourseView: FC = () => {
               value={buffer}
               fullWidth
               onBlur={() => {
-                onUpdate({ numberOfDoses: value });
+                updatePatch({ doses: value });
                 updateSchedule(value);
               }}
               onChange={tryUpdateValue}
@@ -327,13 +291,14 @@ export const VaccineCourseView: FC = () => {
           </Row>
           <Box paddingTop={1.5}>
             <MiniTable
-              rows={Object.values(draft?.schedule) as Schedule[]}
+              rows={draft?.vaccineCourseSchedules ?? []}
               columns={dosesColumns}
               // sx={{ backgroundColour: 'blue' }}
             />
           </Box>
         </Section>
       </Container>
+      <AppFooterComponent isDirty={isDirty} save={update} cancel={cancel} />
     </Box>
   ) : (
     <NothingHere />
