@@ -291,10 +291,10 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
-pub fn integrate_and_translate_sync_buffer<'a>(
+pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     execute_in_transaction: bool,
-    logger: Option<&mut SyncLogger<'a>>,
+    logger: Option<&mut SyncLogger<'_>>,
     source_site_id: Option<i32>,
 ) -> Result<
     (
