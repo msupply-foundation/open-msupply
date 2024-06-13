@@ -12,6 +12,7 @@ import {
   PropertyInput,
   InputWithLabelRow,
   ObjUtils,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -47,6 +48,7 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   setNextFacility,
 }) => {
   const t = useTranslation();
+  const isCentralServer = useIsCentralServerApi();
 
   const { data, isLoading } = useName.document.get(nameId);
   const { data: properties, isLoading: propertiesLoading } =
@@ -127,10 +129,10 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
                   gap: 1,
                 }}
               >
-                {properties.map(property => (
+                {properties.map(p => (
                   <InputWithLabelRow
-                    key={property.key}
-                    label={property.name}
+                    key={p.id}
+                    label={p.property.name}
                     sx={{ width: '100%' }}
                     labelProps={{
                       sx: {
@@ -143,13 +145,14 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
                     Input={
                       <Box flex={1}>
                         <PropertyInput
-                          valueType={property.valueType}
-                          allowedValues={property.allowedValues?.split(',')}
-                          value={draftProperties[property.key]}
+                          disabled={!isCentralServer && !p.remoteEditable}
+                          valueType={p.property.valueType}
+                          allowedValues={p.property.allowedValues?.split(',')}
+                          value={draftProperties[p.property.key]}
                           onChange={v =>
                             setDraftProperties({
                               ...draftProperties,
-                              [property.key]: v ?? null,
+                              [p.property.key]: v ?? null,
                             })
                           }
                         />
