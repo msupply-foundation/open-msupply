@@ -92,7 +92,10 @@ fragment VaccineCourse on VaccineCourseNode {
   }
   vaccineCourseItems {
     id
-    itemId
+    item {
+      id
+      name
+    }
   }
   vaccineCourseSchedules {
     id

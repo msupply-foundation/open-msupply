@@ -1,7 +1,6 @@
 import {
   ArrayUtils,
   Autocomplete,
-  AutocompleteMulti,
   BasicSpinner,
   BasicTextInput,
   Box,
@@ -15,7 +14,6 @@ import {
   NumericTextInput,
   RecordPatch,
   Typography,
-  VaccineCourseItemNode,
   VaccineCourseScheduleNode,
   useBreadcrumbs,
   useColumns,
@@ -28,6 +26,7 @@ import { descriptionColumn } from './DescriptionColumn';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { AppFooterComponent } from './AppFooterComponent';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
+import { VaccineItemSelect } from '../../Item';
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -98,20 +97,6 @@ const Row = ({
     />
   </Box>
 );
-
-// TODO replace with item querr
-const VaccineOptions: VaccineCourseItemNode[] = [
-  {
-    id: 'vaccine 1',
-    itemId: 'vaccine 1',
-    __typename: 'VaccineCourseItemNode',
-  },
-  {
-    id: 'vaccine 2',
-    itemId: 'vaccine 2',
-    __typename: 'VaccineCourseItemNode',
-  },
-];
 
 export const VaccineCourseView: FC = () => {
   const { setSuffix, navigateUpOne } = useBreadcrumbs();
@@ -236,6 +221,10 @@ export const VaccineCourseView: FC = () => {
               onChange={(_e, selected) =>
                 updatePatch({ demographicIndicatorId: selected?.value })
               }
+              defaultValue={{
+                label: draft.demographicIndicator?.name ?? '',
+                value: draft.demographicIndicator?.id ?? '',
+              }}
               placeholder={'demographic'}
               options={options}
             />
@@ -254,38 +243,12 @@ export const VaccineCourseView: FC = () => {
               onChange={value => updatePatch({ wastageRate: value })}
             />
           </Row>
-
           <Row label={t('label.vaccine-items')}>
-            <AutocompleteMulti
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              filterSelectedOptions
-              getOptionLabel={option => option.id}
-              inputProps={{ fullWidth: true }}
-              onChange={(
-                _event,
-                newSelectedLocations: {
-                  id: string;
-                  itemId: string;
-                }[]
-              ) => {
-                updatePatch({
-                  vaccineCourseItems: ArrayUtils.dedupe(
-                    newSelectedLocations.map(item => {
-                      return {
-                        id: item.id,
-                        itemId: item.itemId,
-                        __typename: 'VaccineCourseItemNode',
-                      };
-                    })
-                  ),
-                });
-              }}
-              options={VaccineOptions}
-            />
+            <VaccineItemSelect draft={draft} onChange={updatePatch} />
           </Row>
           <Row label={t('label.calculate-demand')}>
             <Checkbox
-              value={draft?.isActive ?? true}
+              checked={draft?.isActive ?? true}
               onChange={e => updatePatch({ isActive: e.target.checked })}
             ></Checkbox>
           </Row>
@@ -308,7 +271,6 @@ export const VaccineCourseView: FC = () => {
             <MiniTable
               rows={draft.vaccineCourseSchedules ?? [defaultRow]}
               columns={dosesColumns}
-              // sx={{ backgroundColour: 'blue' }}
             />
           </Box>
         </Section>
