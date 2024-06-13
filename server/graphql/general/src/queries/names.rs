@@ -73,6 +73,9 @@ pub struct NameFilterInput {
 
     /// Search filter across name or code
     pub code_or_name: Option<StringFilterInput>,
+
+    /// Patients are excluded by default, use is_patient filter, or include_patients to include them
+    pub include_patients: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -148,6 +151,7 @@ impl NameFilterInput {
             email,
             is_patient,
             code_or_name,
+            include_patients,
         } = self;
 
         NameFilter {
@@ -169,6 +173,7 @@ impl NameFilterInput {
             country: country.map(StringFilter::from),
             email: email.map(StringFilter::from),
             is_patient,
+            include_patients: include_patients.unwrap_or(false),
         }
     }
 }

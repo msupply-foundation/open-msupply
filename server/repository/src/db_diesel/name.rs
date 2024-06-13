@@ -54,6 +54,7 @@ pub struct NameFilter {
     pub email: Option<StringFilter>,
 
     pub code_or_name: Option<StringFilter>,
+    pub include_patients: bool,
 }
 
 impl EqualFilter<NameType> {
@@ -198,6 +199,7 @@ impl<'a> NameRepository<'a> {
                 email,
                 is_patient,
                 code_or_name,
+                include_patients,
             } = f;
 
             // or filter need to be applied before and filters
@@ -254,6 +256,11 @@ impl<'a> NameRepository<'a> {
                 Some(false) => query.filter(store_dsl::id.is_null()),
                 None => query,
             };
+
+            // Exclude patients by default
+            if !include_patients && !is_patient.unwrap_or(false) {
+                query = query.filter(name_dsl::type_.ne(NameType::Patient));
+            }
         };
 
         // Only return active (not deleted) names
