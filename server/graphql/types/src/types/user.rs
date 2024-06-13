@@ -30,7 +30,7 @@ impl UserStoreNode {
     }
 
     pub async fn name_id(&self) -> &str {
-        &self.user_store.store_row.name_id
+        &self.user_store.store_row.name_link_id
     }
 
     pub async fn name(&self, ctx: &Context<'_>) -> Result<String> {
