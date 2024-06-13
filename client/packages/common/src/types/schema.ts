@@ -4650,6 +4650,7 @@ export type PatientNode = {
   code2?: Maybe<Scalars['String']['output']>;
   contactTraces: ContactTraceResponse;
   country?: Maybe<Scalars['String']['output']>;
+  createdDatetime?: Maybe<Scalars['DateTime']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
