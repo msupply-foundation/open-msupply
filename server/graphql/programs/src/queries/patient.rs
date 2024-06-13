@@ -32,6 +32,7 @@ pub enum PatientSortFieldInput {
     Country,
     Email,
     DateOfDeath,
+    CreatedDatetime,
 }
 
 #[derive(InputObject)]
@@ -60,6 +61,7 @@ impl PatientSortInput {
                 PatientSortFieldInput::Country => PatientSortField::Country,
                 PatientSortFieldInput::Email => PatientSortField::Email,
                 PatientSortFieldInput::DateOfDeath => PatientSortField::DateOfDeath,
+                PatientSortFieldInput::CreatedDatetime => PatientSortField::CreatedDatetime,
             },
             desc: self.desc,
         }

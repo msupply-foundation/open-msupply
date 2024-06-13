@@ -39,7 +39,7 @@ const PatientListComponent: FC = () => {
     filter,
     queryParams: { page, first, offset, sortBy, filterBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'code', dir: 'asc' },
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
     filters: [
       {
         key: 'dateOfBirth',
@@ -75,6 +75,13 @@ const PatientListComponent: FC = () => {
     { key: 'code', label: 'label.patient-id' },
     { key: 'code2', label: 'label.patient-nuic' },
     {
+      key: 'createdDatetime',
+      label: 'label.created',
+      formatter: dateString =>
+        dateString ? localisedDate((dateString as string) || '') : '',
+      sortable: true,
+    },
+    {
       key: 'firstName',
       label: 'label.first-name',
     },
@@ -89,7 +96,6 @@ const PatientListComponent: FC = () => {
     {
       key: 'dateOfBirth',
       label: 'label.date-of-birth',
-      width: 175,
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
     },
