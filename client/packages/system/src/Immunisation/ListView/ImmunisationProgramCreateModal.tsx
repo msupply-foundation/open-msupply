@@ -20,13 +20,14 @@ export const ImmunisationProgramCreateModal: FC<
   ImmunisationProgramCreateModalProps
 > = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation(['coldchain']);
+  const t = useTranslation('coldchain');
   const {
     query: { isLoading },
     draft,
+    errorMessage,
     updatePatch,
     create: { create },
-  } = useImmunisationProgram();
+  } = useImmunisationProgram(t);
   const isInvalid = !draft.name.trim();
 
   return (
@@ -36,8 +37,8 @@ export const ImmunisationProgramCreateModal: FC<
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await create();
-            onClose();
+            const success = await create();
+            if (success) onClose();
           }}
         />
       }
@@ -53,6 +54,11 @@ export const ImmunisationProgramCreateModal: FC<
               autoFocus
               value={draft.name}
               onChange={e => updatePatch({ name: e.target.value })}
+              helperText={errorMessage}
+              FormHelperTextProps={{
+                sx: { color: 'error.main' },
+              }}
+              error={!!errorMessage}
             />
           </Box>
         </Grid>

@@ -41,7 +41,6 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         ClinicianStoreJoinRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     fn _upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
@@ -52,13 +51,6 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         Ok(())
     }
 
-    #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(clinician_store_join::dsl::clinician_store_join)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
     pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, false)?;

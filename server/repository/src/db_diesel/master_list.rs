@@ -90,7 +90,8 @@ impl<'a> MasterListRepository<'a> {
                     .distinct()
                     .left_join(
                         name_link_dsl::name_link
-                            .left_join(name_dsl::name.left_join(store_dsl::store)),
+                            .left_join(store_dsl::store)
+                            .left_join(name_dsl::name),
                     )
                     .into_boxed();
 

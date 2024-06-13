@@ -1,11 +1,13 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
+  LocaleKey,
   ProgramSortFieldInput,
+  TypedTFunction,
   isEqual,
+  noOtherVariants,
   useMutation,
   useQuery,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { PROGRAM } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
@@ -19,7 +21,10 @@ const defaultDraftImmunisationProgram: DraftImmunisationProgram = {
   name: '',
 };
 
-export function useImmunisationProgram(id?: string) {
+export function useImmunisationProgram(
+  t: TypedTFunction<LocaleKey>,
+  id?: string
+) {
   const [patch, setPatch] = useState<Partial<DraftImmunisationProgram>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -28,13 +33,13 @@ export function useImmunisationProgram(id?: string) {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
-  } = useCreate();
+  } = useCreate(setErrorMessage, t);
 
   const {
     mutateAsync: updateMutation,
     isLoading: isUpdating,
     error: updateError,
-  } = useUpdate(id ?? '', setErrorMessage);
+  } = useUpdate(id ?? '', setErrorMessage, t);
 
   const draft: DraftImmunisationProgram = data
     ? { ...defaultDraftImmunisationProgram, ...data, ...patch }
@@ -66,7 +71,7 @@ export function useImmunisationProgram(id?: string) {
   };
 
   return {
-    query: { data: data, isLoading, error },
+    query: { data, isLoading, error },
     create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     draft,
@@ -103,17 +108,35 @@ const useGet = (id: string) => {
   return query;
 };
 
-const useCreate = () => {
+const useCreate = (
+  setErrorMessage: Dispatch<SetStateAction<string>>,
+  t: TypedTFunction<LocaleKey>
+) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
 
   const mutationFn = async ({ name }: DraftImmunisationProgram) => {
-    return await api.insertImmunisationProgram({
+    const apiResult = await api.insertImmunisationProgram({
       storeId,
       input: {
         id: FnUtils.generateUUID(),
         name,
       },
     });
+
+    const result = apiResult.centralServer.program.insertImmunisationProgram;
+
+    if (result?.__typename === 'ProgramNode') return result;
+
+    if (result?.__typename === 'InsertImmunisationProgramError') {
+      if (result.error.__typename === 'RecordAlreadyExist') {
+        setErrorMessage(t('error.program-already-exists'));
+      } else {
+        noOtherVariants(result.error.__typename);
+      }
+      return;
+    }
+
+    throw new Error('Unable to create Immunisation Program');
   };
 
   return useMutation({
@@ -126,10 +149,10 @@ const useCreate = () => {
 
 const useUpdate = (
   id: string,
-  setErrorMessage: Dispatch<SetStateAction<string>>
+  setErrorMessage: Dispatch<SetStateAction<string>>,
+  t: TypedTFunction<LocaleKey>
 ) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
-  const t = useTranslation('catalogue');
 
   const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
     if (!name) {

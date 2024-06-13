@@ -68,7 +68,7 @@ fn remove_event_stack(
         Pagination::one(),
         Some(event_target_filter(event_target).datetime(DatetimeFilter::equal_to(datetime))),
         Some(ProgramEventSort {
-            key: ProgramEventSortField::ActiveStartDatetime,
+            key: ProgramEventSortField::ActiveEndDatetime,
             desc: Some(true),
         }),
     )?;
@@ -91,7 +91,7 @@ fn remove_event_stack(
                     .active_end_datetime(DatetimeFilter::equal_to(datetime)),
             ),
             Some(ProgramEventSort {
-                key: ProgramEventSortField::ActiveStartDatetime,
+                key: ProgramEventSortField::ActiveEndDatetime,
                 desc: Some(true),
             }),
         )?
@@ -821,7 +821,7 @@ mod test {
         events.sort_by(|a, b| {
             a.datetime
                 .cmp(&b.datetime)
-                .then_with(|| a.active_start_datetime.cmp(&b.active_start_datetime))
+                .then_with(|| a.active_end_datetime.cmp(&b.active_end_datetime))
         });
 
         // init with first datetime
@@ -864,10 +864,16 @@ mod test {
                         event.data
                     );
                 }
-                assert!(event.active_end_datetime >= prev_event_end);
+                assert!(
+                    event.active_end_datetime >= prev_event_end,
+                    "event.active_end_datetime: {}, prev_event_end: {}",
+                    event.active_end_datetime,
+                    prev_event_end
+                );
                 prev_event_end = event.active_end_datetime;
             }
         }
+        assert_eq!(prev_event_end, max_datetime());
     }
 
     #[actix_rt::test]

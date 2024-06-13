@@ -124,7 +124,7 @@ pub fn name2() -> NameRow {
 pub fn store() -> StoreRow {
     inline_init(|r: &mut StoreRow| {
         r.id = "8576512519B44CCF840E191BABA89596".to_string();
-        r.name_id = name2().id;
+        r.name_link_id = name2().id;
     })
 }
 

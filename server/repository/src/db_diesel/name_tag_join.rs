@@ -31,21 +31,12 @@ impl<'a> NameTagJoinRepository<'a> {
         NameTagJoinRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_tag_join_dsl::name_tag_join)
             .values(row)
             .on_conflict(name_tag_join_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(name_tag_join_dsl::name_tag_join)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
