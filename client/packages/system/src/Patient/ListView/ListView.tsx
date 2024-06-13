@@ -77,7 +77,6 @@ const PatientListComponent: FC = () => {
     {
       key: 'createdDatetime',
       label: 'label.created',
-      width: 175,
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
       sortable: true,
@@ -97,7 +96,6 @@ const PatientListComponent: FC = () => {
     {
       key: 'dateOfBirth',
       label: 'label.date-of-birth',
-      width: 175,
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
     },
