@@ -30,7 +30,7 @@ export const AppFooterComponent = ({
       await save();
       success(t('messages.vaccine-course-saved'));
     } catch (e) {
-      error('error.vaccine-course-update-failed');
+      error(t('error.vaccine-course-update-failed'));
     }
   };
 
