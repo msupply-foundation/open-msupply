@@ -101,7 +101,7 @@ impl<'a> ItemRowRepository<'a> {
             .set(item_row)
             .execute(self.connection.lock().connection())?;
 
-        insert_or_ignore_item_link(&self.connection, item_row)?;
+        insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
     }
 
