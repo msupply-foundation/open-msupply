@@ -58,7 +58,7 @@ pub fn mock_test_master_list_name3() -> NameRow {
 pub fn mock_test_master_list_store1() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "mock_test_master_list_store1".to_string();
-        s.name_id = mock_test_master_list_name3().id;
+        s.name_link_id = mock_test_master_list_name3().id;
         s.code = "mock_test_master_list_store1".to_string();
     })
 }

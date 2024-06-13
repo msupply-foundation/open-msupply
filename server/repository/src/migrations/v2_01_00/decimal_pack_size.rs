@@ -4,14 +4,6 @@ use super::ledger::{create_ledger_views, drop_ledger_views};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     drop_ledger_views(connection)?;
-    // drop other views affected by the pack_size type update
-    sql!(
-        connection,
-        r#"
-            DROP VIEW stock_on_hand;
-            DROP VIEW store_items;
-            "#,
-    )?;
 
     rename_pack_size_columns(connection)?;
 
