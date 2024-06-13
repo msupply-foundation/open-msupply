@@ -64,6 +64,7 @@ async fn setup_with_version_no_template(
 
 static TEMPLATE_LOCK: Mutex<()> = Mutex::new(());
 
+#[allow(clippy::await_holding_lock)]
 pub(crate) async fn setup_with_version(
     db_settings: &DatabaseSettings,
     version: Option<Version>,
