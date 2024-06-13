@@ -147,7 +147,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             suggested_quantity,
             actualQuan: supply_quantity,
             stock_on_hand: available_stock_on_hand,
-            daily_usage: average_monthly_consumption as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
+            daily_usage: average_monthly_consumption / NUMBER_OF_DAYS_IN_A_MONTH,
             comment,
             snapshot_datetime,
             approved_quantity,

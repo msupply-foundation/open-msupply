@@ -46,11 +46,11 @@ pub fn update_response_requisition_line(
             let (requisition_row_option, updated_requisition_line_row) =
                 generate(&ctx.user_id, requisition_row, requisition_line_row, input);
 
-            RequisitionLineRowRepository::new(&connection)
+            RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
 
             if let Some(requisition_row) = requisition_row_option {
-                RequisitionRowRepository::new(&connection).upsert_one(&requisition_row)?;
+                RequisitionRowRepository::new(connection).upsert_one(&requisition_row)?;
             }
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)

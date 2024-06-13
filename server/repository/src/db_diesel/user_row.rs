@@ -60,21 +60,12 @@ impl<'a> UserAccountRowRepository<'a> {
         UserAccountRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_account_dsl::user_account)
             .values(row)
             .on_conflict(user_account_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(user_account_dsl::user_account)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -167,7 +158,7 @@ mod test {
         for variant in LanguageType::iter() {
             let id = format!("{:?}", variant);
             let result = repo.insert_one(&inline_init(|r: &mut UserAccountRow| {
-                r.id = id.clone();
+                r.id.clone_from(&id);
                 r.language = variant.clone();
             }));
             assert_eq!(result, Ok(()));

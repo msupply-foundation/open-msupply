@@ -70,7 +70,7 @@ pub fn insert_outbound_return(
                 other_party,
             )?;
 
-            InvoiceRowRepository::new(&connection).upsert_one(&outbound_return)?;
+            InvoiceRowRepository::new(connection).upsert_one(&outbound_return)?;
 
             for line in insert_stock_out_lines {
                 insert_stock_out_line(ctx, line.clone()).map_err(|error| {
@@ -91,7 +91,7 @@ pub fn insert_outbound_return(
             }
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceCreated,
                 Some(outbound_return.id.to_owned()),
                 None,

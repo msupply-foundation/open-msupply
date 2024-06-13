@@ -155,7 +155,7 @@ impl Synchroniser {
         let batch_size = &self.settings.batch_size;
         let sync_status_service = &self.service_provider.sync_status_service;
 
-        if self.service_provider.settings.is_sync_disabled(&ctx)? {
+        if self.service_provider.settings.is_sync_disabled(ctx)? {
             // TODO logger ?
             warn!("Sync is disabled, skipping");
             return Ok(());

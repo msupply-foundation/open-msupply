@@ -50,7 +50,7 @@ pub fn get_historic_consumption_for_item(
             &points.last_date,
         ));
 
-    let consumption_rows = ConsumptionRepository::new(&connection).query(Some(filter))?;
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
     // Calculate historic consumption
     let result = points
         .rows
@@ -158,7 +158,7 @@ fn calculate_consumption(
 
     ConsumptionHistory {
         consumption,
-        average_monthly_consumption: total_consumption_amc as f64 / days_in_amc_lookup as f64
+        average_monthly_consumption: total_consumption_amc / days_in_amc_lookup as f64
             * NUMBER_OF_DAYS_IN_A_MONTH,
         date: reference_date,
     }

@@ -53,25 +53,25 @@ pub fn insert_stock_in_line(
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (item, invoice) = validate(&input, &ctx.store_id, connection)?;
             let GenerateResult {
                 invoice: invoice_user_update,
                 invoice_line,
                 stock_line,
                 barcode,
-            } = generate(&connection, &ctx.user_id, input, item, invoice)?;
+            } = generate(connection, &ctx.user_id, input, item, invoice)?;
 
             if let Some(barcode_row) = barcode {
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
             }
 
             if let Some(stock_line_row) = stock_line {
-                StockLineRowRepository::new(&connection).upsert_one(&stock_line_row)?;
+                StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
             }
-            InvoiceLineRowRepository::new(&connection).upsert_one(&invoice_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&invoice_line)?;
 
             if let Some(invoice_row) = invoice_user_update {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             get_invoice_line(ctx, &invoice_line.id)

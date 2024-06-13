@@ -22,10 +22,13 @@ fn extract_events(
 ) -> Result<Vec<EventInput>, UpdateProgramDocumentError> {
     let Some(registry_entries) = DocumentRegistryService {}
         .get_entries_by_doc_type(connection, vec![doc.r#type.clone()], allowed_ctx)?
-        .pop() else { return Ok(vec![])};
+        .pop()
+    else {
+        return Ok(vec![]);
+    };
 
     let Some(config) = registry_entries.config else {
-        return Ok(vec![])
+        return Ok(vec![]);
     };
 
     let mut output = vec![];
@@ -124,7 +127,7 @@ pub fn update_program_events(
     doc: &Document,
     allowed_ctx: Option<&[String]>,
 ) -> Result<(), UpdateProgramDocumentError> {
-    let event_inputs = extract_events(connection, base_time, &doc, allowed_ctx)?;
+    let event_inputs = extract_events(connection, base_time, doc, allowed_ctx)?;
     if let Some(previous_base_time) = previous_base_time {
         // the base time has changed, remove all events for the old base time
         // Example of the problem, if the previous_base_time was accidentally set a year
@@ -234,7 +237,9 @@ fn extract_field<T, F>(data: &Value, path: &str, extract: &F) -> Option<T>
 where
     F: Fn(&Value) -> Option<T>,
 {
-    let Some(data) = data.as_object() else {return None};
+    let Some(data) = data.as_object() else {
+        return None;
+    };
     let parts = path
         .split(".")
         .map(|p| p.to_string())

@@ -278,7 +278,7 @@ impl AssetLogReasonNode {
 
     pub async fn asset_log_status(&self) -> StatusType {
         let asset_log_status = &self.row().asset_log_status;
-        StatusType::from_domain(&asset_log_status)
+        StatusType::from_domain(asset_log_status)
     }
 
     pub async fn reason(&self) -> &str {

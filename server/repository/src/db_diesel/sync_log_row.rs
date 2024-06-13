@@ -145,21 +145,12 @@ impl<'a> SyncLogRowRepository<'a> {
         SyncLogRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_log_dsl::sync_log)
             .values(row)
             .on_conflict(sync_log_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(sync_log_dsl::sync_log)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

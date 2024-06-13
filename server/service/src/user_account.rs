@@ -126,9 +126,10 @@ impl<'a> UserAccountService<'a> {
         self.connection
             .transaction_sync(|con| {
                 let repo = UserAccountRowRepository::new(con);
-                if let Some(_) = repo
+                if (repo
                     .find_one_by_user_name(&user.username)
-                    .map_err(CreateUserAccountError::DatabaseError)?
+                    .map_err(CreateUserAccountError::DatabaseError)?)
+                .is_some()
                 {
                     return Err(CreateUserAccountError::UserNameExist);
                 }

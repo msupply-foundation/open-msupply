@@ -79,21 +79,12 @@ impl<'a> AssetLogRowRepository<'a> {
         AssetLogRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_log)
             .values(asset_log_row)
             .on_conflict(id)
             .do_update()
             .set(asset_log_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(asset_log)
-            .values(asset_log_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -129,11 +120,11 @@ impl<'a> AssetLogRowRepository<'a> {
             table_name: ChangelogTableName::AssetLog,
             record_id: asset_log_id,
             row_action: action,
-            store_id: store_id,
+            store_id,
             ..Default::default()
         };
 
-        ChangelogRepository::new(&self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetLogRow>, RepositoryError> {
