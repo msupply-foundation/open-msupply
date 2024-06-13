@@ -28,32 +28,6 @@ import {
 } from './utils';
 import { HeaderData, HeaderValue, Row } from '../types';
 
-export const toRow = (row: {
-  __typename?: 'DemographicIndicatorNode';
-  id: string;
-  name: string;
-  baseYear?: number;
-  basePopulation?: number;
-  year1Projection?: number;
-  year2Projection?: number;
-  year3Projection?: number;
-  year4Projection?: number;
-  year5Projection?: number;
-  populationPercentage?: number;
-}): Row => ({
-  isNew: false,
-  id: row.id,
-  percentage: row.populationPercentage ?? 0,
-  name: row.name,
-  baseYear: row.baseYear ?? 0,
-  basePopulation: row.basePopulation ?? 0,
-  0: row.year1Projection ?? 0,
-  1: row.year2Projection ?? 0,
-  2: row.year3Projection ?? 0,
-  3: row.year4Projection ?? 0,
-  4: row.year5Projection ?? 0,
-});
-
 const currentYear = new Date().getFullYear();
 
 const IndicatorsDemographicsComponent: FC = () => {
@@ -64,7 +38,7 @@ const IndicatorsDemographicsComponent: FC = () => {
     initialSort: { key: 'percentage', dir: 'desc' },
   });
   const [headerDraft, setHeaderDraft] = useState<HeaderData>();
-  const [indexPopulation, setIndexPopulation] = useState<number>();
+  const [indexPopulation, setIndexPopulation] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
 
   const { error, success } = useNotification();
@@ -89,9 +63,9 @@ const IndicatorsDemographicsComponent: FC = () => {
     const indexPopulationChange =
       patch.basePopulation !== draft[patch.id]?.basePopulation &&
       patch.id === GENERAL_POPULATION_ID;
-    if (indexPopulationChange) {
-      setIndexPopulation(patch.basePopulation);
-    }
+
+    if (indexPopulationChange) setIndexPopulation(Number(patch.basePopulation));
+
     Object.keys(currentDraft).forEach(rowKey => {
       const updatedRow = calculateAcrossRow(
         currentDraft[rowKey] as Row,
@@ -105,7 +79,7 @@ const IndicatorsDemographicsComponent: FC = () => {
 
   const setter = (patch: RecordPatch<Row>) => {
     const updatedDraft = { ...draft };
-    const percentage = Number(!patch.percentage ? 0 : patch.percentage);
+    const percentage = !patch.percentage ? 0 : patch.percentage;
     const percentageChange = percentage != draft[patch.id]?.percentage;
 
     setIsDirty(true);
@@ -134,24 +108,22 @@ const IndicatorsDemographicsComponent: FC = () => {
     setHeaderDraft({ ...getHeaderDraft(), [patch.id]: updatedPatch });
     calculateDown(patch);
   };
-
   const calculateDown = (patch: RecordPatch<HeaderValue>) => {
     const updatedHeader = {
       ...getHeaderDraft(),
       [patch.id]: { ...patch } as HeaderValue,
     };
-    const currentDraft = { ...draft };
-    let updatedDraft = {};
-    Object.keys(currentDraft).forEach(row => {
+    const updatedDraft: Record<string, Row> = {};
+    Object.keys(draft).forEach(row => {
       const updatedRow = calculateAcrossRow(
-        currentDraft[row] as Row,
+        draft[row] as Row,
         updatedHeader,
         indexPopulation
       );
-      updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
+      updatedDraft[updatedRow.id] = updatedRow;
     });
     setHeaderDraft(updatedHeader);
-    setDraft({ ...currentDraft, ...updatedDraft });
+    setDraft(updatedDraft);
   };
 
   const insertIndicator = async (row: Row) => {
@@ -201,10 +173,8 @@ const IndicatorsDemographicsComponent: FC = () => {
     }
   };
 
-  // TODO cancel changes (re call data from DB)
   const cancel = () => {
-    setIsDirty(false);
-    console.info('re set data to DB saved (cancel all changes)');
+    window.location.reload();
   };
 
   const columns = useColumns<Row>(
@@ -242,8 +212,19 @@ const IndicatorsDemographicsComponent: FC = () => {
       },
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
-    [draft]
+    [draft, indexPopulation]
   );
+
+  useEffect(() => {
+    if (!draft || !!indexPopulation) return;
+
+    const generalPopulationRow = draft[GENERAL_POPULATION_ID];
+    if (!generalPopulationRow) return;
+
+    setIndexPopulation(generalPopulationRow.basePopulation);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
 
   useEffect(() => {
     if (!projections || !projections.nodes[0]) return;

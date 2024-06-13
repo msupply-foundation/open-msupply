@@ -118,3 +118,29 @@ export const mapProjection = (
   year4: headerData[4].value,
   year5: headerData[5].value,
 });
+
+export const toRow = (row: {
+  __typename?: 'DemographicIndicatorNode';
+  id: string;
+  name: string;
+  baseYear?: number;
+  basePopulation?: number;
+  year1Projection?: number;
+  year2Projection?: number;
+  year3Projection?: number;
+  year4Projection?: number;
+  year5Projection?: number;
+  populationPercentage?: number;
+}): Row => ({
+  isNew: false,
+  id: row.id,
+  percentage: row.populationPercentage ?? 0,
+  name: row.name,
+  baseYear: row.baseYear ?? 0,
+  basePopulation: row.basePopulation ?? 0,
+  0: row.year1Projection ?? 0,
+  1: row.year2Projection ?? 0,
+  2: row.year3Projection ?? 0,
+  3: row.year4Projection ?? 0,
+  4: row.year5Projection ?? 0,
+});
