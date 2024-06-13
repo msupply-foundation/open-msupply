@@ -62,7 +62,7 @@ pub struct VaccineCourseItemInput {
 pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
-    pub item_ids: Vec<VaccineCourseItemInput>,
+    pub vaccine_items: Vec<VaccineCourseItemInput>,
     pub schedules: Vec<VaccineCourseScheduleInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
@@ -76,7 +76,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
         UpdateVaccineCourseInput {
             id,
             name,
-            item_ids,
+            vaccine_items,
             schedules,
             demographic_indicator_id,
             coverage_rate,
@@ -88,7 +88,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
         UpdateVaccineCourse {
             id,
             name,
-            item_ids: item_ids
+            vaccine_items: vaccine_items
                 .into_iter()
                 .map(|i| VaccineCourseItem {
                     id: i.id,
