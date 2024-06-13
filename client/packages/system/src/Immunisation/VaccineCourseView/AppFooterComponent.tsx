@@ -57,9 +57,7 @@ export const AppFooterComponent = ({
             <LoadingButton
               isLoading={isLoading}
               disabled={!isDirty}
-              onClick={() => {
-                onSave();
-              }}
+              onClick={onSave}
               startIcon={<SaveIcon />}
               sx={{ fontSize: '12px' }}
             >

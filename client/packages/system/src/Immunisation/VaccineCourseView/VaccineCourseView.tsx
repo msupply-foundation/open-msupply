@@ -131,7 +131,6 @@ export const VaccineCourseView: FC = () => {
     setBuffer(value);
   };
 
-  // TODO add placeholder and refactor
   const updateSchedule = (value: number) => {
     if (!value) {
       return;
