@@ -623,7 +623,7 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Ok(_));
+            assert!(result.is_ok());
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {

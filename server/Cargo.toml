@@ -38,6 +38,7 @@ bool_assert_comparison = "allow"
 result_large_err = "allow"
 ptr_arg = "allow"
 new_ret_no_self = "allow"
+enum_variant_names = "allow"
 # TODO: Will need frontend changes too. Will be nice for readability.
 too_many_arguments = "allow"
 
