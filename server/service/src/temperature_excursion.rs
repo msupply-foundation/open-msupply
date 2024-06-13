@@ -100,7 +100,7 @@ mod test {
 
         let store = StoreRow {
             id: "store".to_string(),
-            name_id: name.id.clone(),
+            name_link_id: name.id.clone(),
             ..Default::default()
         };
 

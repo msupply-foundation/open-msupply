@@ -17,7 +17,7 @@ pub fn mock_name_store_remote_pull() -> NameRow {
 pub fn mock_store_remote_pull() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "store_remote_pull".to_string();
-        s.name_id = "name_store_remote_pull".to_string();
+        s.name_link_id = "name_store_remote_pull".to_string();
         s.code = "codepull".to_string();
     })
 }

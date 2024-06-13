@@ -57,21 +57,12 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         TemperatureBreachConfigRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_breach_config_dsl::temperature_breach_config)
             .values(row)
             .on_conflict(temperature_breach_config_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(temperature_breach_config_dsl::temperature_breach_config)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

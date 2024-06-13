@@ -353,7 +353,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn store() -> StoreRow {
         inline_init(|r: &mut StoreRow| {
             r.id = "store".to_string();
-            r.name_id = name().id
+            r.name_link_id = name().id
         })
     }
 

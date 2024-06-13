@@ -1,4 +1,5 @@
 use super::{
+    name_link_row::{name_link, name_link::dsl as name_link_dsl, NameLinkRow},
     name_row::{name, name::dsl as name_dsl},
     store_row::{store, store::dsl as store_dsl},
     NameRow, StorageConnection, StoreRow,
@@ -37,7 +38,7 @@ pub enum StoreSortField {
 
 pub type StoreSort = Sort<StoreSortField>;
 
-pub type StoreJoin = (StoreRow, NameRow);
+pub type StoreJoin = (StoreRow, (NameLinkRow, NameRow));
 
 impl StoreFilter {
     pub fn new() -> StoreFilter {
@@ -131,10 +132,13 @@ impl<'a> StoreRepository<'a> {
     }
 }
 
-type BoxedStoreQuery = IntoBoxed<'static, InnerJoin<store::table, name::table>, DBType>;
+type BoxedStoreQuery =
+    IntoBoxed<'static, InnerJoin<store::table, InnerJoin<name_link::table, name::table>>, DBType>;
 
 fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
-    let mut query = store_dsl::store.inner_join(name_dsl::name).into_boxed();
+    let mut query = store_dsl::store
+        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+        .into_boxed();
 
     if let Some(f) = filter {
         let StoreFilter {
@@ -148,7 +152,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
 
         apply_equal_filter!(query, id, store_dsl::id);
         apply_string_filter!(query, code, store_dsl::code);
-        apply_equal_filter!(query, name_id, store_dsl::name_id);
+        apply_equal_filter!(query, name_id, name_dsl::id);
         apply_string_filter!(query, name, name_dsl::name_);
         apply_string_filter!(query, name_code, name_dsl::code);
         apply_equal_filter!(query, site_id, store_dsl::site_id);
@@ -157,7 +161,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
     query
 }
 
-fn to_domain((store_row, name_row): StoreJoin) -> Store {
+fn to_domain((store_row, (_, name_row)): StoreJoin) -> Store {
     Store {
         store_row,
         name_row,

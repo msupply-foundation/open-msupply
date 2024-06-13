@@ -56,7 +56,7 @@ fn store_1() -> TestSyncIncomingRecord {
         STORE_1,
         inline_init(|s: &mut StoreRow| {
             s.id = STORE_1.0.to_string();
-            s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
+            s.name_link_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
             s.code = "GEN".to_string();
             s.site_id = 1;
             s.logo = Some("No logo".to_string());

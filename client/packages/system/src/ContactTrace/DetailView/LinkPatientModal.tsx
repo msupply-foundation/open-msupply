@@ -19,6 +19,7 @@ import {
   useRowStyle,
   AppSxProp,
   alpha,
+  ModalProps,
 } from '@openmsupply-client/common';
 import {
   ChipTableCell,
@@ -223,6 +224,56 @@ const ModalContent: FC<ModalContentProps> = ({
   );
 };
 
+const LinkPatientModal = ({
+  documentData,
+  Modal,
+  hideDialog,
+  onPatientLinked,
+}: {
+  documentData: ContactTrace;
+  Modal: FC<ModalProps>;
+  hideDialog: () => void;
+  onPatientLinked: (patientId?: string) => void;
+}) => {
+  const { filter, onChange } = useFilter(documentData);
+  const [linkedPatientId, setLinkedPatientId] = useState(
+    documentData?.contact?.id
+  );
+
+  return (
+    <TableProvider createStore={createTableStore}>
+      <Modal
+        sx={{
+          maxWidth: '90%',
+          minWidth: '65%',
+          height: '100%',
+        }}
+        title={''}
+        contentProps={{ sx: { padding: 0 } }}
+        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+        okButton={
+          <DialogButton
+            variant="ok"
+            onClick={() => {
+              onPatientLinked(linkedPatientId);
+              hideDialog();
+            }}
+          />
+        }
+        slideAnimation={false}
+      >
+        <ModalContent
+          documentData={documentData}
+          linkedPatientId={linkedPatientId}
+          setLinkedPatientId={setLinkedPatientId}
+          onChangeFilter={onChange}
+          filter={filter}
+        />
+      </Modal>
+    </TableProvider>
+  );
+};
+
 export const useLinkPatientModal = (
   documentData: ContactTrace,
   onPatientLinked: (patientId?: string) => void
@@ -232,50 +283,18 @@ export const useLinkPatientModal = (
 
   LinkPatientModal: FC;
 } => {
-  const { filter, onChange } = useFilter(documentData);
   const { Modal, showDialog, hideDialog } = useDialog();
-  const [linkedPatientId, setLinkedPatientId] = useState(
-    documentData?.contact?.id
-  );
-
-  const LinkPatientModal: FC = () => {
-    return (
-      <TableProvider createStore={createTableStore}>
-        <Modal
-          sx={{
-            maxWidth: '90%',
-            minWidth: '65%',
-            height: '100%',
-          }}
-          title={''}
-          contentProps={{ sx: { padding: 0 } }}
-          cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-          okButton={
-            <DialogButton
-              variant="ok"
-              onClick={() => {
-                onPatientLinked(linkedPatientId);
-                hideDialog();
-              }}
-            />
-          }
-          slideAnimation={false}
-        >
-          <ModalContent
-            documentData={documentData}
-            linkedPatientId={linkedPatientId}
-            setLinkedPatientId={setLinkedPatientId}
-            onChangeFilter={onChange}
-            filter={filter}
-          />
-        </Modal>
-      </TableProvider>
-    );
-  };
 
   return {
     showDialog,
     hideDialog,
-    LinkPatientModal,
+    LinkPatientModal: () => (
+      <LinkPatientModal
+        documentData={documentData}
+        onPatientLinked={onPatientLinked}
+        Modal={Modal}
+        hideDialog={hideDialog}
+      />
+    ),
   };
 };

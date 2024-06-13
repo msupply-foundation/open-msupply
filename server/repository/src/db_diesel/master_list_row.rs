@@ -39,21 +39,12 @@ impl<'a> MasterListRowRepository<'a> {
         MasterListRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(master_list)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

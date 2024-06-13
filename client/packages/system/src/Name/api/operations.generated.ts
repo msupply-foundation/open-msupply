@@ -33,7 +33,7 @@ export type NameByIdQuery = { __typename: 'Queries', names: { __typename: 'NameC
 export type NamePropertiesQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type NamePropertiesQuery = { __typename: 'Queries', nameProperties: { __typename: 'NamePropertyConnector', nodes: Array<{ __typename: 'PropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType }> } };
+export type NamePropertiesQuery = { __typename: 'Queries', nameProperties: { __typename: 'NamePropertyConnector', nodes: Array<{ __typename: 'NamePropertyNode', id: string, remoteEditable: boolean, property: { __typename: 'PropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType } }> } };
 
 export type UpdateNamePropertiesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -131,7 +131,11 @@ export const NamePropertiesDocument = gql`
       __typename
       nodes {
         __typename
-        ...Property
+        id
+        remoteEditable
+        property {
+          ...Property
+        }
       }
     }
   }

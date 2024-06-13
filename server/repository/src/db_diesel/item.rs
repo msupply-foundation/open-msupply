@@ -221,7 +221,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                     .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
             )
             .inner_join(
-                store_dsl::store.on(store_dsl::name_id
+                store_dsl::store.on(store_dsl::name_link_id
                     .eq(master_list_name_join_dsl::name_link_id)
                     .and(store_dsl::id.eq(store_id.clone()))),
             )
@@ -548,7 +548,7 @@ mod tests {
 
         let store_row = inline_init(|r: &mut StoreRow| {
             r.id = "name1_store".to_string();
-            r.name_id = "name1".to_string();
+            r.name_link_id = "name1".to_string();
         });
 
         let master_list_name_join_1 = MasterListNameJoinRow {

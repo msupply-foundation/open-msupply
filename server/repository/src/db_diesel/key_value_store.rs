@@ -72,21 +72,12 @@ impl<'a> KeyValueStoreRepository<'a> {
         KeyValueStoreRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, value: &KeyValueStoreRow) -> Result<(), RepositoryError> {
         diesel::insert_into(kv_store_dsl::key_value_store)
             .values(value)
             .on_conflict(kv_store_dsl::id)
             .do_update()
             .set(value)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, value: &KeyValueStoreRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(kv_store_dsl::key_value_store)
-            .values(value)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
