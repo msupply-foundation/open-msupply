@@ -4,8 +4,15 @@ import {
   useInitialisationStatus,
   Box,
   AppBarButtonsPortal,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
-import { RadioIcon, CustomersIcon, SunIcon, PrinterIcon } from '@common/icons';
+import {
+  RadioIcon,
+  CustomersIcon,
+  SunIcon,
+  PrinterIcon,
+  ListIcon,
+} from '@common/icons';
 import { AppVersion } from '../components';
 import { SyncSettings } from './SyncSettings';
 import { SiteInfo } from '../components/SiteInfo';
@@ -14,10 +21,13 @@ import { ElectronSettings } from './ElectronSettings';
 import { DisplaySettings } from './DisplaySettings';
 import { SettingsSection } from './SettingsSection';
 import { LabelPrinterSettings } from './LabelPrinterSettings';
+import { ConfigurationSettings } from './ConfigurationSettings';
 
 export const Settings: React.FC = () => {
   const { data: initStatus } = useInitialisationStatus();
   const [activeSection, setActiveSection] = React.useState<number | null>(null);
+
+  const isCentralServer = useIsCentralServerApi();
 
   const toggleSection = (index: number) => () =>
     setActiveSection(activeSection === index ? null : index);
@@ -57,6 +67,16 @@ export const Settings: React.FC = () => {
         <LabelPrinterSettings />
         <ElectronSettings />
       </SettingsSection>
+      {isCentralServer && (
+        <SettingsSection
+          Icon={ListIcon}
+          titleKey="Configuration"
+          expanded={activeSection === 4}
+          onChange={toggleSection(4)}
+        >
+          <ConfigurationSettings />
+        </SettingsSection>
+      )}
       <AppBarButtonsPortal>
         <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />
       </AppBarButtonsPortal>
