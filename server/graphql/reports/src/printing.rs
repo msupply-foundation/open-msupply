@@ -282,7 +282,7 @@ async fn fetch_data(
     }
     let mut data = if let Some(ResolvedReportQuery::GraphQlQuery(gql)) = graphql_query.first() {
         let variables = query_variables(store_id, &data_id, &arguments, &sort, &gql.variables);
-        let result = fetch_graphq_data(ctx, gql, variables).await?;
+        let result = fetch_graphql_data(ctx, gql, variables).await?;
         match result {
             FetchResult::Data(serde_json::Value::Object(data)) => data,
             FetchResult::Error(_) => return Ok(result),
@@ -333,7 +333,7 @@ fn fetch_sql_data(
     Ok(serde_json::Value::Array(data))
 }
 
-async fn fetch_graphq_data(
+async fn fetch_graphql_data(
     ctx: &Context<'_>,
     query: &GraphQlQuery,
     variables: serde_json::Map<String, serde_json::Value>,
