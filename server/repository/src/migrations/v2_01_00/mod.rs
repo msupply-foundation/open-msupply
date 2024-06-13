@@ -8,7 +8,7 @@ mod decimal_pack_size;
 mod decimal_requisition_quantities;
 mod demographics;
 mod ledger;
-mod name_properties;
+mod name_property;
 mod pg_enums;
 mod program;
 mod property;
@@ -33,7 +33,7 @@ impl Migration for V2_01_00 {
         assets::migrate_assets(connection)?;
         v6_sync_api_error_code::migrate(connection)?;
         property::migrate(connection)?;
-        name_properties::migrate_name_properties(connection)?;
+        name_property::migrate(connection)?;
         demographics::migrate(connection)?;
         vaccine_course::migrate(connection)?;
         program::migrate(connection)?;
