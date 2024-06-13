@@ -18,9 +18,9 @@ pub fn mock_test_invoice_loaders() -> MockData {
 
 pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_invoice_loader_requisition1".to_owned();
+        r.id = "mock_invoice_loader_requisition1".to_string();
         r.requisition_number = 1;
-        r.name_link_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_string();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionType::Request;
         r.status = RequisitionStatus::Draft;

@@ -396,8 +396,8 @@ fn query_from_resolved_template(
     }
     let queries: Vec<_> = graphql_queries
         .into_iter()
-        .chain(default_queries.into_iter())
-        .chain(sql_queries.into_iter())
+        .chain(default_queries)
+        .chain(sql_queries)
         .collect();
     if queries.is_empty() {
         return Err(ReportError::QueryNotSpecified);

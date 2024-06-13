@@ -387,10 +387,7 @@ mod test {
         assert_eq!(updated_lines.len(), 2);
 
         // new line was added
-        assert!(updated_lines
-            .iter()
-            .find(|line| line.id == "line1")
-            .is_some());
+        assert!(updated_lines.iter().any(|line| line.id == "line1"));
 
         // existing line was updated with new num of packs
         assert_eq!(
@@ -403,9 +400,8 @@ mod test {
         );
 
         // zeroed line was deleted
-        assert!(updated_lines
+        assert!(!updated_lines
             .iter()
-            .find(|line| line.id == mock_outbound_return_a_invoice_line_b().id)
-            .is_none());
+            .any(|line| line.id == mock_outbound_return_a_invoice_line_b().id));
     }
 }

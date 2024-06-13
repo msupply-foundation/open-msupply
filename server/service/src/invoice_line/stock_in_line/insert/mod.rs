@@ -256,7 +256,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.item_id = mock_item_a().id.clone();
+                    r.item_id.clone_from(&mock_item_a().id);
                     r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.invoice_id = mock_outbound_shipment_e().id;
@@ -271,7 +271,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.item_id = mock_item_a().id.clone();
+                    r.item_id.clone_from(&mock_item_a().id);
                     r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.invoice_id = verified_inbound_return().id; // VERIFIED

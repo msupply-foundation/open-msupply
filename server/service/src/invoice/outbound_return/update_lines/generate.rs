@@ -29,8 +29,7 @@ pub fn generate(
     let check_already_exists = |id: &str| {
         existing_lines
             .iter()
-            .find(|line| line.invoice_line_row.id == id)
-            .is_some()
+            .any(|line| line.invoice_line_row.id == id)
     };
 
     let lines_to_add = outbound_return_lines

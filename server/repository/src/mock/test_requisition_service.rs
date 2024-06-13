@@ -54,7 +54,7 @@ pub fn mock_test_requisition_service() -> MockData {
         .push(mock_response_program_requisition());
 
     result.full_invoices = vec![(
-        "mock_new_response_requisition_test_invoice".to_owned(),
+        "mock_new_response_requisition_test_invoice".to_string(),
         mock_new_response_requisition_test_invoice(),
     )]
     .into_iter()
@@ -65,9 +65,9 @@ pub fn mock_test_requisition_service() -> MockData {
 
 pub fn mock_requisition_for_number_test() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_requisition_for_number_test".to_owned();
+        r.id = "mock_requisition_for_number_test".to_string();
         r.requisition_number = 111111111;
-        r.name_link_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_string();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionType::Request;
         r.status = RequisitionStatus::Draft;
@@ -82,9 +82,9 @@ pub fn mock_requisition_for_number_test() -> RequisitionRow {
 
 pub fn mock_draft_request_requisition_for_update_test() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_draft_request_requisition_for_update_test".to_owned();
+        r.id = "mock_draft_request_requisition_for_update_test".to_string();
         r.requisition_number = 3;
-        r.name_link_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_string();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionType::Request;
         r.status = RequisitionStatus::Draft;
@@ -99,9 +99,9 @@ pub fn mock_draft_request_requisition_for_update_test() -> RequisitionRow {
 
 pub fn mock_sent_request_requisition() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_sent_request_requisition".to_owned();
+        r.id = "mock_sent_request_requisition".to_string();
         r.requisition_number = 3;
-        r.name_link_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_string();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionType::Request;
         r.status = RequisitionStatus::Sent;
@@ -116,7 +116,7 @@ pub fn mock_sent_request_requisition() -> RequisitionRow {
 
 pub fn mock_sent_request_requisition_line() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_sent_request_requisition_line".to_owned();
+        r.id = "mock_sent_request_requisition_line".to_string();
         r.requisition_id = mock_sent_request_requisition().id;
         r.item_link_id = mock_item_a().id;
         r.requested_quantity = 10.0;
@@ -128,9 +128,9 @@ pub fn mock_sent_request_requisition_line() -> RequisitionLineRow {
 
 pub fn mock_finalised_response_requisition() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_finalised_response_requisition".to_owned();
+        r.id = "mock_finalised_response_requisition".to_string();
         r.requisition_number = 3;
-        r.name_link_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_string();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionType::Response;
         r.status = RequisitionStatus::Finalised;
@@ -145,7 +145,7 @@ pub fn mock_finalised_response_requisition() -> RequisitionRow {
 
 pub fn mock_finalised_request_requisition_line() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_finalised_request_requisition_line".to_owned();
+        r.id = "mock_finalised_request_requisition_line".to_string();
         r.requisition_id = mock_finalised_response_requisition().id;
         r.item_link_id = mock_item_a().id;
         r.requested_quantity = 10.0;
@@ -157,9 +157,9 @@ pub fn mock_finalised_request_requisition_line() -> RequisitionLineRow {
 
 pub fn mock_new_response_requisition_for_update_test() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_new_response_requisition_for_update_test".to_owned();
+        r.id = "mock_new_response_requisition_for_update_test".to_string();
         r.requisition_number = 3;
-        r.name_link_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_string();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionType::Response;
         r.status = RequisitionStatus::New;
@@ -174,9 +174,9 @@ pub fn mock_new_response_requisition_for_update_test() -> RequisitionRow {
 
 pub fn mock_new_response_requisition() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_new_response_requisition".to_owned();
+        r.id = "mock_new_response_requisition".to_string();
         r.requisition_number = 3;
-        r.name_link_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_string();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionType::Response;
         r.status = RequisitionStatus::New;
@@ -191,7 +191,7 @@ pub fn mock_new_response_requisition() -> RequisitionRow {
 
 pub fn mock_new_response_requisition_for_update_test_line() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_new_response_requisition_for_update_test_line".to_owned();
+        r.id = "mock_new_response_requisition_for_update_test_line".to_string();
         r.requisition_id = mock_new_response_requisition_for_update_test().id;
         r.item_link_id = mock_item_a().id;
         r.requested_quantity = 10.0;
@@ -204,9 +204,9 @@ pub fn mock_new_response_requisition_for_update_test_line() -> RequisitionLineRo
 pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisition {
     FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
-            r.id = "mock_full_draft_response_requisition_for_update_test".to_owned();
+            r.id = "mock_full_draft_response_requisition_for_update_test".to_string();
             r.requisition_number = 10;
-            r.name_link_id = "name_a".to_owned();
+            r.name_link_id = "name_a".to_string();
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionType::Response;
             r.status = RequisitionStatus::Draft;
@@ -218,7 +218,7 @@ pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisi
             r.min_months_of_stock = 0.9;
         }),
         lines: vec![inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "mock_full_draft_response_requisition_for_update_test_line".to_owned();
+            r.id = "mock_full_draft_response_requisition_for_update_test_line".to_string();
             r.requisition_id = "mock_full_draft_response_requisition_for_update_test".to_string();
             r.item_link_id = mock_item_a().id;
             r.requested_quantity = 10.0;
@@ -230,14 +230,14 @@ pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisi
 }
 
 pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition {
-    let requisition_id = "mock_request_draft_requisition_calculation_test".to_owned();
+    let requisition_id = "mock_request_draft_requisition_calculation_test".to_string();
     let line1_id = format!("{}1", requisition_id);
     let line2_id = format!("{}2", requisition_id);
     let line3_id = format!("{}3", requisition_id);
     let line4_id = format!("{}4", requisition_id);
     FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
-            r.id = requisition_id.clone();
+            r.id.clone_from(&requisition_id);
             r.requisition_number = 3;
             r.name_link_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
@@ -253,7 +253,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
         lines: vec![
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
-                r.requisition_id = requisition_id.clone();
+                r.requisition_id.clone_from(&requisition_id);
                 r.item_link_id = mock_item_a().id;
                 r.requested_quantity = 10.0;
                 r.suggested_quantity = 5.0;
@@ -262,7 +262,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             }),
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
-                r.requisition_id = requisition_id.clone();
+                r.requisition_id.clone_from(&requisition_id);
                 r.item_link_id = mock_item_b().id;
                 r.requested_quantity = 10.0;
                 r.suggested_quantity = 5.0;
@@ -270,7 +270,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             }),
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line3_id;
-                r.requisition_id = requisition_id.clone();
+                r.requisition_id.clone_from(&requisition_id);
                 r.item_link_id = mock_item_c().id;
                 r.requested_quantity = 10.0;
                 r.suggested_quantity = 5.0;
@@ -279,7 +279,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             }),
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line4_id;
-                r.requisition_id = requisition_id.clone();
+                r.requisition_id.clone_from(&requisition_id);
                 r.item_link_id = mock_item_d().id;
                 r.requested_quantity = 10.0;
                 r.suggested_quantity = 200.0;
@@ -291,7 +291,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
 }
 
 pub fn mock_test_not_store_a_master_list() -> FullMockMasterList {
-    let id = "mock_test_not_store_a_master_list".to_owned();
+    let id = "mock_test_not_store_a_master_list".to_string();
 
     FullMockMasterList {
         master_list: MasterListRow {
@@ -307,12 +307,12 @@ pub fn mock_test_not_store_a_master_list() -> FullMockMasterList {
 }
 
 pub fn mock_new_response_requisition_test() -> FullMockRequisition {
-    let requisition_id = "mock_new_response_requisition_test".to_owned();
+    let requisition_id = "mock_new_response_requisition_test".to_string();
     let line1_id = format!("{}1", requisition_id);
     let line2_id = format!("{}2", requisition_id);
     FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
-            r.id = requisition_id.clone();
+            r.id.clone_from(&requisition_id);
             r.requisition_number = 3;
             r.name_link_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
@@ -328,7 +328,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
         lines: vec![
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
-                r.requisition_id = requisition_id.clone();
+                r.requisition_id.clone_from(&requisition_id);
                 r.item_link_id = mock_item_a().id;
                 r.requested_quantity = 10.0;
                 r.suggested_quantity = 5.0;
@@ -338,7 +338,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             }),
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
-                r.requisition_id = requisition_id.clone();
+                r.requisition_id.clone_from(&requisition_id);
                 r.item_link_id = mock_item_b().id;
                 r.requested_quantity = 11.0;
                 r.suggested_quantity = 5.0;
@@ -350,15 +350,15 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
 }
 
 pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
-    let invoice_id = "mock_new_response_requisition_test_invoice".to_owned();
+    let invoice_id = "mock_new_response_requisition_test_invoice".to_string();
     let line1_id = format!("{}1", invoice_id);
     let line2_id = format!("{}2", invoice_id);
 
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id = invoice_id.clone();
+            r.id.clone_from(&invoice_id);
             r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_owned();
+            r.store_id = "store_a".to_string();
             r.invoice_number = 20;
             r.requisition_id = Some(mock_new_response_requisition_test().requisition.id);
             r.r#type = InvoiceType::OutboundShipment;
@@ -427,9 +427,9 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
 
 pub fn mock_request_program_requisition() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_request_program_requisition".to_owned();
+        r.id = "mock_request_program_requisition".to_string();
         r.requisition_number = 3;
-        r.name_link_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_string();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionType::Request;
         r.status = RequisitionStatus::Draft;
@@ -444,13 +444,13 @@ pub fn mock_request_program_requisition() -> RequisitionRow {
 }
 
 pub fn mock_response_program_requisition() -> FullMockRequisition {
-    let requisition_id = "mock_response_program_requisition".to_owned();
+    let requisition_id = "mock_response_program_requisition".to_string();
     let line1_id = format!("{}1", requisition_id);
     FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
-            r.id = requisition_id.clone();
+            r.id.clone_from(&requisition_id);
             r.requisition_number = 10;
-            r.name_link_id = "name_a".to_owned();
+            r.name_link_id = "name_a".to_string();
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionType::Response;
             r.status = RequisitionStatus::New;

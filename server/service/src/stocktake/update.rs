@@ -118,7 +118,7 @@ fn check_stock_lines_reduced_to_zero(
                         None,
                     )?
                     .pop()
-                    .ok_or_else(|| RepositoryError::NotFound)?;
+                    .ok_or(RepositoryError::NotFound)?;
 
                 lines_reduced_to_zero.push(stock_line.clone())
             }
@@ -155,7 +155,7 @@ fn validate(
         return Err(UpdateStocktakeError::CannotEditFinalised);
     }
 
-    if !check_stocktake_is_not_locked(&input, &existing) {
+    if !check_stocktake_is_not_locked(input, &existing) {
         return Err(UpdateStocktakeError::StocktakeIsLocked);
     }
 
@@ -339,7 +339,7 @@ fn generate_stock_in_out_or_update(
 
     // if reducing to 0, create movement to exit location
     let location_movement = if counted_number_of_packs == 0.0 {
-        generate_exit_location_movements(connection, &store_id, stock_line.clone())?
+        generate_exit_location_movements(connection, store_id, stock_line.clone())?
     } else {
         None
     };
@@ -461,7 +461,7 @@ fn generate_exit_location_movements(
                         .exit_datetime(DatetimeFilter::is_null(true))
                         .location_id(EqualFilter::equal_to(&location_id))
                         .stock_line_id(EqualFilter::equal_to(&stock_line.id))
-                        .store_id(EqualFilter::equal_to(&store_id)),
+                        .store_id(EqualFilter::equal_to(store_id)),
                 )?
                 .into_iter()
                 .map(|l| l.location_movement_row)
@@ -579,7 +579,7 @@ fn generate(
             )?
         } else {
             // create new stock line
-            generate_new_stock_line(&store_id, &inventory_addition_id, &stocktake_line)?
+            generate_new_stock_line(store_id, &inventory_addition_id, &stocktake_line)?
         };
         match stock_in_out_or_update {
             Some(StockChange::StockIn(line)) => {
@@ -699,13 +699,13 @@ pub fn update_stocktake(
             let stocktake_id = input.id.clone();
             let (existing, stocktake_lines, status_changed) =
                 validate(connection, &ctx.store_id, &input)?;
-            let result = generate(&ctx, input, existing, stocktake_lines, status_changed)?;
+            let result = generate(ctx, input, existing, stocktake_lines, status_changed)?;
 
             // write data to the DB
             let stock_line_repo = StockLineRowRepository::new(connection);
             let stocktake_line_repo = StocktakeLineRowRepository::new(connection);
             let invoice_row_repo = InvoiceRowRepository::new(connection);
-            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
 
             // write updated stock lines (stock line info has changed, but no inventory adjustment)
             for stock_line in result.stock_lines {
@@ -778,7 +778,7 @@ pub fn update_stocktake(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     ActivityLogType::StocktakeStatusFinalised,
                     Some(stocktake_id.to_owned()),
                     None,
@@ -897,7 +897,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = existing_stocktake.id.clone();
+                    i.id.clone_from(&existing_stocktake.id);
                 }),
             )
             .unwrap_err();
@@ -1071,7 +1071,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id.clone();
+                    i.id.clone_from(&stocktake.id);
                     i.is_locked = Some(true);
                     i.comment = Some("New comment".to_string());
                 }),
@@ -1096,7 +1096,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id.clone();
+                    i.id.clone_from(&stocktake.id);
                     i.is_locked = Some(false);
                     i.comment = Some("Comment".to_string());
                 }),
@@ -1147,7 +1147,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = stocktake.id.clone();
+                    i.id.clone_from(&stocktake.id);
                     i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )
@@ -1191,7 +1191,7 @@ mod test {
             .update_stocktake(
                 &context,
                 inline_init(|i: &mut UpdateStocktake| {
-                    i.id = mock_stocktake_existing_line().id.clone();
+                    i.id.clone_from(&mock_stocktake_existing_line().id);
                     i.status = Some(UpdateStocktakeStatus::Finalised);
                 }),
             )

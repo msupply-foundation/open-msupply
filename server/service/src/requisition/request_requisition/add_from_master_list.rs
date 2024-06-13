@@ -325,7 +325,7 @@ mod test {
             .into_iter()
             .map(|requisition_line| requisition_line.item_row.id)
             .collect();
-        item_ids.sort_by(|a, b| a.cmp(b));
+        item_ids.sort();
 
         let mut test_item_ids = vec![
             mock_item_a().id,
@@ -335,7 +335,7 @@ mod test {
             test_item_stats::item().id,
             test_item_stats::item2().id,
         ];
-        test_item_ids.sort_by(|a, b| a.cmp(b));
+        test_item_ids.sort();
 
         assert_eq!(item_ids, test_item_ids);
         let line = lines

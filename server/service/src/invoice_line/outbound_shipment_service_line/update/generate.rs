@@ -106,7 +106,7 @@ mod outbound_shipment_service_line_update_test {
             location_row_option: None,
             stock_line_option: None,
         };
-        line.invoice_line_row.item_link_id = item1.id.to_owned();
+        item1.id.clone_into(&mut line.invoice_line_row.item_link_id);
 
         // no name change
         let result = generate(

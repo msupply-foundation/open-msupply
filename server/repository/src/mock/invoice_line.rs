@@ -483,7 +483,7 @@ pub fn mock_prescription_a_invoice_line_a() -> InvoiceLineRow {
         l.item_code = "item_a_code".to_string();
         l.item_name = "Item A".to_string();
         l.stock_line_id = Some(mock_stock_line_si_d()[0].id.clone());
-        l.batch = mock_stock_line_si_d()[0].batch.clone();
+        l.batch.clone_from(&mock_stock_line_si_d()[0].batch);
         l.pack_size = 1.0;
         l.cost_price_per_pack = 2.0;
         l.sell_price_per_pack = 18.0;

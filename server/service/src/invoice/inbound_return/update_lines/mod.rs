@@ -398,10 +398,7 @@ mod test {
         assert_eq!(updated_lines.len(), 3);
 
         // new line was added
-        assert!(updated_lines
-            .iter()
-            .find(|line| line.id == "line1")
-            .is_some());
+        assert!(updated_lines.iter().any(|line| line.id == "line1"));
 
         // existing line was updated
         let updated_line = updated_lines
@@ -412,9 +409,8 @@ mod test {
         assert_eq!(updated_line.return_reason_id, Some(return_reason().id));
 
         // zeroed line was deleted
-        assert!(updated_lines
+        assert!(!updated_lines
             .iter()
-            .find(|line| line.id == line_to_delete().id)
-            .is_none());
+            .any(|line| line.id == line_to_delete().id));
     }
 }

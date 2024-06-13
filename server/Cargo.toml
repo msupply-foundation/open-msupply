@@ -36,6 +36,9 @@ large_enum_variant = "allow"
 module_inception = "allow"
 bool_assert_comparison = "allow"
 result_large_err = "allow"
+ptr_arg = "allow"
+# TODO: Will need frontend changes too. Will be nice for readability.
+too_many_arguments = "allow"
 
 [workspace]
 
