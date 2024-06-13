@@ -213,7 +213,7 @@ impl RequisitionTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
             r.requisition_number = 3;
-            r.name_link_id.clone_from(&response_store.name_id);
+            r.name_link_id.clone_from(&response_store.name_link_id);
             r.store_id.clone_from(&request_store.id);
             r.r#type = RequisitionType::Request;
             r.status = RequisitionStatus::Draft;
