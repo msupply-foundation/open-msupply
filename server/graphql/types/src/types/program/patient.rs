@@ -1,9 +1,7 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Local, NaiveDate, Utc};
-use graphql_core::generic_filters::{
-    DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
-};
+use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
 use graphql_core::loader::DocumentLoader;
 use graphql_core::{map_filter, ContextExt};
 
