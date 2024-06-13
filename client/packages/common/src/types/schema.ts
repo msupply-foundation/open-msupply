@@ -7765,7 +7765,7 @@ export type VaccineCourseItemInput = {
 export type VaccineCourseItemNode = {
   __typename: 'VaccineCourseItemNode';
   id: Scalars['String']['output'];
-  itemId: Scalars['String']['output'];
+  item: ItemNode;
 };
 
 export type VaccineCourseMutations = {

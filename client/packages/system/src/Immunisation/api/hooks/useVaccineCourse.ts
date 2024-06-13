@@ -1,6 +1,8 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
+  VaccineCourseItemInput,
+  VaccineCourseItemNode,
   VaccineCourseScheduleInput,
   VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
@@ -36,7 +38,12 @@ const vaccineCourseParsers = {
       label: schedule.label,
     } as VaccineCourseScheduleInput;
   },
-  toItemInput: () => {},
+  toItemInput: (item: VaccineCourseItemNode) => {
+    return {
+      id: item.id,
+      itemId: item.item.id,
+    } as VaccineCourseItemInput;
+  },
 };
 
 export function useVaccineCourse(id?: string) {
@@ -166,7 +173,10 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         isActive: input.isActive,
         wastageRate: input.wastageRate,
         doses: input.doses,
-        itemIds: input.vaccineCourseItems ?? [],
+        itemIds:
+          input.vaccineCourseItems?.map(item =>
+            vaccineCourseParsers.toItemInput(item as VaccineCourseItemNode)
+          ) ?? [],
         schedules:
           input.vaccineCourseSchedules?.map(schedule =>
             vaccineCourseParsers.toScheduleInput(schedule)

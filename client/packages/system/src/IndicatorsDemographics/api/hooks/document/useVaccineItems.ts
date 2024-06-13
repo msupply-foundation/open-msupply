@@ -1,19 +1,12 @@
 import { useQuery } from 'packages/common/src';
 import { useItemApi } from 'packages/system/src/Item';
 
-type UseItemVaccineParams = {
-  pagination: { first: number; offset: number };
-  filter: { [key: string]: { like: string } };
-};
-
-export const useVaccineItems = ({
-  filter,
-  pagination,
-}: UseItemVaccineParams) => {
+export const useVaccineItems = () => {
   const queryParams = {
-    filterBy: filter ?? null,
-    ...pagination,
     sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
+    offset: 0,
+    first: 1000, // TODO: remove arbitrary limit
+    filterBy: { isVaccine: { equalTo: true } },
   };
 
   const api = useItemApi();
