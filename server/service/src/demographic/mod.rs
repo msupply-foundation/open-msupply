@@ -29,7 +29,7 @@ pub mod query_demographic_indicator;
 pub mod query_demographic_projection;
 pub mod update_demographic_indicator;
 pub mod update_demographic_projection;
-mod validate;
+pub mod validate;
 
 use self::query_demographic_projection::{get_demographic_projection, get_demographic_projections};
 

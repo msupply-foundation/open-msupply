@@ -1,7 +1,8 @@
 use super::query::get_vaccine_course;
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext,
-    vaccine_course::validate::check_vaccine_course_exists, SingleRecordError,
+    activity_log::activity_log_entry, demographic::validate::check_demographic_indicator_exists,
+    service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
+    SingleRecordError,
 };
 
 use repository::{
@@ -128,12 +129,11 @@ pub fn validate(
         None => return Err(UpdateVaccineCourseError::VaccineCourseDoesNotExist),
     };
 
-    // TODO: demographic_indicator_id
-    // if let Some(demographic_indicator_id) = &input.demographic_indicator_id {
-    //     if check_demographic_indicator_exists(demographic_indicator_id, connection)?.is_none() {
-    //         return Err(UpdateVaccineCourseError::DemographicIndicatorDoesNotExist);
-    //     }
-    // }
+    if let Some(demographic_indicator_id) = &input.demographic_indicator_id {
+        if check_demographic_indicator_exists(demographic_indicator_id, connection)?.is_none() {
+            return Err(UpdateVaccineCourseError::DemographicIndicatorDoesNotExist);
+        }
+    }
     Ok(old_row)
 }
 
