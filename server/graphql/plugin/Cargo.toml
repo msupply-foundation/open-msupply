@@ -18,7 +18,7 @@ async-std = "1.9.0"
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = "0.1.30"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4.38", features = ["serde"] }
 
 
 [dev-dependencies]
