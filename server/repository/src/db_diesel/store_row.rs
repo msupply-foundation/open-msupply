@@ -1,6 +1,6 @@
 use super::{
-    item_link_row::item_link, name_link_row::name_link, name_row::name,
-    store_row::store::dsl as store_dsl, StorageConnection,
+    item_link_row::item_link, name_link_row::name_link, store_row::store::dsl as store_dsl,
+    StorageConnection,
 };
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
@@ -12,7 +12,7 @@ use diesel_derive_enum::DbEnum;
 table! {
     store (id) {
         id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
         code -> Text,
         site_id -> Integer,
         logo -> Nullable<Text>,
@@ -30,7 +30,7 @@ pub enum StoreMode {
     Dispensary,
 }
 
-joinable!(store -> name (name_id));
+joinable!(store -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(store, name_link);
 allow_tables_to_appear_in_same_query!(store, item_link);
 
@@ -38,9 +38,7 @@ allow_tables_to_appear_in_same_query!(store, item_link);
 #[diesel(table_name = store)]
 pub struct StoreRow {
     pub id: String,
-    /// The store's name will never change, for this reason use the actual name_id instead of a
-    /// name_link_id
-    pub name_id: String,
+    pub name_link_id: String,
     pub code: String,
     pub site_id: i32,
     pub logo: Option<String>,
@@ -77,14 +75,6 @@ impl<'a> StoreRowRepository<'a> {
     pub fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
         let result = store_dsl::store
             .filter(store_dsl::id.eq(store_id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
-
-    pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
-        let result = store_dsl::store
-            .filter(store_dsl::name_id.eq(name_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)

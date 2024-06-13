@@ -77,8 +77,7 @@ pub type NameSort = Sort<NameSortField>;
 
 type NameAndNameStoreJoin = (
     NameRow,
-    (NameLinkRow, Option<NameStoreJoinRow>),
-    Option<StoreRow>,
+    (NameLinkRow, Option<NameStoreJoinRow>, Option<StoreRow>),
     NameOmsFieldsRow,
 );
 
@@ -164,17 +163,18 @@ impl<'a> NameRepository<'a> {
 
     /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
     /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
-    /// but it's considered invisible in subseqent filters.
+    /// but it's considered invisible in subsequent filters.
     pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
         let mut query = name_dsl::name
             .inner_join(
-                name_link_dsl::name_link.left_join(
-                    name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_link_id
-                        .eq(name_link_dsl::id)
-                        .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
-                ),
+                name_link_dsl::name_link
+                    .left_join(
+                        name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_link_id
+                            .eq(name_link_dsl::id)
+                            .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
+                    )
+                    .left_join(store_dsl::store),
             )
-            .left_join(store_dsl::store)
             .inner_join(name_oms_fields_alias)
             .into_boxed();
 
@@ -264,12 +264,7 @@ impl<'a> NameRepository<'a> {
 
 impl Name {
     pub fn from_join(
-        (
-            name_row,
-            (_name_link_row, name_store_join_row),
-            store_row,
-            name_oms_fields
-        ): NameAndNameStoreJoin,
+        (name_row, (_name_link_row, name_store_join_row, store_row), name_oms_fields): NameAndNameStoreJoin,
     ) -> Name {
         Name {
             name_row,
@@ -298,9 +293,9 @@ type OnNameStoreJoinToNameLinkJoin =
 type BoxedNameQuery = IntoBoxed<
     'static,
     InnerJoin<
-        LeftJoin<
-            InnerJoin<name::table, LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>>,
-            store::table,
+        InnerJoin<
+            name::table,
+            LeftJoin<LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>, store::table>,
         >,
         Alias<NameOmsFields>,
     >,
@@ -703,7 +698,7 @@ mod tests {
         assert_eq!(result.len(), 1);
         assert_eq!(
             result.first().unwrap().name_row.id,
-            mock_test_name_query_store_2().name_id
+            mock_test_name_query_store_2().name_link_id
         );
 
         // Test is visible

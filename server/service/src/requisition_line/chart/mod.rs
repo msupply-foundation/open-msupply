@@ -243,7 +243,7 @@ mod test {
         fn store() -> StoreRow {
             inline_init(|s: &mut StoreRow| {
                 s.id = "store".to_string();
-                s.name_id = name().id;
+                s.name_link_id = name().id;
                 s.code = "n/a".to_string();
             })
         }
@@ -487,7 +487,7 @@ mod test {
         fn store() -> StoreRow {
             inline_init(|s: &mut StoreRow| {
                 s.id = "store".to_string();
-                s.name_id = name().id;
+                s.name_link_id = name().id;
                 s.code = "n/a".to_string();
             })
         }
