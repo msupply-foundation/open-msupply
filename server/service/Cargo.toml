@@ -28,11 +28,17 @@ reqwest = { workspace = true }
 url = "2.2"
 serde = "1.0.126"
 serde_json = "1.0.66"
-serde_yaml = "0.8.24"
+serde_yaml = "0.9.31"
 schemafy = "0.6.0"
 schemafy_core = "0.6.0"
 tera = "1"
-tokio = { version = "1.17.0", features = ["macros", "sync", "time", "fs"] }
+tokio = { version = "1.35.1", features = [
+    "macros",
+    "sync",
+    "time",
+    "fs",
+    "rt-multi-thread",
+] }
 headless_chrome = "1.0.5"
 pretty_assertions = "1.3.0"
 flate2 = "1.0.26"
@@ -54,7 +60,6 @@ tempfile = "3.10.1"
 actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 httpmock = "0.7"
-tokio = { version = "1.21.1", features = ["macros", "rt-multi-thread", "time"] }
 assert_approx_eq = "1"
 
 [features]
