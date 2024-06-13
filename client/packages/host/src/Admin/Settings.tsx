@@ -70,7 +70,7 @@ export const Settings: React.FC = () => {
       {isCentralServer && (
         <SettingsSection
           Icon={ListIcon}
-          titleKey="Configuration"
+          titleKey="heading.configuration"
           expanded={activeSection === 4}
           onChange={toggleSection(4)}
         >
