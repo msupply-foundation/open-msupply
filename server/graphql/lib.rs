@@ -18,8 +18,8 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::{
-    DiscoveryQueries, GeneralMutations, GeneralQueries, InitialisationMutations,
-    InitialisationQueries,
+    CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
+    InitialisationMutations, InitialisationQueries,
 };
 
 use graphql_asset::{
@@ -83,6 +83,9 @@ impl CentralServerMutationNode {
 
     async fn program(&self) -> CentralProgramsMutations {
         CentralProgramsMutations
+    }
+    async fn general(&self) -> CentralGeneralMutations {
+        CentralGeneralMutations
     }
 }
 
