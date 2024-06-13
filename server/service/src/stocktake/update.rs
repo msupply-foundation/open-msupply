@@ -470,13 +470,13 @@ fn generate_exit_location_movements(
             if filter.is_some() {
                 let mut location_movement = filter.unwrap();
                 location_movement.exit_datetime = Some(Utc::now().naive_utc());
-                return Ok(Some(location_movement));
+                Ok(Some(location_movement))
             } else {
-                return Ok(None);
+                Ok(None)
             }
         }
-        None => return Ok(None),
-    };
+        None => Ok(None),
+    }
 }
 
 fn unallocated_lines_to_trim(

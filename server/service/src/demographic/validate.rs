@@ -43,5 +43,5 @@ pub fn check_year_name_combination_unique(
         filter = filter.id(EqualFilter::not_equal_to(&id));
     }
     let result = DemographicIndicatorRepository::new(connection).query_by_filter(filter)?;
-    Ok(result.len() == 0)
+    Ok(result.is_empty())
 }

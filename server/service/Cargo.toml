@@ -63,3 +63,6 @@ integration_test = []
 sqlite = ["repository/sqlite"]
 memory = ["repository/sqlite"]
 postgres = ["repository/postgres"]
+
+[lints]
+workspace = true

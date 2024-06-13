@@ -172,7 +172,7 @@ fn is_truthy(value: &Value) -> bool {
     if let Some(float) = value.as_f64() {
         return float != 0.0;
     }
-    return true;
+    true
 }
 
 fn match_condition(condition: &EventCondition, doc: &Document) -> bool {
@@ -237,26 +237,20 @@ fn extract_field<T, F>(data: &Value, path: &str, extract: &F) -> Option<T>
 where
     F: Fn(&Value) -> Option<T>,
 {
-    let Some(data) = data.as_object() else {
-        return None;
-    };
+    let data = data.as_object()?;
     let parts = path
-        .split(".")
+        .split('.')
         .map(|p| p.to_string())
         .collect::<Vec<String>>();
 
     let mut reference: &Map<String, Value> = data;
     let parts_len = parts.len();
     for (index, part) in parts.into_iter().enumerate() {
-        let Some(next) = reference.get(&part) else {
-            return None;
-        };
+        let next = reference.get(&part)?;
         if index + 1 == parts_len {
             return extract(next);
         }
-        let Some(next_obj) = next.as_object() else {
-            return None;
-        };
+        let next_obj = next.as_object()?;
 
         reference = next_obj
     }

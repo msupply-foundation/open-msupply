@@ -69,7 +69,7 @@ pub fn update_inbound_return(
             }
 
             get_invoice(ctx, None, &updated_return.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -121,10 +121,9 @@ impl UpdateInboundReturnStatus {
 
 impl UpdateInboundReturn {
     pub fn invoice_row_status_option(&self) -> Option<InvoiceStatus> {
-        match &self.status {
-            Some(status) => Some(status.as_invoice_row_status()),
-            None => None,
-        }
+        self.status
+            .as_ref()
+            .map(|status| status.as_invoice_row_status())
     }
 }
 

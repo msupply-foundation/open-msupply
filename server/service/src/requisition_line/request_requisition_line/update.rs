@@ -46,7 +46,7 @@ pub fn update_request_requisition_line(
                 .upsert_one(&updated_requisition_line_row)?;
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedRequisitionLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

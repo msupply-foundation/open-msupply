@@ -385,11 +385,7 @@ pub fn read_sensor(
         temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
     let temperature_sensor = convert_from_localtime(&temperature_sensor_unmapped)?;
 
-    Ok(integrate_sensor_data(
-        connection,
-        store_id,
-        temperature_sensor,
-    )?)
+    integrate_sensor_data(connection, store_id, temperature_sensor)
 }
 
 fn integrate_sensor_data(
