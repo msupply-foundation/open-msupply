@@ -22,6 +22,6 @@ futures = "0.3"
 log = "0.4.14"
 server = { path = "../server", default-features = false }
 service = { path = "../service" }
-tokio = { version = "1.35.1", features = ["macros"] }
+tokio = { version = "1.38.0", features = ["macros"] }
 windows-service = "0.5.0"
 eventlog = "0.2.2"
