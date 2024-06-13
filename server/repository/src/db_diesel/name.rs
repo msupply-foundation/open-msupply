@@ -465,12 +465,12 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) =
+        let (_, storage_connection, _, _) =
             test_db::setup_all("test_name_query_repository", MockDataInserts::none()).await;
 
         let (rows, queries) = data();
         for row in rows {
-            NameRowRepository::new(&mut storage_connection)
+            NameRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
@@ -482,7 +482,7 @@ mod tests {
         // .count()
         assert_eq!(
             usize::try_from(
-                NameRepository::new(&mut storage_connection)
+                NameRepository::new(&storage_connection)
                     .count(store_id, None)
                     .unwrap()
             )
@@ -492,7 +492,7 @@ mod tests {
 
         // .query, no pagination (default)
         assert_eq!(
-            NameRepository::new(&mut storage_connection)
+            NameRepository::new(&storage_connection)
                 .query(store_id, Pagination::new(), None, None)
                 .unwrap()
                 .len(),
@@ -500,7 +500,7 @@ mod tests {
         );
 
         // .query, pagination (offset 10)
-        let result = NameRepository::new(&mut storage_connection)
+        let result = NameRepository::new(&storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -519,7 +519,7 @@ mod tests {
         );
 
         // .query, pagination (first 10)
-        let result = NameRepository::new(&mut storage_connection)
+        let result = NameRepository::new(&storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -534,7 +534,7 @@ mod tests {
         assert_eq!(*result.last().unwrap(), queries[9]);
 
         // .query, pagination (offset 150, first 90) <- more then records in table
-        let result = NameRepository::new(&mut storage_connection)
+        let result = NameRepository::new(&storage_connection)
             .query(
                 store_id,
                 Pagination {

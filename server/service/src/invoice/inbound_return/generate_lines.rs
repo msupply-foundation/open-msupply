@@ -102,7 +102,7 @@ impl InboundReturnLine {
             id: line.invoice_line_row.id.clone(),
             reason_id: line.invoice_line_row.return_reason_id.clone(),
             note: line.invoice_line_row.note.clone(),
-            number_of_packs: line.invoice_line_row.number_of_packs.clone(),
+            number_of_packs: line.invoice_line_row.number_of_packs,
             stock_line_id: line.invoice_line_row.stock_line_id.clone(),
             // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
             // to store a linked invoice line of the outbound shipment against the inbound return line

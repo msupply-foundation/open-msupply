@@ -39,7 +39,7 @@ pub(super) fn map(
                             period_is_available(
                                 period,
                                 &program_setting,
-                                &order_type,
+                                order_type,
                                 &requisitions_in_periods,
                             )
                         })

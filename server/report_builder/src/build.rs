@@ -184,7 +184,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             ReportDefinitionEntry::DefaultQuery(parse_default_query(query_default)?),
         );
     }
-    for sql_query in extract_sql_entry(&args, &mut files)? {
+    for sql_query in extract_sql_entry(args, &mut files)? {
         index.query.push(sql_query.name.clone());
         entries.insert(
             sql_query.name.clone(),

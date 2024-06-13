@@ -116,7 +116,7 @@ pub fn stocktake_reduction_amount(
 ) -> f64 {
     if let (Some(stock_line), Some(counted_number_of_packs)) = (stock_line, counted_number_of_packs)
     {
-        return stock_line.stock_line_row.total_number_of_packs as f64 - counted_number_of_packs;
+        return stock_line.stock_line_row.total_number_of_packs - counted_number_of_packs;
     } else if stock_line.is_none() && counted_number_of_packs.is_some() {
         return -counted_number_of_packs.unwrap_or(0.0);
     } else {
@@ -303,7 +303,7 @@ pub fn insert_stocktake_line(
                 item_name,
             } = validate(connection, &ctx.store_id, &input)?;
             let new_stocktake_line = generate(stock_line, item_id, item_name, input);
-            StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
+            StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(InsertStocktakeLineError::InternalError(

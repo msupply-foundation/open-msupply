@@ -297,18 +297,18 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) =
+        let (_, storage_connection, _, _) =
             test_db::setup_all("test_item_query_repository", MockDataInserts::none()).await;
 
         let rows = data();
         for row in rows.iter() {
-            ItemRowRepository::new(&mut storage_connection)
+            ItemRowRepository::new(&storage_connection)
                 .upsert_one(row)
                 .unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
-        let item_query_repository = ItemRepository::new(&mut storage_connection);
+        let item_query_repository = ItemRepository::new(&storage_connection);
 
         // Test
         // .count()
@@ -378,7 +378,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_item_query_filter_repository() {
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_item_query_filter_repository",
             MockDataInserts::none()
                 .units()
@@ -387,7 +387,7 @@ mod tests {
                 .full_master_list(),
         )
         .await;
-        let item_query_repository = ItemRepository::new(&mut storage_connection);
+        let item_query_repository = ItemRepository::new(&storage_connection);
 
         // test any id filter:
         let results = item_query_repository
@@ -451,7 +451,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository_visibility() {
         // Prepare
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_item_query_repository_visibility",
             MockDataInserts::none(),
         )
@@ -558,51 +558,51 @@ mod tests {
         };
 
         for row in item_rows.iter() {
-            ItemRowRepository::new(&mut storage_connection)
+            ItemRowRepository::new(&storage_connection)
                 .upsert_one(row)
                 .unwrap();
         }
 
         for row in item_link_rows.iter() {
-            ItemLinkRowRepository::new(&mut storage_connection)
+            ItemLinkRowRepository::new(&storage_connection)
                 .upsert_one(row)
                 .unwrap();
         }
 
         for row in master_list_rows {
-            MasterListRowRepository::new(&mut storage_connection)
+            MasterListRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
 
         for row in master_list_line_rows {
-            MasterListLineRowRepository::new(&mut storage_connection)
+            MasterListLineRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
 
-        NameRowRepository::new(&mut storage_connection)
+        NameRowRepository::new(&storage_connection)
             .upsert_one(&name_row)
             .unwrap();
 
-        StoreRowRepository::new(&mut storage_connection)
+        StoreRowRepository::new(&storage_connection)
             .upsert_one(&store_row)
             .unwrap();
 
         // Before adding any joins
-        let results0 = ItemRepository::new(&mut storage_connection)
+        let results0 = ItemRepository::new(&storage_connection)
             .query(Pagination::new(), None, None, None)
             .unwrap();
 
         assert_eq!(results0, item_rows);
 
         // item1 and item2 visible
-        MasterListNameJoinRepository::new(&mut storage_connection)
+        MasterListNameJoinRepository::new(&storage_connection)
             .upsert_one(&master_list_name_join_1)
             .unwrap();
 
         // test is_visible filter:
-        let results = ItemRepository::new(&mut storage_connection)
+        let results = ItemRepository::new(&storage_connection)
             .query(
                 Pagination::new(),
                 // query invisible rows
@@ -613,7 +613,7 @@ mod tests {
             .unwrap();
         assert_eq!(results.len(), 3);
         // get visible rows
-        let results = ItemRepository::new(&mut storage_connection)
+        let results = ItemRepository::new(&storage_connection)
             .query(
                 Pagination::new(),
                 Some(ItemFilter::new().is_visible(true)),

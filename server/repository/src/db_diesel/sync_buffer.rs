@@ -73,7 +73,6 @@ impl<'a> SyncBufferRowRepository<'a> {
         SyncBufferRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
         let statement = diesel::insert_into(sync_buffer_dsl::sync_buffer)
             .values(row)
@@ -85,14 +84,6 @@ impl<'a> SyncBufferRowRepository<'a> {
         // println!("{}", diesel::debug_query::<DBType, _>(&statement).to_string());
 
         statement.execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(sync_buffer_dsl::sync_buffer)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 

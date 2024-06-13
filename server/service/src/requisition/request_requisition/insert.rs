@@ -54,7 +54,7 @@ pub fn insert_request_requisition(
             RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::RequisitionCreated,
                 Some(new_requisition.id.to_owned()),
                 None,
@@ -75,7 +75,7 @@ fn validate(
     store_id: &str,
     input: &InsertRequestRequisition,
 ) -> Result<(), OutError> {
-    if let Some(_) = check_requisition_row_exists(connection, &input.id)? {
+    if (check_requisition_row_exists(connection, &input.id)?).is_some() {
         return Err(OutError::RequisitionAlreadyExists);
     }
 

@@ -18,7 +18,7 @@ pub fn validate(
     store_id: &str,
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), OutError> {
-    if let Some(_) = check_line_exists(connection, &input.id)? {
+    if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(OutError::LineAlreadyExists);
     }
 

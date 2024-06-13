@@ -70,7 +70,7 @@ mod query {
                 UpdateDemographicIndicator {
                     id: id_2.clone(),
                     name: Some(name_1.clone()),
-                    base_year: Some(base_year_1.clone()),
+                    base_year: Some(base_year_1),
                     ..Default::default()
                 },
             ),
@@ -84,7 +84,7 @@ mod query {
                 UpdateDemographicIndicator {
                     id: id_2.clone(),
                     name: Some(name_1.clone()),
-                    base_year: Some(base_year_2.clone()),
+                    base_year: Some(base_year_2),
                     ..Default::default()
                 },
             )

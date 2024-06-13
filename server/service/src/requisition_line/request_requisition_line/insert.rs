@@ -55,7 +55,7 @@ pub fn insert_request_requisition_line(
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let new_requisition_line_row = generate(ctx, &ctx.store_id, requisition_row, input)?;
 
-            RequisitionLineRowRepository::new(&connection).upsert_one(&new_requisition_line_row)?;
+            RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;
 
             get_requisition_line(ctx, &new_requisition_line_row.id)
                 .map_err(|error| OutError::DatabaseError(error))?
@@ -70,7 +70,7 @@ fn validate(
     store_id: &str,
     input: &InsertRequestRequisitionLine,
 ) -> Result<RequisitionRow, OutError> {
-    if let Some(_) = check_requisition_line_exists(connection, &input.id)? {
+    if (check_requisition_line_exists(connection, &input.id)?).is_some() {
         return Err(OutError::RequisitionLineAlreadyExists);
     }
 
@@ -93,8 +93,8 @@ fn validate(
         return Err(OutError::NotARequestRequisition);
     }
 
-    if let Some(_) =
-        check_item_exists_in_requisition(connection, &input.requisition_id, &input.item_id)?
+    if (check_item_exists_in_requisition(connection, &input.requisition_id, &input.item_id)?)
+        .is_some()
     {
         return Err(OutError::ItemAlreadyExistInRequisition);
     }
@@ -316,10 +316,10 @@ mod test {
             line,
             inline_edit(&line, |mut u| {
                 u.requested_quantity = 20.0;
-                u.available_stock_on_hand = test_item_stats::item_2_soh() as f64;
-                u.average_monthly_consumption = test_item_stats::item2_amc_3_months() as f64;
-                u.suggested_quantity = test_item_stats::item2_amc_3_months() as f64 * 10.0
-                    - test_item_stats::item_2_soh() as f64;
+                u.available_stock_on_hand = test_item_stats::item_2_soh();
+                u.average_monthly_consumption = test_item_stats::item2_amc_3_months();
+                u.suggested_quantity =
+                    test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh();
                 u.comment = Some("comment".to_string());
                 u
             })

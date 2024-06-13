@@ -473,7 +473,7 @@ fn is_active_record_on_site(
     let result = match &record {
         ActiveRecordCheck::InvoiceLine { invoice_id } => {
             let invoice = InvoiceRepository::new(connection)
-                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(&invoice_id)))
+                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_id)))
                 .map_err(Error::DatabaseError)?
                 .ok_or_else(|| Error::ParentRecordNotFound(record))?;
             invoice.store_row.site_id == site_id

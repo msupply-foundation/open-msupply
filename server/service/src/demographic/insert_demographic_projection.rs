@@ -56,7 +56,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(), InsertDemographicProjectionError> {
     // Check for duplicate base year
-    if !check_base_year_unique(input.base_year.clone(), connection)? {
+    if !check_base_year_unique(input.base_year, connection)? {
         return Err(InsertDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists);
     }
 

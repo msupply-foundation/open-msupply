@@ -75,21 +75,12 @@ impl<'a> EncounterRowRepository<'a> {
         EncounterRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
         diesel::insert_into(encounter::dsl::encounter)
             .values(row)
             .on_conflict(encounter::dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(encounter::dsl::encounter)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

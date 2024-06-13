@@ -36,7 +36,7 @@ pub fn validate(
     let remaining_to_supply =
         RequisitionLineSupplyStatus::lines_remaining_to_supply(supply_statuses);
 
-    if remaining_to_supply.len() == 0 {
+    if remaining_to_supply.is_empty() {
         return Err(OutError::NothingRemainingToSupply);
     }
 

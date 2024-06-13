@@ -28,9 +28,9 @@ pub fn update_return_reason_id(
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&connection, &input)?;
+            validate(connection, &input)?;
 
-            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
 
             invoice_line_repo.update_return_reason_id(&input.line_id, input.reason_id.clone())?;
 

@@ -5,20 +5,21 @@ use crate::{NameRow, NameStoreJoinRow, StoreRow};
 use super::MockData;
 
 pub fn mock_test_name_query() -> MockData {
-    let mut result = MockData::default();
-    result.names = vec![mock_name_1(), mock_name_2(), mock_name_3(), name_a_umlaut()];
-    result.stores = vec![
-        mock_test_name_query_store_1(),
-        mock_test_name_query_store_2(),
-    ];
-    result.name_store_joins = vec![
-        mock_name_1_join(),
-        mock_name_2_join(),
-        mock_name_3_join(),
-        mock_name_3_join2(),
-        name_a_umlaut_join(),
-    ];
-    result
+    MockData {
+        names: vec![mock_name_1(), mock_name_2(), mock_name_3(), name_a_umlaut()],
+        stores: vec![
+            mock_test_name_query_store_1(),
+            mock_test_name_query_store_2(),
+        ],
+        name_store_joins: vec![
+            mock_name_1_join(),
+            mock_name_2_join(),
+            mock_name_3_join(),
+            mock_name_3_join2(),
+            name_a_umlaut_join(),
+        ],
+        ..Default::default()
+    }
 }
 
 pub fn mock_test_name_query_store_1() -> StoreRow {

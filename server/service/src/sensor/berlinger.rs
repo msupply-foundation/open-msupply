@@ -31,7 +31,7 @@ fn get_matching_sensor_serial(
     serial: &str,
 ) -> Result<Vec<Sensor>, RepositoryError> {
     SensorRepository::new(connection)
-        .query_by_filter(SensorFilter::new().serial(EqualFilter::equal_to(&serial)))
+        .query_by_filter(SensorFilter::new().serial(EqualFilter::equal_to(serial)))
 }
 
 fn get_matching_sensor_log(
@@ -204,7 +204,7 @@ fn sensor_add_breach_config_if_new(
     let result = get_matching_sensor_breach_config(
         connection,
         &sensor_row.store_id,
-        &temperature_breach_config,
+        temperature_breach_config,
         &breach_row_type,
     )?;
 
@@ -397,7 +397,7 @@ fn integrate_sensor_data(
     store_id: &str,
     temperature_sensor: temperature_sensor::Sensor,
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
-    let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
+    let new_sensor_id = sensor_add_if_new(connection, store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
@@ -414,7 +414,7 @@ fn integrate_sensor_data(
 
     let temperature_sensor_configs = temperature_sensor.configs.unwrap_or_default();
     for temperature_sensor_config in temperature_sensor_configs.iter() {
-        sensor_add_breach_config_if_new(connection, &sensor_row, &temperature_sensor_config)?;
+        sensor_add_breach_config_if_new(connection, &sensor_row, temperature_sensor_config)?;
     }
 
     let temperature_sensor_breaches = temperature_sensor.breaches.unwrap_or_default();
@@ -443,7 +443,7 @@ fn integrate_sensor_data(
                 connection,
                 &sensor_row,
                 &temperature_sensor_breach,
-                &temperature_sensor_config,
+                temperature_sensor_config,
             )?;
 
             if let Some(upserted_breach) = upserted_breach {
@@ -513,83 +513,83 @@ mod test {
         )
         .await;
 
-        let base_date = NaiveDate::from_ymd_opt(2024, 01, 01).unwrap();
+        let base_date = NaiveDate::from_ymd_opt(2024, 1, 1).unwrap();
         // This data is mapped to temperature log row insert and then to expected results
         // of temperature logs with associated breaches
 
         // MOCK DATA
         let log_data = vec![
-            ((09, 01, 01), 3.0, "normal"),
-            ((09, 15, 01), 9.0, "not captured by breach"),
-            ((09, 30, 01), 3.0, "normal"),
-            ((09, 45, 01), 3.0, "normal"),
-            ((10, 01, 01), 3.0, "normal"),
-            ((10, 15, 01), 10.0, "hotcumulative"),
-            ((10, 30, 01), 8.1, "hotcumulative"),
-            ((10, 45, 01), 3.0, "normal"),
-            ((11, 01, 02), 8.5, "hotconsecutive"),
-            ((11, 15, 01), 8.6, "hotconsecutive"),
-            ((11, 30, 01), 8.2, "hotconsecutive"),
-            ((11, 45, 01), 8.9, "hotconsecutive"),
-            ((12, 01, 01), 8.1, "hotconsecutive"),
-            ((12, 15, 01), 8.9, "hotconsecutive"),
-            ((12, 30, 01), 10.0, "hotcumulative"),
-            ((12, 45, 01), 11.0, "hotcumulative"),
-            ((13, 01, 01), 9.0, "hotcumulative"),
-            ((13, 15, 01), 8.6, "hotcumulative"),
+            ((9, 1, 1), 3.0, "normal"),
+            ((9, 15, 1), 9.0, "not captured by breach"),
+            ((9, 30, 1), 3.0, "normal"),
+            ((9, 45, 1), 3.0, "normal"),
+            ((10, 1, 1), 3.0, "normal"),
+            ((10, 15, 1), 10.0, "hotcumulative"),
+            ((10, 30, 1), 8.1, "hotcumulative"),
+            ((10, 45, 1), 3.0, "normal"),
+            ((11, 1, 2), 8.5, "hotconsecutive"),
+            ((11, 15, 1), 8.6, "hotconsecutive"),
+            ((11, 30, 1), 8.2, "hotconsecutive"),
+            ((11, 45, 1), 8.9, "hotconsecutive"),
+            ((12, 1, 1), 8.1, "hotconsecutive"),
+            ((12, 15, 1), 8.9, "hotconsecutive"),
+            ((12, 30, 1), 10.0, "hotcumulative"),
+            ((12, 45, 1), 11.0, "hotcumulative"),
+            ((13, 1, 1), 9.0, "hotcumulative"),
+            ((13, 15, 1), 8.6, "hotcumulative"),
             // s2 = step two
-            ((13, 30, 01), 10.1, "s2-hotcumulative"),
-            ((13, 45, 01), -1.0, "s2-coldcumulative"),
-            ((14, 01, 01), 9.0, "s2-hotcumulative"),
+            ((13, 30, 1), 10.1, "s2-hotcumulative"),
+            ((13, 45, 1), -1.0, "s2-coldcumulative"),
+            ((14, 1, 1), 9.0, "s2-hotcumulative"),
         ];
 
         let s2_log_data = vec![
-            ((14, 15, 01), 7.0, "normal"),
-            ((14, 30, 01), 9.0, "s2-hotcumulative"),
-            ((14, 45, 01), 1.5, "s2-coldcumulative"),
-            ((15, 01, 01), 1.1, "s2-coldconsecutive"),
-            ((15, 15, 01), 0.5, "s2-coldconsecutive"),
-            ((15, 30, 01), -3.0, "s2-coldconsecutive"),
-            ((15, 45, 01), 0.0, "s2-coldcumulative"),
-            ((16, 01, 01), -2.5, "s2-coldcumulative"),
-            ((16, 15, 01), 3.0, "normal"),
+            ((14, 15, 1), 7.0, "normal"),
+            ((14, 30, 1), 9.0, "s2-hotcumulative"),
+            ((14, 45, 1), 1.5, "s2-coldcumulative"),
+            ((15, 1, 1), 1.1, "s2-coldconsecutive"),
+            ((15, 15, 1), 0.5, "s2-coldconsecutive"),
+            ((15, 30, 1), -3.0, "s2-coldconsecutive"),
+            ((15, 45, 1), 0.0, "s2-coldcumulative"),
+            ((16, 1, 1), -2.5, "s2-coldcumulative"),
+            ((16, 15, 1), 3.0, "normal"),
         ];
 
         let breach_data = vec![
             (
                 ts::BreachType::HotCumulative,
-                base_date.and_hms_opt(10, 01, 01).unwrap(), // Start
-                base_date.and_hms_opt(13, 20, 01).unwrap(), // Finish
+                base_date.and_hms_opt(10, 1, 1).unwrap(), // Start
+                base_date.and_hms_opt(13, 20, 1).unwrap(), // Finish
             ),
             (
                 ts::BreachType::HotConsecutive,
-                base_date.and_hms_opt(11, 01, 01).unwrap(), // Start
-                base_date.and_hms_opt(12, 20, 01).unwrap(), // Finish
+                base_date.and_hms_opt(11, 1, 1).unwrap(), // Start
+                base_date.and_hms_opt(12, 20, 1).unwrap(), // Finish
             ),
         ];
 
         let s2_breach_data = vec![
             (
                 ts::BreachType::HotCumulative,
-                base_date.and_hms_opt(10, 01, 01).unwrap(), // Start
-                base_date.and_hms_opt(14, 30, 01).unwrap(), // Finish - Updated
+                base_date.and_hms_opt(10, 1, 1).unwrap(), // Start
+                base_date.and_hms_opt(14, 30, 1).unwrap(), // Finish - Updated
             ),
             // Added
             (
                 ts::BreachType::ColdConsecutive,
-                base_date.and_hms_opt(15, 01, 01).unwrap(), // Start
-                base_date.and_hms_opt(15, 30, 01).unwrap(), // Finish
+                base_date.and_hms_opt(15, 1, 1).unwrap(), // Start
+                base_date.and_hms_opt(15, 30, 1).unwrap(), // Finish
             ),
             (
                 ts::BreachType::ColdCumulative,
-                base_date.and_hms_opt(13, 45, 01).unwrap(), // Start
-                base_date.and_hms_opt(16, 01, 01).unwrap(), // Finish
+                base_date.and_hms_opt(13, 45, 1).unwrap(), // Start
+                base_date.and_hms_opt(16, 1, 1).unwrap(),  // Finish
             ),
             // Previous
             (
                 ts::BreachType::HotConsecutive,
-                base_date.and_hms_opt(11, 01, 01).unwrap(), // Start
-                base_date.and_hms_opt(12, 20, 01).unwrap(), // Finish
+                base_date.and_hms_opt(11, 1, 1).unwrap(), // Start
+                base_date.and_hms_opt(12, 20, 1).unwrap(), // Finish
             ),
         ];
 
@@ -678,13 +678,13 @@ mod test {
             s1_breaches,
             vec![
                 TemperatureBreachRow {
-                    duration_milliseconds: ((1 * 60) + 19) * 60 * 1000,
+                    duration_milliseconds: (60 + 19) * 60 * 1000,
                     r#type: TemperatureBreachType::HotConsecutive,
                     threshold_minimum: -273.0,
                     threshold_maximum: 8.0,
                     threshold_duration_milliseconds: 5 * 60 * 1000,
-                    start_datetime: base_date.and_hms_opt(11, 01, 01).unwrap(),
-                    end_datetime: base_date.and_hms_opt(12, 20, 01),
+                    start_datetime: base_date.and_hms_opt(11, 1, 1).unwrap(),
+                    end_datetime: base_date.and_hms_opt(12, 20, 1),
                     ..s1_breaches[0].clone()
                 },
                 TemperatureBreachRow {
@@ -693,8 +693,8 @@ mod test {
                     threshold_minimum: -273.0,
                     threshold_maximum: 8.0,
                     threshold_duration_milliseconds: 60 * 60 * 1000,
-                    start_datetime: base_date.and_hms_opt(10, 01, 01).unwrap(),
-                    end_datetime: base_date.and_hms_opt(13, 20, 01),
+                    start_datetime: base_date.and_hms_opt(10, 1, 1).unwrap(),
+                    end_datetime: base_date.and_hms_opt(13, 20, 1),
                     ..s1_breaches[1].clone()
                 }
             ]
@@ -798,8 +798,8 @@ mod test {
                     threshold_minimum: 2.0,
                     threshold_maximum: 100.0,
                     threshold_duration_milliseconds: 5 * 60 * 1000,
-                    start_datetime: base_date.and_hms_opt(15, 01, 01).unwrap(),
-                    end_datetime: base_date.and_hms_opt(15, 30, 01),
+                    start_datetime: base_date.and_hms_opt(15, 1, 1).unwrap(),
+                    end_datetime: base_date.and_hms_opt(15, 30, 1),
                     ..s2_breaches[0].clone()
                 },
                 s1_breaches[0].clone(), // Hot consecutive didn't change
@@ -809,14 +809,14 @@ mod test {
                     threshold_minimum: 2.0,
                     threshold_maximum: 100.0,
                     threshold_duration_milliseconds: 60 * 60 * 1000,
-                    start_datetime: base_date.and_hms_opt(13, 45, 01).unwrap(),
-                    end_datetime: base_date.and_hms_opt(16, 01, 01),
+                    start_datetime: base_date.and_hms_opt(13, 45, 1).unwrap(),
+                    end_datetime: base_date.and_hms_opt(16, 1, 1),
                     ..s2_breaches[2].clone()
                 },
                 TemperatureBreachRow {
                     // Only duration and end_datetime changed for Hot cumulative
                     duration_milliseconds: ((4 * 60) + 29) * 60 * 1000,
-                    end_datetime: base_date.and_hms_opt(14, 30, 01),
+                    end_datetime: base_date.and_hms_opt(14, 30, 1),
                     ..s1_breaches[1].clone()
                 }
             ]

@@ -127,7 +127,7 @@ impl ItemStats {
     pub fn from_requisition_line(requisition_line: &RequisitionLine) -> Self {
         let row = &requisition_line.requisition_line_row;
         ItemStats {
-            average_monthly_consumption: row.average_monthly_consumption as f64,
+            average_monthly_consumption: row.average_monthly_consumption,
             available_stock_on_hand: row.available_stock_on_hand,
             item_id: requisition_line.item_row.id.clone(),
             item_name: requisition_line.item_row.name.clone(),
@@ -178,11 +178,11 @@ mod test {
         assert_eq!(item_stats.len(), 2);
         assert_eq!(
             item_stats[0].available_stock_on_hand,
-            test_item_stats::item_1_soh() as f64
+            test_item_stats::item_1_soh()
         );
         assert_eq!(
             item_stats[1].available_stock_on_hand,
-            test_item_stats::item_2_soh() as f64
+            test_item_stats::item_2_soh()
         );
 
         assert_eq!(
@@ -203,11 +203,11 @@ mod test {
         assert_eq!(item_stats.len(), 2);
         assert_eq!(
             item_stats[0].available_stock_on_hand,
-            test_item_stats::item_1_soh() as f64
+            test_item_stats::item_1_soh()
         );
         assert_eq!(
             item_stats[1].available_stock_on_hand,
-            test_item_stats::item_2_soh() as f64
+            test_item_stats::item_2_soh()
         );
 
         assert_eq!(
@@ -225,7 +225,7 @@ mod test {
         assert_eq!(item_stats.len(), 2);
         assert_eq!(
             item_stats[0].available_stock_on_hand,
-            test_item_stats::item_1_store_b_soh() as f64
+            test_item_stats::item_1_store_b_soh()
         );
         // No stock line check
         assert_eq!(item_stats[1].available_stock_on_hand, 0.0);

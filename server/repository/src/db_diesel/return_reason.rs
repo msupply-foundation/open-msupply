@@ -17,7 +17,7 @@ pub struct ReturnReason {
     pub return_reason_row: ReturnReasonRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct ReturnReasonFilter {
     pub id: Option<EqualFilter<String>>,
     pub is_active: Option<bool>,
@@ -102,10 +102,7 @@ fn to_domain(return_reason_row: ReturnReasonRow) -> ReturnReason {
 
 impl ReturnReasonFilter {
     pub fn new() -> ReturnReasonFilter {
-        ReturnReasonFilter {
-            id: None,
-            is_active: None,
-        }
+        Default::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

@@ -42,7 +42,7 @@ pub fn update_request_requisition_line(
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let updated_requisition_line_row = generate(requisition_row, input);
 
-            RequisitionLineRowRepository::new(&connection)
+            RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)

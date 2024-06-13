@@ -200,7 +200,7 @@ mod test {
             connection: &StorageConnection,
             invoice_id: &str,
         ) -> SortedInvoiceAndStock {
-            let invoice_lines = InvoiceLineRepository::new(&connection)
+            let invoice_lines = InvoiceLineRepository::new(connection)
                 .query_by_filter(
                     InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)),
                 )

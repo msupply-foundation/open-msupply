@@ -43,25 +43,25 @@ pub fn update_stock_in_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (line, item, invoice) = validate(&input, &ctx.store_id, connection)?;
 
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
                 generate(connection, &ctx.user_id, input, line, item, invoice)?;
 
-            let stock_line_repository = StockLineRowRepository::new(&connection);
+            let stock_line_repository = StockLineRowRepository::new(connection);
 
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_repository.upsert_one(&upsert_batch)?;
             }
 
-            InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
 
             if let Some(id) = delete_batch_id_option {
                 stock_line_repository.delete(&id)?;
             }
 
             if let Some(invoice_row) = invoice_row_option {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             get_invoice_line(ctx, &updated_line.id)

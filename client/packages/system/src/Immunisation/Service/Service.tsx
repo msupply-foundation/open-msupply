@@ -1,11 +1,6 @@
 import React, { FC } from 'react';
-import {
-  RouteBuilder,
-  Routes,
-  Route,
-  NothingHere,
-} from '@openmsupply-client/common';
-import { AppRoute, Environment } from '@openmsupply-client/config';
+import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { ImmunisationProgramListView } from '../ListView';
 import { ImmunisationProgramDetailView } from '../ImmunisationProgramDetailView';
 import { VaccineCourseView } from '../VaccineCourseView';
@@ -26,9 +21,6 @@ export const ImmunisationProgramService: FC = () => {
     .addPart(':id')
     .build();
 
-  if (!Environment.FEATURE_GAPS) {
-    return <NothingHere />;
-  }
   return (
     <Routes>
       <Route
