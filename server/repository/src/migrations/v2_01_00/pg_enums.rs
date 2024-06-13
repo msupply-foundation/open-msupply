@@ -37,5 +37,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#,
     )?;
 
+    sql!(
+        connection,
+        r#"
+            ALTER TYPE permission_type ADD VALUE 'CENTRAL_SERVER_ADMIN';
+        "#,
+    )?;
+
     Ok(())
 }

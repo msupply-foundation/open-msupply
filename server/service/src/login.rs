@@ -475,9 +475,11 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::SetupAssets => {
                 output.insert(PermissionType::AssetCatalogueItemMutate);
             }
-            // TODO: a more relevant permission? https://github.com/msupply-foundation/open-msupply/issues/4057
-            Permissions::EditNameCategories => {
+            Permissions::EditCustomerSupplierManufacturerNames => {
                 output.insert(PermissionType::NamePropertiesMutate);
+            }
+            Permissions::CentralServerAdmin => {
+                output.insert(PermissionType::CentralServerAdmin);
             }
             _ => continue,
         }

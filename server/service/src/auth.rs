@@ -462,9 +462,12 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryProgram,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![
+                PermissionDSL::HasStoreAccess,
+                PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+            ]),
+            PermissionDSL::HasPermission(PermissionType::CentralServerAdmin),
         ]),
     );
     map.insert(
@@ -483,9 +486,12 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateProgram,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![
+                PermissionDSL::HasStoreAccess,
+                PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
+            ]),
+            PermissionDSL::HasPermission(PermissionType::CentralServerAdmin),
         ]),
     );
     map.insert(
@@ -541,11 +547,11 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateDemographic,
-        PermissionDSL::NoPermissionRequired,
+        PermissionDSL::HasPermission(PermissionType::CentralServerAdmin),
     );
     map.insert(
         Resource::MutateVaccineCourse,
-        PermissionDSL::HasPermission(PermissionType::VaccineCourseMutate),
+        PermissionDSL::HasPermission(PermissionType::CentralServerAdmin),
     );
     map.insert(
         Resource::QueryVaccineCourse,

@@ -54,8 +54,7 @@ pub enum UserPermission {
     AssetQuery,
     AssetCatalogueItemMutate,
     NamePropertiesMutate,
-    DemographicQuery,
-    VaccineCourseMutate,
+    CentralServerAdmin,
 }
 
 #[Object]
@@ -140,8 +139,7 @@ impl UserPermission {
             PermissionType::AssetQuery => UserPermission::AssetQuery,
             PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
-            PermissionType::DemographicQuery => UserPermission::DemographicQuery,
-            PermissionType::VaccineCourseMutate => UserPermission::VaccineCourseMutate,
+            PermissionType::CentralServerAdmin => UserPermission::CentralServerAdmin,
         }
     }
 
@@ -187,9 +185,8 @@ impl UserPermission {
             UserPermission::AssetMutate => PermissionType::AssetMutate,
             UserPermission::AssetQuery => PermissionType::AssetQuery,
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
-            UserPermission::DemographicQuery => PermissionType::DemographicQuery,
-            UserPermission::VaccineCourseMutate => PermissionType::VaccineCourseMutate,
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
+            UserPermission::CentralServerAdmin => PermissionType::CentralServerAdmin,
         }
     }
 }
