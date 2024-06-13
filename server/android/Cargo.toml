@@ -21,7 +21,7 @@ service = { path = "../service" }
 server = { path = "../server", default-features = false, features = [
     "android",
 ] }
-tokio = { version = "1.17.0", features = ["macros"] }
+tokio = { version = "1.35.1", features = ["macros"] }
 android_logger = { version = "0.13.0" }
 simple-log = { version = "1.6" }
 

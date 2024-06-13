@@ -22,7 +22,7 @@ repository = { path = "../repository" }
 service = { path = "../service" }
 util = { path = "../util" }
 
-machine-uid = { version = "0.2.0", optional = true }
+machine-uid = { version = "0.5.1", optional = true }
 
 actix-cors = "0.6.1"
 actix-web = { version = "4.0.1", features = ["rustls"] }
@@ -35,7 +35,7 @@ log = "0.4.14"
 rustls = "0.20.4"
 rustls-pemfile = "1.0.0"
 serde = "1.0.137"
-tokio = { version = "1.17.0", features = ["macros"] }
+tokio = { version = "1.35.1", features = ["macros"] }
 clap = { version = "3.1.8", features = ["derive"] }
 rust-embed = "6.4.0"
 mime_guess = "2.0.4"
