@@ -68,7 +68,7 @@ mod query {
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
-            item_ids: vec![item1.clone(), item2.clone()],
+            vaccine_items: vec![item1.clone(), item2.clone()],
             schedules: vec![schedule1.clone(), schedule2.clone()],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
@@ -105,7 +105,7 @@ mod query {
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
-            item_ids: vec![item2],
+            vaccine_items: vec![item2],
             schedules: vec![schedule2],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
@@ -127,7 +127,7 @@ mod query {
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
-            item_ids: vec![item1.clone()],
+            vaccine_items: vec![item1.clone()],
             schedules: vec![schedule1.clone()],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
@@ -159,7 +159,7 @@ mod query {
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
-            item_ids: vec![item1.clone()],
+            vaccine_items: vec![item1.clone()],
             schedules: vec![schedule1.clone()],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
@@ -180,7 +180,7 @@ mod query {
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
-            item_ids: vec![],
+            vaccine_items: vec![],
             schedules: vec![],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,

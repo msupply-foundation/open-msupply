@@ -7615,9 +7615,9 @@ export type UpdateVaccineCourseInput = {
   doses: Scalars['Int']['input'];
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
-  itemIds: Array<VaccineCourseItemInput>;
   name?: InputMaybe<Scalars['String']['input']>;
   schedules: Array<VaccineCourseScheduleInput>;
+  vaccineItems: Array<VaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
 };
 

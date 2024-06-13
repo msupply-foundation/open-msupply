@@ -173,7 +173,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         isActive: input.isActive,
         wastageRate: input.wastageRate,
         doses: input.doses,
-        itemIds:
+        vaccineItems:
           input.vaccineCourseItems?.map(item =>
             vaccineCourseParsers.toItemInput(item as VaccineCourseItemNode)
           ) ?? [],

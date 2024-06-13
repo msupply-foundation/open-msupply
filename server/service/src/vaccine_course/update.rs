@@ -62,7 +62,7 @@ impl VaccineCourseSchedule {
 pub struct UpdateVaccineCourse {
     pub id: String,
     pub name: Option<String>,
-    pub item_ids: Vec<VaccineCourseItem>,
+    pub vaccine_items: Vec<VaccineCourseItem>,
     pub schedules: Vec<VaccineCourseSchedule>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
@@ -89,7 +89,7 @@ pub fn update_vaccine_course(
             item_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
 
             // Insert the new vaccine course items
-            for item in input.clone().item_ids {
+            for item in input.clone().vaccine_items {
                 item_repo.upsert_one(&item.to_domain(input.clone().id))?;
             }
 
@@ -142,8 +142,8 @@ pub fn generate(
     UpdateVaccineCourse {
         id,
         name,
-        item_ids: _,  // Updated in main function
-        schedules: _, // Updated in main function
+        vaccine_items: _, // Updated in main function
+        schedules: _,     // Updated in main function
         demographic_indicator_id,
         coverage_rate,
         is_active,
