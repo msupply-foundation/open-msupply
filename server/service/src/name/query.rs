@@ -1,7 +1,6 @@
-use repository::NameRepository;
-use repository::NameType;
-use repository::PaginationOption;
-use repository::{Name, NameFilter, NameSort};
+use repository::{
+    EqualFilter, Name, NameFilter, NameRepository, NameSort, NameType, PaginationOption,
+};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
@@ -20,9 +19,17 @@ pub fn get_names(
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = NameRepository::new(&ctx.connection);
 
-    let filter = filter
-        .unwrap_or_default()
-        .r#type(NameType::Patient.not_equal_to());
+    let filter = filter.unwrap_or_default();
+
+    let type_filter = match filter.r#type.clone() {
+        Some(filter_input) => EqualFilter::<NameType> {
+            not_equal_to: Some(NameType::Patient),
+            ..filter_input
+        },
+        None => NameType::Patient.not_equal_to(),
+    };
+
+    let filter = filter.r#type(type_filter);
 
     Ok(ListResult {
         rows: repository.query(store_id, pagination, Some(filter.clone()), sort)?,
