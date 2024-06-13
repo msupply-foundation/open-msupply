@@ -51,7 +51,9 @@ impl<'a> NameTagRepository<'a> {
         if store_id.is_some() {
             let mut name_tag_query = name_tag_join_dsl::name_tag_join
                 .left_join(
-                    name_link_dsl::name_link.left_join(name_dsl::name.left_join(store_dsl::store)),
+                    name_link_dsl::name_link
+                        .left_join(name_dsl::name)
+                        .left_join(store_dsl::store),
                 )
                 .into_boxed();
 

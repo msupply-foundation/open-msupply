@@ -53,7 +53,6 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         AssetCatalogueItemRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(
         &self,
         asset_catalogue_item_row: &AssetCatalogueItemRow,
@@ -63,17 +62,6 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_catalogue_item_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(
-        &self,
-        asset_catalogue_item_row: &AssetCatalogueItemRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::replace_into(asset_catalogue_item)
-            .values(asset_catalogue_item_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

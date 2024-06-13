@@ -1,8 +1,8 @@
 use chrono::{Duration, NaiveDateTime, NaiveTime, Utc};
 use repository::{
-    ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, Requisition, StorageConnection,
-    StoreRowRepository,
+    ActivityLogType, EqualFilter, Invoice, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, Requisition,
+    StorageConnection, StoreFilter, StoreRepository, StoreRowRepository,
 };
 use util::uuid::uuid;
 
@@ -153,7 +153,14 @@ fn generate_inbound_invoice(
     r#type: InboundInvoiceType,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
-    let name_link_id = outbound_invoice.store_row.name_id.clone();
+    let name_id = StoreRepository::new(connection)
+        .query_by_filter(
+            StoreFilter::new().id(EqualFilter::equal_to(&outbound_invoice.store_row.id)),
+        )?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?
+        .name_row
+        .id;
 
     let outbound_invoice_row = &outbound_invoice.invoice_row;
 
@@ -205,7 +212,7 @@ fn generate_inbound_invoice(
             InboundInvoiceType::InboundReturn => InvoiceType::InboundReturn,
             InboundInvoiceType::InboundShipment => InvoiceType::InboundShipment,
         },
-        name_link_id,
+        name_link_id: name_id,
         store_id,
         status,
         requisition_id: request_requisition_id,
