@@ -18,11 +18,6 @@ impl VaccineCourseItemNode {
         &self.row().id
     }
 
-    // pub async fn item_id(&self) -> &str {
-    //     // TODO Look up item_id
-    //     &self.row().item_link_id
-    // }
-
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
         let item_option = loader.load_one(self.row().item_link_id.clone()).await?;
