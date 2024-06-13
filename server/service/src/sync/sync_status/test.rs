@@ -11,7 +11,7 @@ use repository::{
     ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;
-use util::{assert_matches, inline_edit, inline_init};
+use util::{inline_edit, inline_init};
 
 use crate::{
     service_provider::ServiceProvider,
@@ -141,7 +141,7 @@ async fn sync_status() {
     )
     .await;
 
-    assert_matches!(result, Err(_));
+    assert!(result.is_err());
     tester_data.lock().await.try_route("final".to_string());
 }
 

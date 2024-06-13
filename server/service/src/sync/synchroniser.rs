@@ -389,7 +389,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 #[cfg(test)]
 mod tests {
     use repository::mock::MockDataInserts;
-    use util::{assert_matches, inline_init};
+    use util::inline_init;
 
     use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
@@ -412,12 +412,10 @@ mod tests {
         .unwrap();
 
         // First check that synch fails (due to wrong url)
-
-        assert_matches!(s.sync().await, Err(_));
+        assert!(s.sync().await.is_err());
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
-
-        assert_matches!(s.sync().await, Ok(_));
+        assert!(s.sync().await.is_ok());
     }
 }
