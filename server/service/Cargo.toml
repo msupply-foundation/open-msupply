@@ -32,7 +32,7 @@ serde_yaml = "0.9.31"
 schemafy = "0.6.0"
 schemafy_core = "0.6.0"
 tera = "1"
-tokio = { version = "1.35.1", features = [
+tokio = { version = "1.38.0", features = [
     "macros",
     "sync",
     "time",

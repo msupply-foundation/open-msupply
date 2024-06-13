@@ -35,13 +35,13 @@ log = "0.4.14"
 rustls = "0.20.4"
 rustls-pemfile = "1.0.0"
 serde = "1.0.137"
-tokio = { version = "1.35.1", features = ["macros"] }
+tokio = { version = "1.38.0", features = ["macros"] }
 clap = { version = "3.1.8", features = ["derive"] }
 rust-embed = "6.4.0"
 mime_guess = "2.0.4"
 futures = "0.3"
 simple-log = { version = "1.6" }
-rcgen = "0.9.2"
+rcgen = "0.13.1"
 regex = "1.5.5"
 actix-multipart = { workspace = true }
 futures-util = "0.3"
