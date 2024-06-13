@@ -31,6 +31,11 @@ pub struct InitialiseNameProperty {
     pub remote_editable: bool,
 }
 
+// This is super bare bones, no validations or anything
+// We only call this endpoint with predefined values from the frontend
+// And it just does an upsert, so no worries about duplicates
+// There's no risk in additional name properties being added, but this should get
+// fleshed out at whatever point we add an actual UI to manage properties :)
 pub fn initialise_name_properties(
     connection_manager: &StorageConnectionManager,
     input: Vec<InitialiseNameProperty>,
