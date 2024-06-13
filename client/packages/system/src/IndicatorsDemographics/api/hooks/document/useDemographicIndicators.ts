@@ -2,15 +2,13 @@ import {
   useUrlQueryParams,
   useQuery,
   useTranslation,
-  DemographicIndicatorNode,
   uniqBy,
   ArrayUtils,
 } from '@openmsupply-client/common';
 import { useDemographicsApi } from '../utils/useDemographicApi';
-import { toRow } from '../../../DetailView/IndicatorsDemographics';
 import { useEffect, useState } from 'react';
 import { GENERAL_POPULATION_ID } from '../..';
-import { calculateAcrossRow } from '../../../DetailView/utils';
+import { calculateAcrossRow, toRow } from '../../../DetailView/utils';
 import { HeaderData, Row } from '../../../types';
 
 export const useDemographicIndicators = (headerData?: HeaderData) => {
@@ -29,12 +27,15 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
   );
   const [draft, setDraft] = useState<Record<string, Row>>({});
 
+  // initial load which populates from the API
   useEffect(() => {
-    if (!data || !headerData) {
+    const isDraftPopulated = Object.keys(draft).length > 0;
+    if (!data || !headerData || isDraftPopulated) {
       return;
     }
+
     // generate index row dynamically from basePopulation and baseYear
-    const generalRow: DemographicIndicatorNode = {
+    const generalRow = toRow({
       __typename: 'DemographicIndicatorNode',
       id: GENERAL_POPULATION_ID,
       populationPercentage: 100,
@@ -49,21 +50,43 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
       year3Projection: 0,
       year4Projection: 0,
       year5Projection: 0,
-    };
+    });
 
     const generalRowCalculated = calculateAcrossRow(
-      toRow(generalRow),
+      generalRow,
       headerData,
       generalRow.basePopulation
     );
-    if (!generalRowCalculated) return;
 
     const nodes = [...data?.nodes];
     const nodesAsRow = nodes.map(row => toRow(row));
     const nodesFiltered = uniqBy([generalRowCalculated, ...nodesAsRow], 'id');
     const draftRows = ArrayUtils.toObject(nodesFiltered);
     setDraft(draftRows);
-  }, [data, headerData, t]);
+
+    // don't want this changing every time the draft updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, t, headerData]);
+
+  // recalculate the draft when the header changes
+  useEffect(() => {
+    const generalRow = draft[GENERAL_POPULATION_ID];
+    if (!generalRow || !headerData) return;
+
+    const updatedDraft: Record<string, Row> = {};
+    Object.values(draft).forEach(row => {
+      const updatedRow = calculateAcrossRow(
+        row,
+        headerData,
+        generalRow.basePopulation
+      );
+      updatedDraft[updatedRow.id] = updatedRow;
+    });
+
+    setDraft(updatedDraft);
+    // don't want to update on every draft change::recursion!
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [t, headerData]);
 
   return { draft, setDraft, isLoading };
 };
