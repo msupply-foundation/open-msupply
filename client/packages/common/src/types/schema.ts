@@ -4391,8 +4391,15 @@ export enum NameNodeType {
 
 export type NamePropertyConnector = {
   __typename: 'NamePropertyConnector';
-  nodes: Array<PropertyNode>;
+  nodes: Array<NamePropertyNode>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type NamePropertyNode = {
+  __typename: 'NamePropertyNode';
+  id: Scalars['String']['output'];
+  property: PropertyNode;
+  remoteEditable: Scalars['Boolean']['output'];
 };
 
 export type NamePropertyResponse = NamePropertyConnector;
