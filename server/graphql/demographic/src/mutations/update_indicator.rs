@@ -23,7 +23,7 @@ pub fn update_demographic_indicator(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateDemographic,
-            store_id: Some("".to_string()),
+            store_id: None,
         },
     )?;
     let service_provider = ctx.service_provider();

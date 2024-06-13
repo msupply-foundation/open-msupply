@@ -198,6 +198,7 @@ pub enum Permissions {
     HISAddProcedure,
     ConfirmInternalOrderSent,
     ColdChainApi,
+    CentralServerAdmin,
 }
 
 pub fn permission_mapping() -> HashMap<i16, Permissions> {
@@ -386,6 +387,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (190, Permissions::ViewPatients),
         (200, Permissions::ConfirmInternalOrderSent),
         (201, Permissions::ColdChainApi),
+        (202, Permissions::CentralServerAdmin),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),
         (503, Permissions::HISCreateEncounters),
