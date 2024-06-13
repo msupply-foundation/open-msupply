@@ -9,14 +9,16 @@ const NAME_PROPERTY1: (&str, &str) = (
     "59d20a10-0555-4e65-9c36-2c86e50e5def",
     r#"{
         "id": "59d20a10-0555-4e65-9c36-2c86e50e5def",
-        "property_id": "abcbea92-d5bf-4832-863b-c04e093a7760", 
+        "property_id": "property_a",
+        "remote_editable": false
     }"#,
 );
 
 fn name_property1() -> NamePropertyRow {
     NamePropertyRow {
         id: NAME_PROPERTY1.0.to_string(),
-        property_id: "abcbea92-d5bf-4832-863b-c04e093a7760".to_string(),
+        property_id: "property_a".to_string(),
+        remote_editable: false,
     }
 }
 
