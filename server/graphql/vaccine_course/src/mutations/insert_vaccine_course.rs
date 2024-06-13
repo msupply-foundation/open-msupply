@@ -96,6 +96,7 @@ fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
         ServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::VaccineCourseNameExistsForThisProgram => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
