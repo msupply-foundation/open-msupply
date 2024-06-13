@@ -11,7 +11,7 @@ use repository::{
     ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;
-use util::{assert_matches, inline_edit, inline_init};
+use util::{inline_edit, inline_init};
 
 use crate::{
     service_provider::ServiceProvider,
@@ -107,7 +107,6 @@ async fn sync_status() {
                 r.value_int = Some(mock_store_b().site_id);
             })];
             r.locations = (1..=3)
-                .into_iter()
                 .map(|i| {
                     inline_init(|r: &mut LocationRow| {
                         r.id = i.to_string();
@@ -142,7 +141,7 @@ async fn sync_status() {
     )
     .await;
 
-    assert_matches!(result, Err(_));
+    assert!(result.is_err());
     tester_data.lock().await.try_route("final".to_string());
 }
 
@@ -580,8 +579,7 @@ async fn run_server_and_sync(
         },
     };
 
-    let synchroniser =
-        Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
+    let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider.clone()).unwrap();
 
     async fn entry(path: web::Path<String>, tester: TesterData) -> String {
         tester.lock().await.try_route(path.to_string())

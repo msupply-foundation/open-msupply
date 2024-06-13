@@ -146,6 +146,7 @@ pub struct BatchMutationsProcessor<'a> {
     ctx: &'a ServiceContext,
 }
 
+#[allow(clippy::type_complexity)]
 impl<'a> BatchMutationsProcessor<'a> {
     pub fn new(ctx: &'a ServiceContext) -> BatchMutationsProcessor<'a> {
         BatchMutationsProcessor { ctx }

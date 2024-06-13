@@ -20,7 +20,7 @@ fn validate(settings: &SyncSettings) -> Result<(), UpdateSettingsError> {
         )));
     }
 
-    if settings.username == "" {
+    if settings.username.is_empty() {
         return Err(UpdateSettingsError::InvalidSettings(
             "Empty username not allowed".to_string(),
         ));

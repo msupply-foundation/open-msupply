@@ -100,7 +100,7 @@ impl SyncTranslation for BarcodeTranslation {
             id,
             gtin,
             item_id,
-            manufacturer_id: manufacturer_name_row.and_then(|name_row| Some(name_row.id)),
+            manufacturer_id: manufacturer_name_row.map(|name_row| name_row.id),
             pack_size,
             parent_id,
         };

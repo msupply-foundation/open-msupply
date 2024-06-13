@@ -4,6 +4,9 @@ use repository::{
     TemperatureExcursionRepository, TemperatureLogFilter, TemperatureRow,
 };
 
+pub struct TemperatureExcursionService {}
+impl TemperatureExcursionServiceTrait for TemperatureExcursionService {}
+
 pub trait TemperatureExcursionServiceTrait: Sync + Send {
     fn excursions(
         &self,
@@ -243,6 +246,3 @@ mod test {
         );
     }
 }
-
-pub struct TemperatureExcursionService {}
-impl TemperatureExcursionServiceTrait for TemperatureExcursionService {}

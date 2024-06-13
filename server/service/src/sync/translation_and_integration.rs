@@ -92,14 +92,14 @@ impl<'a> TranslationAndIntegration<'a> {
             }
         };
 
-        for (number_of_records_integrated, sync_record) in sync_records.into_iter().enumerate() {
+        for (number_of_records_integrated, sync_record) in sync_records.iter().enumerate() {
             let pull_translation_results =
-                match self.translate_sync_record(&sync_record, translators) {
+                match self.translate_sync_record(sync_record, translators) {
                     Ok(translation_result) => translation_result,
                     // Record error in sync buffer and in result, continue to next sync_record
                     Err(translation_error) => {
                         self.sync_buffer
-                            .record_integration_error(&sync_record, &translation_error)?;
+                            .record_integration_error(sync_record, &translation_error)?;
                         result.insert_error(&sync_record.table_name);
                         warn!(
                             "{:?} {:?} {:?}",
@@ -120,7 +120,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     PullTranslateResult::Ignored(ignore_message) => {
                         ignored = true;
                         self.sync_buffer.record_integration_error(
-                            &sync_record,
+                            sync_record,
                             &anyhow::anyhow!("Ignored: {}", ignore_message),
                         )?;
                         result.insert_error(&sync_record.table_name);
@@ -143,7 +143,7 @@ impl<'a> TranslationAndIntegration<'a> {
             if integration_records.is_empty() {
                 let error = anyhow::anyhow!("Translator for record not found");
                 self.sync_buffer
-                    .record_integration_error(&sync_record, &error)?;
+                    .record_integration_error(sync_record, &error)?;
                 result.insert_error(&sync_record.table_name);
                 warn!(
                     "{:?} {:?} {:?}",
@@ -158,14 +158,14 @@ impl<'a> TranslationAndIntegration<'a> {
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
-                        .record_successful_integration(&sync_record)?;
+                        .record_successful_integration(sync_record)?;
                     result.insert_success(&sync_record.table_name)
                 }
                 // Record database_error in sync buffer and in result
                 Err(database_error) => {
                     let error = anyhow::anyhow!("{:?}", database_error);
                     self.sync_buffer
-                        .record_integration_error(&sync_record, &error)?;
+                        .record_integration_error(sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
                     warn!(
                         "{:?} {:?} {:?}",
