@@ -492,7 +492,7 @@ impl InvoiceTransferTester {
     ) -> InvoiceTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
-            r.name_link_id.clone_from(&outbound_store.name_id);
+            r.name_link_id.clone_from(&outbound_store.name_link_id);
             r.store_id.clone_from(&inbound_store.id);
             r.r#type = RequisitionType::Request;
             r.status = RequisitionStatus::Draft;
@@ -500,7 +500,8 @@ impl InvoiceTransferTester {
 
         let outbound_shipment = inline_init(|r: &mut InvoiceRow| {
             r.id = uuid();
-            r.name_link_id = inbound_name.map_or(inbound_store.name_id.clone(), |n| n.id.clone());
+            r.name_link_id =
+                inbound_name.map_or(inbound_store.name_link_id.clone(), |n| n.id.clone());
             r.store_id.clone_from(&outbound_store.id);
             r.invoice_number = 20;
             r.r#type = InvoiceType::OutboundShipment;
@@ -587,7 +588,8 @@ impl InvoiceTransferTester {
 
         let outbound_return = inline_init(|r: &mut InvoiceRow| {
             r.id = uuid();
-            r.name_link_id = outbound_name.map_or(outbound_store.name_id.clone(), |n| n.id.clone());
+            r.name_link_id =
+                outbound_name.map_or(outbound_store.name_link_id.clone(), |n| n.id.clone());
             r.store_id.clone_from(&inbound_store.id);
             r.invoice_number = 5;
             r.r#type = InvoiceType::OutboundReturn;
