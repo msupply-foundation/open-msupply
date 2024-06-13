@@ -177,9 +177,7 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.id = mock_request_draft_requisition_calculation_test().lines[0]
-                        .id
-                        .clone();
+                    r.id.clone_from(&mock_request_draft_requisition_calculation_test().lines[0].id);
                 }),
             ),
             Err(ServiceError::RequisitionLineAlreadyExists)
@@ -193,10 +191,10 @@ mod test {
                     r.requisition_id = mock_request_draft_requisition_calculation_test()
                         .requisition
                         .id;
-                    r.id = "new requisition line id".to_owned();
-                    r.item_id = mock_request_draft_requisition_calculation_test().lines[0]
-                        .item_link_id
-                        .clone();
+                    r.id = "new requisition line id".to_string();
+                    r.item_id.clone_from(
+                        &mock_request_draft_requisition_calculation_test().lines[0].item_link_id,
+                    );
                 }),
             ),
             Err(ServiceError::ItemAlreadyExistInRequisition)
@@ -207,7 +205,7 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = "invalid".to_owned();
+                    r.requisition_id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::RequisitionDoesNotExist)
@@ -245,7 +243,7 @@ mod test {
                     r.requisition_id = mock_request_draft_requisition_calculation_test()
                         .requisition
                         .id;
-                    r.item_id = "invalid".to_owned();
+                    r.item_id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::ItemDoesNotExist)
@@ -299,7 +297,7 @@ mod test {
                     requisition_id: mock_request_draft_requisition_calculation_test()
                         .requisition
                         .id,
-                    id: "new requisition line id".to_owned(),
+                    id: "new requisition line id".to_string(),
                     item_id: test_item_stats::item2().id,
                     requested_quantity: Some(20.0),
                     comment: Some("comment".to_string()),
@@ -330,7 +328,7 @@ mod test {
             &context,
             inline_init(|r: &mut InsertRequestRequisitionLine| {
                 r.requisition_id = mock_request_draft_requisition().id;
-                r.id = "new requisition line id2".to_owned();
+                r.id = "new requisition line id2".to_string();
                 r.item_id = mock_item_c().id;
                 r.requested_quantity = Some(20.0);
             }),

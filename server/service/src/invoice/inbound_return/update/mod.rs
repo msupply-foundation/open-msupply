@@ -306,7 +306,7 @@ mod test {
             .update_inbound_return(
                 &context,
                 inline_init(|r: &mut UpdateInboundReturn| {
-                    r.id = invoice_id.clone();
+                    r.id.clone_from(&invoice_id);
                     r.status = Some(UpdateInboundReturnStatus::Delivered);
                 }),
             )
@@ -427,7 +427,7 @@ mod test {
             .update_inbound_return(
                 &context,
                 inline_init(|r: &mut UpdateInboundReturn| {
-                    r.id = invoice_id.clone();
+                    r.id.clone_from(&invoice_id);
                     r.status = Some(UpdateInboundReturnStatus::Verified);
                 }),
             )

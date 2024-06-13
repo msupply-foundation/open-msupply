@@ -459,33 +459,33 @@ mod tests {
 
         let item_rows = vec![
             inline_init(|r: &mut ItemRow| {
-                r.id = "item1".to_owned();
-                r.name = "name1".to_owned();
-                r.code = "name1".to_owned();
+                r.id = "item1".to_string();
+                r.name = "name1".to_string();
+                r.code = "name1".to_string();
                 r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
-                r.id = "item2".to_owned();
-                r.name = "name2".to_owned();
-                r.code = "name2".to_owned();
+                r.id = "item2".to_string();
+                r.name = "name2".to_string();
+                r.code = "name2".to_string();
                 r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
-                r.id = "item3".to_owned();
-                r.name = "name3".to_owned();
-                r.code = "name3".to_owned();
+                r.id = "item3".to_string();
+                r.name = "name3".to_string();
+                r.code = "name3".to_string();
                 r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
-                r.id = "item4".to_owned();
-                r.name = "name4".to_owned();
-                r.code = "name4".to_owned();
+                r.id = "item4".to_string();
+                r.name = "name4".to_string();
+                r.code = "name4".to_string();
                 r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
-                r.id = "item5".to_owned();
-                r.name = "name5".to_owned();
-                r.code = "name5".to_owned();
+                r.id = "item5".to_string();
+                r.name = "name5".to_string();
+                r.code = "name5".to_string();
                 r.r#type = ItemType::Stock;
             }),
         ];
@@ -500,61 +500,61 @@ mod tests {
 
         let master_list_rows = vec![
             MasterListRow {
-                id: "master_list1".to_owned(),
-                name: "".to_owned(),
-                code: "".to_owned(),
-                description: "".to_owned(),
+                id: "master_list1".to_string(),
+                name: "".to_string(),
+                code: "".to_string(),
+                description: "".to_string(),
                 is_active: true,
             },
             MasterListRow {
-                id: "master_list2".to_owned(),
-                name: "".to_owned(),
-                code: "".to_owned(),
-                description: "".to_owned(),
+                id: "master_list2".to_string(),
+                name: "".to_string(),
+                code: "".to_string(),
+                description: "".to_string(),
                 is_active: true,
             },
         ];
 
         let master_list_line_rows = vec![
             MasterListLineRow {
-                id: "id1".to_owned(),
-                item_link_id: "item1".to_owned(),
-                master_list_id: "master_list1".to_owned(),
+                id: "id1".to_string(),
+                item_link_id: "item1".to_string(),
+                master_list_id: "master_list1".to_string(),
             },
             MasterListLineRow {
-                id: "id2".to_owned(),
-                item_link_id: "item2".to_owned(),
-                master_list_id: "master_list1".to_owned(),
+                id: "id2".to_string(),
+                item_link_id: "item2".to_string(),
+                master_list_id: "master_list1".to_string(),
             },
             MasterListLineRow {
-                id: "id3".to_owned(),
-                item_link_id: "item3".to_owned(),
-                master_list_id: "master_list2".to_owned(),
+                id: "id3".to_string(),
+                item_link_id: "item3".to_string(),
+                master_list_id: "master_list2".to_string(),
             },
             MasterListLineRow {
-                id: "id4".to_owned(),
-                item_link_id: "item4".to_owned(),
-                master_list_id: "master_list2".to_owned(),
+                id: "id4".to_string(),
+                item_link_id: "item4".to_string(),
+                master_list_id: "master_list2".to_string(),
             },
         ];
 
         let name_row = inline_init(|r: &mut NameRow| {
-            r.id = "name1".to_owned();
-            r.name = "".to_owned();
-            r.code = "".to_owned();
+            r.id = "name1".to_string();
+            r.name = "".to_string();
+            r.code = "".to_string();
             r.is_supplier = true;
             r.is_customer = true;
         });
 
         let store_row = inline_init(|r: &mut StoreRow| {
-            r.id = "name1_store".to_owned();
-            r.name_link_id = "name1".to_owned();
+            r.id = "name1_store".to_string();
+            r.name_link_id = "name1".to_string();
         });
 
         let master_list_name_join_1 = MasterListNameJoinRow {
-            id: "id1".to_owned(),
-            name_link_id: "name1".to_owned(),
-            master_list_id: "master_list1".to_owned(),
+            id: "id1".to_string(),
+            name_link_id: "name1".to_string(),
+            master_list_id: "master_list1".to_string(),
         };
 
         for row in item_rows.iter() {

@@ -268,7 +268,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutboundReturn| {
                     r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id.clone();
+                    r.other_party_id.clone_from(&not_visible().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotVisible)
@@ -280,7 +280,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutboundReturn| {
                     r.id = "new_id".to_string();
-                    r.other_party_id = not_a_supplier().id.clone();
+                    r.other_party_id.clone_from(&not_a_supplier().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotASupplier)

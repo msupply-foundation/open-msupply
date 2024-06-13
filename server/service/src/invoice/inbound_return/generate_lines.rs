@@ -50,7 +50,7 @@ pub fn generate_inbound_return_lines(
     // return existing first, then new lines
     let return_lines: Vec<InboundReturnLine> = existing_return_lines
         .into_iter()
-        .chain(new_return_lines.into_iter())
+        .chain(new_return_lines)
         .collect();
 
     Ok(ListResult {
