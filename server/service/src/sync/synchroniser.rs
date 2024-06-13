@@ -258,7 +258,6 @@ impl Synchroniser {
 
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
-            is_initialised,
             // Only pass in logger during initialisation
             match is_initialised {
                 false => Some(logger),
@@ -293,7 +292,6 @@ impl Synchroniser {
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
-    execute_in_transaction: bool,
     logger: Option<&mut SyncLogger<'a>>,
     source_site_id: Option<i32>,
 ) -> Result<
@@ -343,7 +341,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
-                upsert_sync_buffer_records.clone(),
+                &upsert_sync_buffer_records,
                 &translators,
                 logger,
             )?;
@@ -351,7 +349,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
-                delete_sync_buffer_records.clone(),
+                &delete_sync_buffer_records,
                 &translators,
                 None,
             )?;
@@ -361,9 +359,10 @@ pub fn integrate_and_translate_sync_buffer<'a>(
             &table_order,
             source_site_id,
         )?;
+
         let merge_integration_result: TranslationAndIntegrationResults =
             translation_and_integration.translate_and_integrate_sync_records(
-                merge_sync_buffer_records,
+                &merge_sync_buffer_records,
                 &translators,
                 None,
             )?;
@@ -375,13 +374,9 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         ))
     };
 
-    let result = if execute_in_transaction {
-        connection
-            .transaction_sync(integrate_and_translate)
-            .map_err::<RepositoryError, _>(|e| e.to_inner_error())
-    } else {
-        integrate_and_translate(connection)
-    }?;
+    let result = connection
+        .transaction_sync(integrate_and_translate)
+        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
 
     Ok(result)
 }

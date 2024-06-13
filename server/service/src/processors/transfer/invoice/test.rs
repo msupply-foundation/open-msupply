@@ -36,7 +36,7 @@ async fn invoice_transfers() {
 
     let outbound_store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id.clone_from(&outbound_store_name.id);
+        r.name_link_id.clone_from(&outbound_store_name.id);
         r.site_id = site_id;
     });
 
@@ -47,7 +47,7 @@ async fn invoice_transfers() {
 
     let inbound_store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id.clone_from(&inbound_store_name.id);
+        r.name_link_id.clone_from(&inbound_store_name.id);
         r.site_id = site_id;
     });
 
@@ -238,7 +238,7 @@ async fn invoice_transfers() {
     };
 }
 
-/// Checking behavior when a request requisition name_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
+/// Checking behavior when a request requisition name_link_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
 async fn invoice_transfers_with_merged_name() {
     let site_id = 25;
@@ -250,7 +250,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let outbound_store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id.clone_from(&outbound_store_name.id);
+        r.name_link_id.clone_from(&outbound_store_name.id);
         r.site_id = site_id;
     });
 
@@ -261,7 +261,7 @@ async fn invoice_transfers_with_merged_name() {
 
     let inbound_store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id.clone_from(&inbound_store_name.id);
+        r.name_link_id.clone_from(&inbound_store_name.id);
         r.site_id = site_id;
     });
 
@@ -739,7 +739,10 @@ impl InvoiceTransferTester {
 
         assert_eq!(inbound_shipment.r#type, InvoiceType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
-        assert_eq!(inbound_shipment.name_link_id, self.outbound_store.name_id);
+        assert_eq!(
+            inbound_shipment.name_link_id,
+            self.outbound_store.name_link_id
+        );
         assert_eq!(
             inbound_shipment.name_store_id,
             Some(self.outbound_store.id.clone())
@@ -1027,7 +1030,7 @@ impl InvoiceTransferTester {
 
         assert_eq!(inbound_return.r#type, InvoiceType::InboundReturn);
         assert_eq!(inbound_return.store_id, self.outbound_store.id);
-        assert_eq!(inbound_return.name_link_id, self.inbound_store.name_id);
+        assert_eq!(inbound_return.name_link_id, self.inbound_store.name_link_id);
         assert_eq!(
             inbound_return.name_store_id,
             Some(self.inbound_store.id.clone())

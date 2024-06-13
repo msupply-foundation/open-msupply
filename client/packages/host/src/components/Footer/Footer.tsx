@@ -17,7 +17,6 @@ import {
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
-import { Environment } from '@openmsupply-client/config';
 import { FacilityEditModal } from '@openmsupply-client/system';
 
 export const Footer: React.FC = () => {
@@ -59,14 +58,13 @@ export const Footer: React.FC = () => {
           </Tooltip>
         </PaddedCell>
       </StoreSelector>
-      {Environment.FEATURE_GAPS && (
-        <PaddedCell onClick={onOpen}>
-          <SettingsIcon sx={iconStyles} />
-          <Tooltip title={t('label.edit-store-properties')}>
-            <Typography sx={textStyles}>{t('label.edit')}</Typography>
-          </Tooltip>
-        </PaddedCell>
-      )}
+      {/* TODO: only show if name properties are configured! */}
+      <PaddedCell onClick={onOpen}>
+        <SettingsIcon sx={iconStyles} />
+        <Tooltip title={t('label.edit-store-properties')}>
+          <Typography sx={textStyles}>{t('label.edit')}</Typography>
+        </Tooltip>
+      </PaddedCell>
       {user ? (
         <PaddedCell>
           <UserIcon sx={iconStyles} />

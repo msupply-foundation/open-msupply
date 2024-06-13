@@ -12,7 +12,7 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
-    NameRow, NameRowRepository, StorageConnection, StoreRowRepository, SyncBufferRow,
+    NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -255,9 +255,10 @@ impl SyncTranslation for InvoiceTranslation {
                 data.name_ID
             )))?;
 
-        let name_store_id = StoreRowRepository::new(connection)
-            .find_one_by_name_id(&data.name_ID)?
-            .map(|store_row| store_row.id);
+        let name_store_id = StoreRepository::new(connection)
+            .query_by_filter(StoreFilter::new().name_id(EqualFilter::equal_to(&data.name_ID)))?
+            .pop()
+            .map(|store| store.store_row.id);
 
         let invoice_type = match invoice_type(&data, &name) {
             Some(invoice_type) => invoice_type,

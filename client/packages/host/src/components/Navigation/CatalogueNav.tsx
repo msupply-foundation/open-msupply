@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Collapse,
   List,
@@ -11,7 +11,7 @@ import {
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
-export const CatalogueNav: FC = () => {
+export const CatalogueNav = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Catalogue).addWildCard().build()
   );

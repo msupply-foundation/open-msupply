@@ -29,21 +29,12 @@ impl<'a> ReturnReasonRowRepository<'a> {
         ReturnReasonRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
         diesel::insert_into(return_reason_dsl::return_reason)
             .values(row)
             .on_conflict(return_reason_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(return_reason_dsl::return_reason)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

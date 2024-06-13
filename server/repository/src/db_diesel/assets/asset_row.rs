@@ -77,21 +77,12 @@ impl<'a> AssetRowRepository<'a> {
         AssetRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset)
             .values(asset_row)
             .on_conflict(id)
             .do_update()
             .set(asset_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(asset)
-            .values(asset_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

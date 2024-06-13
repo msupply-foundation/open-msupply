@@ -151,21 +151,12 @@ impl<'a> RequisitionRowRepository<'a> {
         RequisitionRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(requisition_dsl::requisition)
             .values(row)
             .on_conflict(requisition_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(requisition_dsl::requisition)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

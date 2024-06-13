@@ -62,9 +62,7 @@ fn insert_or_ignore_clinician_link(
         clinician_id: row.id.clone(),
     };
 
-    ClinicianLinkRowRepository::new(connection).insert_one_or_ignore(&clinician_link_row)?;
-
-    Ok(())
+    ClinicianLinkRowRepository::new(connection).insert_one_or_ignore(&clinician_link_row)
 }
 
 pub struct ClinicianRowRepository<'a> {
@@ -76,21 +74,12 @@ impl<'a> ClinicianRowRepository<'a> {
         ClinicianRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     fn _upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician::dsl::clinician)
             .values(row)
             .on_conflict(clinician::dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(clinician::dsl::clinician)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -166,7 +155,10 @@ impl Upsert for ClinicianRow {
 mod test {
     use util::uuid::uuid;
 
-    use crate::{mock::MockDataInserts, test_db::setup_all, ClinicianRow, ClinicianRowRepository};
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, ClinicianLinkRow, ClinicianLinkRowRepository,
+        ClinicianRow, ClinicianRowRepository,
+    };
 
     #[actix_rt::test]
     async fn clinician_is_sync_update() {
@@ -206,5 +198,15 @@ mod test {
 
         assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
         assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Sneak in a test for insert_one_or_ignore. If another entry is inserted/upserted in
+        // insert_one_or_ignore() the clinician_id foreign key would be violated and the following
+        // would fail:
+        ClinicianLinkRowRepository::new(&connection)
+            .insert_one_or_ignore(&ClinicianLinkRow {
+                id: row.id,
+                clinician_id: "Invalid id".to_string(),
+            })
+            .unwrap();
     }
 }

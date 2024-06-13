@@ -71,7 +71,7 @@ impl<'a> TranslationAndIntegration<'a> {
 
     pub(crate) fn translate_and_integrate_sync_records(
         &self,
-        sync_records: Vec<SyncBufferRow>,
+        sync_records: &[SyncBufferRow],
         translators: &Vec<Box<dyn SyncTranslation>>,
         mut logger: Option<&mut SyncLogger>,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
@@ -211,23 +211,18 @@ pub(crate) fn integrate(
     connection: &StorageConnection,
     integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
-    // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
-    let start_nested_transaction = {
-        connection
-            .lock()
-            .transaction_level::<RepositoryError>()
-            .map_err(|e| e.to_inner_error())?
-            > 0
-    };
-
     for integration_record in integration_records.iter() {
-        // Integrate every record in a sub transaction. This is mainly for Postgres where the
-        // whole transaction fails when there is a DB error (not a problem in sqlite).
-        if start_nested_transaction {
+        if cfg!(feature = "postgres") {
+            // In Postgres the parent transaction fails when there is a DB error in any of the
+            // statements executed in the transaction. Thus, integrate every record in a nested
+            // transaction to catch potential errors (e.g. foreign key violations).
+            // Note, this is not a problem in Sqlite.
             connection
                 .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
                 .map_err(|e| e.to_inner_error())?;
         } else {
+            // For Sqlite, integrating without nested transaction is faster, especially if there are
+            // errors (see the bench_error_performance() test).
             integration_record.integrate(connection)?;
         }
     }
@@ -255,7 +250,7 @@ impl TranslationAndIntegrationResults {
 mod test {
     use super::*;
     use repository::mock::MockDataInserts;
-    use util::{assert_matches, inline_init};
+    use util::{assert_matches, inline_init, uuid::uuid};
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
@@ -307,5 +302,82 @@ mod test {
             ItemRowRepository::new(&connection).find_active_by_id("item"),
             Ok(None)
         );
+    }
+
+    //#[actix_rt::test]
+    #[allow(dead_code)]
+    async fn bench_error_performance() {
+        let (_, connection, _, _) =
+            test_db::setup_all("bench_error_performance", MockDataInserts::none()).await;
+
+        let insert_batch = |with_error: bool, n: i32, parent_tx: bool, nested_tx: bool| {
+            let mut records = vec![];
+            for i in 0..n {
+                records.push(inline_init(|r: &mut ItemRow| {
+                    r.id = uuid();
+                    r.unit_id = if with_error {
+                        // Create invalid ItemRow
+                        if i % 20 == 0 {
+                            None
+                        } else {
+                            Some("invalid".to_string())
+                        }
+                    } else {
+                        None
+                    };
+                }));
+            }
+            let insert = |connection: &StorageConnection| {
+                for record in records {
+                    // ignore errors
+                    if nested_tx {
+                        let _ = connection.transaction_sync_etc(
+                            |connection| ItemRowRepository::new(connection).upsert_one(&record),
+                            false,
+                        );
+                    } else {
+                        let _ = ItemRowRepository::new(connection).upsert_one(&record);
+                    };
+                }
+            };
+
+            let start = std::time::SystemTime::now();
+            if parent_tx {
+                let _: Result<(), RepositoryError> = connection
+                    .transaction_sync(|con| {
+                        insert(con);
+                        Ok(())
+                    })
+                    .map_err::<RepositoryError, _>(|e| e.to_inner_error());
+            } else {
+                insert(&connection);
+            };
+            println!(
+                "with_error: {with_error}, n: {n}, parent_tx: {parent_tx}, nested_tx: {nested_tx}, Time: {:?}",
+                start.elapsed().unwrap()
+            );
+        };
+
+        let run_all_tx_combinations = |with_error: bool, n: i32| {
+            println!("Batch size: {n}");
+            insert_batch(with_error, n, false, false);
+            insert_batch(with_error, n, false, true);
+            insert_batch(with_error, n, true, false);
+            insert_batch(with_error, n, true, true);
+        };
+        let run = |with_error: bool| {
+            println!("Warm up");
+            insert_batch(with_error, 64, true, true);
+
+            run_all_tx_combinations(with_error, 64);
+            run_all_tx_combinations(with_error, 500);
+            run_all_tx_combinations(with_error, 10000);
+        };
+        println!("With error:");
+        run(true);
+        // For comparison, insert same records without error. Note, later batch will be added to
+        // data from earlier batches which potentially results in a slowdown.
+        println!("Without error:");
+        run(false);
     }
 }
