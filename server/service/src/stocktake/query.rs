@@ -20,7 +20,7 @@ pub fn get_stocktakes(
 
     // ensure filter restrict results to store id
     let filter = filter
-        .unwrap_or(StocktakeFilter::new())
+        .unwrap_or_default()
         .store_id(EqualFilter::equal_to(store_id));
 
     Ok(ListResult {

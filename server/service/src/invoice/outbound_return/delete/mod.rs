@@ -40,7 +40,7 @@ pub fn delete_outbound_return(
 
             InvoiceRowRepository::new(connection)
                 .delete(&id)
-                .map_err(|error| DeleteOutboundReturnError::DatabaseError(error))?;
+                .map_err(DeleteOutboundReturnError::DatabaseError)?;
 
             activity_log_entry(
                 ctx,

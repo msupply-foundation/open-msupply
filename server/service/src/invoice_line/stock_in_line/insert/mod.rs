@@ -75,7 +75,7 @@ pub fn insert_stock_in_line(
             }
 
             get_invoice_line(ctx, &invoice_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

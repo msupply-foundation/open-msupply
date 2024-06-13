@@ -60,8 +60,7 @@ pub trait SettingsServiceTrait: Sync + Send {
     ) -> Result<(), UpdateSettingsError> {
         validate(settings)?;
 
-        let result = ctx
-            .connection
+        ctx.connection
             .transaction_sync(|con| {
                 let key_value_store = KeyValueStoreRepository::new(con);
                 key_value_store.set_string(KeyType::SettingsSyncUrl, Some(settings.url.clone()))?;
@@ -80,7 +79,7 @@ pub trait SettingsServiceTrait: Sync + Send {
                 Ok(())
             })
             .map_err(|err| UpdateSettingsError::RepositoryError(err.to_inner_error()))?;
-        Ok(result)
+        Ok(())
     }
 
     fn is_sync_disabled(&self, ctx: &ServiceContext) -> Result<bool, RepositoryError> {

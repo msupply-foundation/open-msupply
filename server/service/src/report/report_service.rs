@@ -211,7 +211,7 @@ fn query_reports(
     let repo = ReportRepository::new(&ctx.connection);
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let filter = filter
-        .unwrap_or(ReportFilter::new())
+        .unwrap_or_default()
         .r#type(ReportType::OmSupply.equal_to());
     Ok(repo.query(pagination, Some(filter.clone()), sort)?)
 }
@@ -274,12 +274,10 @@ fn resolve_report_definition(
         .iter()
         .map(|query| match fully_loaded_report.entries.get(query) {
             Some(query_entry) => Ok(query_entry),
-            None => {
-                return Err(ReportError::InvalidReportDefinition(format!(
-                    "Invalid query reference: {}",
-                    query
-                )))
-            }
+            None => Err(ReportError::InvalidReportDefinition(format!(
+                "Invalid query reference: {}",
+                query
+            ))),
         })
         .collect::<Result<Vec<_>, ReportError>>()?;
 
@@ -367,11 +365,8 @@ fn tera_templates_from_resolved_template(
 ) -> Option<HashMap<String, TeraTemplate>> {
     let mut templates = HashMap::new();
     for (name, entry) in &report.entries {
-        match entry {
-            ReportDefinitionEntry::TeraTemplate(template) => {
-                templates.insert(name.clone(), template.clone());
-            }
-            _ => {}
+        if let ReportDefinitionEntry::TeraTemplate(template) = entry {
+            templates.insert(name.clone(), template.clone());
         }
     }
     Some(templates)

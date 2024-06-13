@@ -106,7 +106,7 @@ pub fn update_inbound_return_lines(
             }
 
             get_invoice(ctx, None, &input.inbound_return_id)
-                .map_err(|error| UpdateInboundReturnLinesError::DatabaseError(error))?
+                .map_err(UpdateInboundReturnLinesError::DatabaseError)?
                 .ok_or(UpdateInboundReturnLinesError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
