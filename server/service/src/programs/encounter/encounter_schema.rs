@@ -8,6 +8,7 @@ schemafy::schemafy!("src/programs/schemas/encounter.json");
 
 pub type SchemaEncounter = Encounter;
 
+#[allow(clippy::derivable_impls)]
 impl Default for SchemaEncounter {
     fn default() -> Self {
         Self {

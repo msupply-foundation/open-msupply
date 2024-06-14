@@ -54,9 +54,7 @@ pub fn generate_outbound_return_lines(
 
     // At this point should have all stock lines, from input and from existing return_lines, iterate over them create
     // iterator with this shape (Option<OutboundInvoiceLine>, StockLine), so they can be mapped with outbound_line_from_stock_line_and_invoice_line
-    let all_stock_lines = from_stock_line_ids
-        .into_iter()
-        .chain(from_item_id.into_iter());
+    let all_stock_lines = from_stock_line_ids.into_iter().chain(from_item_id);
     let match_stock_line_to_invoice_line = |sl: &StockLine, il: &InvoiceLine| -> bool {
         il.invoice_line_row.stock_line_id.as_ref() == Some(&sl.stock_line_row.id)
     };
@@ -64,7 +62,7 @@ pub fn generate_outbound_return_lines(
         let invoice_line = existing_return_lines
             .iter()
             .find(|invoice_line| match_stock_line_to_invoice_line(&stock_line, invoice_line));
-        (invoice_line.map(Clone::clone), stock_line)
+        (invoice_line.cloned(), stock_line)
     });
 
     // Map iterator over (Option<OutboundInvoiceLine>, StockLine) to Vec<OutboundReturnLine>
@@ -87,9 +85,7 @@ fn stock_lines_from_stock_line_ids(
 
     let filter = StockLineFilter::new().id(EqualFilter::equal_any(stock_line_ids.clone()));
 
-    let stock_lines = stock_line_repo.query_by_filter(filter, Some(store_id.to_string()));
-
-    stock_lines
+    stock_line_repo.query_by_filter(filter, Some(store_id.to_string()))
 }
 
 fn stock_lines_for_item_id(
@@ -108,9 +104,7 @@ fn stock_lines_for_item_id(
                 .store_id(EqualFilter::equal_to(store_id))
                 .is_available(true);
 
-            let stock_lines = stock_line_repo.query_by_filter(filter, None);
-
-            stock_lines
+            stock_line_repo.query_by_filter(filter, None)
         }
         None => Ok(vec![]),
     }
@@ -143,9 +137,7 @@ fn get_existing_return_lines(
     let lines_by_item_id =
         repo.query_by_filter(base_filter.clone().item_id(EqualFilter::equal_to(item_id)))?;
 
-    let all_lines = lines_by_stock_line
-        .into_iter()
-        .chain(lines_by_item_id.into_iter());
+    let all_lines = lines_by_stock_line.into_iter().chain(lines_by_item_id);
 
     // Do sanity check to ensure all invoice lines have stock_line_id
     let result = all_lines
@@ -188,14 +180,14 @@ fn outbound_line_from_stock_line_and_invoice_line(
     let number_of_packs_available_to_return =
         stock_line.stock_line_row.available_number_of_packs + number_of_packs;
 
-    return OutboundReturnLine {
+    OutboundReturnLine {
         id,
         note,
         number_of_packs,
         reason_id: return_reason_id,
         available_number_of_packs: number_of_packs_available_to_return,
         stock_line,
-    };
+    }
 }
 #[cfg(test)]
 mod test {

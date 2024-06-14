@@ -161,7 +161,7 @@ pub fn query_json(
     let rows = statement.raw_query();
     let rows = rows.mapped(|row| {
         let mut object = serde_json::Map::<String, serde_json::Value>::new();
-        for c in 0..column_names.len() {
+        for (c, _) in column_names.iter().enumerate() {
             let value = row.get_ref(c)?;
             let name = column_names[c].clone();
             match value.data_type() {

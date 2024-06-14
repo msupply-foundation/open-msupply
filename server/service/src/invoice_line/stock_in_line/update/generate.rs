@@ -15,6 +15,13 @@ use repository::{
 
 use super::UpdateStockInLine;
 
+pub struct GenerateResult {
+    pub invoice_row_option: Option<InvoiceRow>,
+    pub updated_line: InvoiceLineRow,
+    pub upsert_batch_option: Option<StockLineRow>,
+    pub batch_to_delete_id: Option<String>,
+}
+
 pub fn generate(
     connection: &StorageConnection,
     user_id: &str,
@@ -22,15 +29,7 @@ pub fn generate(
     current_line: InvoiceLine,
     new_item_option: Option<ItemRow>,
     existing_invoice_row: InvoiceRow,
-) -> Result<
-    (
-        Option<InvoiceRow>,
-        InvoiceLineRow,
-        Option<StockLineRow>,
-        Option<String>,
-    ),
-    RepositoryError,
-> {
+) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
@@ -75,12 +74,12 @@ pub fn generate(
         None
     };
 
-    Ok((
-        generate_invoice_user_id_update(user_id, existing_invoice_row),
-        update_line,
+    Ok(GenerateResult {
+        invoice_row_option: generate_invoice_user_id_update(user_id, existing_invoice_row),
+        updated_line: update_line,
         upsert_batch_option,
         batch_to_delete_id,
-    ))
+    })
 }
 
 fn get_batch_to_delete_id(

@@ -25,9 +25,9 @@ pub fn mock_test_master_list_repository() -> MockData {
 pub fn mock_test_master_list_name1() -> NameRow {
     let id = "mock_test_master_list_name1".to_owned();
     inline_init(|r: &mut NameRow| {
-        r.id = id.clone();
-        r.name = id.clone();
-        r.code = id.clone();
+        r.id.clone_from(&id);
+        r.name.clone_from(&id);
+        r.code.clone_from(&id);
         r.is_customer = true;
         r.is_supplier = true;
     })
@@ -36,9 +36,9 @@ pub fn mock_test_master_list_name1() -> NameRow {
 pub fn mock_test_master_list_name2() -> NameRow {
     let id = "mock_test_master_list_name2".to_owned();
     inline_init(|r: &mut NameRow| {
-        r.id = id.clone();
-        r.name = id.clone();
-        r.code = id.clone();
+        r.id.clone_from(&id);
+        r.name.clone_from(&id);
+        r.code.clone_from(&id);
         r.is_customer = true;
         r.is_supplier = true;
     })
@@ -47,9 +47,9 @@ pub fn mock_test_master_list_name2() -> NameRow {
 pub fn mock_test_master_list_name3() -> NameRow {
     let id = "mock_test_master_list_name3".to_owned();
     inline_init(|r: &mut NameRow| {
-        r.id = id.clone();
-        r.name = id.clone();
-        r.code = id.clone();
+        r.id.clone_from(&id);
+        r.name.clone_from(&id);
+        r.code.clone_from(&id);
         r.is_customer = true;
         r.is_supplier = true;
     })

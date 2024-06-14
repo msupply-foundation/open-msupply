@@ -45,8 +45,7 @@ fn extract_events(
                     schedule_config
                         .config
                         .datetime_field
-                        .map(|field| extract_naivedatetime_field(&doc.data, &field))
-                        .flatten()
+                        .and_then(|field| extract_naivedatetime_field(&doc.data, &field))
                         .unwrap_or(base_time)
                 };
                 let mut active_start_datetime = start_datetime;
@@ -161,7 +160,7 @@ fn is_truthy(value: &Value) -> bool {
         return b;
     }
     if let Some(string) = value.as_str() {
-        return string != "";
+        return !string.is_empty();
     }
     if let Some(int) = value.as_i64() {
         return int != 0;
@@ -172,7 +171,7 @@ fn is_truthy(value: &Value) -> bool {
     if let Some(float) = value.as_f64() {
         return float != 0.0;
     }
-    return true;
+    true
 }
 
 fn match_condition(condition: &EventCondition, doc: &Document) -> bool {
@@ -237,26 +236,20 @@ fn extract_field<T, F>(data: &Value, path: &str, extract: &F) -> Option<T>
 where
     F: Fn(&Value) -> Option<T>,
 {
-    let Some(data) = data.as_object() else {
-        return None;
-    };
+    let data = data.as_object()?;
     let parts = path
-        .split(".")
+        .split('.')
         .map(|p| p.to_string())
         .collect::<Vec<String>>();
 
     let mut reference: &Map<String, Value> = data;
     let parts_len = parts.len();
     for (index, part) in parts.into_iter().enumerate() {
-        let Some(next) = reference.get(&part) else {
-            return None;
-        };
+        let next = reference.get(&part)?;
         if index + 1 == parts_len {
             return extract(next);
         }
-        let Some(next_obj) = next.as_object() else {
-            return None;
-        };
+        let next_obj = next.as_object()?;
 
         reference = next_obj
     }
@@ -291,13 +284,11 @@ fn extract_simple_field(data: &Value, path: &str) -> Option<String> {
 
 fn extract_naivedatetime_field(data: &Value, path: &str) -> Option<NaiveDateTime> {
     extract_field(data, path, &|v| {
-        v.as_str()
-            .map(|s| {
-                DateTime::parse_from_rfc3339(s)
-                    .map(|t| Some(t.naive_utc()))
-                    .unwrap_or(None)
-            })
-            .flatten()
+        v.as_str().and_then(|s| {
+            DateTime::parse_from_rfc3339(s)
+                .map(|t| Some(t.naive_utc()))
+                .unwrap_or(None)
+        })
     })
 }
 

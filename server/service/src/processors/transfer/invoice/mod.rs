@@ -221,10 +221,8 @@ fn get_upsert_operation(
 
     let linked_original_shipment = match &invoice.invoice_row.original_shipment_id {
         Some(original_shipment_id) => {
-            let linked_original_shipment =
-                get_linked_original_shipment(connection, original_shipment_id)
-                    .map_err(|e| GetLinkedOriginalShipmentError(changelog_row.clone(), e))?;
-            linked_original_shipment
+            get_linked_original_shipment(connection, original_shipment_id)
+                .map_err(|e| GetLinkedOriginalShipmentError(changelog_row.clone(), e))?
         }
         None => None,
     };

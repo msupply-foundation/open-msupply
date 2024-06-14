@@ -25,5 +25,5 @@ tokio = { version = "1.38.0", features = ["macros"] }
 android_logger = { version = "0.13.0" }
 simple-log = { version = "1.6" }
 
-[lints.clippy]
-module_inception = "allow"
+[lints]
+workspace = true

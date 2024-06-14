@@ -43,7 +43,7 @@ pub(super) fn map(
                                 &requisitions_in_periods,
                             )
                         })
-                        .map(|p| p.clone())
+                        .cloned()
                         .collect();
 
                     // Order type for program settings
@@ -58,7 +58,7 @@ pub(super) fn map(
             let suppliers = program_suppliers
                 .iter()
                 .filter(|s| s.program.id == program_setting.program_row.id)
-                .map(|s| s.clone())
+                .cloned()
                 .collect();
 
             ProgramSettings {

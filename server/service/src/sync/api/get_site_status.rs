@@ -32,8 +32,6 @@ impl SyncApiV5 {
 
 #[cfg(test)]
 mod test {
-    use util::assert_matches;
-
     use super::*;
     use httpmock::{Method::GET, MockServer};
     #[actix_rt::test]
@@ -56,7 +54,7 @@ mod test {
 
         mock.assert();
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
 
         assert_eq!(
             result.unwrap(),
@@ -85,7 +83,7 @@ mod test {
 
         mock.assert();
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
 
         assert_eq!(
             result.unwrap(),
@@ -115,7 +113,7 @@ mod test {
 
         mock.assert();
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
 
         assert_eq!(
             result.unwrap(),

@@ -63,3 +63,6 @@ default = ["sqlite", "dep:machine-uid"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
 android = ["repository/sqlite"]
+
+[lints]
+workspace = true

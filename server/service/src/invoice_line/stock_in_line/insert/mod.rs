@@ -75,7 +75,7 @@ pub fn insert_stock_in_line(
             }
 
             get_invoice_line(ctx, &invoice_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -256,7 +256,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.item_id = mock_item_a().id.clone();
+                    r.item_id.clone_from(&mock_item_a().id);
                     r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.invoice_id = mock_outbound_shipment_e().id;
@@ -271,7 +271,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.item_id = mock_item_a().id.clone();
+                    r.item_id.clone_from(&mock_item_a().id);
                     r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.invoice_id = verified_inbound_return().id; // VERIFIED

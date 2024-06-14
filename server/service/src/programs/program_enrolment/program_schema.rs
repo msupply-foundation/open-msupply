@@ -8,6 +8,7 @@ schemafy::schemafy!("src/programs/schemas/program_enrolment.json");
 
 pub type SchemaProgramEnrolment = ProgramEnrolment;
 
+#[allow(clippy::derivable_impls)]
 impl Default for SchemaProgramEnrolment {
     fn default() -> Self {
         Self {
