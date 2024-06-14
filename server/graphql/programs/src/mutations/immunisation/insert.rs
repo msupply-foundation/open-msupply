@@ -68,7 +68,7 @@ pub fn insert_immunisation_program(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateProgram,
+            resource: Resource::MutateImmunisationProgram,
             store_id: Some(store_id.clone()),
         },
     )?;

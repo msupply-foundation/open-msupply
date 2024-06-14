@@ -478,8 +478,8 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             Permissions::EditCustomerSupplierManufacturerNames => {
                 output.insert(PermissionType::NamePropertiesMutate);
             }
-            Permissions::CentralServerAdmin => {
-                output.insert(PermissionType::CentralServerAdmin);
+            Permissions::EditCentralData => {
+                output.insert(PermissionType::EditCentralData);
             }
             _ => continue,
         }

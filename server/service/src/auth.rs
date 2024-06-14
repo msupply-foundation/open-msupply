@@ -125,6 +125,7 @@ pub enum Resource {
     // vaccine course
     MutateVaccineCourse,
     QueryVaccineCourse,
+    MutateImmunisationProgram,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -467,7 +468,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
                 PermissionDSL::HasStoreAccess,
                 PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
             ]),
-            PermissionDSL::HasPermission(PermissionType::CentralServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
     map.insert(
@@ -486,12 +487,9 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateProgram,
-        PermissionDSL::Any(vec![
-            PermissionDSL::And(vec![
-                PermissionDSL::HasStoreAccess,
-                PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
-            ]),
-            PermissionDSL::HasPermission(PermissionType::CentralServerAdmin),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
         ]),
     );
     map.insert(
@@ -547,11 +545,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateDemographic,
-        PermissionDSL::HasPermission(PermissionType::CentralServerAdmin),
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
     map.insert(
         Resource::MutateVaccineCourse,
-        PermissionDSL::HasPermission(PermissionType::CentralServerAdmin),
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::MutateImmunisationProgram,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
     map.insert(
         Resource::QueryVaccineCourse,
