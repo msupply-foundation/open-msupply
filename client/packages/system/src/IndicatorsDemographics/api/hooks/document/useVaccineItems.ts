@@ -11,6 +11,6 @@ export const useVaccineItems = () => {
 
   const api = useItemApi();
   return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.itemVaccine(queryParams)
+    api.get.vaccineItems(queryParams)
   );
 };

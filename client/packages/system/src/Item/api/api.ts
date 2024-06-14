@@ -110,7 +110,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Could not fetch items');
     },
-    itemVaccine: async ({
+    vaccineItems: async ({
       filterBy,
       first,
       offset,
