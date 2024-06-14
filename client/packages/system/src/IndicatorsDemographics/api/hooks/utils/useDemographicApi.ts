@@ -18,6 +18,8 @@ export const useDemographicsApi = () => {
       [...keys.indicatorList(), sortBy] as const,
     baseProjection: () => ['demographic projection'] as const,
     detailProjection: (id: string) => [...keys.baseProjection(), id] as const,
+    projection: (baseYear: number) =>
+      [...keys.baseProjection(), baseYear] as const,
     projectionList: () => [...keys.baseProjection(), 'list'] as const,
     paramProjectionList: (baseYear: number) =>
       [...keys.projectionList(), baseYear] as const,

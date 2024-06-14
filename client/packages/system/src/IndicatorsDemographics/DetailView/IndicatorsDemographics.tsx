@@ -44,8 +44,8 @@ const IndicatorsDemographicsComponent: FC = () => {
   const t = useTranslation();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
-  const { data: projections, isLoading: isLoadingProjections } =
-    useDemographicData.projection.list(draft?.[0]?.baseYear ?? 2024);
+  const { data: projection, isLoading: isLoadingProjection } =
+    useDemographicData.projection.get(draft?.[0]?.baseYear ?? 2024);
 
   const { insertDemographicIndicator, invalidateQueries } =
     useDemographicData.indicator.insert();
@@ -225,10 +225,10 @@ const IndicatorsDemographicsComponent: FC = () => {
   }, [draft]);
 
   useEffect(() => {
-    if (!projections || !projections.nodes[0]) return;
+    if (!projection) return;
 
-    setHeaderDraft(mapHeaderData(projections.nodes[0]));
-  }, [projections]);
+    setHeaderDraft(mapHeaderData(projection));
+  }, [projection]);
 
   return (
     <>
@@ -237,7 +237,7 @@ const IndicatorsDemographicsComponent: FC = () => {
         <GrowthRow
           columns={columns}
           data={headerDraft}
-          isLoading={isLoadingProjections}
+          isLoading={isLoadingProjection}
           setData={handleGrowthChange}
         ></GrowthRow>
         <DataTable

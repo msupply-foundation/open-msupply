@@ -4,6 +4,7 @@ import { useDemographicIndicatorInsert } from './useDemographicIndicatorInsert';
 import { useDemographicIndicatorUpdate } from './useDemographicIndicatorUpdate';
 import { useDemographicProjections } from './useDemographicProjections';
 import { useDemographicProjectionUpsert } from './useDemographicProjectionUpsert';
+import { useDemographicProjection } from './useDemographicProjection';
 
 export const Document = {
   useDemographicIndicator,
@@ -11,5 +12,6 @@ export const Document = {
   useDemographicIndicatorInsert,
   useDemographicIndicatorUpdate,
   useDemographicProjections,
+  useDemographicProjection,
   useDemographicProjectionUpsert,
 };
