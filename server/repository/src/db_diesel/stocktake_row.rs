@@ -92,21 +92,12 @@ impl<'a> StocktakeRowRepository<'a> {
         StocktakeRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stocktake_dsl::stocktake)
             .values(row)
             .on_conflict(stocktake_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(stocktake_dsl::stocktake)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

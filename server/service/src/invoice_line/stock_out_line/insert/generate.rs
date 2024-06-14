@@ -57,7 +57,7 @@ fn generate_batch_update(
         0.0
     };
 
-    let updated_batch = StockLineRow {
+    StockLineRow {
         available_number_of_packs: batch.available_number_of_packs - available_reduction,
         total_number_of_packs: batch.total_number_of_packs - total_reduction,
         location_id: location_id.or(batch.location_id),
@@ -67,9 +67,7 @@ fn generate_batch_update(
         cost_price_per_pack: cost_price_per_pack.unwrap_or(batch.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.unwrap_or(batch.sell_price_per_pack),
         ..batch
-    };
-
-    updated_batch
+    }
 }
 
 fn generate_line(

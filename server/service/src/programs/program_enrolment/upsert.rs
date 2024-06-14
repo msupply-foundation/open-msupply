@@ -107,7 +107,7 @@ fn generate(
 ) -> Result<RawDocument, RepositoryError> {
     Ok(RawDocument {
         name: patient_doc_name(&input.patient_id, &input.r#type),
-        parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
+        parents: input.parent.map(|p| vec![p]).unwrap_or_default(),
         author: user_id.to_string(),
         datetime: Utc::now(),
         r#type: input.r#type.clone(),

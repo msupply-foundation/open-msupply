@@ -110,14 +110,9 @@ impl FileSyncDriver {
                 };
             } else {
                 // If not initialised, only wait for start trigger
-                if let Some(message) = self.receiver.recv().await {
-                    match message {
-                        FileSyncMessage::Start => {
-                            log::info!("Starting file sync");
-                            stopped = false;
-                        }
-                        _ => {}
-                    }
+                if let Some(FileSyncMessage::Start) = self.receiver.recv().await {
+                    log::info!("Starting file sync");
+                    stopped = false;
                 }
             }
 

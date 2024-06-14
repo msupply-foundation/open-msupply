@@ -1124,7 +1124,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -4393,8 +4393,15 @@ export enum NameNodeType {
 
 export type NamePropertyConnector = {
   __typename: 'NamePropertyConnector';
-  nodes: Array<PropertyNode>;
+  nodes: Array<NamePropertyNode>;
   totalCount: Scalars['Int']['output'];
+};
+
+export type NamePropertyNode = {
+  __typename: 'NamePropertyNode';
+  id: Scalars['String']['output'];
+  property: PropertyNode;
+  remoteEditable: Scalars['Boolean']['output'];
 };
 
 export type NamePropertyResponse = NamePropertyConnector;
@@ -4645,6 +4652,7 @@ export type PatientNode = {
   code2?: Maybe<Scalars['String']['output']>;
   contactTraces: ContactTraceResponse;
   country?: Maybe<Scalars['String']['output']>;
+  createdDatetime?: Maybe<Scalars['DateTime']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;

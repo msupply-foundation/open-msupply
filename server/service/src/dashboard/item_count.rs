@@ -56,14 +56,14 @@ impl ItemCountServiceTrait for ItemServiceCount {
         let low_stock = item_stats
             .iter()
             .filter(|&i| (i.available_stock_on_hand > 0.0))
-            .map(|i| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
+            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
             .count() as i64;
 
         let more_than_six_months_stock = item_stats
             .iter()
             .filter(|&i| (i.available_stock_on_hand > 0.0))
-            .map(|i| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
+            .map(|i| i.available_stock_on_hand / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock > 6.0)
             .count() as i64;
 
@@ -138,7 +138,7 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_link_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_link_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
@@ -219,7 +219,7 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_link_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_link_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
@@ -367,7 +367,7 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_link_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_link_id,
                     }],
                     lines: vec![
                         MasterListLineRow {

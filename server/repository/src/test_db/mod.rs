@@ -86,13 +86,13 @@ pub struct SetupResult {
 
 // Object/Struct input/output allow adding new setup parameters without mass
 // refactor
-pub async fn setup_test<'a>(
+pub async fn setup_test(
     SetupOption {
         db_name,
         version,
         inserts,
         extra_mock_data,
-    }: SetupOption<'a>,
+    }: SetupOption<'_>,
 ) -> SetupResult {
     let db_settings = get_test_db_settings(db_name);
     let (connection_manager, core_data) = setup_with_version(&db_settings, version, inserts).await;

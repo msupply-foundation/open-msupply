@@ -35,8 +35,8 @@ pub fn generate(
     } = generate_new_stock_lines(&stock_line.stock_line_row, &input);
 
     let (repack_invoice, repack_invoice_lines) =
-        generate_invoice_and_lines(&ctx, input.number_of_packs, &stock_line, &new_stock_line)?;
-    let location_movement = if let Some(_) = input.new_location_id {
+        generate_invoice_and_lines(ctx, input.number_of_packs, &stock_line, &new_stock_line)?;
+    let location_movement = if input.new_location_id.is_some() {
         Some(generate_location_movement(&ctx.store_id, &new_stock_line))
     } else {
         None
@@ -119,10 +119,8 @@ fn generate_invoice_and_lines(
         number_of_packs: new_stock_line.total_number_of_packs,
         cost_price_per_pack: new_stock_line.cost_price_per_pack,
         sell_price_per_pack: new_stock_line.sell_price_per_pack,
-        total_before_tax: new_stock_line.cost_price_per_pack
-            * new_stock_line.total_number_of_packs as f64,
-        total_after_tax: new_stock_line.cost_price_per_pack
-            * new_stock_line.total_number_of_packs as f64,
+        total_before_tax: new_stock_line.cost_price_per_pack * new_stock_line.total_number_of_packs,
+        total_after_tax: new_stock_line.cost_price_per_pack * new_stock_line.total_number_of_packs,
         ..Default::default()
     };
 
@@ -135,10 +133,8 @@ fn generate_invoice_and_lines(
         number_of_packs: number_of_packs_input,
         cost_price_per_pack: stock_line_to_update_row.cost_price_per_pack,
         sell_price_per_pack: stock_line_to_update_row.sell_price_per_pack,
-        total_before_tax: stock_line_to_update_row.cost_price_per_pack
-            * number_of_packs_input as f64,
-        total_after_tax: stock_line_to_update_row.cost_price_per_pack
-            * number_of_packs_input as f64,
+        total_before_tax: stock_line_to_update_row.cost_price_per_pack * number_of_packs_input,
+        total_after_tax: stock_line_to_update_row.cost_price_per_pack * number_of_packs_input,
         ..stock_in.clone()
     };
 
@@ -157,17 +153,17 @@ fn generate_new_stock_lines(stock_line: &StockLineRow, input: &InsertRepack) -> 
 
     let new_stock_line = {
         let mut new_line = stock_line.clone();
-        let difference = input.new_pack_size as f64 / stock_line.pack_size as f64;
+        let difference = input.new_pack_size / stock_line.pack_size;
 
         new_line.id = uuid();
         new_line.pack_size = input.new_pack_size;
         new_line.available_number_of_packs =
-            input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
+            input.number_of_packs * stock_line.pack_size / input.new_pack_size;
         new_line.total_number_of_packs =
-            input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
+            input.number_of_packs * stock_line.pack_size / input.new_pack_size;
         new_line.sell_price_per_pack = stock_line.sell_price_per_pack * difference;
         new_line.cost_price_per_pack = stock_line.cost_price_per_pack * difference;
-        new_line.location_id = input.new_location_id.clone();
+        new_line.location_id.clone_from(&input.new_location_id);
 
         new_line
     };

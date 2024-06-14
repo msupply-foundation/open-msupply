@@ -50,14 +50,17 @@ pub fn update_stock_line(
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
-            let (new_stock_line, location_movements, barcode_row) =
-                generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
+            let GenerateResult {
+                new_stock_line,
+                location_movements,
+                barcode_row,
+            } = generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
 
             if let Some(barcode_row) = barcode_row {
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
             }
 
-            StockLineRowRepository::new(&connection).upsert_one(&new_stock_line)?;
+            StockLineRowRepository::new(connection).upsert_one(&new_stock_line)?;
 
             if let Some(location_movements) = location_movements {
                 for movement in location_movements {
@@ -97,6 +100,12 @@ fn validate(
     Ok(stock_line)
 }
 
+pub struct GenerateResult {
+    pub new_stock_line: StockLineRow,
+    pub location_movements: Option<Vec<LocationMovementRow>>,
+    pub barcode_row: Option<BarcodeRow>,
+}
+
 fn generate(
     store_id: String,
     connection: &StorageConnection,
@@ -111,14 +120,7 @@ fn generate(
         on_hold,
         barcode,
     }: UpdateStockLine,
-) -> Result<
-    (
-        StockLineRow,
-        Option<Vec<LocationMovementRow>>,
-        Option<BarcodeRow>,
-    ),
-    UpdateStockLineError,
-> {
+) -> Result<GenerateResult, UpdateStockLineError> {
     let mut existing = existing_line.stock_line_row;
     let location_movements = match location.clone() {
         Some(location) => {
@@ -138,7 +140,7 @@ fn generate(
 
     let barcode_row = match &barcode {
         // Don't generate row for empty gtin
-        Some(gtin) if gtin == "" => None,
+        Some(gtin) if gtin.is_empty() => None,
         Some(gtin) => Some(barcode::generate(
             connection,
             BarcodeInput {
@@ -152,7 +154,7 @@ fn generate(
 
     let barcode_id = match &barcode {
         // If it'e empty gtin unlink
-        Some(gtin) if gtin == "" => None,
+        Some(gtin) if gtin.is_empty() => None,
         // If gtin not specified keep existing
         None => existing.barcode_id,
         Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
@@ -165,7 +167,11 @@ fn generate(
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
     existing.barcode_id = barcode_id;
 
-    Ok((existing, location_movements, barcode_row))
+    Ok(GenerateResult {
+        new_stock_line: existing,
+        location_movements,
+        barcode_row,
+    })
 }
 
 fn generate_location_movement(
@@ -177,28 +183,25 @@ fn generate_location_movement(
     let mut movement: Vec<LocationMovementRow> = Vec::new();
     let mut exit_movement;
 
-    match existing.location_id {
-        Some(location_id) => {
-            let filter = LocationMovementRepository::new(connection)
-                .query_by_filter(
-                    LocationMovementFilter::new()
-                        .enter_datetime(DatetimeFilter::is_null(false))
-                        .exit_datetime(DatetimeFilter::is_null(true))
-                        .location_id(EqualFilter::equal_to(&location_id))
-                        .stock_line_id(EqualFilter::equal_to(&existing.id))
-                        .store_id(EqualFilter::equal_to(&store_id)),
-                )?
-                .into_iter()
-                .map(|l| l.location_movement_row)
-                .min_by_key(|l| l.enter_datetime);
+    if let Some(location_id) = existing.location_id {
+        let filter = LocationMovementRepository::new(connection)
+            .query_by_filter(
+                LocationMovementFilter::new()
+                    .enter_datetime(DatetimeFilter::is_null(false))
+                    .exit_datetime(DatetimeFilter::is_null(true))
+                    .location_id(EqualFilter::equal_to(&location_id))
+                    .stock_line_id(EqualFilter::equal_to(&existing.id))
+                    .store_id(EqualFilter::equal_to(&store_id)),
+            )?
+            .into_iter()
+            .map(|l| l.location_movement_row)
+            .min_by_key(|l| l.enter_datetime);
 
-            if filter.is_some() {
-                exit_movement = filter.unwrap();
-                exit_movement.exit_datetime = Some(Utc::now().naive_utc());
-                movement.push(exit_movement);
-            }
+        if let Some(filter) = filter {
+            exit_movement = filter;
+            exit_movement.exit_datetime = Some(Utc::now().naive_utc());
+            movement.push(exit_movement);
         }
-        None => {}
     }
 
     movement.push(LocationMovementRow {
@@ -226,7 +229,7 @@ fn log_stock_changes(
         };
 
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockLocationChange,
             Some(new.id.to_owned()),
             previous_location,
@@ -241,7 +244,7 @@ fn log_stock_changes(
         };
 
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockBatchChange,
             Some(new.id.to_owned()),
             previous_batch,
@@ -250,7 +253,7 @@ fn log_stock_changes(
     }
     if existing.cost_price_per_pack != new.cost_price_per_pack {
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockCostPriceChange,
             Some(new.id.to_owned()),
             Some(existing.cost_price_per_pack.to_string()),
@@ -259,7 +262,7 @@ fn log_stock_changes(
     }
     if existing.sell_price_per_pack != new.sell_price_per_pack {
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockSellPriceChange,
             Some(new.id.to_owned()),
             Some(existing.sell_price_per_pack.to_string()),
@@ -274,7 +277,7 @@ fn log_stock_changes(
         };
 
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockExpiryDateChange,
             Some(new.id.to_owned()),
             previous_expiry_date,
@@ -283,7 +286,7 @@ fn log_stock_changes(
     }
     if existing.on_hold != new.on_hold && new.on_hold {
         activity_log_entry(
-            &ctx,
+            ctx,
             ActivityLogType::StockOnHold,
             Some(new.id.to_owned()),
             None,
@@ -291,13 +294,7 @@ fn log_stock_changes(
         )?;
     }
     if existing.on_hold != new.on_hold && !new.on_hold {
-        activity_log_entry(
-            &ctx,
-            ActivityLogType::StockOffHold,
-            Some(new.id),
-            None,
-            None,
-        )?;
+        activity_log_entry(ctx, ActivityLogType::StockOffHold, Some(new.id), None, None)?;
     }
 
     Ok(())

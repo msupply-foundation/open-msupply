@@ -23,7 +23,7 @@ pub fn generate_suggested_quantity(
     if average_monthly_consumption == 0.0 {
         return 0.0;
     }
-    let months_of_stock = available_stock_on_hand as f64 / average_monthly_consumption as f64;
+    let months_of_stock = available_stock_on_hand / average_monthly_consumption;
 
     let default_min_months_of_stock = if min_months_of_stock == 0.0 {
         max_months_of_stock

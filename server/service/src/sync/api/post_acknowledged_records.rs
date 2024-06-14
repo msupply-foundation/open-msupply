@@ -26,10 +26,9 @@ impl SyncApiV5 {
 
 #[cfg(test)]
 mod test {
-    use httpmock::{Method::POST, MockServer};
-    use util::assert_matches;
-
     use super::*;
+    use httpmock::{Method::POST, MockServer};
+
     #[actix_rt::test]
     async fn test_acknowledged_remote_records() {
         let mock_server = MockServer::start();
@@ -48,6 +47,6 @@ mod test {
 
         mock.assert();
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
     }
 }

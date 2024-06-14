@@ -18,11 +18,11 @@ export const toIndicatorFragment = (
     baseYear: row.baseYear,
     basePopulation: indexPopulation ?? row.basePopulation,
     populationPercentage: row.percentage ?? 0,
-    year1Projection: row[0],
-    year2Projection: row[1],
-    year3Projection: row[2],
-    year4Projection: row[3],
-    year5Projection: row[4],
+    year1Projection: row[1],
+    year2Projection: row[2],
+    year3Projection: row[3],
+    year4Projection: row[4],
+    year5Projection: row[5],
   };
 };
 
@@ -63,7 +63,6 @@ export const calculateAcrossRow = (
       !isNaN(parseFloat(key)) &&
       !(row.id === GENERAL_POPULATION_ID && parseFloat(key) == 0)
   );
-
   Object.values(rowNumberKeys).forEach(key => {
     const columnKey = parseInt(key);
     updatedRow = {
@@ -81,7 +80,6 @@ export const calculateAcrossRow = (
     updatedRow = { ...updatedRow, [0]: indexValue ?? 0 };
   }
   updatedRow = { ...updatedRow, basePopulation: indexValue ?? 0 };
-
   return updatedRow;
 };
 

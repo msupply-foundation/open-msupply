@@ -265,30 +265,31 @@ pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
 }
 
 pub fn test_stocktake_data() -> MockData {
-    let mut data: MockData = Default::default();
-    data.stocktakes = vec![
-        mock_stocktake_without_lines(),
-        mock_stocktake_finalised(),
-        mock_stocktake_finalised_without_lines(),
-        mock_stocktake_stock_surplus(),
-        mock_stocktake_stock_deficit(),
-        mock_stocktake_no_lines(),
-        mock_stocktake_no_count_change(),
-        mock_stocktake_full_edit(),
-        mock_stocktake_new_stock_line(),
-        mock_locked_stocktake(),
-    ];
-    data.stocktake_lines = vec![
-        mock_stocktake_line_finalised(),
-        mock_stocktake_line_stock_surplus(),
-        mock_stocktake_line_stock_deficit(),
-        mock_stocktake_line_no_count_change(),
-        mock_stocktake_line_new_stock_line(),
-        mock_locked_stocktake_line(),
-    ];
-    data.stock_lines = vec![
-        mock_stock_line_stocktake_surplus(),
-        mock_stock_line_stocktake_deficit(),
-    ];
-    data
+    MockData {
+        stocktakes: vec![
+            mock_stocktake_without_lines(),
+            mock_stocktake_finalised(),
+            mock_stocktake_finalised_without_lines(),
+            mock_stocktake_stock_surplus(),
+            mock_stocktake_stock_deficit(),
+            mock_stocktake_no_lines(),
+            mock_stocktake_no_count_change(),
+            mock_stocktake_full_edit(),
+            mock_stocktake_new_stock_line(),
+            mock_locked_stocktake(),
+        ],
+        stocktake_lines: vec![
+            mock_stocktake_line_finalised(),
+            mock_stocktake_line_stock_surplus(),
+            mock_stocktake_line_stock_deficit(),
+            mock_stocktake_line_no_count_change(),
+            mock_stocktake_line_new_stock_line(),
+            mock_locked_stocktake_line(),
+        ],
+        stock_lines: vec![
+            mock_stock_line_stocktake_surplus(),
+            mock_stock_line_stocktake_deficit(),
+        ],
+        ..Default::default()
+    }
 }

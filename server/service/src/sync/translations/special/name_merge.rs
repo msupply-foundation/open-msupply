@@ -122,9 +122,9 @@ impl SyncTranslation for NameMergeTranslation {
                     // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
                     // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
                     if (!nsj_keep.name_store_join.name_is_customer
-                        && nsj_keep.name_store_join.name_is_customer)
+                        && nsj_delete.name_store_join.name_is_customer)
                         || (!nsj_keep.name_store_join.name_is_supplier
-                            && nsj_keep.name_store_join.name_is_supplier)
+                            && nsj_delete.name_store_join.name_is_supplier)
                     {
                         operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
                             id: nsj_keep.name_store_join.id.clone(),
@@ -211,7 +211,7 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -228,7 +228,7 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
         let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
@@ -257,17 +257,17 @@ mod tests {
         let count_name_store_join = |id: &str| -> usize {
             name_store_join_repo
                 .query(Some(
-                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&id.to_string())),
+                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(id)),
                 ))
                 .unwrap()
                 .len()
         };
 
         // Ensure the test data is what was expected as when written
-        assert_eq!(count_name_store_join(&"name_a"), 3);
-        assert_eq!(count_name_store_join(&"name2"), 1);
-        assert_eq!(count_name_store_join(&"name3"), 2);
-        assert_eq!(count_name_store_join(&"name_store_a"), 1);
+        assert_eq!(count_name_store_join("name_a"), 3);
+        assert_eq!(count_name_store_join("name2"), 1);
+        assert_eq!(count_name_store_join("name3"), 2);
+        assert_eq!(count_name_store_join("name_store_a"), 1);
 
         let sync_records = vec![
             SyncBufferRow {
@@ -309,11 +309,11 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, None).unwrap();
 
-        assert_eq!(count_name_store_join(&"name_a"), 0);
-        assert_eq!(count_name_store_join(&"name2"), 0);
-        assert_eq!(count_name_store_join(&"name3"), 0);
-        assert_eq!(count_name_store_join(&"name_store_a"), 3);
+        assert_eq!(count_name_store_join("name_a"), 0);
+        assert_eq!(count_name_store_join("name2"), 0);
+        assert_eq!(count_name_store_join("name3"), 0);
+        assert_eq!(count_name_store_join("name_store_a"), 3);
     }
 }

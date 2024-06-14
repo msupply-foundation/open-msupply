@@ -36,7 +36,7 @@ impl CentralDataSynchroniser {
         let cursor_controller = CursorController::new(KeyType::CentralSyncPullCursor);
 
         loop {
-            let mut cursor = cursor_controller.get(&connection)?;
+            let mut cursor = cursor_controller.get(connection)?;
 
             let CentralSyncBatchV5 { max_cursor, data } = self
                 .sync_api_v5
@@ -47,7 +47,7 @@ impl CentralDataSynchroniser {
             logger.progress(SyncStepProgress::PullCentral, max_cursor - cursor)?;
 
             for sync_record in data {
-                cursor = sync_record.cursor.clone();
+                cursor = sync_record.cursor;
                 let buffer_row = sync_record.record.to_buffer_row(None)?;
 
                 insert_one_and_update_cursor(connection, &cursor_controller, &buffer_row, cursor)?;
@@ -59,7 +59,7 @@ impl CentralDataSynchroniser {
                 (0, false) => break,
                 // It's possible for batch_length in response to be zero even though we haven't reached max_cursor
                 // in this case we should increment cursor manually
-                (0, true) => cursor_controller.update(&connection, cursor + 1)?,
+                (0, true) => cursor_controller.update(connection, cursor + 1)?,
                 _ => continue,
             }
         }

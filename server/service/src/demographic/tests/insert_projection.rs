@@ -48,7 +48,7 @@ mod query {
                 &ctx,
                 InsertDemographicProjection {
                     id: id.clone(),
-                    base_year: base_year_2.clone(),
+                    base_year: base_year_2,
                     ..Default::default()
                 },
             ),
@@ -61,7 +61,7 @@ mod query {
                 &ctx,
                 InsertDemographicProjection {
                     id: id_2.clone(),
-                    base_year: base_year_1.clone(),
+                    base_year: base_year_1,
                     ..Default::default()
                 },
             ),
@@ -74,7 +74,7 @@ mod query {
                 &ctx,
                 InsertDemographicProjection {
                     id: id_2.clone(),
-                    base_year: base_year_2.clone(),
+                    base_year: base_year_2,
                     ..Default::default()
                 },
             )

@@ -152,7 +152,7 @@ impl SiteIsInitialisedCallback {
     {
         // NOTE: We do not await for tokio::spawn or return JoinHandle (this will just run in background)
         tokio::spawn(async move {
-            if let Some(_) = self.receiver.recv().await {
+            if (self.receiver.recv().await).is_some() {
                 future.await;
             } else {
                 log::error!("Cannot receive site is initialised message, sender was dropped")

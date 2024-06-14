@@ -95,7 +95,7 @@ impl TokenBucket {
 
         let mut password = String::new();
         for token in user_tokens {
-            password = token.password.clone();
+            password.clone_from(&token.password);
         }
         password
     }

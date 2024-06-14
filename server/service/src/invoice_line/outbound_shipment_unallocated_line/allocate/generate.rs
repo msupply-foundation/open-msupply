@@ -77,14 +77,14 @@ pub fn generate(
 
         // Add to existing allocated line or create new
         match try_allocate_existing_line(
-            (packs_to_allocate).into(),
+            packs_to_allocate,
             &stock_line.stock_line_row.id,
             &allocated_lines,
         ) {
             Some(stock_line_update) => result.update_lines.push(stock_line_update),
             None => result.insert_lines.push(generate_new_line(
                 &unallocated_line.invoice_line_row.invoice_id,
-                (packs_to_allocate).into(),
+                packs_to_allocate,
                 &stock_line,
             )),
         }
@@ -197,7 +197,7 @@ fn packs_to_allocate_from_stock_line(remaining_to_allocate: f64, line: &StockLin
         return line_row.available_number_of_packs;
     }
     // We don't want to use fractions for number_of_packs (issue here) - to discuss
-    let fractional_number_of_packs = remaining_to_allocate as f64 / line_row.pack_size as f64;
+    let fractional_number_of_packs = remaining_to_allocate / line_row.pack_size;
 
     if fraction_is_integer(fractional_number_of_packs) {
         return fractional_number_of_packs;

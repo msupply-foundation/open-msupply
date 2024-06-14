@@ -39,11 +39,11 @@ pub(super) fn map(
                             period_is_available(
                                 period,
                                 &program_setting,
-                                &order_type,
+                                order_type,
                                 &requisitions_in_periods,
                             )
                         })
-                        .map(|p| p.clone())
+                        .cloned()
                         .collect();
 
                     // Order type for program settings
@@ -58,7 +58,7 @@ pub(super) fn map(
             let suppliers = program_suppliers
                 .iter()
                 .filter(|s| s.program.id == program_setting.program_row.id)
-                .map(|s| s.clone())
+                .cloned()
                 .collect();
 
             ProgramSettings {
