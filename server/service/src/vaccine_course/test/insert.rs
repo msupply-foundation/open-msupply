@@ -31,28 +31,6 @@ mod query {
             .insert_vaccine_course(&context, vaccine_course_insert_a.clone())
             .unwrap();
 
-        let item1 = VaccineCourseItem {
-            id: "item_id".to_owned(),
-            item_id: mock_item_a().id,
-        };
-
-        let item2 = VaccineCourseItem {
-            id: "item_id2".to_owned(),
-            item_id: mock_item_b().id,
-        };
-
-        let schedule1 = VaccineCourseSchedule {
-            id: "schedule_id1".to_owned(),
-            label: "Dose 1".to_owned(),
-            dose_number: 1,
-        };
-
-        let schedule2 = VaccineCourseSchedule {
-            id: "schedule_id2".to_owned(),
-            label: "Dose 2".to_owned(),
-            dose_number: 2,
-        };
-
         // 0 - Try insert new course with same name and same program_id
 
         let vaccine_course_insert_b = InsertVaccineCourse {
