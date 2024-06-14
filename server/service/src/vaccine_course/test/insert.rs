@@ -1,14 +1,12 @@
 #[cfg(test)]
 mod query {
     use repository::mock::{
-        mock_demographic_indicator_a, mock_immunisation_program_a, mock_immunisation_program_b,
-        mock_item_a, mock_item_b, MockDataInserts,
+        mock_immunisation_program_a, mock_immunisation_program_b, MockDataInserts,
     };
     use repository::test_db::setup_all;
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccine_course::insert::{InsertVaccineCourse, InsertVaccineCourseError};
-    use crate::vaccine_course::update::{VaccineCourseItem, VaccineCourseSchedule};
 
     #[actix_rt::test]
     async fn test_update_vaccine_course() {

@@ -31,18 +31,20 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
 };
 
 const vaccineCourseParsers = {
-  toScheduleInput: (schedule: VaccineCourseScheduleNode) => {
+  toScheduleInput: (
+    schedule: VaccineCourseScheduleNode
+  ): VaccineCourseScheduleInput => {
     return {
       id: schedule.id,
       doseNumber: schedule.doseNumber,
       label: schedule.label,
-    } as VaccineCourseScheduleInput;
+    };
   },
-  toItemInput: (item: VaccineCourseItemNode) => {
+  toItemInput: (item: VaccineCourseItemNode): VaccineCourseItemInput => {
     return {
       id: item.id,
       itemId: item.item.id,
-    } as VaccineCourseItemInput;
+    };
   },
 };
 
@@ -150,9 +152,6 @@ const useCreate = () => {
     });
   };
 
-  // add iterative mutation for vaccine course items
-  // add iterative mutation for schedule
-
   return useMutation({
     mutationFn,
     onSuccess: () => queryClient.invalidateQueries([VACCINE]),
@@ -187,22 +186,12 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
 
     const result = apiResult.centralServer.vaccineCourse.updateVaccineCourse;
 
-    // add iterative mutation for vaccine course items
-
-    // add iterative mutation for schedule
-
     if (result?.__typename === 'VaccineCourseNode') {
       return result;
     }
 
     if (result?.__typename === 'UpdateVaccineCourseError') {
-      // if (result.error.__typename === 'UniqueValueViolation') {
-      //   setErrorMessage(
-      //     t('error.unique-value-violation', { field: result.error.description })
-      //   );
-      // } else {
       setErrorMessage(result.error.description);
-      // }
       return;
     }
 
