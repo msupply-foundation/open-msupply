@@ -112,6 +112,16 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     },
   },
   getProjections: {
+    byBaseYear: async (baseYear: number) => {
+      const result = await sdk.demographicProjectionsByBaseYear({ baseYear });
+      if (
+        result.demographicProjectionByBaseYear.__typename ===
+        'DemographicProjectionNode'
+      )
+        return result.demographicProjectionByBaseYear;
+
+      return undefined;
+    },
     list: async ({
       first,
       offset,

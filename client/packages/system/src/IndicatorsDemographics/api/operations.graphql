@@ -64,6 +64,20 @@ query demographicProjections(
   }
 }
 
+query demographicProjectionsByBaseYear($baseYear: Int!) {
+  demographicProjectionByBaseYear(baseYear: $baseYear) {
+    __typename
+    ... on DemographicProjectionNode {
+      ...DemographicProjection
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
 query demographicIndicatorById($demographicIndicatorId: String!) {
   demographicIndicators(filter: { id: { equalTo: $demographicIndicatorId } }) {
     ... on DemographicIndicatorConnector {

@@ -1586,6 +1586,8 @@ export type DemographicProjectionNode = {
   year5: Scalars['Float']['output'];
 };
 
+export type DemographicProjectionResponse = DemographicProjectionNode | NodeError;
+
 export enum DemographicProjectionSortFieldInput {
   Id = 'id'
 }
@@ -5066,6 +5068,7 @@ export type Queries = {
   currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
+  demographicProjectionByBaseYear: DemographicProjectionResponse;
   demographicProjections: DemographicProjectionsResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
@@ -5318,6 +5321,11 @@ export type QueriesDemographicIndicatorsArgs = {
   filter?: InputMaybe<DemographicIndicatorFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<DemographicIndicatorSortInput>>;
+};
+
+
+export type QueriesDemographicProjectionByBaseYearArgs = {
+  baseYear: Scalars['Int']['input'];
 };
 
 

@@ -8,6 +8,7 @@ export const useDemographicProjectionInsert = () => {
   return useMutation(
     async (
       demographicProjection: Omit<DemographicProjectionFragment, '__typename'>
-    ) => await api.insertProjection(demographicProjection)
+    ) => await api.insertProjection(demographicProjection),
+    { onError: e => console.error(e) }
   );
 };

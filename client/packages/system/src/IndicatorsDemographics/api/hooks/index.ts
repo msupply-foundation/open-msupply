@@ -12,6 +12,7 @@ export const useDemographicData = {
     update: Document.useDemographicIndicatorUpdate,
   },
   projection: {
+    get: Document.useDemographicProjection,
     list: Document.useDemographicProjections,
     upsert: Document.useDemographicProjectionUpsert,
   },

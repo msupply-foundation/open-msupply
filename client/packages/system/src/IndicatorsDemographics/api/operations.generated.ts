@@ -30,6 +30,13 @@ export type DemographicProjectionsQueryVariables = Types.Exact<{
 
 export type DemographicProjectionsQuery = { __typename: 'Queries', demographicProjections: { __typename: 'DemographicProjectionConnector', totalCount: number, nodes: Array<{ __typename: 'DemographicProjectionNode', id: string, baseYear: number, year1: number, year2: number, year3: number, year4: number, year5: number }> } };
 
+export type DemographicProjectionsByBaseYearQueryVariables = Types.Exact<{
+  baseYear: Types.Scalars['Int']['input'];
+}>;
+
+
+export type DemographicProjectionsByBaseYearQuery = { __typename: 'Queries', demographicProjectionByBaseYear: { __typename: 'DemographicProjectionNode', id: string, baseYear: number, year1: number, year2: number, year3: number, year4: number, year5: number } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } };
+
 export type DemographicIndicatorByIdQueryVariables = Types.Exact<{
   demographicIndicatorId: Types.Scalars['String']['input'];
 }>;
@@ -119,6 +126,21 @@ export const DemographicProjectionsDocument = gql`
         ...DemographicProjection
       }
       totalCount
+    }
+  }
+}
+    ${DemographicProjectionFragmentDoc}`;
+export const DemographicProjectionsByBaseYearDocument = gql`
+    query demographicProjectionsByBaseYear($baseYear: Int!) {
+  demographicProjectionByBaseYear(baseYear: $baseYear) {
+    __typename
+    ... on DemographicProjectionNode {
+      ...DemographicProjection
+    }
+    ... on NodeError {
+      error {
+        description
+      }
     }
   }
 }
@@ -225,6 +247,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     demographicProjections(variables: DemographicProjectionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DemographicProjectionsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DemographicProjectionsQuery>(DemographicProjectionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'demographicProjections', 'query');
     },
+    demographicProjectionsByBaseYear(variables: DemographicProjectionsByBaseYearQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DemographicProjectionsByBaseYearQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DemographicProjectionsByBaseYearQuery>(DemographicProjectionsByBaseYearDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'demographicProjectionsByBaseYear', 'query');
+    },
     demographicIndicatorById(variables: DemographicIndicatorByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DemographicIndicatorByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DemographicIndicatorByIdQuery>(DemographicIndicatorByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'demographicIndicatorById', 'query');
     },
@@ -275,6 +300,23 @@ export const mockDemographicIndicatorsQuery = (resolver: ResponseResolver<GraphQ
 export const mockDemographicProjectionsQuery = (resolver: ResponseResolver<GraphQLRequest<DemographicProjectionsQueryVariables>, GraphQLContext<DemographicProjectionsQuery>, any>) =>
   graphql.query<DemographicProjectionsQuery, DemographicProjectionsQueryVariables>(
     'demographicProjections',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDemographicProjectionsByBaseYearQuery((req, res, ctx) => {
+ *   const { baseYear } = req.variables;
+ *   return res(
+ *     ctx.data({ demographicProjectionByBaseYear })
+ *   )
+ * })
+ */
+export const mockDemographicProjectionsByBaseYearQuery = (resolver: ResponseResolver<GraphQLRequest<DemographicProjectionsByBaseYearQueryVariables>, GraphQLContext<DemographicProjectionsByBaseYearQuery>, any>) =>
+  graphql.query<DemographicProjectionsByBaseYearQuery, DemographicProjectionsByBaseYearQueryVariables>(
+    'demographicProjectionsByBaseYear',
     resolver
   )
 
