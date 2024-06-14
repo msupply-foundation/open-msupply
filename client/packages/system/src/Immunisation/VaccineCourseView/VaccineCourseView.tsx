@@ -170,7 +170,9 @@ export const VaccineCourseView: FC = () => {
       [patch.id]: patch,
     };
 
-    const scheduleArray = Object.values(schedule);
+    const scheduleArray = Object.values(
+      schedule
+    ) as VaccineCourseScheduleNode[];
     updatePatch({ vaccineCourseSchedules: scheduleArray });
   };
 
