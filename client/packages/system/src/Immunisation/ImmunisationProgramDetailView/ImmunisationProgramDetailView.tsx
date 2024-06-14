@@ -77,6 +77,7 @@ export const ProgramComponent: FC = () => {
         },
       },
       { key: 'doses', label: 'label.doses' },
+      'selection',
     ],
     {
       onChangeSortBy: updateSortQuery,
