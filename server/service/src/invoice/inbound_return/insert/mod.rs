@@ -99,7 +99,7 @@ pub fn insert_inbound_return(
             )?;
 
             get_invoice(ctx, None, &inbound_return.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -270,7 +270,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertInboundReturn| {
                     r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id.clone();
+                    r.other_party_id.clone_from(&not_visible().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotVisible)
@@ -282,7 +282,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertInboundReturn| {
                     r.id = "new_id".to_string();
-                    r.other_party_id = not_a_customer().id.clone();
+                    r.other_party_id.clone_from(&not_a_customer().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotACustomer)

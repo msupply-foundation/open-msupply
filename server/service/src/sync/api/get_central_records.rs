@@ -43,7 +43,6 @@ impl SyncApiV5 {
 mod test {
     use httpmock::{Method::GET, MockServer};
     use serde_json::json;
-    use util::assert_matches;
 
     use super::*;
     #[actix_rt::test]
@@ -84,7 +83,7 @@ mod test {
 
         mock.assert();
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
 
         assert_eq!(
             result.unwrap(),

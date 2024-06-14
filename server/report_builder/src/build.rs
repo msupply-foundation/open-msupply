@@ -83,11 +83,11 @@ fn extract_sql_entry(
             let query_postgres_sql = fs::read_to_string(file_path).map_err(|err| {
                 anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
             })?;
-            return Ok(SQLQuery {
+            Ok(SQLQuery {
                 name: query.clone(),
                 query_sqlite: query_sqlite_sql.clone(),
                 query_postgres: query_postgres_sql.clone(),
-            });
+            })
         })
         .collect();
     result

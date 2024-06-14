@@ -121,7 +121,7 @@ fn generate(
         user_id: Some(user_id.to_string()),
         requisition_number: next_number(connection, &NumberRowType::RequestRequisition, store_id)?,
         name_link_id: other_party_id,
-        store_id: store_id.to_owned(),
+        store_id: store_id.to_string(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Draft,
         created_datetime: Utc::now().naive_utc(),
@@ -209,8 +209,8 @@ mod test_insert {
             service.insert_request_requisition(
                 &context,
                 inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_owned();
-                    r.other_party_id = name_store_b.id.clone();
+                    r.id = "new_request_requisition".to_string();
+                    r.other_party_id.clone_from(&name_store_b.id);
                 }),
             ),
             Err(ServiceError::OtherPartyNotASupplier)
@@ -233,8 +233,8 @@ mod test_insert {
             service.insert_request_requisition(
                 &context,
                 inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_owned();
-                    r.other_party_id = "invalid".to_owned();
+                    r.id = "new_request_requisition".to_string();
+                    r.other_party_id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
@@ -245,7 +245,7 @@ mod test_insert {
             service.insert_request_requisition(
                 &context,
                 inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_owned();
+                    r.id = "new_request_requisition".to_string();
                     r.other_party_id = mock_name_a().id;
                 }),
             ),
@@ -270,11 +270,11 @@ mod test_insert {
             .insert_request_requisition(
                 &context,
                 InsertRequestRequisition {
-                    id: "new_request_requisition".to_owned(),
+                    id: "new_request_requisition".to_string(),
                     other_party_id: mock_name_store_c().id,
-                    colour: Some("new colour".to_owned()),
-                    their_reference: Some("new their_reference".to_owned()),
-                    comment: Some("new comment".to_owned()),
+                    colour: Some("new colour".to_string()),
+                    their_reference: Some("new their_reference".to_string()),
+                    comment: Some("new comment".to_string()),
                     max_months_of_stock: 1.0,
                     min_months_of_stock: 0.5,
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
@@ -292,12 +292,12 @@ mod test_insert {
         assert_eq!(
             new_row,
             inline_edit(&new_row, |mut u| {
-                u.id = "new_request_requisition".to_owned();
+                u.id = "new_request_requisition".to_string();
                 u.user_id = Some(mock_user_account_a().id);
                 u.name_link_id = mock_name_store_c().id;
-                u.colour = Some("new colour".to_owned());
-                u.their_reference = Some("new their_reference".to_owned());
-                u.comment = Some("new comment".to_owned());
+                u.colour = Some("new colour".to_string());
+                u.their_reference = Some("new their_reference".to_string());
+                u.comment = Some("new comment".to_string());
                 u.max_months_of_stock = 1.0;
                 u.min_months_of_stock = 0.5;
                 u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());

@@ -13,7 +13,7 @@ use rust_embed::RustEmbed;
 #[folder = "../../client/packages/host/dist"]
 struct Asset;
 
-const INDEX: &'static str = "index.html";
+const INDEX: &str = "index.html";
 const CACHE_MAX_AGE: u32 = 365 * 60 * 60 * 24; // 1 year
 
 // https://github.com/pyrossh/rust-embed/blob/master/examples/actix.rs

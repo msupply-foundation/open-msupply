@@ -139,8 +139,8 @@ mod test {
             service.insert_prescription(
                 &context,
                 inline_init(|r: &mut InsertPrescription| {
-                    r.id = mock_prescription_a().id.clone();
-                    r.patient_id = mock_patient().id.clone();
+                    r.id.clone_from(&mock_prescription_a().id);
+                    r.patient_id.clone_from(&mock_patient().id);
                 })
             ),
             Err(ServiceError::InvoiceAlreadyExists)

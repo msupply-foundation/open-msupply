@@ -134,7 +134,7 @@ mod test {
             service.insert_repack(
                 &context,
                 inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_item_b_lines()[0].id.clone();
+                    r.stock_line_id.clone_from(&mock_item_b_lines()[0].id);
                 })
             ),
             Err(ServiceError::NotThisStoreStockLine)
@@ -145,7 +145,7 @@ mod test {
             service.insert_repack(
                 &context,
                 inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_stock_line_a().id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
                     r.number_of_packs = 9.0;
                     r.new_pack_size = 2.0;
                 })
@@ -166,7 +166,7 @@ mod test {
             service.insert_repack(
                 &context,
                 inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_stock_line_b().id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_b().id);
                     r.number_of_packs = 40.0;
                     r.new_pack_size = 2.0;
                 })
@@ -248,7 +248,7 @@ mod test {
             .insert_repack(
                 &context,
                 inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_stock_line_a().id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
                     r.number_of_packs = 8.0;
                     r.new_pack_size = 2.0;
                 }),
@@ -343,7 +343,7 @@ mod test {
             .insert_repack(
                 &context,
                 inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = stock_line_a.id.clone();
+                    r.stock_line_id.clone_from(&stock_line_a.id);
                     r.number_of_packs = 6.0;
                     r.new_pack_size = 6.0;
                 }),
@@ -390,7 +390,7 @@ mod test {
             .insert_repack(
                 &context,
                 inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_stock_line_a().id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_a().id);
                     r.number_of_packs = 22.0;
                     r.new_pack_size = 11.0;
                 }),
@@ -437,7 +437,7 @@ mod test {
             .insert_repack(
                 &context,
                 inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_stock_line_si_d()[1].id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_si_d()[1].id);
                     r.number_of_packs = 1.0;
                     r.new_pack_size = 1.0;
                 }),
@@ -486,7 +486,7 @@ mod test {
             .insert_repack(
                 &context,
                 inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_stock_line_ci_c()[1].id.clone();
+                    r.stock_line_id.clone_from(&mock_stock_line_ci_c()[1].id);
                     r.number_of_packs = 3.0;
                     r.new_pack_size = 3.0;
                     r.new_location_id = Some(mock_location_1().id);

@@ -12,7 +12,7 @@ use repository::{
 mod generate;
 mod validate;
 
-use generate::generate;
+use generate::{generate, GenerateResult};
 use validate::validate;
 
 use super::StockInType;
@@ -45,8 +45,12 @@ pub fn update_stock_in_line(
         .transaction_sync(|connection| {
             let (line, item, invoice) = validate(&input, &ctx.store_id, connection)?;
 
-            let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(connection, &ctx.user_id, input, line, item, invoice)?;
+            let GenerateResult {
+                invoice_row_option,
+                updated_line,
+                upsert_batch_option,
+                batch_to_delete_id,
+            } = generate(connection, &ctx.user_id, input, line, item, invoice)?;
 
             let stock_line_repository = StockLineRowRepository::new(connection);
 
@@ -56,7 +60,7 @@ pub fn update_stock_in_line(
 
             InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
 
-            if let Some(id) = delete_batch_id_option {
+            if let Some(id) = batch_to_delete_id {
                 stock_line_repository.delete(&id)?;
             }
 
@@ -65,7 +69,7 @@ pub fn update_stock_in_line(
             }
 
             get_invoice_line(ctx, &updated_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -304,7 +308,7 @@ mod test {
         update_stock_in_line(
             &context,
             inline_init(|r: &mut UpdateStockInLine| {
-                r.id = return_line_id.clone();
+                r.id.clone_from(&return_line_id);
                 r.pack_size = Some(2.0);
                 r.number_of_packs = Some(3.0);
             }),
@@ -319,7 +323,7 @@ mod test {
         assert_eq!(
             inbound_line_update,
             inline_edit(&inbound_line_update, |mut u| {
-                u.id = return_line_id.clone();
+                u.id.clone_from(&return_line_id);
                 u.pack_size = 2.0;
                 u.number_of_packs = 3.0;
                 u
@@ -339,7 +343,7 @@ mod test {
         update_stock_in_line(
             &context,
             inline_init(|r: &mut UpdateStockInLine| {
-                r.id = return_line_id.clone();
+                r.id.clone_from(&return_line_id);
                 r.pack_size = Some(20.0);
                 r.number_of_packs = Some(20.0);
                 r.sell_price_per_pack = Some(100.0);

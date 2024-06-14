@@ -92,7 +92,7 @@ pub struct CentralServerMutations;
 impl CentralServerMutations {
     async fn central_server(&self) -> async_graphql::Result<CentralServerMutationNode> {
         if !CentralServerConfig::is_central_server() {
-            return Err(StandardGraphqlError::from_str("Not a central server"));
+            return Err(StandardGraphqlError::from_str_slice("Not a central server"));
         };
 
         Ok(CentralServerMutationNode)

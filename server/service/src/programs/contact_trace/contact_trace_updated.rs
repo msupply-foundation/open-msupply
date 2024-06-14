@@ -75,14 +75,15 @@ pub(crate) fn update_contact_trace_row(
             })
         }),
         date_of_birth: contact
-            .and_then(|c| match &c.date_of_birth {
-                Some(date_of_birth) => Some(NaiveDate::from_str(date_of_birth).map_err(|err| {
-                    UpsertContactTraceError::InternalError(format!(
-                        "Invalid date of birth format: {}",
-                        err
-                    ))
-                })),
-                None => None,
+            .and_then(|c| {
+                c.date_of_birth.as_ref().map(|date_of_birth| {
+                    NaiveDate::from_str(date_of_birth).map_err(|err| {
+                        UpsertContactTraceError::InternalError(format!(
+                            "Invalid date of birth format: {}",
+                            err
+                        ))
+                    })
+                })
             })
             .transpose()?,
         store_id,

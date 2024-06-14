@@ -39,7 +39,7 @@ mod query {
             service.update_location(
                 &context,
                 UpdateLocation {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                     code: None,
                     name: None,
                     on_hold: None
@@ -119,8 +119,8 @@ mod query {
 
         // Success with all changes and code that is not unique accross stores
         let mut location = locations_in_store[1].clone();
-        location.location_row.code = "new_location_code".to_owned();
-        location.location_row.name = "new_location_name".to_owned();
+        location.location_row.code = "new_location_code".to_string();
+        location.location_row.name = "new_location_name".to_string();
         location.location_row.on_hold = !location.location_row.on_hold;
 
         assert_eq!(

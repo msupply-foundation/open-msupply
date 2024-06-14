@@ -60,8 +60,7 @@ impl<'a> UserAccountService<'a> {
         user: UserAccountRow,
         stores_permissions: Vec<StorePermissions>,
     ) -> Result<(), RepositoryError> {
-        let result = self
-            .connection
+        self.connection
             .transaction_sync(|con| {
                 let user_repo = UserAccountRowRepository::new(con);
                 let user_store_repo = UserStoreJoinRowRepository::new(con);
@@ -107,8 +106,8 @@ impl<'a> UserAccountService<'a> {
 
                 Ok(())
             })
-            .map_err(|error| RepositoryError::from(error))?;
-        Ok(result)
+            .map_err(RepositoryError::from)?;
+        Ok(())
     }
 
     pub fn hash_password(password: &str) -> Result<String, BcryptError> {

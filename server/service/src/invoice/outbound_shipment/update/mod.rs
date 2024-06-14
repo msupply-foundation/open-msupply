@@ -177,7 +177,7 @@ mod test {
         InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
         NameStoreJoinRow, StockLineRow, StockLineRowRepository,
     };
-    use util::{assert_matches, inline_edit, inline_init};
+    use util::{inline_edit, inline_init};
 
     use crate::{
         invoice::outbound_shipment::update::{
@@ -442,7 +442,7 @@ mod test {
 
         let result = service.update_outbound_shipment(&context, get_update());
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
 
         let updated_record = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice().id)
