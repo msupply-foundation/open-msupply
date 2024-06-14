@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::mock::{
-        mock_demographic_indicator_a, mock_immunisation_program, mock_item_a, mock_item_b,
+        mock_demographic_indicator_a, mock_immunisation_program_a, mock_item_a, mock_item_b,
         MockDataInserts,
     };
     use repository::test_db::setup_all;
@@ -16,7 +16,7 @@ mod query {
     use crate::service_provider::ServiceProvider;
     use crate::vaccine_course::insert::InsertVaccineCourse;
     use crate::vaccine_course::update::{
-        UpdateVaccineCourse, VaccineCourseItem, VaccineCourseSchedule,
+        UpdateVaccineCourse, UpdateVaccineCourseError, VaccineCourseItem, VaccineCourseSchedule,
     };
 
     #[actix_rt::test]
@@ -32,7 +32,7 @@ mod query {
         let vaccine_course_insert_a = InsertVaccineCourse {
             id: "vaccine_course_id".to_owned(),
             name: "vaccine_course_name".to_owned(),
-            program_id: mock_immunisation_program().id.clone(),
+            program_id: mock_immunisation_program_a().id.clone(),
         };
 
         let _result = service
@@ -197,5 +197,40 @@ mod query {
         // Check there are no schedules for the vaccine_course
         let count = schedule_repo.count(Some(schedule_filter.clone())).unwrap();
         assert_eq!(count, 0);
+
+        // 5 - Attempt to update a vaccine course to duplicate name for same program_id
+
+        // insert new vaccine course
+
+        let vaccine_course_insert_b = InsertVaccineCourse {
+            id: "vaccine_course_id_b".to_owned(),
+            name: "vaccine_course_name".to_owned(),
+            program_id: mock_immunisation_program_a().id.clone(),
+        };
+
+        let result = service
+            .insert_vaccine_course(&context, vaccine_course_insert_b.clone())
+            .unwrap();
+
+        assert_eq!(result.id, vaccine_course_insert_b.id);
+
+        // update vaccine course to new name
+
+        let update = UpdateVaccineCourse {
+            id: vaccine_course_insert_b.id.clone(),
+            name: Some("new_name".to_owned()),
+            vaccine_items: vec![],
+            schedules: vec![],
+            demographic_indicator_id: Some(mock_demographic_indicator_a().id),
+            coverage_rate: 100.0,
+            is_active: true,
+            wastage_rate: 0.1,
+            doses: 0,
+        };
+
+        assert_eq!(
+            service.update_vaccine_course(&context, update),
+            Err(UpdateVaccineCourseError::VaccineCourseNameExistsForThisProgram),
+        );
     }
 }
