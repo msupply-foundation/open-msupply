@@ -132,4 +132,5 @@ export const toRow = (row: {
   2: row.year3Projection ?? 0,
   3: row.year4Projection ?? 0,
   4: row.year5Projection ?? 0,
+  5: row.year5Projection ?? 0,
 });
