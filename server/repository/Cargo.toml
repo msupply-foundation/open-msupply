@@ -13,7 +13,7 @@ util = { path = "../util" }
 
 chrono = { workspace = true }
 rand = { workspace = true }
-diesel = { version = "2.1.5", default-features = false, features = [
+diesel = { version = "2.2.1", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
@@ -21,14 +21,14 @@ diesel = { version = "2.1.5", default-features = false, features = [
     "with-deprecated",
 ] }
 diesel-derive-enum = { version = "2.1.0", default-features = false }
-diesel_migrations = "2.1.0"
-futures-util = "0.3.15"
+diesel_migrations = "2.2.0"
+futures-util = "0.3.30"
 libsqlite3-sys = { version = "0.28.0", features = ["bundled"], optional = true }
 # 0.31.0 depends on libsqlite3-sys 0.28.0
 rusqlite = "0.31.0"
-regex = "1.10.3"
-serde = { version = "1.0.126", features = ["derive"] }
-serde_json = "1.0.66"
+regex = "1.10.5"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.117"
 thiserror = { workspace = true }
 log = "0.4.14"
 # Migration script embeds package.json from repository root, single files is embeded and accessed
@@ -36,13 +36,13 @@ log = "0.4.14"
 # behave as if it is in release mode 
 rust-embed = { version = "6.4.0", features = ["debug-embed"] }
 anyhow.workspace = true
-pretty_assertions = "1.3.0"
-strum = { version = "0.26.1", features = ["derive"] }
+pretty_assertions = "1.4.0"
+strum = { version = "0.26.2", features = ["derive"] }
 
 [dev-dependencies]
 tokio = { version = "1.38.0", features = ["time", "rt-multi-thread", "macros"] }
-actix-rt = "2.6.0"
-strum = { version = "0.26.1", features = ["derive"] }
+actix-rt = "2.10.0"
+strum = { version = "0.26.2", features = ["derive"] }
 
 [features]
 default = ["sqlite"]
