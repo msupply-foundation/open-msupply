@@ -77,7 +77,7 @@ impl StaticFileService {
         let file_name = temp_file.file_name.context("Filename not provided")?;
         let sanitized_filename = sanitize_filename(file_name);
 
-        let static_file = self.reserve_file(&sanitized_filename, &category, file_id)?;
+        let static_file = self.reserve_file(&sanitized_filename, category, file_id)?;
         let destination = Path::new(&static_file.path);
         // Is this blocking ? If it is it a problem ?
         move_file(temp_file.file.path(), destination).context("Problem moving file")?;
@@ -153,11 +153,8 @@ impl StaticFileService {
         std::fs::create_dir_all(&dir)?;
 
         // clean up the static file directory
-        match category {
-            StaticFileCategory::Temporary => {
-                delete_temporary_files(&dir, self.max_lifetime_millis)?;
-            }
-            _ => {}
+        if let StaticFileCategory::Temporary = category {
+            delete_temporary_files(&dir, self.max_lifetime_millis)?;
         }
 
         let file_path = match find_file_in_dir(id, &dir)? {

@@ -87,7 +87,11 @@ query nameProperties {
       __typename
       nodes {
         __typename
-        ...Property
+        id
+        remoteEditable
+        property {
+          ...Property
+        }
       }
     }
   }

@@ -130,7 +130,7 @@ impl SensorNode {
     pub async fn assets(&self, ctx: &Context<'_>) -> Result<AssetConnector> {
         let location_id = match &self.row().location_id {
             Some(location_id) => location_id,
-            None => return Ok(AssetConnector::new()),
+            None => return Ok(AssetConnector::default()),
         };
 
         let loader = ctx.get_loader::<DataLoader<AssetByLocationLoader>>();

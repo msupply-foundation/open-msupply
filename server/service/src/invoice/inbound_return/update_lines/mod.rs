@@ -106,7 +106,7 @@ pub fn update_inbound_return_lines(
             }
 
             get_invoice(ctx, None, &input.inbound_return_id)
-                .map_err(|error| UpdateInboundReturnLinesError::DatabaseError(error))?
+                .map_err(UpdateInboundReturnLinesError::DatabaseError)?
                 .ok_or(UpdateInboundReturnLinesError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -268,7 +268,6 @@ mod test {
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineInsertError {
@@ -291,7 +290,6 @@ mod test {
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineUpdateError {
@@ -316,7 +314,6 @@ mod test {
                             reason_id: Some("does_not_exist".to_string()),
                             ..Default::default()
                         }],
-                        ..Default::default()
                     },
                 ),
             Err(ServiceError::LineReturnReasonUpdateError {
@@ -390,7 +387,6 @@ mod test {
                             ..Default::default()
                         },
                     ],
-                    ..Default::default()
                 },
             )
             .unwrap();
@@ -402,10 +398,7 @@ mod test {
         assert_eq!(updated_lines.len(), 3);
 
         // new line was added
-        assert!(updated_lines
-            .iter()
-            .find(|line| line.id == "line1")
-            .is_some());
+        assert!(updated_lines.iter().any(|line| line.id == "line1"));
 
         // existing line was updated
         let updated_line = updated_lines
@@ -416,9 +409,8 @@ mod test {
         assert_eq!(updated_line.return_reason_id, Some(return_reason().id));
 
         // zeroed line was deleted
-        assert!(updated_lines
+        assert!(!updated_lines
             .iter()
-            .find(|line| line.id == line_to_delete().id)
-            .is_none());
+            .any(|line| line.id == line_to_delete().id));
     }
 }

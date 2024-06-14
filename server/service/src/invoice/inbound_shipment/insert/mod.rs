@@ -147,8 +147,8 @@ mod test {
             service.insert_inbound_shipment(
                 &context,
                 inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = mock_inbound_shipment_c().id.clone();
-                    r.other_party_id = mock_name_a().id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c().id);
+                    r.other_party_id.clone_from(&mock_name_a().id);
                 })
             ),
             Err(ServiceError::InvoiceAlreadyExists)
@@ -281,7 +281,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "test_name_store_id_linked".to_string();
-                    r.other_party_id = mock_name_linked_to_store_join().name_link_id.clone();
+                    r.other_party_id
+                        .clone_from(&mock_name_linked_to_store_join().name_link_id);
                 }),
             )
             .unwrap();
@@ -305,7 +306,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "test_name_store_id_not_linked".to_string();
-                    r.other_party_id = mock_name_not_linked_to_store().id.clone();
+                    r.other_party_id
+                        .clone_from(&mock_name_not_linked_to_store().id);
                 }),
             )
             .unwrap();

@@ -25,6 +25,7 @@ describe('recursiveCalculate', () => {
       2: 202,
       3: 202,
       4: 202,
+      5: 202,
     };
     const indexValue = 1000;
     expect(recursiveCalculate(key, draftHeaders, row, indexValue)).toBe(200);

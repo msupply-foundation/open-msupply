@@ -33,7 +33,7 @@ pub fn generate(
         name_link_id: requisition_row.name_link_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_owned(),
-        invoice_number: next_number(connection, &NumberRowType::OutboundShipment, &store_id)?,
+        invoice_number: next_number(connection, &NumberRowType::OutboundShipment, store_id)?,
         r#type: InvoiceType::OutboundShipment,
         status: InvoiceStatus::New,
         created_datetime: Utc::now().naive_utc(),

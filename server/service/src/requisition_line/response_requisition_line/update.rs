@@ -46,15 +46,15 @@ pub fn update_response_requisition_line(
             let (requisition_row_option, updated_requisition_line_row) =
                 generate(&ctx.user_id, requisition_row, requisition_line_row, input);
 
-            RequisitionLineRowRepository::new(&connection)
+            RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
 
             if let Some(requisition_row) = requisition_row_option {
-                RequisitionRowRepository::new(&connection).upsert_one(&requisition_row)?;
+                RequisitionRowRepository::new(connection).upsert_one(&requisition_row)?;
             }
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedRequisitionLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -160,7 +160,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = "invalid".to_owned();
+                    r.id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
@@ -194,7 +194,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_new_response_requisition_test().lines[0].id.clone();
+                    r.id.clone_from(&mock_new_response_requisition_test().lines[0].id);
                 }),
             ),
             Err(ServiceError::NotThisStoreRequisition)
@@ -206,7 +206,7 @@ mod test {
             service.update_response_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_response_program_requisition().lines[0].id.clone();
+                    r.id.clone_from(&mock_response_program_requisition().lines[0].id);
                 }),
             ),
             Err(ServiceError::CannotEditRequisition)

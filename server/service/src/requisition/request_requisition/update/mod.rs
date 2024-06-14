@@ -70,9 +70,9 @@ pub fn update_request_requisition(
                 updated_requisition_lines,
                 empty_lines_to_trim,
             } = generate(connection, requisition_row, input.clone())?;
-            RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition_row)?;
+            RequisitionRowRepository::new(connection).upsert_one(&updated_requisition_row)?;
 
-            let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
+            let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
             for requisition_line_row in updated_requisition_lines {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
@@ -80,13 +80,13 @@ pub fn update_request_requisition(
 
             if let Some(lines) = empty_lines_to_trim {
                 for line in lines {
-                    RequisitionLineRowRepository::new(&connection).delete(&line.id)?;
+                    RequisitionLineRowRepository::new(connection).delete(&line.id)?;
                 }
             }
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     ActivityLogType::RequisitionStatusSent,
                     Some(updated_requisition_row.id.to_owned()),
                     None,
@@ -95,7 +95,7 @@ pub fn update_request_requisition(
             }
 
             get_requisition(ctx, None, &updated_requisition_row.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

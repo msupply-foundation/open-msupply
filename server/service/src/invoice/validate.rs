@@ -29,34 +29,27 @@ pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceSt
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     let status = invoice.status.clone();
     let is_editable = match &invoice.r#type {
-        InvoiceType::OutboundShipment | InvoiceType::OutboundReturn => match status {
-            InvoiceStatus::New => true,
-            InvoiceStatus::Allocated => true,
-            InvoiceStatus::Picked => true,
-            InvoiceStatus::Shipped => false,
-            InvoiceStatus::Delivered => false,
-            InvoiceStatus::Verified => false,
-        },
-        InvoiceType::InboundShipment | InvoiceType::InboundReturn => match status {
-            InvoiceStatus::New => true,
-            InvoiceStatus::Shipped => true,
-            InvoiceStatus::Delivered => true,
-            InvoiceStatus::Allocated => false,
-            InvoiceStatus::Picked => false,
-            InvoiceStatus::Verified => false,
-        },
-        InvoiceType::Prescription => match status {
-            InvoiceStatus::New => true,
-            InvoiceStatus::Allocated => true,
-            InvoiceStatus::Picked => true,
-            InvoiceStatus::Shipped => false,
-            InvoiceStatus::Delivered => false,
-            InvoiceStatus::Verified => false,
-        },
-        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => match status {
-            InvoiceStatus::New => true,
-            _ => false,
-        },
+        InvoiceType::OutboundShipment | InvoiceType::OutboundReturn => {
+            matches!(
+                status,
+                InvoiceStatus::New | InvoiceStatus::Allocated | InvoiceStatus::Picked
+            )
+        }
+        InvoiceType::InboundShipment | InvoiceType::InboundReturn => {
+            matches!(
+                status,
+                InvoiceStatus::New | InvoiceStatus::Shipped | InvoiceStatus::Delivered
+            )
+        }
+        InvoiceType::Prescription => {
+            matches!(
+                status,
+                InvoiceStatus::New | InvoiceStatus::Allocated | InvoiceStatus::Picked
+            )
+        }
+        InvoiceType::InventoryAddition | InvoiceType::InventoryReduction => {
+            matches!(status, InvoiceStatus::New)
+        }
         InvoiceType::Repack => false,
     };
 

@@ -18,7 +18,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
 
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id = invoice_id.clone();
+            r.id.clone_from(&invoice_id);
             r.name_link_id = String::from("name_store_b");
             r.store_id = String::from("store_c");
             r.invoice_number = 10;
@@ -34,7 +34,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                 line: inline_init(|r: &mut InvoiceLineRow| {
                     r.id = invoice_line_a_id;
                     r.stock_line_id = Some(stock_line_a_id.clone());
-                    r.invoice_id = invoice_id.clone();
+                    r.invoice_id.clone_from(&invoice_id);
                     r.item_link_id = String::from("item_a");
                     r.item_name = String::from("Item A");
                     r.item_code = String::from("item_a_code");
@@ -62,7 +62,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                 line: inline_init(|r: &mut InvoiceLineRow| {
                     r.id = invoice_line_b_id;
                     r.stock_line_id = Some(stock_line_b_id.clone());
-                    r.invoice_id = invoice_id.clone();
+                    r.invoice_id.clone_from(&invoice_id);
                     r.item_link_id = String::from("item_a");
                     r.item_name = String::from("Item A");
                     r.item_code = String::from("item_a_code");
@@ -94,7 +94,7 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
 
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id = invoice_id.clone();
+            r.id.clone_from(&invoice_id);
             r.name_link_id = String::from("name_store_a");
             r.store_id = String::from("store_a");
             r.invoice_number = 11;
@@ -115,7 +115,7 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
 
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id = invoice_id.clone();
+            r.id.clone_from(&invoice_id);
             r.name_link_id = String::from("name_store_a");
             r.store_id = String::from("store_c");
             r.invoice_number = 11;

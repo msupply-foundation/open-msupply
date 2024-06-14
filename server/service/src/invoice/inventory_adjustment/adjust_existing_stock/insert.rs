@@ -83,7 +83,7 @@ pub fn insert_inventory_adjustment(
             }
 
             // Add inventory adjustment reason to the invoice line
-            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
             invoice_line_repo.update_inventory_adjustment_reason_id(
                 &update_inventory_adjustment_reason.invoice_line_id,
                 update_inventory_adjustment_reason.reason_id,
@@ -269,7 +269,6 @@ mod test {
                         crate::invoice::inventory_adjustment::AdjustmentType::Reduction,
                     adjustment: 50.0,
                     inventory_adjustment_reason_id: Some(reduction_reason().id),
-                    ..Default::default()
                 }
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))

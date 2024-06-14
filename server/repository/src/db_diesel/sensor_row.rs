@@ -89,21 +89,12 @@ impl<'a> SensorRowRepository<'a> {
         SensorRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sensor_dsl::sensor)
             .values(row)
             .on_conflict(sensor_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(sensor_dsl::sensor)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

@@ -315,12 +315,18 @@ pub struct Pagination {
     pub offset: u32,
 }
 
-impl Pagination {
-    pub fn new() -> Pagination {
+impl Default for Pagination {
+    fn default() -> Self {
         Pagination {
             offset: 0,
             limit: DEFAULT_PAGINATION_LIMIT,
         }
+    }
+}
+
+impl Pagination {
+    pub fn new() -> Pagination {
+        Self::default()
     }
 
     pub fn all() -> Pagination {

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
 import {
   Box,
@@ -29,7 +29,7 @@ import { HeaderData, HeaderValue, Row } from '../types';
 
 const currentYear = new Date().getFullYear();
 
-const IndicatorsDemographicsComponent: FC = () => {
+const IndicatorsDemographicsComponent = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
@@ -208,6 +208,13 @@ const IndicatorsDemographicsComponent: FC = () => {
         label: undefined,
         labelProps: { defaultValue: currentYear + 4 },
       },
+      {
+        key: '5',
+        width: 150,
+        align: ColumnAlign.Right,
+        label: undefined,
+        labelProps: { defaultValue: currentYear + 5 },
+      },
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [draft, indexPopulation]
@@ -251,7 +258,7 @@ const IndicatorsDemographicsComponent: FC = () => {
   );
 };
 
-export const IndicatorsDemographics: FC = () => (
+export const IndicatorsDemographics = () => (
   <TableProvider createStore={createTableStore}>
     <IndicatorsDemographicsComponent />
   </TableProvider>

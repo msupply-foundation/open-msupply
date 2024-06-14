@@ -46,7 +46,7 @@ impl Loader<String> for AssetByLocationLoader {
                 .unwrap_or(&"".to_string())
                 .to_owned();
 
-            let list = map.entry(location_id).or_insert_with(Vec::<Asset>::new);
+            let list = map.entry(location_id).or_default();
             list.push(asset);
         }
 
