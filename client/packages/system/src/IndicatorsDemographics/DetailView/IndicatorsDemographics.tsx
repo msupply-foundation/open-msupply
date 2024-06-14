@@ -21,7 +21,6 @@ import { Footer } from './Footer';
 import { GENERAL_POPULATION_ID, useDemographicData } from '../api';
 import {
   calculateAcrossRow,
-  getDefaultHeaderData,
   mapHeaderData,
   mapProjection,
   toIndicatorFragment,
@@ -53,8 +52,6 @@ const IndicatorsDemographicsComponent: FC = () => {
   const { mutateAsync: updateDemographicIndicator } =
     useDemographicData.indicator.update();
   const upsertProjection = useDemographicData.projection.upsert();
-  const getHeaderDraft = () =>
-    headerDraft ?? getDefaultHeaderData(draft?.[0]?.baseYear ?? 0);
 
   const PopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
@@ -69,7 +66,7 @@ const IndicatorsDemographicsComponent: FC = () => {
     Object.keys(currentDraft).forEach(rowKey => {
       const updatedRow = calculateAcrossRow(
         currentDraft[rowKey] as Row,
-        getHeaderDraft(),
+        headerDraft,
         indexPopulationChange ? patch.basePopulation : indexPopulation
       );
       updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
@@ -92,7 +89,7 @@ const IndicatorsDemographicsComponent: FC = () => {
 
     const updatedRow = calculateAcrossRow(
       { ...patch } as Row,
-      getHeaderDraft(),
+      headerDraft,
       indexPopulation
     );
     setDraft({ ...updatedDraft, [patch.id]: updatedRow });
@@ -105,14 +102,17 @@ const IndicatorsDemographicsComponent: FC = () => {
       ...patch,
       value: patch.value ?? 0,
     };
-    setHeaderDraft({ ...getHeaderDraft(), [patch.id]: updatedPatch });
+    setHeaderDraft({
+      ...(headerDraft as HeaderData),
+      [patch.id]: updatedPatch,
+    });
     calculateDown(patch);
   };
   const calculateDown = (patch: RecordPatch<HeaderValue>) => {
     const updatedHeader = {
-      ...getHeaderDraft(),
+      ...headerDraft,
       [patch.id]: { ...patch } as HeaderValue,
-    };
+    } as HeaderData;
     const updatedDraft: Record<string, Row> = {};
     Object.keys(draft).forEach(row => {
       const updatedRow = calculateAcrossRow(
