@@ -51,9 +51,10 @@ export const recursiveCalculate = (
 
 export const calculateAcrossRow = (
   row: Row,
-  updatedHeader: HeaderData,
+  updatedHeader?: HeaderData,
   indexValue?: number | undefined
 ) => {
+  if (!updatedHeader) return row;
   let updatedRow = row;
 
   // only update numeric entries
@@ -83,16 +84,6 @@ export const calculateAcrossRow = (
 
   return updatedRow;
 };
-
-export const getDefaultHeaderData = (baseYear: number): HeaderData => ({
-  baseYear,
-  id: '',
-  '1': { id: '1', value: 1 },
-  '2': { id: '2', value: 1 },
-  '3': { id: '3', value: 1 },
-  '4': { id: '4', value: 1 },
-  '5': { id: '5', value: 1 },
-});
 
 export const mapHeaderData = (
   projection: DemographicProjectionFragment
