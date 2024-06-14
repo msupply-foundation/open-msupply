@@ -21,7 +21,7 @@ graphql = { path = "../graphql" }
 
 anyhow = { workspace = true }
 async-graphql = { workspace = true }
-clap = { version = "3.1.8", features = ["derive"] }
+clap = { version = "4.5.7", features = ["derive"] }
 chrono = { version = "0.4.38" }
 diesel = { version = "2.1.5", default-features = false, features = ["chrono"] }
 log = "0.4.14"
