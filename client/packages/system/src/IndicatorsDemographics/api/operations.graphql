@@ -78,6 +78,7 @@ mutation insertDemographicIndicator($input: InsertDemographicIndicatorInput!) {
   centralServer {
     demographic {
       insertDemographicIndicator(input: $input) {
+        __typename
         ... on DemographicIndicatorNode {
           id
         }
