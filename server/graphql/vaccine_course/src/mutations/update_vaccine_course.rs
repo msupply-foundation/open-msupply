@@ -7,8 +7,8 @@ use graphql_core::{
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::update::{
-        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseItem,
-        VaccineCourseSchedule,
+        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseItemInput,
+        VaccineCourseScheduleInput,
     },
 };
 
@@ -90,14 +90,14 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             name,
             vaccine_items: vaccine_items
                 .into_iter()
-                .map(|i| VaccineCourseItem {
+                .map(|i| VaccineCourseItemInput {
                     id: i.id,
                     item_id: i.item_id,
                 })
                 .collect(),
             schedules: schedules
                 .into_iter()
-                .map(|s| VaccineCourseSchedule {
+                .map(|s| VaccineCourseScheduleInput {
                     id: s.id,
                     label: s.label,
                     dose_number: s.dose_number,

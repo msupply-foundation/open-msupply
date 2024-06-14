@@ -16,7 +16,8 @@ mod query {
     use crate::service_provider::ServiceProvider;
     use crate::vaccine_course::insert::InsertVaccineCourse;
     use crate::vaccine_course::update::{
-        UpdateVaccineCourse, UpdateVaccineCourseError, VaccineCourseItem, VaccineCourseSchedule,
+        UpdateVaccineCourse, UpdateVaccineCourseError, VaccineCourseItemInput,
+        VaccineCourseScheduleInput,
     };
 
     #[actix_rt::test]
@@ -41,23 +42,23 @@ mod query {
 
         // Setup some items and schedules to add to the vaccine course
 
-        let item1 = VaccineCourseItem {
+        let item1 = VaccineCourseItemInput {
             id: "item_id".to_owned(),
             item_id: mock_item_a().id,
         };
 
-        let item2 = VaccineCourseItem {
+        let item2 = VaccineCourseItemInput {
             id: "item_id2".to_owned(),
             item_id: mock_item_b().id,
         };
 
-        let schedule1 = VaccineCourseSchedule {
+        let schedule1 = VaccineCourseScheduleInput {
             id: "schedule_id1".to_owned(),
             label: "Dose 1".to_owned(),
             dose_number: 1,
         };
 
-        let schedule2 = VaccineCourseSchedule {
+        let schedule2 = VaccineCourseScheduleInput {
             id: "schedule_id2".to_owned(),
             label: "Dose 2".to_owned(),
             dose_number: 2,
@@ -151,7 +152,7 @@ mod query {
 
         // 3 - Update the label for a vaccine course
 
-        let schedule1 = VaccineCourseSchedule {
+        let schedule1 = VaccineCourseScheduleInput {
             label: "Dose 1 Updated".to_owned(),
             ..schedule1
         };
