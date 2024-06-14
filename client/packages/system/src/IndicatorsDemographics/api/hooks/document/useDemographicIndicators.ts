@@ -8,7 +8,10 @@ import {
 import { useDemographicsApi } from '../utils/useDemographicApi';
 import { useEffect, useState } from 'react';
 import { GENERAL_POPULATION_ID } from '../..';
-import { calculateAcrossRow, toRow } from '../../../DetailView/utils';
+import {
+  calculateAcrossRow,
+  toDemographicIndicatorRow,
+} from '../../../DetailView/utils';
 import { HeaderData, Row } from '../../../types';
 
 export const useDemographicIndicators = (headerData?: HeaderData) => {
@@ -35,7 +38,7 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
     }
 
     // generate index row dynamically from basePopulation and baseYear
-    const generalRow = toRow({
+    const generalRow = toDemographicIndicatorRow({
       __typename: 'DemographicIndicatorNode',
       id: GENERAL_POPULATION_ID,
       populationPercentage: 100,
@@ -59,7 +62,7 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
     );
 
     const nodes = [...data?.nodes];
-    const nodesAsRow = nodes.map(row => toRow(row));
+    const nodesAsRow = nodes.map(toDemographicIndicatorRow);
     const nodesFiltered = uniqBy([generalRowCalculated, ...nodesAsRow], 'id');
     const draftRows = ArrayUtils.toObject(nodesFiltered);
     setDraft(draftRows);
