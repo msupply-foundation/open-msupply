@@ -114,7 +114,7 @@ VALUES
         'item',
         'UPSERT',
         '{{"is_vaccine": true}}',
-        ''
+        NULL
     );
         "#,
     )?;
