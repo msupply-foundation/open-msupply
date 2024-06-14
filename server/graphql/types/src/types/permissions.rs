@@ -54,7 +54,7 @@ pub enum UserPermission {
     AssetQuery,
     AssetCatalogueItemMutate,
     NamePropertiesMutate,
-    CentralServerAdmin,
+    EditCentralData,
 }
 
 #[Object]
@@ -139,7 +139,7 @@ impl UserPermission {
             PermissionType::AssetQuery => UserPermission::AssetQuery,
             PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
             PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
-            PermissionType::CentralServerAdmin => UserPermission::CentralServerAdmin,
+            PermissionType::EditCentralData => UserPermission::EditCentralData,
         }
     }
 
@@ -186,7 +186,7 @@ impl UserPermission {
             UserPermission::AssetQuery => PermissionType::AssetQuery,
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
             UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
-            UserPermission::CentralServerAdmin => PermissionType::CentralServerAdmin,
+            UserPermission::EditCentralData => PermissionType::EditCentralData,
         }
     }
 }

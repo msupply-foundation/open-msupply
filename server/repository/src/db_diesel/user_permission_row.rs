@@ -82,7 +82,7 @@ pub enum PermissionType {
     // Names
     NamePropertiesMutate,
     // Central Server
-    CentralServerAdmin,
+    EditCentralData,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
