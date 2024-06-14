@@ -139,6 +139,7 @@ export const InsertDemographicIndicatorDocument = gql`
   centralServer {
     demographic {
       insertDemographicIndicator(input: $input) {
+        __typename
         ... on DemographicIndicatorNode {
           id
         }

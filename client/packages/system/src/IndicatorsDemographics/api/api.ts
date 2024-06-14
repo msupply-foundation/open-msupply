@@ -131,12 +131,14 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     const insertInput: InsertDemographicIndicatorInput =
       Parsers.toInsertIndicator(input);
     const result = await sdk.insertDemographicIndicator({ input: insertInput });
+
     if (
       result.centralServer.demographic.insertDemographicIndicator.__typename ===
       'DemographicIndicatorNode'
     ) {
       return result.centralServer.demographic.insertDemographicIndicator;
     }
+
     throw new Error('could not insert demographic indicator');
   },
   updateIndicator: async (input: DemographicIndicatorFragment) => {

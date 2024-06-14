@@ -149,28 +149,26 @@ const IndicatorsDemographicsComponent: FC = () => {
   // save rows excluding generalRow
   const save = async () => {
     setIsDirty(false);
-    const remainingRows = Object.keys(draft)
-      .map(key => draft[key])
-      .filter(row => row?.id !== GENERAL_POPULATION_ID);
+    const rows = Object.keys(draft)
+      .map(key => draft[key] as Row)
+      .filter(row => row?.id !== GENERAL_POPULATION_ID && !!row);
 
-    while (remainingRows.length) {
-      await Promise.all(
-        remainingRows.splice(0).map(async indicator => {
-          if (indicator != undefined) {
-            indicator.isNew
-              ? await insertIndicator(indicator)
-              : await updateIndicator(indicator);
-          }
-        })
-      )
-        .then(async () => {
-          if (headerDraft !== undefined)
-            await upsertProjection(mapProjection(headerDraft));
-        })
-        .then(() => success(t('success.data-saved'))())
-        .then(() => invalidateQueries())
-        .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
-    }
+    await Promise.all(
+      rows.map(async indicator => {
+        indicator.isNew
+          ? await insertIndicator(indicator)
+          : await updateIndicator(indicator);
+      })
+    )
+      .then(async () => {
+        if (headerDraft !== undefined)
+          await upsertProjection(mapProjection(headerDraft));
+      })
+      .then(() => {
+        success(t('success.data-saved'))();
+        invalidateQueries();
+      })
+      .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
   };
 
   const cancel = () => {
