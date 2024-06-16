@@ -166,6 +166,7 @@ export const InsertVaccineCourseDocument = gql`
   centralServer {
     vaccineCourse {
       insertVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
         ... on VaccineCourseNode {
           ...VaccineCourse
         }

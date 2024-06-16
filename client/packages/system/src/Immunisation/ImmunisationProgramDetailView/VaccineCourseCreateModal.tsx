@@ -8,8 +8,11 @@ import {
   BasicTextInput,
   Box,
   InputLabel,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface VaccineCourseCreateModalModalProps {
   isOpen: boolean;
@@ -22,6 +25,7 @@ export const VaccineCourseCreateModal: FC<
 > = ({ isOpen, onClose, programId }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['coldchain']);
+  const navigate = useNavigate();
   const {
     query: { isLoading },
     draft,
@@ -30,21 +34,30 @@ export const VaccineCourseCreateModal: FC<
   } = useVaccineCourse(programId);
   const isInvalid = !draft.name.trim();
 
+  const onOk = async () => {
+    const result = await create();
+    if (!result) return;
+
+    const response = result.centralServer.vaccineCourse.insertVaccineCourse;
+    if (response.__typename !== 'VaccineCourseNode') return;
+
+    navigate(
+      RouteBuilder.create(AppRoute.Programs)
+        .addPart(AppRoute.ImmunisationPrograms)
+        .addPart(response.programId)
+        .addPart(response.id)
+        .build()
+    );
+  };
+
   useEffect(() => {
     updatePatch({ programId: programId });
-  }, [programId]);
+  }, [programId, updatePatch]);
 
   return (
     <Modal
       okButton={
-        <DialogButton
-          variant="ok"
-          disabled={isInvalid}
-          onClick={async () => {
-            await create();
-            onClose();
-          }}
-        />
+        <DialogButton variant="ok" disabled={isInvalid} onClick={onOk} />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       title={t('label.add-new-vaccine-course')}
