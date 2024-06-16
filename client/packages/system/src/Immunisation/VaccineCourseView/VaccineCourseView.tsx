@@ -20,7 +20,7 @@ import {
   useParams,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { FC } from 'react';
 import { descriptionColumn } from './DescriptionColumn';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
@@ -113,8 +113,6 @@ export const VaccineCourseView: FC = () => {
   } = useVaccineCourse(id);
   const { data: demographicData } = useDemographicIndicators();
 
-  const [doseCount, setDoseCount] = useState(draft?.doses ?? 1);
-
   const defaultRow: VaccineCourseScheduleNode = {
     doseNumber: 1,
     id: FnUtils.generateUUID(),
@@ -129,7 +127,7 @@ export const VaccineCourseView: FC = () => {
     if (value > MAXVACCINEDOSES) {
       return;
     }
-    setDoseCount(value);
+    updatePatch({ doses: value });
   };
 
   const updateSchedule = (value: number) => {
@@ -258,7 +256,7 @@ export const VaccineCourseView: FC = () => {
         <Section heading={t('heading.schedule')}>
           <Row label={t('label.number-of-doses')}>
             <NumericTextInput
-              value={doseCount}
+              value={draft.doses}
               fullWidth
               onBlur={e => {
                 updatePatch({ doses: parseInt(e.target.value) });
