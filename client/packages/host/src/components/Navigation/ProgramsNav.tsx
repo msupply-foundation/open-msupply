@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Collapse,
   List,
@@ -7,18 +7,19 @@ import {
   AppNavLink,
   AppNavSection,
   useIsCentralServerApi,
+  UserStoreNodeFragment,
 } from '@openmsupply-client/common';
-import { AppRoute, Environment } from '@openmsupply-client/config';
+import { InvoiceIcon } from '@common/icons';
+import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
-import { PowerIcon } from '@openmsupply-client/common/src/ui/icons/Power';
 
-export const ProgramsNav: FC = () => {
+export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Programs).addWildCard().build()
   );
   const t = useTranslation('app');
   const isCentralServer = useIsCentralServerApi();
-  const visible = isCentralServer;
+  const visible = isCentralServer && store?.preferences.vaccineModule;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Programs}>
@@ -26,14 +27,14 @@ export const ProgramsNav: FC = () => {
         visible={visible}
         end={false}
         to={AppRoute.Programs}
-        icon={<PowerIcon color="primary" fontSize="small" />}
+        icon={<InvoiceIcon color="primary" fontSize="small" />}
         text={t('programs')}
         inactive
       />
       <Collapse in={isActive}>
         <List>
           <AppNavLink
-            visible={isCentralServer && Environment.FEATURE_GAPS}
+            visible={visible}
             end
             to={RouteBuilder.create(AppRoute.Programs)
               .addPart(AppRoute.ImmunisationPrograms)

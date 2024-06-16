@@ -28,10 +28,7 @@ pub(crate) fn label_printer_settings(ctx: &Context<'_>) -> Result<Option<LabelPr
         .label_printer_settings_service
         .label_printer_settings(&service_context)?;
 
-    let label_printer_settings = match settings {
-        Some(setting) => Some(LabelPrinterSettingNode::from_domain(setting)),
-        None => None,
-    };
+    let label_printer_settings = settings.map(LabelPrinterSettingNode::from_domain);
 
     Ok(label_printer_settings)
 }

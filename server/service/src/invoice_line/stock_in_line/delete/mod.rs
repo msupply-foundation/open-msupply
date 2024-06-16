@@ -26,18 +26,18 @@ pub fn delete_stock_in_line(
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice_row, line) = validate(&input, &ctx.store_id, &connection)?;
+            let (invoice_row, line) = validate(&input, &ctx.store_id, connection)?;
 
             let delete_batch_id_option = line.stock_line_id.clone();
 
-            InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
+            InvoiceLineRowRepository::new(connection).delete(&line.id)?;
 
             if let Some(id) = delete_batch_id_option {
-                StockLineRowRepository::new(&connection).delete(&id)?;
+                StockLineRowRepository::new(connection).delete(&id)?;
             }
 
             if let Some(invoice_row) = generate_invoice_user_id_update(&ctx.user_id, invoice_row) {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             Ok(line.id) as Result<String, OutError>

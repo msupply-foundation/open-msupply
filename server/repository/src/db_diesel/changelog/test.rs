@@ -37,7 +37,7 @@ async fn test_changelog() {
         inline_init(|r: &mut ChangelogRow| {
             r.cursor = starting_cursor as i64 + 1;
             r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id.clone();
+            r.record_id = mock_location_1().id;
             r.row_action = RowActionType::Upsert;
         })
     );
@@ -65,7 +65,7 @@ async fn test_changelog() {
         inline_init(|r: &mut ChangelogRow| {
             r.cursor = starting_cursor as i64 + 2;
             r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id.clone();
+            r.record_id = mock_location_1().id;
             r.row_action = RowActionType::Upsert;
         })
     );
@@ -80,7 +80,7 @@ async fn test_changelog() {
         inline_init(|r: &mut ChangelogRow| {
             r.cursor = starting_cursor as i64 + 2;
             r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id.clone();
+            r.record_id = mock_location_1().id;
             r.row_action = RowActionType::Upsert;
         })
     );
@@ -95,13 +95,13 @@ async fn test_changelog() {
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 2;
                 r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_1().id.clone();
+                r.record_id = mock_location_1().id;
                 r.row_action = RowActionType::Upsert;
             }),
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 3;
                 r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_on_hold().id.clone();
+                r.record_id = mock_location_on_hold().id;
                 r.row_action = RowActionType::Upsert;
             })
         ]
@@ -117,13 +117,13 @@ async fn test_changelog() {
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 2;
                 r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_1().id.clone();
+                r.record_id = mock_location_1().id;
                 r.row_action = RowActionType::Upsert;
             }),
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 4;
                 r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_on_hold().id.clone();
+                r.record_id = mock_location_on_hold().id;
                 r.row_action = RowActionType::Delete;
             })
         ]
@@ -353,7 +353,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn store() -> StoreRow {
         inline_init(|r: &mut StoreRow| {
             r.id = "store".to_string();
-            r.name_id = name().id
+            r.name_link_id = name().id
         })
     }
 

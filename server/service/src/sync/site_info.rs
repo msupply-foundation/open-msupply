@@ -56,8 +56,8 @@ impl SiteInfoTrait for SiteInfoService {
 
         // This can be simplified
         let sync_api_v5 = SyncApiV5::new(SyncApiV5::new_settings(
-            &settings,
-            &service_provider,
+            settings,
+            service_provider,
             SYNC_V5_VERSION,
         )?)?;
         let ctx = service_provider.basic_context()?;
@@ -75,7 +75,7 @@ impl SiteInfoTrait for SiteInfoService {
         }
 
         repo.set_string(KeyType::SettingsSyncSiteUuid, Some(site_info.id.clone()))?;
-        repo.set_i32(KeyType::SettingsSyncSiteId, Some(site_info.site_id.clone()))?;
+        repo.set_i32(KeyType::SettingsSyncSiteId, Some(site_info.site_id))?;
 
         info!("Received site info");
 

@@ -11,11 +11,11 @@ table! {
     demographic_projection(id) {
         id -> Text,
         base_year -> Integer,
-        year_1 -> Integer,
-        year_2 -> Integer,
-        year_3 -> Integer,
-        year_4 -> Integer,
-        year_5 -> Integer,
+        year_1 -> Double,
+        year_2 -> Double,
+        year_3 -> Double,
+        year_4 -> Double,
+        year_5 -> Double,
     }
 }
 
@@ -24,11 +24,11 @@ table! {
 pub struct DemographicProjectionRow {
     pub id: String,
     pub base_year: i32,
-    pub year_1: i32,
-    pub year_2: i32,
-    pub year_3: i32,
-    pub year_4: i32,
-    pub year_5: i32,
+    pub year_1: f64,
+    pub year_2: f64,
+    pub year_3: f64,
+    pub year_4: f64,
+    pub year_5: f64,
 }
 
 pub struct DemographicProjectionRowRepository<'a> {
@@ -40,21 +40,12 @@ impl<'a> DemographicProjectionRowRepository<'a> {
         DemographicProjectionRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &DemographicProjectionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(demographic_projection_dsl::demographic_projection)
             .values(row)
-            .on_conflict(demographic_projection_dsl::id)
+            .on_conflict(demographic_projection::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &DemographicProjectionRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(demographic_projection_dsl::demographic_projection)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

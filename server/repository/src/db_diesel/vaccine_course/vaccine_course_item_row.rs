@@ -31,7 +31,6 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         VaccineCourseItemRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(
         &self,
         vaccine_course_item_row: &VaccineCourseItemRow,
@@ -41,17 +40,6 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(vaccine_course_item_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(
-        &self,
-        vaccine_course_item_row: &VaccineCourseItemRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::replace_into(vaccine_course_item)
-            .values(vaccine_course_item_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

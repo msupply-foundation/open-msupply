@@ -5,16 +5,15 @@ export const useDemographicData = {
   utils: {
     demographics: Utils.useDemographicsApi,
   },
-
-  document: {
-    getIndicator: Document.useDemographicIndicator,
-    listIndicator: Document.useDemographicIndicators,
-    insertIndicator: Document.useDemographicIndicatorInsert,
-    updateIndicator: Document.useDemographicIndicatorUpdate,
-
-    getProjection: Document.useDemographicProjection,
-    listProjection: Document.useDemographicProjections,
-    insertProjection: Document.useDemographicProjectionInsert,
-    updateProjection: Document.useDemographicProjectionUpdate,
+  indicator: {
+    get: Document.useDemographicIndicator,
+    list: Document.useDemographicIndicators,
+    insert: Document.useDemographicIndicatorInsert,
+    update: Document.useDemographicIndicatorUpdate,
+  },
+  projection: {
+    get: Document.useDemographicProjection,
+    list: Document.useDemographicProjections,
+    upsert: Document.useDemographicProjectionUpsert,
   },
 };

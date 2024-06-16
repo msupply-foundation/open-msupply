@@ -18,7 +18,7 @@ pub fn validate(
 ) -> Result<(ItemRow, InvoiceRow, StockLine), InsertStockOutLineError> {
     use InsertStockOutLineError::*;
 
-    if let Some(_) = check_line_exists(connection, &input.id)? {
+    if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
     let batch =
@@ -49,12 +49,8 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
-    if let Some(r#type) = &input.r#type {
-        if !check_invoice_type(&invoice, r#type.to_domain()) {
-            return Err(InvoiceTypeDoesNotMatch);
-        }
-    } else {
-        return Err(NoInvoiceType);
+    if !check_invoice_type(&invoice, input.r#type.to_domain()) {
+        return Err(InvoiceTypeDoesNotMatch);
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);

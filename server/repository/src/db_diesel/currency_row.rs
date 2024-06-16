@@ -38,21 +38,12 @@ impl<'a> CurrencyRowRepository<'a> {
         CurrencyRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::insert_into(currency_dsl::currency)
             .values(row)
             .on_conflict(currency_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(currency_dsl::currency)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

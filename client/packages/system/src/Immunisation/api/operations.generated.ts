@@ -6,6 +6,10 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ImmunisationProgramFragment = { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null };
 
+export type VaccineCourseScheduleFragment = { __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string };
+
+export type VaccineCourseItemFragment = { __typename: 'VaccineCourseItemNode', id: string, item: { __typename: 'ItemNode', id: string, name: string } };
+
 export type ProgramsQueryVariables = Types.Exact<{
   storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -24,7 +28,7 @@ export type InsertImmunisationProgramMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', insertImmunisationProgram: { __typename: 'InsertImmunisationProgramError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } } } };
+export type InsertImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', insertImmunisationProgram: { __typename: 'InsertImmunisationProgramError', error: { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } } } };
 
 export type UpdateImmunisationProgramMutationVariables = Types.Exact<{
   input?: Types.InputMaybe<Types.UpdateImmunisationProgramInput>;
@@ -72,6 +76,22 @@ export const ImmunisationProgramFragmentDoc = gql`
   }
 }
     `;
+export const VaccineCourseItemFragmentDoc = gql`
+    fragment VaccineCourseItem on VaccineCourseItemNode {
+  id
+  item {
+    id
+    name
+  }
+}
+    `;
+export const VaccineCourseScheduleFragmentDoc = gql`
+    fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
+  id
+  doseNumber
+  label
+}
+    `;
 export const VaccineCourseFragmentDoc = gql`
     fragment VaccineCourse on VaccineCourseNode {
   id
@@ -87,19 +107,14 @@ export const VaccineCourseFragmentDoc = gql`
     id
   }
   vaccineCourseItems {
-    id
-    item {
-      id
-      name
-    }
+    ...VaccineCourseItem
   }
   vaccineCourseSchedules {
-    id
-    doseNumber
-    label
+    ...VaccineCourseSchedule
   }
 }
-    `;
+    ${VaccineCourseItemFragmentDoc}
+${VaccineCourseScheduleFragmentDoc}`;
 export const ProgramsDocument = gql`
     query programs($storeId: String, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
   programs(
@@ -124,12 +139,14 @@ export const InsertImmunisationProgramDocument = gql`
   centralServer {
     program {
       insertImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
         ... on ProgramNode {
           ...ImmunisationProgram
         }
         ... on InsertImmunisationProgramError {
           __typename
           error {
+            __typename
             description
           }
         }
@@ -172,7 +189,6 @@ export const VaccineCoursesDocument = gql`
     ... on VaccineCourseConnector {
       __typename
       nodes {
-        __typename
         ...VaccineCourse
       }
       totalCount

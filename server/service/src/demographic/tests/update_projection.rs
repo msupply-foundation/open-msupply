@@ -55,7 +55,7 @@ mod query {
                 &ctx,
                 UpdateDemographicProjection {
                     id: id.clone(),
-                    base_year: Some(base_year_2.clone()),
+                    base_year: Some(base_year_2),
                     ..Default::default()
                 },
             )
@@ -83,7 +83,7 @@ mod query {
                 &ctx,
                 UpdateDemographicProjection {
                     id: id_2.clone(),
-                    base_year: Some(base_year_2.clone()),
+                    base_year: Some(base_year_2),
                     ..Default::default()
                 },
             ),

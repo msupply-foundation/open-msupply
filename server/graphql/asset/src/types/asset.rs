@@ -93,19 +93,10 @@ pub struct AssetNode {
     pub asset: Asset,
 }
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Default)]
 pub struct AssetConnector {
     total_count: u32,
     nodes: Vec<AssetNode>,
-}
-
-impl AssetConnector {
-    pub fn new() -> AssetConnector {
-        AssetConnector {
-            total_count: 0,
-            nodes: Vec::<AssetNode>::new(),
-        }
-    }
 }
 
 #[Object]
@@ -135,11 +126,11 @@ impl AssetNode {
     }
 
     pub async fn installation_date(&self) -> Option<chrono::NaiveDate> {
-        self.row().installation_date.clone()
+        self.row().installation_date
     }
 
     pub async fn replacement_date(&self) -> Option<chrono::NaiveDate> {
-        self.row().replacement_date.clone()
+        self.row().replacement_date
     }
 
     pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
@@ -287,7 +278,7 @@ impl AssetNode {
         };
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &donor_name_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, donor_name_id))
             .await?;
 
         Ok(response_option.map(NameNode::from_domain))

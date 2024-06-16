@@ -92,7 +92,11 @@ impl<'a> SyncLogRepository<'a> {
 
         let result = final_query.load::<SyncLogRow>(self.connection.lock().connection())?;
 
-        Ok(result.into_iter().map(to_domain).collect())
+        Ok(result
+            .into_iter()
+            .map(SyncLogRow::or_latest_row)
+            .map(to_domain)
+            .collect())
     }
 }
 

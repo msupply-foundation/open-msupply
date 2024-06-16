@@ -33,7 +33,7 @@ async fn requisition_transfer() {
 
     let request_store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id = request_store_name.id.clone();
+        r.name_link_id.clone_from(&request_store_name.id);
         r.site_id = site_id;
     });
 
@@ -44,7 +44,7 @@ async fn requisition_transfer() {
 
     let response_store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id = response_store_name.id.clone();
+        r.name_link_id.clone_from(&response_store_name.id);
         r.site_id = site_id;
     });
 
@@ -143,14 +143,14 @@ async fn stock_on_deleted_requisitions() {
 
     let store = inline_init(|r: &mut StoreRow| {
         r.id = uuid();
-        r.name_id = store_name.id.clone();
+        r.name_link_id.clone_from(&store_name.id);
         r.site_id = site_id;
     });
 
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 3,
-        name_link_id: store.name_id.clone(),
+        name_link_id: store.name_link_id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionType::Request,
         ..RequisitionRow::default()
@@ -213,8 +213,8 @@ impl RequisitionTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
             r.requisition_number = 3;
-            r.name_link_id = response_store.name_id.clone();
-            r.store_id = request_store.id.clone();
+            r.name_link_id.clone_from(&response_store.name_link_id);
+            r.store_id.clone_from(&request_store.id);
             r.r#type = RequisitionType::Request;
             r.status = RequisitionStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
@@ -230,8 +230,8 @@ impl RequisitionTransferTester {
 
         let request_requisition_line1 = inline_init(|r: &mut RequisitionLineRow| {
             r.id = uuid();
-            r.requisition_id = request_requisition.id.clone();
-            r.item_link_id = item1.id.clone();
+            r.requisition_id.clone_from(&request_requisition.id);
+            r.item_link_id.clone_from(&item1.id);
             r.requested_quantity = 2.0;
             r.suggested_quantity = 3.0;
             r.comment = Some("line comment".to_string());
@@ -247,8 +247,8 @@ impl RequisitionTransferTester {
 
         let request_requisition_line2 = inline_init(|r: &mut RequisitionLineRow| {
             r.id = uuid();
-            r.requisition_id = request_requisition.id.clone();
-            r.item_link_id = item2.id.clone();
+            r.requisition_id.clone_from(&request_requisition.id);
+            r.item_link_id.clone_from(&item2.id);
             r.requested_quantity = 10.0;
             r.suggested_quantity = 20.0;
             r.available_stock_on_hand = 30.0;
@@ -304,7 +304,7 @@ impl RequisitionTransferTester {
             .update_request_requisition(
                 &ctx,
                 inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = self.request_requisition.id.clone();
+                    r.id.clone_from(&self.request_requisition.id);
                     r.status = Some(UpdateRequestRequisitionStatus::Sent);
                 }),
             )
@@ -326,7 +326,7 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.store_id, self.response_store.id);
         assert_eq!(
             response_requisition.name_link_id,
-            self.request_store.name_id
+            self.request_store.name_link_id
         );
         assert_eq!(
             response_requisition.their_reference,

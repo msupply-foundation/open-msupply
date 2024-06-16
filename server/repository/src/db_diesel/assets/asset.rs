@@ -287,7 +287,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_query_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_asset_query_repository",
             MockDataInserts::none().stores(),
         )
@@ -304,12 +304,12 @@ mod tests {
             ..Default::default()
         };
 
-        let _result = AssetRowRepository::new(&mut storage_connection)
+        let _result = AssetRowRepository::new(&storage_connection)
             .upsert_one(&asset)
             .unwrap();
 
         // Query by id
-        let result = AssetRepository::new(&mut storage_connection)
+        let result = AssetRepository::new(&storage_connection)
             .query_one(AssetFilter::new().id(EqualFilter::equal_to(&asset_id)))
             .unwrap()
             .unwrap();

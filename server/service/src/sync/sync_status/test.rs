@@ -11,7 +11,7 @@ use repository::{
     ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;
-use util::{assert_matches, inline_edit, inline_init};
+use util::{inline_edit, inline_init};
 
 use crate::{
     service_provider::ServiceProvider,
@@ -107,7 +107,6 @@ async fn sync_status() {
                 r.value_int = Some(mock_store_b().site_id);
             })];
             r.locations = (1..=3)
-                .into_iter()
                 .map(|i| {
                     inline_init(|r: &mut LocationRow| {
                         r.id = i.to_string();
@@ -142,7 +141,7 @@ async fn sync_status() {
     )
     .await;
 
-    assert_matches!(result, Err(_));
+    assert!(result.is_err());
     tester_data.lock().await.try_route("final".to_string());
 }
 
@@ -182,7 +181,8 @@ fn get_initialisation_sync_status_tester(
                 let new_status = inline_edit(&previous_status, |mut r| {
                     r.is_syncing = true;
                     r.summary = current_status.summary.clone();
-                    r.prepare_initial = current_status.prepare_initial.clone();
+                    r.prepare_initial
+                        .clone_from(&current_status.prepare_initial);
                     r
                 });
                 assert_eq!(current_status, new_status);
@@ -210,12 +210,13 @@ fn get_initialisation_sync_status_tester(
              }| {
                 let new_status = inline_edit(&previous_status, |mut r| {
                     if iteration == 0 {
-                        r.prepare_initial = current_status.prepare_initial.clone()
+                        r.prepare_initial
+                            .clone_from(&current_status.prepare_initial)
                     }
                     // Even though push is not done start and end is logged
-                    r.push = current_status.push.clone();
-                    r.push_v6 = current_status.push_v6.clone();
-                    r.pull_central = current_status.pull_central.clone();
+                    r.push.clone_from(&current_status.push);
+                    r.push_v6.clone_from(&current_status.push_v6);
+                    r.pull_central.clone_from(&current_status.pull_central);
                     r
                 });
                 assert_eq!(current_status, new_status);
@@ -284,9 +285,9 @@ fn get_initialisation_sync_status_tester(
              }| {
                 let new_status = inline_edit(&previous_status, |mut r| {
                     if iteration == 0 {
-                        r.pull_central = current_status.pull_central.clone()
+                        r.pull_central.clone_from(&current_status.pull_central)
                     }
-                    r.pull_remote = current_status.pull_remote.clone();
+                    r.pull_remote.clone_from(&current_status.pull_remote);
                     r
                 });
                 assert_eq!(current_status, new_status);
@@ -374,11 +375,11 @@ fn get_initialisation_sync_status_tester(
                 let new_status = inline_edit(&previous_status, |mut r| {
                     r.is_syncing = false;
                     r.summary = current_status.summary.clone();
-                    r.pull_remote = current_status.pull_remote.clone();
-                    r.integration = current_status.integration.clone();
+                    r.pull_remote.clone_from(&current_status.pull_remote);
+                    r.integration.clone_from(&current_status.integration);
                     // TODO update with proper v6 tests
-                    r.pull_v6 = current_status.pull_v6.clone();
-                    r.push_v6 = current_status.push_v6.clone();
+                    r.pull_v6.clone_from(&current_status.pull_v6);
+                    r.push_v6.clone_from(&current_status.push_v6);
                     r
                 });
 
@@ -434,9 +435,10 @@ fn get_push_and_error_sync_status_tester(
                         r.summary = current_status.summary.clone();
                     }
                     // Even though prepare_initial is not run, it is logged
-                    r.prepare_initial = current_status.prepare_initial.clone();
-                    r.push = current_status.push.clone();
-                    r.push_v6 = current_status.push_v6.clone();
+                    r.prepare_initial
+                        .clone_from(&current_status.prepare_initial);
+                    r.push.clone_from(&current_status.push);
+                    r.push_v6.clone_from(&current_status.push_v6);
                     r
                 });
                 assert_eq!(current_status, new_status);
@@ -518,10 +520,10 @@ fn get_push_and_error_sync_status_tester(
                  ..
              }| {
                 let new_status = inline_edit(&previous_status, |mut r| {
-                    r.push = current_status.push.clone();
-                    r.push_v6 = current_status.push_v6.clone();
-                    r.pull_central = current_status.pull_central.clone();
-                    r.pull_v6 = current_status.pull_v6.clone();
+                    r.push.clone_from(&current_status.push);
+                    r.push_v6.clone_from(&current_status.push_v6);
+                    r.pull_central.clone_from(&current_status.pull_central);
+                    r.pull_v6.clone_from(&current_status.pull_v6);
                     r
                 });
                 assert_eq!(current_status, new_status);
@@ -544,7 +546,7 @@ fn get_push_and_error_sync_status_tester(
              }| {
                 let new_status = inline_edit(&previous_status, |mut r| {
                     r.is_syncing = false;
-                    r.error = current_status.error.clone();
+                    r.error.clone_from(&current_status.error);
                     r
                 });
                 assert_eq!(current_status, new_status);
@@ -577,8 +579,7 @@ async fn run_server_and_sync(
         },
     };
 
-    let synchroniser =
-        Synchroniser::new(sync_settings.clone(), service_provider.clone().into()).unwrap();
+    let synchroniser = Synchroniser::new(sync_settings.clone(), service_provider.clone()).unwrap();
 
     async fn entry(path: web::Path<String>, tester: TesterData) -> String {
         tester.lock().await.try_route(path.to_string())

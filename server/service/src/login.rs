@@ -119,7 +119,7 @@ impl LoginService {
             Ok(user_info) => {
                 let service_ctx =
                     service_provider.context("".to_string(), user_info.user.id.clone())?;
-                username = user_info.user.name.clone();
+                username.clone_from(&user_info.user.name);
                 LoginService::update_user(&service_ctx, &input.password, user_info)
                     .map_err(LoginError::UpdateUserError)?;
             }
@@ -163,7 +163,7 @@ impl LoginService {
             Err(err) => return Err(err.into()),
         };
 
-        service_ctx.user_id = user_account.id.clone();
+        service_ctx.user_id.clone_from(&user_account.id);
 
         activity_log_entry(
             &service_ctx,
@@ -625,7 +625,7 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Ok(_));
+            assert!(result.is_ok());
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {

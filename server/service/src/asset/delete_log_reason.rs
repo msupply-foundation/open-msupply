@@ -32,7 +32,7 @@ pub fn delete_log_reason(
                 None,
             )?;
 
-            let _deleted_location = AssetInternalLocationRowRepository::new(&connection)
+            let _deleted_location = AssetInternalLocationRowRepository::new(connection)
                 .delete_all_for_asset_id(&reason_id);
 
             AssetLogReasonRowRepository::new(connection)
@@ -49,6 +49,6 @@ pub fn validate(
 ) -> Result<(), DeleteAssetLogReasonError> {
     match check_asset_log_reason_exists(reason_id, connection)? {
         Some(_reason_row) => Ok(()),
-        None => return Err(DeleteAssetLogReasonError::ReasonDoesNotExist),
+        None => Err(DeleteAssetLogReasonError::ReasonDoesNotExist),
     }
 }

@@ -47,7 +47,7 @@ export const VaccineCourseCreateModal: FC<
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      title={t('label.create-new-program')}
+      title={t('label.add-new-vaccine-course')}
     >
       {!isLoading ? (
         <Grid flexDirection="column" display="flex" gap={2}>

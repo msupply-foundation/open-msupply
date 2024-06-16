@@ -12,7 +12,7 @@ pub fn mock_program_a() -> ProgramRow {
     }
 }
 
-pub fn mock_immunisation_program() -> ProgramRow {
+pub fn mock_immunisation_program_a() -> ProgramRow {
     ProgramRow {
         id: "immunisation_program".to_string(),
         master_list_id: None,
@@ -22,6 +22,20 @@ pub fn mock_immunisation_program() -> ProgramRow {
     }
 }
 
+pub fn mock_immunisation_program_b() -> ProgramRow {
+    ProgramRow {
+        id: "immunisation_program_b".to_string(),
+        master_list_id: None,
+        name: "immunisation_program_b".to_string(),
+        context_id: context_immunisation_program().id,
+        is_immunisation: true,
+    }
+}
+
 pub fn mock_programs() -> Vec<ProgramRow> {
-    vec![mock_program_a(), mock_immunisation_program()]
+    vec![
+        mock_program_a(),
+        mock_immunisation_program_a(),
+        mock_immunisation_program_b(),
+    ]
 }

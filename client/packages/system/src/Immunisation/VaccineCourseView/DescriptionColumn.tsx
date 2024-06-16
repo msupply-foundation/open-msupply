@@ -8,11 +8,12 @@ import {
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
   label?: string;
+  placeholder?: string;
 }
 
-export const descriptionColumn = <
-  T extends RecordWithIdWithRequiredFields,
->(): ColumnDefinition<T> => ({
+export const descriptionColumn = <T extends RecordWithIdWithRequiredFields>(
+  placeholder: string
+): ColumnDefinition<T> => ({
   label: 'label.label',
   setter: () => {
     if (process.env['NODE_ENV']) {
@@ -38,9 +39,10 @@ export const descriptionColumn = <
     >
       <>
         <BasicTextInput
+          placeholder={placeholder ?? ''}
           disabled={isDisabled}
           defaultValue={column.accessor({ rowData })}
-          onBlur={e => {
+          onChange={e => {
             column.setter({ ...rowData, label: e.target.value });
           }}
         />
