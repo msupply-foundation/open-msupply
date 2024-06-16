@@ -1,14 +1,33 @@
-import { useUrlQueryParams, useQuery } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useDemographicsApi } from '../utils/useDemographicApi';
+import { DemographicProjectionFragment } from '../../operations.generated';
 
-export const useDemographicProjections = () => {
-  const { queryParams } = useUrlQueryParams({
-    filters: [{ key: 'name' }, { key: 'basePopulation' }, { key: 'id' }],
-  });
+export const useDemographicProjections = (baseYear: number) => {
   const api = useDemographicsApi();
-  const filterBy = queryParams.filterBy;
-  const params = { ...queryParams, filterBy };
-  return useQuery(api.keys.paramProjectionList(params), () =>
-    api.getProjections.list(params)
-  );
+  const params = {
+    filterBy: { baseYear: { equalTo: baseYear } },
+    first: 5,
+    offset: 0,
+  };
+  return useQuery(api.keys.paramProjectionList(baseYear), async () => {
+    const result = await api.getProjections.list(params);
+
+    return result.totalCount === 0
+      ? {
+          nodes: [
+            {
+              __typename:
+                'DemographicProjectionNode' as DemographicProjectionFragment['__typename'],
+              baseYear: baseYear,
+              id: '',
+              year1: 0,
+              year2: 0,
+              year3: 0,
+              year4: 0,
+              year5: 0,
+            },
+          ],
+        }
+      : result;
+  });
 };

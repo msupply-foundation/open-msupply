@@ -2,6 +2,7 @@ use async_graphql::*;
 
 use graphql_core::{
     pagination::PaginationInput,
+    simple_generic_errors::{NodeError, NodeErrorInterface},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -16,13 +17,19 @@ use repository::{
 use service::auth::{Resource, ResourceAccessRequest};
 use types::{
     DemographicIndicatorConnector, DemographicIndicatorSortInput, DemographicProjectionConnector,
-    DemographicProjectionFilterInput, DemographicProjectionSortInput,
+    DemographicProjectionFilterInput, DemographicProjectionNode, DemographicProjectionSortInput,
     DemographicProjectionsResponse,
 };
 use types::{DemographicIndicatorFilterInput, DemographicIndicatorsResponse};
 
 #[derive(Default, Clone)]
 pub struct DemographicIndicatorQueries;
+
+#[derive(Union)]
+pub enum DemographicProjectionResponse {
+    Error(NodeError),
+    Response(DemographicProjectionNode),
+}
 
 #[Object]
 impl DemographicIndicatorQueries {
@@ -92,6 +99,37 @@ impl DemographicIndicatorQueries {
         Ok(DemographicProjectionsResponse::Response(
             DemographicProjectionConnector::from_domain(assets),
         ))
+    }
+    pub async fn demographic_projection_by_base_year(
+        &self,
+        ctx: &Context<'_>,
+        base_year: i32,
+    ) -> Result<DemographicProjectionResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryAsset,
+                store_id: None,
+            },
+        )?;
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context("".to_string(), user.user_id)?;
+
+        let projection_option = service_provider
+            .demographic_service
+            .get_projection_by_base_year(&service_context, base_year)
+            .map_err(StandardGraphqlError::from_repository_error)?;
+
+        let response = match projection_option {
+            Some(projection) => DemographicProjectionResponse::Response(
+                DemographicProjectionNode::from_domain(projection),
+            ),
+            None => DemographicProjectionResponse::Error(NodeError {
+                error: NodeErrorInterface::record_not_found(),
+            }),
+        };
+
+        Ok(response)
     }
 }
 
