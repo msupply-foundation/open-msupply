@@ -41,6 +41,7 @@
   "error.no-sensors": "No sensors found",
   "error.no-temperature-logs": "No temperature logs found",
   "error.printing-qr": "Error printing QR code",
+  "error.program-already-exists": "Immunization program already exists",
   "error.unable-to-create-cce": "Unable to create CCE",
   "error.unable-to-load-breach": "Error loading breach",
   "error.unable-to-save-asset": "Unable to save asset",

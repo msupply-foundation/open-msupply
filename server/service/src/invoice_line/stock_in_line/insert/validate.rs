@@ -1,7 +1,8 @@
 use crate::{
+    check_location_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_location_exists, check_pack_size,
+        stock_in_line::check_pack_size,
         validate::{check_item_exists, check_line_exists},
     },
 };
@@ -15,7 +16,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), InsertStockInLineError> {
     use InsertStockInLineError::*;
-    if let Some(_) = check_line_exists(connection, &input.id)? {
+    if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
     if !check_pack_size(Some(input.pack_size)) {
@@ -26,10 +27,8 @@ pub fn validate(
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
-    if let Some(location) = &input.location {
-        if !check_location_exists(&location.value, connection)? {
-            return Err(LocationDoesNotExist);
-        }
+    if !check_location_exists(connection, store_id, &input.location)? {
+        return Err(LocationDoesNotExist);
     }
 
     let invoice =

@@ -218,7 +218,7 @@ pub async fn get_site_status(
     Ok(SiteStatusV6 { is_integrating })
 }
 
-fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) -> () {
+fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
     tokio::spawn(async move {
         let ctx = match service_provider.basic_context() {
             Ok(ctx) => ctx,
@@ -230,7 +230,7 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) -> ()
 
         set_integrating(site_id, true);
 
-        match integrate_and_translate_sync_buffer(&ctx.connection, true, None, Some(site_id)) {
+        match integrate_and_translate_sync_buffer(&ctx.connection, None, Some(site_id)) {
             Ok(_) => {
                 log::info!("Integration complete for site {}", site_id);
             }

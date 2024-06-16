@@ -21,7 +21,6 @@ mod test {
     use super::*;
     use httpmock::{Method::GET, MockServer};
     use serde_json::json;
-    use util::assert_matches;
 
     #[actix_rt::test]
     async fn test_get_queued_records() {
@@ -60,7 +59,7 @@ mod test {
 
         mock.assert();
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
 
         assert_eq!(
             result.unwrap(),

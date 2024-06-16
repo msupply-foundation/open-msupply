@@ -70,7 +70,7 @@ pub fn update_outbound_return(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     log_type_from_invoice_status(&updated_return.status, false),
                     Some(updated_return.id.to_owned()),
                     None,
@@ -79,7 +79,7 @@ pub fn update_outbound_return(
             }
 
             get_invoice(ctx, None, &input.outbound_return_id)
-                .map_err(|error| UpdateOutboundReturnError::DatabaseError(error))?
+                .map_err(UpdateOutboundReturnError::DatabaseError)?
                 .ok_or(UpdateOutboundReturnError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -106,19 +106,15 @@ impl UpdateOutboundReturnStatus {
     pub fn full_status_option(
         status: &Option<UpdateOutboundReturnStatus>,
     ) -> Option<InvoiceStatus> {
-        match status {
-            Some(status) => Some(status.as_invoice_row_status()),
-            None => None,
-        }
+        status.as_ref().map(|status| status.as_invoice_row_status())
     }
 }
 
 impl UpdateOutboundReturn {
     pub fn full_status(&self) -> Option<InvoiceStatus> {
-        match &self.status {
-            Some(status) => Some(status.as_invoice_row_status()),
-            None => None,
-        }
+        self.status
+            .as_ref()
+            .map(|status| status.as_invoice_row_status())
     }
 }
 #[cfg(test)]

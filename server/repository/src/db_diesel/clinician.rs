@@ -244,19 +244,19 @@ mod tests {
     #[actix_rt::test]
     async fn test_clinician_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_clinician_repository",
             MockDataInserts::none().names().stores(),
         )
         .await;
 
-        ClinicianRowRepository::new(&mut storage_connection)
+        ClinicianRowRepository::new(&storage_connection)
             .upsert_one(&inline_init(|r: &mut ClinicianRow| {
                 r.id = "clinician_store_a".to_string();
                 r.first_name = Some("First".to_string());
             }))
             .unwrap();
-        ClinicianRowRepository::new(&mut storage_connection)
+        ClinicianRowRepository::new(&storage_connection)
             .upsert_one(&inline_init(|r: &mut ClinicianRow| {
                 r.id = "clinician_store_b".to_string();
                 r.first_name = Some("First".to_string());
@@ -264,7 +264,7 @@ mod tests {
             .unwrap();
 
         // no store join no results:
-        let result = ClinicianRepository::new(&mut storage_connection)
+        let result = ClinicianRepository::new(&storage_connection)
             .query_by_filter(
                 &mock_store_a().id,
                 ClinicianFilter::new().first_name(StringFilter::equal_to("First")),
@@ -273,7 +273,7 @@ mod tests {
         assert!(result.is_empty());
 
         // add clinician store join to get query results:
-        ClinicianStoreJoinRowRepository::new(&mut storage_connection)
+        ClinicianStoreJoinRowRepository::new(&storage_connection)
             .upsert_one(&ClinicianStoreJoinRow {
                 id: "JoinId1".to_string(),
                 store_id: mock_store_a().id,
@@ -281,7 +281,7 @@ mod tests {
             })
             .unwrap();
 
-        let result = ClinicianRepository::new(&mut storage_connection)
+        let result = ClinicianRepository::new(&storage_connection)
             .query_by_filter(
                 &mock_store_a().id,
                 ClinicianFilter::new().first_name(StringFilter::equal_to("First")),

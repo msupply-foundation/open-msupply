@@ -45,13 +45,13 @@ pub fn response_store_stats(
     let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
             .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
-            .store_id(EqualFilter::equal_to(&store_id)),
+            .store_id(EqualFilter::equal_to(store_id)),
         None,
     )?;
 
     let stock_on_hand = stock_lines.iter().fold(0.0, |sum, stock_line| {
         sum + stock_line.stock_line_row.available_number_of_packs
-            * stock_line.stock_line_row.pack_size as f64
+            * stock_line.stock_line_row.pack_size
     });
 
     let request_requisitions = RequisitionLineRepository::new(connection).query_by_filter(

@@ -82,19 +82,10 @@ pub enum DemographicIndicatorResponse {
     Response(DemographicIndicatorNode),
 }
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Default)]
 pub struct DemographicIndicatorConnector {
     total_count: u32,
     nodes: Vec<DemographicIndicatorNode>,
-}
-
-impl DemographicIndicatorConnector {
-    pub fn new() -> DemographicIndicatorConnector {
-        DemographicIndicatorConnector {
-            total_count: 0,
-            nodes: Vec::<DemographicIndicatorNode>::new(),
-        }
-    }
 }
 
 #[derive(Union)]
@@ -108,7 +99,7 @@ pub enum DemographicProjectionResponse {
     Response(DemographicProjectionNode),
 }
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Default)]
 pub struct DemographicProjectionConnector {
     total_count: u32,
     nodes: Vec<DemographicProjectionNode>,
@@ -116,10 +107,7 @@ pub struct DemographicProjectionConnector {
 
 impl DemographicProjectionConnector {
     pub fn new() -> DemographicProjectionConnector {
-        DemographicProjectionConnector {
-            total_count: 0,
-            nodes: Vec::<DemographicProjectionNode>::new(),
-        }
+        Self::default()
     }
 }
 
@@ -136,19 +124,19 @@ impl DemographicProjectionNode {
     pub async fn base_year(&self) -> &i32 {
         &self.row().base_year
     }
-    pub async fn year_1(&self) -> &i32 {
+    pub async fn year_1(&self) -> &f64 {
         &self.row().year_1
     }
-    pub async fn year_2(&self) -> &i32 {
+    pub async fn year_2(&self) -> &f64 {
         &self.row().year_2
     }
-    pub async fn year_3(&self) -> &i32 {
+    pub async fn year_3(&self) -> &f64 {
         &self.row().year_3
     }
-    pub async fn year_4(&self) -> &i32 {
+    pub async fn year_4(&self) -> &f64 {
         &self.row().year_4
     }
-    pub async fn year_5(&self) -> &i32 {
+    pub async fn year_5(&self) -> &f64 {
         &self.row().year_5
     }
 }

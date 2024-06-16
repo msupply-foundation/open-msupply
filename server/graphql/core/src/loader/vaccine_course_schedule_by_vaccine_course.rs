@@ -31,9 +31,7 @@ impl Loader<String> for VaccineCourseScheduleByVaccineCourseIdLoader {
 
         for schedule in schedules {
             let id = schedule.vaccine_course_id.clone();
-            let list = map
-                .entry(id)
-                .or_insert_with(|| Vec::<VaccineCourseScheduleRow>::new());
+            let list = map.entry(id).or_default();
             list.push(schedule);
         }
 

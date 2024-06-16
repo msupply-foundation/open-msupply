@@ -40,21 +40,12 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         UserStoreJoinRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_store_join_dsl::user_store_join)
             .values(row)
             .on_conflict(user_store_join_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(user_store_join_dsl::user_store_join)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

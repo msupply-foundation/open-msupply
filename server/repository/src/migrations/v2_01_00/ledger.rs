@@ -4,7 +4,6 @@ pub(crate) fn drop_ledger_views(connection: &StorageConnection) -> anyhow::Resul
     sql!(
         connection,
         r#"
-        DROP VIEW IF EXISTS consumption;
         DROP VIEW IF EXISTS stock_movement;
         DROP VIEW IF EXISTS outbound_shipment_stock_movement;
         DROP VIEW IF EXISTS inbound_shipment_stock_movement;

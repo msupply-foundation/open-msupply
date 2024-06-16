@@ -28,7 +28,7 @@ export type InsertImmunisationProgramMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', insertImmunisationProgram: { __typename: 'InsertImmunisationProgramError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } } } };
+export type InsertImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', insertImmunisationProgram: { __typename: 'InsertImmunisationProgramError', error: { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } } } };
 
 export type UpdateImmunisationProgramMutationVariables = Types.Exact<{
   input?: Types.InputMaybe<Types.UpdateImmunisationProgramInput>;
@@ -139,12 +139,14 @@ export const InsertImmunisationProgramDocument = gql`
   centralServer {
     program {
       insertImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
         ... on ProgramNode {
           ...ImmunisationProgram
         }
         ... on InsertImmunisationProgramError {
           __typename
           error {
+            __typename
             description
           }
         }

@@ -34,9 +34,9 @@ pub fn mock_test_name_store_id() -> MockData {
 
 pub fn mock_name_linked_to_store() -> NameRow {
     inline_init(|r: &mut NameRow| {
-        r.id = "name_linked_to_store_id".to_owned();
-        r.name = "Name linked to store".to_owned();
-        r.code = "name_linked_to_store_code".to_owned();
+        r.id = "name_linked_to_store_id".to_string();
+        r.name = "Name linked to store".to_string();
+        r.code = "name_linked_to_store_code".to_string();
         r.is_customer = true;
         r.is_supplier = true;
     })
@@ -45,16 +45,16 @@ pub fn mock_name_linked_to_store() -> NameRow {
 pub fn mock_store_linked_to_name() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "name_store_id".to_string();
-        s.name_id = "name_linked_to_store_id".to_string();
+        s.name_link_id = "name_linked_to_store_id".to_string();
         s.code = "name_store_code".to_string();
     })
 }
 
 pub fn mock_name_linked_to_store_join() -> NameStoreJoinRow {
     NameStoreJoinRow {
-        id: "name_linked_to_store_id".to_owned(),
-        name_link_id: "name_linked_to_store_id".to_owned(),
-        store_id: "store_a".to_owned(),
+        id: "name_linked_to_store_id".to_string(),
+        name_link_id: "name_linked_to_store_id".to_string(),
+        store_id: "store_a".to_string(),
         name_is_customer: true,
         name_is_supplier: true,
     }
@@ -62,9 +62,9 @@ pub fn mock_name_linked_to_store_join() -> NameStoreJoinRow {
 
 pub fn mock_name_linked_to_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
-        r.id = "name_linked_to_store_a_id".to_owned();
-        r.name = "Name linked to store a".to_owned();
-        r.code = "name_linked_to_store_code_a".to_owned();
+        r.id = "name_linked_to_store_a_id".to_string();
+        r.name = "Name linked to store a".to_string();
+        r.code = "name_linked_to_store_code_a".to_string();
         r.is_customer = true;
         r.is_supplier = true;
     })
@@ -73,16 +73,16 @@ pub fn mock_name_linked_to_store_a() -> NameRow {
 pub fn mock_store_linked_to_name_a() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "name_store_a_id".to_string();
-        s.name_id = "name_linked_to_store_a_id".to_string();
+        s.name_link_id = "name_linked_to_store_a_id".to_string();
         s.code = "name_store_code_a".to_string();
     })
 }
 
 pub fn mock_name_linked_to_store_join_a() -> NameStoreJoinRow {
     NameStoreJoinRow {
-        id: "name_linked_to_store_a_id".to_owned(),
-        name_link_id: "name_linked_to_store_a_id".to_owned(),
-        store_id: "store_c".to_owned(),
+        id: "name_linked_to_store_a_id".to_string(),
+        name_link_id: "name_linked_to_store_a_id".to_string(),
+        store_id: "store_c".to_string(),
         name_is_customer: true,
         name_is_supplier: true,
     }
@@ -90,9 +90,9 @@ pub fn mock_name_linked_to_store_join_a() -> NameStoreJoinRow {
 
 pub fn mock_name_not_linked_to_store() -> NameRow {
     inline_init(|r: &mut NameRow| {
-        r.id = "name_not_linked_to_store_id".to_owned();
-        r.name = "Name not linked to store".to_owned();
-        r.code = "name_not_linked_to_store_code".to_owned();
+        r.id = "name_not_linked_to_store_id".to_string();
+        r.name = "Name not linked to store".to_string();
+        r.code = "name_not_linked_to_store_code".to_string();
         r.is_customer = true;
         r.is_supplier = true;
     })
@@ -100,9 +100,9 @@ pub fn mock_name_not_linked_to_store() -> NameRow {
 
 pub fn mock_name_not_linked_to_store_join() -> NameStoreJoinRow {
     NameStoreJoinRow {
-        id: "name_not_linked_to_store_id".to_owned(),
-        name_link_id: "name_not_linked_to_store_id".to_owned(),
-        store_id: "store_a".to_owned(),
+        id: "name_not_linked_to_store_id".to_string(),
+        name_link_id: "name_not_linked_to_store_id".to_string(),
+        store_id: "store_a".to_string(),
         name_is_customer: true,
         name_is_supplier: true,
     }
@@ -110,9 +110,9 @@ pub fn mock_name_not_linked_to_store_join() -> NameStoreJoinRow {
 
 pub fn mock_name_not_linked_to_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
-        r.id = "name_not_linked_to_store_a_id".to_owned();
-        r.name = "Name not linked to store".to_owned();
-        r.code = "name_not_linked_to_store_a_code".to_owned();
+        r.id = "name_not_linked_to_store_a_id".to_string();
+        r.name = "Name not linked to store".to_string();
+        r.code = "name_not_linked_to_store_a_code".to_string();
         r.is_customer = true;
         r.is_supplier = true;
     })
@@ -120,9 +120,9 @@ pub fn mock_name_not_linked_to_store_a() -> NameRow {
 
 pub fn mock_name_not_linked_to_store_join_a() -> NameStoreJoinRow {
     NameStoreJoinRow {
-        id: "name_not_linked_to_store_a_id".to_owned(),
-        name_link_id: "name_not_linked_to_store_a_id".to_owned(),
-        store_id: "store_c".to_owned(),
+        id: "name_not_linked_to_store_a_id".to_string(),
+        name_link_id: "name_not_linked_to_store_a_id".to_string(),
+        store_id: "store_c".to_string(),
         name_is_customer: true,
         name_is_supplier: true,
     }
@@ -130,9 +130,9 @@ pub fn mock_name_not_linked_to_store_join_a() -> NameStoreJoinRow {
 
 pub fn mock_patient_linked_to_store() -> NameRow {
     inline_init(|r: &mut NameRow| {
-        r.id = "patient_linked_to_store_id".to_owned();
-        r.name = "Patient linked to store".to_owned();
-        r.code = "mock_patient_linked_to_store_code".to_owned();
+        r.id = "patient_linked_to_store_id".to_string();
+        r.name = "Patient linked to store".to_string();
+        r.code = "mock_patient_linked_to_store_code".to_string();
         r.is_customer = true;
         r.is_supplier = true;
         r.r#type = NameType::Patient;
@@ -142,7 +142,7 @@ pub fn mock_patient_linked_to_store() -> NameRow {
 pub fn mock_store_linked_to_patient() -> StoreRow {
     inline_init(|s: &mut StoreRow| {
         s.id = "patient_store_id".to_string();
-        s.name_id = "patient_linked_to_store_id".to_string();
+        s.name_link_id = "patient_linked_to_store_id".to_string();
         s.code = "patient_store_code".to_string();
     })
 }

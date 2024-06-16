@@ -68,7 +68,7 @@ pub fn delete_stocktake(
 
             // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
             // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
-            let lines = StocktakeLineRepository::new(&connection).query_by_filter(
+            let lines = StocktakeLineRepository::new(connection).query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake_id)),
                 Some(ctx.store_id.clone()),
             )?;
@@ -82,14 +82,14 @@ pub fn delete_stocktake(
             }
             // End TODO
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::StocktakeDeleted,
                 Some(stocktake_id.to_owned()),
                 None,
                 None,
             )?;
 
-            StocktakeRowRepository::new(&connection).delete(&stocktake_id)?;
+            StocktakeRowRepository::new(connection).delete(&stocktake_id)?;
             Ok(())
         })
         .map_err(|error: TransactionError<DeleteStocktakeError>| error.to_inner_error())?;

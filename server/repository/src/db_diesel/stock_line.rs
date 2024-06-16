@@ -82,12 +82,7 @@ impl<'a> StockLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(
-            query,
-            filter,
-            &self.connection,
-            store_id.unwrap_or_default(),
-        );
+        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         Ok(query
             .count()
@@ -313,7 +308,7 @@ impl StockLine {
     }
 
     pub fn available_quantity(&self) -> f64 {
-        self.stock_line_row.available_number_of_packs * self.stock_line_row.pack_size as f64
+        self.stock_line_row.available_number_of_packs * self.stock_line_row.pack_size
     }
 
     pub fn supplier_name(&self) -> Option<&str> {

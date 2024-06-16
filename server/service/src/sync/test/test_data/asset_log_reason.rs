@@ -4,9 +4,9 @@ use util::Defaults;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TABLE_NAME: &'static str = "asset_log_reason";
+const TABLE_NAME: &str = "asset_log_reason";
 
-const ASSET_LOG_REASON1: (&'static str, &'static str) = (
+const ASSET_LOG_REASON1: (&str, &str) = (
     "42577e2f-2ede-461f-80cd-6a3b86f48b5e",
     r#"{
         "id": "42577e2f-2ede-461f-80cd-6a3b86f48b5e",
@@ -16,7 +16,7 @@ const ASSET_LOG_REASON1: (&'static str, &'static str) = (
     }"#,
 );
 
-const ASSET_LOG_REASON2: (&'static str, &'static str) = (
+const ASSET_LOG_REASON2: (&str, &str) = (
     "e87d728f-14bd-4ac8-9b9b-5ef00283b60f",
     r#"{
         "id": "e87d728f-14bd-4ac8-9b9b-5ef00283b60f",
