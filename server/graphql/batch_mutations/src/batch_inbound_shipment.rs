@@ -385,10 +385,9 @@ mod test {
             },
             InvoiceServiceTrait,
         },
-        invoice_line::inbound_shipment_line::{
-            DeleteInboundShipmentLine, DeleteInboundShipmentLineError, InsertInboundShipmentLine,
-            InsertInboundShipmentLineError, UpdateInboundShipmentLine,
-            UpdateInboundShipmentLineError,
+        invoice_line::stock_in_line::{
+            DeleteStockInLine, DeleteStockInLineError, InsertStockInLine, InsertStockInLineError,
+            UpdateStockInLine, UpdateStockInLineError,
         },
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
@@ -587,22 +586,22 @@ mod test {
                     result: Err(InsertInboundShipmentError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertInboundShipmentLine| {
+                    input: inline_init(|input: &mut InsertStockInLine| {
                         input.id = "id2".to_string()
                     }),
-                    result: Err(InsertInboundShipmentLineError::InvoiceDoesNotExist {}),
+                    result: Err(InsertStockInLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateInboundShipmentLine| {
+                    input: inline_init(|input: &mut UpdateStockInLine| {
                         input.id = "id3".to_string()
                     }),
-                    result: Err(UpdateInboundShipmentLineError::LineDoesNotExist {}),
+                    result: Err(UpdateStockInLineError::LineDoesNotExist {}),
                 }],
                 delete_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteInboundShipmentLine| {
+                    input: inline_init(|input: &mut DeleteStockInLine| {
                         input.id = "id4".to_string()
                     }),
-                    result: Err(DeleteInboundShipmentLineError::LineDoesNotExist {}),
+                    result: Err(DeleteStockInLineError::LineDoesNotExist {}),
                 }],
                 update_shipment: vec![InputWithResult {
                     input: inline_init(|input: &mut UpdateInboundShipment| {
@@ -640,10 +639,10 @@ mod test {
                     result: Err(InsertInboundShipmentError::OtherPartyNotASupplier),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertInboundShipmentLine| {
+                    input: inline_init(|input: &mut InsertStockInLine| {
                         input.id = "id2".to_string()
                     }),
-                    result: Err(InsertInboundShipmentLineError::InvoiceDoesNotExist {}),
+                    result: Err(InsertStockInLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![],
                 delete_line: vec![],
@@ -704,7 +703,7 @@ mod test {
                 insert_shipment: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateInboundShipmentLine| {
+                    input: inline_init(|input: &mut UpdateStockInLine| {
                         input.id = "id3".to_string()
                     }),
                     result: Ok(inline_init(|input: &mut InvoiceLine| {

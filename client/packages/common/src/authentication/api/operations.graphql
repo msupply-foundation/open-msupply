@@ -1,6 +1,7 @@
 fragment UserStoreNode on UserStoreNode {
   code
   id
+  nameId
   name
   storeMode
   preferences {

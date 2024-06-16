@@ -32,3 +32,6 @@ assert-json-diff = { workspace = true }
 default = ["sqlite"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
+
+[lints]
+workspace = true

@@ -30,7 +30,7 @@ actix-files.workspace = true
 anyhow.workspace = true
 config = "0.11.0"
 chrono = { workspace = true }
-thiserror = {workspace = true}
+thiserror = { workspace = true }
 log = "0.4.14"
 rustls = "0.20.4"
 rustls-pemfile = "1.0.0"
@@ -63,3 +63,6 @@ default = ["sqlite", "dep:machine-uid"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
 android = ["repository/sqlite"]
+
+[lints]
+workspace = true

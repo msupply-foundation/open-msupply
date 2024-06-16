@@ -181,7 +181,7 @@ pub(crate) struct SqlError(String, #[source] RepositoryError);
 
 /// Will try and execute diesel query return SQL error which contains debug version of SQL statements
 #[cfg(test)] // uncomment this when used in queries outside of tests
-pub(crate) fn execute_sql_with_error<'a, Q>(
+pub(crate) fn execute_sql_with_error<Q>(
     connection: &StorageConnection,
     query: Q,
 ) -> Result<usize, SqlError>

@@ -42,7 +42,6 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         AssetLogReasonRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(
         &self,
         asset_log_reason_row: &AssetLogReasonRow,
@@ -52,17 +51,6 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_log_reason_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(
-        &self,
-        asset_log_reason_row: &AssetLogReasonRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::replace_into(asset_log_reason)
-            .values(asset_log_reason_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

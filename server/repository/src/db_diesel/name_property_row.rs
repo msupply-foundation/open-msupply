@@ -16,6 +16,7 @@ table! {
     name_property (id) {
         id -> Text,
         property_id -> Text,
+        remote_editable -> Bool,
     }
 }
 joinable!(name_property -> property (property_id));
@@ -29,6 +30,7 @@ allow_tables_to_appear_in_same_query!(name_property, property);
 pub struct NamePropertyRow {
     pub id: String,
     pub property_id: String,
+    pub remote_editable: bool,
 }
 
 pub struct NamePropertyRowRepository<'a> {
@@ -40,21 +42,12 @@ impl<'a> NamePropertyRowRepository<'a> {
         NamePropertyRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, name_property_row: &NamePropertyRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_property)
             .values(name_property_row)
             .on_conflict(id)
             .do_update()
             .set(name_property_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, name_property_row: &NamePropertyRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(name_property)
-            .values(name_property_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

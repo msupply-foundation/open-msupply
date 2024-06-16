@@ -17,7 +17,7 @@ mod repository_test {
         pub fn store_1() -> StoreRow {
             inline_init(|s: &mut StoreRow| {
                 s.id = "store1".to_string();
-                s.name_id = "name1".to_string();
+                s.name_link_id = "name1".to_string();
                 s.code = "code1".to_string();
             })
         }
@@ -1115,7 +1115,7 @@ mod repository_test {
             Test Scenario
 
             Process A starts a transaction, does a read, then sleeps for a 1000 milliseconds before continuing to write from within the same transaction.
-            Conncurrently Process B tries to do a similar thing.
+            Concurrently Process B tries to do a similar thing.
         */
         /*
             Expected behaviour for this test in SQLite...

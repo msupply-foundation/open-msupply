@@ -52,12 +52,14 @@ mutation insertImmunisationProgram(
   centralServer {
     program {
       insertImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
         ... on ProgramNode {
           ...ImmunisationProgram
         }
         ... on InsertImmunisationProgramError {
           __typename
           error {
+            __typename
             description
           }
         }

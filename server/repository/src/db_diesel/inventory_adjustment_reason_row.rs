@@ -56,21 +56,12 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
         InventoryAdjustmentReasonRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
         diesel::insert_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .values(row)
             .on_conflict(inventory_adjustment_reason_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

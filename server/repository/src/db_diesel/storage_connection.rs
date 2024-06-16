@@ -114,7 +114,7 @@ impl StorageConnection {
 
     /// Executes operations in transaction. A new transaction is only started if not already in a
     /// transaction.
-    pub fn transaction_sync<'a, T, E, F>(&'a self, f: F) -> Result<T, TransactionError<E>>
+    pub fn transaction_sync<T, E, F>(&self, f: F) -> Result<T, TransactionError<E>>
     where
         F: FnOnce(&StorageConnection) -> Result<T, E>,
     {
@@ -124,8 +124,8 @@ impl StorageConnection {
     /// # Arguments
     /// * `reuse_tx` - if true and the connection is currently in a transaction no new nested
     /// transaction is started.
-    pub fn transaction_sync_etc<'a, T, E, F>(
-        &'a self,
+    pub fn transaction_sync_etc<T, E, F>(
+        &self,
         f: F,
         reuse_tx: bool,
     ) -> Result<T, TransactionError<E>>

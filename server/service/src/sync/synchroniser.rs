@@ -155,7 +155,7 @@ impl Synchroniser {
         let batch_size = &self.settings.batch_size;
         let sync_status_service = &self.service_provider.sync_status_service;
 
-        if self.service_provider.settings.is_sync_disabled(&ctx)? {
+        if self.service_provider.settings.is_sync_disabled(ctx)? {
             // TODO logger ?
             warn!("Sync is disabled, skipping");
             return Ok(());
@@ -258,7 +258,6 @@ impl Synchroniser {
 
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
-            is_initialised,
             // Only pass in logger during initialisation
             match is_initialised {
                 false => Some(logger),
@@ -291,10 +290,9 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
-pub fn integrate_and_translate_sync_buffer<'a>(
+pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
-    execute_in_transaction: bool,
-    logger: Option<&mut SyncLogger<'a>>,
+    logger: Option<&mut SyncLogger<'_>>,
     source_site_id: Option<i32>,
 ) -> Result<
     (
@@ -343,7 +341,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
-                upsert_sync_buffer_records.clone(),
+                &upsert_sync_buffer_records,
                 &translators,
                 logger,
             )?;
@@ -351,7 +349,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
-                delete_sync_buffer_records.clone(),
+                &delete_sync_buffer_records,
                 &translators,
                 None,
             )?;
@@ -361,9 +359,10 @@ pub fn integrate_and_translate_sync_buffer<'a>(
             &table_order,
             source_site_id,
         )?;
+
         let merge_integration_result: TranslationAndIntegrationResults =
             translation_and_integration.translate_and_integrate_sync_records(
-                merge_sync_buffer_records,
+                &merge_sync_buffer_records,
                 &translators,
                 None,
             )?;
@@ -375,13 +374,9 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         ))
     };
 
-    let result = if execute_in_transaction {
-        connection
-            .transaction_sync(integrate_and_translate)
-            .map_err::<RepositoryError, _>(|e| e.to_inner_error())
-    } else {
-        integrate_and_translate(&connection)
-    }?;
+    let result = connection
+        .transaction_sync(integrate_and_translate)
+        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
 
     Ok(result)
 }
@@ -389,7 +384,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 #[cfg(test)]
 mod tests {
     use repository::mock::MockDataInserts;
-    use util::{assert_matches, inline_init};
+    use util::inline_init;
 
     use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
@@ -412,12 +407,10 @@ mod tests {
         .unwrap();
 
         // First check that synch fails (due to wrong url)
-
-        assert_matches!(s.sync().await, Err(_));
+        assert!(s.sync().await.is_err());
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
-
-        assert_matches!(s.sync().await, Ok(_));
+        assert!(s.sync().await.is_ok());
     }
 }
