@@ -118,7 +118,7 @@ export const VaccineCourseView: FC = () => {
   const defaultRow: VaccineCourseScheduleNode = {
     doseNumber: 1,
     id: FnUtils.generateUUID(),
-    label: t('label.new-row'),
+    label: '',
     __typename: 'VaccineCourseScheduleNode',
   };
 
@@ -141,7 +141,7 @@ export const VaccineCourseView: FC = () => {
         __typename: 'VaccineCourseScheduleNode',
         id: FnUtils.generateUUID(),
         doseNumber: number,
-        label: t('label.new-row'),
+        label: '',
       };
     };
     let rows = draft?.vaccineCourseSchedules ?? [];
@@ -179,7 +179,7 @@ export const VaccineCourseView: FC = () => {
   const dosesColumns = useColumns<VaccineCourseScheduleNode>(
     [
       { key: 'doseNumber', label: 'label.dose-number' },
-      [descriptionColumn(), { setter: updateDescription }],
+      [descriptionColumn(t('label.new-row')), { setter: updateDescription }],
     ],
     {},
     [draft]
