@@ -108,7 +108,7 @@ export const mapProjection = (
   year5: headerData[5].value,
 });
 
-export const toRow = (row: {
+export const toDemographicIndicatorRow = (row: {
   __typename?: 'DemographicIndicatorNode';
   id: string;
   name: string;
