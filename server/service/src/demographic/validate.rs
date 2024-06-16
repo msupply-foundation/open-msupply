@@ -22,9 +22,12 @@ pub fn check_demographic_projection_exists(
 
 pub fn check_base_year_unique(
     base_year: i32,
+    id: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-    let filter = DemographicProjectionFilter::new().base_year(EqualFilter::equal_to_i32(base_year));
+    let filter = DemographicProjectionFilter::new()
+        .base_year(EqualFilter::equal_to_i32(base_year))
+        .id(EqualFilter::not_equal_to(id));
     let result = DemographicProjectionRepository::new(connection).query_by_filter(filter)?;
     Ok(result.is_empty())
 }

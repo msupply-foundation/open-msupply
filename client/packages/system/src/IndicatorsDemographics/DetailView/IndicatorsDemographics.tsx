@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppBarButtons } from './AppBarButtons';
 import {
-  ArrayUtils,
   Box,
   ColumnAlign,
   DataTable,
@@ -9,6 +8,8 @@ import {
   TableProvider,
   createTableStore,
   useColumns,
+  useNotification,
+  useTranslation,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 
@@ -18,67 +19,13 @@ import { GrowthRow } from './GrowthRow';
 import { populationColumn } from './PopulationColumn';
 import { Footer } from './Footer';
 import { GENERAL_POPULATION_ID, useDemographicData } from '../api';
-import { calculateAcrossRow, toIndicatorFragment } from './utils';
-
-export interface Row {
-  isNew: boolean;
-  id: string;
-  percentage: number;
-  name: string;
-  baseYear: number;
-  basePopulation: number;
-  0: number;
-  1: number;
-  2: number;
-  3: number;
-  4: number;
-  5: number;
-}
-
-export interface HeaderValue {
-  id: string;
-  value: number;
-}
-
-// header data (not currently stored)
-const headerData: HeaderValue[] = [
-  { id: '1', value: 1.1 },
-  { id: '2', value: 1.2 },
-  { id: '3', value: 1.2 },
-  { id: '4', value: 1.1 },
-  { id: '5', value: 0.9 },
-];
-
-export const toRow = (row: {
-  __typename?: 'DemographicIndicatorNode';
-  id: string;
-  name: string;
-  baseYear?: number;
-  basePopulation?: number;
-  year1Projection?: number;
-  year2Projection?: number;
-  year3Projection?: number;
-  year4Projection?: number;
-  year5Projection?: number;
-  populationPercentage?: number;
-}): Row => {
-  const percentage = row.populationPercentage ?? 0;
-  const basePopulation = row.basePopulation ?? 0;
-  return {
-    isNew: false,
-    id: row.id,
-    percentage,
-    name: row.name,
-    baseYear: row.baseYear ?? 0,
-    basePopulation,
-    0: Math.round((basePopulation * percentage) / 100),
-    1: row.year1Projection ?? 0,
-    2: row.year2Projection ?? 0,
-    3: row.year3Projection ?? 0,
-    4: row.year4Projection ?? 0,
-    5: row.year5Projection ?? 0,
-  };
-};
+import {
+  calculateAcrossRow,
+  mapHeaderData,
+  mapProjection,
+  toIndicatorFragment,
+} from './utils';
+import { HeaderData, HeaderValue, Row } from '../types';
 
 const currentYear = new Date().getFullYear();
 
@@ -89,21 +36,22 @@ const IndicatorsDemographicsComponent = () => {
   } = useUrlQueryParams({
     initialSort: { key: 'percentage', dir: 'desc' },
   });
-
-  const { draft, setDraft } =
-    useDemographicData.document.listIndicator(headerData);
-  const [indexPopulation, setIndexPopulation] = useState<number>();
-
-  const draftHeaders = ArrayUtils.toObject(headerData);
+  const [headerDraft, setHeaderDraft] = useState<HeaderData>();
+  const [indexPopulation, setIndexPopulation] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
 
-  const [headerDraft, setHeaderDraft] =
-    useState<Record<string, HeaderValue>>(draftHeaders);
+  const { error, success } = useNotification();
+  const t = useTranslation();
+
+  const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
+  const { data: projection, isLoading: isLoadingProjection } =
+    useDemographicData.projection.get(draft?.[0]?.baseYear ?? 2024);
 
   const { insertDemographicIndicator, invalidateQueries } =
-    useDemographicData.document.insertIndicator();
+    useDemographicData.indicator.insert();
   const { mutateAsync: updateDemographicIndicator } =
-    useDemographicData.document.updateIndicator();
+    useDemographicData.indicator.update();
+  const upsertProjection = useDemographicData.projection.upsert();
 
   const PopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
@@ -112,13 +60,13 @@ const IndicatorsDemographicsComponent = () => {
     const indexPopulationChange =
       patch.basePopulation !== draft[patch.id]?.basePopulation &&
       patch.id === GENERAL_POPULATION_ID;
-    if (indexPopulationChange) {
-      setIndexPopulation(patch.basePopulation);
-    }
+
+    if (indexPopulationChange) setIndexPopulation(Number(patch.basePopulation));
+
     Object.keys(currentDraft).forEach(rowKey => {
       const updatedRow = calculateAcrossRow(
         currentDraft[rowKey] as Row,
-        draftHeaders,
+        headerDraft,
         indexPopulationChange ? patch.basePopulation : indexPopulation
       );
       updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
@@ -128,7 +76,7 @@ const IndicatorsDemographicsComponent = () => {
 
   const setter = (patch: RecordPatch<Row>) => {
     const updatedDraft = { ...draft };
-    const percentage = Number(!patch.percentage ? 0 : patch.percentage);
+    const percentage = !patch.percentage ? 0 : patch.percentage;
     const percentageChange = percentage != draft[patch.id]?.percentage;
 
     setIsDirty(true);
@@ -150,33 +98,32 @@ const IndicatorsDemographicsComponent = () => {
   // generic function for handling percentage change, and then re calculating the values of that year
   const handleGrowthChange = (patch: RecordPatch<HeaderValue>) => {
     setIsDirty(true);
-    const updatedHeaderDraft = { ...headerDraft };
     const updatedPatch = {
       ...patch,
       value: patch.value ?? 0,
     };
-    setHeaderDraft({ ...updatedHeaderDraft, [patch.id]: updatedPatch });
+    setHeaderDraft({
+      ...(headerDraft as HeaderData),
+      [patch.id]: updatedPatch,
+    });
     calculateDown(patch);
   };
-
   const calculateDown = (patch: RecordPatch<HeaderValue>) => {
-    const oldHeaderDraft = { ...headerDraft };
     const updatedHeader = {
-      ...oldHeaderDraft,
+      ...headerDraft,
       [patch.id]: { ...patch } as HeaderValue,
-    };
-    const currentDraft = { ...draft };
-    let updatedDraft = {};
-    Object.keys(currentDraft).forEach(row => {
+    } as HeaderData;
+    const updatedDraft: Record<string, Row> = {};
+    Object.keys(draft).forEach(row => {
       const updatedRow = calculateAcrossRow(
-        currentDraft[row] as Row,
+        draft[row] as Row,
         updatedHeader,
         indexPopulation
       );
-      updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
+      updatedDraft[updatedRow.id] = updatedRow;
     });
     setHeaderDraft(updatedHeader);
-    setDraft({ ...currentDraft, ...updatedDraft });
+    setDraft(updatedDraft);
   };
 
   const insertIndicator = async (row: Row) => {
@@ -199,30 +146,33 @@ const IndicatorsDemographicsComponent = () => {
     }
   };
 
+  // save rows excluding generalRow
   const save = async () => {
     setIsDirty(false);
-    // save rows excluding generalRow
+    const rows = Object.keys(draft)
+      .map(key => draft[key] as Row)
+      .filter(row => row?.id !== GENERAL_POPULATION_ID && !!row);
 
-    const remainingRows = Object.keys(draft)
-      .map(key => draft[key])
-      .filter(row => row?.id !== GENERAL_POPULATION_ID);
-    while (remainingRows.length) {
-      await Promise.all(
-        remainingRows.splice(0).map(async indicator => {
-          if (indicator != undefined) {
-            indicator.isNew
-              ? await insertIndicator(indicator)
-              : await updateIndicator(indicator);
-          }
-        })
-      ).then(() => invalidateQueries());
-    }
+    await Promise.all(
+      rows.map(async indicator => {
+        indicator.isNew
+          ? await insertIndicator(indicator)
+          : await updateIndicator(indicator);
+      })
+    )
+      .then(async () => {
+        if (headerDraft !== undefined)
+          await upsertProjection(mapProjection(headerDraft));
+      })
+      .then(() => {
+        success(t('success.data-saved'))();
+        invalidateQueries();
+      })
+      .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
   };
 
-  // TODO cancel changes (re call data from DB)
   const cancel = () => {
-    setIsDirty(false);
-    console.info('re set data to DB saved (cancel all changes)');
+    window.location.reload();
   };
 
   const columns = useColumns<Row>(
@@ -267,15 +217,25 @@ const IndicatorsDemographicsComponent = () => {
       },
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
-    [draft]
+    [draft, indexPopulation]
   );
 
-  // set the initial value of the index population
   useEffect(() => {
-    if (indexPopulation === undefined) {
-      setIndexPopulation(draft[GENERAL_POPULATION_ID]?.basePopulation);
-    }
-  }, [draft, indexPopulation]);
+    if (!draft || !!indexPopulation) return;
+
+    const generalPopulationRow = draft[GENERAL_POPULATION_ID];
+    if (!generalPopulationRow) return;
+
+    setIndexPopulation(generalPopulationRow.basePopulation);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
+
+  useEffect(() => {
+    if (!projection) return;
+
+    setHeaderDraft(mapHeaderData(projection));
+  }, [projection]);
 
   return (
     <>
@@ -284,6 +244,7 @@ const IndicatorsDemographicsComponent = () => {
         <GrowthRow
           columns={columns}
           data={headerDraft}
+          isLoading={isLoadingProjection}
           setData={handleGrowthChange}
         ></GrowthRow>
         <DataTable

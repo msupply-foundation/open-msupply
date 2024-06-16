@@ -1579,12 +1579,14 @@ export type DemographicProjectionNode = {
   __typename: 'DemographicProjectionNode';
   baseYear: Scalars['Int']['output'];
   id: Scalars['String']['output'];
-  year1: Scalars['Int']['output'];
-  year2: Scalars['Int']['output'];
-  year3: Scalars['Int']['output'];
-  year4: Scalars['Int']['output'];
-  year5: Scalars['Int']['output'];
+  year1: Scalars['Float']['output'];
+  year2: Scalars['Float']['output'];
+  year3: Scalars['Float']['output'];
+  year4: Scalars['Float']['output'];
+  year5: Scalars['Float']['output'];
 };
+
+export type DemographicProjectionResponse = DemographicProjectionNode | NodeError;
 
 export enum DemographicProjectionSortFieldInput {
   Id = 'id'
@@ -2310,11 +2312,11 @@ export type InsertDemographicProjectionErrorInterface = {
 export type InsertDemographicProjectionInput = {
   baseYear: Scalars['Int']['input'];
   id: Scalars['String']['input'];
-  year1?: InputMaybe<Scalars['Int']['input']>;
-  year2?: InputMaybe<Scalars['Int']['input']>;
-  year3?: InputMaybe<Scalars['Int']['input']>;
-  year4?: InputMaybe<Scalars['Int']['input']>;
-  year5?: InputMaybe<Scalars['Int']['input']>;
+  year1?: InputMaybe<Scalars['Float']['input']>;
+  year2?: InputMaybe<Scalars['Float']['input']>;
+  year3?: InputMaybe<Scalars['Float']['input']>;
+  year4?: InputMaybe<Scalars['Float']['input']>;
+  year5?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertDemographicProjectionResponse = DemographicProjectionNode | InsertDemographicProjectionError;
@@ -5074,6 +5076,7 @@ export type Queries = {
   currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
   demographicIndicators: DemographicIndicatorsResponse;
+  demographicProjectionByBaseYear: DemographicProjectionResponse;
   demographicProjections: DemographicProjectionsResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
@@ -5326,6 +5329,11 @@ export type QueriesDemographicIndicatorsArgs = {
   filter?: InputMaybe<DemographicIndicatorFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<DemographicIndicatorSortInput>>;
+};
+
+
+export type QueriesDemographicProjectionByBaseYearArgs = {
+  baseYear: Scalars['Int']['input'];
 };
 
 
@@ -6893,11 +6901,11 @@ export type UpdateDemographicProjectionErrorInterface = {
 export type UpdateDemographicProjectionInput = {
   baseYear?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
-  year1?: InputMaybe<Scalars['Int']['input']>;
-  year2?: InputMaybe<Scalars['Int']['input']>;
-  year3?: InputMaybe<Scalars['Int']['input']>;
-  year4?: InputMaybe<Scalars['Int']['input']>;
-  year5?: InputMaybe<Scalars['Int']['input']>;
+  year1?: InputMaybe<Scalars['Float']['input']>;
+  year2?: InputMaybe<Scalars['Float']['input']>;
+  year3?: InputMaybe<Scalars['Float']['input']>;
+  year4?: InputMaybe<Scalars['Float']['input']>;
+  year5?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateDemographicProjectionResponse = DemographicProjectionNode | UpdateDemographicProjectionError;

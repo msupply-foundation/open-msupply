@@ -124,19 +124,19 @@ impl DemographicProjectionNode {
     pub async fn base_year(&self) -> &i32 {
         &self.row().base_year
     }
-    pub async fn year_1(&self) -> &i32 {
+    pub async fn year_1(&self) -> &f64 {
         &self.row().year_1
     }
-    pub async fn year_2(&self) -> &i32 {
+    pub async fn year_2(&self) -> &f64 {
         &self.row().year_2
     }
-    pub async fn year_3(&self) -> &i32 {
+    pub async fn year_3(&self) -> &f64 {
         &self.row().year_3
     }
-    pub async fn year_4(&self) -> &i32 {
+    pub async fn year_4(&self) -> &f64 {
         &self.row().year_4
     }
-    pub async fn year_5(&self) -> &i32 {
+    pub async fn year_5(&self) -> &f64 {
         &self.row().year_5
     }
 }
