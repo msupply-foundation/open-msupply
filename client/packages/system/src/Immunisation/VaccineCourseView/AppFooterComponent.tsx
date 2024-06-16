@@ -28,9 +28,9 @@ export const AppFooterComponent = ({
   const onSave = async () => {
     try {
       await save();
-      success(t('messages.vaccine-course-saved'));
+      success(t('messages.vaccine-course-saved'))();
     } catch (e) {
-      error(t('error.vaccine-course-update-failed'));
+      error(t('error.vaccine-course-update-failed'))();
     }
   };
 
