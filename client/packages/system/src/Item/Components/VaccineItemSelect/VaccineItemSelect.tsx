@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Checkbox,
   AutocompleteOptionRenderer,
   FnUtils,
   AutocompleteMulti,
@@ -17,12 +16,10 @@ interface VaccineItemSelectProps {
 
 const renderOption: AutocompleteOptionRenderer<VaccineCourseItemNode> = (
   props,
-  option,
-  { selected }
+  option
 ): JSX.Element => {
   return (
     <li {...props}>
-      <Checkbox checked={selected} />
       <span
         style={{
           fontWeight: 700,
@@ -62,9 +59,7 @@ export const VaccineItemSelect = ({
     <AutocompleteMulti
       isOptionEqualToValue={(option, value) => option.item.id === value.item.id}
       getOptionLabel={option => `${option.item.name}`}
-      defaultValue={
-        (draft?.vaccineCourseItems ?? []) as VaccineCourseItemNode[]
-      }
+      value={(draft?.vaccineCourseItems ?? []) as VaccineCourseItemNode[]}
       filterSelectedOptions
       onChange={(_event, newSelectedItems) =>
         onChangeSelectedItems(newSelectedItems)
