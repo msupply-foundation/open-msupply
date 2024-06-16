@@ -124,9 +124,6 @@ export const VaccineCourseView: FC = () => {
     if (typeof value !== 'number') {
       return;
     }
-    if (value > MAXVACCINEDOSES) {
-      return;
-    }
     updatePatch({ doses: value });
   };
 
@@ -263,6 +260,7 @@ export const VaccineCourseView: FC = () => {
                 updateSchedule(parseInt(e.target.value));
               }}
               onChange={tryUpdateValue}
+              max={MAXVACCINEDOSES}
             />
           </Row>
           <Box paddingTop={1.5}>
