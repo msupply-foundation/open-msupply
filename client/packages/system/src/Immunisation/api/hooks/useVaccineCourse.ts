@@ -1,9 +1,9 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
-  VaccineCourseItemInput,
+  UpdateVaccineCourseItemInput,
   VaccineCourseItemNode,
-  VaccineCourseScheduleInput,
+  UpdateVaccineCourseScheduleInput,
   VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
   isEqual,
@@ -33,14 +33,14 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
 const vaccineCourseParsers = {
   toScheduleInput: (
     schedule: VaccineCourseScheduleNode
-  ): VaccineCourseScheduleInput => {
+  ): UpdateVaccineCourseScheduleInput => {
     return {
       id: schedule.id,
       doseNumber: schedule.doseNumber,
       label: schedule.label,
     };
   },
-  toItemInput: (item: VaccineCourseItemNode): VaccineCourseItemInput => {
+  toItemInput: (item: VaccineCourseItemNode): UpdateVaccineCourseItemInput => {
     return {
       id: item.id,
       itemId: item.item.id,

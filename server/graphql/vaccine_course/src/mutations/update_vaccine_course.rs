@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::DatabaseError,
+    simple_generic_errors::{DatabaseError, RecordProgramCombinationAlreadyExists},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -22,7 +22,7 @@ pub fn update_vaccine_course(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin, // https://github.com/msupply-foundation/open-msupply/issues/4057
+            resource: Resource::ServerAdmin,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -46,14 +46,14 @@ pub fn update_vaccine_course(
 }
 
 #[derive(InputObject, Clone)]
-pub struct VaccineCourseScheduleInput {
+pub struct UpdateVaccineCourseScheduleInput {
     pub id: String,
     pub label: String,
     pub dose_number: i32,
 }
 
 #[derive(InputObject, Clone)]
-pub struct VaccineCourseItemInput {
+pub struct UpdateVaccineCourseItemInput {
     pub id: String,
     pub item_id: String,
 }
@@ -62,8 +62,8 @@ pub struct VaccineCourseItemInput {
 pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
-    pub vaccine_items: Vec<VaccineCourseItemInput>,
-    pub schedules: Vec<VaccineCourseScheduleInput>,
+    pub vaccine_items: Vec<UpdateVaccineCourseItemInput>,
+    pub schedules: Vec<UpdateVaccineCourseScheduleInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
@@ -127,6 +127,7 @@ pub enum UpdateVaccineCourseResponse {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateVaccineCourseErrorInterface {
     DatabaseError(DatabaseError),
+    VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
@@ -135,13 +136,18 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        // None for now...
+        ServiceError::VaccineCourseNameExistsForThisProgram => {
+            return Ok(
+                UpdateVaccineCourseErrorInterface::VaccineCourseNameExistsForThisProgram(
+                    RecordProgramCombinationAlreadyExists {},
+                ),
+            )
+        }
         // Standard Graphql Errors
         ServiceError::VaccineCourseDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::VaccineCourseNameExistsForThisProgram => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

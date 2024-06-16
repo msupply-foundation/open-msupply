@@ -40,7 +40,7 @@ export const descriptionColumn = <
         <BasicTextInput
           disabled={isDisabled}
           defaultValue={column.accessor({ rowData })}
-          onBlur={e => {
+          onChange={e => {
             column.setter({ ...rowData, label: e.target.value });
           }}
         />
