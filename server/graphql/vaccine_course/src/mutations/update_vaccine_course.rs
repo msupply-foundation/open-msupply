@@ -1,14 +1,14 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::DatabaseError,
+    simple_generic_errors::{DatabaseError, RecordProgramCombinationAlreadyExists},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::update::{
-        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseItem,
-        VaccineCourseSchedule,
+        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseItemInput,
+        VaccineCourseScheduleInput,
     },
 };
 
@@ -46,14 +46,14 @@ pub fn update_vaccine_course(
 }
 
 #[derive(InputObject, Clone)]
-pub struct VaccineCourseScheduleInput {
+pub struct UpdateVaccineCourseScheduleInput {
     pub id: String,
     pub label: String,
     pub dose_number: i32,
 }
 
 #[derive(InputObject, Clone)]
-pub struct VaccineCourseItemInput {
+pub struct UpdateVaccineCourseItemInput {
     pub id: String,
     pub item_id: String,
 }
@@ -62,8 +62,8 @@ pub struct VaccineCourseItemInput {
 pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
-    pub vaccine_items: Vec<VaccineCourseItemInput>,
-    pub schedules: Vec<VaccineCourseScheduleInput>,
+    pub vaccine_items: Vec<UpdateVaccineCourseItemInput>,
+    pub schedules: Vec<UpdateVaccineCourseScheduleInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
@@ -90,14 +90,14 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             name,
             vaccine_items: vaccine_items
                 .into_iter()
-                .map(|i| VaccineCourseItem {
+                .map(|i| VaccineCourseItemInput {
                     id: i.id,
                     item_id: i.item_id,
                 })
                 .collect(),
             schedules: schedules
                 .into_iter()
-                .map(|s| VaccineCourseSchedule {
+                .map(|s| VaccineCourseScheduleInput {
                     id: s.id,
                     label: s.label,
                     dose_number: s.dose_number,
@@ -127,6 +127,7 @@ pub enum UpdateVaccineCourseResponse {
 #[graphql(field(name = "description", type = "String"))]
 pub enum UpdateVaccineCourseErrorInterface {
     DatabaseError(DatabaseError),
+    VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
@@ -135,7 +136,13 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        // None for now...
+        ServiceError::VaccineCourseNameExistsForThisProgram => {
+            return Ok(
+                UpdateVaccineCourseErrorInterface::VaccineCourseNameExistsForThisProgram(
+                    RecordProgramCombinationAlreadyExists {},
+                ),
+            )
+        }
         // Standard Graphql Errors
         ServiceError::VaccineCourseDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),

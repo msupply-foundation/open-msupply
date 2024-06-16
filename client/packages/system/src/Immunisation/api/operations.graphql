@@ -6,6 +6,20 @@ fragment ImmunisationProgram on ProgramNode {
   }
 }
 
+fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
+  id
+  doseNumber
+  label
+}
+
+fragment VaccineCourseItem on VaccineCourseItemNode {
+  id
+  item {
+    id
+    name
+  }
+}
+
 query programs(
   $storeId: String
   $first: Int
@@ -38,12 +52,14 @@ mutation insertImmunisationProgram(
   centralServer {
     program {
       insertImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
         ... on ProgramNode {
           ...ImmunisationProgram
         }
         ... on InsertImmunisationProgramError {
           __typename
           error {
+            __typename
             description
           }
         }
@@ -91,16 +107,10 @@ fragment VaccineCourse on VaccineCourseNode {
     id
   }
   vaccineCourseItems {
-    id
-    item {
-      id
-      name
-    }
+    ...VaccineCourseItem
   }
   vaccineCourseSchedules {
-    id
-    doseNumber
-    label
+    ...VaccineCourseSchedule
   }
 }
 
@@ -119,7 +129,6 @@ query vaccineCourses(
     ... on VaccineCourseConnector {
       __typename
       nodes {
-        __typename
         ...VaccineCourse
       }
       totalCount

@@ -203,7 +203,6 @@ impl<'a> NumberRowRepository<'a> {
         }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
         diesel::insert_into(number_dsl::number)
             .values(number_row)
@@ -211,20 +210,6 @@ impl<'a> NumberRowRepository<'a> {
             .do_update()
             .set(number_row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
-        let final_query = diesel::replace_into(number_dsl::number).values(number_row);
-
-        // // Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
-        // );
-
-        final_query.execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -257,7 +242,7 @@ mod number_row_mapping_test {
         // The purpose of this test is primarily to remind you to update both the to_string AND try_from functions if any new mappings are added to NumberRowType
         // the try_from function uses a wild card match so theoretically could be missed if you add a new mapping
 
-        for number_row_type in vec![
+        for number_row_type in [
             NumberRowType::Program("EXAMPLE_TEST".to_string()),
             NumberRowType::OutboundReturn,
             NumberRowType::InboundReturn,

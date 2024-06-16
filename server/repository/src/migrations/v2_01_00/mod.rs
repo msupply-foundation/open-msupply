@@ -13,6 +13,7 @@ mod name_properties;
 mod pg_enums;
 mod program;
 mod property;
+mod store_add_name_link_id;
 mod v6_sync_api_error_code;
 mod vaccine_course;
 
@@ -24,6 +25,9 @@ impl Migration for V2_01_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Note, this migration deletes the consumption view which is recreated in decimal_pack_size
+        // migration, i.e. this migration has to run first.
+        store_add_name_link_id::migrate(connection)?;
         activity_log::migrate(connection)?;
         // The ledger is migrated in decimal_pack_size because the same views needed to be
         // re-created
@@ -114,7 +118,7 @@ VALUES
         'item',
         'UPSERT',
         '{{"is_vaccine": true}}',
-        ''
+        NULL
     );
         "#,
     )?;

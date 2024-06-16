@@ -1,4 +1,4 @@
-use super::query::get_vaccine_course;
+use super::{query::get_vaccine_course, validate::check_vaccine_course_name_exists_for_program};
 use crate::{
     activity_log::activity_log_entry, demographic::validate::check_demographic_indicator_exists,
     service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
@@ -18,6 +18,7 @@ use repository::{
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateVaccineCourseError {
+    VaccineCourseNameExistsForThisProgram,
     VaccineCourseDoesNotExist,
     CreatedRecordNotFound,
     DemographicIndicatorDoesNotExist,
@@ -25,12 +26,12 @@ pub enum UpdateVaccineCourseError {
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
-pub struct VaccineCourseItem {
+pub struct VaccineCourseItemInput {
     pub id: String,
     pub item_id: String,
 }
 
-impl VaccineCourseItem {
+impl VaccineCourseItemInput {
     fn to_domain(self, vaccine_course_id: String) -> VaccineCourseItemRow {
         VaccineCourseItemRow {
             id: self.id,
@@ -41,13 +42,13 @@ impl VaccineCourseItem {
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
-pub struct VaccineCourseSchedule {
+pub struct VaccineCourseScheduleInput {
     pub id: String,
     pub dose_number: i32,
     pub label: String,
 }
 
-impl VaccineCourseSchedule {
+impl VaccineCourseScheduleInput {
     fn to_domain(self, vaccine_course_id: String) -> VaccineCourseScheduleRow {
         VaccineCourseScheduleRow {
             id: self.id,
@@ -62,8 +63,8 @@ impl VaccineCourseSchedule {
 pub struct UpdateVaccineCourse {
     pub id: String,
     pub name: Option<String>,
-    pub vaccine_items: Vec<VaccineCourseItem>,
-    pub schedules: Vec<VaccineCourseSchedule>,
+    pub vaccine_items: Vec<VaccineCourseItemInput>,
+    pub schedules: Vec<VaccineCourseScheduleInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
@@ -134,6 +135,23 @@ pub fn validate(
             return Err(UpdateVaccineCourseError::DemographicIndicatorDoesNotExist);
         }
     }
+
+    let name = match &(input.name) {
+        Some(name) => name,
+        None => &old_row.name,
+    };
+
+    if !check_vaccine_course_name_exists_for_program(
+        name,
+        // Using old row program id. If in future vaccine courses can change to different
+        // program, then this will need to change
+        &old_row.program_id,
+        Some(old_row.id.to_owned()),
+        connection,
+    )? {
+        return Err(UpdateVaccineCourseError::VaccineCourseNameExistsForThisProgram);
+    }
+
     Ok(old_row)
 }
 

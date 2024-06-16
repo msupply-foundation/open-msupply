@@ -95,11 +95,11 @@ impl SyncApiV5 {
         use util::hash::sha256;
 
         SyncApiV5 {
-            url: Url::parse(&url).unwrap(),
+            url: Url::parse(url).unwrap(),
             settings: SyncApiSettings {
                 server_url: url.to_string(),
                 username: site_name.to_string(),
-                password_sha256: sha256(&password),
+                password_sha256: sha256(password),
                 site_uuid: hardware_id.to_string(),
                 sync_version: SYNC_V5_VERSION.to_string(),
                 app_version: Version::from_package_json().to_string(),
@@ -239,7 +239,6 @@ async fn response_or_err(
 mod tests {
     use httpmock::{Method::POST, MockServer};
     use reqwest::header::AUTHORIZATION;
-    use util::assert_matches;
 
     use super::*;
 
@@ -263,7 +262,7 @@ mod tests {
 
         mock.assert();
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
     }
 
     #[actix_rt::test]
@@ -288,13 +287,13 @@ mod tests {
             .await;
 
         mock.assert();
+        assert!(result_with_auth.is_ok());
 
-        assert_matches!(result_with_auth, Ok(_));
         let sync_connection_with_auth = create_api(&url, "username", "invalid");
         let result_with_auth = sync_connection_with_auth
             .post_acknowledged_records(Vec::new())
             .await;
 
-        assert_matches!(result_with_auth, Err(_));
+        assert!(result_with_auth.is_err());
     }
 }

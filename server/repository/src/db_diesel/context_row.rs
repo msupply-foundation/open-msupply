@@ -27,21 +27,12 @@ impl<'a> ContextRowRepository<'a> {
         ContextRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ContextRow) -> Result<(), RepositoryError> {
         diesel::insert_into(context::dsl::context)
             .values(row)
             .on_conflict(context::dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ContextRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(context::dsl::context)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

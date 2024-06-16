@@ -67,7 +67,7 @@ mod test_update {
             service.update_request_requisition(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = "invalid".to_owned();
+                    r.id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::RequisitionDoesNotExist)
@@ -176,10 +176,10 @@ mod test_update {
                 &context,
                 UpdateRequestRequisition {
                     id: mock_draft_request_requisition_for_update_test().id,
-                    colour: Some("new colour".to_owned()),
+                    colour: Some("new colour".to_string()),
                     status: Some(UpdateRequestRequisitionStatus::Sent),
-                    their_reference: Some("new their_reference".to_owned()),
-                    comment: Some("new comment".to_owned()),
+                    their_reference: Some("new their_reference".to_string()),
+                    comment: Some("new comment".to_string()),
                     max_months_of_stock: None,
                     min_months_of_stock: None,
                     other_party_id: Some(mock_name_store_c().id),
@@ -198,10 +198,10 @@ mod test_update {
         assert_eq!(
             updated_row,
             inline_edit(&updated_row, |mut u| {
-                u.colour = Some("new colour".to_owned());
+                u.colour = Some("new colour".to_string());
                 u.status = RequisitionStatus::Sent;
-                u.their_reference = Some("new their_reference".to_owned());
-                u.comment = Some("new comment".to_owned());
+                u.their_reference = Some("new their_reference".to_string());
+                u.comment = Some("new comment".to_string());
                 u.name_link_id = mock_name_store_c().id;
                 u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
                 u
@@ -227,7 +227,7 @@ mod test_update {
             .update_request_requisition(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = calculation_requisition.requisition.id.clone();
+                    r.id.clone_from(&calculation_requisition.requisition.id);
                     r.max_months_of_stock = Some(20.0);
                 }),
             )

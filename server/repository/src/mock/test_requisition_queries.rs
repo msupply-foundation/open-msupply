@@ -52,13 +52,13 @@ pub fn mock_request_draft_requisition_all_fields_updated() -> FullMockRequisitio
 }
 
 pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
-    let requisition_id = "mock_request_draft_requisition_all_fields".to_owned();
+    let requisition_id = "mock_request_draft_requisition_all_fields".to_string();
     let line1_id = format!("{}1", requisition_id);
     let line2_id = format!("{}2", requisition_id);
     FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
-            r.id = requisition_id.clone();
-            r.user_id = Some("user_id".to_owned());
+            r.id.clone_from(&requisition_id);
+            r.user_id = Some("user_id".to_string());
             r.requisition_number = 3;
             r.name_link_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
@@ -81,16 +81,16 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
                     .unwrap(),
             );
             r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 1, 4).unwrap());
-            r.colour = Some("colour".to_owned());
-            r.comment = Some("comment".to_owned());
-            r.their_reference = Some("their_reference".to_owned());
+            r.colour = Some("colour".to_string());
+            r.comment = Some("comment".to_string());
+            r.their_reference = Some("their_reference".to_string());
             r.max_months_of_stock = 1.0;
             r.min_months_of_stock = 0.9;
         }),
         lines: vec![
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
-                r.requisition_id = requisition_id.clone();
+                r.requisition_id.clone_from(&requisition_id);
                 r.item_link_id = mock_item_a().id;
                 r.requested_quantity = 10.0;
                 r.suggested_quantity = 3.0;
@@ -100,7 +100,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             }),
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
-                r.requisition_id = requisition_id.clone();
+                r.requisition_id.clone_from(&requisition_id);
                 r.item_link_id = mock_item_b().id;
                 r.requested_quantity = 15.0;
                 r.suggested_quantity = 3.0;
@@ -113,11 +113,11 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
 }
 
 pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
-    let requisition_id = "mock_response_draft_requisition_all_fields".to_owned();
+    let requisition_id = "mock_response_draft_requisition_all_fields".to_string();
     let line1_id = format!("{}1", requisition_id);
     FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
-            r.id = requisition_id.clone();
+            r.id.clone_from(&requisition_id);
             r.requisition_number = 3;
             r.name_link_id = mock_name_b().id;
             r.store_id = mock_store_a().id;
@@ -139,16 +139,16 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             );
-            r.colour = Some("colour".to_owned());
-            r.comment = Some("comment".to_owned());
-            r.their_reference = Some("their_reference".to_owned());
+            r.colour = Some("colour".to_string());
+            r.comment = Some("comment".to_string());
+            r.their_reference = Some("their_reference".to_string());
             r.max_months_of_stock = 1.0;
             r.min_months_of_stock = 0.9;
-            r.linked_requisition_id = Some("mock_request_draft_requisition_all_fields".to_owned());
+            r.linked_requisition_id = Some("mock_request_draft_requisition_all_fields".to_string());
         }),
         lines: vec![inline_init(|r: &mut RequisitionLineRow| {
             r.id = line1_id;
-            r.requisition_id = requisition_id.clone();
+            r.requisition_id.clone_from(&requisition_id);
             r.item_link_id = mock_item_a().id;
             r.requested_quantity = 10.0;
             r.suggested_quantity = 15.0;
@@ -159,15 +159,15 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
 }
 
 pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
-    let invoice_id = "mock_invoice1_linked_to_requisition".to_owned();
+    let invoice_id = "mock_invoice1_linked_to_requisition".to_string();
     let line1_id = format!("{}1", invoice_id);
     let line2_id = format!("{}2", invoice_id);
 
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id = invoice_id.clone();
+            r.id.clone_from(&invoice_id);
             r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_owned();
+            r.store_id = "store_a".to_string();
             r.invoice_number = 20;
             r.r#type = InvoiceType::InboundShipment;
             r.status = InvoiceStatus::New;
@@ -267,14 +267,14 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
 }
 
 pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
-    let invoice_id = "mock_invoice2_linked_to_requisition".to_owned();
+    let invoice_id = "mock_invoice2_linked_to_requisition".to_string();
     let line1_id = format!("{}1", invoice_id);
 
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id = invoice_id.clone();
+            r.id.clone_from(&invoice_id);
             r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_owned();
+            r.store_id = "store_a".to_string();
             r.invoice_number = 20;
             r.r#type = InvoiceType::InboundShipment;
             r.status = InvoiceStatus::New;
@@ -330,14 +330,14 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
 }
 
 pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
-    let invoice_id = "mock_invoice3_linked_to_requisition".to_owned();
+    let invoice_id = "mock_invoice3_linked_to_requisition".to_string();
     let line1_id = format!("{}1", invoice_id);
 
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
-            r.id = invoice_id.clone();
+            r.id.clone_from(&invoice_id);
             r.name_link_id = mock_name_a().id;
-            r.store_id = "store_a".to_owned();
+            r.store_id = "store_a".to_string();
             r.invoice_number = 20;
             r.r#type = InvoiceType::OutboundShipment;
             r.status = InvoiceStatus::New;

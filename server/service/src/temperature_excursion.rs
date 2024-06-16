@@ -4,6 +4,9 @@ use repository::{
     TemperatureExcursionRepository, TemperatureLogFilter, TemperatureRow,
 };
 
+pub struct TemperatureExcursionService {}
+impl TemperatureExcursionServiceTrait for TemperatureExcursionService {}
+
 pub trait TemperatureExcursionServiceTrait: Sync + Send {
     fn excursions(
         &self,
@@ -19,7 +22,7 @@ pub trait TemperatureExcursionServiceTrait: Sync + Send {
                     .unwrap(),
             ));
 
-        let log_data = TemperatureExcursionRepository::new(&connection).query(filter)?;
+        let log_data = TemperatureExcursionRepository::new(connection).query(filter)?;
 
         temperature_excursions(log_data)
     }
@@ -31,11 +34,11 @@ fn temperature_excursions(
     let mut excursion_data: Vec<TemperatureExcursion> = Vec::new();
 
     for row in log_data.iter() {
-        if row.is_excursion == true {
+        if row.is_excursion {
             let excursion_end = log_data.iter().find(|r| {
                 r.datetime > row.datetime
                     && r.sensor_id == row.sensor_id
-                    && r.is_excursion == false
+                    && !r.is_excursion
                     && r.store_id == row.store_id
                     && r.location_id == row.location_id
             });
@@ -100,7 +103,7 @@ mod test {
 
         let store = StoreRow {
             id: "store".to_string(),
-            name_id: name.id.clone(),
+            name_link_id: name.id.clone(),
             ..Default::default()
         };
 
@@ -243,6 +246,3 @@ mod test {
         );
     }
 }
-
-pub struct TemperatureExcursionService {}
-impl TemperatureExcursionServiceTrait for TemperatureExcursionService {}

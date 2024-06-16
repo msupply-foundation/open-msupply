@@ -17,4 +17,4 @@ anyhow.workspace = true
 sanitize-filename = "0.4"
 
 [dev-dependencies]
-thiserror = {workspace = true}
+thiserror = { workspace = true }

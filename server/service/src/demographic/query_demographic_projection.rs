@@ -3,7 +3,7 @@ use repository::{
         DemographicProjection, DemographicProjectionFilter, DemographicProjectionRepository,
         DemographicProjectionSort,
     },
-    EqualFilter, PaginationOption, StorageConnection,
+    EqualFilter, PaginationOption, RepositoryError, StorageConnection,
 };
 
 use crate::{
@@ -43,4 +43,17 @@ pub fn get_demographic_projection(
     } else {
         Err(SingleRecordError::NotFound(id))
     }
+}
+
+pub fn get_demographic_projection_by_base_year(
+    ctx: &ServiceContext,
+    base_year: i32,
+) -> Result<Option<DemographicProjection>, RepositoryError> {
+    let repository = DemographicProjectionRepository::new(&ctx.connection);
+
+    let mut result = repository.query_by_filter(
+        DemographicProjectionFilter::new().base_year(EqualFilter::equal_to_i32(base_year)),
+    )?;
+
+    Ok(result.pop())
 }

@@ -57,7 +57,7 @@ impl SyncApiV6 {
             batch_size,
             sync_v5_settings: sync_v5_settings.clone(),
             is_initialised,
-            sync_v6_version: sync_v6_version.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
@@ -88,7 +88,7 @@ impl SyncApiV6 {
         let request = SyncPushRequestV6 {
             batch,
             sync_v5_settings: sync_v5_settings.clone(),
-            sync_v6_version: sync_v6_version.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
@@ -96,7 +96,7 @@ impl SyncApiV6 {
         let error = match response_or_err(result).await {
             Ok(SyncPushResponseV6::Data(data)) => return Ok(data),
             Ok(SyncPushResponseV6::Error(error)) => error.into(),
-            Err(error) => error.into(),
+            Err(error) => error,
         };
 
         Err(SyncApiErrorV6 {
@@ -118,7 +118,7 @@ impl SyncApiV6 {
 
         let request = SiteStatusRequestV6 {
             sync_v5_settings: sync_v5_settings.clone(),
-            sync_v6_version: sync_v6_version.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
@@ -126,7 +126,7 @@ impl SyncApiV6 {
         let error = match response_or_err(result).await {
             Ok(SiteStatusResponseV6::Data(data)) => return Ok(data),
             Ok(SiteStatusResponseV6::Error(error)) => error.into(),
-            Err(error) => error.into(),
+            Err(error) => error,
         };
 
         Err(SyncApiErrorV6 {

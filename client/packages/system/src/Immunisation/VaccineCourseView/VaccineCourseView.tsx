@@ -20,13 +20,15 @@ import {
   useParams,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { FC } from 'react';
 import { descriptionColumn } from './DescriptionColumn';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { AppFooterComponent } from './AppFooterComponent';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 import { VaccineItemSelect } from '../../Item';
+
+const MAXVACCINEDOSES = 20;
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -111,39 +113,33 @@ export const VaccineCourseView: FC = () => {
   } = useVaccineCourse(id);
   const { data: demographicData } = useDemographicIndicators();
 
-  const [buffer, setBuffer] = useState(draft?.doses ?? 1);
-  const [value, setValue] = useState(draft?.doses ?? 1);
-
   const defaultRow: VaccineCourseScheduleNode = {
     doseNumber: 1,
     id: FnUtils.generateUUID(),
-    label: t('label.new-row'),
+    label: '',
     __typename: 'VaccineCourseScheduleNode',
   };
 
   const tryUpdateValue = (value: number | undefined) => {
-    if (value === undefined) return;
-    const isValid = Number.isInteger(value) && value >= 0 && value <= 10;
-
-    if (isValid) {
-      setValue(value);
+    if (typeof value !== 'number') {
+      return;
     }
-    setBuffer(value);
+    updatePatch({ doses: value });
   };
 
   const updateSchedule = (value: number) => {
     if (!value) {
       return;
     }
-    const scheduleSeed = (number: number) => {
+    const scheduleSeed = (number: number): VaccineCourseScheduleNode => {
       return {
+        __typename: 'VaccineCourseScheduleNode',
         id: FnUtils.generateUUID(),
         doseNumber: number,
-        label: t('label.new-row'),
+        label: '',
       };
     };
-    let rows =
-      (draft?.vaccineCourseSchedules as VaccineCourseScheduleNode[]) ?? [];
+    let rows = draft?.vaccineCourseSchedules ?? [];
 
     if (rows.length === value) {
       return;
@@ -151,7 +147,7 @@ export const VaccineCourseView: FC = () => {
       let toAdd = value - rows.length;
       while (toAdd > 0) {
         const number = value - toAdd + 1;
-        rows.push(scheduleSeed(number) as VaccineCourseScheduleNode);
+        rows.push(scheduleSeed(number));
         toAdd--;
       }
     } else {
@@ -178,7 +174,7 @@ export const VaccineCourseView: FC = () => {
   const dosesColumns = useColumns<VaccineCourseScheduleNode>(
     [
       { key: 'doseNumber', label: 'label.dose-number' },
-      [descriptionColumn(), { setter: updateDescription }],
+      [descriptionColumn(t('label.new-row')), { setter: updateDescription }],
     ],
     {},
     [draft]
@@ -257,13 +253,14 @@ export const VaccineCourseView: FC = () => {
         <Section heading={t('heading.schedule')}>
           <Row label={t('label.number-of-doses')}>
             <NumericTextInput
-              value={buffer}
+              value={draft.doses}
               fullWidth
-              onBlur={() => {
-                updatePatch({ doses: value });
-                updateSchedule(value);
+              onBlur={e => {
+                updatePatch({ doses: parseInt(e.target.value) });
+                updateSchedule(parseInt(e.target.value));
               }}
               onChange={tryUpdateValue}
+              max={MAXVACCINEDOSES}
             />
           </Row>
           <Box paddingTop={1.5}>

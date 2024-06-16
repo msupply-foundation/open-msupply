@@ -137,7 +137,7 @@ mod test {
         fn store() -> StoreRow {
             inline_init(|s: &mut StoreRow| {
                 s.id = "store".to_string();
-                s.name_id = name().id;
+                s.name_link_id = name().id;
                 s.code = "n/a".to_string();
             })
         }
@@ -146,14 +146,14 @@ mod test {
             let invoice_id = uuid();
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
-                    r.id = invoice_id.clone();
+                    r.id.clone_from(&invoice_id);
                     r.store_id = store().id;
                     r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
-                    r.invoice_id = invoice_id.clone();
+                    r.invoice_id.clone_from(&invoice_id);
                     r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineType::StockOut;
                     r.pack_size = 1.0;

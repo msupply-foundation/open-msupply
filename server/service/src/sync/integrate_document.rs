@@ -119,7 +119,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     encounter_updated::update_encounter_row_and_events(
         con,
-        &patient_id,
+        patient_id,
         document,
         encounter,
         clinician_id,

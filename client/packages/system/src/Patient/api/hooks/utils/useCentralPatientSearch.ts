@@ -13,7 +13,7 @@ export const useCentralPatientSearch = (
     ...useQuery(
       api.keys.centralSearch(params),
       () => api.get.centralSearch(params),
-      { enabled }
+      { enabled: enabled && JSON.stringify(params) !== '{}' }
     ),
   };
 };

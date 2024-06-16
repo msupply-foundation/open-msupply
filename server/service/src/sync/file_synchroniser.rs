@@ -94,7 +94,7 @@ impl FileSynchroniser {
         let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
 
         let sync_file_ref = sync_file_repo
-            .find_one_by_id(&file_id)?
+            .find_one_by_id(file_id)?
             .ok_or(Error::FileDoesNotExist(file_id.to_string()))?;
 
         let download_result = self
@@ -158,7 +158,7 @@ impl FileSynchroniser {
 
         let upload_result = self
             .sync_api_v6
-            .upload_file(&sync_file_reference, &file.name, file_handle)
+            .upload_file(sync_file_reference, &file.name, file_handle)
             .await;
 
         let Err(error) = upload_result
@@ -191,8 +191,7 @@ impl FileSynchroniser {
             let retry_at = match error.source {
                 SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncFileNotFound(_)) => {
                     // wait 1 minute before retrying
-                    let retry_at = Utc::now().naive_utc() + Duration::minutes(1);
-                    retry_at
+                    Utc::now().naive_utc() + Duration::minutes(1)
                 }
                 _ => {
                     Utc::now().naive_utc()

@@ -59,21 +59,12 @@ impl<'a> StorePreferenceRowRepository<'a> {
         StorePreferenceRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_preference_dsl::store_preference)
             .values(row)
             .on_conflict(store_preference_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(store_preference_dsl::store_preference)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

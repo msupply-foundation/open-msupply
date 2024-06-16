@@ -70,7 +70,7 @@ pub fn insert_outbound_return(
                 other_party,
             )?;
 
-            InvoiceRowRepository::new(&connection).upsert_one(&outbound_return)?;
+            InvoiceRowRepository::new(connection).upsert_one(&outbound_return)?;
 
             for line in insert_stock_out_lines {
                 insert_stock_out_line(ctx, line.clone()).map_err(|error| {
@@ -91,7 +91,7 @@ pub fn insert_outbound_return(
             }
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceCreated,
                 Some(outbound_return.id.to_owned()),
                 None,
@@ -99,7 +99,7 @@ pub fn insert_outbound_return(
             )?;
 
             get_invoice(ctx, None, &outbound_return.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -268,7 +268,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutboundReturn| {
                     r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id.clone();
+                    r.other_party_id.clone_from(&not_visible().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotVisible)
@@ -280,7 +280,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutboundReturn| {
                     r.id = "new_id".to_string();
-                    r.other_party_id = not_a_supplier().id.clone();
+                    r.other_party_id.clone_from(&not_a_supplier().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotASupplier)

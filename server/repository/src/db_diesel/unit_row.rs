@@ -31,21 +31,12 @@ impl<'a> UnitRowRepository<'a> {
         UnitRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::insert_into(unit)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(unit)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
