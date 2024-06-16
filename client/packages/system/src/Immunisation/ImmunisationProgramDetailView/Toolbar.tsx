@@ -9,6 +9,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftImmunisationProgram } from '../api/hooks/useImmunisationProgram';
+import { useDeleteSelectedVaccineCourses } from '../api/hooks/useDeleteSelectedVaccineCourses';
 
 interface ToolbarProps {
   onUpdate: (patch: Partial<DraftImmunisationProgram>) => void;
@@ -23,8 +24,9 @@ export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
   isError,
   error,
 }: ToolbarProps) => {
-  const t = useTranslation('system');
-  const onDelete = () => {};
+  const t = useTranslation();
+  const onDelete = useDeleteSelectedVaccineCourses();
+
   return (
     <AppBarContentPortal sx={{ width: '100%' }}>
       <Grid
@@ -44,7 +46,7 @@ export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
             onChange={e =>
               onUpdate({
                 name: e.target.value,
-              } as Partial<DraftImmunisationProgram>)
+              })
             }
             label={t('label.name')}
             InputLabelProps={{ shrink: true }}

@@ -1,4 +1,7 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{
+    migrations::{sql, DATETIME},
+    StorageConnection,
+};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // vaccine_course
@@ -13,7 +16,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             coverage_rate FLOAT NOT NULL DEFAULT 100,
             is_active BOOL NOT NULL DEFAULT true,
             wastage_rate FLOAT NOT NULL DEFAULT 0,
-            doses INT
+            doses INT,
+            deleted_datetime {DATETIME}
         );
         "#
     )?;
