@@ -22,7 +22,7 @@ pub fn update_vaccine_course(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::ServerAdmin, // https://github.com/msupply-foundation/open-msupply/issues/4057
             store_id: Some(store_id.to_string()),
         },
     )?;
