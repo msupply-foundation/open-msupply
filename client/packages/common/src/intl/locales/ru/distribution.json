@@ -69,5 +69,9 @@
   "label.requested-quantity": "Запрошенное количество",
   "messages.allocated-lines_few": "Распределено {{count}} строки",
   "messages.allocated-lines_many": "Распределено {{count}} строк",
-  "messages.allocated-lines_other": "Распределено {{count}} строк"
+  "messages.allocated-lines_other": "Распределено {{count}} строк",
+  "label.edited-by": "Отредактировано",
+  "label.issue": "Проблема",
+  "label.group-by-item": "Группировать по Товарам",
+  "label.customer-ref": "Номер Клиента"
 }
