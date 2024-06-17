@@ -1,7 +1,6 @@
 use repository::vaccine_course::vaccine_course_item::{
-    VaccineCourseItemFilter, VaccineCourseItemRepository,
+    VaccineCourseItem, VaccineCourseItemFilter, VaccineCourseItemRepository,
 };
-use repository::vaccine_course::vaccine_course_item_row::VaccineCourseItemRow;
 use repository::EqualFilter;
 use repository::{RepositoryError, StorageConnectionManager};
 
@@ -15,7 +14,7 @@ pub struct VaccineCourseItemByVaccineCourseIdLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for VaccineCourseItemByVaccineCourseIdLoader {
-    type Value = Vec<VaccineCourseItemRow>;
+    type Value = Vec<VaccineCourseItem>;
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
@@ -27,12 +26,12 @@ impl Loader<String> for VaccineCourseItemByVaccineCourseIdLoader {
                 .vaccine_course_id(EqualFilter::equal_any(ids.to_owned())),
         )?;
 
-        let mut map: HashMap<String, Vec<VaccineCourseItemRow>> = HashMap::new();
+        let mut map: HashMap<String, Vec<VaccineCourseItem>> = HashMap::new();
 
         for item in items {
             let id = item.vaccine_course_item.vaccine_course_id.clone();
             let list = map.entry(id).or_default();
-            list.push(item.vaccine_course_item);
+            list.push(item);
         }
 
         Ok(map)
