@@ -81,5 +81,14 @@ export const gapsNameProperties: {
       allowedValues: '> 16 hours,8-16 hours,< 8 hours,No availability',
       remoteEditable: true,
     },
+    {
+      id: 'd4d252eb-40c6-491c-bd2a-65c74534b966',
+      propertyId: 'supply_interval',
+      key: 'supply_interval',
+      name: 'Supply Interval (Months between deliveries)',
+      valueType: PropertyNodeValueType.Integer,
+      allowedValues: null,
+      remoteEditable: true,
+    },
   ],
 };
