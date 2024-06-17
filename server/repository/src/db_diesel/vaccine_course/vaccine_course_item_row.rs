@@ -1,5 +1,6 @@
 use super::vaccine_course_item_row::vaccine_course_item::dsl::*;
 use crate::db_diesel::item_link_row::item_link;
+use crate::db_diesel::item_row::item as item_dsl;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
@@ -16,6 +17,7 @@ table! {
 
 joinable!(vaccine_course_item -> item_link (item_link_id));
 allow_tables_to_appear_in_same_query!(vaccine_course_item, item_link);
+allow_tables_to_appear_in_same_query!(vaccine_course_item, item_dsl);
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
 #[diesel(table_name = vaccine_course_item)]
