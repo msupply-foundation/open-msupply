@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React from 'react';
 import {
   useDialog,
   Grid,
@@ -20,9 +20,11 @@ interface VaccineCourseCreateModalModalProps {
   programId: string | undefined;
 }
 
-export const VaccineCourseCreateModal: FC<
-  VaccineCourseCreateModalModalProps
-> = ({ isOpen, onClose, programId }) => {
+export const VaccineCourseCreateModal = ({
+  isOpen,
+  onClose,
+  programId,
+}: VaccineCourseCreateModalModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['coldchain']);
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ export const VaccineCourseCreateModal: FC<
   const isInvalid = !draft.name.trim();
 
   const onOk = async () => {
-    const result = await create();
+    const result = await create(programId ?? '');
     if (!result) return;
 
     const response = result.centralServer.vaccineCourse.insertVaccineCourse;
@@ -49,10 +51,6 @@ export const VaccineCourseCreateModal: FC<
         .build()
     );
   };
-
-  useEffect(() => {
-    updatePatch({ programId: programId });
-  }, [programId, updatePatch]);
 
   return (
     <Modal
