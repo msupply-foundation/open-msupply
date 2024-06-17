@@ -12,11 +12,15 @@ fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
   label
 }
 
+fragment VaccineItemDetails on ItemNode {
+  id
+  name
+}
+
 fragment VaccineCourseItem on VaccineCourseItemNode {
   id
   item {
-    id
-    name
+    ...VaccineItemDetails
   }
 }
 
@@ -127,7 +131,6 @@ query vaccineCourses(
     filter: $filter
   ) {
     ... on VaccineCourseConnector {
-      __typename
       nodes {
         ...VaccineCourse
       }

@@ -3,18 +3,20 @@ import {
   AutocompleteOptionRenderer,
   FnUtils,
   AutocompleteMulti,
-  VaccineCourseItemNode,
 } from '@openmsupply-client/common';
-import { useVaccineItems } from 'packages/system/src/IndicatorsDemographics/api/hooks/document/useVaccineItems';
-import { DraftVaccineCourse } from 'packages/system/src/Immunisation/api/hooks/useVaccineCourse';
+import { useDemographicData } from '@openmsupply-client/system';
+import {
+  DraftVaccineCourse,
+  DraftVaccineCourseItem,
+} from '@openmsupply-client/system/src/Immunisation';
 
 interface VaccineItemSelectProps {
-  extraFilter?: (item: VaccineCourseItemNode) => boolean;
+  extraFilter?: (item: DraftVaccineCourseItem) => boolean;
   onChange: (newData: Partial<DraftVaccineCourse>) => void;
   draft: DraftVaccineCourse;
 }
 
-const renderOption: AutocompleteOptionRenderer<VaccineCourseItemNode> = (
+const renderOption: AutocompleteOptionRenderer<DraftVaccineCourseItem> = (
   props,
   option
 ): JSX.Element => {
@@ -38,28 +40,29 @@ export const VaccineItemSelect = ({
   onChange,
   draft,
 }: VaccineItemSelectProps) => {
-  const { data } = useVaccineItems();
+  const { data } = useDemographicData.vaccineItems.get();
 
-  const onChangeSelectedItems = (selectedItems: VaccineCourseItemNode[]) => {
+  const onChangeSelectedItems = (selectedItems: DraftVaccineCourseItem[]) => {
     onChange({ vaccineCourseItems: selectedItems });
   };
 
-  const options =
+  const options: DraftVaccineCourseItem[] =
     data?.nodes?.map(item => {
-      return {
+      const vaccineItem: DraftVaccineCourseItem = {
         id: FnUtils.generateUUID(),
         item: {
           id: item.id,
           name: item.name,
         },
-      } as VaccineCourseItemNode;
-    }) ?? ([] as VaccineCourseItemNode[]);
+      };
+      return vaccineItem;
+    }) ?? [];
 
   return (
     <AutocompleteMulti
       isOptionEqualToValue={(option, value) => option.item.id === value.item.id}
       getOptionLabel={option => `${option.item.name}`}
-      value={(draft?.vaccineCourseItems ?? []) as VaccineCourseItemNode[]}
+      value={draft?.vaccineCourseItems ?? []}
       filterSelectedOptions
       onChange={(_event, newSelectedItems) =>
         onChangeSelectedItems(newSelectedItems)

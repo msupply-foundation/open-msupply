@@ -8,6 +8,8 @@ export type ImmunisationProgramFragment = { __typename: 'ProgramNode', id: strin
 
 export type VaccineCourseScheduleFragment = { __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string };
 
+export type VaccineItemDetailsFragment = { __typename: 'ItemNode', id: string, name: string };
+
 export type VaccineCourseItemFragment = { __typename: 'VaccineCourseItemNode', id: string, item: { __typename: 'ItemNode', id: string, name: string } };
 
 export type ProgramsQueryVariables = Types.Exact<{
@@ -76,15 +78,20 @@ export const ImmunisationProgramFragmentDoc = gql`
   }
 }
     `;
+export const VaccineItemDetailsFragmentDoc = gql`
+    fragment VaccineItemDetails on ItemNode {
+  id
+  name
+}
+    `;
 export const VaccineCourseItemFragmentDoc = gql`
     fragment VaccineCourseItem on VaccineCourseItemNode {
   id
   item {
-    id
-    name
+    ...VaccineItemDetails
   }
 }
-    `;
+    ${VaccineItemDetailsFragmentDoc}`;
 export const VaccineCourseScheduleFragmentDoc = gql`
     fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
   id
@@ -187,7 +194,6 @@ export const VaccineCoursesDocument = gql`
     filter: $filter
   ) {
     ... on VaccineCourseConnector {
-      __typename
       nodes {
         ...VaccineCourse
       }
