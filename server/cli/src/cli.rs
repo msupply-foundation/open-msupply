@@ -66,7 +66,7 @@ enum Action {
         #[clap(short, long)]
         users: String,
         /// Prettify json output
-        #[clap(action = ArgAction::SetTrue)]
+        #[clap(long, action = ArgAction::SetTrue)]
         pretty: bool,
     },
     /// Initialise database from exported data), drops existing database, creates new database with latest schema and initialises (syncs) from exported file, also disabling sync to avoid initialised data syncing to any server
@@ -75,14 +75,14 @@ enum Action {
         #[clap(short, long)]
         name: String,
         /// Refresh dates (see refresh-dates --help)
-        #[clap(action = ArgAction::SetTrue)]
+        #[clap(short, long, action = ArgAction::SetTrue)]
         refresh: bool,
     },
     /// Make data current, based on the difference between the latest date to the current date (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference)
     /// This process also disables sync to avoid refreshed data syncing, unless you use the `--enable-sync` flag
     RefreshDates {
         /// Enable sync after refresh, by default the sync is disabled after refreshing
-        #[clap(action = ArgAction::SetTrue)]
+        #[clap(short, long, action = ArgAction::SetTrue)]
         enable_sync: bool,
     },
 
