@@ -31,7 +31,6 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         AssetInternalLocationRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(
         &self,
         asset_internal_location_row: &AssetInternalLocationRow,
@@ -41,17 +40,6 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_internal_location_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(
-        &self,
-        asset_internal_location_row: &AssetInternalLocationRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::replace_into(asset_internal_location)
-            .values(asset_internal_location_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -117,7 +105,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
 
 impl Upsert for AssetInternalLocationRow {
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
+        AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
         Ok(())
     }
 

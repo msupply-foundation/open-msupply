@@ -9,7 +9,7 @@ pub(crate) const TEMPLATE_MARKER_FILE: &str = "___template_needs_update.marker";
 pub(crate) const TEMPLATE_MARKER_FILE: &str = "___template_needs_update_pg.marker";
 
 #[allow(dead_code)]
-pub(crate) const ENV_MSUPPLY_NO_TEST_DB_TEMPLATE: &'static str = "MSUPPLY_NO_TEST_DB_TEMPLATE";
+pub(crate) const ENV_MSUPPLY_NO_TEST_DB_TEMPLATE: &str = "MSUPPLY_NO_TEST_DB_TEMPLATE";
 
 #[allow(dead_code)]
 pub(crate) fn env_msupply_no_test_db_template() -> bool {

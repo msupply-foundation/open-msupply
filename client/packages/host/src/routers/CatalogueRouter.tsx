@@ -44,7 +44,6 @@ export const CatalogueRouter: FC = () => {
   if (gotoMasterLists) {
     return <MasterListService />;
   }
-
   const notFoundRoute = RouteBuilder.create(AppRoute.PageNotFound).build();
   return <Navigate to={notFoundRoute} />;
 };

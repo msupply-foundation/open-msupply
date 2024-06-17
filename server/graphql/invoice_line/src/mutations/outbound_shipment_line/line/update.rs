@@ -102,10 +102,8 @@ impl UpdateInput {
             stock_line_id,
             number_of_packs,
             total_before_tax,
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
+            tax: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
             }),
             note: None,
         }

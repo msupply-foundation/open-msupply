@@ -78,11 +78,7 @@ fn check_stock_line_is_unique(
     )?;
     let already_has_stock_line = stocktake_lines.iter().find(|line| {
         if let Some(ref stock_line) = line.stock_line {
-            if stock_line.id == stock_line_id {
-                return true;
-            } else {
-                return false;
-            }
+            return stock_line.id == stock_line_id;
         }
         false
     });
@@ -116,11 +112,11 @@ pub fn stocktake_reduction_amount(
 ) -> f64 {
     if let (Some(stock_line), Some(counted_number_of_packs)) = (stock_line, counted_number_of_packs)
     {
-        return stock_line.stock_line_row.total_number_of_packs as f64 - counted_number_of_packs;
+        stock_line.stock_line_row.total_number_of_packs - counted_number_of_packs
     } else if stock_line.is_none() && counted_number_of_packs.is_some() {
-        return -counted_number_of_packs.unwrap_or(0.0);
+        -counted_number_of_packs.unwrap_or(0.0)
     } else {
-        return 0.0;
+        0.0
     }
 }
 
@@ -303,7 +299,7 @@ pub fn insert_stocktake_line(
                 item_name,
             } = validate(connection, &ctx.store_id, &input)?;
             let new_stocktake_line = generate(stock_line, item_id, item_name, input);
-            StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
+            StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(InsertStocktakeLineError::InternalError(
@@ -661,7 +657,7 @@ mod stocktake_line_test {
                 &context,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
-                    r.stocktake_id = stocktake_a.id.clone();
+                    r.stocktake_id.clone_from(&stocktake_a.id);
                     r.counted_number_of_packs = Some(50.0);
                     r.stock_line_id = Some(stock_line.id.clone());
                     r.inventory_adjustment_reason_id = Some(positive_reason().id);
@@ -671,7 +667,7 @@ mod stocktake_line_test {
         assert_eq!(
             result.line.clone(),
             inline_init(|r: &mut StocktakeLineRow| {
-                r.id = result.line.id.clone();
+                r.id.clone_from(&result.line.id);
                 r.stocktake_id = stocktake_a.id;
                 r.counted_number_of_packs = Some(50.0);
                 r.stock_line_id = Some(stock_line.id);
@@ -730,7 +726,7 @@ mod stocktake_line_test {
                 &context,
                 inline_init(|r: &mut InsertStocktakeLine| {
                     r.id = uuid();
-                    r.stocktake_id = stocktake_a.id.clone();
+                    r.stocktake_id.clone_from(&stocktake_a.id);
                     r.comment = Some("Some comment".to_string());
                     r.stock_line_id = Some(mock_stock_line_d().id);
                 }),
@@ -739,7 +735,7 @@ mod stocktake_line_test {
         assert_eq!(
             result.line,
             inline_init(|r: &mut StocktakeLineRow| {
-                r.id = result.line.id.clone();
+                r.id.clone_from(&result.line.id);
                 r.stocktake_id = stocktake_a.id;
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;

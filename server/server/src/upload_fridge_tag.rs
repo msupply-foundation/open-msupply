@@ -42,7 +42,7 @@ async fn upload(
 ) -> HttpResponse {
     // For now, we just check that the user is authenticated
     // In future we might want to check that the user has access to upload fridge tag
-    if let Err(_) = validate_cookie_auth(request.clone(), &auth_data) {
+    if validate_cookie_auth(request.clone(), &auth_data).is_err() {
         return HttpResponse::InternalServerError().body("You need to be logged in");
     };
 

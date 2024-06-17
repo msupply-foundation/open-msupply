@@ -118,7 +118,7 @@ mod test {
             },
             InvoiceServiceTrait,
         },
-        invoice_line::inbound_shipment_line::DeleteInboundShipmentLineError,
+        invoice_line::stock_in_line::DeleteStockInLineError,
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -260,7 +260,7 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::LineDeleteError {
                 line_id: "n/a".to_string(),
-                error: DeleteInboundShipmentLineError::LineDoesNotExist,
+                error: DeleteStockInLineError::LineDoesNotExist,
             })
         }));
         let expected_message = "Internal error";

@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   useTranslation,
   DetailContainer,
@@ -11,6 +11,8 @@ import {
   Typography,
   PropertyInput,
   InputWithLabelRow,
+  ObjUtils,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -19,14 +21,19 @@ interface FacilityEditModalProps {
   nameId: string;
   isOpen: boolean;
   onClose: () => void;
-  setNextFacility: (nameId: string) => void;
+  setNextFacility?: (nameId: string) => void;
 }
 
-// todo: next PR - populate existing from name
-const useDraftFacilityProperties = () => {
+const useDraftFacilityProperties = (initialProperties?: string | null) => {
   const [draftProperties, setDraftProperties] = useState<
     Record<string, string | number | boolean | null>
-  >({});
+  >(ObjUtils.parse(initialProperties));
+
+  useEffect(() => {
+    const parsedProperties = ObjUtils.parse(initialProperties);
+
+    setDraftProperties(parsedProperties);
+  }, [initialProperties]);
 
   return {
     draftProperties,
@@ -41,21 +48,28 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   setNextFacility,
 }) => {
   const t = useTranslation();
+  const isCentralServer = useIsCentralServerApi();
 
   const { data, isLoading } = useName.document.get(nameId);
   const { data: properties, isLoading: propertiesLoading } =
     useName.document.properties();
+  const { mutateAsync } = useName.document.updateProperties(nameId);
+
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
   const height = useKeyboardHeightAdjustment(600);
 
-  const { draftProperties, setDraftProperties } = useDraftFacilityProperties();
+  const { draftProperties, setDraftProperties } = useDraftFacilityProperties(
+    data?.properties
+  );
 
   const nextId = useName.utils.nextFacilityId(nameId);
 
   const save = async () => {
-    // TODO
-    console.log(draftProperties);
+    mutateAsync({
+      id: nameId,
+      properties: JSON.stringify(draftProperties),
+    });
   };
 
   if (isLoading || propertiesLoading) return <BasicSpinner />;
@@ -74,16 +88,18 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
         />
       }
       nextButton={
-        <DialogButton
-          disabled={!nextId}
-          variant="next"
-          onClick={async () => {
-            await save();
-            nextId && setNextFacility(nextId);
-            // Returning true triggers the animation/slide out
-            return true;
-          }}
-        />
+        setNextFacility && (
+          <DialogButton
+            disabled={!nextId}
+            variant="next"
+            onClick={async () => {
+              await save();
+              nextId && setNextFacility(nextId);
+              // Returning true triggers the animation/slide out
+              return true;
+            }}
+          />
+        )
       }
       height={height}
       width={700}
@@ -113,10 +129,10 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
                   gap: 1,
                 }}
               >
-                {properties.map(property => (
+                {properties.map(p => (
                   <InputWithLabelRow
-                    key={property.key}
-                    label={property.name}
+                    key={p.id}
+                    label={p.property.name}
                     sx={{ width: '100%' }}
                     labelProps={{
                       sx: {
@@ -129,13 +145,14 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
                     Input={
                       <Box flex={1}>
                         <PropertyInput
-                          valueType={property.valueType}
-                          allowedValues={property.allowedValues?.split(',')}
-                          value={draftProperties[property.key]}
+                          disabled={!isCentralServer && !p.remoteEditable}
+                          valueType={p.property.valueType}
+                          allowedValues={p.property.allowedValues?.split(',')}
+                          value={draftProperties[p.property.key]}
                           onChange={v =>
                             setDraftProperties({
                               ...draftProperties,
-                              [property.key]: v ?? null,
+                              [p.property.key]: v ?? null,
                             })
                           }
                         />

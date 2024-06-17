@@ -19,9 +19,9 @@ struct PackageJson {
 impl PackageJsonAsset {
     fn version() -> String {
         // Since #[folder] of RustEmbed is pointed at a file, need to use empty string to access the file
-        let package_json = PackageJsonAsset::get("").expect("Embeded package json not found");
+        let package_json = PackageJsonAsset::get("").expect("Embedded package json not found");
         let package: PackageJson = serde_json::from_slice(&package_json.data)
-            .expect("Embeded package json cannot be parsed");
+            .expect("Embedded package json cannot be parsed");
         package.version
     }
 }

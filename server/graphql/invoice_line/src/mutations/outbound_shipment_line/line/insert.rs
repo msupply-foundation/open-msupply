@@ -96,13 +96,20 @@ impl InsertInput {
 
         ServiceInput {
             id,
-            r#type: Some(StockOutType::OutboundShipment),
+            r#type: StockOutType::OutboundShipment,
             invoice_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
             tax_percentage,
+            // Default
             note: None,
+            location_id: None,
+            batch: None,
+            pack_size: None,
+            expiry_date: None,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
         }
     }
 }
@@ -158,7 +165,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         // Standard Graphql Errors
         NotThisStoreInvoice
-        | NoInvoiceType
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
         | NumberOfPacksBelowOne => StandardGraphqlError::BadUserInput(formatted_error),
@@ -531,9 +537,15 @@ mod test {
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
-                    r#type: Some(StockOutType::OutboundShipment),
+                    r#type: StockOutType::OutboundShipment,
                     tax_percentage: Some(5.0),
                     note: None,
+                    location_id: None,
+                    batch: None,
+                    pack_size: None,
+                    expiry_date: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None
                 }
             );
             Ok(InvoiceLine {

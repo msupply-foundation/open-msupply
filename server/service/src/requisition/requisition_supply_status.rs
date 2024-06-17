@@ -73,7 +73,7 @@ pub struct RequisitionLineSupplyStatus {
 
 impl RequisitionLineSupplyStatus {
     pub fn remaining_quantity(&self) -> f64 {
-        let result = self.requisition_line.requisition_line_row.supply_quantity as f64
+        let result = self.requisition_line.requisition_line_row.supply_quantity
             - self.quantity_in_invoices();
 
         if result > 0.0 {
@@ -85,7 +85,7 @@ impl RequisitionLineSupplyStatus {
 
     pub fn quantity_in_invoices(&self) -> f64 {
         self.invoice_lines.iter().fold(0.0, |sum, line| {
-            sum + line.invoice_line_row.pack_size as f64 * line.invoice_line_row.number_of_packs
+            sum + line.invoice_line_row.pack_size * line.invoice_line_row.number_of_packs
         })
     }
 

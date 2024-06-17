@@ -128,7 +128,6 @@ impl ProcessorsTrigger {
                 "Problem sending the await_events_processed queue {:#?}",
                 error
             );
-            return;
         }
 
         if let Err(error) = receiver.await {
@@ -136,7 +135,6 @@ impl ProcessorsTrigger {
                 "Problem receiving the await_events_processed response {:#?}",
                 error
             );
-            return;
         }
     }
 

@@ -18,6 +18,10 @@ use self::generate::GenerateResult;
 
 use super::StockInType;
 
+// TODO: future improvement - would be nice to have two variants of this
+// - StockInLine that also creates a new stock line (e.g. inbound shipment)
+// - StockInLine that adjusts existing stock line (e.g. inventory adjustment)
+//  - This one could be accept more `None` values and populate them from the existing stock line
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertStockInLine {
     pub id: String,
@@ -34,6 +38,7 @@ pub struct InsertStockInLine {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub r#type: StockInType,
+    /// If None, new stock line will be generated
     pub stock_line_id: Option<String>,
     pub barcode: Option<String>,
     pub stock_on_hold: bool,
@@ -48,29 +53,29 @@ pub fn insert_stock_in_line(
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (item, invoice) = validate(&input, &ctx.store_id, connection)?;
             let GenerateResult {
                 invoice: invoice_user_update,
                 invoice_line,
                 stock_line,
                 barcode,
-            } = generate(&connection, &ctx.user_id, input, item, invoice)?;
+            } = generate(connection, &ctx.user_id, input, item, invoice)?;
 
             if let Some(barcode_row) = barcode {
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
             }
 
             if let Some(stock_line_row) = stock_line {
-                StockLineRowRepository::new(&connection).upsert_one(&stock_line_row)?;
+                StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
             }
-            InvoiceLineRowRepository::new(&connection).upsert_one(&invoice_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&invoice_line)?;
 
             if let Some(invoice_row) = invoice_user_update {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             get_invoice_line(ctx, &invoice_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -251,7 +256,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.item_id = mock_item_a().id.clone();
+                    r.item_id.clone_from(&mock_item_a().id);
                     r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.invoice_id = mock_outbound_shipment_e().id;
@@ -266,7 +271,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.item_id = mock_item_a().id.clone();
+                    r.item_id.clone_from(&mock_item_a().id);
                     r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.invoice_id = verified_inbound_return().id; // VERIFIED

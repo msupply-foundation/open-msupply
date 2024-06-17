@@ -8,8 +8,7 @@ CREATE TYPE number_type AS ENUM (
 );
 
 -- Numbering table holding a list of typed counters
-CREATE TABLE
-  number (
+CREATE TABLE number (
     id TEXT NOT NULL PRIMARY KEY,
     -- current counter value
     value BIGINT NOT NULL,

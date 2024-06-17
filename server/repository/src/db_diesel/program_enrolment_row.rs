@@ -64,21 +64,12 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
         Ok(result)
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_enrolment::dsl::program_enrolment)
             .values(row)
             .on_conflict(program_enrolment::dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(program_enrolment::dsl::program_enrolment)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

@@ -79,6 +79,11 @@ pub enum PermissionType {
     AssetQuery,
     AssetMutate,
     AssetCatalogueItemMutate,
+    // Names
+    NamePropertiesMutate,
+    // demographics
+    DemographicQuery,
+    VaccineCourseMutate,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
@@ -103,21 +108,12 @@ impl<'a> UserPermissionRowRepository<'a> {
         UserPermissionRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_permission_dsl::user_permission)
             .values(row)
             .on_conflict(user_permission_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(user_permission_dsl::user_permission)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

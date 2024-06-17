@@ -937,6 +937,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "atomic"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c59bdb34bc650a32731b31bd8f0829cc15d24a708ee31559e0bb34f2bc320cba"
+
+[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2304,6 +2310,7 @@ dependencies = [
  "graphql_clinician",
  "graphql_cold_chain",
  "graphql_core",
+ "graphql_demographic",
  "graphql_form_schema",
  "graphql_general",
  "graphql_inventory_adjustment",
@@ -2321,6 +2328,7 @@ dependencies = [
  "graphql_stocktake",
  "graphql_stocktake_line",
  "graphql_types",
+ "graphql_vaccine_course",
  "repository",
  "serde 1.0.198",
  "serde_json",
@@ -2453,6 +2461,26 @@ dependencies = [
  "strum",
  "thiserror",
  "tokio",
+ "util",
+]
+
+[[package]]
+name = "graphql_demographic"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.198",
+ "serde_json",
+ "service",
  "util",
 ]
 
@@ -2794,6 +2822,26 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
+ "repository",
+ "serde 1.0.198",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_vaccine_course"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
  "repository",
  "serde 1.0.198",
  "serde_json",
@@ -3363,7 +3411,7 @@ dependencies = [
  "serde_json",
  "time",
  "url",
- "uuid 1.8.0",
+ "uuid",
 ]
 
 [[package]]
@@ -4515,7 +4563,6 @@ dependencies = [
  "thiserror",
  "tokio",
  "util",
- "uuid 0.8.2",
 ]
 
 [[package]]
@@ -5992,16 +6039,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "thiserror",
- "uuid 1.8.0",
-]
-
-[[package]]
-name = "uuid"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
-dependencies = [
- "getrandom",
+ "uuid",
 ]
 
 [[package]]
@@ -6010,6 +6048,7 @@ version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a183cf7feeba97b4dd1c0d46788634f6221d87fa961b305bed08c851829efcc0"
 dependencies = [
+ "atomic",
  "getrandom",
 ]
 

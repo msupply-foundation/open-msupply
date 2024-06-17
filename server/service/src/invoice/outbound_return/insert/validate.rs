@@ -11,7 +11,7 @@ pub fn validate(
     input: &InsertOutboundReturn,
 ) -> Result<Name, InsertOutboundReturnError> {
     use InsertOutboundReturnError::*;
-    if let Some(_) = check_invoice_exists(&input.id, connection)? {
+    if (check_invoice_exists(&input.id, connection)?).is_some() {
         return Err(InvoiceAlreadyExists);
     }
 
@@ -47,8 +47,8 @@ pub fn validate(
 }
 
 fn check_inbound_shipment_is_returnable(inbound_shipment: &InvoiceRow) -> bool {
-    match inbound_shipment.status {
-        InvoiceStatus::Delivered | InvoiceStatus::Verified => true,
-        _ => false,
-    }
+    matches!(
+        inbound_shipment.status,
+        InvoiceStatus::Delivered | InvoiceStatus::Verified
+    )
 }
