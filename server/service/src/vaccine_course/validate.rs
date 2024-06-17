@@ -35,5 +35,5 @@ pub fn check_vaccine_course_name_exists_for_program(
         filter = filter.id(EqualFilter::not_equal_to(&id));
     }
     let result = VaccineCourseRepository::new(connection).query_by_filter(filter)?;
-    Ok(result.len() == 0)
+    Ok(result.is_empty())
 }
