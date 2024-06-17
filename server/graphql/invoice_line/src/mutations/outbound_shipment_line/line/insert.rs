@@ -72,7 +72,7 @@ pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<InsertRes
 
 #[derive(Interface)]
 #[graphql(name = "InsertOutboundShipmentLineErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum InsertErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),

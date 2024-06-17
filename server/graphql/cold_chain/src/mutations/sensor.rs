@@ -87,7 +87,7 @@ pub enum UpdateSensorResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateSensorErrorInterface {
     SensorNotFound(RecordNotFound),
     UniqueValueViolation(UniqueValueViolation),

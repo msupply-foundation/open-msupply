@@ -88,7 +88,7 @@ pub enum InsertAssetLogResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertAssetLogErrorInterface {
     AssetLogAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),

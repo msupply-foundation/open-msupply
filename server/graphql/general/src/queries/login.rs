@@ -63,7 +63,7 @@ impl AccountBlocked {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum AuthTokenErrorInterface {
     InvalidCredentials(InvalidCredentials),
     AccountBlocked(AccountBlocked),
