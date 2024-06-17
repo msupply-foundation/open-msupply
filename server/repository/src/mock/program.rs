@@ -31,6 +31,7 @@ pub fn mock_immunisation_program_b() -> ProgramRow {
         name: "immunisation_program_b".to_string(),
         context_id: context_immunisation_program().id,
         is_immunisation: true,
+        deleted_datetime: None,
     }
 }
 

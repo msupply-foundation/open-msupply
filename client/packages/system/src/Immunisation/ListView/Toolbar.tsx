@@ -1,15 +1,31 @@
 import React, { FC } from 'react';
-import { AppBarContentPortal } from '@openmsupply-client/common';
+import {
+  AppBarContentPortal,
+  DeleteIcon,
+  DropdownMenu,
+  DropdownMenuItem,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { useDeleteSelectedImmunisationPrograms } from '../api/hooks/useDeleteSelectedImmunisationPrograms';
 
 export const Toolbar: FC = () => {
+  const t = useTranslation();
+  const onDelete = useDeleteSelectedImmunisationPrograms();
+
   return (
     <AppBarContentPortal
       sx={{
         paddingBottom: '16px',
         flex: 1,
-        justifyContent: 'space-between',
+        justifyContent: 'end',
         display: 'flex',
       }}
-    ></AppBarContentPortal>
+    >
+      <DropdownMenu label={t('label.actions')}>
+        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+          {t('button.delete-lines')}
+        </DropdownMenuItem>
+      </DropdownMenu>
+    </AppBarContentPortal>
   );
 };

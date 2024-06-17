@@ -18,7 +18,7 @@ pub fn delete_immunisation_program(
         ctx,
         &ResourceAccessRequest {
             // resource: Resource::MutateImmunisationProgram,
-            resource: Resource::MutateProgram,
+            resource: Resource::ServerAdmin,
             store_id: None,
         },
     )?;
