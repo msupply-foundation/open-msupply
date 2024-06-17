@@ -12,7 +12,7 @@ repository = { path = "../repository" }
 util = { path = "../util" }
 
 anyhow.workspace = true
-async-trait = "0.1.57"
+async-trait = "0.1.80"
 thiserror = { workspace = true }
 topological-sort = "0.2.2"
 bcrypt = "0.15.1"
@@ -25,13 +25,13 @@ jsonschema = "0.18.0"
 jsonwebtoken = "8.0.1"
 log = "0.4.14"
 reqwest = { workspace = true }
-url = "2.2"
+url = "2.5.1"
 serde = "1.0.203"
 serde_json = "1.0.117"
 serde_yaml = "0.9.34"
 schemafy = "0.6.0"
 schemafy_core = "0.6.0"
-tera = "1"
+tera = "1.20.0"
 tokio = { version = "1.38.0", features = [
     "macros",
     "sync",
@@ -39,28 +39,28 @@ tokio = { version = "1.38.0", features = [
     "fs",
     "rt-multi-thread",
 ] }
-headless_chrome = "1.0.5"
+headless_chrome = "1.0.10"
 pretty_assertions = "1.4.0"
-flate2 = "1.0.26"
+flate2 = "1.0.30"
 simple-log = { version = "1.6.0" }
 # dependencies for temperature_sensor
 temperature-sensor = { git = "https://github.com/openmsupply/temperature-sensor.git", tag = "v0.1.0-beta3" }
 # plugin:
-hex = "0.4"
-pem = "3"
+hex = "0.4.3"
+pem = "3.0.4"
 rsa = { version = "0.9.6", features = ["sha2"] }
 sha2 = "0.10.8"
-walkdir = "2"
-x509-parser = { version = "0.15", features = ["verify"] }
+walkdir = "2.5.0"
+x509-parser = { version = "0.16", features = ["verify"] }
 telnet = "0.2.1"
 tempfile = "3.10.1"
 
 
 [dev-dependencies]
 actix-rt = "2.10.0"
-assert-json-diff = "2.0.1"
+assert-json-diff = "2.0.2"
 httpmock = "0.7"
-assert_approx_eq = "1"
+assert_approx_eq = "1.1.0"
 
 [features]
 default = ["sqlite"]

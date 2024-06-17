@@ -20,7 +20,7 @@ actix-web = { version = "4.7.0", default-features = false, features = [
 ] }
 async-graphql = { version = "3.0.35", features = ["dataloader", "chrono"] }
 async-graphql-actix-web = "3.0.35"
-async-trait = "0.1.30"
+async-trait = "0.1.80"
 chrono = { version = "0.4.38", features = ["serde"] }
 serde = "1.0.203"
 serde_json = "1.0.117"
@@ -28,7 +28,7 @@ anyhow.workspace = true
 
 [dev-dependencies]
 actix-rt = "2.10.0"
-assert-json-diff = "2.0.1"
+assert-json-diff = "2.0.2"
 
 [features]
 default = ["sqlite"]
