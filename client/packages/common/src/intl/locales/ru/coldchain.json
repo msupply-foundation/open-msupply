@@ -2,5 +2,6 @@
     "button.print-qr": "Распечатать QR-код",
     "button.upload-assets": "Импортировать",
     "button.stop": "Стоп",
-    "button.update-status": "Обновить Статус"
+    "button.update-status": "Обновить Статус",
+    "heading.schedule": "Расписание"
 }
