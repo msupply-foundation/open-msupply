@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::Utc;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
-use actix_web::http::header::SET_COOKIE;
+use http2::header::SET_COOKIE;
 use service::{
     login::{LoginError, LoginFailure, LoginInput, LoginService},
     token::TokenPair,
