@@ -18,7 +18,7 @@ import {
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
-import { FacilityEditModal } from '@openmsupply-client/system';
+import { FacilityEditModal, useName } from '@openmsupply-client/system';
 
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
@@ -27,6 +27,7 @@ export const Footer: React.FC = () => {
   const isCentralServer = useIsCentralServerApi();
   const { isOpen, onClose, onOpen } = useEditModal();
   const theme = useTheme();
+  const { data: nameProperties } = useName.document.properties();
 
   const PaddedCell = styled(Box)({ display: 'flex' });
   const Divider = styled(Box)({
@@ -65,13 +66,14 @@ export const Footer: React.FC = () => {
           </Tooltip>
         </PaddedCell>
       </StoreSelector>
-      {/* TODO: only show if name properties are configured! */}
-      <PaddedCell onClick={onOpen} sx={{ cursor: 'hand' }}>
-        <EditIcon sx={iconStyles} />
-        <Tooltip title={t('label.edit-store-properties')}>
-          <Typography sx={textStyles}>{t('label.edit')}</Typography>
-        </Tooltip>
-      </PaddedCell>
+      {!!nameProperties?.length && (
+        <PaddedCell onClick={onOpen} sx={{ cursor: 'hand' }}>
+          <EditIcon sx={iconStyles} />
+          <Tooltip title={t('label.edit-store-properties')}>
+            <Typography sx={textStyles}>{t('label.edit')}</Typography>
+          </Tooltip>
+        </PaddedCell>
+      )}
       {user ? (
         <>
           <Divider />

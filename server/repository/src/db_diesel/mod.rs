@@ -76,6 +76,7 @@ mod program_enrolment_row;
 pub mod program_event;
 mod program_event_row;
 mod program_requisition;
+pub mod property;
 pub mod property_row;
 pub mod report;
 mod report_row;
