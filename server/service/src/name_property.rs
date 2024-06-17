@@ -44,16 +44,18 @@ pub fn initialise_name_properties(
     let property_repo = PropertyRowRepository::new(&connection);
     let name_property_repo = NamePropertyRowRepository::new(&connection);
 
-    for InitialiseNameProperty {
-        id,
-        key,
-        property_id,
-        name,
-        value_type,
-        allowed_values,
-        remote_editable,
-    } in input.into_iter()
-    {
+    for property in input.into_iter() {
+        let InitialiseNameProperty {
+            id,
+            key,
+            name,
+            value_type,
+            allowed_values,
+
+            property_id,
+            remote_editable,
+        } = property;
+
         property_repo.upsert_one(&PropertyRow {
             id: property_id.clone(),
             key,
