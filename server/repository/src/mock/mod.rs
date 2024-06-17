@@ -27,6 +27,7 @@ mod period_and_period_schedule;
 mod program;
 mod program_order_types;
 mod program_requisition_settings;
+mod property;
 mod sensor;
 mod stock_line;
 mod stocktake;
@@ -81,6 +82,7 @@ pub use period_and_period_schedule::*;
 pub use program::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
+pub use property::*;
 pub use sensor::*;
 pub use stock_line::*;
 pub use stocktake::*;
@@ -124,14 +126,15 @@ use crate::{
     PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
     PluginDataRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
-    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, ReturnReasonRow,
-    ReturnReasonRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
-    TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
-    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, PropertyRow,
+    PropertyRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, ReturnReasonRow, ReturnReasonRowRepository, SensorRow,
+    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
+    SyncLogRowRepository, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
+    TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{activity_log::mock_activity_logs, unit::mock_units};
@@ -197,6 +200,7 @@ pub struct MockData {
     pub assets: Vec<AssetRow>,
     pub asset_logs: Vec<AssetLogRow>,
     pub demographic_indicators: Vec<DemographicIndicatorRow>,
+    pub properties: Vec<PropertyRow>,
 }
 
 impl MockData {
@@ -264,6 +268,7 @@ pub struct MockDataInserts {
     pub assets: bool,
     pub asset_logs: bool,
     pub demographic_indicators: bool,
+    pub properties: bool,
 }
 
 impl MockDataInserts {
@@ -320,6 +325,7 @@ impl MockDataInserts {
             assets: true,
             asset_logs: true,
             demographic_indicators: true,
+            properties: true,
         }
     }
 
@@ -567,6 +573,11 @@ impl MockDataInserts {
         self.demographic_indicators = true;
         self
     }
+
+    pub fn properties(mut self) -> Self {
+        self.demographic_indicators = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -644,6 +655,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             assets: mock_assets(),
             asset_logs: mock_asset_logs(),
             demographic_indicators: mock_demographic_indicators(),
+            properties: mock_properties(),
             ..Default::default()
         },
     );
@@ -1071,6 +1083,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.properties {
+            let repo = PropertyRowRepository::new(connection);
+            for row in &mock_data.properties {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1131,6 +1150,7 @@ impl MockData {
             plugin_data: _,
             mut currencies,
             mut demographic_indicators,
+            mut properties,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1188,6 +1208,7 @@ impl MockData {
         self.asset_logs.append(&mut asset_logs);
         self.demographic_indicators
             .append(&mut demographic_indicators);
+        self.properties.append(&mut properties);
         self
     }
 }
