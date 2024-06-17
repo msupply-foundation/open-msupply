@@ -22,7 +22,7 @@ actix-web = { workspace = true }
 actix-files = { workspace = true }
 actix-multipart = { workspace = true }
 jsonschema = "0.18.0"
-jsonwebtoken = "8.0.1"
+jsonwebtoken = "9.3.0"
 log = "0.4.14"
 reqwest = { workspace = true }
 url = "2.5.1"
