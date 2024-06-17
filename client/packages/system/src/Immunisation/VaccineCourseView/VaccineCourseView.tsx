@@ -26,7 +26,7 @@ import { descriptionColumn } from './DescriptionColumn';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { AppFooterComponent } from './AppFooterComponent';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
-import { VaccineItemSelect } from '../../Item';
+import { VaccineItemSelect } from './VaccineCourseItemSelect';
 
 const MAX_VACCINE_DOSES = 20;
 
