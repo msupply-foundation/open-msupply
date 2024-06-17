@@ -18,7 +18,7 @@ table! {
         requested_quantity -> Double,
         suggested_quantity -> Double,
         supply_quantity -> Double,
-        available_stock_on_hand -> Double ,
+        available_stock_on_hand -> Double,
         average_monthly_consumption -> Double,
         snapshot_datetime -> Nullable<Timestamp>,
         approved_quantity -> Double,
@@ -66,21 +66,12 @@ impl<'a> RequisitionLineRowRepository<'a> {
         RequisitionLineRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(requisition_line_dsl::requisition_line)
             .values(row)
             .on_conflict(requisition_line_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(requisition_line_dsl::requisition_line)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

@@ -110,7 +110,7 @@ impl RemoteSyncBatchV5 {
     pub(crate) fn to_sync_buffer_rows(self) -> Result<Vec<SyncBufferRow>, ParsingSyncRecordError> {
         self.data
             .into_iter()
-            .map(|r| Ok(r.record.to_buffer_row(None)?))
+            .map(|r| r.record.to_buffer_row(None))
             .collect()
     }
 }

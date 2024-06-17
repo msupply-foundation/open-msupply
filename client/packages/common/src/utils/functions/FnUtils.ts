@@ -1,8 +1,8 @@
 import { UUID } from '@common/types';
-import { v4 } from 'uuid';
+import { uuidv7 } from 'uuidv7';
 
 export const FnUtils = {
-  generateUUID: (): UUID => v4(),
+  generateUUID: (): UUID => uuidv7(),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   debounce: <T extends (...args: any[]) => any>(
     callback: T,

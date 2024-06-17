@@ -50,11 +50,11 @@ pub fn update_response_requisition(
 
             let updated_requisition =
                 generate(&ctx.user_id, requisition_row.clone(), input.clone());
-            RequisitionRowRepository::new(&connection).upsert_one(&updated_requisition)?;
+            RequisitionRowRepository::new(connection).upsert_one(&updated_requisition)?;
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     ActivityLogType::RequisitionStatusFinalised,
                     Some(updated_requisition.id.to_owned()),
                     None,
@@ -63,7 +63,7 @@ pub fn update_response_requisition(
             }
 
             get_requisition(ctx, None, &updated_requisition.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

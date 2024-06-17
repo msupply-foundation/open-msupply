@@ -93,23 +93,12 @@ impl<'a> ItemRowRepository<'a> {
         ItemRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)
             .on_conflict(id)
             .do_update()
             .set(item_row)
-            .execute(self.connection.lock().connection())?;
-
-        insert_or_ignore_item_link(&self.connection, item_row)?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(item)
-            .values(item_row)
             .execute(self.connection.lock().connection())?;
 
         insert_or_ignore_item_link(self.connection, item_row)?;

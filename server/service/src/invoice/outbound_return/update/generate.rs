@@ -104,7 +104,7 @@ fn set_new_status_datetime(
 
         // From New to Shipped
         (InvoiceStatus::New, UpdateOutboundReturnStatus::Shipped) => {
-            outbound_return.picked_datetime = Some(current_datetime.clone());
+            outbound_return.picked_datetime = Some(current_datetime);
             outbound_return.shipped_datetime = Some(current_datetime)
         }
 

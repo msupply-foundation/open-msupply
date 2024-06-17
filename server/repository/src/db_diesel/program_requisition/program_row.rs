@@ -14,9 +14,10 @@ use diesel::prelude::*;
 table! {
     program (id) {
         id -> Text,
-        master_list_id -> Text,
+        master_list_id -> Nullable<Text>,
         name -> Text,
         context_id -> Text,
+        is_immunisation -> Bool,
     }
 }
 
@@ -29,9 +30,10 @@ allow_tables_to_appear_in_same_query!(program, name_link);
 #[diesel(table_name = program)]
 pub struct ProgramRow {
     pub id: String, // Master list id
-    pub master_list_id: String,
+    pub master_list_id: Option<String>,
     pub name: String,
     pub context_id: String,
+    pub is_immunisation: bool,
 }
 
 pub struct ProgramRowRepository<'a> {
@@ -43,21 +45,12 @@ impl<'a> ProgramRowRepository<'a> {
         ProgramRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_dsl::program)
             .values(row)
             .on_conflict(program_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(program_dsl::program)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

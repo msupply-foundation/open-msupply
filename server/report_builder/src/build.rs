@@ -83,11 +83,11 @@ fn extract_sql_entry(
             let query_postgres_sql = fs::read_to_string(file_path).map_err(|err| {
                 anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
             })?;
-            return Ok(SQLQuery {
+            Ok(SQLQuery {
                 name: query.clone(),
                 query_sqlite: query_sqlite_sql.clone(),
                 query_postgres: query_postgres_sql.clone(),
-            });
+            })
         })
         .collect();
     result
@@ -184,7 +184,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             ReportDefinitionEntry::DefaultQuery(parse_default_query(query_default)?),
         );
     }
-    for sql_query in extract_sql_entry(&args, &mut files)? {
+    for sql_query in extract_sql_entry(args, &mut files)? {
         index.query.push(sql_query.name.clone());
         entries.insert(
             sql_query.name.clone(),

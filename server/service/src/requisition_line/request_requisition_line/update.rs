@@ -42,11 +42,11 @@ pub fn update_request_requisition_line(
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let updated_requisition_line_row = generate(requisition_row, input);
 
-            RequisitionLineRowRepository::new(&connection)
+            RequisitionLineRowRepository::new(connection)
                 .upsert_one(&updated_requisition_line_row)?;
 
             get_requisition_line(ctx, &updated_requisition_line_row.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedRequisitionLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -141,7 +141,7 @@ mod test {
             service.update_request_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
-                    r.id = "invalid".to_owned();
+                    r.id = "invalid".to_string();
                 }),
             ),
             Err(ServiceError::RequisitionLineDoesNotExist)
@@ -163,9 +163,9 @@ mod test {
             service.update_request_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
-                    r.id = mock_full_draft_response_requisition_for_update_test().lines[0]
-                        .id
-                        .clone();
+                    r.id.clone_from(
+                        &mock_full_draft_response_requisition_for_update_test().lines[0].id,
+                    );
                 }),
             ),
             Err(ServiceError::NotARequestRequisition)
@@ -177,9 +177,7 @@ mod test {
             service.update_request_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
-                    r.id = mock_request_draft_requisition_calculation_test().lines[0]
-                        .id
-                        .clone();
+                    r.id.clone_from(&mock_request_draft_requisition_calculation_test().lines[0].id);
                 }),
             ),
             Err(ServiceError::NotThisStoreRequisition)

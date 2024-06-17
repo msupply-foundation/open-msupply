@@ -18,8 +18,8 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::{
-    DiscoveryQueries, GeneralMutations, GeneralQueries, InitialisationMutations,
-    InitialisationQueries,
+    CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
+    InitialisationMutations, InitialisationQueries,
 };
 
 use graphql_asset::{
@@ -29,13 +29,14 @@ use graphql_asset::{
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
+use graphql_demographic::{DemographicIndicatorQueries, DemographicMutations};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
 use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
-use graphql_programs::{ProgramsMutations, ProgramsQueries};
+use graphql_programs::{CentralProgramsMutations, ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
@@ -44,6 +45,7 @@ use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 
+use graphql_vaccine_course::{VaccineCourseMutations, VaccineCourseQueries};
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
@@ -72,6 +74,19 @@ impl CentralServerMutationNode {
     async fn log_reason(&self) -> AssetLogReasonMutations {
         AssetLogReasonMutations
     }
+    async fn demographic(&self) -> DemographicMutations {
+        DemographicMutations
+    }
+    async fn vaccine_course(&self) -> VaccineCourseMutations {
+        VaccineCourseMutations
+    }
+
+    async fn program(&self) -> CentralProgramsMutations {
+        CentralProgramsMutations
+    }
+    async fn general(&self) -> CentralGeneralMutations {
+        CentralGeneralMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -80,7 +95,7 @@ pub struct CentralServerMutations;
 impl CentralServerMutations {
     async fn central_server(&self) -> async_graphql::Result<CentralServerMutationNode> {
         if !CentralServerConfig::is_central_server() {
-            return Err(StandardGraphqlError::from_str("Not a central server"));
+            return Err(StandardGraphqlError::from_str_slice("Not a central server"));
         };
 
         Ok(CentralServerMutationNode)
@@ -110,6 +125,8 @@ pub struct Queries(
     pub AssetLogQueries,
     pub AssetLogReasonQueries,
     pub AssetPropertiesQueries,
+    pub DemographicIndicatorQueries,
+    pub VaccineCourseQueries,
 );
 
 impl Queries {
@@ -136,6 +153,8 @@ impl Queries {
             AssetLogQueries,
             AssetLogReasonQueries,
             AssetPropertiesQueries,
+            DemographicIndicatorQueries,
+            VaccineCourseQueries,
         )
     }
 }

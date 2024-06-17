@@ -1,6 +1,6 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use chrono::{Local, NaiveDate};
+use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
 use graphql_core::loader::DocumentLoader;
 use graphql_core::{map_filter, ContextExt};
@@ -147,6 +147,12 @@ impl PatientNode {
 
     pub async fn date_of_death(&self) -> Option<NaiveDate> {
         self.patient.date_of_death
+    }
+
+    pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
+        self.patient.created_datetime.map(|created_datetime| {
+            DateTime::<Utc>::from_naive_utc_and_offset(created_datetime, Utc)
+        })
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {

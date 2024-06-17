@@ -9,12 +9,20 @@ use crate::{
         program_row::program::dsl as program_dsl, store_row::store::dsl as store_dsl,
     },
     diesel_macros::apply_equal_filter,
+    name_oms_fields, name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, Name, NameFilter, NameLinkRow, NameRepository, NameRow, NameStoreJoinRow,
-    ProgramRow, StorageConnection, StoreRow,
+    EqualFilter, Name, NameFilter, NameLinkRow, NameOmsFieldsRow, NameRepository, NameRow,
+    NameStoreJoinRow, ProgramRow, StorageConnection, StoreRow,
 };
 
-pub type ProgramSupplierJoin = (NameRow, NameLinkRow, NameStoreJoinRow, StoreRow, ProgramRow);
+pub type ProgramSupplierJoin = (
+    NameRow,
+    NameOmsFieldsRow,
+    NameLinkRow,
+    NameStoreJoinRow,
+    StoreRow,
+    ProgramRow,
+);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ProgramSupplier {
@@ -61,7 +69,8 @@ impl<'a> ProgramSupplierRepository<'a> {
                         .on(master_list_dsl::id.eq(master_list_name_join_dsl::master_list_id)),
                 )
                 .inner_join(
-                    program_dsl::program.on(program_dsl::master_list_id.eq(master_list_dsl::id)),
+                    program_dsl::program
+                        .on(program_dsl::master_list_id.eq(master_list_dsl::id.nullable())),
                 );
 
         apply_equal_filter!(query, program_id_filter, program_dsl::id);
@@ -75,6 +84,7 @@ impl<'a> ProgramSupplierRepository<'a> {
         let query = query.select((
             // Same as NameRepository
             name_dsl::name::all_columns(),
+            name_oms_fields_alias.fields((name_oms_fields::id, name_oms_fields::properties)),
             name_link_dsl::name_link::all_columns()
                 .nullable()
                 .assume_not_null(),
@@ -91,12 +101,19 @@ impl<'a> ProgramSupplierRepository<'a> {
         Ok(result
             .into_iter()
             .map(
-                |(name_row, name_link_row, name_store_join_row, store_row, program)| {
+                |(
+                    name_row,
+                    name_oms_fields_row,
+                    name_link_row,
+                    name_store_join_row,
+                    store_row,
+                    program,
+                )| {
                     ProgramSupplier {
                         supplier: Name::from_join((
                             name_row,
-                            (name_link_row, Some(name_store_join_row)),
-                            Some(store_row),
+                            (name_link_row, Some(name_store_join_row), Some(store_row)),
+                            name_oms_fields_row,
                         )),
                         program,
                     }
@@ -140,7 +157,7 @@ mod test {
         };
         let store1 = StoreRow {
             id: "store1".to_string(),
-            name_id: store_name1.id.clone(),
+            name_link_id: store_name1.id.clone(),
             ..Default::default()
         };
         let store_name2 = NameRow {
@@ -150,7 +167,7 @@ mod test {
 
         let store2 = StoreRow {
             id: "store2".to_string(),
-            name_id: store_name2.id.clone(),
+            name_link_id: store_name2.id.clone(),
             ..Default::default()
         };
 
@@ -160,7 +177,7 @@ mod test {
         };
         let store3 = StoreRow {
             id: "store3".to_string(),
-            name_id: store_name3.id.clone(),
+            name_link_id: store_name3.id.clone(),
             ..Default::default()
         };
 
@@ -175,7 +192,7 @@ mod test {
         };
         let program1 = ProgramRow {
             id: "program1".to_string(),
-            master_list_id: master_list1.id.clone(),
+            master_list_id: Some(master_list1.id.clone()),
             context_id: context1.id.clone(),
             ..Default::default()
         };
@@ -192,7 +209,7 @@ mod test {
         };
         let program2 = ProgramRow {
             id: "program2".to_string(),
-            master_list_id: master_list2.id.clone(),
+            master_list_id: Some(master_list2.id.clone()),
             context_id: context2.id.clone(),
             ..Default::default()
         };
@@ -288,6 +305,7 @@ mod test {
                     name_row: store_name1.clone(),
                     name_store_join_row: Some(name_store_join2.clone()),
                     store_row: Some(store1.clone()),
+                    properties: None,
                 },
                 program: program1.clone()
             }])
@@ -317,6 +335,7 @@ mod test {
                         name_row: store_name1.clone(),
                         name_store_join_row: Some(name_store_join2.clone()),
                         store_row: Some(store1.clone()),
+                        properties: None,
                     },
                     program: program1.clone()
                 },
@@ -325,6 +344,7 @@ mod test {
                         name_row: store_name2.clone(),
                         name_store_join_row: Some(name_store_join3.clone()),
                         store_row: Some(store2.clone()),
+                        properties: None,
                     },
                     program: program2.clone()
                 }

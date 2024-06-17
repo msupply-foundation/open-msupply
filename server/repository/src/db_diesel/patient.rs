@@ -61,6 +61,7 @@ pub enum PatientSortField {
     Country,
     Email,
     DateOfDeath,
+    CreatedDatetime,
 }
 
 pub type PatientSort = Sort<PatientSortField>;
@@ -137,6 +138,9 @@ impl<'a> PatientRepository<'a> {
                 }
                 PatientSortField::DateOfDeath => {
                     apply_sort_no_case!(query, sort, name_dsl::date_of_death)
+                }
+                PatientSortField::CreatedDatetime => {
+                    apply_sort_no_case!(query, sort, name_dsl::created_datetime)
                 }
             }
         } else {

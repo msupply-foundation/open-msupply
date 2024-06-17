@@ -73,7 +73,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         r.cost_price_per_pack = 12.0;
         r.sell_price_per_pack = 15.0;
         r.total_number_of_packs = 1.0;
-        r.note = Some("stock line note".to_owned());
+        r.note = Some("stock line note".to_string());
         r.supplier_link_id = Some(String::from("name_store_b"));
     });
 
@@ -173,9 +173,9 @@ pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
 
 pub fn mock_item_query_test1() -> Vec<StockLineRow> {
     let mock_item_query_test1: StockLineRow = inline_init(|r: &mut StockLineRow| {
-        r.id = "item_query_test1".to_owned();
-        r.item_link_id = "item_query_test1".to_owned();
-        r.store_id = "store_a".to_owned();
+        r.id = "item_query_test1".to_string();
+        r.item_link_id = "item_query_test1".to_string();
+        r.store_id = "store_a".to_string();
         r.available_number_of_packs = 3.0;
         r.pack_size = 12.0;
         r.cost_price_per_pack = 2.0;
@@ -189,9 +189,9 @@ pub fn mock_item_query_test1() -> Vec<StockLineRow> {
 
 pub fn mock_stock_line_on_hold() -> Vec<StockLineRow> {
     let mock_stock_line_on_hold: StockLineRow = inline_init(|r: &mut StockLineRow| {
-        r.id = "stock_line_on_hold".to_owned();
-        r.item_link_id = "item_c".to_owned();
-        r.store_id = "store_a".to_owned();
+        r.id = "stock_line_on_hold".to_string();
+        r.item_link_id = "item_c".to_string();
+        r.store_id = "store_a".to_string();
         r.available_number_of_packs = 100.0;
         r.pack_size = 1.0;
         r.total_number_of_packs = 100.0;
@@ -204,10 +204,10 @@ pub fn mock_stock_line_on_hold() -> Vec<StockLineRow> {
 
 pub fn mock_stock_line_location_is_on_hold() -> Vec<StockLineRow> {
     let mock_stock_line_location_is_on_hold: StockLineRow = inline_init(|r: &mut StockLineRow| {
-        r.id = "stock_line_location_is_on_hold".to_owned();
-        r.item_link_id = "item_c".to_owned();
-        r.location_id = Some("location_on_hold".to_owned());
-        r.store_id = "store_a".to_owned();
+        r.id = "stock_line_location_is_on_hold".to_string();
+        r.item_link_id = "item_c".to_string();
+        r.location_id = Some("location_on_hold".to_string());
+        r.store_id = "store_a".to_string();
         r.available_number_of_packs = 100.0;
         r.pack_size = 1.0;
         r.total_number_of_packs = 100.0;

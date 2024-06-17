@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type NameRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
-export type NameFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null };
+export type NameFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, properties: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
 export type PropertyFragment = { __typename: 'PropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType };
 
@@ -28,12 +28,20 @@ export type NameByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type NameByIdQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+export type NameByIdQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, properties: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
 export type NamePropertiesQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type NamePropertiesQuery = { __typename: 'Queries', nameProperties: { __typename: 'NamePropertyConnector', nodes: Array<{ __typename: 'PropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType }> } };
+export type NamePropertiesQuery = { __typename: 'Queries', nameProperties: { __typename: 'NamePropertyConnector', nodes: Array<{ __typename: 'NamePropertyNode', id: string, remoteEditable: boolean, property: { __typename: 'PropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType } }> } };
+
+export type UpdateNamePropertiesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input?: Types.InputMaybe<Types.UpdateNamePropertiesInput>;
+}>;
+
+
+export type UpdateNamePropertiesMutation = { __typename: 'Mutations', updateNameProperties: { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, properties: string, store?: { __typename: 'StoreNode', id: string, code: string } | null } | { __typename: 'UpdateNamePropertiesError', error: { __typename: 'RecordNotFound', description: string } } };
 
 export const NameRowFragmentDoc = gql`
     fragment NameRow on NameNode {
@@ -73,6 +81,7 @@ export const NameFragmentDoc = gql`
     id
     code
   }
+  properties
 }
     `;
 export const PropertyFragmentDoc = gql`
@@ -122,12 +131,32 @@ export const NamePropertiesDocument = gql`
       __typename
       nodes {
         __typename
-        ...Property
+        id
+        remoteEditable
+        property {
+          ...Property
+        }
       }
     }
   }
 }
     ${PropertyFragmentDoc}`;
+export const UpdateNamePropertiesDocument = gql`
+    mutation updateNameProperties($storeId: String!, $input: UpdateNamePropertiesInput) {
+  updateNameProperties(storeId: $storeId, input: $input) {
+    __typename
+    ... on NameNode {
+      ...Name
+    }
+    ... on UpdateNamePropertiesError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+    ${NameFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -144,6 +173,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     nameProperties(variables?: NamePropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NamePropertiesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NamePropertiesQuery>(NamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameProperties', 'query');
+    },
+    updateNameProperties(variables: UpdateNamePropertiesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateNamePropertiesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateNamePropertiesMutation>(UpdateNamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateNameProperties', 'mutation');
     }
   };
 }
@@ -196,5 +228,22 @@ export const mockNameByIdQuery = (resolver: ResponseResolver<GraphQLRequest<Name
 export const mockNamePropertiesQuery = (resolver: ResponseResolver<GraphQLRequest<NamePropertiesQueryVariables>, GraphQLContext<NamePropertiesQuery>, any>) =>
   graphql.query<NamePropertiesQuery, NamePropertiesQueryVariables>(
     'nameProperties',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateNamePropertiesMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateNameProperties })
+ *   )
+ * })
+ */
+export const mockUpdateNamePropertiesMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateNamePropertiesMutationVariables>, GraphQLContext<UpdateNamePropertiesMutation>, any>) =>
+  graphql.mutation<UpdateNamePropertiesMutation, UpdateNamePropertiesMutationVariables>(
+    'updateNameProperties',
     resolver
   )

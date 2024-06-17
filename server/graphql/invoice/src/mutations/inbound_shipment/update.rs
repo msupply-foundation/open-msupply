@@ -108,10 +108,8 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
+            tax: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
             }),
             currency_id,
             currency_rate,

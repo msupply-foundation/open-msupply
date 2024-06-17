@@ -82,7 +82,7 @@ impl SyncTranslation for StoreTranslation {
 
         let result = StoreRow {
             id: data.id,
-            name_id: data.name_id,
+            name_link_id: data.name_id,
             code: data.code,
             site_id: data.site_id,
             logo: data.logo,

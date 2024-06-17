@@ -71,21 +71,12 @@ impl<'a> NameStoreJoinRepository<'a> {
         NameStoreJoinRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_store_join_dsl::name_store_join)
             .values(row)
             .on_conflict(name_store_join_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(name_store_join_dsl::name_store_join)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

@@ -49,15 +49,10 @@ pub fn generate_requisition_user_id_update(
 pub fn check_approval_status(requisition_row: &RequisitionRow) -> bool {
     // TODO Rework once plugins are implemented
     if let Some(approval_status) = &requisition_row.approval_status {
-        if requisition_row.program_id.is_some()
+        return requisition_row.program_id.is_some()
             && (*approval_status == ApprovalStatusType::Pending
                 || *approval_status == ApprovalStatusType::Denied
-                || *approval_status == ApprovalStatusType::DeniedByAnother)
-        {
-            return true;
-        } else {
-            return false;
-        }
+                || *approval_status == ApprovalStatusType::DeniedByAnother);
     }
     false
 }

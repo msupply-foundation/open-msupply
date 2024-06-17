@@ -60,7 +60,7 @@ pub fn update_inbound_return(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     log_type_from_invoice_status(&updated_return.status, false),
                     Some(updated_return.id.to_owned()),
                     None,
@@ -69,7 +69,7 @@ pub fn update_inbound_return(
             }
 
             get_invoice(ctx, None, &updated_return.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -121,10 +121,9 @@ impl UpdateInboundReturnStatus {
 
 impl UpdateInboundReturn {
     pub fn invoice_row_status_option(&self) -> Option<InvoiceStatus> {
-        match &self.status {
-            Some(status) => Some(status.as_invoice_row_status()),
-            None => None,
-        }
+        self.status
+            .as_ref()
+            .map(|status| status.as_invoice_row_status())
     }
 }
 
@@ -301,13 +300,13 @@ mod test {
         // Inbound return currently in NEW status, should have no stock lines
         assert!(invoice_lines
             .iter()
-            .all(|l| l.invoice_line_row.stock_line_id == None));
+            .all(|l| l.invoice_line_row.stock_line_id.is_none()));
 
         let updated_return = service
             .update_inbound_return(
                 &context,
                 inline_init(|r: &mut UpdateInboundReturn| {
-                    r.id = invoice_id.clone();
+                    r.id.clone_from(&invoice_id);
                     r.status = Some(UpdateInboundReturnStatus::Delivered);
                 }),
             )
@@ -422,13 +421,13 @@ mod test {
         // Inbound return currently in NEW status, should have no stock lines
         assert!(invoice_lines
             .iter()
-            .all(|l| l.invoice_line_row.stock_line_id == None));
+            .all(|l| l.invoice_line_row.stock_line_id.is_none()));
 
         let updated_return = service
             .update_inbound_return(
                 &context,
                 inline_init(|r: &mut UpdateInboundReturn| {
-                    r.id = invoice_id.clone();
+                    r.id.clone_from(&invoice_id);
                     r.status = Some(UpdateInboundReturnStatus::Verified);
                 }),
             )
