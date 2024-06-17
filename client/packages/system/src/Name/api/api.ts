@@ -118,7 +118,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
         filter: {
           ...filterBy,
-          type: { equalTo: NameNodeType.Store },
+          isStore: true,
         },
       });
 
