@@ -26,7 +26,7 @@ pub struct InsertInput {
 
 #[derive(Interface)]
 #[graphql(name = "InsertRequestRequisitionLineErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     RequisitionDoesNotExist(ForeignKeyError),
     CannotEditRequisition(CannotEditRequisition),
