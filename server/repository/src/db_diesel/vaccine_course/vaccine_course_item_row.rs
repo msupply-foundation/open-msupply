@@ -1,5 +1,5 @@
 use super::vaccine_course_item_row::vaccine_course_item::dsl::*;
-
+use crate::db_diesel::item_link_row::item_link;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
@@ -14,7 +14,10 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+joinable!(vaccine_course_item -> item_link (item_link_id));
+allow_tables_to_appear_in_same_query!(vaccine_course_item, item_link);
+
+#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
 #[diesel(table_name = vaccine_course_item)]
 pub struct VaccineCourseItemRow {
     pub id: String,
