@@ -139,5 +139,7 @@
   "settings": "Настройки",
   "immunisations": "Прививки",
   "indicators-demographics": "Демография",
-  "label.edit-store-properties": "Редактировать свойства хранилища"
+  "label.edit-store-properties": "Редактировать свойства хранилища",
+  "label.initialise-store-properties": "Инициализация свойств хранилища для GAPS",
+  "label.initialised": "Инициализировано"
 }
