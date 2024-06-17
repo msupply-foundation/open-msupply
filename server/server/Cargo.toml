@@ -24,7 +24,7 @@ util = { path = "../util" }
 
 machine-uid = { version = "0.5.1", optional = true }
 
-actix-cors = "0.6.1"
+actix-cors = "0.7.0"
 actix-web = { version = "4.7.0", features = ["rustls"] }
 actix-files.workspace = true
 anyhow.workspace = true
@@ -49,7 +49,7 @@ serde_json = "1.0.117"
 
 [dev-dependencies]
 actix-rt = "2.10.0"
-assert-json-diff = "2.0.1"
+assert-json-diff = "2.0.2"
 httpmock = "0.7"
 
 [target.'cfg(windows)'.build-dependencies]
