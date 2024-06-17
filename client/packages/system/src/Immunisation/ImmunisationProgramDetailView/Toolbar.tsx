@@ -24,7 +24,13 @@ export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid container>
-        <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
+        <Grid
+          item
+          display="flex"
+          flex="0 0 350px"
+          flexDirection="column"
+          gap={1}
+        >
           <BasicTextInput
             fullWidth
             value={draft.name}

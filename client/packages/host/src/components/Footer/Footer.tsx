@@ -12,8 +12,9 @@ import {
   useTranslation,
   useIsCentralServerApi,
   CentralIcon,
-  SettingsIcon,
   useEditModal,
+  EditIcon,
+  useTheme,
 } from '@openmsupply-client/common';
 import { StoreSelector } from './StoreSelector';
 import { LanguageSelector } from './LanguageSelector';
@@ -25,9 +26,15 @@ export const Footer: React.FC = () => {
   const { currentLanguageName } = useIntlUtils();
   const isCentralServer = useIsCentralServerApi();
   const { isOpen, onClose, onOpen } = useEditModal();
+  const theme = useTheme();
   const { data: nameProperties } = useName.document.properties();
 
   const PaddedCell = styled(Box)({ display: 'flex' });
+  const Divider = styled(Box)({
+    width: '1px',
+    height: '24px',
+    backgroundColor: isCentralServer ? '#fff' : theme.palette.gray.main,
+  });
   const iconStyles = { color: 'inherit', height: '16px', width: '16px' };
   const textStyles = {
     color: 'inherit',
@@ -60,19 +67,23 @@ export const Footer: React.FC = () => {
         </PaddedCell>
       </StoreSelector>
       {!!nameProperties?.length && (
-        <PaddedCell onClick={onOpen}>
-          <SettingsIcon sx={iconStyles} />
+        <PaddedCell onClick={onOpen} sx={{ cursor: 'hand' }}>
+          <EditIcon sx={iconStyles} />
           <Tooltip title={t('label.edit-store-properties')}>
             <Typography sx={textStyles}>{t('label.edit')}</Typography>
           </Tooltip>
         </PaddedCell>
       )}
       {user ? (
-        <PaddedCell>
-          <UserIcon sx={iconStyles} />
-          <Typography sx={textStyles}>{user.name}</Typography>
-        </PaddedCell>
+        <>
+          <Divider />
+          <PaddedCell>
+            <UserIcon sx={iconStyles} />
+            <Typography sx={textStyles}>{user.name}</Typography>
+          </PaddedCell>
+        </>
       ) : null}
+      <Divider />
       <LanguageSelector>
         <PaddedCell>
           <TranslateIcon sx={iconStyles} />
