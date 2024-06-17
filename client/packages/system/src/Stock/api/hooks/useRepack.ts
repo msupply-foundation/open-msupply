@@ -9,7 +9,8 @@ type UseRepackProps = { stockLineId?: string; invoiceId?: string };
 export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
   const { stockApi, storeId, queryClient } = useStockGraphQL();
   const [draft, setDraft] = useState<RepackDraft>({
-    stockLineId,
+    stockLineId: stockLineId ?? '',
+    packSize: 0,
     newPackSize: 0,
     numberOfPacks: 0,
   });
@@ -62,9 +63,9 @@ export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
     const result = await stockApi.insertRepack({
       storeId,
       input: {
-        stockLineId: draft.stockLineId ?? '',
-        newPackSize: draft.newPackSize ?? 0,
-        numberOfPacks: draft.numberOfPacks ?? 0,
+        stockLineId: draft.stockLineId,
+        newPackSize: draft.newPackSize,
+        numberOfPacks: draft.numberOfPacks,
         newLocationId: draft.newLocationId ?? undefined,
       },
     });
