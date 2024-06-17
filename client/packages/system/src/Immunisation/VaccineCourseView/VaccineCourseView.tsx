@@ -256,7 +256,6 @@ export const VaccineCourseView: FC = () => {
               value={draft.doses}
               fullWidth
               onBlur={e => {
-                updatePatch({ doses: parseInt(e.target.value) });
                 updateSchedule(parseInt(e.target.value));
               }}
               onChange={tryUpdateValue}
