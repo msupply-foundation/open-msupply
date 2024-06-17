@@ -97,9 +97,7 @@ type BoxedVaccineCourseItemQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_filtered_query(
-    filter: Option<VaccineCourseItemFilter>,
-) -> Result<BoxedVaccineCourseItemQuery, RepositoryError> {
+fn create_filtered_query(filter: Option<VaccineCourseItemFilter>) -> BoxedVaccineCourseItemQuery {
     let mut query = vaccine_course_item_dsl::vaccine_course_item
         .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .into_boxed();
@@ -118,12 +116,12 @@ fn create_filtered_query(
         );
     }
 
-    Ok(query)
+    query
 }
 
 fn to_domain((vaccine_course_item, (_, item_row)): VaccineCourseItemJoin) -> VaccineCourseItem {
     VaccineCourseItem {
-        vaccine_course_item: vaccine_course_item,
+        vaccine_course_item,
         item: item_row,
     }
 }
