@@ -30,9 +30,9 @@ impl Loader<String> for VaccineCourseItemByVaccineCourseIdLoader {
         let mut map: HashMap<String, Vec<VaccineCourseItemRow>> = HashMap::new();
 
         for item in items {
-            let id = item.vaccine_course_id.clone();
+            let id = item.vaccine_course_item.vaccine_course_id.clone();
             let list = map.entry(id).or_default();
-            list.push(item);
+            list.push(item.vaccine_course_item);
         }
 
         Ok(map)
