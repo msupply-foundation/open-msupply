@@ -137,5 +137,7 @@
   "facilities": "Объекты",
   "manage": "Управлять",
   "settings": "Настройки",
-  "immunisations": "Прививки"
+  "immunisations": "Прививки",
+  "indicators-demographics": "Демография",
+  "label.edit-store-properties": "Редактировать свойства хранилища"
 }
