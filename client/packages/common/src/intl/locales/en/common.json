@@ -10,7 +10,7 @@
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Add Item",
   "button.add-new-indicator": "Add New Indicator",
-  "button.add-new-vaccine-course": "Add New Vaccine Course",
+  "button.add-new-vaccine-course": "Add vaccine course",
   "button.edit": "Edit",
   "button.allocate": "Allocate",
   "button.browse-files": "Browse files",
