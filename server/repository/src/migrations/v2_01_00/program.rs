@@ -1,6 +1,9 @@
 use util::constants::IMMUNISATION_CONTEXT_ID;
 
-use crate::{migrations::sql, StorageConnection};
+use crate::{
+    migrations::{sql, DATETIME},
+    StorageConnection,
+};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     if cfg!(feature = "postgres") {
@@ -9,6 +12,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             r#"
             ALTER TABLE program ALTER COLUMN master_list_id DROP NOT NULL;
             ALTER TABLE program ADD COLUMN IF NOT EXISTS is_immunisation BOOLEAN NOT NULL DEFAULT false;
+            ALTER TABLE program ADD COLUMN IF NOT EXISTS deleted_datetime {DATETIME};
             "#
         )?;
     } else {
@@ -20,9 +24,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 master_list_id TEXT,
                 name TEXT NOT NULL,
                 context_id TEXT NOT NULL REFERENCES context(id),
-                is_immunisation BOOLEAN NOT NULL
+                is_immunisation BOOLEAN NOT NULL,
+                deleted_datetime {DATETIME}
             );
-            INSERT INTO tmp_program SELECT id, master_list_id, name, context_id, false FROM program;
+            INSERT INTO tmp_program SELECT id, master_list_id, name, context_id, false, null FROM program;
 
             PRAGMA foreign_keys = OFF;
             DROP TABLE program;

@@ -131,6 +131,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_1.0.to_owned()),
                     context_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     is_immunisation: false,
+                    deleted_datetime: None,
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_1().id,
@@ -216,6 +217,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_2.0.to_owned()),
                     context_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     is_immunisation: false,
+                    deleted_datetime: None,
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned() + &mock_name_tag_1().id,
