@@ -58,7 +58,7 @@ impl<'a> VaccineCourseItemRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<VaccineCourseItemFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = create_filtered_query(filter)?;
 
         Ok(query
             .count()
@@ -83,7 +83,7 @@ impl<'a> VaccineCourseItemRepository<'a> {
         &self,
         filter: Option<VaccineCourseItemFilter>,
     ) -> Result<Vec<VaccineCourseItem>, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = create_filtered_query(filter)?;
 
         let result = query.load::<VaccineCourseItemJoin>(self.connection.lock().connection())?;
 
