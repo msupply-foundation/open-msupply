@@ -82,12 +82,12 @@ async fn migration_2_01_00() {
 fn check_item_needs_translation(connection: &StorageConnection) -> bool {
     use crate::SyncBufferRowRepository;
 
-    let sync_buffer_row = SyncBufferRowRepository::new(&connection)
+    let sync_buffer_row = SyncBufferRowRepository::new(connection)
         .find_one_by_record_id("F078B01C94DF4A5BA1EC0408CDD46B55")
         .unwrap()
         .unwrap();
 
-    return sync_buffer_row.integration_datetime.is_none();
+    sync_buffer_row.integration_datetime.is_none()
 }
 
 #[cfg(test)]
