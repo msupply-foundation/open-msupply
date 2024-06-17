@@ -1,5 +1,5 @@
-import { useQuery } from 'packages/common/src';
-import { useItemApi } from 'packages/system/src/Item';
+import { useQuery } from '@openmsupply-client/common';
+import { useItemApi } from '@openmsupply-client/system';
 
 export const useVaccineItems = () => {
   const queryParams = {

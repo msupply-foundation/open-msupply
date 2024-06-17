@@ -10,3 +10,4 @@ export * from './useStockItems';
 export * from './useDefaultServiceItem';
 export * from './useItemStockOnHand';
 export * from './usePackVariants';
+export * from './useItemApi';

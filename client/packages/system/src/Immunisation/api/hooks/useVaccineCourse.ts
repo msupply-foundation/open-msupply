@@ -2,7 +2,6 @@ import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
   UpdateVaccineCourseItemInput,
-  VaccineCourseItemNode,
   UpdateVaccineCourseScheduleInput,
   VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
@@ -13,14 +12,14 @@ import {
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
-import { VaccineCourseFragment } from '../operations.generated';
+import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
+// import { VaccineCourseFragment } from '../operations.generated';
 
-export interface DraftVaccineCourse extends VaccineCourseFragment {}
+// export interface DraftVaccineCourse extends VaccineCourseFragment {}
 
 export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
 
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
-  __typename: 'VaccineCourseNode',
   id: '',
   name: '',
   programId: '',
@@ -28,6 +27,7 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   coverageRate: 100,
   wastageRate: 0,
   isActive: true,
+  vaccineCourseItems: [],
 };
 
 const vaccineCourseParsers = {
@@ -40,7 +40,7 @@ const vaccineCourseParsers = {
       label: schedule.label,
     };
   },
-  toItemInput: (item: VaccineCourseItemNode): UpdateVaccineCourseItemInput => {
+  toItemInput: (item: DraftVaccineCourseItem): UpdateVaccineCourseItemInput => {
     return {
       id: item.id,
       itemId: item.item.id,
@@ -174,7 +174,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         doses: input.doses,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>
-            vaccineCourseParsers.toItemInput(item as VaccineCourseItemNode)
+            vaccineCourseParsers.toItemInput(item)
           ) ?? [],
         schedules:
           input.vaccineCourseSchedules?.map(schedule =>

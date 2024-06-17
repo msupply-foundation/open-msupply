@@ -16,4 +16,7 @@ export const useDemographicData = {
     list: Document.useDemographicProjections,
     upsert: Document.useDemographicProjectionUpsert,
   },
+  vaccineItems: {
+    get: Document.useVaccineItems,
+  },
 };

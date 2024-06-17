@@ -28,7 +28,7 @@ import { AppFooterComponent } from './AppFooterComponent';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 import { VaccineItemSelect } from '../../Item';
 
-const MAXVACCINEDOSES = 20;
+const MAX_VACCINE_DOSES = 20;
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -259,7 +259,7 @@ export const VaccineCourseView: FC = () => {
                 updateSchedule(parseInt(e.target.value));
               }}
               onChange={tryUpdateValue}
-              max={MAXVACCINEDOSES}
+              max={MAX_VACCINE_DOSES}
             />
           </Row>
           <Box paddingTop={1.5}>
