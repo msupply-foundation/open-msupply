@@ -73,5 +73,12 @@
   "label.edited-by": "Отредактировано",
   "label.issue": "Проблема",
   "label.group-by-item": "Группировать по Товарам",
-  "label.customer-ref": "Номер Клиента"
+  "label.customer-ref": "Номер Клиента",
+  "label.no-unallocated-rows-selected": "Все выбранные строки уже распределены",
+  "label.outbound-shipment": "Исходящая поставка",
+  "label.placeholder": "Заполнитель",
+  "label.select-rows-to-allocate-them": "Выберите строки, чтобы распределить их",
+  "label.supply-quantity": "Количество для поставки",
+  "message.placeholder-line": "Для дополнительного запрашиваемого количества была создана резервная строка",
+  "message.placeholder-lines-cannot-be-returned": "Резервные строки не могут быть возвращены"
 }
