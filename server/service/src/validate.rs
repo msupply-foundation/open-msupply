@@ -1,6 +1,7 @@
 use repository::{
+    property::{PropertyFilter, PropertyRepository},
     EqualFilter, Name, NameFilter, NameRepository, RepositoryError, StorageConnection,
-    StoreRowRepository,
+    StoreRowRepository, StringFilter,
 };
 
 pub fn check_store_id_matches(store_id_a: &str, store_id_b: &str) -> bool {
@@ -76,6 +77,20 @@ pub fn check_other_party(
     };
 
     Ok(other_party)
+}
+
+pub fn check_property_key_does_not_exist(
+    connection: &StorageConnection,
+    key: &str,
+    property_id: &str,
+) -> Result<bool, RepositoryError> {
+    let filter = PropertyFilter::new()
+        .key(StringFilter::equal_to(key))
+        .id(EqualFilter::not_equal_to(property_id));
+
+    let found = PropertyRepository::new(connection).query_by_filter(filter)?;
+
+    Ok(found.is_empty())
 }
 
 impl From<RepositoryError> for OtherPartyErrors {

@@ -6,6 +6,7 @@ use repository::{NameProperty, NamePropertyRow};
 
 use service::name_property::{
     get_name_properties, initialise_name_properties, InitialiseNameProperty,
+    InitialiseNamePropertyError,
 };
 use service::ListResult;
 
@@ -25,16 +26,32 @@ pub fn configure_name_properties(
 ) -> Result<ConfigureNamePropertiesResponse> {
     let connection_manager = ctx.get_connection_manager();
 
-    initialise_name_properties(
+    let result = initialise_name_properties(
         connection_manager,
         input
             .into_iter()
             .map(ConfigureNamePropertyInput::to_domain)
             .collect(),
-    )
-    .map_err(StandardGraphqlError::from_repository_error)?;
+    );
 
-    Ok(ConfigureNamePropertiesResponse::Response(Success))
+    match result {
+        Ok(_) => Ok(ConfigureNamePropertiesResponse::Response(Success)),
+        Err(error) => {
+            let formatted_error = format!("{:?}", error);
+
+            let graphql_error = match error {
+                // TODO: When there is a UI to enter the key, this should probably become structured error
+                InitialiseNamePropertyError::PropertyKeyAlreadyExists => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InitialiseNamePropertyError::DatabaseError(_) => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
+            };
+
+            Err(graphql_error.extend())
+        }
+    }
 }
 
 #[derive(Union)]
