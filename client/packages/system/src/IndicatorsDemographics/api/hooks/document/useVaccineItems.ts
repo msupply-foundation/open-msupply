@@ -6,7 +6,6 @@ export const useVaccineItems = () => {
     sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
     offset: 0,
     first: 1000, // TODO: remove arbitrary limit
-    filterBy: { isVaccine: { equalTo: true } },
   };
 
   const api = useItemApi();
