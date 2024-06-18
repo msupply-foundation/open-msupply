@@ -7,14 +7,14 @@ edition = "2018"
 path = "src/lib.rs"
 
 [dependencies]
-sha2 = "0.10.2"
+sha2 = { workspace = true }
 uuid = { version = "1.8.0", features = ["v7"] }
 chrono = { workspace = true }
-serde = "1.0.126"
-env_logger = "0.8.3"
-serde_json = "1.0.66"
+serde = { workspace = true }
+env_logger = "0.11.3"
+serde_json = { workspace = true }
 anyhow.workspace = true
-sanitize-filename = "0.4"
+sanitize-filename = "0.5"
 
 [dev-dependencies]
 thiserror = { workspace = true }
