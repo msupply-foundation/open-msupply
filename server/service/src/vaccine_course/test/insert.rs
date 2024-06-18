@@ -9,7 +9,7 @@ mod query {
     use crate::vaccine_course::insert::{InsertVaccineCourse, InsertVaccineCourseError};
 
     #[actix_rt::test]
-    async fn test_update_vaccine_course() {
+    async fn test_insert_vaccine_course() {
         let (_, _connection, connection_manager, _) =
             setup_all("test_insert_vaccine_course", MockDataInserts::all()).await;
 
