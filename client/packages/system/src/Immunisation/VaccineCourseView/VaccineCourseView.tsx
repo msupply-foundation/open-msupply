@@ -106,72 +106,12 @@ export const VaccineCourseView: FC = () => {
   } = useVaccineCourse(id);
   const { data: demographicData } = useDemographicIndicators();
 
-  // const defaultRow: VaccineCourseScheduleNode = {
-  //   doseNumber: 1,
-  //   id: FnUtils.generateUUID(),
-  //   label: '',
-  //   __typename: 'VaccineCourseScheduleNode',
-  // };
-
   const tryUpdateValue = (value: number | undefined) => {
     if (typeof value !== 'number') {
       return;
     }
     updatePatch({ doses: value });
   };
-
-  // const updateSchedule = (value: number) => {
-  //   if (!value) {
-  //     return;
-  //   }
-  //   const scheduleSeed = (number: number): VaccineCourseScheduleNode => {
-  //     return {
-  //       __typename: 'VaccineCourseScheduleNode',
-  //       id: FnUtils.generateUUID(),
-  //       doseNumber: number,
-  //       label: '',
-  //     };
-  //   };
-  //   let rows = draft?.vaccineCourseSchedules ?? [];
-
-  //   if (rows.length === value) {
-  //     return;
-  //   } else if (value > rows.length) {
-  //     let toAdd = value - rows.length;
-  //     while (toAdd > 0) {
-  //       const number = value - toAdd + 1;
-  //       rows.push(scheduleSeed(number));
-  //       toAdd--;
-  //     }
-  //   } else {
-  //     rows = rows.slice(0, value);
-  //   }
-  //   updatePatch({ vaccineCourseSchedules: rows });
-  // };
-
-  // const updateDescription = (patch: RecordPatch<VaccineCourseScheduleNode>) => {
-  //   if (!patch) {
-  //     return;
-  //   }
-  //   const schedule = {
-  //     ...ArrayUtils.toObject(draft.vaccineCourseSchedules ?? [defaultRow]),
-  //     [patch.id]: patch,
-  //   };
-
-  //   const scheduleArray = Object.values(
-  //     schedule
-  //   ) as VaccineCourseScheduleNode[];
-  //   updatePatch({ vaccineCourseSchedules: scheduleArray });
-  // };
-
-  // const dosesColumns = useColumns<VaccineCourseScheduleNode>(
-  //   [
-  //     { key: 'doseNumber', label: 'label.dose-number' },
-  //     [descriptionColumn(t('label.new-row')), { setter: updateDescription }],
-  //   ],
-  //   {},
-  //   [draft]
-  // );
 
   const cancel = () => {
     navigateUpOne();
@@ -240,10 +180,6 @@ export const VaccineCourseView: FC = () => {
               onChange={e => updatePatch({ isActive: e.target.checked })}
             ></Checkbox>
           </Row>
-          {/* </Section> */}
-          {/* </Container>
-      <Container>
-        <Section heading={t('heading.schedule')}> */}
           <Row label={t('label.number-of-doses')}>
             <NumericTextInput
               value={draft.doses}
@@ -252,12 +188,6 @@ export const VaccineCourseView: FC = () => {
               max={MAX_VACCINE_DOSES}
             />
           </Row>
-          {/* <Box paddingTop={1.5}>
-            <MiniTable
-              rows={draft.vaccineCourseSchedules ?? [defaultRow]}
-              columns={dosesColumns}
-            />
-          </Box> */}
         </Section>
       </Container>
       <AppFooterComponent
