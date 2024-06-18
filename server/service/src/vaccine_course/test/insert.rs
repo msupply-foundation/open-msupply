@@ -11,7 +11,7 @@ mod query {
     #[actix_rt::test]
     async fn test_update_vaccine_course() {
         let (_, _connection, connection_manager, _) =
-            setup_all("test_update_vaccine_course", MockDataInserts::all()).await;
+            setup_all("test_insert_vaccine_course", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
