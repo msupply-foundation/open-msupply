@@ -22,11 +22,11 @@ diesel = { version = "2.2.1", default-features = false, features = [
 ] }
 diesel-derive-enum = { version = "2.1.0", default-features = false }
 diesel_migrations = "2.2.0"
-futures-util = "0.3.30"
+futures-util = { workspace = true }
 libsqlite3-sys = { version = "0.28.0", features = ["bundled"], optional = true }
 # 0.31.0 depends on libsqlite3-sys 0.28.0
 rusqlite = "0.31.0"
-regex = "1.10.5"
+regex = { workspace = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
@@ -36,13 +36,13 @@ log = { workspace = true }
 # behave as if it is in release mode 
 rust-embed = { version = "6.4.0", features = ["debug-embed"] }
 anyhow.workspace = true
-pretty_assertions = "1.4.0"
-strum = { version = "0.26.2", features = ["derive"] }
+pretty_assertions = { workspace = true }
+strum = { workspace = true }
 
 [dev-dependencies]
 tokio = { version = "1.38.0", features = ["time", "rt-multi-thread", "macros"] }
 actix-rt = { workspace = true }
-strum = { version = "0.26.2", features = ["derive"] }
+strum = { workspace = true }
 
 [features]
 default = ["sqlite"]

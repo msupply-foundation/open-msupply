@@ -27,7 +27,7 @@ diesel = { version = "2.2.1", default-features = false, features = ["chrono"] }
 log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-simple-log = { version = "1.6.0" }
+simple-log = { workspace = true }
 tokio = { version = "1.38.0", features = ["macros", "time", "rt-multi-thread"] }
 
 [dev-dependencies]
