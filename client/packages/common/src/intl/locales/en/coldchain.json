@@ -26,6 +26,7 @@
   "button.create-log-reason": "Create log reason",
   "error.cce-asset-number-already-used": "CCE asset number already in use, please use another number",
   "error.code-no-match": "{{field}} not found in catalogue",
+  "error.could-not-delete-immunisation-program": "Could not delete immunization program",
   "error.duplicate-asset-number": "duplicate asset number in csv",
   "error.duplicated-field": "{{field}} already exists in the import file",
   "error.fetch-notifications": "Unable to display cold chain notifications",

@@ -8,9 +8,29 @@ import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
 import { PROGRAM } from './keys';
 
 export const useDeleteSelectedImmunisationPrograms = () => {
-  const { api, queryClient } = useImmunisationGraphQL();
-  const { mutateAsync } = useMutation(api.deleteImmunisationProgram);
   const t = useTranslation('coldchain');
+  const { api, queryClient } = useImmunisationGraphQL();
+
+  const { mutateAsync } = useMutation(
+    async ({ immunisationProgramId }: { immunisationProgramId: string }) => {
+      const apiResult = await api.deleteImmunisationProgram({
+        immunisationProgramId,
+      });
+
+      // NOTE: per the types, `apiResult` should always be a `DeleteImmunisationProgramMutation`.
+      // However, if there is a standard error, `GqlContext` will instead return an empty object
+      // in a non type-safe manner :cry:
+      // TODO: link to refactor issue
+      // The `?` after centralServer handles if `apiResult` is an empty object
+      const result = apiResult.centralServer?.program.deleteImmunisationProgram;
+
+      if (result?.__typename === 'DeleteResponse') {
+        return result.id;
+      }
+
+      throw new Error(t('error.could-not-delete-immunisation-program'));
+    }
+  );
 
   const selectedRows =
     useTableStore(state => {
@@ -21,7 +41,9 @@ export const useDeleteSelectedImmunisationPrograms = () => {
 
   const onDelete = async () => {
     await Promise.all(
-      selectedRows.map(id => mutateAsync({ immunisationProgramId: id }))
+      selectedRows.map(
+        async id => await mutateAsync({ immunisationProgramId: id })
+      )
     ).then(() => queryClient.invalidateQueries([PROGRAM]));
   };
 
