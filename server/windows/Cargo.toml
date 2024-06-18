@@ -16,7 +16,7 @@ default-target = "x86_64-pc-windows-msvc"
 
 [target.'cfg(windows)'.dependencies]
 actix-web = { workspace = true }
-futures = "0.3.30"
+futures = { workspace = true }
 log = { workspace = true }
 server = { path = "../server", default-features = false }
 service = { path = "../service" }

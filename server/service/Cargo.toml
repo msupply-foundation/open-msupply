@@ -28,7 +28,7 @@ reqwest = { workspace = true }
 url = "2.5.1"
 serde = { workspace = true }
 serde_json = { workspace = true }
-serde_yaml = "0.9.34"
+serde_yaml = { workspace = true }
 schemafy = "0.6.0"
 schemafy_core = "0.6.0"
 tera = "1.20.0"
@@ -40,16 +40,16 @@ tokio = { version = "1.38.0", features = [
     "rt-multi-thread",
 ] }
 headless_chrome = "1.0.10"
-pretty_assertions = "1.4.0"
+pretty_assertions = { workspace = true }
 flate2 = "1.0.30"
-simple-log = { version = "1.6.0" }
+simple-log = { workspace = true }
 # dependencies for temperature_sensor
 temperature-sensor = { git = "https://github.com/openmsupply/temperature-sensor.git", tag = "v0.1.0-beta3" }
 # plugin:
 hex = "0.4.3"
 pem = "3.0.4"
 rsa = { version = "0.9.6", features = ["sha2"] }
-sha2 = "0.10.8"
+sha2 = { workspace = true }
 walkdir = "2.5.0"
 x509-parser = { version = "0.16", features = ["verify"] }
 telnet = "0.2.1"
@@ -58,8 +58,8 @@ tempfile = "3.10.1"
 
 [dev-dependencies]
 actix-rt = { workspace = true }
-assert-json-diff = "2.0.2"
-httpmock = "0.7"
+assert-json-diff = { workspace = true }
+httpmock = { workspace = true }
 assert_approx_eq = "1.1.0"
 
 [features]

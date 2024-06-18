@@ -39,18 +39,18 @@ tokio = { workspace = true }
 clap = { workspace = true }
 rust-embed = "6.4.0"
 mime_guess = "2.0.4"
-futures = "0.3.30"
-simple-log = { version = "1.6.0" }
-rcgen = "0.13.1"
-regex = "1.10.5"
+futures = { workspace = true }
+simple-log = { workspace = true }
+rcgen = { workspace = true }
+regex = { workspace = true }
 actix-multipart = { workspace = true }
-futures-util = "0.3.30"
+futures-util = { workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }
-assert-json-diff = "2.0.2"
-httpmock = "0.7"
+assert-json-diff = { workspace = true }
+httpmock = { workspace = true }
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"
