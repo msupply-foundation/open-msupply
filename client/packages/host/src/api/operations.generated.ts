@@ -40,6 +40,13 @@ export type UpdateLabelPrinterSettingsMutationVariables = Types.Exact<{
 
 export type UpdateLabelPrinterSettingsMutation = { __typename: 'Mutations', updateLabelPrinterSettings: { __typename: 'LabelPrinterUpdateResult', success: boolean } | { __typename: 'UpdateLabelPrinterSettingsError' } };
 
+export type ConfigureNamePropertiesMutationVariables = Types.Exact<{
+  input: Array<Types.ConfigureNamePropertyInput> | Types.ConfigureNamePropertyInput;
+}>;
+
+
+export type ConfigureNamePropertiesMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', general: { __typename: 'CentralGeneralMutations', configureNameProperties: { __typename: 'Success', success: boolean } } } };
+
 
 export const DatabaseSettingsDocument = gql`
     query databaseSettings {
@@ -110,6 +117,21 @@ export const UpdateLabelPrinterSettingsDocument = gql`
   }
 }
     `;
+export const ConfigureNamePropertiesDocument = gql`
+    mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
+  centralServer {
+    general {
+      configureNameProperties(input: $input) {
+        __typename
+        ... on Success {
+          __typename
+          success
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -135,6 +157,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateLabelPrinterSettings(variables: UpdateLabelPrinterSettingsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateLabelPrinterSettingsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateLabelPrinterSettingsMutation>(UpdateLabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLabelPrinterSettings', 'mutation');
+    },
+    configureNameProperties(variables: ConfigureNamePropertiesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ConfigureNamePropertiesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ConfigureNamePropertiesMutation>(ConfigureNamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'configureNameProperties', 'mutation');
     }
   };
 }
@@ -236,5 +261,22 @@ export const mockUpdateDisplaySettingsMutation = (resolver: ResponseResolver<Gra
 export const mockUpdateLabelPrinterSettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLabelPrinterSettingsMutationVariables>, GraphQLContext<UpdateLabelPrinterSettingsMutation>, any>) =>
   graphql.mutation<UpdateLabelPrinterSettingsMutation, UpdateLabelPrinterSettingsMutationVariables>(
     'updateLabelPrinterSettings',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockConfigureNamePropertiesMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockConfigureNamePropertiesMutation = (resolver: ResponseResolver<GraphQLRequest<ConfigureNamePropertiesMutationVariables>, GraphQLContext<ConfigureNamePropertiesMutation>, any>) =>
+  graphql.mutation<ConfigureNamePropertiesMutation, ConfigureNamePropertiesMutationVariables>(
+    'configureNameProperties',
     resolver
   )

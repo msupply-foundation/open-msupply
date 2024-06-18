@@ -48,7 +48,7 @@ const vaccineCourseParsers = {
   },
 };
 
-export function useVaccineCourse(id?: string) {
+export const useVaccineCourse = (id?: string) => {
   const [patch, setPatch] = useState<Partial<DraftVaccineCourse>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -76,9 +76,7 @@ export function useVaccineCourse(id?: string) {
     // Ensures that UI doesn't show in "dirty" state if nothing actually
     // different from the saved data
     const updatedData = { ...data, ...newPatch };
-    if (isEqual(data, updatedData)) setIsDirty(false);
-    else setIsDirty(true);
-    return;
+    setIsDirty(!isEqual(data, updatedData));
   };
 
   const resetDraft = () => {
@@ -88,8 +86,8 @@ export function useVaccineCourse(id?: string) {
     }
   };
 
-  const create = async () => {
-    const result = await createMutation(draft);
+  const create = async (programId: string) => {
+    const result = await createMutation({ ...draft, programId });
     setIsDirty(false);
     return result;
   };
@@ -110,7 +108,7 @@ export function useVaccineCourse(id?: string) {
     isDirty,
     updatePatch,
   };
-}
+};
 
 const useGet = (id: string) => {
   const { api } = useImmunisationGraphQL();

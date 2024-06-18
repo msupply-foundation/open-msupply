@@ -45,7 +45,13 @@ const ImmunisationProgramListComponent: FC = () => {
 
   const columns = useColumns<ImmunisationProgramFragment>(
     [
-      'name',
+      [
+        'name',
+        {
+          width: 350,
+          label: 'label.program-name',
+        },
+      ],
       {
         key: 'vaccine-courses',
         label: 'label.vaccine-courses',

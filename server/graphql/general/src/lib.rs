@@ -507,3 +507,18 @@ impl DiscoveryQueries {
         initialisation_status(ctx)
     }
 }
+
+// Central server only mutations
+#[derive(Default, Clone)]
+pub struct CentralGeneralMutations;
+
+#[Object]
+impl CentralGeneralMutations {
+    pub async fn configure_name_properties(
+        &self,
+        ctx: &Context<'_>,
+        input: Vec<ConfigureNamePropertyInput>,
+    ) -> Result<ConfigureNamePropertiesResponse> {
+        configure_name_properties(ctx, input)
+    }
+}
