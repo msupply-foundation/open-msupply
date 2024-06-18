@@ -131,6 +131,7 @@ query vaccineCourses(
     filter: $filter
   ) {
     ... on VaccineCourseConnector {
+      __typename
       nodes {
         ...VaccineCourse
       }

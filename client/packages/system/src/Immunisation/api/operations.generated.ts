@@ -194,6 +194,7 @@ export const VaccineCoursesDocument = gql`
     filter: $filter
   ) {
     ... on VaccineCourseConnector {
+      __typename
       nodes {
         ...VaccineCourse
       }
