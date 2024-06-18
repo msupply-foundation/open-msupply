@@ -1,55 +1,31 @@
 import React from 'react';
-import { Box } from '@mui/material';
-import { BasicTextInput } from '@common/components';
-import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
+import {
+  CellProps,
+  ColumnDefinition,
+  InputAdornment,
+  NumberInputCell,
+} from '@openmsupply-client/common';
 import { GENERAL_POPULATION_ID } from '../api';
+import { Row } from '../types';
 
-interface RecordWithIdWithPercentageFields extends RecordWithId {
-  percentage?: number | null;
-  name?: string;
-}
+const PercentageCell = (props: CellProps<Row>) => (
+  <NumberInputCell
+    {...props}
+    max={100}
+    decimalLimit={2}
+    isDisabled={props.isDisabled || props.rowData.id === GENERAL_POPULATION_ID}
+    TextInputProps={{
+      InputProps: {
+        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+      },
+    }}
+  />
+);
 
-export const percentageColumn = <
-  T extends RecordWithIdWithPercentageFields,
->(): ColumnDefinition<T> => ({
+export const percentageColumn = (): ColumnDefinition<Row> => ({
   label: 'label.percentage',
-  setter: () => {
-    if (process.env['NODE_ENV']) {
-      throw new Error(
-        `The default setter of the Percentage column was called.
-        Have you forgotten to provide a custom setter?
-        When setting up your columns, you should provide a setter function
-        const columns = useColumns([ percentageColumn(), { setter }])
-        `
-      );
-    }
-  },
-  accessor: ({ rowData }) => rowData.percentage,
   key: 'percentage',
-  Cell: ({ rowData, column, isDisabled }) => (
-    <Box
-      sx={{
-        flexDirection: 'row',
-        borderBottom: 'none',
-        alignItems: 'center',
-        display: 'flex',
-      }}
-    >
-      <>
-        <BasicTextInput
-          disabled={isDisabled || rowData.id === GENERAL_POPULATION_ID}
-          defaultValue={column.accessor({ rowData }) as number}
-          onBlur={e => {
-            const updatedRowData = { ...rowData };
-            column.setter({
-              ...updatedRowData,
-              percentage: parseFloat(e.target.value),
-            });
-          }}
-        />
-        <Box ml={1} />
-      </>
-    </Box>
-  ),
+  Cell: PercentageCell,
   minWidth: 100,
+  sortable: false,
 });

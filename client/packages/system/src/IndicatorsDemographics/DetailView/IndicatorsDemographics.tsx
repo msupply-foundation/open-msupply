@@ -34,7 +34,7 @@ const IndicatorsDemographicsComponent = () => {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({
-    initialSort: { key: 'percentage', dir: 'desc' },
+    initialSort: { key: 'name', dir: 'asc' },
   });
   const [headerDraft, setHeaderDraft] = useState<HeaderData>();
   const [indexPopulation, setIndexPopulation] = useState(0);
@@ -55,23 +55,23 @@ const IndicatorsDemographicsComponent = () => {
 
   const PopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
-    const currentDraft = { ...draft, [patch.id]: patch } as Record<string, Row>;
-    let updatedDraft = {} as Record<string, Row>;
+    const basePopulation = patch['0'] ?? 0;
+    let updatedDraft: Record<string, Row> = {};
     const indexPopulationChange =
-      patch.basePopulation !== draft[patch.id]?.basePopulation &&
+      basePopulation !== draft[patch.id]?.basePopulation &&
       patch.id === GENERAL_POPULATION_ID;
 
-    if (indexPopulationChange) setIndexPopulation(Number(patch.basePopulation));
+    if (indexPopulationChange) setIndexPopulation(basePopulation);
 
-    Object.keys(currentDraft).forEach(rowKey => {
+    Object.keys(draft).forEach(rowKey => {
       const updatedRow = calculateAcrossRow(
-        currentDraft[rowKey] as Row,
+        draft[rowKey] as Row,
         headerDraft,
-        indexPopulationChange ? patch.basePopulation : indexPopulation
+        indexPopulationChange ? basePopulation : indexPopulation
       );
       updatedDraft = { ...updatedDraft, [updatedRow.id]: updatedRow };
     });
-    setDraft({ ...currentDraft, ...updatedDraft });
+    setDraft(updatedDraft);
   };
 
   const setter = (patch: RecordPatch<Row>) => {
@@ -177,8 +177,8 @@ const IndicatorsDemographicsComponent = () => {
 
   const columns = useColumns<Row>(
     [
-      [percentageColumn(), { setter }],
       [nameColumn(), { setter }],
+      [percentageColumn(), { setter }],
       [populationColumn(), { setter: PopulationChange }],
       {
         key: '1',
@@ -186,6 +186,7 @@ const IndicatorsDemographicsComponent = () => {
         align: ColumnAlign.Right,
         label: undefined,
         labelProps: { defaultValue: currentYear + 1 },
+        sortable: false,
       },
       {
         key: '2',
@@ -193,6 +194,7 @@ const IndicatorsDemographicsComponent = () => {
         align: ColumnAlign.Right,
         label: undefined,
         labelProps: { defaultValue: currentYear + 2 },
+        sortable: false,
       },
       {
         key: '3',
@@ -200,6 +202,7 @@ const IndicatorsDemographicsComponent = () => {
         align: ColumnAlign.Right,
         label: undefined,
         labelProps: { defaultValue: currentYear + 3 },
+        sortable: false,
       },
       {
         key: '4',
@@ -207,6 +210,7 @@ const IndicatorsDemographicsComponent = () => {
         align: ColumnAlign.Right,
         label: undefined,
         labelProps: { defaultValue: currentYear + 4 },
+        sortable: false,
       },
       {
         key: '5',
@@ -214,10 +218,11 @@ const IndicatorsDemographicsComponent = () => {
         align: ColumnAlign.Right,
         label: undefined,
         labelProps: { defaultValue: currentYear + 5 },
+        sortable: false,
       },
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
-    [draft, indexPopulation]
+    [draft, indexPopulation, sortBy]
   );
 
   useEffect(() => {
@@ -240,7 +245,7 @@ const IndicatorsDemographicsComponent = () => {
   return (
     <>
       <AppBarButtons patch={setter} rows={Object.values(draft)}></AppBarButtons>
-      <Box>
+      <Box sx={{ width: '100%' }} padding={0}>
         <GrowthRow
           columns={columns}
           data={headerDraft}
