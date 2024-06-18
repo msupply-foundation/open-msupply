@@ -23,11 +23,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             CREATE TABLE demographic_projection (
                 id TEXT NOT NULL PRIMARY KEY,
                 base_year INTEGER NOT NULL,
-                year_1 INTEGER NOT NULL,
-                year_2 INTEGER NOT NULL,
-                year_3 INTEGER NOT NULL,
-                year_4 INTEGER NOT NULL,
-                year_5 INTEGER NOT NULL
+                year_1 {DOUBLE} NOT NULL,
+                year_2 {DOUBLE} NOT NULL,
+                year_3 {DOUBLE} NOT NULL,
+                year_4 {DOUBLE} NOT NULL,
+                year_5 {DOUBLE} NOT NULL
             );
         "#
     )?;

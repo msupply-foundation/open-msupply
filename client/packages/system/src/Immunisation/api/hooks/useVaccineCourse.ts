@@ -1,19 +1,25 @@
-import { useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
+  UpdateVaccineCourseItemInput,
+  UpdateVaccineCourseScheduleInput,
+  VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
   isEqual,
   useMutation,
   useQuery,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
-import { VaccineCourseFragment } from '../operations.generated';
+import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
+// import { VaccineCourseFragment } from '../operations.generated';
 
-export interface DraftVaccineCourse extends VaccineCourseFragment {}
+// export interface DraftVaccineCourse extends VaccineCourseFragment {}
+
+export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
 
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
-  __typename: 'VaccineCourseNode',
   id: '',
   name: '',
   programId: '',
@@ -21,17 +27,43 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   coverageRate: 100,
   wastageRate: 0,
   isActive: true,
+  vaccineCourseItems: [],
 };
 
-export function useVaccineCourse(id?: string) {
+const vaccineCourseParsers = {
+  toScheduleInput: (
+    schedule: VaccineCourseScheduleNode
+  ): UpdateVaccineCourseScheduleInput => {
+    return {
+      id: schedule.id,
+      doseNumber: schedule.doseNumber,
+      label: schedule.label,
+    };
+  },
+  toItemInput: (item: DraftVaccineCourseItem): UpdateVaccineCourseItemInput => {
+    return {
+      id: item.id,
+      itemId: item.itemId,
+    };
+  },
+};
+
+export const useVaccineCourse = (id?: string) => {
   const [patch, setPatch] = useState<Partial<DraftVaccineCourse>>({});
   const [isDirty, setIsDirty] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { data, isLoading, error } = useGet(id ?? '');
   const {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
   } = useCreate();
+
+  const {
+    mutateAsync: updateMutation,
+    isLoading: isUpdating,
+    error: updateError,
+  } = useUpdate(setErrorMessage);
 
   const draft: DraftVaccineCourse = data
     ? { ...defaultDraftVaccineCourse, ...data, ...patch }
@@ -44,9 +76,7 @@ export function useVaccineCourse(id?: string) {
     // Ensures that UI doesn't show in "dirty" state if nothing actually
     // different from the saved data
     const updatedData = { ...data, ...newPatch };
-    if (isEqual(data, updatedData)) setIsDirty(false);
-    else setIsDirty(true);
-    return;
+    setIsDirty(!isEqual(data, updatedData));
   };
 
   const resetDraft = () => {
@@ -56,8 +86,14 @@ export function useVaccineCourse(id?: string) {
     }
   };
 
-  const create = async () => {
-    const result = await createMutation(draft);
+  const create = async (programId: string) => {
+    const result = await createMutation({ ...draft, programId });
+    setIsDirty(false);
+    return result;
+  };
+
+  const update = async () => {
+    const result = await updateMutation(draft);
     setIsDirty(false);
     return result;
   };
@@ -65,12 +101,14 @@ export function useVaccineCourse(id?: string) {
   return {
     query: { data: data, isLoading, error },
     create: { create, isCreating, createError },
+    update: { update, isUpdating, updateError },
+    errorMessage,
     draft,
     resetDraft,
     isDirty,
     updatePatch,
   };
-}
+};
 
 const useGet = (id: string) => {
   const { api } = useImmunisationGraphQL();
@@ -110,6 +148,52 @@ const useCreate = () => {
         programId,
       },
     });
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([VACCINE]),
+  });
+};
+
+const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
+  const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const t = useTranslation('coldchain');
+
+  const mutationFn = async (input: DraftVaccineCourse) => {
+    const apiResult = await api.updateVaccineCourse({
+      input: {
+        id: input.id,
+        name: input.name,
+        demographicIndicatorId: input.demographicIndicatorId,
+        coverageRate: input.coverageRate,
+        isActive: input.isActive,
+        wastageRate: input.wastageRate,
+        doses: input.doses,
+        vaccineItems:
+          input.vaccineCourseItems?.map(item =>
+            vaccineCourseParsers.toItemInput(item)
+          ) ?? [],
+        schedules:
+          input.vaccineCourseSchedules?.map(schedule =>
+            vaccineCourseParsers.toScheduleInput(schedule)
+          ) ?? [],
+      },
+      storeId,
+    });
+
+    const result = apiResult.centralServer.vaccineCourse.updateVaccineCourse;
+
+    if (result?.__typename === 'VaccineCourseNode') {
+      return result;
+    }
+
+    if (result?.__typename === 'UpdateVaccineCourseError') {
+      setErrorMessage(result.error.description);
+      return;
+    }
+
+    throw new Error(t('error.unable-to-update-vaccine-course'));
   };
 
   return useMutation({

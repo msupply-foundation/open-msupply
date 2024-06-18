@@ -118,11 +118,12 @@ impl Certificates {
 
         let key_file = cert_dir.join(PRIVATE_CERT_FILE);
         let mut file = std::fs::File::create(&key_file)?;
-        file.write_all(cert.serialize_private_key_pem().as_bytes())?;
+        let private_cert_buffer = cert.key_pair.serialize_pem();
+        file.write_all(private_cert_buffer.as_bytes())?;
 
         let cert_file = cert_dir.join(PUBLIC_CERT_FILE);
         let mut file = std::fs::File::create(&cert_file)?;
-        let public_cert_buffer = cert.serialize_pem()?;
+        let public_cert_buffer = cert.cert.pem();
         file.write_all(public_cert_buffer.as_bytes())?;
 
         Ok(CertFiles {

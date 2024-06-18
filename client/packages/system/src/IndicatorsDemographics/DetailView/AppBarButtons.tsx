@@ -1,13 +1,15 @@
 import React from 'react';
 import {
+  AppBarButtonsPortal,
   ButtonWithIcon,
   FnUtils,
+  Grid,
   PlusCircleIcon,
   RecordPatch,
   useTranslation,
 } from '@openmsupply-client/common';
-import { Row } from './IndicatorsDemographics';
-import { AppBarButtonsPortal, Grid } from '@openmsupply-client/common';
+
+import { Row } from '../types';
 
 interface IndicatorsAppBarButtonsProps {
   patch: (patch: RecordPatch<Row>) => void;

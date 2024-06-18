@@ -112,41 +112,26 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     },
   },
   getProjections: {
-    byId: async (demographicProjectionId: string) => {
-      const result = await sdk.demographicProjectionById({
-        demographicProjectionId,
-      });
-      const { demographicProjections } = result;
+    byBaseYear: async (baseYear: number) => {
+      const result = await sdk.demographicProjectionsByBaseYear({ baseYear });
       if (
-        demographicProjections?.__typename ===
-          'DemographicProjectionConnector' &&
-        !!demographicProjections.nodes[0]
-      ) {
-        return demographicProjections.nodes[0];
-      } else {
-        throw new Error('Could not find encounter');
-      }
+        result.demographicProjectionByBaseYear.__typename ===
+        'DemographicProjectionNode'
+      )
+        return result.demographicProjectionByBaseYear;
+
+      return undefined;
     },
     list: async ({
       first,
       offset,
-      sortBy,
       filterBy,
-    }: ListParams<DemographicProjectionFragment>) => {
+    }: Omit<ListParams<DemographicProjectionFragment>, 'sortBy'>) => {
       const result = await sdk.demographicProjections({
         first,
         offset,
         key: DemographicProjectionSortFieldInput.Id,
-        desc: sortBy.isDesc,
         filter: filterBy,
-      });
-      const demographicProjections = result?.demographicProjections;
-      return demographicProjections;
-    },
-    listAll: async ({ sortBy }: ListParams<DemographicProjectionFragment>) => {
-      const result = await sdk.demographicProjections({
-        key: DemographicProjectionSortFieldInput.Id,
-        desc: sortBy.isDesc,
       });
       const demographicProjections = result?.demographicProjections;
       return demographicProjections;
@@ -156,12 +141,14 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     const insertInput: InsertDemographicIndicatorInput =
       Parsers.toInsertIndicator(input);
     const result = await sdk.insertDemographicIndicator({ input: insertInput });
+
     if (
       result.centralServer.demographic.insertDemographicIndicator.__typename ===
       'DemographicIndicatorNode'
     ) {
       return result.centralServer.demographic.insertDemographicIndicator;
     }
+
     throw new Error('could not insert demographic indicator');
   },
   updateIndicator: async (input: DemographicIndicatorFragment) => {

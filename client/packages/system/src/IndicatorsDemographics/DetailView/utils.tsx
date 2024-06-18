@@ -1,7 +1,11 @@
 import { NumUtils } from '@common/utils';
-import { DemographicIndicatorFragment } from '../api/operations.generated';
-import { HeaderValue, Row } from './IndicatorsDemographics';
+import {
+  DemographicIndicatorFragment,
+  DemographicProjectionFragment,
+} from '../api/operations.generated';
+
 import { GENERAL_POPULATION_ID } from '../api';
+import { HeaderData, HeaderValue, Row } from '../types';
 
 export const toIndicatorFragment = (
   row: Row,
@@ -24,11 +28,13 @@ export const toIndicatorFragment = (
 
 export const recursiveCalculate = (
   key: number,
-  updatedHeader: { [x: string]: HeaderValue },
+  updatedHeader: HeaderData,
   row: Row,
   indexValue: number | undefined
 ): number => {
-  const headerValue = updatedHeader[key];
+  const headerValue = updatedHeader[
+    String(key) as keyof HeaderData
+  ] as HeaderValue;
   if (key > 0) {
     return headerValue
       ? (NumUtils.round(
@@ -45,9 +51,10 @@ export const recursiveCalculate = (
 
 export const calculateAcrossRow = (
   row: Row,
-  updatedHeader: { [x: string]: HeaderValue },
+  updatedHeader?: HeaderData,
   indexValue?: number | undefined
 ) => {
+  if (!updatedHeader) return row;
   let updatedRow = row;
 
   // only update numeric entries
@@ -75,3 +82,55 @@ export const calculateAcrossRow = (
   updatedRow = { ...updatedRow, basePopulation: indexValue ?? 0 };
   return updatedRow;
 };
+
+export const mapHeaderData = (
+  projection: DemographicProjectionFragment
+): HeaderData => ({
+  id: projection.id,
+  baseYear: projection.baseYear,
+  '1': { id: '1', value: projection.year1 },
+  '2': { id: '2', value: projection.year2 },
+  '3': { id: '3', value: projection.year3 },
+  '4': { id: '4', value: projection.year4 },
+  '5': { id: '5', value: projection.year5 },
+});
+
+export const mapProjection = (
+  headerData: HeaderData,
+  generalPopulationRow?: Row
+) => ({
+  baseYear: generalPopulationRow?.baseYear ?? 2024,
+  id: headerData.id,
+  year1: headerData[1].value,
+  year2: headerData[2].value,
+  year3: headerData[3].value,
+  year4: headerData[4].value,
+  year5: headerData[5].value,
+});
+
+export const toDemographicIndicatorRow = (row: {
+  __typename?: 'DemographicIndicatorNode';
+  id: string;
+  name: string;
+  baseYear?: number;
+  basePopulation?: number;
+  year1Projection?: number;
+  year2Projection?: number;
+  year3Projection?: number;
+  year4Projection?: number;
+  year5Projection?: number;
+  populationPercentage?: number;
+}): Row => ({
+  isNew: false,
+  id: row.id,
+  percentage: row.populationPercentage ?? 0,
+  name: row.name,
+  baseYear: row.baseYear ?? 0,
+  basePopulation: row.basePopulation ?? 0,
+  0: row.year1Projection ?? 0,
+  1: row.year2Projection ?? 0,
+  2: row.year3Projection ?? 0,
+  3: row.year4Projection ?? 0,
+  4: row.year5Projection ?? 0,
+  5: row.year5Projection ?? 0,
+});

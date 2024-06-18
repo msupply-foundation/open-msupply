@@ -39,7 +39,7 @@ export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
           gap: 2,
         }}
       >
-        <Grid item flex={1}>
+        <Grid item flex="0 0 350px">
           <BasicTextInput
             fullWidth
             value={draft.name}

@@ -92,6 +92,8 @@
   "label.central-server": "Central server",
   "label.edit-store-properties": "Edit store properties",
   "label.site": "Site:",
+  "label.initialise-store-properties": "Initialise store properties for GAPS",
+  "label.initialised": "Initialised",
   "loading": "Loading…",
   "locations": "Locations",
   "login.body": "Whether you run a pharmaceutical distribution warehouse, or are a manufacturer needing dozens of connected users, or a small dispensary, mSupply is a valuable partner.",

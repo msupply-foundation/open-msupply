@@ -1,4 +1,7 @@
-use super::{query::get_vaccine_course, validate::check_program_exists};
+use super::{
+    query::get_vaccine_course,
+    validate::{check_program_exists, check_vaccine_course_name_exists_for_program},
+};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext,
     vaccine_course::validate::check_vaccine_course_exists, SingleRecordError,
@@ -11,6 +14,7 @@ use repository::{
 
 #[derive(PartialEq, Debug)]
 pub enum InsertVaccineCourseError {
+    VaccineCourseNameExistsForThisProgram,
     VaccineCourseAlreadyExists,
     CreatedRecordNotFound,
     ProgramDoesNotExist,
@@ -61,6 +65,15 @@ pub fn validate(
 
     if check_program_exists(&input.program_id, connection)?.is_none() {
         return Err(InsertVaccineCourseError::ProgramDoesNotExist);
+    }
+
+    if !check_vaccine_course_name_exists_for_program(
+        &input.name,
+        &input.program_id,
+        None,
+        connection,
+    )? {
+        return Err(InsertVaccineCourseError::VaccineCourseNameExistsForThisProgram);
     }
 
     Ok(())
