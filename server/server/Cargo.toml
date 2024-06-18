@@ -31,12 +31,12 @@ anyhow.workspace = true
 config = "0.12.0"
 chrono = { workspace = true }
 thiserror = { workspace = true }
-log = "0.4.14"
+log = { workspace = true }
 rustls = "0.20.9"
 rustls-pemfile = "1.0.0"
-serde = "1.0.203"
-tokio = { version = "1.38.0", features = ["macros"] }
-clap = { version = "4.5.7", features = ["derive"] }
+serde = { workspace = true }
+tokio = { workspace = true }
+clap = { workspace = true }
 rust-embed = "6.4.0"
 mime_guess = "2.0.4"
 futures = "0.3.30"
@@ -45,10 +45,10 @@ rcgen = "0.13.1"
 regex = "1.10.5"
 actix-multipart = { workspace = true }
 futures-util = "0.3.30"
-serde_json = "1.0.117"
+serde_json = { workspace = true }
 
 [dev-dependencies]
-actix-rt = "2.10.0"
+actix-rt = { workspace = true }
 assert-json-diff = "2.0.2"
 httpmock = "0.7"
 
