@@ -22,11 +22,11 @@ pub enum UpdateDemographicProjectionError {
 pub struct UpdateDemographicProjection {
     pub id: String,
     pub base_year: Option<i32>,
-    pub year_1: Option<i32>,
-    pub year_2: Option<i32>,
-    pub year_3: Option<i32>,
-    pub year_4: Option<i32>,
-    pub year_5: Option<i32>,
+    pub year_1: Option<f64>,
+    pub year_2: Option<f64>,
+    pub year_3: Option<f64>,
+    pub year_4: Option<f64>,
+    pub year_5: Option<f64>,
 }
 
 pub fn update_demographic_projection(
@@ -42,7 +42,7 @@ pub fn update_demographic_projection(
 
             DemographicProjectionRowRepository::new(connection)
                 .upsert_one(&updated_demographic_projection_row)?;
-            // TODO add acitivity logs
+            // TODO add activity logs
 
             get_demographic_projection(ctx, updated_demographic_projection_row.id)
                 .map_err(UpdateDemographicProjectionError::from)
@@ -55,22 +55,23 @@ pub fn validate(
     connection: &StorageConnection,
     input: &UpdateDemographicProjection,
 ) -> Result<DemographicProjectionRow, UpdateDemographicProjectionError> {
-    let demographioc_projection_row =
+    let demographic_projection_row =
         match check_demographic_projection_exists(&input.id, connection)? {
             Some(demographic_projection_row) => demographic_projection_row,
             None => {
                 return Err(UpdateDemographicProjectionError::DemographicProjectionDoesNotExist)
             }
         };
+
     if let Some(base_year) = input.base_year {
-        if !check_base_year_unique(base_year, connection)? {
+        if !check_base_year_unique(base_year, &input.id, connection)? {
             return Err(
                 UpdateDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists,
             );
         }
     }
 
-    Ok(demographioc_projection_row)
+    Ok(demographic_projection_row)
 }
 
 pub fn generate(

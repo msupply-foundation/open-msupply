@@ -16,11 +16,13 @@ use self::update_demographic_projection::{
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 
+use query_demographic_projection::get_demographic_projection_by_base_year;
 use repository::demographic_indicator::{
     DemographicIndicator, DemographicIndicatorFilter, DemographicIndicatorSort,
 };
 use repository::{
-    DemographicIndicatorRow, DemographicProjectionRow, PaginationOption, StorageConnection,
+    DemographicIndicatorRow, DemographicProjectionRow, PaginationOption, RepositoryError,
+    StorageConnection,
 };
 
 pub mod insert_demographic_indicator;
@@ -29,7 +31,7 @@ pub mod query_demographic_indicator;
 pub mod query_demographic_projection;
 pub mod update_demographic_indicator;
 pub mod update_demographic_projection;
-mod validate;
+pub mod validate;
 
 use self::query_demographic_projection::{get_demographic_projection, get_demographic_projections};
 
@@ -72,6 +74,14 @@ pub trait DemographicServiceTrait: Sync + Send {
         id: String,
     ) -> Result<DemographicProjection, SingleRecordError> {
         get_demographic_projection(ctx, id)
+    }
+
+    fn get_projection_by_base_year(
+        &self,
+        ctx: &ServiceContext,
+        base_year: i32,
+    ) -> Result<Option<DemographicProjection>, RepositoryError> {
+        get_demographic_projection_by_base_year(ctx, base_year)
     }
 
     fn insert_demographic_indicator(

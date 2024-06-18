@@ -56,9 +56,24 @@ query demographicProjections(
   ) {
     ... on DemographicProjectionConnector {
       nodes {
+        __typename
         ...DemographicProjection
       }
       totalCount
+    }
+  }
+}
+
+query demographicProjectionsByBaseYear($baseYear: Int!) {
+  demographicProjectionByBaseYear(baseYear: $baseYear) {
+    __typename
+    ... on DemographicProjectionNode {
+      ...DemographicProjection
+    }
+    ... on NodeError {
+      error {
+        description
+      }
     }
   }
 }
@@ -73,22 +88,11 @@ query demographicIndicatorById($demographicIndicatorId: String!) {
   }
 }
 
-query demographicProjectionById($demographicProjectionId: String!) {
-  demographicProjections(
-    filter: { id: { equalTo: $demographicProjectionId } }
-  ) {
-    ... on DemographicProjectionConnector {
-      nodes {
-        ...DemographicProjection
-      }
-    }
-  }
-}
-
 mutation insertDemographicIndicator($input: InsertDemographicIndicatorInput!) {
   centralServer {
     demographic {
       insertDemographicIndicator(input: $input) {
+        __typename
         ... on DemographicIndicatorNode {
           id
         }
@@ -109,9 +113,11 @@ mutation insertDemographicProjection(
     demographic {
       insertDemographicProjection(input: $input) {
         ... on DemographicProjectionNode {
+          __typename
           id
         }
         ... on InsertDemographicProjectionError {
+          __typename
           error {
             description
           }
@@ -126,9 +132,11 @@ mutation updateDemographicIndicator($input: UpdateDemographicIndicatorInput!) {
     demographic {
       updateDemographicIndicator(input: $input) {
         ... on DemographicIndicatorNode {
+          __typename
           id
         }
         ... on UpdateDemographicIndicatorError {
+          __typename
           error {
             description
           }
@@ -147,7 +155,7 @@ mutation updateDemographicProjection(
         ... on DemographicProjectionNode {
           id
         }
-        ... on InsertDemographicProjectionError {
+        ... on UpdateDemographicProjectionError {
           error {
             description
           }
