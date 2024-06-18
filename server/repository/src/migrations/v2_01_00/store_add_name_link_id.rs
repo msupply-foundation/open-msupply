@@ -38,6 +38,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           name_link_id TEXT NOT NULL REFERENCES name_link(id),
           code TEXT NOT NULL,
           site_id INTEGER NOT NULL,
+          disabled BOOLEAN DEFAULT FALSE NOT NULL,
           logo TEXT,
           store_mode TEXT DEFAULT 'STORE' NOT NULL,
           created_date TEXT
