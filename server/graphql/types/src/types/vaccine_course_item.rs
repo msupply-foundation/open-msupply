@@ -1,11 +1,6 @@
 use async_graphql::*;
-use dataloader::DataLoader;
-
-use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
 
 use repository::vaccine_course::vaccine_course_item::VaccineCourseItem;
-
-use super::ItemNode;
 
 #[derive(PartialEq, Debug)]
 pub struct VaccineCourseItemNode {
@@ -19,11 +14,11 @@ impl VaccineCourseItemNode {
     }
 
     pub async fn item_id(&self) -> &str {
-        &self.row().item.id;
+        &self.row().item.id
     }
 
     pub async fn name(&self) -> &str {
-        &self.row().item.name;
+        &self.row().item.name
     }
 }
 
