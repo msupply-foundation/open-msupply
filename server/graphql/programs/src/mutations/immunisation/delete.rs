@@ -17,8 +17,7 @@ pub fn delete_immunisation_program(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // resource: Resource::MutateImmunisationProgram,
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutateImmunisationProgram,
             store_id: None,
         },
     )?;
