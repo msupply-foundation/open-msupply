@@ -16,19 +16,15 @@ import { HeaderData, Row } from '../../../types';
 
 export const useDemographicIndicators = (headerData?: HeaderData) => {
   const t = useTranslation();
-
+  const api = useDemographicsApi();
+  const [draft, setDraft] = useState<Record<string, Row>>({});
   const { queryParams } = useUrlQueryParams({
     filters: [{ key: 'name' }, { key: 'basePopulation' }, { key: 'id' }],
   });
-
-  const api = useDemographicsApi();
-  const filterBy = queryParams.filterBy;
-  const params = { ...queryParams, filterBy };
   const { data, isLoading } = useQuery(
-    api.keys.paramIndicatorList(params),
-    () => api.getIndicators.list(params)
+    api.keys.paramIndicatorList(queryParams),
+    () => api.getIndicators.list(queryParams)
   );
-  const [draft, setDraft] = useState<Record<string, Row>>({});
 
   // initial load which populates from the API
   useEffect(() => {
