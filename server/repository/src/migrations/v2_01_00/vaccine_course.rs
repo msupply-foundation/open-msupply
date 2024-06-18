@@ -42,7 +42,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             id TEXT PRIMARY KEY NOT NULL,
             vaccine_course_id TEXT NOT NULL REFERENCES vaccine_course(id),
             dose_number INT NOT NULL,
-            label INT NOT NULL
+            label TEXT NOT NULL
         );
         "#
     )?;

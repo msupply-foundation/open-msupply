@@ -1,19 +1,21 @@
+export * from '../../../../Item/api/hooks/useVaccineItem/useVaccineItems';
+
 import { useDemographicIndicator } from './useDemographicIndicator';
 import { useDemographicIndicators } from './useDemographicIndicators';
 import { useDemographicIndicatorInsert } from './useDemographicIndicatorInsert';
 import { useDemographicIndicatorUpdate } from './useDemographicIndicatorUpdate';
-import { useDemographicProjection } from './useDemographicProjection';
 import { useDemographicProjections } from './useDemographicProjections';
-import { useDemographicProjectionInsert } from './useDemographicProjectionInsert';
-import { useDemographicProjectionUpdate } from './useDemographicProjectionUpdate';
+import { useDemographicProjectionUpsert } from './useDemographicProjectionUpsert';
+import { useDemographicProjection } from './useDemographicProjection';
+import { useVaccineItems } from '../../../../Item/api/hooks/useVaccineItem/useVaccineItems';
 
 export const Document = {
   useDemographicIndicator,
   useDemographicIndicators,
   useDemographicIndicatorInsert,
   useDemographicIndicatorUpdate,
-  useDemographicProjection,
   useDemographicProjections,
-  useDemographicProjectionInsert,
-  useDemographicProjectionUpdate,
+  useDemographicProjection,
+  useDemographicProjectionUpsert,
+  useVaccineItems,
 };

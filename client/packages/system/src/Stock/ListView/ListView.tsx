@@ -15,7 +15,7 @@ import {
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment, useStock } from '../api';
+import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import {
   getPackVariantCell,
@@ -23,6 +23,7 @@ import {
 } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { AppRoute } from '@openmsupply-client/config';
+import { useStockList } from '../api/hooks/useStockList';
 
 const StockListComponent: FC = () => {
   const {
@@ -54,7 +55,7 @@ const StockListComponent: FC = () => {
   const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const { data, isLoading, isError } = useStock.line.list(queryParams);
+  const { data, isLoading, isError } = useStockList(queryParams);
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
   });

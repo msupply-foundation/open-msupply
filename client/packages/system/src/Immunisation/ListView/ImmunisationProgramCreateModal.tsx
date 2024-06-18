@@ -8,8 +8,11 @@ import {
   BasicTextInput,
   Box,
   InputLabel,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface ImmunisationProgramCreateModalProps {
   isOpen: boolean;
@@ -21,6 +24,7 @@ export const ImmunisationProgramCreateModal: FC<
 > = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation('coldchain');
+  const navigate = useNavigate();
   const {
     query: { isLoading },
     draft,
@@ -37,8 +41,14 @@ export const ImmunisationProgramCreateModal: FC<
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            const success = await create();
-            if (success) onClose();
+            const result = await create();
+            if (result)
+              navigate(
+                RouteBuilder.create(AppRoute.Programs)
+                  .addPart(AppRoute.ImmunisationPrograms)
+                  .addPart(result.id)
+                  .build()
+              );
           }}
         />
       }
