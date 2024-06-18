@@ -149,5 +149,6 @@
   "label.actions": "Действия",
   "label.delete": "Удалить",
   "label.quantity": "Количество",
-  "label.requisition": "Заявка на закупку"
+  "label.requisition": "Заявка на закупку",
+  "label.day": "день"
 }

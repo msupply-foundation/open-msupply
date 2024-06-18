@@ -21,6 +21,15 @@ impl PropertyNodeValueType {
             Float => PropertyNodeValueType::Float,
         }
     }
+    pub fn to_domain(value_type: &PropertyNodeValueType) -> PropertyValueType {
+        use PropertyNodeValueType::*;
+        match value_type {
+            String => PropertyValueType::String,
+            Boolean => PropertyValueType::Boolean,
+            Integer => PropertyValueType::Integer,
+            Float => PropertyValueType::Float,
+        }
+    }
 }
 
 #[derive(PartialEq, Debug)]

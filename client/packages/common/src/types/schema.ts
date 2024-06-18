@@ -840,6 +840,16 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShi
   description: Scalars['String']['output'];
 };
 
+export type CentralGeneralMutations = {
+  __typename: 'CentralGeneralMutations';
+  configureNameProperties: ConfigureNamePropertiesResponse;
+};
+
+
+export type CentralGeneralMutationsConfigureNamePropertiesArgs = {
+  input: Array<ConfigureNamePropertyInput>;
+};
+
 export type CentralPatientNode = {
   __typename: 'CentralPatientNode';
   code: Scalars['String']['output'];
@@ -896,6 +906,7 @@ export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
   demographic: DemographicMutations;
+  general: CentralGeneralMutations;
   logReason: AssetLogReasonMutations;
   packVariant: PackVariantMutations;
   program: CentralProgramsMutations;
@@ -959,6 +970,18 @@ export type ClinicianSortInput = {
 };
 
 export type CliniciansResponse = ClinicianConnector;
+
+export type ConfigureNamePropertiesResponse = Success;
+
+export type ConfigureNamePropertyInput = {
+  allowedValues?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  key: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  propertyId: Scalars['String']['input'];
+  remoteEditable: Scalars['Boolean']['input'];
+  valueType: PropertyNodeValueType;
+};
 
 export type ConnectionError = CentralPatientSearchErrorInterface & LinkPatientPatientToStoreErrorInterface & UpdateUserErrorInterface & {
   __typename: 'ConnectionError';
@@ -6564,6 +6587,11 @@ export type StringFilterInput = {
   like?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type Success = {
+  __typename: 'Success';
+  success: Scalars['Boolean']['output'];
+};
+
 export type SuggestedNextEncounterNode = {
   __typename: 'SuggestedNextEncounterNode';
   label?: Maybe<Scalars['String']['output']>;
@@ -7793,7 +7821,8 @@ export type VaccineCourseFilterInput = {
 export type VaccineCourseItemNode = {
   __typename: 'VaccineCourseItemNode';
   id: Scalars['String']['output'];
-  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type VaccineCourseMutations = {

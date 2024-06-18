@@ -9,7 +9,7 @@ import { ImmunisationProgramFragment } from '../operations.generated';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
 import { LIST, PROGRAM } from './keys';
 
-export type ListParams = {
+type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<ImmunisationProgramFragment>;
