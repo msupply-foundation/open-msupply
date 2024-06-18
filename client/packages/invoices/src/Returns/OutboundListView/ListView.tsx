@@ -79,6 +79,7 @@ const OutboundReturnListViewComponent: FC = () => {
         'theirReference',
         {
           Cell: TooltipTextCell,
+          width: 150,
         },
       ],
       'selection',

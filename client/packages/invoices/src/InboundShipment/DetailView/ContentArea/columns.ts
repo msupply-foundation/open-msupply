@@ -130,6 +130,7 @@ export const useInboundShipmentColumns = () => {
               { path: ['lines', 'location', 'code'] },
               { path: ['location', 'code'], default: '' },
             ]),
+          width: 150,
         },
       ],
 
