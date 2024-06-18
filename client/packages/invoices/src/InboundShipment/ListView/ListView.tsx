@@ -68,7 +68,7 @@ export const InboundListView: FC = () => {
             getStatusTranslator(t)(status as InvoiceNodeStatus),
         },
       ],
-      ['invoiceNumber', { maxWidth: 80 }],
+      ['invoiceNumber', { maxWidth: 100 }],
       'createdDatetime',
       'deliveredDatetime',
       ['comment', { width: 125, Cell: TooltipTextCell }],
@@ -76,6 +76,7 @@ export const InboundListView: FC = () => {
         'theirReference',
         {
           Cell: TooltipTextCell,
+          width: 125,
         },
       ],
       [
