@@ -29,7 +29,7 @@ const renderOption: AutocompleteOptionRenderer<DraftVaccineCourseItem> = (
           width: 100,
         }}
       >
-        {option.item.name ?? ''}
+        {option.name ?? ''}
       </span>
     </li>
   );
@@ -50,18 +50,16 @@ export const VaccineItemSelect = ({
     data?.nodes?.map(item => {
       const vaccineItem: DraftVaccineCourseItem = {
         id: FnUtils.generateUUID(),
-        item: {
-          id: item.id,
-          name: item.name,
-        },
+        itemId: item.id,
+        name: item.name,
       };
       return vaccineItem;
     }) ?? [];
 
   return (
     <AutocompleteMulti
-      isOptionEqualToValue={(option, value) => option.item.id === value.item.id}
-      getOptionLabel={option => `${option.item.name}`}
+      isOptionEqualToValue={(option, value) => option.itemId === value.itemId}
+      getOptionLabel={option => `${option.name}`}
       value={draft?.vaccineCourseItems ?? []}
       filterSelectedOptions
       onChange={(_event, newSelectedItems) =>
