@@ -33,7 +33,7 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
       <Autocomplete
         fullWidth
         autoFocus={autoFocus}
-        disabled={isDisabled}
+        disabled={isDisabled || data?.nodes.length === 0}
         clearable={false}
         value={
           value
