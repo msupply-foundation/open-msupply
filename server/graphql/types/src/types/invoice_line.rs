@@ -1,9 +1,9 @@
-use super::{ItemNode, LocationNode, PricingNode, StockLineNode};
+use super::{ItemNode, LocationNode, PricingNode, ReturnReasonNode, StockLineNode};
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader, StockLineByIdLoader},
+    loader::{ItemLoader, LocationByIdLoader, ReturnReasonLoader, StockLineByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -163,6 +163,19 @@ impl InvoiceLineNode {
     }
     pub async fn return_reason_id(&self) -> &Option<String> {
         &self.row().return_reason_id
+    }
+
+    pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReturnReasonNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReturnReasonLoader>>();
+
+        let return_reason_id = match &self.row().return_reason_id {
+            Some(return_reason_id) => return_reason_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(return_reason_id.clone()).await?;
+
+        Ok(result.map(ReturnReasonNode::from_domain))
     }
 }
 
