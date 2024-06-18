@@ -120,11 +120,11 @@ fn insert_merge_test_data(connection: &StorageConnection) {
         connection,
         r#"
         INSERT INTO
-            store (id, name_id, code, site_id, store_mode, disabled)
+            store (id, name_id, code, site_id, store_mode)
         VALUES
-            ('store1', 'name1', 'store1code', 1, 'STORE', FALSE),
-            ('store2', 'name2', 'store2code', 1, 'STORE', FALSE),
-            ('store3', 'name3', 'store3code', 1, 'STORE', FALSE);
+            ('store1', 'name1', 'store1code', 1, 'STORE'),
+            ('store2', 'name2', 'store2code', 1, 'STORE'),
+            ('store3', 'name3', 'store3code', 1, 'STORE');
         "#
     )
     .unwrap();
@@ -157,9 +157,9 @@ fn insert_merge_test_data(connection: &StorageConnection) {
     connection,
         r#"
         INSERT INTO
-            invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, is_system_generated, status, type)
+            invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, status, type)
         VALUES
-            ('invoice1', 'name1', 'store1', 1, false, '2020-07-09 17:10:40', false, 'PICKED', 'INBOUND_SHIPMENT');
+            ('invoice1', 'name1', 'store1', 1, false, '2020-07-09 17:10:40', 'PICKED', 'INBOUND_SHIPMENT');
         "#
     )
     .unwrap();
