@@ -185,7 +185,7 @@ const useUpdate = (
       return;
     }
 
-    throw new Error('Unable to update Immunisation Program');
+    throw new Error(t('error.unable-to-update-immunisation-program'));
   };
 
   return useMutation({

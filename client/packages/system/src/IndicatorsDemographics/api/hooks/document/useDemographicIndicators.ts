@@ -91,5 +91,5 @@ export const useDemographicIndicators = (headerData?: HeaderData) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t, headerData]);
 
-  return { draft, setDraft, isLoading };
+  return { draft, setDraft, isLoading, data };
 };
