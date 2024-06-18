@@ -105,6 +105,8 @@ export const GrowthRow = <T extends RecordWithId>({
                     {columnHeader ? (
                       <NumericTextInput
                         value={columnHeader.value ?? 0}
+                        decimalLimit={2}
+                        decimalMin={1}
                         InputProps={{
                           endAdornment: (
                             <InputAdornment position="end">%</InputAdornment>
