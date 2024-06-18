@@ -63,5 +63,7 @@
   "messages.confirm-delete-reasons_few": "Это навсегда удалит {{count}} причины",
   "messages.error-deleting-reasons_few": "{{count}} причины не могут быть удалены",
   "messages.error-deleting-reasons_many": "{{count}} причин не могут быть удалены",
-  "messages.error-deleting-reasons_other": "{{count}} причин не могут быть удалены"
+  "messages.error-deleting-reasons_other": "{{count}} причин не могут быть удалены",
+  "label.percentage": "Процент",
+  "heading.schedule": "Расписание"
 }
