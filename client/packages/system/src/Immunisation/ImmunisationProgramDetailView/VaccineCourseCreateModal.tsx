@@ -8,6 +8,8 @@ import {
   BasicTextInput,
   Box,
   InputLabel,
+  usePermissionCheck,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 
@@ -20,6 +22,7 @@ interface VaccineCourseCreateModalModalProps {
 export const VaccineCourseCreateModal: FC<
   VaccineCourseCreateModalModalProps
 > = ({ isOpen, onClose, programId }) => {
+  usePermissionCheck(UserPermission.EditCentralData, onClose);
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['coldchain']);
   const {
@@ -41,8 +44,13 @@ export const VaccineCourseCreateModal: FC<
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await create();
-            onClose();
+            try {
+              const success = await create();
+              if (success) onClose();
+            } catch (e) {
+              // Should ideally just just catch `Permission Denied` as it's handled in graphql client
+              console.error(e);
+            }
           }}
         />
       }

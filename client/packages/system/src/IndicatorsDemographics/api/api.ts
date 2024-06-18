@@ -143,8 +143,8 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
     const result = await sdk.insertDemographicIndicator({ input: insertInput });
 
     if (
-      result.centralServer.demographic.insertDemographicIndicator.__typename ===
-      'DemographicIndicatorNode'
+      result.centralServer?.demographic?.insertDemographicIndicator
+        ?.__typename === 'DemographicIndicatorNode'
     ) {
       return result.centralServer.demographic.insertDemographicIndicator;
     }
@@ -158,8 +158,8 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
       input: updateInput,
     });
     if (
-      result.centralServer.demographic.updateDemographicIndicator.__typename ===
-      'DemographicIndicatorNode'
+      result.centralServer?.demographic?.updateDemographicIndicator
+        ?.__typename === 'DemographicIndicatorNode'
     ) {
       return result.centralServer.demographic.updateDemographicIndicator;
     }
@@ -169,8 +169,8 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
       input,
     });
     if (
-      result.centralServer.demographic.insertDemographicProjection
-        .__typename === 'DemographicProjectionNode'
+      result.centralServer?.demographic?.insertDemographicProjection
+        ?.__typename === 'DemographicProjectionNode'
     ) {
       return result.centralServer.demographic.insertDemographicProjection;
     }
@@ -181,8 +181,8 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
       input,
     });
     if (
-      result.centralServer.demographic.updateDemographicProjection
-        .__typename === 'DemographicProjectionNode'
+      result.centralServer?.demographic?.updateDemographicProjection
+        ?.__typename === 'DemographicProjectionNode'
     ) {
       return result.centralServer.demographic.updateDemographicProjection;
     }
