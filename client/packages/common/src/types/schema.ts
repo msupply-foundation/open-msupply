@@ -7822,7 +7822,8 @@ export type VaccineCourseFilterInput = {
 export type VaccineCourseItemNode = {
   __typename: 'VaccineCourseItemNode';
   id: Scalars['String']['output'];
-  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type VaccineCourseMutations = {

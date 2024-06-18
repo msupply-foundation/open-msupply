@@ -3,18 +3,12 @@
 import {
   VaccineCourseFragment,
   VaccineCourseItemFragment,
-  VaccineItemDetailsFragment,
 } from '../operations.generated';
-
-export type DraftVaccineItemDetails = Omit<
-  VaccineItemDetailsFragment,
-  '__typename'
->;
 
 export type DraftVaccineCourseItem = Omit<
   VaccineCourseItemFragment,
-  '__typename' | 'item'
-> & { item: DraftVaccineItemDetails };
+  '__typename'
+>;
 
 export type DraftVaccineCourse = Omit<
   VaccineCourseFragment,

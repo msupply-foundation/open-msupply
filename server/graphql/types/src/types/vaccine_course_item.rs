@@ -1,15 +1,15 @@
 use async_graphql::*;
-use dataloader::DataLoader;
 
-use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
-
-use repository::vaccine_course::vaccine_course_item_row::VaccineCourseItemRow;
-
-use super::ItemNode;
+use repository::{
+    vaccine_course::{
+        vaccine_course_item::VaccineCourseItem, vaccine_course_item_row::VaccineCourseItemRow,
+    },
+    ItemRow,
+};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccineCourseItemNode {
-    pub vaccine_course_item: VaccineCourseItemRow,
+    pub vaccine_course_item: VaccineCourseItem,
 }
 
 #[Object]
@@ -18,27 +18,27 @@ impl VaccineCourseItemNode {
         &self.row().id
     }
 
-    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
-        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader.load_one(self.row().item_link_id.clone()).await?;
+    pub async fn item_id(&self) -> &str {
+        &self.item_row().id
+    }
 
-        let item = item_option.ok_or(
-            StandardGraphqlError::InternalError(format!("Cannot find item {}", self.row().id,))
-                .extend(),
-        )?;
-
-        Ok(ItemNode::from_domain(item))
+    pub async fn name(&self) -> &str {
+        &self.item_row().name
     }
 }
 
 impl VaccineCourseItemNode {
-    pub fn from_domain(vaccine_course_item: VaccineCourseItemRow) -> VaccineCourseItemNode {
+    pub fn from_domain(vaccine_course_item: VaccineCourseItem) -> VaccineCourseItemNode {
         VaccineCourseItemNode {
             vaccine_course_item,
         }
     }
 
     pub fn row(&self) -> &VaccineCourseItemRow {
-        &self.vaccine_course_item
+        &self.vaccine_course_item.vaccine_course_item
+    }
+
+    pub fn item_row(&self) -> &ItemRow {
+        &self.vaccine_course_item.item
     }
 }
