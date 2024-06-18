@@ -68,12 +68,6 @@ pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
 ) -> Result<Version, MigrationError> {
-    if cfg!(test) {
-        println!("***Running migrations in test mode***");
-    } else {
-        println!("Running migrations in production mode");
-    }
-
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(V1_00_04),
         Box::new(V1_01_01),
