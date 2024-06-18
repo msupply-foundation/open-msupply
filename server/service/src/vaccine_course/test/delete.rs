@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod delete {
-    use repository::mock::{mock_immunisation_program, MockDataInserts};
+    use repository::mock::{mock_immunisation_program_a, MockDataInserts};
     use repository::test_db::setup_all;
+    use repository::vaccine_course::vaccine_course::VaccineCourseFilter;
+    use repository::EqualFilter;
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccine_course::delete::DeleteVaccineCourseError;
@@ -35,16 +37,26 @@ mod delete {
         let vaccine_course = InsertVaccineCourse {
             id: "vaccine_course_to_delete".to_owned(),
             name: "vaccine_course_name".to_owned(),
-            program_id: mock_immunisation_program().id.clone(),
+            program_id: mock_immunisation_program_a().id.clone(),
         };
 
         let _result = service
             .insert_vaccine_course(&context, vaccine_course.clone())
             .unwrap();
 
+        // Soft delete it
         let result = service.delete_vaccine_course(&context, vaccine_course.id.clone());
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), vaccine_course.id);
+
+        // Ensure it is not found in query
+        let filter = VaccineCourseFilter::new().id(EqualFilter::equal_to(&vaccine_course.id));
+
+        let courses = service
+            .get_vaccine_courses(&context.connection, None, Some(filter), None)
+            .unwrap();
+
+        assert_eq!(courses.count, 0);
     }
 }
