@@ -136,5 +136,10 @@
   "error.sync-v6-api-incompatible-hint": "Необходимо обновить Open mSupply Центральный Сервер до более новой версии - пожалуйста, свяжитесь с support@msupply.foundation",
   "facilities": "Объекты",
   "manage": "Управлять",
-  "settings": "Настройки"
+  "settings": "Настройки",
+  "immunisations": "Прививки",
+  "indicators-demographics": "Демография",
+  "label.edit-store-properties": "Редактировать свойства хранилища",
+  "label.initialise-store-properties": "Инициализация свойств хранилища для GAPS",
+  "label.initialised": "Инициализировано"
 }

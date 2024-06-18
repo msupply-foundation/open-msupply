@@ -22,11 +22,11 @@ pub enum InsertDemographicProjectionError {
 pub struct InsertDemographicProjection {
     pub id: String,
     pub base_year: i32,
-    pub year_1: Option<i32>,
-    pub year_2: Option<i32>,
-    pub year_3: Option<i32>,
-    pub year_4: Option<i32>,
-    pub year_5: Option<i32>,
+    pub year_1: Option<f64>,
+    pub year_2: Option<f64>,
+    pub year_3: Option<f64>,
+    pub year_4: Option<f64>,
+    pub year_5: Option<f64>,
 }
 
 pub fn insert_demographic_projection(
@@ -56,7 +56,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(), InsertDemographicProjectionError> {
     // Check for duplicate base year
-    if !check_base_year_unique(input.base_year, connection)? {
+    if !check_base_year_unique(input.base_year, &input.id, connection)? {
         return Err(InsertDemographicProjectionError::DemographicProjectionBaseYearAlreadyExists);
     }
 

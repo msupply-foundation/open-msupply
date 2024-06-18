@@ -17,10 +17,10 @@ bench = false
 service = { path = "../service" }
 
 anyhow.workspace = true
-clap = { version = "4.5.7", features = ["derive"] }
-serde = "1.0.203"
-serde_json = "1.0.117"
-serde_yaml = "0.9.34"
-log = "0.4.16"
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+log = { workspace = true }
 reqwest = { workspace = true }
-regex = "1.10.5"
+regex = { workspace = true }

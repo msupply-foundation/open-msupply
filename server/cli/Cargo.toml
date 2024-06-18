@@ -21,17 +21,17 @@ graphql = { path = "../graphql" }
 
 anyhow = { workspace = true }
 async-graphql = { workspace = true }
-clap = { version = "4.5.7", features = ["derive"] }
-chrono = { version = "0.4.38" }
+clap = { workspace = true }
+chrono = { workspace = true }
 diesel = { version = "2.2.1", default-features = false, features = ["chrono"] }
-log = "0.4.14"
-serde = "1.0.203"
-serde_json = "1.0.117"
-simple-log = { version = "1.6.0" }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+simple-log = { workspace = true }
 tokio = { version = "1.38.0", features = ["macros", "time", "rt-multi-thread"] }
 
 [dev-dependencies]
-actix-rt = "2.10.0"
+actix-rt = { workspace = true }
 
 [features]
 default = ["sqlite"]

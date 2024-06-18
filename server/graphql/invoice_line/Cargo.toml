@@ -23,7 +23,7 @@ async-trait = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-strum = { version = "0.26.2", features = ["derive"] }
+strum = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }
