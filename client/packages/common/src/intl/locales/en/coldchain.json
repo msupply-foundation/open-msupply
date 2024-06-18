@@ -20,7 +20,6 @@
   "label.calculate-demand": "Enabled",
   "label.day": "day",
   "label.target-demographic": "Target Demographic",
-  "label.new-row": "new row",
   "error.no-immunisation-programs": "No Immunization programs found",
   "error.asset-not-found": "Asset not found",
   "button.create-log-reason": "Create log reason",
