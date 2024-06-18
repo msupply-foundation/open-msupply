@@ -3,5 +3,20 @@
     "button.upload-assets": "Импортировать",
     "button.stop": "Стоп",
     "button.update-status": "Обновить Статус",
-    "heading.schedule": "Расписание"
+    "heading.schedule": "Расписание",
+    "error.immunisations-not-found": "Прививки не найдены",
+    "button.add-new-program": "Новая Программа",
+    "button.new-asset": "Новый Ресурс",
+    "button.acknowledge": "Нажмите, чтобы подтвердить это нарушение",
+    "error.asset-not-found": "Ресурс не найден",
+    "button.create-log-reason": "Создать причину записи",
+    "button.view-details": "Посмотреть Детали",
+    "button.view-all-breaches": "Посмотреть все нарушения",
+    "label.day": "день",
+    "label.demographic-group": "Демографическая Группа",
+    "label.wastage-rate": "Уровень отходов",
+    "label.coverage-rate": "Уровень покрытия",
+    "label.calculated-demand": "Расчетный Cпрос",
+    "label.calculate-demand": "Включено",
+    "label.target-demographic": "Целевая демографическая группа"
 }
