@@ -1,6 +1,11 @@
 use async_graphql::*;
 
-use repository::vaccine_course::vaccine_course_item::VaccineCourseItem;
+use repository::{
+    vaccine_course::{
+        vaccine_course_item::VaccineCourseItem, vaccine_course_item_row::VaccineCourseItemRow,
+    },
+    ItemRow,
+};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccineCourseItemNode {
@@ -10,15 +15,15 @@ pub struct VaccineCourseItemNode {
 #[Object]
 impl VaccineCourseItemNode {
     pub async fn id(&self) -> &str {
-        &self.row().vaccine_course_item.id
+        &self.row().id
     }
 
     pub async fn item_id(&self) -> &str {
-        &self.row().item.id
+        &self.item_row().id
     }
 
     pub async fn name(&self) -> &str {
-        &self.row().item.name
+        &self.item_row().name
     }
 }
 
@@ -29,7 +34,11 @@ impl VaccineCourseItemNode {
         }
     }
 
-    pub fn row(&self) -> &VaccineCourseItem {
-        &self.vaccine_course_item
+    pub fn row(&self) -> &VaccineCourseItemRow {
+        &self.vaccine_course_item.vaccine_course_item
+    }
+
+    pub fn item_row(&self) -> &ItemRow {
+        &self.vaccine_course_item.item
     }
 }
