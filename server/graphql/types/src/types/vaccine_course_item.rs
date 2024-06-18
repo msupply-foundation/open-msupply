@@ -18,18 +18,12 @@ impl VaccineCourseItemNode {
         &self.row().vaccine_course_item.id
     }
 
-    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
-        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader.load_one(self.row().item.id.clone()).await?;
+    pub async fn item_id(&self) -> &str {
+        &self.row().item.id;
+    }
 
-        let item = item_option.ok_or(
-            StandardGraphqlError::InternalError(
-                format!("Cannot find item {}", self.row().item.id,),
-            )
-            .extend(),
-        )?;
-
-        Ok(ItemNode::from_domain(item))
+    pub async fn name(&self) -> &str {
+        &self.row().item.name;
     }
 }
 
