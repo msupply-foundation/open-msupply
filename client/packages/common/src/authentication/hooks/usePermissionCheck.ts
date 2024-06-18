@@ -6,7 +6,10 @@ import { useLocalStorage } from '../../localStorage';
 import { useNavigate } from 'react-router-dom';
 import { RouteBuilder } from '../../utils/navigation';
 
-export const usePermissionCheck = (permission: UserPermission) => {
+export const usePermissionCheck = (
+  permission: UserPermission,
+  onPermissionDenied?: () => void
+) => {
   const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
   const [error, setError] = useLocalStorage('/error/auth');
@@ -23,6 +26,10 @@ export const usePermissionCheck = (permission: UserPermission) => {
   }, [error]);
 
   if (previous.current === AuthError.PermissionDenied && !error) {
-    navigate(RouteBuilder.create(AppRoute.Dashboard).build());
+    if (onPermissionDenied) {
+      onPermissionDenied();
+    } else {
+      navigate(RouteBuilder.create(AppRoute.Dashboard).build());
+    }
   }
 };

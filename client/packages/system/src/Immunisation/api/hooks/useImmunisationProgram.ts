@@ -123,7 +123,7 @@ const useCreate = (
       },
     });
 
-    const result = apiResult.centralServer.program.insertImmunisationProgram;
+    const result = apiResult.centralServer?.program?.insertImmunisationProgram; // `?` is needed as result type is incorrect when permission is denied
 
     if (result?.__typename === 'ProgramNode') return result;
 
@@ -168,7 +168,7 @@ const useUpdate = (
       storeId,
     });
 
-    const result = apiResult.centralServer.program.updateImmunisationProgram;
+    const result = apiResult.centralServer?.program?.updateImmunisationProgram; // `?` is needed as result type is incorrect when permission is denied
 
     if (result?.__typename === 'ProgramNode') {
       return result;

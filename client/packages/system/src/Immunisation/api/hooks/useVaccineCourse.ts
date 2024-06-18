@@ -184,7 +184,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
       storeId,
     });
 
-    const result = apiResult.centralServer.vaccineCourse.updateVaccineCourse;
+    const result = apiResult.centralServer?.vaccineCourse?.updateVaccineCourse; // `?` is needed as result type is incorrect when permission is denied
 
     if (result?.__typename === 'VaccineCourseNode') {
       return result;

@@ -8,6 +8,8 @@ import {
   BasicTextInput,
   Box,
   InputLabel,
+  usePermissionCheck,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 
@@ -20,6 +22,7 @@ export const ImmunisationProgramCreateModal: FC<
   ImmunisationProgramCreateModalProps
 > = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
+  usePermissionCheck(UserPermission.EditCentralData, onClose);
   const t = useTranslation('coldchain');
   const {
     query: { isLoading },
@@ -37,8 +40,13 @@ export const ImmunisationProgramCreateModal: FC<
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            const success = await create();
-            if (success) onClose();
+            try {
+              const success = await create();
+              if (success) onClose();
+            } catch (e) {
+              // Should ideally just just catch `Permission Denied` as it's handled in graphql client
+              console.error(e);
+            }
           }}
         />
       }
