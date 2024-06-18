@@ -141,7 +141,7 @@ mod query {
         // Check there is one item for the vaccine_course, and it's the right one
         let items = item_repo.query_by_filter(item_filter.clone()).unwrap();
         assert_eq!(items.len(), 1);
-        assert_eq!(items[0].id, item1.id);
+        assert_eq!(items[0].vaccine_course_item.id, item1.id);
 
         // Check there is one schedule for the vaccine_course, and it's the right one
         let schedules = schedule_repo

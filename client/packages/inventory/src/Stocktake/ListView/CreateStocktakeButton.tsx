@@ -13,7 +13,11 @@ import { PlusCircleIcon } from '@common/icons';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { ToggleState, useDialog } from '@common/hooks';
 import { useStocktake } from '../api';
-import { useMasterList, useLocation } from '@openmsupply-client/system';
+import {
+  useMasterList,
+  useLocation,
+  useStockList,
+} from '@openmsupply-client/system';
 import {
   Box,
   FnUtils,
@@ -21,7 +25,6 @@ import {
   InsertStocktakeInput,
   useAuthContext,
 } from '@openmsupply-client/common';
-import { useStock } from '@openmsupply-client/system';
 
 const LABEL_FLEX = '0 0 150px';
 
@@ -61,9 +64,11 @@ export const CreateStocktakeButton: React.FC<{
     isLoading: isLoadingLocations,
     mutate: fetchLocations,
   } = useLocation.document.listAll({ key: 'name', direction: 'asc' });
-  const { data: stockData, isLoading: isLoadingStock } = useStock.line.sorted({
-    key: 'expiryDate',
-    direction: 'asc',
+  const { data: stockData, isLoading: isLoadingStock } = useStockList({
+    sortBy: {
+      key: 'expiryDate',
+      direction: 'asc',
+    },
   });
   const { localisedDate } = useFormatDateTime();
   const [createStocktakeArgs, setCreateStocktakeArgs] =

@@ -8,10 +8,13 @@ import {
   BasicTextInput,
   Box,
   InputLabel,
+  useNavigate,
+  RouteBuilder,
   usePermissionCheck,
   UserPermission,
 } from '@openmsupply-client/common';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface ImmunisationProgramCreateModalProps {
   isOpen: boolean;
@@ -24,6 +27,7 @@ export const ImmunisationProgramCreateModal: FC<
   const { Modal } = useDialog({ isOpen, onClose });
   usePermissionCheck(UserPermission.EditCentralData, onClose);
   const t = useTranslation('coldchain');
+  const navigate = useNavigate();
   const {
     query: { isLoading },
     draft,
@@ -41,8 +45,14 @@ export const ImmunisationProgramCreateModal: FC<
           disabled={isInvalid}
           onClick={async () => {
             try {
-              const success = await create();
-              if (success) onClose();
+              const result = await create();
+              if (result)
+                navigate(
+                  RouteBuilder.create(AppRoute.Programs)
+                    .addPart(AppRoute.ImmunisationPrograms)
+                    .addPart(result.id)
+                    .build()
+                );
             } catch (e) {
               // Should ideally just just catch `Permission Denied` as it's handled in graphql client
               console.error(e);

@@ -14,10 +14,8 @@ fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
 
 fragment VaccineCourseItem on VaccineCourseItemNode {
   id
-  item {
-    id
-    name
-  }
+  itemId
+  name
 }
 
 query programs(
@@ -143,6 +141,7 @@ mutation insertVaccineCourse(
   centralServer {
     vaccineCourse {
       insertVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
         ... on VaccineCourseNode {
           ...VaccineCourse
         }

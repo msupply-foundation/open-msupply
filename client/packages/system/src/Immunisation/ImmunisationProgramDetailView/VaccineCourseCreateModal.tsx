@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React from 'react';
 import {
   useDialog,
   Grid,
@@ -8,10 +8,13 @@ import {
   BasicTextInput,
   Box,
   InputLabel,
+  useNavigate,
+  RouteBuilder,
   usePermissionCheck,
   UserPermission,
 } from '@openmsupply-client/common';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface VaccineCourseCreateModalModalProps {
   isOpen: boolean;
@@ -19,12 +22,15 @@ interface VaccineCourseCreateModalModalProps {
   programId: string | undefined;
 }
 
-export const VaccineCourseCreateModal: FC<
-  VaccineCourseCreateModalModalProps
-> = ({ isOpen, onClose, programId }) => {
+export const VaccineCourseCreateModal = ({
+  isOpen,
+  onClose,
+  programId,
+}: VaccineCourseCreateModalModalProps) => {
   usePermissionCheck(UserPermission.EditCentralData, onClose);
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation(['coldchain']);
+  const navigate = useNavigate();
   const {
     query: { isLoading },
     draft,
@@ -33,26 +39,32 @@ export const VaccineCourseCreateModal: FC<
   } = useVaccineCourse(programId);
   const isInvalid = !draft.name.trim();
 
-  useEffect(() => {
-    updatePatch({ programId: programId });
-  }, [programId]);
+  const onOk = async () => {
+    try {
+      const result = await create(programId ?? '');
+      if (!result) return;
+
+      const response = result.centralServer?.vaccineCourse?.insertVaccineCourse;
+      if (response?.__typename !== 'VaccineCourseNode') return;
+
+      navigate(
+        RouteBuilder.create(AppRoute.Programs)
+          .addPart(AppRoute.ImmunisationPrograms)
+          .addPart(response.programId)
+          .addPart(response.id)
+          .build()
+      );
+    } catch (e) {
+      // Should ideally just just catch `Permission Denied` as it's handled in graphql client
+      console.error(e);
+      return;
+    }
+  };
 
   return (
     <Modal
       okButton={
-        <DialogButton
-          variant="ok"
-          disabled={isInvalid}
-          onClick={async () => {
-            try {
-              const success = await create();
-              if (success) onClose();
-            } catch (e) {
-              // Should ideally just just catch `Permission Denied` as it's handled in graphql client
-              console.error(e);
-            }
-          }}
-        />
+        <DialogButton variant="ok" disabled={isInvalid} onClick={onOk} />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       title={t('label.add-new-vaccine-course')}

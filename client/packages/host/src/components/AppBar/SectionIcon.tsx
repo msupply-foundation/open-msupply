@@ -1,19 +1,22 @@
 import React from 'react';
 import {
   CustomersIcon,
+  InvoiceIcon,
   ListIcon,
-  LocaleKey,
-  matchPath,
   RadioIcon,
   ReportsIcon,
-  RouteBuilder,
   SettingsIcon,
   SlidersIcon,
   StockIcon,
   SuppliersIcon,
   ThermometerIcon,
-  Tooltip,
   TruckIcon,
+} from '@common/icons';
+import {
+  LocaleKey,
+  matchPath,
+  RouteBuilder,
+  Tooltip,
   useLocation,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -46,6 +49,8 @@ const getIcon = (section?: AppRoute) => {
       return <RadioIcon color="primary" fontSize="small" />;
     case AppRoute.Manage:
       return <SlidersIcon color="primary" fontSize="small" />;
+    case AppRoute.Programs:
+      return <InvoiceIcon color="primary" fontSize="small" />;
     default:
       return undefined;
   }
@@ -63,6 +68,7 @@ const useSection = (): Section | undefined => {
     AppRoute.Reports,
     AppRoute.Sync,
     AppRoute.Manage,
+    AppRoute.Programs,
   ];
   const location = useLocation();
 
