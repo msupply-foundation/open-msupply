@@ -43,7 +43,7 @@ const vaccineCourseParsers = {
   toItemInput: (item: DraftVaccineCourseItem): UpdateVaccineCourseItemInput => {
     return {
       id: item.id,
-      itemId: item.item.id,
+      itemId: item.itemId,
     };
   },
 };
