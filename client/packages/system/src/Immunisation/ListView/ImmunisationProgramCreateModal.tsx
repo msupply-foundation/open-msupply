@@ -10,8 +10,6 @@ import {
   InputLabel,
   useNavigate,
   RouteBuilder,
-  usePermissionCheck,
-  UserPermission,
 } from '@openmsupply-client/common';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppRoute } from '@openmsupply-client/config';
@@ -25,7 +23,6 @@ export const ImmunisationProgramCreateModal: FC<
   ImmunisationProgramCreateModalProps
 > = ({ isOpen, onClose }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  usePermissionCheck(UserPermission.EditCentralData, onClose);
   const t = useTranslation('coldchain');
   const navigate = useNavigate();
   const {
