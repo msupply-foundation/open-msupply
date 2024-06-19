@@ -1,9 +1,11 @@
 import React from 'react';
 import {
+  Box,
   Grid,
   InputWithLabelRow,
   NumericTextInput,
   TextArea,
+  Tooltip,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -98,8 +100,11 @@ export const ResponseLineEditForm = ({
           <Typography variant="body1" fontWeight="bold">
             {t('heading.stock-details')}
           </Typography>
-
-          <InfoRow label={t('label.name')} value={item.name} />
+          <Tooltip title={item.name}>
+            <Box>
+              <InfoRow label={t('label.name')} value={item.name} />
+            </Box>
+          </Tooltip>
           <InfoRow label={t('label.code')} value={item.code} />
           {variantsControl ? (
             <InfoRow

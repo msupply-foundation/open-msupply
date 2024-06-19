@@ -95,6 +95,7 @@ pub fn generate(
         is_active: true,
         wastage_rate: 0.0,
         doses: 1,
+        deleted_datetime: None,
     }
 }
 

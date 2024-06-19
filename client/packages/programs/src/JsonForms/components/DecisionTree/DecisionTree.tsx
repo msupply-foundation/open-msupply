@@ -4,7 +4,7 @@ import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { DetailInputWithLabelRow } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../../common';
 import { z } from 'zod';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 import { useEncounter } from '../../../api';
 import { useDecisionTreeValidation } from './useDecisionTreeValidation';
 import { usePatient, PatientRowFragment } from '@openmsupply-client/system';

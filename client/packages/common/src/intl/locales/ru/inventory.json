@@ -11,7 +11,7 @@
   "error.no-locations": "Нет Локаций для отображения.",
   "error.no-stock": "Нет запасов для отображения.",
   "button.repack": "Переупаковать",
-  "error.unable-to-scan": "Невозможно отсканировать штрихкод: {{error}}",
+  "error.unable-to-scan": "Не удалось отсканировать штрихкод: {{error}}",
   "label.add-batch": "Добавить партию",
   "label.batch": "Партия",
   "label.finalised": "Завершено",
