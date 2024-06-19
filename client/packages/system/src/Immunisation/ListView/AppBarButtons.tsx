@@ -6,8 +6,7 @@ import {
   useTranslation,
   ButtonWithIcon,
   UserPermission,
-  useDisabledNotificationToast,
-  useAuthContext,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 
 interface ImmunisationsAppBarButtonsProps {
@@ -18,12 +17,10 @@ export const AppBarButtons = ({
   onCreate,
 }: ImmunisationsAppBarButtonsProps) => {
   const t = useTranslation('coldchain');
-  const { userHasPermission } = useAuthContext();
-  const showDisabledNotification = useDisabledNotificationToast();
-  const onClick = () => {
-    if (userHasPermission(UserPermission.EditCentralData)) onCreate();
-    else showDisabledNotification();
-  };
+  const onClick = useCallbackWithPermission(
+    UserPermission.EditCentralData,
+    onCreate
+  );
 
   return (
     <AppBarButtonsPortal>
