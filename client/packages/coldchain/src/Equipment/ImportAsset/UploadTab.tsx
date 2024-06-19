@@ -261,7 +261,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         })
       ),
       t,
-      isCentralServer
+      isCentralServer,
+      properties ? properties.map(p => p.key) : []
     );
     FileUtils.exportCSV(csv, t('filename.cce'));
   };
