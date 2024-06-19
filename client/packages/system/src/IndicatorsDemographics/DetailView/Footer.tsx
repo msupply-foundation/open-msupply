@@ -6,8 +6,7 @@ import {
   AppFooterPortal,
   LoadingButton,
   UserPermission,
-  useDisabledNotificationToast,
-  useAuthContext,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 import { XCircleIcon } from '@common/icons';
 
@@ -23,14 +22,10 @@ export const FooterComponent = ({
   cancel,
 }: DemographicsFooterProps) => {
   const t = useTranslation();
-  const { userHasPermission } = useAuthContext();
-  const showDisabledNotification = useDisabledNotificationToast();
-
-  const onClick = () => {
-    if (userHasPermission(UserPermission.EditCentralData)) save();
-    else showDisabledNotification();
-  };
-
+  const onClick = useCallbackWithPermission(
+    UserPermission.EditCentralData,
+    save
+  );
   return (
     <AppFooterPortal
       Content={

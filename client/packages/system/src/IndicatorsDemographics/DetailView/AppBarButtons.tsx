@@ -6,8 +6,7 @@ import {
   Grid,
   PlusCircleIcon,
   RecordPatch,
-  useAuthContext,
-  useDisabledNotificationToast,
+  useCallbackWithPermission,
   UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -24,15 +23,8 @@ export const AppBarButtonsComponent = ({
   rows,
 }: IndicatorsAppBarButtonsProps) => {
   const t = useTranslation();
-  const { userHasPermission } = useAuthContext();
-  const showDisabledNotification = useDisabledNotificationToast();
 
-  const handleClick = () => {
-    if (!userHasPermission(UserPermission.EditCentralData)) {
-      showDisabledNotification();
-      return;
-    }
-
+  const onCreate = () => {
     const id = FnUtils.generateUUID();
     const newRow = {
       id,
@@ -50,6 +42,12 @@ export const AppBarButtonsComponent = ({
     };
     patch({ ...newRow });
   };
+
+  const handleClick = useCallbackWithPermission(
+    UserPermission.EditCentralData,
+    onCreate
+  );
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>

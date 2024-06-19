@@ -10,9 +10,8 @@ import {
   FileUtils,
   LoadingButton,
   SortBy,
-  useAuthContext,
   UserPermission,
-  useDisabledNotificationToast,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
@@ -24,9 +23,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   const { success, error } = useNotification();
   const t = useTranslation('dispensary');
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
-  const { userHasPermission } = useAuthContext();
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const showPermissionDenied = useDisabledNotificationToast();
 
   const csvExport = async () => {
     const data = await mutateAsync();
@@ -40,13 +37,10 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
     success(t('success'))();
   };
 
-  const onCreatePatient = () => {
-    if (!userHasPermission(UserPermission.PatientMutate)) {
-      showPermissionDenied();
-      return;
-    }
-    setCreateModalOpen(true);
-  };
+  const onCreatePatient = useCallbackWithPermission(
+    UserPermission.PatientMutate,
+    () => setCreateModalOpen(true)
+  );
 
   return (
     <AppBarButtonsPortal>
