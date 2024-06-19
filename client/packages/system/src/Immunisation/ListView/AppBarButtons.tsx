@@ -5,8 +5,8 @@ import {
   Grid,
   useTranslation,
   ButtonWithIcon,
-  useCheckPermissionWithError,
   UserPermission,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 
 interface ImmunisationsAppBarButtonsProps {
@@ -17,8 +17,9 @@ export const AppBarButtons = ({
   onCreate,
 }: ImmunisationsAppBarButtonsProps) => {
   const t = useTranslation('coldchain');
-  const checkPermissionDenied = useCheckPermissionWithError(
-    UserPermission.EditCentralData
+  const onClick = useCallbackWithPermission(
+    UserPermission.EditCentralData,
+    onCreate
   );
 
   return (
@@ -27,12 +28,7 @@ export const AppBarButtons = ({
         <ButtonWithIcon
           startIcon={<PlusCircleIcon />}
           variant="outlined"
-          onClick={() => {
-            if (checkPermissionDenied()) {
-              return;
-            }
-            onCreate();
-          }}
+          onClick={onClick}
           Icon={<PlusCircleIcon />}
           label={t('button.add-new-program')}
         >

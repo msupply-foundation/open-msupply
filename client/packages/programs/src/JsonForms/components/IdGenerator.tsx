@@ -19,7 +19,7 @@ import {
   FORM_GAP,
   FORM_LABEL_WIDTH,
 } from '@openmsupply-client/programs';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 import { usePatient } from '@openmsupply-client/system';
 import { z } from 'zod';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';

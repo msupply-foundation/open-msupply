@@ -13,9 +13,8 @@ import {
   useNotification,
   FileUtils,
   FnUtils,
-  useAuthContext,
   UserPermission,
-  useDisabledNotificationToast,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
@@ -26,8 +25,6 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const t = useTranslation('distribution');
   const { success, error } = useNotification();
-  const { userHasPermission } = useAuthContext();
-  const showPermissionDenied = useDisabledNotificationToast();
 
   const { mutateAsync: onCreate } = useReturns.document.insertInboundReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllInbound({
@@ -46,14 +43,10 @@ export const AppBarButtonsComponent: FC<{
     FileUtils.exportCSV(csv, t('filename.inbound-returns'));
     success(t('success'))();
   };
-
-  const openModal = () => {
-    if (!userHasPermission(UserPermission.InboundReturnMutate)) {
-      showPermissionDenied();
-      return;
-    }
-    modalController.toggleOn();
-  };
+  const openModal = useCallbackWithPermission(
+    UserPermission.InboundReturnMutate,
+    modalController.toggleOn
+  );
 
   return (
     <AppBarButtonsPortal>

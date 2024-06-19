@@ -1,2 +1,2 @@
 export * from './usePermissionCheck';
-export * from './useCheckPermissionWithError';
+export * from './useCallbackWithPermission';

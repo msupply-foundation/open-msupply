@@ -1,6 +1,6 @@
 import React from 'react';
 import DOMPurify from 'dompurify';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 
 export const RegexUtils = {
   extractSvg: (
