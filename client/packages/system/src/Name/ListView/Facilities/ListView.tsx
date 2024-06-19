@@ -9,11 +9,13 @@ import {
   DotCell,
   ColumnAlign,
   useEditModal,
+  useToggle,
 } from '@openmsupply-client/common';
 import { useName, NameRowFragment } from '../../api';
 import { NameRenderer } from '../../Components';
 import { Toolbar } from './Toolbar';
 import { FacilityEditModal } from './FacilityEditModal';
+import { AppBarButtons } from './AppBarButtons';
 
 const FacilitiesListComponent = () => {
   const [selectedId, setSelectedId] = useState('');
@@ -27,6 +29,7 @@ const FacilitiesListComponent = () => {
   const pagination = { page, first, offset };
 
   const { isOpen, onClose, onOpen } = useEditModal<NameRowFragment>();
+  const importPropertiesModalController = useToggle();
 
   const onRowClick = (row: NameRowFragment) => {
     setSelectedId(row.id);
@@ -78,6 +81,7 @@ const FacilitiesListComponent = () => {
 
   return (
     <>
+      <AppBarButtons importModalController={importPropertiesModalController} />
       <Toolbar filter={filter} />
       {isOpen && (
         <FacilityEditModal

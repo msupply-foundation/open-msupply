@@ -49,6 +49,7 @@
   "button.dashboard": "Dashboard",
   "button.view": "View",
   "button.zero-line-quantity": "Set quantities to 0",
+  "button.import-properties": "Import Properties",
   "description.already-issued": "Quantity already issued in shipments.",
   "description.average-monthly-consumption": "Average Monthly Consumption",
   "description.breach-type": "Ongoing breach type",
