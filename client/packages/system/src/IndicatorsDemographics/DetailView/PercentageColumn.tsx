@@ -26,6 +26,6 @@ export const percentageColumn = (): ColumnDefinition<Row> => ({
   label: 'label.percentage',
   key: 'percentage',
   Cell: PercentageCell,
-  minWidth: 100,
+  width: 125,
   sortable: false,
 });
