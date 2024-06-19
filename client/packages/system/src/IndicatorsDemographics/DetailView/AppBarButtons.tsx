@@ -6,8 +6,9 @@ import {
   Grid,
   PlusCircleIcon,
   RecordPatch,
+  useAuthContext,
+  useDisabledNotificationToast,
   UserPermission,
-  useCheckPermissionWithError,
   useTranslation,
 } from '@openmsupply-client/common';
 
@@ -23,14 +24,15 @@ export const AppBarButtonsComponent = ({
   rows,
 }: IndicatorsAppBarButtonsProps) => {
   const t = useTranslation();
-  const checkPermissionDenied = useCheckPermissionWithError(
-    UserPermission.EditCentralData
-  );
+  const { userHasPermission } = useAuthContext();
+  const showDisabledNotification = useDisabledNotificationToast();
 
   const handleClick = () => {
-    if (checkPermissionDenied()) {
+    if (!userHasPermission(UserPermission.EditCentralData)) {
+      showDisabledNotification();
       return;
     }
+
     const id = FnUtils.generateUUID();
     const newRow = {
       id,

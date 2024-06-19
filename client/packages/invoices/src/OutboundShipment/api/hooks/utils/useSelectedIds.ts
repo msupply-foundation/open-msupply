@@ -1,6 +1,6 @@
 import { useTableStore } from '@openmsupply-client/common';
 import { useOutboundRows } from '../line/useOutboundRows';
-import { isString } from 'lodash';
+import { isString } from '@common/utils';
 
 export const useSelectedIds = () => {
   const { items, lines } = useOutboundRows();

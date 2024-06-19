@@ -20,7 +20,7 @@ import {
 } from 'recharts';
 import { useEncounter } from '../../api';
 import { z } from 'zod';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 
 export const encounterLineChartTester = rankWith(
   4,

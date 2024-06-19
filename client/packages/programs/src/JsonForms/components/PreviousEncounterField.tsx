@@ -16,7 +16,7 @@ import {
   DefaultFormRowSpacing,
 } from '../common';
 import { useEncounter } from '../../api';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 
 export const previousEncounterFieldTester = rankWith(
   10,

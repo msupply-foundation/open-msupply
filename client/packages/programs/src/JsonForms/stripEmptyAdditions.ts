@@ -1,4 +1,10 @@
-import { isObject, isArray, isEqualWith, includes, omitBy } from 'lodash';
+import {
+  isObject,
+  isArray,
+  isEqualWith,
+  includes,
+  omitBy,
+} from '@common/utils';
 import { JsonData } from './common';
 
 /**
