@@ -247,19 +247,20 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const { data: properties } = useAssetData.utils.properties();
 
   const csvExample = async () => {
-    const emptyRows: ImportRow[] = [];
+    const exampleRows: Partial<ImportRow>[] = [
+      {
+        id: '',
+        assetNumber: 'Asset Number',
+        catalogueItemCode: '',
+        store: undefined,
+        notes: '',
+        serialNumber: '',
+        installationDate: '',
+        properties: {},
+      },
+    ];
     const csv = importEquipmentToCsv(
-      emptyRows.map(
-        (_row: ImportRow): Partial<ImportRow> => ({
-          assetNumber: undefined,
-          catalogueItemCode: undefined,
-          store: undefined,
-          notes: undefined,
-          serialNumber: undefined,
-          installationDate: undefined,
-          properties: {},
-        })
-      ),
+      exampleRows,
       t,
       isCentralServer,
       properties ? properties.map(p => p.key) : []
