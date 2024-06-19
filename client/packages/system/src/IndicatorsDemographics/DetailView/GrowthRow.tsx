@@ -12,6 +12,7 @@ import {
   NumericTextInput,
   InputAdornment,
   useTranslation,
+  useBufferState,
 } from '@openmsupply-client/common';
 import { HeaderData, HeaderValue } from '../types';
 
@@ -103,22 +104,14 @@ export const GrowthRow = <T extends RecordWithId>({
                   >
                     {hasColumnText ? t('label.growth-on-previous-year') : null}
                     {columnHeader ? (
-                      <NumericTextInput
-                        value={columnHeader.value ?? 0}
-                        decimalLimit={2}
-                        decimalMin={1}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">%</InputAdornment>
-                          ),
-                        }}
-                        onChange={value => {
-                          if (value !== undefined)
-                            setData({
-                              id: columnHeader.id,
-                              value,
-                            });
-                        }}
+                      <GrowthInput
+                        value={columnHeader.value}
+                        setValue={value =>
+                          setData({
+                            id: columnHeader.id,
+                            value,
+                          })
+                        }
                       />
                     ) : null}
                   </Box>
@@ -129,5 +122,32 @@ export const GrowthRow = <T extends RecordWithId>({
         </TableHead>
       </MuiTable>
     </TableContainer>
+  );
+};
+
+const GrowthInput = ({
+  value,
+  setValue,
+}: {
+  value?: number;
+  setValue: (x: number) => void;
+}) => {
+  const [buffer, setBuffer] = useBufferState(value);
+
+  return (
+    <NumericTextInput
+      value={buffer}
+      decimalLimit={2}
+      decimalMin={1}
+      allowNegative
+      InputProps={{
+        inputProps: { sx: { padding: '2px 0' } },
+        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+      }}
+      onChange={newValue => {
+        setBuffer(newValue);
+        if (newValue !== undefined) setValue(newValue);
+      }}
+    />
   );
 };
