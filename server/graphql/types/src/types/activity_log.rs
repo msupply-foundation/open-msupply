@@ -67,6 +67,7 @@ pub enum ActivityLogNodeType {
     VaccineCourseCreated,
     ProgramCreated,
     ProgramUpdated,
+    VaccineCourseUpdated,
 }
 
 #[Object]
@@ -187,6 +188,7 @@ impl ActivityLogNodeType {
             from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
             from::AssetPropertyCreated => to::AssetPropertyCreated,
             from::VaccineCourseCreated => to::VaccineCourseCreated,
+            from::VaccineCourseUpdated => to::VaccineCourseUpdated,
             from::ProgramCreated => to::ProgramCreated,
             from::ProgramUpdated => to::ProgramUpdated,
         }
@@ -239,6 +241,7 @@ impl ActivityLogNodeType {
             from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
             from::AssetPropertyCreated => to::AssetPropertyCreated,
             from::VaccineCourseCreated => to::VaccineCourseCreated,
+            from::VaccineCourseUpdated => to::VaccineCourseUpdated,
             from::ProgramCreated => to::ProgramCreated,
             from::ProgramUpdated => to::ProgramUpdated,
         }

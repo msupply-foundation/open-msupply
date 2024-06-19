@@ -1,66 +1,38 @@
 import {
-  ArrayUtils,
-  AutocompleteMulti,
+  Autocomplete,
   BasicSpinner,
   BasicTextInput,
   Box,
   Checkbox,
   Container,
-  FnUtils,
+  DemographicIndicatorNode,
   InputWithLabelRow,
-  MiniTable,
   NothingHere,
   NumericTextInput,
-  RecordPatch,
-  SearchBar,
   Typography,
   useBreadcrumbs,
-  useColumns,
+  useParams,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { FC } from 'react';
-import { descriptionColumn } from './DescriptionColumn';
+import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
+import { AppFooterComponent } from './AppFooterComponent';
+import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
+import { VaccineItemSelect } from './VaccineCourseItemSelect';
 
-// dummy data
-const data = {
-  name: 'some immunisation name',
-};
+const MAX_VACCINE_DOSES = 20;
 
-interface Schedule {
-  id: string;
-  number: number;
-  description: string;
-  day: number;
-}
-
-interface Draft {
-  name: string;
-  demographic: string;
-  wastageRate: number;
-  coverageRate: number;
-  vaccineItems: any[];
-  numberOfDoses: number;
-  schedule: Record<string, Schedule>;
-  calculateDemand: boolean;
-}
-
-const seed: Draft = {
-  name: '',
-  demographic: '',
-  coverageRate: 100,
-  vaccineItems: [{}],
-  numberOfDoses: 1,
-  wastageRate: 0,
-  calculateDemand: false,
-  schedule: {
-    id: {
-      id: 'id',
-      number: 1,
-      day: 1,
-      description: '',
-    },
-  },
+const getDemographicOptions = (
+  demographicIndicators: DemographicIndicatorNode[]
+) => {
+  const options = demographicIndicators.map(indicator => {
+    return {
+      value: indicator.id,
+      label: `${indicator.name} ${indicator.baseYear}`,
+    };
+  });
+  return options;
 };
 
 const Section = ({
@@ -121,219 +93,184 @@ const Row = ({
   </Box>
 );
 
-const createNewVaccineCourse = (seed?: any | null): any => ({
-  id: FnUtils.generateUUID(),
-  name: '',
-  description: '',
-  ...seed,
-});
-
-interface UseDraftVaccineCourseControl {
-  draft: any;
-  onUpdate: (patch: Partial<any>) => void;
-  onSave: () => Promise<void>;
-  isLoading: boolean;
-}
-
-// dummy vaccine items
-const VaccineOptions = [
-  {
-    label: 'vaccine 1',
-    value: 'vaccine 1',
-  },
-  {
-    label: 'vaccine 2',
-    value: 'vaccine 2',
-  },
-];
-
-const useDraftVaccineCourse = (): UseDraftVaccineCourseControl => {
-  const [vaccine, setVaccineCourse] = useState<any>(() =>
-    createNewVaccineCourse(seed)
-  );
-
-  const onUpdate = (patch: Partial<any>) => {
-    setVaccineCourse({ ...vaccine, ...patch });
-  };
-
-  const onSave = async () => {
-    console.info('TODO update vaccine course mutation');
-  };
-
-  const isLoading = false;
-
-  return {
-    draft: vaccine,
-    onUpdate,
-    onSave,
-    isLoading,
-  };
-};
-
 export const VaccineCourseView: FC = () => {
-  const { setSuffix } = useBreadcrumbs();
+  const { setSuffix, navigateUpOne } = useBreadcrumbs();
   const t = useTranslation('coldchain');
-  const { draft, onUpdate, isLoading } = useDraftVaccineCourse();
-  const [buffer, setBuffer] = useState(draft?.numberOfDoses ?? 1);
-  const [value, setValue] = useState(draft?.numberOfDoses ?? 1);
+  const { id } = useParams();
+  const {
+    draft,
+    update: { update },
+    updatePatch,
+    query: { data, isLoading },
+    isDirty,
+  } = useVaccineCourse(id);
+  const { data: demographicData } = useDemographicIndicators();
 
+  // const defaultRow: VaccineCourseScheduleNode = {
+  //   doseNumber: 1,
+  //   id: FnUtils.generateUUID(),
+  //   label: '',
+  //   __typename: 'VaccineCourseScheduleNode',
+  // };
   const tryUpdateValue = (value: number | undefined) => {
-    if (value === undefined) return;
-    const isValid = Number.isInteger(value) && value >= 0 && value <= 10;
-
-    if (isValid) {
-      setValue(value);
-      // setError(false);
-      // } else {
-      //   setError(true);
-      // }
-    }
-    setBuffer(value);
-  };
-
-  const updateSchedule = (value: number) => {
-    if (!value) {
+    if (typeof value !== 'number') {
       return;
     }
-    const scheduleSeed = (number: number) => {
-      return {
-        id: FnUtils.generateUUID(),
-        number: number,
-        description: '',
-        day: 0,
-      };
-    };
-    let rows = Object.values(draft?.schedule) as Schedule[];
-
-    if (rows.length === value) {
-      return;
-    } else if (value > rows.length) {
-      let toAdd = value - rows.length;
-      while (toAdd > 0) {
-        const number = value - toAdd + 1;
-        rows.push(scheduleSeed(number));
-        toAdd--;
-      }
-    } else {
-      rows = rows.slice(0, value);
-    }
-
-    const rowsAsObject = ArrayUtils.toObject(rows);
-    onUpdate({ schedule: rowsAsObject });
+    updatePatch({ doses: value });
   };
 
-  const updateDescription = (patch: RecordPatch<Schedule>) => {
-    if (!patch) {
-      return;
-    }
-    const schedule = { ...draft.schedule, [patch.id]: patch };
-    onUpdate({ schedule: schedule });
-  };
+  // const updateSchedule = (value: number) => {
+  //   if (!value) {
+  //     return;
+  //   }
+  //   const scheduleSeed = (number: number): VaccineCourseScheduleNode => {
+  //     return {
+  //       __typename: 'VaccineCourseScheduleNode',
+  //       id: FnUtils.generateUUID(),
+  //       doseNumber: number,
+  //       label: '',
+  //     };
+  //   };
+  //   let rows = draft?.vaccineCourseSchedules ?? [];
 
-  const dosesColumns = useColumns(
-    [
-      { key: 'number', label: 'label.dose-number' },
-      [descriptionColumn(), { setter: updateDescription }],
-    ],
-    {},
-    [draft]
-  );
+  //   if (rows.length === value) {
+  //     return;
+  //   } else if (value > rows.length) {
+  //     let toAdd = value - rows.length;
+  //     while (toAdd > 0) {
+  //       const number = value - toAdd + 1;
+  //       rows.push(scheduleSeed(number));
+  //       toAdd--;
+  //     }
+  //   } else {
+  //     rows = rows.slice(0, value);
+  //   }
+  //   updatePatch({ vaccineCourseSchedules: rows });
+  // };
+
+  // const updateDescription = (patch: RecordPatch<VaccineCourseScheduleNode>) => {
+  //   if (!patch) {
+  //     return;
+  //   }
+  //   const schedule = {
+  //     ...ArrayUtils.toObject(draft.vaccineCourseSchedules ?? [defaultRow]),
+  //     [patch.id]: patch,
+  //   };
+
+  //   const scheduleArray = Object.values(
+  //     schedule
+  //   ) as VaccineCourseScheduleNode[];
+  //   updatePatch({ vaccineCourseSchedules: scheduleArray });
+  // };
+
+  // const dosesColumns = useColumns<VaccineCourseScheduleNode>(
+  //   [
+  //     { key: 'doseNumber', label: 'label.dose-number' },
+  //     [descriptionColumn(t('label.new-row')), { setter: updateDescription }],
+  //   ],
+  //   {},
+  //   [draft]
+  // );
+
+  const cancel = () => {
+    navigateUpOne();
+  };
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
-  }, [setSuffix]);
+  }, [data?.name, setSuffix]);
+
+  const options = useMemo(
+    () => getDemographicOptions(demographicData?.nodes ?? []),
+    [demographicData]
+  );
 
   if (isLoading) {
     return <BasicSpinner />;
   }
 
+  const defaultValue = {
+    value: draft.demographicIndicator?.name ?? '',
+    label: draft.demographicIndicator
+      ? `${draft.demographicIndicator?.name} ${draft.demographicIndicator?.baseYear}`
+      : '',
+  };
+
   return !!data ? (
     <Box display="flex" flex={1}>
       <Container>
-        <Section heading={''}>
+        <Section heading={t('heading.vaccine-details')}>
           <Row label={t('label.immunisation-name')}>
             <BasicTextInput
+              textAlign="right"
               value={draft?.name ?? ''}
               fullWidth
-              onChange={e => onUpdate({ name: e.target.value })}
+              onChange={e => updatePatch({ name: e.target.value })}
             />
           </Row>
           <Row label={t('label.target-demographic')}>
-            <SearchBar
-              value={draft?.demographic ?? ''}
-              onChange={e => onUpdate({ demographic: e })}
+            <Autocomplete
+              sx={{ input: { textAlign: 'right' } }}
+              isOptionEqualToValue={option =>
+                option?.value === draft.demographicIndicatorId
+              }
+              onChange={(_e, selected) =>
+                updatePatch({ demographicIndicatorId: selected?.value })
+              }
+              defaultValue={defaultValue}
               placeholder={'demographic'}
+              options={options}
             />
           </Row>
           <Row label={t('label.coverage-rate')}>
             <NumericTextInput
               value={draft?.coverageRate ?? 1}
               fullWidth
-              onChange={value => onUpdate({ coverageRate: value })}
+              onChange={value => updatePatch({ coverageRate: value })}
             />
           </Row>
           <Row label={t('label.wastage-rate')}>
             <NumericTextInput
               value={draft?.wastageRate ?? 1}
               fullWidth
-              onChange={value => onUpdate({ wastageRate: value })}
+              onChange={value => updatePatch({ wastageRate: value })}
             />
           </Row>
-
           <Row label={t('label.vaccine-items')}>
-            <AutocompleteMulti
-              isOptionEqualToValue={(option, value) =>
-                option.value === value.value
-              }
-              filterSelectedOptions
-              getOptionLabel={option => option.label}
-              inputProps={{ fullWidth: true }}
-              onChange={(
-                _event,
-                newSelectedLocations: {
-                  label: string;
-                  value: string;
-                }[]
-              ) => {
-                onUpdate({
-                  vaccineItems: ArrayUtils.dedupe(
-                    newSelectedLocations.map(item => item.value)
-                  ),
-                });
-              }}
-              options={VaccineOptions}
-            />
+            <VaccineItemSelect draft={draft} onChange={updatePatch} />
           </Row>
           <Row label={t('label.calculate-demand')}>
             <Checkbox
-              value={draft?.calculateDemand ?? true}
-              onChange={value => onUpdate({ calculateDemand: value })}
+              checked={draft?.isActive ?? true}
+              onChange={e => updatePatch({ isActive: e.target.checked })}
             ></Checkbox>
           </Row>
-        </Section>
-      </Container>
+          {/* </Section> */}
+          {/* </Container>
       <Container>
-        <Section heading={t('heading.schedule')}>
+        <Section heading={t('heading.schedule')}> */}
           <Row label={t('label.number-of-doses')}>
             <NumericTextInput
-              value={buffer}
+              value={draft.doses}
               fullWidth
-              onBlur={() => {
-                onUpdate({ numberOfDoses: value });
-                updateSchedule(value);
-              }}
               onChange={tryUpdateValue}
+              max={MAX_VACCINE_DOSES}
             />
           </Row>
-          <Box paddingTop={1.5}>
+          {/* <Box paddingTop={1.5}>
             <MiniTable
-              rows={Object.values(draft?.schedule) as Schedule[]}
+              rows={draft.vaccineCourseSchedules ?? [defaultRow]}
               columns={dosesColumns}
-              // sx={{ backgroundColour: 'blue' }}
             />
-          </Box>
+          </Box> */}
         </Section>
       </Container>
+      <AppFooterComponent
+        isDirty={isDirty}
+        save={update}
+        cancel={cancel}
+        isLoading={isLoading}
+      />
     </Box>
   ) : (
     <NothingHere />

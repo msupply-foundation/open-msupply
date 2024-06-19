@@ -152,6 +152,14 @@ impl RecordAlreadyExist {
     }
 }
 
+pub struct RecordProgramCombinationAlreadyExists;
+#[Object]
+impl RecordProgramCombinationAlreadyExists {
+    pub async fn description(&self) -> &str {
+        "Course name already exists on this program"
+    }
+}
+
 pub struct RecordBelongsToAnotherStore;
 #[Object]
 impl RecordBelongsToAnotherStore {

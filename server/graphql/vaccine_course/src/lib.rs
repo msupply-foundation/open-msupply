@@ -1,6 +1,10 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use mutations::{insert_vaccine_course, InsertVaccineCourseInput, InsertVaccineCourseResponse};
+use mutations::{
+    delete_vaccine_course, insert_vaccine_course, update_vaccine_course,
+    DeleteVaccineCourseResponse, InsertVaccineCourseInput, InsertVaccineCourseResponse,
+    UpdateVaccineCourseInput, UpdateVaccineCourseResponse,
+};
 use types::vaccine_course::{VaccineCourseResponse, VaccineCoursesResponse};
 
 pub mod vaccine_course_queries;
@@ -44,5 +48,22 @@ impl VaccineCourseMutations {
         input: InsertVaccineCourseInput,
     ) -> Result<InsertVaccineCourseResponse> {
         insert_vaccine_course(ctx, &store_id, input)
+    }
+
+    async fn update_vaccine_course(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateVaccineCourseInput,
+    ) -> Result<UpdateVaccineCourseResponse> {
+        update_vaccine_course(ctx, &store_id, input)
+    }
+
+    async fn delete_vaccine_course(
+        &self,
+        ctx: &Context<'_>,
+        vaccine_course_id: String,
+    ) -> Result<DeleteVaccineCourseResponse> {
+        delete_vaccine_course(ctx, &vaccine_course_id)
     }
 }

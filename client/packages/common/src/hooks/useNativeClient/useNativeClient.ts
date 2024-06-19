@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useMutation } from 'react-query';
-import { uniqWith } from 'lodash';
+import { uniqWith } from '@common/utils';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { Capacitor } from '@capacitor/core';
 import {

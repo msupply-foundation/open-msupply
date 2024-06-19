@@ -16,17 +16,17 @@ graphql_types = { path = "../types" }
 
 async-std = { workspace = true }
 actix-web = { workspace = true }
-anymap = "0.12"
+anymap = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
-async-trait = "0.1.30"
-chrono = { version = "0.4", features = ["serde"] }
-serde = "1.0.126"
-serde_json = "1.0.66"
+async-trait = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = "1.0.117"
 
 [dev-dependencies]
-actix-rt = "2.6.0"
-assert-json-diff = "2.0.1"
+actix-rt = { workspace = true }
+assert-json-diff = { workspace = true }
 
 
 [features]

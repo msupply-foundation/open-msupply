@@ -1,5 +1,6 @@
 use super::vaccine_course_item_row::vaccine_course_item::dsl::*;
-
+use crate::db_diesel::item_link_row::item_link;
+use crate::db_diesel::item_row::item;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
@@ -14,7 +15,11 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+joinable!(vaccine_course_item -> item_link (item_link_id));
+allow_tables_to_appear_in_same_query!(vaccine_course_item, item_link);
+allow_tables_to_appear_in_same_query!(vaccine_course_item, item);
+
+#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
 #[diesel(table_name = vaccine_course_item)]
 pub struct VaccineCourseItemRow {
     pub id: String,
@@ -63,6 +68,13 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
     pub fn delete(&self, vaccine_course_item_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(vaccine_course_item)
             .filter(id.eq(vaccine_course_item_id))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn delete_by_vaccine_course_id(&self, course_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(vaccine_course_item)
+            .filter(vaccine_course_id.eq(course_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

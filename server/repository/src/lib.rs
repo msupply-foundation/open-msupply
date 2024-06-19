@@ -21,7 +21,7 @@ use std::str;
 
 mod tests;
 
-sql_function!(fn lower(x: Text) -> Text);
+define_sql_function!(fn lower(x: Text) -> Text);
 
 #[cfg(feature = "postgres")]
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/postgres");
