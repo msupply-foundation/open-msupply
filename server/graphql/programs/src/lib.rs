@@ -34,6 +34,8 @@ use mutations::encounter::insert::InsertEncounterResponse;
 use mutations::encounter::update::update_encounter;
 use mutations::encounter::update::UpdateEncounterInput;
 use mutations::encounter::update::UpdateEncounterResponse;
+use mutations::immunisation::delete::delete_immunisation_program;
+use mutations::immunisation::delete::DeleteImmunisationProgramResponse;
 use mutations::immunisation::insert::insert_immunisation_program;
 use mutations::immunisation::insert::InsertImmunisationProgramInput;
 use mutations::immunisation::insert::InsertImmunisationProgramResponse;
@@ -404,5 +406,13 @@ impl CentralProgramsMutations {
         input: UpdateImmunisationProgramInput,
     ) -> Result<UpdateImmunisationProgramResponse> {
         update_immunisation_program(ctx, store_id, input)
+    }
+
+    async fn delete_immunisation_program(
+        &self,
+        ctx: &Context<'_>,
+        immunisation_program_id: String,
+    ) -> Result<DeleteImmunisationProgramResponse> {
+        delete_immunisation_program(ctx, &immunisation_program_id)
     }
 }

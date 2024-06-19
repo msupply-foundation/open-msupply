@@ -3,6 +3,7 @@ use crate::{service_provider::ServiceContext, SingleRecordError};
 
 use repository::{PaginationOption, ProgramFilter, ProgramRow, ProgramSort, StorageConnection};
 
+pub mod delete_immunisation;
 pub mod insert_immunisation;
 pub mod query;
 pub mod update_immunisation;
@@ -46,6 +47,14 @@ pub trait ProgramServiceTrait: Sync + Send {
         input: update_immunisation::UpdateImmunisationProgram,
     ) -> Result<ProgramRow, update_immunisation::UpdateImmunisationProgramError> {
         update_immunisation::update_immunisation_program(ctx, input)
+    }
+
+    fn delete_immunisation_program(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, delete_immunisation::DeleteImmunisationProgramError> {
+        delete_immunisation::delete_immunisation_program(ctx, id)
     }
 }
 

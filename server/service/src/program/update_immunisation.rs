@@ -70,6 +70,7 @@ pub fn generate(UpdateImmunisationProgram { id, name }: UpdateImmunisationProgra
         master_list_id: None,
         context_id: IMMUNISATION_CONTEXT_ID.to_string(),
         is_immunisation: true,
+        deleted_datetime: None,
     }
 }
 

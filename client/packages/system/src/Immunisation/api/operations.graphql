@@ -179,6 +179,19 @@ mutation updateVaccineCourse(
   }
 }
 
+mutation deleteImmunisationProgram($immunisationProgramId: String!) {
+  centralServer {
+    program {
+      deleteImmunisationProgram(immunisationProgramId: $immunisationProgramId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
 mutation deleteVaccineCourse($vaccineCourseId: String!) {
   centralServer {
     vaccineCourse {
