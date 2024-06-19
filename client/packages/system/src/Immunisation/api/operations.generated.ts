@@ -67,6 +67,13 @@ export type UpdateVaccineCourseMutationVariables = Types.Exact<{
 
 export type UpdateVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', updateVaccineCourse: { __typename: 'UpdateVaccineCourseError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null } } } };
 
+export type DeleteVaccineCourseMutationVariables = Types.Exact<{
+  vaccineCourseId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', deleteVaccineCourse: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteVaccineCourseError' } } } };
+
 export const ImmunisationProgramFragmentDoc = gql`
     fragment ImmunisationProgram on ProgramNode {
   id
@@ -235,6 +242,20 @@ export const UpdateVaccineCourseDocument = gql`
   }
 }
     ${VaccineCourseFragmentDoc}`;
+export const DeleteVaccineCourseDocument = gql`
+    mutation deleteVaccineCourse($vaccineCourseId: String!) {
+  centralServer {
+    vaccineCourse {
+      deleteVaccineCourse(vaccineCourseId: $vaccineCourseId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -260,6 +281,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateVaccineCourse(variables?: UpdateVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateVaccineCourseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateVaccineCourseMutation>(UpdateVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateVaccineCourse', 'mutation');
+    },
+    deleteVaccineCourse(variables: DeleteVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteVaccineCourseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteVaccineCourseMutation>(DeleteVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteVaccineCourse', 'mutation');
     }
   };
 }
@@ -364,5 +388,22 @@ export const mockInsertVaccineCourseMutation = (resolver: ResponseResolver<Graph
 export const mockUpdateVaccineCourseMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateVaccineCourseMutationVariables>, GraphQLContext<UpdateVaccineCourseMutation>, any>) =>
   graphql.mutation<UpdateVaccineCourseMutation, UpdateVaccineCourseMutationVariables>(
     'updateVaccineCourse',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteVaccineCourseMutation((req, res, ctx) => {
+ *   const { vaccineCourseId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockDeleteVaccineCourseMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteVaccineCourseMutationVariables>, GraphQLContext<DeleteVaccineCourseMutation>, any>) =>
+  graphql.mutation<DeleteVaccineCourseMutation, DeleteVaccineCourseMutationVariables>(
+    'deleteVaccineCourse',
     resolver
   )
