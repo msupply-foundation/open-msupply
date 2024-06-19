@@ -79,5 +79,6 @@
     "label.cce": "Холодильное Оборудование",
     "label.chart": "Диаграмма",
     "label.cold-consecutive": "Последовательно Холодное",
-    "label.catalogue-properties": "Свойства Каталога"
+    "label.catalogue-properties": "Свойства Каталога",
+    "label.cold-storage-location": "Локация Холодильного склада"
 }
