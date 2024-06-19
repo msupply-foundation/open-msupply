@@ -10,6 +10,7 @@ import {
   ClickableStepper,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
+import { UploadTab } from './UploadTab';
 
 interface PropertiesImportModalProps {
   isOpen: boolean;
@@ -36,6 +37,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
+  const [warningMessage, setWarningMessage] = useState<string>(() => '');
 
   const importAction = async () => {
     onChangeTab(Tabs.Import);
@@ -70,6 +72,10 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
     }
     onChangeTab(tabName);
   };
+
+  const showWarnings = errorMessage.length == 0 && warningMessage.length > 0;
+
+  console.info('showWarnings', showWarnings);
 
   const importSteps = [
     { label: t('label.upload'), description: '', clickable: true },
@@ -116,6 +122,11 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
               <Box flex={1} flexBasis="40%"></Box>
               <Box flex={1} flexBasis="60%"></Box>
             </Grid>
+            <UploadTab
+              tab={Tabs.Upload}
+              setErrorMessage={setErrorMessage}
+              setWarningMessage={setWarningMessage}
+            />
           </Grid>
         </TabContext>
       </>
