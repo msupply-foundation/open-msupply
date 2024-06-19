@@ -71,7 +71,7 @@ const OutboundReturnListViewComponent: FC = () => {
       ],
       [
         'invoiceNumber',
-        { description: 'description.invoice-number', maxWidth: 110 },
+        { description: 'description.invoice-number', width: 150 },
       ],
       'createdDatetime',
       ['comment', { width: 125, Cell: TooltipTextCell }],
