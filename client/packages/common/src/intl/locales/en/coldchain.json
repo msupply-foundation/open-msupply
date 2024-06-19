@@ -34,6 +34,7 @@
   "error.label-printer-not-configured": "There is no label printer configured. Please see the Admin > Devices section to configure a label printer.",
   "error.manufacturer-model-unique": "An item already exists with this manufacturer and model",
   "error.no-asset-create-permission": "You do not have permission to create a new asset.",
+  "error.unable-to-create-immunisation-program": "Unable to create Immunisation Program",
   "error.unable-to-update-immunisation-program": "Unable to update Immunisation Program",
   "error.unable-to-update-vaccine-course": "Unable to update Vaccine Course",
   "error.no-matching-asset": "CCE not found with id: {{id}}",

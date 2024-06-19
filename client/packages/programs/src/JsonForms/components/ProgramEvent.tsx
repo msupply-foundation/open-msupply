@@ -20,7 +20,7 @@ import {
   useProgramEnrolments,
   useProgramEvents,
 } from '../../api';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 import { z } from 'zod';
 import {
   ProgramEnrolmentFragment,

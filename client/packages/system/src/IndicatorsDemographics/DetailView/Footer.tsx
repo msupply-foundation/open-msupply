@@ -5,8 +5,9 @@ import {
   useTranslation,
   AppFooterPortal,
   LoadingButton,
-  useCheckPermissionWithError,
   UserPermission,
+  useDisabledNotificationToast,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { XCircleIcon } from '@common/icons';
 
@@ -22,9 +23,13 @@ export const FooterComponent = ({
   cancel,
 }: DemographicsFooterProps) => {
   const t = useTranslation();
-  const checkPermissionDenied = useCheckPermissionWithError(
-    UserPermission.EditCentralData
-  );
+  const { userHasPermission } = useAuthContext();
+  const showDisabledNotification = useDisabledNotificationToast();
+
+  const onClick = () => {
+    if (userHasPermission(UserPermission.EditCentralData)) save();
+    else showDisabledNotification();
+  };
 
   return (
     <AppFooterPortal
@@ -45,12 +50,7 @@ export const FooterComponent = ({
             color="secondary"
           />
           <LoadingButton
-            onClick={() => {
-              if (checkPermissionDenied()) {
-                return;
-              }
-              save();
-            }}
+            onClick={onClick}
             disabled={!isDirty}
             isLoading={false}
             color="secondary"
