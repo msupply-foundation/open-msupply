@@ -140,7 +140,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.created',
     key: 'createdDatetime',
     format: ColumnFormat.Date,
-    width: 130,
+    width: 150,
   },
   stocktakeDate: {
     label: 'label.date',
