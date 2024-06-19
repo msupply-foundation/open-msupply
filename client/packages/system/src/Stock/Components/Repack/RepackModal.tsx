@@ -28,7 +28,7 @@ import {
 } from '@openmsupply-client/system';
 import { RepackFragment } from '../../api';
 import { useRepackColumns } from './column';
-import { useRepackEdit } from '../../api/hooks/useRepack';
+import { useRepack } from '../../api/hooks';
 
 interface RepackModalControlProps {
   isOpen: boolean;
@@ -47,18 +47,18 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
-  const defaultRepack = {
-    stockLineId: stockLine?.id,
-    newPackSize: 0,
-    numberOfPacks: 0,
-  };
 
   const { data: logData } = useActivityLog.document.listByRecord(
     stockLine?.id ?? ''
   );
 
-  const { repacks, isError, isLoading, draft, onChange, onInsert } =
-    useRepackEdit(defaultRepack);
+  const {
+    list: { repacks, isError, isLoading },
+    repack: { repackData },
+    draft,
+    onChange,
+    onInsert,
+  } = useRepack({ stockLineId: stockLine?.id, invoiceId });
   const { columns } = useRepackColumns();
   // only display the message if there are lines to click on
   // if there are no lines, the 'click new' message is displayed closer to the action
@@ -74,13 +74,11 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   };
 
   const onRowClick = (rowData: RepackFragment) => {
-    onChange(defaultRepack);
     setInvoiceId(rowData.id);
     setIsNew(false);
   };
 
   const onNewClick = () => {
-    onChange(defaultRepack);
     setInvoiceId(undefined);
     setIsNew(true);
   };
@@ -104,6 +102,29 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     }
   };
 
+  const getFormData = () => {
+    const isNewRepack = !repackData;
+
+    if (isNewRepack) {
+      return {
+        ...draft,
+        locationName: stockLine.location?.name,
+        packSize: stockLine.packSize,
+      };
+    }
+
+    const { numberOfPacks, packSize } = repackData.from;
+    const { packSize: newPackSize, location } = repackData.to;
+    return {
+      stockLineId: stockLine.id,
+      numberOfPacks,
+      packSize,
+      newPackSize,
+      locationName: location?.name,
+      newLocationId: location?.id,
+    };
+  };
+
   return (
     <Modal
       width={900}
@@ -122,7 +143,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
               if (errorMessage) {
                 error(errorMessage)();
               } else {
-                onChange(defaultRepack);
                 if (stockLine?.totalNumberOfPacks === draft.numberOfPacks) {
                   onClose();
                   success(t('messages.all-packs-repacked'))();
@@ -211,10 +231,10 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           <Box paddingLeft={3} paddingTop={3} flex={1}>
             {showRepackDetail && (
               <RepackEditForm
-                invoiceId={invoiceId}
                 onChange={onChange}
-                stockLine={stockLine}
-                draft={draft}
+                availableNumberOfPacks={stockLine.availableNumberOfPacks}
+                data={getFormData()}
+                isNew={isNew}
               />
             )}
           </Box>

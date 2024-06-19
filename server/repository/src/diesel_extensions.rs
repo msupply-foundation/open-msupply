@@ -103,7 +103,7 @@ impl<T> OrderByExtensions for T where T: Expression {}
 
 pub mod date_coalesce {
     use diesel::sql_types::{Date, Nullable};
-    sql_function! { fn coalesce(x: Nullable<Date>, y: Date) -> Date; }
+    define_sql_function! { fn coalesce(x: Nullable<Date>, y: Date) -> Date; }
 }
 
 #[cfg(test)]

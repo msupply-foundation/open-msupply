@@ -3,7 +3,7 @@ strip = true
 
 [workspace.dependencies]
 # dependencies used in graphql crates:
-actix-web = { version = "4.0.1", default-features = false, features = [
+actix-web = { version = "4.7.0", default-features = false, features = [
   "macros",
   "rustls",
 ] }
@@ -11,20 +11,33 @@ actix-multipart = "0.6.1"
 anymap = "0.12"
 async-graphql = { version = "3.0.35", features = ["dataloader", "chrono"] }
 async-graphql-actix-web = "3.0.35"
-async-trait = "0.1.30"
-chrono = { version = "0.4.23", features = ["serde"] }
+async-trait = "0.1.80"
+chrono = { version = "0.4.38", features = ["serde"] }
+clap = { version = "4.5.7", features = ["derive"] }
+futures = "0.3"
+futures-util = "0.3"
+httpmock = "0.7"
+log = "0.4"
+pretty_assertions = "1.4.0"
+rcgen = "0.13.1"
+regex = "1.10.5"
 reqwest = { version = "0.12", features = [
   "json",
   "rustls-tls",
   "multipart",
   "blocking",
 ], default-features = false }
-serde = "1.0.126"
-serde_json = "1.0.66"
+serde = "1.0"
+serde_json = "1.0"
+serde_yaml = "0.9.34"
+sha2 = "0.10.8"
+simple-log = { version = "1.6.0" }
+strum = { version = "0.26.2", features = ["derive"] }
 thiserror = "1.0.30"
+tokio = { version = "1.38.0", features = ["macros"] }
 # dev dependencies used in graphql crates:
-actix-rt = "2.6.0"
-assert-json-diff = "2.0.1"
+actix-rt = "2.10.0"
+assert-json-diff = "2.0.2"
 async-std = "1.12.0"
 rand = "0.8.5"
 anyhow = "1.0.56"

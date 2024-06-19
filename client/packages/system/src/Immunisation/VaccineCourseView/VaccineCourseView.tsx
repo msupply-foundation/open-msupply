@@ -26,9 +26,9 @@ import { descriptionColumn } from './DescriptionColumn';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { AppFooterComponent } from './AppFooterComponent';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
-import { VaccineItemSelect } from '../../Item';
+import { VaccineItemSelect } from './VaccineCourseItemSelect';
 
-const MAXVACCINEDOSES = 20;
+const MAX_VACCINE_DOSES = 20;
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -256,11 +256,10 @@ export const VaccineCourseView: FC = () => {
               value={draft.doses}
               fullWidth
               onBlur={e => {
-                updatePatch({ doses: parseInt(e.target.value) });
                 updateSchedule(parseInt(e.target.value));
               }}
               onChange={tryUpdateValue}
-              max={MAXVACCINEDOSES}
+              max={MAX_VACCINE_DOSES}
             />
           </Row>
           <Box paddingTop={1.5}>

@@ -138,7 +138,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
       exampleRows,
       t,
       false, // exclude errors
-      properties ? properties.map(p => p.name) : []
+      properties ? properties.map(p => p.key) : []
     );
     FileUtils.exportCSV(csv, t('filename.asset-import-example'));
   };
@@ -157,9 +157,10 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
       setIsLoading(true);
       Papa.parse(csvFile, {
         delimiter: ',',
+        quoteChar: '"',
         header: true,
         worker: true,
-        skipEmptyLines: true,
+        skipEmptyLines: 'greedy',
         fastMode: false,
         chunkSize: 100 * 1024, // 100kb
         chunk: processUploadedDataChunk,

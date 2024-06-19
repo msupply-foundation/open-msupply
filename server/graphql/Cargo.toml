@@ -15,7 +15,7 @@ util = { path = "../util" }
 graphql_core = { path = "core" }
 
 graphql_asset = { path = "asset" }
-graphql_demographic = {path = "demographic" }
+graphql_demographic = { path = "demographic" }
 graphql_general = { path = "general" }
 graphql_cold_chain = { path = "cold_chain" }
 graphql_asset_catalogue = { path = "asset_catalogue" }
@@ -47,7 +47,7 @@ chrono = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-tokio = { version = "1.17.0", features = ["macros"] }
+tokio = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }

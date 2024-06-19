@@ -15,5 +15,7 @@
     "error.prescription-not-found": "Рецепт не найден.",
     "filename.patients": "пациенты",
     "filename.prescriptions": "Рецепты",
-    "button.edit-linked-patient": "Редактировать Привязанного Пациента"
+    "button.edit-linked-patient": "Редактировать Привязанного Пациента",
+    "label.customer-name": "Имя Клиента",
+    "label.any": "Любой"
 }
