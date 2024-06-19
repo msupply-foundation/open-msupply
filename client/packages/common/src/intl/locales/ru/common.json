@@ -150,5 +150,8 @@
   "label.delete": "Удалить",
   "label.quantity": "Количество",
   "label.requisition": "Заявка на закупку",
-  "label.day": "день"
+  "label.day": "день",
+  "label.target-demographic": "Целевая Демографическая Группа",
+  "label.breach-type": "Тип нарушения",
+  "label.asset-notes": "Примечания"
 }

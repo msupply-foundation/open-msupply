@@ -141,9 +141,9 @@ fn insert_merge_test_data(connection: &StorageConnection) {
         connection,
         r#"
         INSERT INTO
-            store (id, name_id, code, site_id, store_mode, disabled)
+            store (id, name_id, code, site_id, store_mode)
         VALUES
-            ('store1', 'name1', 'store1code', 1, 'STORE', FALSE);
+            ('store1', 'name1', 'store1code', 1, 'STORE');
         "#
     )
     .unwrap();

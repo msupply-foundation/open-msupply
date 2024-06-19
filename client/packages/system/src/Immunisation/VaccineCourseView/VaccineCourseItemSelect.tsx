@@ -58,6 +58,7 @@ export const VaccineItemSelect = ({
 
   return (
     <AutocompleteMulti
+      sx={{ input: { textAlign: 'right' } }}
       isOptionEqualToValue={(option, value) => option.itemId === value.itemId}
       getOptionLabel={option => `${option.name}`}
       value={draft?.vaccineCourseItems ?? []}

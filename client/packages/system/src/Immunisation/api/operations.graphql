@@ -103,6 +103,7 @@ fragment VaccineCourse on VaccineCourseNode {
   demographicIndicator {
     name
     id
+    baseYear
   }
   vaccineCourseItems {
     ...VaccineCourseItem
@@ -173,6 +174,32 @@ mutation updateVaccineCourse(
           error {
             description
           }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteImmunisationProgram($immunisationProgramId: String!) {
+  centralServer {
+    program {
+      deleteImmunisationProgram(immunisationProgramId: $immunisationProgramId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation deleteVaccineCourse($vaccineCourseId: String!) {
+  centralServer {
+    vaccineCourse {
+      deleteVaccineCourse(vaccineCourseId: $vaccineCourseId) {
+        ... on DeleteResponse {
+          __typename
+          id
         }
       }
     }

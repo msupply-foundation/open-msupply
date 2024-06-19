@@ -37,19 +37,25 @@ export const VaccineCourseCreateModal = ({
   const isInvalid = !draft.name.trim();
 
   const onOk = async () => {
-    const result = await create(programId ?? '');
-    if (!result) return;
+    try {
+      const result = await create(programId ?? '');
+      if (!result) return;
 
-    const response = result.centralServer.vaccineCourse.insertVaccineCourse;
-    if (response.__typename !== 'VaccineCourseNode') return;
+      const response = result.centralServer?.vaccineCourse?.insertVaccineCourse;
+      if (response?.__typename !== 'VaccineCourseNode') return;
 
-    navigate(
-      RouteBuilder.create(AppRoute.Programs)
-        .addPart(AppRoute.ImmunisationPrograms)
-        .addPart(response.programId)
-        .addPart(response.id)
-        .build()
-    );
+      navigate(
+        RouteBuilder.create(AppRoute.Programs)
+          .addPart(AppRoute.ImmunisationPrograms)
+          .addPart(response.programId)
+          .addPart(response.id)
+          .build()
+      );
+    } catch (e) {
+      // Should ideally just just catch `Permission Denied` as it's handled in graphql client
+      console.error(e);
+      return;
+    }
   };
 
   return (

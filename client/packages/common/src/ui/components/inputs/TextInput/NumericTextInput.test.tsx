@@ -104,6 +104,24 @@ describe('Test NumericTextInput component', () => {
     expect(input).toHaveValue('-5');
   });
 
+  it('should handle negative decimal input', async () => {
+    const { getByRole } = render(
+      <TestNumericTextInput allowNegative decimalLimit={3} decimalMin={2} />
+    );
+    const input = getByRole('textbox');
+
+    fireEvent.change(input, { target: { value: '-' } });
+    expect(input).toHaveValue('-');
+    fireEvent.change(input, { target: { value: '-0' } });
+    expect(input).toHaveValue('-0');
+    fireEvent.change(input, { target: { value: '-0.' } });
+    expect(input).toHaveValue('-0.');
+    fireEvent.change(input, { target: { value: '-0.2' } });
+    expect(input).toHaveValue('-0.2');
+    fireEvent.blur(input);
+    expect(input).toHaveValue('-0.20');
+  });
+
   it('should handle removing input', async () => {
     const { getByRole } = render(<TestNumericTextInput />);
     const input = getByRole('textbox');
