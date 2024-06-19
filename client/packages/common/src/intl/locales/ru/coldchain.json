@@ -71,5 +71,13 @@
     "heading.download-cce-documents": "Скачать документы Холодильного Оборудования",
     "heading.download-example": "Скачать шаблон.",
     "label.immunisation-name": "Название Курса Вакцин",
-    "label.vaccine-items": "Вакцинные Товары"
+    "label.vaccine-items": "Вакцинные Товары",
+    "label.cold-cumulative": "Накопительно Холодное",
+    "label.catalogue-item-code": "Код товара по каталогу",
+    "label.catalogue-item": "Товар каталога",
+    "label.asset-properties": "Свойства Ресурса",
+    "label.cce": "Холодильное Оборудование",
+    "label.chart": "Диаграмма",
+    "label.cold-consecutive": "Последовательно Холодное",
+    "label.catalogue-properties": "Свойства Каталога"
 }

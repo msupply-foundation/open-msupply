@@ -18,6 +18,7 @@ table! {
         is_active -> Bool,
         wastage_rate -> Double,
         doses -> Integer,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -25,6 +26,7 @@ table! {
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
 )]
 #[diesel(table_name = vaccine_course)]
+#[diesel(treat_none_as_null = true)]
 pub struct VaccineCourseRow {
     pub id: String,
     pub name: String,
@@ -34,6 +36,7 @@ pub struct VaccineCourseRow {
     pub is_active: bool,
     pub wastage_rate: f64,
     pub doses: i32,
+    pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
 
 pub struct VaccineCourseRowRepository<'a> {
@@ -71,9 +74,9 @@ impl<'a> VaccineCourseRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, vaccine_course_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vaccine_course)
-            .filter(id.eq(vaccine_course_id))
+    pub fn mark_deleted(&self, vaccine_course_id: &str) -> Result<(), RepositoryError> {
+        diesel::update(vaccine_course.filter(id.eq(vaccine_course_id)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
