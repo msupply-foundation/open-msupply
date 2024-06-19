@@ -142,8 +142,41 @@ mod tests {
             .update_sync_settings(&service_context, &sync_settings)
             .unwrap();
 
+        let synchroniser = Synchroniser::new_with_version(
+            sync_settings.clone(),
+            service_provider.clone(),
+            10000,
+            1,
+        )
+        .unwrap();
+
+        let error = synchroniser
+            .sync()
+            .await
+            .err()
+            .expect("Should result in error");
+
+        assert_matches!(
+            error,
+            SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(
+                SyncApiError {
+                    source: SyncApiErrorVariantV5::ParsedError {
+                        status: StatusCode::CONFLICT,
+                        source: ParsedError {
+                            code: SyncErrorCodeV5::ApiVersionIncompatible,
+                            data: Some(_),
+                            ..
+                        }
+                    },
+                    ..
+                }
+            ))
+        );
+
+        // V6
         let synchroniser =
-            Synchroniser::new_with_version(sync_settings.clone(), service_provider, 10000).unwrap();
+            Synchroniser::new_with_version(sync_settings.clone(), service_provider, 2, 10000)
+                .unwrap();
 
         let error = synchroniser
             .sync()
