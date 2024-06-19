@@ -1,12 +1,11 @@
-import { useQuery } from 'packages/common/src';
-import { useItemApi } from 'packages/system/src/Item';
+import { useQuery } from '@openmsupply-client/common';
+import { useItemApi } from '@openmsupply-client/system';
 
 export const useVaccineItems = () => {
   const queryParams = {
     sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
     offset: 0,
     first: 1000, // TODO: remove arbitrary limit
-    filterBy: { isVaccine: { equalTo: true } },
   };
 
   const api = useItemApi();

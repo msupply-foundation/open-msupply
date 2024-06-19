@@ -11,7 +11,7 @@
   "error.no-locations": "Нет Локаций для отображения.",
   "error.no-stock": "Нет запасов для отображения.",
   "button.repack": "Переупаковать",
-  "error.unable-to-scan": "Невозможно отсканировать штрихкод: {{error}}",
+  "error.unable-to-scan": "Не удалось отсканировать штрихкод: {{error}}",
   "label.add-batch": "Добавить партию",
   "label.batch": "Партия",
   "label.finalised": "Завершено",
@@ -115,5 +115,7 @@
   "title.stock-line-details": "Детали Строки Запасов",
   "title.repack-details": "Детали Переупаковки",
   "messages.reduced-to-zero_one": "Количество 1 строки уменьшено до 0",
-  "stocktake.comment-location-template": "Создано с использованием товаров в локации '{{location}}'"
+  "stocktake.comment-location-template": "Создано с использованием товаров в локации '{{location}}'",
+  "button.adjust": "Откорректировать",
+  "title.adjustment-details": "Детали Корректировки"
 }

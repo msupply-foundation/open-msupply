@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use async_graphql::EmptySubscription;
 use chrono::Utc;
-use clap::StructOpt;
+use clap::{ArgAction, Parser};
 use cli::RefreshDatesRepository;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
@@ -66,7 +66,7 @@ enum Action {
         #[clap(short, long)]
         users: String,
         /// Prettify json output
-        #[clap(long, parse(from_flag))]
+        #[clap(long, action = ArgAction::SetTrue)]
         pretty: bool,
     },
     /// Initialise database from exported data), drops existing database, creates new database with latest schema and initialises (syncs) from exported file, also disabling sync to avoid initialised data syncing to any server
@@ -75,14 +75,14 @@ enum Action {
         #[clap(short, long)]
         name: String,
         /// Refresh dates (see refresh-dates --help)
-        #[clap(short, long, parse(from_flag))]
+        #[clap(short, long, action = ArgAction::SetTrue)]
         refresh: bool,
     },
     /// Make data current, based on the difference between the latest date to the current date (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference)
     /// This process also disables sync to avoid refreshed data syncing, unless you use the `--enable-sync` flag
     RefreshDates {
         /// Enable sync after refresh, by default the sync is disabled after refreshing
-        #[clap(short, long, parse(from_flag))]
+        #[clap(short, long, action = ArgAction::SetTrue)]
         enable_sync: bool,
     },
 

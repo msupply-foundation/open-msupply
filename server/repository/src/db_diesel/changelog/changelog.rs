@@ -44,7 +44,7 @@ joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
 #[cfg(not(feature = "postgres"))]
-sql_function!(
+define_sql_function!(
     fn last_insert_rowid() -> BigInt
 );
 

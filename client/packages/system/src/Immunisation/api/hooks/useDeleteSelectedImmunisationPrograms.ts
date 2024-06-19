@@ -17,11 +17,7 @@ export const useDeleteSelectedImmunisationPrograms = () => {
         immunisationProgramId,
       });
 
-      // NOTE: per the types, `apiResult` should always be a `DeleteImmunisationProgramMutation`.
-      // However, if there is a standard error, `GqlContext` will instead return an empty object
-      // in a non type-safe manner :cry:
-      // TODO: link to refactor issue
-      // The `?` after centralServer handles if `apiResult` is an empty object
+      // The `?` after `centralServer` handles empty `apiResult` (see issue: https://github.com/msupply-foundation/open-msupply/issues/4191)
       const result = apiResult.centralServer?.program.deleteImmunisationProgram;
 
       if (result?.__typename === 'DeleteResponse') {

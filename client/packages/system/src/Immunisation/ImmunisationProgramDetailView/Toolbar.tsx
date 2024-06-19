@@ -2,10 +2,14 @@ import React, { FC, PropsWithChildren } from 'react';
 import {
   AppBarContentPortal,
   BasicTextInput,
+  DeleteIcon,
+  DropdownMenu,
+  DropdownMenuItem,
   Grid,
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftImmunisationProgram } from '../api/hooks/useImmunisationProgram';
+import { useDeleteSelectedVaccineCourses } from '../api/hooks/useDeleteSelectedVaccineCourses';
 
 interface ToolbarProps {
   onUpdate: (patch: Partial<DraftImmunisationProgram>) => void;
@@ -20,24 +24,43 @@ export const Toolbar: FC<PropsWithChildren<ToolbarProps>> = ({
   isError,
   error,
 }: ToolbarProps) => {
-  const t = useTranslation('system');
+  const t = useTranslation();
+  const onDelete = useDeleteSelectedVaccineCourses();
+
   return (
-    <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
-      <Grid container>
-        <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
+    <AppBarContentPortal sx={{ width: '100%' }}>
+      <Grid
+        container
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          marginBottom: 1,
+          alignItems: 'end',
+          gap: 2,
+        }}
+      >
+        <Grid item flex="0 0 350px">
           <BasicTextInput
             fullWidth
             value={draft.name}
             onChange={e =>
               onUpdate({
                 name: e.target.value,
-              } as Partial<DraftImmunisationProgram>)
+              })
             }
             label={t('label.name')}
             InputLabelProps={{ shrink: true }}
             helperText={isError ? error : ''}
             error={isError}
           />
+        </Grid>
+
+        <Grid item>
+          <DropdownMenu label={t('label.actions')}>
+            <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+              {t('button.delete-lines')}
+            </DropdownMenuItem>
+          </DropdownMenu>
         </Grid>
       </Grid>
     </AppBarContentPortal>

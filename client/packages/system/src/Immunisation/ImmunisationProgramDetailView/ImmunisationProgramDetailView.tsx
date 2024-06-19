@@ -25,8 +25,7 @@ import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppBarButtons } from './AppBarButtons';
 import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
 import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
-import { DraftVaccineCourse } from '../api/hooks/useVaccineCourse';
-import { VaccineCourseFragment } from '../api';
+import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
 
 export const ProgramComponent: FC = () => {
   const {
@@ -77,6 +76,7 @@ export const ProgramComponent: FC = () => {
         },
       },
       { key: 'doses', label: 'label.doses' },
+      'selection',
     ],
     {
       onChangeSortBy: updateSortQuery,

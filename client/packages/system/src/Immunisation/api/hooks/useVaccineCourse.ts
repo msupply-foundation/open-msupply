@@ -2,7 +2,6 @@ import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
   UpdateVaccineCourseItemInput,
-  VaccineCourseItemNode,
   UpdateVaccineCourseScheduleInput,
   VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
@@ -13,14 +12,14 @@ import {
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
-import { VaccineCourseFragment } from '../operations.generated';
+import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
+// import { VaccineCourseFragment } from '../operations.generated';
 
-export interface DraftVaccineCourse extends VaccineCourseFragment {}
+// export interface DraftVaccineCourse extends VaccineCourseFragment {}
 
 export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
 
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
-  __typename: 'VaccineCourseNode',
   id: '',
   name: '',
   programId: '',
@@ -28,6 +27,7 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
   coverageRate: 100,
   wastageRate: 0,
   isActive: true,
+  vaccineCourseItems: [],
 };
 
 const vaccineCourseParsers = {
@@ -40,15 +40,15 @@ const vaccineCourseParsers = {
       label: schedule.label,
     };
   },
-  toItemInput: (item: VaccineCourseItemNode): UpdateVaccineCourseItemInput => {
+  toItemInput: (item: DraftVaccineCourseItem): UpdateVaccineCourseItemInput => {
     return {
       id: item.id,
-      itemId: item.item.id,
+      itemId: item.itemId,
     };
   },
 };
 
-export function useVaccineCourse(id?: string) {
+export const useVaccineCourse = (id?: string) => {
   const [patch, setPatch] = useState<Partial<DraftVaccineCourse>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -76,9 +76,7 @@ export function useVaccineCourse(id?: string) {
     // Ensures that UI doesn't show in "dirty" state if nothing actually
     // different from the saved data
     const updatedData = { ...data, ...newPatch };
-    if (isEqual(data, updatedData)) setIsDirty(false);
-    else setIsDirty(true);
-    return;
+    setIsDirty(!isEqual(data, updatedData));
   };
 
   const resetDraft = () => {
@@ -88,8 +86,8 @@ export function useVaccineCourse(id?: string) {
     }
   };
 
-  const create = async () => {
-    const result = await createMutation(draft);
+  const create = async (programId: string) => {
+    const result = await createMutation({ ...draft, programId });
     setIsDirty(false);
     return result;
   };
@@ -110,7 +108,7 @@ export function useVaccineCourse(id?: string) {
     isDirty,
     updatePatch,
   };
-}
+};
 
 const useGet = (id: string) => {
   const { api } = useImmunisationGraphQL();
@@ -174,7 +172,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         doses: input.doses,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>
-            vaccineCourseParsers.toItemInput(item as VaccineCourseItemNode)
+            vaccineCourseParsers.toItemInput(item)
           ) ?? [],
         schedules:
           input.vaccineCourseSchedules?.map(schedule =>
@@ -184,7 +182,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
       storeId,
     });
 
-    const result = apiResult.centralServer.vaccineCourse.updateVaccineCourse;
+    const result = apiResult.centralServer?.vaccineCourse?.updateVaccineCourse; // `?` is needed as result type is incorrect when permission is denied
 
     if (result?.__typename === 'VaccineCourseNode') {
       return result;
