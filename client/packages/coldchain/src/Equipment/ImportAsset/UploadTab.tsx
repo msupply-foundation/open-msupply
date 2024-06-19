@@ -23,12 +23,10 @@ import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv } from '../utils';
 import {
   AssetCatalogueItemFragment,
+  processProperties,
   useStore,
 } from '@openmsupply-client/system';
-import {
-  AssetPropertyFragment,
-  useAssetData,
-} from '@openmsupply-client/system';
+import { useAssetData } from '@openmsupply-client/system';
 
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -171,59 +169,12 @@ function getImportHelpers<T, P>(
     addCell(key, localeKey, formatter);
   }
 
-  const processProperties = (
-    properties: undefined | AssetPropertyFragment[],
-    row: ParsedAsset,
-    importRow: ImportRow,
-    rowErrors: string[],
-    t: TypedTFunction<LocaleKey>
-  ) => {
-    properties?.forEach(property => {
-      const value = row[property.name] ?? row[property.key];
-      if (!!value?.trim()) {
-        if (!!property.allowedValues) {
-          const allowedValues = property.allowedValues.split(',');
-          if (allowedValues.every(v => v !== value)) {
-            rowErrors.push(
-              t('error.invalid-field-value', {
-                field: property.name,
-                value: value,
-              })
-            );
-          }
-        }
-        switch (property.valueType) {
-          case 'INTEGER':
-          case 'FLOAT':
-            if (Number.isNaN(Number(value))) {
-              rowErrors.push(
-                t('error.invalid-field-value', {
-                  field: property.name,
-                  value: value,
-                })
-              );
-            }
-            importRow.properties[property.key] = value;
-            break;
-          case 'BOOLEAN':
-            const isTrue =
-              value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
-            importRow.properties[property.key] = isTrue ? 'true' : 'false';
-            break;
-          default:
-            importRow.properties[property.key] = value;
-        }
-      }
-    });
-  };
-
   return {
     addLookup,
     addCell,
     addRequired,
     addSoftRequired,
     addUnique,
-    processProperties,
     importRow,
     rowErrors,
     rowWarnings,
@@ -313,7 +264,6 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         rowErrors,
         rowWarnings,
         addSoftRequired,
-        processProperties,
       } = getImportHelpers(row, rows, index, t);
       const lookupCode = (item: { code: string | null | undefined }) =>
         item.code;
@@ -342,7 +292,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         formatDate
       );
       addCell('serialNumber', 'label.serial');
-      processProperties(properties, row, importRow, rowErrors, t);
+      processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;

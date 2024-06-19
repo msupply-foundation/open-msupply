@@ -77,7 +77,7 @@ export const toInsertEquipmentInput = (
   store: row.store
     ? { ...row.store, __typename: 'StoreNode', storeName: '' }
     : null,
-  properties: JSON.stringify(row.properties),
+  parsedProperties: row.properties,
 });
 
 export const toExportEquipment = (
