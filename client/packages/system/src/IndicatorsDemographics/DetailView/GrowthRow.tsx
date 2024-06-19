@@ -108,6 +108,7 @@ export const GrowthRow = <T extends RecordWithId>({
                         decimalLimit={2}
                         decimalMin={1}
                         InputProps={{
+                          inputProps: { sx: { padding: '2px 0' } },
                           endAdornment: (
                             <InputAdornment position="end">%</InputAdornment>
                           ),
