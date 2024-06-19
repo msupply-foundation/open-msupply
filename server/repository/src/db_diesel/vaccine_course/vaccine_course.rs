@@ -130,5 +130,8 @@ fn create_filtered_query(filter: Option<VaccineCourseFilter>) -> BoxedVaccineCou
         apply_string_filter!(query, name, vaccine_course_dsl::name);
         apply_equal_filter!(query, program_id, vaccine_course_dsl::program_id);
     }
+
+    query = query.filter(vaccine_course_dsl::deleted_datetime.is_null());
+
     query
 }
