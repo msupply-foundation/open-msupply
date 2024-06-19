@@ -189,12 +189,20 @@ export const VaccineCourseView: FC = () => {
     return <BasicSpinner />;
   }
 
+  const defaultValue = {
+    value: draft.demographicIndicator?.name ?? '',
+    label: draft.demographicIndicator
+      ? `${draft.demographicIndicator?.name} ${draft.demographicIndicator?.baseYear}`
+      : '',
+  };
+
   return !!data ? (
     <Box display="flex" flex={1}>
       <Container>
         <Section heading={t('heading.vaccine-details')}>
           <Row label={t('label.immunisation-name')}>
             <BasicTextInput
+              textAlign="right"
               value={draft?.name ?? ''}
               fullWidth
               onChange={e => updatePatch({ name: e.target.value })}
@@ -202,16 +210,14 @@ export const VaccineCourseView: FC = () => {
           </Row>
           <Row label={t('label.target-demographic')}>
             <Autocomplete
+              sx={{ input: { textAlign: 'right' } }}
               isOptionEqualToValue={option =>
                 option?.value === draft.demographicIndicatorId
               }
               onChange={(_e, selected) =>
                 updatePatch({ demographicIndicatorId: selected?.value })
               }
-              defaultValue={{
-                label: draft.demographicIndicator?.name ?? '',
-                value: draft.demographicIndicator?.id ?? '',
-              }}
+              defaultValue={defaultValue}
               placeholder={'demographic'}
               options={options}
             />
