@@ -2,7 +2,13 @@ use crate::{
     program::validate::check_immunisation_program_exists, service_provider::ServiceContext,
 };
 
-use repository::{ProgramRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    vaccine_course::{
+        vaccine_course::{VaccineCourseFilter, VaccineCourseRepository},
+        vaccine_course_row::VaccineCourseRowRepository,
+    },
+    EqualFilter, ProgramRowRepository, RepositoryError, StorageConnection, TransactionError,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteImmunisationProgramError {
@@ -18,14 +24,26 @@ pub fn delete_immunisation_program(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &id)?;
+            let courses_to_delete = generate(connection, &id)?;
 
-            let repo = ProgramRowRepository::new(connection);
+            let program_row_repo = ProgramRowRepository::new(connection);
+            let vaccine_course_row_repo = VaccineCourseRowRepository::new(connection);
 
-            repo.mark_deleted(&id)
-                .map(|_| id)
-                .map_err(DeleteImmunisationProgramError::from)
+            program_row_repo
+                .mark_deleted(&id)
+                .map_err(DeleteImmunisationProgramError::from)?;
+
+            for id in courses_to_delete.iter() {
+                vaccine_course_row_repo
+                    .mark_deleted(&id)
+                    .map_err(DeleteImmunisationProgramError::from)?;
+            }
+
+            Ok(id)
         })
-        .map_err(|error| error.to_inner_error())?;
+        .map_err(|error: TransactionError<DeleteImmunisationProgramError>| {
+            error.to_inner_error()
+        })?;
     Ok(immunisation_program_id)
 }
 
@@ -43,4 +61,16 @@ fn validate(
         .ok_or(DeleteImmunisationProgramError::ImmunisationProgramDoesNotExist)?;
 
     Ok(())
+}
+
+fn generate(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Vec<String>, DeleteImmunisationProgramError> {
+    let vaccine_courses = VaccineCourseRepository::new(connection)
+        .query_by_filter(VaccineCourseFilter::new().program_id(EqualFilter::equal_to(&id)))?;
+
+    let vaccine_course_ids_to_delete = vaccine_courses.into_iter().map(|v| v.id).collect();
+
+    Ok(vaccine_course_ids_to_delete)
 }
