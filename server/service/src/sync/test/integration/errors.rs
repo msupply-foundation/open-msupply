@@ -10,7 +10,8 @@ mod tests {
         service_provider::ServiceProvider,
         sync::{
             api::{ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncErrorCodeV5},
-            remote_data_synchroniser::PostInitialisationError,
+            api_v6::{SyncApiErrorV6, SyncApiErrorVariantV6, SyncParsedErrorV6},
+            central_data_synchroniser_v6::CentralPullErrorV6,
             settings::SyncSettings,
             sync_status::SyncLogError,
             synchroniser::{SyncError, Synchroniser},
@@ -158,19 +159,17 @@ mod tests {
 
         assert_matches!(
             error,
-            SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(
-                SyncApiError {
-                    source: SyncApiErrorVariantV5::ParsedError {
-                        status: StatusCode::CONFLICT,
-                        source: ParsedError {
-                            code: SyncErrorCodeV5::ApiVersionIncompatible,
-                            data: Some(_),
-                            ..
-                        }
-                    },
-                    ..
-                }
-            ))
+            SyncError::SyncApiError(SyncApiError {
+                source: SyncApiErrorVariantV5::ParsedError {
+                    status: StatusCode::CONFLICT,
+                    source: ParsedError {
+                        code: SyncErrorCodeV5::ApiVersionIncompatible,
+                        data: Some(_),
+                        ..
+                    }
+                },
+                ..
+            })
         );
 
         // V6
@@ -186,19 +185,12 @@ mod tests {
 
         assert_matches!(
             error,
-            SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(
-                SyncApiError {
-                    source: SyncApiErrorVariantV5::ParsedError {
-                        status: StatusCode::CONFLICT,
-                        source: ParsedError {
-                            code: SyncErrorCodeV5::ApiVersionIncompatible,
-                            data: Some(_),
-                            ..
-                        }
-                    },
-                    ..
-                }
-            ))
+            SyncError::CentralPullErrorV6(CentralPullErrorV6::SyncApiError(SyncApiErrorV6 {
+                source: SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncVersionMismatch(
+                    0, 1, 10000
+                )),
+                ..
+            }))
         );
     }
 
