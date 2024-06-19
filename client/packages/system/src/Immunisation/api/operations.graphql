@@ -103,6 +103,7 @@ fragment VaccineCourse on VaccineCourseNode {
   demographicIndicator {
     name
     id
+    baseYear
   }
   vaccineCourseItems {
     ...VaccineCourseItem
