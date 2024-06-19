@@ -180,46 +180,11 @@ const IndicatorsDemographicsComponent = () => {
       [nameColumn(), { setter }],
       [percentageColumn(), { setter }],
       [populationColumn(), { setter: PopulationChange }],
-      {
-        key: '1',
-        width: 150,
-        align: ColumnAlign.Right,
-        label: undefined,
-        labelProps: { defaultValue: currentYear + 1 },
-        sortable: false,
-      },
-      {
-        key: '2',
-        width: 150,
-        align: ColumnAlign.Right,
-        label: undefined,
-        labelProps: { defaultValue: currentYear + 2 },
-        sortable: false,
-      },
-      {
-        key: '3',
-        width: 150,
-        align: ColumnAlign.Right,
-        label: undefined,
-        labelProps: { defaultValue: currentYear + 3 },
-        sortable: false,
-      },
-      {
-        key: '4',
-        width: 150,
-        align: ColumnAlign.Right,
-        label: undefined,
-        labelProps: { defaultValue: currentYear + 4 },
-        sortable: false,
-      },
-      {
-        key: '5',
-        width: 150,
-        align: ColumnAlign.Right,
-        label: undefined,
-        labelProps: { defaultValue: currentYear + 5 },
-        sortable: false,
-      },
+      yearColumn(1),
+      yearColumn(2),
+      yearColumn(3),
+      yearColumn(4),
+      yearColumn(5),
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [draft, indexPopulation, sortBy]
@@ -268,3 +233,12 @@ export const IndicatorsDemographics = () => (
     <IndicatorsDemographicsComponent />
   </TableProvider>
 );
+
+const yearColumn = (year: number) => ({
+  key: String(year),
+  width: 150,
+  align: ColumnAlign.Right,
+  label: undefined,
+  labelProps: { defaultValue: currentYear + year },
+  sortable: false,
+});

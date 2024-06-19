@@ -20,6 +20,6 @@ export const populationColumn = (): ColumnDefinition<Row> => ({
   accessor: ({ rowData }) => rowData[0],
   key: '0',
   Cell: PopulationCell,
-  minWidth: 100,
+  width: 190,
   sortable: false,
 });
