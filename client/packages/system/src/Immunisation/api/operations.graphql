@@ -178,3 +178,16 @@ mutation updateVaccineCourse(
     }
   }
 }
+
+mutation deleteVaccineCourse($vaccineCourseId: String!) {
+  centralServer {
+    vaccineCourse {
+      deleteVaccineCourse(vaccineCourseId: $vaccineCourseId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
