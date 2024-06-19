@@ -88,6 +88,13 @@ const mapRoute = (route: string): RouteMapping => {
       return { title: 'equipment', docs: '/coldchain/equipment/' };
     case inRoute(AppRoute.Facilities):
       return { title: 'facilities', docs: '/manage/facilities/' };
+    case inRoute(AppRoute.IndicatorsDemographics):
+      return {
+        title: 'indicators-demographics',
+        docs: '/manage/demographics/',
+      };
+    case inRoute(AppRoute.ImmunisationPrograms):
+      return { title: 'immunisations', docs: '/programs/immunizations/' };
     default:
       return { title: undefined, docs: '/introduction/' };
   }
