@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { ImportPanel } from './ImportPanel';
-import { ReviewDataTable } from './ReviewDataTable';
+import { ImportReviewDataTable } from './ImportReviewDataTable';
 
 interface PropertiesReviewTabProps {
   uploadedRows: any[];
@@ -11,6 +11,6 @@ export const PropertiesReviewTab: FC<
   ImportPanel & PropertiesReviewTabProps
 > = ({ showWarnings, tab, uploadedRows }) => (
   <ImportPanel tab={tab}>
-    <ReviewDataTable rows={uploadedRows} showWarnings={showWarnings} />
+    <ImportReviewDataTable rows={uploadedRows} showWarnings={showWarnings} />
   </ImportPanel>
 );

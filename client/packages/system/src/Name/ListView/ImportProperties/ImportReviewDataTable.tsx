@@ -12,11 +12,11 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 
-interface ReviewDataTableProps {
+interface ImportReviewDataTableProps {
   rows: any[];
   showWarnings: boolean;
 }
-export const ReviewDataTable: FC<ReviewDataTableProps> = ({
+export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   rows,
   showWarnings,
 }) => {
