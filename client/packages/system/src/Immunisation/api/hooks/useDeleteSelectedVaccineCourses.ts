@@ -9,7 +9,20 @@ import { VACCINE, LIST } from './keys';
 
 export const useDeleteSelectedVaccineCourses = () => {
   const { api, queryClient } = useImmunisationGraphQL();
-  const { mutateAsync } = useMutation(api.deleteVaccineCourse);
+  const { mutateAsync } = useMutation(
+    async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
+      const apiResult = await api.deleteVaccineCourse({ vaccineCourseId });
+
+      // The `?` after `centralServer` handles empty `apiResult` (see issue: https://github.com/msupply-foundation/open-msupply/issues/4191)
+      const result = apiResult.centralServer?.vaccineCourse.deleteVaccineCourse;
+
+      if (result?.__typename === 'DeleteResponse') {
+        return result.id;
+      }
+
+      throw new Error(t('error.could-not-delete-vaccine-course'));
+    }
+  );
   const t = useTranslation('coldchain');
 
   const selectedRows =
