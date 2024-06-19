@@ -11,6 +11,7 @@
   "button.add-new-program": "New Program",
   "label.add-new-vaccine-course": "Add New Vaccine Course",
   "heading.schedule": "Schedule",
+  "heading.vaccine-details": "Vaccine Course Details",
   "label.immunisation-name": "Vaccine Course Name",
   "label.demographic-group": "Demographic Group",
   "label.coverage-rate": "Coverage Rate",
