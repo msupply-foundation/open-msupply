@@ -12,6 +12,7 @@ import {
 import { PROGRAM } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
 import { ImmunisationProgramFragment } from '../operations.generated';
+import { isEmpty } from '@common/utils';
 
 export interface DraftImmunisationProgram extends ImmunisationProgramFragment {}
 
@@ -123,17 +124,20 @@ const useCreate = (
       },
     });
 
-    const result = apiResult.centralServer.program.insertImmunisationProgram;
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result = apiResult.centralServer.program.insertImmunisationProgram;
 
-    if (result?.__typename === 'ProgramNode') return result;
+      if (result.__typename === 'ProgramNode') return result;
 
-    if (result?.__typename === 'InsertImmunisationProgramError') {
-      if (result.error.__typename === 'RecordAlreadyExist') {
-        setErrorMessage(t('error.program-already-exists'));
-      } else {
-        noOtherVariants(result.error.__typename);
+      if (result.__typename === 'InsertImmunisationProgramError') {
+        if (result.error.__typename === 'RecordAlreadyExist') {
+          setErrorMessage(t('error.program-already-exists'));
+        } else {
+          noOtherVariants(result.error.__typename);
+        }
+        return;
       }
-      return;
     }
 
     throw new Error('Unable to create Immunisation Program');
@@ -168,21 +172,24 @@ const useUpdate = (
       storeId,
     });
 
-    const result = apiResult.centralServer.program.updateImmunisationProgram;
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result = apiResult.centralServer.program.updateImmunisationProgram;
 
-    if (result?.__typename === 'ProgramNode') {
-      return result;
-    }
-
-    if (result?.__typename === 'UpdateImmunisationProgramError') {
-      if (result.error.__typename === 'UniqueValueViolation') {
-        setErrorMessage(
-          t('error.unique-value-violation', { field: result.error.field })
-        );
-      } else {
-        setErrorMessage(result.error.description);
+      if (result.__typename === 'ProgramNode') {
+        return result;
       }
-      return;
+
+      if (result.__typename === 'UpdateImmunisationProgramError') {
+        if (result.error.__typename === 'UniqueValueViolation') {
+          setErrorMessage(
+            t('error.unique-value-violation', { field: result.error.field })
+          );
+        } else {
+          setErrorMessage(result.error.description);
+        }
+        return;
+      }
     }
 
     throw new Error(t('error.unable-to-update-immunisation-program'));

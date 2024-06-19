@@ -6,6 +6,8 @@ import {
   Grid,
   PlusCircleIcon,
   RecordPatch,
+  useCallbackWithPermission,
+  UserPermission,
   useTranslation,
 } from '@openmsupply-client/common';
 
@@ -22,7 +24,7 @@ export const AppBarButtonsComponent = ({
 }: IndicatorsAppBarButtonsProps) => {
   const t = useTranslation();
 
-  const handleClick = () => {
+  const onCreate = () => {
     const id = FnUtils.generateUUID();
     const newRow = {
       id,
@@ -40,6 +42,12 @@ export const AppBarButtonsComponent = ({
     };
     patch({ ...newRow });
   };
+
+  const handleClick = useCallbackWithPermission(
+    UserPermission.EditCentralData,
+    onCreate
+  );
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>

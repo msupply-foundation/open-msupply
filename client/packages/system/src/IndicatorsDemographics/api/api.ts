@@ -4,6 +4,7 @@ import {
   FilterByWithBoolean,
   InsertDemographicIndicatorInput,
   InsertDemographicProjectionInput,
+  isEmpty,
   SortBy,
   UpdateDemographicIndicatorInput,
   UpdateDemographicProjectionInput,
@@ -140,13 +141,17 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
   insertIndicator: async (input: DemographicIndicatorFragment) => {
     const insertInput: InsertDemographicIndicatorInput =
       Parsers.toInsertIndicator(input);
-    const result = await sdk.insertDemographicIndicator({ input: insertInput });
+    const apiResult = await sdk.insertDemographicIndicator({
+      input: insertInput,
+    });
 
-    if (
-      result.centralServer.demographic.insertDemographicIndicator.__typename ===
-      'DemographicIndicatorNode'
-    ) {
-      return result.centralServer.demographic.insertDemographicIndicator;
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result =
+        apiResult.centralServer.demographic.insertDemographicIndicator;
+      if (result.__typename === 'DemographicIndicatorNode') {
+        return result;
+      }
     }
 
     throw new Error('could not insert demographic indicator');
@@ -154,37 +159,45 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
   updateIndicator: async (input: DemographicIndicatorFragment) => {
     const updateInput: UpdateDemographicIndicatorInput =
       Parsers.toUpdateIndicator(input);
-    const result = await sdk.updateDemographicIndicator({
+    const apiResult = await sdk.updateDemographicIndicator({
       input: updateInput,
     });
-    if (
-      result.centralServer.demographic.updateDemographicIndicator.__typename ===
-      'DemographicIndicatorNode'
-    ) {
-      return result.centralServer.demographic.updateDemographicIndicator;
+
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result =
+        apiResult.centralServer.demographic.updateDemographicIndicator;
+      if (result.__typename === 'DemographicIndicatorNode') {
+        return result;
+      }
     }
   },
   insertProjection: async (input: InsertDemographicProjectionInput) => {
-    const result = await sdk.insertDemographicProjection({
+    const apiResult = await sdk.insertDemographicProjection({
       input,
     });
-    if (
-      result.centralServer.demographic.insertDemographicProjection
-        .__typename === 'DemographicProjectionNode'
-    ) {
-      return result.centralServer.demographic.insertDemographicProjection;
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result =
+        apiResult.centralServer.demographic.insertDemographicProjection;
+      if (result.__typename === 'DemographicProjectionNode') {
+        return result;
+      }
     }
     throw new Error('could not insert demographic projection');
   },
   updateProjection: async (input: UpdateDemographicProjectionInput) => {
-    const result = await sdk.updateDemographicProjection({
+    const apiResult = await sdk.updateDemographicProjection({
       input,
     });
-    if (
-      result.centralServer.demographic.updateDemographicProjection
-        .__typename === 'DemographicProjectionNode'
-    ) {
-      return result.centralServer.demographic.updateDemographicProjection;
+
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result =
+        apiResult.centralServer?.demographic?.updateDemographicProjection;
+      if (result.__typename === 'DemographicProjectionNode') {
+        return result;
+      }
     }
   },
 });

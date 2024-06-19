@@ -94,8 +94,8 @@ pub fn validate_auth(
                     msg,
                     required_permissions,
                 } => StandardGraphqlError::Forbidden(format!(
-                    "{}, Required permissions: {:?}",
-                    msg, required_permissions
+                    "{}, Required permissions: {:?}, Store: {:?}",
+                    msg, required_permissions, access_request.store_id
                 )),
             },
             AuthError::InternalError(err) => StandardGraphqlError::InternalError(err),

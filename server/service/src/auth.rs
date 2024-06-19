@@ -125,6 +125,7 @@ pub enum Resource {
     // vaccine course
     MutateVaccineCourse,
     QueryVaccineCourse,
+    MutateImmunisationProgram,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -462,9 +463,12 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryProgram,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![
+                PermissionDSL::HasStoreAccess,
+                PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+            ]),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
     map.insert(
@@ -541,11 +545,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::MutateDemographic,
-        PermissionDSL::NoPermissionRequired,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
     map.insert(
         Resource::MutateVaccineCourse,
-        PermissionDSL::HasPermission(PermissionType::VaccineCourseMutate),
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::MutateImmunisationProgram,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
     );
     map.insert(
         Resource::QueryVaccineCourse,

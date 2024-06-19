@@ -3,7 +3,7 @@ import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { DetailInputWithLabelRow } from '@openmsupply-client/common';
 import React from 'react';
 import { z } from 'zod';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 import { useProgramEnrolments } from '../../api';
 import {
   DefaultFormRowSpacing,
