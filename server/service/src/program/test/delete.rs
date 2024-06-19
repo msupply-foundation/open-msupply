@@ -2,11 +2,13 @@
 mod delete {
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
+    use repository::vaccine_course::vaccine_course::VaccineCourseFilter;
     use repository::{EqualFilter, ProgramFilter};
 
     use crate::program::delete_immunisation::DeleteImmunisationProgramError;
     use crate::program::insert_immunisation::InsertImmunisationProgram;
     use crate::service_provider::ServiceProvider;
+    use crate::vaccine_course::insert::InsertVaccineCourse;
 
     #[actix_rt::test]
     async fn delete_immunisation_program_errors() {
@@ -38,7 +40,7 @@ mod delete {
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.program_service;
 
-        // Create vaccine course
+        // Create program
         let immunisation_program = InsertImmunisationProgram {
             id: "immunisation_program_to_delete".to_owned(),
             name: "immunisation_program_name".to_owned(),
@@ -46,6 +48,18 @@ mod delete {
 
         let _result = service
             .insert_immunisation_program(&context, immunisation_program.clone())
+            .unwrap();
+
+        // Add a vaccine course to the program
+        let vaccine_course = InsertVaccineCourse {
+            id: "vaccine_course_to_delete".to_owned(),
+            name: "vaccine_course_name".to_owned(),
+            program_id: immunisation_program.id.clone(),
+        };
+
+        let _result = service_provider
+            .vaccine_course_service
+            .insert_vaccine_course(&context, vaccine_course.clone())
             .unwrap();
 
         // Soft delete it
@@ -62,5 +76,15 @@ mod delete {
             .unwrap();
 
         assert_eq!(programs.count, 0);
+
+        // Ensure vaccine course is also not found in query
+        let filter = VaccineCourseFilter::new().id(EqualFilter::equal_to(&vaccine_course.id));
+
+        let courses = service_provider
+            .vaccine_course_service
+            .get_vaccine_courses(&context.connection, None, Some(filter), None)
+            .unwrap();
+
+        assert_eq!(courses.count, 0);
     }
 }
