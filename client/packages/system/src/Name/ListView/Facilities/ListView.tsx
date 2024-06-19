@@ -16,6 +16,7 @@ import { NameRenderer } from '../../Components';
 import { Toolbar } from './Toolbar';
 import { FacilityEditModal } from './FacilityEditModal';
 import { AppBarButtons } from './AppBarButtons';
+import { PropertiesImportModal } from '../ImportProperties/PropertiesImportModal';
 
 const FacilitiesListComponent = () => {
   const [selectedId, setSelectedId] = useState('');
@@ -81,6 +82,10 @@ const FacilitiesListComponent = () => {
 
   return (
     <>
+      <PropertiesImportModal
+        isOpen={importPropertiesModalController.isOn}
+        onClose={importPropertiesModalController.toggleOff}
+      />
       <AppBarButtons importModalController={importPropertiesModalController} />
       <Toolbar filter={filter} />
       {isOpen && (
