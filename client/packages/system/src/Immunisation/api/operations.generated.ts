@@ -6,6 +6,10 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ImmunisationProgramFragment = { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null };
 
+export type VaccineCourseScheduleFragment = { __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string };
+
+export type VaccineCourseItemFragment = { __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string };
+
 export type ProgramsQueryVariables = Types.Exact<{
   storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -34,7 +38,7 @@ export type UpdateImmunisationProgramMutationVariables = Types.Exact<{
 
 export type UpdateImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', updateImmunisationProgram: { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } | { __typename: 'UpdateImmunisationProgramError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', field: Types.UniqueValueKey, description: string } } } } };
 
-export type VaccineCourseFragment = { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string } | null };
+export type VaccineCourseFragment = { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null };
 
 export type VaccineCoursesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -45,7 +49,7 @@ export type VaccineCoursesQueryVariables = Types.Exact<{
 }>;
 
 
-export type VaccineCoursesQuery = { __typename: 'Queries', vaccineCourses: { __typename: 'VaccineCourseConnector', totalCount: number, nodes: Array<{ __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string } | null }> } };
+export type VaccineCoursesQuery = { __typename: 'Queries', vaccineCourses: { __typename: 'VaccineCourseConnector', totalCount: number, nodes: Array<{ __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null }> } };
 
 export type InsertVaccineCourseMutationVariables = Types.Exact<{
   input?: Types.InputMaybe<Types.InsertVaccineCourseInput>;
@@ -53,7 +57,29 @@ export type InsertVaccineCourseMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', insertVaccineCourse: { __typename: 'InsertVaccineCourseError', error: { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string } | null } } } };
+export type InsertVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', insertVaccineCourse: { __typename: 'InsertVaccineCourseError', error: { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null } } } };
+
+export type UpdateVaccineCourseMutationVariables = Types.Exact<{
+  input?: Types.InputMaybe<Types.UpdateVaccineCourseInput>;
+  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
+
+
+export type UpdateVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', updateVaccineCourse: { __typename: 'UpdateVaccineCourseError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null } } } };
+
+export type DeleteImmunisationProgramMutationVariables = Types.Exact<{
+  immunisationProgramId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', deleteImmunisationProgram: { __typename: 'DeleteImmunisationProgramError' } | { __typename: 'DeleteResponse', id: string } } } };
+
+export type DeleteVaccineCourseMutationVariables = Types.Exact<{
+  vaccineCourseId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', deleteVaccineCourse: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteVaccineCourseError' } } } };
 
 export const ImmunisationProgramFragmentDoc = gql`
     fragment ImmunisationProgram on ProgramNode {
@@ -62,6 +88,20 @@ export const ImmunisationProgramFragmentDoc = gql`
   vaccineCourses {
     name
   }
+}
+    `;
+export const VaccineCourseItemFragmentDoc = gql`
+    fragment VaccineCourseItem on VaccineCourseItemNode {
+  id
+  itemId
+  name
+}
+    `;
+export const VaccineCourseScheduleFragmentDoc = gql`
+    fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
+  id
+  doseNumber
+  label
 }
     `;
 export const VaccineCourseFragmentDoc = gql`
@@ -76,9 +116,18 @@ export const VaccineCourseFragmentDoc = gql`
   isActive
   demographicIndicator {
     name
+    id
+    baseYear
+  }
+  vaccineCourseItems {
+    ...VaccineCourseItem
+  }
+  vaccineCourseSchedules {
+    ...VaccineCourseSchedule
   }
 }
-    `;
+    ${VaccineCourseItemFragmentDoc}
+${VaccineCourseScheduleFragmentDoc}`;
 export const ProgramsDocument = gql`
     query programs($storeId: String, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
   programs(
@@ -153,7 +202,6 @@ export const VaccineCoursesDocument = gql`
     ... on VaccineCourseConnector {
       __typename
       nodes {
-        __typename
         ...VaccineCourse
       }
       totalCount
@@ -181,6 +229,55 @@ export const InsertVaccineCourseDocument = gql`
   }
 }
     ${VaccineCourseFragmentDoc}`;
+export const UpdateVaccineCourseDocument = gql`
+    mutation updateVaccineCourse($input: UpdateVaccineCourseInput, $storeId: String) {
+  centralServer {
+    vaccineCourse {
+      updateVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
+        ... on VaccineCourseNode {
+          __typename
+          ...VaccineCourse
+        }
+        ... on UpdateVaccineCourseError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    ${VaccineCourseFragmentDoc}`;
+export const DeleteImmunisationProgramDocument = gql`
+    mutation deleteImmunisationProgram($immunisationProgramId: String!) {
+  centralServer {
+    program {
+      deleteImmunisationProgram(immunisationProgramId: $immunisationProgramId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
+export const DeleteVaccineCourseDocument = gql`
+    mutation deleteVaccineCourse($vaccineCourseId: String!) {
+  centralServer {
+    vaccineCourse {
+      deleteVaccineCourse(vaccineCourseId: $vaccineCourseId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -203,6 +300,15 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertVaccineCourse(variables?: InsertVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertVaccineCourseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertVaccineCourseMutation>(InsertVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertVaccineCourse', 'mutation');
+    },
+    updateVaccineCourse(variables?: UpdateVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateVaccineCourseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateVaccineCourseMutation>(UpdateVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateVaccineCourse', 'mutation');
+    },
+    deleteImmunisationProgram(variables: DeleteImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteImmunisationProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteImmunisationProgramMutation>(DeleteImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteImmunisationProgram', 'mutation');
+    },
+    deleteVaccineCourse(variables: DeleteVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteVaccineCourseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteVaccineCourseMutation>(DeleteVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteVaccineCourse', 'mutation');
     }
   };
 }
@@ -290,5 +396,56 @@ export const mockVaccineCoursesQuery = (resolver: ResponseResolver<GraphQLReques
 export const mockInsertVaccineCourseMutation = (resolver: ResponseResolver<GraphQLRequest<InsertVaccineCourseMutationVariables>, GraphQLContext<InsertVaccineCourseMutation>, any>) =>
   graphql.mutation<InsertVaccineCourseMutation, InsertVaccineCourseMutationVariables>(
     'insertVaccineCourse',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateVaccineCourseMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockUpdateVaccineCourseMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateVaccineCourseMutationVariables>, GraphQLContext<UpdateVaccineCourseMutation>, any>) =>
+  graphql.mutation<UpdateVaccineCourseMutation, UpdateVaccineCourseMutationVariables>(
+    'updateVaccineCourse',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteImmunisationProgramMutation((req, res, ctx) => {
+ *   const { immunisationProgramId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockDeleteImmunisationProgramMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteImmunisationProgramMutationVariables>, GraphQLContext<DeleteImmunisationProgramMutation>, any>) =>
+  graphql.mutation<DeleteImmunisationProgramMutation, DeleteImmunisationProgramMutationVariables>(
+    'deleteImmunisationProgram',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteVaccineCourseMutation((req, res, ctx) => {
+ *   const { vaccineCourseId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockDeleteVaccineCourseMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteVaccineCourseMutationVariables>, GraphQLContext<DeleteVaccineCourseMutation>, any>) =>
+  graphql.mutation<DeleteVaccineCourseMutation, DeleteVaccineCourseMutationVariables>(
+    'deleteVaccineCourse',
     resolver
   )

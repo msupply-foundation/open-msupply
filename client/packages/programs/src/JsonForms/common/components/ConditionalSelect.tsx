@@ -8,7 +8,7 @@ import {
 import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 
 export const conditionalSelectTester = rankWith(
   10,

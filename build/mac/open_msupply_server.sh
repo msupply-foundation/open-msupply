@@ -10,4 +10,4 @@ cd "$(dirname "$0")"
 chmod +x bin/remote_server
 xattr -cr bin/remote_server
 $(sleep 3 && open "http://localhost:8000") &
-APP_SERVER__DANGER_ALLOW_HTTP=true ./bin/remote_server
+APP__SERVER__DANGER_ALLOW_HTTP=true ./bin/remote_server

@@ -3,12 +3,28 @@ use super::vaccine_course_item_row::{
     VaccineCourseItemRow,
 };
 
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    helper_types::{InnerJoin, IntoBoxed},
+    prelude::*,
+};
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
-    StorageConnection,
+    db_diesel::{
+        item_link_row::{item_link, item_link::dsl as item_link_dsl},
+        item_row::{item, item::dsl as item_dsl},
+    },
+    diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError,
+    DBType, EqualFilter, ItemLinkRow, ItemRow, StorageConnection,
 };
+
+type VaccineCourseItemJoin = (VaccineCourseItemRow, (ItemLinkRow, ItemRow));
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct VaccineCourseItem {
+    pub vaccine_course_item: VaccineCourseItemRow,
+    pub item: ItemRow,
+}
 
 #[derive(Clone, Default)]
 pub struct VaccineCourseItemFilter {
@@ -42,7 +58,7 @@ impl<'a> VaccineCourseItemRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<VaccineCourseItemFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = create_filtered_query(filter)?;
 
         Ok(query
             .count()
@@ -52,33 +68,41 @@ impl<'a> VaccineCourseItemRepository<'a> {
     pub fn query_one(
         &self,
         filter: VaccineCourseItemFilter,
-    ) -> Result<Option<VaccineCourseItemRow>, RepositoryError> {
+    ) -> Result<Option<VaccineCourseItem>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: VaccineCourseItemFilter,
-    ) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
+    ) -> Result<Vec<VaccineCourseItem>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
         &self,
         filter: Option<VaccineCourseItemFilter>,
-    ) -> Result<Vec<VaccineCourseItemRow>, RepositoryError> {
-        let query = create_filtered_query(filter);
+    ) -> Result<Vec<VaccineCourseItem>, RepositoryError> {
+        let query = create_filtered_query(filter)?;
 
-        let result = query.load::<VaccineCourseItemRow>(self.connection.lock().connection())?;
+        let result = query.load::<VaccineCourseItemJoin>(self.connection.lock().connection())?;
 
-        Ok(result.into_iter().collect())
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedVaccineCourseItemQuery = IntoBoxed<'static, vaccine_course_item::table, DBType>;
+type BoxedVaccineCourseItemQuery = IntoBoxed<
+    'static,
+    InnerJoin<vaccine_course_item::table, InnerJoin<item_link::table, item::table>>,
+    DBType,
+>;
 
-fn create_filtered_query(filter: Option<VaccineCourseItemFilter>) -> BoxedVaccineCourseItemQuery {
-    let mut query = vaccine_course_item_dsl::vaccine_course_item.into_boxed();
+fn create_filtered_query(
+    filter: Option<VaccineCourseItemFilter>,
+) -> Result<BoxedVaccineCourseItemQuery, RepositoryError> {
+    let mut query = vaccine_course_item_dsl::vaccine_course_item
+        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
+        .into_boxed();
 
     if let Some(f) = filter {
         let VaccineCourseItemFilter {
@@ -93,5 +117,13 @@ fn create_filtered_query(filter: Option<VaccineCourseItemFilter>) -> BoxedVaccin
             vaccine_course_item_dsl::vaccine_course_id
         );
     }
-    query
+
+    Ok(query)
+}
+
+fn to_domain((vaccine_course_item, (_, item_row)): VaccineCourseItemJoin) -> VaccineCourseItem {
+    VaccineCourseItem {
+        vaccine_course_item,
+        item: item_row,
+    }
 }

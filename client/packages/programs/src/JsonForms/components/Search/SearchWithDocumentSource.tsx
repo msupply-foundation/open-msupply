@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ControlProps } from '@jsonforms/core';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 import {
   useTranslation,
   Box,

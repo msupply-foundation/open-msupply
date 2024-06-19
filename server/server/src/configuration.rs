@@ -1,4 +1,4 @@
-use config::{Config, ConfigError, Environment, File, FileSourceFile};
+use config::{Config, ConfigError, Environment, File, FileFormat, FileSourceFile};
 use repository::{KeyType, KeyValueStoreRepository, StorageConnection};
 use service::settings::{is_develop, Settings};
 use std::{
@@ -37,7 +37,7 @@ pub fn get_configuration_directory() -> Result<PathBuf, SettingsError> {
 ///
 /// The base configuration file stores configuration properties which are common between local and
 /// production environments.
-pub fn get_configuration_base_file() -> Result<File<FileSourceFile>, SettingsError> {
+pub fn get_configuration_base_file() -> Result<File<FileSourceFile, FileFormat>, SettingsError> {
     let configuration_directory = get_configuration_directory()?;
     let base_file = File::from(get_configuration_base_file_path(configuration_directory));
     Ok(base_file)
@@ -54,7 +54,7 @@ pub fn get_configuration_base_file_path(configuration_directory: PathBuf) -> Pat
 ///
 /// The application configuration file stores environment-specific configuration properties. Valid
 /// environments are `local` and `production`.
-pub fn get_configuration_app_file() -> Result<File<FileSourceFile>, SettingsError> {
+pub fn get_configuration_app_file() -> Result<File<FileSourceFile, FileFormat>, SettingsError> {
     let configuration_directory = get_configuration_directory()?;
     let app_file = File::from(get_configuration_app_file_path(configuration_directory));
     Ok(app_file)
@@ -85,7 +85,7 @@ pub fn get_example_file_path(configuration_directory: PathBuf) -> PathBuf {
 /// For example, the following runs the application using the `local` configuration with the
 /// `database.port` value set to `5433`:
 ///
-/// APP_ENVIRONMENT=local APP_DATABASE__PORT=5433 cargo run
+/// APP__ENVIRONMENT=local APP__DATABASE__PORT=5433 cargo run
 ///
 pub fn get_configuration_environment() -> Environment {
     Environment::with_prefix(CONFIGURATION_ENVIRONMENT_PREFIX)
@@ -122,12 +122,14 @@ pub fn copy_example_environment_configuration_file_if_required() -> Result<(), S
 pub fn get_configuration() -> Result<Settings, SettingsError> {
     copy_example_environment_configuration_file_if_required()?;
 
-    let mut configuration: Config = Config::default();
-    configuration
-        .merge(get_configuration_base_file()?)?
-        .merge(get_configuration_app_file()?)?
-        .merge(get_configuration_environment())?;
-    let settings: Settings = configuration.try_into()?;
+    let mut builder = Config::builder();
+    builder = builder.add_source(get_configuration_base_file()?);
+    builder = builder.add_source(get_configuration_app_file()?);
+    builder = builder.add_source(get_configuration_environment());
+
+    let configuration = builder.build()?;
+    let settings: Settings = configuration.try_deserialize()?;
+
     Ok(settings)
 }
 

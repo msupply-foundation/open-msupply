@@ -41,14 +41,19 @@ export const ImmunisationProgramCreateModal: FC<
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            const result = await create();
-            if (result)
-              navigate(
-                RouteBuilder.create(AppRoute.Programs)
-                  .addPart(AppRoute.ImmunisationPrograms)
-                  .addPart(result.id)
-                  .build()
-              );
+            try {
+              const result = await create();
+              if (result)
+                navigate(
+                  RouteBuilder.create(AppRoute.Programs)
+                    .addPart(AppRoute.ImmunisationPrograms)
+                    .addPart(result.id)
+                    .build()
+                );
+            } catch (e) {
+              // Should ideally just just catch `Permission Denied` as it's handled in graphql client
+              console.error(e);
+            }
           }}
         />
       }

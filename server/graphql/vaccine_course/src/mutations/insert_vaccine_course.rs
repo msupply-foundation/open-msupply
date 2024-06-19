@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordAlreadyExist,
+    simple_generic_errors::{RecordAlreadyExist, RecordProgramCombinationAlreadyExists},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -18,7 +18,7 @@ pub fn insert_vaccine_course(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutateVaccineCourse,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -78,6 +78,7 @@ pub enum InsertVaccineCourseResponse {
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertVaccineCourseErrorInterface {
     ItemAlreadyExists(RecordAlreadyExist),
+    VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
@@ -90,6 +91,13 @@ fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
             return Ok(InsertVaccineCourseErrorInterface::ItemAlreadyExists(
                 RecordAlreadyExist {},
             ))
+        }
+        ServiceError::VaccineCourseNameExistsForThisProgram => {
+            return Ok(
+                InsertVaccineCourseErrorInterface::VaccineCourseNameExistsForThisProgram(
+                    RecordProgramCombinationAlreadyExists {},
+                ),
+            )
         }
         // Standard Graphql Errors
         ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),

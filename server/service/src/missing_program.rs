@@ -28,6 +28,7 @@ pub fn create_missing_master_list_and_program(
         name: MISSING_PROGRAM.to_string(),
         context_id: MISSING_PROGRAM.to_string(),
         is_immunisation: false,
+        deleted_datetime: None,
     };
 
     let connection = service_provider.connection()?;

@@ -9,8 +9,10 @@ use repository::{
     PaginationOption, StorageConnection,
 };
 
+pub mod delete;
 pub mod insert;
 pub mod query;
+pub mod update;
 mod validate;
 
 #[cfg(test)]
@@ -43,6 +45,22 @@ pub trait VaccineCourseServiceTrait: Sync + Send {
         input: insert::InsertVaccineCourse,
     ) -> Result<VaccineCourseRow, insert::InsertVaccineCourseError> {
         insert::insert_vaccine_course(ctx, input)
+    }
+
+    fn update_vaccine_course(
+        &self,
+        ctx: &ServiceContext,
+        input: update::UpdateVaccineCourse,
+    ) -> Result<VaccineCourseRow, update::UpdateVaccineCourseError> {
+        update::update_vaccine_course(ctx, input)
+    }
+
+    fn delete_vaccine_course(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, delete::DeleteVaccineCourseError> {
+        delete::delete_vaccine_course(ctx, id)
     }
 }
 

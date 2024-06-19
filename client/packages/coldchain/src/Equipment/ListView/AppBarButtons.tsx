@@ -13,9 +13,8 @@ import {
   PlusCircleIcon,
   ToggleState,
   UploadIcon,
-  useDisabledNotificationToast,
-  useAuthContext,
   UserPermission,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
@@ -31,16 +30,13 @@ export const AppBarButtonsComponent = ({
   const { success, error } = useNotification();
   const t = useTranslation('coldchain');
   const { fetchAsync, isLoading } = useAssets.document.listAll();
-  const { userHasPermission } = useAuthContext();
-  const showDisabledNotification = useDisabledNotificationToast(
+
+  const onAdd = useCallbackWithPermission(
+    UserPermission.AssetMutate,
+    modalController.toggleOn,
     t('error.no-asset-create-permission')
   );
 
-  const onAdd = () => {
-    if (userHasPermission(UserPermission.AssetMutate))
-      modalController.toggleOn();
-    else showDisabledNotification();
-  };
   const csvExport = async () => {
     const data = await fetchAsync();
     if (!data || !data?.nodes.length) {

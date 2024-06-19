@@ -22,7 +22,7 @@ import {
 } from '../common';
 import { z } from 'zod';
 import { EncounterFragment, useEncounter, useProgramEvents } from '../../api';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 
 export const adherenceScoreTester = rankWith(10, uiTypeIs('AdherenceScore'));
 
