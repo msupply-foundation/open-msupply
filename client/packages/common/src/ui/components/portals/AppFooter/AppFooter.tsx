@@ -27,7 +27,7 @@ export const AppFooter: FC = () => {
 
   return (
     <Box>
-      <Container ref={appFooterRef} style={{ flex: 0, padding: 0 }} />
+      <Container ref={appFooterRef} style={{ flex: 0 }} />
       <Container
         ref={appSessionDetailsRef}
         sx={{

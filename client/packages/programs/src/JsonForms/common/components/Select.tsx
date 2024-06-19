@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 export const selectTester = rankWith(4, isEnumControl);

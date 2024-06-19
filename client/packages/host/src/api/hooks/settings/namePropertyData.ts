@@ -51,7 +51,7 @@ export const gapsNameProperties: {
       key: 'electricity_availability',
       name: 'Electricity Availability',
       valueType: PropertyNodeValueType.String,
-      allowedValues: '> 16 hours,8-16 hours,< 8 hours,No availability',
+      allowedValues: '> 16 hours,8-16 hours,< 8 hours,No availability,Unknown',
       remoteEditable: true,
     },
     {
@@ -60,7 +60,7 @@ export const gapsNameProperties: {
       key: 'solar_availability',
       name: 'Solar Availability',
       valueType: PropertyNodeValueType.String,
-      allowedValues: '> 16 hours,8-16 hours,< 8 hours,No availability',
+      allowedValues: '> 16 hours,8-16 hours,< 8 hours,No availability,Unknown',
       remoteEditable: true,
     },
     {
@@ -69,7 +69,7 @@ export const gapsNameProperties: {
       key: 'gas_availability',
       name: 'Gas Availability',
       valueType: PropertyNodeValueType.String,
-      allowedValues: '> 16 hours,8-16 hours,< 8 hours,No availability',
+      allowedValues: 'Not availability,Available,Irregular,Unknown',
       remoteEditable: true,
     },
     {
@@ -78,7 +78,7 @@ export const gapsNameProperties: {
       key: 'kerosene_availability',
       name: 'Kerosene Availability',
       valueType: PropertyNodeValueType.String,
-      allowedValues: '> 16 hours,8-16 hours,< 8 hours,No availability',
+      allowedValues: 'No availability,Available,Irregular,Unknown',
       remoteEditable: true,
     },
     {

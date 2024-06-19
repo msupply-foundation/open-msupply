@@ -5,6 +5,8 @@ import {
   useTranslation,
   ButtonWithIcon,
   PlusCircleIcon,
+  UserPermission,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 
 interface ProgramAppBarButtonsProps {
@@ -13,6 +15,10 @@ interface ProgramAppBarButtonsProps {
 
 export const AppBarButtons = ({ onCreate }: ProgramAppBarButtonsProps) => {
   const t = useTranslation('coldchain');
+  const onClick = useCallbackWithPermission(
+    UserPermission.EditCentralData,
+    onCreate
+  );
 
   return (
     <AppBarButtonsPortal>
@@ -20,7 +26,7 @@ export const AppBarButtons = ({ onCreate }: ProgramAppBarButtonsProps) => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.add-new-vaccine-course')}
-          onClick={onCreate}
+          onClick={onClick}
         />
       </Grid>
     </AppBarButtonsPortal>

@@ -63,6 +63,7 @@ const ImmunisationProgramListComponent: FC = () => {
           return rowData.vaccineCourses?.map(n => n.name).join(', ');
         },
       },
+      'selection',
     ],
     {
       onChangeSortBy: updateSortQuery,

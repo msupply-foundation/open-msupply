@@ -220,7 +220,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
         return new RegExp(
           // Checks for a trailing `.` or a `0` (not necessarily immediately)
           // after a `.`
-          `^\\d*${RegexUtils.escapeChars(
+          `^-?\\d*${RegexUtils.escapeChars(
             decimal
           )}$|\\d*${RegexUtils.escapeChars(decimal)}\\d*0$`
         ).test(value);

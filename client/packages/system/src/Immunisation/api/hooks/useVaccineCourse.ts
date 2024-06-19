@@ -5,6 +5,7 @@ import {
   UpdateVaccineCourseScheduleInput,
   VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
+  isEmpty,
   isEqual,
   useMutation,
   useQuery,
@@ -182,15 +183,18 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
       storeId,
     });
 
-    const result = apiResult.centralServer.vaccineCourse.updateVaccineCourse;
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result = apiResult.centralServer.vaccineCourse.updateVaccineCourse;
 
-    if (result?.__typename === 'VaccineCourseNode') {
-      return result;
-    }
+      if (result.__typename === 'VaccineCourseNode') {
+        return result;
+      }
 
-    if (result?.__typename === 'UpdateVaccineCourseError') {
-      setErrorMessage(result.error.description);
-      return;
+      if (result.__typename === 'UpdateVaccineCourseError') {
+        setErrorMessage(result.error.description);
+        return;
+      }
     }
 
     throw new Error(t('error.unable-to-update-vaccine-course'));

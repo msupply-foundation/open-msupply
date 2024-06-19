@@ -71,14 +71,15 @@ const InboundReturnListViewComponent: FC = () => {
       ],
       [
         'invoiceNumber',
-        { description: 'description.invoice-number', maxWidth: 110 },
+        { description: 'description.invoice-number', width: 145 },
       ],
-      'createdDatetime',
+      ['createdDatetime', { width: 150 }],
       ['comment', { width: 125, Cell: TooltipTextCell }],
       [
         'theirReference',
         {
           Cell: TooltipTextCell,
+          width: 125,
         },
       ],
       'selection',

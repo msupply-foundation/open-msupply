@@ -80,7 +80,7 @@ async fn migration_1_00_07() {
     // For data migrations we want to insert data then do the migration, thus setup with version - 1
     // Then insert data and upgrade to this version
 
-    let previous_version = templates::adding_table::V1_00_05.version();
+    let previous_version = V1_00_04.version();
     let version = V1_00_07.version();
 
     // Migrate to version - 1
@@ -191,8 +191,12 @@ async fn migration_1_00_07() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&connection, Some(version.clone())).unwrap();
-    assert_eq!(get_database_version(&connection), version);
+    // Since this test refers to a migration we don't want it production, we can't use the main migration to this version.
+    // So manually run just this test migration...
+    // In a real example you'd use `migrate(&connection, Some(version.clone())).unwrap();` instead
+    V1_00_07.migrate(&connection).unwrap();
+    // In a real test, you'd check the version was updated correctly
+    // e.g. assert_eq!(get_database_version(&connection), version);
 
     // Check data
     let invoices = invoice_dsl::invoice

@@ -18,23 +18,39 @@ export * from './item';
 // so we're just importing the functions we need
 // and re-exporting them here
 import debounce from 'lodash/debounce';
+import extractProperty from 'lodash/get';
 import groupBy from 'lodash/groupBy';
+import includes from 'lodash/includes';
+import isArray from 'lodash/isArray';
+import isEmpty from 'lodash/isEmpty';
+import isEqual from 'lodash/isEqual';
+import isEqualWith from 'lodash/isEqualWith';
+import isObject from 'lodash/isObject';
+import isString from 'lodash/isString';
 import keyBy from 'lodash/keyBy';
 import mapKeys from 'lodash/mapKeys';
 import mapValues from 'lodash/mapValues';
 import merge from 'lodash/merge';
+import omitBy from 'lodash/omitBy';
 import uniqBy from 'lodash/uniqBy';
 import uniqWith from 'lodash/uniqWith';
-import isEqual from 'lodash/isEqual';
 
 export {
   debounce,
+  extractProperty,
   groupBy,
+  includes,
+  isArray,
+  isEmpty,
+  isEqual,
+  isEqualWith,
+  isObject,
   keyBy,
   mapKeys,
   mapValues,
   merge,
+  omitBy,
   uniqBy,
   uniqWith,
-  isEqual,
+  isString,
 };
