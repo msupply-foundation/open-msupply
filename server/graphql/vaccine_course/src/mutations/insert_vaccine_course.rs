@@ -18,7 +18,7 @@ pub fn insert_vaccine_course(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource: Resource::MutateVaccineCourse,
             store_id: Some(store_id.to_string()),
         },
     )?;
