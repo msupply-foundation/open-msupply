@@ -7736,9 +7736,9 @@ export enum UserPermission {
   AssetQuery = 'ASSET_QUERY',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
-  DemographicQuery = 'DEMOGRAPHIC_QUERY',
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
+  EditCentralData = 'EDIT_CENTRAL_DATA',
   InboundReturnMutate = 'INBOUND_RETURN_MUTATE',
   InboundReturnQuery = 'INBOUND_RETURN_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
@@ -7770,8 +7770,7 @@ export enum UserPermission {
   StockLineQuery = 'STOCK_LINE_QUERY',
   StoreAccess = 'STORE_ACCESS',
   TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
-  TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY',
-  VaccineCourseMutate = 'VACCINE_COURSE_MUTATE'
+  TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY'
 }
 
 export type UserResponse = UserNode;
