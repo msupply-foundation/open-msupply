@@ -3,83 +3,66 @@ import {
   ColumnDescription,
   DataTable,
   Grid,
+  NamePropertyNode,
   NothingHere,
   Pagination,
+  PropertyNode,
   SearchBar,
   TooltipTextCell,
   useColumns,
-  useIsCentralServerApi,
   useTranslation,
 } from '@openmsupply-client/common';
+import { ImportRow } from './PropertiesImportModal';
 
 interface ImportReviewDataTableProps {
-  rows: any[];
-  showWarnings: boolean;
+  rows: ImportRow[];
+  properties: NamePropertyNode[] | undefined;
 }
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   rows,
-  showWarnings,
+  properties,
 }) => {
-  const t = useTranslation('coldchain');
-  const isCentralServer = useIsCentralServerApi();
+  const t = useTranslation();
   const [pagination, setPagination] = useState<Pagination>({
     page: 0,
     first: 20,
     offset: 0,
   });
+  // Could filter here for only properties that are used in import
+  const propertyNodes: PropertyNode[] | undefined = properties
+    ?.map(property => {
+      return { ...property.property };
+    })
+    .sort();
+
   const [searchString, setSearchString] = useState<string>(() => '');
-  const columnDescriptions: ColumnDescription<any>[] = [
+  const columnDescriptions: ColumnDescription<ImportRow>[] = [
     {
-      key: 'assetNumber',
-      width: 70,
-      sortable: false,
-      label: 'label.asset-number',
-    },
-    {
-      key: 'catalogueItemCode',
+      key: 'code',
       width: 50,
       sortable: false,
-      label: 'label.catalogue-item-code',
+      label: 'label.code',
+    },
+    {
+      key: 'name',
+      width: 150,
+      sortable: false,
+      label: 'label.name',
+      Cell: TooltipTextCell,
     },
   ];
-  if (isCentralServer) {
+  propertyNodes?.map(property =>
     columnDescriptions.push({
-      key: 'store',
-      width: 50,
+      key: property.key,
+      width: 100,
       sortable: false,
-      label: 'label.store',
-      accessor: ({ rowData }) => rowData.store?.code,
-    });
-  }
-  columnDescriptions.push({
-    key: 'serialNumber',
-    width: 100,
-    sortable: false,
-    label: 'label.serial',
-    Cell: TooltipTextCell,
-  });
-  columnDescriptions.push({
-    key: 'installationDate',
-    width: 100,
-    sortable: false,
-    label: 'label.installation-date',
-    Cell: TooltipTextCell,
-  });
-  columnDescriptions.push({
-    key: 'notes',
-    width: 100,
-    sortable: false,
-    label: 'label.asset-notes',
-    Cell: TooltipTextCell,
-  });
-  if (showWarnings) {
-    columnDescriptions.push({
-      key: 'warningMessage',
-      label: 'label.warning-message',
-      width: 150,
+      label: undefined,
+      labelProps: { defaultValue: property.name },
       Cell: TooltipTextCell,
-    });
-  } else {
+    })
+  );
+
+  {
     columnDescriptions.push({
       key: 'errorMessage',
       label: 'label.error-message',
@@ -88,23 +71,29 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     });
   }
 
-  const columns = useColumns<any>(columnDescriptions, {}, []);
+  const rowsWithProperties = rows.map(row => {
+    return { ...row, ...row.properties };
+  });
 
-  const filteredEquipment = rows.filter(row => {
+  const columns = useColumns<ImportRow>(columnDescriptions, {}, []);
+
+  const filteredEquipment = rowsWithProperties.filter(row => {
     if (!searchString) {
       return true;
     }
     return (
-      row.assetNumber.includes(searchString) ||
-      (row.catalogueItemCode && row.catalogueItemCode.includes(searchString)) ||
-      row.errorMessage.includes(searchString) ||
+      row.name.includes(searchString) ||
+      (row.code && row.code.includes(searchString)) ||
+      (row.errorMessage && row.errorMessage.includes(searchString)) ||
       row.id === searchString
     );
   });
-  const currentEquipmentPage = filteredEquipment.slice(
+  const currentFacilitiesPage = filteredEquipment.slice(
     pagination.offset,
     pagination.offset + pagination.first
   );
+
+  // console.log('currentFacilitiesPage', currentFacilitiesPage);
 
   return (
     <Grid flexDirection="column" display="flex" gap={0}>
@@ -134,7 +123,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
           });
         }}
         columns={columns}
-        data={currentEquipmentPage}
+        data={currentFacilitiesPage}
         noDataElement={<NothingHere body={t('error.asset-not-found')} />}
         id={''}
       />

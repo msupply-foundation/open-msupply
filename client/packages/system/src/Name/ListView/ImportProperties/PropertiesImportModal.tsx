@@ -11,17 +11,22 @@ import {
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { UploadTab } from './UploadTab';
-import { NameRowFragment } from '../../api';
+import { ReviewTab } from './ReviewTab';
+import { useNameProperties } from '../../api/hooks/document/useNameProperties';
+import { FacilityNameRowFragment } from '../../api/operations.generated';
 
 interface PropertiesImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  facilities: NameRowFragment[] | undefined;
+  facilities: FacilityNameRowFragment[] | undefined;
 }
 
 export type ImportRow = {
   code: string;
   name: string;
+  properties: Record<string, string>;
+  id: string;
+  errorMessage?: string;
 };
 
 enum Tabs {
@@ -45,7 +50,12 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
-  const [warningMessage, setWarningMessage] = useState<string>(() => '');
+  const [warningMessage] = useState<string>(() => '');
+  const { data: properties } = useNameProperties();
+
+  const [bufferedFacilityProperties, setBufferedFacilityProperties] = useState<
+    ImportRow[]
+  >(() => []);
 
   const importAction = async () => {
     onChangeTab(Tabs.Import);
@@ -133,8 +143,17 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
             <UploadTab
               tab={Tabs.Upload}
               setErrorMessage={setErrorMessage}
-              setWarningMessage={setWarningMessage}
               facilities={facilities}
+              setFacilityProperties={setBufferedFacilityProperties}
+              onUploadComplete={() => {
+                changeTab(Tabs.Review);
+              }}
+              properties={properties}
+            />
+            <ReviewTab
+              tab={Tabs.Review}
+              uploadedRows={bufferedFacilityProperties}
+              properties={properties}
             />
           </Grid>
         </TabContext>

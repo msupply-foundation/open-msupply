@@ -1,16 +1,20 @@
 import React, { FC } from 'react';
 import { ImportPanel } from './ImportPanel';
 import { ImportReviewDataTable } from './ImportReviewDataTable';
+import { NamePropertyNode } from '@common/types';
+import { ImportRow } from './PropertiesImportModal';
 
-interface PropertiesReviewTabProps {
-  uploadedRows: any[];
-  showWarnings: boolean;
+interface ReviewTabProps {
+  uploadedRows: ImportRow[];
+  properties: NamePropertyNode[] | undefined;
 }
 
-export const PropertiesReviewTab: FC<
-  ImportPanel & PropertiesReviewTabProps
-> = ({ showWarnings, tab, uploadedRows }) => (
+export const ReviewTab: FC<ImportPanel & ReviewTabProps> = ({
+  tab,
+  uploadedRows,
+  properties,
+}) => (
   <ImportPanel tab={tab}>
-    <ImportReviewDataTable rows={uploadedRows} showWarnings={showWarnings} />
+    <ImportReviewDataTable rows={uploadedRows} properties={properties} />
   </ImportPanel>
 );
