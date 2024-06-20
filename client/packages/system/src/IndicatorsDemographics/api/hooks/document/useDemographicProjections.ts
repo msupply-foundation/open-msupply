@@ -1,6 +1,5 @@
 import { useQuery } from '@openmsupply-client/common';
 import { useDemographicsApi } from '../utils/useDemographicApi';
-import { DemographicProjectionFragment } from '../../operations.generated';
 
 export const useDemographicProjections = (baseYear: number) => {
   const api = useDemographicsApi();
@@ -16,8 +15,7 @@ export const useDemographicProjections = (baseYear: number) => {
       ? {
           nodes: [
             {
-              __typename:
-                'DemographicProjectionNode' as DemographicProjectionFragment['__typename'],
+              __typename: 'DemographicProjectionNode',
               baseYear: baseYear,
               id: '',
               year1: 0,
