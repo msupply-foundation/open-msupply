@@ -52,6 +52,7 @@ export type ImportRow = {
   errorMessage: string;
   warningMessage: string;
   store: StoreRowFragment | null | undefined;
+  properties: Record<string, string>;
 };
 
 export type LineNumber = {
@@ -76,6 +77,7 @@ export const toInsertEquipmentInput = (
   store: row.store
     ? { ...row.store, __typename: 'StoreNode', storeName: '' }
     : null,
+  parsedProperties: row.properties,
 });
 
 export const toExportEquipment = (
@@ -91,6 +93,7 @@ export const toExportEquipment = (
   lineNumber: index + 2,
   errorMessage: row.errorMessage,
   store: row.store,
+  properties: row.properties,
 });
 
 export const toUpdateEquipmentInput = (
