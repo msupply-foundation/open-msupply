@@ -77,10 +77,10 @@ export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
     mutationFn,
     onSuccess: () => {
       // Stock list needs to be re-fetched to load new repacked stock line
-      queryClient.invalidateQueries([STOCK_LINE, storeId, LIST]);
+      queryClient.invalidateQueries([STOCK_LINE, LIST]);
       // Repack list also needs to be re-fetched on insert to show new repack
       // line
-      queryClient.invalidateQueries([STOCK_LINE, storeId, draft.stockLineId]);
+      queryClient.invalidateQueries([STOCK_LINE, stockLineId]);
     },
   });
 
