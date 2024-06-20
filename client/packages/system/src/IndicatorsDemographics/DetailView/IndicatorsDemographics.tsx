@@ -207,7 +207,10 @@ const IndicatorsDemographicsComponent = () => {
 
   return (
     <>
-      <AppBarButtons patch={setter} rows={Object.values(draft)}></AppBarButtons>
+      <AppBarButtons
+        addRow={(newRow: Row) => setDraft({ ...draft, [newRow.id]: newRow })}
+        rows={Object.values(draft)}
+      ></AppBarButtons>
       <Box sx={{ width: '100%' }} padding={0}>
         <GrowthRow
           columns={columns}
