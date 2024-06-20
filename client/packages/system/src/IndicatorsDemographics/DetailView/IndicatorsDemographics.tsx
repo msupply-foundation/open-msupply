@@ -25,7 +25,7 @@ import {
   mapProjection,
   toIndicatorFragment,
 } from './utils';
-import { HeaderData, HeaderValue, Row } from '../types';
+import { HeaderData, Row } from '../types';
 
 const currentYear = new Date().getFullYear();
 
@@ -53,19 +53,21 @@ const IndicatorsDemographicsComponent = () => {
     useDemographicData.indicator.update();
   const upsertProjection = useDemographicData.projection.upsert();
 
-  const PopulationChange = (patch: RecordPatch<Row>) => {
+  const handlePopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
+
     const basePopulation = patch['0'] ?? 0;
     let updatedDraft: Record<string, Row> = {};
+
     const indexPopulationChange =
       basePopulation !== draft[patch.id]?.basePopulation &&
       patch.id === GENERAL_POPULATION_ID;
 
     if (indexPopulationChange) setIndexPopulation(basePopulation);
 
-    Object.keys(draft).forEach(rowKey => {
+    Object.values(draft).forEach(row => {
       const updatedRow = calculateAcrossRow(
-        draft[rowKey] as Row,
+        row,
         headerDraft,
         indexPopulationChange ? basePopulation : indexPopulation
       );
@@ -75,54 +77,50 @@ const IndicatorsDemographicsComponent = () => {
   };
 
   const setter = (patch: RecordPatch<Row>) => {
-    const updatedDraft = { ...draft };
     const percentage = !patch.percentage ? 0 : patch.percentage;
     const percentageChange = percentage != draft[patch.id]?.percentage;
 
     setIsDirty(true);
 
+    const existingRow = draft[patch.id];
+    if (!existingRow) return;
+
+    const patchedRow: Row = { ...existingRow, ...patch };
+
     // change state of name only if only name changes
     if (!percentageChange) {
-      setDraft({ ...updatedDraft, [patch.id]: { ...patch } as Row });
+      setDraft({ ...draft, [patch.id]: patchedRow });
       return;
     }
 
     const updatedRow = calculateAcrossRow(
-      { ...patch } as Row,
+      patchedRow,
       headerDraft,
       indexPopulation
     );
-    setDraft({ ...updatedDraft, [patch.id]: updatedRow });
+    setDraft({ ...draft, [patch.id]: updatedRow });
   };
 
   // generic function for handling percentage change, and then re calculating the values of that year
-  const handleGrowthChange = (patch: RecordPatch<HeaderValue>) => {
+  const handleGrowthChange = (updatedHeader: HeaderData) => {
     setIsDirty(true);
-    const updatedPatch = {
-      ...patch,
-      value: patch.value ?? 0,
-    };
-    setHeaderDraft({
-      ...(headerDraft as HeaderData),
-      [patch.id]: updatedPatch,
-    });
-    calculateDown(patch);
+
+    setHeaderDraft(updatedHeader);
+    calculateDown(updatedHeader);
   };
-  const calculateDown = (patch: RecordPatch<HeaderValue>) => {
-    const updatedHeader = {
-      ...headerDraft,
-      [patch.id]: { ...patch } as HeaderValue,
-    } as HeaderData;
+
+  const calculateDown = (updatedHeader: HeaderData) => {
     const updatedDraft: Record<string, Row> = {};
-    Object.keys(draft).forEach(row => {
+
+    Object.values(draft).forEach(row => {
       const updatedRow = calculateAcrossRow(
-        draft[row] as Row,
+        row,
         updatedHeader,
         indexPopulation
       );
       updatedDraft[updatedRow.id] = updatedRow;
     });
-    setHeaderDraft(updatedHeader);
+
     setDraft(updatedDraft);
   };
 
@@ -149,9 +147,9 @@ const IndicatorsDemographicsComponent = () => {
   // save rows excluding generalRow
   const save = async () => {
     setIsDirty(false);
-    const rows = Object.keys(draft)
-      .map(key => draft[key] as Row)
-      .filter(row => row?.id !== GENERAL_POPULATION_ID && !!row);
+    const rows = Object.values(draft).filter(
+      row => row.id !== GENERAL_POPULATION_ID
+    );
 
     await Promise.all(
       rows.map(async indicator => {
@@ -179,7 +177,7 @@ const IndicatorsDemographicsComponent = () => {
     [
       [nameColumn(), { setter }],
       [percentageColumn(), { setter }],
-      [populationColumn(), { setter: PopulationChange }],
+      [populationColumn(), { setter: handlePopulationChange }],
       yearColumn(1),
       yearColumn(2),
       yearColumn(3),
