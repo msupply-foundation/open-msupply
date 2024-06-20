@@ -14,7 +14,6 @@ import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
-import { EditableInput } from './EditableInput';
 
 const AssetListComponent: FC = () => {
   const {
@@ -59,7 +58,7 @@ const AssetListComponent: FC = () => {
         label: 'label.manufacturer',
       },
       {
-        Cell: EditableInput,
+        Cell: TooltipTextCell,
         key: 'model',
         label: 'label.model',
         width: 200,
