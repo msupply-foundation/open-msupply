@@ -83,7 +83,7 @@ export type CreateInventoryAdjustmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError' } | { __typename: 'InvoiceNode', id: string } };
+export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError', error: { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string } };
 
 export type InsertStockLineMutationVariables = Types.Exact<{
   input: Types.InsertStockLineInput;
@@ -266,9 +266,20 @@ export const InsertRepackDocument = gql`
 export const CreateInventoryAdjustmentDocument = gql`
     mutation createInventoryAdjustment($input: CreateInventoryAdjustmentInput!, $storeId: String!) {
   createInventoryAdjustment(input: $input, storeId: $storeId) {
+    __typename
     ... on InvoiceNode {
       __typename
       ...InvoiceRow
+    }
+    ... on CreateInventoryAdjustmentError {
+      __typename
+      error {
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+      }
     }
   }
 }
