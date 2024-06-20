@@ -81,7 +81,7 @@ _Pros:_
 _Cons:_
 
 - Would need archive and unarchive scripts, that would also need to deal with file backup
-- Restoring is more techincal and may take longer
+- Restoring is more technical and may take longer
 - Need a mechanism for periodic snapshot backup (to optimise space and speed of restore)
 - Upskilling support staff to be able to work with postgres WAL backups
 
