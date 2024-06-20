@@ -209,7 +209,7 @@ mod test {
             Err(ServiceError::PackSizeBelowOne)
         );
 
-        // NumberOfPacksBelowOne
+        // NumberOfPacksBelowZero
         assert_eq!(
             update_stock_in_line(
                 &context,
