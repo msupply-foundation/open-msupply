@@ -11,12 +11,13 @@ import {
   useEditModal,
   useToggle,
 } from '@openmsupply-client/common';
-import { useName, NameRowFragment } from '../../api';
+import { useName } from '../../api';
 import { NameRenderer } from '../../Components';
 import { Toolbar } from './Toolbar';
 import { FacilityEditModal } from './FacilityEditModal';
 import { AppBarButtons } from './AppBarButtons';
 import { PropertiesImportModal } from '../ImportProperties/PropertiesImportModal';
+import { FacilityNameRowFragment } from '../../api/operations.generated';
 
 const FacilitiesListComponent = () => {
   const [selectedId, setSelectedId] = useState('');
@@ -29,15 +30,15 @@ const FacilitiesListComponent = () => {
   const { data, isError, isLoading } = useName.document.facilities();
   const pagination = { page, first, offset };
 
-  const { isOpen, onClose, onOpen } = useEditModal<NameRowFragment>();
+  const { isOpen, onClose, onOpen } = useEditModal<FacilityNameRowFragment>();
   const importPropertiesModalController = useToggle();
 
-  const onRowClick = (row: NameRowFragment) => {
+  const onRowClick = (row: FacilityNameRowFragment) => {
     setSelectedId(row.id);
     onOpen();
   };
 
-  const columns = useColumns<NameRowFragment>(
+  const columns = useColumns<FacilityNameRowFragment>(
     [
       {
         key: 'code',

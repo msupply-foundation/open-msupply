@@ -1,5 +1,5 @@
 import { TypedTFunction, LocaleKey } from '@common/intl';
-import { Formatter } from '@common/utils';
+import { ArrayUtils, Formatter } from '@common/utils';
 import {
   ImportRow,
   LineNumber,
@@ -7,17 +7,20 @@ import {
 
 export const importFacilitiesPropertiesToCsv = (
   facilities: Partial<ImportRow & LineNumber>[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  properties?: string[]
 ) => {
-  const fields: string[] = [];
-  fields.push(t('label.code'));
-  fields.push(t('label.name'));
+  // TODO maybe don't need the facilities[0] fallback.
+  const props =
+    properties ??
+    ArrayUtils.dedupe(Object.keys(facilities[0]?.properties ?? {}));
+  const fields: string[] = [t('label.code'), t('label.name')].concat(props);
 
   const data = facilities.map(node => {
     const mapped: (string | number | null | undefined)[] = [
       node.code,
       node.name,
-    ];
+    ].concat(props.map(key => node.properties?.[key] ?? ''));
     return mapped;
   });
   return Formatter.csv({ fields, data });

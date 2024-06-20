@@ -11,6 +11,20 @@ fragment NameRow on NameNode {
   }
 }
 
+fragment FacilityNameRow on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  isOnHold
+  name
+  store {
+    id
+    code
+  }
+  properties
+}
+
 fragment Name on NameNode {
   address1
   address2
@@ -63,6 +77,30 @@ query names(
       __typename
       nodes {
         ...NameRow
+      }
+      totalCount
+    }
+  }
+}
+
+query facilities(
+  $storeId: String!
+  $key: NameSortFieldInput!
+  $desc: Boolean
+  $first: Int
+  $offset: Int
+  $filter: NameFilterInput
+) {
+  names(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...FacilityNameRow
       }
       totalCount
     }
