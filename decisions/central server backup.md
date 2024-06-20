@@ -17,7 +17,7 @@ We back up mSupply via a scheduled snapshot + journal file since last backup.
 There is UI to configure all of the parameters of the backup in mSupply.
 We use cloud services to hold the backup, in case of full local failure.
 
-We've restored mSupply central server data from latest local backup + current journal, on a number of ocassions. I beleive we had to use remote backups saved in cloud a couple of time.
+We've restored mSupply central server data from latest local backup + current journal, on a number of occasions. I believe we had to use remote backups saved in cloud a couple of times.
 
 Encryption for mSupply data happens at the cloud provider end
 
