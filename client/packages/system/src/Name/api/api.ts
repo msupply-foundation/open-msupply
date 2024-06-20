@@ -9,6 +9,7 @@ import {
   Sdk,
   NameRowFragment,
   FacilityNameRowFragment,
+  UpdateNamePropertiesMutation,
 } from './operations.generated';
 
 export type ListParams = {
@@ -165,11 +166,13 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Unable to fetch properties');
     },
   },
-  updateNameProperties: async (input: UpdateNamePropertiesInput) => {
+  updateNameProperties: async (
+    input: UpdateNamePropertiesInput
+  ): Promise<UpdateNamePropertiesMutation> => {
     const result = await sdk.updateNameProperties({ storeId, input });
 
     if (result.updateNameProperties.__typename === 'NameNode') {
-      return result?.updateNameProperties;
+      return result;
     }
 
     // TODO: properly handle structured error

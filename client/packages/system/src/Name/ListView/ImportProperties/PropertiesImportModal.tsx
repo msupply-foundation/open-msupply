@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { useDialog } from '@common/hooks';
+import { useDialog, useNotification } from '@common/hooks';
 import {
   DialogButton,
   TabContext,
@@ -8,6 +8,7 @@ import {
   Grid,
   Alert,
   ClickableStepper,
+  UpdateNamePropertiesInput,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { UploadTab } from './UploadTab';
@@ -15,6 +16,7 @@ import { ReviewTab } from './ReviewTab';
 import { useNameProperties } from '../../api/hooks/document/useNameProperties';
 import { FacilityNameRowFragment } from '../../api/operations.generated';
 import { ImportTab } from './ImportTab';
+import { useName } from '../../api';
 
 interface PropertiesImportModalProps {
   isOpen: boolean;
@@ -40,22 +42,30 @@ export type LineNumber = {
   lineNumber: number;
 };
 
+const toUpdateNamePropertiesInput = (
+  row: ImportRow
+): UpdateNamePropertiesInput => {
+  return { id: row.id, properties: JSON.stringify(row.properties) };
+};
+
 export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   isOpen,
   onClose,
   facilities,
 }) => {
   const t = useTranslation('coldchain');
+  const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
-  const [importProgress] = useState(0);
-  const [importErrorCount] = useState(0);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importErrorCount, setImportErrorCount] = useState(0);
 
   const [warningMessage] = useState<string>(() => '');
   const { data: properties } = useNameProperties();
+  const { mutateAsync } = useName.document.updateProperties('');
 
   const [bufferedFacilityProperties, setBufferedFacilityProperties] = useState<
     ImportRow[]
@@ -63,6 +73,63 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
 
   const importAction = async () => {
     onChangeTab(Tabs.Import);
+    const numberImportRecords = bufferedFacilityProperties?.length ?? 0;
+    if (bufferedFacilityProperties && numberImportRecords > 0) {
+      const importErrorRows: ImportRow[] = [];
+      // Import count can be quite large, we break this into blocks of 10 to avoid too much concurrency
+      const remainingRecords = bufferedFacilityProperties;
+      while (remainingRecords.length) {
+        await Promise.all(
+          remainingRecords.splice(0, 10).map(async asset => {
+            await mutateAsync(toUpdateNamePropertiesInput(asset))
+              .then(async result => {
+                // Map structured Errors
+                if (result?.__typename === 'Mutations') {
+                  // const errorMessage = mapStructuredErrors(result);
+                  const errorMessage = result;
+                  importErrorRows.push({
+                    ...asset,
+                    errorMessage: errorMessage.__typename,
+                  });
+                  return;
+                }
+              })
+              .catch((err: { message: string }) => {
+                if (!err) {
+                  err = { message: t('messages.unknown-error') };
+                }
+                importErrorRows.push({
+                  ...asset,
+                  errorMessage: err.message,
+                });
+              });
+          })
+        ).then(() => {
+          // Update Progress Bar
+          const percentComplete =
+            10 - (remainingRecords.length / numberImportRecords) * 100.0;
+          setImportProgress(percentComplete);
+          setImportErrorCount(importErrorRows.length);
+        });
+      }
+      if (importErrorRows.length === 0) {
+        const importMessage = t('messages.import-generic', {
+          count: numberImportRecords,
+        });
+        const successSnack = success(importMessage);
+        successSnack();
+        onChangeTab(Tabs.Upload);
+        setBufferedFacilityProperties([]);
+        setErrorMessage('');
+        onClose();
+      } else {
+        // Load the error rows in to the component for review
+        setErrorMessage(t('messages.import-error'));
+        setBufferedFacilityProperties(importErrorRows);
+        setImportErrorCount(importErrorRows.length);
+        onChangeTab(Tabs.Review);
+      }
+    }
   };
 
   const onClickStep = (tabName: string) => {
