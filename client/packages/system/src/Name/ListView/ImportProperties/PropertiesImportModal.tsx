@@ -11,11 +11,18 @@ import {
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { UploadTab } from './UploadTab';
+import { NameRowFragment } from '../../api';
 
 interface PropertiesImportModalProps {
   isOpen: boolean;
   onClose: () => void;
+  facilities: NameRowFragment[] | undefined;
 }
+
+export type ImportRow = {
+  code: string;
+  name: string;
+};
 
 enum Tabs {
   Upload = 'Upload',
@@ -30,6 +37,7 @@ export type LineNumber = {
 export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   isOpen,
   onClose,
+  facilities,
 }) => {
   const t = useTranslation('coldchain');
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
@@ -126,6 +134,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
               tab={Tabs.Upload}
               setErrorMessage={setErrorMessage}
               setWarningMessage={setWarningMessage}
+              facilities={facilities}
             />
           </Grid>
         </TabContext>
