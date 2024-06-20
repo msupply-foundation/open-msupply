@@ -56,7 +56,6 @@ const useCreate = (stockLineId: string) => {
       adjustmentType,
       reason,
     }: DraftInventoryAdjustment) => {
-      // TODO: error helper to handle structured/standard errors
       return await stockApi.createInventoryAdjustment({
         storeId,
         input: {
