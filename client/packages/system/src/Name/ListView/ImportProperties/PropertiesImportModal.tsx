@@ -14,6 +14,7 @@ import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
 import { useNameProperties } from '../../api/hooks/document/useNameProperties';
 import { FacilityNameRowFragment } from '../../api/operations.generated';
+import { ImportTab } from './ImportTab';
 
 interface PropertiesImportModalProps {
   isOpen: boolean;
@@ -50,6 +51,9 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
+  const [importProgress] = useState(0);
+  const [importErrorCount] = useState(0);
+
   const [warningMessage] = useState<string>(() => '');
   const { data: properties } = useNameProperties();
 
@@ -154,6 +158,11 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
               tab={Tabs.Review}
               uploadedRows={bufferedFacilityProperties}
               properties={properties}
+            />
+            <ImportTab
+              tab={Tabs.Import}
+              importProgress={importProgress}
+              importErrorCount={importErrorCount}
             />
           </Grid>
         </TabContext>
