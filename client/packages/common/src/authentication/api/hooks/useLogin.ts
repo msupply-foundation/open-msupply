@@ -70,11 +70,15 @@ export const getStore = async (
     item => item.username.toLowerCase() === userDetails?.username?.toLowerCase()
   );
 
-  if (mru?.store && stores?.some(store => store.id === mru?.store?.id)) {
+  if (
+    mru?.store &&
+    !mru.store.isDisabled &&
+    stores?.some(store => store.id === mru?.store?.id)
+  ) {
     return stores.find(store => store.id === mru.store?.id) ?? mru.store;
   }
 
-  if (!!defaultStore) return defaultStore;
+  if (!!defaultStore && !defaultStore.isDisabled) return defaultStore;
 
   return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
 };
