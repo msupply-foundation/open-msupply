@@ -158,7 +158,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice
         | ServiceError::NotAStockIn
-        | ServiceError::NumberOfPacksBelowOne
+        | ServiceError::NumberOfPacksBelowZero
         | ServiceError::NotThisInvoiceLine(_)
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
@@ -360,8 +360,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
+        //NumberOfPacksBelowZero
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

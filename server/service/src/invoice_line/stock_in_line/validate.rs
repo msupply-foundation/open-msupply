@@ -11,6 +11,15 @@ pub fn check_pack_size(pack_size_option: Option<f64>) -> bool {
     true
 }
 
+pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
+    if let Some(number_of_packs) = number_of_packs_option {
+        if number_of_packs <= 0.0 {
+            return false;
+        }
+    }
+    true
+}
+
 pub fn check_batch(
     line: &InvoiceLineRow,
     connection: &StorageConnection,
