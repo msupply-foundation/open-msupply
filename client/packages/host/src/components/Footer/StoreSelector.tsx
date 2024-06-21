@@ -32,8 +32,8 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   const storeButtons = stores.map(s => (
     <FlatButton
-      label={s.name}
-      disabled={s.id === store.id}
+      label={s.name + (s.isDisabled ? ` (${t('label.on-hold')})` : '')}
+      disabled={s.id === store.id || !!s.isDisabled}
       onClick={async () => {
         await setStore(s);
         hide();
