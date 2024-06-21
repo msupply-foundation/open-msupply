@@ -2,7 +2,6 @@ import React, { FC, useEffect, useRef } from 'react';
 import {
   Box,
   StandardTextFieldProps,
-  SxProps,
   TextField,
   Typography,
 } from '@mui/material';
