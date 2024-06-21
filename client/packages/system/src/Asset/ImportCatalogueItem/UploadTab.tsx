@@ -13,6 +13,7 @@ import {
   AssetClassNode,
   AssetCategoryNode,
   AssetTypeNode,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportRow } from './CatalogueItemImportModal';
@@ -138,7 +139,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
       exampleRows,
       t,
       false, // exclude errors
-      properties ? properties.map(p => p.key) : []
+      properties ? ArrayUtils.dedupe(properties.map(p => p.key)) : []
     );
     FileUtils.exportCSV(csv, t('filename.asset-import-example'));
   };
