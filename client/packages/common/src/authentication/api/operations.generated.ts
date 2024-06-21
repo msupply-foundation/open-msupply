@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, nameId: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } };
+export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, nameId: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, isDisabled: boolean, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } };
 
 export type AuthTokenQueryVariables = Types.Exact<{
   username: Types.Scalars['String']['input'];
@@ -17,7 +17,7 @@ export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: '
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, firstName?: string | null, lastName?: string | null, phoneNumber?: string | null, jobTitle?: string | null, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, nameId: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, nameId: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } }> } } };
+export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, firstName?: string | null, lastName?: string | null, phoneNumber?: string | null, jobTitle?: string | null, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, nameId: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, isDisabled: boolean, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, nameId: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, isDisabled: boolean, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } }> } } };
 
 export type IsCentralServerQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -73,6 +73,7 @@ export const UserStoreNodeFragmentDoc = gql`
   }
   createdDate
   homeCurrencyCode
+  isDisabled
 }
     `;
 export const UpdateUserFragmentDoc = gql`

@@ -3098,6 +3098,7 @@ export type InvoiceLineNode = {
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Float']['output'];
   pricing: PricingNode;
+  returnReason?: Maybe<ReturnReasonNode>;
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
@@ -7815,6 +7816,7 @@ export type UserStoreNode = {
   createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  isDisabled: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   nameId: Scalars['String']['output'];
   preferences: StorePreferenceNode;
