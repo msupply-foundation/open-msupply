@@ -80,10 +80,10 @@ const IndicatorsDemographicsComponent = () => {
     const percentage = !patch.percentage ? 0 : patch.percentage;
     const percentageChange = percentage != draft[patch.id]?.percentage;
 
-    setIsDirty(true);
-
     const existingRow = draft[patch.id];
     if (!existingRow) return;
+
+    setIsDirty(true);
 
     const patchedRow: Row = { ...existingRow, ...patch };
 
@@ -208,7 +208,7 @@ const IndicatorsDemographicsComponent = () => {
   return (
     <>
       <AppBarButtons
-        addRow={(newRow: Row) => setDraft({ ...draft, [newRow.id]: newRow })}
+        addRow={newRow => setDraft({ ...draft, [newRow.id]: newRow })}
         rows={Object.values(draft)}
       ></AppBarButtons>
       <Box sx={{ width: '100%' }} padding={0}>
