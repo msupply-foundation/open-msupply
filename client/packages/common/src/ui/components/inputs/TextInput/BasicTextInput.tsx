@@ -62,15 +62,13 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
           // object. So we're going to convert this input to a single array of
           // SX props here, which means it'll be safe regardless of the shape of
           // the incoming sx prop
-          sx={
-            [
-              {
-                '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-                '& .MuiInput-input': { color: 'gray.dark', textAlign },
-              },
-              sx,
-            ].flat() as SxProps
-          }
+          sx={[
+            {
+              '& .MuiInput-underline:before': { borderBottomWidth: 0 },
+              '& .MuiInput-input': { color: 'gray.dark', textAlign },
+            },
+            sx ?? {},
+          ].flat()}
           variant="standard"
           size="small"
           InputProps={{
