@@ -517,6 +517,7 @@
   "messages.upload-invite": "Drag & drop to upload",
   "messages.upload-or": "or",
   "messages.yes": "Yes",
+  "messages.import-generic": "import successful",
   "multiple": "[multiple]",
   "placeholder.filter-by-status": "Filter by status",
   "placeholder.filter-items": "Filter items",
