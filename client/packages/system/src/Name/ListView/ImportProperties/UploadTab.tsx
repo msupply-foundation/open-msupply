@@ -15,8 +15,8 @@ import {
 
 import { ImportRow } from './PropertiesImportModal';
 import { importFacilitiesPropertiesToCsv } from '../utils';
-import { processProperties } from 'packages/system/src/utils';
 import { FacilityNameRowFragment } from '../../api/operations.generated';
+import { processProperties } from '../../../utils';
 
 interface UploadTabProps {
   setFacilityProperties: React.Dispatch<React.SetStateAction<ImportRow[]>>;
