@@ -53,7 +53,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   onClose,
   facilities,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);
@@ -80,15 +80,15 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
       const remainingRecords = bufferedFacilityProperties;
       while (remainingRecords.length) {
         await Promise.all(
-          remainingRecords.splice(0, 10).map(async asset => {
-            await mutateAsync(toUpdateNamePropertiesInput(asset))
+          remainingRecords.splice(0, 10).map(async facility => {
+            await mutateAsync(toUpdateNamePropertiesInput(facility))
               .then(async result => {
                 // Map structured Errors
                 if (result?.__typename === 'Mutations') {
                   // const errorMessage = mapStructuredErrors(result);
                   const errorMessage = result;
                   importErrorRows.push({
-                    ...asset,
+                    ...facility,
                     errorMessage: errorMessage.__typename,
                   });
                   return;
@@ -99,7 +99,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
                   err = { message: t('messages.unknown-error') };
                 }
                 importErrorRows.push({
-                  ...asset,
+                  ...facility,
                   errorMessage: err.message,
                 });
               });
@@ -124,7 +124,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
         onClose();
       } else {
         // Load the error rows in to the component for review
-        setErrorMessage(t('messages.import-error'));
+        setErrorMessage(t('messages.import-generic'));
         setBufferedFacilityProperties(importErrorRows);
         setImportErrorCount(importErrorRows.length);
         onChangeTab(Tabs.Review);
