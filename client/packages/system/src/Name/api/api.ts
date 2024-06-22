@@ -175,7 +175,6 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       return result;
     }
 
-    // TODO: properly handle structured error
     throw new Error(result.updateNameProperties.error.description);
   },
 });
