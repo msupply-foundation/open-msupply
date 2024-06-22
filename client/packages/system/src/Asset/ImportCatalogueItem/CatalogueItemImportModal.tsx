@@ -80,7 +80,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation('coldchain');
   const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const [activeStep, setActiveStep] = useState(0);
@@ -213,7 +213,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
         onClose();
       } else {
         // Load the error rows in to the component for review
-        setErrorMessage(t('messages.catalogue-import-error'));
+        setErrorMessage(t('messages.import-error'));
         setBufferedAssetItem(importErrorRows);
         setImportErrorCount(importErrorRows.length);
         onChangeTab(Tabs.Review);
