@@ -10,7 +10,6 @@ import {
   FileUtils,
   PropertyNode,
   useNotification,
-  FnUtils,
   NamePropertyNode,
 } from '@openmsupply-client/common';
 
@@ -138,8 +137,6 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
     csvRows.map((row, _index) => {
       const importRow = { properties: {} } as ImportRow;
       const rowErrors: string[] = [];
-      importRow.id = FnUtils.generateUUID();
-
       const code = getCell(row, FacilitiesColumn.CODE);
       if (code === undefined || code.trim() === '') {
         rowErrors.push(
@@ -148,6 +145,10 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
           })
         );
       }
+
+      const id = facilities?.find(facility => facility.code == code)?.id;
+      importRow.id = id ?? '';
+
       importRow.code = code;
 
       const name = getCell(row, FacilitiesColumn.NAME);
