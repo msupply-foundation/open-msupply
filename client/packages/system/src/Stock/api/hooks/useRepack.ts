@@ -70,7 +70,6 @@ export const useRepack = ({ invoiceId, stockLineId }: UseRepackProps) => {
       },
     });
 
-    console.log('result.insertRepack', result.insertRepack);
     return result.insertRepack;
   };
 
