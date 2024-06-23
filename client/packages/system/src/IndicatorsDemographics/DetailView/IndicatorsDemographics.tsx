@@ -23,7 +23,8 @@ import {
   calculateAcrossRow,
   mapHeaderData,
   mapProjection,
-  toIndicatorFragment,
+  toInsertIndicator,
+  toUpdateIndicator,
 } from './utils';
 import { HeaderData, Row } from '../types';
 
@@ -131,9 +132,7 @@ const IndicatorsDemographicsComponent = () => {
 
   const insertIndicator = async (row: Row) => {
     try {
-      await insertDemographicIndicator(
-        toIndicatorFragment(row, indexPopulation)
-      );
+      await insertDemographicIndicator(toInsertIndicator(row, indexPopulation));
     } catch (e) {
       console.error(e);
     }
@@ -141,9 +140,7 @@ const IndicatorsDemographicsComponent = () => {
 
   const updateIndicator = async (row: Row) => {
     try {
-      await updateDemographicIndicator(
-        toIndicatorFragment(row, indexPopulation)
-      );
+      await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
     } catch (e) {
       console.error(e);
     }
