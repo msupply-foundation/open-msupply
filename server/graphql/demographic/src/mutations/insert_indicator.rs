@@ -47,7 +47,7 @@ pub fn insert_demographic_indicator(
 #[derive(InputObject, Clone)]
 pub struct InsertDemographicIndicatorInput {
     pub id: String,
-    pub name: String,
+    pub name: Option<String>,
     pub base_year: i32,
     pub base_population: Option<i32>,
     pub population_percentage: Option<f64>,
