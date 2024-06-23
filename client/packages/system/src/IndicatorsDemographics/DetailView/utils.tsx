@@ -14,7 +14,7 @@ export const toInsertIndicator = (
 ): InsertDemographicIndicatorInput => {
   return {
     id: row.id,
-    name: row.name,
+    name: row.name?.trim() === '' ? undefined : row.name,
     baseYear: row.baseYear,
     basePopulation: indexPopulation ?? row.basePopulation,
     populationPercentage: row.percentage ?? 0,
