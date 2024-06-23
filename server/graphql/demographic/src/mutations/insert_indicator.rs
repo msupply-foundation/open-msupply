@@ -119,6 +119,7 @@ fn map_error(error: IndicatorServiceError) -> Result<InsertDemographicIndicatorE
         IndicatorServiceError::DemographicIndicatorAlreadyExistsForThisYear => {
             BadUserInput(formatted_error)
         }
+        IndicatorServiceError::DemographicIndicatorHasNoName => BadUserInput(formatted_error),
         IndicatorServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         IndicatorServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
