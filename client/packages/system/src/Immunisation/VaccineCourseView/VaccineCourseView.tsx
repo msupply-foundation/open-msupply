@@ -6,6 +6,7 @@ import {
   Checkbox,
   Container,
   DemographicIndicatorNode,
+  InputAdornment,
   InputWithLabelRow,
   NothingHere,
   NumericTextInput,
@@ -227,6 +228,10 @@ export const VaccineCourseView: FC = () => {
               value={draft?.coverageRate ?? 1}
               fullWidth
               onChange={value => updatePatch({ coverageRate: value })}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              }}
+              decimalLimit={1}
             />
           </Row>
           <Row label={t('label.wastage-rate')}>
@@ -234,6 +239,10 @@ export const VaccineCourseView: FC = () => {
               value={draft?.wastageRate ?? 1}
               fullWidth
               onChange={value => updatePatch({ wastageRate: value })}
+              InputProps={{
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              }}
+              decimalLimit={1}
             />
           </Row>
           <Row label={t('label.vaccine-items')}>
