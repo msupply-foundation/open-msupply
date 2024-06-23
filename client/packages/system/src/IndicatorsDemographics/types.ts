@@ -2,7 +2,7 @@ export interface Row {
   isNew: boolean;
   id: string;
   percentage: number;
-  name: string;
+  name: string | undefined;
   baseYear: number;
   basePopulation: number;
   0: number;
