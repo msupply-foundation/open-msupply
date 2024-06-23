@@ -46,6 +46,17 @@ fragment Repack on RepackNode {
 
 fragment InvoiceRow on InvoiceNode {
   id
+  lines {
+    nodes {
+      id
+      itemName
+      numberOfPacks
+      itemCode
+      stockLine {
+        id
+      }
+    }
+  }
 }
 
 fragment LedgerRow on LedgerNode {
