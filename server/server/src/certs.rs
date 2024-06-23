@@ -55,6 +55,8 @@ pub fn load_certs_rustls(cert_files: CertFiles) -> Result<ServerConfig, anyhow::
     if let Err(e) = result {
         panic!("Unable to install aws_lc_rs default provider: {:#?}", e);
     }
+    // If we have problems building on windows, we might need to switch to rustls::crypto::ring::default_provider().install_default()
+    // https://docs.rs/rustls/latest/rustls/index.html#crate-features
 
     let private_key = rustls_pemfile::read_one(&mut private_reader)?
         .map(|key| match key {
