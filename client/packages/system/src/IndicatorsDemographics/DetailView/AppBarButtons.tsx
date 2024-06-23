@@ -13,24 +13,25 @@ import {
 import { Row } from '../types';
 
 interface IndicatorsAppBarButtonsProps {
-  addRow: (patch: Row) => void;
+  createNewRow: (patch: Row) => void;
   rows: Row[];
 }
 
 export const AppBarButtonsComponent = ({
-  addRow,
+  createNewRow,
   rows,
 }: IndicatorsAppBarButtonsProps) => {
   const t = useTranslation();
 
   const onCreate = () => {
     const id = FnUtils.generateUUID();
-    const newRow = {
+    const newRow: Row = {
       id,
       name: '',
       percentage: 0,
       isNew: true,
       baseYear: rows[0]?.baseYear ?? 0,
+      basePopulation: rows[0]?.basePopulation ?? 0,
       basePopulation: rows[0]?.basePopulation ?? 0,
       0: 0,
       1: 0,
@@ -39,7 +40,7 @@ export const AppBarButtonsComponent = ({
       4: 0,
       5: 0,
     };
-    addRow(newRow);
+    createNewRow({ ...newRow });
   };
 
   const handleClick = useCallbackWithPermission(

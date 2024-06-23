@@ -101,6 +101,11 @@ const IndicatorsDemographicsComponent = () => {
     setDraft({ ...draft, [patch.id]: updatedRow });
   };
 
+  const createNewRow = (row: Row) => {
+    // don't set is dirty true when creating new row because we want a new name first
+    setDraft({ ...draft, [row.id]: { ...row } });
+  };
+
   // generic function for handling percentage change, and then re calculating the values of that year
   const handleGrowthChange = (updatedHeader: HeaderData) => {
     setIsDirty(true);
@@ -208,7 +213,7 @@ const IndicatorsDemographicsComponent = () => {
   return (
     <>
       <AppBarButtons
-        addRow={newRow => setDraft({ ...draft, [newRow.id]: newRow })}
+        createNewRow={createNewRow}
         rows={Object.values(draft)}
       ></AppBarButtons>
       <Box sx={{ width: '100%' }} padding={0}>
