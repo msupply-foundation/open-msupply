@@ -3417,7 +3417,7 @@ export type LedgerNode = {
   invoiceType: InvoiceNodeType;
   itemId: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  quantity: Scalars['Int']['output'];
+  quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
