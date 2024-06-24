@@ -11,12 +11,11 @@ import {
   ModalMode,
   NumericTextInput,
   Typography,
-  useBreadcrumbs,
   useDialog,
   useKeyboardHeightAdjustment,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
@@ -110,7 +109,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   programId,
   mode,
 }) => {
-  const { setSuffix } = useBreadcrumbs();
   const t = useTranslation('coldchain');
 
   const {
@@ -118,7 +116,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     update: { update },
     create: { create },
     updatePatch,
-    query: { data, isLoading },
+    query: { isLoading },
     isDirty,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
   const { data: demographicData } = useDemographicIndicators();
@@ -192,10 +190,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   //   [draft]
   // );
 
-  useEffect(() => {
-    setSuffix(data?.name ?? '');
-  }, [data?.name, setSuffix]);
-
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
     [demographicData]
@@ -233,7 +227,13 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     >
       <Box display="flex" flex={1}>
         <Container>
-          <Section heading={t('heading.vaccine-details')}>
+          <Section
+            heading={
+              mode === ModalMode.Create
+                ? t('heading.create-vaccine-course')
+                : t('heading.edit-vaccine-course')
+            }
+          >
             <Row label={t('label.immunisation-name')}>
               <BasicTextInput
                 textAlign="right"
