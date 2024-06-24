@@ -1,5 +1,6 @@
 export interface Row {
   isNew: boolean;
+  isError?: boolean;
   id: string;
   percentage: number;
   name: string | undefined;

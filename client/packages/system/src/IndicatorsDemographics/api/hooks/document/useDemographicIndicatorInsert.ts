@@ -10,7 +10,10 @@ export const useDemographicIndicatorInsert = () => {
     queryClient.invalidateQueries(api.keys.baseIndicator());
   const { mutateAsync: insertDemographicIndicator } = useMutation(
     async (demographicIndicator: InsertDemographicIndicatorInput) =>
-      await api.insertIndicator(demographicIndicator)
+      await api.insertIndicator(demographicIndicator),
+    {
+      onError: () => {},
+    }
   );
 
   return { insertDemographicIndicator, invalidateQueries };
