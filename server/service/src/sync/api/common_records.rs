@@ -85,7 +85,7 @@ impl CommonSyncRecord {
                 uuid()
             }
             _ if table_name == *"name_oms_fields" => {
-                // apprehend table name to record_id to avoid name override
+                // append table name to record_id to avoid name override
                 format!("{}{:#?}", record_id, ChangelogTableName::NameOmsFields)
             }
             _ => record_id,
