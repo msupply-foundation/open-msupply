@@ -450,7 +450,7 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NumberOfPacksBelowOne
+        //NumberOfPacksBelowZero
         let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(

@@ -43,7 +43,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           created_date TEXT
         );
 
-        INSERT INTO store_new SELECT * FROM store;
+        INSERT INTO store_new SELECT id, name_id, code, site_id, logo, store_mode, created_date FROM store;
 
         PRAGMA foreign_keys=off;
         DROP TABLE store;

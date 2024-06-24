@@ -19,7 +19,7 @@
   "label.wastage-rate": "Wastage rate",
   "label.vaccine-items": "Vaccine items",
   "label.calculated-demand": "Calculated Demand",
-  "label.calculate-demand": "Enabled",
+  "label.calculate-demand": "Include in GAPS calculations",
   "label.day": "day",
   "label.target-demographic": "Target demographic",
   "error.no-immunisation-programs": "No Immunization programs found",
