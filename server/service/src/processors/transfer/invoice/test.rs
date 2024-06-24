@@ -1284,6 +1284,9 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
     );
     assert_eq!(inbound_line.stock_line_id, None);
     assert_eq!(inbound_line.location_id, None);
-    assert_eq!(inbound_line.sell_price_per_pack, 0.0);
+    assert_eq!(
+        inbound_line.sell_price_per_pack,
+        outbound_line.sell_price_per_pack
+    );
     assert_eq!(inbound_line.tax_percentage, None);
 }
