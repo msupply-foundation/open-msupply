@@ -76,7 +76,6 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
           </Box>
         )}
       </Box>
-
       <Box
         sx={{
           paddingLeft: 4,
