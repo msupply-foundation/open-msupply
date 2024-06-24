@@ -1,5 +1,6 @@
 use super::{
     query::get_vaccine_course,
+    update::{VaccineCourseItemInput, VaccineCourseScheduleInput},
     validate::{check_program_exists, check_vaccine_course_name_exists_for_program},
 };
 use crate::{
@@ -8,7 +9,11 @@ use crate::{
 };
 
 use repository::{
-    vaccine_course::vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+    vaccine_course::{
+        vaccine_course_item_row::VaccineCourseItemRowRepository,
+        vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+        vaccine_course_schedule_row::VaccineCourseScheduleRowRepository,
+    },
     ActivityLogType, RepositoryError, StorageConnection,
 };
 
@@ -27,6 +32,13 @@ pub struct InsertVaccineCourse {
     pub id: String,
     pub name: String,
     pub program_id: String,
+    pub vaccine_items: Vec<VaccineCourseItemInput>,
+    pub schedules: Vec<VaccineCourseScheduleInput>,
+    pub demographic_indicator_id: Option<String>,
+    pub coverage_rate: f64,
+    pub is_active: bool,
+    pub wastage_rate: f64,
+    pub doses: i32,
 }
 
 pub fn insert_vaccine_course(
@@ -37,8 +49,29 @@ pub fn insert_vaccine_course(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let new_vaccine_course = generate(input);
+            let new_vaccine_course = generate(input.clone());
             VaccineCourseRowRepository::new(connection).upsert_one(&new_vaccine_course)?;
+
+            // Update ITEMS - Delete and recreate all records.
+            // If nothing has changed, we still need to query and compare each record so this is the simplest way
+            let item_repo = VaccineCourseItemRowRepository::new(connection);
+            // Delete the existing vaccine course items
+            item_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
+
+            // Insert the new vaccine course items
+            for item in input.clone().vaccine_items {
+                item_repo.upsert_one(&item.to_domain(input.clone().id))?;
+            }
+
+            // Update Schedules - Delete and recreate all records.
+            let schedule_repo = VaccineCourseScheduleRowRepository::new(connection);
+            // Delete the existing vaccine course schedules
+            schedule_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
+
+            // Insert the new vaccine course schedules
+            for schedule in input.clone().schedules {
+                schedule_repo.upsert_one(&schedule.to_domain(input.clone().id))?;
+            }
 
             activity_log_entry(
                 ctx,
@@ -84,17 +117,24 @@ pub fn generate(
         id,
         name,
         program_id,
+        vaccine_items: _, // Updated in main function
+        schedules: _,     // Updated in main function
+        demographic_indicator_id,
+        coverage_rate,
+        is_active,
+        wastage_rate,
+        doses,
     }: InsertVaccineCourse,
 ) -> VaccineCourseRow {
     VaccineCourseRow {
         id,
         name,
         program_id,
-        demographic_indicator_id: None,
-        coverage_rate: 100.0,
-        is_active: true,
-        wastage_rate: 0.0,
-        doses: 1,
+        demographic_indicator_id,
+        coverage_rate,
+        is_active,
+        wastage_rate,
+        doses,
         deleted_datetime: None,
     }
 }
