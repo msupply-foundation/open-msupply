@@ -26,10 +26,7 @@ import {
   processProperties,
   useStore,
 } from '@openmsupply-client/system';
-import {
-  AssetPropertyFragment,
-  useAssetData,
-} from '@openmsupply-client/system';
+import { useAssetData } from '@openmsupply-client/system';
 
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
