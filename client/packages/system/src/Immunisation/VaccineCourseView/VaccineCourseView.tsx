@@ -7,10 +7,13 @@ import {
   Container,
   DemographicIndicatorNode,
   InputWithLabelRow,
+  LocaleKey,
   NothingHere,
   NumericTextInput,
   Typography,
+  UrlPart,
   useBreadcrumbs,
+  useLocation,
   useParams,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -20,6 +23,7 @@ import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { AppFooterComponent } from './AppFooterComponent';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
+import { useImmunisationProgram } from '../api';
 
 const MAX_VACCINE_DOSES = 20;
 
@@ -94,9 +98,11 @@ const Row = ({
 );
 
 export const VaccineCourseView: FC = () => {
-  const { setSuffix, navigateUpOne } = useBreadcrumbs();
+  const location = useLocation();
+  const { pathname } = location;
+  const { setSuffix, navigateUpOne, setUrlParts } = useBreadcrumbs();
   const t = useTranslation('coldchain');
-  const { id } = useParams();
+  const { id, programId } = useParams();
   const {
     draft,
     update: { update },
@@ -104,7 +110,11 @@ export const VaccineCourseView: FC = () => {
     query: { data, isLoading },
     isDirty,
   } = useVaccineCourse(id);
+
   const { data: demographicData } = useDemographicIndicators();
+  const {
+    query: { data: programData },
+  } = useImmunisationProgram(t, programId);
 
   // const defaultRow: VaccineCourseScheduleNode = {
   //   doseNumber: 1,
@@ -178,7 +188,33 @@ export const VaccineCourseView: FC = () => {
 
   useEffect(() => {
     setSuffix(data?.name ?? '');
-  }, [data?.name, setSuffix]);
+    const parts = pathname.split('/');
+    const urlParts: UrlPart[] = [];
+    parts.reduce((fullPath, part, index) => {
+      if (part === '') return '';
+      const path = `${fullPath}/${part}`;
+
+      if (index > 1)
+        urlParts.push({
+          path,
+          key: `${part}` as unknown as LocaleKey,
+          value: part,
+        });
+      return path;
+    }, '');
+    const updatedUrlParts: UrlPart[] = urlParts.map(urlPart => {
+      if (urlPart?.value == programId) {
+        return {
+          ...urlPart,
+          // can define this as localeKey as it will be in local language in anycase
+          value: (programData?.name as unknown as LocaleKey) ?? '',
+        };
+      }
+      return urlPart;
+    });
+    setUrlParts(updatedUrlParts);
+    // possibly a race condition with hook in breadcrumbs?
+  }, [data?.name, pathname]);
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),

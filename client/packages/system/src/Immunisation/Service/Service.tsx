@@ -17,7 +17,7 @@ export const ImmunisationProgramService: FC = () => {
   const immunisationDetailRoute = RouteBuilder.create(
     AppRoute.ImmunisationPrograms
   )
-    .addPart(':id')
+    .addPart(':programId')
     .addPart(':id')
     .build();
 

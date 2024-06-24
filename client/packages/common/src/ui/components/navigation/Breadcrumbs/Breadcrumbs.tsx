@@ -3,7 +3,7 @@ import { styled } from '@mui/material/styles';
 import { Breadcrumbs as MuiBreadcrumbs } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useRegisterActions, useBreadcrumbs } from '@openmsupply-client/common';
-import { useTranslation } from '@common/intl';
+import { useTranslation, LocaleKey } from '@common/intl';
 import { UrlPart } from '@common/hooks';
 import { AppRoute } from '@openmsupply-client/config';
 
@@ -59,7 +59,7 @@ export const Breadcrumbs = ({
 
     return (
       <Breadcrumb to={part.path} key={part.key}>
-        {t(part.key)}
+        {t(part.value as unknown as LocaleKey)}
       </Breadcrumb>
     );
   });

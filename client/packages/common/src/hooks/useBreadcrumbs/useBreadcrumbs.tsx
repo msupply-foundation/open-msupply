@@ -7,7 +7,7 @@ export interface UrlPart {
   disabled?: boolean;
   path: string;
   key: LocaleKey;
-  value: string;
+  value: string | LocaleKey;
 }
 
 type BreadcrumbState = {
@@ -48,6 +48,7 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
     }, '');
     setUrlParts(urlParts);
     setSuffix(undefined);
+    console.log('breadcrumbs hook called');
   }, [pathname]);
 
   const navigateUpOne = () => {
@@ -55,5 +56,5 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
     navigate(urlParts[urlParts.length - 2]?.path as string);
   };
 
-  return { urlParts, navigateUpOne, suffix, setSuffix };
+  return { urlParts, navigateUpOne, suffix, setSuffix, setUrlParts };
 };
