@@ -51,12 +51,13 @@ pub fn load_certs_rustls(cert_files: CertFiles) -> Result<ServerConfig, anyhow::
     let private_cert_file = std::fs::File::open(cert_files.clone().private_cert_file)?;
     let mut private_reader = BufReader::new(private_cert_file);
 
-    let result = rustls::crypto::aws_lc_rs::default_provider().install_default();
+    let result = rustls::crypto::ring::default_provider().install_default();
     if let Err(e) = result {
-        panic!("Unable to install aws_lc_rs default provider: {:#?}", e);
+        panic!(
+            "Unable to install rustls::crypto::ring default provider: {:#?}",
+            e
+        );
     }
-    // If we have problems building on windows, we might need to switch to rustls::crypto::ring::default_provider().install_default()
-    // https://docs.rs/rustls/latest/rustls/index.html#crate-features
 
     let private_key = rustls_pemfile::read_one(&mut private_reader)?
         .map(|key| match key {
