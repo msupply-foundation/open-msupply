@@ -5,7 +5,7 @@ import {
 } from '../api/operations.generated';
 
 import { GENERAL_POPULATION_ID } from '../api';
-import { HeaderData, HeaderValue, Row } from '../types';
+import { HeaderData, Row } from '../types';
 
 export const toIndicatorFragment = (
   row: Row,
@@ -32,16 +32,12 @@ export const recursiveCalculate = (
   row: Row,
   indexValue: number | undefined
 ): number => {
-  const headerValue = updatedHeader[
-    String(key) as keyof HeaderData
-  ] as HeaderValue;
-  if (key > 0) {
-    return headerValue
-      ? (NumUtils.round(
-          recursiveCalculate(key - 1, updatedHeader, row, indexValue) *
-            ((headerValue.value ?? 0) / 100 + 1)
-        ) as number)
-      : 0;
+  if (isHeaderDataYearKey(key)) {
+    const headerValue = updatedHeader[key];
+    return NumUtils.round(
+      recursiveCalculate(key - 1, updatedHeader, row, indexValue) *
+        ((headerValue.value ?? 0) / 100 + 1)
+    );
   } else {
     return NumUtils.round(
       (indexValue ?? row.basePopulation ?? 0) * ((row?.percentage ?? 0) / 100)
@@ -134,3 +130,16 @@ export const toDemographicIndicatorRow = (row: {
   4: row.year5Projection ?? 0,
   5: row.year5Projection ?? 0,
 });
+
+export function isHeaderDataYearKey(key: number): key is 1 | 2 | 3 | 4 | 5 {
+  switch (key) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      return true;
+    default:
+      return false;
+  }
+}
