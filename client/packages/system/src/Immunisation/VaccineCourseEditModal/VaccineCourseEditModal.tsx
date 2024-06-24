@@ -6,20 +6,22 @@ import {
   Checkbox,
   Container,
   DemographicIndicatorNode,
+  DialogButton,
   InputWithLabelRow,
-  NothingHere,
+  ModalMode,
   NumericTextInput,
   Typography,
   useBreadcrumbs,
-  useParams,
+  useDialog,
+  useKeyboardHeightAdjustment,
   useTranslation,
 } from '@openmsupply-client/common';
 import React, { useEffect, useMemo } from 'react';
 import { FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
-import { AppFooterComponent } from './AppFooterComponent';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
+import { VaccineCourseFragment } from '../api';
 
 const MAX_VACCINE_DOSES = 20;
 
@@ -93,18 +95,36 @@ const Row = ({
   </Box>
 );
 
-export const VaccineCourseView: FC = () => {
-  const { setSuffix, navigateUpOne } = useBreadcrumbs();
+interface VaccineCourseEditModalProps {
+  vaccineCourse: VaccineCourseFragment | null;
+  isOpen: boolean;
+  onClose: () => void;
+  programId: string | undefined;
+  mode: ModalMode | null;
+}
+
+export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
+  vaccineCourse,
+  isOpen,
+  onClose,
+  programId,
+  mode,
+}) => {
+  const { setSuffix } = useBreadcrumbs();
   const t = useTranslation('coldchain');
-  const { id } = useParams();
+
   const {
     draft,
     update: { update },
+    create: { create },
     updatePatch,
     query: { data, isLoading },
     isDirty,
-  } = useVaccineCourse(id);
+  } = useVaccineCourse(vaccineCourse?.id ?? undefined);
   const { data: demographicData } = useDemographicIndicators();
+
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
+  const height = useKeyboardHeightAdjustment(600);
 
   // const defaultRow: VaccineCourseScheduleNode = {
   //   doseNumber: 1,
@@ -172,10 +192,6 @@ export const VaccineCourseView: FC = () => {
   //   [draft]
   // );
 
-  const cancel = () => {
-    navigateUpOne();
-  };
-
   useEffect(() => {
     setSuffix(data?.name ?? '');
   }, [data?.name, setSuffix]);
@@ -196,83 +212,94 @@ export const VaccineCourseView: FC = () => {
       : '',
   };
 
-  return !!data ? (
-    <Box display="flex" flex={1}>
-      <Container>
-        <Section heading={t('heading.vaccine-details')}>
-          <Row label={t('label.immunisation-name')}>
-            <BasicTextInput
-              textAlign="right"
-              value={draft?.name ?? ''}
-              fullWidth
-              onChange={e => updatePatch({ name: e.target.value })}
-            />
-          </Row>
-          <Row label={t('label.target-demographic')}>
-            <Autocomplete
-              sx={{ input: { textAlign: 'right' } }}
-              isOptionEqualToValue={option =>
-                option?.value === draft.demographicIndicatorId
-              }
-              onChange={(_e, selected) =>
-                updatePatch({ demographicIndicatorId: selected?.value })
-              }
-              defaultValue={defaultValue}
-              placeholder={'demographic'}
-              options={options}
-            />
-          </Row>
-          <Row label={t('label.coverage-rate')}>
-            <NumericTextInput
-              value={draft?.coverageRate ?? 1}
-              fullWidth
-              onChange={value => updatePatch({ coverageRate: value })}
-            />
-          </Row>
-          <Row label={t('label.wastage-rate')}>
-            <NumericTextInput
-              value={draft?.wastageRate ?? 1}
-              fullWidth
-              onChange={value => updatePatch({ wastageRate: value })}
-            />
-          </Row>
-          <Row label={t('label.vaccine-items')}>
-            <VaccineItemSelect draft={draft} onChange={updatePatch} />
-          </Row>
-          <Row label={t('label.calculate-demand')}>
-            <Checkbox
-              checked={draft?.isActive ?? true}
-              onChange={e => updatePatch({ isActive: e.target.checked })}
-            ></Checkbox>
-          </Row>
-          {/* </Section> */}
-          {/* </Container>
-      <Container>
-        <Section heading={t('heading.schedule')}> */}
-          <Row label={t('label.number-of-doses')}>
-            <NumericTextInput
-              value={draft.doses}
-              fullWidth
-              onChange={tryUpdateValue}
-              max={MAX_VACCINE_DOSES}
-            />
-          </Row>
-          {/* <Box paddingTop={1.5}>
-            <MiniTable
-              rows={draft.vaccineCourseSchedules ?? [defaultRow]}
-              columns={dosesColumns}
-            />
-          </Box> */}
-        </Section>
-      </Container>
-      <AppFooterComponent
-        isDirty={isDirty}
-        save={update}
-        cancel={cancel}
-        isLoading={isLoading}
-      />
-    </Box>
-  ) : (
-    <NothingHere />
+  return (
+    <Modal
+      title=""
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      okButton={
+        <DialogButton
+          disabled={!isDirty || !programId}
+          variant="ok"
+          onClick={async () => {
+            mode === ModalMode.Update
+              ? await update()
+              : await create(programId ?? '');
+            onClose();
+          }}
+        />
+      }
+      height={height}
+      width={700}
+    >
+      <Box display="flex" flex={1}>
+        <Container>
+          <Section heading={t('heading.vaccine-details')}>
+            <Row label={t('label.immunisation-name')}>
+              <BasicTextInput
+                textAlign="right"
+                value={draft?.name ?? ''}
+                fullWidth
+                onChange={e => updatePatch({ name: e.target.value })}
+              />
+            </Row>
+            <Row label={t('label.target-demographic')}>
+              <Autocomplete
+                sx={{ input: { textAlign: 'right' } }}
+                isOptionEqualToValue={option =>
+                  option?.value === draft.demographicIndicatorId
+                }
+                onChange={(_e, selected) =>
+                  updatePatch({ demographicIndicatorId: selected?.value })
+                }
+                defaultValue={defaultValue}
+                placeholder={'demographic'}
+                options={options}
+              />
+            </Row>
+            <Row label={t('label.coverage-rate')}>
+              <NumericTextInput
+                value={draft?.coverageRate ?? 1}
+                fullWidth
+                onChange={value => updatePatch({ coverageRate: value })}
+              />
+            </Row>
+            <Row label={t('label.wastage-rate')}>
+              <NumericTextInput
+                value={draft?.wastageRate ?? 1}
+                fullWidth
+                onChange={value => updatePatch({ wastageRate: value })}
+              />
+            </Row>
+            <Row label={t('label.vaccine-items')}>
+              <VaccineItemSelect draft={draft} onChange={updatePatch} />
+            </Row>
+            <Row label={t('label.calculate-demand')}>
+              <Checkbox
+                checked={draft?.isActive ?? true}
+                onChange={e => updatePatch({ isActive: e.target.checked })}
+              ></Checkbox>
+            </Row>
+            {/* </Section> */}
+            {/* </Container>
+    <Container>
+      <Section heading={t('heading.schedule')}> */}
+            <Row label={t('label.number-of-doses')}>
+              <NumericTextInput
+                value={draft.doses}
+                fullWidth
+                onChange={tryUpdateValue}
+                max={MAX_VACCINE_DOSES}
+              />
+            </Row>
+            {/* <Box paddingTop={1.5}>
+          <MiniTable
+            rows={draft.vaccineCourseSchedules ?? [defaultRow]}
+            columns={dosesColumns}
+          />
+        </Box> */}
+          </Section>
+        </Container>
+      </Box>
+    </Modal>
   );
 };
