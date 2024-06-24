@@ -119,6 +119,7 @@ export const StockLineDetailView: React.FC = () => {
     showSaveConfirmation,
     showCancelConfirmation,
     disabled: !isDirty && !hasPluginChanged,
+    isDirty,
   };
 
   return (
