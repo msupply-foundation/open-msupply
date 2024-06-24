@@ -78,14 +78,16 @@ impl CommonSyncRecord {
             record_data: data,
         } = self;
 
-        let record_id = if action == SyncAction::Merge {
-            // This is (likely) a temporary fix to avoid merge sync records overriding upserts on target table
-            // causing errors as the merge is applied to record that never got upserted first.
-            uuid()
-        } else if table_name == "name_oms_fields".to_string() {
-            format!("{}{:#?}", record_id, ChangelogTableName::NameOmsFields)
-        } else {
-            record_id
+        let record_id = match action {
+            SyncAction::Merge => {
+                // This is (likely) a temporary fix to avoid merge sync records overriding upserts on target table
+                // causing errors as the merge is applied to record that never got upserted first.
+                uuid()
+            }
+            _ if table_name == *"name_oms_fields" => {
+                format!("{}{:#?}", record_id, ChangelogTableName::NameOmsFields)
+            }
+            _ => record_id,
         };
 
         Ok(SyncBufferRow {
