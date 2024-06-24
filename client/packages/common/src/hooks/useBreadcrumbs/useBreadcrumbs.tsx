@@ -48,7 +48,6 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
     }, '');
     setUrlParts(urlParts);
     setSuffix(undefined);
-    console.log('breadcrumbs hook called');
   }, [pathname]);
 
   const navigateUpOne = () => {
