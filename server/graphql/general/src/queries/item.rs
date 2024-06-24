@@ -49,6 +49,7 @@ pub struct ItemFilterInput {
     pub code_or_name: Option<StringFilterInput>,
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
+    pub has_stock_on_hand: Option<bool>,
 }
 
 #[derive(Union)]
@@ -97,6 +98,7 @@ impl ItemFilterInput {
             code_or_name,
             is_active,
             is_vaccine,
+            has_stock_on_hand,
         } = self;
 
         ItemFilter {
@@ -108,6 +110,7 @@ impl ItemFilterInput {
             code_or_name: code_or_name.map(StringFilter::from),
             is_active,
             is_vaccine,
+            has_stock_on_hand,
         }
     }
 }
