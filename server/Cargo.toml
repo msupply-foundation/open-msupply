@@ -9,8 +9,8 @@ actix-web = { version = "4.7.0", default-features = false, features = [
 ] }
 actix-multipart = "0.6.1"
 anymap = "0.12"
-async-graphql = { version = "3.0.35", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "3.0.35"
+async-graphql = { version = "7.0.6", features = ["dataloader", "chrono"] }
+async-graphql-actix-web = "7.0.6"
 async-trait = "0.1.80"
 chrono = { version = "0.4.38", features = ["serde"] }
 clap = { version = "4.5.7", features = ["derive"] }
@@ -42,6 +42,9 @@ async-std = "1.12.0"
 rand = "0.8.5"
 anyhow = "1.0.56"
 actix-files = "0.6.0"
+# TODO: Remove. async_graphql is using 1.0 but SET_COOKIE was being imported
+# from wrong version.
+http2 = { package = "http", version = "1.0.0" }
 
 [workspace.lints.clippy]
 wrong_self_convention = "allow"

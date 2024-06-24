@@ -100,7 +100,7 @@ pub enum InsertDemographicIndicatorResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertDemographicIndicatorErrorInterface {
     DemographicIndicatorAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),
