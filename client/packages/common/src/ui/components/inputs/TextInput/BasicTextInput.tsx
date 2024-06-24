@@ -56,11 +56,18 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
           ref={ref}
           inputRef={inputRef}
           color="secondary"
-          sx={{
-            '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-            '& .MuiInput-input': { color: 'gray.dark', textAlign },
-            ...sx,
-          }}
+          // Sx props can be provided as an array of SxProp objects. In this
+          // case, it doesn't work to try and merge it as though it was an
+          // object. So we're going to convert this input to a single array of
+          // SX props here, which means it'll be safe regardless of the shape of
+          // the incoming sx prop
+          sx={[
+            {
+              '& .MuiInput-underline:before': { borderBottomWidth: 0 },
+              '& .MuiInput-input': { color: 'gray.dark', textAlign },
+            },
+            sx ?? {},
+          ].flat()}
           variant="standard"
           size="small"
           InputProps={{

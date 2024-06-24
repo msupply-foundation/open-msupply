@@ -189,9 +189,20 @@ mutation createInventoryAdjustment(
   $storeId: String!
 ) {
   createInventoryAdjustment(input: $input, storeId: $storeId) {
+    __typename
     ... on InvoiceNode {
       __typename
       ...InvoiceRow
+    }
+    ... on CreateInventoryAdjustmentError {
+      __typename
+      error {
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+      }
     }
   }
 }

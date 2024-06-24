@@ -277,9 +277,20 @@ export const InsertRepackDocument = gql`
 export const CreateInventoryAdjustmentDocument = gql`
     mutation createInventoryAdjustment($input: CreateInventoryAdjustmentInput!, $storeId: String!) {
   createInventoryAdjustment(input: $input, storeId: $storeId) {
+    __typename
     ... on InvoiceNode {
       __typename
       ...InvoiceRow
+    }
+    ... on CreateInventoryAdjustmentError {
+      __typename
+      error {
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+      }
     }
   }
 }

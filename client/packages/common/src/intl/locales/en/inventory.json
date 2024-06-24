@@ -15,6 +15,7 @@
   "error.provide-reason": "A reason must be provided for any rows which have a difference in the counted number of packs.",
   "error.provide-valid-reason": "Adjustment reason does not match adjustment direction",
   "error.reduced-below-zero": "Stock reserved for new outbound shipments. The quantity cannot be reduced below zero.",
+  "error.stock-line-stock-reduced-below-zero": "Stock line cannot be adjusted because some of the stock has been used in new outbound shipments.",
   "error.stocktake-has-stock-reduced-below-zero": "Stock take cannot be finalised because some of the stock has been used in new outbound shipments.",
   "error.stocktake-not-found": "Stocktake not found",
   "error.unable-to-scan": "Unable to scan barcode: {{error}}",
