@@ -3,7 +3,7 @@ import Papa, { ParseResult } from 'papaparse';
 import { ImportPanel } from './ImportPanel';
 import { useNotification } from '@common/hooks';
 import { InlineProgress, Typography, Upload } from '@common/components';
-import { useTranslation } from '@common/intl';
+import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import {
   Grid,
   Stack,
@@ -18,8 +18,11 @@ import {
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportRow } from './CatalogueItemImportModal';
 import { importRowToCsv } from '../utils';
-import { useAssetData, AssetCatalogueItemFragment } from '../api';
-import { processProperties } from '../../utils';
+import {
+  useAssetData,
+  AssetCatalogueItemFragment,
+  AssetPropertyFragment,
+} from '../api';
 
 interface AssetItemUploadTabProps {
   setAssetItem: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -54,6 +57,52 @@ const getCell = (row: ParsedImport, index: AssetColumn) => {
   const rowKeys = Object.keys(row);
   const key = rowKeys[index] ?? '';
   return row[key] ?? '';
+};
+
+const processProperties = (
+  properties: undefined | AssetPropertyFragment[],
+  row: ParsedImport,
+  importRow: ImportRow,
+  rowErrors: string[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  properties?.forEach(property => {
+    const value = row[property.name] ?? row[property.key];
+    if (!!value?.trim()) {
+      if (!!property.allowedValues) {
+        const allowedValues = property.allowedValues.split(',');
+        if (allowedValues.every(v => v !== value)) {
+          rowErrors.push(
+            t('error.invalid-field-value', {
+              field: property.name,
+              value: value,
+            })
+          );
+        }
+      }
+      switch (property.valueType) {
+        case 'INTEGER':
+        case 'FLOAT':
+          if (Number.isNaN(Number(value))) {
+            rowErrors.push(
+              t('error.invalid-field-value', {
+                field: property.name,
+                value: value,
+              })
+            );
+          }
+          importRow.properties[property.key] = value;
+          break;
+        case 'BOOLEAN':
+          const isTrue =
+            value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+          importRow.properties[property.key] = isTrue ? 'true' : 'false';
+          break;
+        default:
+          importRow.properties[property.key] = value;
+      }
+    }
+  });
 };
 
 export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
@@ -254,7 +303,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
       } else {
         importRow.model = model;
       }
-      processProperties(properties ?? [], row, importRow, rowErrors, t);
+      processProperties(properties, row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);

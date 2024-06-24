@@ -32,7 +32,7 @@ pub struct StockEvolutionOptionsInput {
 
 #[derive(Interface)]
 #[graphql(name = "RequisitionLineChartErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum ChartErrorInterface {
     RecordNotFound(RecordNotFound),
 }

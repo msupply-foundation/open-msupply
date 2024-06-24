@@ -72,7 +72,7 @@ pub enum UpdateResponse {
 
 #[derive(Interface)]
 #[graphql(name = "UpdatePrescriptionLineErrorInterface")]
-#[graphql(field(name = "description", ty = "&str"))]
+#[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),

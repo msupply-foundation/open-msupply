@@ -13,8 +13,6 @@ import {
   TableProvider,
   createTableStore,
   ObjUtils,
-  useAuthContext,
-  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -29,9 +27,6 @@ import { DraftAsset } from '../types';
 import { Details } from './Tabs/Details';
 
 export const EquipmentDetailView = () => {
-  const { storeId } = useAuthContext();
-  const isCentralServer = useIsCentralServerApi();
-
   const { data, isLoading } = useAssets.document.get();
   const { mutateAsync: update, isLoading: isSaving } =
     useAssets.document.update();
@@ -84,15 +79,11 @@ export const EquipmentDetailView = () => {
     const assetProperties = ObjUtils.parse(data.properties);
     const catalogProperties = ObjUtils.parse(data.catalogProperties);
 
-    const canEditLocationIds = !isCentralServer || draft?.storeId == storeId;
-
-    const locationIds = draft?.locationIds
-      ? draft.locationIds
-      : data.locations.nodes.map(location => location.id);
-
     setDraft({
       ...data,
-      locationIds: canEditLocationIds ? locationIds : undefined,
+      locationIds: draft?.locationIds
+        ? draft.locationIds
+        : data.locations.nodes.map(location => location.id),
       parsedProperties: assetProperties,
       parsedCatalogProperties: catalogProperties,
     });

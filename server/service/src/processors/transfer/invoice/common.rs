@@ -70,7 +70,7 @@ pub(crate) fn generate_inbound_lines(
                     // Default
                     stock_line_id: None,
                     location_id: None,
-                    sell_price_per_pack,
+                    sell_price_per_pack: 0.0,
                     inventory_adjustment_reason_id: None,
                 }
             },

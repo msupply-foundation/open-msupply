@@ -65,7 +65,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 
 #[derive(Interface)]
 #[graphql(name = "InsertInboundShipmentLineErrorInterface")]
-#[graphql(field(name = "description", ty = "&str"))]
+#[graphql(field(name = "description", type = "&str"))]
 pub enum InsertErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),

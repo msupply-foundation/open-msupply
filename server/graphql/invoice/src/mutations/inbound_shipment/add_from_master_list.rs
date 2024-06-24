@@ -15,7 +15,7 @@ use service::{
 
 #[derive(Interface)]
 #[graphql(name = "AddToInboundShipmentFromMasterListErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     MasterListNotFoundForThisStore(MasterListNotFoundForThisStore),

@@ -11,6 +11,7 @@ pub struct AssetLogReasonLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for AssetLogReasonLoader {
     type Value = AssetLogReasonRow;
     type Error = RepositoryError;
