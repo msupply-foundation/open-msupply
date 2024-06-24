@@ -1,26 +1,30 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetRowFragment } from './api';
-import { Formatter } from '@common/utils';
+import { ArrayUtils, Formatter } from '@common/utils';
 import { StatusType } from '@common/types';
 import { ImportRow, LineNumber } from './ImportAsset';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
+function baseAssetFields(t: TypedTFunction<LocaleKey>) {
+  return [
+    'id',
+    t('label.asset-number'),
+    t('label.installation-date'),
+    t('label.replacement-date'),
+    t('label.serial'),
+    t('label.asset-notes'),
+  ];
+}
+
 export const assetsToCsv = (
   items: AssetRowFragment[],
   t: TypedTFunction<LocaleKey>
 ) => {
-  const fields: string[] = [
-    'id',
-    t('label.asset-number'),
-    t('label.created-datetime'),
-    t('label.modified-datetime'),
-    t('label.installation-date'),
-    t('label.replacement-date'),
-    t('label.serial'),
-    t('label.notes'),
-  ];
+  const fields: string[] = baseAssetFields(t);
+  fields.push('label.created-datetime');
+  fields.push(t('label.modified-datetime'));
 
   const data = items.map(node => [
     node.id,
@@ -107,18 +111,17 @@ export const importEquipmentToCsvWithErrors = (
 export const importEquipmentToCsv = (
   assets: Partial<ImportRow>[],
   t: TypedTFunction<LocaleKey>,
-  isCentralServer: boolean = false
+  isCentralServer: boolean = false,
+  properties?: string[]
 ) => {
-  const fields: string[] = [
-    t('label.asset-number'),
-    t('label.catalogue-item-code'),
-  ];
+  const props =
+    properties ?? ArrayUtils.dedupe(Object.keys(assets[0]?.properties ?? {}));
+  const fields = baseAssetFields(t).concat(props);
+
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
-  fields.push(t('label.asset-notes'));
-  fields.push(t('label.serial'));
-  fields.push(t('label.installation-date'));
+  fields.push(t('label.catalogue-item-code'));
 
   const data = assets.map(node => {
     const row = [
@@ -127,7 +130,7 @@ export const importEquipmentToCsv = (
       node.notes,
       node.serialNumber,
       node.installationDate,
-    ];
+    ].concat(props.map(key => node.properties?.[key] ?? ''));
     if (isCentralServer) row.push(node.store?.code);
     return row;
   });
