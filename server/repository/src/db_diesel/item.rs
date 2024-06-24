@@ -249,8 +249,6 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             .group_by(item_link_dsl::item_id)
             .into_boxed();
 
-        // MORNING - add me to frontend filters and test me everywhere!
-
         query = match (is_visible, has_stock_on_hand) {
             // visible items AND non-visible items with stock on hand
             (Some(true), Some(true)) => query.filter(
