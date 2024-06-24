@@ -32,10 +32,10 @@ impl SyncTranslation for PropertyTranslation {
         let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
 
         // Properties are synced out from legacy mSupply central, but we only support Open mSupply properties
-        if let Some(_) = data.get("ID") {
-            return Ok(PullTranslateResult::Ignored(format!(
-                "Legacy properties not supported",
-            )));
+        if data.get("ID").is_some() {
+            return Ok(PullTranslateResult::Ignored(
+                "Legacy properties not supported".to_string(),
+            ));
         };
 
         Ok(PullTranslateResult::upsert(serde_json::from_str::<
