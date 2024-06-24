@@ -1,5 +1,5 @@
 use chrono::Utc;
-use repository::{SyncAction as SyncActionRepo, SyncBufferRow};
+use repository::{ChangelogTableName, SyncAction as SyncActionRepo, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
@@ -82,6 +82,8 @@ impl CommonSyncRecord {
             // This is (likely) a temporary fix to avoid merge sync records overriding upserts on target table
             // causing errors as the merge is applied to record that never got upserted first.
             uuid()
+        } else if table_name == "name_oms_fields".to_string() {
+            format!("{}{:#?}", record_id, ChangelogTableName::NameOmsFields)
         } else {
             record_id
         };
