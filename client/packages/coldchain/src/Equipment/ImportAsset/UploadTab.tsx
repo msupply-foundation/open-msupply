@@ -23,9 +23,10 @@ import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv } from '../utils';
 import {
   AssetCatalogueItemFragment,
+  processProperties,
   useStore,
 } from '@openmsupply-client/system';
-
+import { useAssetData } from '@openmsupply-client/system';
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;
@@ -51,6 +52,7 @@ function getImportHelpers<T, P>(
 ) {
   const importRow = {
     id: FnUtils.generateUUID(),
+    properties: {},
   } as T;
   const rowErrors: string[] = [];
   const rowWarnings: string[] = [];
@@ -192,21 +194,26 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
+  const { data: properties } = useAssetData.utils.properties();
+
   const csvExample = async () => {
-    const emptyRows: ImportRow[] = [];
+    const exampleRows: Partial<ImportRow>[] = [
+      {
+        id: '',
+        assetNumber: 'Asset Number',
+        catalogueItemCode: '',
+        store: undefined,
+        notes: '',
+        serialNumber: '',
+        installationDate: '',
+        properties: {},
+      },
+    ];
     const csv = importEquipmentToCsv(
-      emptyRows.map(
-        (_row: ImportRow): Partial<ImportRow> => ({
-          assetNumber: undefined,
-          catalogueItemCode: undefined,
-          store: undefined,
-          notes: undefined,
-          serialNumber: undefined,
-          installationDate: undefined,
-        })
-      ),
+      exampleRows,
       t,
-      isCentralServer
+      isCentralServer,
+      properties ? properties.map(p => p.key) : []
     );
     FileUtils.exportCSV(csv, t('filename.cce'));
   };
@@ -284,6 +291,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         formatDate
       );
       addCell('serialNumber', 'label.serial');
+      processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;

@@ -52,11 +52,11 @@ pub fn initialise_name_properties(
 
     connection
         .transaction_sync(|connection| {
-            let property_repo = PropertyRowRepository::new(&connection);
-            let name_property_repo = NamePropertyRowRepository::new(&connection);
+            let property_repo = PropertyRowRepository::new(connection);
+            let name_property_repo = NamePropertyRowRepository::new(connection);
 
             for property in input.into_iter() {
-                validate(&connection, &property)?;
+                validate(connection, &property)?;
 
                 let InitialiseNameProperty {
                     id,
