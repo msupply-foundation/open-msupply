@@ -24,7 +24,7 @@ pub struct InsertInput {
 
 #[derive(Interface)]
 #[graphql(name = "InsertOutboundShipmentUnallocatedLineErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     ForeignKeyError(ForeignKeyError),
     UnallocatedLinesOnlyEditableInNewInvoice(UnallocatedLinesOnlyEditableInNewInvoice),
