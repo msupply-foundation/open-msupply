@@ -15,17 +15,17 @@ import {
   useTranslation,
   useUrlQueryParams,
   DataTable,
-  useNavigate,
   useColumns,
   NothingHere,
   useEditModal,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppBarButtons } from './AppBarButtons';
-import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
 import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
-import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
+import { VaccineCourseFragment } from '../api';
+import { VaccineCourseEditModal } from '../VaccineCourseEditModal';
 
 export const ProgramComponent: FC = () => {
   const {
@@ -33,8 +33,8 @@ export const ProgramComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
+  const { urlQuery, updateQuery } = useUrlQuery();
   const pagination = { page, first, offset };
-  const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { setSuffix, navigateUpOne } = useBreadcrumbs();
   const { id } = useParams();
@@ -89,17 +89,42 @@ export const ProgramComponent: FC = () => {
     setSuffix(data?.name ?? '');
   }, [setSuffix, data]);
 
-  const { isOpen, onClose, onOpen } = useEditModal<DraftVaccineCourse>();
+  const {
+    isOpen,
+    onClose,
+    onOpen,
+    entity: vaccineCourse,
+    mode,
+  } = useEditModal<VaccineCourseFragment>();
+
+  // this will open the edit modal, if the `edit` query parameter is set
+  // to a valid sensor ID. On opening, the query param is removed to
+  // prevent a loop which would happen if a sensor was edited
+  useEffect(() => {
+    const vaccineCourseId = (urlQuery['edit'] as string) ?? '';
+    if (vaccineCourseId) {
+      // keep this check so we don't go to edit mode if incorrect id prompt
+      const vaccineCourse = vaccineCoursesData?.nodes?.find(
+        c => c.id === vaccineCourseId
+      );
+      if (vaccineCourse) {
+        updateQuery({ edit: '' });
+        onOpen(vaccineCourse);
+      }
+    }
+  }, [vaccineCoursesData?.nodes]);
 
   return isLoading ? (
     <InlineSpinner />
   ) : (
     <>
       {isOpen && (
-        <VaccineCourseCreateModal
+        <VaccineCourseEditModal
           isOpen={isOpen}
           onClose={onClose}
           programId={id}
+          vaccineCourse={vaccineCourse}
+          mode={mode}
         />
       )}
       <Toolbar
@@ -117,7 +142,7 @@ export const ProgramComponent: FC = () => {
         data={vaccineCoursesData?.nodes ?? []}
         isLoading={vaccineCoursesLoading}
         isError={vaccineCoursesError}
-        onRowClick={row => navigate(row.id)}
+        onRowClick={onOpen}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
       <AppFooterPortal

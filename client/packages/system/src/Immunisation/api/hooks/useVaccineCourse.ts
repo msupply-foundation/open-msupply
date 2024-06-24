@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
-  UpdateVaccineCourseItemInput,
-  UpdateVaccineCourseScheduleInput,
+  UpsertVaccineCourseItemInput,
+  UpsertVaccineCourseScheduleInput,
   VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
   isEmpty,
@@ -34,14 +34,14 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
 const vaccineCourseParsers = {
   toScheduleInput: (
     schedule: VaccineCourseScheduleNode
-  ): UpdateVaccineCourseScheduleInput => {
+  ): UpsertVaccineCourseScheduleInput => {
     return {
       id: schedule.id,
       doseNumber: schedule.doseNumber,
       label: schedule.label,
     };
   },
-  toItemInput: (item: DraftVaccineCourseItem): UpdateVaccineCourseItemInput => {
+  toItemInput: (item: DraftVaccineCourseItem): UpsertVaccineCourseItemInput => {
     return {
       id: item.id,
       itemId: item.itemId,
@@ -140,13 +140,26 @@ const useGet = (id: string) => {
 const useCreate = () => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
 
-  const mutationFn = async ({ name, programId }: DraftVaccineCourse) => {
+  const mutationFn = async (input: DraftVaccineCourse) => {
     return await api.insertVaccineCourse({
       storeId,
       input: {
         id: FnUtils.generateUUID(),
-        name,
-        programId,
+        name: input.name,
+        programId: input.programId,
+        demographicIndicatorId: input.demographicIndicatorId,
+        coverageRate: input.coverageRate,
+        isActive: input.isActive,
+        wastageRate: input.wastageRate,
+        doses: input.doses,
+        vaccineItems:
+          input.vaccineCourseItems?.map(item =>
+            vaccineCourseParsers.toItemInput(item)
+          ) ?? [],
+        schedules:
+          input.vaccineCourseSchedules?.map(schedule =>
+            vaccineCourseParsers.toScheduleInput(schedule)
+          ) ?? [],
       },
     });
   };

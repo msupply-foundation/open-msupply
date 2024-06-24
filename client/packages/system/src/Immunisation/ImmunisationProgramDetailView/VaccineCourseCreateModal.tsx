@@ -33,7 +33,7 @@ export const VaccineCourseCreateModal = ({
     draft,
     updatePatch,
     create: { create },
-  } = useVaccineCourse(programId);
+  } = useVaccineCourse();
   const isInvalid = !draft.name.trim();
 
   const onOk = async () => {
