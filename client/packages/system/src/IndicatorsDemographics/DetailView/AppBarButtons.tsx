@@ -32,7 +32,6 @@ export const AppBarButtonsComponent = ({
       isNew: true,
       baseYear: rows[0]?.baseYear ?? 0,
       basePopulation: rows[0]?.basePopulation ?? 0,
-      basePopulation: rows[0]?.basePopulation ?? 0,
       0: 0,
       1: 0,
       2: 0,
