@@ -58,14 +58,13 @@ export const getMostRecentCredentials = (
   return [];
 };
 
-// returns MRU store, if set
-// or the first store in the list
+// returns MRU store, if set or the first store in the list
 export const getStore = async (
   userDetails?: Partial<UserNode>,
   mostRecentCredentials?: AuthenticationCredentials[]
 ) => {
   const defaultStore = userDetails?.defaultStore;
-  const stores = userDetails?.stores?.nodes;
+  const stores = userDetails?.stores?.nodes.filter(s => !s.isDisabled);
   const mru = mostRecentCredentials?.find(
     item => item.username.toLowerCase() === userDetails?.username?.toLowerCase()
   );
@@ -73,7 +72,7 @@ export const getStore = async (
   if (
     mru?.store &&
     !mru.store.isDisabled &&
-    stores?.some(store => store.id === mru?.store?.id)
+    stores?.some(store => store.id === mru?.store?.id && !store.isDisabled)
   ) {
     return stores.find(store => store.id === mru.store?.id) ?? mru.store;
   }
