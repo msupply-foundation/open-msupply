@@ -105,7 +105,7 @@
   "messages.no-ledger": "This stock line has no stock movements to display",
   "messages.no-repacks": "This stock line has not been repacked. Click New to create a new repack.",
   "messages.no-repack-detail": "Select a line to view the details of a repack or click new to create a new repack",
-  "messages.all-packs-repacked": "Saved. The previous window has been closed since everything in the stock line has been repacked.",
+  "messages.all-packs-repacked": "All stock has been repacked and this stock line will no longer show in the list. Click OK to be taken to the new stock line.",
   "messages.repack-log-info": "Repacked from stock line",
   "messages.reduced-to-zero_one": "Reduced 1 line to quantity of 0",
   "messages.reduced-to-zero_other": "Reduced {{ count }} lines to quantity of 0",
@@ -118,5 +118,6 @@
   "stocktake-comment-items-have-stock-template": "Created using items that have stock",
   "title.stock-line-details": "Stock Line Details",
   "title.adjustment-details": "Adjustment Details",
-  "title.repack-details": "Repack Details"
+  "title.repack-details": "Repack Details",
+  "title.repack-complete": "Repack complete"
 }
