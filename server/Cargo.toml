@@ -59,7 +59,6 @@ enum_variant_names = "allow"
 too_many_arguments = "allow"
 
 [workspace]
-
 members = [
   "android",
   "report_builder",
