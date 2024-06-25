@@ -110,9 +110,9 @@ mod query {
             dose_number: 2,
         };
 
-        let vaccine_course_insert_c = InsertVaccineCourse {
-            id: "vaccine_course_id_c".to_owned(),
-            name: "vaccine_course_name".to_owned(),
+        let vaccine_course_insert_d = InsertVaccineCourse {
+            id: "vaccine_course_id_d".to_owned(),
+            name: "vaccine_course_name_d".to_owned(),
             program_id: mock_immunisation_program_b().id.clone(),
             vaccine_items: vec![item1.clone(), item2.clone()],
             schedules: vec![schedule1.clone(), schedule2.clone()],
@@ -124,7 +124,7 @@ mod query {
         };
 
         let result = service
-            .insert_vaccine_course(&context, vaccine_course_insert_c.clone())
+            .insert_vaccine_course(&context, vaccine_course_insert_d.clone())
             .unwrap();
 
         assert_eq!(
@@ -135,7 +135,7 @@ mod query {
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);
         let item_filter = VaccineCourseItemFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_a.id));
+            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_d.id));
 
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
         assert_eq!(count, 2);
@@ -144,7 +144,7 @@ mod query {
 
         let schedule_repo = VaccineCourseScheduleRepository::new(&context.connection);
         let schedule_filter = VaccineCourseScheduleFilter::new()
-            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_a.id));
+            .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_d.id));
         let count = schedule_repo.count(Some(schedule_filter.clone())).unwrap();
         assert_eq!(count, 2);
     }
