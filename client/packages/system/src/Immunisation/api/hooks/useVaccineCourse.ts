@@ -18,17 +18,17 @@ import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
 
 // export interface DraftVaccineCourse extends VaccineCourseFragment {}
 
-export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
-
 export enum UpdateVaccineCourseError {
-  DatabaseError = 'DatabaseError',
-  RecordProgramCombinationAlreadyExists = 'RecordProgramCombinationAlreadyExists',
+  DatabaseError = 'Database Error',
+  RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
 }
 
 export enum InsertVaccineCourseError {
-  RecordAlreadyExist = 'RecordAlreadyExist',
-  RecordProgramCombinationAlreadyExists = 'RecordProgramCombinationAlreadyExists',
+  RecordAlreadyExist = 'Record already exists',
+  RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
 }
+
+export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
 
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
   id: '',
@@ -183,20 +183,22 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         return result;
       }
 
-      if (result.__typename === 'InsertVaccineCourseError') {
-        let message: string;
-        switch (result.error.__typename) {
-          case InsertVaccineCourseError.RecordAlreadyExist:
-            message = t('error.database-error');
-            setErrorMessage(message);
-            result.error.description = message;
-            return result;
-          case InsertVaccineCourseError.RecordProgramCombinationAlreadyExists:
-            message = t('error.name-program-duplicate');
-            setErrorMessage(message);
-            result.error.description = message;
-            return result;
-        }
+      let message: string;
+      switch (result.error.description) {
+        case InsertVaccineCourseError.RecordAlreadyExist:
+          message = t('error.database-error');
+          setErrorMessage(message);
+          throw new Error(
+            `${t('error.unable-to-insert-vaccine-course')}: ${message}`
+          );
+        case InsertVaccineCourseError.RecordProgramCombinationAlreadyExists:
+          message = t('error.name-program-duplicate');
+          setErrorMessage(message);
+          throw new Error(
+            `${t('error.unable-to-insert-vaccine-course')}: ${message}`
+          );
+        default:
+          throw new Error(`${t('error.unable-to-insert-vaccine-course')}`);
       }
     }
 
@@ -243,18 +245,22 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         return result;
       }
 
-      if (result.__typename === 'UpdateVaccineCourseError') {
-        let message: string;
-        switch (result.error.__typename) {
-          case UpdateVaccineCourseError.DatabaseError:
-            message = t('error.database-error');
-            setErrorMessage(message);
-            return result;
-          case UpdateVaccineCourseError.RecordProgramCombinationAlreadyExists:
-            message = t('error.name-program-duplicate');
-            setErrorMessage(message);
-            return result;
-        }
+      let message: string;
+      switch (result.error.description) {
+        case UpdateVaccineCourseError.DatabaseError:
+          message = t('error.database-error');
+          setErrorMessage(message);
+          throw new Error(
+            `${t('error.unable-to-update-vaccine-course')}: ${message}`
+          );
+        case UpdateVaccineCourseError.RecordProgramCombinationAlreadyExists:
+          message = t('error.name-program-duplicate');
+          setErrorMessage(message);
+          throw new Error(
+            `${t('error.unable-to-update-vaccine-course')}: ${message}`
+          );
+        default:
+          throw new Error(`${t('error.unable-to-update-vaccine-course')}`);
       }
     }
 
