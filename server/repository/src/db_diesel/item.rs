@@ -97,6 +97,11 @@ impl ItemFilter {
         self.is_vaccine = Some(value);
         self
     }
+
+    pub fn has_stock_on_hand(mut self, value: bool) -> Self {
+        self.has_stock_on_hand = Some(value);
+        self
+    }
 }
 
 type ItemAndUnit = (ItemRow, Option<UnitRow>);
@@ -306,8 +311,9 @@ mod tests {
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
         ItemRowRepository, ItemType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
-        StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StockLineRow,
+        StockLineRowRepository, StoreRow, StoreRowRepository, StringFilter,
+        DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -662,6 +668,39 @@ mod tests {
             )
             .unwrap();
         assert_eq!(results.len(), 2);
+
+        // Test has_stock_on_hand filter
+
+        // Add stock for item 3 (which is invisible)
+        StockLineRowRepository::new(&storage_connection)
+            .upsert_one(&StockLineRow {
+                id: "stock_line_for_item_3".to_string(),
+                item_link_id: "item3".to_string(),
+                store_id: "name1_store".to_string(),
+                available_number_of_packs: 5.0,
+                pack_size: 1.0,
+                ..Default::default()
+            })
+            .unwrap();
+
+        // get visible rows + non visible rows with stock on hand
+        let results = ItemRepository::new(&storage_connection)
+            .query(
+                Pagination::new(),
+                Some(ItemFilter::new().is_visible(true).has_stock_on_hand(true)),
+                None,
+                Some("name1_store".to_string()),
+            )
+            .unwrap();
+
+        // item 1 & 2 == visible, item 3 == has stock
+        assert_eq!(
+            results
+                .into_iter()
+                .map(|r| r.item_row.id)
+                .collect::<Vec<String>>(),
+            vec!["item1", "item2", "item3"]
+        );
     }
 
     #[actix_rt::test]
