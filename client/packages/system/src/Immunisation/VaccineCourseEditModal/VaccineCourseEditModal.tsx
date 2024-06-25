@@ -223,7 +223,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
                 mode === ModalMode.Update
                   ? await update()
                   : await create(programId ?? '');
-              if (result.__typename === 'VaccineCourseNode') {
+              if (result?.__typename === 'VaccineCourseNode') {
                 const message =
                   mode === ModalMode.Update
                     ? `${t('messages.updated-new-vaccine-course')}: ${
