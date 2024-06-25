@@ -71,7 +71,6 @@ export const getStore = async (
 
   if (
     mru?.store &&
-    !mru.store.isDisabled &&
     stores?.some(store => store.id === mru?.store?.id && !store.isDisabled)
   ) {
     return stores.find(store => store.id === mru.store?.id) ?? mru.store;
