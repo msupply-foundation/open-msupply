@@ -13,6 +13,7 @@ import {
   Typography,
   useDialog,
   useKeyboardHeightAdjustment,
+  useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import React, { useMemo } from 'react';
@@ -110,7 +111,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   mode,
 }) => {
   const t = useTranslation('coldchain');
-
+  const { error, success } = useNotification();
   const {
     draft,
     update: { update },
@@ -118,6 +119,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     updatePatch,
     query: { isLoading },
     isDirty,
+    errorMessage,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
   const { data: demographicData } = useDemographicIndicators();
 
@@ -215,10 +217,38 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           disabled={!isDirty || !programId}
           variant="ok"
           onClick={async () => {
-            mode === ModalMode.Update
-              ? await update()
-              : await create(programId ?? '');
-            onClose();
+            // wrapping entire block in try in case of unexpected error from graphql
+            try {
+              if (mode === ModalMode.Update) {
+                const result = await update();
+                if (result.__typename === 'UpdateVaccineCourseError') {
+                  // TODO translatable errors from db?
+                  error(`${result.error.description}`)();
+                } else {
+                  success(
+                    `${t('messages.updated-new-vaccine-course')}: ${
+                      result.name
+                    }`
+                  )();
+                  onClose();
+                }
+              } else {
+                const result = await create(programId ?? '');
+                if (result.__typename === 'InsertVaccineCourseError') {
+                  // TODO translatable errors from db?
+                  error(`${result.error.description}`)();
+                } else {
+                  success(
+                    `${t('messages.created-new-vaccine-course')}: ${
+                      result.name
+                    }`
+                  )();
+                  onClose();
+                }
+              }
+            } catch (e) {
+              error(errorMessage);
+            }
           }}
         />
       }

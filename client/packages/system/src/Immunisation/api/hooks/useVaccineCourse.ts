@@ -58,7 +58,7 @@ export const useVaccineCourse = (id?: string) => {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
-  } = useCreate();
+  } = useCreate(setErrorMessage);
 
   const {
     mutateAsync: updateMutation,
@@ -137,11 +137,12 @@ const useGet = (id: string) => {
   return query;
 };
 
-const useCreate = () => {
+const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const t = useTranslation('coldchain');
 
   const mutationFn = async (input: DraftVaccineCourse) => {
-    return await api.insertVaccineCourse({
+    const apiResult = await api.insertVaccineCourse({
       storeId,
       input: {
         id: FnUtils.generateUUID(),
@@ -162,6 +163,22 @@ const useCreate = () => {
           ) ?? [],
       },
     });
+
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result = apiResult.centralServer.vaccineCourse.insertVaccineCourse;
+
+      if (result.__typename === 'VaccineCourseNode') {
+        return result;
+      }
+
+      if (result.__typename === 'InsertVaccineCourseError') {
+        setErrorMessage(result.error.description);
+        return result;
+      }
+    }
+
+    throw new Error(t('error.unable-to-insert-vaccine-course'));
   };
 
   return useMutation({
@@ -206,7 +223,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
 
       if (result.__typename === 'UpdateVaccineCourseError') {
         setErrorMessage(result.error.description);
-        return;
+        return result;
       }
     }
 
