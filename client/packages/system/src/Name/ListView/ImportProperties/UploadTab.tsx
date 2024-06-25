@@ -50,7 +50,7 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
   const t = useTranslation();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
-  const { data: facilitiesData } = useName.document.facilities();
+  const { data: facilitiesData } = useName.document.facilitiesAll();
 
   const FacilityPropertyBuffer: ImportRow[] = [];
   // TODO filter name properties for facility properties?
