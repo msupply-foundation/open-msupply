@@ -7816,6 +7816,7 @@ export type UserStoreNode = {
   createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  isDisabled: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   nameId: Scalars['String']['output'];
   preferences: StorePreferenceNode;
