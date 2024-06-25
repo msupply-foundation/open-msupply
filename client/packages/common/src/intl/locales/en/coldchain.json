@@ -55,6 +55,7 @@
   "error.unable-to-scan": "Unable to scan QR code",
   "error.too-many-datapoints": "Warning: There are too many data points to display. Please reduce the date range or number of sensors to view all the data.",
   "error.upserting-vaccine-courses": "Unknown error. Cannot change vaccine courses",
+  "error.name-program-duplicate": "Vaccine course name already exists for this program",
   "filename.asset-import-example": "Example Asset Item Import",
   "filename.cce": "equipment upload template",
   "filename.cce-failed-uploads": "Assets failed to upload",

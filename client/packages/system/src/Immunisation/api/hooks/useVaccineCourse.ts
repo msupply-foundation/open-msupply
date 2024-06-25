@@ -20,6 +20,16 @@ import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
 
 export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
 
+export enum UpdateVaccineCourseError {
+  DatabaseError = 'DatabaseError',
+  RecordProgramCombinationAlreadyExists = 'RecordProgramCombinationAlreadyExists',
+}
+
+export enum InsertVaccineCourseError {
+  RecordAlreadyExist = 'RecordAlreadyExist',
+  RecordProgramCombinationAlreadyExists = 'RecordProgramCombinationAlreadyExists',
+}
+
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
   id: '',
   name: '',
@@ -108,6 +118,7 @@ export const useVaccineCourse = (id?: string) => {
     resetDraft,
     isDirty,
     updatePatch,
+    setIsDirty,
   };
 };
 
@@ -173,8 +184,19 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
       }
 
       if (result.__typename === 'InsertVaccineCourseError') {
-        setErrorMessage(result.error.description);
-        return result;
+        let message: string;
+        switch (result.error.__typename) {
+          case InsertVaccineCourseError.RecordAlreadyExist:
+            message = t('error.database-error');
+            setErrorMessage(message);
+            result.error.description = message;
+            return result;
+          case InsertVaccineCourseError.RecordProgramCombinationAlreadyExists:
+            message = t('error.name-program-duplicate');
+            setErrorMessage(message);
+            result.error.description = message;
+            return result;
+        }
       }
     }
 
@@ -222,12 +244,21 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
       }
 
       if (result.__typename === 'UpdateVaccineCourseError') {
-        setErrorMessage(result.error.description);
-        return result;
+        let message: string;
+        switch (result.error.__typename) {
+          case UpdateVaccineCourseError.DatabaseError:
+            message = t('error.database-error');
+            setErrorMessage(message);
+            return result;
+          case UpdateVaccineCourseError.RecordProgramCombinationAlreadyExists:
+            message = t('error.name-program-duplicate');
+            setErrorMessage(message);
+            return result;
+        }
       }
     }
 
-    throw new Error(t('error.unable-to-update-vaccine-course'));
+    throw new Error(`${t('error.unable-to-update-vaccine-course')}`);
   };
 
   return useMutation({
