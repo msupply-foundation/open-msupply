@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from '@common/intl';
-import { Box, ValueBar } from '@openmsupply-client/common';
+import { Box, Typography, ValueBar } from '@openmsupply-client/common';
 
 export interface ResponseStoreStatsProps {
   stockOnHand: number;
@@ -44,31 +44,40 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
           paddingBottom: 2,
         }}
       >
-        <Box
-          display="flex"
-          alignItems="flex-start"
-          width={predictedStockPercent}
-        >
-          <ValueBar
-            value={stockOnHand}
-            total={predictedStockLevels}
-            label={t('label.stock-on-hand')}
-            colour="gray.dark"
-            startDivider
-          />
-          <ValueBar
-            value={incomingStock}
-            total={predictedStockLevels}
-            label={t('label.incoming-stock')}
-            colour="gray.main"
-          />
-          <ValueBar
-            value={stockOnOrder}
-            total={predictedStockLevels}
-            label={t('label.stock-on-order')}
-            colour="gray.light"
-          />
-        </Box>
+        {stockOnHand === 0 && incomingStock === 0 && stockOnOrder === 0 ? (
+          <Typography fontSize={14} style={{ textAlign: 'center' }}>
+            ⓘ
+            <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
+              {t('messages.requisition-no-stock')}
+            </span>
+          </Typography>
+        ) : (
+          <Box
+            display="flex"
+            alignItems="flex-start"
+            width={predictedStockPercent}
+          >
+            <ValueBar
+              value={stockOnHand}
+              total={predictedStockLevels}
+              label={t('label.stock-on-hand')}
+              colour="gray.dark"
+              startDivider
+            />
+            <ValueBar
+              value={incomingStock}
+              total={predictedStockLevels}
+              label={t('label.incoming-stock')}
+              colour="gray.main"
+            />
+            <ValueBar
+              value={stockOnOrder}
+              total={predictedStockLevels}
+              label={t('label.stock-on-order')}
+              colour="gray.light"
+            />
+          </Box>
+        )}
       </Box>
       <Box
         sx={{
