@@ -45,8 +45,11 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
         }}
       >
         {stockOnHand === 0 && incomingStock === 0 && stockOnOrder === 0 ? (
-          <Typography fontSize={14}>
-            {t('messages.no-stock-available')}
+          <Typography fontSize={14} style={{ textAlign: 'center' }}>
+            ⓘ
+            <span style={{ fontStyle: 'italic', paddingLeft: 4 }}>
+              {t('messages.requisition-no-stock')}
+            </span>
           </Typography>
         ) : (
           <Box
