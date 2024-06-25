@@ -86,7 +86,6 @@ const FacilitiesListComponent = () => {
       <PropertiesImportModal
         isOpen={importPropertiesModalController.isOn}
         onClose={importPropertiesModalController.toggleOff}
-        facilities={data?.nodes}
       />
       <AppBarButtons importModalController={importPropertiesModalController} />
       <Toolbar filter={filter} />

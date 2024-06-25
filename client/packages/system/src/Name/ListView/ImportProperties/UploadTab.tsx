@@ -15,13 +15,12 @@ import {
 
 import { ImportRow } from './PropertiesImportModal';
 import { importFacilitiesPropertiesToCsv } from '../utils';
-import { FacilityNameRowFragment } from '../../api/operations.generated';
 import { processProperties } from '../../../utils';
+import { useName } from '../../api';
 
 interface UploadTabProps {
   setFacilityProperties: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;
-  facilities: FacilityNameRowFragment[] | undefined;
   onUploadComplete: () => void;
   properties: NamePropertyNode[] | undefined;
 }
@@ -43,7 +42,6 @@ const getCell = (row: ParsedImport, index: FacilitiesColumn) => {
 
 export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
   tab,
-  facilities,
   setErrorMessage,
   setFacilityProperties,
   onUploadComplete,
@@ -52,6 +50,8 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
   const t = useTranslation();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
+  const { data: facilitiesData } = useName.document.facilities();
+
   const FacilityPropertyBuffer: ImportRow[] = [];
   // TODO filter name properties for facility properties?
   const propertyNodes: PropertyNode[] | undefined = properties
@@ -61,8 +61,8 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
     .sort();
 
   const csvExample = async () => {
-    const facilityRows: ImportRow[] = facilities
-      ? facilities.map(facilityNode => {
+    const facilityRows: ImportRow[] = facilitiesData?.nodes
+      ? facilitiesData?.nodes.map(facilityNode => {
           return {
             id: facilityNode.id,
             code: facilityNode.code,
@@ -146,7 +146,8 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
         );
       }
 
-      const id = facilities?.find(facility => facility.code == code)?.id;
+      const id = facilitiesData?.nodes?.find(facility => facility.code == code)
+        ?.id;
       importRow.id = id ?? '';
 
       importRow.code = code;
