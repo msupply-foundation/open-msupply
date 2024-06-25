@@ -32,7 +32,7 @@ type CurrencyPricingProps = {
   pricing: PricingNode;
   currency?: CurrencyRowFragment | null;
   otherPartyIsInternal: boolean;
-  currencyRate?: number | null;
+  currencyRate: number;
   onChange: (value: CurrencyRowFragment | null) => void;
 };
 
@@ -159,6 +159,7 @@ export const ForeignCurrencyPrices = ({
   const t = useTranslation('distribution');
   const { store } = useAuthContext();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
+  const isHomeCurrency = store?.homeCurrencyCode === currency?.code;
 
   return (
     <>
@@ -183,12 +184,16 @@ export const ForeignCurrencyPrices = ({
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.rate')}</PanelLabel>
-        <PanelField>{currencyRate ?? 1}</PanelField>
+        <PanelField>{currencyRate === 0 ? 1 : currencyRate}</PanelField>
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.total')}</PanelLabel>
         <PanelField>
-          {foreignCurrency(pricing.foreignCurrencyTotalAfterTax ?? 0).format()}
+          {isHomeCurrency
+            ? '-'
+            : foreignCurrency(
+                pricing.foreignCurrencyTotalAfterTax ?? 0
+              ).format()}
         </PanelField>
       </PanelRow>
     </>
@@ -215,12 +220,13 @@ export const PricingSectionComponent = () => {
   const t = useTranslation('distribution');
   const isDisabled = useOutbound.utils.isDisabled();
 
-  const { pricing, currency, otherParty, update, currencyRate } = useOutbound.document.fields([
-    'otherParty',
-    'currencyRate',
-    'pricing',
-    'currency',
-  ]);
+  const { pricing, currency, otherParty, update, currencyRate } =
+    useOutbound.document.fields([
+      'otherParty',
+      'currencyRate',
+      'pricing',
+      'currency',
+    ]);
 
   return (
     <DetailPanelSection title={t('heading.invoice-details')}>
