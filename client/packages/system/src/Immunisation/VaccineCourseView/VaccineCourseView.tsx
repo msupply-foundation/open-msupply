@@ -218,7 +218,6 @@ export const VaccineCourseView: FC = () => {
                 updatePatch({ demographicIndicatorId: selected?.value })
               }
               defaultValue={defaultValue}
-              placeholder={'demographic'}
               options={options}
             />
           </Row>
