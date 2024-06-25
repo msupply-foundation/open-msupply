@@ -188,10 +188,10 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
       <Stack spacing={2}>
         <Upload onUpload={csvImport} />
         <Typography textAlign="center">
-          {t('messages.template-download-text')}
           <Link onClick={csvExample} to={''}>
-            {t('heading.download-example')}
+            {t('messages.properties-download-example')}
           </Link>
+          {t('messages.properties-template-download-text')}
         </Typography>
       </Stack>
     </ImportPanel>
