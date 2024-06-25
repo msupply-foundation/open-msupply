@@ -251,9 +251,18 @@ fn generate_stock_in_out_or_update(
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let row = stocktake_line.line.to_owned();
 
-    let counted_number_of_packs = row
-        .counted_number_of_packs
-        .unwrap_or(stocktake_line.line.snapshot_number_of_packs);
+    let counted_number_of_packs = match row.counted_number_of_packs {
+        Some(counted_number_of_packs) => counted_number_of_packs,
+        None => {
+            return Ok(StockLineJob {
+                stock_in_out_or_update: None,
+                stocktake_line: None,
+                location_movement: None,
+                update_inventory_adjustment_reason: None,
+            });
+        }
+    };
+
     let delta = counted_number_of_packs - row.snapshot_number_of_packs;
 
     let stock_line_row = stock_line.to_owned();
@@ -874,13 +883,56 @@ mod test {
             })
         }
 
+        fn mock_stocktake_no_counted_packs() -> StocktakeRow {
+            inline_init(|r: &mut StocktakeRow| {
+                r.id = "mock_stocktake_no_counted_packs".to_string();
+                r.store_id = "store_a".to_string();
+                r.stocktake_number = 20;
+                r.created_datetime = NaiveDate::from_ymd_opt(2024, 12, 14)
+                    .unwrap()
+                    .and_hms_milli_opt(12, 33, 0, 0)
+                    .unwrap();
+                r.status = StocktakeStatus::New;
+            })
+        }
+
+        fn mock_stocktake_line_no_counted_packs_line() -> StocktakeLineRow {
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = "mock_stocktake_line_no_counted_packs_line".to_string();
+                r.stocktake_id = mock_stocktake_no_counted_packs().id;
+                r.stock_line_id = Some(mock_existing_stock_line_b().id);
+                r.snapshot_number_of_packs = 10.0;
+                r.item_link_id = mock_item_a().id;
+                r.batch = Some("updated batch name".to_string());
+                r.counted_number_of_packs = None;
+            })
+        }
+
+        fn mock_existing_stock_line_b() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "existing_stock_b".to_string();
+                r.item_link_id = "item_a".to_string();
+                r.store_id = "store_a".to_string();
+                r.available_number_of_packs = 10.0;
+                r.pack_size = 2.0;
+                r.total_number_of_packs = 10.0;
+                r.batch = Some("initial batch name".to_string());
+            })
+        }
+
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_stocktake",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
-                r.stocktakes = vec![mock_stocktake_existing_line()];
-                r.stocktake_lines = vec![mock_stocktake_line_existing_line()];
-                r.stock_lines = vec![mock_existing_stock_line()];
+                r.stocktakes = vec![
+                    mock_stocktake_existing_line(),
+                    mock_stocktake_no_counted_packs(),
+                ];
+                r.stocktake_lines = vec![
+                    mock_stocktake_line_existing_line(),
+                    mock_stocktake_line_no_counted_packs_line(),
+                ];
+                r.stock_lines = vec![mock_existing_stock_line(), mock_existing_stock_line_b()];
             }),
         )
         .await;
@@ -1207,5 +1259,34 @@ mod test {
             stock_line.supplier_link_id,
             mock_stock_line_b().supplier_link_id
         );
+
+        // success - prunes uncounted lines
+        let result = service
+            .update_stocktake(
+                &context,
+                inline_init(|i: &mut UpdateStocktake| {
+                    i.id.clone_from(&mock_stocktake_no_counted_packs().id);
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
+                }),
+            )
+            .unwrap();
+
+        let stocktake_line = StocktakeLineRepository::new(&context.connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&result.id)),
+                None,
+            )
+            .unwrap();
+
+        // line has been pruned, as was counted_number_of_packs = None
+        assert_eq!(stocktake_line.len(), 0);
+
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_existing_stock_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        // still has initial batch name (was not updated)
+        assert_eq!(stock_line.batch, Some("initial batch name".to_string()),);
     }
 }
