@@ -111,7 +111,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   mode,
 }) => {
   const t = useTranslation('coldchain');
-  const { error, success } = useNotification();
+  const { success } = useNotification();
   const {
     draft,
     update: { update },
@@ -119,7 +119,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     updatePatch,
     query: { isLoading },
     isDirty,
-    errorMessage,
+    setIsDirty,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
   const { data: demographicData } = useDemographicIndicators();
 
@@ -217,37 +217,26 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           disabled={!isDirty || !programId}
           variant="ok"
           onClick={async () => {
-            // wrapping entire block in try in case of unexpected error from graphql
+            setIsDirty(false);
             try {
-              if (mode === ModalMode.Update) {
-                const result = await update();
-                if (result.__typename === 'UpdateVaccineCourseError') {
-                  // TODO translatable errors from db?
-                  error(`${result.error.description}`)();
-                } else {
-                  success(
-                    `${t('messages.updated-new-vaccine-course')}: ${
-                      result.name
-                    }`
-                  )();
-                  onClose();
-                }
-              } else {
-                const result = await create(programId ?? '');
-                if (result.__typename === 'InsertVaccineCourseError') {
-                  // TODO translatable errors from db?
-                  error(`${result.error.description}`)();
-                } else {
-                  success(
-                    `${t('messages.created-new-vaccine-course')}: ${
-                      result.name
-                    }`
-                  )();
-                  onClose();
-                }
+              const result =
+                mode === ModalMode.Update
+                  ? await update()
+                  : await create(programId ?? '');
+              if (result.__typename === 'VaccineCourseNode') {
+                const message =
+                  mode === ModalMode.Update
+                    ? `${t('messages.updated-new-vaccine-course')}: ${
+                        result.name
+                      }`
+                    : `${t('messages.created-new-vaccine-course')}: ${
+                        result.name
+                      }`;
+                success(message)();
+                onClose();
               }
             } catch (e) {
-              error(errorMessage);
+              console.error(e);
             }
           }}
         />
