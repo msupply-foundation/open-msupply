@@ -124,7 +124,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         }}
         columns={columns}
         data={currentFacilitiesPage}
-        noDataElement={<NothingHere body={t('error.asset-not-found')} />}
+        noDataElement={<NothingHere body={t('error.facility-not-found')} />}
         id={''}
       />
     </Grid>

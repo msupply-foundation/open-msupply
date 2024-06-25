@@ -191,7 +191,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
       nextButton={
         <DialogButton variant="export" disabled={false} onClick={() => {}} />
       }
-      title={t('label.import-cce')}
+      title={t('label.import-facility-properties')}
       height={1000}
       width={1600}
     >
