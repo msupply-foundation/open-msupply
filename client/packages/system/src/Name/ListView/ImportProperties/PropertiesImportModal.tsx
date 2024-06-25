@@ -14,14 +14,12 @@ import { useTranslation } from '@common/intl';
 import { UploadTab } from './UploadTab';
 import { ReviewTab } from './ReviewTab';
 import { useNameProperties } from '../../api/hooks/document/useNameProperties';
-import { FacilityNameRowFragment } from '../../api/operations.generated';
 import { ImportTab } from './ImportTab';
 import { useName } from '../../api';
 
 interface PropertiesImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  facilities: FacilityNameRowFragment[] | undefined;
 }
 
 export type ImportRow = {
@@ -51,7 +49,6 @@ const toUpdateNamePropertiesInput = (
 export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   isOpen,
   onClose,
-  facilities,
 }) => {
   const t = useTranslation();
   const { success } = useNotification();
@@ -214,7 +211,6 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
             <UploadTab
               tab={Tabs.Upload}
               setErrorMessage={setErrorMessage}
-              facilities={facilities}
               setFacilityProperties={setBufferedFacilityProperties}
               onUploadComplete={() => {
                 changeTab(Tabs.Review);
