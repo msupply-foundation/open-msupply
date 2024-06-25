@@ -1,7 +1,5 @@
-import React, { useState } from 'react';
+import React, { act, useRef, useState } from 'react';
 import { fireEvent, render, renderHook } from '@testing-library/react';
-import { useRef } from 'react';
-import { act } from 'react-dom/test-utils';
 import { useBoundingClientRect } from './useBoundingClientRect';
 
 describe('useBoundingClientRect', () => {
