@@ -174,7 +174,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a0a77f836d869f700e5b47ac7c3c8b9c8bc82e4aec861954c6198abee3ebd4d"
 dependencies = [
- "darling 0.20.9",
+ "darling",
  "parse-size",
  "proc-macro2",
  "quote",
@@ -247,8 +247,10 @@ dependencies = [
  "futures-core",
  "impl-more",
  "pin-project-lite",
+ "rustls-pki-types",
  "tokio",
  "tokio-rustls 0.23.4",
+ "tokio-rustls 0.26.0",
  "tokio-util",
  "tracing",
  "webpki-roots 0.22.6",
@@ -370,17 +372,6 @@ checksum = "0453232ace82dee0dd0b4c87a59bd90f7b53b314f3e0f61fe2ee7c8a16482289"
 
 [[package]]
 name = "ahash"
-version = "0.7.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "891477e0c6a8957309ee5c45a6368af3ae14bb510732d2684ffa19af310920f9"
-dependencies = [
- "getrandom",
- "once_cell",
- "version_check",
-]
-
-[[package]]
-name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
@@ -416,6 +407,12 @@ checksum = "94fb8275041c72129eb51b7d0322c29b8387a0386127718b096429201a5d6ece"
 dependencies = [
  "alloc-no-stdlib",
 ]
+
+[[package]]
+name = "allocator-api2"
+version = "0.2.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c6cb57a04249c6480766f7f7cef5467412af1490f8d1e243141daddada3264f"
 
 [[package]]
 name = "android"
@@ -683,15 +680,16 @@ dependencies = [
 
 [[package]]
 name = "async-graphql"
-version = "3.0.38"
+version = "7.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2106123e9c79a8d649bf0f7e9f58462a90ce2ca71ad9a0b69b4f2b67382c376f"
+checksum = "bf338d20ba5bab309f55ce8df95d65ee19446f7737f06f4a64593ab2c6b546ad"
 dependencies = [
  "async-graphql-derive",
  "async-graphql-parser",
  "async-graphql-value",
  "async-stream",
  "async-trait",
+ "base64 0.22.1",
  "bytes",
  "chrono",
  "fast_chemail",
@@ -699,8 +697,9 @@ dependencies = [
  "futures-channel",
  "futures-timer",
  "futures-util",
- "http 0.2.12",
- "indexmap 1.9.3",
+ "handlebars",
+ "http 1.1.0",
+ "indexmap 2.2.6",
  "lru",
  "mime",
  "multer",
@@ -710,67 +709,68 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "static_assertions",
+ "serde_urlencoded",
+ "static_assertions_next",
  "tempfile",
  "thiserror",
 ]
 
 [[package]]
 name = "async-graphql-actix-web"
-version = "3.0.38"
+version = "7.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "444088fb3f4faeaf1e235df5e485c0595a4ec3d9f73bcba3ceee4ba6a97a9fdf"
+checksum = "d50661e77b4c6c27ca018ad809d62fe40a02aa56b58fdc4eb333ceba56a024f1"
 dependencies = [
  "actix",
  "actix-http",
  "actix-web",
  "actix-web-actors",
- "async-channel 1.9.0",
+ "async-channel 2.3.1",
  "async-graphql",
+ "async-stream",
  "futures-channel",
  "futures-util",
  "serde_json",
- "serde_urlencoded",
  "thiserror",
 ]
 
 [[package]]
 name = "async-graphql-derive"
-version = "3.0.38"
+version = "7.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a6ec150ac445a660169a3ad5075b953a7351ec75fe28095e639f6282aac9fdb"
+checksum = "fc51fd6b7102acda72bc94e8ae1543844d5688ff394a6cf7c21f2a07fe2d64e4"
 dependencies = [
  "Inflector",
  "async-graphql-parser",
- "darling 0.13.4",
+ "darling",
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "strum",
+ "syn 2.0.66",
  "thiserror",
 ]
 
 [[package]]
 name = "async-graphql-parser"
-version = "3.0.38"
+version = "7.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0302764f05e0e50fd3b381646d4a0ed07d4ce5c9fc1eaf79bbd7745bd4893adb"
+checksum = "75361eefd64e39f89bead4cb45fddbaf60ddb0e7b15fb7c852b6088bcd63071f"
 dependencies = [
  "async-graphql-value",
  "pest",
- "pest_derive",
  "serde",
  "serde_json",
 ]
 
 [[package]]
 name = "async-graphql-value"
-version = "3.0.38"
+version = "7.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba2e19876bcd2068f597fd0182f4ba602ce3c89cb04c4b8810d7c36f44724e92"
+checksum = "c1f665d2d52b41c4ed1f01c43f3ef27a2fe0af2452ed5c8bc7ac9b1a8719afaa"
 dependencies = [
  "bytes",
- "indexmap 1.9.3",
+ "indexmap 2.2.6",
  "serde",
  "serde_json",
 ]
@@ -1311,7 +1311,7 @@ dependencies = [
  "anstream",
  "anstyle",
  "clap_lex",
- "strsim 0.11.1",
+ "strsim",
 ]
 
 [[package]]
@@ -1503,36 +1503,12 @@ dependencies = [
 
 [[package]]
 name = "darling"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a01d95850c592940db9b8194bc39f4bc0e89dee5c4265e4b1807c34a9aba453c"
-dependencies = [
- "darling_core 0.13.4",
- "darling_macro 0.13.4",
-]
-
-[[package]]
-name = "darling"
 version = "0.20.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83b2eb4d90d12bdda5ed17de686c2acb4c57914f8f921b8da7e112b5a36f3fe1"
 dependencies = [
- "darling_core 0.20.9",
- "darling_macro 0.20.9",
-]
-
-[[package]]
-name = "darling_core"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "859d65a907b6852c9361e3185c862aae7fafd2887876799fa55f5f99dc40d610"
-dependencies = [
- "fnv",
- "ident_case",
- "proc-macro2",
- "quote",
- "strsim 0.10.0",
- "syn 1.0.109",
+ "darling_core",
+ "darling_macro",
 ]
 
 [[package]]
@@ -1545,19 +1521,8 @@ dependencies = [
  "ident_case",
  "proc-macro2",
  "quote",
- "strsim 0.11.1",
+ "strsim",
  "syn 2.0.66",
-]
-
-[[package]]
-name = "darling_macro"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c972679f83bdf9c42bd905396b6c3588a843a17f0f16dfcfa3e2c5d57441835"
-dependencies = [
- "darling_core 0.13.4",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -1566,7 +1531,7 @@ version = "0.20.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "733cabb43482b1a1b53eee8583c2b9e8684d592215ea83efd305dd31bc2f0178"
 dependencies = [
- "darling_core 0.20.9",
+ "darling_core",
  "quote",
  "syn 2.0.66",
 ]
@@ -1637,7 +1602,7 @@ version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d48cda787f839151732d396ac69e3473923d54312c070ee21e9effcaa8ca0b1d"
 dependencies = [
- "darling 0.20.9",
+ "darling",
  "proc-macro2",
  "quote",
  "syn 2.0.66",
@@ -1802,7 +1767,7 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0892a17df262a24294c382f0d5997571006e7a4348b4327557c4ff1cd4a8bccc"
 dependencies = [
- "darling 0.20.9",
+ "darling",
  "either",
  "heck 0.5.0",
  "proc-macro2",
@@ -2284,7 +2249,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_asset_catalogue",
  "graphql_core",
@@ -2305,7 +2269,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2325,7 +2288,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_invoice",
@@ -2351,7 +2313,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2411,7 +2372,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2432,7 +2392,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2452,10 +2411,10 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
+ "http 1.1.0",
  "repository",
  "reqwest",
  "serde",
@@ -2474,7 +2433,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2494,7 +2452,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2514,7 +2471,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_invoice",
@@ -2536,7 +2492,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2556,7 +2511,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "graphql_core",
  "graphql_types",
  "repository",
@@ -2576,7 +2530,6 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-std",
- "async-trait",
  "chrono",
  "graphql_core",
  "repository",
@@ -2596,7 +2549,6 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "async-std",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2617,7 +2569,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2638,7 +2589,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2658,7 +2608,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2678,7 +2627,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2698,7 +2646,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2718,7 +2665,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2738,7 +2684,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2757,7 +2702,6 @@ dependencies = [
  "actix-rt",
  "assert-json-diff",
  "async-graphql",
- "async-trait",
  "chrono",
  "graphql_core",
  "repository",
@@ -2776,7 +2720,6 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
@@ -2807,6 +2750,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "handlebars"
+version = "5.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d08485b96a0e6393e9e4d1b8d48cf74ad6c063cd905eb33f42c1ce3f0377539b"
+dependencies = [
+ "log",
+ "pest",
+ "pest_derive",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "hashbrown"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2820,9 +2777,6 @@ name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
-dependencies = [
- "ahash 0.7.8",
-]
 
 [[package]]
 name = "hashbrown"
@@ -2831,6 +2785,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
  "ahash 0.8.11",
+ "allocator-api2",
 ]
 
 [[package]]
@@ -3299,7 +3254,6 @@ checksum = "bd070e393353796e801d209ad339e89596eb4c8d430d18ede6a1cced8fafbd99"
 dependencies = [
  "autocfg",
  "hashbrown 0.12.3",
- "serde",
 ]
 
 [[package]]
@@ -3310,6 +3264,7 @@ checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
 dependencies = [
  "equivalent",
  "hashbrown 0.14.5",
+ "serde",
 ]
 
 [[package]]
@@ -3472,13 +3427,14 @@ dependencies = [
 
 [[package]]
 name = "jsonwebtoken"
-version = "8.3.0"
+version = "9.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6971da4d9c3aa03c3d8f3ff0f4155b534aad021292003895a469716b2a230378"
+checksum = "b9ae10193d25051e74945f1ea2d0b42e03cc3b890f7e4cc5faa44997d808193f"
 dependencies = [
  "base64 0.21.7",
- "pem 1.1.1",
- "ring 0.16.20",
+ "js-sys",
+ "pem",
+ "ring 0.17.8",
  "serde",
  "serde_json",
  "simple_asn1",
@@ -3697,11 +3653,11 @@ dependencies = [
 
 [[package]]
 name = "lru"
-version = "0.7.8"
+version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e999beba7b6e8345721bd280141ed958096a2e4abdf74f67ff4ce49b4b54e47a"
+checksum = "d3262e75e648fce39813cb56ac41f3c3e3f65217ebf3844d818d1f9398cfb0dc"
 dependencies = [
- "hashbrown 0.12.3",
+ "hashbrown 0.14.5",
 ]
 
 [[package]]
@@ -3787,16 +3743,15 @@ dependencies = [
 
 [[package]]
 name = "multer"
-version = "2.1.0"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01acbdc23469fd8fe07ab135923371d5f5a422fbf9c522158677c8eb15bc51c2"
+checksum = "83e87776546dc87511aa5ee218730c92b666d7264ab6ed41f9d215af9cd5224b"
 dependencies = [
  "bytes",
  "encoding_rs",
  "futures-util",
- "http 0.2.12",
+ "http 1.1.0",
  "httparse",
- "log",
  "memchr",
  "mime",
  "spin 0.9.8",
@@ -4075,15 +4030,6 @@ name = "peeking_take_while"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19b17cddbe7ec3f8bc800887bab5e717348c95ea2ca0b1bf0837fb964dc67099"
-
-[[package]]
-name = "pem"
-version = "1.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a8835c273a76a90455d7344889b0964598e3316e2a79ede8e36f16bdcf2228b8"
-dependencies = [
- "base64 0.13.1",
-]
 
 [[package]]
 name = "pem"
@@ -4368,12 +4314,11 @@ dependencies = [
 
 [[package]]
 name = "proc-macro-crate"
-version = "1.3.1"
+version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f4c021e1093a56626774e81216a4ce732a735e5bad4868a03f3ed65ca0c3919"
+checksum = "6d37c51ca738a55da99dc0c4a34860fd675453b8b36209178c2249bb13651284"
 dependencies = [
- "once_cell",
- "toml_edit 0.19.15",
+ "toml_edit 0.21.1",
 ]
 
 [[package]]
@@ -4518,7 +4463,7 @@ version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54077e1872c46788540de1ea3d7f4ccb1983d12f9aa909b234468676c1a36779"
 dependencies = [
- "pem 3.0.4",
+ "pem",
  "ring 0.17.8",
  "rustls-pki-types",
  "time",
@@ -4641,7 +4586,7 @@ dependencies = [
  "rand",
  "regex",
  "rusqlite",
- "rust-embed",
+ "rust-embed 8.4.0",
  "serde",
  "serde_json",
  "strum",
@@ -4677,7 +4622,7 @@ dependencies = [
  "pin-project-lite",
  "quinn",
  "rustls 0.23.10",
- "rustls-pemfile 2.1.2",
+ "rustls-pemfile",
  "rustls-pki-types",
  "serde",
  "serde_json",
@@ -4789,8 +4734,19 @@ version = "6.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a36224c3276f8c4ebc8c20f158eca7ca4359c8db89991c4925132aaaf6702661"
 dependencies = [
- "rust-embed-impl",
- "rust-embed-utils",
+ "rust-embed-impl 6.8.1",
+ "rust-embed-utils 7.8.1",
+ "walkdir",
+]
+
+[[package]]
+name = "rust-embed"
+version = "8.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "19549741604902eb99a7ed0ee177a0663ee1eda51a29f71401f166e47e77806a"
+dependencies = [
+ "rust-embed-impl 8.4.0",
+ "rust-embed-utils 8.4.0",
  "walkdir",
 ]
 
@@ -4802,7 +4758,20 @@ checksum = "49b94b81e5b2c284684141a2fb9e2a31be90638caf040bf9afbc5a0416afe1ac"
 dependencies = [
  "proc-macro2",
  "quote",
- "rust-embed-utils",
+ "rust-embed-utils 7.8.1",
+ "syn 2.0.66",
+ "walkdir",
+]
+
+[[package]]
+name = "rust-embed-impl"
+version = "8.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb9f96e283ec64401f30d3df8ee2aaeb2561f34c824381efa24a35f79bf40ee4"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "rust-embed-utils 8.4.0",
  "syn 2.0.66",
  "walkdir",
 ]
@@ -4812,6 +4781,16 @@ name = "rust-embed-utils"
 version = "7.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d38ff6bf570dc3bb7100fce9f7b60c33fa71d80e88da3f2580df4ff2bdded74"
+dependencies = [
+ "sha2",
+ "walkdir",
+]
+
+[[package]]
+name = "rust-embed-utils"
+version = "8.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38c74a686185620830701348de757fd36bef4aa9680fd23c49fc539ddcc1af32"
 dependencies = [
  "sha2",
  "walkdir",
@@ -4922,15 +4901,6 @@ dependencies = [
  "rustls-webpki",
  "subtle",
  "zeroize",
-]
-
-[[package]]
-name = "rustls-pemfile"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c74cae0a4cf6ccbbf5f359f08efdf8ee7e1dc532573bf0db71968cb56b1448c"
-dependencies = [
- "base64 0.21.7",
 ]
 
 [[package]]
@@ -5208,9 +5178,9 @@ dependencies = [
  "rcgen",
  "regex",
  "repository",
- "rust-embed",
- "rustls 0.20.9",
- "rustls-pemfile 1.0.4",
+ "rust-embed 6.8.1",
+ "rustls 0.23.10",
+ "rustls-pemfile",
  "serde",
  "serde_json",
  "service",
@@ -5242,7 +5212,7 @@ dependencies = [
  "jsonschema",
  "jsonwebtoken",
  "log",
- "pem 3.0.4",
+ "pem",
  "pretty_assertions",
  "rand",
  "repository",
@@ -5438,10 +5408,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
-name = "static_assertions"
-version = "1.1.0"
+name = "static_assertions_next"
+version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
+checksum = "d7beae5182595e9a8b683fa98c4317f956c9a2dec3b9716990d20023cc60c766"
 
 [[package]]
 name = "string_cache"
@@ -5455,12 +5425,6 @@ dependencies = [
  "phf_shared 0.10.0",
  "precomputed-hash",
 ]
-
-[[package]]
-name = "strsim"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "strsim"
@@ -5804,9 +5768,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.19.15"
+version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
+checksum = "6a8534fd7f78b5405e860340ad6575217ce99f38d4d5c8f2442cb5ecb50090e1"
 dependencies = [
  "indexmap 2.2.6",
  "toml_datetime",

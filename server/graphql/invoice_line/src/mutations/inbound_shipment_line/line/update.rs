@@ -74,7 +74,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
 #[derive(Interface)]
 #[graphql(name = "UpdateInboundShipmentLineErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum UpdateErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),

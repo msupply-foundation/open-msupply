@@ -41,6 +41,7 @@ interface CreateAssetModalProps {
 const mapCatalogueItem = (catalogueItem: AssetCatalogueItemFragment) => ({
   label: `${catalogueItem.code} ${catalogueItem.assetType?.name} ${catalogueItem.manufacturer} ${catalogueItem.model}`,
   value: catalogueItem.id,
+  id: catalogueItem.id,
 });
 
 const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
@@ -175,8 +176,8 @@ export const CreateAssetModal = ({
 
   // when the pagination changes, fetch the next page
   useEffect(() => {
-    fetchNextPage({ pageParam: pagination });
-  }, [fetchNextPage, pagination]);
+    fetchNextPage({ pageParam: pagination.page });
+  }, [fetchNextPage, pagination.page]);
 
   // reset the catalogue item pagination when the category changes
   useEffect(() => {
@@ -231,7 +232,7 @@ export const CreateAssetModal = ({
                     typeId: '',
                   });
                 }}
-                value={draft.categoryId}
+                value={draft.categoryId ?? ''}
               />
             }
           />

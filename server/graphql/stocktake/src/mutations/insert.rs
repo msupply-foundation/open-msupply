@@ -35,7 +35,7 @@ pub enum InsertResponse {
 
 #[derive(Interface)]
 #[graphql(name = "InsertStocktakeErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
 }
