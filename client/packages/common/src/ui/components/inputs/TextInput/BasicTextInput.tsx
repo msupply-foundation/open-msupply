@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Box,
   StandardTextFieldProps,
@@ -16,7 +16,10 @@ export type BasicTextInputProps = StandardTextFieldProps & {
  * build your input on top.
  */
 
-export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
+export const BasicTextInput = React.forwardRef<
+  HTMLDivElement,
+  BasicTextInputProps
+>(
   (
     {
       sx,
@@ -30,7 +33,7 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
     },
     ref
   ) => {
-    const inputRef = useRef<HTMLInputElement | null>(null);
+    const inputRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
       if (focusOnRender) {
         inputRef?.current;

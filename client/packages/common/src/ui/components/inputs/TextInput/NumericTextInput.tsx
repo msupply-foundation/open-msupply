@@ -100,7 +100,7 @@
  * Numeric), so please check these all behave as expected as well.
  */
 
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BasicTextInput, BasicTextInputProps } from './BasicTextInput';
 import { NumUtils, RegexUtils } from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
@@ -173,7 +173,10 @@ export type NumericTextInputProps = NumericInputProps &
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
 
-export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
+export const NumericTextInput = React.forwardRef<
+  HTMLDivElement,
+  NumericTextInputProps
+>(
   (
     {
       sx,
