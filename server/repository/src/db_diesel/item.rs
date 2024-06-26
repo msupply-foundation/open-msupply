@@ -45,12 +45,13 @@ pub struct ItemFilter {
     pub name: Option<StringFilter>,
     pub code: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ItemType>>,
-    /// If true it only returns ItemAndMasterList that have a name join row
+    /// If true it only returns ItemAndMasterList that have a name join row (void if is_visible_or_on_hand is true!)
     pub is_visible: Option<bool>,
+    /// If true it returns ItemAndMasterList that have a name join row, or items with stock on hand
+    pub is_visible_or_on_hand: Option<bool>,
     pub code_or_name: Option<StringFilter>,
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
-    pub has_stock_on_hand: Option<bool>,
 }
 
 impl ItemFilter {
@@ -99,7 +100,7 @@ impl ItemFilter {
     }
 
     pub fn has_stock_on_hand(mut self, value: bool) -> Self {
-        self.has_stock_on_hand = Some(value);
+        self.is_visible_or_on_hand = Some(value);
         self
     }
 }
@@ -203,7 +204,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             code_or_name,
             is_active,
             is_vaccine,
-            has_stock_on_hand,
+            is_visible_or_on_hand,
         } = f;
 
         // or filter need to be applied before and filters
@@ -254,28 +255,20 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             .group_by(item_link_dsl::item_id)
             .into_boxed();
 
-        query = match (is_visible, has_stock_on_hand) {
+        query = match (is_visible_or_on_hand, is_visible) {
             // visible items AND non-visible items with stock on hand
-            (Some(true), Some(true)) => query.filter(
+            (Some(true), _) => query.filter(
                 item_dsl::id
                     .eq_any(visible_item_ids)
                     .or(item_dsl::id.eq_any(item_ids_with_stock_on_hand)),
             ),
             // visible items
-            (Some(true), _) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
+            (_, Some(true)) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
 
-            // non-visible items with stock on hand
-            (Some(false), Some(true)) => query.filter(
-                item_dsl::id
-                    .ne_all(visible_item_ids)
-                    .and(item_dsl::id.eq_any(item_ids_with_stock_on_hand)),
-            ),
-            // non-visible items
-            (Some(false), _) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
+            // invisible items
+            (_, Some(false)) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
 
-            // Items with stock on hand
-            (_, Some(true)) => query.filter(item_dsl::id.eq_any(item_ids_with_stock_on_hand)),
-
+            // no visibility filters
             (_, _) => query,
         }
     }
