@@ -100,9 +100,10 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
-          isVisible: true,
+          [includeNonVisibleWithStockOnHand
+            ? 'isVisibleOrOnHand'
+            : 'isVisible']: true,
           isActive: true,
-          hasStockOnHand: includeNonVisibleWithStockOnHand,
         },
       });
 
@@ -155,10 +156,9 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         // because service items don't have SOH & AMC so it's odd to show them alongside stock items
         filter: {
           ...filterBy,
-          isVisible: true,
-          isActive: true,
           // includes non-visible items that have stock on hand
-          hasStockOnHand: true,
+          isVisibleOrOnHand: true,
+          isActive: true,
         },
       });
 
