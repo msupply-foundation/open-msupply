@@ -5,6 +5,7 @@ import {
   ColumnAlign,
   DataTable,
   DateUtils,
+  Formatter,
   RecordPatch,
   TableProvider,
   createTableStore,
@@ -25,7 +26,8 @@ import {
   calculateAcrossRow,
   mapHeaderData,
   mapProjection,
-  toIndicatorFragment,
+  toInsertIndicator,
+  toUpdateIndicator,
 } from './utils';
 import { HeaderData, Row } from '../types';
 
@@ -99,7 +101,7 @@ const IndicatorsDemographicsComponent = () => {
 
     setIsDirty(true);
 
-    const patchedRow: Row = { ...existingRow, ...patch };
+    const patchedRow: Row = { ...existingRow, ...patch, isError: false };
 
     // change state of name only if only name changes
     if (!percentageChange) {
@@ -113,6 +115,11 @@ const IndicatorsDemographicsComponent = () => {
       indexPopulation
     );
     setDraft({ ...draft, [patch.id]: updatedRow });
+  };
+
+  const createNewRow = (row: Row) => {
+    setDraft({ ...draft, [row.id]: row });
+    setIsDirty(true);
   };
 
   // generic function for handling percentage change, and then re calculating the values of that year
@@ -140,21 +147,19 @@ const IndicatorsDemographicsComponent = () => {
 
   const insertIndicator = async (row: Row) => {
     try {
-      await insertDemographicIndicator(
-        toIndicatorFragment(row, indexPopulation)
-      );
+      await insertDemographicIndicator(toInsertIndicator(row, indexPopulation));
     } catch (e) {
-      console.error(e);
+      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
+      throw e;
     }
   };
 
   const updateIndicator = async (row: Row) => {
     try {
-      await updateDemographicIndicator(
-        toIndicatorFragment(row, indexPopulation)
-      );
+      await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
     } catch (e) {
-      console.error(e);
+      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
+      throw e;
     }
   };
 
@@ -180,7 +185,13 @@ const IndicatorsDemographicsComponent = () => {
         success(t('success.data-saved'))();
         invalidateQueries();
       })
-      .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
+      .catch(e =>
+        error(
+          t('error.an-error-occurred', {
+            message: Formatter.fromCamelCase(e.message),
+          })
+        )()
+      );
   };
 
   const cancel = () => {
@@ -222,7 +233,7 @@ const IndicatorsDemographicsComponent = () => {
   return (
     <>
       <AppBarButtons
-        addRow={newRow => setDraft({ ...draft, [newRow.id]: newRow })}
+        createNewRow={createNewRow}
         rows={Object.values(draft)}
       ></AppBarButtons>
       <Box sx={{ width: '100%' }} padding={0}>

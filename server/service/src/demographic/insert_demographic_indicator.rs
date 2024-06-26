@@ -12,6 +12,7 @@ use super::{
 pub enum InsertDemographicIndicatorError {
     DemographicIndicatorAlreadyExists,
     DemographicIndicatorAlreadyExistsForThisYear,
+    DemographicIndicatorHasNoName,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
@@ -19,7 +20,7 @@ pub enum InsertDemographicIndicatorError {
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertDemographicIndicator {
     pub id: String,
-    pub name: String,
+    pub name: Option<String>,
     pub base_year: i32,
     pub base_population: Option<i32>,
     pub population_percentage: Option<f64>,
@@ -56,8 +57,17 @@ pub fn validate(
     input: &InsertDemographicIndicator,
     connection: &StorageConnection,
 ) -> Result<(), InsertDemographicIndicatorError> {
-    if !check_year_name_combination_unique(&input.name, input.base_year, None, connection)? {
-        return Err(InsertDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear);
+    match &input.name {
+        Some(name) => {
+            if !check_year_name_combination_unique(&name, input.base_year, None, connection)? {
+                return Err(
+                    InsertDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear,
+                );
+            }
+        }
+        None => {
+            return Err(InsertDemographicIndicatorError::DemographicIndicatorHasNoName);
+        }
     }
 
     if check_demographic_indicator_exists(&input.id, connection)?.is_some() {
@@ -83,7 +93,7 @@ pub fn generate(
 ) -> DemographicIndicatorRow {
     DemographicIndicatorRow {
         id,
-        name,
+        name: name.unwrap_or_default(),
         base_year,
         base_population: base_population.unwrap_or_default(),
         population_percentage: population_percentage.unwrap_or_default(),
