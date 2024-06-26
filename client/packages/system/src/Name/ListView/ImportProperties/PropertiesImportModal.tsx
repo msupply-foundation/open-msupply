@@ -60,7 +60,6 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
 
-  const [warningMessage] = useState<string>(() => '');
   const { data: properties } = useNameProperties();
   const { mutateAsync } = useName.document.updateProperties('');
 
@@ -158,10 +157,6 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
     }
     onChangeTab(tabName);
   };
-
-  const showWarnings = errorMessage.length == 0 && warningMessage.length > 0;
-
-  console.info('showWarnings', showWarnings);
 
   const importSteps = [
     { label: t('label.upload'), description: '', clickable: true },
