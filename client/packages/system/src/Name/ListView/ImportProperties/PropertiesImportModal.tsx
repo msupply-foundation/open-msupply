@@ -137,9 +137,11 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
     switch (tabName) {
       case Tabs.Upload:
         changeTab(tabName as Tabs);
+        setActiveStep(0);
         break;
       case Tabs.Review:
         changeTab(tabName as Tabs);
+        setActiveStep(1);
         break;
       case Tabs.Import:
         // Do nothing, user can't get to the import page without clicking the import button
@@ -151,6 +153,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
     switch (tabName) {
       case Tabs.Upload:
         setErrorMessage('');
+        setBufferedFacilityProperties([]);
         setActiveStep(0);
         break;
       case Tabs.Review:
