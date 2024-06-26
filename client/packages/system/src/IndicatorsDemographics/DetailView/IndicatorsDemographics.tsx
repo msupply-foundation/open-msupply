@@ -4,6 +4,7 @@ import {
   Box,
   ColumnAlign,
   DataTable,
+  DateUtils,
   RecordPatch,
   TableProvider,
   createTableStore,
@@ -46,7 +47,7 @@ const IndicatorsDemographicsComponent = () => {
   const t = useTranslation();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
-  const baseYear = headerDraft?.baseYear ?? 2024;
+  const baseYear = headerDraft?.baseYear ?? DateUtils.getCurrentYear();
 
   const { data: projection, isLoading: isLoadingProjection } =
     useDemographicData.projection.get(baseYear);
