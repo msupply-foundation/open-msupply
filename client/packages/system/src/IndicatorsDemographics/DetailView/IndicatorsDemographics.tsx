@@ -4,11 +4,13 @@ import {
   Box,
   ColumnAlign,
   DataTable,
+  DateUtils,
   Formatter,
   RecordPatch,
   TableProvider,
   createTableStore,
   useColumns,
+  useFormatNumber,
   useNotification,
   useTranslation,
   useUrlQueryParams,
@@ -41,19 +43,31 @@ const IndicatorsDemographicsComponent = () => {
   const [headerDraft, setHeaderDraft] = useState<HeaderData>();
   const [indexPopulation, setIndexPopulation] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
+  const formatNumber = useFormatNumber();
 
   const { error, success } = useNotification();
   const t = useTranslation();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
-  const { data: projection, isLoading: isLoadingProjection } =
-    useDemographicData.projection.get(draft?.[0]?.baseYear ?? 2024);
+  const baseYear = headerDraft?.baseYear ?? DateUtils.getCurrentYear();
 
-  const { insertDemographicIndicator, invalidateQueries } =
-    useDemographicData.indicator.insert();
+  const { data: projection, isLoading: isLoadingProjection } =
+    useDemographicData.projection.get(baseYear);
+
+  const {
+    insertDemographicIndicator,
+    invalidateQueries: invalidateDemographicQueries,
+  } = useDemographicData.indicator.insert();
   const { mutateAsync: updateDemographicIndicator } =
     useDemographicData.indicator.update();
-  const upsertProjection = useDemographicData.projection.upsert();
+
+  const { upsertProjection, invalidateQueries: invalidateProjectionQueries } =
+    useDemographicData.projection.upsert();
+
+  const invalidateQueries = () => {
+    invalidateDemographicQueries();
+    invalidateProjectionQueries(baseYear);
+  };
 
   const handlePopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
@@ -189,11 +203,11 @@ const IndicatorsDemographicsComponent = () => {
       [nameColumn(), { setter }],
       [percentageColumn(), { setter }],
       [populationColumn(), { setter: handlePopulationChange }],
-      yearColumn(1),
-      yearColumn(2),
-      yearColumn(3),
-      yearColumn(4),
-      yearColumn(5),
+      yearColumn(1, formatNumber.format),
+      yearColumn(2, formatNumber.format),
+      yearColumn(3, formatNumber.format),
+      yearColumn(4, formatNumber.format),
+      yearColumn(5, formatNumber.format),
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [draft, indexPopulation, sortBy]
@@ -246,11 +260,28 @@ export const IndicatorsDemographics = () => (
   </TableProvider>
 );
 
-const yearColumn = (year: number) => ({
+const yearColumn = (year: number, format: (n: number) => string) => ({
   key: String(year),
   width: 150,
   align: ColumnAlign.Right,
   label: undefined,
   labelProps: { defaultValue: currentYear + year },
   sortable: false,
+  accessor: ({ rowData }: { rowData: Row }) => {
+    // using a switch to appease typescript
+    switch (year) {
+      case 1:
+        return format(rowData[1]);
+      case 2:
+        return format(rowData[2]);
+      case 3:
+        return format(rowData[3]);
+      case 4:
+        return format(rowData[4]);
+      case 5:
+        return format(rowData[5]);
+      default:
+        return '';
+    }
+  },
 });
