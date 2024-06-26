@@ -125,7 +125,9 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         columns={columns}
         data={currentFacilitiesPage}
         noDataElement={<NothingHere body={t('error.facility-not-found')} />}
-        id={''}
+        id="facilities' properties review table"
+        overflowX="auto"
+        width={1500}
       />
     </Grid>
   );
