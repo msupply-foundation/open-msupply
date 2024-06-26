@@ -7,6 +7,9 @@ export const useDemographicIndicatorUpdate = () => {
 
   return useMutation(
     async (demographicIndicator: UpdateDemographicIndicatorInput) =>
-      await api.updateIndicator(demographicIndicator)
+      await api.updateIndicator(demographicIndicator),
+    {
+      onError: () => {},
+    }
   );
 };

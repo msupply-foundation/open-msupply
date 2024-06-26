@@ -4,6 +4,7 @@ import {
   Box,
   ColumnAlign,
   DataTable,
+  Formatter,
   RecordPatch,
   TableProvider,
   createTableStore,
@@ -86,7 +87,7 @@ const IndicatorsDemographicsComponent = () => {
 
     setIsDirty(true);
 
-    const patchedRow: Row = { ...existingRow, ...patch };
+    const patchedRow: Row = { ...existingRow, ...patch, isError: false };
 
     // change state of name only if only name changes
     if (!percentageChange) {
@@ -103,8 +104,8 @@ const IndicatorsDemographicsComponent = () => {
   };
 
   const createNewRow = (row: Row) => {
-    // don't set is dirty true when creating new row because we want a new name first
-    setDraft({ ...draft, [row.id]: { ...row } });
+    setDraft({ ...draft, [row.id]: row });
+    setIsDirty(true);
   };
 
   // generic function for handling percentage change, and then re calculating the values of that year
@@ -134,16 +135,13 @@ const IndicatorsDemographicsComponent = () => {
     try {
       await insertDemographicIndicator(toInsertIndicator(row, indexPopulation));
     } catch (e) {
-      console.error(e);
+      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
+      throw e;
     }
   };
 
   const updateIndicator = async (row: Row) => {
-    try {
-      await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
-    } catch (e) {
-      console.error(e);
-    }
+    await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
   };
 
   // save rows excluding generalRow
@@ -168,7 +166,13 @@ const IndicatorsDemographicsComponent = () => {
         success(t('success.data-saved'))();
         invalidateQueries();
       })
-      .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
+      .catch(e =>
+        error(
+          t('error.an-error-occurred', {
+            message: Formatter.fromCamelCase(e.message),
+          })
+        )()
+      );
   };
 
   const cancel = () => {
