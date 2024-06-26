@@ -13,6 +13,8 @@ export const ExpiryDateInput: FC<ExpiryDateInputProps> = ({
   onChange,
   disabled,
 }) => {
+  const [date, setDate] = React.useState<Date | null>(value);
+
   return (
     <BaseDatePickerInput
       disabled={disabled}
@@ -20,8 +22,17 @@ export const ExpiryDateInput: FC<ExpiryDateInputProps> = ({
       format="dd/MM/yyyy"
       value={value}
       onChange={d => {
-        if (d) onChange(lastDayOfMonth(d));
-        else onChange(d);
+        setDate(d);
+        if (
+          d &&
+          date &&
+          (d.getMonth() !== date.getMonth() ||
+            d.getFullYear() !== date.getFullYear())
+        ) {
+          onChange(lastDayOfMonth(d));
+        } else {
+          onChange(d);
+        }
       }}
     />
   );
