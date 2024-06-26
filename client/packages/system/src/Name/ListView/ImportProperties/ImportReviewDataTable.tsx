@@ -77,7 +77,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
 
   const columns = useColumns<ImportRow>(columnDescriptions, {}, []);
 
-  const filteredEquipment = rowsWithProperties.filter(row => {
+  const filteredFacilities = rowsWithProperties.filter(row => {
     if (!searchString) {
       return true;
     }
@@ -88,12 +88,10 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       row.id === searchString
     );
   });
-  const currentFacilitiesPage = filteredEquipment.slice(
+  const currentFacilitiesPage = filteredFacilities.slice(
     pagination.offset,
     pagination.offset + pagination.first
   );
-
-  // console.log('currentFacilitiesPage', currentFacilitiesPage);
 
   return (
     <Grid flexDirection="column" display="flex" gap={0}>
@@ -113,7 +111,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       <DataTable
         pagination={{
           ...pagination,
-          total: filteredEquipment.length,
+          total: filteredFacilities.length,
         }}
         onChangePage={page => {
           setPagination({
