@@ -34,6 +34,7 @@ impl PluginFileService {
         PluginInfo { plugin, filename }: &PluginInfo,
     ) -> anyhow::Result<Option<PathBuf>> {
         let plugin_base_dir = get_plugin_dir(base_dir)?;
+        validate_dir_or_create(plugin_base_dir.clone())?;
         let plugin_dir = plugin_base_dir.join(plugin);
         let file_path = plugin_dir.join(filename);
 
@@ -89,6 +90,14 @@ fn get_plugin_dir(base_dir: &Option<String>) -> Result<PathBuf, anyhow::Error> {
         Some(file_dir) => PathBuf::from_str(file_dir)?.join(PLUGIN_FILE_DIR),
         None => PathBuf::from_str(PLUGIN_FILE_DIR)?,
     })
+}
+
+fn validate_dir_or_create(dir_path: PathBuf) -> Result<(), anyhow::Error> {
+    if let Ok(false) = dir_path.try_exists() {
+        println!("Creating new dir...");
+        fs::create_dir(dir_path)?;
+    }
+    Ok(())
 }
 
 fn read_plugin_file(
