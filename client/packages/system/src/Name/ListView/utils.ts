@@ -1,19 +1,16 @@
 import { TypedTFunction, LocaleKey } from '@common/intl';
-import { ArrayUtils, Formatter } from '@common/utils';
+import { Formatter } from '@common/utils';
 import {
   ImportRow,
   LineNumber,
 } from './ImportProperties/PropertiesImportModal';
 
-export const importFacilitiesPropertiesToCsv = (
+export const exportFacilitiesPropertiesToCsv = (
   facilities: Partial<ImportRow & LineNumber>[],
   t: TypedTFunction<LocaleKey>,
-  properties?: string[]
+  properties: string[]
 ) => {
-  // TODO maybe don't need the facilities[0] fallback.
-  const props =
-    properties ??
-    ArrayUtils.dedupe(Object.keys(facilities[0]?.properties ?? {}));
+  const props = properties;
   const fields: string[] = [t('label.code'), t('label.name')].concat(props);
 
   const data = facilities.map(node => {

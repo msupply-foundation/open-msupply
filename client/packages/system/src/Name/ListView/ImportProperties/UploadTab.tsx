@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 
 import { ImportRow } from './PropertiesImportModal';
-import { importFacilitiesPropertiesToCsv } from '../utils';
+import { exportFacilitiesPropertiesToCsv } from '../utils';
 import { processProperties } from '../../../utils';
 import { useName } from '../../api';
 
@@ -72,7 +72,7 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
           };
         })
       : [];
-    const csv = importFacilitiesPropertiesToCsv(
+    const csv = exportFacilitiesPropertiesToCsv(
       facilityRows,
       t,
       propertyNodes ? propertyNodes?.map(p => p.key) : []
