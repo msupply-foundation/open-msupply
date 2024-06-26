@@ -37,6 +37,7 @@ export interface TableProps<T extends RecordWithId> {
     | 'inherit'
     | 'initial'
     | 'unset';
+  width?: string | number;
   pagination?: Pagination & { total?: number };
   onChangePage?: (page: number) => void;
   onRowClick?: null | ((row: T) => void);
