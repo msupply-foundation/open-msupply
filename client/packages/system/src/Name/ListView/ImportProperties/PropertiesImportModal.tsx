@@ -107,7 +107,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
         ).then(() => {
           // Update Progress Bar
           const percentComplete =
-            10 - (remainingRecords.length / numberImportRecords) * 100.0;
+            100 - (remainingRecords.length / numberImportRecords) * 100.0;
           setImportProgress(percentComplete);
           setImportErrorCount(importErrorRows.length);
         });
