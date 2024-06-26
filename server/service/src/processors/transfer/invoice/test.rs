@@ -876,6 +876,7 @@ impl InvoiceTransferTester {
                 &ctx,
                 inline_init(|r: &mut UpdateOutboundShipment| {
                     r.id.clone_from(&self.outbound_shipment.id);
+                    r.their_reference = Some("some updated reference".to_string());
                     r.status = Some(UpdateOutboundShipmentStatus::Shipped);
                 }),
             )
@@ -896,6 +897,8 @@ impl InvoiceTransferTester {
             inline_edit(&inbound_shipment, |mut r| {
                 r.status = InvoiceStatus::Shipped;
                 r.shipped_datetime = self.outbound_shipment.shipped_datetime;
+                r.their_reference =
+                    Some("From invoice number: 20 (some updated reference)".to_string());
                 r
             })
         );
