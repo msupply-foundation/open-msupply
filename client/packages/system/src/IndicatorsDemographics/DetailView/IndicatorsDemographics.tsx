@@ -141,7 +141,12 @@ const IndicatorsDemographicsComponent = () => {
   };
 
   const updateIndicator = async (row: Row) => {
-    await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
+    try {
+      await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
+    } catch (e) {
+      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
+      throw e;
+    }
   };
 
   // save rows excluding generalRow
