@@ -4,6 +4,7 @@ import {
   Box,
   ColumnAlign,
   DataTable,
+  DateUtils,
   RecordPatch,
   TableProvider,
   createTableStore,
@@ -46,14 +47,25 @@ const IndicatorsDemographicsComponent = () => {
   const t = useTranslation();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
-  const { data: projection, isLoading: isLoadingProjection } =
-    useDemographicData.projection.get(draft?.[0]?.baseYear ?? 2024);
+  const baseYear = headerDraft?.baseYear ?? DateUtils.getCurrentYear();
 
-  const { insertDemographicIndicator, invalidateQueries } =
-    useDemographicData.indicator.insert();
+  const { data: projection, isLoading: isLoadingProjection } =
+    useDemographicData.projection.get(baseYear);
+
+  const {
+    insertDemographicIndicator,
+    invalidateQueries: invalidateDemographicQueries,
+  } = useDemographicData.indicator.insert();
   const { mutateAsync: updateDemographicIndicator } =
     useDemographicData.indicator.update();
-  const upsertProjection = useDemographicData.projection.upsert();
+
+  const { upsertProjection, invalidateQueries: invalidateProjectionQueries } =
+    useDemographicData.projection.upsert();
+
+  const invalidateQueries = () => {
+    invalidateDemographicQueries();
+    invalidateProjectionQueries(baseYear);
+  };
 
   const handlePopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
