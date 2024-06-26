@@ -36,13 +36,19 @@ pub(crate) fn generate_inbound_lines(
                  note,
                  r#type,
                  total_after_tax: _,
-                 total_before_tax: _,
+                 total_before_tax,
                  tax_percentage,
                  inventory_adjustment_reason_id: _,
                  return_reason_id,
                  foreign_currency_price_before_tax,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
+
+                let total_before_tax = match r#type {
+                    // Service lines don't work in packs
+                    InvoiceLineType::Service => total_before_tax,
+                    _ => cost_price_per_pack * number_of_packs,
+                };
 
                 InvoiceLineRow {
                     id: uuid(),
@@ -53,9 +59,8 @@ pub(crate) fn generate_inbound_lines(
                     batch,
                     expiry_date,
                     pack_size,
-                    // TODO clarify this
-                    total_before_tax: cost_price_per_pack * number_of_packs,
-                    total_after_tax: (cost_price_per_pack * number_of_packs)
+                    total_before_tax,
+                    total_after_tax: total_before_tax
                         * (1.0 + tax_percentage.unwrap_or(0.0) / 100.0),
                     cost_price_per_pack,
                     sell_price_per_pack,
@@ -86,6 +91,7 @@ pub(crate) fn convert_invoice_line_to_single_pack(
     invoice_lines
         .into_iter()
         .map(|mut line| {
+            // Service lines don't work in packs
             if line.r#type == InvoiceLineType::Service {
                 return line;
             }
