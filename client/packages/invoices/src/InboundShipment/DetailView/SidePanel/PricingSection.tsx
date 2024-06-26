@@ -15,6 +15,7 @@ import {
   InvoiceLineNodeType,
   Currencies,
   useAuthContext,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { InboundServiceLineEdit, TaxEdit } from '../modals';
@@ -172,7 +173,7 @@ export const PricingSectionComponent = () => {
           <PanelLabel>{t('heading.total')}</PanelLabel>
           <PanelField>
             {isHomeCurrency
-              ? '-'
+              ? UNDEFINED_STRING_VALUE
               : foreignCurrency(
                   pricing.foreignCurrencyTotalAfterTax ?? 0
                 ).format()}
