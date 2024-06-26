@@ -10,7 +10,6 @@ import {
   Table as MuiTable,
   InlineSpinner,
   NumericTextInput,
-  InputAdornment,
   useTranslation,
   useBufferState,
 } from '@openmsupply-client/common';
@@ -147,10 +146,7 @@ const GrowthInput = ({
       decimalLimit={2}
       decimalMin={1}
       allowNegative
-      InputProps={{
-        inputProps: { sx: { padding: '2px 0' } },
-        endAdornment: <InputAdornment position="end">%</InputAdornment>,
-      }}
+      endAdornment="%"
       onChange={newValue => {
         setBuffer(newValue);
         if (newValue !== undefined) setValue(newValue);

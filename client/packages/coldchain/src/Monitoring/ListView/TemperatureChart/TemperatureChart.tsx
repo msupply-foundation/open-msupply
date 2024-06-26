@@ -14,6 +14,7 @@ import {
   NothingHere,
   ResponsiveContainer,
   Typography,
+  UNDEFINED_STRING_VALUE,
   XAxis,
   YAxis,
   useTheme,
@@ -165,7 +166,7 @@ const Chart = ({
   const formatTemp = useFormatTemperature();
 
   const formatTemperature = (value: number | null | undefined) =>
-    !!value ? `${formatTemp(value)}` : '-';
+    !!value ? `${formatTemp(value)}` : UNDEFINED_STRING_VALUE;
 
   useEffect(() => {
     if (!urlQuery['datetime']) {
