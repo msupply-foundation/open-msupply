@@ -18,7 +18,6 @@ import {
   useColumns,
   NothingHere,
   useEditModal,
-  useUrlQuery,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
@@ -33,7 +32,6 @@ export const ProgramComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
-  const { urlQuery, updateQuery } = useUrlQuery();
   const pagination = { page, first, offset };
   const t = useTranslation('catalogue');
   const { setSuffix, navigateUpOne } = useBreadcrumbs();
@@ -96,23 +94,6 @@ export const ProgramComponent: FC = () => {
     entity: vaccineCourse,
     mode,
   } = useEditModal<VaccineCourseFragment>();
-
-  // this will open the edit modal, if the `edit` query parameter is set
-  // to a valid sensor ID. On opening, the query param is removed to
-  // prevent a loop which would happen if a sensor was edited
-  useEffect(() => {
-    const vaccineCourseId = (urlQuery['edit'] as string) ?? '';
-    if (vaccineCourseId) {
-      // keep this check so we don't go to edit mode if incorrect id prompt
-      const vaccineCourse = vaccineCoursesData?.nodes?.find(
-        c => c.id === vaccineCourseId
-      );
-      if (vaccineCourse) {
-        updateQuery({ edit: '' });
-        onOpen(vaccineCourse);
-      }
-    }
-  }, [vaccineCoursesData?.nodes]);
 
   return isLoading ? (
     <InlineSpinner />

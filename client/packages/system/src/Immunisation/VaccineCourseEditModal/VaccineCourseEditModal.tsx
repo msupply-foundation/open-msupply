@@ -111,7 +111,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   mode,
 }) => {
   const t = useTranslation('coldchain');
-  const { success } = useNotification();
+  const { error, success } = useNotification();
   const {
     draft,
     update: { update },
@@ -133,10 +133,9 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   //   __typename: 'VaccineCourseScheduleNode',
   // };
   const tryUpdateValue = (value: number | undefined) => {
-    if (typeof value !== 'number') {
-      return;
+    if (value !== undefined) {
+      updatePatch({ doses: value });
     }
-    updatePatch({ doses: value });
   };
 
   // const updateSchedule = (value: number) => {
@@ -208,6 +207,28 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       : '',
   };
 
+  const save = async () => {
+    setIsDirty(false);
+    try {
+      const result =
+        mode === ModalMode.Update
+          ? await update()
+          : await create(programId ?? '');
+      if (result?.__typename === 'VaccineCourseNode') {
+        const message =
+          mode === ModalMode.Update
+            ? `${t('messages.updated-new-vaccine-course')}: ${result.name}`
+            : `${t('messages.created-new-vaccine-course')}: ${result.name}`;
+        success(message)();
+        onClose();
+        return;
+      }
+      error(t('error.unable-to-insert-vaccine-course'))();
+    } catch (e) {
+      error((e as Error).message)();
+    }
+  };
+
   return (
     <Modal
       title=""
@@ -216,29 +237,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         <DialogButton
           disabled={!isDirty || !programId}
           variant="ok"
-          onClick={async () => {
-            setIsDirty(false);
-            try {
-              const result =
-                mode === ModalMode.Update
-                  ? await update()
-                  : await create(programId ?? '');
-              if (result?.__typename === 'VaccineCourseNode') {
-                const message =
-                  mode === ModalMode.Update
-                    ? `${t('messages.updated-new-vaccine-course')}: ${
-                        result.name
-                      }`
-                    : `${t('messages.created-new-vaccine-course')}: ${
-                        result.name
-                      }`;
-                success(message)();
-                onClose();
-              }
-            } catch (e) {
-              console.error(e);
-            }
-          }}
+          onClick={save}
         />
       }
       height={height}
@@ -255,7 +254,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           >
             <Row label={t('label.immunisation-name')}>
               <BasicTextInput
-                textAlign="right"
+                textAlign="left"
                 value={draft?.name ?? ''}
                 fullWidth
                 onChange={e => updatePatch({ name: e.target.value })}
@@ -263,7 +262,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             </Row>
             <Row label={t('label.target-demographic')}>
               <Autocomplete
-                sx={{ input: { textAlign: 'right' } }}
                 isOptionEqualToValue={option =>
                   option?.value === draft.demographicIndicatorId
                 }
@@ -271,7 +269,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
                   updatePatch({ demographicIndicatorId: selected?.value })
                 }
                 defaultValue={defaultValue}
-                placeholder={'demographic'}
                 options={options}
               />
             </Row>

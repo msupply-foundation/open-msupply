@@ -18,17 +18,15 @@ import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
 
 // export interface DraftVaccineCourse extends VaccineCourseFragment {}
 
-export enum UpdateVaccineCourseError {
+enum UpdateVaccineCourseError {
   DatabaseError = 'Database Error',
   RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
 }
 
-export enum InsertVaccineCourseError {
+enum InsertVaccineCourseError {
   RecordAlreadyExist = 'Record already exists',
   RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
 }
-
-export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
 
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
   id: '',
@@ -182,7 +180,6 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
       if (result.__typename === 'VaccineCourseNode') {
         return result;
       }
-
       let message: string;
       switch (result.error.description) {
         case InsertVaccineCourseError.RecordAlreadyExist:
@@ -208,6 +205,7 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
   return useMutation({
     mutationFn,
     onSuccess: () => queryClient.invalidateQueries([VACCINE]),
+    onError: () => {},
   });
 };
 
@@ -270,5 +268,6 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
   return useMutation({
     mutationFn,
     onSuccess: () => queryClient.invalidateQueries([VACCINE]),
+    onError: () => {},
   });
 };
