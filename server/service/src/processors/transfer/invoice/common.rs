@@ -2,6 +2,8 @@ use repository::{EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository,
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
 
+use crate::invoice::common::calculate_total_after_tax;
+
 pub(crate) fn generate_inbound_lines(
     connection: &StorageConnection,
     inbound_invoice_id: &str,
@@ -60,8 +62,7 @@ pub(crate) fn generate_inbound_lines(
                     expiry_date,
                     pack_size,
                     total_before_tax,
-                    total_after_tax: total_before_tax
-                        * (1.0 + tax_percentage.unwrap_or(0.0) / 100.0),
+                    total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
                     cost_price_per_pack,
                     sell_price_per_pack,
                     r#type: match r#type {
