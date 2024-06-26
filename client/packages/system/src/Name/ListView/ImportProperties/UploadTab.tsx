@@ -53,7 +53,6 @@ export const UploadTab: FC<ImportPanel & UploadTabProps> = ({
   const { data: facilitiesData } = useName.document.facilitiesAll();
 
   const FacilityPropertyBuffer: ImportRow[] = [];
-  // TODO filter name properties for facility properties?
   const propertyNodes: PropertyNode[] | undefined = properties
     ?.map(property => {
       return { ...property.property };
