@@ -58,6 +58,7 @@ pub(crate) fn generate_inbound_lines(
                     total_after_tax: (cost_price_per_pack * number_of_packs)
                         * (1.0 + tax_percentage.unwrap_or(0.0) / 100.0),
                     cost_price_per_pack,
+                    sell_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -70,7 +71,6 @@ pub(crate) fn generate_inbound_lines(
                     // Default
                     stock_line_id: None,
                     location_id: None,
-                    sell_price_per_pack,
                     inventory_adjustment_reason_id: None,
                 }
             },
@@ -86,6 +86,10 @@ pub(crate) fn convert_invoice_line_to_single_pack(
     invoice_lines
         .into_iter()
         .map(|mut line| {
+            if line.r#type == InvoiceLineType::Service {
+                return line;
+            }
+
             line.number_of_packs *= line.pack_size;
             line.cost_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;
