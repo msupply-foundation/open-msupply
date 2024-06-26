@@ -39,7 +39,7 @@ export const AppBarButtonsComponent = ({
       4: 0,
       5: 0,
     };
-    createNewRow({ ...newRow });
+    createNewRow(newRow);
   };
 
   const handleClick = useCallbackWithPermission(
