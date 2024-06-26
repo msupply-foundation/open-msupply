@@ -67,6 +67,11 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
     ImportRow[]
   >(() => []);
 
+  const handleClose = () => {
+    setActiveStep(0);
+    onClose();
+  };
+
   const importAction = async () => {
     onChangeTab(Tabs.Import);
     const numberImportRecords = bufferedFacilityProperties?.length ?? 0;
@@ -117,7 +122,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
         onChangeTab(Tabs.Upload);
         setBufferedFacilityProperties([]);
         setErrorMessage('');
-        onClose();
+        handleClose();
       } else {
         // Load the error rows in to the component for review
         setErrorMessage(t('messages.import-generic'));
@@ -179,7 +184,7 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
           onClick={async () => {
             setErrorMessage('');
             changeTab(Tabs.Upload);
-            onClose();
+            handleClose();
           }}
         />
       }
