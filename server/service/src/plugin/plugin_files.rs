@@ -50,6 +50,7 @@ impl PluginFileService {
     ) -> anyhow::Result<Vec<PluginFile>> {
         let mut files = Vec::new();
         let plugin_base_dir = get_plugin_dir(base_dir)?;
+        validate_dir_or_create(plugin_base_dir.clone())?;
         let paths = fs::read_dir(plugin_base_dir)?;
 
         for plugin_dir in paths {
@@ -89,6 +90,14 @@ fn get_plugin_dir(base_dir: &Option<String>) -> Result<PathBuf, anyhow::Error> {
         Some(file_dir) => PathBuf::from_str(file_dir)?.join(PLUGIN_FILE_DIR),
         None => PathBuf::from_str(PLUGIN_FILE_DIR)?,
     })
+}
+
+fn validate_dir_or_create(dir_path: PathBuf) -> Result<(), anyhow::Error> {
+    if let Ok(false) = dir_path.try_exists() {
+        println!("Creating new dir...");
+        fs::create_dir(dir_path)?;
+    }
+    Ok(())
 }
 
 fn read_plugin_file(
