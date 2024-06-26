@@ -1,9 +1,9 @@
 import React, { FC, useState } from 'react';
 import {
-  DatePicker,
   DatePickerProps,
   DateTimeValidationError,
   DateValidationError,
+  DesktopDatePicker,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
 import { BasicTextInput } from '../../TextInput';
@@ -58,7 +58,7 @@ export const BaseDatePickerInput: FC<
   const t = useTranslation();
 
   return (
-    <DatePicker
+    <DesktopDatePicker
       slots={{
         textField: TextField,
       }}
