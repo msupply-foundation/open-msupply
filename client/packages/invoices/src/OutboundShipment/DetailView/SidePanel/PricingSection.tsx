@@ -17,6 +17,7 @@ import {
   useAuthContext,
   useCurrency,
   Currencies,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
@@ -190,7 +191,7 @@ export const ForeignCurrencyPrices = ({
         <PanelLabel>{t('heading.total')}</PanelLabel>
         <PanelField>
           {isHomeCurrency
-            ? '-'
+            ? UNDEFINED_STRING_VALUE
             : foreignCurrency(
                 pricing.foreignCurrencyTotalAfterTax ?? 0
               ).format()}
