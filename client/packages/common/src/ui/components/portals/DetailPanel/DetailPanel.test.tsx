@@ -1,6 +1,5 @@
+import React, { act, FC } from 'react';
 import { render } from '@testing-library/react';
-import React, { FC } from 'react';
-import { act } from 'react-dom/test-utils';
 import {
   DetailPanelSection,
   setScreenSize_ONLY_FOR_TESTING,
