@@ -4,7 +4,6 @@ import {
   DialogButton,
   TabContext,
   useTabs,
-  Grid,
   Alert,
   ClickableStepper,
   UpdateNamePropertiesInput,
@@ -205,33 +204,25 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
         ></ClickableStepper>
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
         <TabContext value={currentTab}>
-          <Grid
-            container
-            flex={1}
-            flexDirection="column"
-            gap={1}
-            overflow={'scroll'}
-          >
-            <UploadTab
-              tab={Tabs.Upload}
-              setErrorMessage={setErrorMessage}
-              setFacilityProperties={setBufferedFacilityProperties}
-              onUploadComplete={() => {
-                changeTab(Tabs.Review);
-              }}
-              properties={properties}
-            />
-            <ReviewTab
-              tab={Tabs.Review}
-              uploadedRows={bufferedFacilityProperties}
-              properties={properties}
-            />
-            <ImportTab
-              tab={Tabs.Import}
-              importProgress={importProgress}
-              importErrorCount={importErrorCount}
-            />
-          </Grid>
+          <UploadTab
+            tab={Tabs.Upload}
+            setErrorMessage={setErrorMessage}
+            setFacilityProperties={setBufferedFacilityProperties}
+            onUploadComplete={() => {
+              changeTab(Tabs.Review);
+            }}
+            properties={properties}
+          />
+          <ReviewTab
+            tab={Tabs.Review}
+            uploadedRows={bufferedFacilityProperties}
+            properties={properties}
+          />
+          <ImportTab
+            tab={Tabs.Import}
+            importProgress={importProgress}
+            importErrorCount={importErrorCount}
+          />
         </TabContext>
       </>
     </Modal>
