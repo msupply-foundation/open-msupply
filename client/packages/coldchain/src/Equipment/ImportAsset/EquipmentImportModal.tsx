@@ -47,6 +47,7 @@ export type ImportRow = {
   catalogueItemCode: string | null | undefined;
   serialNumber: string | null | undefined;
   installationDate: string | null | undefined;
+  replacementDate: string | null | undefined;
   id: string;
   notes: string;
   errorMessage: string;
