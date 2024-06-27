@@ -20,6 +20,7 @@ export const Formatter = {
     date && isValid(date)
       ? format(date, "dd/MM/yyyy' 'HH:mm:ss")
       : '--/--/---- --:--:--',
+  // TODO remove if expiry date is supposed to be displayed as dd/MM/yyyy
   expiryDate: (date?: Date | null): string | null => {
     if (date && isValid(date)) return format(date, 'MM/yyyy');
     else return null;
