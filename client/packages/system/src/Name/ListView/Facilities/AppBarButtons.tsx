@@ -20,12 +20,12 @@ export const AppBarButtonsComponent = ({
   propertiesLoading: boolean;
 }) => {
   const t = useTranslation();
-  const { error } = useNotification();
+  const { info } = useNotification();
 
   const handleClick = () => {
     properties?.length && properties.length >= 0
       ? importModalController.toggleOn()
-      : error(t('error.no-properties-to-import'))();
+      : info(t('error.no-properties-to-import'))();
   };
 
   return (
