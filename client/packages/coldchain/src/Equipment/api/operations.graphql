@@ -24,6 +24,7 @@ fragment AssetRow on AssetNode {
   catalogueItem {
     manufacturer
     model
+    code
   }
   assetType {
     name
