@@ -11,6 +11,7 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
   return [
     'id',
     t('label.asset-number'),
+    t('label.catalogue-item-code'),
     t('label.installation-date'),
     t('label.replacement-date'),
     t('label.serial'),
@@ -121,15 +122,16 @@ export const importEquipmentToCsv = (
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
-  fields.push(t('label.catalogue-item-code'));
 
   const data = assets.map(node => {
     const row = [
+      node.id,
       node.assetNumber,
       node.catalogueItemCode,
-      node.notes,
-      node.serialNumber,
       node.installationDate,
+      node.replacementDate,
+      node.serialNumber,
+      node.notes,
     ].concat(props.map(key => node.properties?.[key] ?? ''));
     if (isCentralServer) row.push(node.store?.code);
     return row;

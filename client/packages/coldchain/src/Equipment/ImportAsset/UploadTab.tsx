@@ -155,11 +155,6 @@ function getImportHelpers<T, P>(
     const prop = t(localeKey) as keyof P;
     const value = row[prop] ?? '';
     if (value === undefined || (value as string).trim() === '') {
-      rowErrors.push(
-        t('error.field-must-be-specified', {
-          field: t(localeKey),
-        })
-      );
       return;
     }
     if (lookupData.filter(l => lookupFn(l) === value).length === 0) {
@@ -201,12 +196,13 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     const exampleRows: Partial<ImportRow>[] = [
       {
         id: '',
-        assetNumber: 'Asset Number',
+        assetNumber: 'ASSET NUMBER',
         catalogueItemCode: '',
         store: undefined,
         notes: '',
         serialNumber: '',
         installationDate: '',
+        replacementDate: '',
         properties: {},
       },
     ];
