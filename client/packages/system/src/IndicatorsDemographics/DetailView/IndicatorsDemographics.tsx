@@ -4,10 +4,13 @@ import {
   Box,
   ColumnAlign,
   DataTable,
+  DateUtils,
+  Formatter,
   RecordPatch,
   TableProvider,
   createTableStore,
   useColumns,
+  useFormatNumber,
   useNotification,
   useTranslation,
   useUrlQueryParams,
@@ -23,7 +26,8 @@ import {
   calculateAcrossRow,
   mapHeaderData,
   mapProjection,
-  toIndicatorFragment,
+  toInsertIndicator,
+  toUpdateIndicator,
 } from './utils';
 import { HeaderData, Row } from '../types';
 
@@ -39,19 +43,31 @@ const IndicatorsDemographicsComponent = () => {
   const [headerDraft, setHeaderDraft] = useState<HeaderData>();
   const [indexPopulation, setIndexPopulation] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
+  const formatNumber = useFormatNumber();
 
   const { error, success } = useNotification();
   const t = useTranslation();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
-  const { data: projection, isLoading: isLoadingProjection } =
-    useDemographicData.projection.get(draft?.[0]?.baseYear ?? 2024);
+  const baseYear = headerDraft?.baseYear ?? DateUtils.getCurrentYear();
 
-  const { insertDemographicIndicator, invalidateQueries } =
-    useDemographicData.indicator.insert();
+  const { data: projection, isLoading: isLoadingProjection } =
+    useDemographicData.projection.get(baseYear);
+
+  const {
+    insertDemographicIndicator,
+    invalidateQueries: invalidateDemographicQueries,
+  } = useDemographicData.indicator.insert();
   const { mutateAsync: updateDemographicIndicator } =
     useDemographicData.indicator.update();
-  const upsertProjection = useDemographicData.projection.upsert();
+
+  const { upsertProjection, invalidateQueries: invalidateProjectionQueries } =
+    useDemographicData.projection.upsert();
+
+  const invalidateQueries = () => {
+    invalidateDemographicQueries();
+    invalidateProjectionQueries(baseYear);
+  };
 
   const handlePopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
@@ -85,7 +101,7 @@ const IndicatorsDemographicsComponent = () => {
 
     setIsDirty(true);
 
-    const patchedRow: Row = { ...existingRow, ...patch };
+    const patchedRow: Row = { ...existingRow, ...patch, isError: false };
 
     // change state of name only if only name changes
     if (!percentageChange) {
@@ -99,6 +115,11 @@ const IndicatorsDemographicsComponent = () => {
       indexPopulation
     );
     setDraft({ ...draft, [patch.id]: updatedRow });
+  };
+
+  const createNewRow = (row: Row) => {
+    setDraft({ ...draft, [row.id]: row });
+    setIsDirty(true);
   };
 
   // generic function for handling percentage change, and then re calculating the values of that year
@@ -126,21 +147,19 @@ const IndicatorsDemographicsComponent = () => {
 
   const insertIndicator = async (row: Row) => {
     try {
-      await insertDemographicIndicator(
-        toIndicatorFragment(row, indexPopulation)
-      );
+      await insertDemographicIndicator(toInsertIndicator(row, indexPopulation));
     } catch (e) {
-      console.error(e);
+      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
+      throw e;
     }
   };
 
   const updateIndicator = async (row: Row) => {
     try {
-      await updateDemographicIndicator(
-        toIndicatorFragment(row, indexPopulation)
-      );
+      await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
     } catch (e) {
-      console.error(e);
+      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
+      throw e;
     }
   };
 
@@ -166,7 +185,13 @@ const IndicatorsDemographicsComponent = () => {
         success(t('success.data-saved'))();
         invalidateQueries();
       })
-      .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
+      .catch(e =>
+        error(
+          t('error.an-error-occurred', {
+            message: Formatter.fromCamelCase(e.message),
+          })
+        )()
+      );
   };
 
   const cancel = () => {
@@ -178,11 +203,11 @@ const IndicatorsDemographicsComponent = () => {
       [nameColumn(), { setter }],
       [percentageColumn(), { setter }],
       [populationColumn(), { setter: handlePopulationChange }],
-      yearColumn(1),
-      yearColumn(2),
-      yearColumn(3),
-      yearColumn(4),
-      yearColumn(5),
+      yearColumn(1, formatNumber.format),
+      yearColumn(2, formatNumber.format),
+      yearColumn(3, formatNumber.format),
+      yearColumn(4, formatNumber.format),
+      yearColumn(5, formatNumber.format),
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [draft, indexPopulation, sortBy]
@@ -208,7 +233,7 @@ const IndicatorsDemographicsComponent = () => {
   return (
     <>
       <AppBarButtons
-        addRow={newRow => setDraft({ ...draft, [newRow.id]: newRow })}
+        createNewRow={createNewRow}
         rows={Object.values(draft)}
       ></AppBarButtons>
       <Box sx={{ width: '100%' }} padding={0}>
@@ -235,11 +260,28 @@ export const IndicatorsDemographics = () => (
   </TableProvider>
 );
 
-const yearColumn = (year: number) => ({
+const yearColumn = (year: number, format: (n: number) => string) => ({
   key: String(year),
   width: 150,
   align: ColumnAlign.Right,
   label: undefined,
   labelProps: { defaultValue: currentYear + year },
   sortable: false,
+  accessor: ({ rowData }: { rowData: Row }) => {
+    // using a switch to appease typescript
+    switch (year) {
+      case 1:
+        return format(rowData[1]);
+      case 2:
+        return format(rowData[2]);
+      case 3:
+        return format(rowData[3]);
+      case 4:
+        return format(rowData[4]);
+      case 5:
+        return format(rowData[5]);
+      default:
+        return '';
+    }
+  },
 });

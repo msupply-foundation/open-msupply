@@ -1,18 +1,36 @@
 import { NumUtils } from '@common/utils';
-import {
-  DemographicIndicatorFragment,
-  DemographicProjectionFragment,
-} from '../api/operations.generated';
+import { DemographicProjectionFragment } from '../api/operations.generated';
 
 import { GENERAL_POPULATION_ID } from '../api';
 import { HeaderData, Row } from '../types';
+import {
+  InsertDemographicIndicatorInput,
+  UpdateDemographicIndicatorInput,
+} from '@common/types';
 
-export const toIndicatorFragment = (
+export const toInsertIndicator = (
   row: Row,
   indexPopulation?: number
-): DemographicIndicatorFragment => {
+): InsertDemographicIndicatorInput => {
   return {
-    __typename: 'DemographicIndicatorNode',
+    id: row.id,
+    name: row.name?.trim() === '' ? undefined : row.name,
+    baseYear: row.baseYear,
+    basePopulation: indexPopulation ?? row.basePopulation,
+    populationPercentage: row.percentage ?? 0,
+    year1Projection: row[1],
+    year2Projection: row[2],
+    year3Projection: row[3],
+    year4Projection: row[4],
+    year5Projection: row[5],
+  };
+};
+
+export const toUpdateIndicator = (
+  row: Row,
+  indexPopulation?: number
+): UpdateDemographicIndicatorInput => {
+  return {
     id: row.id,
     name: row.name,
     baseYear: row.baseYear,
