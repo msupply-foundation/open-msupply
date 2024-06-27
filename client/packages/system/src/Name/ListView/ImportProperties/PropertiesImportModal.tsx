@@ -205,7 +205,13 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
         ></ClickableStepper>
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
         <TabContext value={currentTab}>
-          <Grid container flex={1} flexDirection="column" gap={1}>
+          <Grid
+            container
+            flex={1}
+            flexDirection="column"
+            gap={1}
+            overflow={'scroll'}
+          >
             <UploadTab
               tab={Tabs.Upload}
               setErrorMessage={setErrorMessage}
