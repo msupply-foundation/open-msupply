@@ -80,20 +80,8 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
       while (remainingRecords.length) {
         await Promise.all(
           remainingRecords.splice(0, 10).map(async facility => {
-            await mutateAsync(toUpdateNamePropertiesInput(facility))
-              .then(async result => {
-                // Map structured Errors
-                if (result?.__typename === 'Mutations') {
-                  // const errorMessage = mapStructuredErrors(result);
-                  const errorMessage = result;
-                  importErrorRows.push({
-                    ...facility,
-                    errorMessage: errorMessage.__typename,
-                  });
-                  return;
-                }
-              })
-              .catch((err: { message: string }) => {
+            await mutateAsync(toUpdateNamePropertiesInput(facility)).catch(
+              (err: { message: string }) => {
                 if (!err) {
                   err = { message: t('messages.unknown-error') };
                 }
@@ -101,7 +89,8 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
                   ...facility,
                   errorMessage: err.message,
                 });
-              });
+              }
+            );
           })
         ).then(() => {
           // Update Progress Bar
