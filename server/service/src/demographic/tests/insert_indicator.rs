@@ -27,6 +27,7 @@ mod query {
         // check we can insert
         let id = "test_id".to_string();
         let id_2 = "test_id_2".to_string();
+        let id_3 = "test_id_2".to_string();
         let name_1 = "name".to_string();
         let base_year_1 = 2024;
         let name_2 = "name2".to_string();
@@ -36,7 +37,7 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id.clone(),
-                    name: name_1.clone(),
+                    name: Some(name_1.clone()),
                     base_year: base_year_1,
                     ..Default::default()
                 },
@@ -51,7 +52,7 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id.clone(),
-                    name: name_2.clone(),
+                    name: Some(name_2.clone()),
                     base_year: base_year_2,
                     ..Default::default()
                 },
@@ -65,7 +66,7 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id_2.clone(),
-                    name: name_1.clone(),
+                    name: Some(name_1.clone()),
                     base_year: base_year_1,
                     ..Default::default()
                 },
@@ -79,12 +80,26 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id_2.clone(),
-                    name: name_1.clone(),
+                    name: Some(name_1.clone()),
                     base_year: base_year_2,
                     ..Default::default()
                 },
             )
             .unwrap();
         assert_eq!(indicator.id, id_2);
+
+        // check insert with None name won't work
+        assert_eq!(
+            service.insert_demographic_indicator(
+                &ctx,
+                InsertDemographicIndicator {
+                    id: id_3.clone(),
+                    name: None,
+                    base_year: base_year_2,
+                    ..Default::default()
+                },
+            ),
+            Err(InsertDemographicIndicatorError::DemographicIndicatorHasNoName)
+        );
     }
 }
