@@ -43,7 +43,7 @@ interface ParsedAsset {
 }
 
 const formatDate = (value: string): string | null =>
-  Formatter.naiveDate(DateUtils.getDateOrNull(value));
+  Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
 
 function getImportHelpers<T, P>(
   row: P,
@@ -201,8 +201,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         store: undefined,
         notes: '',
         serialNumber: '',
-        installationDate: '',
-        replacementDate: '',
+        installationDate: 'DD/MM/YYYY',
+        replacementDate: 'DD/MM/YYYY',
         properties: {},
       },
     ];
@@ -287,6 +287,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         'label.installation-date',
         formatDate
       );
+      addSoftRequired('replacementDate', 'label.replacement-date', formatDate);
       addCell('serialNumber', 'label.serial');
       processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
