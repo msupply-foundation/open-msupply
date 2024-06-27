@@ -105,6 +105,7 @@
   "error.unable-to-load-data": "An error has occurred: there was a problem loading the data.",
   "error.unable-to-load-server-log": "No server logs found. Check your configuration to see if server logs are enabled.",
   "error.unable-to-read-barcode": "Unable to read a barcode",
+  "error.no-properties-to-import": "There are no configured properties to import for your facilities",
   "filename.asset-categories": "asset-categories",
   "filename.cold-chain-equipment": "cold-chain-equipment",
   "filename.inbound-returns": "inbound-returns",

@@ -28,6 +28,8 @@ const FacilitiesListComponent = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
   const { data, isError, isLoading } = useName.document.facilities();
+  const { data: properties, isLoading: propertiesLoading } =
+    useName.document.properties();
   const pagination = { page, first, offset };
 
   const { isOpen, onClose, onOpen } = useEditModal<FacilityNameRowFragment>();
@@ -87,7 +89,11 @@ const FacilitiesListComponent = () => {
         isOpen={importPropertiesModalController.isOn}
         onClose={importPropertiesModalController.toggleOff}
       />
-      <AppBarButtons importModalController={importPropertiesModalController} />
+      <AppBarButtons
+        importModalController={importPropertiesModalController}
+        properties={properties}
+        propertiesLoading={propertiesLoading}
+      />
       <Toolbar filter={filter} />
       {isOpen && (
         <FacilityEditModal
@@ -95,6 +101,8 @@ const FacilitiesListComponent = () => {
           nameId={selectedId}
           onClose={onClose}
           setNextFacility={setSelectedId}
+          properties={properties}
+          propertiesLoading={propertiesLoading}
         />
       )}
       <DataTable
