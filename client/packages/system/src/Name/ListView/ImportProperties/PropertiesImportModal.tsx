@@ -184,6 +184,9 @@ export const PropertiesImportModal: FC<PropertiesImportModalProps> = ({
       title={t('label.import-facility-properties')}
       height={1000}
       width={1600}
+      contentProps={{
+        sx: { height: '100px' },
+      }}
     >
       <>
         <ClickableStepper

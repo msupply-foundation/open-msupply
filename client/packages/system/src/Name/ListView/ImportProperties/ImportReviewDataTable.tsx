@@ -94,7 +94,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   );
 
   return (
-    <Grid flexDirection="column" display="flex" gap={0}>
+    <Grid flexDirection="column" display="flex" gap={0} height={'100%'}>
       <SearchBar
         placeholder={t('messages.search')}
         value={searchString}
