@@ -98,8 +98,8 @@ export const ProgramComponent: FC = () => {
   } = useEditModal<VaccineCourseFragment>();
 
   // this will open the edit modal, if the `edit` query parameter is set
-  // to a valid sensor ID. On opening, the query param is removed to
-  // prevent a loop which would happen if a sensor was edited
+  // to a valid vaccine course ID. On opening, the query param is removed to
+  // prevent a loop which would happen if a vaccine course was edited
   useEffect(() => {
     const vaccineCourseId = (urlQuery['edit'] as string) ?? '';
     if (vaccineCourseId) {
