@@ -16,8 +16,7 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { useMemo } from 'react';
-import { FC } from 'react';
+import React, { FC, useMemo } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
