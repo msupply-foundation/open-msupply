@@ -38,7 +38,7 @@ export const DetailView: FC<DetailViewProps> = ({
 }) => {
   const t = useTranslation('dispensary');
   const navigate = useNavigate();
-  const { setSuffix, urlParts } = useBreadcrumbs();
+  const { setBreadcrumbRenderers, urlParts } = useBreadcrumbs();
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const id = useContactTraces.utils.idFromUrl();
@@ -125,27 +125,29 @@ export const DetailView: FC<DetailViewProps> = ({
 
   useEffect(() => {
     if (contactData) {
-      setSuffix(
-        <span key="patient-contact-trace">
-          <Breadcrumb
-            to={RouteBuilder.create(AppRoute.Dispensary)
-              .addPart(AppRoute.Patients)
-              .addPart(contactData.patient.id)
-              .addQuery({ tab: PatientTabValue.ContactTracing })
-              .build()}
-          >
-            {getLocalisedFullName(
-              contactData.patient?.firstName,
-              contactData.patient?.lastName
-            )}
-          </Breadcrumb>
-          <span>{` / ${contactData.programName} - ${dateFormat.localisedDate(
-            contactData.documentData.datetime
-          )}`}</span>
-        </span>
-      );
+      setBreadcrumbRenderers({
+        1: () => (
+          <span key="patient-contact-trace">
+            <Breadcrumb
+              to={RouteBuilder.create(AppRoute.Dispensary)
+                .addPart(AppRoute.Patients)
+                .addPart(contactData.patient.id)
+                .addQuery({ tab: PatientTabValue.ContactTracing })
+                .build()}
+            >
+              {getLocalisedFullName(
+                contactData.patient?.firstName,
+                contactData.patient?.lastName
+              )}
+            </Breadcrumb>
+            <span>{` / ${contactData.programName} - ${dateFormat.localisedDate(
+              contactData.documentData.datetime
+            )}`}</span>
+          </span>
+        ),
+      });
     }
-  }, [contactData, setSuffix]);
+  }, [contactData, setBreadcrumbRenderers, getLocalisedFullName, dateFormat]);
 
   const documentData =
     (data as ContactTrace) ?? contactData?.documentData ?? {};

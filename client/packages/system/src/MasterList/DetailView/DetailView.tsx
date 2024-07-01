@@ -18,11 +18,11 @@ export const MasterListDetailView: FC = () => {
   const { data, isLoading } = useMasterList.document.get();
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const { setSuffix } = useBreadcrumbs();
+  const { setBreadcrumbRenderers } = useBreadcrumbs();
 
   useEffect(() => {
-    setSuffix(data?.name ?? '');
-  }, [data]);
+    setBreadcrumbRenderers({ 1: () => data?.name ?? '' });
+  }, [data, setBreadcrumbRenderers]);
 
   if (isLoading) return <DetailViewSkeleton />;
 

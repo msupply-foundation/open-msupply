@@ -33,7 +33,7 @@ export const PatientSummary: FC = () => {
   const { data: patient } = usePatient.document.get(patientId);
   const { localisedDate } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
-  const { setSuffix } = useBreadcrumbs();
+  const { setBreadcrumbRenderers } = useBreadcrumbs();
   const t = useTranslation('dispensary');
   const formatDateOfBirth = (dateOfBirth: string | null) => {
     const dob = DateUtils.getDateOrNull(dateOfBirth);
@@ -43,12 +43,12 @@ export const PatientSummary: FC = () => {
       : `${localisedDate(dob)} (${t('label.age')}: ${DateUtils.age(dob)})`;
   };
   useEffect(() => {
-    if (patient)
-      setSuffix(
-        `${getLocalisedFullName(patient?.firstName, patient?.lastName)}`
-      );
-    else setSuffix(t('label.new-patient'));
-  }, [patient]);
+    const patientName = patient
+      ? getLocalisedFullName(patient.firstName, patient.lastName)
+      : t('label.new-patient');
+
+    setBreadcrumbRenderers({ 1: () => patientName });
+  }, [patient, t, setBreadcrumbRenderers, getLocalisedFullName]);
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>

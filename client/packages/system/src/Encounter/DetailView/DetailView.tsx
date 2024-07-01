@@ -136,7 +136,7 @@ export const DetailView: FC = () => {
   const t = useTranslation('dispensary');
   const id = useEncounter.utils.idFromUrl();
   const navigate = useNavigate();
-  const { setSuffix } = useBreadcrumbs();
+  const { setBreadcrumbRenderers } = useBreadcrumbs();
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const [logicalStatus, setLogicalStatus] = useState<string | undefined>(
@@ -220,25 +220,27 @@ export const DetailView: FC = () => {
 
   useEffect(() => {
     if (encounter) {
-      setSuffix(
-        <span key="patient-encounter">
-          <Breadcrumb
-            to={RouteBuilder.create(AppRoute.Dispensary)
-              .addPart(AppRoute.Patients)
-              .addPart(encounter.patient.id)
-              .addQuery({
-                tab: PatientTabValue.Encounters,
-              })
-              .build()}
-          >
-            {getPatientBreadcrumbSuffix(encounter, getLocalisedFullName)}
-          </Breadcrumb>
-          <span>{` / ${encounter.document.documentRegistry
-            ?.name} - ${dateFormat.localisedDate(
-            encounter.startDatetime
-          )}`}</span>
-        </span>
-      );
+      setBreadcrumbRenderers({
+        1: () => (
+          <span key="patient-encounter">
+            <Breadcrumb
+              to={RouteBuilder.create(AppRoute.Dispensary)
+                .addPart(AppRoute.Patients)
+                .addPart(encounter.patient.id)
+                .addQuery({
+                  tab: PatientTabValue.Encounters,
+                })
+                .build()}
+            >
+              {getPatientBreadcrumbSuffix(encounter, getLocalisedFullName)}
+            </Breadcrumb>
+            <span>{` / ${encounter.document.documentRegistry
+              ?.name} - ${dateFormat.localisedDate(
+              encounter.startDatetime
+            )}`}</span>
+          </span>
+        ),
+      });
 
       if (encounter.status === EncounterNodeStatus.Pending) {
         const datetime = new Date(encounter.startDatetime);
