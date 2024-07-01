@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type NameRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
 export type NameFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, properties: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
@@ -180,70 +179,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockNamesQuery((req, res, ctx) => {
- *   const { storeId, key, desc, first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ names })
- *   )
- * })
- */
-export const mockNamesQuery = (resolver: ResponseResolver<GraphQLRequest<NamesQueryVariables>, GraphQLContext<NamesQuery>, any>) =>
-  graphql.query<NamesQuery, NamesQueryVariables>(
-    'names',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockNameByIdQuery((req, res, ctx) => {
- *   const { storeId, nameId } = req.variables;
- *   return res(
- *     ctx.data({ names })
- *   )
- * })
- */
-export const mockNameByIdQuery = (resolver: ResponseResolver<GraphQLRequest<NameByIdQueryVariables>, GraphQLContext<NameByIdQuery>, any>) =>
-  graphql.query<NameByIdQuery, NameByIdQueryVariables>(
-    'nameById',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockNamePropertiesQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ nameProperties })
- *   )
- * })
- */
-export const mockNamePropertiesQuery = (resolver: ResponseResolver<GraphQLRequest<NamePropertiesQueryVariables>, GraphQLContext<NamePropertiesQuery>, any>) =>
-  graphql.query<NamePropertiesQuery, NamePropertiesQueryVariables>(
-    'nameProperties',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateNamePropertiesMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateNameProperties })
- *   )
- * })
- */
-export const mockUpdateNamePropertiesMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateNamePropertiesMutationVariables>, GraphQLContext<UpdateNamePropertiesMutation>, any>) =>
-  graphql.mutation<UpdateNamePropertiesMutation, UpdateNamePropertiesMutationVariables>(
-    'updateNameProperties',
-    resolver
-  )

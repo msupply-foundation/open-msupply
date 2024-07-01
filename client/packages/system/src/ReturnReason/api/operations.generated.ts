@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ReturnReasonFragment = { __typename: 'ReturnReasonNode', id: string, reason: string };
 
 export type ReturnReasonsQueryVariables = Types.Exact<{
@@ -49,20 +48,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockReturnReasonsQuery((req, res, ctx) => {
- *   const { sort, filter } = req.variables;
- *   return res(
- *     ctx.data({ returnReasons })
- *   )
- * })
- */
-export const mockReturnReasonsQuery = (resolver: ResponseResolver<GraphQLRequest<ReturnReasonsQueryVariables>, GraphQLContext<ReturnReasonsQuery>, any>) =>
-  graphql.query<ReturnReasonsQuery, ReturnReasonsQueryVariables>(
-    'returnReasons',
-    resolver
-  )
