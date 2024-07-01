@@ -197,7 +197,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
               setExpandedItems([...expandedItems, true]);
               addItem(
                 path,
-                uischema.defaultNewItem ?? createDefaultValue(schema)
+                uischema.defaultNewItem ?? createDefaultValue({})
               )();
             }}
           />
