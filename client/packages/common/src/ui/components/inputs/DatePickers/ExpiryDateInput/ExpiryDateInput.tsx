@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useRef } from 'react';
 import { BaseDatePickerInput } from '../BaseDatePickerInput';
 import lastDayOfMonth from 'date-fns/lastDayOfMonth';
 
@@ -13,7 +13,7 @@ export const ExpiryDateInput: FC<ExpiryDateInputProps> = ({
   onChange,
   disabled,
 }) => {
-  const [date, setDate] = React.useState<Date | null>(value);
+  const pickerOpen = useRef(false);
 
   return (
     <BaseDatePickerInput
@@ -22,18 +22,20 @@ export const ExpiryDateInput: FC<ExpiryDateInputProps> = ({
       format="dd/MM/yyyy"
       value={value}
       onChange={d => {
-        setDate(d);
+        // Only set the date to last day of month if done through the picker,
+        // not the keyboard
         if (
+          pickerOpen.current &&
           d &&
-          date &&
-          (d.getMonth() !== date.getMonth() ||
-            d.getFullYear() !== date.getFullYear())
+          (d?.getMonth() !== value?.getMonth() ||
+            d?.getFullYear() !== value?.getFullYear())
         ) {
           onChange(lastDayOfMonth(d));
         } else {
           onChange(d);
         }
       }}
+      setIsOpen={open => (pickerOpen.current = open)}
     />
   );
 };
