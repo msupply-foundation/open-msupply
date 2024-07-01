@@ -119,7 +119,7 @@ impl SynchroniserV6 {
                     cursor_controller.update(t_con, last_cursor_in_batch + 1)
                 })
                 .map_err(|e| e.to_inner_error())?;
-
+            // TODO it's likely that above update to cursor is redundant, this comment is to record this observation in a PR https://github.com/msupply-foundation/open-msupply/pull/4283/files/ac66350bc5aee585a10c2a8450e8d2abeffc527b#r1656344877
             cursor_controller.update(connection, end_cursor + 1)?;
 
             if is_last_batch {
