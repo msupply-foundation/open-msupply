@@ -16,9 +16,10 @@ import {
   Currencies,
   useAuthContext,
   UNDEFINED_STRING_VALUE,
+  TaxEdit,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
-import { InboundServiceLineEdit, TaxEdit } from '../modals';
+import { InboundServiceLineEdit } from '../modals';
 import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const PricingSectionComponent = () => {
