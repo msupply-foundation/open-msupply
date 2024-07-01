@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ReportRowFragment = { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null };
 
 export type ReportsQueryVariables = Types.Exact<{
@@ -100,37 +99,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockReportsQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter } = req.variables;
- *   return res(
- *     ctx.data({ reports })
- *   )
- * })
- */
-export const mockReportsQuery = (resolver: ResponseResolver<GraphQLRequest<ReportsQueryVariables>, GraphQLContext<ReportsQuery>, any>) =>
-  graphql.query<ReportsQuery, ReportsQueryVariables>(
-    'reports',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockPrintReportQuery((req, res, ctx) => {
- *   const { storeId, reportId, dataId, arguments, format, sort } = req.variables;
- *   return res(
- *     ctx.data({ printReport })
- *   )
- * })
- */
-export const mockPrintReportQuery = (resolver: ResponseResolver<GraphQLRequest<PrintReportQueryVariables>, GraphQLContext<PrintReportQuery>, any>) =>
-  graphql.query<PrintReportQuery, PrintReportQueryVariables>(
-    'printReport',
-    resolver
-  )

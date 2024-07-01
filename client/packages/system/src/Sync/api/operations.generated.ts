@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string };
 
 export type SyncSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
@@ -201,101 +200,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockSyncSettingsQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ syncSettings })
- *   )
- * })
- */
-export const mockSyncSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<SyncSettingsQueryVariables>, GraphQLContext<SyncSettingsQuery>, any>) =>
-  graphql.query<SyncSettingsQuery, SyncSettingsQueryVariables>(
-    'syncSettings',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInitialiseSiteMutation((req, res, ctx) => {
- *   const { syncSettings } = req.variables;
- *   return res(
- *     ctx.data({ initialiseSite })
- *   )
- * })
- */
-export const mockInitialiseSiteMutation = (resolver: ResponseResolver<GraphQLRequest<InitialiseSiteMutationVariables>, GraphQLContext<InitialiseSiteMutation>, any>) =>
-  graphql.mutation<InitialiseSiteMutation, InitialiseSiteMutationVariables>(
-    'initialiseSite',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateSyncSettingsMutation((req, res, ctx) => {
- *   const { syncSettings } = req.variables;
- *   return res(
- *     ctx.data({ updateSyncSettings })
- *   )
- * })
- */
-export const mockUpdateSyncSettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateSyncSettingsMutationVariables>, GraphQLContext<UpdateSyncSettingsMutation>, any>) =>
-  graphql.mutation<UpdateSyncSettingsMutation, UpdateSyncSettingsMutationVariables>(
-    'updateSyncSettings',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockSyncInfoQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ latestSyncStatus, numberOfRecordsInPushQueue })
- *   )
- * })
- */
-export const mockSyncInfoQuery = (resolver: ResponseResolver<GraphQLRequest<SyncInfoQueryVariables>, GraphQLContext<SyncInfoQuery>, any>) =>
-  graphql.query<SyncInfoQuery, SyncInfoQueryVariables>(
-    'syncInfo',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockSyncStatusQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ latestSyncStatus })
- *   )
- * })
- */
-export const mockSyncStatusQuery = (resolver: ResponseResolver<GraphQLRequest<SyncStatusQueryVariables>, GraphQLContext<SyncStatusQuery>, any>) =>
-  graphql.query<SyncStatusQuery, SyncStatusQueryVariables>(
-    'syncStatus',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockManualSyncMutation((req, res, ctx) => {
- *   return res(
- *     ctx.data({ manualSync })
- *   )
- * })
- */
-export const mockManualSyncMutation = (resolver: ResponseResolver<GraphQLRequest<ManualSyncMutationVariables>, GraphQLContext<ManualSyncMutation>, any>) =>
-  graphql.mutation<ManualSyncMutation, ManualSyncMutationVariables>(
-    'manualSync',
-    resolver
-  )

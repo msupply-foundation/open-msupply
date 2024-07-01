@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type MasterListItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
 export type MasterListLineFragment = { __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } };
@@ -166,71 +165,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockMasterListsQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ masterLists })
- *   )
- * })
- */
-export const mockMasterListsQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsQueryVariables>, GraphQLContext<MasterListsQuery>, any>) =>
-  graphql.query<MasterListsQuery, MasterListsQueryVariables>(
-    'masterLists',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockMasterListsByItemIdQuery((req, res, ctx) => {
- *   const { storeId, itemId } = req.variables;
- *   return res(
- *     ctx.data({ masterLists })
- *   )
- * })
- */
-export const mockMasterListsByItemIdQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsByItemIdQueryVariables>, GraphQLContext<MasterListsByItemIdQuery>, any>) =>
-  graphql.query<MasterListsByItemIdQuery, MasterListsByItemIdQueryVariables>(
-    'masterListsByItemId',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockMasterListQuery((req, res, ctx) => {
- *   const { filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ masterLists })
- *   )
- * })
- */
-export const mockMasterListQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListQueryVariables>, GraphQLContext<MasterListQuery>, any>) =>
-  graphql.query<MasterListQuery, MasterListQueryVariables>(
-    'masterList',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockMasterListLinesQuery((req, res, ctx) => {
- *   const { storeId, masterListId, page, sort, filter } = req.variables;
- *   return res(
- *     ctx.data({ masterListLines })
- *   )
- * })
- */
-export const mockMasterListLinesQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListLinesQueryVariables>, GraphQLContext<MasterListLinesQuery>, any>) =>
-  graphql.query<MasterListLinesQuery, MasterListLinesQueryVariables>(
-    'masterListLines',
-    resolver
-  )

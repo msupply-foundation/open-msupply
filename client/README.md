@@ -14,7 +14,7 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 ## Usage
 
-- Install dependencies (Using node v16+ and using yarn):
+- Install dependencies (Using node v20+ and using yarn):
 
 `yarn install`
 
