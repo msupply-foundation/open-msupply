@@ -1,14 +1,17 @@
-import React, { FC, useState } from 'react';
+import React, { FC, ReactElement, useState } from 'react';
 import {
   ColumnDescription,
   DataTable,
   Grid,
+  HeaderProps,
   NamePropertyNode,
   NothingHere,
   Pagination,
   PropertyNode,
+  RecordWithId,
   SearchBar,
   TooltipTextCell,
+  Typography,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -18,6 +21,27 @@ interface ImportReviewDataTableProps {
   rows: ImportRow[];
   properties: NamePropertyNode[] | undefined;
 }
+
+const PropertyHeader = <T extends RecordWithId>({
+  column,
+}: HeaderProps<T>): ReactElement => {
+  const t = useTranslation();
+  const header = column.label === '' ? '' : t(column.label, column.labelProps);
+  return (
+    <Typography
+      sx={{
+        display: '-webkit-box',
+        overflow: 'ellipsis',
+        fontWeight: 'bold',
+        WebkitBoxOrient: 'vertical',
+        WebkitLineClamp: 2,
+      }}
+    >
+      {header}
+    </Typography>
+  );
+};
+
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   rows,
   properties,
@@ -39,7 +63,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   const columnDescriptions: ColumnDescription<ImportRow>[] = [
     {
       key: 'code',
-      width: 50,
+      width: 80,
       sortable: false,
       label: 'label.code',
     },
@@ -54,11 +78,14 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   propertyNodes?.map(property =>
     columnDescriptions.push({
       key: property.key,
-      width: 100,
+      width: 150,
       sortable: false,
       label: undefined,
-      labelProps: { defaultValue: property.name },
+      labelProps: {
+        defaultValue: property.name,
+      },
       Cell: TooltipTextCell,
+      Header: PropertyHeader,
     })
   );
 
