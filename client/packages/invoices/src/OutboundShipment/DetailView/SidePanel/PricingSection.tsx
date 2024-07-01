@@ -49,7 +49,6 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
     serviceTotalBeforeTax,
     serviceTotalAfterTax
   );
-  console.log('tax: ', tax);
   const totalTax = PricingUtils.taxAmount(
     serviceTotalBeforeTax,
     serviceTotalAfterTax
