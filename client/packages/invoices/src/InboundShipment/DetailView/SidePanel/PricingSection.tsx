@@ -59,6 +59,11 @@ export const PricingSectionComponent = () => {
     pricing?.serviceTotalAfterTax
   );
 
+  const stockTaxAmount = PricingUtils.taxAmount(
+    pricing?.stockTotalBeforeTax,
+    pricing?.stockTotalAfterTax
+  );
+
   const disableServiceTax =
     serviceLines
       ?.map(line => line.totalBeforeTax)
@@ -97,7 +102,7 @@ export const PricingSectionComponent = () => {
               }}
             />
           </PanelField>
-          <PanelField>{c(taxPercentage ?? 0).format()}</PanelField>
+          <PanelField>{c(stockTaxAmount).format()}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>
