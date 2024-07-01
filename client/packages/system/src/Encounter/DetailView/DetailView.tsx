@@ -136,7 +136,7 @@ export const DetailView: FC = () => {
   const t = useTranslation('dispensary');
   const id = useEncounter.utils.idFromUrl();
   const navigate = useNavigate();
-  const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
+  const { setSuffix } = useBreadcrumbs();
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const [logicalStatus, setLogicalStatus] = useState<string | undefined>(

@@ -20,6 +20,7 @@ import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { AppFooterComponent } from './AppFooterComponent';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
+import { useImmunisationProgram } from '../api';
 
 const MAX_VACCINE_DOSES = 20;
 
@@ -94,7 +95,7 @@ const Row = ({
 );
 
 export const VaccineCourseView: FC = () => {
-  const { setSuffix, navigateUpOne } = useBreadcrumbs();
+  const { setBreadcrumbRenderers, navigateUpOne } = useBreadcrumbs();
   const t = useTranslation('coldchain');
   const { id } = useParams();
   const {
@@ -104,6 +105,9 @@ export const VaccineCourseView: FC = () => {
     query: { data, isLoading },
     isDirty,
   } = useVaccineCourse(id);
+  const {
+    query: { data: programData },
+  } = useImmunisationProgram(t, data?.programId ?? '');
   const { data: demographicData } = useDemographicIndicators();
 
   // const defaultRow: VaccineCourseScheduleNode = {
@@ -177,8 +181,13 @@ export const VaccineCourseView: FC = () => {
   };
 
   useEffect(() => {
-    setSuffix(data?.name ?? '');
-  }, [data?.name, setSuffix]);
+    setBreadcrumbRenderers({
+      1: () => programData?.name ?? '',
+      2: () => data?.name ?? '',
+    });
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.name, programData?.name]);
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),

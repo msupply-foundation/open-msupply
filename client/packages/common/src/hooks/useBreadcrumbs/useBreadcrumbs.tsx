@@ -12,23 +12,36 @@ export interface UrlPart {
 
 type BreadcrumbState = {
   setSuffix: (suffix?: string | React.ReactElement) => void;
+  setBreadcrumbRenderers: (
+    renderers?: Record<number, (part: UrlPart) => string | React.ReactElement>
+  ) => void;
   suffix?: string | React.ReactElement;
   setUrlParts: (urlParts: UrlPart[]) => void;
   urlParts: UrlPart[];
+  renderers: Record<number, (part: UrlPart) => string | React.ReactElement>;
 };
 
 const useBreadcrumbState = create<BreadcrumbState>(set => ({
   setSuffix: suffix => set(state => ({ ...state, suffix })),
+  setBreadcrumbRenderers: renderers => set(state => ({ ...state, renderers })),
   suffix: undefined,
   setUrlParts: (urlParts: UrlPart[]) => set(state => ({ ...state, urlParts })),
   urlParts: [],
+  renderers: {},
 }));
 
 export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = useBreadcrumbState();
-  const { urlParts, setUrlParts, setSuffix, suffix } = state;
+  const {
+    urlParts,
+    setUrlParts,
+    setSuffix,
+    suffix,
+    renderers,
+    setBreadcrumbRenderers,
+  } = state;
   const { pathname } = location;
 
   useEffect(() => {
@@ -55,5 +68,12 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
     navigate(urlParts[urlParts.length - 2]?.path as string);
   };
 
-  return { urlParts, navigateUpOne, suffix, setSuffix };
+  return {
+    urlParts,
+    navigateUpOne,
+    suffix,
+    setSuffix,
+    renderers,
+    setBreadcrumbRenderers,
+  };
 };
