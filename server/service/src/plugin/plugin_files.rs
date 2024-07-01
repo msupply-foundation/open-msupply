@@ -52,7 +52,7 @@ impl PluginFileService {
         let mut files = Vec::new();
         let plugin_base_dir = get_plugin_dir(base_dir)?;
         if let Ok(false) = plugin_base_dir.clone().try_exists() {
-            println!("no plugin dir found in base_dir");
+            log::warn!("no plugin dir found in base_dir");
             return Ok(files);
         }
         let paths = fs::read_dir(plugin_base_dir)?;
