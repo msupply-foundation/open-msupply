@@ -67,7 +67,7 @@ pub(crate) struct ParsingSyncRecordError {
 }
 
 impl CommonSyncRecord {
-    pub(crate) fn to_buffer_row(
+    fn to_buffer_row(
         self,
         source_site_id: Option<i32>,
     ) -> Result<SyncBufferRow, ParsingSyncRecordError> {
@@ -105,18 +105,17 @@ impl CommonSyncRecord {
             source_site_id,
         })
     }
+
+    pub(crate) fn to_buffer_rows(
+        rows: Vec<CommonSyncRecord>,
+    ) -> Result<Vec<SyncBufferRow>, ParsingSyncRecordError> {
+        rows.into_iter().map(|r| r.to_buffer_row(None)).collect()
+    }
 }
 
 impl RemoteSyncBatchV5 {
     pub(crate) fn extract_sync_ids(&self) -> Vec<String> {
         self.data.iter().map(|r| r.sync_id.clone()).collect()
-    }
-
-    pub(crate) fn to_sync_buffer_rows(self) -> Result<Vec<SyncBufferRow>, ParsingSyncRecordError> {
-        self.data
-            .into_iter()
-            .map(|r| r.record.to_buffer_row(None))
-            .collect()
     }
 }
 
@@ -158,72 +157,56 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn test_remote_sync_batch_v5_to_sync_buffer_rows() {
-        let batch = RemoteSyncBatchV5 {
-            queue_length: 0,
-            data: vec![
-                RemoteSyncRecordV5 {
-                    sync_id: "test1".to_string(),
-                    record: CommonSyncRecord {
-                        table_name: "item".to_string(),
-                        record_id: "itemA".to_string(),
-                        action: SyncAction::Insert,
-                        record_data: json!({
-                            "ID": "itemA",
-                            "item_name": "itemA",
-                            "code": "itemA",
-                            "unit_ID": "",
-                            "type_of": "general",
-                            "default_pack_size": 1,
-                        }),
-                    },
-                },
-                RemoteSyncRecordV5 {
-                    sync_id: "test2".to_string(),
-                    record: CommonSyncRecord {
-                        table_name: "item".to_string(),
-                        record_id: "itemA".to_string(),
-                        action: SyncAction::Update,
-                        record_data: json!({
-                            "ID": "itemA",
-                            "item_name": "itemA",
-                            "code": "itemA",
-                            "unit_ID": "",
-                            "type_of": "general",
-                            "default_pack_size": 1,
-                        }),
-                    },
-                },
-                RemoteSyncRecordV5 {
-                    sync_id: "test3".to_string(),
-                    record: CommonSyncRecord {
-                        table_name: "item".to_string(),
-                        record_id: "itemB".to_string(),
-                        action: SyncAction::Insert,
-                        record_data: json!({
-                            "ID": "itemB",
-                            "item_name": "itemB",
-                            "code": "itemB",
-                            "unit_ID": "",
-                            "type_of": "general",
-                            "default_pack_size": 1,
-                        }),
-                    },
-                },
-                RemoteSyncRecordV5 {
-                    sync_id: "test4".to_string(),
-                    record: CommonSyncRecord {
-                        table_name: "item".to_string(),
-                        record_id: "itemA".to_string(),
-                        action: SyncAction::Merge,
-                        record_data: json!({
-                            "mergeIdToKeep": "itemA", "mergeIdToDelete": "itemB"
-                        }),
-                    },
-                },
-            ],
-        }
-        .to_sync_buffer_rows()
+    async fn test_common_records_to_sync_buffer_rows() {
+        let batch = CommonSyncRecord::to_buffer_rows(vec![
+            CommonSyncRecord {
+                table_name: "item".to_string(),
+                record_id: "itemA".to_string(),
+                action: SyncAction::Insert,
+                record_data: json!({
+                    "ID": "itemA",
+                    "item_name": "itemA",
+                    "code": "itemA",
+                    "unit_ID": "",
+                    "type_of": "general",
+                    "default_pack_size": 1,
+                }),
+            },
+            CommonSyncRecord {
+                table_name: "item".to_string(),
+                record_id: "itemA".to_string(),
+                action: SyncAction::Update,
+                record_data: json!({
+                    "ID": "itemA",
+                    "item_name": "itemA",
+                    "code": "itemA",
+                    "unit_ID": "",
+                    "type_of": "general",
+                    "default_pack_size": 1,
+                }),
+            },
+            CommonSyncRecord {
+                table_name: "item".to_string(),
+                record_id: "itemB".to_string(),
+                action: SyncAction::Insert,
+                record_data: json!({
+                    "ID": "itemB",
+                    "item_name": "itemB",
+                    "code": "itemB",
+                    "unit_ID": "",
+                    "type_of": "general",
+                    "default_pack_size": 1,
+                }),
+            },
+            CommonSyncRecord {
+                table_name: "item".to_string(),
+                record_id: "itemA".to_string(),
+                action: SyncAction::Merge,
+                record_data: json!({
+                    "mergeIdToKeep": "itemA", "mergeIdToDelete": "itemB"
+                }),
+            },
+        ])
         .unwrap();
 
         let (_, connection, _, _) = setup_all(
