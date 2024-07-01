@@ -48,21 +48,8 @@ export const Breadcrumbs = ({
       : parseTitle(part);
 
     const isLastPart = index === urlParts.length - 1;
-    // TODO: possibly dont need span if already react node
-    // todo merge with part disabled?
-    if (isLastPart) {
-      return <span key={part.key}>{displayValue}</span>;
-      // switch (true) {
-      //   case !suffix:
-      //     return <span key={part.key}>{displayValue}</span>;
-      //   case typeof suffix === 'string':
-      //     return <span key={part.key}>{suffix}</span>;
-      //   default:
-      //     return suffix;
-      // }
-    }
 
-    if (part.disabled) {
+    if (isLastPart || part.disabled) {
       return <span key={part.key}>{displayValue}</span>;
     }
 

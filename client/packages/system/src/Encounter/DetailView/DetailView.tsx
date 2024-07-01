@@ -222,7 +222,7 @@ export const DetailView: FC = () => {
     if (encounter) {
       setBreadcrumbRenderers({
         1: () => (
-          <span key="patient-encounter">
+          <>
             <Breadcrumb
               to={RouteBuilder.create(AppRoute.Dispensary)
                 .addPart(AppRoute.Patients)
@@ -238,7 +238,7 @@ export const DetailView: FC = () => {
               ?.name} - ${dateFormat.localisedDate(
               encounter.startDatetime
             )}`}</span>
-          </span>
+          </>
         ),
       });
 
