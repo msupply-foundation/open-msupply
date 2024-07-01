@@ -93,8 +93,17 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     pagination.offset + pagination.first
   );
 
+  const tableHeight = window.innerHeight - 360;
+
   return (
-    <Grid flexDirection="column" display="flex" gap={0}>
+    <Grid
+      flexDirection="column"
+      display="flex"
+      gap={0}
+      height={`${tableHeight}px`}
+      minHeight="350px"
+      maxHeight="700px"
+    >
       <SearchBar
         placeholder={t('messages.search')}
         value={searchString}
