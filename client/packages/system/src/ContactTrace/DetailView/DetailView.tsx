@@ -127,7 +127,7 @@ export const DetailView: FC<DetailViewProps> = ({
     if (contactData) {
       setBreadcrumbRenderers({
         1: () => (
-          <span key="patient-contact-trace">
+          <>
             <Breadcrumb
               to={RouteBuilder.create(AppRoute.Dispensary)
                 .addPart(AppRoute.Patients)
@@ -143,7 +143,7 @@ export const DetailView: FC<DetailViewProps> = ({
             <span>{` / ${contactData.programName} - ${dateFormat.localisedDate(
               contactData.documentData.datetime
             )}`}</span>
-          </span>
+          </>
         ),
       });
     }
