@@ -242,7 +242,7 @@ fn generate_update_inventory_adjustment_reason(
 
 /// Returns new stock line and matching invoice line
 fn generate_stock_in_out_or_update(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     store_id: &str,
     inventory_addition_id: &str,
     inventory_reduction_id: &str,
@@ -302,8 +302,10 @@ fn generate_stock_in_out_or_update(
 
     let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
         invoice_line_id.clone(),
-        row.inventory_adjustment_reason_id,
+        row.inventory_adjustment_reason_id.clone(),
     );
+
+    log_stock_changes(ctx, stock_line_row.clone(), row.clone())?;
 
     let stock_in_or_out_line = if delta > 0.0 {
         StockChange::StockIn(InsertStockInLine {
@@ -339,8 +341,8 @@ fn generate_stock_in_out_or_update(
             batch: row.batch,
             pack_size: row.pack_size,
             expiry_date: row.expiry_date,
-            cost_price_per_pack: None,
-            sell_price_per_pack: None,
+            cost_price_per_pack: Some(cost_price_per_pack),
+            sell_price_per_pack: Some(sell_price_per_pack),
             total_before_tax: None,
             tax_percentage: None,
         })
@@ -348,7 +350,7 @@ fn generate_stock_in_out_or_update(
 
     // if reducing to 0, create movement to exit location
     let location_movement = if counted_number_of_packs == 0.0 {
-        generate_exit_location_movements(connection, store_id, stock_line.clone())?
+        generate_exit_location_movements(&ctx.connection, store_id, stock_line.clone())?
     } else {
         None
     };
@@ -359,6 +361,82 @@ fn generate_stock_in_out_or_update(
         stocktake_line: None,
         update_inventory_adjustment_reason,
     })
+}
+
+fn log_stock_changes(
+    ctx: &ServiceContext,
+    existing: StockLineRow,
+    new: StocktakeLineRow,
+) -> Result<(), RepositoryError> {
+    if existing.location_id != new.location_id {
+        let previous_location = if let Some(location_id) = existing.location_id {
+            Some(location_id)
+        } else {
+            Some("-".to_string())
+        };
+
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockLocationChange,
+            Some(existing.id.to_owned()),
+            previous_location,
+            new.location_id,
+        )?;
+    }
+    if existing.batch != new.batch {
+        let previous_batch = if let Some(batch) = existing.batch {
+            Some(batch)
+        } else {
+            Some("-".to_string())
+        };
+
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockBatchChange,
+            Some(existing.id.to_owned()),
+            previous_batch,
+            new.batch,
+        )?;
+    }
+    if let Some(cost_price_per_pack) = new.cost_price_per_pack {
+        if existing.cost_price_per_pack != cost_price_per_pack {
+            activity_log_entry(
+                ctx,
+                ActivityLogType::StockCostPriceChange,
+                Some(existing.id.to_owned()),
+                Some(existing.cost_price_per_pack.to_string()),
+                Some(cost_price_per_pack.to_string()),
+            )?;
+        }
+    }
+    if let Some(sell_price_per_pack) = new.sell_price_per_pack {
+        if existing.sell_price_per_pack != sell_price_per_pack {
+            activity_log_entry(
+                ctx,
+                ActivityLogType::StockSellPriceChange,
+                Some(existing.id.to_owned()),
+                Some(existing.sell_price_per_pack.to_string()),
+                Some(sell_price_per_pack.to_string()),
+            )?;
+        }
+    }
+    if existing.expiry_date != new.expiry_date {
+        let previous_expiry_date = if let Some(expiry_date) = existing.expiry_date {
+            Some(expiry_date.to_string())
+        } else {
+            Some("-".to_string())
+        };
+
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockExpiryDateChange,
+            Some(existing.id.to_owned()),
+            previous_expiry_date,
+            new.expiry_date.map(|date| date.to_string()),
+        )?;
+    }
+
+    Ok(())
 }
 
 fn generate_new_stock_line(
@@ -579,7 +657,7 @@ fn generate(
         } = if let Some(ref stock_line) = stocktake_line.stock_line {
             // adjust existing stock line
             generate_stock_in_out_or_update(
-                connection,
+                ctx,
                 store_id,
                 &inventory_addition_id,
                 &inventory_reduction_id,
