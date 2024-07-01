@@ -50,8 +50,20 @@ export const BaseDatePickerInput: FC<
     label?: string;
     onError?: (validationError: string, date?: Date | null) => void;
     textFieldProps?: TextFieldProps;
+    // This allows a calling component to know whether the date was changed via
+    // keyboard input or the picker UI
+    setIsOpen?: (open: boolean) => void;
   }
-> = ({ error, onChange, onError, width, label, textFieldProps, ...props }) => {
+> = ({
+  error,
+  onChange,
+  onError,
+  width,
+  label,
+  textFieldProps,
+  setIsOpen,
+  ...props
+}) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
@@ -62,6 +74,8 @@ export const BaseDatePickerInput: FC<
       slots={{
         textField: TextField,
       }}
+      onOpen={() => setIsOpen && setIsOpen(true)}
+      onClose={() => setIsOpen && setIsOpen(false)}
       onChange={(date, context) => {
         const { validationError } = context;
 
