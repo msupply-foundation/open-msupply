@@ -47,6 +47,7 @@ export type ImportRow = {
   catalogueItemCode: string | null | undefined;
   serialNumber: string | null | undefined;
   installationDate: string | null | undefined;
+  replacementDate: string | null | undefined;
   id: string;
   notes: string;
   errorMessage: string;
@@ -131,6 +132,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     fetchAsync,
     isLoading,
   } = useAssetData.document.listAll();
+  const { data: properties } = useAssetData.utils.properties();
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
@@ -149,7 +151,8 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         toExportEquipment(row, index)
       ),
       t,
-      isCentralServer
+      isCentralServer,
+      properties?.map(p => p.key) ?? []
     );
     FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
     success(t('success'))();
