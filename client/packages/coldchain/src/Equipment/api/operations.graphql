@@ -29,6 +29,8 @@ fragment AssetRow on AssetNode {
   assetType {
     name
   }
+  properties
+  catalogProperties
 }
 
 fragment Asset on AssetNode {
