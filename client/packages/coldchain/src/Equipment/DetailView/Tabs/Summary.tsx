@@ -12,6 +12,7 @@ import {
   ArrayUtils,
   Box,
   Formatter,
+  UNDEFINED_STRING_VALUE,
   useAuthContext,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
@@ -277,7 +278,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
           <Row label={t('label.reason')}>
             <BasicTextInput
-              value={draft.statusLog?.reason?.reason ?? '-'}
+              value={draft.statusLog?.reason?.reason ?? UNDEFINED_STRING_VALUE}
               disabled
               fullWidth
             />

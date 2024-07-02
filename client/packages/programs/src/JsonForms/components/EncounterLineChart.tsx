@@ -20,7 +20,7 @@ import {
 } from 'recharts';
 import { useEncounter } from '../../api';
 import { z } from 'zod';
-import { extractProperty } from '@common/utils';
+import { UNDEFINED_STRING_VALUE, extractProperty } from '@common/utils';
 
 export const encounterLineChartTester = rankWith(
   4,
@@ -172,7 +172,9 @@ const UIComponent = (props: ControlProps) => {
         />
         <YAxis domain={domain}>
           <Label
-            value={`${option.label ?? '-'} [${option.unit ?? '?'}]`}
+            value={`${option.label ?? UNDEFINED_STRING_VALUE} [${
+              option.unit ?? '?'
+            }]`}
             angle={-90}
             position={{ x: 0, y: 10 }}
           />
@@ -180,7 +182,7 @@ const UIComponent = (props: ControlProps) => {
         <Tooltip
           content={
             <DateTimeTooltip
-              name={option.label ?? '-'}
+              name={option.label ?? UNDEFINED_STRING_VALUE}
               unit={option.unit ?? '?'}
             />
           }

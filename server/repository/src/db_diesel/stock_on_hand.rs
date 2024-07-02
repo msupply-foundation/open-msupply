@@ -1,6 +1,6 @@
 use super::{stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl, StorageConnection};
 
-use crate::{diesel_macros::apply_equal_filter, EqualFilter, RepositoryError};
+use crate::{diesel_macros::apply_equal_filter, item_link, EqualFilter, RepositoryError};
 use diesel::prelude::*;
 
 table! {
@@ -12,6 +12,9 @@ table! {
         available_stock_on_hand -> Double,
     }
 }
+
+joinable!(stock_on_hand -> item_link (item_id));
+allow_tables_to_appear_in_same_query!(item_link, stock_on_hand);
 
 #[derive(Clone, Queryable, Debug, PartialEq)]
 pub struct StockOnHandRow {
