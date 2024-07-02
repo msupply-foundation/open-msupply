@@ -136,7 +136,7 @@ export const DetailView: FC = () => {
   const t = useTranslation('dispensary');
   const id = useEncounter.utils.idFromUrl();
   const navigate = useNavigate();
-  const { setBreadcrumbRenderers } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const [logicalStatus, setLogicalStatus] = useState<string | undefined>(
@@ -220,8 +220,8 @@ export const DetailView: FC = () => {
 
   useEffect(() => {
     if (encounter) {
-      setBreadcrumbRenderers({
-        1: () => (
+      setCustomBreadcrumbs({
+        1: (
           <>
             <Breadcrumb
               to={RouteBuilder.create(AppRoute.Dispensary)

@@ -11,26 +11,28 @@ export interface UrlPart {
 }
 
 type BreadcrumbState = {
-  setBreadcrumbRenderers: (
-    renderers?: Record<number, (part: UrlPart) => string | React.ReactElement>
+  setCustomBreadcrumbs: (
+    customBreadcrumbs?: Record<number, string | React.ReactElement>
   ) => void;
   setUrlParts: (urlParts: UrlPart[]) => void;
   urlParts: UrlPart[];
-  renderers: Record<number, (part: UrlPart) => string | React.ReactElement>;
+  customBreadcrumbs: Record<number, string | React.ReactElement>;
 };
 
 const useBreadcrumbState = create<BreadcrumbState>(set => ({
-  setBreadcrumbRenderers: renderers => set(state => ({ ...state, renderers })),
+  setCustomBreadcrumbs: customBreadcrumbs =>
+    set(state => ({ ...state, customBreadcrumbs })),
   setUrlParts: (urlParts: UrlPart[]) => set(state => ({ ...state, urlParts })),
   urlParts: [],
-  renderers: {},
+  customBreadcrumbs: {},
 }));
 
 export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = useBreadcrumbState();
-  const { urlParts, setUrlParts, renderers, setBreadcrumbRenderers } = state;
+  const { urlParts, setUrlParts, customBreadcrumbs, setCustomBreadcrumbs } =
+    state;
   const { pathname } = location;
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
     // if the path has actually changed
     if (currentPath === pathname) return;
 
-    setBreadcrumbRenderers({});
+    setCustomBreadcrumbs({});
 
     const parts = pathname.split('/');
     const newUrlParts: UrlPart[] = [];
@@ -69,7 +71,12 @@ export const useBreadcrumbs = (topLevelPaths: string[] = []) => {
   return {
     urlParts,
     navigateUpOne,
-    renderers,
-    setBreadcrumbRenderers,
+    customBreadcrumbs,
+    /**
+     * Accepts an object, of type `{ [key: number]: string | ReactNode }` where:
+     * - the key is the index of the breadcrumb that you wish the replace
+     * - the value is the text or React element to render
+     */
+    setCustomBreadcrumbs,
   };
 };

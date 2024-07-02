@@ -20,7 +20,8 @@ export const Breadcrumbs = ({
   topLevelPaths?: string[];
 }) => {
   const t = useTranslation('app');
-  const { urlParts, navigateUpOne, renderers } = useBreadcrumbs(topLevelPaths);
+  const { urlParts, navigateUpOne, customBreadcrumbs } =
+    useBreadcrumbs(topLevelPaths);
 
   useRegisterActions(
     [
@@ -41,11 +42,9 @@ export const Breadcrumbs = ({
       : t(part.key);
 
   const crumbs = urlParts.map((part, index) => {
-    const customRenderer = renderers[index];
+    const customCrumb = customBreadcrumbs[index];
 
-    const displayValue = customRenderer
-      ? customRenderer(part)
-      : parseTitle(part);
+    const displayValue = customCrumb ?? parseTitle(part);
 
     const isLastPart = index === urlParts.length - 1;
 

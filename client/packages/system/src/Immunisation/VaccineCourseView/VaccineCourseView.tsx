@@ -95,7 +95,7 @@ const Row = ({
 );
 
 export const VaccineCourseView: FC = () => {
-  const { setBreadcrumbRenderers, navigateUpOne } = useBreadcrumbs();
+  const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
   const t = useTranslation('coldchain');
   const { id } = useParams();
   const {
@@ -181,9 +181,9 @@ export const VaccineCourseView: FC = () => {
   };
 
   useEffect(() => {
-    setBreadcrumbRenderers({
-      1: () => programData?.name ?? '',
-      2: () => data?.name ?? '',
+    setCustomBreadcrumbs({
+      1: programData?.name ?? '',
+      2: data?.name ?? '',
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

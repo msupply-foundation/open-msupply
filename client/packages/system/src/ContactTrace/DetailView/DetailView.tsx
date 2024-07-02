@@ -38,7 +38,7 @@ export const DetailView: FC<DetailViewProps> = ({
 }) => {
   const t = useTranslation('dispensary');
   const navigate = useNavigate();
-  const { setBreadcrumbRenderers, urlParts } = useBreadcrumbs();
+  const { setCustomBreadcrumbs, urlParts } = useBreadcrumbs();
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const id = useContactTraces.utils.idFromUrl();
@@ -125,8 +125,8 @@ export const DetailView: FC<DetailViewProps> = ({
 
   useEffect(() => {
     if (contactData) {
-      setBreadcrumbRenderers({
-        1: () => (
+      setCustomBreadcrumbs({
+        1: (
           <>
             <Breadcrumb
               to={RouteBuilder.create(AppRoute.Dispensary)
@@ -147,7 +147,7 @@ export const DetailView: FC<DetailViewProps> = ({
         ),
       });
     }
-  }, [contactData, setBreadcrumbRenderers, getLocalisedFullName, dateFormat]);
+  }, [contactData, setCustomBreadcrumbs, getLocalisedFullName, dateFormat]);
 
   const documentData =
     (data as ContactTrace) ?? contactData?.documentData ?? {};

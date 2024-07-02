@@ -41,7 +41,7 @@ export const StockLineDetailView: React.FC = () => {
   } = useUrlQuery();
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { setBreadcrumbRenderers, navigateUpOne } = useBreadcrumbs();
+  const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
   const repackModalController = useToggle();
   const adjustmentModalController = useToggle();
@@ -53,8 +53,8 @@ export const StockLineDetailView: React.FC = () => {
   });
 
   useEffect(() => {
-    setBreadcrumbRenderers({ 1: () => data?.item.name ?? '' });
-  }, [setBreadcrumbRenderers, data]);
+    setCustomBreadcrumbs({ 1: data?.item.name ?? '' });
+  }, [setCustomBreadcrumbs, data]);
 
   const onPluginChange = () => setHasPluginChanged(true);
   useEffect(() => {
