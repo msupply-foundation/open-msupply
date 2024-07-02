@@ -11,7 +11,7 @@ mod inventory_adjustment_logtype;
 mod inventory_adjustment_permissions;
 mod invoice_rename_tax;
 mod linked_shipment;
-mod name_created_datetime;
+mod name_deleted_datetime;
 mod pack_variant;
 mod report_views;
 mod requisition_line_add_item_name;
@@ -52,7 +52,7 @@ impl Migration for V2_00_00 {
         run_without_change_log_updates(connection, |_| {
             stocktake_line_add_item_name::migrate(connection)
         })?;
-        name_created_datetime::migrate(connection)?;
+        name_deleted_datetime::migrate(connection)?;
         Ok(())
     }
 }
