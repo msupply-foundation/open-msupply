@@ -35,7 +35,7 @@ export const ProgramComponent: FC = () => {
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
   const t = useTranslation('catalogue');
-  const { setSuffix, navigateUpOne } = useBreadcrumbs();
+  const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
   const { id } = useParams();
   const {
     query: { data, isLoading },
@@ -84,8 +84,8 @@ export const ProgramComponent: FC = () => {
   );
 
   useEffect(() => {
-    setSuffix(data?.name ?? '');
-  }, [setSuffix, data]);
+    setCustomBreadcrumbs({ 1: data?.name ?? '' });
+  }, [setCustomBreadcrumbs, data]);
 
   const {
     isOpen,
