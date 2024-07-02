@@ -15,6 +15,7 @@ pub struct InvoiceByIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for InvoiceByIdLoader {
     type Value = Invoice;
     type Error = async_graphql::Error;
@@ -47,6 +48,7 @@ pub struct InvoiceStatsLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for InvoiceStatsLoader {
     type Value = PricingRow;
     type Error = RepositoryError;
@@ -73,6 +75,7 @@ pub struct InvoiceByRequisitionIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for InvoiceByRequisitionIdLoader {
     type Value = Vec<Invoice>;
     type Error = async_graphql::Error;

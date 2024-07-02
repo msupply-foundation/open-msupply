@@ -81,10 +81,6 @@ impl UserStoreNode {
             None => Ok(None),
         }
     }
-
-    pub async fn is_disabled(&self) -> bool {
-        self.user_store.store_row.is_disabled
-    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

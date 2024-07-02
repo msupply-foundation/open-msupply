@@ -11,7 +11,6 @@ import {
   UserPermission,
   useIntlUtils,
   useDisabledNotificationToast,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useRequest } from '../../api';
@@ -101,8 +100,8 @@ const useStatusChangeButton = () => {
     return `${comment ? comment + '\n' : ''}${t('template.requisition-sent', {
       name,
       job,
-      phone: user?.phoneNumber ?? UNDEFINED_STRING_VALUE,
-      email: user?.email ?? UNDEFINED_STRING_VALUE,
+      phone: user?.phoneNumber ?? '-',
+      email: user?.email ?? '-',
     })}`;
   };
 

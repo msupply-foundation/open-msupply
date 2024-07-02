@@ -10,7 +10,6 @@ import {
   useFormatDateTime,
   RouteBuilder,
   Tooltip,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useOutbound } from '../../api';
@@ -36,7 +35,7 @@ const RelatedDocumentsSectionComponent = () => {
           <Tooltip
             title={getTooltip(
               requisition.createdDatetime,
-              requisition.user?.username ?? UNDEFINED_STRING_VALUE
+              requisition.user?.username ?? '-'
             )}
           >
             <Grid item>

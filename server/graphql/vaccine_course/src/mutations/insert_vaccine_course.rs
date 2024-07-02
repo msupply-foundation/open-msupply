@@ -75,7 +75,7 @@ pub enum InsertVaccineCourseResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum InsertVaccineCourseErrorInterface {
     ItemAlreadyExists(RecordAlreadyExist),
     VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),

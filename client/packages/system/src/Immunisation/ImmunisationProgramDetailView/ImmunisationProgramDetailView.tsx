@@ -19,7 +19,6 @@ import {
   useColumns,
   NothingHere,
   useEditModal,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
@@ -70,9 +69,10 @@ export const ProgramComponent: FC = () => {
 
         sortable: false,
         accessor: ({ rowData }) => {
-          rowData?.demographicIndicator
-            ? rowData.demographicIndicator.name
-            : UNDEFINED_STRING_VALUE;
+          if (!rowData?.demographicIndicator) {
+            return '-';
+          }
+          return rowData.demographicIndicator.name;
         },
       },
       { key: 'doses', label: 'label.doses' },

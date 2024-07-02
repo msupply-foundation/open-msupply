@@ -7,7 +7,6 @@ import {
   DialogButton,
   TabContext,
   useTabs,
-  Box,
   Grid,
   Alert,
   ClickableStepper,
@@ -316,10 +315,6 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
         <TabContext value={currentTab}>
           <Grid container flex={1} flexDirection="column" gap={1}>
-            <Grid item display="flex">
-              <Box flex={1} flexBasis="40%"></Box>
-              <Box flex={1} flexBasis="60%"></Box>
-            </Grid>
             <AssetItemUploadTab
               tab={Tabs.Upload}
               setAssetItem={setBufferedAssetItem}

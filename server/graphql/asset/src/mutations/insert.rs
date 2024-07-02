@@ -141,7 +141,7 @@ pub enum InsertAssetResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum InsertAssetErrorInterface {
     AssetAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),

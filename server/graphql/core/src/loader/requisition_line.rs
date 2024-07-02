@@ -14,6 +14,7 @@ pub struct RequisitionLinesByRequisitionIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for RequisitionLinesByRequisitionIdLoader {
     type Value = Vec<RequisitionLine>;
     type Error = async_graphql::Error;
@@ -49,6 +50,7 @@ pub struct LinkedRequisitionLineLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+#[async_trait::async_trait]
 impl Loader<RequisitionAndItemId> for LinkedRequisitionLineLoader {
     type Value = RequisitionLine;
     type Error = async_graphql::Error;

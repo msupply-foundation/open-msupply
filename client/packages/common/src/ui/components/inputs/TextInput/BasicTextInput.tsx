@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { FC, useEffect, useRef } from 'react';
 import {
   Box,
   StandardTextFieldProps,
@@ -16,10 +16,7 @@ export type BasicTextInputProps = StandardTextFieldProps & {
  * build your input on top.
  */
 
-export const BasicTextInput = React.forwardRef<
-  HTMLDivElement,
-  BasicTextInputProps
->(
+export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
   (
     {
       sx,
@@ -33,7 +30,7 @@ export const BasicTextInput = React.forwardRef<
     },
     ref
   ) => {
-    const inputRef = useRef<HTMLDivElement | null>(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
     useEffect(() => {
       if (focusOnRender) {
         inputRef?.current;
@@ -59,18 +56,11 @@ export const BasicTextInput = React.forwardRef<
           ref={ref}
           inputRef={inputRef}
           color="secondary"
-          // Sx props can be provided as an array of SxProp objects. In this
-          // case, it doesn't work to try and merge it as though it was an
-          // object. So we're going to convert this input to a single array of
-          // SX props here, which means it'll be safe regardless of the shape of
-          // the incoming sx prop
-          sx={[
-            {
-              '& .MuiInput-underline:before': { borderBottomWidth: 0 },
-              '& .MuiInput-input': { color: 'gray.dark', textAlign },
-            },
-            sx ?? {},
-          ].flat()}
+          sx={{
+            '& .MuiInput-underline:before': { borderBottomWidth: 0 },
+            '& .MuiInput-input': { color: 'gray.dark', textAlign },
+            ...sx,
+          }}
           variant="standard"
           size="small"
           InputProps={{

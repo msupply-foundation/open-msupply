@@ -10,7 +10,6 @@ import {
   Link,
   useFormatDateTime,
   RouteBuilder,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useInbound } from '../../api';
@@ -27,7 +26,7 @@ export const RelatedDocumentsSectionComponent = () => {
       date: d(new Date(createdDatetime)),
     });
     tooltip += ` ${t('messages.by-user', {
-      username: user?.username ?? UNDEFINED_STRING_VALUE,
+      username: user?.username ?? '-',
     })}`;
   }
 

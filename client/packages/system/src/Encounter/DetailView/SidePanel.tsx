@@ -14,7 +14,6 @@ import {
   InlineSpinner,
   useAuthContext,
   BasicTextInput,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -40,7 +39,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
     encounter.document.data?.notes?.[0]?.text ?? ''
   );
   const [createdBy, setCreatedBy] = useState(
-    encounter?.document?.data?.createdBy?.username ?? UNDEFINED_STRING_VALUE
+    encounter?.document?.data?.createdBy?.username ?? '-'
   );
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();

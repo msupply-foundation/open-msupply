@@ -189,7 +189,6 @@ export const PrescriptionLineEditForm: React.FC<
             disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
-            includeNonVisibleWithStockOnHand
             extraFilter={
               disabled
                 ? undefined

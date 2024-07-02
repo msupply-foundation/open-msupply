@@ -46,17 +46,6 @@ fragment Repack on RepackNode {
 
 fragment InvoiceRow on InvoiceNode {
   id
-  lines {
-    nodes {
-      id
-      itemName
-      numberOfPacks
-      itemCode
-      stockLine {
-        id
-      }
-    }
-  }
 }
 
 fragment LedgerRow on LedgerNode {
@@ -189,20 +178,9 @@ mutation createInventoryAdjustment(
   $storeId: String!
 ) {
   createInventoryAdjustment(input: $input, storeId: $storeId) {
-    __typename
     ... on InvoiceNode {
       __typename
       ...InvoiceRow
-    }
-    ... on CreateInventoryAdjustmentError {
-      __typename
-      error {
-        description
-        ... on StockLineReducedBelowZero {
-          __typename
-          description
-        }
-      }
     }
   }
 }

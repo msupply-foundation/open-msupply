@@ -4,7 +4,6 @@ import {
   Box,
   Paper,
   SettingsCircleIcon,
-  UNDEFINED_STRING_VALUE,
   UserCircleIcon,
 } from '@openmsupply-client/common';
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
@@ -41,7 +40,7 @@ const User = ({ user }: { user: ColdchainAssetLogFragment['user'] }) => {
   return (
     <Box display="flex" alignItems="flex-start">
       <Typography sx={{ fontWeight: 'bold', fontSize: '12px' }}>
-        {t('label.user')}: {user?.username ?? UNDEFINED_STRING_VALUE}
+        {t('label.user')}: {user?.username ?? '-'}
       </Typography>
       {!!fullName && <Divider />}
       {!!fullName && (
@@ -98,7 +97,7 @@ const StatusLog = ({
     >
       <Box flex={0} display="flex" flexDirection="column" alignItems="center">
         <Connector visible={!isFirst} />
-        <Icon username={log.user?.username ?? UNDEFINED_STRING_VALUE} />
+        <Icon username={log.user?.username ?? '-'} />
         <Connector visible={!isLast} />
       </Box>
       <Paper
@@ -124,13 +123,11 @@ const StatusLog = ({
           <User user={log.user} />
           <Box display="flex" alignItems="flex-start">
             <Typography sx={{ fontSize: '12px' }}>
-              <b>{t('label.reason')}:</b>{' '}
-              {log.reason?.reason ?? UNDEFINED_STRING_VALUE}
+              <b>{t('label.reason')}:</b> {log.reason?.reason ?? '-'}
             </Typography>
           </Box>
           <Typography sx={{ fontSize: '12px' }}>
-            <b>{t('label.observations')}:</b>{' '}
-            {log.comment ?? UNDEFINED_STRING_VALUE}
+            <b>{t('label.observations')}:</b> {log.comment ?? '-'}
           </Typography>
         </Box>
         <Box display="flex" flex={0.3}>

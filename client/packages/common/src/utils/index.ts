@@ -13,7 +13,6 @@ export * from './types';
 export * from './files';
 export * from './BarcodeScannerContext';
 export * from './item';
-export * from './globalConst';
 
 // having issues with tree shaking lodash
 // so we're just importing the functions we need

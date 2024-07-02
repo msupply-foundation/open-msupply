@@ -39,7 +39,7 @@ pub enum UpdateRequestRequisitionStatusInput {
 
 #[derive(Interface)]
 #[graphql(name = "UpdateRequestRequisitionErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotASupplier(OtherPartyNotASupplier),

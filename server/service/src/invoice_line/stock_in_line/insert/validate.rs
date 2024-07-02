@@ -2,7 +2,7 @@ use crate::{
     check_location_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        stock_in_line::{check_number_of_packs, check_pack_size},
+        stock_in_line::check_pack_size,
         validate::{check_item_exists, check_line_exists},
     },
 };
@@ -23,7 +23,7 @@ pub fn validate(
         return Err(PackSizeBelowOne);
     }
     if !check_number_of_packs(Some(input.number_of_packs)) {
-        return Err(NumberOfPacksBelowZero);
+        return Err(NumberOfPacksBelowOne);
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
@@ -47,4 +47,13 @@ pub fn validate(
     // TODO: LocationDoesNotBelongToCurrentStore
 
     Ok((item, invoice))
+}
+
+pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
+    if let Some(number_of_packs) = number_of_packs_option {
+        if number_of_packs < 1.0 {
+            return false;
+        }
+    }
+    true
 }

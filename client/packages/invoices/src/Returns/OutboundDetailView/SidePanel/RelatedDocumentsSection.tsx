@@ -9,7 +9,6 @@ import {
   Link,
   useFormatDateTime,
   RouteBuilder,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useReturns } from '../../api';
@@ -39,7 +38,7 @@ export const RelatedDocumentsSectionComponent = () => {
               <PanelLabel>
                 {getLabel(
                   originalShipment.createdDatetime,
-                  originalShipment.user?.username ?? UNDEFINED_STRING_VALUE
+                  originalShipment.user?.username ?? '-'
                 )}
               </PanelLabel>
               <PanelField>

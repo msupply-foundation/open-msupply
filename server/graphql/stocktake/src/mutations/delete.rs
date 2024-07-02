@@ -18,7 +18,7 @@ pub struct DeleteInput {
 
 #[derive(Interface)]
 #[graphql(name = "DeleteStocktakeErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
 }

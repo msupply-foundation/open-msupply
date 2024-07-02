@@ -11,7 +11,6 @@ import {
   useBufferState,
   InfoTooltipIcon,
   useFormatDateTime,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 
@@ -34,7 +33,7 @@ export const AdditionalInfoSectionComponent: FC = () => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          <PanelField>{user?.username ?? UNDEFINED_STRING_VALUE}</PanelField>
+          <PanelField>{user?.username ?? '-'}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
         <PanelRow>

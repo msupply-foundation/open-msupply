@@ -41,7 +41,7 @@ export const StockLineDetailView: React.FC = () => {
   } = useUrlQuery();
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { setSuffix, navigateUpOne } = useBreadcrumbs();
+  const { setSuffix } = useBreadcrumbs();
 
   const repackModalController = useToggle();
   const adjustmentModalController = useToggle();
@@ -86,13 +86,8 @@ export const StockLineDetailView: React.FC = () => {
     title: t('heading.are-you-sure'),
   });
 
-  const onCancel = () => {
-    resetDraft();
-    navigateUpOne();
-  };
-
   const showCancelConfirmation = useConfirmationModal({
-    onConfirm: onCancel,
+    onConfirm: resetDraft,
     message: t('messages.confirm-cancel-generic'),
     title: t('heading.are-you-sure'),
   });
@@ -124,7 +119,6 @@ export const StockLineDetailView: React.FC = () => {
     showSaveConfirmation,
     showCancelConfirmation,
     disabled: !isDirty && !hasPluginChanged,
-    isDirty,
   };
 
   return (

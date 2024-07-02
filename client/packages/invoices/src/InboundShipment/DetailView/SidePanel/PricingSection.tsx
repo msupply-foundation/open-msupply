@@ -15,7 +15,6 @@ import {
   InvoiceLineNodeType,
   Currencies,
   useAuthContext,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { InboundServiceLineEdit, TaxEdit } from '../modals';
@@ -47,7 +46,6 @@ export const PricingSectionComponent = () => {
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
   const { store } = useAuthContext();
-  const isHomeCurrency = store?.homeCurrencyCode === currency?.code;
 
   const tax = PricingUtils.effectiveTax(
     pricing?.serviceTotalBeforeTax,
@@ -167,16 +165,14 @@ export const PricingSectionComponent = () => {
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.rate')}</PanelLabel>
-          <PanelField>{currencyRate === 0 ? 1 : currencyRate}</PanelField>
+          <PanelField>{currencyRate ?? 1}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>
           <PanelField>
-            {isHomeCurrency
-              ? UNDEFINED_STRING_VALUE
-              : foreignCurrency(
-                  pricing.foreignCurrencyTotalAfterTax ?? 0
-                ).format()}
+            {foreignCurrency(
+              pricing.foreignCurrencyTotalAfterTax ?? 0
+            ).format()}
           </PanelField>
         </PanelRow>
         <PanelRow style={{ marginTop: 12 }}>

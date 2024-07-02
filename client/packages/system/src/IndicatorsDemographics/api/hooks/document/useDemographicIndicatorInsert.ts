@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from 'react-query';
+import { DemographicIndicatorFragment } from '../../operations.generated';
 import { useDemographicsApi } from '../utils/useDemographicApi';
-import { InsertDemographicIndicatorInput } from '@common/types';
 
 export const useDemographicIndicatorInsert = () => {
   const queryClient = useQueryClient();
@@ -9,11 +9,8 @@ export const useDemographicIndicatorInsert = () => {
   const invalidateQueries = () =>
     queryClient.invalidateQueries(api.keys.baseIndicator());
   const { mutateAsync: insertDemographicIndicator } = useMutation(
-    async (demographicIndicator: InsertDemographicIndicatorInput) =>
-      await api.insertIndicator(demographicIndicator),
-    {
-      onError: () => {},
-    }
+    async (demographicIndicator: DemographicIndicatorFragment) =>
+      await api.insertIndicator(demographicIndicator)
   );
 
   return { insertDemographicIndicator, invalidateQueries };

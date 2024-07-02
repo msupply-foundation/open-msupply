@@ -12,6 +12,7 @@ pub struct RequisitionsByIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for RequisitionsByIdLoader {
     type Value = Requisition;
     type Error = async_graphql::Error;

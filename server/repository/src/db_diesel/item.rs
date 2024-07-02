@@ -4,7 +4,6 @@ use super::{
     master_list_line_row::master_list_line::dsl as master_list_line_dsl,
     master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
     master_list_row::master_list::dsl as master_list_dsl,
-    stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl,
     store_row::store::dsl as store_dsl,
     unit_row::{unit, unit::dsl as unit_dsl},
     DBType, ItemRow, ItemType, StorageConnection, UnitRow,
@@ -45,10 +44,8 @@ pub struct ItemFilter {
     pub name: Option<StringFilter>,
     pub code: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ItemType>>,
-    /// If true it only returns ItemAndMasterList that have a name join row (void if is_visible_or_on_hand is true!)
+    /// If true it only returns ItemAndMasterList that have a name join row
     pub is_visible: Option<bool>,
-    /// If true it returns ItemAndMasterList that have a name join row, or items with stock on hand
-    pub is_visible_or_on_hand: Option<bool>,
     pub code_or_name: Option<StringFilter>,
     pub is_active: Option<bool>,
     pub is_vaccine: Option<bool>,
@@ -96,11 +93,6 @@ impl ItemFilter {
 
     pub fn is_vaccine(mut self, value: bool) -> Self {
         self.is_vaccine = Some(value);
-        self
-    }
-
-    pub fn has_stock_on_hand(mut self, value: bool) -> Self {
-        self.is_visible_or_on_hand = Some(value);
         self
     }
 }
@@ -204,7 +196,6 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             code_or_name,
             is_active,
             is_vaccine,
-            is_visible_or_on_hand,
         } = f;
 
         // or filter need to be applied before and filters
@@ -248,28 +239,10 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             .filter(store_dsl::id.eq(store_id.clone()))
             .into_boxed();
 
-        let item_ids_with_stock_on_hand = item_link_dsl::item_link
-            .select(item_link_dsl::item_id)
-            .inner_join(stock_on_hand_dsl::stock_on_hand)
-            .filter(stock_on_hand_dsl::available_stock_on_hand.gt(0.0))
-            .group_by(item_link_dsl::item_id)
-            .into_boxed();
-
-        query = match (is_visible_or_on_hand, is_visible) {
-            // visible items AND non-visible items with stock on hand
-            (Some(true), _) => query.filter(
-                item_dsl::id
-                    .eq_any(visible_item_ids)
-                    .or(item_dsl::id.eq_any(item_ids_with_stock_on_hand)),
-            ),
-            // visible items
-            (_, Some(true)) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
-
-            // invisible items
-            (_, Some(false)) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
-
-            // no visibility filters
-            (_, _) => query,
+        query = match is_visible {
+            Some(true) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
+            Some(false) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
+            None => query,
         }
     }
     query
@@ -304,9 +277,8 @@ mod tests {
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
         ItemRowRepository, ItemType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StockLineRow,
-        StockLineRowRepository, StoreRow, StoreRowRepository, StringFilter,
-        DEFAULT_PAGINATION_LIMIT,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
+        StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -661,39 +633,6 @@ mod tests {
             )
             .unwrap();
         assert_eq!(results.len(), 2);
-
-        // Test has_stock_on_hand filter
-
-        // Add stock for item 3 (which is invisible)
-        StockLineRowRepository::new(&storage_connection)
-            .upsert_one(&StockLineRow {
-                id: "stock_line_for_item_3".to_string(),
-                item_link_id: "item3".to_string(),
-                store_id: "name1_store".to_string(),
-                available_number_of_packs: 5.0,
-                pack_size: 1.0,
-                ..Default::default()
-            })
-            .unwrap();
-
-        // get visible rows + non visible rows with stock on hand
-        let results = ItemRepository::new(&storage_connection)
-            .query(
-                Pagination::new(),
-                Some(ItemFilter::new().is_visible(true).has_stock_on_hand(true)),
-                None,
-                Some("name1_store".to_string()),
-            )
-            .unwrap();
-
-        // item 1 & 2 == visible, item 3 == has stock
-        assert_eq!(
-            results
-                .into_iter()
-                .map(|r| r.item_row.id)
-                .collect::<Vec<String>>(),
-            vec!["item1", "item2", "item3"]
-        );
     }
 
     #[actix_rt::test]

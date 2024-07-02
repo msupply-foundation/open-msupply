@@ -1,6 +1,7 @@
-import React, { act, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useWindowDimensions } from './useWindowDimensions';
 import { render, renderHook } from '@testing-library/react';
+import { act } from 'react-dom/test-utils';
 
 const original = {
   innerWidth: window.innerWidth,

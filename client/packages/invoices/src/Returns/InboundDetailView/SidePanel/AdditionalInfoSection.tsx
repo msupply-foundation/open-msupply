@@ -9,7 +9,6 @@ import {
   InfoTooltipIcon,
   ColorSelectButton,
   BufferedTextArea,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { InboundReturnFragment, useReturns } from '../../api';
 
@@ -33,7 +32,7 @@ export const AdditionalInfoSectionComponent = () => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.edited-by')}</PanelLabel>
-          <PanelField>{user?.username ?? UNDEFINED_STRING_VALUE}</PanelField>
+          <PanelField>{user?.username ?? '-'}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
 
