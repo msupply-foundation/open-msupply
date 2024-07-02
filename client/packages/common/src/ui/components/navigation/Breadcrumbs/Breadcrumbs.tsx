@@ -20,7 +20,8 @@ export const Breadcrumbs = ({
   topLevelPaths?: string[];
 }) => {
   const t = useTranslation('app');
-  const { urlParts, navigateUpOne, suffix } = useBreadcrumbs(topLevelPaths);
+  const { urlParts, navigateUpOne, customBreadcrumbs } =
+    useBreadcrumbs(topLevelPaths);
 
   useRegisterActions(
     [
@@ -41,25 +42,19 @@ export const Breadcrumbs = ({
       : t(part.key);
 
   const crumbs = urlParts.map((part, index) => {
-    const isLastPart = index === urlParts.length - 1;
-    if (isLastPart) {
-      switch (true) {
-        case !suffix:
-          return <span key={part.key}>{parseTitle(part)}</span>;
-        case typeof suffix === 'string':
-          return <span key={part.key}>{suffix}</span>;
-        default:
-          return suffix;
-      }
-    }
+    const customCrumb = customBreadcrumbs[index];
 
-    if (part.disabled) {
-      return <span key={part.key}>{parseTitle(part)}</span>;
+    const displayValue = customCrumb ?? parseTitle(part);
+
+    const isLastPart = index === urlParts.length - 1;
+
+    if (isLastPart || part.disabled) {
+      return <span key={part.key}>{displayValue}</span>;
     }
 
     return (
       <Breadcrumb to={part.path} key={part.key}>
-        {t(part.key)}
+        {displayValue}
       </Breadcrumb>
     );
   });
