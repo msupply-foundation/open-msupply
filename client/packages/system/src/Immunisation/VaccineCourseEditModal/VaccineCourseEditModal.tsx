@@ -16,14 +16,11 @@ import {
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { useMemo } from 'react';
-import { FC } from 'react';
+import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { VaccineCourseFragment } from '../api';
-
-const MAX_VACCINE_DOSES = 20;
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -37,13 +34,9 @@ const getDemographicOptions = (
   return options;
 };
 
-const Section = ({
-  children,
-  heading,
-}: {
-  children: React.ReactNode;
-  heading: string;
-}) => (
+const Section = (
+  { children, heading }: { children: React.ReactNode; heading: string }
+) => (
   <Box
     display="flex"
     flexDirection="column"
@@ -68,13 +61,9 @@ const Heading = ({ children }: { children: React.ReactNode }) => (
   </Typography>
 );
 
-const Row = ({
-  children,
-  label,
-}: {
-  children: React.ReactNode;
-  label: string;
-}) => (
+const Row = (
+  { children, label }: { children: React.ReactNode; label: string }
+) => (
   <Box paddingTop={1.5}>
     <InputWithLabelRow
       labelWidth="160px"
@@ -103,15 +92,11 @@ interface VaccineCourseEditModalProps {
   mode: ModalMode | null;
 }
 
-export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
-  vaccineCourse,
-  isOpen,
-  onClose,
-  programId,
-  mode,
-}) => {
+export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = (
+  { vaccineCourse, isOpen, onClose, programId, mode }
+) => {
   const t = useTranslation('coldchain');
-  const { success } = useNotification();
+  const { success, error } = useNotification();
   const {
     draft,
     update: { update },
@@ -126,14 +111,8 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  // const defaultRow: VaccineCourseScheduleNode = {
-  //   doseNumber: 1,
-  //   id: FnUtils.generateUUID(),
-  //   label: '',
-  //   __typename: 'VaccineCourseScheduleNode',
-  // };
   const tryUpdateValue = (value: number | undefined) => {
-    if (typeof value !== 'number') {
+    if (value === undefined) {
       return;
     }
     updatePatch({ doses: value });
@@ -208,6 +187,27 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       : '',
   };
 
+  const save = async () => {
+    setIsDirty(false);
+    try {
+      const result =
+        mode === ModalMode.Update
+          ? await update()
+          : await create(programId ?? '');
+      if (result?.__typename === 'VaccineCourseNode') {
+        const message =
+          mode === ModalMode.Update
+            ? `${t('messages.updated-new-vaccine-course')}: ${result.name}`
+            : `${t('messages.created-new-vaccine-course')}: ${result.name}`;
+        success(message)();
+        onClose();
+      }
+    } catch (e) {
+      error(t('error.failed-to-save-vaccine-course'))();
+      console.error(e);
+    }
+  };
+
   return (
     <Modal
       title=""
@@ -216,29 +216,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         <DialogButton
           disabled={!isDirty || !programId}
           variant="ok"
-          onClick={async () => {
-            setIsDirty(false);
-            try {
-              const result =
-                mode === ModalMode.Update
-                  ? await update()
-                  : await create(programId ?? '');
-              if (result?.__typename === 'VaccineCourseNode') {
-                const message =
-                  mode === ModalMode.Update
-                    ? `${t('messages.updated-new-vaccine-course')}: ${
-                        result.name
-                      }`
-                    : `${t('messages.created-new-vaccine-course')}: ${
-                        result.name
-                      }`;
-                success(message)();
-                onClose();
-              }
-            } catch (e) {
-              console.error(e);
-            }
-          }}
+          onClick={save}
         />
       }
       height={height}
@@ -255,7 +233,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
           >
             <Row label={t('label.immunisation-name')}>
               <BasicTextInput
-                textAlign="right"
                 value={draft?.name ?? ''}
                 fullWidth
                 onChange={e => updatePatch({ name: e.target.value })}
@@ -263,7 +240,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             </Row>
             <Row label={t('label.target-demographic')}>
               <Autocomplete
-                sx={{ input: { textAlign: 'right' } }}
                 isOptionEqualToValue={option =>
                   option?.value === draft.demographicIndicatorId
                 }
@@ -271,7 +247,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
                   updatePatch({ demographicIndicatorId: selected?.value })
                 }
                 defaultValue={defaultValue}
-                placeholder={'demographic'}
                 options={options}
               />
             </Row>
@@ -298,24 +273,14 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
                 onChange={e => updatePatch({ isActive: e.target.checked })}
               ></Checkbox>
             </Row>
-            {/* </Section> */}
-            {/* </Container>
-    <Container>
-      <Section heading={t('heading.schedule')}> */}
+
             <Row label={t('label.number-of-doses')}>
               <NumericTextInput
                 value={draft.doses}
                 fullWidth
                 onChange={tryUpdateValue}
-                max={MAX_VACCINE_DOSES}
               />
             </Row>
-            {/* <Box paddingTop={1.5}>
-          <MiniTable
-            rows={draft.vaccineCourseSchedules ?? [defaultRow]}
-            columns={dosesColumns}
-          />
-        </Box> */}
           </Section>
         </Container>
       </Box>
