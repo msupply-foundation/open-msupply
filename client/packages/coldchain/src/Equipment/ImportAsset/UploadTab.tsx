@@ -288,7 +288,9 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         formatDate
       );
       addSoftRequired('replacementDate', 'label.replacement-date', formatDate);
-      addCell('serialNumber', 'label.serial');
+      addCell('serialNumber', 'label.serial', serial =>
+        serial === '' ? undefined : serial
+      );
       processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');
