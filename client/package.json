@@ -101,8 +101,7 @@
     "tsconfig-paths-webpack-plugin": "^4.0.1",
     "typescript": "^5.0.2",
     "webpack": "^5.76.2",
-    "yarn-outdated-formatter": "^4.0.0",
-    "msw": "1.2.3"
+    "yarn-outdated-formatter": "^4.0.0"
   },
   "lint-staged": {
     "src/**/*.+(js|json|ts|tsx)": [

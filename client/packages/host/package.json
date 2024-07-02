@@ -43,8 +43,5 @@
     "react-qr-code": "^2.0.12",
     "swc-loader": "^0.2.0",
     "webpack-bundle-analyzer": "^4.9.0"
-  },
-  "msw": {
-    "workerDirectory": "public"
   }
 }
