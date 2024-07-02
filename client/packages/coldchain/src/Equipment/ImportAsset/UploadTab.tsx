@@ -43,7 +43,7 @@ interface ParsedAsset {
 }
 
 const formatDate = (value: string): string | null =>
-  Formatter.naiveDate(DateUtils.getDateOrNull(value));
+  Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
 
 function getImportHelpers<T, P>(
   row: P,
@@ -155,11 +155,6 @@ function getImportHelpers<T, P>(
     const prop = t(localeKey) as keyof P;
     const value = row[prop] ?? '';
     if (value === undefined || (value as string).trim() === '') {
-      rowErrors.push(
-        t('error.field-must-be-specified', {
-          field: t(localeKey),
-        })
-      );
       return;
     }
     if (lookupData.filter(l => lookupFn(l) === value).length === 0) {
@@ -201,12 +196,13 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     const exampleRows: Partial<ImportRow>[] = [
       {
         id: '',
-        assetNumber: 'Asset Number',
+        assetNumber: 'ASSET NUMBER',
         catalogueItemCode: '',
         store: undefined,
         notes: '',
         serialNumber: '',
-        installationDate: '',
+        installationDate: 'DD/MM/YYYY',
+        replacementDate: 'DD/MM/YYYY',
         properties: {},
       },
     ];
@@ -291,6 +287,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         'label.installation-date',
         formatDate
       );
+      addSoftRequired('replacementDate', 'label.replacement-date', formatDate);
       addCell('serialNumber', 'label.serial');
       processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');

@@ -11,6 +11,7 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
   return [
     'id',
     t('label.asset-number'),
+    t('label.catalogue-item-code'),
     t('label.installation-date'),
     t('label.replacement-date'),
     t('label.serial'),
@@ -23,18 +24,18 @@ export const assetsToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = baseAssetFields(t);
-  fields.push('label.created-datetime');
-  fields.push(t('label.modified-datetime'));
+  fields.push(t('label.created-datetime'), t('label.modified-datetime'));
 
   const data = items.map(node => [
     node.id,
     node.assetNumber,
-    Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateTimeString(node.modifiedDatetime),
+    node.catalogueItem?.code ?? '',
     Formatter.csvDateString(node.installationDate),
     Formatter.csvDateString(node.replacementDate),
     node.serialNumber,
     node.notes,
+    Formatter.csvDateTimeString(node.createdDatetime),
+    Formatter.csvDateTimeString(node.modifiedDatetime),
   ]);
   return Formatter.csv({ fields, data });
 };
@@ -78,19 +79,23 @@ export const importEquipmentToCsvWithErrors = (
   t: TypedTFunction<LocaleKey>,
   isCentralServer: boolean
 ) => {
-  const fields: string[] = [];
-  fields.push(t('label.asset-number'));
-  fields.push(t('label.catalogue-item-code'));
+  const fields: string[] = [
+    t('label.asset-number'),
+    t('label.catalogue-item-code'),
+  ];
 
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
 
-  fields.push(t('label.asset-notes'));
-  fields.push(t('label.serial'));
-  fields.push(t('label.installation-date'));
-  fields.push(t('label.line-number'));
-  fields.push(t('label.error-message'));
+  fields.push(
+    t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
+    t('label.replacement-date'),
+    t('label.line-number'),
+    t('label.error-message')
+  );
 
   const data = assets.map(node => {
     const mapped: (string | number | null | undefined)[] = [
@@ -98,11 +103,14 @@ export const importEquipmentToCsvWithErrors = (
       node.catalogueItemCode,
     ];
     if (isCentralServer) mapped.push(node.store?.code);
-    mapped.push(node.notes);
-    mapped.push(node.serialNumber);
-    mapped.push(node.installationDate);
-    mapped.push(node.lineNumber);
-    mapped.push(node.errorMessage);
+    mapped.push(
+      node.notes,
+      node.serialNumber,
+      node.installationDate,
+      node.replacementDate,
+      node.lineNumber,
+      node.errorMessage
+    );
     return mapped;
   });
   return Formatter.csv({ fields, data });
@@ -116,23 +124,27 @@ export const importEquipmentToCsv = (
 ) => {
   const props =
     properties ?? ArrayUtils.dedupe(Object.keys(assets[0]?.properties ?? {}));
-  const fields = baseAssetFields(t).concat(props);
 
+  const fields = baseAssetFields(t);
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
-  fields.push(t('label.catalogue-item-code'));
+  fields.push(...props);
 
   const data = assets.map(node => {
     const row = [
+      node.id,
       node.assetNumber,
       node.catalogueItemCode,
-      node.notes,
-      node.serialNumber,
       node.installationDate,
-    ].concat(props.map(key => node.properties?.[key] ?? ''));
+      node.replacementDate,
+      node.serialNumber,
+      node.notes,
+    ];
+
     if (isCentralServer) row.push(node.store?.code);
-    return row;
+
+    return row.concat(props.map(key => node.properties?.[key] ?? ''));
   });
 
   return Formatter.csv({ fields, data });

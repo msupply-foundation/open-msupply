@@ -52,27 +52,38 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       accessor: ({ rowData }) => rowData.store?.code,
     });
   }
-  columnDescriptions.push({
-    key: 'serialNumber',
-    width: 100,
-    sortable: false,
-    label: 'label.serial',
-    Cell: TooltipTextCell,
-  });
-  columnDescriptions.push({
-    key: 'installationDate',
-    width: 100,
-    sortable: false,
-    label: 'label.installation-date',
-    Cell: TooltipTextCell,
-  });
-  columnDescriptions.push({
-    key: 'notes',
-    width: 100,
-    sortable: false,
-    label: 'label.asset-notes',
-    Cell: TooltipTextCell,
-  });
+
+  columnDescriptions.push(
+    {
+      key: 'serialNumber',
+      width: 100,
+      sortable: false,
+      label: 'label.serial',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'installationDate',
+      width: 100,
+      sortable: false,
+      label: 'label.installation-date',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'replacementDate',
+      width: 100,
+      sortable: false,
+      label: 'label.replacement-date',
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'notes',
+      width: 100,
+      sortable: false,
+      label: 'label.asset-notes',
+      Cell: TooltipTextCell,
+    }
+  );
+
   if (showWarnings) {
     columnDescriptions.push({
       key: 'warningMessage',
