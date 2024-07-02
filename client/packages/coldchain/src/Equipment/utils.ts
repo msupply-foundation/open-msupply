@@ -9,7 +9,6 @@ export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
 function baseAssetFields(t: TypedTFunction<LocaleKey>) {
   return [
-    'id',
     t('label.asset-number'),
     t('label.catalogue-item-code'),
     t('label.installation-date'),
@@ -24,7 +23,8 @@ export const assetsToCsv = (
   t: TypedTFunction<LocaleKey>,
   properties: string[]
 ) => {
-  const fields: string[] = baseAssetFields(t);
+  const fields: string[] = ['id'].concat(baseAssetFields(t));
+
   fields.push(t('label.created-datetime'), t('label.modified-datetime'));
 
   fields.push(...properties);
@@ -150,7 +150,6 @@ export const importEquipmentToCsv = (
 
   const data = assets.map(node => {
     const row = [
-      node.id,
       node.assetNumber,
       node.catalogueItemCode,
       node.installationDate,
