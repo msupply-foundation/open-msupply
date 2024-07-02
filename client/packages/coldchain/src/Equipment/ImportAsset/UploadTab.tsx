@@ -203,7 +203,6 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const csvExample = async () => {
     const exampleRows: Partial<ImportRow>[] = [
       {
-        id: '',
         assetNumber: 'ASSET NUMBER',
         catalogueItemCode: '',
         store: undefined,
