@@ -5,8 +5,9 @@ export const PricingUtils = {
     return Math.max(total - subtotal, 0);
   },
   effectiveTax: (subtotal: number, total: number) => {
+    const taxAmount = PricingUtils.taxAmount(subtotal, total);
     return (
-      Math.round(((total - subtotal) / subtotal) * 100 * ROUNDING_PRECISION) /
+      Math.round((taxAmount / (subtotal || 1)) * 100 * ROUNDING_PRECISION) /
       ROUNDING_PRECISION
     );
   },
