@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use repository::ContextType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -45,6 +46,12 @@ pub struct ReportRef {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct Manifest {
+    /// The report context
+    pub context: ContextType,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct TeraTemplate {
     pub output: ReportOutputType,
     pub template: String,
@@ -59,6 +66,7 @@ pub enum ReportOutputType {
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum ReportDefinitionEntry {
+    Manifest(Manifest),
     TeraTemplate(TeraTemplate),
     /// Custom http query
     GraphGLQuery(GraphQlQuery),
