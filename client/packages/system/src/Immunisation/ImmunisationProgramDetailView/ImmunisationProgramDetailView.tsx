@@ -15,7 +15,6 @@ import {
   useTranslation,
   useUrlQueryParams,
   DataTable,
-  useNavigate,
   useColumns,
   NothingHere,
   useEditModal,
@@ -23,9 +22,9 @@ import {
 import { Toolbar } from './Toolbar';
 import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppBarButtons } from './AppBarButtons';
-import { VaccineCourseCreateModal } from './VaccineCourseCreateModal';
 import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
-import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
+import { VaccineCourseFragment } from '../api';
+import { VaccineCourseEditModal } from '../VaccineCourseEditModal';
 
 export const ProgramComponent: FC = () => {
   const {
@@ -34,9 +33,8 @@ export const ProgramComponent: FC = () => {
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
-  const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const { setSuffix, navigateUpOne } = useBreadcrumbs();
+  const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
   const { id } = useParams();
   const {
     query: { data, isLoading },
@@ -86,20 +84,28 @@ export const ProgramComponent: FC = () => {
   );
 
   useEffect(() => {
-    setSuffix(data?.name ?? '');
-  }, [setSuffix, data]);
+    setCustomBreadcrumbs({ 1: data?.name ?? '' });
+  }, [setCustomBreadcrumbs, data]);
 
-  const { isOpen, onClose, onOpen } = useEditModal<DraftVaccineCourse>();
+  const {
+    isOpen,
+    onClose,
+    onOpen,
+    entity: vaccineCourse,
+    mode,
+  } = useEditModal<VaccineCourseFragment>();
 
   return isLoading ? (
     <InlineSpinner />
   ) : (
     <>
       {isOpen && (
-        <VaccineCourseCreateModal
+        <VaccineCourseEditModal
           isOpen={isOpen}
           onClose={onClose}
           programId={id}
+          vaccineCourse={vaccineCourse}
+          mode={mode}
         />
       )}
       <Toolbar
@@ -117,7 +123,7 @@ export const ProgramComponent: FC = () => {
         data={vaccineCoursesData?.nodes ?? []}
         isLoading={vaccineCoursesLoading}
         isError={vaccineCoursesError}
-        onRowClick={row => navigate(row.id)}
+        onRowClick={onOpen}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
       <AppFooterPortal

@@ -243,6 +243,7 @@ mod graphql {
         // make sure item has been inserted
         InvoiceRowRepository::new(&connection)
             .find_one_by_id("ci_insert_1")
+            .unwrap()
             .unwrap();
 
         // Test succeeding insert on_hold and their_reference

@@ -21,11 +21,11 @@ export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const { setSuffix } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   React.useEffect(() => {
-    setSuffix(data?.name ?? '');
-  }, [data]);
+    setCustomBreadcrumbs({ 1: data?.name ?? '' });
+  }, [data, setCustomBreadcrumbs]);
 
   const { variantsControl, numberOfPacksFromQuantity } = usePackVariant(
     data?.id ?? '',
