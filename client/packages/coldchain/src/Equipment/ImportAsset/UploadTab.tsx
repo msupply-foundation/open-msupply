@@ -150,11 +150,19 @@ function getImportHelpers<T, P>(
     lookupData: K[],
     lookupFn: (item: K) => string | null | undefined,
     localeKey: LocaleKey,
+    required: boolean,
     formatter?: (value: string) => unknown
   ) {
     const prop = t(localeKey) as keyof P;
     const value = row[prop] ?? '';
     if (value === undefined || (value as string).trim() === '') {
+      if (required) {
+        rowErrors.push(
+          t('error.field-must-be-specified', {
+            field: t(localeKey),
+          })
+        );
+      }
       return;
     }
     if (lookupData.filter(l => lookupFn(l) === value).length === 0) {
@@ -270,7 +278,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         'catalogueItemCode',
         catalogueItemData ?? [],
         lookupCode,
-        'label.catalogue-item-code'
+        'label.catalogue-item-code',
+        true
       );
       if (isCentralServer) {
         addLookup(
@@ -278,6 +287,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
           stores?.nodes ?? [],
           lookupStore,
           'label.store',
+          false,
           s => stores?.nodes?.find(store => store.code === s)
         );
       }
