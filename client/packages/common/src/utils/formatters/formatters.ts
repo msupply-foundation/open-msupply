@@ -20,14 +20,6 @@ export const Formatter = {
     date && isValid(date)
       ? format(date, "dd/MM/yyyy' 'HH:mm:ss")
       : '--/--/---- --:--:--',
-  expiryDate: (date?: Date | null): string | null => {
-    if (date && isValid(date)) return format(date, 'MM/yyyy');
-    else return null;
-  },
-  expiryDateString: (date?: string | null | undefined): string => {
-    const expiryDate = date ? Formatter.expiryDate(new Date(date)) : null;
-    return expiryDate ?? '';
-  },
   csv: (
     data: unknown[] | UnparseObject<unknown>,
     config?: UnparseConfig

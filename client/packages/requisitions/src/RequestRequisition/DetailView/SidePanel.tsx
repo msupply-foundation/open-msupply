@@ -22,6 +22,7 @@ import {
   RequisitionNodeStatus,
   useDeleteConfirmation,
   useNavigate,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -44,7 +45,7 @@ const AdditionalInfoSection: FC = () => {
       <Grid container gap={0.5} key="additional-info">
         <PanelRow>
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
-          <PanelField>{user?.username ?? '-'}</PanelField>
+          <PanelField>{user?.username ?? UNDEFINED_STRING_VALUE}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
         <PanelRow>
@@ -112,7 +113,7 @@ const RelatedDocumentsSection: FC = () => {
             key={shipment.id}
             title={getTooltip(
               shipment.createdDatetime,
-              shipment.user?.username ?? '-'
+              shipment.user?.username ?? UNDEFINED_STRING_VALUE
             )}
           >
             <Grid item>

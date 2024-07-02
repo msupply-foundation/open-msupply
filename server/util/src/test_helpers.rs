@@ -9,3 +9,13 @@ macro_rules! assert_matches {
         )
     }};
 }
+
+#[macro_export]
+macro_rules! assert_variant {
+    ($e:expr, $matches:pat => $result:expr) => {
+         match $e {
+            $matches=> $result,
+            _ => panic!("expected {}", stringify!($matches:pat => $result:expr))
+        }
+    }
+}

@@ -15,9 +15,11 @@ import {
   InvoiceLineNodeType,
   Currencies,
   useAuthContext,
+  UNDEFINED_STRING_VALUE,
+  TaxEdit,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
-import { InboundServiceLineEdit, TaxEdit } from '../modals';
+import { InboundServiceLineEdit } from '../modals';
 import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const PricingSectionComponent = () => {
@@ -46,6 +48,7 @@ export const PricingSectionComponent = () => {
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
   const { store } = useAuthContext();
+  const isHomeCurrency = store?.homeCurrencyCode === currency?.code;
 
   const tax = PricingUtils.effectiveTax(
     pricing?.serviceTotalBeforeTax,
@@ -55,6 +58,11 @@ export const PricingSectionComponent = () => {
   const totalTax = PricingUtils.taxAmount(
     pricing?.serviceTotalBeforeTax,
     pricing?.serviceTotalAfterTax
+  );
+
+  const stockTaxAmount = PricingUtils.taxAmount(
+    pricing?.stockTotalBeforeTax,
+    pricing?.stockTotalAfterTax
   );
 
   const disableServiceTax =
@@ -95,7 +103,7 @@ export const PricingSectionComponent = () => {
               }}
             />
           </PanelField>
-          <PanelField>{c(taxPercentage ?? 0).format()}</PanelField>
+          <PanelField>{c(stockTaxAmount).format()}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>
@@ -170,9 +178,11 @@ export const PricingSectionComponent = () => {
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>
           <PanelField>
-            {foreignCurrency(
-              pricing.foreignCurrencyTotalAfterTax ?? 0
-            ).format()}
+            {isHomeCurrency
+              ? UNDEFINED_STRING_VALUE
+              : foreignCurrency(
+                  pricing.foreignCurrencyTotalAfterTax ?? 0
+                ).format()}
           </PanelField>
         </PanelRow>
         <PanelRow style={{ marginTop: 12 }}>

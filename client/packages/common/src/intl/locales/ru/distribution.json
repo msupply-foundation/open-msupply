@@ -35,7 +35,6 @@
   "stocktake.description-template": "Создано пользователем {{username}} {{date}}",
   "error.failed-to-create-return": "Не удалось создать возврат!",
   "error.no-inbound-returns": "Нет входящих возвратов для отображения.",
-  "heading.edit-tax-rate": "Редактировать процентную ставку налога",
   "heading.item-sell-price": "Цена продажи товаров",
   "info.automatic-return": "Этот возврат был создан автоматически в результате Исходящего Возврата в другом хранилище.",
   "info.manual-return": "Этот возврат был создан вручную. Статус доставки не будет обновляться автоматически.",

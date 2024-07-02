@@ -1,3 +1,5 @@
+use std::any::Any;
+
 use super::requisition_row::requisition::dsl as requisition_dsl;
 
 use crate::db_diesel::{
@@ -249,6 +251,10 @@ impl Upsert for RequisitionRow {
             RequisitionRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }
 

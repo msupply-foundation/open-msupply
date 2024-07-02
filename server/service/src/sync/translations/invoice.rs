@@ -184,7 +184,7 @@ pub struct LegacyTransactRow {
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
-/// receiving store.
+/// receiving store. Same for Inbound Returns.
 /// In the current version of mSupply all om_ fields get copied though.
 /// When receiving the transferred invoice on the omSupply store the "si" get translated to
 /// outbound shipments because the om_type will override to legacy type field.
@@ -204,6 +204,12 @@ fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
         return data;
     };
     if legacy_type == LegacyTransactType::Si && om_type == InvoiceType::OutboundShipment {
+        let Some(obj) = data.as_object_mut() else {
+            return data;
+        };
+        obj.retain(|key, _| !key.starts_with("om_"));
+    }
+    if legacy_type == LegacyTransactType::Cc && om_type == InvoiceType::OutboundReturn {
         let Some(obj) = data.as_object_mut() else {
             return data;
         };
@@ -247,9 +253,7 @@ impl SyncTranslation for InvoiceTranslation {
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
 
         let name = NameRowRepository::new(connection)
-            .find_one_by_id(&data.name_ID)
-            .ok()
-            .flatten()
+            .find_one_by_id(&data.name_ID)?
             .ok_or(anyhow::Error::msg(format!(
                 "Missing name: {}",
                 data.name_ID

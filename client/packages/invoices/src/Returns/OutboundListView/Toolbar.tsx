@@ -55,7 +55,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
           ]}
         />
       </Box>
-      <DropdownMenu label="Select">
+      <DropdownMenu label={t('label.actions')}>
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
           {t('button.delete-lines')}
         </DropdownMenuItem>

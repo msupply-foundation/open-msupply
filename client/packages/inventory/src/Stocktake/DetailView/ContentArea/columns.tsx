@@ -15,6 +15,7 @@ import {
   useColumnUtils,
   NumberCell,
   ColumnDescription,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import {
   InventoryAdjustmentReasonRowFragment,
@@ -211,7 +212,9 @@ export const useStocktakeColumns = ({
       label: 'label.counted-num-of-packs',
       description: 'description.counted-num-of-packs',
       align: ColumnAlign.Right,
-      Cell: props => <NumberCell {...props} defaultValue={'-'} />,
+      Cell: props => (
+        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
+      ),
       getIsError: row =>
         getLinesFromRow(row).some(
           r => getError(r)?.__typename === 'StockLineReducedBelowZero'

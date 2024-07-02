@@ -1,7 +1,15 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  useAuthContext,
+  useIsCentralServerApi,
+  useQuery,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssets = () => {
+  const isCentralServer = useIsCentralServerApi();
+  const { store } = useAuthContext();
+
   const { queryParams } = useUrlQueryParams({
     filters: [
       { key: 'notes' },
@@ -17,8 +25,11 @@ export const useAssets = () => {
       { key: 'functionalStatus', condition: 'equalTo' },
     ],
   });
+
+  const storeCodeFilter = isCentralServer ? undefined : store?.code;
+
   const api = useAssetApi();
   return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.list(queryParams)
+    api.get.list(queryParams, storeCodeFilter)
   );
 };

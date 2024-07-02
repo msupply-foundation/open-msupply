@@ -10,9 +10,9 @@ import {
   ColumnAlign,
   useEditModal,
   useToggle,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
-import { NameRenderer } from '../../Components';
 import { Toolbar } from './Toolbar';
 import { FacilityEditModal } from './FacilityEditModal';
 import { AppBarButtons } from './AppBarButtons';
@@ -45,9 +45,7 @@ const FacilitiesListComponent = () => {
       {
         key: 'code',
         label: 'label.code',
-        Cell: ({ rowData }) => (
-          <NameRenderer label={rowData.code} isStore={!!rowData.store} />
-        ),
+        Cell: TooltipTextCell,
         width: 100,
       },
       'name',

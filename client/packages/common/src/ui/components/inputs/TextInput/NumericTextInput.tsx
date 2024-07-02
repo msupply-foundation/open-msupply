@@ -104,6 +104,7 @@ import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { BasicTextInput, BasicTextInputProps } from './BasicTextInput';
 import { NumUtils, RegexUtils } from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
+import { InputAdornment } from '@common/components';
 
 export interface NumericInputProps {
   /**
@@ -167,6 +168,7 @@ export interface NumericInputProps {
 export type NumericTextInputProps = NumericInputProps &
   Omit<BasicTextInputProps, 'onChange'> & {
     onChange?: (value: number | undefined) => void;
+    endAdornment?: string;
   };
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
@@ -189,6 +191,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       value,
       noFormatting = false,
       fullWidth,
+      endAdornment,
       ...props
     },
     ref
@@ -268,7 +271,14 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           ...sx,
         }}
         inputMode="numeric"
-        InputProps={InputProps}
+        InputProps={{
+          endAdornment: endAdornment ? (
+            <InputAdornment position="end" sx={{ paddingBottom: '2px' }}>
+              {endAdornment}
+            </InputAdornment>
+          ) : undefined,
+          ...InputProps,
+        }}
         onChange={e => {
           if (!isDirty) setIsDirty(true);
 

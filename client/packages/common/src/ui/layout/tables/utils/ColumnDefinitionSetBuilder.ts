@@ -1,6 +1,5 @@
 import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
 import { ColumnAlign, ColumnFormat } from '../columns/types';
-import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
 import { CurrencyCell, NumberCell, TooltipTextCell } from '../components';
@@ -84,12 +83,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'expiryDate',
     label: 'label.expiry',
     width: 110,
-    formatter: dateString => {
-      if (dateString === '[multiple]') return '[multiple]';
-      return dateString
-        ? Formatter.expiryDate(new Date(dateString as string)) || ''
-        : '';
-    },
+    format: ColumnFormat.Date,
   },
 
   itemCode: {

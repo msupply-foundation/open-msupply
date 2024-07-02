@@ -6,8 +6,6 @@ describe('Formatter', () => {
   it('is defined', () => {
     expect(Formatter.csv).toBeDefined();
     expect(Formatter.csvDateString).toBeDefined();
-    expect(Formatter.expiryDate).toBeDefined();
-    expect(Formatter.expiryDateString).toBeDefined();
     expect(Formatter.naiveDate).toBeDefined();
     expect(Formatter.toIsoString).toBeDefined();
     expect(Formatter.tax).toBeDefined();
@@ -31,17 +29,6 @@ describe('Formatter', () => {
     expect(Formatter.csvDateTimeString('2020/10/12 04:30')).toBe(
       '12/10/2020 04:30:00'
     );
-  });
-
-  it('expiryDate', () => {
-    expect(Formatter.expiryDate(null)).toBe(null);
-    expect(Formatter.expiryDate(new Date('2022/01/20'))).toBe('01/2022');
-  });
-
-  it('expiryDateString', () => {
-    expect(Formatter.expiryDateString(null)).toBe('');
-    expect(Formatter.expiryDateString('oops')).toBe('');
-    expect(Formatter.expiryDateString('2022/01/20')).toBe('01/2022');
   });
 
   it('naiveDate', () => {

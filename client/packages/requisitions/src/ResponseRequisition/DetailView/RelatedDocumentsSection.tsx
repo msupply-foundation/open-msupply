@@ -9,6 +9,7 @@ import {
   RouteBuilder,
   Link,
   Tooltip,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useFormatDateTime } from '@common/intl';
 import { useResponse } from '../api';
@@ -50,7 +51,7 @@ export const RelatedDocumentsSection: FC = () => {
           <Tooltip
             title={getTooltip(
               shipment.createdDatetime,
-              shipment.user?.username ?? '-'
+              shipment.user?.username ?? UNDEFINED_STRING_VALUE
             )}
             key={shipment.id}
           >

@@ -155,8 +155,11 @@ impl SyncTranslation for InvoiceLineTranslation {
             }
         };
 
-        let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code {
-            Some(item_code) => {
+        let item_code = item_code.unwrap_or("".to_string());
+        let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code
+            .is_empty()
+        {
+            false => {
                 // use new om_* fields
                 (
                     item_code,
@@ -165,7 +168,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     total_after_tax.unwrap_or(0.0),
                 )
             }
-            None => {
+            true => {
                 let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
@@ -198,8 +201,8 @@ impl SyncTranslation for InvoiceLineTranslation {
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
         let is_stock_line_valid = match stock_line_id {
             Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)
-                .is_ok(),
+                .find_one_by_id(stock_line_id)?
+                .is_some(),
             None => true,
         };
 

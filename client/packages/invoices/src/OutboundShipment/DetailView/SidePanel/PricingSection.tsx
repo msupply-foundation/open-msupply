@@ -17,10 +17,11 @@ import {
   useAuthContext,
   useCurrency,
   Currencies,
+  UNDEFINED_STRING_VALUE,
+  TaxEdit,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
-import { TaxEdit } from '../modals';
 import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 type PricingGroupProps = {
@@ -91,7 +92,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
           <TaxEdit
             disabled={disableServiceTax || isDisabled}
             tax={tax}
-            update={updateServiceLineTax}
+            onChange={updateServiceLineTax}
           />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
@@ -137,7 +138,11 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
       <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
-          <TaxEdit disabled={disableTax} tax={tax} update={updateInvoiceTax} />
+          <TaxEdit
+            disabled={disableTax}
+            tax={tax}
+            onChange={updateInvoiceTax}
+          />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>
@@ -159,6 +164,7 @@ export const ForeignCurrencyPrices = ({
   const t = useTranslation('distribution');
   const { store } = useAuthContext();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
+  const isHomeCurrency = store?.homeCurrencyCode === currency?.code;
 
   return (
     <>
@@ -188,7 +194,11 @@ export const ForeignCurrencyPrices = ({
       <PanelRow>
         <PanelLabel>{t('heading.total')}</PanelLabel>
         <PanelField>
-          {foreignCurrency(pricing.foreignCurrencyTotalAfterTax ?? 0).format()}
+          {isHomeCurrency
+            ? UNDEFINED_STRING_VALUE
+            : foreignCurrency(
+                pricing.foreignCurrencyTotalAfterTax ?? 0
+              ).format()}{' '}
         </PanelField>
       </PanelRow>
     </>
@@ -215,12 +225,13 @@ export const PricingSectionComponent = () => {
   const t = useTranslation('distribution');
   const isDisabled = useOutbound.utils.isDisabled();
 
-  const { pricing, currency, otherParty, update, currencyRate } = useOutbound.document.fields([
-    'otherParty',
-    'currencyRate',
-    'pricing',
-    'currency',
-  ]);
+  const { pricing, currency, otherParty, update, currencyRate } =
+    useOutbound.document.fields([
+      'otherParty',
+      'currencyRate',
+      'pricing',
+      'currency',
+    ]);
 
   return (
     <DetailPanelSection title={t('heading.invoice-details')}>
