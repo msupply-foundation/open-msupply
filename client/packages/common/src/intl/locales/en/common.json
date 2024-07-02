@@ -545,5 +545,6 @@
   "warning.caps-lock": "Warning: Caps lock is on",
   "error.record-already-exists": "A record with this id already exists",
   "error.unique-value-violation": "A record with this {{ field }} already exists",
-  "error.field-must-be-specified": "{{field}} must be specified"
+  "error.field-must-be-specified": "{{field}} must be specified",
+  "error.database-error": "Database error"
 }

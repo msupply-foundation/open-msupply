@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
-  UpdateVaccineCourseItemInput,
-  UpdateVaccineCourseScheduleInput,
+  UpsertVaccineCourseItemInput,
+  UpsertVaccineCourseScheduleInput,
   VaccineCourseScheduleNode,
   VaccineCourseSortFieldInput,
   isEmpty,
@@ -14,9 +14,16 @@ import {
 import { VACCINE } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
 import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
-// import { VaccineCourseFragment } from '../operations.generated';
 
-// export interface DraftVaccineCourse extends VaccineCourseFragment {}
+enum UpdateVaccineCourseError {
+  DatabaseError = 'Database Error',
+  RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
+}
+
+enum InsertVaccineCourseError {
+  RecordAlreadyExist = 'Record already exists',
+  RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
+}
 
 export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
 
@@ -34,14 +41,14 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
 const vaccineCourseParsers = {
   toScheduleInput: (
     schedule: VaccineCourseScheduleNode
-  ): UpdateVaccineCourseScheduleInput => {
+  ): UpsertVaccineCourseScheduleInput => {
     return {
       id: schedule.id,
       doseNumber: schedule.doseNumber,
       label: schedule.label,
     };
   },
-  toItemInput: (item: DraftVaccineCourseItem): UpdateVaccineCourseItemInput => {
+  toItemInput: (item: DraftVaccineCourseItem): UpsertVaccineCourseItemInput => {
     return {
       id: item.id,
       itemId: item.itemId,
@@ -58,7 +65,7 @@ export const useVaccineCourse = (id?: string) => {
     mutateAsync: createMutation,
     isLoading: isCreating,
     error: createError,
-  } = useCreate();
+  } = useCreate(setErrorMessage);
 
   const {
     mutateAsync: updateMutation,
@@ -108,6 +115,7 @@ export const useVaccineCourse = (id?: string) => {
     resetDraft,
     isDirty,
     updatePatch,
+    setIsDirty,
   };
 };
 
@@ -137,18 +145,61 @@ const useGet = (id: string) => {
   return query;
 };
 
-const useCreate = () => {
+const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
   const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const t = useTranslation('coldchain');
 
-  const mutationFn = async ({ name, programId }: DraftVaccineCourse) => {
-    return await api.insertVaccineCourse({
+  const mutationFn = async (input: DraftVaccineCourse) => {
+    const apiResult = await api.insertVaccineCourse({
       storeId,
       input: {
         id: FnUtils.generateUUID(),
-        name,
-        programId,
+        name: input.name,
+        programId: input.programId,
+        demographicIndicatorId: input.demographicIndicatorId,
+        coverageRate: input.coverageRate,
+        isActive: input.isActive,
+        wastageRate: input.wastageRate,
+        doses: input.doses,
+        vaccineItems:
+          input.vaccineCourseItems?.map(item =>
+            vaccineCourseParsers.toItemInput(item)
+          ) ?? [],
+        schedules:
+          input.vaccineCourseSchedules?.map(schedule =>
+            vaccineCourseParsers.toScheduleInput(schedule)
+          ) ?? [],
       },
     });
+
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result = apiResult.centralServer.vaccineCourse.insertVaccineCourse;
+
+      if (result.__typename === 'VaccineCourseNode') {
+        return result;
+      }
+
+      let message: string;
+      switch (result.error.description) {
+        case InsertVaccineCourseError.RecordAlreadyExist:
+          message = t('error.database-error');
+          setErrorMessage(message);
+          throw new Error(
+            `${t('error.unable-to-insert-vaccine-course')}: ${message}`
+          );
+        case InsertVaccineCourseError.RecordProgramCombinationAlreadyExists:
+          message = t('error.name-program-duplicate');
+          setErrorMessage(message);
+          throw new Error(
+            `${t('error.unable-to-insert-vaccine-course')}: ${message}`
+          );
+        default:
+          throw new Error(t('error.unable-to-insert-vaccine-course'));
+      }
+    }
+
+    throw new Error(t('error.unable-to-insert-vaccine-course'));
   };
 
   return useMutation({
@@ -191,9 +242,22 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         return result;
       }
 
-      if (result.__typename === 'UpdateVaccineCourseError') {
-        setErrorMessage(result.error.description);
-        return;
+      let message: string;
+      switch (result.error.description) {
+        case UpdateVaccineCourseError.DatabaseError:
+          message = t('error.database-error');
+          setErrorMessage(message);
+          throw new Error(
+            `${t('error.unable-to-update-vaccine-course')}: ${message}`
+          );
+        case UpdateVaccineCourseError.RecordProgramCombinationAlreadyExists:
+          message = t('error.name-program-duplicate');
+          setErrorMessage(message);
+          throw new Error(
+            `${t('error.unable-to-update-vaccine-course')}: ${message}`
+          );
+        default:
+          throw new Error(t('error.unable-to-update-vaccine-course'));
       }
     }
 
