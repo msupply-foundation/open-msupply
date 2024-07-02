@@ -2945,9 +2945,16 @@ export type InsertVaccineCourseErrorInterface = {
 };
 
 export type InsertVaccineCourseInput = {
+  coverageRate: Scalars['Float']['input'];
+  demographicIndicatorId?: InputMaybe<Scalars['String']['input']>;
+  doses: Scalars['Int']['input'];
   id: Scalars['String']['input'];
+  isActive: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   programId: Scalars['String']['input'];
+  schedules: Array<UpsertVaccineCourseScheduleInput>;
+  vaccineItems: Array<UpsertVaccineCourseItemInput>;
+  wastageRate: Scalars['Float']['input'];
 };
 
 export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
@@ -7695,23 +7702,12 @@ export type UpdateVaccineCourseInput = {
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-  schedules: Array<UpdateVaccineCourseScheduleInput>;
-  vaccineItems: Array<UpdateVaccineCourseItemInput>;
+  schedules: Array<UpsertVaccineCourseScheduleInput>;
+  vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
 };
 
-export type UpdateVaccineCourseItemInput = {
-  id: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
-};
-
 export type UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode;
-
-export type UpdateVaccineCourseScheduleInput = {
-  doseNumber: Scalars['Int']['input'];
-  id: Scalars['String']['input'];
-  label: Scalars['String']['input'];
-};
 
 export type UpsertLogLevelInput = {
   level: LogLevelEnum;
@@ -7720,6 +7716,17 @@ export type UpsertLogLevelInput = {
 export type UpsertLogLevelResponse = {
   __typename: 'UpsertLogLevelResponse';
   level: LogLevelEnum;
+};
+
+export type UpsertVaccineCourseItemInput = {
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+};
+
+export type UpsertVaccineCourseScheduleInput = {
+  doseNumber: Scalars['Int']['input'];
+  id: Scalars['String']['input'];
+  label: Scalars['String']['input'];
 };
 
 export type UseSuggestedQuantityError = {

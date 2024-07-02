@@ -16,7 +16,7 @@ import { ServiceItemSearchInput } from '@openmsupply-client/system';
 import { DraftStockOutLine } from './../../../types';
 
 const TaxPercentageCell = (props: CellProps<DraftStockOutLine>) => (
-  <NumberInputCell {...props} max={100} decimalLimit={2} />
+  <NumberInputCell {...props} max={100} decimalLimit={2} endAdornment="%" />
 );
 
 export const useServiceLineColumns = (

@@ -40,7 +40,7 @@ export const EquipmentDetailView = () => {
     });
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
-  const { setSuffix } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const [draft, setDraft] = useState<DraftAsset>();
   const [isDirty, setIsDirty] = useState(false);
   const { error, success } = useNotification();
@@ -70,8 +70,8 @@ export const EquipmentDetailView = () => {
   };
 
   useEffect(() => {
-    setSuffix(data?.assetNumber ?? '');
-  }, [setSuffix, data?.assetNumber]);
+    setCustomBreadcrumbs({ 1: data?.assetNumber ?? '' });
+  }, [setCustomBreadcrumbs, data?.assetNumber]);
 
   useEffect(() => {
     if (!data) return;
