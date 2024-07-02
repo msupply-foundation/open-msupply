@@ -6,7 +6,7 @@ import {
 } from '@openmsupply-client/common';
 import { useInboundNumber } from '../document/useInbound';
 import { useInboundApi } from '../utils/useInboundApi';
-import { DraftInboundLine } from 'packages/invoices/src/types';
+import { DraftInboundLine } from '../../../../types';
 
 export const useSaveInboundLines = () => {
   const queryClient = useQueryClient();
