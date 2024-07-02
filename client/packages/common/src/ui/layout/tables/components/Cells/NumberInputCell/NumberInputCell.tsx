@@ -25,6 +25,7 @@ export const NumberInputCell = <T extends RecordWithId>({
   allowNegative,
   id,
   TextInputProps,
+  width,
 }: CellProps<T> &
   NumericInputProps & {
     id?: string;
@@ -59,6 +60,7 @@ export const NumberInputCell = <T extends RecordWithId>({
       allowNegative={allowNegative}
       defaultValue={defaultValue}
       value={buffer as number | undefined}
+      width={width}
     />
   );
 };
