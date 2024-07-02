@@ -14,16 +14,13 @@ import {
 import { VACCINE } from './keys';
 import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
 import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
-// import { VaccineCourseFragment } from '../operations.generated';
 
-// export interface DraftVaccineCourse extends VaccineCourseFragment {}
-
-export enum UpdateVaccineCourseError {
+enum UpdateVaccineCourseError {
   DatabaseError = 'Database Error',
   RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
 }
 
-export enum InsertVaccineCourseError {
+enum InsertVaccineCourseError {
   RecordAlreadyExist = 'Record already exists',
   RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
 }
