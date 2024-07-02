@@ -59,7 +59,7 @@ pub fn validate(
 ) -> Result<(), InsertDemographicIndicatorError> {
     match &input.name {
         Some(name) => {
-            if !check_year_name_combination_unique(&name, input.base_year, None, connection)? {
+            if !check_year_name_combination_unique(name, input.base_year, None, connection)? {
                 return Err(
                     InsertDemographicIndicatorError::DemographicIndicatorAlreadyExistsForThisYear,
                 );
