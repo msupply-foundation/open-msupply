@@ -195,7 +195,7 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
             `${t('error.unable-to-insert-vaccine-course')}: ${message}`
           );
         default:
-          throw new Error(`${t('error.unable-to-insert-vaccine-course')}`);
+          throw new Error(t('error.unable-to-insert-vaccine-course'));
       }
     }
 
@@ -257,11 +257,11 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
             `${t('error.unable-to-update-vaccine-course')}: ${message}`
           );
         default:
-          throw new Error(`${t('error.unable-to-update-vaccine-course')}`);
+          throw new Error(t('error.unable-to-update-vaccine-course'));
       }
     }
 
-    throw new Error(`${t('error.unable-to-update-vaccine-course')}`);
+    throw new Error(t('error.unable-to-update-vaccine-course'));
   };
 
   return useMutation({
