@@ -198,8 +198,8 @@ impl SyncTranslation for InvoiceLineTranslation {
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
         let is_stock_line_valid = match stock_line_id {
             Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)
-                .is_ok(),
+                .find_one_by_id(stock_line_id)?
+                .is_some(),
             None => true,
         };
 
