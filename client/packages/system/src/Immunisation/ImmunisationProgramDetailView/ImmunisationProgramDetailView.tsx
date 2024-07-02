@@ -37,7 +37,7 @@ export const ProgramComponent: FC = () => {
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const { setBreadcrumbRenderers, navigateUpOne } = useBreadcrumbs();
+  const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
   const { id } = useParams();
   const {
     query: { data, isLoading },
@@ -86,8 +86,8 @@ export const ProgramComponent: FC = () => {
   );
 
   useEffect(() => {
-    setBreadcrumbRenderers({ 1: () => data?.name ?? '' });
-  }, [setBreadcrumbRenderers, data]);
+    setCustomBreadcrumbs({ 1: data?.name ?? '' });
+  }, [setCustomBreadcrumbs, data]);
 
   const { isOpen, onClose, onOpen } = useEditModal<DraftVaccineCourse>();
 

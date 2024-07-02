@@ -33,7 +33,7 @@ export const PatientSummary: FC = () => {
   const { data: patient } = usePatient.document.get(patientId);
   const { localisedDate } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
-  const { setBreadcrumbRenderers } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const t = useTranslation('dispensary');
   const formatDateOfBirth = (dateOfBirth: string | null) => {
     const dob = DateUtils.getDateOrNull(dateOfBirth);
@@ -47,8 +47,8 @@ export const PatientSummary: FC = () => {
       ? getLocalisedFullName(patient.firstName, patient.lastName)
       : t('label.new-patient');
 
-    setBreadcrumbRenderers({ 1: () => patientName });
-  }, [patient, t, setBreadcrumbRenderers, getLocalisedFullName]);
+    setCustomBreadcrumbs({ 1: patientName });
+  }, [patient, t, setCustomBreadcrumbs, getLocalisedFullName]);
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
