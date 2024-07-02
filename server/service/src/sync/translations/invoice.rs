@@ -247,9 +247,7 @@ impl SyncTranslation for InvoiceTranslation {
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
 
         let name = NameRowRepository::new(connection)
-            .find_one_by_id(&data.name_ID)
-            .ok()
-            .flatten()
+            .find_one_by_id(&data.name_ID)?
             .ok_or(anyhow::Error::msg(format!(
                 "Missing name: {}",
                 data.name_ID
