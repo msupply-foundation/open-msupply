@@ -276,6 +276,8 @@ fn generate_stock_in_out_or_update(
         .sell_price_per_pack
         .unwrap_or(stock_line_row.sell_price_per_pack);
 
+    log_stock_changes(ctx, stock_line_row.clone(), row.clone())?;
+
     // If no change in stock quantity, we just update the stock line (no inventory adjustment)
     if delta == 0.0 {
         let updated_stock_line = StockLineRow {
@@ -304,8 +306,6 @@ fn generate_stock_in_out_or_update(
         invoice_line_id.clone(),
         row.inventory_adjustment_reason_id.clone(),
     );
-
-    log_stock_changes(ctx, stock_line_row.clone(), row.clone())?;
 
     let stock_in_or_out_line = if delta > 0.0 {
         StockChange::StockIn(InsertStockInLine {
