@@ -158,3 +158,48 @@ macro_rules! create_upsert_trait {
         }
     };
 }
+
+// Hacky since store preference has the same id as store, need to add store preference in change log to avoid dedup
+#[macro_export]
+macro_rules! create_upsert_trait_store_preference {
+    ($row:ident, $repo:ident, $change_log:path) => {
+        impl crate::Upsert for $row {
+            fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+                let _change_log_id = $repo::new(con).upsert_one(self)?;
+                Ok(())
+            }
+
+            fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+                let cursor_id = $repo::new(con).upsert_one(self)?;
+                Ok(Some(cursor_id))
+            }
+
+            // Test only
+            fn assert_upserted(&self, con: &StorageConnection) {
+                assert_eq!(
+                    $repo::new(con).find_one_by_id(&self.id),
+                    Ok(Some(self.clone()))
+                )
+            }
+        }
+        impl<'a> $repo<'a> {
+            pub fn upsert_one(&self, row: &$row) -> Result<i64, RepositoryError> {
+                self._upsert_one(row)?;
+                #[allow(unused_imports)]
+                use crate::StoreAndNameLinkId;
+                let (store_id, name_link_id_not_dsl) =
+                    row.get_store_and_name_link_id(self.connection)?;
+
+                let changelog_row = crate::ChangeLogInsertRow {
+                    table_name: $change_log,
+                    record_id: format!("store_preference{}", row.id),
+                    row_action: crate::ChangelogAction::Upsert,
+                    store_id,
+                    name_link_id: name_link_id_not_dsl,
+                };
+
+                crate::ChangelogRepository::new(self.connection).insert(&changelog_row)
+            }
+        }
+    };
+}

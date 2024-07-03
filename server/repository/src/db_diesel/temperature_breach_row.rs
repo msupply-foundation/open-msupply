@@ -3,7 +3,7 @@ use super::{
     temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::repository_error::RepositoryError;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -45,7 +45,15 @@ pub enum TemperatureBreachRowType {
 }
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "temperature_breach"]
@@ -94,11 +102,6 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        Ok(())
-    }
-
     pub fn find_one_by_id(
         &self,
         id: &str,
@@ -120,16 +123,17 @@ impl<'a> TemperatureBreachRowRepository<'a> {
     }
 }
 
-impl Upsert for TemperatureBreachRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        TemperatureBreachRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            TemperatureBreachRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+impl TemperatureBreachRow {
+    fn get_store_and_name_link_id(
+        &self,
+        _: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError> {
+        Ok((Some(self.store_id.clone()), None))
     }
 }
+
+crate::create_upsert_trait!(
+    TemperatureBreachRow,
+    TemperatureBreachRowRepository,
+    crate::ChangelogTableName::TemperatureBreach
+);

@@ -84,7 +84,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_preference_dsl::store_preference)
             .values(row)
             .on_conflict(store_preference_dsl::id)
@@ -95,7 +95,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(store_preference_dsl::store_preference)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -121,16 +121,18 @@ impl<'a> StorePreferenceRowRepository<'a> {
     }
 }
 
-impl Upsert for StorePreferenceRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StorePreferenceRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StorePreferenceRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+// Hacky since store preference has the same id as store, need to add store preference in change log to avoid dedup
+impl StorePreferenceRow {
+    fn get_store_and_name_link_id(
+        &self,
+        _: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError> {
+        Ok((Some(self.id.clone()), None))
     }
 }
+
+crate::create_upsert_trait_store_preference!(
+    StorePreferenceRow,
+    StorePreferenceRowRepository,
+    crate::ChangelogTableName::StorePreference
+);

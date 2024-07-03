@@ -47,7 +47,7 @@ pub fn get_sensor_type(serial: &str) -> SensorType {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize, Deserialize)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "sensor"]
 pub struct SensorRow {
@@ -108,11 +108,6 @@ impl<'a> SensorRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        Ok(())
-    }
-
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SensorRow>, RepositoryError> {
         let result = sensor_dsl::sensor
             .filter(sensor_dsl::id.eq(id))
@@ -128,16 +123,17 @@ impl<'a> SensorRowRepository<'a> {
     }
 }
 
-impl Upsert for SensorRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        SensorRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            SensorRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+impl SensorRow {
+    fn get_store_and_name_link_id(
+        &self,
+        _: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError> {
+        Ok((Some(self.store_id.clone()), None))
     }
 }
+
+crate::create_upsert_trait!(
+    SensorRow,
+    SensorRowRepository,
+    crate::ChangelogTableName::Sensor
+);

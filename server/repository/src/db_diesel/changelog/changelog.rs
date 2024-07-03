@@ -107,6 +107,7 @@ pub enum ChangelogTableName {
     Asset,
     AssetLog,
     AssetLogReason,
+    StorePreference,
 }
 
 #[derive(PartialEq)]
@@ -169,6 +170,7 @@ impl ChangelogTableName {
             ChangelogTableName::User => ChangeLogSyncStyle::Central,
             ChangelogTableName::UserPermission => ChangeLogSyncStyle::Central,
             ChangelogTableName::UserStoreJoin => ChangeLogSyncStyle::Central,
+            ChangelogTableName::StorePreference => ChangeLogSyncStyle::Central,
         }
     }
 }

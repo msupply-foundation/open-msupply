@@ -206,7 +206,12 @@ impl Synchroniser {
                 logger.start_step(SyncStep::PullCentralV7)?;
 
                 v7_sync
-                    .pull(&ctx.connection, 20, is_initialised, logger)
+                    .pull(
+                        &ctx.connection,
+                        batch_size.central_pull,
+                        is_initialised,
+                        logger,
+                    )
                     .await?;
 
                 logger.done_step(SyncStep::PullCentralV7)?;

@@ -24,7 +24,15 @@ joinable!(temperature_log -> sensor (sensor_id));
 joinable!(temperature_log -> store (store_id));
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "temperature_log"]
@@ -66,11 +74,6 @@ impl<'a> TemperatureLogRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        Ok(())
-    }
-
     pub fn update_breach_id(
         &self,
         breach_id: &str,
@@ -101,16 +104,17 @@ impl<'a> TemperatureLogRowRepository<'a> {
     }
 }
 
-impl Upsert for TemperatureLogRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        TemperatureLogRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            TemperatureLogRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+impl TemperatureLogRow {
+    fn get_store_and_name_link_id(
+        &self,
+        _: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError> {
+        Ok((Some(self.store_id.clone()), None))
     }
 }
+
+crate::create_upsert_trait!(
+    TemperatureLogRow,
+    TemperatureLogRowRepository,
+    crate::ChangelogTableName::TemperatureLog
+);

@@ -24,11 +24,18 @@ macro_rules! create_v7_translator {
                 connection: &StorageConnection,
                 changelog: &ChangelogRow,
             ) -> Result<PushTranslateResult, anyhow::Error> {
+                // Hacky since store preference has the same id as store, need to add store preference in change log to avoid dedup
+                let record_id = if changelog.table_name == ChangelogTableName::StorePreference {
+                    changelog.store_id.clone().unwrap()
+                } else {
+                    changelog.record_id.clone()
+                };
+
                 let row = $repo_type::new(connection)
-                    .find_one_by_id(&changelog.record_id)?
+                    .find_one_by_id(&record_id)?
                     .ok_or(anyhow::Error::msg(format!(
                         "{} ({}) not found",
-                        $table_name, changelog.record_id
+                        $table_name, record_id
                     )))?;
 
                 Ok(PushTranslateResult::upsert(
@@ -461,6 +468,54 @@ create_v7_translator!(
     vec![]
 );
 
+create_v7_translator!(
+    SensorTranslation,
+    "v7_Sensor",
+    ChangelogTableName::Sensor,
+    SensorRow,
+    SensorRowRepository,
+    vec![
+        LocationTranslation.table_name(),
+        StoreTranslation.table_name()
+    ]
+);
+
+create_v7_translator!(
+    TemperatureBreachTranslation,
+    "v7_TemperatureBreach",
+    ChangelogTableName::TemperatureBreach,
+    TemperatureBreachRow,
+    TemperatureBreachRowRepository,
+    vec![
+        SensorTranslation.table_name(),
+        StoreTranslation.table_name(),
+        LocationTranslation.table_name()
+    ]
+);
+
+create_v7_translator!(
+    TemperatureLogTranslation,
+    "v7_TemperatureLog",
+    ChangelogTableName::TemperatureLog,
+    TemperatureLogRow,
+    TemperatureLogRowRepository,
+    vec![
+        StoreTranslation.table_name(),
+        LocationTranslation.table_name(),
+        SensorTranslation.table_name(),
+        TemperatureBreachTranslation.table_name()
+    ]
+);
+
+create_v7_translator!(
+    StorePreferenceTranslation,
+    "v7_StorePreference",
+    ChangelogTableName::StorePreference,
+    StorePreferenceRow,
+    StorePreferenceRowRepository,
+    vec![StoreTranslation.table_name()]
+);
+
 pub(crate) fn all_translators_v7() -> SyncTranslators {
     vec![
         // Central
@@ -499,5 +554,9 @@ pub(crate) fn all_translators_v7() -> SyncTranslators {
         CurrencyTranslation::boxed(),
         UserPermissionTranslation::boxed(),
         UserStoreJoinTranslation::boxed(),
+        SensorTranslation::boxed(),
+        TemperatureBreachTranslation::boxed(),
+        TemperatureLogTranslation::boxed(),
+        StorePreferenceTranslation::boxed(),
     ]
 }
