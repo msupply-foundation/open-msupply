@@ -62,7 +62,7 @@ pub async fn pull(
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
-    let changelogs = changelog_repo.outgoing_sync_records_from_central(
+    let changelogs = changelog_repo.outgoing_sync_records_from_central_v7(
         cursor,
         batch_size,
         site.site_id,

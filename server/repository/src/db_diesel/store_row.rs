@@ -3,7 +3,10 @@ use super::{
     store_row::store::dsl as store_dsl, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    repository_error::RepositoryError, ChangeLogInsertRow, ChangelogAction, ChangelogRepository,
+    ChangelogTableName, Delete, Upsert,
+};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -77,7 +80,7 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_dsl::store)
             .values(row)
             .on_conflict(store_dsl::id)
@@ -88,11 +91,16 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
         diesel::replace_into(store_dsl::store)
             .values(row)
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &StoreRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(row)?;
+        self.insert_changelog(row.id.to_owned())
     }
 
     pub async fn insert_one(&self, store_row: &StoreRow) -> Result<(), RepositoryError> {
@@ -135,6 +143,16 @@ impl<'a> StoreRowRepository<'a> {
             .execute(&self.connection.connection)?;
         Ok(())
     }
+
+    fn insert_changelog(&self, id: String) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Store,
+            record_id: id,
+            row_action: ChangelogAction::Upsert,
+            ..Default::default()
+        };
+        ChangelogRepository::new(self.connection).insert(&row)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -155,7 +173,13 @@ impl Delete for StoreRowDelete {
 
 impl Upsert for StoreRow {
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StoreRowRepository::new(con).upsert_one(self)
+        let _change_log_id = StoreRowRepository::new(con).upsert_one(self)?;
+        Ok(())
+    }
+
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let cursor_id = StoreRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(cursor_id))
     }
 
     // Test only

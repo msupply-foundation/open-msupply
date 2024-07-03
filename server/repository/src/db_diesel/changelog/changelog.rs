@@ -137,7 +137,7 @@ impl ChangelogTableName {
             ChangelogTableName::Barcode => ChangeLogSyncStyle::Remote, //TODO: Confirm
             ChangelogTableName::Clinician => ChangeLogSyncStyle::Remote,
             ChangelogTableName::ClinicianStoreJoin => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::Name => ChangeLogSyncStyle::Remote, //TODO: Confirm
+            ChangelogTableName::Name => ChangeLogSyncStyle::Central, //TODO: Confirm
             ChangelogTableName::NameStoreJoin => ChangeLogSyncStyle::Remote,
             ChangelogTableName::Document => ChangeLogSyncStyle::Remote, //TODO: Confirm
             ChangelogTableName::Sensor => ChangeLogSyncStyle::Remote,
@@ -271,6 +271,39 @@ impl<'a> ChangelogRepository<'a> {
         is_initialized: bool,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
+            .order(changelog_deduped::cursor.asc())
+            .limit(batch_size.into());
+
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        // );
+
+        let result: Vec<ChangelogJoin> = query.load(&self.connection.connection)?;
+        Ok(result
+            .into_iter()
+            .map(|(change_log_row, name_link_row)| ChangelogRow {
+                cursor: change_log_row.cursor,
+                table_name: change_log_row.table_name,
+                record_id: change_log_row.record_id,
+                row_action: change_log_row.row_action,
+                name_id: name_link_row.map(|r| r.name_id),
+                store_id: change_log_row.store_id,
+                is_sync_update: change_log_row.is_sync_update,
+                source_site_id: change_log_row.source_site_id,
+            })
+            .collect())
+    }
+
+    pub fn outgoing_sync_records_from_central_v7(
+        &self,
+        earliest: u64,
+        batch_size: u32,
+        sync_site_id: i32,
+        is_initialized: bool,
+    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+        let query = create_filtered_outgoing_sync_query_v7(earliest, sync_site_id, is_initialized)
             .order(changelog_deduped::cursor.asc())
             .limit(batch_size.into());
 
@@ -448,6 +481,76 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
 /// This looks up associated records to decide if change log should be sent to the site or not
 /// Update this method when adding new sync styles to the system
 fn create_filtered_outgoing_sync_query(
+    earliest: u64,
+    sync_site_id: i32,
+    is_initialized: bool,
+) -> BoxedChangelogQuery {
+    let mut query = changelog_deduped::table
+        .left_join(name_link::table)
+        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
+        .into_boxed();
+
+    // If we are initialising, we want to send all the records for the site, even ones that originally came from the site
+    // The rest of the time we want to exclude any records that were created by the site
+
+    if is_initialized {
+        query = query.filter(
+            changelog_deduped::source_site_id
+                .ne(Some(sync_site_id))
+                .or(changelog_deduped::source_site_id.is_null()),
+        )
+    }
+
+    // Loop through all the Sync tables and add them to the query if they have the right sync style
+
+    // Central Records
+
+    let central_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Central))
+        .collect();
+
+    // Remote Records
+    let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Remote))
+        .collect();
+
+    // Transfer Records
+    let transfer_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Transfer))
+        .collect();
+
+    let active_stores_for_site = store::table
+        .filter(store::site_id.eq(sync_site_id))
+        .select(store::id.nullable())
+        .into_boxed();
+
+    let active_names_for_site = store::table
+        .filter(store::site_id.eq(sync_site_id))
+        .select(store::name_id.nullable())
+        .into_boxed();
+
+    // Filter the query for the matching records for each type
+    query = query.filter(
+        changelog_deduped::table_name
+            .eq_any(central_sync_table_names)
+            .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
+            .or(changelog_deduped::table_name
+                .eq_any(remote_sync_table_names.clone())
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site)))
+            // .or(changelog_deduped::table_name
+            //     .eq_any(remote_sync_table_names)
+            //     .and(changelog_deduped::name_link_id.eq_any(active_names_for_site.clone()))) // TODO: Can't clone!
+            .or(changelog_deduped::table_name
+                .eq_any(transfer_sync_table_names)
+                .and(changelog_deduped::name_link_id.eq_any(active_names_for_site))), // TODO is there a difference between transfer and remote here? are they the same?
+
+                                                                                      // Any other special cases could be handled here...
+    );
+
+    query
+}
+
+fn create_filtered_outgoing_sync_query_v7(
     earliest: u64,
     sync_site_id: i32,
     is_initialized: bool,
