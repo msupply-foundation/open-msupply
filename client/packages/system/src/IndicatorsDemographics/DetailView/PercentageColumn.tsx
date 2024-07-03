@@ -12,7 +12,7 @@ const PercentageCell = (props: CellProps<Row>) => (
   <NumberInputCell
     {...props}
     max={100}
-    decimalLimit={2}
+    decimalLimit={4}
     isDisabled={props.isDisabled || props.rowData.id === GENERAL_POPULATION_ID}
     TextInputProps={{
       InputProps: {

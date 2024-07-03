@@ -5,6 +5,7 @@ import {
   InputWithLabelRow,
   NumericTextInput,
   TextWithLabelRow,
+  UNDEFINED_STRING_VALUE,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, RepackDraft } from '@openmsupply-client/system';
@@ -70,7 +71,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           />
           <TextWithLabelRow
             label={t('label.location')}
-            text={data?.locationName ?? '-'}
+            text={data?.locationName ?? UNDEFINED_STRING_VALUE}
             textProps={textProps}
             labelProps={labelProps}
           />

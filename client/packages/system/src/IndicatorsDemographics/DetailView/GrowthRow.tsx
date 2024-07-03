@@ -137,7 +137,7 @@ const GrowthInput = ({
   return (
     <NumericTextInput
       value={buffer}
-      decimalLimit={2}
+      decimalLimit={4}
       decimalMin={1}
       allowNegative
       InputProps={{
