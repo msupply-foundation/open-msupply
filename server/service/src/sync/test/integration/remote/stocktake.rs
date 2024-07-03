@@ -130,7 +130,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             d.stock_line_id = Some(stock_line_row.id.clone());
             d.batch = Some(uuid());
             d.expiry_date = NaiveDate::from_ymd_opt(2025, 03, 24);
-            d.pack_size = Some(2.25);
+            d.pack_size = Some(thread_rng().gen::<f64>());
             d.cost_price_per_pack = Some(gen_f64());
             d.sell_price_per_pack = Some(gen_f64());
             d.note = Some("stock_line.note".to_string());

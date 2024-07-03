@@ -34,6 +34,7 @@ pub struct DocumentRegistryLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+#[async_trait::async_trait]
 impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryLoader {
     type Value = DocumentRegistry;
     type Error = RepositoryError;

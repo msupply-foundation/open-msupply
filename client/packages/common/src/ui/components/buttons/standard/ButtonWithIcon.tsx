@@ -14,10 +14,7 @@ export interface ButtonWithIconProps extends ButtonProps {
   shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export const ButtonWithIcon = React.forwardRef<
-  HTMLButtonElement,
-  ButtonWithIconProps
->(
+export const ButtonWithIcon: React.FC<ButtonWithIconProps> = React.forwardRef(
   (
     {
       label,

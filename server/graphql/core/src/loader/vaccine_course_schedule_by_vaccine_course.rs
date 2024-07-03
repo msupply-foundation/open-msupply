@@ -13,6 +13,7 @@ pub struct VaccineCourseScheduleByVaccineCourseIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for VaccineCourseScheduleByVaccineCourseIdLoader {
     type Value = Vec<VaccineCourseScheduleRow>;
     type Error = RepositoryError;

@@ -68,7 +68,7 @@ impl LedgerNode {
     pub async fn name(&self) -> &String {
         &self.ledger.name
     }
-    pub async fn quantity(&self) -> &f64 {
+    pub async fn quantity(&self) -> &i64 {
         &self.ledger.quantity
     }
     pub async fn invoice_type(&self) -> InvoiceNodeType {

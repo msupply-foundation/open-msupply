@@ -45,9 +45,6 @@ pub struct ItemFilterInput {
     pub name: Option<StringFilterInput>,
     pub r#type: Option<EqualFilterItemTypeInput>,
     pub code: Option<StringFilterInput>,
-    /// Items that are visible in this store OR there is available stock of that item in this store
-    pub is_visible_or_on_hand: Option<bool>,
-    /// Items that are visible in this store. This filter is void if `is_visible_or_on_hand` is true
     pub is_visible: Option<bool>,
     pub code_or_name: Option<StringFilterInput>,
     pub is_active: Option<bool>,
@@ -100,7 +97,6 @@ impl ItemFilterInput {
             code_or_name,
             is_active,
             is_vaccine,
-            is_visible_or_on_hand,
         } = self;
 
         ItemFilter {
@@ -112,7 +108,6 @@ impl ItemFilterInput {
             code_or_name: code_or_name.map(StringFilter::from),
             is_active,
             is_vaccine,
-            is_visible_or_on_hand,
         }
     }
 }

@@ -34,7 +34,7 @@ pub struct InsertImmunisationProgramError {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum InsertImmunisationProgramErrorInterface {
     ProgramAlreadyExists(RecordAlreadyExist),
 }

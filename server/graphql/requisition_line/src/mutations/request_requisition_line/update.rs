@@ -24,7 +24,7 @@ pub struct UpdateInput {
 
 #[derive(Interface)]
 #[graphql(name = "UpdateRequestRequisitionLineErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     RequisitionDoesNotExist(ForeignKeyError),

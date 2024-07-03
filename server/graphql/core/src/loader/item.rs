@@ -9,6 +9,7 @@ pub struct ItemLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for ItemLoader {
     type Value = Item;
     type Error = RepositoryError;

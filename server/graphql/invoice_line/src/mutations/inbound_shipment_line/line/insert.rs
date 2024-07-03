@@ -65,7 +65,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 
 #[derive(Interface)]
 #[graphql(name = "InsertInboundShipmentLineErrorInterface")]
-#[graphql(field(name = "description", ty = "&str"))]
+#[graphql(field(name = "description", type = "&str"))]
 pub enum InsertErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),
@@ -146,7 +146,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::NotThisStoreInvoice
         | ServiceError::LineAlreadyExists
         | ServiceError::NotAStockIn
-        | ServiceError::NumberOfPacksBelowZero
+        | ServiceError::NumberOfPacksBelowOne
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemNotFound => BadUserInput(formatted_error),
@@ -324,8 +324,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NumberOfPacksBelowZero
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
+        //NumberOfPacksBelowOne
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

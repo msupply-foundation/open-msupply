@@ -11,6 +11,7 @@ pub struct AssetClassLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for AssetClassLoader {
     type Value = AssetClassRow;
     type Error = RepositoryError;

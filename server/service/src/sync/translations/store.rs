@@ -33,8 +33,6 @@ pub struct LegacyStoreRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub created_date: Option<NaiveDate>,
-    #[serde(rename = "disabled")]
-    is_disabled: bool,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -90,7 +88,6 @@ impl SyncTranslation for StoreTranslation {
             logo: data.logo,
             store_mode,
             created_date: data.created_date,
-            is_disabled: data.is_disabled,
         };
 
         Ok(PullTranslateResult::upsert(result))

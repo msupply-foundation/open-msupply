@@ -69,7 +69,7 @@ export const gapsNameProperties: {
       key: 'gas_availability',
       name: 'Gas Availability',
       valueType: PropertyNodeValueType.String,
-      allowedValues: 'No availability,Available,Irregular,Unknown',
+      allowedValues: 'Not availability,Available,Irregular,Unknown',
       remoteEditable: true,
     },
     {

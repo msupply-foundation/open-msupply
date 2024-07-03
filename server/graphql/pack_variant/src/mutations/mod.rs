@@ -42,7 +42,7 @@ pub struct InsertPackVariantError {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum InsertPackVariantErrorInterface {
     VariantWithPackSizeAlreadyExists(VariantWithPackSizeAlreadyExists),
     CannotAddPackSizeOfZero(CannotAddPackSizeOfZero),
@@ -55,7 +55,7 @@ pub struct UpdatePackVariantError {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum UpdatePackVariantErrorInterface {
     CannotAddWithNoAbbreviationAndName(CannotAddWithNoAbbreviationAndName),
 }

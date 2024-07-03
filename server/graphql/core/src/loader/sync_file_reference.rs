@@ -12,6 +12,7 @@ pub struct SyncFileReferenceLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for SyncFileReferenceLoader {
     type Value = Vec<SyncFileReference>;
     type Error = RepositoryError;

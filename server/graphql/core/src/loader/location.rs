@@ -12,6 +12,7 @@ pub struct LocationByIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for LocationByIdLoader {
     type Value = Location;
     type Error = RepositoryError;

@@ -2341,7 +2341,7 @@ export type InsertDemographicIndicatorInput = {
   basePopulation?: InputMaybe<Scalars['Int']['input']>;
   baseYear: Scalars['Int']['input'];
   id: Scalars['String']['input'];
-  name?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
   populationPercentage?: InputMaybe<Scalars['Float']['input']>;
   year1Projection?: InputMaybe<Scalars['Int']['input']>;
   year2Projection?: InputMaybe<Scalars['Int']['input']>;
@@ -2945,9 +2945,16 @@ export type InsertVaccineCourseErrorInterface = {
 };
 
 export type InsertVaccineCourseInput = {
+  coverageRate: Scalars['Float']['input'];
+  demographicIndicatorId?: InputMaybe<Scalars['String']['input']>;
+  doses: Scalars['Int']['input'];
   id: Scalars['String']['input'];
+  isActive: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   programId: Scalars['String']['input'];
+  schedules: Array<UpsertVaccineCourseScheduleInput>;
+  vaccineItems: Array<UpsertVaccineCourseItemInput>;
+  wastageRate: Scalars['Float']['input'];
 };
 
 export type InsertVaccineCourseResponse = InsertVaccineCourseError | VaccineCourseNode;
@@ -3273,10 +3280,7 @@ export type ItemFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are visible in this store. This filter is void if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Items that are visible in this store OR there is available stock of that item in this store */
-  isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
@@ -3420,7 +3424,7 @@ export type LedgerNode = {
   invoiceType: InvoiceNodeType;
   itemId: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  quantity: Scalars['Float']['output'];
+  quantity: Scalars['Int']['output'];
   reason?: Maybe<Scalars['String']['output']>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
@@ -7698,23 +7702,12 @@ export type UpdateVaccineCourseInput = {
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-  schedules: Array<UpdateVaccineCourseScheduleInput>;
-  vaccineItems: Array<UpdateVaccineCourseItemInput>;
+  schedules: Array<UpsertVaccineCourseScheduleInput>;
+  vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
 };
 
-export type UpdateVaccineCourseItemInput = {
-  id: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
-};
-
 export type UpdateVaccineCourseResponse = UpdateVaccineCourseError | VaccineCourseNode;
-
-export type UpdateVaccineCourseScheduleInput = {
-  doseNumber: Scalars['Int']['input'];
-  id: Scalars['String']['input'];
-  label: Scalars['String']['input'];
-};
 
 export type UpsertLogLevelInput = {
   level: LogLevelEnum;
@@ -7723,6 +7716,17 @@ export type UpsertLogLevelInput = {
 export type UpsertLogLevelResponse = {
   __typename: 'UpsertLogLevelResponse';
   level: LogLevelEnum;
+};
+
+export type UpsertVaccineCourseItemInput = {
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+};
+
+export type UpsertVaccineCourseScheduleInput = {
+  doseNumber: Scalars['Int']['input'];
+  id: Scalars['String']['input'];
+  label: Scalars['String']['input'];
 };
 
 export type UseSuggestedQuantityError = {
@@ -7819,7 +7823,6 @@ export type UserStoreNode = {
   createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
-  isDisabled: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   nameId: Scalars['String']['output'];
   preferences: StorePreferenceNode;

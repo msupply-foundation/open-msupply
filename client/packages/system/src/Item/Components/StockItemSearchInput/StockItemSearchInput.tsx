@@ -28,7 +28,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   width,
   autoFocus = false,
   openOnFocus,
-  includeNonVisibleWithStockOnHand = false,
 }) => {
   const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
   const { pagination, onPageChange } = usePagination();
@@ -37,7 +36,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const { data, isLoading } = useItemStockOnHand({
     pagination,
     filter,
-    includeNonVisibleWithStockOnHand,
   });
   // changed from useStockLines even though that is more appropriate
   // when viewing a stocktake, you may have a stocktake line which has no stock lines.

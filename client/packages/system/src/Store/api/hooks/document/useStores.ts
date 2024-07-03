@@ -4,10 +4,11 @@ import { useStoreApi } from '../utils/useStoreApi';
 export const useStores = () => {
   const api = useStoreApi();
   const queryParams = useQueryParamsStore();
-  const { filter } = queryParams;
+  const { filter, pagination } = queryParams;
   const { filterBy } = filter;
+  const { first, offset } = pagination;
 
-  return useQuery(api.keys.paramList(filterBy), async () =>
-    api.get.list(filterBy)
+  return useQuery(api.keys.paramList(queryParams.paramList()), async () =>
+    api.get.list({ filterBy, first, offset })
   );
 };

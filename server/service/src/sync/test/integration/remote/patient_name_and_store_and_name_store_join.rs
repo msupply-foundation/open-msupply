@@ -36,7 +36,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
 
         let store_row = StoreRow {
             id: uuid(),
-            name_link_id: facility_name_row.id.clone(),
+            name_id: facility_name_row.id.clone(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
             logo: None,
@@ -46,7 +46,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         let store_json = json!({
             "ID": store_row.id,
             "code": store_row.code,
-            "name_ID": store_row.name_link_id,
+            "name_ID": store_row.name_id,
             "sync_id_remote_site": store_row.site_id,
             "store_mode": "dispensary",
             "created_date": "2021-01-01"

@@ -21,7 +21,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         -- Adding store.name_link_id
         DROP INDEX index_store_name_id_fkey;
         ALTER TABLE store ADD COLUMN name_link_id TEXT;
-        ALTER TABLE store ADD COLUMN is_disabled BOOLEAN DEFAULT FALSE NOT NULL;
         
         UPDATE store SET name_link_id = name_id;
 
@@ -41,11 +40,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           site_id INTEGER NOT NULL,
           logo TEXT,
           store_mode TEXT DEFAULT 'STORE' NOT NULL,
-          created_date TEXT,
-          is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+          created_date TEXT
         );
 
-        INSERT INTO store_new SELECT id, name_id, code, site_id, logo, store_mode, created_date, false FROM store;
+        INSERT INTO store_new SELECT * FROM store;
 
         PRAGMA foreign_keys=off;
         DROP TABLE store;

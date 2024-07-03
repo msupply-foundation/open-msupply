@@ -19,6 +19,7 @@ graphql_types = { path = "../types" }
 actix-web = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
+async-trait = { workspace = true }
 chrono = { workspace = true }
 
 [dev-dependencies]

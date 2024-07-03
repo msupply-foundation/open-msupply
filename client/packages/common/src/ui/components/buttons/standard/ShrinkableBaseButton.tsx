@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { ButtonProps } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { StyledBaseButton } from './BaseButton';
@@ -30,22 +30,20 @@ interface ShrinkableBaseButtonProps extends ButtonProps {
   shrink: boolean;
 }
 
-export const ShrinkableBaseButton = React.forwardRef<
-  HTMLButtonElement,
-  ShrinkableBaseButtonProps
->(({ shrink = false, onClick, ...props }, ref) => {
-  const { isRtl } = useIntlUtils();
-  return (
-    <StyledShrinkableBaseButton
-      ref={ref}
-      shrink={shrink}
-      size="small"
-      isRtl={isRtl}
-      onClick={onClick}
-      onKeyDown={(event: React.KeyboardEvent<HTMLButtonElement>) => {
-        if (event.code === 'Enter' && !!onClick) onClick({} as any);
-      }}
-      {...props}
-    />
-  );
-});
+export const ShrinkableBaseButton: FC<ShrinkableBaseButtonProps> =
+  React.forwardRef(({ shrink = false, onClick, ...props }, ref) => {
+    const { isRtl } = useIntlUtils();
+    return (
+      <StyledShrinkableBaseButton
+        ref={ref}
+        shrink={shrink}
+        size="small"
+        isRtl={isRtl}
+        onClick={onClick}
+        onKeyDown={(event: React.KeyboardEvent<HTMLButtonElement>) => {
+          if (event.code === 'Enter' && !!onClick) onClick({} as any);
+        }}
+        {...props}
+      />
+    );
+  });

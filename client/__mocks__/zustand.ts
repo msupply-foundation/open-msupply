@@ -1,5 +1,5 @@
-import { act } from 'react';
 import { create as actualCreate, StateCreator, useStore } from 'zustand';
+import { act } from 'react-dom/test-utils';
 
 /**
  * This mock adds functionality to standard zustand by resetting to the

@@ -46,7 +46,7 @@ pub enum UpdateResponse {
 
 #[derive(Interface)]
 #[graphql(name = "UpdateStocktakeLineErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum UpdateErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
     StockLineReducedBelowZero(StockLineReducedBelowZero),
