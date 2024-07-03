@@ -10,14 +10,15 @@ use actix_web::{
 
 use crate::central_server_only;
 use service::{
+    apis::login_v4::LoginInputV4,
     service_provider::ServiceProvider,
     settings::Settings,
     sync::{
         api_v7::{
-            SiteInfoRequestV7, SiteInfoResponseV7, SiteStatusRequestV7, SiteStatusResponseV7,
-            SyncDownloadFileRequestV7, SyncParsedErrorV7, SyncPullRequestV7, SyncPullResponseV7,
-            SyncPushRequestV7, SyncPushResponseV7, SyncUploadFileRequestV7,
-            SyncUploadFileResponseV7,
+            LoginResponseV7, LoginV7Api, SiteInfoRequestV7, SiteInfoResponseV7,
+            SiteStatusRequestV7, SiteStatusResponseV7, SyncDownloadFileRequestV7,
+            SyncParsedErrorV7, SyncPullRequestV7, SyncPullResponseV7, SyncPushRequestV7,
+            SyncPushResponseV7, SyncUploadFileRequestV7, SyncUploadFileResponseV7,
         },
         sync_on_central_v7,
     },
@@ -27,6 +28,7 @@ pub fn config_sync_on_central_v7(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("central_v7")
             .wrap(central_server_only())
+            .service(login)
             .service(pull)
             .service(push)
             .service(site_info)
@@ -165,6 +167,19 @@ async fn upload_file(
     {
         Ok(batch) => SyncUploadFileResponseV7::Data(batch),
         Err(error) => SyncUploadFileResponseV7::Error(error),
+    };
+
+    Ok(web::Json(response))
+}
+
+#[post("/login")]
+async fn login(
+    request: Json<LoginInputV4>,
+    service_provider: Data<ServiceProvider>,
+) -> actix_web::Result<impl Responder> {
+    let response = match LoginV7Api::login(&service_provider, request.into_inner()).await {
+        Ok(response) => LoginResponseV7::Data(response),
+        Err(err) => LoginResponseV7::Error(err),
     };
 
     Ok(web::Json(response))

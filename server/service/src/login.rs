@@ -10,34 +10,44 @@ use repository::{
     ActivityLogType, Language, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
     UserStoreJoinRow,
 };
-use reqwest::{ClientBuilder, Url};
+use reqwest::{Client, ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
-use util::uuid::uuid;
+use util::{is_central_server, uuid::uuid};
 
 use crate::{
     activity_log::activity_log_entry,
     apis::{
         login_v4::{
-            LoginApiV4, LoginInputV4, LoginStatusV4, LoginUserInfoV4, LoginUserTypeV4, LoginV4Error,
+            LoginApiV4, LoginInputV4, LoginResponseV4, LoginStatusV4, LoginUserInfoV4,
+            LoginUserTypeV4, LoginV4Error,
         },
+        login_v7::LoginApiV7,
         permissions::{map_api_permissions, Permissions},
     },
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
+    sync::api_v7::LoginV7Error,
     token::{JWTIssuingError, TokenPair, TokenService},
     user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
 
 const CONNECTION_TIMEOUT_SEC: u64 = 10;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum FetchUserError {
     Unauthenticated,
     AccountBlocked(u64),
     ConnectionError(String),
     InternalError(String),
 }
+
+impl From<RepositoryError> for FetchUserError {
+    fn from(err: RepositoryError) -> Self {
+        FetchUserError::InternalError(err.to_string())
+    }
+}
+
 #[derive(Debug)]
 pub enum UpdateUserError {
     PasswordHashError(BcryptError),
@@ -194,41 +204,23 @@ impl LoginService {
             .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SEC))
             .build()
             .map_err(|err| FetchUserError::ConnectionError(format!("{:?}", err)))?;
-        let login_api = LoginApiV4::new(client, central_server_url.clone());
+
         let username = &input.username;
         let password = &input.password;
 
-        // Try login with central
-        let login_result = login_api
-            .login(LoginInputV4 {
-                username: username.clone(),
-                password: password.clone(),
-                login_type: LoginUserTypeV4::User,
-            })
-            .await;
+        let login_input = LoginInputV4 {
+            username: username.clone(),
+            password: password.clone(),
+            login_type: LoginUserTypeV4::User,
+        };
 
-        let user_data = match login_result {
-            Ok(user_data) => user_data,
-            Err(err) => match err {
-                LoginV4Error::Unauthorised => {
-                    return Err(FetchUserError::Unauthenticated);
-                }
-                LoginV4Error::AccountBlocked(timeout_remaining) => {
-                    return Err(FetchUserError::AccountBlocked(timeout_remaining));
-                }
-                LoginV4Error::ConnectionError(_) => {
-                    return Err(FetchUserError::ConnectionError(format!(
-                        "Failed to reach the central server to fetch data for {}: {:?}",
-                        username, err
-                    )))
-                }
-                LoginV4Error::ParseError(_) => {
-                    return Err(FetchUserError::InternalError(format!(
-                        "Failed to parse central server response for {}: {:?}",
-                        username, err
-                    )))
-                }
-            },
+        let user_data = match is_central_server() {
+            true => {
+                LoginService::fetch_user_v4(client, central_server_url.clone(), login_input).await?
+            }
+            false => {
+                LoginService::fetch_user_v7(client, central_server_url.clone(), login_input).await?
+            }
         };
 
         if user_data.status == LoginStatusV4::Error {
@@ -253,6 +245,67 @@ impl LoginService {
         };
 
         Ok(user_info)
+    }
+
+    async fn fetch_user_v4(
+        client: Client,
+        central_server_url: Url,
+        login_input: LoginInputV4,
+    ) -> Result<LoginResponseV4, FetchUserError> {
+        let username = login_input.username.clone();
+
+        let login_api = LoginApiV4::new(client, central_server_url.clone());
+        let login_result = login_api.login(login_input).await;
+
+        let error = match login_result {
+            Ok(user_data) => return Ok(user_data),
+            Err(err) => match err {
+                LoginV4Error::Unauthorised => FetchUserError::Unauthenticated,
+                LoginV4Error::AccountBlocked(timeout_remaining) => {
+                    FetchUserError::AccountBlocked(timeout_remaining)
+                }
+                LoginV4Error::ConnectionError(_) => FetchUserError::ConnectionError(format!(
+                    "Failed to reach the central server to fetch data for {}: {:?}",
+                    username, err
+                )),
+                LoginV4Error::ParseError(_) => FetchUserError::InternalError(format!(
+                    "Failed to parse central server response for {}: {:?}",
+                    username, err
+                )),
+            },
+        };
+        Err(error)
+    }
+
+    async fn fetch_user_v7(
+        client: Client,
+        central_server_url: Url,
+        login_input: LoginInputV4,
+    ) -> Result<LoginResponseV4, FetchUserError> {
+        let login_api = LoginApiV7::new(client, central_server_url.clone());
+
+        let login_result = login_api.login(&login_input).await;
+
+        let error = match login_result {
+            Ok(user_data) => return Ok(user_data),
+            Err(err) => match err {
+                LoginV7Error::Unauthorised => FetchUserError::Unauthenticated,
+
+                LoginV7Error::AccountBlocked(timeout_remaining) => {
+                    FetchUserError::AccountBlocked(timeout_remaining)
+                }
+
+                LoginV7Error::ConnectionError(_) => FetchUserError::ConnectionError(format!(
+                    "Failed to reach the central server to fetch data for {}: {:?}",
+                    login_input.username, err
+                )),
+                LoginV7Error::OtherServerError(_) => FetchUserError::InternalError(format!(
+                    "Failed to parse central server response for {}: {:?}",
+                    login_input.username, err
+                )),
+            },
+        };
+        Err(error)
     }
 
     pub fn update_user(

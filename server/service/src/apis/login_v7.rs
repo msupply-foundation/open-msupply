@@ -1,6 +1,8 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
 use reqwest::{Client, Url};
-use serde::{Deserialize, Serialize};
+
+use crate::sync::api_v7::{LoginResponseV7, LoginV7Error};
+
+use super::login_v4::{LoginInputV4, LoginResponseV4};
 
 pub struct LoginApiV7 {
     server_url: Url,
@@ -12,45 +14,27 @@ impl LoginApiV7 {
         LoginApiV7 { server_url, client }
     }
 
-    // idk maybe need to strip back
-    pub async fn login(&self, input: LoginInputV7) -> Result<LoginResponseV4, LoginV4Error> {
+    pub async fn login(&self, input: &LoginInputV4) -> Result<LoginResponseV4, LoginV7Error> {
         let response = self
             .client
-            .post(self.server_url.join("/central_v7/login").unwrap())
-            .json(&input)
+            .post(self.server_url.join("central_v7/login").unwrap())
+            .json(input)
             .send()
             .await
-            .map_err(LoginV4Error::ConnectionError)?;
+            .map_err(|err| LoginV7Error::ConnectionError(err.to_string()))?;
 
-        let status = response.status();
+        // Not checking for status, expecting 200 only, even if there is error
+        let response_text = response
+            .text()
+            .await
+            .map_err(|err| LoginV7Error::ConnectionError(err.to_string()))?;
 
-        if status == reqwest::StatusCode::UNAUTHORIZED {
-            return Err(LoginV4Error::Unauthorised);
-        }
+        let result: LoginResponseV7 = serde_json::from_str(&response_text)
+            .map_err(|err| LoginV7Error::OtherServerError(err.to_string()))?;
 
-        let body = response.json::<serde_json::Value>().await;
-
-        match body {
-            Ok(body) => {
-                if status == reqwest::StatusCode::FORBIDDEN {
-                    // Handle account blocked error (i.e. too many failed login attempts)
-                    if let Ok(error_body) =
-                        serde_json::from_value::<LoginResponseErrorV4>(body.clone())
-                    {
-                        if error_body.status == "user_login_timeout" {
-                            if let Some(timeout_remaining) = error_body.timeout_remaining {
-                                return Err(LoginV4Error::AccountBlocked(timeout_remaining));
-                            }
-                        }
-                    }
-                }
-
-                let response = serde_json::from_value::<LoginResponseV4>(body)
-                    .map_err(LoginV4Error::ParseError)?;
-
-                Ok(response)
-            }
-            Err(e) => Err(LoginV4Error::ConnectionError(e)),
+        match result {
+            LoginResponseV7::Data(response) => return Ok(response),
+            LoginResponseV7::Error(error) => return Err(error),
         }
     }
 }

@@ -1,13 +1,15 @@
 mod core;
+mod login;
 use repository::RepositoryError;
 use reqwest::{Response, Url};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
 
-use crate::i64_to_u64;
+use crate::{apis::login_v4::LoginResponseV4, i64_to_u64};
 
 pub use self::core::*;
+pub use self::login::*;
 
 use super::{
     api::{CommonSyncRecord, ParsingResponseError},
@@ -86,6 +88,30 @@ pub enum SiteStatusResponseV7 {
 pub enum SiteInfoResponseV7 {
     Data(SiteInfoV7),
     Error(SyncParsedErrorV7),
+}
+
+#[derive(Deserialize, Debug, Error, Serialize)]
+pub enum LoginV7Error {
+    #[error("Unauthorized")]
+    Unauthorised,
+    #[error("Account blocked")]
+    AccountBlocked(u64),
+    #[error("Connection error: {0}")]
+    ConnectionError(String),
+    #[error("Other server error: {0}")]
+    OtherServerError(String),
+}
+
+impl From<RepositoryError> for LoginV7Error {
+    fn from(from: RepositoryError) -> Self {
+        LoginV7Error::OtherServerError(format_error(&from))
+    }
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+pub enum LoginResponseV7 {
+    Data(LoginResponseV4),
+    Error(LoginV7Error),
 }
 
 #[derive(Error, Debug)]

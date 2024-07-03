@@ -18,7 +18,7 @@ pub enum LoginUserTypeV4 {
     Unknown,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub enum LoginStatusV4 {
     #[serde(alias = "success")]
     Success,
@@ -30,12 +30,12 @@ pub enum LoginStatusV4 {
 
 #[derive(Deserialize)]
 pub struct LoginResponseErrorV4 {
-    status: String,
+    pub status: String,
     #[serde(rename = "timeoutRemaining")]
-    timeout_remaining: Option<u64>,
+    pub timeout_remaining: Option<u64>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LoginInputV4 {
     pub username: String,
     pub password: String,
@@ -114,7 +114,7 @@ pub struct LoginUserInfoV4 {
     pub user_stores: Vec<LoginUserStoresV4>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LoginResponseV4 {
     pub status: LoginStatusV4,
     pub authenticated: bool,
