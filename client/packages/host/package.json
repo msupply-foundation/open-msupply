@@ -5,7 +5,7 @@
   "main": "./src/index.ts",
   "private": true,
   "devDependencies": {
-    "@capacitor-community/keep-awake": "^4.0.0",
+    "@capacitor-community/keep-awake": "^5.0.0",
     "copy-webpack-plugin": "^11.0.0",
     "find-up": "^6.3.0",
     "html-webpack-plugin": "^5.5.0",

@@ -43,9 +43,6 @@
   "devDependencies": {
     "@babel/core": "^7.21.3",
     "@babel/preset-flow": "^7.21.4",
-    "@capacitor-community/keep-awake": "^4.0.0",
-    "@capacitor/keyboard": "^5.0.6",
-    "@capacitor/preferences": "^5.0.6",
     "@graphql-codegen/cli": "^5.0.0",
     "@graphql-codegen/near-operation-file-preset": "^2.2.5",
     "@graphql-codegen/typescript": "^4.0.1",
@@ -115,7 +112,6 @@
   },
   "dependencies": {
     "@bugsnag/js": "^7.16.2",
-    "@capacitor/core": "^5.2.2",
     "@mui/x-date-pickers": "^7.3.2",
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",
