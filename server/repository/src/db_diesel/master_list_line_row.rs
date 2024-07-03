@@ -48,7 +48,7 @@ impl<'a> MasterListLineRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list_line)
             .values(row)
             .on_conflict(id)
@@ -59,7 +59,7 @@ impl<'a> MasterListLineRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list_line)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -94,20 +94,6 @@ impl<'a> MasterListLineRowRepository<'a> {
     }
 }
 
-impl Upsert for MasterListLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListLineRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            MasterListLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct MasterListLineRowDelete(pub String);
 impl Delete for MasterListLineRowDelete {
@@ -122,3 +108,9 @@ impl Delete for MasterListLineRowDelete {
         )
     }
 }
+
+crate::create_central_upsert_trait!(
+    MasterListLineRow,
+    MasterListLineRowRepository,
+    crate::ChangelogTableName::MasterListLine
+);

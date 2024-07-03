@@ -138,7 +138,7 @@ impl ChangelogTableName {
             ChangelogTableName::Clinician => ChangeLogSyncStyle::Remote,
             ChangelogTableName::ClinicianStoreJoin => ChangeLogSyncStyle::Remote,
             ChangelogTableName::Name => ChangeLogSyncStyle::Central, //TODO: Confirm
-            ChangelogTableName::NameStoreJoin => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::NameStoreJoin => ChangeLogSyncStyle::Central,
             ChangelogTableName::Document => ChangeLogSyncStyle::Remote, //TODO: Confirm
             ChangelogTableName::Sensor => ChangeLogSyncStyle::Remote,
             ChangelogTableName::TemperatureBreach => ChangeLogSyncStyle::Remote,

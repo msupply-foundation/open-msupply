@@ -6,7 +6,6 @@ use actix_files as fs;
 use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::MultipartForm;
 
-use actix_web::dev::Url;
 use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;

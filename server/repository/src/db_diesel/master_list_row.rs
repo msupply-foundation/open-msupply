@@ -51,7 +51,7 @@ impl<'a> MasterListRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list)
             .values(row)
             .on_conflict(id)
@@ -62,7 +62,7 @@ impl<'a> MasterListRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -87,16 +87,8 @@ impl<'a> MasterListRowRepository<'a> {
     }
 }
 
-impl Upsert for MasterListRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            MasterListRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
+crate::create_central_upsert_trait!(
+    MasterListRow,
+    MasterListRowRepository,
+    crate::ChangelogTableName::MasterList
+);

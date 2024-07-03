@@ -152,7 +152,7 @@ create_v7_translator!(
 use repository::asset_catalogue_property_row::*;
 create_v7_translator!(
     AssetCataloguePropertyTranslation,
-    "asset_catalogue_property",
+    "v7_asset_catalogue_property",
     ChangelogTableName::AssetCatalogueProperty,
     AssetCataloguePropertyRow,
     AssetCataloguePropertyRowRepository,
@@ -195,6 +195,7 @@ create_v7_translator!(
     vec![AssetTranslation.table_name()]
 );
 
+// TODO manual translation for now because of password ?
 create_v7_translator!(
     UserTranslation,
     "v7_user",
@@ -213,6 +214,7 @@ create_v7_translator!(
     vec![]
 );
 
+// TODO skipping for now
 create_v7_translator!(
     NameTagTranslation,
     "v7_name_tag",
@@ -222,6 +224,7 @@ create_v7_translator!(
     vec![]
 );
 
+// TODO skipping for now
 create_v7_translator!(
     NameTagJoinTranslation,
     "v7_name_tag_join",
@@ -246,7 +249,7 @@ create_v7_translator!(
     ChangelogTableName::Item,
     ItemRow,
     ItemRowRepository,
-    vec![]
+    vec![UnitTranslation.table_name()]
 );
 
 create_v7_translator!(
@@ -255,7 +258,7 @@ create_v7_translator!(
     ChangelogTableName::Store,
     StoreRow,
     StoreRowRepository,
-    vec![]
+    vec![NameTranslation.table_name()]
 );
 
 create_v7_translator!(
@@ -273,7 +276,10 @@ create_v7_translator!(
     ChangelogTableName::MasterListLine,
     MasterListLineRow,
     MasterListLineRowRepository,
-    vec![]
+    vec![
+        MasterListTranslation.table_name(),
+        ItemTranslation.table_name()
+    ]
 );
 
 create_v7_translator!(
@@ -282,7 +288,10 @@ create_v7_translator!(
     ChangelogTableName::MasterListNameJoin,
     MasterListNameJoinRow,
     MasterListNameJoinRepository,
-    vec![]
+    vec![
+        NameTranslation.table_name(),
+        MasterListTranslation.table_name(),
+    ]
 );
 
 create_v7_translator!(
@@ -291,16 +300,7 @@ create_v7_translator!(
     ChangelogTableName::Location,
     LocationRow,
     LocationRowRepository,
-    vec![]
-);
-
-create_v7_translator!(
-    LocationMovementTranslation,
-    "v7_LocationMovement",
-    ChangelogTableName::LocationMovement,
-    LocationMovementRow,
-    LocationMovementRowRepository,
-    vec![]
+    vec![StoreTranslation.table_name()]
 );
 
 create_v7_translator!(
@@ -309,25 +309,54 @@ create_v7_translator!(
     ChangelogTableName::StockLine,
     StockLineRow,
     StockLineRowRepository,
-    vec![]
+    vec![
+        ItemTranslation.table_name(),
+        NameTranslation.table_name(),
+        StoreTranslation.table_name(),
+        LocationTranslation.table_name()
+    ]
 );
 
+create_v7_translator!(
+    LocationMovementTranslation,
+    "v7_LocationMovement",
+    ChangelogTableName::LocationMovement,
+    LocationMovementRow,
+    LocationMovementRowRepository,
+    vec![
+        StoreTranslation.table_name(),
+        LocationTranslation.table_name(),
+        StockLineTranslation.table_name()
+    ]
+);
+
+// also should have
+// ClinicianTranslation.table_name(),
+// CurrencyTranslation.table_name()
 create_v7_translator!(
     InvoiceTranslation,
     "v7_Invoice",
     ChangelogTableName::Invoice,
     InvoiceRow,
     InvoiceRowRepository,
-    vec![]
+    vec![NameTranslation.table_name(), StoreTranslation.table_name(),]
 );
 
+// Also should have
+// ReasonTranslation.table_name(),
+// CurrencyTranslation.table_name()
 create_v7_translator!(
     InvoiceLineTranslation,
     "v7_InvoiceLine",
     ChangelogTableName::InvoiceLine,
     InvoiceLineRow,
     InvoiceLineRowRepository,
-    vec![]
+    vec![
+        InvoiceTranslation.table_name(),
+        ItemTranslation.table_name(),
+        StockLineTranslation.table_name(),
+        LocationTranslation.table_name(),
+    ]
 );
 
 create_v7_translator!(
@@ -336,25 +365,41 @@ create_v7_translator!(
     ChangelogTableName::Stocktake,
     StocktakeRow,
     StocktakeRowRepository,
-    vec![]
+    vec![
+        InvoiceTranslation.table_name(),
+        StoreTranslation.table_name()
+    ]
 );
 
+// Also should have
+// ReasonTranslation.table_name()
 create_v7_translator!(
     StocktakeLineTranslation,
     "v7_StocktakeLine",
     ChangelogTableName::StocktakeLine,
     StocktakeLineRow,
     StocktakeLineRowRepository,
-    vec![]
+    vec![
+        StocktakeTranslation.table_name(),
+        StockLineTranslation.table_name(),
+        ItemTranslation.table_name(),
+        LocationTranslation.table_name(),
+    ]
 );
 
+// Also should have
+// PeriodTranslation.table_name(),
 create_v7_translator!(
     RequisitionTranslation,
     "v7_Requisition",
     ChangelogTableName::Requisition,
     RequisitionRow,
     RequisitionRowRepository,
-    vec![]
+    vec![
+        NameTranslation.table_name(),
+        StoreTranslation.table_name(),
+        MasterListTranslation.table_name()
+    ]
 );
 
 create_v7_translator!(
@@ -363,7 +408,10 @@ create_v7_translator!(
     ChangelogTableName::RequisitionLine,
     RequisitionLineRow,
     RequisitionLineRowRepository,
-    vec![]
+    vec![
+        RequisitionTranslation.table_name(),
+        ItemTranslation.table_name()
+    ]
 );
 
 create_v7_translator!(
@@ -372,7 +420,7 @@ create_v7_translator!(
     ChangelogTableName::ActivityLog,
     ActivityLogRow,
     ActivityLogRowRepository,
-    vec![]
+    vec![StoreTranslation.table_name()]
 );
 
 create_v7_translator!(
@@ -381,7 +429,7 @@ create_v7_translator!(
     ChangelogTableName::NameStoreJoin,
     NameStoreJoinRow,
     NameStoreJoinRepository,
-    vec![]
+    vec![NameTranslation.table_name(), StoreTranslation.table_name()]
 );
 
 pub(crate) fn all_translators_v7() -> SyncTranslators {

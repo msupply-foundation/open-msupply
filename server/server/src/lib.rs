@@ -36,7 +36,6 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
-use util::is_central_server;
 
 mod authentication;
 pub mod certs;

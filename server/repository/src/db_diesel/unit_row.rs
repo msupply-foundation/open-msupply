@@ -1,5 +1,8 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    create_central_upsert_trait, repository_error::RepositoryError, ChangelogTableName, Delete,
+    Upsert,
+};
 use diesel::prelude::*;
 
 table! {
@@ -12,7 +15,18 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default,  serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "unit"]
 pub struct UnitRow {
     pub id: String,
@@ -32,7 +46,7 @@ impl<'a> UnitRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::insert_into(unit)
             .values(row)
             .on_conflict(id)
@@ -43,7 +57,7 @@ impl<'a> UnitRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::replace_into(unit)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -98,17 +112,4 @@ impl Delete for UnitRowDelete {
         ));
     }
 }
-
-impl Upsert for UnitRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UnitRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UnitRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
+create_central_upsert_trait!(UnitRow, UnitRowRepository, crate::ChangelogTableName::Unit);

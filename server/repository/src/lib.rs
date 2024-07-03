@@ -95,3 +95,43 @@ fn downcast_example() {
 
     assert_eq!(format!("{boxed:?}"), format!("{compare_to:?}"))
 }
+
+#[macro_export]
+macro_rules! create_central_upsert_trait {
+    ($row:ident, $repo:ident, $change_log:path) => {
+        impl<'a> $repo<'a> {
+            pub fn upsert_one(&self, row: &$row) -> Result<i64, RepositoryError> {
+                self._upsert_one(row)?;
+
+                let changelog_row = crate::ChangeLogInsertRow {
+                    table_name: $change_log,
+                    record_id: row.id.clone(),
+                    row_action: crate::ChangelogAction::Upsert,
+                    ..Default::default()
+                };
+
+                crate::ChangelogRepository::new(self.connection).insert(&changelog_row)
+            }
+        }
+
+        impl Upsert for $row {
+            fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+                let _change_log_id = $repo::new(con).upsert_one(self)?;
+                Ok(())
+            }
+
+            fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+                let cursor_id = $repo::new(con).upsert_one(self)?;
+                Ok(Some(cursor_id))
+            }
+
+            // Test only
+            fn assert_upserted(&self, con: &StorageConnection) {
+                assert_eq!(
+                    $repo::new(con).find_one_by_id(&self.id),
+                    Ok(Some(self.clone()))
+                )
+            }
+        }
+    };
+}

@@ -2,7 +2,7 @@ use crate::{Delete, Upsert};
 
 use super::{
     item_link_row::item_link, item_row::item::dsl::*, name_link_row::name_link, unit_row::unit,
-    ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
+    ChangelogTableName, ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -104,7 +104,7 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)
             .on_conflict(id)
@@ -117,7 +117,7 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::replace_into(item)
             .values(item_row)
             .execute(&self.connection.connection)?;
@@ -188,16 +188,4 @@ impl Delete for ItemRowDelete {
     }
 }
 
-impl Upsert for ItemRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ItemRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            ItemRowRepository::new(con).find_active_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
+crate::create_central_upsert_trait!(ItemRow, ItemRowRepository, crate::ChangelogTableName::Item);

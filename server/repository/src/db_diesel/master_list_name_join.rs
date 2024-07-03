@@ -48,7 +48,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list_name_join)
             .values(row)
             .on_conflict(id)
@@ -59,7 +59,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list_name_join)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -109,16 +109,8 @@ impl Delete for MasterListNameJoinRowDelete {
     }
 }
 
-impl Upsert for MasterListNameJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListNameJoinRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            MasterListNameJoinRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
+crate::create_central_upsert_trait!(
+    MasterListNameJoinRow,
+    MasterListNameJoinRepository,
+    crate::ChangelogTableName::MasterListNameJoin
+);
