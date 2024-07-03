@@ -35,11 +35,6 @@ const DEVICE_CLOSE_DELAY = 5000;
 const OMSUPPLY_BARCODE =
   '19,16,3,0,111,112,101,110,32,109,83,117,112,112,108,121,0,24,11';
 
-// App data store
-type StoreType = {
-  [key: string]: string | null;
-};
-
 class Scanner {
   device: HID.HID | undefined;
   barcodeScanner: BarcodeScanner | undefined;
@@ -132,7 +127,15 @@ class Scanner {
   }
 }
 
-const store = new ElectronStore<StoreType>();
+// the typescript typing for ElectronStore now requires us to build as ESM modules
+// in order to get the ts defs for 'conf' which gives the get/set/clear methods
+// because we aren't building ESM, have manually typed the class
+const store = new ElectronStore() as unknown as {
+  clear: () => void;
+  get: (key: string, defaultValue: string | null) => string | null;
+  set: (key: string, value: string | null) => void;
+};
+
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
 
 let connectedServer: FrontEndHost | null = null;
