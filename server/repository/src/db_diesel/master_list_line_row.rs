@@ -109,7 +109,7 @@ impl Delete for MasterListLineRowDelete {
     }
 }
 
-crate::create_central_upsert_trait!(
+crate::create_upsert_trait!(
     MasterListLineRow,
     MasterListLineRowRepository,
     crate::ChangelogTableName::MasterListLine

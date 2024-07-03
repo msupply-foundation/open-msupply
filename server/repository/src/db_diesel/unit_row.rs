@@ -1,8 +1,5 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::{
-    create_central_upsert_trait, repository_error::RepositoryError, ChangelogTableName, Delete,
-    Upsert,
-};
+use crate::{create_upsert_trait, repository_error::RepositoryError, Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -112,4 +109,4 @@ impl Delete for UnitRowDelete {
         ));
     }
 }
-create_central_upsert_trait!(UnitRow, UnitRowRepository, crate::ChangelogTableName::Unit);
+create_upsert_trait!(UnitRow, UnitRowRepository, crate::ChangelogTableName::Unit);

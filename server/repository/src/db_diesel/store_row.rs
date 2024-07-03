@@ -3,7 +3,7 @@ use super::{
     store_row::store::dsl as store_dsl, StorageConnection,
 };
 
-use crate::{create_central_upsert_trait, repository_error::RepositoryError, Delete, Upsert};
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -165,7 +165,7 @@ impl Delete for StoreRowDelete {
     }
 }
 
-crate::create_central_upsert_trait!(
+crate::create_upsert_trait!(
     StoreRow,
     StoreRowRepository,
     crate::ChangelogTableName::Store

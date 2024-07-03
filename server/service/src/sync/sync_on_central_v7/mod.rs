@@ -68,7 +68,7 @@ pub async fn pull(
         site.site_id,
         is_initialised,
     )?;
-    let total_records = changelog_repo.count_outgoing_sync_records_from_central(
+    let total_records = changelog_repo.count_outgoing_sync_records_from_central_v7(
         cursor,
         site.site_id,
         is_initialised,

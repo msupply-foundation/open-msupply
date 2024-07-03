@@ -1,5 +1,5 @@
 use super::{currency_row::currency::dsl as currency_dsl, StorageConnection};
-use crate::{Delete, Upsert};
+use crate::Delete;
 
 use crate::repository_error::RepositoryError;
 
@@ -17,7 +17,17 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "currency"]
 pub struct CurrencyRow {
@@ -39,7 +49,7 @@ impl<'a> CurrencyRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::insert_into(currency_dsl::currency)
             .values(row)
             .on_conflict(currency_dsl::id)
@@ -50,7 +60,7 @@ impl<'a> CurrencyRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::replace_into(currency_dsl::currency)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -94,16 +104,8 @@ impl Delete for CurrencyRowDelete {
     }
 }
 
-impl Upsert for CurrencyRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        CurrencyRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            CurrencyRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
+crate::create_upsert_trait!(
+    CurrencyRow,
+    CurrencyRowRepository,
+    crate::ChangelogTableName::Currency
+);

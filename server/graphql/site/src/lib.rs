@@ -1,7 +1,6 @@
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::ContextExt;
 use repository::SiteRowRepository;
-use service::auth::{Resource, ResourceAccessRequest};
 
 mod mutations;
 use self::mutations::*;

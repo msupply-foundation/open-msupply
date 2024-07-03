@@ -2,7 +2,7 @@ use crate::{Delete, Upsert};
 
 use super::{
     item_link_row::item_link, item_row::item::dsl::*, name_link_row::name_link, unit_row::unit,
-    ChangelogTableName, ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
+    ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -188,4 +188,4 @@ impl Delete for ItemRowDelete {
     }
 }
 
-crate::create_central_upsert_trait!(ItemRow, ItemRowRepository, crate::ChangelogTableName::Item);
+crate::create_upsert_trait!(ItemRow, ItemRowRepository, crate::ChangelogTableName::Item);

@@ -46,6 +46,13 @@ pub trait Delete: DebugTrait {
     fn assert_deleted(&self, con: &StorageConnection);
 }
 
+pub trait StoreAndNameLinkId {
+    fn get_store_and_name_link_id(
+        &self,
+        _: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError>;
+}
+
 pub trait Upsert: DebugTrait {
     // TODO:(Long term) DELETE THIS TRAIT METHOD AND REMOVE TRIGGERS?
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError>;
@@ -64,6 +71,18 @@ pub trait Upsert: DebugTrait {
     // This is needed for integration test (where test record is generated for inventory adjustment, but id is not know until site is created)
     fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
         None
+    }
+}
+
+impl<T> StoreAndNameLinkId for T
+where
+    T: Upsert,
+{
+    fn get_store_and_name_link_id(
+        &self,
+        _: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError> {
+        Ok((None, None))
     }
 }
 
@@ -97,24 +116,9 @@ fn downcast_example() {
 }
 
 #[macro_export]
-macro_rules! create_central_upsert_trait {
+macro_rules! create_upsert_trait {
     ($row:ident, $repo:ident, $change_log:path) => {
-        impl<'a> $repo<'a> {
-            pub fn upsert_one(&self, row: &$row) -> Result<i64, RepositoryError> {
-                self._upsert_one(row)?;
-
-                let changelog_row = crate::ChangeLogInsertRow {
-                    table_name: $change_log,
-                    record_id: row.id.clone(),
-                    row_action: crate::ChangelogAction::Upsert,
-                    ..Default::default()
-                };
-
-                crate::ChangelogRepository::new(self.connection).insert(&changelog_row)
-            }
-        }
-
-        impl Upsert for $row {
+        impl crate::Upsert for $row {
             fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
                 let _change_log_id = $repo::new(con).upsert_one(self)?;
                 Ok(())
@@ -131,6 +135,25 @@ macro_rules! create_central_upsert_trait {
                     $repo::new(con).find_one_by_id(&self.id),
                     Ok(Some(self.clone()))
                 )
+            }
+        }
+        impl<'a> $repo<'a> {
+            pub fn upsert_one(&self, row: &$row) -> Result<i64, RepositoryError> {
+                self._upsert_one(row)?;
+                #[allow(unused_imports)]
+                use crate::StoreAndNameLinkId;
+                let (store_id, name_link_id_not_dsl) =
+                    row.get_store_and_name_link_id(self.connection)?;
+
+                let changelog_row = crate::ChangeLogInsertRow {
+                    table_name: $change_log,
+                    record_id: row.id.clone(),
+                    row_action: crate::ChangelogAction::Upsert,
+                    store_id,
+                    name_link_id: name_link_id_not_dsl,
+                };
+
+                crate::ChangelogRepository::new(self.connection).insert(&changelog_row)
             }
         }
     };

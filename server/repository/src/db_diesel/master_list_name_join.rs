@@ -109,7 +109,7 @@ impl Delete for MasterListNameJoinRowDelete {
     }
 }
 
-crate::create_central_upsert_trait!(
+crate::create_upsert_trait!(
     MasterListNameJoinRow,
     MasterListNameJoinRepository,
     crate::ChangelogTableName::MasterListNameJoin

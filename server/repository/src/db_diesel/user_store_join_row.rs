@@ -51,7 +51,7 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_store_join_dsl::user_store_join)
             .values(row)
             .on_conflict(user_store_join_dsl::id)
@@ -62,7 +62,7 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_store_join_dsl::user_store_join)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -85,3 +85,9 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(())
     }
 }
+
+crate::create_upsert_trait!(
+    UserStoreJoinRow,
+    UserStoreJoinRowRepository,
+    crate::ChangelogTableName::UserStoreJoin
+);

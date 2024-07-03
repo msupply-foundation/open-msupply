@@ -37,7 +37,17 @@ joinable!(stock_line -> barcode (barcode_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
 allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "stock_line"]
 pub struct StockLineRow {
@@ -68,7 +78,7 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stock_line_dsl::stock_line)
             .values(row)
             .on_conflict(stock_line_dsl::id)
@@ -79,7 +89,7 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stock_line_dsl::stock_line)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -122,6 +132,14 @@ impl<'a> StockLineRowRepository<'a> {
     }
 }
 
+impl StockLineRow {
+    fn get_store_and_name_link_id(
+        &self,
+        _: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError> {
+        Ok((Some(self.store_id.clone()), None))
+    }
+}
 #[derive(Debug, Clone)]
 pub struct StockLineRowDelete(pub String);
 // For tests only
@@ -138,16 +156,8 @@ impl Delete for StockLineRowDelete {
     }
 }
 
-impl Upsert for StockLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StockLineRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
+crate::create_upsert_trait!(
+    StockLineRow,
+    StockLineRowRepository,
+    crate::ChangelogTableName::StockLine
+);

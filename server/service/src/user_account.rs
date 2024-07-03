@@ -163,11 +163,19 @@ impl<'a> UserAccountService<'a> {
             .unwrap(); //TODO relocate to service
 
         let repo = UserRepository::new(self.connection);
-        repo.query_one(
+        let user_for_msupply_site = repo.query_one(
             UserFilter::new()
                 .id(EqualFilter::equal_to(user_id))
                 .site_id(EqualFilter::equal_to_i32(site_id)),
-        )
+        )?;
+
+        let user_for_omsupply_site = repo.query_one(
+            UserFilter::new()
+                .id(EqualFilter::equal_to(user_id))
+                .om_site_id(EqualFilter::equal_to_i32(site_id)),
+        )?;
+
+        Ok(user_for_msupply_site.or(user_for_omsupply_site))
     }
 
     /// Finds a user account and verifies that the password is ok

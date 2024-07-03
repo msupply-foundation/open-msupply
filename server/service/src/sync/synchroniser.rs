@@ -29,8 +29,8 @@ use super::{
 };
 
 pub enum Synchronisers {
-    v5(CentralDataSynchroniser, RemoteDataSynchroniser),
-    v7(SynchroniserV7),
+    V5(CentralDataSynchroniser, RemoteDataSynchroniser),
+    V7(SynchroniserV7),
 }
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
@@ -123,13 +123,13 @@ impl Synchroniser {
         let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
 
         let synchronisers = match is_central_server() {
-            true => Synchronisers::v5(
+            true => Synchronisers::V5(
                 CentralDataSynchroniser {
                     sync_api_v5: sync_api_v5.clone(),
                 },
                 RemoteDataSynchroniser { sync_api_v5 },
             ),
-            false => Synchronisers::v7(SynchroniserV7::new(settings.clone())?),
+            false => Synchronisers::V7(SynchroniserV7::new(settings.clone())?),
         };
 
         Ok(Synchroniser {
@@ -178,7 +178,7 @@ impl Synchroniser {
         // V7 sync for ROMS sites
 
         match &self.synchronisers {
-            Synchronisers::v7(v7_sync) => {
+            Synchronisers::V7(v7_sync) => {
                 println!("V7");
                 // TODO - initialisation for v7 ?
 
@@ -211,7 +211,7 @@ impl Synchroniser {
 
                 logger.done_step(SyncStep::PullCentralV7)?;
             }
-            Synchronisers::v5(central, remote) => {
+            Synchronisers::V5(central, remote) => {
                 // V5 sync for COMS
 
                 // Get site info for initialisation status

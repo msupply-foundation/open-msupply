@@ -73,7 +73,7 @@ impl<'a> UserAccountRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_account_dsl::user_account)
             .values(row)
             .on_conflict(user_account_dsl::id)
@@ -84,7 +84,7 @@ impl<'a> UserAccountRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_account_dsl::user_account)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -146,19 +146,11 @@ impl<'a> UserAccountRowRepository<'a> {
     }
 }
 
-impl Upsert for UserAccountRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UserAccountRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UserAccountRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
+crate::create_upsert_trait!(
+    UserAccountRow,
+    UserAccountRowRepository,
+    crate::ChangelogTableName::User
+);
 
 #[cfg(test)]
 mod test {

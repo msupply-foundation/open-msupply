@@ -70,6 +70,8 @@ pub enum ChangelogTableName {
     Item,
     Store,
     User,
+    UserPermission,
+    UserStoreJoin,
     Number,
     Location,
     LocationMovement,
@@ -165,6 +167,8 @@ impl ChangelogTableName {
             ChangelogTableName::Item => ChangeLogSyncStyle::Central,
             ChangelogTableName::Store => ChangeLogSyncStyle::Central,
             ChangelogTableName::User => ChangeLogSyncStyle::Central,
+            ChangelogTableName::UserPermission => ChangeLogSyncStyle::Central,
+            ChangelogTableName::UserStoreJoin => ChangeLogSyncStyle::Central,
         }
     }
 }
@@ -339,6 +343,21 @@ impl<'a> ChangelogRepository<'a> {
         is_initialized: bool,
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
+            .count()
+            .get_result::<i64>(&self.connection.connection)?;
+        Ok(result as u64)
+    }
+
+    /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
+    /// This looks up associated records to decide if change log should be sent to the site or not
+    /// Update this method when adding new record types to the system
+    pub fn count_outgoing_sync_records_from_central_v7(
+        &self,
+        earliest: u64,
+        sync_site_id: i32,
+        is_initialized: bool,
+    ) -> Result<u64, RepositoryError> {
+        let result = create_filtered_outgoing_sync_query_v7(earliest, sync_site_id, is_initialized)
             .count()
             .get_result::<i64>(&self.connection.connection)?;
         Ok(result as u64)
@@ -590,12 +609,17 @@ fn create_filtered_outgoing_sync_query_v7(
         .collect();
 
     let active_stores_for_site = store::table
-        .filter(store::site_id.eq(sync_site_id))
+        .filter(store::om_site_id.eq(sync_site_id))
+        .select(store::id.nullable())
+        .into_boxed();
+
+    let active_stores_for_site_for_transfers = store::table
+        .filter(store::om_site_id.eq(sync_site_id))
         .select(store::id.nullable())
         .into_boxed();
 
     let active_names_for_site = store::table
-        .filter(store::site_id.eq(sync_site_id))
+        .filter(store::om_site_id.eq(sync_site_id))
         .select(store::name_id.nullable())
         .into_boxed();
 
@@ -607,6 +631,9 @@ fn create_filtered_outgoing_sync_query_v7(
             .or(changelog_deduped::table_name
                 .eq_any(remote_sync_table_names.clone())
                 .and(changelog_deduped::store_id.eq_any(active_stores_for_site)))
+            .or(changelog_deduped::table_name
+                .eq_any(transfer_sync_table_names.clone())
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site_for_transfers)))
             // .or(changelog_deduped::table_name
             //     .eq_any(remote_sync_table_names)
             //     .and(changelog_deduped::name_link_id.eq_any(active_names_for_site.clone()))) // TODO: Can't clone!

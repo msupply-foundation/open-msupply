@@ -195,7 +195,6 @@ create_v7_translator!(
     vec![AssetTranslation.table_name()]
 );
 
-// TODO manual translation for now because of password ?
 create_v7_translator!(
     UserTranslation,
     "v7_user",
@@ -203,6 +202,24 @@ create_v7_translator!(
     UserAccountRow,
     UserAccountRowRepository,
     vec![]
+);
+
+create_v7_translator!(
+    UserPermissionTranslation,
+    "v7_user_permission",
+    ChangelogTableName::UserPermission,
+    UserPermissionRow,
+    UserPermissionRowRepository,
+    vec![UserTranslation.table_name(), StoreTranslation.table_name()]
+);
+
+create_v7_translator!(
+    UserStoreJoinTranslation,
+    "v7_user_store_join",
+    ChangelogTableName::UserStoreJoin,
+    UserStoreJoinRow,
+    UserStoreJoinRowRepository,
+    vec![UserTranslation.table_name(), StoreTranslation.table_name()]
 );
 
 create_v7_translator!(
@@ -332,19 +349,21 @@ create_v7_translator!(
 
 // also should have
 // ClinicianTranslation.table_name(),
-// CurrencyTranslation.table_name()
 create_v7_translator!(
     InvoiceTranslation,
     "v7_Invoice",
     ChangelogTableName::Invoice,
     InvoiceRow,
     InvoiceRowRepository,
-    vec![NameTranslation.table_name(), StoreTranslation.table_name(),]
+    vec![
+        NameTranslation.table_name(),
+        StoreTranslation.table_name(),
+        CurrencyTranslation.table_name()
+    ]
 );
 
 // Also should have
 // ReasonTranslation.table_name(),
-// CurrencyTranslation.table_name()
 create_v7_translator!(
     InvoiceLineTranslation,
     "v7_InvoiceLine",
@@ -356,6 +375,7 @@ create_v7_translator!(
         ItemTranslation.table_name(),
         StockLineTranslation.table_name(),
         LocationTranslation.table_name(),
+        CurrencyTranslation.table_name()
     ]
 );
 
@@ -432,6 +452,15 @@ create_v7_translator!(
     vec![NameTranslation.table_name(), StoreTranslation.table_name()]
 );
 
+create_v7_translator!(
+    CurrencyTranslation,
+    "v7_currency",
+    ChangelogTableName::Currency,
+    CurrencyRow,
+    CurrencyRowRepository,
+    vec![]
+);
+
 pub(crate) fn all_translators_v7() -> SyncTranslators {
     vec![
         // Central
@@ -467,5 +496,8 @@ pub(crate) fn all_translators_v7() -> SyncTranslators {
         AssetLogReasonTranslation::boxed(),
         //Sync file reference
         SyncFileReferenceTranslation::boxed(),
+        CurrencyTranslation::boxed(),
+        UserPermissionTranslation::boxed(),
+        UserStoreJoinTranslation::boxed(),
     ]
 }

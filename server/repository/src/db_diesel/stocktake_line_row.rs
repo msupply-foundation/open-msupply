@@ -5,7 +5,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{repository_error::RepositoryError, Delete, StocktakeRepository, Upsert};
 
 use diesel::prelude::*;
 
@@ -87,7 +87,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stocktake_line_dsl::stocktake_line)
             .values(row)
             .on_conflict(stocktake_line_dsl::id)
@@ -98,7 +98,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stocktake_line_dsl::stocktake_line)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -146,16 +146,22 @@ impl Delete for StocktakeLineRowDelete {
     }
 }
 
-impl Upsert for StocktakeLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StocktakeLineRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StocktakeLineRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+impl StocktakeLineRow {
+    fn get_store_and_name_link_id(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError> {
+        let store_id = StocktakeRepository::new(connection)
+            .find_one_by_id(&self.stocktake_id)
+            .ok()
+            .flatten()
+            .map(|s| s.store_id);
+        Ok((store_id, None))
     }
 }
+
+crate::create_upsert_trait!(
+    StocktakeLineRow,
+    StocktakeLineRowRepository,
+    crate::ChangelogTableName::StocktakeLine
+);

@@ -8,6 +8,7 @@ use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
 use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 
 table! {
   user_permission (id) {
@@ -19,7 +20,7 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(DbEnum, Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum Permission {
     ServerAdmin,
@@ -81,7 +82,9 @@ pub enum Permission {
     AssetCatalogueItemMutate,
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(
+    Clone, Queryable, Serialize, Deserialize, Insertable, Debug, PartialEq, Eq, AsChangeset,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "user_permission"]
 pub struct UserPermissionRow {
@@ -104,7 +107,7 @@ impl<'a> UserPermissionRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_permission_dsl::user_permission)
             .values(row)
             .on_conflict(user_permission_dsl::id)
@@ -115,7 +118,7 @@ impl<'a> UserPermissionRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_permission_dsl::user_permission)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -160,16 +163,8 @@ impl Delete for UserPermissionRowDelete {
     }
 }
 
-impl Upsert for UserPermissionRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UserPermissionRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            UserPermissionRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
-    }
-}
+crate::create_upsert_trait!(
+    UserPermissionRow,
+    UserPermissionRowRepository,
+    crate::ChangelogTableName::UserPermission
+);

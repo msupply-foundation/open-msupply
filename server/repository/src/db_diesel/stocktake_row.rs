@@ -103,7 +103,7 @@ impl<'a> StocktakeRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stocktake_dsl::stocktake)
             .values(row)
             .on_conflict(stocktake_dsl::id)
@@ -114,7 +114,7 @@ impl<'a> StocktakeRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stocktake_dsl::stocktake)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -170,16 +170,17 @@ impl Delete for StocktakeRowDelete {
     }
 }
 
-impl Upsert for StocktakeRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StocktakeRowRepository::new(con).upsert_one(self)
-    }
-
-    // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
-        assert_eq!(
-            StocktakeRowRepository::new(con).find_one_by_id(&self.id),
-            Ok(Some(self.clone()))
-        )
+impl StocktakeRow {
+    fn get_store_and_name_link_id(
+        &self,
+        _: &StorageConnection,
+    ) -> Result<(Option<String>, Option<String>), RepositoryError> {
+        Ok((Some(self.store_id.clone()), None))
     }
 }
+
+crate::create_upsert_trait!(
+    StocktakeRow,
+    StocktakeRowRepository,
+    crate::ChangelogTableName::Stocktake
+);

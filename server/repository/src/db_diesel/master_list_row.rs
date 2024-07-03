@@ -87,7 +87,7 @@ impl<'a> MasterListRowRepository<'a> {
     }
 }
 
-crate::create_central_upsert_trait!(
+crate::create_upsert_trait!(
     MasterListRow,
     MasterListRowRepository,
     crate::ChangelogTableName::MasterList
