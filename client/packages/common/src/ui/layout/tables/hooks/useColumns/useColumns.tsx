@@ -63,6 +63,8 @@ const getDefaultFormatter = <T extends RecordWithId>(
   switch (column.format) {
     case ColumnFormat.Date: {
       return (date: unknown) => {
+        if (date === '[multiple]') return '[multiple]';
+
         const { localisedDate } = useFormatDateTime();
         const maybeDate = DateUtils.getDateOrNull(date as string | null);
         return maybeDate ? localisedDate(maybeDate) : '';

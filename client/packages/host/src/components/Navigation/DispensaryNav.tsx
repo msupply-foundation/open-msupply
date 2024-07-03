@@ -42,7 +42,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
             end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
-              .addQuery({ sort: 'code' })
+              .addQuery({ sort: 'createdDatetime', dir: 'desc' })
               .build()}
             text={t('patients')}
           />
