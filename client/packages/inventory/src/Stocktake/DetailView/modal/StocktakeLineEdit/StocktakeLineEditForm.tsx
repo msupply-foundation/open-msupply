@@ -41,7 +41,6 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
             disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
-            includeNonVisibleWithStockOnHand
             extraFilter={
               disabled
                 ? undefined

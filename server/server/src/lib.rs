@@ -313,7 +313,7 @@ pub async fn start_server(
 
     http_server = match certificates.config() {
         Some(config) => http_server
-            .bind_rustls_0_23(settings.server.address(), config)
+            .bind_rustls(settings.server.address(), config)
             .unwrap(),
         None => http_server.bind(settings.server.address()).unwrap(),
     };

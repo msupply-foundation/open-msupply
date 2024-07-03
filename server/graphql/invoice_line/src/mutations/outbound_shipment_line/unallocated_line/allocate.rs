@@ -14,7 +14,7 @@ use service::{
 
 #[derive(Interface)]
 #[graphql(name = "AllocateOutboundShipmentUnallocatedLineErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum AllocateErrorInterface {
     RecordNotFound(RecordNotFound),
 }

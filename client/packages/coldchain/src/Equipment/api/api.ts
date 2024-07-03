@@ -97,19 +97,21 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Asset not found');
     },
-    list: async ({
-      first,
-      offset,
-      sortBy,
-      filterBy,
-    }: ListParams<AssetFragment>) => {
+    list: async (
+      { first, offset, sortBy, filterBy }: ListParams<AssetFragment>,
+      storeCode?: string
+    ) => {
       const result = await sdk.assets({
         first,
         offset,
         key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, classId: { equalTo: CCE_CLASS_ID } },
+        filter: {
+          ...filterBy,
+          ...(storeCode ? { store: { equalTo: storeCode } } : {}),
+          classId: { equalTo: CCE_CLASS_ID },
+        },
       });
 
       const items = result?.assets;

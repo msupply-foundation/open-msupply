@@ -17,11 +17,7 @@ import {
   LoadingButton,
   PrinterIcon,
   StockLineNode,
-  useConfirmationModal,
-  useNavigate,
-  RouteBuilder,
 } from '@openmsupply-client/common';
-import { AppRoute } from '@openmsupply-client/config';
 import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
 import {
@@ -33,6 +29,7 @@ import {
 import { RepackFragment } from '../../api';
 import { useRepackColumns } from './column';
 import { useRepack } from '../../api/hooks';
+
 interface RepackModalControlProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,11 +43,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const { error, success } = useNotification();
-  const getRedirectConfirmation = useConfirmationModal({
-    title: t('title.repack-complete'),
-    message: t('messages.all-packs-repacked'),
-  });
-  const navigate = useNavigate();
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
@@ -148,27 +140,12 @@ export const RepackModal: FC<RepackModalControlProps> = ({
               const result = await onInsert();
               const errorMessage = mapStructuredErrors(result);
 
-              // The new stockline is the second of two lines in the resulting
-              // invoice
-              const newLineId =
-                result.__typename === 'InvoiceNode'
-                  ? result?.lines?.nodes?.[1]?.stockLine?.id ?? ''
-                  : '';
-
               if (errorMessage) {
                 error(errorMessage)();
               } else {
                 if (stockLine?.totalNumberOfPacks === draft.numberOfPacks) {
                   onClose();
-                  getRedirectConfirmation({
-                    onConfirm: () =>
-                      navigate(
-                        RouteBuilder.create(AppRoute.Inventory)
-                          .addPart(AppRoute.Stock)
-                          .addPart(newLineId)
-                          .build()
-                      ),
-                  });
+                  success(t('messages.all-packs-repacked'))();
                 } else {
                   success(t('messages.saved'))();
                 }

@@ -74,7 +74,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
 #[derive(Interface)]
 #[graphql(name = "UpdateInboundShipmentLineErrorInterface")]
-#[graphql(field(name = "description", ty = "&str"))]
+#[graphql(field(name = "description", type = "&str"))]
 pub enum UpdateErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
@@ -158,7 +158,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice
         | ServiceError::NotAStockIn
-        | ServiceError::NumberOfPacksBelowZero
+        | ServiceError::NumberOfPacksBelowOne
         | ServiceError::NotThisInvoiceLine(_)
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
@@ -360,8 +360,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NumberOfPacksBelowZero
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
+        //NumberOfPacksBelowOne
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

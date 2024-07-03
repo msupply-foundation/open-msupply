@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { AdjustmentTypeInput, useMutation } from '@openmsupply-client/common';
 import {
   InventoryAdjustmentReasonRowFragment,
@@ -19,26 +19,17 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
     adjustment: 0,
     adjustmentType: AdjustmentTypeInput.Addition,
   });
+
   const { mutateAsync: createMutation } = useCreate(stockLine.id);
 
-  const create = async () => {
-    const result = await createMutation(draft);
-
-    if (result.createInventoryAdjustment.__typename === 'InvoiceNode') {
-      setDraft({
-        reason: null,
-        adjustment: 0,
-        adjustmentType: AdjustmentTypeInput.Addition,
-      });
-      return;
-    }
-
-    const { error: adjustmentError } = result.createInventoryAdjustment;
-
-    if (adjustmentError.__typename === 'StockLineReducedBelowZero') {
-      return 'error.stock-line-stock-reduced-below-zero';
-    }
-  };
+  const create = useCallback(async () => {
+    await createMutation(draft);
+    setDraft({
+      reason: null,
+      adjustment: 0,
+      adjustmentType: AdjustmentTypeInput.Addition,
+    });
+  }, [draft, createMutation]);
 
   return {
     draft,
@@ -56,6 +47,7 @@ const useCreate = (stockLineId: string) => {
       adjustmentType,
       reason,
     }: DraftInventoryAdjustment) => {
+      // TODO: error helper to handle structured/standard errors
       return await stockApi.createInventoryAdjustment({
         storeId,
         input: {

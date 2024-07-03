@@ -26,7 +26,7 @@ pub struct CentralPatientSearchConnector {
 
 #[derive(Interface)]
 #[graphql(name = "CentralPatientSearchErrorInterface")]
-#[graphql(field(name = "description", ty = "&str"))]
+#[graphql(field(name = "description", type = "&str"))]
 pub enum CentralPatientSearchErrorInterface {
     ConnectionError(ConnectionError),
 }

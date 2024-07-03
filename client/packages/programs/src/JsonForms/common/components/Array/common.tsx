@@ -145,7 +145,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
         uischema,
         rootSchema
       ),
-    [uischemas, schema, path, uischema, rootSchema]
+    [uischemas, schema, uischema.scope, path, uischema, rootSchema]
   );
 
   if (!props.visible) {
@@ -197,7 +197,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
               setExpandedItems([...expandedItems, true]);
               addItem(
                 path,
-                uischema.defaultNewItem ?? createDefaultValue({})
+                uischema.defaultNewItem ?? createDefaultValue(schema)
               )();
             }}
           />
@@ -277,8 +277,8 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
         })
         .sort((a, b) =>
           options?.['reverse']
-            ? Number(b.key) - Number(a.key)
-            : Number(a.key) - Number(b.key)
+            ? (b.key as number) - (a.key as number)
+            : (a.key as number) - (b.key as number)
         )}
     </Box>
   );

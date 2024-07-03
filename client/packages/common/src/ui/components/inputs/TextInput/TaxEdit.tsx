@@ -38,6 +38,7 @@ export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
               max={100}
               value={val ?? 0}
               onChange={setVal}
+              endAdornment="%"
             />
           }
           onChange={() => onChange(val ?? 0)}

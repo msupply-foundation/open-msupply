@@ -63,7 +63,7 @@ pub enum DeleteLocationResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum DeleteLocationErrorInterface {
     LocationNotFound(RecordNotFound),
     RecordBelongsToAnotherStore(RecordBelongsToAnotherStore),
