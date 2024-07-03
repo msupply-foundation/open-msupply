@@ -127,17 +127,18 @@ const getSteps = (
   }
 
   if (isOperational) {
-    if (!isCentralServer) {
-      steps.push(getStep('sync-status.push-v6', syncStatus?.pushV6));
+    if (isCentralServer) {
+      steps.push(getStep('sync-status.push', syncStatus?.push));
+    } else {
+      steps.push(getStep('sync-status.push', syncStatus?.pushV6));
     }
-    steps.push(getStep('sync-status.push', syncStatus?.push));
   }
 
-  steps.push(getStep('sync-status.pull-central', syncStatus?.pullCentral));
-  steps.push(getStep('sync-status.pull-remote', syncStatus?.pullRemote));
-
-  if (!isCentralServer) {
-    steps.push(getStep('sync-status.pull-v6', syncStatus?.pullV6));
+  if (isCentralServer) {
+    steps.push(getStep('sync-status.pull-central', syncStatus?.pullCentral));
+    steps.push(getStep('sync-status.pull-remote', syncStatus?.pullRemote));
+  } else {
+    steps.push(getStep('sync-status.pull', syncStatus?.pullV6));
   }
 
   steps.push(getStep('sync-status.integrate', syncStatus?.integration));

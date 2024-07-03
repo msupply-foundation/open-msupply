@@ -4,7 +4,7 @@ use crate::{
     db_diesel::user_permission_row::user_permission::dsl as user_permission_dsl,
     repository_error::RepositoryError,
 };
-use crate::{Delete, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, Delete, Upsert};
 use diesel::prelude::*;
 
 use diesel_derive_enum::DbEnum;
@@ -152,7 +152,16 @@ impl<'a> UserPermissionRowRepository<'a> {
 pub struct UserPermissionRowDelete(pub String);
 impl Delete for UserPermissionRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UserPermissionRowRepository::new(con).delete(&self.0)
+        UserPermissionRowRepository::new(con).delete(&self.0)?;
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::UserPermission,
+            record_id: self.0.clone(),
+            row_action: crate::ChangelogAction::Delete,
+            ..Default::default()
+        };
+
+        let _ = ChangelogRepository::new(con).insert(&row)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
