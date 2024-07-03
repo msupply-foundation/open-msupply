@@ -94,7 +94,7 @@ create_v7_translator!(
 use repository::asset_category_row::*;
 create_v7_translator!(
     AssetCategoryTranslation,
-    "asset_category",
+    "v7_asset_category",
     ChangelogTableName::AssetCategory,
     AssetCategoryRow,
     AssetCategoryRowRepository,
@@ -104,7 +104,7 @@ create_v7_translator!(
 use repository::asset_row::*;
 create_v7_translator!(
     AssetTranslation,
-    "asset",
+    "v7_asset",
     ChangelogTableName::Asset,
     AssetRow,
     AssetRowRepository,
@@ -114,7 +114,7 @@ create_v7_translator!(
 use repository::asset_type_row::*;
 create_v7_translator!(
     AssetTypeTranslation,
-    "asset_catalogue_type",
+    "v7_asset_catalogue_type",
     ChangelogTableName::AssetCatalogueType,
     AssetTypeRow,
     AssetTypeRowRepository,
@@ -124,7 +124,7 @@ create_v7_translator!(
 use repository::asset_catalogue_item_row::*;
 create_v7_translator!(
     AssetCatalogueItemTranslation,
-    "asset_catalogue_item",
+    "v7_asset_catalogue_item",
     ChangelogTableName::AssetCatalogueItem,
     AssetCatalogueItemRow,
     AssetCatalogueItemRowRepository,
@@ -138,7 +138,7 @@ create_v7_translator!(
 use repository::asset_catalogue_item_property_row::*;
 create_v7_translator!(
     AssetCatalogueItemPropertyTranslation,
-    "asset_catalogue_item_property",
+    "v7_asset_catalogue_item_property",
     ChangelogTableName::AssetCatalogueItemProperty,
     AssetCatalogueItemPropertyRow,
     AssetCatalogueItemPropertyRowRepository,
@@ -166,7 +166,7 @@ create_v7_translator!(
 use repository::asset_log_reason_row::*;
 create_v7_translator!(
     AssetLogReasonTranslation,
-    "asset_log_reason",
+    "v7_asset_log_reason",
     ChangelogTableName::AssetLogReason,
     AssetLogReasonRow,
     AssetLogReasonRowRepository,
@@ -176,7 +176,7 @@ create_v7_translator!(
 use repository::asset_log_row::*;
 create_v7_translator!(
     AssetLogTranslation,
-    "asset_log",
+    "v7_asset_log",
     ChangelogTableName::AssetLog,
     AssetLogRow,
     AssetLogRowRepository,
@@ -188,7 +188,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     SyncFileReferenceTranslation,
-    "sync_file_reference",
+    "v7_sync_file_reference",
     ChangelogTableName::SyncFileReference,
     SyncFileReferenceRow,
     SyncFileReferenceRowRepository,
@@ -197,7 +197,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     UserTranslation,
-    "user",
+    "v7_user",
     ChangelogTableName::User,
     UserAccountRow,
     UserAccountRowRepository,
@@ -206,7 +206,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     NameTranslation,
-    "name",
+    "v7_name",
     ChangelogTableName::Name,
     NameRow,
     NameRowRepository,
@@ -215,7 +215,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     NameTagTranslation,
-    "name_tag",
+    "v7_name_tag",
     ChangelogTableName::NameTag,
     NameTagRow,
     NameTagRowRepository,
@@ -224,7 +224,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     NameTagJoinTranslation,
-    "name_tag_join",
+    "v7_name_tag_join",
     ChangelogTableName::NameTagJoin,
     NameTagJoinRow,
     NameTagJoinRepository,
@@ -233,7 +233,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     UnitTranslation,
-    "unit",
+    "v7_unit",
     ChangelogTableName::Unit,
     UnitRow,
     UnitRowRepository,
@@ -242,7 +242,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     ItemTranslation,
-    "Item",
+    "v7_Item",
     ChangelogTableName::Item,
     ItemRow,
     ItemRowRepository,
@@ -251,7 +251,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     StoreTranslation,
-    "Store",
+    "v7_Store",
     ChangelogTableName::Store,
     StoreRow,
     StoreRowRepository,
@@ -260,7 +260,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     MasterListTranslation,
-    "MasterList",
+    "v7_MasterList",
     ChangelogTableName::MasterList,
     MasterListRow,
     MasterListRowRepository,
@@ -269,7 +269,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     MasterListLineTranslation,
-    "MasterListLine",
+    "v7_MasterListLine",
     ChangelogTableName::MasterListLine,
     MasterListLineRow,
     MasterListLineRowRepository,
@@ -278,7 +278,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     MasterListNameJoinTranslation,
-    "MasterListNameJoin",
+    "v7_MasterListNameJoin",
     ChangelogTableName::MasterListNameJoin,
     MasterListNameJoinRow,
     MasterListNameJoinRepository,
@@ -287,7 +287,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     LocationTranslation,
-    "Location",
+    "v7_Location",
     ChangelogTableName::Location,
     LocationRow,
     LocationRowRepository,
@@ -296,7 +296,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     LocationMovementTranslation,
-    "LocationMovement",
+    "v7_LocationMovement",
     ChangelogTableName::LocationMovement,
     LocationMovementRow,
     LocationMovementRowRepository,
@@ -305,7 +305,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     StockLineTranslation,
-    "StockLine",
+    "v7_StockLine",
     ChangelogTableName::StockLine,
     StockLineRow,
     StockLineRowRepository,
@@ -314,7 +314,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     InvoiceTranslation,
-    "Invoice",
+    "v7_Invoice",
     ChangelogTableName::Invoice,
     InvoiceRow,
     InvoiceRowRepository,
@@ -323,7 +323,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     InvoiceLineTranslation,
-    "InvoiceLine",
+    "v7_InvoiceLine",
     ChangelogTableName::InvoiceLine,
     InvoiceLineRow,
     InvoiceLineRowRepository,
@@ -332,7 +332,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     StocktakeTranslation,
-    "Stocktake",
+    "v7_Stocktake",
     ChangelogTableName::Stocktake,
     StocktakeRow,
     StocktakeRowRepository,
@@ -341,7 +341,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     StocktakeLineTranslation,
-    "StocktakeLine",
+    "v7_StocktakeLine",
     ChangelogTableName::StocktakeLine,
     StocktakeLineRow,
     StocktakeLineRowRepository,
@@ -350,7 +350,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     RequisitionTranslation,
-    "Requisition",
+    "v7_Requisition",
     ChangelogTableName::Requisition,
     RequisitionRow,
     RequisitionRowRepository,
@@ -359,7 +359,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     RequisitionLineTranslation,
-    "RequisitionLine",
+    "v7_RequisitionLine",
     ChangelogTableName::RequisitionLine,
     RequisitionLineRow,
     RequisitionLineRowRepository,
@@ -368,7 +368,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     ActivityLogTranslation,
-    "ActivityLog",
+    "v7_ActivityLog",
     ChangelogTableName::ActivityLog,
     ActivityLogRow,
     ActivityLogRowRepository,
@@ -377,7 +377,7 @@ create_v7_translator!(
 
 create_v7_translator!(
     NameStoreJoinTranslation,
-    "NameStoreJoin",
+    "v7_NameStoreJoin",
     ChangelogTableName::NameStoreJoin,
     NameStoreJoinRow,
     NameStoreJoinRepository,

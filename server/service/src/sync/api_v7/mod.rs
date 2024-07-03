@@ -11,6 +11,7 @@ pub use self::core::*;
 
 use super::{
     api::{CommonSyncRecord, ParsingResponseError},
+    settings::SyncSettings,
     translations::PushSyncRecord,
 };
 use crate::sync::api::ParsingSyncRecordError;
@@ -134,17 +135,9 @@ impl From<PushSyncRecord> for SyncRecordV7 {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct SyncV7Settings {
-    pub sync_version: u32,
-    pub username: String,
-    pub password: String, // passing around plain text bc yolo?
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct SyncRequestV7<T> {
-    pub common: SyncV7Settings,
+    pub common: SyncSettings,
     pub data: T,
 }
 

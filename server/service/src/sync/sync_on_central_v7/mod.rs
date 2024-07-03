@@ -8,7 +8,7 @@ use repository::{
     ChangelogRepository, SiteRow, SyncBufferRowRepository, SyncFileReferenceRow,
     SyncFileReferenceRowRepository,
 };
-use util::format_error;
+use util::{format_error, is_central_server};
 
 use crate::{
     service_provider::{ServiceContext, ServiceProvider},
@@ -17,7 +17,7 @@ use crate::{
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
         synchroniser::integrate_and_translate_sync_buffer,
-        translations::ToSyncRecordTranslationType, CentralServerConfig,
+        translations::ToSyncRecordTranslationType,
     },
 };
 
@@ -26,8 +26,9 @@ use super::{
         DownloadFilePayload, PullPayload, PushPayload, SiteInfoRequestV7, SiteInfoV7,
         SiteStatusRequestV7, SiteStatusV7, SyncBatchV7, SyncDownloadFileRequestV7,
         SyncParsedErrorV7, SyncPullRequestV7, SyncPushRequestV7, SyncPushSuccessV7, SyncRecordV7,
-        SyncUploadFileRequestV7, SyncV7Settings, UploadFilePayload,
+        SyncUploadFileRequestV7, UploadFilePayload,
     },
+    settings::SyncSettings,
     translations::translate_changelogs_to_sync_records,
 };
 
@@ -46,7 +47,7 @@ pub async fn pull(
 ) -> Result<SyncBatchV7, SyncParsedErrorV7> {
     use SyncParsedErrorV7 as Error;
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
 
@@ -112,7 +113,7 @@ pub async fn push(
 ) -> Result<SyncPushSuccessV7, SyncParsedErrorV7> {
     use SyncParsedErrorV7 as Error;
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
 
@@ -162,7 +163,7 @@ pub async fn get_site_status(
 ) -> Result<SiteStatusV7, SyncParsedErrorV7> {
     use SyncParsedErrorV7 as Error;
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
 
@@ -180,7 +181,7 @@ pub async fn get_site_info(
 ) -> Result<SiteInfoV7, SyncParsedErrorV7> {
     use SyncParsedErrorV7 as Error;
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
 
@@ -240,7 +241,7 @@ pub async fn download_file(
         id
     );
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials
@@ -274,7 +275,7 @@ pub async fn upload_file(
 
     log::info!("Receiving a file via sync : {}", file_id);
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials
@@ -324,13 +325,11 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
     }
 }
 
-fn get_site(
-    ctx: &ServiceContext,
-    sync_v7_settings: SyncV7Settings,
-) -> Result<SiteRow, SyncParsedErrorV7> {
+fn get_site(ctx: &ServiceContext, settings: SyncSettings) -> Result<SiteRow, SyncParsedErrorV7> {
     let site_service = SiteService::new(&ctx.connection);
 
-    let site = site_service.verify_password(&sync_v7_settings.username, &sync_v7_settings.password);
+    println!("{:?}", settings);
+    let site = site_service.verify_password(&settings.username, &settings.password_sha256);
 
     match site {
         Ok(site) => Ok(site.to_owned()),

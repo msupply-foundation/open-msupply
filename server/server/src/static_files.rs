@@ -6,6 +6,7 @@ use actix_files as fs;
 use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::MultipartForm;
 
+use actix_web::dev::Url;
 use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
@@ -31,10 +32,10 @@ use service::static_files::{StaticFileCategory, StaticFileService};
 use service::sync::file_sync_driver::get_sync_settings;
 use service::sync::file_synchroniser;
 use service::sync::file_synchroniser::FileSynchroniser;
-use service::sync::CentralServerConfig;
 use service::usize_to_i32;
 use thiserror::Error;
 use util::format_error;
+use util::is_central_server;
 
 use crate::authentication::validate_cookie_auth;
 use crate::middleware::limit_content_length;
@@ -310,14 +311,13 @@ async fn download_sync_file_inner(
         None => {}
     };
 
-    let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() else {
+    if is_central_server() {
         // Not found locally and is central server
         return Err(DownloadFileError::NotFoundLocallyAndThisIsCentralServer);
     };
 
     // File not found locally, download from central
     let file_synchroniser = FileSynchroniser::new(
-        &url,
         get_sync_settings(&service_provider),
         service_provider.into_inner(),
         Arc::new(file_service),

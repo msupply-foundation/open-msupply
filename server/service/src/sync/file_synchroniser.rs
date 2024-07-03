@@ -64,14 +64,13 @@ pub struct FileSynchroniser {
 
 impl FileSynchroniser {
     pub fn new(
-        sync_v6_url: &str,
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
         static_file_service: Arc<StaticFileService>,
     ) -> anyhow::Result<Self> {
         // Create SyncApiV6 instance
         let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, SYNC_VERSION)?;
-        let sync_api_v6 = SyncApiV6::new(sync_v6_url, &sync_v5_settings)?;
+        let sync_api_v6 = SyncApiV6::new(&settings.url, &sync_v5_settings)?;
 
         Ok(Self {
             sync_api_v6,

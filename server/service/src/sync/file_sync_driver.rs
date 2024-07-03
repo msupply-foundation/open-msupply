@@ -7,12 +7,11 @@ use crate::{
 };
 
 use super::settings::SyncSettings;
-use super::CentralServerConfig;
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
 };
-use util::format_error;
+use util::{format_error, is_central_server};
 
 const FILE_SYNC_UPLOAD_DELAY: Duration = Duration::from_millis(100); // This just gives time for a PAUSE message to be received between uploading files
 const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_millis(10000); // If there's nothing to upload or there was an error, wait a longer before checking again
@@ -121,21 +120,18 @@ impl FileSyncDriver {
                 }
             }
 
-            // If not stopped or paused and we have central server URL
-            if let (false, false, CentralServerConfig::CentralServerUrl(url)) =
-                (stopped, paused, CentralServerConfig::get())
-            {
+            // If not stopped or paused and we are on central server
+            if let (false, false, false) = (stopped, paused, is_central_server()) {
                 // for now we only sync if we're not the central server
-                files_to_upload = self.sync(&url, service_provider.clone()).await;
+                files_to_upload = self.sync(service_provider.clone()).await;
             }
         }
     }
 
-    pub async fn sync(&self, sync_v6_url: &str, service_provider: Arc<ServiceProvider>) -> usize {
+    pub async fn sync(&self, service_provider: Arc<ServiceProvider>) -> usize {
         // ...Try to upload a file
 
         let synchroniser = FileSynchroniser::new(
-            sync_v6_url,
             get_sync_settings(&service_provider),
             service_provider,
             self.static_file_service.clone(),

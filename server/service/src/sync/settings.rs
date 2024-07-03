@@ -1,9 +1,9 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 // See README.md for description of when this API version needs to be updated
 pub(crate) static SYNC_VERSION: u32 = 4;
 
-#[derive(Deserialize, Clone, Debug, PartialEq, Default)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
 pub struct SyncSettings {
     pub url: String,
     pub username: String,
@@ -15,7 +15,7 @@ pub struct SyncSettings {
     pub batch_size: BatchSize,
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Serialize, PartialEq, Deserialize)]
 pub struct BatchSize {
     pub remote_pull: u32,
     pub remote_push: u32,

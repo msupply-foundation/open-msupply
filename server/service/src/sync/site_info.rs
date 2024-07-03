@@ -2,13 +2,13 @@ use async_trait::async_trait;
 use log::info;
 use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
 use thiserror::Error;
-use util::{central_server_url, format_error};
+use util::{format_error, is_central_server};
 
 use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::{
         api::{SiteInfoV5, SyncApiV5},
-        api_v7::{SyncApiV7, SyncV7Settings},
+        api_v7::SyncApiV7,
         settings::{SyncSettings, SYNC_VERSION},
     },
 };
@@ -22,12 +22,16 @@ use super::{
 pub enum RequestAndSetSiteInfoError {
     #[error("Api error while requesting site info")]
     RequestSiteInfoError(#[from] SyncApiError),
+    #[error("Api error while requesting site info")]
+    RequestSiteInfoErrorV7(#[from] SyncApiErrorV7),
     #[error("Database error while requesting site info")]
     DatabaseError(#[from] RepositoryError),
     #[error("Attempt to change initialised site, UUID does not match: current ({0}) new ({1}")]
     SiteUUIDIsBeingChanged(String, String),
     #[error("Error while requesting and setting site info")]
     SyncApiV5CreatingError(#[from] SyncApiV5CreatingError),
+    #[error("Error while requesting and setting site info")]
+    SyncApiV7CreatingError(#[from] SyncApiV7CreatingError),
 }
 
 // For unwrap and expect debug implementation is used
@@ -36,65 +40,30 @@ impl std::fmt::Debug for RequestAndSetSiteInfoError {
         write!(f, "{}", format_error(self))
     }
 }
-#[derive(Error)]
-pub enum RequestAndSetSiteInfoV7Error {
-    #[error("Api error while requesting site info")]
-    RequestSiteInfoError(#[from] SyncApiErrorV7),
-    #[error("Database error while requesting site info")]
-    DatabaseError(#[from] RepositoryError),
-    #[error("Attempt to change initialised site, UUID does not match: current ({0}) new ({1}")]
-    SiteUUIDIsBeingChanged(String, String),
-    #[error("Error while requesting and setting site info")]
-    SyncApiV7CreatingError(#[from] SyncApiV7CreatingError),
-}
-
-// For unwrap and expect debug implementation is used
-impl std::fmt::Debug for RequestAndSetSiteInfoV7Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format_error(self))
-    }
-}
 
 #[async_trait]
 pub trait SiteInfoTrait: Sync + Send {
-    async fn request_and_set_site_info_v7(
-        &self,
-        service_provider: &ServiceProvider,
-        settings: &SyncSettings,
-    ) -> Result<SiteInfoV7, RequestAndSetSiteInfoV7Error>;
-
     async fn request_and_set_site_info(
         &self,
         service_provider: &ServiceProvider,
         settings: &SyncSettings,
-    ) -> Result<SiteInfoV5, RequestAndSetSiteInfoError>;
+    ) -> Result<(), RequestAndSetSiteInfoError>;
 
     fn get_site_id(&self, ctx: &ServiceContext) -> Result<Option<i32>, RepositoryError>;
 }
 
 pub struct SiteInfoService;
 
-#[async_trait]
-impl SiteInfoTrait for SiteInfoService {
+impl SiteInfoService {
     async fn request_and_set_site_info_v7(
         &self,
         service_provider: &ServiceProvider,
         settings: &SyncSettings,
-    ) -> Result<SiteInfoV7, RequestAndSetSiteInfoV7Error> {
-        use RequestAndSetSiteInfoV7Error as Error;
-
-        // todo get me proper
-        let url = central_server_url();
+    ) -> Result<SiteInfoV7, RequestAndSetSiteInfoError> {
+        use RequestAndSetSiteInfoError as Error;
 
         // This can be simplified
-        let sync_api_v7 = SyncApiV7::new(
-            &url,
-            &SyncV7Settings {
-                username: settings.username.clone(),
-                password: settings.password_sha256.clone(), // todo?
-                sync_version: 1,                            // TODO
-            },
-        )?;
+        let sync_api_v7 = SyncApiV7::new(settings.clone())?;
         let ctx = service_provider.basic_context()?;
 
         info!("Requesting site info");
@@ -123,7 +92,7 @@ impl SiteInfoTrait for SiteInfoService {
         Ok(site_info)
     }
 
-    async fn request_and_set_site_info(
+    async fn request_and_set_site_info_v5(
         &self,
         service_provider: &ServiceProvider,
         settings: &SyncSettings,
@@ -162,6 +131,28 @@ impl SiteInfoTrait for SiteInfoService {
         info!("Received site info");
 
         Ok(site_info)
+    }
+}
+
+#[async_trait]
+impl SiteInfoTrait for SiteInfoService {
+    async fn request_and_set_site_info(
+        &self,
+        service_provider: &ServiceProvider,
+        settings: &SyncSettings,
+    ) -> Result<(), RequestAndSetSiteInfoError> {
+        match is_central_server() {
+            true => {
+                self.request_and_set_site_info_v5(service_provider, settings)
+                    .await?;
+            }
+            false => {
+                self.request_and_set_site_info_v7(service_provider, settings)
+                    .await?;
+            }
+        };
+
+        Ok(())
     }
 
     fn get_site_id(&self, ctx: &ServiceContext) -> Result<Option<i32>, RepositoryError> {

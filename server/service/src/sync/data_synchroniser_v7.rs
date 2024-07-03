@@ -4,11 +4,9 @@ use crate::{cursor_controller::CursorController, sync::sync_status::logger::Sync
 
 use super::{
     api::ParsingSyncRecordError,
-    api_v7::{
-        SyncApiErrorV7, SyncApiV7, SyncApiV7CreatingError, SyncBatchV7, SyncRecordV7,
-        SyncV7Settings,
-    },
+    api_v7::{SyncApiErrorV7, SyncApiV7, SyncApiV7CreatingError, SyncBatchV7, SyncRecordV7},
     get_sync_push_changelogs_filter,
+    settings::SyncSettings,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
         translate_changelogs_to_sync_records, PushTranslationError, ToSyncRecordTranslationType,
@@ -68,12 +66,9 @@ pub(crate) struct SynchroniserV7 {
 }
 
 impl SynchroniserV7 {
-    pub(crate) fn new(
-        url: &str,
-        sync_v7_settings: &SyncV7Settings,
-    ) -> Result<Self, SyncApiV7CreatingError> {
+    pub(crate) fn new(settings: SyncSettings) -> Result<Self, SyncApiV7CreatingError> {
         Ok(Self {
-            sync_api_v7: SyncApiV7::new(url, sync_v7_settings)?,
+            sync_api_v7: SyncApiV7::new(settings)?,
         })
     }
 

@@ -356,19 +356,9 @@ async fn request_and_set_site_info(
     service_provider: &ServiceProvider,
     yaml_sync_settings: &SyncSettings,
 ) {
-    if is_central_server() {
-        // COMS gets site info from COGS
-        service_provider
-            .site_info_service
-            .request_and_set_site_info(&service_provider, &yaml_sync_settings)
-            .await
-            .unwrap();
-    } else {
-        // ROMS gets site info from COMS
-        service_provider
-            .site_info_service
-            .request_and_set_site_info_v7(&service_provider, &yaml_sync_settings)
-            .await
-            .unwrap();
-    }
+    service_provider
+        .site_info_service
+        .request_and_set_site_info(&service_provider, &yaml_sync_settings)
+        .await
+        .unwrap();
 }

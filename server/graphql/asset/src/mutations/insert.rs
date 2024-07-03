@@ -11,8 +11,8 @@ use graphql_core::{
 use service::{
     asset::insert::{InsertAsset, InsertAssetError as ServiceError},
     auth::{Resource, ResourceAccessRequest},
-    sync::CentralServerConfig,
 };
+use util::is_central_server;
 
 use crate::types::AssetNode;
 
@@ -31,7 +31,7 @@ pub fn insert_asset(
 
     // add store_id if not inserting from central server
     let asset_input;
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         match input.clone().store_id {
             Some(input_store_id) => {
                 if input_store_id != store_id.to_owned() {

@@ -9,7 +9,7 @@ use repository::{
     SyncFileReferenceRowRepository,
 };
 
-use util::format_error;
+use util::{format_error, is_central_server};
 
 use crate::{
     service_provider::ServiceProvider,
@@ -17,7 +17,7 @@ use crate::{
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
         api::SyncApiV5, api_v6::SiteStatusV6, synchroniser::integrate_and_translate_sync_buffer,
-        translations::ToSyncRecordTranslationType, CentralServerConfig,
+        translations::ToSyncRecordTranslationType,
     },
 };
 
@@ -42,7 +42,7 @@ pub async fn pull(
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
@@ -116,7 +116,7 @@ pub async fn push(
 ) -> Result<SyncPushSuccessV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
@@ -169,7 +169,7 @@ pub async fn get_site_status(
 ) -> Result<SiteStatusV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
 
@@ -228,7 +228,7 @@ pub async fn download_file(
         id
     );
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
@@ -266,7 +266,7 @@ pub async fn upload_file(
 
     log::info!("Receiving a file via sync : {}", file_id);
 
-    if !CentralServerConfig::is_central_server() {
+    if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
