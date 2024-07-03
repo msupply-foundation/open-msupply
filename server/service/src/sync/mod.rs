@@ -31,6 +31,7 @@ use repository::{
 };
 
 use thiserror::Error;
+use util::is_central_server;
 
 pub(crate) struct ActiveStoresOnSite {
     stores: Vec<Store>,
