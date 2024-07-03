@@ -14,8 +14,8 @@
   "dependencies": {
     "@bugsnag/js": "^7.14.1",
     "@capacitor-community/barcode-scanner": "^4.0.1",
-    "@capacitor/app": "^5.0.6",
-    "@capacitor/core": "^5.2.1",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/core": "^6.1.0",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@mui/lab": "^5.0.0-alpha.59",
