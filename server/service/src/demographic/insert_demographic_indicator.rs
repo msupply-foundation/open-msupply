@@ -13,13 +13,14 @@ pub enum InsertDemographicIndicatorError {
     DemographicIndicatorAlreadyExists,
     DemographicIndicatorAlreadyExistsForThisYear,
     CreatedRecordNotFound,
+    DemographicIndicatorHasNoName,
     DatabaseError(RepositoryError),
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertDemographicIndicator {
     pub id: String,
-    pub name: String,
+    pub name: Option<String>,
     pub base_year: i32,
     pub base_population: Option<i32>,
     pub population_percentage: Option<f64>,
@@ -92,7 +93,7 @@ pub fn generate(
 ) -> DemographicIndicatorRow {
     DemographicIndicatorRow {
         id,
-        name,
+        name: name.unwrap_or_default(),
         base_year,
         base_population: base_population.unwrap_or_default(),
         population_percentage: population_percentage.unwrap_or_default(),
