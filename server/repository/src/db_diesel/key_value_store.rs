@@ -39,6 +39,8 @@ pub enum KeyType {
     SettingsTokenSecret,
 
     DatabaseVersion,
+    DatabaseMigratedFromPreRelease,
+    DatabaseMigrationError,
 
     SettingsDisplayCustomLogo,
     SettingsDisplayCustomLogoHash,

@@ -20,7 +20,10 @@ mod v1_06_00;
 mod v1_07_00;
 mod v2_00_00;
 mod v2_01_00;
+mod v2_02_00;
 mod version;
+
+use std::env;
 
 pub(crate) use self::types::*;
 use self::v1_00_04::V1_00_04;
@@ -39,10 +42,35 @@ use crate::{
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
 
+#[allow(dead_code)]
+pub(crate) struct MigrationContext {
+    start_version: Version,
+    to_version: Version,
+    database_version: Version,
+    ignore_migration_errors: bool,
+}
+
 pub(crate) trait Migration {
     fn version(&self) -> Version;
-    fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
+    }
+    fn rc_pre_migrate(
+        &self,
+        _connection: &StorageConnection,
+        ctx: &MigrationContext,
+    ) -> anyhow::Result<()> {
+        Err(anyhow::anyhow!(
+            "RC migration not allowed for version {}",
+            ctx.database_version
+        ))
+    }
+    fn migrate_with_context(
+        &self,
+        connection: &StorageConnection,
+        _ctx: &MigrationContext,
+    ) -> anyhow::Result<()> {
+        self.migrate(connection)
     }
 }
 
@@ -89,29 +117,33 @@ pub fn migrate(
         Box::new(v1_07_00::V1_07_00),
         Box::new(v2_00_00::V2_00_00),
         Box::new(v2_01_00::V2_01_00),
+        Box::new(v2_02_00::V2_02_00),
     ];
 
     // Historic diesel migrations
     run_db_migrations(connection).unwrap();
 
     // Rust migrations
+    let ignore_migration_errors = env::var("IGNORE_MIGRATION_ERRORS").is_ok();
+
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
     let database_version = get_database_version(connection);
 
     // for `>` see PartialOrd implementation of Version
-    if database_version > to_version {
+    if database_version > to_version && !ignore_migration_errors {
         return Err(MigrationError::DatabaseVersionAboveAppVersion(
             database_version,
             to_version,
         ));
     }
 
-    if database_version.is_pre_release() {
-        return Err(MigrationError::DatabaseVersionIsPreRelease(
-            database_version,
-        ));
-    }
+    let mut migration_context = MigrationContext {
+        start_version: database_version.clone(),
+        to_version: to_version.clone(),
+        database_version: database_version.clone(),
+        ignore_migration_errors,
+    };
 
     for migration in migrations {
         let migration_version = migration.version();
@@ -123,6 +155,12 @@ pub fn migrate(
                 break;
             }
 
+            // Should only get here if ignore_migration_errors is true
+            if cfg!(debug_assertions) {
+                log::warn!("Migration version {} is higher then app version {} consider increasing the version in package.json", migration_version, to_version);
+                break;
+            }
+
             return Err(MigrationError::MigrationAboveAppVersion(
                 migration_version,
                 to_version,
@@ -130,13 +168,49 @@ pub fn migrate(
         }
 
         let database_version = get_database_version(connection);
+        migration_context.database_version = database_version;
 
         // TODO transaction ?
 
-        if migration_version > database_version {
+        // Handle pre-release migrations, attempt to re-run or update the same version
+        if migration_version.is_equivalent(&migration_context.database_version)
+            && migration_context.database_version.is_pre_release()
+        {
+            log::warn!("Database version is pre-release, running pre-release migration");
+            migration
+                .rc_pre_migrate(connection, &migration_context)
+                .map_err(|source| MigrationError::MigrationError {
+                    source,
+                    version: migration_version.clone(),
+                })?;
+
+            set_migrated_from_rc(connection)?;
+
+            let result = migration.migrate_with_context(connection, &migration_context);
+            match result {
+                Ok(_) => {
+                    log::info!("RC Migration completed with no errors");
+                }
+                Err(error) => {
+                    if migration_context.ignore_migration_errors {
+                        set_migration_error(connection, format!("{}", error))?;
+                        log::error!("RC Migration had errors, trying to continue but database may be in an inconsistent state");
+                    } else {
+                        return Err(MigrationError::MigrationError {
+                            source: error,
+                            version: migration_version.clone(),
+                        });
+                    }
+                }
+            };
+            set_database_version(connection, &migration_version)?;
+        }
+
+        // Normal migrations
+        if migration_version > migration_context.database_version {
             log::info!("Running database migration {}", migration_version);
             migration
-                .migrate(connection)
+                .migrate_with_context(connection, &migration_context)
                 .map_err(|source| MigrationError::MigrationError {
                     source,
                     version: migration_version.clone(),
@@ -146,6 +220,12 @@ pub fn migrate(
     }
 
     set_database_version(connection, &to_version)?;
+
+    let migrated_from_rc = get_migrated_from_pre_release(connection)?;
+    if migrated_from_rc {
+        log::warn!("Database has been migrated from Pre Release version, database state might be inconsistent");
+    }
+
     Ok(to_version)
 }
 
@@ -165,6 +245,25 @@ fn set_database_version(
 ) -> Result<(), RepositoryError> {
     KeyValueStoreRepository::new(connection)
         .set_string(KeyType::DatabaseVersion, Some(new_version.to_string()))
+}
+
+fn set_migration_error(
+    connection: &StorageConnection,
+    error_message: String,
+) -> Result<(), RepositoryError> {
+    KeyValueStoreRepository::new(connection)
+        .set_string(KeyType::DatabaseMigrationError, Some(error_message))
+}
+
+fn set_migrated_from_rc(connection: &StorageConnection) -> Result<(), RepositoryError> {
+    KeyValueStoreRepository::new(connection)
+        .set_bool(KeyType::DatabaseMigratedFromPreRelease, Some(true))
+}
+
+fn get_migrated_from_pre_release(connection: &StorageConnection) -> Result<bool, RepositoryError> {
+    KeyValueStoreRepository::new(connection)
+        .get_bool(KeyType::DatabaseMigratedFromPreRelease)
+        .map(|value| value.unwrap_or(false))
 }
 
 #[derive(Error, Debug)]
