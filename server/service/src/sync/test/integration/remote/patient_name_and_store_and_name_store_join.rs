@@ -42,6 +42,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             logo: None,
             store_mode: StoreMode::Dispensary,
             created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
+            is_disabled: false,
         };
         let store_json = json!({
             "ID": store_row.id,
@@ -49,7 +50,8 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             "name_ID": store_row.name_link_id,
             "sync_id_remote_site": store_row.site_id,
             "store_mode": "dispensary",
-            "created_date": "2021-01-01"
+            "created_date": "2021-01-01",
+            "disabled": false,
         });
 
         let patient_name_row = inline_init(|r: &mut NameRow| {

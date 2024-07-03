@@ -102,6 +102,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             logo: None,
             store_mode: StoreMode::Store,
             created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
+            is_disabled: false,
         };
         let store_json = json!({
             "ID": store_row.id,
@@ -110,6 +111,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "sync_id_remote_site": store_row.site_id,
             "store_mode": "store",
             "created_date": "2021-01-01",
+            "disabled": false,
         });
         result.push(TestStepData {
             central_upsert: json!({
