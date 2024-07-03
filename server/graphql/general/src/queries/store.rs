@@ -141,6 +141,7 @@ impl StoreFilterInput {
             name: name.map(StringFilter::from),
             name_code: name_code.map(StringFilter::from),
             site_id: site_id.map(EqualFilter::from),
+            om_site_id: None, // TODO... consolidate w site_id?
         }
     }
 }

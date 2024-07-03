@@ -70,8 +70,17 @@ impl ActiveStoresOnSite {
             .map_err(Error::DatabaseError)?
             .ok_or(Error::SiteIdNotSet)?;
 
+        let store_filter = match is_central_server() {
+            true => StoreFilter::new()
+                // stores assigned to COMS by COGS
+                .site_id(EqualFilter::equal_to_i32(site_id))
+                // which have not been assigned to a remote site by COMS
+                .om_site_id(EqualFilter::i32_is_null(true)),
+            false => StoreFilter::new().om_site_id(EqualFilter::equal_to_i32(site_id)),
+        };
+
         let stores = StoreRepository::new(connection)
-            .query_by_filter(StoreFilter::new().site_id(EqualFilter::equal_to_i32(site_id)))
+            .query_by_filter(store_filter)
             .map_err(Error::DatabaseError)?;
 
         Ok(ActiveStoresOnSite { stores })

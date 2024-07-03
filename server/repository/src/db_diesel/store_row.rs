@@ -21,7 +21,7 @@ table! {
         logo -> Nullable<Text>,
         store_mode -> crate::db_diesel::store_row::StoreModeMapping,
         created_date -> Nullable<Date>,
-        oms_site_id -> Nullable<Integer>,
+        om_site_id -> Nullable<Integer>,
     }
 }
 
@@ -61,7 +61,7 @@ pub struct StoreRow {
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
     /// The oms_site_id is used to link the store to the oms site, this is needed as site_id from mSupply won't be used...
-    pub oms_site_id: Option<i32>,
+    pub om_site_id: Option<i32>,
 }
 
 impl Default for StoreMode {
@@ -131,6 +131,18 @@ impl<'a> StoreRowRepository<'a> {
             .filter(store_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?;
         Ok(result)
+    }
+
+    pub fn update_om_site_id(
+        &self,
+        store_id: &str,
+        om_site_id: Option<i32>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(store_dsl::store)
+            .filter(store_dsl::id.eq(store_id))
+            .set(store_dsl::om_site_id.eq(om_site_id))
+            .execute(&self.connection.connection)?;
+        Ok(())
     }
 
     pub fn all(&self) -> Result<Vec<StoreRow>, RepositoryError> {

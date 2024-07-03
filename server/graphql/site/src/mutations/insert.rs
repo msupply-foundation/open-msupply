@@ -14,6 +14,7 @@ pub struct InsertSiteInput {
     pub hardware_id: String,
     pub name: String,
     pub password: String,
+    pub store_ids: Vec<String>,
 }
 
 #[derive(Union)]
@@ -30,6 +31,7 @@ pub fn insert_site(
         hardware_id,
         name,
         password,
+        store_ids,
     }: InsertSiteInput,
 ) -> Result<InsertResponse> {
     // validate_auth(
@@ -51,6 +53,7 @@ pub fn insert_site(
         hardware_id,
         name,
         password,
+        store_ids,
     });
 
     map_response(res)

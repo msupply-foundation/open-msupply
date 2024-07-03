@@ -13,5 +13,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         );"#
     )?;
 
+    sql!(
+        connection,
+        r#"
+        ALTER TABLE store ADD COLUMN om_site_id INTEGER;
+        "#
+    )?;
+
     Ok(())
 }

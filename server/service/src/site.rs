@@ -1,7 +1,8 @@
 use bcrypt::{hash, verify, BcryptError, DEFAULT_COST};
 use log::error;
 use repository::{
-    RepositoryError, SiteRow, SiteRowRepository, StorageConnection, TransactionError,
+    RepositoryError, SiteRow, SiteRowRepository, StorageConnection, StoreRowRepository,
+    TransactionError,
 };
 
 pub struct CreateSite {
@@ -10,6 +11,7 @@ pub struct CreateSite {
     pub hardware_id: String,
     pub name: String,
     pub password: String,
+    pub store_ids: Vec<String>,
 }
 
 pub type Site = SiteRow;
@@ -57,6 +59,8 @@ impl<'a> SiteService<'a> {
         self.connection
             .transaction_sync(|con| {
                 let repo = SiteRowRepository::new(con);
+                // todo site already exists (by id?)
+
                 if let Some(_) = repo
                     .find_one_by_name(&site.name)
                     .map_err(CreateSiteError::DatabaseError)?
@@ -75,6 +79,12 @@ impl<'a> SiteService<'a> {
                     hardware_id: site.hardware_id,
                 };
                 repo.upsert_one(&row)?;
+
+                let store_row_repo = StoreRowRepository::new(con);
+                for store_id in site.store_ids {
+                    store_row_repo.update_om_site_id(&store_id, Some(site.site_id))?;
+                }
+
                 Ok(row)
             })
             .map_err(|error: TransactionError<CreateSiteError>| match error {

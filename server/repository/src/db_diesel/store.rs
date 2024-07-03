@@ -26,6 +26,7 @@ pub struct StoreFilter {
     pub name: Option<StringFilter>,
     pub name_code: Option<StringFilter>,
     pub site_id: Option<EqualFilter<i32>>,
+    pub om_site_id: Option<EqualFilter<i32>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -71,6 +72,11 @@ impl StoreFilter {
 
     pub fn site_id(mut self, filter: EqualFilter<i32>) -> Self {
         self.site_id = Some(filter);
+        self
+    }
+
+    pub fn om_site_id(mut self, filter: EqualFilter<i32>) -> Self {
+        self.om_site_id = Some(filter);
         self
     }
 }
@@ -142,6 +148,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             name,
             name_code,
             site_id,
+            om_site_id, // tODO
         } = f;
 
         apply_equal_filter!(query, id, store_dsl::id);
@@ -150,6 +157,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
         apply_string_filter!(query, name, name_dsl::name_);
         apply_string_filter!(query, name_code, name_dsl::code);
         apply_equal_filter!(query, site_id, store_dsl::site_id);
+        apply_equal_filter!(query, om_site_id, store_dsl::om_site_id);
     }
 
     query
