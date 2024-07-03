@@ -123,7 +123,9 @@ const getSteps = (
   const steps = [];
 
   if (!isOperational) {
-    steps.push(getStep('sync-status.prepare', syncStatus?.prepareInitial));
+    if (isCentralServer) {
+      steps.push(getStep('sync-status.prepare', syncStatus?.prepareInitial));
+    }
   }
 
   if (isOperational) {

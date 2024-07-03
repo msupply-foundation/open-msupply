@@ -447,6 +447,10 @@ impl InitialisationQueries {
     ) -> Result<Option<FullSyncStatusNode>> {
         latest_sync_status(ctx, false)
     }
+
+    pub async fn is_central_server(&self) -> bool {
+        is_central_server()
+    }
 }
 /// Auth is not checked during initialisation stage
 #[derive(Default, Clone)]

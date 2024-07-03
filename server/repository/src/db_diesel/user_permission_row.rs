@@ -144,6 +144,15 @@ impl<'a> UserPermissionRowRepository<'a> {
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;
+
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::UserPermission,
+            record_id: id.to_string(),
+            row_action: crate::ChangelogAction::Delete,
+            ..Default::default()
+        };
+
+        let _ = ChangelogRepository::new(&self.connection).insert(&row)?;
         Ok(())
     }
 }
@@ -152,16 +161,7 @@ impl<'a> UserPermissionRowRepository<'a> {
 pub struct UserPermissionRowDelete(pub String);
 impl Delete for UserPermissionRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UserPermissionRowRepository::new(con).delete(&self.0)?;
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::UserPermission,
-            record_id: self.0.clone(),
-            row_action: crate::ChangelogAction::Delete,
-            ..Default::default()
-        };
-
-        let _ = ChangelogRepository::new(con).insert(&row)?;
-        Ok(())
+        UserPermissionRowRepository::new(con).delete(&self.0)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
