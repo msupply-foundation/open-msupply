@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type InventoryAdjustmentReasonRowFragment = { __typename: 'InventoryAdjustmentReasonNode', id: string, type: Types.InventoryAdjustmentReasonNodeType, reason: string };
 
 export type InventoryAdjustmentReasonsQueryVariables = Types.Exact<{
@@ -53,20 +52,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInventoryAdjustmentReasonsQuery((req, res, ctx) => {
- *   const { sort, filter } = req.variables;
- *   return res(
- *     ctx.data({ inventoryAdjustmentReasons })
- *   )
- * })
- */
-export const mockInventoryAdjustmentReasonsQuery = (resolver: ResponseResolver<GraphQLRequest<InventoryAdjustmentReasonsQueryVariables>, GraphQLContext<InventoryAdjustmentReasonsQuery>, any>) =>
-  graphql.query<InventoryAdjustmentReasonsQuery, InventoryAdjustmentReasonsQueryVariables>(
-    'inventoryAdjustmentReasons',
-    resolver
-  )

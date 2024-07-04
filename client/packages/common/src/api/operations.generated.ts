@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type InitialisationStatusQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
@@ -32,19 +31,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInitialisationStatusQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ initialisationStatus })
- *   )
- * })
- */
-export const mockInitialisationStatusQuery = (resolver: ResponseResolver<GraphQLRequest<InitialisationStatusQueryVariables>, GraphQLContext<InitialisationStatusQuery>, any>) =>
-  graphql.query<InitialisationStatusQuery, InitialisationStatusQueryVariables>(
-    'initialisationStatus',
-    resolver
-  )
