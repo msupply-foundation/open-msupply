@@ -1,5 +1,5 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { PaperClickPopover } from './PaperClickPopover';
 import { PaperPopoverSection, usePopover } from '@common/components';
 import { Box, Typography } from '@mui/material';
@@ -9,7 +9,7 @@ export default {
   component: PaperClickPopover,
 };
 
-const Example: Story = () => {
+const Example: StoryFn = () => {
   const { show, hide, Popover } = usePopover();
   return (
     <>

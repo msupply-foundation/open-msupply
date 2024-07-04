@@ -1,14 +1,14 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { HorizontalStepper } from './HorizontalStepper';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 
 export default {
   title: 'Steppers/HorizontalStepper',
   component: HorizontalStepper,
 };
 
-const Template: Story<{ colour: 'primary' | 'secondary' }> = args => (
+const Template: StoryFn<{ colour: 'primary' | 'secondary' }> = args => (
   <Box>
     <Box width={500} m={4}>
       <Typography>Basic stepper with the second step active</Typography>

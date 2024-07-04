@@ -1,9 +1,9 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { ValueBar } from './ValueBar';
 
-const Template: ComponentStory<typeof ValueBar> = ({
+const Template: StoryFn<typeof ValueBar> = ({
   value,
   total,
   label,
@@ -55,4 +55,4 @@ BothDividers.args = {
 export default {
   title: 'Charts/ValueBar',
   component: ValueBar,
-} as ComponentMeta<typeof ValueBar>;
+} as Meta<typeof ValueBar>;

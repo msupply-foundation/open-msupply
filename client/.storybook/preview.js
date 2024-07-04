@@ -15,7 +15,6 @@ export const decorators = [
 ];
 
 export const parameters = {
-  actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
     expanded: true, // Adds the description and default columns
     matchers: {
@@ -24,3 +23,4 @@ export const parameters = {
     },
   },
 };
+export const tags = ['autodocs'];

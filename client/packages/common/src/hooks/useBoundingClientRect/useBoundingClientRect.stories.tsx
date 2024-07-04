@@ -1,12 +1,12 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { useBoundingClientRectRef } from './useBoundingClientRect';
 
 export default {
   title: 'Hooks/useBoundingClientRect',
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const { ref, rect } = useBoundingClientRectRef<HTMLDivElement>();
 
   return (

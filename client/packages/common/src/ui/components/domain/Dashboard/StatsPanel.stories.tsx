@@ -1,10 +1,10 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { StatsPanel, Stat } from './StatsPanel';
 import { Box } from '@mui/material';
 import { useTranslation } from '@common/intl';
 
-const Template: ComponentStory<typeof StatsPanel> = () => {
+const Template: StoryFn<typeof StatsPanel> = () => {
   const [isLoading, setIsLoading] = React.useState(true);
   const t = useTranslation();
   const stats: Stat[] = [
@@ -50,4 +50,4 @@ export const Primary = Template.bind({});
 export default {
   title: 'Components/StatsPanel',
   component: StatsPanel,
-} as ComponentMeta<typeof StatsPanel>;
+} as Meta<typeof StatsPanel>;
