@@ -24,7 +24,6 @@ impl ItemStatsLoaderInput {
     }
 }
 
-#[async_trait::async_trait]
 impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
     type Value = ItemStats;
     type Error = async_graphql::Error;
