@@ -2341,7 +2341,7 @@ export type InsertDemographicIndicatorInput = {
   basePopulation?: InputMaybe<Scalars['Int']['input']>;
   baseYear: Scalars['Int']['input'];
   id: Scalars['String']['input'];
-  name: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
   populationPercentage?: InputMaybe<Scalars['Float']['input']>;
   year1Projection?: InputMaybe<Scalars['Int']['input']>;
   year2Projection?: InputMaybe<Scalars['Int']['input']>;
