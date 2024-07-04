@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod create_missing_master_list_and_program;
+mod create_system_user;
 
 pub(crate) struct V2_02_00;
 
@@ -13,6 +14,7 @@ impl Migration for V2_02_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         create_missing_master_list_and_program::migrate(connection)?;
+        create_system_user::migrate(connection)?;
         Ok(())
     }
 }
