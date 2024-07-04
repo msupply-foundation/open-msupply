@@ -56,7 +56,7 @@ impl InvalidToken {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum RefreshTokenErrorInterface {
     NoRefreshTokenProvided(NoRefreshTokenProvided),
     TokenExpired(TokenExpired),

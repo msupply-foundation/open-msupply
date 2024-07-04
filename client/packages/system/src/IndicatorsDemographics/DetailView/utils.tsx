@@ -1,4 +1,5 @@
 import { NumUtils } from '@common/utils';
+
 import { DemographicProjectionFragment } from '../api/operations.generated';
 
 import { GENERAL_POPULATION_ID } from '../api';

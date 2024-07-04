@@ -29,7 +29,7 @@ impl NameStoreJoinNode {
 
 #[derive(Interface)]
 #[graphql(name = "LinkPatientPatientToStoreErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum LinkPatientToStoreErrorInterface {
     ConnectionError(ConnectionError),
 }

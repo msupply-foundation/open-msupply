@@ -7,7 +7,7 @@ use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
 };
 
-pub const MAX_LIMIT: u32 = 1000;
+pub const MAX_LIMIT: u32 = u32::MAX;
 pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_names(

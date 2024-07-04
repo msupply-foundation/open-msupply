@@ -57,7 +57,7 @@ pub fn update_name(
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateNameErrorInterface {
     InvoiceDoesNotExist(RecordNotFound),
     InvoiceIsNotEditable(InvoiceIsNotEditable),

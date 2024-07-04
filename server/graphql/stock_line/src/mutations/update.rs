@@ -30,7 +30,7 @@ pub struct UpdateInput {
 
 #[derive(Interface)]
 #[graphql(name = "UpdateStockLineErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
 }

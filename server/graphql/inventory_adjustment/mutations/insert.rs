@@ -88,7 +88,7 @@ impl CreateInventoryAdjustmentInput {
 
 #[derive(Interface)]
 #[graphql(name = "InsertInventoryAdjustmentErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
 }

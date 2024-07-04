@@ -23,7 +23,7 @@ pub struct AddFromMasterListInput {
 
 #[derive(Interface)]
 #[graphql(name = "AddFromMasterListErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     MasterListNotFoundForThisStore(MasterListNotFoundForThisStore),

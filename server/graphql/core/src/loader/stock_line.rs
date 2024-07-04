@@ -13,7 +13,6 @@ pub struct StockLineByLocationIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for StockLineByLocationIdLoader {
     type Value = Vec<StockLine>;
     type Error = RepositoryError;
@@ -60,7 +59,6 @@ impl StockLineByItemAndStoreIdLoaderInput {
     }
 }
 
-#[async_trait::async_trait]
 impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdLoader {
     type Value = Vec<StockLine>;
     type Error = RepositoryError;
@@ -106,7 +104,6 @@ pub struct StockLineByIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for StockLineByIdLoader {
     type Value = StockLine;
     type Error = RepositoryError;

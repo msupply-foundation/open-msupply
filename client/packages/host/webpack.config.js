@@ -156,7 +156,6 @@ module.exports = env => {
       }),
       new CopyPlugin({
         patterns: [
-          { from: './public/mockServiceWorker.js', to: 'mockServiceWorker.js' },
           { from: './public/medical-icons.css', to: 'medical-icons.css' },
           { from: './public/game', to: 'game' },
           {

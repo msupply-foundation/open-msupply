@@ -13,9 +13,6 @@ table! {
     }
 }
 
-joinable!(stock_on_hand -> item_link (item_id));
-allow_tables_to_appear_in_same_query!(item_link, stock_on_hand);
-
 #[derive(Clone, Queryable, Debug, PartialEq)]
 pub struct StockOnHandRow {
     pub id: String,
@@ -30,6 +27,9 @@ pub struct StockOnHandFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
 }
+
+joinable!(stock_on_hand -> item_link (item_id));
+allow_tables_to_appear_in_same_query!(item_link, stock_on_hand);
 
 pub struct StockOnHandRepository<'a> {
     connection: &'a StorageConnection,

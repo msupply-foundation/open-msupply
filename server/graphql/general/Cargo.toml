@@ -23,6 +23,7 @@ chrono = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+http2 = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }

@@ -90,7 +90,7 @@ impl InsertInput {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     OtherPartyNotACustomer(OtherPartyNotACustomer),
     OtherPartyNotVisible(OtherPartyNotVisible),

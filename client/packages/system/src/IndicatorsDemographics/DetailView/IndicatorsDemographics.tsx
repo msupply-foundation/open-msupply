@@ -50,7 +50,6 @@ const IndicatorsDemographicsComponent = () => {
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
   const baseYear = headerDraft?.baseYear ?? DateUtils.getCurrentYear();
-
   const { data: projection, isLoading: isLoadingProjection } =
     useDemographicData.projection.get(baseYear);
 
@@ -60,7 +59,6 @@ const IndicatorsDemographicsComponent = () => {
   } = useDemographicData.indicator.insert();
   const { mutateAsync: updateDemographicIndicator } =
     useDemographicData.indicator.update();
-
   const { upsertProjection, invalidateQueries: invalidateProjectionQueries } =
     useDemographicData.projection.upsert();
 
@@ -74,7 +72,6 @@ const IndicatorsDemographicsComponent = () => {
 
     const basePopulation = patch['0'] ?? 0;
     let updatedDraft: Record<string, Row> = {};
-
     const indexPopulationChange =
       basePopulation !== draft[patch.id]?.basePopulation &&
       patch.id === GENERAL_POPULATION_ID;
@@ -125,14 +122,11 @@ const IndicatorsDemographicsComponent = () => {
   // generic function for handling percentage change, and then re calculating the values of that year
   const handleGrowthChange = (updatedHeader: HeaderData) => {
     setIsDirty(true);
-
     setHeaderDraft(updatedHeader);
     calculateDown(updatedHeader);
   };
-
   const calculateDown = (updatedHeader: HeaderData) => {
     const updatedDraft: Record<string, Row> = {};
-
     Object.values(draft).forEach(row => {
       const updatedRow = calculateAcrossRow(
         row,
@@ -141,7 +135,6 @@ const IndicatorsDemographicsComponent = () => {
       );
       updatedDraft[updatedRow.id] = updatedRow;
     });
-
     setDraft(updatedDraft);
   };
 
@@ -235,7 +228,7 @@ const IndicatorsDemographicsComponent = () => {
       <AppBarButtons
         createNewRow={createNewRow}
         rows={Object.values(draft)}
-      ></AppBarButtons>
+      ></AppBarButtons>{' '}
       <Box sx={{ width: '100%' }} padding={0}>
         <GrowthRow
           columns={columns}

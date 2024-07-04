@@ -15,7 +15,6 @@ pub struct AssetByLocationLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for AssetByLocationLoader {
     type Value = Vec<Asset>;
     type Error = RepositoryError;

@@ -25,7 +25,6 @@ pub struct ClinicianLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-#[async_trait::async_trait]
 impl Loader<ClinicianLoaderInput> for ClinicianLoader {
     type Value = Clinician;
     type Error = async_graphql::Error;

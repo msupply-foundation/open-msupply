@@ -64,7 +64,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 
 #[derive(Interface)]
 #[graphql(name = "DeleteOutboundShipmentServiceLineErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),

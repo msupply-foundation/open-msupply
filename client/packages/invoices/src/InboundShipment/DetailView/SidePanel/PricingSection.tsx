@@ -173,7 +173,7 @@ export const PricingSectionComponent = () => {
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.rate')}</PanelLabel>
-          <PanelField>{currencyRate === 0 ? 1 : currencyRate}</PanelField>
+          <PanelField>{currencyRate ?? 1}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>

@@ -19,7 +19,6 @@ import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
 
 const AssetListComponent: FC = () => {
   const isCentralServer = useIsCentralServerApi();
-
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -81,7 +80,6 @@ const AssetListComponent: FC = () => {
   ];
 
   if (isCentralServer) columnDescriptions.push('selection');
-
   const columns = useColumns<AssetCatalogueItemFragment>(
     columnDescriptions,
     {

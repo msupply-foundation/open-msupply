@@ -1,13 +1,9 @@
 import React from 'react';
 import '@fontsource-variable/inter';
 import { CssBaseline } from '@mui/material';
-import { initializeWorker, mswDecorator } from 'msw-storybook-addon';
 import { StoryProvider, TestingRouterContext } from '@common/utils';
 
-initializeWorker();
-
 export const decorators = [
-  mswDecorator,
   Story => (
     <StoryProvider>
       <TestingRouterContext>

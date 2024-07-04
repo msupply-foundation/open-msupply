@@ -12,7 +12,6 @@ pub struct TemperatureLogByIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for TemperatureLogByIdLoader {
     type Value = TemperatureLog;
     type Error = RepositoryError;

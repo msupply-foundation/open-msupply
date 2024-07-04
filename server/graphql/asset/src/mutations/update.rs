@@ -129,7 +129,7 @@ pub enum UpdateAssetResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateAssetErrorInterface {
     AssetNotFound(RecordNotFound),
     UniqueValueViolation(UniqueValueViolation),

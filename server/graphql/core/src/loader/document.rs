@@ -14,7 +14,6 @@ pub struct DocumentLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for DocumentLoader {
     type Value = Document;
     type Error = RepositoryError;
@@ -46,7 +45,6 @@ pub struct DocumentByIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for DocumentByIdLoader {
     type Value = Document;
     type Error = RepositoryError;

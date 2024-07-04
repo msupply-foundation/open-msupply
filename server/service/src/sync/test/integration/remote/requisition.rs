@@ -60,6 +60,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             snapshot_datetime: None,
             approved_quantity: 0.0,
             approval_comment: None,
+            approval_comment: None,
         };
 
         let requisition_row_2 = inline_edit(&base_requisition_row, |mut d| {

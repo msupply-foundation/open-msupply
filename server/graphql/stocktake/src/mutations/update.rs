@@ -60,7 +60,7 @@ impl StockLinesReducedBelowZero {
 
 #[derive(Interface)]
 #[graphql(name = "UpdateStocktakeErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     SnapshotCountCurrentCountMismatch(SnapshotCountCurrentCountMismatch),
     StocktakeIsLocked(StocktakeIsLocked),

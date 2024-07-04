@@ -21,7 +21,7 @@ pub struct DeleteInput {
 
 #[derive(Interface)]
 #[graphql(name = "DeleteOutboundShipmentUnallocatedLineErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),

@@ -26,7 +26,7 @@ impl UpdateUserNode {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum UpdateUserErrorInterface {
     ConnectionError(ConnectionError),
     InvalidCredentials(InvalidCredentials),

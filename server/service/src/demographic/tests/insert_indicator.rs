@@ -27,7 +27,7 @@ mod query {
         // check we can insert
         let id = "test_id".to_string();
         let id_2 = "test_id_2".to_string();
-        let id_3 = "test_id_2".to_string();
+        let id_3 = "test_id_3".to_string();
         let name_1 = "name".to_string();
         let base_year_1 = 2024;
         let name_2 = "name2".to_string();
@@ -52,7 +52,7 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id.clone(),
-                    name: Some(name_2.clone()),
+                    name: Some(name_2),
                     base_year: base_year_2,
                     ..Default::default()
                 },
@@ -80,7 +80,7 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id_2.clone(),
-                    name: Some(name_1.clone()),
+                    name: Some(name_1),
                     base_year: base_year_2,
                     ..Default::default()
                 },

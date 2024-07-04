@@ -53,7 +53,7 @@ pub enum DeleteAssetLogReasonResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteAssetLogReasonErrorInterface {
     AssetNotFound(RecordNotFound),
     RecordBelongsToAnotherStore(RecordBelongsToAnotherStore),

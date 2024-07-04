@@ -15,7 +15,6 @@ pub struct InventoryAdjustmentReasonByIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for InventoryAdjustmentReasonByIdLoader {
     type Value = InventoryAdjustmentReason;
     type Error = RepositoryError;

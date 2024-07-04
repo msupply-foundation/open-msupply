@@ -92,7 +92,7 @@ pub enum InsertDemographicProjectionResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertDemographicProjectionErrorInterface {
     DemographicProjectionAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),

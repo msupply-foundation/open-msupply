@@ -103,6 +103,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           [includeNonVisibleWithStockOnHand
             ? 'isVisibleOrOnHand'
             : 'isVisible']: true,
+          isVisible: true,
           isActive: true,
         },
       });

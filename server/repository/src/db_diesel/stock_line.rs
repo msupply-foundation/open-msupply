@@ -229,6 +229,7 @@ fn apply_item_filter(
         if let Some(item_code_or_name) = &f.item_code_or_name {
             let mut item_filter = ItemFilter::new();
             item_filter.code_or_name = Some(item_code_or_name.clone());
+            item_filter.is_visible = Some(true);
             item_filter.is_active = Some(true);
             let items = ItemRepository::new(connection)
                 .query_by_filter(item_filter, Some(store_id))

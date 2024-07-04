@@ -3,6 +3,7 @@ import { Formatter } from '@common/utils';
 import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
 import { StockLineRowFragment } from './Stock/api';
+import { PropertyNode } from '@common/types';
 
 export const locationsToCsv = (
   invoices: LocationRowFragment[],
@@ -86,7 +87,7 @@ interface ParsedRow {
 export const processProperties = <
   T extends { properties: Record<string, string> },
 >(
-  properties: AssetPropertyFragment[],
+  properties: AssetPropertyFragment[] | PropertyNode[],
   row: ParsedRow,
   importRow: T,
   rowErrors: string[],

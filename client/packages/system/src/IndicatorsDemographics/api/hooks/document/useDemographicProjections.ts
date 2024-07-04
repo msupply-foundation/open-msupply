@@ -16,7 +16,7 @@ export const useDemographicProjections = (baseYear: number) => {
           nodes: [
             {
               __typename: 'DemographicProjectionNode',
-              baseYear: baseYear,
+              baseYear,
               id: '',
               year1: 0,
               year2: 0,

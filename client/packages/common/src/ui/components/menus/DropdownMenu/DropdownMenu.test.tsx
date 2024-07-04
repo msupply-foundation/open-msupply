@@ -1,5 +1,5 @@
-import { act, render } from '@testing-library/react';
-import React from 'react';
+import React, { act } from 'react';
+import { render } from '@testing-library/react';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
 import { TestingProvider } from '../../../../utils';
 
@@ -13,7 +13,7 @@ describe('Dropdown', () => {
       </TestingProvider>
     );
 
-    const button = getByRole('button');
+    const button = getByRole('combobox');
     act(() => {
       button.click();
     });
@@ -39,7 +39,7 @@ describe('Dropdown', () => {
 
     const { getByRole, findByText } = render(<TestDropdown />);
 
-    const button = getByRole('button');
+    const button = getByRole('combobox');
 
     act(() => {
       button.click();

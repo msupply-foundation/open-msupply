@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { act, useState } from 'react';
 import { waitFor } from '@testing-library/dom';
 import { renderHook } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
 import { useDebouncedValue } from './useDebouncedValue';
 
 describe('useDebouncedValue', () => {

@@ -52,7 +52,7 @@ pub enum DeleteAssetCatalogueItemResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteAssetCatalogueItemErrorInterface {
     AssetCatalogueItemNotFound(RecordNotFound),
     DatabaseError(DatabaseError),

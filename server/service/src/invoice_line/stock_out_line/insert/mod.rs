@@ -36,7 +36,7 @@ pub enum InsertStockOutLineError {
     NotThisStoreInvoice,
     CannotEditFinalised,
     StockLineNotFound,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
     LocationIsOnHold,
     LocationNotFound,
     StockLineAlreadyExistsInInvoice(String),
@@ -163,7 +163,7 @@ mod test {
             Err(ServiceError::StockLineNotFound)
         );
 
-        // NumberOfPacksBelowOne
+        // NumberOfPacksBelowZero
         // invoice `mock_outbound_shipment_a` has status `Picked`
         assert_eq!(
             service.insert_stock_out_line(
@@ -177,7 +177,7 @@ mod test {
                     r.number_of_packs = -1.0;
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // LocationIsOnHold
