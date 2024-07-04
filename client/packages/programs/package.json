@@ -9,17 +9,17 @@
     "eslint": "eslint ./src"
   },
   "dependencies": {
-    "@openmsupply-client/common": "^0.0.1",
-    "@openmsupply-client/config": "^0.0.0",
-    "@openmsupply-client/requisitions": "^0.0.0",
     "@jsonforms/core": "^3.1.0",
     "@jsonforms/material-renderers": "^3.1.0",
     "@jsonforms/react": "^3.1.0",
     "@mui/icons-material": "^5.14.1",
+    "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/config": "^0.0.0",
+    "@openmsupply-client/requisitions": "^0.0.0",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
     "react-diff-viewer": "3.1.1",
-    "zod": "3.21.4"
+    "react-dom": "^18.0.0",
+    "zod": "3.23.8"
   },
   "devDependencies": {}
 }

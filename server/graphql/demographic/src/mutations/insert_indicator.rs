@@ -100,7 +100,7 @@ pub enum InsertDemographicIndicatorResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertDemographicIndicatorErrorInterface {
     DemographicIndicatorAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),
@@ -115,11 +115,11 @@ fn map_error(error: IndicatorServiceError) -> Result<InsertDemographicIndicatorE
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        IndicatorServiceError::DemographicIndicatorAlreadyExists => BadUserInput(formatted_error),
-        IndicatorServiceError::DemographicIndicatorAlreadyExistsForThisYear => {
+        IndicatorServiceError::DemographicIndicatorHasNoName
+        | IndicatorServiceError::DemographicIndicatorAlreadyExists
+        | IndicatorServiceError::DemographicIndicatorAlreadyExistsForThisYear => {
             BadUserInput(formatted_error)
         }
-        IndicatorServiceError::DemographicIndicatorHasNoName => BadUserInput(formatted_error),
         IndicatorServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         IndicatorServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
