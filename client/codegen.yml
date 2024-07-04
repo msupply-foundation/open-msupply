@@ -20,7 +20,6 @@ generates:
     plugins:
       - typescript-operations
       - typescript-graphql-request
-      - typescript-msw
     config:
       nonOptionalTypename: true
       scalars:
