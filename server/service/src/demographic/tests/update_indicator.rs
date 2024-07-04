@@ -55,7 +55,7 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id_2.clone(),
-                    name: Some(name_2.clone()),
+                    name: Some(name_2),
                     base_year: base_year_1,
                     ..Default::default()
                 },
