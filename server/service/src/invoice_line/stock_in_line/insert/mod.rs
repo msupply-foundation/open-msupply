@@ -118,16 +118,11 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        barcode::{BarcodeFilter, BarcodeRepository},
-        mock::{
+        barcode::{BarcodeFilter, BarcodeRepository}, mock::{
             mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
             mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
             mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow,
-        StorePreferenceRowRepository,
+        }, test_db::{setup_all, setup_all_with_data}, EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow, StorePreferenceRowRepository
     };
     use util::{inline_edit, inline_init};
 
