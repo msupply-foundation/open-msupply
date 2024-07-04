@@ -19,6 +19,7 @@ import {
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
 import { AddFromScannerButton } from './AddFromScannerButton';
+import { useAssetData } from '@openmsupply-client/system';
 
 export const AppBarButtonsComponent = ({
   importModalController,
@@ -30,6 +31,7 @@ export const AppBarButtonsComponent = ({
   const { success, error } = useNotification();
   const t = useTranslation('coldchain');
   const { fetchAsync, isLoading } = useAssets.document.listAll();
+  const { data: properties } = useAssetData.utils.properties();
 
   const onAdd = useCallbackWithPermission(
     UserPermission.AssetMutate,
@@ -44,7 +46,7 @@ export const AppBarButtonsComponent = ({
       return;
     }
 
-    const csv = assetsToCsv(data.nodes, t);
+    const csv = assetsToCsv(data.nodes, t, properties?.map(p => p.key) ?? []);
     FileUtils.exportCSV(csv, t('filename.cold-chain-equipment'));
     success(t('success'))();
   };

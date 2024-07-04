@@ -14,6 +14,7 @@ import {
   NothingHere,
   ResponsiveContainer,
   Typography,
+  UNDEFINED_STRING_VALUE,
   XAxis,
   YAxis,
   useTheme,
@@ -141,6 +142,30 @@ const yAxisTicks = (
   };
 };
 
+const ActiveDot = (
+  {
+    cx,
+    cy,
+    stroke,
+    payload,
+    fill,
+    r,
+    strokeWidth, // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }: any // annoyingly, specifying DotProps here causes a type error
+) =>
+  payload?.breachId ? (
+    <></>
+  ) : (
+    <Dot
+      cx={cx}
+      cy={cy}
+      r={r}
+      stroke={stroke}
+      fill={fill}
+      strokeWidth={strokeWidth}
+    ></Dot>
+  );
+
 const Chart = ({
   data,
   dataTruncated,
@@ -165,7 +190,7 @@ const Chart = ({
   const formatTemp = useFormatTemperature();
 
   const formatTemperature = (value: number | null | undefined) =>
-    !!value ? `${formatTemp(value)}` : '-';
+    !!value ? `${formatTemp(value)}` : UNDEFINED_STRING_VALUE;
 
   useEffect(() => {
     if (!urlQuery['datetime']) {
@@ -223,8 +248,8 @@ const Chart = ({
       payload.value === BREACH_MIN
         ? theme.palette.chart.cold.main
         : payload.value === BREACH_MAX
-        ? theme.palette.chart.hot.main
-        : theme.palette.gray.dark;
+          ? theme.palette.chart.hot.main
+          : theme.palette.gray.dark;
     return (
       <g>
         <line x={x} y={y} stroke={theme.palette.gray.dark}></line>
@@ -304,20 +329,7 @@ const Chart = ({
               dot={({ key, ...rest }) => (
                 <TemperatureLineDot {...rest} key={`${sensor.id}_${key}`} />
               )}
-              activeDot={({ cx, cy, stroke, payload, fill, r, strokeWidth }) =>
-                payload?.breachId ? (
-                  <></>
-                ) : (
-                  <Dot
-                    cx={cx}
-                    cy={cy}
-                    r={r}
-                    stroke={stroke}
-                    fill={fill}
-                    strokeWidth={strokeWidth}
-                  ></Dot>
-                )
-              }
+              activeDot={ActiveDot}
               isAnimationActive={false}
             />
           ))}

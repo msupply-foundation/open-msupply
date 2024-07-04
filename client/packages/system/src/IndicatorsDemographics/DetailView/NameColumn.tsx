@@ -8,6 +8,7 @@ import {
 import { GENERAL_POPULATION_ID } from '../api';
 
 interface RecordWithIdWithRequiredFields extends RecordWithId {
+  isError?: boolean;
   name?: number | null | string;
 }
 
@@ -28,6 +29,7 @@ export const nameColumn = <
     >
       <>
         <BasicTextInput
+          error={rowData.isError}
           disabled={isDisabled || rowData.id === GENERAL_POPULATION_ID}
           defaultValue={column.accessor({ rowData })}
           onBlur={e => {

@@ -99,7 +99,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
         INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('temperature_monitoring_device-ic', 'temperature_monitoring_device', 'Temperature monitoring device', 'STRING', 'Integrated, External, None', '{COLD_CHAIN_EQUIPMENT_UUID}','{INSULATED_CONTAINERS_UUID}');
-        INSERT INTO asset_property (id, key, name, value_type, allowed_values, asset_class_id, asset_category_id) VALUES ('voltage_stabilizer-ic', 'voltage_stabilizer', 'Voltage stabilizer', 'STRING', 'Integrated, External, None', '{COLD_CHAIN_EQUIPMENT_UUID}','{INSULATED_CONTAINERS_UUID}');
         "#,
     )?;
 

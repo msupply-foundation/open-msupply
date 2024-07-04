@@ -7,8 +7,13 @@ use graphql_core::{
 use graphql_types::types::VaccineCourseNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    vaccine_course::insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
+    vaccine_course::{
+        insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
+        update::{VaccineCourseItemInput, VaccineCourseScheduleInput},
+    },
 };
+
+use super::{UpsertVaccineCourseItemInput, UpsertVaccineCourseScheduleInput};
 
 pub fn insert_vaccine_course(
     ctx: &Context<'_>,
@@ -46,6 +51,13 @@ pub struct InsertVaccineCourseInput {
     pub id: String,
     pub name: String,
     pub program_id: String,
+    pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
+    pub schedules: Vec<UpsertVaccineCourseScheduleInput>,
+    pub demographic_indicator_id: Option<String>,
+    pub coverage_rate: f64,
+    pub is_active: bool,
+    pub wastage_rate: f64,
+    pub doses: i32,
 }
 
 impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
@@ -54,12 +66,39 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
             id,
             name,
             program_id,
+            vaccine_items,
+            schedules,
+            demographic_indicator_id,
+            coverage_rate,
+            is_active,
+            wastage_rate,
+            doses,
         }: InsertVaccineCourseInput,
     ) -> Self {
         InsertVaccineCourse {
             id,
             name,
             program_id,
+            vaccine_items: vaccine_items
+                .into_iter()
+                .map(|i| VaccineCourseItemInput {
+                    id: i.id,
+                    item_id: i.item_id,
+                })
+                .collect(),
+            schedules: schedules
+                .into_iter()
+                .map(|s| VaccineCourseScheduleInput {
+                    id: s.id,
+                    label: s.label,
+                    dose_number: s.dose_number,
+                })
+                .collect(),
+            demographic_indicator_id,
+            coverage_rate,
+            is_active,
+            wastage_rate,
+            doses,
         }
     }
 }
@@ -75,7 +114,7 @@ pub enum InsertVaccineCourseResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertVaccineCourseErrorInterface {
     ItemAlreadyExists(RecordAlreadyExist),
     VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),

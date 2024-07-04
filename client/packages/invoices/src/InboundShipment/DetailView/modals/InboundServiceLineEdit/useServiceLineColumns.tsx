@@ -19,7 +19,7 @@ import {
 import { DraftInboundLine } from './../../../../types';
 
 const TaxPercentageCell = (props: CellProps<DraftInboundLine>) => (
-  <NumberInputCell {...props} max={100} decimalLimit={2} />
+  <NumberInputCell {...props} max={100} decimalLimit={2} endAdornment="%" />
 );
 
 export const useServiceLineColumns = (

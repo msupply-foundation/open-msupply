@@ -22,7 +22,7 @@ use crate::sync::{
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyRequisitionType {
     /// A response to the request created for the suppling store
     #[serde(rename = "response")]
@@ -160,6 +160,47 @@ pub struct LegacyRequisitionRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub programID: Option<String>,
 }
+
+/// When mSupply central creates transfers it copies over all of the data
+/// from existing record. When omSupply sends requisition to mSupply the new
+/// response requisition will have all of the omSupply fields copied over from
+/// request requisition. This create a problem when mSupply store is converted
+/// to omSupply store, as it will use om fields in favour of deducing them
+/// This method will sanitise om_fields if it sees a mismatch between legacy
+/// and new omSupply fields (for response requisition)
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+struct PartialLegacyRequisitionRow {
+    pub r#type: LegacyRequisitionType,
+    pub status: LegacyRequisitionStatus,
+    pub om_status: Option<RequisitionStatus>,
+}
+
+fn sanitize_legacy_record(data: serde_json::Value) -> serde_json::Value {
+    let mut sanitized_data = data.clone();
+    let Ok(PartialLegacyRequisitionRow {
+        r#type,
+        status,
+        om_status,
+    }) = serde_json::from_value(data)
+    else {
+        return sanitized_data;
+    };
+    let Some(om_status) = om_status else {
+        return sanitized_data;
+    };
+    if r#type == LegacyRequisitionType::Response
+        && from_legacy_status(&r#type, &status) != Some(om_status)
+    {
+        let Some(obj) = sanitized_data.as_object_mut() else {
+            return sanitized_data;
+        };
+        obj.retain(|key, _| !key.starts_with("om_"));
+    }
+
+    sanitized_data
+}
+
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
@@ -190,7 +231,9 @@ impl SyncTranslation for RequisitionTranslation {
         conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyRequisitionRow>(&sync_record.data)?;
+        let json_data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let sanitised_data = sanitize_legacy_record(json_data);
+        let data = serde_json::from_value::<LegacyRequisitionRow>(sanitised_data)?;
         let r#type = match from_legacy_type(&data.r#type) {
             Some(r#type) => r#type,
             None => {
@@ -533,7 +576,8 @@ impl LegacyAuthorisationStatus {
 #[cfg(test)]
 mod tests {
     use crate::sync::{
-        test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+        test::merge_helpers::merge_all_name_links,
+        translations::{IntegrationOperation, ToSyncRecordTranslationType},
     };
 
     use super::*;
@@ -541,6 +585,7 @@ mod tests {
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
     };
     use serde_json::json;
+    use util::assert_variant;
 
     #[actix_rt::test]
     async fn test_requisition_translation() {
@@ -606,5 +651,75 @@ mod tests {
 
             assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
+    }
+
+    #[actix_rt::test]
+    async fn test_sanitise() {
+        let translator = RequisitionTranslation {};
+
+        let (_, connection, _, _) = setup_all("test_sanitise", MockDataInserts::none()).await;
+
+        let sync_record = SyncBufferRow {
+            data: r#"
+            {
+                "//": "Status is set to sent, should be changed to draft",
+                "om_status": "SENT",
+
+                "ID": "50AB29075A7A4A1DA3CDB34465244A61",
+                "authorisationStatus": "none",
+                "colour": 0,
+                "comment": "From request requisition 1 (Approved by test. Email: - and Phone Number: -.)",
+                "custom_data": null,
+                "date_entered": "2024-07-01",
+                "date_order_received": "2024-07-01",
+                "date_required": "0000-00-00",
+                "date_stock_take": "2024-07-01",
+                "daysToSupply": 30,
+                "donor_ID": "",
+                "isRemoteOrder": false,
+                "is_emergency": false,
+                "lastModifiedAt": 1719800437,
+                "linked_purchase_order_ID": "",
+                "linked_requisition_id": "01906c17-0f49-7c13-b6ab-6fab0abb1d20",
+                "name_ID": "947274E3A24D4900996CA516379A1FFD",
+                "nsh_custInv_ID": "",
+                "orderType": "",
+                "periodID": "",
+                "previous_csh_id": "",
+                "programID": "",
+                "requester_reference": "From request requisition 1",
+                "requisition_category_ID": "",
+                "serial_number": 0,
+                "status": "sg",
+                "store_ID": "8659A64D2CF245A1B1BCC7C8F7CDC577",
+                "thresholdMOS": 0,
+                "type": "response",
+                "user_ID": ""
+            }
+            "#.to_string(),
+            ..Default::default()
+        };
+
+        let mut op = assert_variant!(
+            translator.try_translate_from_upsert_sync_record(&connection, &sync_record),
+            Ok( PullTranslateResult::IntegrationOperations(out)) => out
+        );
+
+        let mut upsert =
+            assert_variant!(op.pop(), Some(IntegrationOperation::Upsert(out, _)) => out);
+
+        let requisition_row = upsert
+            .as_mut_any()
+            .and_then(|any| any.downcast_mut::<RequisitionRow>())
+            .unwrap()
+            .clone();
+
+        assert_eq!(
+            requisition_row.clone(),
+            RequisitionRow {
+                status: RequisitionStatus::New,
+                ..requisition_row
+            }
+        )
     }
 }

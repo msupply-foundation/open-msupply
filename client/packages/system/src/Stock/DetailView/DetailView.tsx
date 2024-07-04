@@ -41,7 +41,7 @@ export const StockLineDetailView: React.FC = () => {
   } = useUrlQuery();
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { setSuffix } = useBreadcrumbs();
+  const { navigateUpOne } = useBreadcrumbs();
 
   const repackModalController = useToggle();
   const adjustmentModalController = useToggle();
@@ -51,11 +51,6 @@ export const StockLineDetailView: React.FC = () => {
     type: 'StockEditForm',
     data,
   });
-
-  useEffect(() => {
-    if (!data) return;
-    setSuffix(data?.item.name ?? '');
-  }, [data]);
 
   const onPluginChange = () => setHasPluginChanged(true);
   useEffect(() => {
@@ -86,8 +81,13 @@ export const StockLineDetailView: React.FC = () => {
     title: t('heading.are-you-sure'),
   });
 
+  const onCancel = () => {
+    resetDraft();
+    navigateUpOne();
+  };
+
   const showCancelConfirmation = useConfirmationModal({
-    onConfirm: resetDraft,
+    onConfirm: onCancel,
     message: t('messages.confirm-cancel-generic'),
     title: t('heading.are-you-sure'),
   });
@@ -119,6 +119,7 @@ export const StockLineDetailView: React.FC = () => {
     showSaveConfirmation,
     showCancelConfirmation,
     disabled: !isDirty && !hasPluginChanged,
+    isDirty,
   };
 
   return (

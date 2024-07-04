@@ -1,11 +1,9 @@
 use super::{
-    api::{ParsingSyncRecordError, SyncApiError, SyncApiV5},
+    api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiError, SyncApiV5},
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
 use crate::{cursor_controller::CursorController, sync::api::CentralSyncBatchV5};
-use repository::{
-    KeyType, RepositoryError, StorageConnection, SyncBufferRow, SyncBufferRowRepository,
-};
+use repository::{KeyType, RepositoryError, StorageConnection, SyncBufferRowRepository};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -36,47 +34,41 @@ impl CentralDataSynchroniser {
         let cursor_controller = CursorController::new(KeyType::CentralSyncPullCursor);
 
         loop {
-            let mut cursor = cursor_controller.get(connection)?;
+            let start_cursor = cursor_controller.get(connection)?;
 
             let CentralSyncBatchV5 { max_cursor, data } = self
                 .sync_api_v5
-                .get_central_records(cursor, batch_size)
+                .get_central_records(start_cursor, batch_size)
                 .await?;
             let batch_length = data.len();
 
-            logger.progress(SyncStepProgress::PullCentral, max_cursor - cursor)?;
+            logger.progress(SyncStepProgress::PullCentral, max_cursor - start_cursor)?;
 
-            for sync_record in data {
-                cursor = sync_record.cursor;
-                let buffer_row = sync_record.record.to_buffer_row(None)?;
+            let last_cursor_in_batch = data.last().map(|r| r.cursor).unwrap_or(start_cursor);
+            let sync_buffer_rows =
+                CommonSyncRecord::to_buffer_rows(data.into_iter().map(|r| r.record).collect())?;
 
-                insert_one_and_update_cursor(connection, &cursor_controller, &buffer_row, cursor)?;
-            }
+            // Upsert sync buffer rows in a transaction together with cursor update
+            connection
+                .transaction_sync(|t_con| {
+                    SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)?;
+                    cursor_controller.update(t_con, last_cursor_in_batch)
+                })
+                .map_err(|e| e.to_inner_error())?;
 
-            logger.progress(SyncStepProgress::PullCentral, max_cursor - cursor)?;
+            logger.progress(
+                SyncStepProgress::PullCentral,
+                max_cursor - last_cursor_in_batch,
+            )?;
 
-            match (batch_length, cursor < max_cursor) {
+            match (batch_length, last_cursor_in_batch < max_cursor) {
                 (0, false) => break,
                 // It's possible for batch_length in response to be zero even though we haven't reached max_cursor
                 // in this case we should increment cursor manually
-                (0, true) => cursor_controller.update(connection, cursor + 1)?,
+                (0, true) => cursor_controller.update(connection, last_cursor_in_batch + 1)?,
                 _ => continue,
             }
         }
         Ok(())
     }
-}
-
-fn insert_one_and_update_cursor(
-    connection: &StorageConnection,
-    cursor_controller: &CursorController,
-    row: &SyncBufferRow,
-    cursor: u64,
-) -> Result<(), RepositoryError> {
-    connection
-        .transaction_sync(|con| {
-            SyncBufferRowRepository::new(con).upsert_one(row)?;
-            cursor_controller.update(con, cursor)
-        })
-        .map_err(|e| e.to_inner_error())
 }

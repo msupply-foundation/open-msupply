@@ -10,7 +10,6 @@ pub struct PatientLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for PatientLoader {
     type Value = Patient;
     type Error = async_graphql::Error;

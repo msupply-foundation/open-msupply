@@ -5,7 +5,6 @@ import {
   FnUtils,
   Grid,
   PlusCircleIcon,
-  RecordPatch,
   useCallbackWithPermission,
   UserPermission,
   useTranslation,
@@ -14,25 +13,25 @@ import {
 import { Row } from '../types';
 
 interface IndicatorsAppBarButtonsProps {
-  patch: (patch: RecordPatch<Row>) => void;
+  createNewRow: (patch: Row) => void;
   rows: Row[];
 }
 
 export const AppBarButtonsComponent = ({
-  patch,
+  createNewRow,
   rows,
 }: IndicatorsAppBarButtonsProps) => {
   const t = useTranslation();
 
   const onCreate = () => {
     const id = FnUtils.generateUUID();
-    const newRow = {
+    const newRow: Row = {
       id,
-      name: '',
+      name: undefined,
       percentage: 0,
       isNew: true,
       baseYear: rows[0]?.baseYear ?? 0,
-      BasePopulation: rows[0]?.basePopulation ?? 0,
+      basePopulation: rows[0]?.basePopulation ?? 0,
       0: 0,
       1: 0,
       2: 0,
@@ -40,7 +39,7 @@ export const AppBarButtonsComponent = ({
       4: 0,
       5: 0,
     };
-    patch({ ...newRow });
+    createNewRow(newRow);
   };
 
   const handleClick = useCallbackWithPermission(
