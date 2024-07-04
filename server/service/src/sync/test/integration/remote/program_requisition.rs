@@ -125,8 +125,10 @@ impl SyncRecordTester for ProgramRequisitionTester {
         let program = ProgramRow {
             id: master_list_row.id.clone(),
             name: master_list_row.name.clone(),
-            master_list_id: master_list_row.id.clone(),
+            master_list_id: Some(master_list_row.id.clone()),
             context_id: master_list_row.id.clone(),
+            is_immunisation: false,
+            deleted_datetime: None,
         };
 
         let program_requisition_settings1 = ProgramRequisitionSettingsRow {
@@ -208,8 +210,10 @@ impl SyncRecordTester for ProgramRequisitionTester {
         let program2 = ProgramRow {
             id: master_list_row2.id.clone(),
             name: master_list_row2.name.clone(),
-            master_list_id: master_list_row2.id.clone(),
+            master_list_id: Some(master_list_row2.id.clone()),
             context_id: master_list_row2.id.clone(),
+            is_immunisation: false,
+            deleted_datetime: None,
         };
 
         let program_requisition_settings3 = ProgramRequisitionSettingsRow {

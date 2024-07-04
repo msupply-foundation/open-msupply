@@ -11,6 +11,7 @@ const PopulationCell = (props: CellProps<Row>) => (
   <NumberInputCell
     {...props}
     decimalLimit={0}
+    width={100}
     isDisabled={props.isDisabled || props.rowData.id !== GENERAL_POPULATION_ID}
   />
 );
