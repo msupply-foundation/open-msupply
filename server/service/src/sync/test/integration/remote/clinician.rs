@@ -19,7 +19,7 @@ impl SyncRecordTester for ClinicianRecordTester {
         // STEP 1 - insert
         let store_row = StoreRow {
             id: uuid(),
-            name_id: new_site_properties.name_id.to_owned(),
+            name_link_id: new_site_properties.name_id.to_owned(),
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
             logo: None,
@@ -29,7 +29,7 @@ impl SyncRecordTester for ClinicianRecordTester {
         let store_json = json!({
             "ID": store_row.id,
             "code": store_row.code,
-            "name_ID": store_row.name_id,
+            "name_ID": store_row.name_link_id,
             "sync_id_remote_site": store_row.site_id,
             "store_mode": "dispensary",
             "created_date": "2021-01-01"

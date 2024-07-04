@@ -32,7 +32,7 @@ pub enum UpdateResponseRequisitionStatusInput {
 
 #[derive(Interface)]
 #[graphql(name = "UpdateResponseRequisitionErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),

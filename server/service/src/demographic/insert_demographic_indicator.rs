@@ -12,8 +12,8 @@ use super::{
 pub enum InsertDemographicIndicatorError {
     DemographicIndicatorAlreadyExists,
     DemographicIndicatorAlreadyExistsForThisYear,
-    CreatedRecordNotFound,
     DemographicIndicatorHasNoName,
+    CreatedRecordNotFound,
     DatabaseError(RepositoryError),
 }
 

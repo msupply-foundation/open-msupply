@@ -34,7 +34,7 @@ type CurrencyPricingProps = {
   pricing: PricingNode;
   currency?: CurrencyRowFragment | null;
   otherPartyIsInternal: boolean;
-  currencyRate?: number | null;
+  currencyRate: number;
   onChange: (value: CurrencyRowFragment | null) => void;
 };
 
@@ -192,7 +192,7 @@ export const ForeignCurrencyPrices = ({
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.rate')}</PanelLabel>
-        <PanelField>{currencyRate ?? 1}</PanelField>
+        <PanelField>{currencyRate === 0 ? 1 : currencyRate}</PanelField>
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.total')}</PanelLabel>
@@ -201,7 +201,7 @@ export const ForeignCurrencyPrices = ({
             ? UNDEFINED_STRING_VALUE
             : foreignCurrency(
                 pricing.foreignCurrencyTotalAfterTax ?? 0
-              ).format()}{' '}
+              ).format()}
         </PanelField>
       </PanelRow>
     </>

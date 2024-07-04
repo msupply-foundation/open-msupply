@@ -49,4 +49,11 @@ export const Formatter = {
       .join(' '),
   logTypeTranslation: (logType: string): LocaleKey =>
     `log.${logType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
+  fromCamelCase: (str: string): string => {
+    const _str = str
+      .replace(/([A-Z])/g, ' $1')
+      .toLowerCase()
+      .trim();
+    return _str.substring(0, 1).toUpperCase() + _str.substring(1);
+  },
 };

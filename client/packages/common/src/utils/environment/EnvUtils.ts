@@ -67,7 +67,7 @@ const mapRoute = (route: string): RouteMapping => {
     case inRoute(AppRoute.Sync):
       return { title: 'sync', docs: '/sync/synchronisation/' };
     case inRoute(AppRoute.Settings):
-      return { title: 'settings', docs: '/administration/' };
+      return { title: 'settings', docs: '/settings/' };
     case inRoute(AppRoute.Patients):
       return { title: 'patients', docs: '/dispensary/patients/' };
     case inRoute(AppRoute.Prescription):

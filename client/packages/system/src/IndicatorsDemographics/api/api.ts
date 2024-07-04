@@ -36,38 +36,6 @@ const Parsers = {
     };
     return fields[sortBy.key] ?? DemographicProjectionSortFieldInput.Id;
   },
-  toInsertIndicator: (
-    input: DemographicIndicatorFragment
-  ): InsertDemographicIndicatorInput => {
-    return {
-      id: input.id,
-      name: input.name,
-      baseYear: input.baseYear,
-      basePopulation: input.basePopulation,
-      populationPercentage: input.populationPercentage,
-      year1Projection: input.year1Projection,
-      year2Projection: input.year2Projection,
-      year3Projection: input.year3Projection,
-      year4Projection: input.year4Projection,
-      year5Projection: input.year5Projection,
-    };
-  },
-  toUpdateIndicator: (
-    input: DemographicIndicatorFragment
-  ): UpdateDemographicIndicatorInput => {
-    return {
-      id: input.id,
-      name: input.name,
-      baseYear: input.baseYear,
-      populationPercentage: input.populationPercentage,
-      basePopulation: input.basePopulation,
-      year1Projection: input.year1Projection,
-      year2Projection: input.year2Projection,
-      year3Projection: input.year3Projection,
-      year4Projection: input.year4Projection,
-      year5Projection: input.year5Projection,
-    };
-  },
 };
 
 export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
@@ -138,11 +106,9 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
       return demographicProjections;
     },
   },
-  insertIndicator: async (input: DemographicIndicatorFragment) => {
-    const insertInput: InsertDemographicIndicatorInput =
-      Parsers.toInsertIndicator(input);
+  insertIndicator: async (input: InsertDemographicIndicatorInput) => {
     const apiResult = await sdk.insertDemographicIndicator({
-      input: insertInput,
+      input,
     });
 
     // will be empty if there's a generic error, such as permission denied
@@ -156,11 +122,9 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
 
     throw new Error('could not insert demographic indicator');
   },
-  updateIndicator: async (input: DemographicIndicatorFragment) => {
-    const updateInput: UpdateDemographicIndicatorInput =
-      Parsers.toUpdateIndicator(input);
+  updateIndicator: async (input: UpdateDemographicIndicatorInput) => {
     const apiResult = await sdk.updateDemographicIndicator({
-      input: updateInput,
+      input,
     });
 
     // will be empty if there's a generic error, such as permission denied

@@ -99,6 +99,7 @@
   "messages.off-hold-confirmation": "This will re-enable status changes",
   "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
   "messages.no-stock-available": "There is no stock available",
+  "messages.requisition-no-stock": "There is currently no stock available",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "messages.cant-return-shipment": "Cannot process return of lines until the status is 'Shipped'",
   "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",

@@ -9,7 +9,7 @@
     "copy-webpack-plugin": "^11.0.0",
     "find-up": "^6.3.0",
     "html-webpack-plugin": "^5.5.0",
-    "react-refresh": "0.14.0",
+    "react-refresh": "0.14.2",
     "serve": "^14.2.0",
     "webpack": "^5.88.1",
     "webpack-cli": "^5.0.1",

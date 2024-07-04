@@ -5,6 +5,7 @@ import {
   AppFooterPortal,
   DialogButton,
   LoadingButton,
+  useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { FormInputData } from '@openmsupply-client/programs';
 
@@ -15,6 +16,7 @@ interface FooterProps {
   inputData?: FormInputData;
   showSaveConfirmation: () => void;
   showCancelConfirmation: () => void;
+  isDirty: boolean;
 }
 
 export const Footer: FC<FooterProps> = ({
@@ -23,8 +25,10 @@ export const Footer: FC<FooterProps> = ({
   inputData,
   showSaveConfirmation,
   showCancelConfirmation,
+  isDirty,
 }) => {
   const t = useTranslation();
+  const { navigateUpOne } = useBreadcrumbs();
 
   return (
     <AppFooterPortal
@@ -44,9 +48,10 @@ export const Footer: FC<FooterProps> = ({
             marginLeft="auto"
           >
             <DialogButton
-              variant="cancel"
-              disabled={disabled}
-              onClick={() => showCancelConfirmation()}
+              variant="close"
+              onClick={() =>
+                isDirty ? showCancelConfirmation() : navigateUpOne()
+              }
             />
             <LoadingButton
               color="secondary"

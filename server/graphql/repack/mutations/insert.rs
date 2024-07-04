@@ -22,7 +22,7 @@ pub struct InsertRepackInput {
 
 #[derive(Interface)]
 #[graphql(name = "InsertRepackErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
     CannotHaveFractionalPack(CannotHaveFractionalPack),
