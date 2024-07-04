@@ -15,8 +15,11 @@ use crate::{
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
-        api::SyncApiV5, api_v6::SiteStatusV6, synchroniser::integrate_and_translate_sync_buffer,
-        translations::ToSyncRecordTranslationType, CentralServerConfig,
+        api::{CommonSyncRecord, SyncApiV5},
+        api_v6::SiteStatusV6,
+        synchroniser::integrate_and_translate_sync_buffer,
+        translations::ToSyncRecordTranslationType,
+        CentralServerConfig,
     },
 };
 
@@ -169,14 +172,17 @@ pub async fn push(
     } = batch;
 
     let ctx = service_provider.basic_context()?;
-    let repo = SyncBufferRowRepository::new(&ctx.connection);
 
     let records_in_this_batch = records.len() as u64;
-    for SyncRecordV6 { record, .. } in records {
-        let buffer_row = record.to_buffer_row(Some(response.site_id))?;
 
-        repo.upsert_one(&buffer_row)?;
-    }
+    let sync_buffer_rows =
+        CommonSyncRecord::to_buffer_rows(records.into_iter().map(|r| r.record).collect())?;
+
+    ctx.connection
+        .transaction_sync(|t_con| {
+            SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
+        })
+        .map_err(|e| e.to_inner_error())?;
 
     if is_last_batch {
         spawn_integration(service_provider, response.site_id);

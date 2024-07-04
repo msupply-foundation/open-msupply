@@ -7,6 +7,7 @@ import {
   Formatter,
   TextWithLabelRow,
   SensorNodeType,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { UseDraftSensorControl } from './SensorEditModal';
 import { isSensorNameEditDisabled } from '../utils';
@@ -54,7 +55,10 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
       <TextWithLabelRow
         sx={textSx}
         label={t('label.cce')}
-        text={draft.assets?.nodes?.map(a => a.assetNumber).join(', ') || '-'}
+        text={
+          draft.assets?.nodes?.map(a => a.assetNumber).join(', ') ||
+          UNDEFINED_STRING_VALUE
+        }
       />
       <TextWithLabelRow
         sx={textSx}
@@ -64,7 +68,9 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
       <TextWithLabelRow
         sx={textSx}
         label={t('label.battery-level')}
-        text={draft.batteryLevel ? `${draft.batteryLevel}%` : '-'}
+        text={
+          draft.batteryLevel ? `${draft.batteryLevel}%` : UNDEFINED_STRING_VALUE
+        }
       />
       <TextWithLabelRow
         sx={textSx}
@@ -75,7 +81,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
             ? `${formatTemperature(
                 draft.latestTemperatureLog?.nodes[0]?.temperature
               )}`
-            : '-'
+            : UNDEFINED_STRING_VALUE
         }
       />
       <TextWithLabelRow
