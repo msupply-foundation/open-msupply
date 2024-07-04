@@ -11,6 +11,7 @@ import {
   createQueryParamsStore,
   useEditModal,
   InsertImmunisationProgramInput,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -58,7 +59,7 @@ const ImmunisationProgramListComponent: FC = () => {
         sortable: false,
         accessor: ({ rowData }) => {
           if (rowData.vaccineCourses?.length === 0) {
-            return '-';
+            return UNDEFINED_STRING_VALUE;
           }
           return rowData.vaccineCourses?.map(n => n.name).join(', ');
         },

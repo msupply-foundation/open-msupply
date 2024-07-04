@@ -4,14 +4,13 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type StockLineRowFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } };
 
 export type RepackStockLineFragment = { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null };
 
 export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: string, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null } };
 
-export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string };
+export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemName: string, numberOfPacks: number, itemCode: string, stockLine?: { __typename: 'StockLineNode', id: string } | null }> } };
 
 export type LedgerRowFragment = { __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId?: string | null, storeId: string };
 
@@ -75,7 +74,7 @@ export type InsertRepackMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError', error: { __typename: 'CannotHaveFractionalPack', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string } };
+export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError', error: { __typename: 'CannotHaveFractionalPack', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemName: string, numberOfPacks: number, itemCode: string, stockLine?: { __typename: 'StockLineNode', id: string } | null }> } } };
 
 export type CreateInventoryAdjustmentMutationVariables = Types.Exact<{
   input: Types.CreateInventoryAdjustmentInput;
@@ -83,7 +82,7 @@ export type CreateInventoryAdjustmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError' } | { __typename: 'InvoiceNode', id: string } };
+export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError', error: { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemName: string, numberOfPacks: number, itemCode: string, stockLine?: { __typename: 'StockLineNode', id: string } | null }> } } };
 
 export type InsertStockLineMutationVariables = Types.Exact<{
   input: Types.InsertStockLineInput;
@@ -145,6 +144,17 @@ export const RepackFragmentDoc = gql`
 export const InvoiceRowFragmentDoc = gql`
     fragment InvoiceRow on InvoiceNode {
   id
+  lines {
+    nodes {
+      id
+      itemName
+      numberOfPacks
+      itemCode
+      stockLine {
+        id
+      }
+    }
+  }
 }
     `;
 export const LedgerRowFragmentDoc = gql`
@@ -266,9 +276,20 @@ export const InsertRepackDocument = gql`
 export const CreateInventoryAdjustmentDocument = gql`
     mutation createInventoryAdjustment($input: CreateInventoryAdjustmentInput!, $storeId: String!) {
   createInventoryAdjustment(input: $input, storeId: $storeId) {
+    __typename
     ... on InvoiceNode {
       __typename
       ...InvoiceRow
+    }
+    ... on CreateInventoryAdjustmentError {
+      __typename
+      error {
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+      }
     }
   }
 }
@@ -321,156 +342,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStockLinesQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ stockLines })
- *   )
- * })
- */
-export const mockStockLinesQuery = (resolver: ResponseResolver<GraphQLRequest<StockLinesQueryVariables>, GraphQLContext<StockLinesQuery>, any>) =>
-  graphql.query<StockLinesQuery, StockLinesQueryVariables>(
-    'stockLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStockLineQuery((req, res, ctx) => {
- *   const { id, storeId } = req.variables;
- *   return res(
- *     ctx.data({ stockLines })
- *   )
- * })
- */
-export const mockStockLineQuery = (resolver: ResponseResolver<GraphQLRequest<StockLineQueryVariables>, GraphQLContext<StockLineQuery>, any>) =>
-  graphql.query<StockLineQuery, StockLineQueryVariables>(
-    'stockLine',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLedgerQuery((req, res, ctx) => {
- *   const { key, desc, filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ ledger })
- *   )
- * })
- */
-export const mockLedgerQuery = (resolver: ResponseResolver<GraphQLRequest<LedgerQueryVariables>, GraphQLContext<LedgerQuery>, any>) =>
-  graphql.query<LedgerQuery, LedgerQueryVariables>(
-    'ledger',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateStockLineMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ updateStockLine })
- *   )
- * })
- */
-export const mockUpdateStockLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateStockLineMutationVariables>, GraphQLContext<UpdateStockLineMutation>, any>) =>
-  graphql.mutation<UpdateStockLineMutation, UpdateStockLineMutationVariables>(
-    'updateStockLine',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRepackQuery((req, res, ctx) => {
- *   const { invoiceId, storeId } = req.variables;
- *   return res(
- *     ctx.data({ repack })
- *   )
- * })
- */
-export const mockRepackQuery = (resolver: ResponseResolver<GraphQLRequest<RepackQueryVariables>, GraphQLContext<RepackQuery>, any>) =>
-  graphql.query<RepackQuery, RepackQueryVariables>(
-    'repack',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRepacksByStockLineQuery((req, res, ctx) => {
- *   const { stockLineId, storeId } = req.variables;
- *   return res(
- *     ctx.data({ repacksByStockLine })
- *   )
- * })
- */
-export const mockRepacksByStockLineQuery = (resolver: ResponseResolver<GraphQLRequest<RepacksByStockLineQueryVariables>, GraphQLContext<RepacksByStockLineQuery>, any>) =>
-  graphql.query<RepacksByStockLineQuery, RepacksByStockLineQueryVariables>(
-    'repacksByStockLine',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertRepackMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ insertRepack })
- *   )
- * })
- */
-export const mockInsertRepackMutation = (resolver: ResponseResolver<GraphQLRequest<InsertRepackMutationVariables>, GraphQLContext<InsertRepackMutation>, any>) =>
-  graphql.mutation<InsertRepackMutation, InsertRepackMutationVariables>(
-    'insertRepack',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockCreateInventoryAdjustmentMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ createInventoryAdjustment })
- *   )
- * })
- */
-export const mockCreateInventoryAdjustmentMutation = (resolver: ResponseResolver<GraphQLRequest<CreateInventoryAdjustmentMutationVariables>, GraphQLContext<CreateInventoryAdjustmentMutation>, any>) =>
-  graphql.mutation<CreateInventoryAdjustmentMutation, CreateInventoryAdjustmentMutationVariables>(
-    'createInventoryAdjustment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertStockLineMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ insertStockLine })
- *   )
- * })
- */
-export const mockInsertStockLineMutation = (resolver: ResponseResolver<GraphQLRequest<InsertStockLineMutationVariables>, GraphQLContext<InsertStockLineMutation>, any>) =>
-  graphql.mutation<InsertStockLineMutation, InsertStockLineMutationVariables>(
-    'insertStockLine',
-    resolver
-  )

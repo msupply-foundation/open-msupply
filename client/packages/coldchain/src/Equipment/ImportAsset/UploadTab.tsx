@@ -27,6 +27,7 @@ import {
   useStore,
 } from '@openmsupply-client/system';
 import { useAssetData } from '@openmsupply-client/system';
+
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;
@@ -42,7 +43,7 @@ interface ParsedAsset {
 }
 
 const formatDate = (value: string): string | null =>
-  Formatter.naiveDate(DateUtils.getDateOrNull(value));
+  Formatter.naiveDate(DateUtils.getDateOrNull(value, 'dd/MM/yyyy'));
 
 function getImportHelpers<T, P>(
   row: P,
@@ -149,16 +150,19 @@ function getImportHelpers<T, P>(
     lookupData: K[],
     lookupFn: (item: K) => string | null | undefined,
     localeKey: LocaleKey,
+    required: boolean,
     formatter?: (value: string) => unknown
   ) {
     const prop = t(localeKey) as keyof P;
     const value = row[prop] ?? '';
     if (value === undefined || (value as string).trim() === '') {
-      rowErrors.push(
-        t('error.field-must-be-specified', {
-          field: t(localeKey),
-        })
-      );
+      if (required) {
+        rowErrors.push(
+          t('error.field-must-be-specified', {
+            field: t(localeKey),
+          })
+        );
+      }
       return;
     }
     if (lookupData.filter(l => lookupFn(l) === value).length === 0) {
@@ -199,13 +203,13 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const csvExample = async () => {
     const exampleRows: Partial<ImportRow>[] = [
       {
-        id: '',
-        assetNumber: 'Asset Number',
+        assetNumber: 'ASSET NUMBER',
         catalogueItemCode: '',
         store: undefined,
         notes: '',
         serialNumber: '',
-        installationDate: '',
+        installationDate: 'DD/MM/YYYY',
+        replacementDate: 'DD/MM/YYYY',
         properties: {},
       },
     ];
@@ -273,7 +277,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         'catalogueItemCode',
         catalogueItemData ?? [],
         lookupCode,
-        'label.catalogue-item-code'
+        'label.catalogue-item-code',
+        true
       );
       if (isCentralServer) {
         addLookup(
@@ -281,6 +286,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
           stores?.nodes ?? [],
           lookupStore,
           'label.store',
+          false,
           s => stores?.nodes?.find(store => store.code === s)
         );
       }
@@ -290,7 +296,10 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         'label.installation-date',
         formatDate
       );
-      addCell('serialNumber', 'label.serial');
+      addSoftRequired('replacementDate', 'label.replacement-date', formatDate);
+      addCell('serialNumber', 'label.serial', serial =>
+        serial === '' ? undefined : serial
+      );
       processProperties(properties ?? [], row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       importRow.warningMessage = rowWarnings.join(',');

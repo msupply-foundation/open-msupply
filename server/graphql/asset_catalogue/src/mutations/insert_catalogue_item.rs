@@ -115,7 +115,7 @@ pub enum InsertAssetCatalogueItemResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertAssetCatalogueItemErrorInterface {
     ItemAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),

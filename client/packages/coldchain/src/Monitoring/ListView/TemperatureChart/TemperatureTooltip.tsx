@@ -3,6 +3,7 @@ import {
   Box,
   TooltipProps,
   Typography,
+  UNDEFINED_STRING_VALUE,
   useFormatDateTime,
 } from '@openmsupply-client/common';
 import { useFormatTemperature } from '../../../common';
@@ -50,7 +51,7 @@ export const TemperatureTooltip = ({
   }
 
   const formatTemperature = (value: number | null | undefined) =>
-    !!value ? `${formatTemp(value)}` : '-';
+    !!value ? `${formatTemp(value)}` : UNDEFINED_STRING_VALUE;
   const entries: Entry[] = payload?.map(entry => {
     return {
       name: entry.name ?? '',

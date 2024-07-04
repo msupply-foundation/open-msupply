@@ -24,10 +24,13 @@ fragment AssetRow on AssetNode {
   catalogueItem {
     manufacturer
     model
+    code
   }
   assetType {
     name
   }
+  properties
+  catalogProperties
 }
 
 fragment Asset on AssetNode {

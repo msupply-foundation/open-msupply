@@ -75,7 +75,7 @@ pub enum UpdateResponse {
 
 #[derive(Interface)]
 #[graphql(name = "UpdateOutboundShipmentLineErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum UpdateErrorInterface {
     ForeignKeyError(ForeignKeyError),
     RecordNotFound(RecordNotFound),
@@ -459,7 +459,7 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NumberOfPacksBelowOne
+        //NumberOfPacksBelowZero
         let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(

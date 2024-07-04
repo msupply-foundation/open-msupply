@@ -6,7 +6,7 @@ use super::{
 use crate::{
     diesel_extensions::date_coalesce,
     diesel_macros::{
-        apply_date_filter, apply_equal_filter, apply_sort_no_case, apply_string_filter,
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
@@ -137,10 +137,10 @@ impl<'a> PatientRepository<'a> {
                     apply_sort_no_case!(query, sort, name_dsl::national_health_number)
                 }
                 PatientSortField::DateOfDeath => {
-                    apply_sort_no_case!(query, sort, name_dsl::date_of_death)
+                    apply_sort!(query, sort, name_dsl::date_of_death)
                 }
                 PatientSortField::CreatedDatetime => {
-                    apply_sort_no_case!(query, sort, name_dsl::created_datetime)
+                    apply_sort!(query, sort, name_dsl::created_datetime)
                 }
             }
         } else {

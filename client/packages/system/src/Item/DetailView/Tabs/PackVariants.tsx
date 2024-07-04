@@ -80,7 +80,7 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
           }
         />
         <DropdownMenu
-          label="Select"
+          label={t('label.actions')}
           sx={{ visibility: isEmpty ? 'hidden' : 'visible' }}
         >
           <DropdownMenuItem
