@@ -27,6 +27,7 @@ import {
   useStore,
 } from '@openmsupply-client/system';
 import { useAssetData } from '@openmsupply-client/system';
+
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;
@@ -276,12 +277,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         'label.catalogue-item-code'
       );
       if (isCentralServer) {
-        addLookup(
-          'store',
-          stores?.nodes ?? [],
-          lookupStore,
-          'label.store',
-          s => stores?.nodes?.find(store => store.code === s)
+        addLookup('store', stores?.nodes ?? [], lookupStore, 'label.store', s =>
+          stores?.nodes?.find(store => store.code === s)
         );
       }
       addCell('notes', 'label.asset-notes');

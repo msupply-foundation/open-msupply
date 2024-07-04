@@ -9,14 +9,16 @@ import {
   useUrlQueryParams,
   TooltipTextCell,
   useToggle,
+  useIsCentralServerApi,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
-import { EditableInput } from './EditableInput';
 
 const AssetListComponent: FC = () => {
+  const isCentralServer = useIsCentralServerApi();
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -37,47 +39,49 @@ const AssetListComponent: FC = () => {
   const t = useTranslation('catalogue');
   const importModalController = useToggle();
 
+  const columnDescriptions: ColumnDescription<AssetCatalogueItemFragment>[] = [
+    {
+      key: 'subCatalogue',
+      label: 'label.sub-catalogue',
+      sortable: true,
+      width: 165,
+    },
+    ['code', { width: 150 }],
+    {
+      key: 'type',
+      label: 'label.type',
+      sortable: false,
+      accessor: ({ rowData }) => rowData.assetType?.name,
+    },
+    {
+      key: 'manufacturer',
+      Cell: TooltipTextCell,
+      width: 300,
+      label: 'label.manufacturer',
+    },
+    {
+      Cell: TooltipTextCell,
+      key: 'model',
+      label: 'label.model',
+      width: 200,
+    },
+    {
+      key: 'class',
+      label: 'label.class',
+      sortable: false,
+      accessor: ({ rowData }) => rowData.assetClass?.name,
+    },
+    {
+      key: 'category',
+      label: 'label.category',
+      sortable: false,
+      accessor: ({ rowData }) => rowData.assetCategory?.name,
+    },
+  ];
+
+  if (isCentralServer) columnDescriptions.push('selection');
   const columns = useColumns<AssetCatalogueItemFragment>(
-    [
-      {
-        key: 'subCatalogue',
-        label: 'label.sub-catalogue',
-        sortable: true,
-        width: 165,
-      },
-      ['code', { width: 150 }],
-      {
-        key: 'type',
-        label: 'label.type',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.assetType?.name,
-      },
-      {
-        key: 'manufacturer',
-        Cell: TooltipTextCell,
-        width: 300,
-        label: 'label.manufacturer',
-      },
-      {
-        Cell: EditableInput,
-        key: 'model',
-        label: 'label.model',
-        width: 200,
-      },
-      {
-        key: 'class',
-        label: 'label.class',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.assetClass?.name,
-      },
-      {
-        key: 'category',
-        label: 'label.category',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.assetCategory?.name,
-      },
-      'selection',
-    ],
+    columnDescriptions,
     {
       sortBy,
       onChangeSortBy: updateSortQuery,

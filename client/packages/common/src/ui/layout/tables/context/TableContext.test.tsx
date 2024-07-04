@@ -1,5 +1,4 @@
-import React, { FC } from 'react';
-import { act } from 'react-dom/test-utils';
+import React, { act, FC } from 'react';
 import { renderHook } from '@testing-library/react';
 import { useIsGrouped } from './hooks';
 import { TableStore, TableProvider, createTableStore } from './TableContext';
