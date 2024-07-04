@@ -51,14 +51,15 @@ impl SyncRecordTester for RequisitionRecordTester {
             requisition_id: requisition_row_1.id.clone(),
             item_link_id: uuid(),
             item_name: "test item".to_string(),
-            requested_quantity: 50,
-            suggested_quantity: 10,
-            supply_quantity: 5,
-            available_stock_on_hand: 10,
-            average_monthly_consumption: 15,
+            requested_quantity: 50.0,
+            suggested_quantity: 10.0,
+            supply_quantity: 5.0,
+            available_stock_on_hand: 10.0,
+            average_monthly_consumption: 15.0,
             comment: None,
             snapshot_datetime: None,
-            approved_quantity: 0,
+            approved_quantity: 0.0,
+            approval_comment: None,
             approval_comment: None,
         };
 
@@ -127,11 +128,11 @@ impl SyncRecordTester for RequisitionRecordTester {
         });
 
         let requisition_line_row_1 = inline_edit(&requisition_line_row_1, |mut d| {
-            d.requested_quantity = 55;
-            d.suggested_quantity = 15;
-            d.supply_quantity = 15;
-            d.available_stock_on_hand = 15;
-            d.average_monthly_consumption = 10;
+            d.requested_quantity = 55.0;
+            d.suggested_quantity = 15.0;
+            d.supply_quantity = 15.0;
+            d.available_stock_on_hand = 15.0;
+            d.average_monthly_consumption = 10.0;
             d.comment = Some("some comment".to_string());
             d.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
                 .unwrap()

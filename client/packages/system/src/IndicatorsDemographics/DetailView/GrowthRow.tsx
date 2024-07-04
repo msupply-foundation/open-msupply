@@ -10,7 +10,6 @@ import {
   Table as MuiTable,
   InlineSpinner,
   NumericTextInput,
-  InputAdornment,
   useTranslation,
   useBufferState,
 } from '@openmsupply-client/common';
@@ -74,9 +73,11 @@ export const GrowthRow = <T extends RecordWithId>({
           <HeaderRow>
             {columns.map(column => {
               const { align, width } = column;
+
               const key = Number(column.key);
 
               const columnHeader = isHeaderDataYearKey(key) ? data[key] : null;
+
               const hasColumnText = column.key === '0';
               return (
                 <TableCell

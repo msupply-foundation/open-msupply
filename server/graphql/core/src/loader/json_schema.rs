@@ -8,7 +8,6 @@ pub struct JsonSchemaLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for JsonSchemaLoader {
     type Value = FormSchema;
     type Error = RepositoryError;

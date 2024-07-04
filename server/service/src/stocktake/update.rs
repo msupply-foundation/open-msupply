@@ -242,7 +242,7 @@ fn generate_update_inventory_adjustment_reason(
 
 /// Returns new stock line and matching invoice line
 fn generate_stock_in_out_or_update(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     store_id: &str,
     inventory_addition_id: &str,
     inventory_reduction_id: &str,
@@ -251,9 +251,18 @@ fn generate_stock_in_out_or_update(
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let row = stocktake_line.line.to_owned();
 
-    let counted_number_of_packs = row
-        .counted_number_of_packs
-        .unwrap_or(stocktake_line.line.snapshot_number_of_packs);
+    let counted_number_of_packs = match row.counted_number_of_packs {
+        Some(counted_number_of_packs) => counted_number_of_packs,
+        None => {
+            return Ok(StockLineJob {
+                stock_in_out_or_update: None,
+                stocktake_line: None,
+                location_movement: None,
+                update_inventory_adjustment_reason: None,
+            });
+        }
+    };
+
     let delta = counted_number_of_packs - row.snapshot_number_of_packs;
 
     let stock_line_row = stock_line.to_owned();
@@ -266,6 +275,8 @@ fn generate_stock_in_out_or_update(
     let sell_price_per_pack = row
         .sell_price_per_pack
         .unwrap_or(stock_line_row.sell_price_per_pack);
+
+    log_stock_changes(ctx, stock_line_row.clone(), row.clone())?;
 
     // If no change in stock quantity, we just update the stock line (no inventory adjustment)
     if delta == 0.0 {
@@ -293,7 +304,7 @@ fn generate_stock_in_out_or_update(
 
     let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
         invoice_line_id.clone(),
-        row.inventory_adjustment_reason_id,
+        row.inventory_adjustment_reason_id.clone(),
     );
 
     let stock_in_or_out_line = if delta > 0.0 {
@@ -330,8 +341,8 @@ fn generate_stock_in_out_or_update(
             batch: row.batch,
             pack_size: row.pack_size,
             expiry_date: row.expiry_date,
-            cost_price_per_pack: None,
-            sell_price_per_pack: None,
+            cost_price_per_pack: Some(cost_price_per_pack),
+            sell_price_per_pack: Some(sell_price_per_pack),
             total_before_tax: None,
             tax_percentage: None,
         })
@@ -339,7 +350,7 @@ fn generate_stock_in_out_or_update(
 
     // if reducing to 0, create movement to exit location
     let location_movement = if counted_number_of_packs == 0.0 {
-        generate_exit_location_movements(connection, store_id, stock_line.clone())?
+        generate_exit_location_movements(&ctx.connection, store_id, stock_line.clone())?
     } else {
         None
     };
@@ -350,6 +361,82 @@ fn generate_stock_in_out_or_update(
         stocktake_line: None,
         update_inventory_adjustment_reason,
     })
+}
+
+fn log_stock_changes(
+    ctx: &ServiceContext,
+    existing: StockLineRow,
+    new: StocktakeLineRow,
+) -> Result<(), RepositoryError> {
+    if existing.location_id != new.location_id {
+        let previous_location = if let Some(location_id) = existing.location_id {
+            Some(location_id)
+        } else {
+            Some("-".to_string())
+        };
+
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockLocationChange,
+            Some(existing.id.to_owned()),
+            previous_location,
+            new.location_id,
+        )?;
+    }
+    if existing.batch != new.batch {
+        let previous_batch = if let Some(batch) = existing.batch {
+            Some(batch)
+        } else {
+            Some("-".to_string())
+        };
+
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockBatchChange,
+            Some(existing.id.to_owned()),
+            previous_batch,
+            new.batch,
+        )?;
+    }
+    if let Some(cost_price_per_pack) = new.cost_price_per_pack {
+        if existing.cost_price_per_pack != cost_price_per_pack {
+            activity_log_entry(
+                ctx,
+                ActivityLogType::StockCostPriceChange,
+                Some(existing.id.to_owned()),
+                Some(existing.cost_price_per_pack.to_string()),
+                Some(cost_price_per_pack.to_string()),
+            )?;
+        }
+    }
+    if let Some(sell_price_per_pack) = new.sell_price_per_pack {
+        if existing.sell_price_per_pack != sell_price_per_pack {
+            activity_log_entry(
+                ctx,
+                ActivityLogType::StockSellPriceChange,
+                Some(existing.id.to_owned()),
+                Some(existing.sell_price_per_pack.to_string()),
+                Some(sell_price_per_pack.to_string()),
+            )?;
+        }
+    }
+    if existing.expiry_date != new.expiry_date {
+        let previous_expiry_date = if let Some(expiry_date) = existing.expiry_date {
+            Some(expiry_date.to_string())
+        } else {
+            Some("-".to_string())
+        };
+
+        activity_log_entry(
+            ctx,
+            ActivityLogType::StockExpiryDateChange,
+            Some(existing.id.to_owned()),
+            previous_expiry_date,
+            new.expiry_date.map(|date| date.to_string()),
+        )?;
+    }
+
+    Ok(())
 }
 
 fn generate_new_stock_line(
@@ -570,7 +657,7 @@ fn generate(
         } = if let Some(ref stock_line) = stocktake_line.stock_line {
             // adjust existing stock line
             generate_stock_in_out_or_update(
-                connection,
+                ctx,
                 store_id,
                 &inventory_addition_id,
                 &inventory_reduction_id,
@@ -874,13 +961,56 @@ mod test {
             })
         }
 
+        fn mock_stocktake_no_counted_packs() -> StocktakeRow {
+            inline_init(|r: &mut StocktakeRow| {
+                r.id = "mock_stocktake_no_counted_packs".to_string();
+                r.store_id = "store_a".to_string();
+                r.stocktake_number = 20;
+                r.created_datetime = NaiveDate::from_ymd_opt(2024, 12, 14)
+                    .unwrap()
+                    .and_hms_milli_opt(12, 33, 0, 0)
+                    .unwrap();
+                r.status = StocktakeStatus::New;
+            })
+        }
+
+        fn mock_stocktake_line_no_counted_packs_line() -> StocktakeLineRow {
+            inline_init(|r: &mut StocktakeLineRow| {
+                r.id = "mock_stocktake_line_no_counted_packs_line".to_string();
+                r.stocktake_id = mock_stocktake_no_counted_packs().id;
+                r.stock_line_id = Some(mock_existing_stock_line_b().id);
+                r.snapshot_number_of_packs = 10.0;
+                r.item_link_id = mock_item_a().id;
+                r.batch = Some("updated batch name".to_string());
+                r.counted_number_of_packs = None;
+            })
+        }
+
+        fn mock_existing_stock_line_b() -> StockLineRow {
+            inline_init(|r: &mut StockLineRow| {
+                r.id = "existing_stock_b".to_string();
+                r.item_link_id = "item_a".to_string();
+                r.store_id = "store_a".to_string();
+                r.available_number_of_packs = 10.0;
+                r.pack_size = 2.0;
+                r.total_number_of_packs = 10.0;
+                r.batch = Some("initial batch name".to_string());
+            })
+        }
+
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_stocktake",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
-                r.stocktakes = vec![mock_stocktake_existing_line()];
-                r.stocktake_lines = vec![mock_stocktake_line_existing_line()];
-                r.stock_lines = vec![mock_existing_stock_line()];
+                r.stocktakes = vec![
+                    mock_stocktake_existing_line(),
+                    mock_stocktake_no_counted_packs(),
+                ];
+                r.stocktake_lines = vec![
+                    mock_stocktake_line_existing_line(),
+                    mock_stocktake_line_no_counted_packs_line(),
+                ];
+                r.stock_lines = vec![mock_existing_stock_line(), mock_existing_stock_line_b()];
             }),
         )
         .await;
@@ -1207,5 +1337,34 @@ mod test {
             stock_line.supplier_link_id,
             mock_stock_line_b().supplier_link_id
         );
+
+        // success - prunes uncounted lines
+        let result = service
+            .update_stocktake(
+                &context,
+                inline_init(|i: &mut UpdateStocktake| {
+                    i.id.clone_from(&mock_stocktake_no_counted_packs().id);
+                    i.status = Some(UpdateStocktakeStatus::Finalised);
+                }),
+            )
+            .unwrap();
+
+        let stocktake_line = StocktakeLineRepository::new(&context.connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&result.id)),
+                None,
+            )
+            .unwrap();
+
+        // line has been pruned, as was counted_number_of_packs = None
+        assert_eq!(stocktake_line.len(), 0);
+
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_existing_stock_line_b().id)
+            .unwrap()
+            .unwrap();
+
+        // still has initial batch name (was not updated)
+        assert_eq!(stock_line.batch, Some("initial batch name".to_string()),);
     }
 }
