@@ -14433,7 +14433,7 @@ node-gyp@^9.0.0:
     tar "^6.1.2"
     which "^2.0.2"
 
-"node-hid@^3.0.0   ":
+"node-hid@^3.1.0   ":
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/node-hid/-/node-hid-3.1.0.tgz#b678894c050e525108b1e4117e6b1ae63b85db54"
   integrity sha512-YCTD1Ad3PHavx2+hY0QA468pn/gKa44U+fWB1KkRswisWtTROtBzdbmY+Xrm+QZSBCGTkdkgke7Ce606WcGxiQ==
