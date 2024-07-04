@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type CurrencyRowFragment = { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean };
 
 export type CurrenciesQueryVariables = Types.Exact<{
@@ -48,20 +47,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockCurrenciesQuery((req, res, ctx) => {
- *   const { sort, filter } = req.variables;
- *   return res(
- *     ctx.data({ currencies })
- *   )
- * })
- */
-export const mockCurrenciesQuery = (resolver: ResponseResolver<GraphQLRequest<CurrenciesQueryVariables>, GraphQLContext<CurrenciesQuery>, any>) =>
-  graphql.query<CurrenciesQuery, CurrenciesQueryVariables>(
-    'currencies',
-    resolver
-  )

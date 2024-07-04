@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type TemperatureBreachFragment = { __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, durationMilliseconds: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, comment?: string | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', code: string, name: string } | null };
 
 export type Temperature_BreachesQueryVariables = Types.Exact<{
@@ -90,37 +89,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockTemperatureBreachesQuery((req, res, ctx) => {
- *   const { page, sort, filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ temperatureBreaches })
- *   )
- * })
- */
-export const mockTemperatureBreachesQuery = (resolver: ResponseResolver<GraphQLRequest<Temperature_BreachesQueryVariables>, GraphQLContext<Temperature_BreachesQuery>, any>) =>
-  graphql.query<Temperature_BreachesQuery, Temperature_BreachesQueryVariables>(
-    'temperature_breaches',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateTemperatureBreachMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ updateTemperatureBreach })
- *   )
- * })
- */
-export const mockUpdateTemperatureBreachMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateTemperatureBreachMutationVariables>, GraphQLContext<UpdateTemperatureBreachMutation>, any>) =>
-  graphql.mutation<UpdateTemperatureBreachMutation, UpdateTemperatureBreachMutationVariables>(
-    'updateTemperatureBreach',
-    resolver
-  )

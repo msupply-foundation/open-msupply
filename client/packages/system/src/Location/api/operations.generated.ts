@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type LocationRowFragment = { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string };
 
 export type LocationsQueryVariables = Types.Exact<{
@@ -218,71 +217,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLocationsQuery((req, res, ctx) => {
- *   const { storeId, sort, first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ locations })
- *   )
- * })
- */
-export const mockLocationsQuery = (resolver: ResponseResolver<GraphQLRequest<LocationsQueryVariables>, GraphQLContext<LocationsQuery>, any>) =>
-  graphql.query<LocationsQuery, LocationsQueryVariables>(
-    'locations',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertLocationMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ insertLocation })
- *   )
- * })
- */
-export const mockInsertLocationMutation = (resolver: ResponseResolver<GraphQLRequest<InsertLocationMutationVariables>, GraphQLContext<InsertLocationMutation>, any>) =>
-  graphql.mutation<InsertLocationMutation, InsertLocationMutationVariables>(
-    'insertLocation',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateLocationMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ updateLocation })
- *   )
- * })
- */
-export const mockUpdateLocationMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLocationMutationVariables>, GraphQLContext<UpdateLocationMutation>, any>) =>
-  graphql.mutation<UpdateLocationMutation, UpdateLocationMutationVariables>(
-    'updateLocation',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteLocationMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ deleteLocation })
- *   )
- * })
- */
-export const mockDeleteLocationMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteLocationMutationVariables>, GraphQLContext<DeleteLocationMutation>, any>) =>
-  graphql.mutation<DeleteLocationMutation, DeleteLocationMutationVariables>(
-    'deleteLocation',
-    resolver
-  )
