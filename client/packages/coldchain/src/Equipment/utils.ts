@@ -1,6 +1,6 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetRowFragment } from './api';
-import { ArrayUtils, Formatter } from '@common/utils';
+import { Formatter, ObjUtils } from '@common/utils';
 import { StatusType } from '@common/types';
 import { ImportRow, LineNumber } from './ImportAsset';
 
@@ -9,8 +9,8 @@ export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
 function baseAssetFields(t: TypedTFunction<LocaleKey>) {
   return [
-    'id',
     t('label.asset-number'),
+    t('label.catalogue-item-code'),
     t('label.installation-date'),
     t('label.replacement-date'),
     t('label.serial'),
@@ -20,22 +20,35 @@ function baseAssetFields(t: TypedTFunction<LocaleKey>) {
 
 export const assetsToCsv = (
   items: AssetRowFragment[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  properties: string[]
 ) => {
-  const fields: string[] = baseAssetFields(t);
-  fields.push('label.created-datetime');
-  fields.push(t('label.modified-datetime'));
+  const fields: string[] = ['id'].concat(baseAssetFields(t));
 
-  const data = items.map(node => [
-    node.id,
-    node.assetNumber,
-    Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateTimeString(node.modifiedDatetime),
-    Formatter.csvDateString(node.installationDate),
-    Formatter.csvDateString(node.replacementDate),
-    node.serialNumber,
-    node.notes,
-  ]);
+  fields.push(t('label.created-datetime'), t('label.modified-datetime'));
+
+  fields.push(...properties);
+
+  const data = items.map(node => {
+    const parsedProperties = ObjUtils.parse(node.properties);
+    const parsedCatalogProperties = ObjUtils.parse(node.catalogProperties);
+
+    return [
+      node.id,
+      node.assetNumber,
+      node.catalogueItem?.code ?? '',
+      Formatter.csvDateString(node.installationDate),
+      Formatter.csvDateString(node.replacementDate),
+      node.serialNumber,
+      node.notes,
+      Formatter.csvDateTimeString(node.createdDatetime),
+      Formatter.csvDateTimeString(node.modifiedDatetime),
+      ...properties.map(
+        key => parsedCatalogProperties[key] ?? parsedProperties[key] ?? ''
+      ),
+    ];
+  });
+
   return Formatter.csv({ fields, data });
 };
 
@@ -76,21 +89,29 @@ export const parseLogStatus = (
 export const importEquipmentToCsvWithErrors = (
   assets: Partial<ImportRow & LineNumber>[],
   t: TypedTFunction<LocaleKey>,
-  isCentralServer: boolean
+  isCentralServer: boolean,
+  properties?: string[]
 ) => {
-  const fields: string[] = [];
-  fields.push(t('label.asset-number'));
-  fields.push(t('label.catalogue-item-code'));
+  const props = properties ?? [];
+
+  const fields: string[] = [
+    t('label.asset-number'),
+    t('label.catalogue-item-code'),
+  ];
 
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
 
-  fields.push(t('label.asset-notes'));
-  fields.push(t('label.serial'));
-  fields.push(t('label.installation-date'));
-  fields.push(t('label.line-number'));
-  fields.push(t('label.error-message'));
+  fields.push(
+    t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
+    t('label.replacement-date'),
+    t('label.line-number'),
+    ...props,
+    t('label.error-message')
+  );
 
   const data = assets.map(node => {
     const mapped: (string | number | null | undefined)[] = [
@@ -98,11 +119,16 @@ export const importEquipmentToCsvWithErrors = (
       node.catalogueItemCode,
     ];
     if (isCentralServer) mapped.push(node.store?.code);
-    mapped.push(node.notes);
-    mapped.push(node.serialNumber);
-    mapped.push(node.installationDate);
-    mapped.push(node.lineNumber);
-    mapped.push(node.errorMessage);
+    mapped.push(
+      node.notes,
+      node.serialNumber,
+      node.installationDate,
+      node.replacementDate,
+      node.lineNumber,
+      ...props.map(key => node.properties?.[key] ?? ''),
+      node.errorMessage
+    );
+
     return mapped;
   });
   return Formatter.csv({ fields, data });
@@ -114,25 +140,27 @@ export const importEquipmentToCsv = (
   isCentralServer: boolean = false,
   properties?: string[]
 ) => {
-  const props =
-    properties ?? ArrayUtils.dedupe(Object.keys(assets[0]?.properties ?? {}));
-  const fields = baseAssetFields(t).concat(props);
-
+  const fields = baseAssetFields(t);
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
-  fields.push(t('label.catalogue-item-code'));
+
+  const props = properties ?? [];
+  fields.push(...props);
 
   const data = assets.map(node => {
     const row = [
       node.assetNumber,
       node.catalogueItemCode,
-      node.notes,
-      node.serialNumber,
       node.installationDate,
-    ].concat(props.map(key => node.properties?.[key] ?? ''));
+      node.replacementDate,
+      node.serialNumber,
+      node.notes,
+    ];
+
     if (isCentralServer) row.push(node.store?.code);
-    return row;
+
+    return row.concat(props.map(key => node.properties?.[key] ?? ''));
   });
 
   return Formatter.csv({ fields, data });
