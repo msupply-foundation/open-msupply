@@ -11,7 +11,7 @@ pub type NodeError = ErrorWrapper<NodeErrorInterface>;
 
 // Generic Node Error Interface
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "&str"))]
+#[graphql(field(name = "description", type = "&str"))]
 pub enum NodeErrorInterface {
     DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),

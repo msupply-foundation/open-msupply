@@ -11,6 +11,7 @@ pub struct StocktakeLineByStocktakeIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for StocktakeLineByStocktakeIdLoader {
     type Value = Vec<StocktakeLine>;
     type Error = RepositoryError;

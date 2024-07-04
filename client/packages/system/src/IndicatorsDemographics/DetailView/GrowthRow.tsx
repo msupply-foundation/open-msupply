@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { RecordWithId } from '@common/types';
+import { RecordPatch, RecordWithId } from '@common/types';
 import {
   Box,
   Column,
@@ -10,18 +10,18 @@ import {
   Table as MuiTable,
   InlineSpinner,
   NumericTextInput,
+  InputAdornment,
   useTranslation,
   useBufferState,
 } from '@openmsupply-client/common';
-import { HeaderData } from '../types';
-import { isHeaderDataYearKey } from './utils';
+import { HeaderData, HeaderValue } from '../types';
 
 interface GrowthRowProps<T extends RecordWithId> {
   columns: Column<T>[];
   isError?: boolean;
   isLoading?: boolean;
   data?: HeaderData;
-  setData: (updatedHeader: HeaderData) => void;
+  setData: (patch: RecordPatch<HeaderValue>) => void;
   overflowX?:
     | 'auto'
     | 'hidden'
@@ -41,7 +41,6 @@ export const GrowthRow = <T extends RecordWithId>({
 }: GrowthRowProps<T>) => {
   const t = useTranslation('coldchain');
   const ref = useRef<HTMLDivElement>(null);
-
   if (isLoading) {
     return <InlineSpinner messageKey="loading" />;
   }
@@ -73,11 +72,9 @@ export const GrowthRow = <T extends RecordWithId>({
           <HeaderRow>
             {columns.map(column => {
               const { align, width } = column;
-
-              const key = Number(column.key);
-
-              const columnHeader = isHeaderDataYearKey(key) ? data[key] : null;
-
+              const columnHeader = Object.values(data).filter(
+                header => (header as HeaderValue).id === column.key
+              )[0] as HeaderValue;
               const hasColumnText = column.key === '0';
               return (
                 <TableCell
@@ -111,11 +108,8 @@ export const GrowthRow = <T extends RecordWithId>({
                         value={columnHeader.value}
                         setValue={value =>
                           setData({
-                            ...data,
-                            [columnHeader.id]: {
-                              id: columnHeader.id,
-                              value,
-                            },
+                            id: columnHeader.id,
+                            value,
                           })
                         }
                       />
@@ -143,10 +137,13 @@ const GrowthInput = ({
   return (
     <NumericTextInput
       value={buffer}
-      decimalLimit={2}
+      decimalLimit={4}
       decimalMin={1}
       allowNegative
-      endAdornment="%"
+      InputProps={{
+        inputProps: { sx: { padding: '2px 0' } },
+        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+      }}
       onChange={newValue => {
         setBuffer(newValue);
         if (newValue !== undefined) setValue(newValue);

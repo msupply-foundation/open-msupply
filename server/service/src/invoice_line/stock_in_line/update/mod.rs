@@ -88,7 +88,7 @@ pub enum UpdateStockInLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowZero,
+    NumberOfPacksBelowOne,
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
@@ -209,7 +209,7 @@ mod test {
             Err(ServiceError::PackSizeBelowOne)
         );
 
-        // NumberOfPacksBelowZero
+        // NumberOfPacksBelowOne
         assert_eq!(
             update_stock_in_line(
                 &context,
@@ -219,7 +219,7 @@ mod test {
                     r.number_of_packs = Some(0.0);
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowZero)
+            Err(ServiceError::NumberOfPacksBelowOne)
         );
 
         // ItemNotFound

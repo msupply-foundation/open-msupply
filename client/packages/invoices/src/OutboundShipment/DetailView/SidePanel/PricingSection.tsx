@@ -18,10 +18,10 @@ import {
   useCurrency,
   Currencies,
   UNDEFINED_STRING_VALUE,
+  TaxEdit,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
-import { TaxEdit } from '../modals';
 import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 type PricingGroupProps = {
@@ -33,7 +33,7 @@ type CurrencyPricingProps = {
   pricing: PricingNode;
   currency?: CurrencyRowFragment | null;
   otherPartyIsInternal: boolean;
-  currencyRate: number;
+  currencyRate?: number | null;
   onChange: (value: CurrencyRowFragment | null) => void;
 };
 
@@ -92,7 +92,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
           <TaxEdit
             disabled={disableServiceTax || isDisabled}
             tax={tax}
-            update={updateServiceLineTax}
+            onChange={updateServiceLineTax}
           />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
@@ -138,7 +138,11 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
       <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
-          <TaxEdit disabled={disableTax} tax={tax} update={updateInvoiceTax} />
+          <TaxEdit
+            disabled={disableTax}
+            tax={tax}
+            onChange={updateInvoiceTax}
+          />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>
@@ -185,7 +189,7 @@ export const ForeignCurrencyPrices = ({
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.rate')}</PanelLabel>
-        <PanelField>{currencyRate === 0 ? 1 : currencyRate}</PanelField>
+        <PanelField>{currencyRate ?? 1}</PanelField>
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.total')}</PanelLabel>
@@ -194,7 +198,7 @@ export const ForeignCurrencyPrices = ({
             ? UNDEFINED_STRING_VALUE
             : foreignCurrency(
                 pricing.foreignCurrencyTotalAfterTax ?? 0
-              ).format()}
+              ).format()}{' '}
         </PanelField>
       </PanelRow>
     </>

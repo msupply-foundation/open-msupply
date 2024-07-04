@@ -46,14 +46,14 @@ pub fn update_vaccine_course(
 }
 
 #[derive(InputObject, Clone)]
-pub struct UpdateVaccineCourseScheduleInput {
+pub struct UpsertVaccineCourseScheduleInput {
     pub id: String,
     pub label: String,
     pub dose_number: i32,
 }
 
 #[derive(InputObject, Clone)]
-pub struct UpdateVaccineCourseItemInput {
+pub struct UpsertVaccineCourseItemInput {
     pub id: String,
     pub item_id: String,
 }
@@ -62,8 +62,8 @@ pub struct UpdateVaccineCourseItemInput {
 pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
-    pub vaccine_items: Vec<UpdateVaccineCourseItemInput>,
-    pub schedules: Vec<UpdateVaccineCourseScheduleInput>,
+    pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
+    pub schedules: Vec<UpsertVaccineCourseScheduleInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
@@ -124,7 +124,7 @@ pub enum UpdateVaccineCourseResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum UpdateVaccineCourseErrorInterface {
     DatabaseError(DatabaseError),
     VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),

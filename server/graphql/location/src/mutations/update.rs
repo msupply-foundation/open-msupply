@@ -81,7 +81,7 @@ pub enum UpdateLocationResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum UpdateLocationErrorInterface {
     LocationNotFound(RecordNotFound),
     UniqueValueViolation(UniqueValueViolation),

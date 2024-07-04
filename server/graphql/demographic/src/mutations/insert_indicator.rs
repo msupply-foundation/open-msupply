@@ -47,7 +47,7 @@ pub fn insert_demographic_indicator(
 #[derive(InputObject, Clone)]
 pub struct InsertDemographicIndicatorInput {
     pub id: String,
-    pub name: Option<String>,
+    pub name: String,
     pub base_year: i32,
     pub base_population: Option<i32>,
     pub population_percentage: Option<f64>,
@@ -100,7 +100,7 @@ pub enum InsertDemographicIndicatorResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum InsertDemographicIndicatorErrorInterface {
     DemographicIndicatorAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),
@@ -119,7 +119,6 @@ fn map_error(error: IndicatorServiceError) -> Result<InsertDemographicIndicatorE
         IndicatorServiceError::DemographicIndicatorAlreadyExistsForThisYear => {
             BadUserInput(formatted_error)
         }
-        IndicatorServiceError::DemographicIndicatorHasNoName => BadUserInput(formatted_error),
         IndicatorServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         IndicatorServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

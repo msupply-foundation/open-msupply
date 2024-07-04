@@ -78,7 +78,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum UpdatePrescriptionErrorInterface {
     InvoiceDoesNotExist(RecordNotFound),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),

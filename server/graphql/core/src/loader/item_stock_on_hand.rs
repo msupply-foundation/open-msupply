@@ -22,6 +22,7 @@ impl ItemsStockOnHandLoaderInput {
     }
 }
 
+#[async_trait::async_trait]
 impl Loader<ItemsStockOnHandLoaderInput> for ItemsStockOnHandLoader {
     type Value = u32;
     type Error = async_graphql::Error;

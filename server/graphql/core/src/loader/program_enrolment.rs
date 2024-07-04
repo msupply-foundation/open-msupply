@@ -26,6 +26,7 @@ pub struct ProgramEnrolmentLoader {
 /// - a few types of programs
 /// - many patients
 /// Thus the loader groups requests by program and does a DB query for each program.
+#[async_trait::async_trait]
 impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
     type Value = ProgramEnrolment;
     type Error = async_graphql::Error;

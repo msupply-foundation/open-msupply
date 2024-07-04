@@ -11,6 +11,7 @@ pub struct StoreByIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for StoreByIdLoader {
     type Value = Store;
     type Error = async_graphql::Error;

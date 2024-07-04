@@ -93,7 +93,7 @@ pub enum InsertStockInLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowZero,
+    NumberOfPacksBelowOne,
     NewlyCreatedLineDoesNotExist,
 }
 
@@ -191,7 +191,7 @@ mod test {
             Err(ServiceError::PackSizeBelowOne)
         );
 
-        // NumberOfPacksBelowZero
+        // NumberOfPacksBelowOne
         assert_eq!(
             insert_stock_in_line(
                 &context,
@@ -201,7 +201,7 @@ mod test {
                     r.number_of_packs = 0.0;
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowZero)
+            Err(ServiceError::NumberOfPacksBelowOne)
         );
 
         // ItemNotFound

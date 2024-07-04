@@ -27,7 +27,6 @@ import {
   useStore,
 } from '@openmsupply-client/system';
 import { useAssetData } from '@openmsupply-client/system';
-
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;

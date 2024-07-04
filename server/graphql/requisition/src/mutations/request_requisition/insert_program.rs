@@ -30,7 +30,7 @@ pub struct InsertProgramRequestRequisitionInput {
 
 #[derive(Interface)]
 #[graphql(name = "InsertProgramRequestRequisitionErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
     MaxOrdersReachedForPeriod(MaxOrdersReachedForPeriod),
 }

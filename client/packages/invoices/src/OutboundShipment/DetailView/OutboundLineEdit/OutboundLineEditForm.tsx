@@ -179,7 +179,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
             disabled={disabled}
             currentItemId={item?.id}
             onChange={onChangeItem}
-            includeNonVisibleWithStockOnHand
             extraFilter={
               disabled
                 ? undefined
