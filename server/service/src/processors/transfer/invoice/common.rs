@@ -2,8 +2,6 @@ use repository::{EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository,
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
 
-use crate::invoice::common::calculate_total_after_tax;
-
 pub(crate) fn generate_inbound_lines(
     connection: &StorageConnection,
     inbound_invoice_id: &str,
@@ -38,19 +36,13 @@ pub(crate) fn generate_inbound_lines(
                  note,
                  r#type,
                  total_after_tax: _,
-                 total_before_tax,
+                 total_before_tax: _,
                  tax_percentage,
                  inventory_adjustment_reason_id: _,
                  return_reason_id,
                  foreign_currency_price_before_tax,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
-
-                let total_before_tax = match r#type {
-                    // Service lines don't work in packs
-                    InvoiceLineType::Service => total_before_tax,
-                    _ => cost_price_per_pack * number_of_packs,
-                };
 
                 InvoiceLineRow {
                     id: uuid(),
@@ -61,10 +53,11 @@ pub(crate) fn generate_inbound_lines(
                     batch,
                     expiry_date,
                     pack_size,
-                    total_before_tax,
-                    total_after_tax: calculate_total_after_tax(total_before_tax, tax_percentage),
+                    // TODO clarify this
+                    total_before_tax: cost_price_per_pack * number_of_packs,
+                    total_after_tax: (cost_price_per_pack * number_of_packs)
+                        * (1.0 + tax_percentage.unwrap_or(0.0) / 100.0),
                     cost_price_per_pack,
-                    sell_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineType::Service => InvoiceLineType::Service,
                         _ => InvoiceLineType::StockIn,
@@ -77,6 +70,7 @@ pub(crate) fn generate_inbound_lines(
                     // Default
                     stock_line_id: None,
                     location_id: None,
+                    sell_price_per_pack: 0.0,
                     inventory_adjustment_reason_id: None,
                 }
             },
@@ -92,11 +86,6 @@ pub(crate) fn convert_invoice_line_to_single_pack(
     invoice_lines
         .into_iter()
         .map(|mut line| {
-            // Service lines don't work in packs
-            if line.r#type == InvoiceLineType::Service {
-                return line;
-            }
-
             line.number_of_packs *= line.pack_size;
             line.cost_price_per_pack /= line.pack_size;
             line.pack_size = 1.0;

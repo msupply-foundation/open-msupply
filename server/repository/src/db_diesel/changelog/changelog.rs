@@ -324,7 +324,7 @@ impl<'a> ChangelogRepository<'a> {
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via
     // PullUpsertRecord (but not through sync)
-    #[cfg(feature = "integration_test")]
+    #[cfg(test)]
     pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
         diesel::update(changelog::table)
             .set(changelog::is_sync_update.eq(false))

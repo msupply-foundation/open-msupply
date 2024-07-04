@@ -11,6 +11,7 @@ pub struct ReturnReasonLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for ReturnReasonLoader {
     type Value = ReturnReason;
     type Error = RepositoryError;

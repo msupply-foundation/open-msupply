@@ -10,6 +10,7 @@ pub struct NameRowLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for NameRowLoader {
     type Value = NameRow;
     type Error = RepositoryError;

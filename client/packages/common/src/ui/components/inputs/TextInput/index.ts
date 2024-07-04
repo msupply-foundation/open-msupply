@@ -6,3 +6,4 @@ export * from './ReadOnlyInput';
 export * from './BufferedTextInput';
 export * from './NumericTextInput';
 export * from './PasswordTextInput';
+export * from './TaxEdit';

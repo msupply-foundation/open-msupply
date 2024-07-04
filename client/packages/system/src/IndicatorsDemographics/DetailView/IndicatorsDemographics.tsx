@@ -4,13 +4,10 @@ import {
   Box,
   ColumnAlign,
   DataTable,
-  DateUtils,
-  Formatter,
   RecordPatch,
   TableProvider,
   createTableStore,
   useColumns,
-  useFormatNumber,
   useNotification,
   useTranslation,
   useUrlQueryParams,
@@ -26,10 +23,9 @@ import {
   calculateAcrossRow,
   mapHeaderData,
   mapProjection,
-  toInsertIndicator,
-  toUpdateIndicator,
+  toIndicatorFragment,
 } from './utils';
-import { HeaderData, Row } from '../types';
+import { HeaderData, HeaderValue, Row } from '../types';
 
 const currentYear = new Date().getFullYear();
 
@@ -43,47 +39,33 @@ const IndicatorsDemographicsComponent = () => {
   const [headerDraft, setHeaderDraft] = useState<HeaderData>();
   const [indexPopulation, setIndexPopulation] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
-  const formatNumber = useFormatNumber();
 
   const { error, success } = useNotification();
   const t = useTranslation();
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
-  const baseYear = headerDraft?.baseYear ?? DateUtils.getCurrentYear();
-
   const { data: projection, isLoading: isLoadingProjection } =
-    useDemographicData.projection.get(baseYear);
+    useDemographicData.projection.get(draft?.[0]?.baseYear ?? 2024);
 
-  const {
-    insertDemographicIndicator,
-    invalidateQueries: invalidateDemographicQueries,
-  } = useDemographicData.indicator.insert();
+  const { insertDemographicIndicator, invalidateQueries } =
+    useDemographicData.indicator.insert();
   const { mutateAsync: updateDemographicIndicator } =
     useDemographicData.indicator.update();
+  const upsertProjection = useDemographicData.projection.upsert();
 
-  const { upsertProjection, invalidateQueries: invalidateProjectionQueries } =
-    useDemographicData.projection.upsert();
-
-  const invalidateQueries = () => {
-    invalidateDemographicQueries();
-    invalidateProjectionQueries(baseYear);
-  };
-
-  const handlePopulationChange = (patch: RecordPatch<Row>) => {
+  const PopulationChange = (patch: RecordPatch<Row>) => {
     setIsDirty(true);
-
     const basePopulation = patch['0'] ?? 0;
     let updatedDraft: Record<string, Row> = {};
-
     const indexPopulationChange =
       basePopulation !== draft[patch.id]?.basePopulation &&
       patch.id === GENERAL_POPULATION_ID;
 
     if (indexPopulationChange) setIndexPopulation(basePopulation);
 
-    Object.values(draft).forEach(row => {
+    Object.keys(draft).forEach(rowKey => {
       const updatedRow = calculateAcrossRow(
-        row,
+        draft[rowKey] as Row,
         headerDraft,
         indexPopulationChange ? basePopulation : indexPopulation
       );
@@ -93,82 +75,83 @@ const IndicatorsDemographicsComponent = () => {
   };
 
   const setter = (patch: RecordPatch<Row>) => {
+    const updatedDraft = { ...draft };
     const percentage = !patch.percentage ? 0 : patch.percentage;
     const percentageChange = percentage != draft[patch.id]?.percentage;
 
-    const existingRow = draft[patch.id];
-    if (!existingRow) return;
-
     setIsDirty(true);
-
-    const patchedRow: Row = { ...existingRow, ...patch, isError: false };
 
     // change state of name only if only name changes
     if (!percentageChange) {
-      setDraft({ ...draft, [patch.id]: patchedRow });
+      setDraft({ ...updatedDraft, [patch.id]: { ...patch } as Row });
       return;
     }
 
     const updatedRow = calculateAcrossRow(
-      patchedRow,
+      { ...patch } as Row,
       headerDraft,
       indexPopulation
     );
-    setDraft({ ...draft, [patch.id]: updatedRow });
-  };
-
-  const createNewRow = (row: Row) => {
-    setDraft({ ...draft, [row.id]: row });
-    setIsDirty(true);
+    setDraft({ ...updatedDraft, [patch.id]: updatedRow });
   };
 
   // generic function for handling percentage change, and then re calculating the values of that year
-  const handleGrowthChange = (updatedHeader: HeaderData) => {
+  const handleGrowthChange = (patch: RecordPatch<HeaderValue>) => {
     setIsDirty(true);
-
-    setHeaderDraft(updatedHeader);
-    calculateDown(updatedHeader);
+    const updatedPatch = {
+      ...patch,
+      value: patch.value ?? 0,
+    };
+    setHeaderDraft({
+      ...(headerDraft as HeaderData),
+      [patch.id]: updatedPatch,
+    });
+    calculateDown(patch);
   };
-
-  const calculateDown = (updatedHeader: HeaderData) => {
+  const calculateDown = (patch: RecordPatch<HeaderValue>) => {
+    const updatedHeader = {
+      ...headerDraft,
+      [patch.id]: { ...patch } as HeaderValue,
+    } as HeaderData;
     const updatedDraft: Record<string, Row> = {};
-
-    Object.values(draft).forEach(row => {
+    Object.keys(draft).forEach(row => {
       const updatedRow = calculateAcrossRow(
-        row,
+        draft[row] as Row,
         updatedHeader,
         indexPopulation
       );
       updatedDraft[updatedRow.id] = updatedRow;
     });
-
+    setHeaderDraft(updatedHeader);
     setDraft(updatedDraft);
   };
 
   const insertIndicator = async (row: Row) => {
     try {
-      await insertDemographicIndicator(toInsertIndicator(row, indexPopulation));
+      await insertDemographicIndicator(
+        toIndicatorFragment(row, indexPopulation)
+      );
     } catch (e) {
-      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
-      throw e;
+      console.error(e);
     }
   };
 
   const updateIndicator = async (row: Row) => {
     try {
-      await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
+      await updateDemographicIndicator(
+        toIndicatorFragment(row, indexPopulation)
+      );
     } catch (e) {
-      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
-      throw e;
+      console.error(e);
     }
   };
 
   // save rows excluding generalRow
   const save = async () => {
     setIsDirty(false);
-    const rows = Object.values(draft).filter(
-      row => row.id !== GENERAL_POPULATION_ID
-    );
+    const rows = Object.keys(draft)
+      .map(key => draft[key] as Row)
+      .filter(row => row?.id !== GENERAL_POPULATION_ID && !!row);
 
     await Promise.all(
       rows.map(async indicator => {
@@ -185,13 +168,7 @@ const IndicatorsDemographicsComponent = () => {
         success(t('success.data-saved'))();
         invalidateQueries();
       })
-      .catch(e =>
-        error(
-          t('error.an-error-occurred', {
-            message: Formatter.fromCamelCase(e.message),
-          })
-        )()
-      );
+      .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
   };
 
   const cancel = () => {
@@ -202,12 +179,12 @@ const IndicatorsDemographicsComponent = () => {
     [
       [nameColumn(), { setter }],
       [percentageColumn(), { setter }],
-      [populationColumn(), { setter: handlePopulationChange }],
-      yearColumn(1, formatNumber.format),
-      yearColumn(2, formatNumber.format),
-      yearColumn(3, formatNumber.format),
-      yearColumn(4, formatNumber.format),
-      yearColumn(5, formatNumber.format),
+      [populationColumn(), { setter: PopulationChange }],
+      yearColumn(1),
+      yearColumn(2),
+      yearColumn(3),
+      yearColumn(4),
+      yearColumn(5),
     ],
     { sortBy, onChangeSortBy: updateSortQuery },
     [draft, indexPopulation, sortBy]
@@ -232,10 +209,7 @@ const IndicatorsDemographicsComponent = () => {
 
   return (
     <>
-      <AppBarButtons
-        createNewRow={createNewRow}
-        rows={Object.values(draft)}
-      ></AppBarButtons>
+      <AppBarButtons patch={setter} rows={Object.values(draft)}></AppBarButtons>
       <Box sx={{ width: '100%' }} padding={0}>
         <GrowthRow
           columns={columns}
@@ -260,28 +234,11 @@ export const IndicatorsDemographics = () => (
   </TableProvider>
 );
 
-const yearColumn = (year: number, format: (n: number) => string) => ({
+const yearColumn = (year: number) => ({
   key: String(year),
   width: 150,
   align: ColumnAlign.Right,
   label: undefined,
   labelProps: { defaultValue: currentYear + year },
   sortable: false,
-  accessor: ({ rowData }: { rowData: Row }) => {
-    // using a switch to appease typescript
-    switch (year) {
-      case 1:
-        return format(rowData[1]);
-      case 2:
-        return format(rowData[2]);
-      case 3:
-        return format(rowData[3]);
-      case 4:
-        return format(rowData[4]);
-      case 5:
-        return format(rowData[5]);
-      default:
-        return '';
-    }
-  },
 });

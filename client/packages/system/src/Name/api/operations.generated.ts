@@ -5,6 +5,8 @@ import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 export type NameRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
+export type FacilityNameRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, properties: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
+
 export type NameFragment = { __typename: 'NameNode', address1?: string | null, address2?: string | null, chargeCode?: string | null, code: string, comment?: string | null, country?: string | null, createdDatetime?: string | null, email?: string | null, id: string, isCustomer: boolean, isDonor: boolean, isManufacturer: boolean, isOnHold: boolean, isSupplier: boolean, isSystemName: boolean, name: string, phone?: string | null, website?: string | null, properties: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
 export type PropertyFragment = { __typename: 'PropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType };
@@ -20,6 +22,18 @@ export type NamesQueryVariables = Types.Exact<{
 
 
 export type NamesQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
+
+export type FacilitiesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  key: Types.NameSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  filter?: Types.InputMaybe<Types.NameFilterInput>;
+}>;
+
+
+export type FacilitiesQuery = { __typename: 'Queries', names: { __typename: 'NameConnector', totalCount: number, nodes: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, properties: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }> } };
 
 export type NameByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -54,6 +68,21 @@ export const NameRowFragmentDoc = gql`
     id
     code
   }
+}
+    `;
+export const FacilityNameRowFragmentDoc = gql`
+    fragment FacilityNameRow on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  isOnHold
+  name
+  store {
+    id
+    code
+  }
+  properties
 }
     `;
 export const NameFragmentDoc = gql`
@@ -110,6 +139,24 @@ export const NamesDocument = gql`
   }
 }
     ${NameRowFragmentDoc}`;
+export const FacilitiesDocument = gql`
+    query facilities($storeId: String!, $key: NameSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: NameFilterInput) {
+  names(
+    storeId: $storeId
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...FacilityNameRow
+      }
+      totalCount
+    }
+  }
+}
+    ${FacilityNameRowFragmentDoc}`;
 export const NameByIdDocument = gql`
     query nameById($storeId: String!, $nameId: String!) {
   names(storeId: $storeId, filter: {id: {equalTo: $nameId}}) {
@@ -166,6 +213,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     names(variables: NamesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NamesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names', 'query');
+    },
+    facilities(variables: FacilitiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FacilitiesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<FacilitiesQuery>(FacilitiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'facilities', 'query');
     },
     nameById(variables: NameByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NameByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NameByIdQuery>(NameByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameById', 'query');

@@ -11,7 +11,6 @@ use crate::{
 
 use super::{
     common::{convert_invoice_line_to_single_pack, generate_inbound_lines},
-    create_inbound_invoice::InboundInvoiceType,
     InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation,
 };
 
@@ -29,7 +28,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
     /// 1. Source invoice name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source invoice is Outbound shipment or Outbound Return
     /// 3. Linked invoice exists (the inbound invoice)
-    /// 4. Linked inbound invoice is Picked (Inbound invoice can only be updated before it turns to Shipped status)
+    /// 4. Linked inbound invoice is Picked (Inbound invoice can only be deleted before it turns to Shipped status)
     /// 5. Source outbound invoice is Shipped
     ///
     /// Only runs once:
@@ -49,11 +48,12 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             _ => return Ok(None),
         };
         // 2.
-        let inbound_invoice_type = match outbound_invoice.invoice_row.r#type {
-            InvoiceType::OutboundShipment => InboundInvoiceType::InboundShipment,
-            InvoiceType::OutboundReturn => InboundInvoiceType::InboundReturn,
-            _ => return Ok(None),
-        };
+        if !matches!(
+            outbound_invoice.invoice_row.r#type,
+            InvoiceType::OutboundShipment | InvoiceType::OutboundReturn
+        ) {
+            return Ok(None);
+        }
         // 3.
         let inbound_invoice = match &linked_invoice {
             Some(linked_invoice) => linked_invoice,
@@ -93,41 +93,10 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             invoice_line_repository.upsert_one(line)?;
         }
 
-        let outbound_invoice_row = &outbound_invoice.invoice_row;
-
-        let formatted_ref = match &outbound_invoice_row.their_reference {
-            Some(reference) => format!(
-                "From invoice number: {} ({})",
-                outbound_invoice_row.invoice_number, reference
-            ),
-            None => format!(
-                "From invoice number: {}",
-                outbound_invoice_row.invoice_number
-            ),
-        };
-
-        let formatted_comment = match inbound_invoice_type {
-            InboundInvoiceType::InboundShipment => match &outbound_invoice_row.comment {
-                Some(comment) => format!("Stock transfer ({})", comment),
-                None => "Stock transfer".to_string(),
-            },
-            InboundInvoiceType::InboundReturn => match &outbound_invoice_row.comment {
-                Some(comment) => format!("Stock return ({})", comment),
-                None => "Stock return".to_string(),
-            },
-        };
-
         let updated_inbound_invoice = InvoiceRow {
             // 6.
             status: InvoiceStatus::Shipped,
-            shipped_datetime: outbound_invoice_row.shipped_datetime,
-            their_reference: Some(formatted_ref),
-            comment: Some(formatted_comment),
-            transport_reference: outbound_invoice_row.transport_reference.clone(),
-            tax_percentage: outbound_invoice_row.tax_percentage,
-            currency_id: outbound_invoice_row.currency_id.clone(),
-            currency_rate: outbound_invoice_row.currency_rate,
-
+            shipped_datetime: outbound_invoice.invoice_row.shipped_datetime,
             ..inbound_invoice.invoice_row.clone()
         };
 

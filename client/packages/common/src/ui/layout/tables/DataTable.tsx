@@ -128,6 +128,7 @@ const DataTableComponent = <T extends RecordWithId>({
   onChangePage,
   onRowClick,
   additionalRows,
+  width = '100%',
 }: TableProps<T>): JSX.Element => {
   const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
@@ -218,6 +219,7 @@ const DataTableComponent = <T extends RecordWithId>({
         flexDirection: 'column',
         overflowX,
         overflowY: 'auto',
+        width,
       }}
     >
       <MuiTable>

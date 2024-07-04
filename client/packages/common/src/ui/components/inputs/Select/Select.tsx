@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import {
   Divider,
   MenuItem,
@@ -23,7 +23,7 @@ const defaultRenderOption = (option: Option) => (
   </MenuItem>
 );
 
-export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
+export const Select: FC<SelectProps> = React.forwardRef(
   (
     { options, renderOption, sx, InputProps, clearable = false, ...props },
     ref

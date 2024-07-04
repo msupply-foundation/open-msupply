@@ -6,8 +6,12 @@ export const useInventoryAdjustmentReason = (
   sortBy?: SortBy<InventoryAdjustmentReasonRowFragment>
 ) => {
   const api = useInventoryAdjustmentReasonApi();
-  const result = useQuery(api.keys.sortedList(sortBy), () =>
-    api.get.listAllActive({ sortBy })
+  const result = useQuery(
+    api.keys.sortedList(sortBy),
+    () => api.get.listAllActive({ sortBy }),
+    {
+      staleTime: 5 * 60 * 1000,
+    }
   );
 
   return { ...result };

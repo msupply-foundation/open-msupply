@@ -40,7 +40,6 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
             disabled={disabled}
             currentItemId={itemId}
             onChange={newItem => newItem && onChangeItemId(newItem.id)}
-            includeNonVisibleWithStockOnHand
             extraFilter={
               disabled
                 ? undefined

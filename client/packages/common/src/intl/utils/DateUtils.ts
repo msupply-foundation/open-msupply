@@ -36,7 +36,6 @@ import {
   endOfWeek,
   setMilliseconds,
   addMilliseconds,
-  getYear,
 } from 'date-fns';
 import { getTimezoneOffset } from 'date-fns-tz';
 
@@ -140,7 +139,6 @@ export const DateUtils = {
   previousMonday,
   endOfWeek,
   setMilliseconds,
-  getCurrentYear: () => getYear(new Date()),
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,

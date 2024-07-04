@@ -1,4 +1,4 @@
-import { act } from 'react';
+import { act } from 'react-dom/test-utils';
 import { useIntlUtils } from '@common/intl';
 import { renderHookWithProvider } from '@common/utils';
 

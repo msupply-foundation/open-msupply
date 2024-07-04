@@ -35,7 +35,7 @@ pub fn delete_immunisation_program(
 
             for id in courses_to_delete.iter() {
                 vaccine_course_row_repo
-                    .mark_deleted(id)
+                    .mark_deleted(&id)
                     .map_err(DeleteImmunisationProgramError::from)?;
             }
 
@@ -68,7 +68,7 @@ fn generate(
     id: &str,
 ) -> Result<Vec<String>, DeleteImmunisationProgramError> {
     let vaccine_courses = VaccineCourseRepository::new(connection)
-        .query_by_filter(VaccineCourseFilter::new().program_id(EqualFilter::equal_to(id)))?;
+        .query_by_filter(VaccineCourseFilter::new().program_id(EqualFilter::equal_to(&id)))?;
 
     let vaccine_course_ids_to_delete = vaccine_courses.into_iter().map(|v| v.id).collect();
 

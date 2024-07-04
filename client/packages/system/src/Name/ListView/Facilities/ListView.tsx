@@ -9,11 +9,15 @@ import {
   DotCell,
   ColumnAlign,
   useEditModal,
+  useToggle,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
-import { useName, NameRowFragment } from '../../api';
-import { NameRenderer } from '../../Components';
+import { useName } from '../../api';
 import { Toolbar } from './Toolbar';
 import { FacilityEditModal } from './FacilityEditModal';
+import { AppBarButtons } from './AppBarButtons';
+import { PropertiesImportModal } from '../ImportProperties/PropertiesImportModal';
+import { FacilityNameRowFragment } from '../../api/operations.generated';
 
 const FacilitiesListComponent = () => {
   const [selectedId, setSelectedId] = useState('');
@@ -24,23 +28,24 @@ const FacilitiesListComponent = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
   const { data, isError, isLoading } = useName.document.facilities();
+  const { data: properties, isLoading: propertiesLoading } =
+    useName.document.properties();
   const pagination = { page, first, offset };
 
-  const { isOpen, onClose, onOpen } = useEditModal<NameRowFragment>();
+  const { isOpen, onClose, onOpen } = useEditModal<FacilityNameRowFragment>();
+  const importPropertiesModalController = useToggle();
 
-  const onRowClick = (row: NameRowFragment) => {
+  const onRowClick = (row: FacilityNameRowFragment) => {
     setSelectedId(row.id);
     onOpen();
   };
 
-  const columns = useColumns<NameRowFragment>(
+  const columns = useColumns<FacilityNameRowFragment>(
     [
       {
         key: 'code',
         label: 'label.code',
-        Cell: ({ rowData }) => (
-          <NameRenderer label={rowData.code} isStore={!!rowData.store} />
-        ),
+        Cell: TooltipTextCell,
         width: 100,
       },
       'name',
@@ -78,6 +83,15 @@ const FacilitiesListComponent = () => {
 
   return (
     <>
+      <PropertiesImportModal
+        isOpen={importPropertiesModalController.isOn}
+        onClose={importPropertiesModalController.toggleOff}
+      />
+      <AppBarButtons
+        importModalController={importPropertiesModalController}
+        properties={properties}
+        propertiesLoading={propertiesLoading}
+      />
       <Toolbar filter={filter} />
       {isOpen && (
         <FacilityEditModal
@@ -85,6 +99,8 @@ const FacilitiesListComponent = () => {
           nameId={selectedId}
           onClose={onClose}
           setNextFacility={setSelectedId}
+          properties={properties}
+          propertiesLoading={propertiesLoading}
         />
       )}
       <DataTable

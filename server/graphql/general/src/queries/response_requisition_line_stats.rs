@@ -14,7 +14,7 @@ type ServiceError = ResponseRequisitionStatsError;
 
 #[derive(Interface)]
 #[graphql(name = "RequisitionLineStatsErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum RequisitionStatsErrorInterface {
     RecordNotFound(RecordNotFound),
 }

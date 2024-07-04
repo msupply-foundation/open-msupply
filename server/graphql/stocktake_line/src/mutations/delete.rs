@@ -25,7 +25,7 @@ pub enum DeleteResponse {
 
 #[derive(Interface)]
 #[graphql(name = "DeleteStocktakeLineErrorInterface")]
-#[graphql(field(name = "description", ty = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum DeleteErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
 }

@@ -25,7 +25,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
   onClose,
 }) => {
   const t = useTranslation('inventory');
-  const { success, error } = useNotification();
+  const { success } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
 
   const { draft, setDraft, create } = useInventoryAdjustment(stockLine);
@@ -40,19 +40,12 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
 
   const save = async () => {
     try {
-      const result = await create();
-
-      if (result === undefined) {
-        const successSnack = success(t('messages.inventory-adjustment-saved'));
-        successSnack();
-        onClose();
-        return;
-      }
-
-      const errorSnack = error(t(result));
-      errorSnack();
+      await create();
+      const successSnack = success(t('messages.inventory-adjustment-saved'));
+      successSnack();
+      onClose();
     } catch {
-      //     // TODO: handle error if no reason selected when reasons required
+      // TODO: handle error if no reason selected when reasons required
     }
   };
 

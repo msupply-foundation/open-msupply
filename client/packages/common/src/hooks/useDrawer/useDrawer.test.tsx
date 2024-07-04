@@ -1,6 +1,7 @@
-import React, { act } from 'react';
 import { useDrawer } from './useDrawer';
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { act } from 'react-dom/test-utils';
 import LocalStorage from '../../localStorage/LocalStorage';
 
 describe('useDrawer', () => {

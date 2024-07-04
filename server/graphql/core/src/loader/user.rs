@@ -9,6 +9,7 @@ pub struct UserLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
+#[async_trait::async_trait]
 impl Loader<String> for UserLoader {
     type Value = User;
     type Error = async_graphql::Error;
