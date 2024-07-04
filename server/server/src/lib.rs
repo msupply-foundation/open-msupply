@@ -265,12 +265,6 @@ pub async fn start_server(
         .run(),
     );
 
-    // ADD SYSTEM USER
-    service_provider
-        .general_service
-        .create_system_user(&service_provider)
-        .unwrap();
-
     // START SERVER
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());

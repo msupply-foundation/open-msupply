@@ -54,7 +54,6 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
-    system_user::create_system_user,
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
@@ -285,13 +284,6 @@ pub trait GeneralServiceTrait: Sync + Send {
         filter: StoreFilter,
     ) -> Result<Option<Store>, RepositoryError> {
         get_store(ctx, filter)
-    }
-
-    fn create_system_user(
-        &self,
-        service_provider: &ServiceProvider,
-    ) -> Result<(), RepositoryError> {
-        create_system_user(service_provider)
     }
 }
 
