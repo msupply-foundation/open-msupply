@@ -100,9 +100,9 @@
  * Numeric), so please check these all behave as expected as well.
  */
 
-import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BasicTextInput, BasicTextInputProps } from './BasicTextInput';
-import { NumUtils, RegexUtils } from '@common/utils';
+import { NumUtils, RegexUtils, UNDEFINED_STRING_VALUE } from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
 import { InputAdornment } from '@common/components';
 
@@ -173,7 +173,10 @@ export type NumericTextInputProps = NumericInputProps &
 
 export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
 
-export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
+export const NumericTextInput = React.forwardRef<
+  HTMLDivElement,
+  NumericTextInputProps
+>(
   (
     {
       sx,
@@ -218,7 +221,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
     const isInputIncomplete = useCallback(
       (value: string) => {
-        if (value === '-') return true;
+        if (value === UNDEFINED_STRING_VALUE) return true;
 
         return new RegExp(
           // Checks for a trailing `.` or a `0` (not necessarily immediately)

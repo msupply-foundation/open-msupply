@@ -1,7 +1,7 @@
 import { AssetFragment } from './api';
 
 export interface LocationIds {
-  locationIds: string[];
+  locationIds: string[] | undefined;
 }
 
 export interface Properties {
