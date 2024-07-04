@@ -33,16 +33,9 @@ impl Migration for V2_02_00 {
         // Any migrations that can be re-run safely
         safe_to_re_run::migrate(connection)?;
 
-        // Any migrations that should already be applied in the previous version
+        // Any migrations that should already be applied in the previous version will be skipped
         if !ctx.database_version.is_equivalent(&self.version()) {
             add_column::migrate(connection)?;
-        }
-
-        // Something specific to a particular version
-        if ctx.database_version == self.version()
-            && ctx.database_version.pre_release == Some("RC1".to_string())
-        {
-            fix_rc1::migrate(connection)?;
         }
 
         Ok(())
