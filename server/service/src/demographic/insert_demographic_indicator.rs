@@ -14,7 +14,6 @@ pub enum InsertDemographicIndicatorError {
     DemographicIndicatorAlreadyExistsForThisYear,
     DemographicIndicatorHasNoName,
     CreatedRecordNotFound,
-    DemographicIndicatorHasNoName,
     DatabaseError(RepositoryError),
 }
 
