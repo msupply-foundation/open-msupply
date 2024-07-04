@@ -1,10 +1,10 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Widget } from './Widget';
 import { Typography } from '@mui/material';
 import { useTranslation } from '@common/intl';
 
-const Template: ComponentStory<typeof Widget> = () => {
+const Template: StoryFn<typeof Widget> = () => {
   const t = useTranslation('app');
 
   return (
@@ -19,4 +19,4 @@ export const Primary = Template.bind({});
 export default {
   title: 'Components/Widget',
   component: Widget,
-} as ComponentMeta<typeof Widget>;
+} as Meta<typeof Widget>;

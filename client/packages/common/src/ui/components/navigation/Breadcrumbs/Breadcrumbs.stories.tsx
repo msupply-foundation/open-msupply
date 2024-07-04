@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentMeta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import { Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { Breadcrumbs } from './Breadcrumbs';
@@ -10,9 +10,9 @@ import { AppRoute } from '@openmsupply-client/config';
 export default {
   title: 'Components/Breadcrumbs',
   component: Breadcrumbs,
-} as ComponentMeta<typeof Breadcrumbs>;
+} as Meta<typeof Breadcrumbs>;
 
-const Template: Story<{ initialEntries: string[] }> = ({ initialEntries }) => {
+const Template: StoryFn<{ initialEntries: string[] }> = ({ initialEntries }) => {
   return (
     <StoryProvider>
       <TestingRouter initialEntries={initialEntries}>

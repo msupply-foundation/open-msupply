@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { useOpenInNewTab } from './useOpenInNewTab';
 import { Typography, BaseButton, BasicTextInput } from '@common/components';
 
@@ -7,7 +7,7 @@ export default {
   title: 'Hooks/useOpenInNewTab',
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const openInNewTab = useOpenInNewTab();
   const [url, setUrl] = useState('');
 

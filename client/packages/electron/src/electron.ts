@@ -65,19 +65,23 @@ class Scanner {
   }
 
   scanDevices(window: BrowserWindow) {
-    const devices: BarcodeScanner[] = [];
     // if a scanner is already connected, we'll need to close it in order to open it
     if (this.device) {
       this.device?.close();
     }
 
-    HID.devices().forEach(device => {
-      devices.push({ ...device, connected: false });
+    this.scanDevicesAsync(window);
+  }
+
+  async scanDevicesAsync(window: BrowserWindow) {
+    const devices = await HID.devicesAsync();
+
+      devices.forEach(device => {
       if (device.path) {
         try {
           const hid = new HID.HID(device.vendorId, device.productId);
 
-          // close the devices after a delay
+          // close the device after a delay
           const timeout = setTimeout(() => {
             try {
               hid.close();
@@ -105,7 +109,6 @@ class Scanner {
         }
       }
     });
-    return devices;
   }
 
   start() {

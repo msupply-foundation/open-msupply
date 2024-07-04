@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { styled } from '@mui/material/styles';
 import { Autocomplete } from './Autocomplete';
 import { AutocompleteList } from './AutocompleteList';
@@ -139,7 +139,7 @@ const longOptions = [
 ];
 
 // TODO: Currently the styles are broken for this only within storybook
-const BasicTemplate: Story = ({ options }) => (
+const BasicTemplate: StoryFn = ({ options }) => (
   <Grid container>
     <Grid item>
       <StyledPaper>
@@ -167,7 +167,7 @@ const BasicTemplate: Story = ({ options }) => (
   </Grid>
 );
 
-const ListTemplate: Story = () => (
+const ListTemplate: StoryFn = () => (
   <Grid container>
     <Grid item>
       <StyledPaper>
@@ -178,7 +178,7 @@ const ListTemplate: Story = () => (
   </Grid>
 );
 
-const MultiListTemplate: Story = () => {
+const MultiListTemplate: StoryFn = () => {
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   return (
     <Grid container>
@@ -202,7 +202,7 @@ const MultiListTemplate: Story = () => {
   );
 };
 
-const AutocompleteWithPaginationTemplate: Story = () => {
+const AutocompleteWithPaginationTemplate: StoryFn = () => {
   const [pagination, setPagination] = React.useState({
     page: 1,
     first: 10,
