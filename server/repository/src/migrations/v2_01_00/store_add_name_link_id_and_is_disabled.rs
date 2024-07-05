@@ -6,11 +6,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         -- Drop views early
         -- These views are re-created in the decimal_pack_size migration
-        DROP VIEW IF EXISTS stock_on_hand;
-        DROP VIEW IF EXISTS store_items;
+        DROP VIEW stock_on_hand;
+        DROP VIEW store_items;
         DROP VIEW IF EXISTS consumption;
         -- Recreated below
-        DROP VIEW IF EXISTS report_store;
+        DROP VIEW report_store;
     "#,
     )?;
 
