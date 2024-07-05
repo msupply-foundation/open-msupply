@@ -12,7 +12,7 @@
     "react": "^17.0.2"
   },
   "dependencies": {
-    "@bugsnag/js": "^7.14.1",
+    "@bugsnag/js": "^7.25.0",
     "@capacitor-community/barcode-scanner": "^4.0.1",
     "@capacitor/app": "^6.0.0",
     "@capacitor/core": "^6.1.0",
@@ -45,7 +45,7 @@
     "react-dropzone": "^14.2.3",
     "react-i18next": "^13.0.2",
     "react-query": "^3.34.12",
-    "react-router-dom": "^6.1.1",
+    "react-router-dom": "^6.24.1",
     "react-singleton-context": "^1.0.2",
     "react-viewport-list": "^7.0.0",
     "recharts": "^2.5.0",

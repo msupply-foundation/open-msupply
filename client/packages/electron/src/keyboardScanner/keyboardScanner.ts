@@ -53,7 +53,7 @@ const KEYBOARD_SCANNER: BarcodeScanner = {
 
 export class KeyboardScanner {
   window: BrowserWindow;
-  interval: NodeJS.Timer | undefined;
+  interval: NodeJS.Timeout | undefined;
   // Buffer can be written concurrent in event handles and when processing input
   // this lock is to make sure it's edited synchronously
   lockBuffer: boolean;
