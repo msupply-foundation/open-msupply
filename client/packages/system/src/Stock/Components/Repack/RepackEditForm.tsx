@@ -117,24 +117,33 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
               />
             }
           />
-          <InputWithLabelRow
-            label={t('label.new-location')}
-            labelWidth="100%"
-            Input={
-              <LocationSearchInput
-                autoFocus={false}
-                disabled={!isNew}
-                selectedLocation={location}
-                width={160}
-                onChange={location => {
-                  setLocation(location);
-                  onChange({
-                    newLocationId: location?.id,
-                  });
-                }}
-              />
-            }
-          />
+          {data.newLocationName ? (
+            <TextWithLabelRow
+              label={t('label.new-location')}
+              text={data.newLocationName}
+              textProps={textProps}
+              labelProps={labelProps}
+            />
+          ) : (
+            <InputWithLabelRow
+              label={t('label.new-location')}
+              labelWidth="100%"
+              Input={
+                <LocationSearchInput
+                  autoFocus={false}
+                  disabled={!isNew}
+                  selectedLocation={location}
+                  width={160}
+                  onChange={location => {
+                    setLocation(location);
+                    onChange({
+                      newLocationId: location?.id,
+                    });
+                  }}
+                />
+              }
+            />
+          )}
         </Box>
       </Box>
     </Box>

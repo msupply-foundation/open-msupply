@@ -122,15 +122,16 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       };
     }
 
-    const { numberOfPacks, packSize } = repackData.from;
+    const { numberOfPacks, packSize, location: oldLocation } = repackData.from;
     const { packSize: newPackSize, location } = repackData.to;
     return {
       stockLineId: stockLine.id,
       numberOfPacks,
       packSize,
       newPackSize,
-      locationName: location?.name,
+      locationName: oldLocation ? oldLocation.name : location?.name,
       newLocationId: location?.id,
+      newLocationName: location?.name,
     };
   };
 
