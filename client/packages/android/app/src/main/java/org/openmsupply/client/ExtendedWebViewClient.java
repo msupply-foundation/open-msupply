@@ -1,6 +1,7 @@
 package org.openmsupply.client;
 
 import android.graphics.Bitmap;
+import android.webkit.ValueCallback;
 import android.webkit.WebView;
 
 import com.getcapacitor.Bridge;
@@ -26,10 +27,14 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
     // but since it manually uses net.URL to fetch the content of request, this
     // fails for self signed certificates
     // and plugin definitions etc is not injected
+
+    // Using onLoadResource vs onPageStarted because sometimes onPageStarted is too late
+    // but with onLoadResource we need to make sure that injection happens only one in a web view
     @Override
-    public void onPageStarted(WebView webView,
-            String url,
-            Bitmap favicon) {
+    public void onLoadResource(WebView webView, 
+            String url) {
+        super.onLoadResource(webView, url);
+
         // TODO make sure this is only injected for pages in native bundle
         // There is no way to get the full list of plugins from bridge, use 'debug' and
         // see what plugins to add
@@ -56,6 +61,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
             // This would mean getServerUrl wouldn't work correctly (we are not using it)
             String localUrlJS = "window.WEBVIEW_SERVER_URL = '';";
 
+            // From JSInjector.getScriptString()
             String fullScript = globalJS +
                     " \n\n" +
                     localUrlJS +
@@ -71,9 +77,20 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
                     cordovaPluginsJS +
                     "\n\n";
 
-            // From JSInjector.getScriptString()
             // .post to run on UI thread
-            webView.post(() -> webView.evaluateJavascript(fullScript, null));
+            webView.post(() -> {
+                // To only run once on a page we check for existence ot nativeBridge
+                // which is instantiated by above scripts
+                webView.evaluateJavascript("typeof nativeBridge", new ValueCallback<String>() {
+                    @Override
+                    public void onReceiveValue(String s) {
+                        if (s.trim().equals("\"undefined\"")) {
+                            webView.evaluateJavascript(fullScript, null);
+                        }
+                    }
+                });
+            });
+
         } catch (Exception ex) {
             Logger.error("Unable to export Capacitor JS. App will not function!", ex);
         }
