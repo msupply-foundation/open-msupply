@@ -57,11 +57,10 @@ const ImmunisationProgramListComponent: FC = () => {
         key: 'vaccine-courses',
         label: 'label.vaccine-courses',
         sortable: false,
-        accessor: ({ rowData }) => {
+        accessor: ({ rowData }) =>
           rowData?.vaccineCourses?.length === 0
             ? UNDEFINED_STRING_VALUE
-            : rowData.vaccineCourses?.map(n => n.name).join(', ');
-        },
+            : rowData.vaccineCourses?.map(n => n.name).join(', '),
       },
       'selection',
     ],
