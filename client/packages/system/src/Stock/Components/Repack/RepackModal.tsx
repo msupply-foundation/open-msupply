@@ -150,11 +150,11 @@ export const RepackModal: FC<RepackModalControlProps> = ({
               const result = await onInsert();
               const errorMessage = mapStructuredErrors(result);
 
-              // The new stockline is the second of two lines in the resulting
+              // The new stockline is the first of two lines in the resulting
               // invoice
               const newLineId =
                 result.__typename === 'InvoiceNode'
-                  ? result?.lines?.nodes?.[1]?.stockLine?.id ?? ''
+                  ? result?.lines?.nodes?.[0]?.stockLine?.id ?? ''
                   : '';
 
               if (errorMessage) {
