@@ -92,6 +92,7 @@
     "jetifier": "^2.0.0",
     "lint-staged": "^13.2.0",
     "prettier": "^3.0.0",
+    "prettier-fallback": "^3.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "storybook": "^8.1.11",
