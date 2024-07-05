@@ -29,7 +29,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
-  const textProps = { textAlign: 'end' as 'end' | 'start', paddingRight: 3 };
+  const textProps = { textAlign: 'end' as 'end' | 'start' };
   const labelProps = { sx: { width: 0 } };
 
   return (
