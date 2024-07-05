@@ -29,7 +29,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
     // and plugin definitions etc is not injected
 
     // Using onLoadResource vs onPageStarted because sometimes onPageStarted is too late
-    // but with onLoadResource we need to make sure that injection happens only one in a web view
+    // but with onLoadResource we need to make sure that injection happens only once in a web view
     @Override
     public void onLoadResource(WebView webView, 
             String url) {
@@ -79,7 +79,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
 
             // .post to run on UI thread
             webView.post(() -> {
-                // To only run once on a page we check for existence ot nativeBridge
+                // To only run once on a page we check for existence of nativeBridge
                 // which is instantiated by above scripts
                 webView.evaluateJavascript("typeof nativeBridge", new ValueCallback<String>() {
                     @Override
