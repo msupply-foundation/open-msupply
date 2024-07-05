@@ -43,7 +43,7 @@
   "devDependencies": {
     "@babel/core": "^7.21.3",
     "@babel/preset-flow": "^7.21.4",
-    "@chromatic-com/storybook": "^1",
+    "@chromatic-com/storybook": "^1.6.1",
     "@graphql-codegen/cli": "^5.0.0",
     "@graphql-codegen/near-operation-file-preset": "^2.2.5",
     "@graphql-codegen/typescript": "^4.0.1",
@@ -60,7 +60,7 @@
     "@storybook/test": "^8.1.11",
     "@storybook/theming": "^8.1.11",
     "@swc/cli": "^0.1.57",
-    "@swc/core": "^1.2.211",
+    "@swc/core": "^1.6.7",
     "@swc/jest": "^0.2.15",
     "@testing-library/dom": "^9.0.1",
     "@testing-library/jest-dom": "^5.16.1",
@@ -112,7 +112,7 @@
     ]
   },
   "dependencies": {
-    "@bugsnag/js": "^7.16.2",
+    "@bugsnag/js": "^7.25.0",
     "@mui/x-date-pickers": "^7.3.2",
     "@types/react-dom": "^18.0.1",
     "graphql": "^16.3.0",
