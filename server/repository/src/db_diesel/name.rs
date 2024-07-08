@@ -176,6 +176,7 @@ impl<'a> NameRepository<'a> {
                     .left_join(store_dsl::store),
             )
             .inner_join(name_oms_fields_alias)
+            .filter(name_dsl::type_.ne(NameType::Patient))
             .into_boxed();
 
         if let Some(f) = filter {
