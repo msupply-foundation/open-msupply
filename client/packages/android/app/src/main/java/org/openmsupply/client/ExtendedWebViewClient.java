@@ -27,9 +27,9 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
     // fails for self signed certificates
     // and plugin definitions etc is not injected
     @Override
-    public void onPageStarted(WebView webView,
-            String url,
-            Bitmap favicon) {
+    public void onPageStarted(WebView webView, String url, Bitmap favicon) {
+        if (url.startsWith("data:text")) return;
+
         // TODO make sure this is only injected for pages in native bundle
         // There is no way to get the full list of plugins from bridge, use 'debug' and
         // see what plugins to add
