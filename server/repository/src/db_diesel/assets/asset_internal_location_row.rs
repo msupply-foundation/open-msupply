@@ -1,8 +1,10 @@
 use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
+use crate::LocationRowRepository;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::Upsert;
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -34,24 +36,36 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
     pub fn upsert_one(
         &self,
         asset_internal_location_row: &AssetInternalLocationRow,
-    ) -> Result<(), RepositoryError> {
+    ) -> Result<i64, RepositoryError> {
         diesel::insert_into(asset_internal_location)
             .values(asset_internal_location_row)
             .on_conflict(id)
             .do_update()
             .set(asset_internal_location_row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(asset_internal_location_row, RowActionType::Upsert)
     }
 
-    pub fn insert_one(
+    fn insert_changelog(
         &self,
-        asset_internal_location_row: &AssetInternalLocationRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::insert_into(asset_internal_location)
-            .values(asset_internal_location_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        row: &AssetInternalLocationRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let location = LocationRowRepository::new(self.connection).find_one_by_id(&row.location_id);
+        let store_id = match location {
+            Ok(Some(location)) => Some(location.store_id),
+            _ => None,
+        };
+
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::AssetInternalLocationRow,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id,
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all_by_location(
@@ -104,9 +118,9 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
 }
 
 impl Upsert for AssetInternalLocationRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
-        Ok(())
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

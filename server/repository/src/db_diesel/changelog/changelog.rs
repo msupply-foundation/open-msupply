@@ -89,6 +89,7 @@ pub enum ChangelogTableName {
     AssetCatalogueItem,
     AssetCatalogueItemProperty,
     AssetCatalogueProperty,
+    AssetInternalLocationRow,
     #[default]
     SyncFileReference,
     Asset,
@@ -142,6 +143,7 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueType => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::AssetInternalLocationRow => ChangeLogSyncStyle::Remote,
             ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
             ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,

@@ -347,11 +347,6 @@ impl Delete for NameRowDelete {
 }
 
 impl Upsert for NameRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _changelog_id = NameRowRepository::new(con).upsert_one(self);
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = NameRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
@@ -367,12 +362,6 @@ impl Upsert for NameRow {
 }
 
 impl Upsert for NameOmsFieldsRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _changelog_id =
-            NameRowRepository::new(con).update_properties(&self.id, &self.properties);
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id =
             NameRowRepository::new(con).update_properties(&self.id, &self.properties)?;

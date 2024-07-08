@@ -86,7 +86,7 @@ mod tests {
             location_id: mock_location_1().id,
         };
 
-        let _result = asset_internal_location_row.upsert_sync(&storage_connection);
+        let _result = asset_internal_location_row.upsert(&storage_connection);
 
         let loader = AssetLocationLoader { connection_manager };
 
@@ -112,7 +112,7 @@ mod tests {
             location_id: mock_location_2().id,
         };
 
-        let _result = asset_internal_location_row.upsert_sync(&storage_connection);
+        let _result = asset_internal_location_row.upsert(&storage_connection);
 
         let result: std::collections::HashMap<String, Vec<Location>> =
             loader.load(ids).await.unwrap();
@@ -143,7 +143,7 @@ mod tests {
             location_id: mock_location_3().id,
         };
 
-        let _result = asset_internal_location_row.upsert_sync(&storage_connection);
+        let _result = asset_internal_location_row.upsert(&storage_connection);
 
         let result: std::collections::HashMap<String, Vec<Location>> =
             loader.load(ids).await.unwrap();

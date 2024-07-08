@@ -106,8 +106,9 @@ impl<'a> ClinicianLinkRowRepository<'a> {
 }
 
 impl Upsert for ClinicianLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ClinicianLinkRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ClinicianLinkRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

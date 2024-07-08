@@ -9,6 +9,7 @@ use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
     NameLinkRow, NameRow,
 };
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 
 use diesel::{
@@ -71,28 +72,30 @@ impl<'a> NameStoreJoinRepository<'a> {
         NameStoreJoinRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(name_store_join_dsl::name_store_join)
             .values(row)
             .on_conflict(name_store_join_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(name_store_join_is_sync_update::table.find(id))
-            .set(name_store_join_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(self.connection.lock().connection())?;
+    fn insert_changelog(
+        &self,
+        row: &NameStoreJoinRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::NameStoreJoin,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: Some(row.name_link_id.clone()),
+        };
 
-        Ok(())
-    }
-
-    pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        self.toggle_is_sync_update(&row.id, false)?;
-        Ok(())
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameStoreJoinRow>, RepositoryError> {
@@ -125,23 +128,6 @@ impl<'a> NameStoreJoinRepository<'a> {
         let result = query.load::<NameStoreJoins>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
-    }
-
-    pub fn sync_upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        self.toggle_is_sync_update(&row.id, true)?;
-
-        Ok(())
-    }
-
-    #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = name_store_join_is_sync_update::table
-            .find(id)
-            .select(name_store_join_is_sync_update::dsl::is_sync_update)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
     }
 }
 
@@ -205,8 +191,9 @@ impl Delete for NameStoreJoinRowDelete {
 }
 
 impl Upsert for NameStoreJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameStoreJoinRepository::new(con).sync_upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = NameStoreJoinRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
@@ -215,60 +202,5 @@ impl Upsert for NameStoreJoinRow {
             NameStoreJoinRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
-    }
-}
-#[cfg(test)]
-mod test {
-    use util::uuid::uuid;
-
-    use crate::{
-        mock::{mock_name_a, mock_store_a, MockDataInserts},
-        test_db::setup_all,
-        NameStoreJoinRepository, NameStoreJoinRow,
-    };
-
-    #[actix_rt::test]
-    async fn name_store_join_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
-            "name_store_join_is_sync_update",
-            MockDataInserts::none().items().units().names().stores(),
-        )
-        .await;
-
-        let repo = NameStoreJoinRepository::new(&connection);
-
-        let base_row = NameStoreJoinRow {
-            name_link_id: mock_name_a().id,
-            store_id: mock_store_a().id,
-            ..Default::default()
-        };
-        // Two rows, to make sure is_sync_update update only affects one row
-        let row = NameStoreJoinRow {
-            id: uuid(),
-            ..base_row.clone()
-        };
-        let row2 = NameStoreJoinRow {
-            id: uuid(),
-            ..base_row.clone()
-        };
-
-        // First insert
-        repo.upsert_one(&row).unwrap();
-        repo.upsert_one(&row2).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Synchronisation upsert
-        repo.sync_upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Normal upsert
-        repo.upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
     }
 }

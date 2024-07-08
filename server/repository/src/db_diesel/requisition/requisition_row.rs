@@ -9,6 +9,7 @@ use crate::db_diesel::{
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::dsl::max;
@@ -153,34 +154,45 @@ impl<'a> RequisitionRowRepository<'a> {
         RequisitionRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(requisition_dsl::requisition)
             .values(row)
             .on_conflict(requisition_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(requisition_is_sync_update::table.find(id))
-            .set(requisition_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(self.connection.lock().connection())?;
+    fn insert_changelog(
+        &self,
+        row: &RequisitionRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Requisition,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: Some(row.name_link_id.clone()),
+        };
 
-        Ok(())
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
-    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        self.toggle_is_sync_update(&row.id, false)?;
-        Ok(())
-    }
+    pub fn delete(&self, requisition_id: &str) -> Result<i64, RepositoryError> {
+        let requisition = self.find_one_by_id(requisition_id)?;
+        let requisition = match requisition {
+            Some(requisition) => requisition,
+            None => return Err(RepositoryError::NotFound),
+        };
 
-    pub fn delete(&self, requisition_id: &str) -> Result<(), RepositoryError> {
+        let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
+
         diesel::delete(requisition_dsl::requisition.filter(requisition_dsl::id.eq(requisition_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+
+        Ok(change_log_id)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
@@ -206,30 +218,14 @@ impl<'a> RequisitionRowRepository<'a> {
             .first(self.connection.lock().connection())?;
         Ok(result)
     }
-
-    pub fn sync_upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        self.toggle_is_sync_update(&row.id, true)?;
-
-        Ok(())
-    }
-
-    #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = requisition_is_sync_update::table
-            .find(id)
-            .select(requisition_is_sync_update::dsl::is_sync_update)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct RequisitionRowDelete(pub String);
 impl Delete for RequisitionRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        RequisitionRowRepository::new(con).delete(&self.0)
+        let _change_log_id = RequisitionRowRepository::new(con).delete(&self.0)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -241,8 +237,9 @@ impl Delete for RequisitionRowDelete {
 }
 
 impl Upsert for RequisitionRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        RequisitionRowRepository::new(con).sync_upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = RequisitionRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
@@ -261,10 +258,7 @@ impl Upsert for RequisitionRow {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::{
-            mock_request_draft_requisition_all_fields, mock_response_draft_requisition_all_fields,
-            MockDataInserts,
-        },
+        mock::{mock_request_draft_requisition_all_fields, MockDataInserts},
         test_db::setup_all,
         ApprovalStatusType, RequisitionRow, RequisitionRowRepository,
     };
@@ -286,7 +280,7 @@ mod test {
                 ..mock_request_draft_requisition_all_fields().requisition
             };
             let result = repo.upsert_one(&row);
-            assert_eq!(result, Ok(()));
+            assert!(result.is_ok());
 
             let result = repo
                 .find_one_by_id(&mock_request_draft_requisition_all_fields().requisition.id)
@@ -294,37 +288,5 @@ mod test {
                 .unwrap();
             assert_eq!(result.approval_status, row.approval_status);
         }
-    }
-
-    #[actix_rt::test]
-    async fn requisition_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
-            "requisition_is_sync_update",
-            MockDataInserts::none().names().stores(),
-        )
-        .await;
-
-        let repo = RequisitionRowRepository::new(&connection);
-        // Two rows, to make sure is_sync_update update only affects one row
-        let row = mock_request_draft_requisition_all_fields().requisition;
-        let row2 = mock_response_draft_requisition_all_fields().requisition;
-        // First insert
-        repo.upsert_one(&row).unwrap();
-        repo.upsert_one(&row2).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Synchronisation upsert
-        repo.sync_upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Normal upsert
-        repo.upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
     }
 }

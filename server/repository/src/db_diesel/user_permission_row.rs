@@ -156,8 +156,9 @@ impl Delete for UserPermissionRowDelete {
 }
 
 impl Upsert for UserPermissionRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UserPermissionRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        UserPermissionRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

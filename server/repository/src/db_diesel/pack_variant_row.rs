@@ -2,6 +2,7 @@ use super::{item_row::item, pack_variant_row::pack_variant::dsl::*};
 
 use crate::{repository_error::RepositoryError, StorageConnection, Upsert};
 
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +51,7 @@ impl<'a> PackVariantRowRepository<'a> {
         PackVariantRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(pack_variant::dsl::pack_variant)
             .values(row)
             .on_conflict(pack_variant::dsl::id)
@@ -58,7 +59,23 @@ impl<'a> PackVariantRowRepository<'a> {
             .set(row)
             .execute(self.connection.lock().connection())?;
 
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &PackVariantRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::PackVariant,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(
@@ -75,8 +92,9 @@ impl<'a> PackVariantRowRepository<'a> {
 }
 
 impl Upsert for PackVariantRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        PackVariantRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = PackVariantRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
