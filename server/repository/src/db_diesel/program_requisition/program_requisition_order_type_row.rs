@@ -99,8 +99,9 @@ impl Delete for ProgramRequisitionOrderTypeRowDelete {
 }
 
 impl Upsert for ProgramRequisitionOrderTypeRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

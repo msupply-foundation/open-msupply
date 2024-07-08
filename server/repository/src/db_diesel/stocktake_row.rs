@@ -2,9 +2,10 @@ use super::{
     stocktake_row::stocktake::dsl as stocktake_dsl, user_row::user_account, StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Delete};
-
 use crate::Upsert;
+use crate::{repository_error::RepositoryError, Delete};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
@@ -92,14 +93,30 @@ impl<'a> StocktakeRowRepository<'a> {
         StocktakeRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &StocktakeRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &StocktakeRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(stocktake_dsl::stocktake)
             .values(row)
             .on_conflict(stocktake_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &StocktakeRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Stocktake,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
@@ -152,8 +169,9 @@ impl Delete for StocktakeRowDelete {
 }
 
 impl Upsert for StocktakeRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StocktakeRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = StocktakeRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

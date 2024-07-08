@@ -50,15 +50,7 @@ pub trait Delete: DebugTrait {
 }
 
 pub trait Upsert: DebugTrait {
-    // TODO:(Long term) DELETE THIS TRAIT METHOD AND REMOVE TRIGGERS?
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError>;
-
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        self.upsert_sync(con)?;
-        // When not using triggers to create changelog records, this is where you may want to implement changelog logic
-        // This function should return the id of the changelog record created...
-        Ok(None)
-    }
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection);

@@ -6,6 +6,10 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
+    RowActionType,
+};
 use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
@@ -97,14 +101,36 @@ impl<'a> InvoiceLineRowRepository<'a> {
         InvoiceLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(invoice_line)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &InvoiceLineRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let invoice = InvoiceRowRepository::new(self.connection).find_one_by_id(&row.invoice_id)?;
+        let invoice = match invoice {
+            Some(invoice) => invoice,
+            None => return Err(RepositoryError::NotFound),
+        };
+
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::InvoiceLine,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(invoice.store_id.clone()),
+            name_link_id: Some(invoice.name_link_id.clone()),
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn update_inventory_adjustment_reason_id(
@@ -161,10 +187,18 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(invoice_line_id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(invoice_line.filter(id.eq(invoice_line_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(
@@ -211,7 +245,8 @@ impl<'a> InvoiceLineRowRepository<'a> {
 pub struct InvoiceLineRowDelete(pub String);
 impl Delete for InvoiceLineRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InvoiceLineRowRepository::new(con).delete(&self.0)
+        let _change_log_id = InvoiceLineRowRepository::new(con).delete(&self.0)?;
+        Ok(())
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -223,8 +258,9 @@ impl Delete for InvoiceLineRowDelete {
 }
 
 impl Upsert for InvoiceLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InvoiceLineRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = InvoiceLineRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

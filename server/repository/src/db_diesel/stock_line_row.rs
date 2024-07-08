@@ -4,6 +4,7 @@ use super::{
 };
 
 use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError, Delete, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -67,14 +68,30 @@ impl<'a> StockLineRowRepository<'a> {
         StockLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &StockLineRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(stock_line_dsl::stock_line)
             .values(row)
             .on_conflict(stock_line_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &StockLineRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::StockLine,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
@@ -123,8 +140,9 @@ impl Delete for StockLineRowDelete {
 }
 
 impl Upsert for StockLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StockLineRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = StockLineRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

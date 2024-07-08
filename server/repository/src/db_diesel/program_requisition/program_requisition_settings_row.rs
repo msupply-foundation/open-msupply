@@ -98,8 +98,9 @@ impl Delete for ProgramRequisitionSettingsRowDelete {
 }
 
 impl Upsert for ProgramRequisitionSettingsRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ProgramRequisitionSettingsRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRequisitionSettingsRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

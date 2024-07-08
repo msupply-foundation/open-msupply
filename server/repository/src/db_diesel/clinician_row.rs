@@ -4,6 +4,7 @@ use crate::{
     clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType, RepositoryError,
     Upsert,
 };
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -74,29 +75,31 @@ impl<'a> ClinicianRowRepository<'a> {
         ClinicianRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ClinicianRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(clinician::dsl::clinician)
             .values(row)
             .on_conflict(clinician::dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    pub fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
         insert_or_ignore_clinician_link(self.connection, row)?;
-        self.toggle_is_sync_update(&row.id, false)?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(clinician_is_sync_update::table.find(id))
-            .set(clinician_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(self.connection.lock().connection())?;
+    fn insert_changelog(
+        &self,
+        row: &ClinicianRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Clinician,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
 
-        Ok(())
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id_option(
@@ -115,31 +118,14 @@ impl<'a> ClinicianRowRepository<'a> {
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
-    pub fn sync_upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        insert_or_ignore_clinician_link(self.connection, row)?;
-        self.toggle_is_sync_update(&row.id, true)?;
-
-        Ok(())
-    }
-
-    #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = clinician_is_sync_update::table
-            .find(id)
-            .select(clinician_is_sync_update::dsl::is_sync_update)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
 }
 
 pub struct ClinicianRowDelete(pub String);
 
 impl Upsert for ClinicianRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ClinicianRowRepository::new(con).sync_upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = ClinicianRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
@@ -148,65 +134,5 @@ impl Upsert for ClinicianRow {
             ClinicianRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))
         )
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use util::uuid::uuid;
-
-    use crate::{
-        mock::MockDataInserts, test_db::setup_all, ClinicianLinkRow, ClinicianLinkRowRepository,
-        ClinicianRow, ClinicianRowRepository,
-    };
-
-    #[actix_rt::test]
-    async fn clinician_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
-            "clinician_is_sync_update",
-            MockDataInserts::none().items().units(),
-        )
-        .await;
-
-        let repo = ClinicianRowRepository::new(&connection);
-
-        // Two rows, to make sure is_sync_update update only affects one row
-        let row = ClinicianRow {
-            id: uuid(),
-            ..Default::default()
-        };
-        let row2 = ClinicianRow {
-            id: uuid(),
-            ..Default::default()
-        };
-
-        // First insert
-        repo.upsert_one(&row).unwrap();
-        repo.upsert_one(&row2).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Synchronisation upsert
-        repo.sync_upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Normal upsert
-        repo.upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Sneak in a test for insert_one_or_ignore. If another entry is inserted/upserted in
-        // insert_one_or_ignore() the clinician_id foreign key would be violated and the following
-        // would fail:
-        ClinicianLinkRowRepository::new(&connection)
-            .insert_one_or_ignore(&ClinicianLinkRow {
-                id: row.id,
-                clinician_id: "Invalid id".to_string(),
-            })
-            .unwrap();
     }
 }

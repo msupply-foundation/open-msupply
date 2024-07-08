@@ -1,5 +1,6 @@
 use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
@@ -41,28 +42,31 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         ClinicianStoreJoinRowRepository { connection }
     }
 
-    fn _upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
             .on_conflict(clinician_store_join::dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        self.toggle_is_sync_update(&row.id, false)?;
-        Ok(())
-    }
+    fn insert_changelog(
+        &self,
+        row: &ClinicianStoreJoinRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::ClinicianStoreJoin,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: Some(row.clinician_link_id.clone()),
+        };
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(clinician_store_join_is_sync_update::table.find(id))
-            .set(clinician_store_join_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(self.connection.lock().connection())?;
-
-        Ok(())
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(
@@ -84,30 +88,12 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         .execute(self.connection.lock().connection())?;
         Ok(())
     }
-
-    pub fn sync_upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        self.toggle_is_sync_update(&row.id, true)?;
-
-        Ok(())
-    }
-
-    #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = clinician_store_join_is_sync_update::table
-            .find(id)
-            .select(clinician_store_join_is_sync_update::dsl::is_sync_update)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
 }
 
-pub struct ClinicianStoreJoinRowDelete(pub String);
-
 impl Upsert for ClinicianStoreJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = ClinicianStoreJoinRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
@@ -116,76 +102,5 @@ impl Upsert for ClinicianStoreJoinRow {
             ClinicianStoreJoinRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use util::uuid::uuid;
-
-    use crate::{
-        mock::{mock_store_a, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
-        ClinicianRow, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository,
-    };
-
-    #[actix_rt::test]
-    async fn clinician_store_join_is_sync_update() {
-        let clinician = ClinicianRow {
-            id: uuid(),
-            ..Default::default()
-        };
-
-        let (_, connection, _, _) = setup_all_with_data(
-            "clinician_store_join_is_sync_update",
-            MockDataInserts::none()
-                .items()
-                .units()
-                .names()
-                .stores()
-                .clinicians(),
-            MockData {
-                clinicians: vec![clinician.clone()],
-                ..Default::default()
-            },
-        )
-        .await;
-
-        let repo = ClinicianStoreJoinRowRepository::new(&connection);
-
-        let base_row = ClinicianStoreJoinRow {
-            clinician_link_id: clinician.id,
-            store_id: mock_store_a().id,
-            ..Default::default()
-        };
-
-        // Two rows, to make sure is_sync_update update only affects one row
-        let row = ClinicianStoreJoinRow {
-            id: uuid(),
-            ..base_row.clone()
-        };
-        let row2 = ClinicianStoreJoinRow {
-            id: uuid(),
-            ..base_row.clone()
-        };
-
-        // First insert
-        repo.upsert_one(&row).unwrap();
-        repo.upsert_one(&row2).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Synchronisation upsert
-        repo.sync_upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Normal upsert
-        repo.upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
     }
 }
