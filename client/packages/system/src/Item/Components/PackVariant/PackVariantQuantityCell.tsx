@@ -3,6 +3,9 @@ import {
   RecordWithId,
   CellProps,
   BasicCellLayout,
+  Tooltip,
+  Typography,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 
@@ -26,7 +29,9 @@ export const PackVariantQuantityCell =
 
     return (
       <BasicCellLayout isError={isError}>
-        {String(packQuantity)}
+        <Tooltip title={String(quantity)}>
+          <Typography>{NumUtils.round(packQuantity, 2)}</Typography>
+        </Tooltip>
       </BasicCellLayout>
     );
   };
