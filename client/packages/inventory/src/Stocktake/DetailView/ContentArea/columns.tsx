@@ -223,6 +223,15 @@ export const useStocktakeColumns = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
+          if (
+            lines.every(
+              line =>
+                line.countedNumberOfPacks === null ||
+                line.countedNumberOfPacks === undefined
+            )
+          ) {
+            return null;
+          }
           return (
             lines.reduce(
               (total, line) => total + (line.countedNumberOfPacks ?? 0),
