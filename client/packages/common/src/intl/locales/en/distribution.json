@@ -68,6 +68,7 @@
   "label.delete": "Delete",
   "label.quantity": "Quantity",
   "label.shipment": "Shipment",
+  "label.shipment-created": "Shipment created",
   "label.requisition": "Requisition",
   "label.requested-quantity": "Requested quantity",
   "label.select-rows-to-allocate-them": "Select rows to allocate them",

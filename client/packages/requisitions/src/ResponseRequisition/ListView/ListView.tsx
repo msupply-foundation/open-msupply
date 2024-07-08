@@ -51,6 +51,10 @@ export const ResponseRequisitionListView: FC = () => {
         key: 'status',
         condition: 'equalTo',
       },
+      {
+        key: 'shipmentCreated',
+        condition: '=',
+      },
     ],
   });
   const pagination = { page, first, offset };
