@@ -80,6 +80,12 @@ export const ResponseRequisitionListView: FC = () => {
       },
     ],
     {
+      key: 'numberOfShipments',
+      label: 'label.shipments',
+      description: 'description.number-of-shipments',
+      accessor: ({ rowData }) => rowData.numberOfShipments,
+    },
+    {
       key: 'programName',
       accessor: ({ rowData }) => {
         return rowData.programName;
