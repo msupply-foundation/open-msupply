@@ -113,7 +113,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const getFormData = () => {
     const isNewRepack = !repackData;
-
     if (isNewRepack) {
       return {
         ...draft,
@@ -122,16 +121,16 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       };
     }
 
-    const { numberOfPacks, packSize, location: oldLocation } = repackData.from;
-    const { packSize: newPackSize, location } = repackData.to;
+    const { numberOfPacks, packSize, location: fromLocation } = repackData.from;
+    const { packSize: newPackSize, location: toLocation } = repackData.to;
     return {
       stockLineId: stockLine.id,
       numberOfPacks,
       packSize,
       newPackSize,
-      locationName: oldLocation ? oldLocation.name : location?.name,
-      newLocationId: location?.id,
-      newLocationName: location?.name,
+      locationName: fromLocation?.name,
+      newLocationId: toLocation?.id,
+      newLocationName: toLocation?.name,
     };
   };
 
