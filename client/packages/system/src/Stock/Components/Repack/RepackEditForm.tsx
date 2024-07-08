@@ -117,10 +117,10 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
               />
             }
           />
-          {data.newLocationName ? (
+          {data.newLocationName || !isNew ? (
             <TextWithLabelRow
               label={t('label.new-location')}
-              text={data.newLocationName}
+              text={data.newLocationName ?? UNDEFINED_STRING_VALUE}
               textProps={textProps}
               labelProps={labelProps}
             />
