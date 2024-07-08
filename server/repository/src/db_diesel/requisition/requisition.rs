@@ -5,6 +5,7 @@ use super::{
 
 use crate::{
     db_diesel::{
+        invoice_row::invoice::dsl as invoice_dsl,
         name_link_row::{name_link, name_link::dsl as name_link_dsl},
         name_row::{name, name::dsl as name_dsl},
         period::period::{self, dsl as period_dsl},
@@ -179,6 +180,7 @@ fn create_filtered_query(
         store_id,
         linked_requisition_id,
         order_type,
+        shipment_created,
     }) = filter
     {
         apply_equal_filter!(query, id, requisition_dsl::id);
@@ -216,7 +218,24 @@ fn create_filtered_query(
         apply_string_filter!(query, comment, requisition_dsl::comment);
 
         apply_equal_filter!(query, store_id, requisition_dsl::store_id);
-        apply_equal_filter!(query, order_type, requisition_dsl::order_type)
+        apply_equal_filter!(query, order_type, requisition_dsl::order_type);
+
+        if let Some(shipment_created) = shipment_created {
+            let requisition_ids = invoice_dsl::invoice
+                .left_join(
+                    requisition_dsl::requisition.on(requisition_dsl::id
+                        .nullable()
+                        .eq(invoice_dsl::requisition_id)),
+                )
+                .select(invoice_dsl::requisition_id)
+                .into_boxed();
+
+            if shipment_created {
+                query = query.filter(requisition_dsl::id.nullable().eq_any(requisition_ids))
+            } else {
+                query = query.filter(requisition_dsl::id.nullable().ne_all(requisition_ids))
+            }
+        }
     }
 
     Ok(query)
