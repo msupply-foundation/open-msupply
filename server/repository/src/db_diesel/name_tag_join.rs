@@ -59,8 +59,9 @@ impl<'a> NameTagJoinRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct NameTagJoinRowDelete(pub String);
 impl Delete for NameTagJoinRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameTagJoinRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        NameTagJoinRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

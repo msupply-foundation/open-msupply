@@ -46,17 +46,17 @@ impl<'a> CurrencyRowRepository<'a> {
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(row, RowActionType::Upsert)
+        self.insert_changelog(&row.id, RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
-        row: &CurrencyRow,
+        record_id: &String,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::Currency,
-            record_id: row.id.clone(),
+            record_id: record_id.clone(),
             row_action: action,
             store_id: None,
             name_link_id: None,
@@ -76,19 +76,21 @@ impl<'a> CurrencyRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, currency_id: &str) -> Result<i64, RepositoryError> {
         diesel::update(currency_dsl::currency.filter(currency_dsl::id.eq(currency_id)))
             .set(currency_dsl::is_active.eq(false))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+
+        self.insert_changelog(&currency_id.to_string(), RowActionType::Delete)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct CurrencyRowDelete(pub String);
 impl Delete for CurrencyRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        CurrencyRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = CurrencyRowRepository::new(con).delete(&self.0)?;
+        Ok(Some(change_log_id))
     }
 
     fn assert_deleted(&self, con: &StorageConnection) {

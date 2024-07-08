@@ -106,10 +106,17 @@ impl<'a> NameStoreJoinRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
         diesel::delete(name_store_join_dsl::name_store_join.filter(name_store_join_dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
     pub fn query_by_filter(
@@ -178,7 +185,7 @@ impl NameStoreJoinFilter {
 #[derive(Debug, Clone)]
 pub struct NameStoreJoinRowDelete(pub String);
 impl Delete for NameStoreJoinRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         NameStoreJoinRepository::new(con).delete(&self.0)
     }
     // Test only

@@ -44,7 +44,7 @@ pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
 
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError>;
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
     // Test only
     fn assert_deleted(&self, con: &StorageConnection);
 }
