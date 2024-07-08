@@ -231,10 +231,9 @@ impl<'a> InvoiceRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct InvoiceRowDelete(pub String);
 impl Delete for InvoiceRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = InvoiceRowRepository::new(con).delete(&self.0)?;
-        // TODO: Do we need to do something with change_log_id?
-        Ok(())
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = InvoiceRowRepository::new(con).delete(&self.0)?;
+        Ok(change_log_id)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

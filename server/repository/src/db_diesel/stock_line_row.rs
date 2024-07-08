@@ -94,10 +94,18 @@ impl<'a> StockLineRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&row)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(stock_line_dsl::stock_line.filter(stock_line_dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
@@ -127,7 +135,7 @@ impl<'a> StockLineRowRepository<'a> {
 pub struct StockLineRowDelete(pub String);
 // For tests only
 impl Delete for StockLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         StockLineRowRepository::new(con).delete(&self.0)
     }
     // Test only

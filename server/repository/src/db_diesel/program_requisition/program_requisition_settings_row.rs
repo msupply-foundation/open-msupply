@@ -85,8 +85,9 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ProgramRequisitionSettingsRowDelete(pub String);
 impl Delete for ProgramRequisitionSettingsRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ProgramRequisitionSettingsRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRequisitionSettingsRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

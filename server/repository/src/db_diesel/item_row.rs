@@ -155,8 +155,9 @@ impl<'a> ItemRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ItemRowDelete(pub String);
 impl Delete for ItemRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ItemRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ItemRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

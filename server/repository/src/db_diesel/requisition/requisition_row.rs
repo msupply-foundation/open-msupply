@@ -180,11 +180,11 @@ impl<'a> RequisitionRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&row)
     }
 
-    pub fn delete(&self, requisition_id: &str) -> Result<i64, RepositoryError> {
+    pub fn delete(&self, requisition_id: &str) -> Result<Option<i64>, RepositoryError> {
         let requisition = self.find_one_by_id(requisition_id)?;
         let requisition = match requisition {
             Some(requisition) => requisition,
-            None => return Err(RepositoryError::NotFound),
+            None => return Ok(None),
         };
 
         let change_log_id = self.insert_changelog(&requisition, RowActionType::Delete)?;
@@ -192,7 +192,7 @@ impl<'a> RequisitionRowRepository<'a> {
         diesel::delete(requisition_dsl::requisition.filter(requisition_dsl::id.eq(requisition_id)))
             .execute(self.connection.lock().connection())?;
 
-        Ok(change_log_id)
+        Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
@@ -223,9 +223,8 @@ impl<'a> RequisitionRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct RequisitionRowDelete(pub String);
 impl Delete for RequisitionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = RequisitionRowRepository::new(con).delete(&self.0)?;
-        Ok(())
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        RequisitionRowRepository::new(con).delete(&self.0)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

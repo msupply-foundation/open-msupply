@@ -85,8 +85,9 @@ impl Upsert for MasterListRow {
 #[derive(Debug, Clone)]
 pub struct MasterListRowDelete(pub String);
 impl Delete for MasterListRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        MasterListRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

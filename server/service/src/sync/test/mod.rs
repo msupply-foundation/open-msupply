@@ -120,7 +120,7 @@ pub(crate) fn check_integrated(
     for record in integration_records {
         match record {
             IntegrationOperation::Upsert(upsert, _) => upsert.assert_upserted(con),
-            IntegrationOperation::Delete(delete) => delete.assert_deleted(con),
+            IntegrationOperation::Delete(delete, _) => delete.assert_deleted(con),
         }
     }
 }
