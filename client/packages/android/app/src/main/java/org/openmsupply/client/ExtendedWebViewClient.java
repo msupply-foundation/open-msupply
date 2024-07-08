@@ -24,8 +24,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
     // Have to manually inject Capacitor JS, this typically happens in
     // WebViewLocalServer.handleProxyRequest
     // but since it manually uses net.URL to fetch the content of request, this
-    // fails for self signed certificates
-    // and plugin definitions etc is not injected
+    // fails for self signed certificates and plugin definitions etc is not injected
     @Override
     public void onPageStarted(WebView webView, String url, Bitmap favicon) {
         if (url.startsWith("data:text")) return;
@@ -58,6 +57,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
 
             // From JSInjector.getScriptString()
             String fullScript = globalJS +
+                    // " \n\n console.log('> injecting plugin code < " + url + "');\n\n" +
                     " \n\n" +
                     localUrlJS +
                     "\n\n" +
