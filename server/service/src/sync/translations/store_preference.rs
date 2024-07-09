@@ -39,6 +39,24 @@ pub struct LegacyPrefData {
     #[serde(default)]
     #[serde(rename = "can_issue_in_foreign_currency")]
     pub issue_in_foreign_currency: bool,
+    #[serde(default)]
+    #[serde(rename = "monthlyConsumptionLookBackPeriod")]
+    pub monthly_consumption_look_back_period: f64,
+    #[serde(default)]
+    #[serde(rename = "monthsLeadTime")]
+    pub months_lead_time: f64,
+    #[serde(default)]
+    #[serde(rename = "monthsOverstock")]
+    pub months_overstock: f64,
+    #[serde(default)]
+    #[serde(rename = "monthsUnderstock")]
+    pub months_understock: f64,
+    #[serde(default)]
+    #[serde(rename = "monthsItemsExpire")]
+    pub months_items_expire: f64,
+    #[serde(default)]
+    #[serde(rename = "stocktakeFrequency")]
+    pub stocktake_frequency: f64,
 }
 
 // Needs to be added to all_translators()
@@ -82,6 +100,12 @@ impl SyncTranslation for StorePreferenceTranslation {
             om_program_module,
             vaccine_module,
             issue_in_foreign_currency,
+            monthly_consumption_look_back_period,
+            months_lead_time,
+            months_overstock,
+            months_understock,
+            months_items_expire,
+            stocktake_frequency,
         } = data;
 
         let result = StorePreferenceRow {
@@ -93,6 +117,12 @@ impl SyncTranslation for StorePreferenceTranslation {
             om_program_module,
             vaccine_module,
             issue_in_foreign_currency,
+            monthly_consumption_look_back_period,
+            months_lead_time,
+            months_overstock,
+            months_understock,
+            months_items_expire,
+            stocktake_frequency,
         };
 
         Ok(PullTranslateResult::upsert(result))
