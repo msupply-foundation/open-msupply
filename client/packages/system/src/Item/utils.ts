@@ -36,6 +36,7 @@ export interface StockItemSearchInputProps
   extends GenericStockItemSearchInputProps {
   onChange: (item: ItemStockOnHandFragment | null) => void;
   extraFilter?: (item: ItemStockOnHandFragment) => boolean;
+  includeNonVisibleWithStockOnHand?: boolean;
 }
 
 export interface StockItemSearchInputWithStatsProps

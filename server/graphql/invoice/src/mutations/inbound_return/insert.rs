@@ -75,7 +75,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 
 #[derive(Interface)]
 #[graphql(name = "InsertInboundReturnErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum InsertErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotACustomer(OtherPartyNotACustomer),

@@ -26,7 +26,6 @@ pub struct NameByIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-#[async_trait::async_trait]
 impl Loader<NameByIdLoaderInput> for NameByIdLoader {
     type Value = Name;
     type Error = async_graphql::Error;

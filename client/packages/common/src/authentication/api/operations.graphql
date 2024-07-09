@@ -15,6 +15,7 @@ fragment UserStoreNode on UserStoreNode {
   }
   createdDate
   homeCurrencyCode
+  isDisabled
 }
 
 query authToken($username: String!, $password: String!) {

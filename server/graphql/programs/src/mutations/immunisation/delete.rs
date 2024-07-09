@@ -52,7 +52,7 @@ pub enum DeleteImmunisationProgramResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteImmunisationProgramErrorInterface {
     ImmunisationProgramNotFound(RecordNotFound),
     DatabaseError(DatabaseError),

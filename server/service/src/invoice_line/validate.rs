@@ -6,6 +6,7 @@ use repository::{
 
 pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     if let Some(number_of_packs) = number_of_packs_option {
+        // Don't use <= 0.0 or else can't 0 out inbound shipment lines
         if number_of_packs < 0.0 {
             return false;
         }

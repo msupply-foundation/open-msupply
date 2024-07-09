@@ -18,6 +18,7 @@ table! {
         logo -> Nullable<Text>,
         store_mode -> crate::db_diesel::store_row::StoreModeMapping,
         created_date -> Nullable<Date>,
+        is_disabled -> Bool,
     }
 }
 
@@ -44,6 +45,7 @@ pub struct StoreRow {
     pub logo: Option<String>,
     pub store_mode: StoreMode,
     pub created_date: Option<NaiveDate>,
+    pub is_disabled: bool,
 }
 
 pub struct StoreRowRepository<'a> {
