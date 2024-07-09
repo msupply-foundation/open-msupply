@@ -17,7 +17,7 @@ pub fn empty_str_as_option<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
 ) -> Result<Option<T>, D::Error> {
     let s: Option<String> = empty_str_as_option_string(d)?;
 
-    let Some(s) = s else { return Ok(None)};
+    let Some(s) = s else { return Ok(None) };
 
     let str_d: StrDeserializer<D::Error> = s.as_str().into_deserializer();
     Ok(Some(T::deserialize(str_d)?))
@@ -73,4 +73,9 @@ pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error
     // if the deserialisation panics then the whole server crashes, so have used the error & default
     Ok(NaiveTime::from_num_seconds_from_midnight_opt(secs, 0)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()))
+}
+
+pub fn string_to_f64<'de, D: Deserializer<'de>>(d: D) -> Result<f64, D::Error> {
+    let s: String = String::deserialize(d)?;
+    Ok(s.parse().unwrap_or(0.0))
 }
