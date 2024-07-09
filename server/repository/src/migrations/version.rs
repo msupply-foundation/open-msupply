@@ -22,7 +22,11 @@ impl PackageJsonAsset {
         let package_json = PackageJsonAsset::get("").expect("Embedded package json not found");
         let package: PackageJson = serde_json::from_slice(&package_json.data)
             .expect("Embedded package json cannot be parsed");
-        package.version
+        // strip out the -rc1 or -test detail from the version
+        let re = regex::Regex::new(r"\-.*").unwrap();
+        let version = re.replace(&package.version, "").to_string();
+
+        version
     }
 }
 

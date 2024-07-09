@@ -93,7 +93,7 @@ pub enum InsertStockInLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
     NewlyCreatedLineDoesNotExist,
 }
 
@@ -118,16 +118,11 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        barcode::{BarcodeFilter, BarcodeRepository},
-        mock::{
+        barcode::{BarcodeFilter, BarcodeRepository}, mock::{
             mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
             mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
             mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow,
-        StorePreferenceRowRepository,
+        }, test_db::{setup_all, setup_all_with_data}, EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow, StorePreferenceRowRepository
     };
     use util::{inline_edit, inline_init};
 
@@ -191,17 +186,17 @@ mod test {
             Err(ServiceError::PackSizeBelowOne)
         );
 
-        // NumberOfPacksBelowOne
+        // NumberOfPacksBelowZero
         assert_eq!(
             insert_stock_in_line(
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
                     r.pack_size = 1.0;
-                    r.number_of_packs = 0.0;
+                    r.number_of_packs = -1.0;
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // ItemNotFound

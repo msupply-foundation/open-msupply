@@ -1,6 +1,6 @@
+import { act } from 'react';
 import { useTabs } from './useTabs';
 import { renderHook } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
 
 describe('useTabs', () => {
   it('returns an the correct initial tab', () => {

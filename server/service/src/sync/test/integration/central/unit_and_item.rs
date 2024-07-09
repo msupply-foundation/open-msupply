@@ -55,6 +55,7 @@ impl SyncRecordTester for UnitAndItemTester {
             legacy_record: "".to_string(),
             default_pack_size: 1.0,
             is_active: true,
+            is_vaccine: false,
         };
         let item_json1 = extend_base(json!({
             "ID": item_row1.id,
@@ -74,6 +75,7 @@ impl SyncRecordTester for UnitAndItemTester {
             legacy_record: "".to_string(),
             default_pack_size: 1.0,
             is_active: true,
+            is_vaccine: false,
         };
         let item_json2 = extend_base(json!({
             "ID": item_row2.id,
@@ -93,6 +95,7 @@ impl SyncRecordTester for UnitAndItemTester {
             legacy_record: "".to_string(),
             default_pack_size: 1.0,
             is_active: true,
+            is_vaccine: false,
         };
         let item_json3 = extend_base(json!({
             "ID": item_row3.id,

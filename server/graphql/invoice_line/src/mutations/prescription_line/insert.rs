@@ -71,7 +71,7 @@ pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<InsertRes
 
 #[derive(Interface)]
 #[graphql(name = "InsertPrescriptionLineErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum InsertErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),
@@ -135,7 +135,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
-        | NumberOfPacksBelowOne => StandardGraphqlError::BadUserInput(formatted_error),
+        | NumberOfPacksBelowZero => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }
@@ -461,8 +461,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
+        //NumberOfPacksBelowZero
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

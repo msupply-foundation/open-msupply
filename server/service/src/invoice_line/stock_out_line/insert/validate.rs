@@ -30,7 +30,7 @@ pub fn validate(
         check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
     if invoice.status != InvoiceStatus::New && !check_number_of_packs(Some(input.number_of_packs)) {
-        return Err(NumberOfPacksBelowOne);
+        return Err(NumberOfPacksBelowZero);
     }
 
     if !check_store(&invoice, store_id) {

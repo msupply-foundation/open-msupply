@@ -3,6 +3,8 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod add_asset_internal_location_changelog;
+mod create_missing_master_list_and_program;
+mod create_system_user;
 mod remove_changelog_triggers;
 
 pub(crate) struct V2_02_00;
@@ -15,6 +17,8 @@ impl Migration for V2_02_00 {
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         add_asset_internal_location_changelog::migrate(connection)?;
         remove_changelog_triggers::migrate(connection)?;
+        create_missing_master_list_and_program::migrate(connection)?;
+        create_system_user::migrate(connection)?;
         Ok(())
     }
 }
@@ -22,12 +26,12 @@ impl Migration for V2_02_00 {
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_2_02_00() {
-    use v2_00_00::V2_00_00;
+    use v2_01_00::V2_01_00;
 
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let previous_version = V2_00_00.version();
+    let previous_version = V2_01_00.version();
     let version = V2_02_00.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {
