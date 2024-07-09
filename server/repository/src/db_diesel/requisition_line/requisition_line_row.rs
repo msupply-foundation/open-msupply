@@ -28,14 +28,6 @@ table! {
     }
 }
 
-table! {
-    #[sql_name = "requisition_line"]
-    requisition_line_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
 joinable!(requisition_line -> item_link (item_link_id));
 joinable!(requisition_line -> requisition (requisition_id));
 allow_tables_to_appear_in_same_query!(requisition_line, item_link);

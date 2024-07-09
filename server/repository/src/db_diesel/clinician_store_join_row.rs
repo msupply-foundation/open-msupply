@@ -13,14 +13,6 @@ table! {
   }
 }
 
-table! {
-    #[sql_name = "clinician_store_join"]
-    clinician_store_join_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
 joinable!(clinician_store_join -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(clinician, clinician_store_join);
 allow_tables_to_appear_in_same_query!(clinician_store_join, clinician_link);

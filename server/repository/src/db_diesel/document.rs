@@ -53,13 +53,6 @@ table! {
     }
 }
 
-table! {
-    #[sql_name = "document"]
-    document_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
 joinable!(document -> name_link (owner_name_link_id));
 allow_tables_to_appear_in_same_query!(document, name);
 allow_tables_to_appear_in_same_query!(document, name_link);

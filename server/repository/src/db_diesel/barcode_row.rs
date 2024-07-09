@@ -20,14 +20,6 @@ table! {
     }
 }
 
-table! {
-    #[sql_name = "barcode"]
-    barcode_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
 joinable!(barcode -> item (item_id));
 joinable!(barcode -> invoice_line (id));
 joinable!(barcode -> name_link (manufacturer_link_id));
