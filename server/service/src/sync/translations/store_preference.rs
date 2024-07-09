@@ -1,6 +1,8 @@
 use repository::{StorageConnection, StorePreferenceRow, StorePreferenceType, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
+use crate::sync::sync_serde::string_to_f64;
+
 use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -40,9 +42,11 @@ pub struct LegacyPrefData {
     #[serde(rename = "can_issue_in_foreign_currency")]
     pub issue_in_foreign_currency: bool,
     #[serde(default)]
+    #[serde(deserialize_with = "string_to_f64")]
     #[serde(rename = "monthlyConsumptionLookBackPeriod")]
     pub monthly_consumption_look_back_period: f64,
     #[serde(default)]
+    #[serde(deserialize_with = "string_to_f64")]
     #[serde(rename = "monthsLeadTime")]
     pub months_lead_time: f64,
     #[serde(default)]
