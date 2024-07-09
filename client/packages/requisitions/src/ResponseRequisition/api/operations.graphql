@@ -144,13 +144,27 @@ fragment ResponseRow on RequisitionNode {
   otherPartyId
   approvalStatus
   programName
-  numberOfShipments
   period {
     name
     startDate
     endDate
   }
   orderType
+  shipments {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      id
+      invoiceNumber
+      createdDatetime
+
+      user {
+        __typename
+        username
+      }
+    }
+  }
 }
 
 query responses(
