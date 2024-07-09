@@ -6144,7 +6144,6 @@ export type RequisitionNode = {
   maxMonthsOfStock: Scalars['Float']['output'];
   /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
   minMonthsOfStock: Scalars['Float']['output'];
-  numberOfShipments: Scalars['Int']['output'];
   orderType?: Maybe<Scalars['String']['output']>;
   /**
    * Request Requisition: Supplying store (store that is supplying stock)

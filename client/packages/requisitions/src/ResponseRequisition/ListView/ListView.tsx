@@ -83,7 +83,7 @@ export const ResponseRequisitionListView: FC = () => {
       key: 'numberOfShipments',
       label: 'label.shipments',
       description: 'description.number-of-shipments',
-      accessor: ({ rowData }) => rowData.numberOfShipments,
+      accessor: ({ rowData }) => rowData?.shipments?.totalCount ?? 0,
     },
     {
       key: 'programName',
