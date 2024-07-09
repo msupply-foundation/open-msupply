@@ -113,7 +113,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const getFormData = () => {
     const isNewRepack = !repackData;
-
     if (isNewRepack) {
       return {
         ...draft,
@@ -122,15 +121,16 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       };
     }
 
-    const { numberOfPacks, packSize } = repackData.from;
-    const { packSize: newPackSize, location } = repackData.to;
+    const { numberOfPacks, packSize, location: fromLocation } = repackData.from;
+    const { packSize: newPackSize, location: toLocation } = repackData.to;
     return {
       stockLineId: stockLine.id,
       numberOfPacks,
       packSize,
       newPackSize,
-      locationName: location?.name,
-      newLocationId: location?.id,
+      locationName: fromLocation?.name,
+      newLocationId: toLocation?.id,
+      newLocationName: toLocation?.name,
     };
   };
 
@@ -149,11 +149,11 @@ export const RepackModal: FC<RepackModalControlProps> = ({
               const result = await onInsert();
               const errorMessage = mapStructuredErrors(result);
 
-              // The new stockline is the second of two lines in the resulting
+              // The new stockline is the first of two lines in the resulting
               // invoice
               const newLineId =
                 result.__typename === 'InvoiceNode'
-                  ? result?.lines?.nodes?.[1]?.stockLine?.id ?? ''
+                  ? result?.lines?.nodes?.[0]?.stockLine?.id ?? ''
                   : '';
 
               if (errorMessage) {
