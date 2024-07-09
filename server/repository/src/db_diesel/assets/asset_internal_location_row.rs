@@ -58,7 +58,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
         };
 
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::AssetInternalLocationRow,
+            table_name: ChangelogTableName::AssetInternalLocation,
             record_id: row.id.clone(),
             row_action: action,
             store_id,

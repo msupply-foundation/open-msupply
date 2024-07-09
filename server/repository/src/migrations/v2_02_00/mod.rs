@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod add_asset_internal_location_changelog;
 mod remove_changelog_triggers;
 
 pub(crate) struct V2_02_00;
@@ -12,6 +13,7 @@ impl Migration for V2_02_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        add_asset_internal_location_changelog::migrate(connection)?;
         remove_changelog_triggers::migrate(connection)?;
         Ok(())
     }
