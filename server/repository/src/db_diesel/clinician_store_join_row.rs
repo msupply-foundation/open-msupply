@@ -63,9 +63,8 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
-            name_link_id: Some(row.clinician_link_id.clone()),
+            name_link_id: None,
         };
-
         ChangelogRepository::new(self.connection).insert(&row)
     }
 
