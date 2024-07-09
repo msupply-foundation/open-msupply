@@ -43,14 +43,6 @@ pub struct ClinicianRow {
     pub is_active: bool,
 }
 
-table! {
-    #[sql_name = "clinician"]
-    clinician_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
 allow_tables_to_appear_in_same_query!(clinician, clinician_link);
 allow_tables_to_appear_in_same_query!(clinician, name_link);
 

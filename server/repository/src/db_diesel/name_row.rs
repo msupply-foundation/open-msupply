@@ -58,14 +58,6 @@ table! {
 
 table! {
     #[sql_name = "name"]
-    name_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
-table! {
-    #[sql_name = "name"]
     name_oms_fields (id) {
         id -> Text,
         properties -> Nullable<Text>,

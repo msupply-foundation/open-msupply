@@ -27,14 +27,6 @@ table! {
     }
 }
 
-table! {
-    #[sql_name = "name_store_join"]
-    name_store_join_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
 #[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Clone, Default)]
 #[diesel(table_name = name_store_join)]
 pub struct NameStoreJoinRow {

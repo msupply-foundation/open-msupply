@@ -44,14 +44,6 @@ table! {
     }
 }
 
-table! {
-    #[sql_name = "requisition"]
-    requisition_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
 joinable!(requisition -> name_link (name_link_id));
 joinable!(requisition -> store (store_id));
 joinable!(requisition -> user_account (user_id));

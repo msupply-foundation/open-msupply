@@ -23,14 +23,6 @@ table! {
     }
 }
 
-table! {
-    #[sql_name = "temperature_breach_config"]
-    temperature_breach_config_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
 joinable!(temperature_breach_config -> store (store_id));
 
 allow_tables_to_appear_in_same_query!(temperature_breach_config, temperature_log);
