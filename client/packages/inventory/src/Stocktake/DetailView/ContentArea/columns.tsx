@@ -223,21 +223,13 @@ export const useStocktakeColumns = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
-          if (
-            lines.every(
-              line =>
-                line.countedNumberOfPacks === null ||
-                line.countedNumberOfPacks === undefined
-            )
-          ) {
-            return null;
-          }
-          return (
-            lines.reduce(
-              (total, line) => total + (line.countedNumberOfPacks ?? 0),
-              0
-            ) ?? 0
-          ).toString();
+          let countedLines = lines.flatMap(
+            ({ countedNumberOfPacks: counted }) =>
+              typeof counted === 'number' ? [counted] : []
+          );
+          // No counted lines
+          if (countedLines.length === 0) return null;
+          return countedLines.reduce((total, counted) => total + counted, 0);
         } else {
           return rowData.countedNumberOfPacks;
         }
