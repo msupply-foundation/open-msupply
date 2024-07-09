@@ -57,26 +57,14 @@ impl<'a> DocumentRegistryRowRepository<'a> {
         DocumentRegistryRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
         diesel::insert_into(document_registry_dsl::document_registry)
             .values(row)
             .on_conflict(document_registry_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id, RowActionType::Upsert)
-    }
-
-    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
-        let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::Document,
-            record_id: uid.to_string(),
-            row_action: action,
-            store_id: None,
-            name_link_id: None,
-        };
-
-        ChangelogRepository::new(self.connection).insert(&row)
+        Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<DocumentRegistryRow>, RepositoryError> {
@@ -106,8 +94,8 @@ impl<'a> DocumentRegistryRowRepository<'a> {
 
 impl Upsert for DocumentRegistryRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = DocumentRegistryRowRepository::new(con).upsert_one(self)?;
-        Ok(Some(change_log_id))
+        DocumentRegistryRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
