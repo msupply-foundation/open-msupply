@@ -110,7 +110,7 @@ async fn sync_status() {
                 .map(|i| {
                     inline_init(|r: &mut LocationRow| {
                         r.id = i.to_string();
-                        r.store_id = mock_store_a().id;
+                        r.store_id = mock_store_b().id;
                     })
                 })
                 .collect();
