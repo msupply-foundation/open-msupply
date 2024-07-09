@@ -222,11 +222,6 @@ fn create_filtered_query(
 
         if let Some(shipment_created) = shipment_created {
             let requisition_ids = invoice_dsl::invoice
-                .left_join(
-                    requisition_dsl::requisition.on(requisition_dsl::id
-                        .nullable()
-                        .eq(invoice_dsl::requisition_id)),
-                )
                 .select(invoice_dsl::requisition_id)
                 .into_boxed();
 
