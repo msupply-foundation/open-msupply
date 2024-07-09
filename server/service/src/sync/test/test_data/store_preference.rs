@@ -59,12 +59,13 @@ const STORE_PREFERENCE_1: (&str, &str) = (
         "monthlyConsumptionLookBackPeriod": "0",
         "monthsLeadTime": "0",
         "usesDispensaryModule": false,
-        "monthsOverstock": 12,
-        "monthsUnderstock": 4,
-        "monthsItemsExpire": 2,
+        "monthsOverstock": 6.12,
+        "monthsUnderstock": 4.42,
+        "monthsItemsExpire": 2.12,
         "boxPrefix": "",
         "boxPercentageSpace": 0,
-        "omSupplyUsesProgramModule": true
+        "omSupplyUsesProgramModule": true,
+        "stocktakeFrequency": 1.34
     }
 }"#,
 );
@@ -129,7 +130,8 @@ const STORE_PREFERENCE_2: (&str, &str) = (
         "monthsUnderstock": 3,
         "monthsItemsExpire": 3,
         "boxPrefix": "",
-        "boxPercentageSpace": 0
+        "boxPercentageSpace": 0,
+        "stocktakeFrequency": 1
     }
 }"#,
 );
@@ -148,6 +150,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 om_program_module: true,
                 vaccine_module: false,
                 issue_in_foreign_currency: true,
+                monthly_consumption_look_back_period: 0.0,
+                months_lead_time: 0.0,
+                months_overstock: 6.12,
+                months_understock: 4.42,
+                months_items_expire: 2.12,
+                stocktake_frequency: 1.34,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -163,6 +171,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 om_program_module: false,
                 vaccine_module: true,
                 issue_in_foreign_currency: false,
+                monthly_consumption_look_back_period: 0.0,
+                months_lead_time: 0.0,
+                months_overstock: 6.0,
+                months_understock: 3.0,
+                months_items_expire: 3.0,
+                stocktake_frequency: 1.0,
             },
         ),
     ]
