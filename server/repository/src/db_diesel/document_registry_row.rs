@@ -95,13 +95,13 @@ impl<'a> DocumentRegistryRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
+    // pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    //     diesel::delete(
+    //         document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
+    //     )
+    //     .execute(self.connection.lock().connection())?;
+    //     Ok(())
+    // }
 }
 
 impl Upsert for DocumentRegistryRow {
