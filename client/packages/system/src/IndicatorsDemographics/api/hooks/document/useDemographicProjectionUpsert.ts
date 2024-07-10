@@ -8,7 +8,6 @@ import { useDemographicsApi } from '../utils/useDemographicApi';
 export const useDemographicProjectionUpsert = () => {
   const queryClient = useQueryClient();
   const api = useDemographicsApi();
-
   const { mutateAsync: insert } = useDemographicProjectionInsert();
   const { mutateAsync: update } = useDemographicProjectionUpdate();
 
@@ -29,7 +28,6 @@ export const useDemographicProjectionUpsert = () => {
       return result;
     }
   };
-
   return {
     upsertProjection,
     invalidateQueries,

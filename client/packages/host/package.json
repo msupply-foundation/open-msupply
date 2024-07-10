@@ -5,11 +5,11 @@
   "main": "./src/index.ts",
   "private": true,
   "devDependencies": {
-    "@capacitor-community/keep-awake": "^4.0.0",
+    "@capacitor-community/keep-awake": "^5.0.0",
     "copy-webpack-plugin": "^11.0.0",
     "find-up": "^6.3.0",
     "html-webpack-plugin": "^5.5.0",
-    "react-refresh": "0.14.0",
+    "react-refresh": "0.14.2",
     "serve": "^14.2.0",
     "webpack": "^5.88.1",
     "webpack-cli": "^5.0.1",
@@ -27,7 +27,7 @@
     "eslint": "eslint ./src"
   },
   "dependencies": {
-    "@fontsource-variable/inter": "^5.0.5",
+    "@fontsource-variable/inter": "^5.0.19",
     "@openmsupply-client/coldchain": "^0.0.0",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
@@ -43,8 +43,5 @@
     "react-qr-code": "^2.0.12",
     "swc-loader": "^0.2.0",
     "webpack-bundle-analyzer": "^4.9.0"
-  },
-  "msw": {
-    "workerDirectory": "public"
   }
 }

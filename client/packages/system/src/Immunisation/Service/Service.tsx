@@ -3,7 +3,6 @@ import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ImmunisationProgramListView } from '../ListView';
 import { ImmunisationProgramDetailView } from '../ImmunisationProgramDetailView';
-import { VaccineCourseView } from '../VaccineCourseView';
 
 export const ImmunisationProgramService: FC = () => {
   const immunisationProgramsRoute = RouteBuilder.create(
@@ -12,12 +11,6 @@ export const ImmunisationProgramService: FC = () => {
   const immunisationProgramRoute = RouteBuilder.create(
     AppRoute.ImmunisationPrograms
   )
-    .addPart(':id')
-    .build();
-  const immunisationDetailRoute = RouteBuilder.create(
-    AppRoute.ImmunisationPrograms
-  )
-    .addPart(':id')
     .addPart(':id')
     .build();
 
@@ -31,7 +24,6 @@ export const ImmunisationProgramService: FC = () => {
         path={immunisationProgramRoute}
         element={<ImmunisationProgramDetailView />}
       />
-      <Route path={immunisationDetailRoute} element={<VaccineCourseView />} />
     </Routes>
   );
 };

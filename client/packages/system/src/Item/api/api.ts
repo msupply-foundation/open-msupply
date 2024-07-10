@@ -87,7 +87,10 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
-    }: ListParams<ItemRowFragment>) => {
+      includeNonVisibleWithStockOnHand,
+    }: ListParams<ItemRowFragment> & {
+      includeNonVisibleWithStockOnHand?: boolean;
+    }) => {
       const result = await sdk.itemStockOnHand({
         key: itemParsers.toSortField(sortBy),
         first,
@@ -97,6 +100,9 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
+          [includeNonVisibleWithStockOnHand
+            ? 'isVisibleOrOnHand'
+            : 'isVisible']: true,
           isVisible: true,
           isActive: true,
         },
@@ -151,7 +157,8 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         // because service items don't have SOH & AMC so it's odd to show them alongside stock items
         filter: {
           ...filterBy,
-          isVisible: true,
+          // includes non-visible items that have stock on hand
+          isVisibleOrOnHand: true,
           isActive: true,
         },
       });

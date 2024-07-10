@@ -216,7 +216,7 @@ mod test {
                 inline_init(|r: &mut UpdateStockInLine| {
                     r.id = mock_inbound_return_a_invoice_line_a().id;
                     r.pack_size = Some(1.0);
-                    r.number_of_packs = Some(0.0);
+                    r.number_of_packs = Some(-1.0);
                 }),
             ),
             Err(ServiceError::NumberOfPacksBelowZero)

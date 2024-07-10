@@ -29,7 +29,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
-  const textProps = { textAlign: 'end' as 'end' | 'start', paddingRight: 3 };
+  const textProps = { textAlign: 'end' as 'end' | 'start' };
   const labelProps = { sx: { width: 0 } };
 
   return (
@@ -117,24 +117,33 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
               />
             }
           />
-          <InputWithLabelRow
-            label={t('label.new-location')}
-            labelWidth="100%"
-            Input={
-              <LocationSearchInput
-                autoFocus={false}
-                disabled={!isNew}
-                selectedLocation={location}
-                width={160}
-                onChange={location => {
-                  setLocation(location);
-                  onChange({
-                    newLocationId: location?.id,
-                  });
-                }}
-              />
-            }
-          />
+          {data.newLocationName || !isNew ? (
+            <TextWithLabelRow
+              label={t('label.new-location')}
+              text={data.newLocationName ?? UNDEFINED_STRING_VALUE}
+              textProps={textProps}
+              labelProps={labelProps}
+            />
+          ) : (
+            <InputWithLabelRow
+              label={t('label.new-location')}
+              labelWidth="100%"
+              Input={
+                <LocationSearchInput
+                  autoFocus={false}
+                  disabled={!isNew}
+                  selectedLocation={location}
+                  width={160}
+                  onChange={location => {
+                    setLocation(location);
+                    onChange({
+                      newLocationId: location?.id,
+                    });
+                  }}
+                />
+              }
+            />
+          )}
         </Box>
       </Box>
     </Box>

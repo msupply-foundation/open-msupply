@@ -5,6 +5,7 @@ import {
   ColumnAlign,
   DataTable,
   DateUtils,
+  Formatter,
   RecordPatch,
   TableProvider,
   createTableStore,
@@ -25,7 +26,8 @@ import {
   calculateAcrossRow,
   mapHeaderData,
   mapProjection,
-  toIndicatorFragment,
+  toInsertIndicator,
+  toUpdateIndicator,
 } from './utils';
 import { HeaderData, Row } from '../types';
 
@@ -48,7 +50,6 @@ const IndicatorsDemographicsComponent = () => {
 
   const { draft, setDraft } = useDemographicData.indicator.list(headerDraft);
   const baseYear = headerDraft?.baseYear ?? DateUtils.getCurrentYear();
-
   const { data: projection, isLoading: isLoadingProjection } =
     useDemographicData.projection.get(baseYear);
 
@@ -58,7 +59,6 @@ const IndicatorsDemographicsComponent = () => {
   } = useDemographicData.indicator.insert();
   const { mutateAsync: updateDemographicIndicator } =
     useDemographicData.indicator.update();
-
   const { upsertProjection, invalidateQueries: invalidateProjectionQueries } =
     useDemographicData.projection.upsert();
 
@@ -72,7 +72,6 @@ const IndicatorsDemographicsComponent = () => {
 
     const basePopulation = patch['0'] ?? 0;
     let updatedDraft: Record<string, Row> = {};
-
     const indexPopulationChange =
       basePopulation !== draft[patch.id]?.basePopulation &&
       patch.id === GENERAL_POPULATION_ID;
@@ -99,7 +98,7 @@ const IndicatorsDemographicsComponent = () => {
 
     setIsDirty(true);
 
-    const patchedRow: Row = { ...existingRow, ...patch };
+    const patchedRow: Row = { ...existingRow, ...patch, isError: false };
 
     // change state of name only if only name changes
     if (!percentageChange) {
@@ -115,17 +114,19 @@ const IndicatorsDemographicsComponent = () => {
     setDraft({ ...draft, [patch.id]: updatedRow });
   };
 
+  const createNewRow = (row: Row) => {
+    setDraft({ ...draft, [row.id]: row });
+    setIsDirty(true);
+  };
+
   // generic function for handling percentage change, and then re calculating the values of that year
   const handleGrowthChange = (updatedHeader: HeaderData) => {
     setIsDirty(true);
-
     setHeaderDraft(updatedHeader);
     calculateDown(updatedHeader);
   };
-
   const calculateDown = (updatedHeader: HeaderData) => {
     const updatedDraft: Record<string, Row> = {};
-
     Object.values(draft).forEach(row => {
       const updatedRow = calculateAcrossRow(
         row,
@@ -134,27 +135,24 @@ const IndicatorsDemographicsComponent = () => {
       );
       updatedDraft[updatedRow.id] = updatedRow;
     });
-
     setDraft(updatedDraft);
   };
 
   const insertIndicator = async (row: Row) => {
     try {
-      await insertDemographicIndicator(
-        toIndicatorFragment(row, indexPopulation)
-      );
+      await insertDemographicIndicator(toInsertIndicator(row, indexPopulation));
     } catch (e) {
-      console.error(e);
+      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
+      throw e;
     }
   };
 
   const updateIndicator = async (row: Row) => {
     try {
-      await updateDemographicIndicator(
-        toIndicatorFragment(row, indexPopulation)
-      );
+      await updateDemographicIndicator(toUpdateIndicator(row, indexPopulation));
     } catch (e) {
-      console.error(e);
+      setDraft({ ...draft, [row.id]: { ...row, isError: true } });
+      throw e;
     }
   };
 
@@ -180,7 +178,13 @@ const IndicatorsDemographicsComponent = () => {
         success(t('success.data-saved'))();
         invalidateQueries();
       })
-      .catch(e => error(`${t('error.problem-saving')}: ${e.message}`)());
+      .catch(e =>
+        error(
+          t('error.an-error-occurred', {
+            message: Formatter.fromCamelCase(e.message),
+          })
+        )()
+      );
   };
 
   const cancel = () => {
@@ -222,9 +226,9 @@ const IndicatorsDemographicsComponent = () => {
   return (
     <>
       <AppBarButtons
-        addRow={newRow => setDraft({ ...draft, [newRow.id]: newRow })}
+        createNewRow={createNewRow}
         rows={Object.values(draft)}
-      ></AppBarButtons>
+      ></AppBarButtons>{' '}
       <Box sx={{ width: '100%' }} padding={0}>
         <GrowthRow
           columns={columns}

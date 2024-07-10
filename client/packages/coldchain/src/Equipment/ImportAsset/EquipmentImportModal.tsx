@@ -12,7 +12,6 @@ import {
   DialogButton,
   TabContext,
   useTabs,
-  Box,
   Grid,
   Alert,
   ClickableStepper,
@@ -47,6 +46,7 @@ export type ImportRow = {
   catalogueItemCode: string | null | undefined;
   serialNumber: string | null | undefined;
   installationDate: string | null | undefined;
+  replacementDate: string | null | undefined;
   id: string;
   notes: string;
   errorMessage: string;
@@ -131,6 +131,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     fetchAsync,
     isLoading,
   } = useAssetData.document.listAll();
+  const { data: properties } = useAssetData.utils.properties();
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
@@ -149,7 +150,8 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         toExportEquipment(row, index)
       ),
       t,
-      isCentralServer
+      isCentralServer,
+      properties?.map(p => p.key) ?? []
     );
     FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
     success(t('success'))();
@@ -301,10 +303,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
         <TabContext value={currentTab}>
           <Grid container flex={1} flexDirection="column" gap={1}>
-            <Grid item display="flex">
-              <Box flex={1} flexBasis="40%"></Box>
-              <Box flex={1} flexBasis="60%"></Box>
-            </Grid>
             <QueryParamsProvider
               createStore={createQueryParamsStore<StoreRowFragment>({
                 initialSortBy: { key: 'code' },

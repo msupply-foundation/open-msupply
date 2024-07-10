@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type StoreRowFragment = { __typename: 'StoreNode', code: string, id: string };
 
 export type StoresQueryVariables = Types.Exact<{
@@ -52,20 +51,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStoresQuery((req, res, ctx) => {
- *   const { first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ stores })
- *   )
- * })
- */
-export const mockStoresQuery = (resolver: ResponseResolver<GraphQLRequest<StoresQueryVariables>, GraphQLContext<StoresQuery>, any>) =>
-  graphql.query<StoresQuery, StoresQueryVariables>(
-    'stores',
-    resolver
-  )

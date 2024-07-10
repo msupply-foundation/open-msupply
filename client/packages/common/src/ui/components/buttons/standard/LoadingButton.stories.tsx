@@ -1,10 +1,10 @@
 import React from 'react';
 import { Box, FormControlLabel, Switch } from '@mui/material';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { LoadingButton } from './LoadingButton';
 import { ArrowRightIcon, SvgIconProps } from '@common/icons';
 
-const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
+const Template: StoryFn<React.FC<SvgIconProps>> = args => {
   const [isLoading, setIsLoading] = React.useState(false);
   return (
     <Box>
@@ -38,6 +38,6 @@ export const Secondary = Template.bind({});
 export default {
   title: 'Buttons/LoadingButton',
   component: LoadingButton,
-} as ComponentMeta<typeof LoadingButton>;
+} as Meta<typeof LoadingButton>;
 
 Secondary.args = { color: 'secondary' } as SvgIconProps;

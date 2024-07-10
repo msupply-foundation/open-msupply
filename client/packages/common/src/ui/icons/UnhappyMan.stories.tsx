@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { UnhappyMan } from './UnhappyMan';
 
@@ -9,9 +9,9 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof UnhappyMan>;
+} as Meta<typeof UnhappyMan>;
 
-const Template: ComponentStory<typeof UnhappyMan> = args => (
+const Template: StoryFn<typeof UnhappyMan> = args => (
   <UnhappyMan {...args} />
 );
 

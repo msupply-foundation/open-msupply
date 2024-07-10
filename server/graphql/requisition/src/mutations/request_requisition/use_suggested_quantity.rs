@@ -20,7 +20,7 @@ pub struct UseSuggestedQuantityInput {
 
 #[derive(Interface)]
 #[graphql(name = "UseSuggestedQuantityErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditRequisition(CannotEditRequisition),

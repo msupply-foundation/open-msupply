@@ -1,14 +1,14 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { VerticalStepper } from './VerticalStepper';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 
 export default {
   title: 'Steppers/VerticalStepper',
   component: VerticalStepper,
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   return (
     <>
       <Typography>

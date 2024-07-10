@@ -12,7 +12,6 @@ pub struct VaccineCourseItemByVaccineCourseIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for VaccineCourseItemByVaccineCourseIdLoader {
     type Value = Vec<VaccineCourseItem>;
     type Error = RepositoryError;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { InfoTooltipIcon } from './InfoTooltipIcon';
 import { Box } from '@mui/material';
 
@@ -8,7 +8,7 @@ export default {
   component: InfoTooltipIcon,
 };
 
-const Example: Story = () => {
+const Example: StoryFn = () => {
   return (
     <Box width="50px" height="50px">
       <InfoTooltipIcon title="Here is some very helpful text, explaining something!" />
