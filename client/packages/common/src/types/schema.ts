@@ -6652,10 +6652,16 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
+  monthlyConsumptionLookBackPeriod: Scalars['Float']['output'];
+  monthsItemsExpire: Scalars['Float']['output'];
+  monthsLeadTime: Scalars['Float']['output'];
+  monthsOverstock: Scalars['Float']['output'];
+  monthsUnderstock: Scalars['Float']['output'];
   omProgramModule: Scalars['Boolean']['output'];
   packToOne: Scalars['Boolean']['output'];
   requestRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
   responseRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
+  stocktakeFrequency: Scalars['Float']['output'];
   vaccineModule: Scalars['Boolean']['output'];
 };
 
