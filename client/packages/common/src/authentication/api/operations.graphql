@@ -12,6 +12,12 @@ fragment UserStoreNode on UserStoreNode {
     omProgramModule
     vaccineModule
     issueInForeignCurrency
+    monthlyConsumptionLookBackPeriod
+    monthsLeadTime
+    monthsOverstock
+    monthsUnderstock
+    monthsItemsExpire
+    stocktakeFrequency
   }
   createdDate
   homeCurrencyCode
