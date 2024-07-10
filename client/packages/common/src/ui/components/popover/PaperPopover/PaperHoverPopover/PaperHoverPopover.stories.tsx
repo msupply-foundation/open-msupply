@@ -1,5 +1,5 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { PaperHoverPopover } from './PaperHoverPopover';
 import { PaperPopoverSection } from '@common/components';
 import { Box, Typography } from '@mui/material';
@@ -10,7 +10,7 @@ export default {
   component: PaperHoverPopover,
 };
 
-const Example: Story = () => {
+const Example: StoryFn = () => {
   const t = useTranslation('app');
 
   return (

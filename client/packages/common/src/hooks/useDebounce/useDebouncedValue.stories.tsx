@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { useDebouncedValue } from './useDebouncedValue';
 import { Box, TextField, Typography } from '@mui/material';
 import { useDebounceCallback } from './useDebounceCallback';
@@ -9,7 +9,7 @@ export default {
   title: 'Hooks/useDebounce',
 };
 
-const Value: Story = () => {
+const Value: StoryFn = () => {
   const [debounceTime, setDebounceTime] = useState(500);
   const [number, setNumber] = useState(0);
   const debouncedNumber = useDebouncedValue(number, debounceTime);
@@ -37,7 +37,7 @@ const Value: Story = () => {
   );
 };
 
-const Callback: Story = () => {
+const Callback: StoryFn = () => {
   const [debounceTime, setDebounceTime] = useState(500);
   const [number, setNumber] = useState(0);
   const cb = useDebounceCallback(setNumber, [], debounceTime);

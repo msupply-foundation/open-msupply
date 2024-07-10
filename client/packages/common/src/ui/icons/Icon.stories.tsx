@@ -1,12 +1,14 @@
 // Icons sourced from https://feathericons.com/
 
 import React, { ChangeEvent, useState } from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
-
+import { StoryFn, Meta } from '@storybook/react';
+import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 import { SvgIconProps } from '.';
+
 import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
 import { ArrowRightIcon } from './ArrowRight';
+import { BarChart2Icon } from './BarChart2';
 import { BarChartIcon } from './BarChart';
 import { BookIcon } from './Book';
 import { CartIcon } from './Cart';
@@ -31,8 +33,8 @@ import { EditIcon } from './Edit';
 import { ExternalLinkIcon } from './ExternalLink';
 import { EyeIcon } from './Eye';
 import { EyeOffIcon } from './EyeOff';
-import { FileUploadIcon } from './FileUpload';
 import { FileIcon } from './File';
+import { FileUploadIcon } from './FileUpload';
 import { FilterIcon } from './Filter';
 import { HelpIcon } from './Help';
 import { HomeIcon } from './Home';
@@ -44,8 +46,8 @@ import { ListIcon } from './List';
 import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 import { MedicineIcon } from './MedicineIcon';
 import { MenuDotsIcon } from './MenuDots';
-import { MessagesIcon } from './Messages';
 import { MessageSquareIcon } from './MessageSquare';
+import { MessagesIcon } from './Messages';
 import { MinusCircleIcon } from './MinusCircle';
 import { PlusCircleIcon } from './PlusCircle';
 import { PowerIcon } from './Power';
@@ -57,8 +59,8 @@ import { RewindIcon } from './Rewind';
 import { SaveIcon } from './Save';
 import { ScanIcon } from './Scan';
 import { SearchIcon } from './Search';
-import { SettingsIcon } from './Settings';
 import { SettingsCircleIcon } from './SettingsCircle';
+import { SettingsIcon } from './Settings';
 import { SidebarIcon } from './Sidebar';
 import { SlidersIcon } from './Sliders';
 import { SnowflakeIcon } from './Snowflake';
@@ -70,14 +72,12 @@ import { SuppliersIcon } from './Suppliers';
 import { ThermometerIcon } from './Thermometer';
 import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
-import { BarChart2Icon } from './BarChart2';
 import { TruckIcon } from './Truck';
 import { UploadIcon } from './Upload';
 import { UserCircleIcon } from './UserCircle';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
 import { ZapIcon } from './Zap';
-import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 
 export default {
   title: 'Assets/Svg Icon',
@@ -85,7 +85,7 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof Grid>;
+} as Meta<typeof Grid>;
 
 const StyledPaper = styled(Paper)({
   textAlign: 'center',
@@ -98,12 +98,13 @@ type Icon = {
   name: string;
 };
 
-const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
+const Template: StoryFn<React.FC<SvgIconProps>> = args => {
   const icons: Icon[] = [
     { icon: <AlertIcon {...args} />, name: 'Alert' },
     { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
     { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
     { icon: <BarChartIcon {...args} />, name: 'BarChart' },
+    { icon: <BarChart2Icon {...args} />, name: 'BarChart2Icon' },
     { icon: <BookIcon {...args} />, name: 'Book' },
     { icon: <CartIcon {...args} />, name: 'Cart' },
     { icon: <CentralIcon {...args} />, name: 'Central' },
@@ -114,7 +115,6 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
       icon: <CheckboxIndeterminateIcon {...args} />,
       name: 'Checkbox Indeterminate',
     },
-    { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDownIcon {...args} />, name: 'ChevronDown' },
     { icon: <ChevronsDownIcon {...args} />, name: 'ChevronsDown' },
     { icon: <CircleAlertIcon {...args} />, name: 'CircleAlert' },
@@ -174,7 +174,6 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
-    { icon: <BarChart2Icon {...args} />, name: 'BarChart2Icon' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UploadIcon {...args} />, name: 'Upload' },
     { icon: <UserCircleIcon {...args} />, name: 'UserCircle' },

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
-import { ComponentMeta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import { SplitButton, SplitButtonOption } from './SplitButton';
 import { useIntlUtils } from '@common/intl';
 
@@ -111,4 +111,4 @@ export const OptionDisabled = OptionDisabledComponent.bind({});
 export default {
   title: 'Buttons/SplitButton',
   component: SplitButton,
-} as ComponentMeta<typeof SplitButton>;
+} as Meta<typeof SplitButton>;

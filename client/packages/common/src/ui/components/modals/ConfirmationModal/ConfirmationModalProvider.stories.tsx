@@ -1,5 +1,5 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { BaseButton } from '../../buttons';
 import { useConfirmationModal } from './useConfirmationModal';
 
@@ -8,7 +8,7 @@ export default {
   component: useConfirmationModal,
 };
 
-const UseConfirmationModalStory: Story = () => {
+const UseConfirmationModalStory: StoryFn = () => {
   const getConfirmation = useConfirmationModal({
     title: 'Are you sure?',
     message: 'This will delete all your data.',
