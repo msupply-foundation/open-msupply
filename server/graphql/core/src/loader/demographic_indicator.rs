@@ -11,7 +11,6 @@ pub struct DemographicIndicatorLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for DemographicIndicatorLoader {
     type Value = DemographicIndicatorRow;
     type Error = RepositoryError;

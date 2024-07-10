@@ -1,14 +1,14 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Alert } from './Alert';
 import { Box } from '@mui/material';
 
 export default {
   title: 'Panels/Alert',
   component: Alert,
-} as ComponentMeta<typeof Alert>;
+} as Meta<typeof Alert>;
 
-const Template: ComponentStory<typeof Alert> = () => (
+const Template: StoryFn<typeof Alert> = () => (
   <Box sx={{ width: '80%' }} gap={2}>
     <Box paddingBottom={1} display="flex">
       <Alert severity="success">This is a success message</Alert>

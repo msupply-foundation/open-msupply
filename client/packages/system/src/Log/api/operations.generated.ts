@@ -3,7 +3,6 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type LogLevelRowFragment = { __typename: 'LogLevelNode', level: Types.LogLevelEnum };
 
 export type LogRowFragment = { __typename: 'LogNode', fileContent?: Array<string> | null, fileNames?: Array<string> | null };
@@ -88,52 +87,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLogLevelQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ logLevel })
- *   )
- * })
- */
-export const mockLogLevelQuery = (resolver: ResponseResolver<GraphQLRequest<LogLevelQueryVariables>, GraphQLContext<LogLevelQuery>, any>) =>
-  graphql.query<LogLevelQuery, LogLevelQueryVariables>(
-    'logLevel',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLogFileNamesQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ logFileNames })
- *   )
- * })
- */
-export const mockLogFileNamesQuery = (resolver: ResponseResolver<GraphQLRequest<LogFileNamesQueryVariables>, GraphQLContext<LogFileNamesQuery>, any>) =>
-  graphql.query<LogFileNamesQuery, LogFileNamesQueryVariables>(
-    'logFileNames',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLogContentsByFileNameQuery((req, res, ctx) => {
- *   const { fileName } = req.variables;
- *   return res(
- *     ctx.data({ logContents })
- *   )
- * })
- */
-export const mockLogContentsByFileNameQuery = (resolver: ResponseResolver<GraphQLRequest<LogContentsByFileNameQueryVariables>, GraphQLContext<LogContentsByFileNameQuery>, any>) =>
-  graphql.query<LogContentsByFileNameQuery, LogContentsByFileNameQueryVariables>(
-    'logContentsByFileName',
-    resolver
-  )

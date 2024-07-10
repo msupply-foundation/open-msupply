@@ -25,15 +25,15 @@ util = { path = "../util" }
 machine-uid = { version = "0.5.1", optional = true }
 
 actix-cors = "0.7.0"
-actix-web = { version = "4.7.0", features = ["rustls"] }
+actix-web = { version = "4.7.0", features = ["rustls-0_23"] }
 actix-files.workspace = true
 anyhow.workspace = true
 config = "0.12.0"
 chrono = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }
-rustls = "0.20.9"
-rustls-pemfile = "1.0.0"
+rustls = { version = "0.23.10", default-features = false, features = ["ring"] }
+rustls-pemfile = "2.1.2"
 serde = { workspace = true }
 tokio = { workspace = true }
 clap = { workspace = true }

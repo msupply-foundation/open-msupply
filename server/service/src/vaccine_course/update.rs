@@ -32,7 +32,7 @@ pub struct VaccineCourseItemInput {
 }
 
 impl VaccineCourseItemInput {
-    fn to_domain(self, vaccine_course_id: String) -> VaccineCourseItemRow {
+    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseItemRow {
         VaccineCourseItemRow {
             id: self.id,
             item_link_id: self.item_id, // Todo item_link_id ? https://github.com/msupply-foundation/open-msupply/issues/4129
@@ -49,7 +49,7 @@ pub struct VaccineCourseScheduleInput {
 }
 
 impl VaccineCourseScheduleInput {
-    fn to_domain(self, vaccine_course_id: String) -> VaccineCourseScheduleRow {
+    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseScheduleRow {
         VaccineCourseScheduleRow {
             id: self.id,
             dose_number: self.dose_number,

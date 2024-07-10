@@ -3,8 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type AssetRowFragment = { __typename: 'AssetNode', assetNumber?: string | null, id: string, notes?: string | null, serialNumber?: string | null, modifiedDatetime: any, installationDate?: string | null, createdDatetime: any, replacementDate?: string | null, storeId?: string | null, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, status?: Types.StatusType | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
+export type AssetRowFragment = { __typename: 'AssetNode', assetNumber?: string | null, id: string, notes?: string | null, serialNumber?: string | null, modifiedDatetime: any, installationDate?: string | null, createdDatetime: any, replacementDate?: string | null, storeId?: string | null, properties: string, catalogProperties?: string | null, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, status?: Types.StatusType | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, code: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
 export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber?: string | null, createdDatetime: any, id: string, installationDate?: string | null, properties: string, catalogProperties?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, donorNameId?: string | null, warrantyStart?: string | null, warrantyEnd?: string | null, needsReplacement?: boolean | null, documents: { __typename: 'SyncFileReferenceConnector', nodes: Array<{ __typename: 'SyncFileReferenceNode', fileName: string, id: string, mimeType?: string | null }> }, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, status?: Types.StatusType | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', id: string, name: string } | null, assetClass?: { __typename: 'AssetClassNode', id: string, name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', id: string, name: string } | null, donor?: { __typename: 'NameNode', id: string, name: string } | null };
 
@@ -20,7 +19,7 @@ export type AssetsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetsQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', assetNumber?: string | null, id: string, notes?: string | null, serialNumber?: string | null, modifiedDatetime: any, installationDate?: string | null, createdDatetime: any, replacementDate?: string | null, storeId?: string | null, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, status?: Types.StatusType | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
+export type AssetsQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', assetNumber?: string | null, id: string, notes?: string | null, serialNumber?: string | null, modifiedDatetime: any, installationDate?: string | null, createdDatetime: any, replacementDate?: string | null, storeId?: string | null, properties: string, catalogProperties?: string | null, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, status?: Types.StatusType | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, code: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
 
 export type AssetByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -103,10 +102,13 @@ export const AssetRowFragmentDoc = gql`
   catalogueItem {
     manufacturer
     model
+    code
   }
   assetType {
     name
   }
+  properties
+  catalogProperties
 }
     `;
 export const AssetFragmentDoc = gql`
@@ -359,138 +361,3 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAssetsQuery((req, res, ctx) => {
- *   const { desc, filter, first, key, offset, storeId } = req.variables;
- *   return res(
- *     ctx.data({ assets })
- *   )
- * })
- */
-export const mockAssetsQuery = (resolver: ResponseResolver<GraphQLRequest<AssetsQueryVariables>, GraphQLContext<AssetsQuery>, any>) =>
-  graphql.query<AssetsQuery, AssetsQueryVariables>(
-    'assets',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAssetByIdQuery((req, res, ctx) => {
- *   const { storeId, assetId } = req.variables;
- *   return res(
- *     ctx.data({ assets })
- *   )
- * })
- */
-export const mockAssetByIdQuery = (resolver: ResponseResolver<GraphQLRequest<AssetByIdQueryVariables>, GraphQLContext<AssetByIdQuery>, any>) =>
-  graphql.query<AssetByIdQuery, AssetByIdQueryVariables>(
-    'assetById',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAssetLogsQuery((req, res, ctx) => {
- *   const { filter, sort, storeId } = req.variables;
- *   return res(
- *     ctx.data({ assetLogs })
- *   )
- * })
- */
-export const mockAssetLogsQuery = (resolver: ResponseResolver<GraphQLRequest<AssetLogsQueryVariables>, GraphQLContext<AssetLogsQuery>, any>) =>
-  graphql.query<AssetLogsQuery, AssetLogsQueryVariables>(
-    'assetLogs',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLabelPrinterSettingsQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ labelPrinterSettings })
- *   )
- * })
- */
-export const mockLabelPrinterSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<LabelPrinterSettingsQueryVariables>, GraphQLContext<LabelPrinterSettingsQuery>, any>) =>
-  graphql.query<LabelPrinterSettingsQuery, LabelPrinterSettingsQueryVariables>(
-    'labelPrinterSettings',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteAssetMutation((req, res, ctx) => {
- *   const { assetId, storeId } = req.variables;
- *   return res(
- *     ctx.data({ deleteAsset })
- *   )
- * })
- */
-export const mockDeleteAssetMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteAssetMutationVariables>, GraphQLContext<DeleteAssetMutation>, any>) =>
-  graphql.mutation<DeleteAssetMutation, DeleteAssetMutationVariables>(
-    'deleteAsset',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertAssetMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ insertAsset })
- *   )
- * })
- */
-export const mockInsertAssetMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetMutationVariables>, GraphQLContext<InsertAssetMutation>, any>) =>
-  graphql.mutation<InsertAssetMutation, InsertAssetMutationVariables>(
-    'insertAsset',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateAssetMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ updateAsset })
- *   )
- * })
- */
-export const mockUpdateAssetMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateAssetMutationVariables>, GraphQLContext<UpdateAssetMutation>, any>) =>
-  graphql.mutation<UpdateAssetMutation, UpdateAssetMutationVariables>(
-    'updateAsset',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertAssetLogMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ insertAssetLog })
- *   )
- * })
- */
-export const mockInsertAssetLogMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetLogMutationVariables>, GraphQLContext<InsertAssetLogMutation>, any>) =>
-  graphql.mutation<InsertAssetLogMutation, InsertAssetLogMutationVariables>(
-    'insertAssetLog',
-    resolver
-  )

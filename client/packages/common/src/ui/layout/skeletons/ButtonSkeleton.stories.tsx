@@ -1,14 +1,14 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { ButtonSkeleton } from './ButtonSkeleton';
 
 export default {
   title: 'Skeleton/Button',
   component: ButtonSkeleton,
-} as ComponentMeta<typeof ButtonSkeleton>;
+} as Meta<typeof ButtonSkeleton>;
 
-const Template: ComponentStory<typeof ButtonSkeleton> = () => (
+const Template: StoryFn<typeof ButtonSkeleton> = () => (
   <ButtonSkeleton />
 );
 

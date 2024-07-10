@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { SearchBar } from './SearchBar';
 import { Box } from '@mui/material';
@@ -10,9 +10,9 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof SearchBar>;
+} as Meta<typeof SearchBar>;
 
-const Template: ComponentStory<typeof SearchBar> = () => {
+const Template: StoryFn<typeof SearchBar> = () => {
   const [value, setValue] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
 

@@ -1,12 +1,12 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { StoryProvider } from '../../utils';
 import { useIsSmallScreen } from './useIsSmallScreen';
 import { useIsMediumScreen } from './useIsMediumScreen';
 import { useIsLargeScreen } from './useIsLargeScreen';
 import { useIsExtraLargeScreen } from './useIsExtraLargeScreen';
 
-const Template: Story<{
+const Template: StoryFn<{
   type: 'large' | 'medium' | 'xl' | 'sm';
   hook: () => boolean;
 }> = args => {

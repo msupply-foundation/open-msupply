@@ -2,7 +2,7 @@
   "name": "@openmsupply-client/electron",
   "productName": "open mSupply",
   "//": "Version is updated from the root package.json when electron is built, see the 'make' script below",
-  "version": "1.2.00",
+  "version": "2.1.00",
   "description": "Client for omSupply running on local network",
   "main": "./.webpack/main",
   "scripts": {
@@ -15,11 +15,11 @@
     "name": "mSupply Foundation"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.2.1",
-    "@electron-forge/maker-dmg": "^6.2.1",
-    "@electron-forge/maker-squirrel": "^6.2.1",
-    "@electron-forge/maker-zip": "^6.2.1",
-    "@electron-forge/plugin-webpack": "^6.2.1",
+    "@electron-forge/cli": "^7.4.0",
+    "@electron-forge/maker-dmg": "^7.4.0",
+    "@electron-forge/maker-squirrel": "^7.4.0",
+    "@electron-forge/maker-zip": "^7.4.0",
+    "@electron-forge/plugin-webpack": "^7.4.0",
     "@types/dnssd": "^0.4.2",
     "@types/ip": "^1.1.0",
     "@types/node-hid": "^1.3.1",
@@ -28,13 +28,13 @@
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
     "copy-webpack-plugin": "11.0.0",
     "css-loader": "^6.8.1",
-    "electron": "^25.3.0",
+    "electron": "^31.1.0",
     "eslint": "^8.45.0",
     "eslint-plugin-import": "^2.25.0",
     "file-loader": "^6.2.0",
     "fork-ts-checker-webpack-plugin": "^8.0.0",
     "node-loader": "^2.0.0",
-    "style-loader": "^3.0.0",
+    "style-loader": "^4.0.0",
     "ts-loader": "^9.2.2"
   },
   "dependencies": {
@@ -42,9 +42,9 @@
     "@openmsupply-client/host": "^0.0.0",
     "dnssd": "^0.4.1",
     "electron-squirrel-startup": "^1.0.0",
-    "electron-store": "^8.1.0",
-    "ip": "^1.1.8",
-    "node-hid": "^2.1.2",
+    "electron-store": "^10.0.0",
+    "ip": "^2.0.1",
+    "node-hid": "^3.1.0   ",
     "react": "^18.0.0",
     "react-dom": "^18.0.0"
   }

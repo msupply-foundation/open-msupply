@@ -31,7 +31,6 @@ import { Details } from './Tabs/Details';
 export const EquipmentDetailView = () => {
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
-
   const { data, isLoading } = useAssets.document.get();
   const { mutateAsync: update, isLoading: isSaving } =
     useAssets.document.update();
@@ -45,7 +44,7 @@ export const EquipmentDetailView = () => {
     });
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
-  const { setSuffix } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const [draft, setDraft] = useState<DraftAsset>();
   const [isDirty, setIsDirty] = useState(false);
   const { error, success } = useNotification();
@@ -75,17 +74,15 @@ export const EquipmentDetailView = () => {
   };
 
   useEffect(() => {
-    setSuffix(data?.assetNumber ?? '');
-  }, [setSuffix, data?.assetNumber]);
+    setCustomBreadcrumbs({ 1: data?.assetNumber ?? '' });
+  }, [setCustomBreadcrumbs, data?.assetNumber]);
 
   useEffect(() => {
     if (!data) return;
 
     const assetProperties = ObjUtils.parse(data.properties);
     const catalogProperties = ObjUtils.parse(data.catalogProperties);
-
     const canEditLocationIds = !isCentralServer || draft?.storeId == storeId;
-
     const locationIds = draft?.locationIds
       ? draft.locationIds
       : data.locations.nodes.map(location => location.id);

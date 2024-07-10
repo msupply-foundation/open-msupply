@@ -265,6 +265,7 @@ export const RequestLineEditForm = ({
                       requestedQuantity / currentItem.defaultPackSize,
                       2
                     )}
+                    decimalLimit={2}
                     width={100}
                     onChange={quantity => {
                       update({

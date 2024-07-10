@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Story, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Grid, Typography } from '@mui/material';
 import { DetailPanel, DetailPanelPortal } from './DetailPanel';
 import {
@@ -15,14 +15,14 @@ import {
 export default {
   title: 'Components/DetailPanel',
   component: DetailPanel,
-} as ComponentMeta<typeof DetailPanel>;
+} as Meta<typeof DetailPanel>;
 
 interface DetailPanelArgs {
   Actions: ReactNode;
   Sections: ReactNode;
 }
 
-const Template: Story<DetailPanelArgs> = args => {
+const Template: StoryFn<DetailPanelArgs> = args => {
   const { OpenButton } = useDetailPanel();
   const { Actions, Sections } = args;
 

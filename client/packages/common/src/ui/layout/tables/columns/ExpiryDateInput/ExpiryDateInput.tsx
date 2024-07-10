@@ -3,9 +3,10 @@ import { ExpiryDateInput } from '@common/components';
 import { RecordWithId } from '@common/types';
 import { EnvUtils } from '@common/utils';
 import { ColumnDefinition } from '../../columns';
+import { DateUtils } from '@common/intl';
 
 export const getExpiryDateInputColumn = <
-  T extends RecordWithId & { expiryDate?: string | Date | null }
+  T extends RecordWithId & { expiryDate?: string | Date | null },
 >(): ColumnDefinition<T> => ({
   key: 'expiryDateInput',
   label: 'label.expiry',
@@ -31,7 +32,8 @@ export const getExpiryDateInputColumn = <
     }
   },
   Cell: ({ rowData, column, isDisabled }) => {
-    const value = column.accessor({ rowData }) as Date | null;
+    const date = column.accessor({ rowData }) as string;
+    const value = DateUtils.getDateOrNull(date);
 
     const onChange = (newValue: Date | null) => {
       column.setter({ ...rowData, expiryDate: newValue });

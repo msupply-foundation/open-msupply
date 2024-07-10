@@ -19,6 +19,7 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
     adjustment: 0,
     adjustmentType: AdjustmentTypeInput.Addition,
   });
+
   const { mutateAsync: createMutation } = useCreate(stockLine.id);
 
   const create = async () => {
@@ -56,6 +57,7 @@ const useCreate = (stockLineId: string) => {
       adjustmentType,
       reason,
     }: DraftInventoryAdjustment) => {
+      // TODO: error helper to handle structured/standard errors
       return await stockApi.createInventoryAdjustment({
         storeId,
         input: {

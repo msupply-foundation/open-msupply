@@ -5,7 +5,12 @@ import {
   FilterByWithBoolean,
   UpdateNamePropertiesInput,
 } from '@openmsupply-client/common';
-import { Sdk, NameRowFragment } from './operations.generated';
+import {
+  Sdk,
+  NameRowFragment,
+  FacilityNameRowFragment,
+  UpdateNamePropertiesMutation,
+} from './operations.generated';
 
 export type ListParams = {
   type?: 'supplier' | 'customer';
@@ -102,7 +107,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       sortBy?: SortBy<NameRowFragment>;
       filterBy?: FilterByWithBoolean | null;
     }): Promise<{
-      nodes: NameRowFragment[];
+      nodes: FacilityNameRowFragment[];
       totalCount: number;
     }> => {
       const key =
@@ -110,7 +115,7 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
           ? NameSortFieldInput.Name
           : NameSortFieldInput.Code;
 
-      const result = await sdk.names({
+      const result = await sdk.facilities({
         first,
         offset,
         key,
@@ -161,14 +166,15 @@ export const getNameQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Unable to fetch properties');
     },
   },
-  updateNameProperties: async (input: UpdateNamePropertiesInput) => {
+  updateNameProperties: async (
+    input: UpdateNamePropertiesInput
+  ): Promise<UpdateNamePropertiesMutation> => {
     const result = await sdk.updateNameProperties({ storeId, input });
 
     if (result.updateNameProperties.__typename === 'NameNode') {
-      return result?.updateNameProperties;
+      return result;
     }
 
-    // TODO: properly handle structured error
     throw new Error(result.updateNameProperties.error.description);
   },
 });
