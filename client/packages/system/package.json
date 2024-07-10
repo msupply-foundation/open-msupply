@@ -5,7 +5,7 @@
   "main": "./src/index.ts",
   "private": true,
   "devDependencies": {
-    "@bcyesil/capacitor-plugin-printer": "^0.0.3"
+    "@bcyesil/capacitor-plugin-printer": "^0.0.4"
   },
   "scripts": {
     "tsc": "tsc",

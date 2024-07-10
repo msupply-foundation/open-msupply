@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Box, styled, Toolbar } from '@mui/material';
 
 import { DetailFormSkeleton } from './DetailFormSkeleton';
@@ -13,7 +13,7 @@ import { useAppBarRect } from '@common/hooks';
 export default {
   title: 'Skeleton/DetailFormSkeleton',
   component: DetailFormSkeleton,
-} as ComponentMeta<typeof DetailFormSkeleton>;
+} as Meta<typeof DetailFormSkeleton>;
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   marginRight: 0,
@@ -24,7 +24,7 @@ const StyledContainer = styled(Box)(({ theme }) => ({
   ...theme.mixins.header,
 }));
 
-const Template: ComponentStory<typeof DetailFormSkeleton> = () => {
+const Template: StoryFn<typeof DetailFormSkeleton> = () => {
   const { ref } = useAppBarRect();
   return (
     <Box display="flex" flexDirection="column">

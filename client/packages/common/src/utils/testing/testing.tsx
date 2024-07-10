@@ -7,7 +7,7 @@ import { SnackbarProvider } from 'notistack';
 import { QueryClientProvider, QueryClient } from 'react-query';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { TableProvider, createTableStore } from '../../ui/layout/tables';
-import { createQueryParamsStore, GqlProvider } from '../..';
+import { createQueryParamsStore, GqlProvider, KBarProvider } from '../..';
 import { Environment } from '@openmsupply-client/config';
 import { ConfirmationModalProvider } from '../../ui/components/modals';
 import { renderHook } from '@testing-library/react';
@@ -82,11 +82,11 @@ export const TestingRouter: FC<PropsWithChildren<TestingRouterProps>> = ({
   </MemoryRouter>
 );
 
-export const TestingRouterContext: FC<PropsWithChildrenOnly> = ({
-  children,
-}) => (
-  <TestingRouter initialEntries={['/testing']}>
-    <Route path="/testing" element={<>{children}</>} />
+export const TestingRouterContext: FC<
+  PropsWithChildren<{ initialEntries?: string[] }>
+> = ({ children, initialEntries = ['/testing'] }) => (
+  <TestingRouter initialEntries={initialEntries}>
+    <Route path={initialEntries[0]} element={<>{children}</>} />
   </TestingRouter>
 );
 
@@ -125,9 +125,11 @@ export const StoryProvider: FC<PropsWithChildrenOnly> = ({ children }) => (
           <IntlTestProvider locale="en">
             <TableProvider createStore={createTableStore}>
               <AppThemeProvider>
-                <ConfirmationModalProvider>
-                  {children}
-                </ConfirmationModalProvider>
+                <KBarProvider actions={[]}>
+                  <ConfirmationModalProvider>
+                    {children}
+                  </ConfirmationModalProvider>
+                </KBarProvider>
               </AppThemeProvider>
             </TableProvider>
           </IntlTestProvider>

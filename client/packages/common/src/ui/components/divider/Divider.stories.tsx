@@ -1,9 +1,9 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Divider } from './Divider';
 
-const Template: ComponentStory<typeof Divider> = ({ margin = 0 }) => (
+const Template: StoryFn<typeof Divider> = ({ margin = 0 }) => (
   <Grid container>
     <Grid
       item
@@ -57,4 +57,4 @@ Margin40.args = { margin: 40 };
 export default {
   title: 'Components/Divider',
   component: Divider,
-} as ComponentMeta<typeof Divider>;
+} as Meta<typeof Divider>;

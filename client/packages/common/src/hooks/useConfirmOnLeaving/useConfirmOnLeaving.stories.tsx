@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Grid } from '@mui/material';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { useConfirmOnLeaving } from './useConfirmOnLeaving';
 import { ToggleButton } from '@common/components';
 
@@ -9,7 +9,7 @@ export default {
   component: useConfirmOnLeaving,
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const [isUnsaved, setIsUnsaved] = useState(false);
   useConfirmOnLeaving(isUnsaved);
 

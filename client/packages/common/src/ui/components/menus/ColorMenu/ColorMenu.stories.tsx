@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box } from '@mui/material';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { ColorMenu } from './ColorMenu';
 import { StoryProvider } from '../../../../utils';
@@ -14,9 +14,9 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof ColorMenu>;
+} as Meta<typeof ColorMenu>;
 
-const Template: ComponentStory<typeof ColorMenu> = ({ onClick }) => {
+const Template: StoryFn<typeof ColorMenu> = ({ onClick }) => {
   const t = useTranslation('app');
 
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);

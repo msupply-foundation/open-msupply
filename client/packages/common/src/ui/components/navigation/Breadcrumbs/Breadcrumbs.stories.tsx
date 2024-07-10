@@ -1,42 +1,29 @@
 import React from 'react';
-import { ComponentMeta, Story } from '@storybook/react';
-import { Route } from 'react-router-dom';
+import { Meta, StoryFn } from '@storybook/react';
 import { Box } from '@mui/material';
 import { Breadcrumbs } from './Breadcrumbs';
-import { StoryProvider, TestingRouter } from '../../../../utils/testing';
 import { RouteBuilder } from '../../../../utils';
 import { AppRoute } from '@openmsupply-client/config';
 
 export default {
   title: 'Components/Breadcrumbs',
   component: Breadcrumbs,
-} as ComponentMeta<typeof Breadcrumbs>;
+} as Meta<typeof Breadcrumbs>;
 
-const Template: Story<{ initialEntries: string[] }> = ({ initialEntries }) => {
-  return (
-    <StoryProvider>
-      <TestingRouter initialEntries={initialEntries}>
-        <Route
-          path="*"
-          element={
-            <Box>
-              <Breadcrumbs />
-            </Box>
-          }
-        ></Route>
-      </TestingRouter>
-    </StoryProvider>
-  );
-};
+const Template: StoryFn<{ initialEntries: string[] }> = () => (
+  <Box>
+    <Breadcrumbs />
+  </Box>
+);
 
 export const Short = Template.bind({});
-Short.args = {
-  initialEntries: [RouteBuilder.create(AppRoute.Distribution).build()],
+Short.parameters = {
+  routes: [RouteBuilder.create(AppRoute.Distribution).build()],
 };
 
 export const Medium = Template.bind({});
-Medium.args = {
-  initialEntries: [
+Medium.parameters = {
+  routes: [
     RouteBuilder.create(AppRoute.Distribution)
       .addPart(AppRoute.OutboundShipment)
       .addPart('3')
@@ -45,8 +32,8 @@ Medium.args = {
 };
 
 export const TooLong = Template.bind({});
-TooLong.args = {
-  initialEntries: [
+TooLong.parameters = {
+  routes: [
     RouteBuilder.create(AppRoute.Distribution)
       .addPart(AppRoute.OutboundShipment)
       .addPart(AppRoute.Distribution)

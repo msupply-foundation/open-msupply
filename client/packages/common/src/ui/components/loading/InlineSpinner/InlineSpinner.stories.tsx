@@ -1,9 +1,9 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { InlineSpinner } from './InlineSpinner';
 import { Box } from '@mui/material';
 
-const Template: ComponentStory<typeof InlineSpinner> = ({
+const Template: StoryFn<typeof InlineSpinner> = ({
   color,
   messageKey,
 }) => (
@@ -29,7 +29,7 @@ export const SecondaryWithText = Template.bind({});
 export default {
   title: 'Components/InlineSpinner',
   component: InlineSpinner,
-} as ComponentMeta<typeof InlineSpinner>;
+} as Meta<typeof InlineSpinner>;
 
 Primary.args = { color: 'primary' };
 PrimaryWithText.args = { color: 'primary', messageKey: 'loading' };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { PaginationRow } from './PaginationRow';
 
@@ -9,9 +9,9 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof PaginationRow>;
+} as Meta<typeof PaginationRow>;
 
-const Template: ComponentStory<typeof PaginationRow> = args => (
+const Template: StoryFn<typeof PaginationRow> = args => (
   <PaginationRow {...args} />
 );
 

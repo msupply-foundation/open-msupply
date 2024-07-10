@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { useBufferState } from './useBufferState';
 import { Box, TextField, Typography } from '@mui/material';
 import { useDebounceCallback } from '@common/hooks';
@@ -25,7 +25,7 @@ const UsingBufferState: FC<{
   );
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const [val, setVal] = useState('');
   const debouncedCallback = useDebounceCallback(
     (val: string) => setVal(val),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDialog } from './useDialog';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 
 import { BaseButton, DialogButton } from '@common/components';
 
@@ -8,7 +8,7 @@ export default {
   title: 'Hooks/useDialog',
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const [result, setResult] = React.useState('[not shown]');
   const onOk = () => {
     setResult('Ok');

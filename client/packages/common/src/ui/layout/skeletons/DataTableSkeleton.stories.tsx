@@ -1,14 +1,14 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { DataTableSkeleton } from './DataTableSkeleton';
 
 export default {
   title: 'Skeleton/DataTable',
   component: DataTableSkeleton,
-} as ComponentMeta<typeof DataTableSkeleton>;
+} as Meta<typeof DataTableSkeleton>;
 
-const Template: ComponentStory<typeof DataTableSkeleton> = args => (
+const Template: StoryFn<typeof DataTableSkeleton> = args => (
   <DataTableSkeleton hasGroupBy={args.hasGroupBy} />
 );
 
