@@ -74,9 +74,11 @@ class Scanner {
   }
 
   async scanDevicesAsync(window: BrowserWindow) {
+    // note that HID.devicesAsync (and HID.devices) are costly, as they enumerate all USB and (potentially bluetooth) devices
+    // see https://github.com/node-hid/node-hid?tab=readme-ov-file#cost-of-hiddevices-hiddevicesasync-new-hidhid-and-hidasyncopen-for-detecting-device-plugunplug
     const devices = await HID.devicesAsync();
 
-      devices.forEach(device => {
+    devices.forEach(device => {
       if (device.path) {
         try {
           const hid = new HID.HID(device.vendorId, device.productId);
