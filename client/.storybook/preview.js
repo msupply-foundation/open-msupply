@@ -4,14 +4,17 @@ import { CssBaseline } from '@mui/material';
 import { StoryProvider, TestingRouterContext } from '@common/utils';
 
 export const decorators = [
-  Story => (
-    <StoryProvider>
-      <TestingRouterContext>
-        <CssBaseline />
-        <Story />
-      </TestingRouterContext>
-    </StoryProvider>
-  ),
+  (Story, { parameters }) => {
+    const { routes } = parameters;
+    return (
+      <StoryProvider>
+        <TestingRouterContext initialEntries={routes}>
+          <CssBaseline />
+          <Story />
+        </TestingRouterContext>
+      </StoryProvider>
+    );
+  },
 ];
 
 export const parameters = {

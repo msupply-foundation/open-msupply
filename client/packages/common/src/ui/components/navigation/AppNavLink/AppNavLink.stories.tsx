@@ -1,9 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import { Meta, StoryFn } from '@storybook/react';
-import { Route } from 'react-router-dom';
 import { Box } from '@mui/material';
 import { AppNavLink, AppNavLinkProps } from './AppNavLink';
-import { StoryProvider, TestingRouter } from '../../../../utils/testing';
 import { TruckIcon } from '@common/icons';
 import { useDrawer } from '@common/hooks';
 
@@ -25,23 +23,15 @@ const Wrapper: FC<{ collapsed: boolean }> = ({ collapsed }) => {
 
 const Template: StoryFn<AppNavLinkProps & { collapsed: boolean }> = args => {
   return (
-    <StoryProvider>
-      <TestingRouter initialEntries={['/distribution']}>
-        <Route
-          path="*"
-          element={
-            <Box>
-              <Wrapper collapsed={args.collapsed} />
-              <AppNavLink {...args} />
-            </Box>
-          }
-        ></Route>
-      </TestingRouter>
-    </StoryProvider>
+    <Box>
+      <Wrapper collapsed={args.collapsed} />
+      <AppNavLink {...args} />
+    </Box>
   );
 };
 
 export const Collapsed = Template.bind({});
+Collapsed.parameters = { routes: ['/distribution'] };
 Collapsed.args = {
   end: false,
   text: 'Distribution',
@@ -51,6 +41,7 @@ Collapsed.args = {
 };
 
 export const Expanded = Template.bind({});
+Expanded.parameters = { routes: ['/distribution'] };
 Expanded.args = {
   end: false,
   text: 'Distribution',
