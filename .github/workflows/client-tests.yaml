@@ -16,6 +16,15 @@ jobs:
         with:
           ref: ${{ github.base_ref }}
 
+      - name: Read .nvmrc
+        run: echo "##[set-output name=NVMRC;]$(cat .nvmrc)"
+        id: nvm
+
+      - name: Use Node.js (.nvmrc)
+        uses: actions/setup-node@v1
+        with:
+          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
         env:
