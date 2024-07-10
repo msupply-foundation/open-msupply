@@ -36,6 +36,7 @@
     "@openmsupply-client/invoices": "^0.0.0",
     "@openmsupply-client/requisitions": "^0.0.0",
     "@openmsupply-client/system": "^0.0.0",
+    "@openmsupply-client/reports": "^0.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.4",
     "history": "^5.1.0",
     "react": "^18.0.0",
