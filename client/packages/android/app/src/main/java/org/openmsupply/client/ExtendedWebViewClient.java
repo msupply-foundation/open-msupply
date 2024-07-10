@@ -1,7 +1,6 @@
 package org.openmsupply.client;
 
 import android.graphics.Bitmap;
-import android.webkit.ValueCallback;
 import android.webkit.WebView;
 
 import com.getcapacitor.Bridge;
@@ -15,38 +14,42 @@ import java.util.List;
 
 public class ExtendedWebViewClient extends BridgeWebViewClient {
     Bridge bridge;
+    String jsInject;
 
     public ExtendedWebViewClient(Bridge bridge) {
         super(bridge);
 
         this.bridge = bridge;
+        this.jsInject = this.generatePluginScript();
     }
 
     // Have to manually inject Capacitor JS, this typically happens in
     // WebViewLocalServer.handleProxyRequest
     // but since it manually uses net.URL to fetch the content of request, this
-    // fails for self signed certificates
-    // and plugin definitions etc is not injected
-
-    // Using onLoadResource vs onPageStarted because sometimes onPageStarted is too late
-    // but with onLoadResource we need to make sure that injection happens only once in a web view
+    // fails for self signed certificates and plugin definitions etc is not injected
     @Override
-    public void onLoadResource(WebView webView, 
-            String url) {
-        super.onLoadResource(webView, url);
+    public void onPageStarted(WebView webView, String url, Bitmap favicon) {
+        if (url.startsWith("data:text")) return;
 
+        if(this.jsInject != null) {
+            // .post to run on UI thread
+            webView.post(() -> webView.evaluateJavascript(this.jsInject, null));
+        }
+    }
+
+    String generatePluginScript() {
         // TODO make sure this is only injected for pages in native bundle
         // There is no way to get the full list of plugins from bridge, use 'debug' and
         // see what plugins to add
         List<PluginHandle> pluginList = Arrays.asList(
-            bridge.getPlugin("NativeApi"),
-            bridge.getPlugin("Keyboard"),
-            bridge.getPlugin("WebView"),
-            bridge.getPlugin("BarcodeScanner"),
-            bridge.getPlugin("Preferences"),
-            bridge.getPlugin("KeepAwake"),
-            bridge.getPlugin("App"),
-            bridge.getPlugin("Printer")
+                bridge.getPlugin("NativeApi"),
+                bridge.getPlugin("Keyboard"),
+                bridge.getPlugin("WebView"),
+                bridge.getPlugin("BarcodeScanner"),
+                bridge.getPlugin("Preferences"),
+                bridge.getPlugin("KeepAwake"),
+                bridge.getPlugin("App"),
+                bridge.getPlugin("Printer")
         );
 
         try {
@@ -62,7 +65,7 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
             String localUrlJS = "window.WEBVIEW_SERVER_URL = '';";
 
             // From JSInjector.getScriptString()
-            String fullScript = globalJS +
+            return globalJS +
                     " \n\n" +
                     localUrlJS +
                     "\n\n" +
@@ -76,23 +79,9 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
                     "\n\n" +
                     cordovaPluginsJS +
                     "\n\n";
-
-            // .post to run on UI thread
-            webView.post(() -> {
-                // To only run once on a page we check for existence of nativeBridge
-                // which is instantiated by above scripts
-                webView.evaluateJavascript("typeof nativeBridge", new ValueCallback<String>() {
-                    @Override
-                    public void onReceiveValue(String s) {
-                        if (s.trim().equals("\"undefined\"")) {
-                            webView.evaluateJavascript(fullScript, null);
-                        }
-                    }
-                });
-            });
-
         } catch (Exception ex) {
             Logger.error("Unable to export Capacitor JS. App will not function!", ex);
         }
+        return null;
     }
 }
