@@ -1,8 +1,8 @@
 import React from 'react';
-import { Report } from './Components/Report';
+import { ListView } from './Components/ListView';
 
 export const Reports = () => {
-  return <Report />;
+  return <ListView />;
 };
 
 export default Reports;
