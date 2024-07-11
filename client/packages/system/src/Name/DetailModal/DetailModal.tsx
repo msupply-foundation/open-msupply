@@ -37,15 +37,6 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
         <Grid container flex={1} flexDirection="row" gap={4}>
           <DetailSection title="">
             <DetailInputWithLabelRow
-              label={t('label.address')}
-              inputProps={{
-                value: [data?.address1, data?.address2]
-                  .filter(a => !!a)
-                  .join(', '),
-                disabled: isDisabled,
-              }}
-            />
-            <DetailInputWithLabelRow
               label={t('label.code')}
               inputProps={{ value: data?.code, disabled: isDisabled }}
             />
@@ -119,6 +110,17 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
               Input={
                 <Checkbox disabled={isDisabled} checked={data?.isOnHold} />
               }
+            />
+            <DetailInputWithLabelRow
+              label={t('label.address')}
+              inputProps={{
+                value: [data?.address1, data?.address2]
+                  .filter(a => !!a)
+                  .join(', '),
+                disabled: isDisabled,
+                maxRows: 3,
+                multiline: true,
+              }}
             />
           </DetailSection>
         </Grid>
