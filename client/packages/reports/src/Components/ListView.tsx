@@ -2,7 +2,7 @@ import React from 'react';
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
 
-export const Report = () => {
+export const ListView = () => {
   return (
     <>
       <AppBarButtons />
