@@ -137,7 +137,7 @@ query nameProperties {
 
 mutation updateNameProperties(
   $storeId: String!
-  $input: UpdateNamePropertiesInput
+  $input: UpdateNamePropertiesInput!
 ) {
   updateNameProperties(storeId: $storeId, input: $input) {
     __typename
