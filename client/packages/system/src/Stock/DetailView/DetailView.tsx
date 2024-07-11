@@ -14,6 +14,8 @@ import {
   useUrlQuery,
   useToggle,
   StockLineNode,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -96,6 +98,10 @@ export const StockLineDetailView: React.FC = () => {
     title: t('heading.are-you-sure'),
   });
 
+  const openInventoryAdjustmentModal = useCallbackWithPermission(
+    UserPermission.InventoryAdjustmentMutate,
+    adjustmentModalController.toggleOn
+  );
   const tabs = [
     {
       Component: (
@@ -144,7 +150,7 @@ export const StockLineDetailView: React.FC = () => {
       )}
       <AppBarButtons
         openRepack={repackModalController.toggleOn}
-        openAdjust={adjustmentModalController.toggleOn}
+        openAdjust={openInventoryAdjustmentModal}
       />
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />
