@@ -49,7 +49,7 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
 }));
 
 const Circle = (props: StepIconProps) => {
-  const { active, completed, ...rest } = props;
+  const { active, completed, error, ...rest } = props;
   {
     // Base colours for all uncompleted and non-active steps.
     const colors = {

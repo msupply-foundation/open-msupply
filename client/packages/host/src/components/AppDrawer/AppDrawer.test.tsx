@@ -6,6 +6,7 @@ import {
   TestingProvider,
   TestingRouterContext,
 } from '@openmsupply-client/common';
+import '@testing-library/jest-dom';
 
 describe('AppDrawer', () => {
   it('Collapses when clicking the drawer open/close button for the first time on a large screen', async () => {
