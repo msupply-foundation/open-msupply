@@ -52,7 +52,7 @@ export const ResponseRequisitionListView: FC = () => {
         condition: 'equalTo',
       },
       {
-        key: 'shipmentCreated',
+        key: 'aShipmentHasBeenCreated',
         condition: '=',
       },
     ],

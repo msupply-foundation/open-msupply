@@ -27,7 +27,7 @@ pub struct RequisitionFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub linked_requisition_id: Option<EqualFilter<String>>,
     pub order_type: Option<EqualFilter<String>>,
-    pub shipment_created: Option<bool>,
+    pub a_shipment_has_been_created: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -147,8 +147,8 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn shipment_created(mut self, filter: bool) -> Self {
-        self.shipment_created = Some(filter);
+    pub fn a_shipment_has_been_created(mut self, filter: bool) -> Self {
+        self.a_shipment_has_been_created = Some(filter);
         self
     }
 }
