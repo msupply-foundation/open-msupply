@@ -13,7 +13,7 @@
     "serve": "^14.2.0",
     "webpack": "^5.88.1",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.12.0",
+    "webpack-dev-server": "^5.0.4",
     "webpack-encoding-plugin": "^0.3.1"
   },
   "scripts": {
