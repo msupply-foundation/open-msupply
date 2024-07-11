@@ -46,7 +46,7 @@ export const Toolbar: FC<{
             {
               type: 'boolean',
               name: t('label.shipment-created'),
-              urlParameter: 'shipmentCreated',
+              urlParameter: 'aShipmentHasBeenCreated',
             },
           ]}
         />
