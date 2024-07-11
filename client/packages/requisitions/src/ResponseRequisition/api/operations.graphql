@@ -153,17 +153,6 @@ fragment ResponseRow on RequisitionNode {
   shipments {
     __typename
     totalCount
-    nodes {
-      __typename
-      id
-      invoiceNumber
-      createdDatetime
-
-      user {
-        __typename
-        username
-      }
-    }
   }
 }
 

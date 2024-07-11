@@ -64,7 +64,10 @@ export const ResponseRequisitionListView: FC = () => {
   useDisableResponseRows(data?.nodes);
 
   const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
-    [getNameAndColorColumn(), { setter: onUpdate }],
+    [
+      getNameAndColorColumn(),
+      { setter: ({ id, colour }) => onUpdate({ id, colour }) },
+    ],
     {
       key: 'requisitionNumber',
       label: 'label.number',
