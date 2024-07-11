@@ -1,9 +1,9 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { StockOutLineFragmentDoc } from '../../StockOut/operations.generated';
+import { StockOutLineFragmentDoc } from '../../../../../packages/invoices/src/StockOut/operations.generated';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PrescriptionRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null };
 
 export type PrescriptionsQueryVariables = Types.Exact<{
@@ -423,30 +423,30 @@ export const DeletePrescriptionLinesDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     prescriptions(variables: PrescriptionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrescriptionsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionsQuery>(PrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptions', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionsQuery>(PrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptions', 'query', variables);
     },
     prescriptionByNumber(variables: PrescriptionByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrescriptionByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionByNumberQuery>(PrescriptionByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptionByNumber', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionByNumberQuery>(PrescriptionByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptionByNumber', 'query', variables);
     },
     insertPrescription(variables: InsertPrescriptionMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPrescriptionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertPrescriptionMutation>(InsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPrescription', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertPrescriptionMutation>(InsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPrescription', 'mutation', variables);
     },
     upsertPrescription(variables: UpsertPrescriptionMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertPrescriptionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertPrescriptionMutation>(UpsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertPrescription', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertPrescriptionMutation>(UpsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertPrescription', 'mutation', variables);
     },
     deletePrescriptions(variables: DeletePrescriptionsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionsMutation>(DeletePrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptions', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionsMutation>(DeletePrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptions', 'mutation', variables);
     },
     deletePrescriptionLines(variables: DeletePrescriptionLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation', variables);
     }
   };
 }

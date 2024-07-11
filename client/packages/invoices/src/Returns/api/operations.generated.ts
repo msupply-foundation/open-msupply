@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type OutboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, comment?: string | null, theirReference?: string | null };
 
 export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null, comment?: string | null, theirReference?: string | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null };
@@ -528,54 +528,54 @@ export const DeleteInboundReturnDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     outboundReturns(variables: OutboundReturnsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<OutboundReturnsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<OutboundReturnsQuery>(OutboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundReturns', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<OutboundReturnsQuery>(OutboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundReturns', 'query', variables);
     },
     inboundReturns(variables: InboundReturnsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InboundReturnsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InboundReturnsQuery>(InboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundReturns', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<InboundReturnsQuery>(InboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundReturns', 'query', variables);
     },
     generateOutboundReturnLines(variables: GenerateOutboundReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateOutboundReturnLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GenerateOutboundReturnLinesQuery>(GenerateOutboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateOutboundReturnLines', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateOutboundReturnLinesQuery>(GenerateOutboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateOutboundReturnLines', 'query', variables);
     },
     generateInboundReturnLines(variables: GenerateInboundReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateInboundReturnLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GenerateInboundReturnLinesQuery>(GenerateInboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateInboundReturnLines', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateInboundReturnLinesQuery>(GenerateInboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateInboundReturnLines', 'query', variables);
     },
     outboundReturnByNumber(variables: OutboundReturnByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<OutboundReturnByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<OutboundReturnByNumberQuery>(OutboundReturnByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundReturnByNumber', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<OutboundReturnByNumberQuery>(OutboundReturnByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundReturnByNumber', 'query', variables);
     },
     inboundReturnByNumber(variables: InboundReturnByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InboundReturnByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InboundReturnByNumberQuery>(InboundReturnByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundReturnByNumber', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<InboundReturnByNumberQuery>(InboundReturnByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundReturnByNumber', 'query', variables);
     },
     insertOutboundReturn(variables: InsertOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertOutboundReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundReturnMutation>(InsertOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundReturn', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundReturnMutation>(InsertOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundReturn', 'mutation', variables);
     },
     updateOutboundReturn(variables: UpdateOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnMutation>(UpdateOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturn', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnMutation>(UpdateOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturn', 'mutation', variables);
     },
     updateOutboundReturnLines(variables: UpdateOutboundReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundReturnLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnLinesMutation>(UpdateOutboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturnLines', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnLinesMutation>(UpdateOutboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturnLines', 'mutation', variables);
     },
     insertInboundReturn(variables: InsertInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertInboundReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundReturnMutation>(InsertInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundReturn', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundReturnMutation>(InsertInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundReturn', 'mutation', variables);
     },
     deleteOutboundReturn(variables: DeleteOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundReturnMutation>(DeleteOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundReturn', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundReturnMutation>(DeleteOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundReturn', 'mutation', variables);
     },
     updateInboundReturn(variables: UpdateInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateInboundReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundReturnMutation>(UpdateInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundReturn', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundReturnMutation>(UpdateInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundReturn', 'mutation', variables);
     },
     updateInboundReturnLines(variables: UpdateInboundReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateInboundReturnLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundReturnLinesMutation>(UpdateInboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundReturnLines', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundReturnLinesMutation>(UpdateInboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundReturnLines', 'mutation', variables);
     },
     deleteInboundReturn(variables: DeleteInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteInboundReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundReturnMutation>(DeleteInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundReturn', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundReturnMutation>(DeleteInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundReturn', 'mutation', variables);
     }
   };
 }

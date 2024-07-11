@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type NameRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
 
 export type FacilityNameRowFragment = { __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, properties: string, store?: { __typename: 'StoreNode', id: string, code: string } | null };
@@ -50,7 +50,7 @@ export type NamePropertiesQuery = { __typename: 'Queries', nameProperties: { __t
 
 export type UpdateNamePropertiesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input?: Types.InputMaybe<Types.UpdateNamePropertiesInput>;
+  input: Types.UpdateNamePropertiesInput;
 }>;
 
 
@@ -188,7 +188,7 @@ export const NamePropertiesDocument = gql`
 }
     ${PropertyFragmentDoc}`;
 export const UpdateNamePropertiesDocument = gql`
-    mutation updateNameProperties($storeId: String!, $input: UpdateNamePropertiesInput) {
+    mutation updateNameProperties($storeId: String!, $input: UpdateNamePropertiesInput!) {
   updateNameProperties(storeId: $storeId, input: $input) {
     __typename
     ... on NameNode {
@@ -204,27 +204,27 @@ export const UpdateNamePropertiesDocument = gql`
 }
     ${NameFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     names(variables: NamesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NamesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<NamesQuery>(NamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'names', 'query', variables);
     },
     facilities(variables: FacilitiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FacilitiesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<FacilitiesQuery>(FacilitiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'facilities', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<FacilitiesQuery>(FacilitiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'facilities', 'query', variables);
     },
     nameById(variables: NameByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NameByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NameByIdQuery>(NameByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameById', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<NameByIdQuery>(NameByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameById', 'query', variables);
     },
     nameProperties(variables?: NamePropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NamePropertiesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NamePropertiesQuery>(NamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameProperties', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<NamePropertiesQuery>(NamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'nameProperties', 'query', variables);
     },
     updateNameProperties(variables: UpdateNamePropertiesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateNamePropertiesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateNamePropertiesMutation>(UpdateNamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateNameProperties', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateNamePropertiesMutation>(UpdateNamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateNameProperties', 'mutation', variables);
     }
   };
 }

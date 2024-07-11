@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ImmunisationProgramFragment = { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null };
 
 export type VaccineCourseScheduleFragment = { __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string };
@@ -10,7 +10,7 @@ export type VaccineCourseScheduleFragment = { __typename: 'VaccineCourseSchedule
 export type VaccineCourseItemFragment = { __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string };
 
 export type ProgramsQueryVariables = Types.Exact<{
-  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  storeId: Types.Scalars['String']['input'];
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.ProgramSortFieldInput;
@@ -22,16 +22,16 @@ export type ProgramsQueryVariables = Types.Exact<{
 export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null }> } };
 
 export type InsertImmunisationProgramMutationVariables = Types.Exact<{
-  input?: Types.InputMaybe<Types.InsertImmunisationProgramInput>;
-  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  input: Types.InsertImmunisationProgramInput;
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type InsertImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', insertImmunisationProgram: { __typename: 'InsertImmunisationProgramError', error: { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } } } };
 
 export type UpdateImmunisationProgramMutationVariables = Types.Exact<{
-  input?: Types.InputMaybe<Types.UpdateImmunisationProgramInput>;
-  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  input: Types.UpdateImmunisationProgramInput;
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -51,16 +51,16 @@ export type VaccineCoursesQueryVariables = Types.Exact<{
 export type VaccineCoursesQuery = { __typename: 'Queries', vaccineCourses: { __typename: 'VaccineCourseConnector', totalCount: number, nodes: Array<{ __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null }> } };
 
 export type InsertVaccineCourseMutationVariables = Types.Exact<{
-  input?: Types.InputMaybe<Types.InsertVaccineCourseInput>;
-  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  input: Types.InsertVaccineCourseInput;
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type InsertVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', insertVaccineCourse: { __typename: 'InsertVaccineCourseError', error: { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null } } } };
 
 export type UpdateVaccineCourseMutationVariables = Types.Exact<{
-  input?: Types.InputMaybe<Types.UpdateVaccineCourseInput>;
-  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  input: Types.UpdateVaccineCourseInput;
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -128,7 +128,7 @@ export const VaccineCourseFragmentDoc = gql`
     ${VaccineCourseItemFragmentDoc}
 ${VaccineCourseScheduleFragmentDoc}`;
 export const ProgramsDocument = gql`
-    query programs($storeId: String, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
+    query programs($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
   programs(
     storeId: $storeId
     page: {first: $first, offset: $offset}
@@ -147,7 +147,7 @@ export const ProgramsDocument = gql`
 }
     ${ImmunisationProgramFragmentDoc}`;
 export const InsertImmunisationProgramDocument = gql`
-    mutation insertImmunisationProgram($input: InsertImmunisationProgramInput, $storeId: String) {
+    mutation insertImmunisationProgram($input: InsertImmunisationProgramInput!, $storeId: String!) {
   centralServer {
     program {
       insertImmunisationProgram(input: $input, storeId: $storeId) {
@@ -168,7 +168,7 @@ export const InsertImmunisationProgramDocument = gql`
 }
     ${ImmunisationProgramFragmentDoc}`;
 export const UpdateImmunisationProgramDocument = gql`
-    mutation updateImmunisationProgram($input: UpdateImmunisationProgramInput, $storeId: String) {
+    mutation updateImmunisationProgram($input: UpdateImmunisationProgramInput!, $storeId: String!) {
   centralServer {
     program {
       updateImmunisationProgram(input: $input, storeId: $storeId) {
@@ -209,7 +209,7 @@ export const VaccineCoursesDocument = gql`
 }
     ${VaccineCourseFragmentDoc}`;
 export const InsertVaccineCourseDocument = gql`
-    mutation insertVaccineCourse($input: InsertVaccineCourseInput, $storeId: String) {
+    mutation insertVaccineCourse($input: InsertVaccineCourseInput!, $storeId: String!) {
   centralServer {
     vaccineCourse {
       insertVaccineCourse(input: $input, storeId: $storeId) {
@@ -229,7 +229,7 @@ export const InsertVaccineCourseDocument = gql`
 }
     ${VaccineCourseFragmentDoc}`;
 export const UpdateVaccineCourseDocument = gql`
-    mutation updateVaccineCourse($input: UpdateVaccineCourseInput, $storeId: String) {
+    mutation updateVaccineCourse($input: UpdateVaccineCourseInput!, $storeId: String!) {
   centralServer {
     vaccineCourse {
       updateVaccineCourse(input: $input, storeId: $storeId) {
@@ -278,36 +278,36 @@ export const DeleteVaccineCourseDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
     },
-    insertImmunisationProgram(variables?: InsertImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertImmunisationProgramMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertImmunisationProgramMutation>(InsertImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertImmunisationProgram', 'mutation');
+    insertImmunisationProgram(variables: InsertImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertImmunisationProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertImmunisationProgramMutation>(InsertImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertImmunisationProgram', 'mutation', variables);
     },
-    updateImmunisationProgram(variables?: UpdateImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateImmunisationProgramMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateImmunisationProgramMutation>(UpdateImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateImmunisationProgram', 'mutation');
+    updateImmunisationProgram(variables: UpdateImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateImmunisationProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateImmunisationProgramMutation>(UpdateImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateImmunisationProgram', 'mutation', variables);
     },
     vaccineCourses(variables: VaccineCoursesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccineCoursesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<VaccineCoursesQuery>(VaccineCoursesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccineCourses', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<VaccineCoursesQuery>(VaccineCoursesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccineCourses', 'query', variables);
     },
-    insertVaccineCourse(variables?: InsertVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertVaccineCourseMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertVaccineCourseMutation>(InsertVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertVaccineCourse', 'mutation');
+    insertVaccineCourse(variables: InsertVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertVaccineCourseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertVaccineCourseMutation>(InsertVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertVaccineCourse', 'mutation', variables);
     },
-    updateVaccineCourse(variables?: UpdateVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateVaccineCourseMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateVaccineCourseMutation>(UpdateVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateVaccineCourse', 'mutation');
+    updateVaccineCourse(variables: UpdateVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateVaccineCourseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateVaccineCourseMutation>(UpdateVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateVaccineCourse', 'mutation', variables);
     },
     deleteImmunisationProgram(variables: DeleteImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteImmunisationProgramMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteImmunisationProgramMutation>(DeleteImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteImmunisationProgram', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteImmunisationProgramMutation>(DeleteImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteImmunisationProgram', 'mutation', variables);
     },
     deleteVaccineCourse(variables: DeleteVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteVaccineCourseMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteVaccineCourseMutation>(DeleteVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteVaccineCourse', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteVaccineCourseMutation>(DeleteVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteVaccineCourse', 'mutation', variables);
     }
   };
 }
