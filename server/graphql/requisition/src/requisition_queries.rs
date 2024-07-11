@@ -75,6 +75,7 @@ pub struct RequisitionFilterInput {
     pub their_reference: Option<StringFilterInput>,
     pub comment: Option<StringFilterInput>,
     pub order_type: Option<EqualFilterStringInput>,
+    pub a_shipment_has_been_created: Option<bool>,
 }
 
 #[derive(Union)]
@@ -239,6 +240,7 @@ impl RequisitionFilterInput {
             linked_requisition_id: None,
             store_id: None,
             order_type: self.order_type.map(EqualFilter::from),
+            a_shipment_has_been_created: self.a_shipment_has_been_created,
         }
     }
 }
