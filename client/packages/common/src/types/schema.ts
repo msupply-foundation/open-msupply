@@ -6028,6 +6028,7 @@ export type RequisitionCounts = {
 };
 
 export type RequisitionFilterInput = {
+  aShipmentHasBeenCreated?: InputMaybe<Scalars['Boolean']['input']>;
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
