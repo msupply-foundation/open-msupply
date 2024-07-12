@@ -7,3 +7,4 @@ export * from './DispensaryRouter';
 export * from './ColdChainRouter';
 export * from './ManageRouter';
 export * from './ImmunisationProgramRouter';
+export * from './ReportsRouter';
