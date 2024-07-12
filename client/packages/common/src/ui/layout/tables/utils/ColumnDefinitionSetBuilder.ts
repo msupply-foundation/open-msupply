@@ -237,6 +237,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'unitQuantity',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: NumberCell,
   },
   itemUnit: {
     label: 'label.unit',
@@ -270,6 +271,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'availableStockOnHand',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: NumberCell,
   },
   theirReference: {
     label: 'label.reference',
