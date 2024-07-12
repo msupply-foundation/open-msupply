@@ -51,7 +51,6 @@ pub struct NameFilterInput {
     pub is_supplier: Option<bool>,
     /// Filter by donor property
     pub is_donor: Option<bool>,
-    pub is_patient: Option<bool>,
     /// Is this name a store
     pub is_store: Option<bool>,
     /// Code of the store if store is linked to name
@@ -146,7 +145,6 @@ impl NameFilterInput {
             address2,
             country,
             email,
-            is_patient,
             code_or_name,
         } = self;
 
@@ -168,7 +166,6 @@ impl NameFilterInput {
             address2: address2.map(StringFilter::from),
             country: country.map(StringFilter::from),
             email: email.map(StringFilter::from),
-            is_patient,
         }
     }
 }

@@ -128,21 +128,6 @@ mutation insertPrescription(
       id
       invoiceNumber
     }
-    ... on InsertPrescriptionError {
-      __typename
-      error {
-        description
-        ... on OtherPartyNotVisible {
-          __typename
-          description
-        }
-        ... on OtherPartyNotAPatient {
-          __typename
-          description
-        }
-        description
-      }
-    }
   }
 }
 
@@ -218,14 +203,6 @@ mutation upsertPrescription(
     }
     insertPrescriptions {
       id
-      response {
-        ... on InsertPrescriptionError {
-          __typename
-          error {
-            description
-          }
-        }
-      }
     }
     updatePrescriptionLines {
       id
