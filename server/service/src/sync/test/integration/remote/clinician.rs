@@ -25,6 +25,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             logo: None,
             store_mode: StoreMode::Dispensary,
             created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
+            is_disabled: false,
         };
         let store_json = json!({
             "ID": store_row.id,
