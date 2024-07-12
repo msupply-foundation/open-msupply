@@ -8,7 +8,7 @@ import { usePackVariant } from '../../context';
 import { PackVariantSelect } from './PackVariantSelect';
 
 // Drop down selector for unit variant
-export const PackVariantSelectCell =
+export const getPackVariantSelectCell =
   <T extends RecordWithId>({
     getItemId,
     getUnitName,

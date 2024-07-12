@@ -7,7 +7,7 @@ import {
 import { usePackVariant } from '../../context';
 
 // Adjust quantity to reflect selected pack variant
-export const PackVariantQuantityCell =
+export const getPackVariantQuantityCell =
   <T extends RecordWithId>({
     getItemId,
     getQuantity,

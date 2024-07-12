@@ -14,7 +14,10 @@ import {
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
-import { PackVariantQuantityCell, PackVariantSelectCell } from '../Components';
+import {
+  getPackVariantQuantityCell,
+  getPackVariantSelectCell,
+} from '../Components';
 
 const ItemListComponent: FC = () => {
   const {
@@ -45,7 +48,7 @@ const ItemListComponent: FC = () => {
         key: 'packUnit',
         label: 'label.unit',
         align: ColumnAlign.Right,
-        Cell: PackVariantSelectCell({
+        Cell: getPackVariantSelectCell({
           getItemId: r => r.id,
           getUnitName: r => r.unitName || null,
         }),
@@ -55,7 +58,7 @@ const ItemListComponent: FC = () => {
       [
         'stockOnHand',
         {
-          Cell: PackVariantQuantityCell({
+          Cell: getPackVariantQuantityCell({
             getItemId: r => r.id,
             getQuantity: r => NumUtils.round(r.stats.availableStockOnHand),
           }),
@@ -68,7 +71,7 @@ const ItemListComponent: FC = () => {
       [
         'monthlyConsumption',
         {
-          Cell: PackVariantQuantityCell({
+          Cell: getPackVariantQuantityCell({
             getItemId: r => r.id,
             getQuantity: r =>
               NumUtils.round(r.stats.averageMonthlyConsumption, 2),
@@ -79,7 +82,7 @@ const ItemListComponent: FC = () => {
         },
       ],
       {
-        Cell: PackVariantQuantityCell({
+        Cell: getPackVariantQuantityCell({
           getItemId: r => r.id,
           getQuantity: r =>
             NumUtils.round(r.stats.availableMonthsOfStockOnHand ?? 0, 2),
