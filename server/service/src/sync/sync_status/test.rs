@@ -7,7 +7,7 @@ use actix_web::{
 };
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    mock::{insert_extra_mock_data, mock_store_a, mock_store_b, MockData, MockDataInserts},
+    mock::{insert_extra_mock_data, mock_store_b, MockData, MockDataInserts},
     ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;

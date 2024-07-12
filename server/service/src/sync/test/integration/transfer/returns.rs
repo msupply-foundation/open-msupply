@@ -1,4 +1,4 @@
-use repository::{CurrencyRow, ItemRow};
+use repository::{CurrencyRow, ItemRow, ItemType};
 use serde_json::json;
 use util::{inline_init, uuid::uuid};
 
@@ -21,6 +21,11 @@ async fn integration_sync_return_transfers_normal() {
         r.id = uuid();
     });
 
+    let service_item = inline_init(|r: &mut ItemRow| {
+        r.id = uuid();
+        r.r#type = ItemType::Service;
+    });
+
     let currency = inline_init(|r: &mut CurrencyRow| {
         r.id = String::from("currency_a");
         r.code = String::from("USD");
@@ -39,6 +44,7 @@ async fn integration_sync_return_transfers_normal() {
             "item": [
                 {"ID": item1.id, "type_of": "general"},
                 {"ID": item2.id, "type_of": "general"},
+                {"ID": service_item.id, "type_of": "service"},
             ],
             "currency": [
                 {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
@@ -56,6 +62,7 @@ async fn integration_sync_return_transfers_normal() {
             None,
             &item1,
             &item2,
+            &service_item,
         );
 
         // SETUP FOR RETURN
@@ -205,6 +212,11 @@ async fn integration_sync_return_transfers_delete() {
         r.id = uuid();
     });
 
+    let service_item = inline_init(|r: &mut ItemRow| {
+        r.id = uuid();
+        r.r#type = ItemType::Service;
+    });
+
     let currency = inline_init(|r: &mut CurrencyRow| {
         r.id = String::from("currency_a");
         r.code = String::from("USD");
@@ -223,6 +235,7 @@ async fn integration_sync_return_transfers_delete() {
             "item": [
                 {"ID": item1.id, "type_of": "general"},
                 {"ID": item2.id, "type_of": "general"},
+                {"ID": service_item.id, "type_of": "service"}
             ],
             "currency": [
                 {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
@@ -240,6 +253,7 @@ async fn integration_sync_return_transfers_delete() {
             None,
             &item1,
             &item2,
+            &service_item,
         );
 
         // SETUP FOR RETURN
@@ -336,6 +350,11 @@ async fn integration_sync_return_transfers_initialise() {
         r.id = uuid();
     });
 
+    let service_item = inline_init(|r: &mut ItemRow| {
+        r.id = uuid();
+        r.r#type = ItemType::Service;
+    });
+
     let currency = inline_init(|r: &mut CurrencyRow| {
         r.id = String::from("currency_a");
         r.code = String::from("USD");
@@ -354,6 +373,7 @@ async fn integration_sync_return_transfers_initialise() {
             "item": [
                 {"ID": item1.id, "type_of": "general"},
                 {"ID": item2.id, "type_of": "general"},
+                {"ID": service_item.id, "type_of": "service"},
             ],
             "currency": [
                 {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
@@ -371,6 +391,7 @@ async fn integration_sync_return_transfers_initialise() {
             None,
             &item1,
             &item2,
+            &service_item,
         );
 
         // SETUP FOR RETURN

@@ -3,7 +3,6 @@ use super::{
 };
 
 use crate::{db_diesel::form_schema_row::form_schema, RepositoryError, Upsert};
-use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;

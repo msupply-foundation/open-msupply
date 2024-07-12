@@ -13,6 +13,7 @@ static PROGRESS_STEP_LEN: usize = 100;
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
     sync_buffer: &'a SyncBuffer<'a>,
+    source_site_id: Option<i32>,
 }
 
 #[derive(Default, Debug)]
@@ -28,10 +29,12 @@ impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(
         connection: &'a StorageConnection,
         sync_buffer: &'a SyncBuffer,
+        source_site_id: Option<i32>,
     ) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
             connection,
             sync_buffer,
+            source_site_id,
         }
     }
 
@@ -47,9 +50,8 @@ impl<'a> TranslationAndIntegration<'a> {
             if !translator.should_translate_from_sync_record(sync_record) {
                 continue;
             }
-            let source_site_id = sync_record.source_site_id;
 
-            let mut translation_result = match sync_record.action {
+            let translation_result = match sync_record.action {
                 SyncAction::Upsert => translator
                     .try_translate_from_upsert_sync_record(self.connection, sync_record)?,
                 SyncAction::Delete => translator
@@ -58,10 +60,6 @@ impl<'a> TranslationAndIntegration<'a> {
                     translator.try_translate_from_merge_sync_record(self.connection, sync_record)?
                 }
             };
-
-            if let Some(id) = source_site_id {
-                translation_result.add_source_site_id(id);
-            }
 
             translation_results.push(translation_result);
         }
@@ -154,7 +152,8 @@ impl<'a> TranslationAndIntegration<'a> {
             }
 
             // Integrate
-            let integration_result = integrate(self.connection, &integration_records);
+            let integration_result =
+                integrate(self.connection, &integration_records, self.source_site_id);
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
@@ -187,30 +186,30 @@ impl<'a> TranslationAndIntegration<'a> {
 }
 
 impl IntegrationOperation {
-    fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+    fn integrate(
+        &self,
+        connection: &StorageConnection,
+        source_site_id: Option<i32>,
+    ) -> Result<(), RepositoryError> {
         match self {
-            IntegrationOperation::Upsert(upsert, source_site_id) => {
+            IntegrationOperation::Upsert(upsert) => {
                 let cursor_id = upsert.upsert(connection)?;
 
                 // Update the change log if we get a cursor id
                 if let Some(cursor_id) = cursor_id {
-                    ChangelogRepository::new(connection).set_source_site_id_and_is_sync_update(
-                        cursor_id,
-                        source_site_id.to_owned(),
-                    )?;
+                    ChangelogRepository::new(connection)
+                        .set_source_site_id_and_is_sync_update(cursor_id, source_site_id)?;
                 }
                 Ok(())
             }
 
-            IntegrationOperation::Delete(delete, source_site_id) => {
+            IntegrationOperation::Delete(delete) => {
                 let cursor_id = delete.delete(connection)?;
 
                 // Update the change log if we get a cursor id
                 if let Some(cursor_id) = cursor_id {
-                    ChangelogRepository::new(connection).set_source_site_id_and_is_sync_update(
-                        cursor_id,
-                        source_site_id.to_owned(),
-                    )?;
+                    ChangelogRepository::new(connection)
+                        .set_source_site_id_and_is_sync_update(cursor_id, source_site_id)?;
                 }
                 Ok(())
             }
@@ -221,6 +220,7 @@ impl IntegrationOperation {
 pub(crate) fn integrate(
     connection: &StorageConnection,
     integration_records: &[IntegrationOperation],
+    source_site_id: Option<i32>,
 ) -> Result<(), RepositoryError> {
     for integration_record in integration_records.iter() {
         if cfg!(feature = "postgres") {
@@ -229,12 +229,15 @@ pub(crate) fn integrate(
             // transaction to catch potential errors (e.g. foreign key violations).
             // Note, this is not a problem in Sqlite.
             connection
-                .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
+                .transaction_sync_etc(
+                    |sub_tx| integration_record.integrate(sub_tx, source_site_id),
+                    false,
+                )
                 .map_err(|e| e.to_inner_error())?;
         } else {
             // For Sqlite, integrating without nested transaction is faster, especially if there are
             // errors (see the bench_error_performance() test).
-            integration_record.integrate(connection)?;
+            integration_record.integrate(connection, source_site_id)?;
         }
     }
 
@@ -281,6 +284,7 @@ mod test {
                             r.id = "unit".to_string();
                         },
                     ))],
+                    None,
                 );
 
                 assert_eq!(result, Ok(()));
@@ -294,6 +298,7 @@ mod test {
                             r.unit_id = Some("invalid".to_string());
                         },
                     ))],
+                    None,
                 );
 
                 assert_ne!(result, Ok(()));
