@@ -13,7 +13,6 @@ import {
   NumberCell,
   CurrencyCell,
   ColumnDescription,
-  NumUtils,
 } from '@openmsupply-client/common';
 import {
   getPackVariantCell,
@@ -44,9 +43,7 @@ const getNumberOfPacks = (row: StockOutLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
 
 const getUnitQuantity = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row)
-    ? ''
-    : NumUtils.floatMultiply(row.packSize, row.numberOfPacks);
+  isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
 
 export const useOutboundColumns = ({
   sortBy,

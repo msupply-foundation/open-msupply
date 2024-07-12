@@ -9,7 +9,6 @@ import {
   useTranslation,
   useUrlQueryParams,
   ColumnAlign,
-  NumUtils,
   TooltipTextCell,
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
@@ -57,7 +56,7 @@ const ItemListComponent: FC = () => {
         {
           Cell: PackVariantQuantityCell({
             getItemId: r => r.id,
-            getQuantity: r => NumUtils.round(r.stats.availableStockOnHand),
+            getQuantity: r => r.stats.availableStockOnHand,
           }),
           label: 'label.soh',
           description: 'description.soh',
@@ -70,8 +69,7 @@ const ItemListComponent: FC = () => {
         {
           Cell: PackVariantQuantityCell({
             getItemId: r => r.id,
-            getQuantity: r =>
-              NumUtils.round(r.stats.averageMonthlyConsumption, 2),
+            getQuantity: r => r.stats.averageMonthlyConsumption,
           }),
           align: ColumnAlign.Right,
           sortable: false,
@@ -81,8 +79,7 @@ const ItemListComponent: FC = () => {
       {
         Cell: PackVariantQuantityCell({
           getItemId: r => r.id,
-          getQuantity: r =>
-            NumUtils.round(r.stats.availableMonthsOfStockOnHand ?? 0, 2),
+          getQuantity: r => r.stats.availableMonthsOfStockOnHand ?? 0,
         }),
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
