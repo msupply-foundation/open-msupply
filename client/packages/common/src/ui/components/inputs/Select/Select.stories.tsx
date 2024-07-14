@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { Select } from './Select';
 import { Grid, Typography } from '@mui/material';
@@ -7,9 +7,9 @@ import { Grid, Typography } from '@mui/material';
 export default {
   title: 'Inputs/Select',
   component: Select,
-} as ComponentMeta<typeof Select>;
+} as Meta<typeof Select>;
 
-const Template: ComponentStory<typeof Select> = args => (
+const Template: StoryFn<typeof Select> = args => (
   <Grid container spacing={5} flexDirection="column">
     <Grid item>
       <Typography>Basic Select</Typography>

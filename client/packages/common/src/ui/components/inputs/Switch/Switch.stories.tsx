@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { Switch } from './Switch';
 import { Box } from '@mui/material';
@@ -7,9 +7,9 @@ import { Box } from '@mui/material';
 export default {
   title: 'Inputs/Switch',
   component: Switch,
-} as ComponentMeta<typeof Switch>;
+} as Meta<typeof Switch>;
 
-const Template: ComponentStory<typeof Switch> = args => {
+const Template: StoryFn<typeof Switch> = args => {
   const [checked, setChecked] = React.useState(false);
   return (
     <Box>

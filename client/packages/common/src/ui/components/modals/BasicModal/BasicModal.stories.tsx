@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Grid, Button } from '@mui/material';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { BasicModal } from './BasicModal';
 
 export default {
@@ -8,7 +8,7 @@ export default {
   component: BasicModal,
 };
 
-const Template: Story = ({ children, width = 300, height = 300 }) => {
+const Template: StoryFn = ({ children, width = 300, height = 300 }) => {
   const [open, setOpen] = useState(false);
 
   return (

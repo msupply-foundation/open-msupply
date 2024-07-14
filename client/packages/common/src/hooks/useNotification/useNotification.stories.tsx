@@ -1,5 +1,5 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 
 import { useNotification } from './useNotification';
 import { BaseButton } from '@common/components';
@@ -35,7 +35,7 @@ const NotificationButton: React.FC<NotificationArgs> = ({ variant }) => {
   return <BaseButton onClick={onClick}>Click Me</BaseButton>;
 };
 
-const Template: Story<NotificationArgs> = args => (
+const Template: StoryFn<NotificationArgs> = args => (
   <div>
     <NotificationButton {...args} />
   </div>

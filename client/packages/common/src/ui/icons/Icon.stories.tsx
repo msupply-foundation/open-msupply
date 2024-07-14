@@ -1,14 +1,15 @@
 // Icons sourced from https://feathericons.com/
 
 import React, { ChangeEvent, useState } from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
-
+import { StoryFn, Meta } from '@storybook/react';
+import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 import { SvgIconProps } from '.';
+
 import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
 import { ArrowRightIcon } from './ArrowRight';
-import { BarIcon } from './Bar';
 import { BarChartIcon } from './BarChart';
+import { BarIcon } from './Bar';
 import { BookIcon } from './Book';
 import { CartIcon } from './Cart';
 import { CentralIcon } from './Central';
@@ -32,8 +33,8 @@ import { EditIcon } from './Edit';
 import { ExternalLinkIcon } from './ExternalLink';
 import { EyeIcon } from './Eye';
 import { EyeOffIcon } from './EyeOff';
-import { FileUploadIcon } from './FileUpload';
 import { FileIcon } from './File';
+import { FileUploadIcon } from './FileUpload';
 import { FilterIcon } from './Filter';
 import { HelpIcon } from './Help';
 import { HomeIcon } from './Home';
@@ -45,8 +46,8 @@ import { ListIcon } from './List';
 import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
 import { MedicineIcon } from './MedicineIcon';
 import { MenuDotsIcon } from './MenuDots';
-import { MessagesIcon } from './Messages';
 import { MessageSquareIcon } from './MessageSquare';
+import { MessagesIcon } from './Messages';
 import { MinusCircleIcon } from './MinusCircle';
 import { PlusCircleIcon } from './PlusCircle';
 import { PowerIcon } from './Power';
@@ -58,8 +59,8 @@ import { RewindIcon } from './Rewind';
 import { SaveIcon } from './Save';
 import { ScanIcon } from './Scan';
 import { SearchIcon } from './Search';
-import { SettingsIcon } from './Settings';
 import { SettingsCircleIcon } from './SettingsCircle';
+import { SettingsIcon } from './Settings';
 import { SidebarIcon } from './Sidebar';
 import { SlidersIcon } from './Sliders';
 import { SnowflakeIcon } from './Snowflake';
@@ -79,7 +80,6 @@ import { UserCircleIcon } from './UserCircle';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
 import { ZapIcon } from './Zap';
-import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
 
 export default {
   title: 'Assets/Svg Icon',
@@ -87,7 +87,7 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof Grid>;
+} as Meta<typeof Grid>;
 
 const StyledPaper = styled(Paper)({
   textAlign: 'center',
@@ -100,7 +100,7 @@ type Icon = {
   name: string;
 };
 
-const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
+const Template: StoryFn<React.FC<SvgIconProps>> = args => {
   const icons: Icon[] = [
     { icon: <AlertIcon {...args} />, name: 'Alert' },
     { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
@@ -118,7 +118,6 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
       icon: <CheckboxIndeterminateIcon {...args} />,
       name: 'Checkbox Indeterminate',
     },
-    { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDownIcon {...args} />, name: 'ChevronDown' },
     { icon: <ChevronsDownIcon {...args} />, name: 'ChevronsDown' },
     { icon: <CircleAlertIcon {...args} />, name: 'CircleAlert' },

@@ -13,7 +13,6 @@ export const SidePanelComponent = () => {
   const t = useTranslation('reports');
   const { store } = useAuthContext();
   const preferences = store?.preferences;
-  const isDisabled = true;
 
   return (
     <DetailPanelPortal>
@@ -27,7 +26,7 @@ export const SidePanelComponent = () => {
               decimalLimit={2}
               endAdornment={t('label.months')}
               value={preferences?.monthsOverstock}
-              disabled={isDisabled}
+              disabled={true}
               fullWidth
             />
           </PanelRow>
@@ -37,7 +36,7 @@ export const SidePanelComponent = () => {
               decimalLimit={2}
               endAdornment={t('label.months')}
               value={preferences?.monthsUnderstock}
-              disabled={isDisabled}
+              disabled={true}
               fullWidth
             />
           </PanelRow>
@@ -47,7 +46,7 @@ export const SidePanelComponent = () => {
               decimalLimit={2}
               endAdornment={t('label.months')}
               value={preferences?.monthsItemsExpire}
-              disabled={isDisabled}
+              disabled={true}
               fullWidth
             />
           </PanelRow>
@@ -57,7 +56,7 @@ export const SidePanelComponent = () => {
               decimalLimit={2}
               endAdornment={t('label.months')}
               value={preferences?.stocktakeFrequency}
-              disabled={isDisabled}
+              disabled={true}
               fullWidth
             />
           </PanelRow>
@@ -72,7 +71,7 @@ export const SidePanelComponent = () => {
               decimalLimit={2}
               endAdornment={t('label.months')}
               value={preferences?.monthlyConsumptionLookBackPeriod}
-              disabled={isDisabled}
+              disabled={true}
               fullWidth
             />
           </PanelRow>
@@ -82,7 +81,7 @@ export const SidePanelComponent = () => {
               decimalLimit={2}
               endAdornment={t('label.months')}
               value={preferences?.monthsLeadTime}
-              disabled={isDisabled}
+              disabled={true}
               fullWidth
             />
           </PanelRow>

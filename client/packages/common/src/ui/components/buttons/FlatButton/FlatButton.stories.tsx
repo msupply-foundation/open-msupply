@@ -1,10 +1,10 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { FlatButton } from './FlatButton';
 import { BookIcon, FilterIcon } from '@common/icons';
 
-const Template: ComponentStory<typeof FlatButton> = args => (
+const Template: StoryFn<typeof FlatButton> = args => (
   <Box>
     <FlatButton
       {...args}
@@ -15,7 +15,7 @@ const Template: ComponentStory<typeof FlatButton> = args => (
   </Box>
 );
 
-const StyledTemplate: ComponentStory<typeof FlatButton> = args => (
+const StyledTemplate: StoryFn<typeof FlatButton> = args => (
   <Box>
     <FlatButton
       {...args}
@@ -43,6 +43,6 @@ export const Styled = StyledTemplate.bind({});
 export default {
   title: 'Buttons/FlatButton',
   component: FlatButton,
-} as ComponentMeta<typeof FlatButton>;
+} as Meta<typeof FlatButton>;
 
 Secondary.args = { color: 'secondary' };

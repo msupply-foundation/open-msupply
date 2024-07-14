@@ -1,12 +1,12 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { useWindowDimensions } from './useWindowDimensions';
 
 export default {
   title: 'Hooks/useWindowDimensions',
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const windowDimensions = useWindowDimensions();
 
   return (

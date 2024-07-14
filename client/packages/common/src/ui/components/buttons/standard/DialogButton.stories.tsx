@@ -1,9 +1,9 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { DialogButton } from './DialogButton';
 
-const Template: ComponentStory<typeof DialogButton> = ({
+const Template: StoryFn<typeof DialogButton> = ({
   disabled,
   variant,
 }) => (
@@ -31,4 +31,4 @@ DisabledCancel.args = { variant: 'cancel', disabled: true };
 export default {
   title: 'Buttons/DialogButton',
   component: DialogButton,
-} as ComponentMeta<typeof DialogButton>;
+} as Meta<typeof DialogButton>;

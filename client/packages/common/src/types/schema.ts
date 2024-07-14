@@ -2703,15 +2703,6 @@ export type InsertPluginDataInput = {
 
 export type InsertPluginDataResponse = PluginDataNode;
 
-export type InsertPrescriptionError = {
-  __typename: 'InsertPrescriptionError';
-  error: InsertPrescriptionErrorInterface;
-};
-
-export type InsertPrescriptionErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type InsertPrescriptionInput = {
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
@@ -2742,7 +2733,7 @@ export type InsertPrescriptionLineResponseWithId = {
   response: InsertPrescriptionLineResponse;
 };
 
-export type InsertPrescriptionResponse = InsertPrescriptionError | InvoiceNode;
+export type InsertPrescriptionResponse = InvoiceNode;
 
 export type InsertPrescriptionResponseWithId = {
   __typename: 'InsertPrescriptionResponseWithId';
@@ -4435,7 +4426,6 @@ export type NameFilterInput = {
   isCustomer?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by donor property */
   isDonor?: InputMaybe<Scalars['Boolean']['input']>;
-  isPatient?: InputMaybe<Scalars['Boolean']['input']>;
   /** Is this name a store */
   isStore?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by supplier property */
@@ -4494,7 +4484,6 @@ export enum NameNodeType {
   Facility = 'FACILITY',
   Invad = 'INVAD',
   Others = 'OTHERS',
-  Patient = 'PATIENT',
   Repack = 'REPACK',
   Store = 'STORE'
 }
@@ -4630,17 +4619,12 @@ export type OtherPartyNotACustomer = InsertErrorInterface & InsertInboundReturnE
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotAPatient = InsertPrescriptionErrorInterface & UpdatePrescriptionErrorInterface & {
-  __typename: 'OtherPartyNotAPatient';
-  description: Scalars['String']['output'];
-};
-
 export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String']['output'];
 };
@@ -6028,6 +6012,7 @@ export type RequisitionCounts = {
 };
 
 export type RequisitionFilterInput = {
+  aShipmentHasBeenCreated?: InputMaybe<Scalars['Boolean']['input']>;
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;

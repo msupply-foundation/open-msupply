@@ -104,6 +104,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       noOptionsText={t('messages.no-locations')}
       renderOption={optionRenderer}
       getOptionLabel={getOptionLabel}
+      isOptionEqualToValue={(option, value) => option.value === value?.value}
     />
   );
 };

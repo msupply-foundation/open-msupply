@@ -4,18 +4,20 @@ import { CssBaseline } from '@mui/material';
 import { StoryProvider, TestingRouterContext } from '@common/utils';
 
 export const decorators = [
-  Story => (
-    <StoryProvider>
-      <TestingRouterContext>
-        <CssBaseline />
-        <Story />
-      </TestingRouterContext>
-    </StoryProvider>
-  ),
+  (Story, { parameters }) => {
+    const { routes } = parameters;
+    return (
+      <StoryProvider>
+        <TestingRouterContext initialEntries={routes}>
+          <CssBaseline />
+          <Story />
+        </TestingRouterContext>
+      </StoryProvider>
+    );
+  },
 ];
 
 export const parameters = {
-  actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
     expanded: true, // Adds the description and default columns
     matchers: {
@@ -24,3 +26,4 @@ export const parameters = {
     },
   },
 };
+export const tags = ['autodocs'];
