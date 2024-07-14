@@ -1,6 +1,6 @@
 import React from 'react';
 import { SvgIconProps } from '@mui/material';
-import { ComponentMeta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import { DropdownMenu, DropdownMenuItem } from './DropdownMenu';
 import {
   CustomersIcon,
@@ -12,7 +12,7 @@ import {
 export default {
   title: 'Menus/DropdownMenu',
   component: DropdownMenu,
-} as ComponentMeta<typeof DropdownMenu>;
+} as Meta<typeof DropdownMenu>;
 
 const options = [
   { value: 'cooks', label: 'Cook islands.' },
@@ -68,7 +68,7 @@ const someWithIconsOptions = [
   { label: 'Tools', inset: true },
 ];
 
-const Template: Story<{
+const Template: StoryFn<{
   options: {
     label: string;
     value?: string;

@@ -33,7 +33,7 @@ export type InsertPrescriptionMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertPrescriptionMutation = { __typename: 'Mutations', insertPrescription: { __typename: 'InsertPrescriptionError', error: { __typename: 'OtherPartyNotAPatient', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type InsertPrescriptionMutation = { __typename: 'Mutations', insertPrescription: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export type UpsertPrescriptionMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -41,7 +41,7 @@ export type UpsertPrescriptionMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertPrescriptionMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deletePrescriptions?: Array<{ __typename: 'DeletePrescriptionResponseWithId', id: string, response: { __typename: 'DeletePrescriptionError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, insertPrescriptionLines?: Array<{ __typename: 'InsertPrescriptionLineResponseWithId', id: string, response: { __typename: 'InsertPrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertPrescriptions?: Array<{ __typename: 'InsertPrescriptionResponseWithId', id: string, response: { __typename: 'InsertPrescriptionError', error: { __typename: 'OtherPartyNotAPatient', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode' } }> | null, updatePrescriptionLines?: Array<{ __typename: 'UpdatePrescriptionLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdatePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string, batch: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode' } } | { __typename: 'RecordNotFound', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } }> | null, updatePrescriptions?: Array<{ __typename: 'UpdatePrescriptionResponseWithId', id: string, response: { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdatePrescriptionError', error: { __typename: 'CanOnlyChangeToPickedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'OtherPartyNotAPatient', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
+export type UpsertPrescriptionMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deletePrescriptions?: Array<{ __typename: 'DeletePrescriptionResponseWithId', id: string, response: { __typename: 'DeletePrescriptionError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, insertPrescriptionLines?: Array<{ __typename: 'InsertPrescriptionLineResponseWithId', id: string, response: { __typename: 'InsertPrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertPrescriptions?: Array<{ __typename: 'InsertPrescriptionResponseWithId', id: string }> | null, updatePrescriptionLines?: Array<{ __typename: 'UpdatePrescriptionLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdatePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string, batch: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode' } } | { __typename: 'RecordNotFound', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } }> | null, updatePrescriptions?: Array<{ __typename: 'UpdatePrescriptionResponseWithId', id: string, response: { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdatePrescriptionError', error: { __typename: 'CanOnlyChangeToPickedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
 
 export type DeletePrescriptionsMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -173,21 +173,6 @@ export const InsertPrescriptionDocument = gql`
       id
       invoiceNumber
     }
-    ... on InsertPrescriptionError {
-      __typename
-      error {
-        description
-        ... on OtherPartyNotVisible {
-          __typename
-          description
-        }
-        ... on OtherPartyNotAPatient {
-          __typename
-          description
-        }
-        description
-      }
-    }
   }
 }
     `;
@@ -261,14 +246,6 @@ export const UpsertPrescriptionDocument = gql`
     }
     insertPrescriptions {
       id
-      response {
-        ... on InsertPrescriptionError {
-          __typename
-          error {
-            description
-          }
-        }
-      }
     }
     updatePrescriptionLines {
       id

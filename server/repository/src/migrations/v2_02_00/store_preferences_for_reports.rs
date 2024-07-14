@@ -16,5 +16,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#
     )?;
 
+    // Reset translate all prefs on the next sync
+    sql!(
+        connection,
+        r#"
+            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'pref';
+        "#,
+    )?;
+
     Ok(())
 }
