@@ -137,19 +137,23 @@ export const useInitialiseForm = () => {
   useEffect(() => {
     if (!initStatus) return;
 
-    switch (initStatus.status) {
-      case InitialisationStatusType.Initialised:
-        allowSleep().then(() =>
-          navigate(`/${AppRoute.Login}`, { replace: true })
-        );
-        break;
-      case InitialisationStatusType.Initialising:
-        keepAwake().then(() => setIsInitialising(true));
-        break;
-      case InitialisationStatusType.PreInitialisation:
-        allowSleep().then(() => setIsInitialising(false));
-        break;
-    }
+    const handleStatus = async (status: InitialisationStatusType) => {
+      switch (status) {
+        case InitialisationStatusType.Initialised:
+          await allowSleep();
+          navigate(`/${AppRoute.Login}`, { replace: true });
+          break;
+        case InitialisationStatusType.Initialising:
+          await keepAwake();
+          setIsInitialising(true);
+          break;
+        case InitialisationStatusType.PreInitialisation:
+          await allowSleep();
+          setIsInitialising(false);
+          break;
+      }
+    };
+    handleStatus(initStatus.status);
   }, [initStatus]);
 
   useEffect(() => {

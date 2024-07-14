@@ -51,6 +51,10 @@ export const ResponseRequisitionListView: FC = () => {
         key: 'status',
         condition: 'equalTo',
       },
+      {
+        key: 'aShipmentHasBeenCreated',
+        condition: '=',
+      },
     ],
   });
   const pagination = { page, first, offset };
@@ -60,7 +64,10 @@ export const ResponseRequisitionListView: FC = () => {
   useDisableResponseRows(data?.nodes);
 
   const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
-    [getNameAndColorColumn(), { setter: onUpdate }],
+    [
+      getNameAndColorColumn(),
+      { setter: ({ id, colour }) => onUpdate({ id, colour }) },
+    ],
     {
       key: 'requisitionNumber',
       label: 'label.number',
@@ -75,6 +82,12 @@ export const ResponseRequisitionListView: FC = () => {
         width: 100,
       },
     ],
+    {
+      key: 'numberOfShipments',
+      label: 'label.shipments',
+      description: 'description.number-of-shipments',
+      accessor: ({ rowData }) => rowData?.shipments?.totalCount ?? 0,
+    },
     {
       key: 'programName',
       accessor: ({ rowData }) => {
