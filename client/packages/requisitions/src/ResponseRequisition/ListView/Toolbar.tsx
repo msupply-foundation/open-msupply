@@ -11,7 +11,7 @@ import {
 export const Toolbar: FC<{
   filter: FilterController;
 }> = () => {
-  const t = useTranslation();
+  const t = useTranslation('distribution');
 
   return (
     <AppBarContentPortal
@@ -42,6 +42,11 @@ export const Toolbar: FC<{
                   value: RequisitionNodeStatus.Finalised,
                 },
               ],
+            },
+            {
+              type: 'boolean',
+              name: t('label.shipment-created'),
+              urlParameter: 'aShipmentHasBeenCreated',
             },
           ]}
         />
