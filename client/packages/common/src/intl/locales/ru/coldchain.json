@@ -116,5 +116,13 @@
     "label.last-recording-value": "Последнее значение записи температуры",
     "label.last-updated": "Последний раз обновлено",
     "label.line-number": "Номер строки",
-    "label.growth-on-previous-year": "Рост по сравнению с предыдущим годом"
+    "label.growth-on-previous-year": "Рост по сравнению с предыдущим годом",
+    "messages.confirm-delete-assets_one": "Это навсегда удалит этот ресурс.",
+    "messages.breach-ongoing": "Это нарушение продолжается и не может быть признано до тех пор, пока оно не закончится.",
+    "messages.cce-created": "Холодильное оборудование успешно создано",
+    "messages.click-to-return-to-assets": "Невозможно найти ресурс оборудования холодной цепи с таким идентификатором. Нажмите OK, чтобы вернуться к списку оборудования",
+    "messages.confirm-delete-assets_other": "Это навсегда удалит {{count}} выбранных ресурсов.",
+    "messages.confirm-delete-immunisation-programs_one": "Это навсегда удалит эту Программу Иммунизации.",
+    "messages.confirm-delete-immunisation-programs_other": "Это навсегда удалит {{count}} выбранных Программ Иммунизации.",
+    "messages.confirm-delete-vaccine-courses_one": "Это навсегда удалит этот курс вакцинации"
 }
