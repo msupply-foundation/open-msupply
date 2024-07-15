@@ -20,6 +20,8 @@ import {
   useConfirmationModal,
   useNavigate,
   RouteBuilder,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { PlusCircleIcon } from '@common/icons';
@@ -134,6 +136,11 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     };
   };
 
+  const newRepack = useCallbackWithPermission(
+    UserPermission.CreateRepack,
+    onNewClick
+  );
+
   return (
     <Modal
       width={900}
@@ -226,7 +233,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             <ButtonWithIcon
               label={t('label.new')}
               Icon={<PlusCircleIcon />}
-              onClick={onNewClick}
+              onClick={newRepack}
             />
           </Box>
         </Box>
