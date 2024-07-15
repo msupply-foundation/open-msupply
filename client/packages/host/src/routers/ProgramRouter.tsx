@@ -6,13 +6,12 @@ const ProgramService = React.lazy(
   () => import('@openmsupply-client/programs/src/Service/Service')
 );
 
-const immunisationFullPath = RouteBuilder.create(AppRoute.Programs)
-  .addPart(AppRoute.ImmunisationPrograms)
+const programsFullPath = RouteBuilder.create(AppRoute.Programs)
   .addWildCard()
   .build();
 
 export const ProgramsRouter: FC = () => {
-  const gotoImmunisations = useMatch(immunisationFullPath);
+  const gotoImmunisations = useMatch(programsFullPath);
 
   if (gotoImmunisations) {
     return <ProgramService />;
