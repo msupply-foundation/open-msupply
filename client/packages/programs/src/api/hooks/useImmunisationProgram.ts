@@ -10,7 +10,7 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { PROGRAM } from './keys';
-import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
+import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { ImmunisationProgramFragment } from '../operations.generated';
 import { isEmpty } from '@common/utils';
 
@@ -83,7 +83,7 @@ export function useImmunisationProgram(
 }
 
 const useGet = (id: string) => {
-  const { api, storeId } = useImmunisationGraphQL();
+  const { api, storeId } = useProgramsGraphQL();
 
   const queryFn = async () => {
     const result = await api.programs({
@@ -113,7 +113,7 @@ const useCreate = (
   setErrorMessage: Dispatch<SetStateAction<string>>,
   t: TypedTFunction<LocaleKey>
 ) => {
-  const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const { api, storeId, queryClient } = useProgramsGraphQL();
 
   const mutationFn = async ({ name }: DraftImmunisationProgram) => {
     const apiResult = await api.insertImmunisationProgram({
@@ -156,7 +156,7 @@ const useUpdate = (
   setErrorMessage: Dispatch<SetStateAction<string>>,
   t: TypedTFunction<LocaleKey>
 ) => {
-  const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const { api, storeId, queryClient } = useProgramsGraphQL();
 
   const mutationFn = async ({ name }: Partial<DraftImmunisationProgram>) => {
     if (!name) {

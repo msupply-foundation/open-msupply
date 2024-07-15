@@ -21,10 +21,8 @@ import {
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
-import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
 import { AppBarButtons } from './AppBarButtons';
-import { useVaccineCourseList } from '../api/hooks/useVaccineCourseList';
-import { VaccineCourseFragment } from '../api';
+import { VaccineCourseFragment, useVaccineCourseList, useImmunisationProgram } from '../api';
 import { VaccineCourseEditModal } from '../VaccineCourseEditModal';
 
 export const ProgramComponent: FC = () => {

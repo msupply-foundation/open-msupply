@@ -5,7 +5,7 @@ import {
 } from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
 
-export const useImmunisationGraphQL = () => {
+export const useProgramsGraphQL = () => {
   const { client } = useGql();
   const queryClient = useQueryClient();
   const { storeId } = useAuthContext();

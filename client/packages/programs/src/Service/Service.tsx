@@ -1,10 +1,10 @@
 import React, { FC } from 'react';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { ImmunisationProgramListView } from '../ListView';
+import { ImmunisationProgramListView } from '../ImmunisationProgramListView';
 import { ImmunisationProgramDetailView } from '../ImmunisationProgramDetailView';
 
-export const ImmunisationProgramService: FC = () => {
+export const ProgramService: FC = () => {
   const immunisationProgramsRoute = RouteBuilder.create(
     AppRoute.ImmunisationPrograms
   ).build();
@@ -28,4 +28,4 @@ export const ImmunisationProgramService: FC = () => {
   );
 };
 
-export default ImmunisationProgramService;
+export default ProgramService;
