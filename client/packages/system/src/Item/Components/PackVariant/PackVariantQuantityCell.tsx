@@ -26,17 +26,13 @@ export const PackVariantQuantityCell =
 
     const quantity = getQuantity(rowData);
     const packQuantity = numberOfPacksFromQuantity(quantity);
-    const hasMoreThanTwoDp =
-      packQuantity.toString().split('.')[1]?.length ?? 0 > 2;
     const roundedPackQuantity = NumUtils.round(packQuantity, 2);
 
     return (
       <BasicCellLayout isError={isError}>
         <Tooltip title={String(packQuantity)}>
           <Typography>
-            {hasMoreThanTwoDp
-              ? `${roundedPackQuantity}...`
-              : roundedPackQuantity}
+            {roundedPackQuantity}
           </Typography>
         </Tooltip>
       </BasicCellLayout>
