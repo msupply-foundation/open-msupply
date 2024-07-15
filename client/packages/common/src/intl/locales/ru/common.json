@@ -153,5 +153,20 @@
   "label.day": "день",
   "label.target-demographic": "Целевая Демографическая Группа",
   "label.breach-type": "Тип нарушения",
-  "label.asset-notes": "Примечания"
+  "label.asset-notes": "Примечания",
+  "label.group-by-item": "Группировать по Товарам",
+  "label.catalogue-item-code": "Код товара по каталогу",
+  "error.database-error": "Ошибка базы данных",
+  "label.percentage": "Процент",
+  "error.field-must-be-specified": "{{field}} должно быть указано",
+  "description.number-of-shipments": "Количество поставок, созданных на основе этой заявки за закупку",
+  "label.counted-num-of-packs": "Подсчитанное Количество",
+  "label.edited-by": "Отредактировано",
+  "label.error-message": "Ошибка",
+  "button.add-new-indicator": "Добавить Новый Индикатор",
+  "button.edit": "Редактировать",
+  "button.import-properties": "Импортировать Свойства",
+  "error.an-error-occurred": "Произошла ошибка: {{message}}",
+  "error.facility-not-found": "Объект не найден",
+  "button.add-new-vaccine-course": "Добавить курс вакцинации"
 }
