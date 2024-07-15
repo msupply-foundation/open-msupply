@@ -9,6 +9,13 @@ import { useDocumentRegistryApi } from './utils/useDocumentRegistryApi';
 import { useIdFromUrl } from './utils/useIdFromUrl';
 
 export { EncounterRegistryByProgram };
+export * from './types'
+export * from './useDeleteSelectedImmunisationPrograms'
+export * from './useDeleteSelectedVaccineCourses'
+export * from './useImmunisationProgram'
+export * from './useImmunisationProgramList'
+export * from './useVaccineCourse'
+export * from './useVaccineCourseList'
 
 export {
   ProgramEnrolmentRowFragmentWithId,

@@ -12,7 +12,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { VACCINE } from './keys';
-import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
+import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
 
 enum UpdateVaccineCourseError {
@@ -120,7 +120,7 @@ export const useVaccineCourse = (id?: string) => {
 };
 
 const useGet = (id: string) => {
-  const { api } = useImmunisationGraphQL();
+  const { api } = useProgramsGraphQL();
 
   const queryFn = async () => {
     const result = await api.vaccineCourses({
@@ -146,7 +146,7 @@ const useGet = (id: string) => {
 };
 
 const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
-  const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const { api, storeId, queryClient } = useProgramsGraphQL();
   const t = useTranslation('coldchain');
 
   const mutationFn = async (input: DraftVaccineCourse) => {
@@ -209,7 +209,7 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
 };
 
 const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
-  const { api, storeId, queryClient } = useImmunisationGraphQL();
+  const { api, storeId, queryClient } = useProgramsGraphQL();
   const t = useTranslation('coldchain');
 
   const mutationFn = async (input: DraftVaccineCourse) => {

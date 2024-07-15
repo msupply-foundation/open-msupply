@@ -6,7 +6,7 @@ import {
   VaccineCourseNode,
 } from '@openmsupply-client/common';
 import { VaccineCourseFragment } from '../operations.generated';
-import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
+import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
 
 export type CourseListParams = {
@@ -17,7 +17,7 @@ export type CourseListParams = {
 };
 
 export const useVaccineCourseList = (queryParams: CourseListParams) => {
-  const { api } = useImmunisationGraphQL();
+  const { api } = useProgramsGraphQL();
 
   const {
     sortBy = {

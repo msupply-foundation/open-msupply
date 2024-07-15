@@ -6,7 +6,7 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { ImmunisationProgramFragment } from '../operations.generated';
-import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
+import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { LIST, PROGRAM } from './keys';
 
 type ListParams = {
@@ -17,7 +17,7 @@ type ListParams = {
 };
 
 export const useImmunisationProgramList = (queryParams: ListParams) => {
-  const { api, storeId } = useImmunisationGraphQL();
+  const { api, storeId } = useProgramsGraphQL();
 
   const {
     sortBy = {

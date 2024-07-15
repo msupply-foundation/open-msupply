@@ -17,7 +17,7 @@ import {
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
-import { useDemographicIndicators } from '../../IndicatorsDemographics/api/hooks/document/useDemographicIndicators';
+import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { VaccineCourseFragment } from '../api';
 
@@ -86,7 +86,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
     isDirty,
     setIsDirty,
   } = useVaccineCourse(vaccineCourse?.id ?? undefined);
-  const { data: demographicData } = useDemographicIndicators();
+  const { data: demographicData } = useDemographicData.indicator.list();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
