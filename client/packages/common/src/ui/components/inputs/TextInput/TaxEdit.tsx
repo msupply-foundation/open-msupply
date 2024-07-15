@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   useTranslation,
   InputModal,
@@ -19,6 +19,10 @@ export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
   const t = useTranslation('replenishment');
   const [val, setVal] = useState<number | undefined>(tax);
 
+  useEffect(() => {
+    setVal(tax);
+  }, [tax]);
+
   return (
     <>
       <IconButton
@@ -27,7 +31,6 @@ export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
         label={t('heading.edit-tax-rate')}
         onClick={modalController.toggleOn}
       />
-      {/* Unmount when closing to reset state */}
       {modalController.isOn && (
         <InputModal
           isOpen={modalController.isOn}

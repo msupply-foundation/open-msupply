@@ -184,7 +184,6 @@ mod graphql {
                 address2,
                 country,
                 email,
-                is_patient: _,
                 is_donor,
                 code_or_name: _,
             } = filter.unwrap();
