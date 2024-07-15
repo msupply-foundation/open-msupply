@@ -6,8 +6,8 @@
   "private": true,
   "devDependencies": {
     "@capacitor-community/keep-awake": "^5.0.0",
-    "copy-webpack-plugin": "^11.0.0",
-    "find-up": "^6.3.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "find-up": "^7.0.0",
     "html-webpack-plugin": "^5.5.0",
     "react-refresh": "0.14.2",
     "serve": "^14.2.0",

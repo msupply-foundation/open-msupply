@@ -7,12 +7,12 @@ import { IntlContext } from '../context';
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
 // but the locales are not. when adding, please add as below
-import enGB from 'date-fns/locale/en-GB';
-import enUS from 'date-fns/locale/en-US';
-import fr from 'date-fns/locale/fr';
-import ar from 'date-fns/locale/ar';
-import es from 'date-fns/locale/es';
-import ru from 'date-fns/locale/ru';
+import { enGB } from 'date-fns/locale/en-GB';
+import { enUS } from 'date-fns/locale/en-US';
+import { fr } from 'date-fns/locale/fr';
+import { ar } from 'date-fns/locale/ar';
+import { es } from 'date-fns/locale/es';
+import { ru } from 'date-fns/locale/ru';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es, ru };
