@@ -1,12 +1,17 @@
 import React from 'react';
-import { Grid } from '@openmsupply-client/common';
+import {
+  BarIcon,
+  Grid,
+  TrendingDownIcon,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
-import { StockAndItemWidget } from './StockAndItemWidget';
 import { useReport } from '@openmsupply-client/system';
-import { ExpiringWidget } from './ExpiringWidget';
+import { ReportWidget } from '../components';
 
 export const ListView = () => {
+  const t = useTranslation('reports');
   const { data } = useReport.document.list({});
   const stockAndItemReports = data?.nodes?.filter(
     report => report?.subContext === 'StockAndItems'
@@ -25,8 +30,16 @@ export const ListView = () => {
         }}
         justifyContent="space-evenly"
       >
-        <StockAndItemWidget reports={stockAndItemReports} />
-        <ExpiringWidget reports={expiringReports} />
+        <ReportWidget
+          title={t('heading.stock-and-items')}
+          Icon={BarIcon}
+          reports={stockAndItemReports}
+        />
+        <ReportWidget
+          title={t('heading.expiring')}
+          Icon={TrendingDownIcon}
+          reports={expiringReports}
+        />
       </Grid>
 
       <AppBarButtons />
