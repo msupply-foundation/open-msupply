@@ -110,6 +110,10 @@ pub enum Resource {
     MutateProgram,
     MutateEncounter,
     MutateContactTrace,
+    // RnR
+    QueryRnRForms,
+    MutateRnRForms,
+
     SyncInfo,
     ManualSync,
     QueryInventoryAdjustmentReasons,
@@ -326,6 +330,21 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::RequisitionSend),
+        ]),
+    );
+    // r&r form
+    map.insert(
+        Resource::QueryRnRForms,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RnRFormQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateRnRForms,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RnRFormMutate),
         ]),
     );
     // invoice

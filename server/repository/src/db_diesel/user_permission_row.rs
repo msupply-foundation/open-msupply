@@ -47,6 +47,9 @@ pub enum PermissionType {
     RequisitionQuery,
     RequisitionMutate,
     RequisitionSend,
+    // r&r form,
+    RnRFormQuery,
+    RnRFormMutate,
     // outbound shipment
     OutboundShipmentQuery,
     OutboundShipmentMutate,
