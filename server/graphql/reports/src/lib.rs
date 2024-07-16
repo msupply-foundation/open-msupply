@@ -49,16 +49,7 @@ impl ReportQueries {
         format: Option<PrintFormat>,
         sort: Option<PrintReportSortInput>,
     ) -> Result<PrintReportResponse> {
-        print_report(
-            ctx,
-            store_id,
-            report_id,
-            data_id,
-            arguments,
-            format.into(),
-            sort,
-        )
-        .await
+        print_report(ctx, store_id, report_id, data_id, arguments, format, sort).await
     }
 
     /// Can be used when developing reports, e.g. to print a report that is not already in the
