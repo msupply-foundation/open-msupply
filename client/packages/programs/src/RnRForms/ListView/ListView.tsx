@@ -9,14 +9,13 @@ import {
   useTranslation,
   createTableStore,
   createQueryParamsStore,
-  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { useImmunisationProgramList } from '../../api/hooks/useImmunisationProgramList';
-import { ImmunisationProgramFragment } from '../../api';
+import { useRnRFormList } from '../../api';
+import { RnRFormFragment } from '../../api/operations.generated';
 
-const RnRFormListComponent= () => {
+const RnRFormListComponent = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
@@ -32,27 +31,21 @@ const RnRFormListComponent= () => {
     sortBy,
     first,
   };
-  const { data, isLoading, isError } = useImmunisationProgramList(queryParams);
+  const { data, isLoading, isError } = useRnRFormList(queryParams);
 
-  const columns = useColumns<ImmunisationProgramFragment>(
+  const columns = useColumns<RnRFormFragment>(
     [
-      [
-        'name',
-        {
-          width: 350,
-          label: 'label.program-name',
-        },
-      ],
       {
-        key: 'vaccine-courses',
-        label: 'label.vaccine-courses',
-        sortable: false,
-        accessor: ({ rowData }) =>
-          rowData?.vaccineCourses?.length === 0
-            ? UNDEFINED_STRING_VALUE
-            : rowData.vaccineCourses?.map(n => n.name).join(', '),
+        key: 'periodName',
+        width: 350,
+        label: 'label.period',
       },
-      'selection',
+      ['createdDatetime', { accessor: ({ rowData }) => rowData.createdDate }],
+      {
+        key: 'programName',
+        label: 'label.program-name',
+        sortable: false,
+      },
     ],
     {
       onChangeSortBy: updateSortQuery,
@@ -61,11 +54,14 @@ const RnRFormListComponent= () => {
     [updateSortQuery, sortBy]
   );
 
-
   return (
     <>
       <Toolbar />
-      <AppBarButtons onCreate={() => {/* TODO */}} />
+      <AppBarButtons
+        onCreate={() => {
+          /* TODO */
+        }}
+      />
       <DataTable
         id={'rnr-form-list'}
         pagination={{ ...pagination }}
@@ -75,9 +71,7 @@ const RnRFormListComponent= () => {
         isLoading={isLoading}
         isError={isError}
         onRowClick={row => navigate(row.id)}
-        noDataElement={
-          <NothingHere body={t('error.no-rnr-forms')} />
-        }
+        noDataElement={<NothingHere body={t('error.no-rnr-forms')} />}
       />
     </>
   );

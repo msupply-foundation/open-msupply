@@ -778,3 +778,37 @@ mutation deleteVaccineCourse($vaccineCourseId: String!) {
     }
   }
 }
+
+fragment RnRForm on RnRFormNode {
+  id
+  programId
+  programName
+  periodId
+  periodName
+  createdDate
+}
+
+query rnrForms(
+  $storeId: String
+  $first: Int
+  $offset: Int
+  $key: RnRFormSortFieldInput!
+  $desc: Boolean
+  $filter: RnRFormFilterInput
+) {
+  rAndRForms(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on RnRFormConnector {
+      __typename
+      nodes {
+        __typename
+        ...RnRForm
+      }
+      totalCount
+    }
+  }
+}

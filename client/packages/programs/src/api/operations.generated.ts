@@ -302,6 +302,20 @@ export type DeleteVaccineCourseMutationVariables = Types.Exact<{
 
 export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', deleteVaccineCourse: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteVaccineCourseError' } } } };
 
+export type RnRFormFragment = { __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDate?: string | null };
+
+export type RnrFormsQueryVariables = Types.Exact<{
+  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.RnRFormSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.RnRFormFilterInput>;
+}>;
+
+
+export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDate?: string | null }> } };
+
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
   fields
@@ -578,6 +592,16 @@ export const VaccineCourseFragmentDoc = gql`
 }
     ${VaccineCourseItemFragmentDoc}
 ${VaccineCourseScheduleFragmentDoc}`;
+export const RnRFormFragmentDoc = gql`
+    fragment RnRForm on RnRFormNode {
+  id
+  programId
+  programName
+  periodId
+  periodName
+  createdDate
+}
+    `;
 export const DocumentByNameDocument = gql`
     query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
@@ -1033,6 +1057,25 @@ export const DeleteVaccineCourseDocument = gql`
   }
 }
     `;
+export const RnrFormsDocument = gql`
+    query rnrForms($storeId: String, $first: Int, $offset: Int, $key: RnRFormSortFieldInput!, $desc: Boolean, $filter: RnRFormFilterInput) {
+  rAndRForms(
+    storeId: $storeId
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on RnRFormConnector {
+      __typename
+      nodes {
+        __typename
+        ...RnRForm
+      }
+      totalCount
+    }
+  }
+}
+    ${RnRFormFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -1130,6 +1173,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteVaccineCourse(variables: DeleteVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteVaccineCourseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteVaccineCourseMutation>(DeleteVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteVaccineCourse', 'mutation');
+    },
+    rnrForms(variables: RnrFormsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RnrFormsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RnrFormsQuery>(RnrFormsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rnrForms', 'query');
     }
   };
 }
