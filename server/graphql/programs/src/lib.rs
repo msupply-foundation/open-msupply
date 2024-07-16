@@ -66,9 +66,7 @@ use service::programs::patient::patient_search_central;
 use types::program::ProgramFilterInput;
 use types::program::ProgramSortInput;
 use types::program::ProgramsResponse;
-use types::r_and_r_form::RnRFormFilterInput;
-use types::r_and_r_form::RnRFormSortInput;
-use types::r_and_r_form::RnRFormsResponse;
+use types::r_and_r_form::{RnRFormFilterInput, RnRFormSortInput, RnRFormsResponse};
 
 mod mutations;
 
