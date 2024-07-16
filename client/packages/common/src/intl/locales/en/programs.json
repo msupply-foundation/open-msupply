@@ -11,7 +11,7 @@
   "control.search.no-results-label": "No results",
   "control.search.reset-button": "Unlink matched patient",
   "control.search.searching-label": "Searching...",
-  "error.no-rnr-forms": "No RnR Forms found",
+  "error.no-rnr-forms": "No R&R Forms found",
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
   "label.diastolic": "Diastolic",
   "label.systolic": "Systolic"
