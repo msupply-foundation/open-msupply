@@ -1,10 +1,14 @@
 use async_graphql::*;
 
-use graphql_core::generic_filters::EqualFilterStringInput;
+use graphql_core::generic_filters::{DatetimeFilterInput, EqualFilterStringInput};
 use graphql_types::types::rnr_form::RnRFormNode;
 use repository::{
+    DatetimeFilter,
     EqualFilter,
-    //  RnRFormFilter, RnRFormRow, RnRFormSort, RnRFormSortField
+    RnRForm,
+    RnRFormFilter,
+    RnRFormSort,
+    RnRFormSortField, //  RnRFormFilter, RnRFormRow, RnRFormSort, RnRFormSortField
 };
 use service::ListResult;
 
@@ -24,7 +28,9 @@ pub enum RnRFormsResponse {
 pub enum RnRFormSortFieldInput {
     Period,
     Program,
-    CreatedDate,
+    CreatedDatetime,
+    Status,
+    SupplierName,
 }
 
 #[derive(InputObject)]
@@ -36,49 +42,61 @@ pub struct RnRFormSortInput {
     desc: Option<bool>,
 }
 
-// impl RnRFormSortInput {
-//     pub fn to_domain(self) -> RnRFormSort {
-//         let key = match self.key {
-//             RnRFormSortFieldInput::Period => RnRFormSortField::Period,
-//             RnRFormSortFieldInput::Program => RnRFormSortField::Program,
-//             RnRFormSortFieldInput::CreatedDate => RnRFormSortField::CreatedDate,
-//         };
+impl RnRFormSortInput {
+    pub fn to_domain(self) -> RnRFormSort {
+        let key = match self.key {
+            RnRFormSortFieldInput::Period => RnRFormSortField::Period,
+            RnRFormSortFieldInput::Program => RnRFormSortField::Program,
+            RnRFormSortFieldInput::CreatedDatetime => RnRFormSortField::CreatedDatetime,
+            RnRFormSortFieldInput::Status => RnRFormSortField::Status,
+            RnRFormSortFieldInput::SupplierName => RnRFormSortField::SupplierName,
+        };
 
-//         RnRFormSort {
-//             key,
-//             desc: self.desc,
-//         }
-//     }
-// }
+        RnRFormSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
 
 #[derive(InputObject, Clone)]
 pub struct RnRFormFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub period_id: Option<EqualFilterStringInput>,
-    pub program_id: Option<EqualFilterStringInput>,
+    pub created_datetime: Option<DatetimeFilterInput>,
+    pub store_id: Option<EqualFilterStringInput>,
 }
-// impl From<RnRFormFilterInput> for RnRFormFilter {
-//     fn from(f: RnRFormFilterInput) -> Self {
-//         RnRFormFilter {
-//             id: f.id.map(EqualFilter::from),
-//             period_id: f.period_id.map(EqualFilter::from),
-//             program_id: f.program_id.map(EqualFilter::from),
-//         }
-//     }
-// }
+impl From<RnRFormFilterInput> for RnRFormFilter {
+    fn from(f: RnRFormFilterInput) -> Self {
+        RnRFormFilter {
+            id: f.id.map(EqualFilter::from),
+            created_datetime: f.created_datetime.map(DatetimeFilter::from),
+            store_id: f.store_id.map(EqualFilter::from),
+        }
+    }
+}
 
 impl RnRFormConnector {
-    // pub fn from_domain(forms: ListResult<RnRFormRow>) -> RnRFormConnector {
-    pub fn from_domain() -> RnRFormConnector {
+    pub fn from_domain(forms: ListResult<RnRForm>) -> RnRFormConnector {
         RnRFormConnector {
-            // total_count: forms.count,
-            // nodes: forms
-            //     .rows
-            //     .into_iter()
-            //     .map(|row| RnRFormNode { rnr_form_row: row })
-            //     .collect(),
-            total_count: 1,
-            nodes: vec![RnRFormNode {}],
+            total_count: forms.count,
+            nodes: forms
+                .rows
+                .into_iter()
+                .map(
+                    |RnRForm {
+                         rnr_form_row,
+                         name_row,
+                         period_row,
+                         program_row,
+                         store_row: _,
+                     }| RnRFormNode {
+                        rnr_form_row,
+                        program_row,
+                        period_row,
+                        supplier_row: name_row,
+                    },
+                )
+                .collect(),
         }
     }
 }
