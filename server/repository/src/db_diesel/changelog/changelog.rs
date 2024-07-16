@@ -98,6 +98,7 @@ pub enum ChangelogTableName {
     Property,
     NameProperty,
     NameOmsFields,
+    RnRForm,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -151,6 +152,7 @@ impl ChangelogTableName {
             ChangelogTableName::Property => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
+            ChangelogTableName::RnRForm => ChangeLogSyncStyle::Central,
         }
     }
 }
