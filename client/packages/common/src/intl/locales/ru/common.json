@@ -168,5 +168,12 @@
   "button.import-properties": "Импортировать Свойства",
   "error.an-error-occurred": "Произошла ошибка: {{message}}",
   "error.facility-not-found": "Объект не найден",
-  "button.add-new-vaccine-course": "Добавить курс вакцинации"
+  "button.add-new-vaccine-course": "Добавить курс вакцинации",
+  "error.record-already-exists": "Запись с таким идентификатором уже существует",
+  "error.no-service-charges": "Этому хранилищу не присвоены сервисные сборы",
+  "error.no-temperature-breaches": "Нарушений температурного режима не обнаружено",
+  "error.problem-saving": "Произошла ошибка: возникла проблема с сохранением данных.",
+  "error.scanner-not-connected": "Сканер не подключен. Чтобы подключить сканер, перейдите в раздел Администратор > Устройства.",
+  "error.something-wrong": "Упс! Что-то пошло не так.",
+  "error.unable-to-detect-scanner": "Невозможно обнаружить сканер"
 }
