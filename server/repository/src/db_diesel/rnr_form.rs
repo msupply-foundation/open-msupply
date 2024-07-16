@@ -31,14 +31,16 @@ pub struct RnRForm {
 #[derive(Clone, Default)]
 pub struct RnRFormFilter {
     pub id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
 }
 
 pub enum RnRFormSortField {
+    Program,
     Period,
     Status,
     CreatedDatetime,
-    OtherPartyName,
+    SupplierName,
 }
 
 pub type RnRFormSort = Sort<RnRFormSortField>;
@@ -95,12 +97,15 @@ impl<'a> RnRFormRepository<'a> {
                 RnRFormSortField::CreatedDatetime => {
                     apply_sort!(query, sort, rnr_form_dsl::created_datetime);
                 }
-                RnRFormSortField::OtherPartyName => {
+                RnRFormSortField::SupplierName => {
                     apply_sort_no_case!(query, sort, name_dsl::name_);
+                }
+                RnRFormSortField::Program => {
+                    apply_sort_no_case!(query, sort, program_dsl::name);
                 }
             }
         } else {
-            query = query.order(rnr_form_dsl::id.asc())
+            query = query.order(rnr_form_dsl::created_datetime.asc())
         }
 
         let result = query
@@ -151,9 +156,11 @@ fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
         let RnRFormFilter {
             id,
             created_datetime,
+            store_id,
         } = f;
 
         apply_equal_filter!(query, id, rnr_form_dsl::id);
+        apply_equal_filter!(query, store_id, rnr_form_dsl::store_id);
 
         apply_date_time_filter!(query, created_datetime, rnr_form_dsl::created_datetime);
     }
@@ -181,6 +188,11 @@ impl RnRFormFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 
