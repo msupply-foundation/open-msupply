@@ -5245,6 +5245,7 @@ export type Queries = {
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   programs: ProgramsResponse;
+  rAndRForms: RnRFormsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -5690,6 +5691,14 @@ export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesRAndRFormsArgs = {
+  filter?: InputMaybe<RnRFormFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<RnRFormSortInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6277,6 +6286,46 @@ export type ReturnReasonSortInput = {
   /** Sort query result by `key` */
   key: ReturnReasonSortFieldInput;
 };
+
+export type RnRFormConnector = {
+  __typename: 'RnRFormConnector';
+  nodes: Array<RnRFormNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type RnRFormFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  periodId?: InputMaybe<EqualFilterStringInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type RnRFormNode = {
+  __typename: 'RnRFormNode';
+  createdDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  periodId: Scalars['String']['output'];
+  periodName: Scalars['String']['output'];
+  programId: Scalars['String']['output'];
+  programName: Scalars['String']['output'];
+};
+
+export enum RnRFormSortFieldInput {
+  CreatedDate = 'createdDate',
+  Period = 'period',
+  Program = 'program'
+}
+
+export type RnRFormSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: RnRFormSortFieldInput;
+};
+
+export type RnRFormsResponse = RnRFormConnector;
 
 export type SensorConnector = {
   __typename: 'SensorConnector';
