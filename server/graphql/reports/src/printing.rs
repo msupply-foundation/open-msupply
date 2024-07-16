@@ -6,7 +6,9 @@ use graphql_core::{ContextExt, RequestUserData};
 use repository::query_json;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
-use service::report::report_service::{PrintFormat, ReportError, ResolvedReportQuery};
+use service::report::report_service::{ReportError, ResolvedReportQuery};
+
+use crate::PrintFormat;
 
 pub struct FailedToFetchReportData {
     errors: serde_json::Value,
@@ -113,7 +115,7 @@ pub async fn print_report(
         &resolved_report,
         report_data,
         arguments,
-        format,
+        format.map(PrintFormat::to_domain),
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
@@ -133,6 +135,7 @@ pub async fn print_report_definition(
     report: serde_json::Value,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
+    format: Option<PrintFormat>,
 ) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
@@ -190,7 +193,7 @@ pub async fn print_report_definition(
         &resolved_report,
         report_data,
         arguments,
-        None,
+        format.map(PrintFormat::to_domain),
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
