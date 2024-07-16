@@ -58,9 +58,8 @@ const ListView: FC = () => {
       {
         key: 'datetime',
         label: 'label.date-time',
-        accessor: ({ rowData }) => {
-          return Formatter.csvDateTimeString(rowData.datetime);
-        },
+        accessor: ({ rowData }) =>
+          Formatter.csvDateTimeString(rowData.datetime),
       },
       {
         key: 'sensor',
@@ -82,9 +81,7 @@ const ListView: FC = () => {
       {
         key: 'temperature',
         label: 'label.temperature',
-        accessor: ({ rowData }) => {
-          return `${formatTemperature(rowData.temperature)}`;
-        },
+        accessor: ({ rowData }) => `${formatTemperature(rowData.temperature)}`,
       },
       {
         key: 'breach',
