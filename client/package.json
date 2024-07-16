@@ -15,7 +15,7 @@
     "clean": "lerna run --scope @openmsupply-client/* --parallel clean",
     "compile": "lerna run --scope @openmsupply-client/* --parallel tsc --since HEAD -- --noEmit",
     "compile-full": "lerna run --scope @openmsupply-client/* --parallel tsc",
-    "prepare": "cd .. && husky install client/.husky",
+    "prepare": "cd .. && husky client/.husky",
     "pre-commit-lint": "yarn compile && yarn lint-staged",
     "test": "jest --config ./jest.config.js --maxWorkers=50% --env=jsdom",
     "storybook": "storybook dev -p 6006",
