@@ -52,7 +52,7 @@ export const useRnRFormList = ({
 };
 
 const toSortField = (sortBy: SortBy<RnRFormFragment>): RnRFormSortFieldInput => {
-  switch (sortBy.key as keyof RnRFormFragment) {
+  switch (sortBy.key) {
     case 'periodName':
       return RnRFormSortFieldInput.Period;
     case 'programName':
