@@ -6294,25 +6294,28 @@ export type RnRFormConnector = {
 };
 
 export type RnRFormFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  periodId?: InputMaybe<EqualFilterStringInput>;
-  programId?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type RnRFormNode = {
   __typename: 'RnRFormNode';
-  createdDate?: Maybe<Scalars['NaiveDate']['output']>;
+  createdDatetime: Scalars['NaiveDateTime']['output'];
   id: Scalars['String']['output'];
   periodId: Scalars['String']['output'];
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
+  supplierName: Scalars['String']['output'];
 };
 
 export enum RnRFormSortFieldInput {
-  CreatedDate = 'createdDate',
+  CreatedDatetime = 'createdDatetime',
   Period = 'period',
-  Program = 'program'
+  Program = 'program',
+  Status = 'status',
+  SupplierName = 'supplierName'
 }
 
 export type RnRFormSortInput = {
@@ -7900,6 +7903,8 @@ export enum UserPermission {
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',
+  RnRFormMutate = 'RN_R_FORM_MUTATE',
+  RnRFormQuery = 'RN_R_FORM_QUERY',
   SensorMutate = 'SENSOR_MUTATE',
   SensorQuery = 'SENSOR_QUERY',
   ServerAdmin = 'SERVER_ADMIN',

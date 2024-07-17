@@ -23,6 +23,10 @@ impl RnRFormNode {
         &self.rnr_form_row.program_id
     }
 
+    pub async fn supplier_name(&self) -> &str {
+        &self.supplier_row.name
+    }
+
     pub async fn program_name(&self) -> &str {
         &self.program_row.name
     }

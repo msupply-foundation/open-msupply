@@ -13,7 +13,7 @@ export const Toolbar = () => {
         display: 'flex',
       }}
     >
-      TODO: search
+      {/* TODO: filtering */}
     </AppBarContentPortal>
   );
 };
