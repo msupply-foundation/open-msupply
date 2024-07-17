@@ -22,7 +22,7 @@ pub fn r_and_r_forms(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryProgram, // todo
+            resource: Resource::QueryRnRForms,
             store_id: Some(store_id.clone()),
         },
     )?;
