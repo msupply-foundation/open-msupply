@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ReturnReasonFragment = { __typename: 'ReturnReasonNode', id: string, reason: string };
 
 export type ReturnReasonsQueryVariables = Types.Exact<{
@@ -35,15 +35,15 @@ export const ReturnReasonsDocument = gql`
 }
     ${ReturnReasonFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     returnReasons(variables?: ReturnReasonsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ReturnReasonsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ReturnReasonsQuery>(ReturnReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'returnReasons', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ReturnReasonsQuery>(ReturnReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'returnReasons', 'query', variables);
     }
   };
 }
