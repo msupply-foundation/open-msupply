@@ -9,7 +9,7 @@ import {
   useMutation,
   useQuery,
 } from '@openmsupply-client/common';
-import { PROGRAM } from './keys';
+import { IMMUNISATION_PROGRAM } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { ImmunisationProgramFragment } from '../operations.generated';
 import { isEmpty } from '@common/utils';
@@ -101,7 +101,7 @@ const useGet = (id: string) => {
   };
 
   const query = useQuery({
-    queryKey: [PROGRAM, id],
+    queryKey: [IMMUNISATION_PROGRAM, id],
     queryFn,
     enabled: id !== '',
   });
@@ -147,7 +147,7 @@ const useCreate = (
     mutationFn,
     onSuccess: () =>
       // All Programs need to be re-fetched to include the new one
-      queryClient.invalidateQueries([PROGRAM]),
+      queryClient.invalidateQueries([IMMUNISATION_PROGRAM]),
   });
 };
 
@@ -197,6 +197,6 @@ const useUpdate = (
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([PROGRAM]),
+    onSuccess: () => queryClient.invalidateQueries([IMMUNISATION_PROGRAM]),
   });
 };

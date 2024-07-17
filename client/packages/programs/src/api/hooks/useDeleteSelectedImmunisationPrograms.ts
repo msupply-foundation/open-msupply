@@ -5,7 +5,7 @@ import {
   useMutation,
 } from '@openmsupply-client/common';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
-import { PROGRAM } from './keys';
+import { IMMUNISATION_PROGRAM } from './keys';
 
 export const useDeleteSelectedImmunisationPrograms = () => {
   const t = useTranslation('coldchain');
@@ -40,7 +40,7 @@ export const useDeleteSelectedImmunisationPrograms = () => {
       selectedRows.map(
         async id => await mutateAsync({ immunisationProgramId: id })
       )
-    ).then(() => queryClient.invalidateQueries([PROGRAM]));
+    ).then(() => queryClient.invalidateQueries([IMMUNISATION_PROGRAM]));
   };
 
   const confirmAndDelete = useDeleteConfirmation({
