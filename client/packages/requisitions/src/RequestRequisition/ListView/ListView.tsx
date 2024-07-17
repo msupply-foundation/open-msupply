@@ -67,9 +67,7 @@ export const RequestRequisitionListView: FC = () => {
     ['createdDatetime', { width: 150 }],
     {
       key: 'programName',
-      accessor: ({ rowData }) => {
-        return rowData.programName;
-      },
+      accessor: ({ rowData }) => rowData.programName,
       label: 'label.program',
       description: 'description.program',
       sortable: true,
@@ -77,18 +75,14 @@ export const RequestRequisitionListView: FC = () => {
     },
     {
       key: 'orderType',
-      accessor: ({ rowData }) => {
-        return rowData.orderType;
-      },
+      accessor: ({ rowData }) => rowData.orderType,
       label: 'label.order-type',
       sortable: true,
     },
 
     {
       key: 'period',
-      accessor: ({ rowData }) => {
-        return rowData.period?.name ?? '';
-      },
+      accessor: ({ rowData }) => rowData.period?.name ?? '',
       label: 'label.period',
       sortable: true,
     },
