@@ -67,11 +67,10 @@ export const ProgramComponent: FC = () => {
         label: 'label.target-demographic',
 
         sortable: false,
-        accessor: ({ rowData }) => {
+        accessor: ({ rowData }) =>
           rowData?.demographicIndicator
             ? rowData.demographicIndicator.name
-            : UNDEFINED_STRING_VALUE;
-        },
+            : UNDEFINED_STRING_VALUE,
       },
       { key: 'doses', label: 'label.doses' },
       'selection',
