@@ -49,7 +49,7 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
 }));
 
 const Circle = (props: StepIconProps) => {
-  const { active, completed, error, ...rest } = props;
+  const { active, completed, ...rest } = props;
   {
     // Base colours for all uncompleted and non-active steps.
     const colors = {
@@ -67,6 +67,9 @@ const Circle = (props: StepIconProps) => {
     if (active) {
       colors.backgroundColor = 'white';
     }
+
+    // 'error' isn't a valid attribute for a div component
+    delete rest.error;
 
     return (
       <Box
