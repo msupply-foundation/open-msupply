@@ -7,12 +7,12 @@ import {
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
-import { useReport } from '@openmsupply-client/system';
 import { ReportWidget } from '../components';
+import { useReportList } from 'packages/system/src/Report/api/hooks';
 
 export const ListView = () => {
   const t = useTranslation('reports');
-  const { data } = useReport.document.list({});
+  const { data } = useReportList({});
   const stockAndItemReports = data?.nodes?.filter(
     report => report?.subContext === 'StockAndItems'
   );
