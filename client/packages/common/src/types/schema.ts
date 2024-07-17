@@ -5947,6 +5947,7 @@ export enum ReportContext {
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
   Repack = 'REPACK',
+  Report = 'REPORT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
