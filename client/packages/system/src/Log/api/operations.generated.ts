@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type LogLevelRowFragment = { __typename: 'LogLevelNode', level: Types.LogLevelEnum };
 
 export type LogRowFragment = { __typename: 'LogNode', fileContent?: Array<string> | null, fileNames?: Array<string> | null };
@@ -68,21 +68,21 @@ export const LogContentsByFileNameDocument = gql`
 }
     ${LogRowFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     logLevel(variables?: LogLevelQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LogLevelQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LogLevelQuery>(LogLevelDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logLevel', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<LogLevelQuery>(LogLevelDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logLevel', 'query', variables);
     },
     logFileNames(variables?: LogFileNamesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LogFileNamesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LogFileNamesQuery>(LogFileNamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logFileNames', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<LogFileNamesQuery>(LogFileNamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logFileNames', 'query', variables);
     },
     logContentsByFileName(variables: LogContentsByFileNameQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LogContentsByFileNameQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LogContentsByFileNameQuery>(LogContentsByFileNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logContentsByFileName', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<LogContentsByFileNameQuery>(LogContentsByFileNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logContentsByFileName', 'query', variables);
     }
   };
 }
