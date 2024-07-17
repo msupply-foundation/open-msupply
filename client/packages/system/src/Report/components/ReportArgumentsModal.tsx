@@ -1,9 +1,9 @@
 import React, { FC, useState } from 'react';
 
 import { JsonData, JsonForm } from '@openmsupply-client/programs';
-import { ReportRowFragment } from '../api';
 import { useDialog } from '@common/hooks';
 import { DialogButton } from '@common/components';
+import { ReportRowFragment } from '../api';
 
 export type ReportArgumentsModalProps = {
   /** Modal is shown if there is an argument schema present */
