@@ -39,7 +39,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
       setReportWithArgs(report);
     }
   };
-  const { setId, setName, setArgs } = useReportStore();
+  const { setReport, setArgs } = useReportStore();
 
   const reportArgs = useCallback(
     (report: ReportRowFragment, args: JsonData | undefined) => {
@@ -95,8 +95,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                     textDecoration: 'none',
                   }}
                   onClick={() => {
-                    setId(report.id);
-                    setName(report.name);
+                    setReport(report);
                     onReportClick(report);
                   }}
                   to={
