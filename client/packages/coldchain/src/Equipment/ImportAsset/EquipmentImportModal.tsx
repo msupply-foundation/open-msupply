@@ -58,42 +58,30 @@ export type ImportRow = {
 export type LineNumber = {
   lineNumber: number;
 };
+
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<DraftAsset> => ({
-  assetNumber: row.assetNumber,
-  catalogueItemId: catalogueItemData
-    ?.filter(
-      (item: { code: string | null | undefined }) =>
-        item.code == row.catalogueItemCode
-    )
-    ?.map((item: { id: string }) => item.id)
-    .pop(),
-  serialNumber: row.serialNumber,
-  installationDate: row.installationDate,
-  id: row.id,
-  notes: row.notes,
-  store: row.store
-    ? { ...row.store, __typename: 'StoreNode', storeName: '' }
-    : null,
-  parsedProperties: row.properties,
-});
+): Partial<DraftAsset> => {
+  const catalogueItemId = catalogueItemData?.find(
+    item => item.code === row.catalogueItemCode
+  )?.id;
+  const { properties: parsedProperties, store, ...rest } = row;
+
+  return {
+    ...rest,
+    catalogueItemId,
+    store: store ? { ...store, __typename: 'StoreNode', storeName: '' } : null,
+    parsedProperties,
+  };
+};
 
 export const toExportEquipment = (
   row: ImportRow,
   index: number
 ): Partial<ImportRow & LineNumber> => ({
-  assetNumber: row.assetNumber,
-  catalogueItemCode: row.catalogueItemCode,
-  serialNumber: row.serialNumber,
-  installationDate: row.installationDate,
-  id: row.id,
-  notes: row.notes,
+  ...row,
   lineNumber: index + 2,
-  errorMessage: row.errorMessage,
-  store: row.store,
-  properties: row.properties,
 });
 
 export const toUpdateEquipmentInput = (
