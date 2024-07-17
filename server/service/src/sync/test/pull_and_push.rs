@@ -28,7 +28,7 @@ use super::{
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
     // Uncomment to see logs such as Foreign key constraint failed in test
-    util::init_logger(util::LogLevel::Warn);
+    // util::init_logger(util::LogLevel::Warn);
 
     let (_, connection, _, _) = test_db::setup_all_with_data(
         "test_sync_pull_and_push",
