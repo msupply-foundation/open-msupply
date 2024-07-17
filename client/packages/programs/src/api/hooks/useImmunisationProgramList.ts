@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { ImmunisationProgramFragment } from '../operations.generated';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
-import { LIST, PROGRAM } from './keys';
+import { LIST, IMMUNISATION_PROGRAM } from './keys';
 
 type ListParams = {
   first?: number;
@@ -29,7 +29,7 @@ export const useImmunisationProgramList = (queryParams: ListParams) => {
     filterBy,
   } = queryParams;
 
-  const queryKey = [PROGRAM, LIST, sortBy, first, offset, filterBy];
+  const queryKey = [IMMUNISATION_PROGRAM, LIST, sortBy, first, offset, filterBy];
   const queryFn = async (): Promise<{
     nodes: ImmunisationProgramFragment[];
     totalCount: number;
@@ -38,7 +38,7 @@ export const useImmunisationProgramList = (queryParams: ListParams) => {
       ...filterBy,
       isImmunisation: true,
     };
-    const query = await api.programs({
+    const query = await api.immunisationPrograms({
       storeId,
       first: first,
       offset: offset,

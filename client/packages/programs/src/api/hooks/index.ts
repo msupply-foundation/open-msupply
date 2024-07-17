@@ -18,6 +18,7 @@ export * from './useImmunisationProgramList'
 export * from './useVaccineCourse'
 export * from './useVaccineCourseList'
 export * from './useRnRFormList'
+export * from './useProgramList'
 
 export {
   ProgramEnrolmentRowFragmentWithId,

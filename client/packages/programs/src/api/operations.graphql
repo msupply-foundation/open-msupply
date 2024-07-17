@@ -591,7 +591,7 @@ fragment VaccineCourseItem on VaccineCourseItemNode {
   name
 }
 
-query programs(
+query immunisationPrograms(
   $storeId: String
   $first: Int
   $offset: Int
@@ -808,6 +808,37 @@ query rnrForms(
       nodes {
         __typename
         ...RnRForm
+      }
+      totalCount
+    }
+  }
+}
+
+
+fragment Program on ProgramNode {
+  id
+  name
+}
+
+  query programs(
+  $storeId: String
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
       }
       totalCount
     }

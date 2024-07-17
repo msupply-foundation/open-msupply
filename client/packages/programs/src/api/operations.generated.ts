@@ -231,7 +231,7 @@ export type VaccineCourseScheduleFragment = { __typename: 'VaccineCourseSchedule
 
 export type VaccineCourseItemFragment = { __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string };
 
-export type ProgramsQueryVariables = Types.Exact<{
+export type ImmunisationProgramsQueryVariables = Types.Exact<{
   storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -241,7 +241,7 @@ export type ProgramsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null }> } };
+export type ImmunisationProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null }> } };
 
 export type InsertImmunisationProgramMutationVariables = Types.Exact<{
   input?: Types.InputMaybe<Types.InsertImmunisationProgramInput>;
@@ -315,6 +315,20 @@ export type RnrFormsQueryVariables = Types.Exact<{
 
 
 export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDatetime: string, supplierName: string }> } };
+
+export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
+
+export type ProgramsQueryVariables = Types.Exact<{
+  storeId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.ProgramSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
+}>;
+
+
+export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
 
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
@@ -601,6 +615,12 @@ export const RnRFormFragmentDoc = gql`
   periodName
   createdDatetime
   supplierName
+}
+    `;
+export const ProgramFragmentDoc = gql`
+    fragment Program on ProgramNode {
+  id
+  name
 }
     `;
 export const DocumentByNameDocument = gql`
@@ -908,8 +928,8 @@ export const UpdateContactTraceDocument = gql`
   }
 }
     ${ContactTraceFragmentDoc}`;
-export const ProgramsDocument = gql`
-    query programs($storeId: String, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
+export const ImmunisationProgramsDocument = gql`
+    query immunisationPrograms($storeId: String, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
   programs(
     storeId: $storeId
     page: {first: $first, offset: $offset}
@@ -1077,6 +1097,25 @@ export const RnrFormsDocument = gql`
   }
 }
     ${RnRFormFragmentDoc}`;
+export const ProgramsDocument = gql`
+    query programs($storeId: String, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
+  programs(
+    storeId: $storeId
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
+      }
+      totalCount
+    }
+  }
+}
+    ${ProgramFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -1151,8 +1190,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     updateContactTrace(variables: UpdateContactTraceMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateContactTraceMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateContactTraceMutation>(UpdateContactTraceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateContactTrace', 'mutation');
     },
-    programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query');
+    immunisationPrograms(variables: ImmunisationProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ImmunisationProgramsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ImmunisationProgramsQuery>(ImmunisationProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'immunisationPrograms', 'query');
     },
     insertImmunisationProgram(variables?: InsertImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertImmunisationProgramMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertImmunisationProgramMutation>(InsertImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertImmunisationProgram', 'mutation');
@@ -1177,6 +1216,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     rnrForms(variables: RnrFormsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RnrFormsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RnrFormsQuery>(RnrFormsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rnrForms', 'query');
+    },
+    programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query');
     }
   };
 }
