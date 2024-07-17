@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use repository::{NameRow, PeriodRow, ProgramRow, RnRFormRow};
 
 pub struct RnRFormNode {
@@ -15,8 +15,8 @@ impl RnRFormNode {
         &self.rnr_form_row.id
     }
 
-    pub async fn created_datetime(&self) -> &NaiveDateTime {
-        &self.rnr_form_row.created_datetime
+    pub async fn created_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.rnr_form_row.created_datetime, Utc)
     }
 
     pub async fn program_id(&self) -> &str {

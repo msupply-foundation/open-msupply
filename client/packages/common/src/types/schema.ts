@@ -6301,7 +6301,7 @@ export type RnRFormFilterInput = {
 
 export type RnRFormNode = {
   __typename: 'RnRFormNode';
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   periodId: Scalars['String']['output'];
   periodName: Scalars['String']['output'];
