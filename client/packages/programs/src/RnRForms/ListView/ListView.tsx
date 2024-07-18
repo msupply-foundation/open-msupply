@@ -33,8 +33,6 @@ const RnRFormListComponent = () => {
   };
   const { data, isLoading, isError } = useRnRFormList(queryParams);
 
-
-
   const columns = useColumns<RnRFormFragment>(
     [
       {
@@ -42,16 +40,17 @@ const RnRFormListComponent = () => {
         width: 350,
         label: 'label.period',
       },
-      ['createdDatetime', { accessor: ({ rowData }) => rowData.createdDatetime }],
+      [
+        'createdDatetime',
+        { accessor: ({ rowData }) => rowData.createdDatetime },
+      ],
       {
         key: 'programName',
         label: 'label.program-name',
-        sortable: false,
       },
       {
         key: 'supplierName',
         label: 'label.supplier',
-        sortable: false,
       },
     ],
     {
