@@ -35,8 +35,7 @@ const RnRFormListComponent = () => {
   };
   const { data, isLoading, isError } = useRnRFormList(queryParams);
 
-  const { isOpen, onClose, onOpen } =
-    useEditModal();
+  const { isOpen, onClose, onOpen } = useEditModal();
 
   const columns = useColumns<RnRFormFragment>(
     [
@@ -45,16 +44,17 @@ const RnRFormListComponent = () => {
         width: 350,
         label: 'label.period',
       },
-      ['createdDatetime', { accessor: ({ rowData }) => rowData.createdDatetime }],
+      [
+        'createdDatetime',
+        { accessor: ({ rowData }) => rowData.createdDatetime },
+      ],
       {
         key: 'programName',
         label: 'label.program-name',
-        sortable: false,
       },
       {
         key: 'supplierName',
         label: 'label.supplier',
-        sortable: false,
       },
     ],
     {
@@ -66,14 +66,9 @@ const RnRFormListComponent = () => {
 
   return (
     <>
-      <RnRFormCreateModal 
-        isOpen={isOpen} 
-        onClose={onClose}
-      />
+      <RnRFormCreateModal isOpen={isOpen} onClose={onClose} />
       <Toolbar />
-      <AppBarButtons
-        onCreate={onOpen}
-      />
+      <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'rnr-form-list'}
         pagination={{ ...pagination }}

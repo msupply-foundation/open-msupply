@@ -4839,6 +4839,13 @@ export type PatientSortInput = {
   key: PatientSortFieldInput;
 };
 
+export type PeriodInUseNode = {
+  __typename: 'PeriodInUseNode';
+  id: Scalars['String']['output'];
+  inUse: Scalars['Boolean']['output'];
+  period: PeriodNode;
+};
+
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate']['output'];
@@ -4846,6 +4853,21 @@ export type PeriodNode = {
   name: Scalars['String']['output'];
   startDate: Scalars['NaiveDate']['output'];
 };
+
+export type PeriodScheduleNode = {
+  __typename: 'PeriodScheduleNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  periodsInUse: Array<PeriodInUseNode>;
+};
+
+export type PeriodSchedulesConnector = {
+  __typename: 'PeriodSchedulesConnector';
+  nodes: Array<PeriodScheduleNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PeriodSchedulesResponse = PeriodSchedulesConnector;
 
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
@@ -5262,6 +5284,7 @@ export type Queries = {
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   returnReasons: ReturnReasonResponse;
+  schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
   stockCounts: StockCounts;
@@ -5770,6 +5793,11 @@ export type QueriesReturnReasonsArgs = {
 };
 
 
+export type QueriesSchedulesWithPeriodsByProgramArgs = {
+  programId: Scalars['String']['input'];
+};
+
+
 export type QueriesSensorsArgs = {
   filter?: InputMaybe<SensorFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -5956,6 +5984,7 @@ export enum ReportContext {
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
   Repack = 'REPACK',
+  Report = 'REPORT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'

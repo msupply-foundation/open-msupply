@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type LocationRowFragment = { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string };
 
 export type LocationsQueryVariables = Types.Exact<{
@@ -195,24 +195,24 @@ export const DeleteLocationDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     locations(variables: LocationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LocationsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations', 'query', variables);
     },
     insertLocation(variables: InsertLocationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertLocationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertLocationMutation>(InsertLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertLocation', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertLocationMutation>(InsertLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertLocation', 'mutation', variables);
     },
     updateLocation(variables: UpdateLocationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateLocationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLocationMutation>(UpdateLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLocation', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLocationMutation>(UpdateLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLocation', 'mutation', variables);
     },
     deleteLocation(variables: DeleteLocationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteLocationMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteLocationMutation>(DeleteLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLocation', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteLocationMutation>(DeleteLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLocation', 'mutation', variables);
     }
   };
 }

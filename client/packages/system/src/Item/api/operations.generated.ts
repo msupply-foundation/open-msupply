@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ServiceItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
 export type StockLineFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null } };
@@ -43,7 +43,7 @@ export type ItemsQuery = { __typename: 'Queries', items: { __typename: 'ItemConn
 
 export type ItemStockOnHandQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  key?: Types.InputMaybe<Types.ItemSortFieldInput>;
+  key: Types.ItemSortFieldInput;
   isDesc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -57,7 +57,7 @@ export type ItemsWithStatsFragment = { __typename: 'ItemNode', code: string, id:
 
 export type ItemsWithStatsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  key?: Types.InputMaybe<Types.ItemSortFieldInput>;
+  key: Types.ItemSortFieldInput;
   isDesc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -289,7 +289,7 @@ export const ItemsDocument = gql`
 }
     ${ItemRowFragmentDoc}`;
 export const ItemStockOnHandDocument = gql`
-    query itemStockOnHand($storeId: String!, $key: ItemSortFieldInput, $isDesc: Boolean, $filter: ItemFilterInput, $first: Int, $offset: Int) {
+    query itemStockOnHand($storeId: String!, $key: ItemSortFieldInput!, $isDesc: Boolean, $filter: ItemFilterInput, $first: Int, $offset: Int) {
   items(
     storeId: $storeId
     sort: {key: $key, desc: $isDesc}
@@ -307,7 +307,7 @@ export const ItemStockOnHandDocument = gql`
 }
     ${ItemStockOnHandFragmentDoc}`;
 export const ItemsWithStatsDocument = gql`
-    query itemsWithStats($storeId: String!, $key: ItemSortFieldInput, $isDesc: Boolean, $filter: ItemFilterInput, $first: Int, $offset: Int) {
+    query itemsWithStats($storeId: String!, $key: ItemSortFieldInput!, $isDesc: Boolean, $filter: ItemFilterInput, $first: Int, $offset: Int) {
   items(
     storeId: $storeId
     sort: {key: $key, desc: $isDesc}
@@ -417,39 +417,39 @@ export const DeletePackVariantDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsWithStockLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines', 'query', variables);
     },
     items(variables: ItemsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsQuery>(ItemsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'items', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemsQuery>(ItemsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'items', 'query', variables);
     },
     itemStockOnHand(variables: ItemStockOnHandQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemStockOnHandQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemStockOnHandQuery>(ItemStockOnHandDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemStockOnHand', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemStockOnHandQuery>(ItemStockOnHandDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemStockOnHand', 'query', variables);
     },
     itemsWithStats(variables: ItemsWithStatsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsWithStatsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStatsQuery>(ItemsWithStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStats', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStatsQuery>(ItemsWithStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStats', 'query', variables);
     },
     itemById(variables: ItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemByIdQuery>(ItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemById', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemByIdQuery>(ItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemById', 'query', variables);
     },
     packVariants(variables: PackVariantsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PackVariantsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PackVariantsQuery>(PackVariantsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'packVariants', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PackVariantsQuery>(PackVariantsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'packVariants', 'query', variables);
     },
     insertPackVariant(variables: InsertPackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPackVariantMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertPackVariantMutation>(InsertPackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPackVariant', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertPackVariantMutation>(InsertPackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPackVariant', 'mutation', variables);
     },
     updatePackVariant(variables: UpdatePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePackVariantMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePackVariantMutation>(UpdatePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePackVariant', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePackVariantMutation>(UpdatePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePackVariant', 'mutation', variables);
     },
     deletePackVariant(variables: DeletePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePackVariantMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeletePackVariantMutation>(DeletePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePackVariant', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePackVariantMutation>(DeletePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePackVariant', 'mutation', variables);
     }
   };
 }
