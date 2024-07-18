@@ -60,7 +60,9 @@ pub trait RnRFormServiceTrait: Sync + Send {
             .map(|schedule_id| {
                 let period_filter = PeriodFilter::new()
                     .period_schedule_id(EqualFilter::equal_to(&schedule_id))
-                    .rnr_form_program_id(EqualFilter::equal_to(&program_id))
+                    .rnr_form_program_id(EqualFilter::equal_any_or_null(vec![
+                        program_id.to_string()
+                    ]))
                     .end_date(DateFilter::before_or_equal_to(Utc::now().date_naive()));
 
                 let closed_periods = period_repo.query(
