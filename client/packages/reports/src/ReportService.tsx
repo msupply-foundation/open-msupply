@@ -1,5 +1,5 @@
 import React from 'react';
-import { ListView } from './Components/ListView';
+import { ListView } from './ListView/ListView';
 
 export const Reports = () => {
   return <ListView />;

@@ -30,6 +30,7 @@ pub enum ContextType {
     Repack,
     OutboundReturn,
     InboundReturn,
+    Report,
 }
 
 table! {

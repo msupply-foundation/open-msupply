@@ -72,7 +72,7 @@ fragment ProgramPatientRow on PatientNode {
 query patients(
   $storeId: String!
   $page: PaginationInput
-  $sort: PatientSortInput
+  $sort: [PatientSortInput!]
   $filter: PatientFilterInput
 ) {
   patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
