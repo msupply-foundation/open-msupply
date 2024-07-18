@@ -8,9 +8,9 @@ use graphql_core::{
 use repository::{PaginationOption, RnRFormFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
-use crate::types::r_and_r_form::{
-    PeriodSchedulesConnector, PeriodSchedulesResponse, RnRFormConnector, RnRFormFilterInput,
-    RnRFormSortInput, RnRFormsResponse,
+use crate::types::{
+    period_schedule::{PeriodSchedulesConnector, PeriodSchedulesResponse},
+    r_and_r_form::{RnRFormConnector, RnRFormFilterInput, RnRFormSortInput, RnRFormsResponse},
 };
 
 pub fn r_and_r_forms(

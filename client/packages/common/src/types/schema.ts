@@ -4839,13 +4839,6 @@ export type PatientSortInput = {
   key: PatientSortFieldInput;
 };
 
-export type PeriodInUseNode = {
-  __typename: 'PeriodInUseNode';
-  id: Scalars['String']['output'];
-  inUse: Scalars['Boolean']['output'];
-  period: PeriodNode;
-};
-
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate']['output'];
@@ -4858,7 +4851,7 @@ export type PeriodScheduleNode = {
   __typename: 'PeriodScheduleNode';
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  periodsInUse: Array<PeriodInUseNode>;
+  periods: Array<SchedulePeriodNode>;
 };
 
 export type PeriodSchedulesConnector = {
@@ -6358,6 +6351,13 @@ export type RnRFormSortInput = {
 };
 
 export type RnRFormsResponse = RnRFormConnector;
+
+export type SchedulePeriodNode = {
+  __typename: 'SchedulePeriodNode';
+  id: Scalars['String']['output'];
+  inUse: Scalars['Boolean']['output'];
+  period: PeriodNode;
+};
 
 export type SensorConnector = {
   __typename: 'SensorConnector';

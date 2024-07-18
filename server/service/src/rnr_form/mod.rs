@@ -13,7 +13,7 @@ pub mod query;
 mod tests;
 
 pub struct X {
-    pub period_schedule: PeriodScheduleRow,
+    pub schedule_row: PeriodScheduleRow,
     pub periods: Vec<Period>,
 }
 
@@ -78,7 +78,7 @@ pub trait RnRFormServiceTrait: Sync + Send {
                     .ok_or_else(|| RepositoryError::NotFound)?;
 
                 Ok(X {
-                    period_schedule: schedule_row,
+                    schedule_row,
                     periods: closed_periods,
                 })
             })
