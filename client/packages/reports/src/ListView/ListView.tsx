@@ -8,8 +8,7 @@ import {
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
 import { ReportWidget } from '../components';
-import { useReportList } from 'packages/system/src/Report/api/hooks';
-import { ReportRowFragment } from 'packages/system/src';
+import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
 
 export const ListView = () => {
   const t = useTranslation('reports');
