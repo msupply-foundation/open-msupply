@@ -20,24 +20,22 @@ interface RnRFormCreateModalProps {
   onClose: () => void;
 }
 
-export const RnRFormCreateModal: FC<
-RnRFormCreateModalProps
-> = ({ isOpen, onClose }) => {
+export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation('programs');
   const navigate = useNavigate();
   const {
     query: { isLoading },
     draft,
-    errorMessage,
-    updatePatch,
     create: { create },
   } = useImmunisationProgram(t);
   const isInvalid = !draft.name.trim();
 
-  const [selectedProgram, setSelectedProgram] = useState<ProgramFragment | null>(null);
-
-
+  const [selectedProgram, setSelectedProgram] =
+    useState<ProgramFragment | null>(null);
 
   return (
     <Modal
@@ -67,8 +65,13 @@ RnRFormCreateModalProps
       {!isLoading ? (
         <Grid flexDirection="column" display="flex" gap={2}>
           <Box alignItems="center" gap={1}>
-            <InputLabel sx={{fontSize: 'small'}}>{t('label.program')}:</InputLabel>
-          <ProgramSearchInput onChange={(program) => setSelectedProgram(program)} value={selectedProgram} />
+            <InputLabel sx={{ fontSize: 'small' }}>
+              {t('label.program')}:
+            </InputLabel>
+            <ProgramSearchInput
+              onChange={program => setSelectedProgram(program)}
+              value={selectedProgram}
+            />
           </Box>
         </Grid>
       ) : (
