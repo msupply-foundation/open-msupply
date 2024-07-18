@@ -3,6 +3,9 @@ import {
   RecordWithId,
   CellProps,
   BasicCellLayout,
+  Tooltip,
+  Typography,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 
@@ -20,13 +23,22 @@ export const PackVariantQuantityCell =
       getItemId(rowData),
       null
     );
-
+    const formatNumber = useFormatNumber();
     const quantity = getQuantity(rowData);
     const packQuantity = numberOfPacksFromQuantity(quantity);
+    const hasMoreThanTwoDp =
+      packQuantity.toString().split('.')[1]?.length ?? 0 > 2;
+    const roundedPackQuantity = formatNumber.round(packQuantity, 2);
 
     return (
       <BasicCellLayout isError={isError}>
-        {String(packQuantity)}
+        <Tooltip title={String(packQuantity)}>
+          <Typography>
+            {hasMoreThanTwoDp
+              ? `${roundedPackQuantity}...`
+              : roundedPackQuantity}
+          </Typography>
+        </Tooltip>
       </BasicCellLayout>
     );
   };
