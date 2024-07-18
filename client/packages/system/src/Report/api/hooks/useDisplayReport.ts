@@ -2,11 +2,11 @@ import { PrintFormat } from '@common/types';
 import { useReportGraphQL } from '../useReportGraphQL';
 import { PrintReportParams } from './usePrintReport';
 import { useQuery } from '@openmsupply-client/common';
-import { DISPLAY, REPORT } from './keys';
+import { REPORT } from './keys';
 export const useDisplayReport = (params: PrintReportParams) => {
   const { reportApi, storeId } = useReportGraphQL();
 
-  const queryKey = [REPORT, storeId, DISPLAY];
+  const queryKey = [REPORT, storeId, params];
   const queryFn = async () => {
     const { dataId, reportId, args, sort } = params;
     const result = await reportApi.printReport({
