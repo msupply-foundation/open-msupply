@@ -66,6 +66,7 @@ use service::programs::patient::patient_search_central;
 use types::program::ProgramFilterInput;
 use types::program::ProgramSortInput;
 use types::program::ProgramsResponse;
+use types::r_and_r_form::PeriodSchedulesResponse;
 use types::r_and_r_form::{RnRFormFilterInput, RnRFormSortInput, RnRFormsResponse};
 
 mod mutations;
@@ -262,6 +263,14 @@ impl ProgramsQueries {
         sort: Option<RnRFormSortInput>,
     ) -> Result<RnRFormsResponse> {
         r_and_r_forms(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn schedules_with_periods_by_program(
+        &self,
+        ctx: &Context<'_>,
+        program_id: String,
+    ) -> Result<PeriodSchedulesResponse> {
+        get_schedules_with_periods_by_program(ctx, program_id)
     }
 }
 

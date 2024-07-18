@@ -4,8 +4,9 @@ use crate::{
 };
 
 use super::{
-    name_link_row::name_link, name_row::name, period_row::period, program_row::program,
-    rnr_form_row::rnr_form::dsl::*, store_row::store,
+    name_link_row::name_link, name_row::name, period_row::period,
+    period_schedule_row::period_schedule, program_row::program, rnr_form_row::rnr_form::dsl::*,
+    store_row::store,
 };
 
 use chrono::NaiveDateTime;
@@ -38,6 +39,7 @@ allow_tables_to_appear_in_same_query!(rnr_form, name_link);
 allow_tables_to_appear_in_same_query!(rnr_form, name);
 allow_tables_to_appear_in_same_query!(rnr_form, period);
 allow_tables_to_appear_in_same_query!(rnr_form, program);
+allow_tables_to_appear_in_same_query!(rnr_form, period_schedule);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,

@@ -8,7 +8,7 @@ use crate::{
         invoice_row::invoice::dsl as invoice_dsl,
         name_link_row::{name_link, name_link::dsl as name_link_dsl},
         name_row::{name, name::dsl as name_dsl},
-        period::period::{self, dsl as period_dsl},
+        period::period_row::period::{self, dsl as period_dsl},
         program_requisition::program_row::program::{self, dsl as program_dsl},
         store_row::{store, store::dsl as store_dsl},
     },
