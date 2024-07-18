@@ -3,6 +3,7 @@ import {
   ReportContext,
   FilterByWithBoolean,
   SortBy,
+  ReportSortFieldInput,
 } from '@openmsupply-client/common';
 import { ReportRowFragment } from '../operations.generated';
 import { useReportGraphQL } from '../useReportGraphQL';
@@ -47,7 +48,7 @@ export const useReportList = ({
         : null;
     const query = await reportApi.reports({
       filter: { ...filterBy, ...filter },
-      key: sortBy.key,
+      key: sortBy.key as ReportSortFieldInput,
       desc: sortBy.isDesc,
       storeId,
     });
