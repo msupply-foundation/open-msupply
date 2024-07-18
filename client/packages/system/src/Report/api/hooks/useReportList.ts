@@ -1,16 +1,16 @@
 import {
   useQuery,
   ReportContext,
-  FilterByWithBoolean,
   SortBy,
   ReportSortFieldInput,
+  ReportFilterInput,
 } from '@openmsupply-client/common';
 import { ReportRowFragment } from '../operations.generated';
 import { useReportGraphQL } from '../useReportGraphQL';
 import { LIST, REPORT } from './keys';
 
 export type ReportListParams = {
-  filterBy: FilterByWithBoolean | null;
+  filterBy: ReportFilterInput | null;
   sortBy: SortBy<ReportRowFragment>;
   offset: number;
 };
