@@ -302,7 +302,7 @@ export type DeleteVaccineCourseMutationVariables = Types.Exact<{
 
 export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', deleteVaccineCourse: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteVaccineCourseError' } } } };
 
-export type RnRFormFragment = { __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDate?: string | null };
+export type RnRFormFragment = { __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDatetime: string, supplierName: string };
 
 export type RnrFormsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -314,7 +314,7 @@ export type RnrFormsQueryVariables = Types.Exact<{
 }>;
 
 
-export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDate?: string | null }> } };
+export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDatetime: string, supplierName: string }> } };
 
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
@@ -599,7 +599,8 @@ export const RnRFormFragmentDoc = gql`
   programName
   periodId
   periodName
-  createdDate
+  createdDatetime
+  supplierName
 }
     `;
 export const DocumentByNameDocument = gql`

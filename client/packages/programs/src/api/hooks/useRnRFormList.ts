@@ -53,14 +53,16 @@ export const useRnRFormList = ({
 
 const toSortField = (sortBy: SortBy<RnRFormFragment>): RnRFormSortFieldInput => {
   switch (sortBy.key) {
-    case 'periodName': // TODO
+    case 'periodName':
       return RnRFormSortFieldInput.Period;
-    case 'programName': // ?
+    case 'programName':
       return RnRFormSortFieldInput.Program;
-    case 'createdDate':
-      return RnRFormSortFieldInput.CreatedDate;
+    case 'supplierName':
+      return RnRFormSortFieldInput.SupplierName;
+    case 'createdDatetime':
+      return RnRFormSortFieldInput.CreatedDatetime;
     default: {
-      return RnRFormSortFieldInput.CreatedDate;
+      return RnRFormSortFieldInput.CreatedDatetime;
     }
   }
 };

@@ -40,11 +40,17 @@ const RnRFormListComponent = () => {
         width: 350,
         label: 'label.period',
       },
-      ['createdDatetime', { accessor: ({ rowData }) => rowData.createdDate }],
+      [
+        'createdDatetime',
+        { accessor: ({ rowData }) => rowData.createdDatetime },
+      ],
       {
         key: 'programName',
         label: 'label.program-name',
-        sortable: false,
+      },
+      {
+        key: 'supplierName',
+        label: 'label.supplier',
       },
     ],
     {
