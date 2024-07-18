@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, createdDatetime?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', name: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } };
 
 export type ProgramPatientRowFragment = { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, createdDatetime?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } };
@@ -10,7 +10,7 @@ export type ProgramPatientRowFragment = { __typename: 'PatientNode', id: string,
 export type PatientsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   page?: Types.InputMaybe<Types.PaginationInput>;
-  sort?: Types.InputMaybe<Types.PatientSortInput>;
+  sort?: Types.InputMaybe<Array<Types.PatientSortInput> | Types.PatientSortInput>;
   filter?: Types.InputMaybe<Types.PatientFilterInput>;
 }>;
 
@@ -164,7 +164,7 @@ export const ProgramPatientRowFragmentDoc = gql`
 }
     `;
 export const PatientsDocument = gql`
-    query patients($storeId: String!, $page: PaginationInput, $sort: PatientSortInput, $filter: PatientFilterInput) {
+    query patients($storeId: String!, $page: PaginationInput, $sort: [PatientSortInput!], $filter: PatientFilterInput) {
   patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
     ... on PatientConnector {
       __typename
@@ -315,42 +315,42 @@ export const LatestPatientEncounterDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     patients(variables: PatientsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PatientsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PatientsQuery>(PatientsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patients', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PatientsQuery>(PatientsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patients', 'query', variables);
     },
     patientById(variables: PatientByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PatientByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PatientByIdQuery>(PatientByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientById', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PatientByIdQuery>(PatientByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientById', 'query', variables);
     },
     patientSearch(variables: PatientSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PatientSearchQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PatientSearchQuery>(PatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientSearch', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PatientSearchQuery>(PatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientSearch', 'query', variables);
     },
     centralPatientSearch(variables: CentralPatientSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CentralPatientSearchQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CentralPatientSearchQuery>(CentralPatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'centralPatientSearch', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<CentralPatientSearchQuery>(CentralPatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'centralPatientSearch', 'query', variables);
     },
     linkPatientToStore(variables: LinkPatientToStoreMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LinkPatientToStoreMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LinkPatientToStoreMutation>(LinkPatientToStoreDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'linkPatientToStore', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<LinkPatientToStoreMutation>(LinkPatientToStoreDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'linkPatientToStore', 'mutation', variables);
     },
     insertProgramPatient(variables: InsertProgramPatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertProgramPatientMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramPatientMutation>(InsertProgramPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramPatient', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramPatientMutation>(InsertProgramPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramPatient', 'mutation', variables);
     },
     updateProgramPatient(variables: UpdateProgramPatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateProgramPatientMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateProgramPatientMutation>(UpdateProgramPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateProgramPatient', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateProgramPatientMutation>(UpdateProgramPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateProgramPatient', 'mutation', variables);
     },
     insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPatientMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation', variables);
     },
     updatePatient(variables: UpdatePatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePatientMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePatientMutation>(UpdatePatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePatient', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePatientMutation>(UpdatePatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePatient', 'mutation', variables);
     },
     latestPatientEncounter(variables: LatestPatientEncounterQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LatestPatientEncounterQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LatestPatientEncounterQuery>(LatestPatientEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'latestPatientEncounter', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<LatestPatientEncounterQuery>(LatestPatientEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'latestPatientEncounter', 'query', variables);
     }
   };
 }

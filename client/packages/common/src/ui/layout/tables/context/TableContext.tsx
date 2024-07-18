@@ -1,7 +1,8 @@
 import React, { createContext, PropsWithChildren, useContext } from 'react';
 import { RecordWithId } from '@common/types';
 import { QueryParamsProvider, QueryParamsState } from '@common/hooks';
-import { create, StoreApi, UseBoundStore, useStore } from 'zustand';
+import { create, StoreApi, UseBoundStore } from 'zustand';
+import { useStoreWithEqualityFn } from 'zustand/traditional';
 import { AppSxProp } from '../../../../styles';
 
 export interface RowState {
@@ -45,7 +46,7 @@ export const TableProvider = <T extends RecordWithId>({
   queryParamsStore?: UseBoundStore<StoreApi<QueryParamsState<T>>>;
 }>) => {
   const { Provider } = tableContext;
-  const store = React.useMemo(createStore, []);
+  const store = React.useMemo(createStore, [createStore]);
   return queryParamsStore ? (
     <Provider value={store}>
       <QueryParamsProvider createStore={queryParamsStore}>
@@ -62,10 +63,10 @@ export function useTableStore<T = TableStore>(
   equalityFn?: (a: T, b: T) => boolean
 ): T {
   const store = useContext(tableContext);
-  const storeWithoutSelector = useStore(store) as unknown as T;
+  const storeWithoutSelector = useStoreWithEqualityFn(store) as unknown as T;
   const selector = selectorFn ?? ((_: TableStore) => storeWithoutSelector);
 
-  return useStore(store, selector, equalityFn) as unknown as T;
+  return useStoreWithEqualityFn(store, selector, equalityFn) as unknown as T;
 }
 
 const getRowState = (

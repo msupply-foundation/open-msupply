@@ -3,6 +3,7 @@ import {
   FilterByWithBoolean,
   SortBy,
   PrintReportSortInput,
+  ReportSortFieldInput,
 } from '@openmsupply-client/common';
 import { ReportRowFragment, Sdk } from './operations.generated';
 import { JsonData } from '@openmsupply-client/programs';
@@ -18,7 +19,7 @@ export const getReportQueries = (sdk: Sdk, storeId: string) => ({
     list: async ({ filterBy, sortBy }: ReportListParams) => {
       const result = await sdk.reports({
         filter: filterBy,
-        key: sortBy.key,
+        key: sortBy.key as ReportSortFieldInput,
         desc: sortBy.isDesc,
         storeId,
       });

@@ -55,7 +55,7 @@ query documents(
 
 query documentRegistries(
   $filter: DocumentRegistryFilterInput
-  $sort: DocumentRegistrySortInput
+  $sort: [DocumentRegistrySortInput!]
   $storeId: String!
 ) {
   documentRegistries(filter: $filter, sort: $sort, storeId: $storeId) {
@@ -120,7 +120,7 @@ fragment ProgramEvent on ProgramEventNode {
 query encounterFields(
   $storeId: String!
   $patientId: String!
-  $fields: [String!]
+  $fields: [String!]!
 ) {
   encounterFields(
     input: { fields: $fields }
@@ -180,7 +180,7 @@ fragment Encounter on EncounterNode {
 
 query encountersWithDocument(
   $storeId: String!
-  $key: EncounterSortFieldInput
+  $key: EncounterSortFieldInput!
   $desc: Boolean
   $filter: EncounterFilterInput
   $page: PaginationInput
@@ -263,11 +263,11 @@ fragment EncounterRow on EncounterNode {
 
 query encounters(
   $storeId: String!
-  $key: EncounterSortFieldInput
+  $key: EncounterSortFieldInput!
   $desc: Boolean
   $filter: EncounterFilterInput
   $page: PaginationInput
-  $eventTime: String!
+  $eventTime: DateTime
 ) {
   encounters(
     storeId: $storeId
@@ -334,7 +334,7 @@ query programEnrolments(
   $key: ProgramEnrolmentSortFieldInput!
   $desc: Boolean
   $filter: ProgramEnrolmentFilterInput
-  $eventTime: String!
+  $eventTime: DateTime
 ) {
   programEnrolments(
     storeId: $storeId
@@ -459,7 +459,7 @@ query formSchemas($filter: FormSchemaFilterInput) {
 }
 
 query activeProgramEvents(
-  $at: String
+  $at: DateTime
   $storeId: String!
   $filter: ProgramEventFilterInput
   $page: PaginationInput
@@ -520,7 +520,7 @@ fragment ContactTraceRow on ContactTraceNode {
 
 query contactTraces(
   $storeId: String!
-  $key: ContactTraceSortFieldInput
+  $key: ContactTraceSortFieldInput!
   $desc: Boolean
   $filter: ContactTraceFilterInput
   $page: PaginationInput
@@ -592,7 +592,7 @@ fragment VaccineCourseItem on VaccineCourseItemNode {
 }
 
 query programs(
-  $storeId: String
+  $storeId: String!
   $first: Int
   $offset: Int
   $key: ProgramSortFieldInput!
@@ -617,8 +617,8 @@ query programs(
 }
 
 mutation insertImmunisationProgram(
-  $input: InsertImmunisationProgramInput
-  $storeId: String
+  $input: InsertImmunisationProgramInput!
+  $storeId: String!
 ) {
   centralServer {
     program {
@@ -640,8 +640,8 @@ mutation insertImmunisationProgram(
 }
 
 mutation updateImmunisationProgram(
-  $input: UpdateImmunisationProgramInput
-  $storeId: String
+  $input: UpdateImmunisationProgramInput!
+  $storeId: String!
 ) {
   centralServer {
     program {
@@ -709,8 +709,8 @@ query vaccineCourses(
 }
 
 mutation insertVaccineCourse(
-  $input: InsertVaccineCourseInput
-  $storeId: String
+  $input: InsertVaccineCourseInput!
+  $storeId: String!
 ) {
   centralServer {
     vaccineCourse {
@@ -731,8 +731,8 @@ mutation insertVaccineCourse(
 }
 
 mutation updateVaccineCourse(
-  $input: UpdateVaccineCourseInput
-  $storeId: String
+  $input: UpdateVaccineCourseInput!
+  $storeId: String!
 ) {
   centralServer {
     vaccineCourse {
@@ -789,7 +789,7 @@ fragment RnRForm on RnRFormNode {
 }
 
 query rnrForms(
-  $storeId: String
+  $storeId: String!
   $first: Int
   $offset: Int
   $key: RnRFormSortFieldInput!

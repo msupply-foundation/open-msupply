@@ -165,9 +165,7 @@ export const PricingTableComponent: FC<
     [
       'batch',
       {
-        accessor: ({ rowData }) => {
-          return rowData.batch || '';
-        },
+        accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
   ];
@@ -294,9 +292,7 @@ export const LocationTableComponent: FC<TableProps> = ({
       [
         'batch',
         {
-          accessor: ({ rowData }) => {
-            return rowData.batch || '';
-          },
+          accessor: ({ rowData }) => rowData.batch || '',
         },
       ],
       [getLocationInputColumn(), { setter: updateDraftLine, width: 800 }],

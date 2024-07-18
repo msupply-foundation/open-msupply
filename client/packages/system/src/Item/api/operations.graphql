@@ -145,7 +145,7 @@ query items(
 
 query itemStockOnHand(
   $storeId: String!
-  $key: ItemSortFieldInput
+  $key: ItemSortFieldInput!
   $isDesc: Boolean
   $filter: ItemFilterInput
   $first: Int
@@ -185,7 +185,7 @@ fragment ItemsWithStats on ItemNode {
 
 query itemsWithStats(
   $storeId: String!
-  $key: ItemSortFieldInput
+  $key: ItemSortFieldInput!
   $isDesc: Boolean
   $filter: ItemFilterInput
   $first: Int

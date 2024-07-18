@@ -14,7 +14,7 @@ fragment ActivityLogRow on ActivityLogNode {
 query activityLogs(
   $first: Int
   $offset: Int
-  $sort: ActivityLogSortInput
+  $sort: [ActivityLogSortInput!]
   $filter: ActivityLogFilterInput
 ) {
   activityLogs(

@@ -65,13 +65,12 @@ export const SensorListView: FC = () => {
       {
         key: 'lastReading',
         label: 'label.last-reading',
-        accessor: ({ rowData }) => {
-          return !!rowData.latestTemperatureLog?.nodes[0]?.temperature
+        accessor: ({ rowData }) =>
+          !!rowData.latestTemperatureLog?.nodes[0]?.temperature
             ? `${formatTemperature(
                 rowData.latestTemperatureLog?.nodes[0]?.temperature
               )}`
-            : UNDEFINED_STRING_VALUE;
-        },
+            : UNDEFINED_STRING_VALUE,
         sortable: false,
       },
       {
