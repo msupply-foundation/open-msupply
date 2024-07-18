@@ -843,3 +843,33 @@ query programs(
     }
   }
 }
+
+fragment Period on PeriodNode {
+  id
+  name
+  startDate
+  endDate
+}
+
+fragment PeriodSchedule on PeriodScheduleNode {
+  id
+  name
+  periods {
+    id
+    inUse
+    period {
+      ...Period
+    }
+  }
+}
+
+query schedulesAndPeriods($programId: String!) {
+  schedulesWithPeriodsByProgram(programId: $programId) {
+    __typename
+    ... on PeriodSchedulesConnector {
+      nodes {
+        ...PeriodSchedule
+      }
+    }
+  }
+}
