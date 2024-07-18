@@ -6,5 +6,5 @@ export * from './ReplenishmentRouter';
 export * from './DispensaryRouter';
 export * from './ColdChainRouter';
 export * from './ManageRouter';
-export * from './ImmunisationProgramRouter';
+export * from './ProgramRouter';
 export * from './ReportsRouter';

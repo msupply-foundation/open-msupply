@@ -4,11 +4,11 @@ import {
   useTranslation,
   useMutation,
 } from '@openmsupply-client/common';
-import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
+import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { VACCINE, LIST } from './keys';
 
 export const useDeleteSelectedVaccineCourses = () => {
-  const { api, queryClient } = useImmunisationGraphQL();
+  const { api, queryClient } = useProgramsGraphQL();
   const { mutateAsync } = useMutation(
     async ({ vaccineCourseId }: { vaccineCourseId: string }) => {
       const apiResult = await api.deleteVaccineCourse({ vaccineCourseId });
