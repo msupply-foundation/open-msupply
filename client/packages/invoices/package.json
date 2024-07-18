@@ -5,7 +5,7 @@
   "private": true,
   "main": "./src/index.ts",
   "devDependencies": {
-    "find-up": "^6.3.0"
+    "find-up": "^7.0.0"
   },
   "scripts": {
     "tsc": "tsc",

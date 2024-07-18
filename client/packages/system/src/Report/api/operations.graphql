@@ -13,7 +13,7 @@ fragment ReportRow on ReportNode {
 
 query reports(
   $storeId: String!
-  $key: String!
+  $key: ReportSortFieldInput!
   $desc: Boolean
   $filter: ReportFilterInput
 ) {

@@ -26,5 +26,6 @@
   "heading.total": "Итого",
   "label.shipment": "Поставка",
   "button.return-lines": "Обработать возврат выбранных строк",
-  "button.requested-to-suggested": "Использовать Рекомендуемые Количества"
+  "button.requested-to-suggested": "Использовать Рекомендуемые Количества",
+  "label.location": "Локация"
 }

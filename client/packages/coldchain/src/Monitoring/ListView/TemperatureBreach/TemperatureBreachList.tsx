@@ -75,11 +75,10 @@ const ListView: FC = () => {
       {
         key: 'unacknowledged',
         label: 'label.status',
-        accessor: ({ rowData }) => {
-          return !rowData?.unacknowledged
+        accessor: ({ rowData }) =>
+          !rowData?.unacknowledged
             ? t('label.acknowledged')
-            : t('label.unacknowledged');
-        },
+            : t('label.unacknowledged'),
         sortable: false,
       },
       {
@@ -102,17 +101,15 @@ const ListView: FC = () => {
       {
         key: 'datetime',
         label: 'label.type-start',
-        accessor: ({ rowData }) => {
-          return Formatter.csvDateTimeString(rowData.startDatetime);
-        },
+        accessor: ({ rowData }) =>
+          Formatter.csvDateTimeString(rowData.startDatetime),
         getSortValue: row => row.startDatetime,
       },
       {
         key: 'endDatetime',
         label: 'label.type-end',
-        accessor: ({ rowData }) => {
-          return Formatter.csvDateTimeString(rowData.endDatetime);
-        },
+        accessor: ({ rowData }) =>
+          Formatter.csvDateTimeString(rowData.endDatetime),
       },
       {
         key: 'duration',
@@ -132,11 +129,10 @@ const ListView: FC = () => {
         label: 'label.max-min-temperature',
         description: 'description.max-min-temperature',
         width: 125,
-        accessor: ({ rowData }) => {
-          return !!rowData.maxOrMinTemperature
+        accessor: ({ rowData }) =>
+          !!rowData.maxOrMinTemperature
             ? `${formatTemperature(rowData.maxOrMinTemperature)}`
-            : null;
-        },
+            : null,
         sortable: false,
       },
     ],

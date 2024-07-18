@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PartialStockLineFragment = { __typename: 'StockLineNode', id: string, itemId: string, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null };
 
 export type StockOutLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null };
@@ -92,15 +92,15 @@ export const DummyDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     dummy(variables?: DummyQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DummyQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DummyQuery>(DummyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'dummy', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<DummyQuery>(DummyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'dummy', 'query', variables);
     }
   };
 }

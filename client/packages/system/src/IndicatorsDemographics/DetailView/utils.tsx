@@ -142,11 +142,11 @@ export const toDemographicIndicatorRow = (row: {
   name: row.name,
   baseYear: row.baseYear ?? 0,
   basePopulation: row.basePopulation ?? 0,
-  0: row.year1Projection ?? 0,
-  1: row.year2Projection ?? 0,
-  2: row.year3Projection ?? 0,
-  3: row.year4Projection ?? 0,
-  4: row.year5Projection ?? 0,
+  0: (row.basePopulation ?? 0) * (row.populationPercentage ?? 0)/100,
+  1: row.year1Projection ?? 0,
+  2: row.year2Projection ?? 0,
+  3: row.year3Projection ?? 0,
+  4: row.year4Projection ?? 0,
   5: row.year5Projection ?? 0,
 });
 

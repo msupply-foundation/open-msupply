@@ -6,15 +6,14 @@
   "private": true,
   "devDependencies": {
     "@capacitor-community/keep-awake": "^5.0.0",
-    "copy-webpack-plugin": "^11.0.0",
-    "find-up": "^6.3.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "find-up": "^7.0.0",
     "html-webpack-plugin": "^5.5.0",
     "react-refresh": "0.14.2",
     "serve": "^14.2.0",
     "webpack": "^5.88.1",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.12.0",
-    "webpack-encoding-plugin": "^0.3.1"
+    "webpack-dev-server": "^5.0.4"
   },
   "scripts": {
     "start": "webpack-cli serve",

@@ -19,7 +19,7 @@ fragment VaccineCourseItem on VaccineCourseItemNode {
 }
 
 query programs(
-  $storeId: String
+  $storeId: String!
   $first: Int
   $offset: Int
   $key: ProgramSortFieldInput!
@@ -44,8 +44,8 @@ query programs(
 }
 
 mutation insertImmunisationProgram(
-  $input: InsertImmunisationProgramInput
-  $storeId: String
+  $input: InsertImmunisationProgramInput!
+  $storeId: String!
 ) {
   centralServer {
     program {
@@ -67,8 +67,8 @@ mutation insertImmunisationProgram(
 }
 
 mutation updateImmunisationProgram(
-  $input: UpdateImmunisationProgramInput
-  $storeId: String
+  $input: UpdateImmunisationProgramInput!
+  $storeId: String!
 ) {
   centralServer {
     program {
@@ -136,8 +136,8 @@ query vaccineCourses(
 }
 
 mutation insertVaccineCourse(
-  $input: InsertVaccineCourseInput
-  $storeId: String
+  $input: InsertVaccineCourseInput!
+  $storeId: String!
 ) {
   centralServer {
     vaccineCourse {
@@ -158,8 +158,8 @@ mutation insertVaccineCourse(
 }
 
 mutation updateVaccineCourse(
-  $input: UpdateVaccineCourseInput
-  $storeId: String
+  $input: UpdateVaccineCourseInput!
+  $storeId: String!
 ) {
   centralServer {
     vaccineCourse {
