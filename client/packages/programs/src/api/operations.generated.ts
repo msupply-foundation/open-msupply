@@ -316,6 +316,14 @@ export type RnrFormsQueryVariables = Types.Exact<{
 
 export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDatetime: string, supplierName: string }> } };
 
+export type CreateRnRFormMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertRnRFormInput;
+}>;
+
+
+export type CreateRnRFormMutation = { __typename: 'Mutations', insertRnrForm: { __typename: 'InsertRnRFormError', error: { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDatetime: string, supplierName: string } };
+
 export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
 
 export type ProgramsQueryVariables = Types.Exact<{
@@ -1129,6 +1137,23 @@ export const RnrFormsDocument = gql`
   }
 }
     ${RnRFormFragmentDoc}`;
+export const CreateRnRFormDocument = gql`
+    mutation createRnRForm($storeId: String!, $input: InsertRnRFormInput!) {
+  insertRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+    }
+    ... on InsertRnRFormError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    ${RnRFormFragmentDoc}`;
 export const ProgramsDocument = gql`
     query programs($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
   programs(
@@ -1260,6 +1285,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     rnrForms(variables: RnrFormsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RnrFormsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RnrFormsQuery>(RnrFormsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rnrForms', 'query', variables);
+    },
+    createRnRForm(variables: CreateRnRFormMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CreateRnRFormMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateRnRFormMutation>(CreateRnRFormDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createRnRForm', 'mutation', variables);
     },
     programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);

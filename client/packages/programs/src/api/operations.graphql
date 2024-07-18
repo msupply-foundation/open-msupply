@@ -814,6 +814,22 @@ query rnrForms(
   }
 }
 
+mutation createRnRForm($storeId: String!, $input: InsertRnRFormInput!) {
+  insertRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+    }
+    ... on InsertRnRFormError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
 fragment Program on ProgramNode {
   id
   name

@@ -59,6 +59,7 @@ use mutations::program_patient::insert::*;
 use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
+use mutations::rnr_form::insert::{insert_rnr_form, InsertRnRFormInput, InsertRnRFormResponse};
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
@@ -404,6 +405,15 @@ impl ProgramsMutations {
         input: UpdateContactTraceInput,
     ) -> Result<UpdateContactTraceResponse> {
         update_contact_trace(ctx, store_id, input)
+    }
+
+    pub async fn insert_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertRnRFormInput,
+    ) -> Result<InsertRnRFormResponse> {
+        insert_rnr_form(ctx, store_id, input)
     }
 }
 
