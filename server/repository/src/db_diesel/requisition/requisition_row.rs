@@ -3,7 +3,7 @@ use std::any::Any;
 use super::requisition_row::requisition::dsl as requisition_dsl;
 
 use crate::db_diesel::{
-    item_link_row::item_link, name_link_row::name_link, period::period,
+    item_link_row::item_link, name_link_row::name_link, period::period_row::period,
     program_requisition::program_row::program, store_row::store, user_row::user_account,
 };
 use crate::repository_error::RepositoryError;
