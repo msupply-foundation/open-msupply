@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   useDialog,
   Grid,
@@ -7,28 +7,16 @@ import {
   useNavigate,
   RouteBuilder,
   Autocomplete,
-  SchedulePeriodNode,
   InputWithLabelRow,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ProgramSearchInput } from './ProgramSearchInput';
-import {
-  PeriodScheduleFragment,
-  ProgramFragment,
-} from '../../api/operations.generated';
-import { NameRowFragment, SupplierSearchInput } from 'packages/system/src';
-import { useSchedulesAndPeriods } from '../../api';
+import { SupplierSearchInput } from 'packages/system/src';
+import { useCreateRnRForm, useSchedulesAndPeriods } from '../../api';
 
 interface RnRFormCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-interface RnRFormDraft {
-  supplier: NameRowFragment | null;
-  program: ProgramFragment | null;
-  schedule: PeriodScheduleFragment | null;
-  period: SchedulePeriodNode | null;
 }
 
 export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
@@ -39,15 +27,11 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
   const t = useTranslation('programs');
   const navigate = useNavigate();
 
-  const [draftRnRForm, setDraftRnRForm] = useState<RnRFormDraft>({
-    supplier: null,
-    program: null,
-    schedule: null,
-    period: null,
-  });
+  const { draft, updateDraft, clearDraft, create, isIncomplete } =
+    useCreateRnRForm();
 
   const { data: schedulesAndPeriods } = useSchedulesAndPeriods(
-    draftRnRForm.program?.id ?? ''
+    draft.program?.id ?? ''
   );
 
   const width = '350px';
@@ -57,11 +41,10 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!draftRnRForm.program}
+          disabled={isIncomplete}
           onClick={async () => {
             try {
-              // TOOD :creat()
-              const result = { id: 'TODO' };
+              const result = await create();
               if (result)
                 navigate(
                   RouteBuilder.create(AppRoute.Programs)
@@ -75,7 +58,15 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
           }}
         />
       }
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      cancelButton={
+        <DialogButton
+          variant="cancel"
+          onClick={() => {
+            clearDraft();
+            onClose();
+          }}
+        />
+      }
       title={t('label.new-rnr-form')}
     >
       <Grid flexDirection="column" display="flex" gap={2}>
@@ -84,13 +75,8 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
           Input={
             <SupplierSearchInput
               width={350}
-              onChange={supplier =>
-                setDraftRnRForm({
-                  ...draftRnRForm,
-                  supplier,
-                })
-              }
-              value={draftRnRForm.supplier}
+              onChange={supplier => updateDraft({ supplier })}
+              value={draft.supplier}
             />
           }
         />
@@ -100,14 +86,13 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
             <ProgramSearchInput
               width={width}
               onChange={program =>
-                setDraftRnRForm({
-                  ...draftRnRForm,
+                updateDraft({
                   program,
                   schedule: null,
                   period: null,
                 })
               }
-              value={draftRnRForm.program}
+              value={draft.program}
             />
           }
         />
@@ -116,18 +101,13 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
           Input={
             <Autocomplete
               width={width}
-              disabled={!draftRnRForm.program}
+              disabled={!draft.program}
               optionKey="name"
               // TODO: autoselect!
               options={schedulesAndPeriods?.nodes ?? []}
-              value={draftRnRForm.schedule}
+              value={draft.schedule}
               onChange={(_, schedule) =>
-                schedule &&
-                setDraftRnRForm({
-                  ...draftRnRForm,
-                  schedule,
-                  period: null,
-                })
+                schedule && updateDraft({ schedule, period: null })
               }
             />
           }
@@ -137,19 +117,13 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
           Input={
             <Autocomplete
               width={width}
-              disabled={!draftRnRForm.program}
+              disabled={!draft.program}
               // TODO: only enable oldest available period!... autoselect!
               getOptionDisabled={option => option.inUse}
               getOptionLabel={option => option.period.name}
-              options={draftRnRForm.schedule?.periods ?? []}
-              value={draftRnRForm.period}
-              onChange={(_, period) =>
-                period &&
-                setDraftRnRForm({
-                  ...draftRnRForm,
-                  period,
-                })
-              }
+              options={draft.schedule?.periods ?? []}
+              value={draft.period}
+              onChange={(_, period) => period && updateDraft({ period })}
             />
           }
         />

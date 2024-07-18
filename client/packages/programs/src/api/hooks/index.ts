@@ -20,6 +20,7 @@ export * from './useVaccineCourseList';
 export * from './useRnRFormList';
 export * from './useProgramList';
 export * from './useSchedulesAndPeriods';
+export * from './useCreateRnRForm';
 
 export {
   ProgramEnrolmentRowFragmentWithId,
