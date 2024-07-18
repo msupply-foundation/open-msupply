@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback, useState } from 'react';
+import React, { PropsWithChildren, useCallback } from 'react';
 import { Card, Grid, Typography } from '@mui/material';
 import { ChevronDownIcon, SvgIconProps } from '@common/icons';
 import {
@@ -21,6 +21,9 @@ interface ReportWidgetProps {
   title: string;
   Icon: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
   reports: ReportRowFragment[] | undefined;
+  onReportClick: (report: ReportRowFragment) => void;
+  reportWithArgs?: ReportRowFragment;
+  setReportWithArgs: (value: ReportRowFragment | undefined) => void;
 }
 
 export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
@@ -29,21 +32,17 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
   title,
   Icon,
   reports,
+  onReportClick,
+  reportWithArgs,
+  setReportWithArgs,
 }) => {
-  const [reportWithArgs, setReportWithArgs] = useState<
-    ReportRowFragment | undefined
-  >();
   const navigate = useNavigate();
-  const onReportClick = (report: ReportRowFragment) => {
-    if (report.argumentSchema) {
-      setReportWithArgs(report);
-    }
-  };
-  const { setReport, setArgs } = useReportStore();
+
+  const { setId, setArgs } = useReportStore();
 
   const reportArgs = useCallback(
     (report: ReportRowFragment, args: JsonData | undefined) => {
-      setArgs(args);
+      setArgs(report.id, args);
       navigate(
         RouteBuilder.create(AppRoute.Reports).addPart(report.id).build()
       );
@@ -95,7 +94,7 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                     textDecoration: 'none',
                   }}
                   onClick={() => {
-                    setReport(report);
+                    setId(report.id);
                     onReportClick(report);
                   }}
                   to={
