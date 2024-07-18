@@ -1,6 +1,8 @@
 {
     "description.notification-preferences": "By default, the system will tell you if you have more than 3 or 6 months of stock on the homepage dashboard.",
+    "heading.expiring": "Expiring",
     "heading.notification-preferences": "Notification Preferences",
+    "heading.stock-and-items": "Stock & Items",
     "label.expiring-item-period": "Expiring item period",
     "label.leads-time": "Months leads time",
     "label.monthly-consumption-look-back-period": "Monthly consumption look back period",

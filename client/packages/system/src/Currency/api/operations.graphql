@@ -6,7 +6,7 @@ fragment CurrencyRow on CurrencyNode {
 }
 
 query currencies(
-  $sort: CurrencySortInput
+  $sort: [CurrencySortInput!]
   $filter: CurrencyFilterInput
 ) {
   currencies(

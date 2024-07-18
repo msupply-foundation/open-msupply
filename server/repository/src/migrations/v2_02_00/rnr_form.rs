@@ -30,8 +30,19 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 created_datetime TIMESTAMP NOT NULL,
                 finalised_datetime TIMESTAMP,
                 linked_requisition_id TEXT
-            )
+            );
 
+        "#
+    )?;
+
+    #[cfg(feature = "postgres")]
+    sql!(
+        connection,
+        r#"
+            ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'RNR_FORM_QUERY';
+            ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'RNR_FORM_MUTATE';
+
+            ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'rnr_form';
         "#
     )?;
 
