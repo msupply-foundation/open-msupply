@@ -4,12 +4,12 @@ import {
   useTranslation,
   useMutation,
 } from '@openmsupply-client/common';
-import { useImmunisationGraphQL } from '../useImmunisationGraphQL';
+import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { PROGRAM } from './keys';
 
 export const useDeleteSelectedImmunisationPrograms = () => {
   const t = useTranslation('coldchain');
-  const { api, queryClient } = useImmunisationGraphQL();
+  const { api, queryClient } = useProgramsGraphQL();
 
   const { mutateAsync } = useMutation(
     async ({ immunisationProgramId }: { immunisationProgramId: string }) => {

@@ -11,7 +11,7 @@ import {
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
-import { useImmunisationProgram } from '../api/hooks/useImmunisationProgram';
+import { useImmunisationProgram } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
 interface ImmunisationProgramCreateModalProps {

@@ -8,7 +8,7 @@ import { useVaccineItems } from '@openmsupply-client/system';
 import {
   DraftVaccineCourse,
   DraftVaccineCourseItem,
-} from '@openmsupply-client/system/src/Immunisation';
+} from '@openmsupply-client/programs';
 
 interface VaccineItemSelectProps {
   extraFilter?: (item: DraftVaccineCourseItem) => boolean;

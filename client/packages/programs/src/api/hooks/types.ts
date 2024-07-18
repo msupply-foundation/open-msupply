@@ -1,4 +1,4 @@
-// re defining DraftVaccineCourse typr yo omit typenames
+// re defining DraftVaccineCourse type to omit `__typename`s
 
 import {
   VaccineCourseFragment,

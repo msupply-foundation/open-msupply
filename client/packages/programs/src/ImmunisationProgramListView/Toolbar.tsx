@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useDeleteSelectedImmunisationPrograms } from '../api/hooks/useDeleteSelectedImmunisationPrograms';
+import { useDeleteSelectedImmunisationPrograms } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation();

@@ -5,5 +5,7 @@ export {
   ProgramEventFragment,
   ContactTraceRowFragment,
   ContactTraceFragment,
+  VaccineCourseFragment,
+  ImmunisationProgramFragment
 } from './operations.generated';
 export * from './hooks';
