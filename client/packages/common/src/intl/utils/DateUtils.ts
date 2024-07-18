@@ -37,6 +37,9 @@ import {
   setMilliseconds,
   addMilliseconds,
   getYear,
+  Locale,
+  FirstWeekContainsDate,
+  ParseOptions,
 } from 'date-fns';
 import { getTimezoneOffset } from 'date-fns-tz';
 
@@ -54,9 +57,9 @@ const formatIfValid = (
   date: Date | number,
   dateFormat: string,
   options?: {
-    locale?: Locale;
+    locale: Locale;
     weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-    firstWeekContainsDate?: number;
+    firstWeekContainsDate?: FirstWeekContainsDate;
     useAdditionalWeekYearTokens?: boolean;
     useAdditionalDayOfYearTokens?: boolean;
   }
@@ -219,12 +222,11 @@ export const useFormatDateTime = () => {
   const getLocalDate = (
     date?: Date | string | null,
     format?: string,
-    options?: Parameters<typeof parse>[3]
+    options?: ParseOptions,
+    timeZone?: string
   ): Date | null => {
     // tz passed as props options for testing purposes
-    const tz =
-      options?.locale?.code ??
-      new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const tz = timeZone ?? new Intl.DateTimeFormat().resolvedOptions().timeZone;
     const UTCDateWithoutTime = DateUtils.getDateOrNull(date, format, options);
     const offset = UTCDateWithoutTime
       ? getTimezoneOffset(tz, UTCDateWithoutTime)

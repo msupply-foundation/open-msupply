@@ -55,7 +55,7 @@ query assetCatalogueItems(
   $offset: Int
   $key: AssetCatalogueItemSortFieldInput!
   $desc: Boolean
-  $filter: ItemFilterInput
+  $filter: AssetCatalogueItemFilterInput
 ) {
   assetCatalogueItems(
     page: { first: $first, offset: $offset }
@@ -82,7 +82,7 @@ query assetCatalogueItemById($assetCatalogueItemId: String!) {
   }
 }
 
-query assetClasses($sort: AssetClassSortInput) {
+query assetClasses($sort: [AssetClassSortInput!]) {
   assetClasses(sort: $sort) {
     ... on AssetClassConnector {
       nodes {
@@ -94,7 +94,7 @@ query assetClasses($sort: AssetClassSortInput) {
   }
 }
 
-query assetTypes($sort: AssetTypeSortInput, $filter: AssetTypeFilterInput) {
+query assetTypes($sort: [AssetTypeSortInput!], $filter: AssetTypeFilterInput) {
   assetTypes(sort: $sort, filter: $filter) {
     ... on AssetTypeConnector {
       nodes {
@@ -108,7 +108,7 @@ query assetTypes($sort: AssetTypeSortInput, $filter: AssetTypeFilterInput) {
 }
 
 query assetCategories(
-  $sort: AssetCategorySortInput
+  $sort: [AssetCategorySortInput!]
   $filter: AssetCategoryFilterInput
 ) {
   assetCategories(sort: $sort, filter: $filter) {
@@ -137,7 +137,7 @@ query assetProperties($filter: AssetPropertyFilterInput) {
 
 query assetLogReasons(
   $filter: AssetLogReasonFilterInput
-  $sort: AssetLogReasonSortInput
+  $sort: [AssetLogReasonSortInput!]
   $storeId: String!
 ) {
   assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
