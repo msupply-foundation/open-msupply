@@ -427,11 +427,11 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             // requisitions
             Permissions::ViewRequisitions => {
                 output.insert(PermissionType::RequisitionQuery);
-                output.insert(PermissionType::RnRFormQuery);
+                output.insert(PermissionType::RnrFormQuery);
             }
             Permissions::CreateAndEditRequisitions => {
                 output.insert(PermissionType::RequisitionMutate);
-                output.insert(PermissionType::RnRFormMutate);
+                output.insert(PermissionType::RnrFormMutate);
             }
             Permissions::ConfirmInternalOrderSent => {
                 output.insert(PermissionType::RequisitionSend);

@@ -48,8 +48,8 @@ pub enum PermissionType {
     RequisitionMutate,
     RequisitionSend,
     // r&r form,
-    RnRFormQuery,
-    RnRFormMutate,
+    RnrFormQuery,
+    RnrFormMutate,
     // outbound shipment
     OutboundShipmentQuery,
     OutboundShipmentMutate,

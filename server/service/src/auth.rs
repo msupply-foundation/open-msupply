@@ -337,14 +337,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryRnRForms,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::RnRFormQuery),
+            PermissionDSL::HasPermission(PermissionType::RnrFormQuery),
         ]),
     );
     map.insert(
         Resource::MutateRnRForms,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::RnRFormMutate),
+            PermissionDSL::HasPermission(PermissionType::RnrFormMutate),
         ]),
     );
     // invoice
