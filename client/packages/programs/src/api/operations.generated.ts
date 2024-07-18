@@ -330,6 +330,17 @@ export type ProgramsQueryVariables = Types.Exact<{
 
 export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
 
+export type PeriodFragment = { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string };
+
+export type PeriodScheduleFragment = { __typename: 'PeriodScheduleNode', id: string, name: string, periods: Array<{ __typename: 'SchedulePeriodNode', id: string, inUse: boolean, period: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } }> };
+
+export type SchedulesAndPeriodsQueryVariables = Types.Exact<{
+  programId: Types.Scalars['String']['input'];
+}>;
+
+
+export type SchedulesAndPeriodsQuery = { __typename: 'Queries', schedulesWithPeriodsByProgram: { __typename: 'PeriodSchedulesConnector', nodes: Array<{ __typename: 'PeriodScheduleNode', id: string, name: string, periods: Array<{ __typename: 'SchedulePeriodNode', id: string, inUse: boolean, period: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } }> }> } };
+
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
   fields
@@ -623,6 +634,27 @@ export const ProgramFragmentDoc = gql`
   name
 }
     `;
+export const PeriodFragmentDoc = gql`
+    fragment Period on PeriodNode {
+  id
+  name
+  startDate
+  endDate
+}
+    `;
+export const PeriodScheduleFragmentDoc = gql`
+    fragment PeriodSchedule on PeriodScheduleNode {
+  id
+  name
+  periods {
+    id
+    inUse
+    period {
+      ...Period
+    }
+  }
+}
+    ${PeriodFragmentDoc}`;
 export const DocumentByNameDocument = gql`
     query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
@@ -1116,6 +1148,18 @@ export const ProgramsDocument = gql`
   }
 }
     ${ProgramFragmentDoc}`;
+export const SchedulesAndPeriodsDocument = gql`
+    query schedulesAndPeriods($programId: String!) {
+  schedulesWithPeriodsByProgram(programId: $programId) {
+    __typename
+    ... on PeriodSchedulesConnector {
+      nodes {
+        ...PeriodSchedule
+      }
+    }
+  }
+}
+    ${PeriodScheduleFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -1219,6 +1263,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
+    },
+    schedulesAndPeriods(variables: SchedulesAndPeriodsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SchedulesAndPeriodsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SchedulesAndPeriodsQuery>(SchedulesAndPeriodsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'schedulesAndPeriods', 'query', variables);
     }
   };
 }
