@@ -66,13 +66,14 @@ use service::programs::patient::patient_search_central;
 use types::program::ProgramFilterInput;
 use types::program::ProgramSortInput;
 use types::program::ProgramsResponse;
-use types::r_and_r_form::PeriodSchedulesResponse;
 use types::r_and_r_form::{RnRFormFilterInput, RnRFormSortInput, RnRFormsResponse};
 
 mod mutations;
 
 mod queries;
 pub mod types;
+use crate::types::period_schedule::PeriodSchedulesResponse;
+
 use self::queries::*;
 
 #[derive(Default, Clone)]
