@@ -48,12 +48,15 @@ pub trait RnRFormServiceTrait: Sync + Send {
 
         let settings = settings_repo.find_many_by_program_id(program_id)?;
 
-        let period_schedule_ids = settings
+        let mut period_schedule_ids = settings
             .iter()
             .map(|s| s.period_schedule_id.clone())
             .collect::<Vec<String>>();
 
-        // TODO: no period schedules for program
+        // There can be duplicates in the program settings due to name tags
+        // which we don't care about here, so we dedup here
+        period_schedule_ids.sort_unstable();
+        period_schedule_ids.dedup();
 
         let schedules = period_schedule_ids
             .into_iter()
@@ -69,7 +72,7 @@ pub trait RnRFormServiceTrait: Sync + Send {
                     Some(period_filter),
                     Some(PeriodSort {
                         key: PeriodSortField::EndDate,
-                        desc: None,
+                        desc: Some(true),
                     }),
                 )?;
 
