@@ -8,8 +8,8 @@ import { SvgIconProps } from '.';
 import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
 import { ArrowRightIcon } from './ArrowRight';
-import { BarChart2Icon } from './BarChart2';
 import { BarChartIcon } from './BarChart';
+import { BarIcon } from './Bar';
 import { BookIcon } from './Book';
 import { CartIcon } from './Cart';
 import { CentralIcon } from './Central';
@@ -72,6 +72,8 @@ import { SuppliersIcon } from './Suppliers';
 import { ThermometerIcon } from './Thermometer';
 import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
+import { TrendingDownIcon } from './TrendingDown';
+import { BarChart2Icon } from './BarChart2';
 import { TruckIcon } from './Truck';
 import { UploadIcon } from './Upload';
 import { UserCircleIcon } from './UserCircle';
@@ -103,6 +105,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <AlertIcon {...args} />, name: 'Alert' },
     { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
     { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
+    { icon: <BarIcon {...args} />, name: 'Bar' },
     { icon: <BarChartIcon {...args} />, name: 'BarChart' },
     { icon: <BarChart2Icon {...args} />, name: 'BarChart2Icon' },
     { icon: <BookIcon {...args} />, name: 'Book' },
@@ -174,6 +177,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
+    { icon: <TrendingDownIcon {...args} />, name: 'TrendingDown' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UploadIcon {...args} />, name: 'Upload' },
     { icon: <UserCircleIcon {...args} />, name: 'UserCircle' },
