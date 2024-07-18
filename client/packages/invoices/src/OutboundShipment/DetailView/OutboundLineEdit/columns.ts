@@ -11,7 +11,6 @@ import {
   useCurrencyCell,
   Currencies,
   CurrencyCell,
-  NumUtils,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
@@ -133,8 +132,7 @@ export const useOutboundLineEditColumns = ({
       {
         label: 'label.unit-quantity-issued',
         labelProps: { unit },
-        accessor: ({ rowData }) =>
-          NumUtils.floatMultiply(rowData.numberOfPacks, rowData.packSize),
+        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
         width: 90,
       },
     ],
@@ -198,8 +196,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
     [
       'unitQuantity',
       {
-        accessor: ({ rowData }) =>
-          NumUtils.floatMultiply(rowData.packSize, rowData.numberOfPacks),
+        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
       },
     ],
     [

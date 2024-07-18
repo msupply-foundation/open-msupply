@@ -90,27 +90,21 @@ export const ResponseRequisitionListView: FC = () => {
     },
     {
       key: 'programName',
-      accessor: ({ rowData }) => {
-        return rowData.programName;
-      },
+      accessor: ({ rowData }) => rowData.programName,
       label: 'label.program',
       description: 'description.program',
       sortable: true,
     },
     {
       key: 'orderType',
-      accessor: ({ rowData }) => {
-        return rowData.orderType;
-      },
+      accessor: ({ rowData }) => rowData.orderType,
       label: 'label.order-type',
       sortable: true,
     },
 
     {
       key: 'period',
-      accessor: ({ rowData }) => {
-        return rowData.period?.name ?? '';
-      },
+      accessor: ({ rowData }) => rowData.period?.name ?? '',
       label: 'label.period',
       sortable: true,
     },

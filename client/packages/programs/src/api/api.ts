@@ -94,7 +94,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
   }> => {
     const result = await sdk.encounters({
       storeId,
-      key: sortBy?.key as EncounterSortFieldInput | undefined,
+      key: sortBy?.key as EncounterSortFieldInput,
       desc: sortBy?.isDesc,
       filter: filterBy,
       page: pagination,
