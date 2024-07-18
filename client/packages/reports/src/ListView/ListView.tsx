@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   BarIcon,
   Grid,
+  ReportContext,
   TrendingDownIcon,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -12,7 +13,15 @@ import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
 
 export const ListView = () => {
   const t = useTranslation('reports');
-  const { data } = useReportList({});
+  const { data } = useReportList({
+    queryParams: {
+      filterBy: {
+        context: { equalAny: [ReportContext.Report, ReportContext.Dispensary] },
+      },
+      sortBy: { key: 'name', direction: 'asc' },
+      offset: 0,
+    },
+  });
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
