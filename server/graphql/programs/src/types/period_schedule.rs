@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use graphql_types::types::PeriodNode;
 use repository::{Period, PeriodScheduleRow};
-use service::rnr_form::X;
+use service::rnr_form::schedules_with_periods::PeriodSchedule;
 
 #[derive(SimpleObject)]
 pub struct PeriodSchedulesConnector {
@@ -11,13 +11,13 @@ pub struct PeriodSchedulesConnector {
 }
 
 impl PeriodSchedulesConnector {
-    pub fn from_domain(schedules: Vec<X>) -> PeriodSchedulesConnector {
+    pub fn from_domain(schedules: Vec<PeriodSchedule>) -> PeriodSchedulesConnector {
         PeriodSchedulesConnector {
             total_count: 0, // TODO
             nodes: schedules
                 .into_iter()
                 .map(
-                    |X {
+                    |PeriodSchedule {
                          schedule_row,
                          periods,
                      }| PeriodScheduleNode {
