@@ -5,7 +5,6 @@ import {
 } from '@openmsupply-client/common';
 import { getSdk } from './operations.generated';
 
-// TODO: generic useGraphql with all except stock API
 export const useReportGraphQL = () => {
   const { client } = useGql();
   const queryClient = useQueryClient();

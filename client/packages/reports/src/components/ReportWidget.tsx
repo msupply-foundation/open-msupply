@@ -1,5 +1,4 @@
 import React, { PropsWithChildren, useCallback } from 'react';
-import { Card, Grid, Typography } from '@mui/material';
 import { ChevronDownIcon, SvgIconProps } from '@common/icons';
 import {
   ReportRowFragment,
@@ -11,6 +10,9 @@ import {
   Link,
   RouteBuilder,
   useNavigate,
+  Card,
+  Grid,
+  Typography,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { JsonData } from '@openmsupply-client/programs';
@@ -53,13 +55,13 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
   return (
     <Card
       sx={{
-        borderRadius: '16px',
+        borderRadius: 4,
         height,
         maxWidth,
-        padding: '24px',
+        padding: 3,
         display: 'flex',
         flexDirection: 'column',
-        margin: '11px',
+        margin: 1.375,
         flex: 1,
         boxShadow: theme => theme.shadows[2],
       }}
