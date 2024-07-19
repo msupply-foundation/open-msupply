@@ -23,17 +23,17 @@ export type ReportsQueryVariables = Types.Exact<{
 
 export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
 
-export type PrintReportQueryVariables = Types.Exact<{
+export type GenerateReportQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   reportId: Types.Scalars['String']['input'];
   dataId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   arguments?: Types.InputMaybe<Types.Scalars['JSON']['input']>;
-  format?: Types.InputMaybe<Types.PrintFormat>;
-  sort?: Types.InputMaybe<Types.PrintReportSortInput>;
+  format?: Types.InputMaybe<Types.GenerateFormat>;
+  sort?: Types.InputMaybe<Types.GenerateReportSortInput>;
 }>;
 
 
-export type PrintReportQuery = { __typename: 'Queries', printReport: { __typename: 'PrintReportError', error: { __typename: 'FailedToFetchReportData', description: string, errors: any } } | { __typename: 'PrintReportNode', fileId: string } };
+export type GenerateReportQuery = { __typename: 'Queries', generateReport: { __typename: 'GenerateReportError', error: { __typename: 'FailedToFetchReportData', description: string, errors: any } } | { __typename: 'GenerateReportNode', fileId: string } };
 
 export const ReportRowFragmentDoc = gql`
     fragment ReportRow on ReportNode {
@@ -69,9 +69,9 @@ export const ReportsDocument = gql`
   }
 }
     ${ReportRowFragmentDoc}`;
-export const PrintReportDocument = gql`
-    query printReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: PrintFormat, $sort: PrintReportSortInput) {
-  printReport(
+export const GenerateReportDocument = gql`
+    query generateReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: GenerateFormat, $sort: GenerateReportSortInput) {
+  generateReport(
     dataId: $dataId
     reportId: $reportId
     storeId: $storeId
@@ -79,11 +79,11 @@ export const PrintReportDocument = gql`
     arguments: $arguments
     sort: $sort
   ) {
-    ... on PrintReportNode {
+    ... on GenerateReportNode {
       __typename
       fileId
     }
-    ... on PrintReportError {
+    ... on GenerateReportError {
       __typename
       error {
         ... on FailedToFetchReportData {
@@ -111,8 +111,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     reports(variables: ReportsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ReportsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReportsQuery>(ReportsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'reports', 'query', variables);
     },
-    printReport(variables: PrintReportQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrintReportQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PrintReportQuery>(PrintReportDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'printReport', 'query', variables);
+    generateReport(variables: GenerateReportQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateReportQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateReportQuery>(GenerateReportDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateReport', 'query', variables);
     }
   };
 }

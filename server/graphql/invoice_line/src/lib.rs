@@ -2,7 +2,7 @@ pub mod invoice_line_queries;
 pub mod mutations;
 use self::mutations::{inbound_shipment_line, outbound_shipment_line, prescription_line};
 use async_graphql::*;
-use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use graphql_core::{generic_inputs::GenerateReportSortInput, pagination::PaginationInput};
 use invoice_line_queries::{
     invoice_lines, InvoiceLineFilterInput, InvoiceLineSortInput, InvoiceLinesResponse,
 };
@@ -20,7 +20,7 @@ impl InvoiceLineQueries {
         page: Option<PaginationInput>,
         filter: Option<InvoiceLineFilterInput>,
         sort: Option<Vec<InvoiceLineSortInput>>,
-        report_sort: Option<PrintReportSortInput>,
+        report_sort: Option<GenerateReportSortInput>,
     ) -> Result<InvoiceLinesResponse> {
         invoice_lines(ctx, &store_id, &invoice_id, page, filter, sort, report_sort)
     }

@@ -18,7 +18,7 @@ pub fn get_default_gql_query(query: DefaultQuery) -> GraphQlQuery {
 }
 
 const INVOICE_QUERY: &str = r#"
-query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInput) {
+query InvoiceQuery($storeId: String, $dataId: String, $sort: GenerateReportSortInput) {
   invoice(storeId: $storeId, id: $dataId) {
     ... on InvoiceNode {
       id
@@ -148,7 +148,7 @@ query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInpu
 }
 "#;
 
-const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String, $sort: PrintReportSortInput) {
+const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String, $sort: GenerateReportSortInput) {
   stocktake(storeId: $storeId, id: $dataId) {
     ... on NodeError {
       __typename

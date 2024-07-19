@@ -234,10 +234,10 @@ mod permission_tests {
                 },
             },
             TestData {
-                name: "printReport",
+                name: "generateReport",
                 query: r#"query Query {
-                printReport(dataId: "", reportId: "", storeId: "") {
-                  ... on PrintReportNode {
+                generateReport(dataId: "", reportId: "", storeId: "") {
+                  ... on GenerateReportNode {
                     __typename
                     fileId
                   }

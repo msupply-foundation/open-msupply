@@ -21,7 +21,7 @@ pub struct GraphQlQuery {
 
 /// This struct is used to sort report data by a key and in descending or ascending order
 #[derive(Clone)]
-pub struct PrintReportSort {
+pub struct GenerateReportSort {
     /// Key to sort by
     pub key: String,
     /// Whether to sort in descending order
