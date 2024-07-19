@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
-use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
+use graphql_core::generic_inputs::{report_sort_to_typed_sort, GenerateReportSortInput};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::{
     list_error_to_gql_err, validate_auth, StandardGraphqlError,
@@ -88,7 +88,7 @@ pub fn stocktake_lines(
     page: Option<PaginationInput>,
     filter: Option<StocktakeLineFilterInput>,
     sort: Option<Vec<StocktakeLineSortInput>>,
-    report_sort: Option<PrintReportSortInput>,
+    report_sort: Option<GenerateReportSortInput>,
 ) -> Result<StocktakesLinesResponse> {
     let user = validate_auth(
         ctx,
@@ -146,7 +146,7 @@ mod test {
     use async_graphql::*;
     use chrono::NaiveDate;
     use graphql_core::assert_graphql_query;
-    use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
+    use graphql_core::generic_inputs::{report_sort_to_typed_sort, GenerateReportSortInput};
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::{mock_item_a, mock_stocktake_line_a};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
@@ -209,21 +209,21 @@ mod test {
         }
 
         assert_eq!(
-            report_sort_to_typed_sort::<SortField>(Some(PrintReportSortInput {
+            report_sort_to_typed_sort::<SortField>(Some(GenerateReportSortInput {
                 key: "batch".to_string(),
                 desc: Some(false)
             })),
             None
         );
         assert_eq!(
-            report_sort_to_typed_sort::<SortField>(Some(PrintReportSortInput {
+            report_sort_to_typed_sort::<SortField>(Some(GenerateReportSortInput {
                 key: "ItemCode".to_string(),
                 desc: Some(true)
             })),
             Some((SortField::ItemCode, Some(true)))
         );
         assert_eq!(
-            report_sort_to_typed_sort::<SortField>(Some(PrintReportSortInput {
+            report_sort_to_typed_sort::<SortField>(Some(GenerateReportSortInput {
                 key: "ItemName".to_string(),
                 desc: None
             })),

@@ -22,13 +22,13 @@ query AuthToken($username: String!, $password: String) {
 "#;
 
 const PRINT_QUERY: &str = r#"
-query PrintReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON) {
-  printReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments) {
-    ... on PrintReportNode {
+query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON) {
+  generateReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments) {
+    ... on GenerateReportNode {
       __typename
       fileId
     }
-    ... on PrintReportError {
+    ... on GenerateReportError {
       __typename
       error {
         description
@@ -80,7 +80,7 @@ fn token_request(url: Url, config: &Config) -> anyhow::Result<String> {
     Ok(auth_token["token"].as_str().unwrap().to_string())
 }
 
-fn print_request(
+fn generate_request(
     url: Url,
     token: &str,
     store_id: &str,
@@ -106,10 +106,10 @@ fn print_request(
         .send()?;
     let status = response.status();
     let gql_result: GraphQlResponse = response.json()?;
-    let result = &gql_result.data["printReportDefinition"];
-    if result["__typename"] != "PrintReportNode" {
+    let result = &gql_result.data["generateReportDefinition"];
+    if result["__typename"] != "GenerateReportNode" {
         return Err(anyhow::Error::msg(format!(
-            "Failed to print report: status={:?}  {:#?}",
+            "Failed to generate report: status={:?}  {:#?}",
             status, gql_result
         )));
     }
@@ -162,7 +162,7 @@ fn fetch_file(
     Ok(output_filename)
 }
 
-pub fn print_report(
+pub fn generate_report(
     config_path: String,
     store_id: String,
     output_filename: Option<String>,
@@ -207,13 +207,13 @@ pub fn print_report(
         ))
     })?;
 
-    println!("> Send report print request ");
+    println!("> Send report generate request ");
     let file_name = output_filename.as_ref().and_then(|p| {
         Path::new(&p)
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
     });
-    let file_id = print_request(
+    let file_id = generate_request(
         gql_url.clone(),
         &token,
         &store_id,

@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{EqualFilterBigFloatingNumberInput, EqualFilterStringInput},
-    generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput},
+    generic_inputs::{report_sort_to_typed_sort, GenerateReportSortInput},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{list_error_to_gql_err, validate_auth, StandardGraphqlError},
@@ -148,7 +148,7 @@ pub fn invoice_lines(
     page: Option<PaginationInput>,
     filter: Option<InvoiceLineFilterInput>,
     sort: Option<Vec<InvoiceLineSortInput>>,
-    report_sort: Option<PrintReportSortInput>,
+    report_sort: Option<GenerateReportSortInput>,
 ) -> Result<InvoiceLinesResponse> {
     let user = validate_auth(
         ctx,

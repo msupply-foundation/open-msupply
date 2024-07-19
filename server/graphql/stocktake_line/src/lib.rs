@@ -1,7 +1,7 @@
 pub mod mutations;
 pub mod stocktake_line_queries;
 use async_graphql::*;
-use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use graphql_core::{generic_inputs::GenerateReportSortInput, pagination::PaginationInput};
 use mutations::{delete::*, insert::*, update::*};
 use stocktake_line_queries::{
     stocktake_lines, StocktakeLineFilterInput, StocktakeLineSortInput, StocktakesLinesResponse,
@@ -20,7 +20,7 @@ impl StocktakeLineQueries {
         page: Option<PaginationInput>,
         filter: Option<StocktakeLineFilterInput>,
         sort: Option<Vec<StocktakeLineSortInput>>,
-        report_sort: Option<PrintReportSortInput>,
+        report_sort: Option<GenerateReportSortInput>,
     ) -> Result<StocktakesLinesResponse> {
         stocktake_lines(
             ctx,

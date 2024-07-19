@@ -1,8 +1,8 @@
 import {
   EnvUtils,
   Platform,
-  PrintFormat,
-  PrintReportSortInput,
+  GenerateFormat,
+  GenerateReportSortInput,
   useMutation,
   useNotification,
 } from '@openmsupply-client/common';
@@ -11,11 +11,11 @@ import { Printer } from '@bcyesil/capacitor-plugin-printer';
 import { JsonData } from '@openmsupply-client/programs';
 import { useReportGraphQL } from '../useReportGraphQL';
 
-export type PrintReportParams = {
+export type GenerateReportParams = {
   reportId: string;
   dataId?: string;
   args?: JsonData;
-  sort?: PrintReportSortInput;
+  sort?: GenerateReportSortInput;
 };
 
 const setClose = (frame: HTMLIFrameElement) => () => {
@@ -63,30 +63,30 @@ export const usePrintReport = () => {
   const { reportApi, storeId } = useReportGraphQL();
   const { error } = useNotification();
 
-  const mutationFn = async (params: PrintReportParams) => {
+  const mutationFn = async (params: GenerateReportParams) => {
     const { dataId, reportId, args, sort } = params;
 
-    const result = await reportApi.printReport({
+    const result = await reportApi.generateReport({
       dataId,
       reportId,
       storeId,
-      format: EnvUtils.printFormat,
+      format: EnvUtils.generateFormat,
       arguments: args,
       sort,
     });
-    if (result?.printReport?.__typename === 'PrintReportNode') {
-      return result.printReport.fileId;
+    if (result?.generateReport?.__typename === 'GenerateReportNode') {
+      return result.generateReport.fileId;
     }
 
-    throw new Error('Unable to print report');
+    throw new Error('Unable to generate report');
   };
 
   const { mutate, isLoading } = useMutation({
     mutationFn,
     onSuccess: fileId => {
-      if (!fileId) throw new Error('Error printing report');
+      if (!fileId) throw new Error('Error generating report');
       const url = `${Environment.FILE_URL}${fileId}`;
-      if (EnvUtils.printFormat === PrintFormat.Html) {
+      if (EnvUtils.generateFormat === GenerateFormat.Html) {
         printPage(url);
       } else {
         const win = window.open(url, '_blank');

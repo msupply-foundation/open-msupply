@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::{NaiveDate, NaiveDateTime};
-use service::report::definition::PrintReportSort;
+use service::report::definition::GenerateReportSort;
 
 #[derive(InputObject, Clone)]
 pub struct TaxInput {
@@ -27,7 +27,7 @@ pub struct NullableUpdateInput<T: InputType> {
 
 /// This struct is used to sort report data by a key and in descending or ascending order
 #[derive(InputObject)]
-pub struct PrintReportSortInput {
+pub struct GenerateReportSortInput {
     /// Sort query result by `key`
     pub key: String,
     /// Sort query result is sorted descending or ascending (if not provided the default is
@@ -35,10 +35,10 @@ pub struct PrintReportSortInput {
     pub desc: Option<bool>,
 }
 
-impl PrintReportSortInput {
-    /// Convert the input object `PrintReportSortInput` to a domain object `PrintReportSort`
-    pub fn to_domain(self) -> PrintReportSort {
-        PrintReportSort {
+impl GenerateReportSortInput {
+    /// Convert the input object `GenerateReportSortInput` to a domain object `GenerateReportSort`
+    pub fn to_domain(self) -> GenerateReportSort {
+        GenerateReportSort {
             key: self.key,
             desc: self.desc,
         }
@@ -46,11 +46,11 @@ impl PrintReportSortInput {
 }
 
 pub fn report_sort_to_typed_sort<T: strum::IntoEnumIterator + serde::Serialize>(
-    sort: Option<PrintReportSortInput>,
+    sort: Option<GenerateReportSortInput>,
 ) -> Option<(T, Option<bool>)> {
     match sort {
         None => None,
-        Some(PrintReportSortInput { key, desc }) => T::iter()
+        Some(GenerateReportSortInput { key, desc }) => T::iter()
             .find(|variant| {
                 serde_json::to_string(variant)
                     .unwrap_or_default()

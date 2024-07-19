@@ -1,5 +1,5 @@
 pub mod build;
-pub mod print;
+pub mod generate;
 
 use clap::{Parser, Subcommand};
 
