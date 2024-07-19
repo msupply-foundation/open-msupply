@@ -1,246 +1,70 @@
 #[cfg(test)]
 mod query {
-    use chrono::NaiveDate;
-    use repository::{
-        mock::MockDataInserts, test_db::setup_all, StockLineFilter, StockLineSortField,
+    use repository::mock::{
+        mock_name_tag_1, mock_name_tag_2, mock_period_2_a, mock_period_2_b, mock_period_schedule_2,
+        mock_store_a, MockData,
     };
-    use repository::{EqualFilter, PaginationOption, Sort};
-    use std::cmp::Ordering;
+    use repository::mock::{mock_program_b, MockDataInserts};
+    use repository::test_db::setup_all_with_data;
+    use repository::{ProgramRequisitionSettingsRow, RnRFormRow};
 
-    use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
+    use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
-    async fn get_schedules_with_next_periods_by_program_success() {
-        let (_, _, connection_manager, _) = setup_all(
-            "get_schedules_with_next_periods_by_program_success",
+    async fn get_schedules_with_next_periods_by_program() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "get_schedules_with_next_periods_by_program",
             MockDataInserts::all(),
+            MockData {
+                program_requisition_settings: vec![
+                    // simulate duplicate program/period_schedule to dedup
+                    ProgramRequisitionSettingsRow {
+                        id: "setting_A".to_string(),
+                        name_tag_id: mock_name_tag_1().id,
+                        program_id: mock_program_b().id,
+                        period_schedule_id: mock_period_schedule_2().id,
+                    },
+                    ProgramRequisitionSettingsRow {
+                        id: "setting_B".to_string(),
+                        // only unique by name_tag
+                        name_tag_id: mock_name_tag_2().id,
+                        program_id: mock_program_b().id,
+                        period_schedule_id: mock_period_schedule_2().id,
+                    },
+                ],
+                rnr_forms: vec![RnRFormRow {
+                    id: "rnr_form_1".to_string(),
+                    store_id: mock_store_a().id,
+                    name_link_id: String::from("name_store_b"),
+                    period_id: mock_period_2_a().id,
+                    program_id: mock_program_b().id,
+                    ..Default::default()
+                }],
+                ..MockData::default()
+            },
         )
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
-        let service = service_provider.stock_line_service;
-
-        assert_eq!(
-            service.get_stock_lines(
-                &context,
-                Some(PaginationOption {
-                    limit: Some(2000),
-                    offset: None
-                }),
-                None,
-                None,
-                None,
-            ),
-            Err(ListError::LimitAboveMax(1000))
-        );
-
-        assert_eq!(
-            service.get_stock_lines(
-                &context,
-                Some(PaginationOption {
-                    limit: Some(0),
-                    offset: None,
-                }),
-                None,
-                None,
-                None,
-            ),
-            Err(ListError::LimitBelowMin(1))
-        );
-    }
-
-    #[actix_rt::test]
-    async fn stock_line_service_single_record() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_stock_line_single_record", MockDataInserts::all()).await;
-
-        let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        let context = service_provider.basic_context().unwrap();
-        let service = service_provider.stock_line_service;
-
-        assert_eq!(
-            service.get_stock_line(&context, "invalid_id".to_owned()),
-            Err(SingleRecordError::NotFound("invalid_id".to_owned()))
-        );
+        let service = service_provider.rnr_form_service;
 
         let result = service
-            .get_stock_line(&context, "stock_line_on_hold".to_owned())
+            .get_schedules_with_periods_by_program(&context, &mock_program_b().id)
             .unwrap();
 
-        assert_eq!(result.stock_line_row.id, "stock_line_on_hold");
-        assert_eq!(result.stock_line_row.on_hold, true);
-    }
+        // dedupes
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].schedule_row.id, mock_period_schedule_2().id);
 
-    #[actix_rt::test]
-    async fn stock_line_service_filter() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_stock_line_filter", MockDataInserts::all()).await;
+        let periods = &result[0].periods;
+        assert_eq!(periods.len(), 2);
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.basic_context().unwrap();
-        let service = service_provider.stock_line_service;
+        // sorted in descending order, so period_2_b (FEB, newer) should be first
+        assert_eq!(periods[0].period_row.id, mock_period_2_b().id);
 
-        let result = service
-            .get_stock_lines(
-                &context,
-                None,
-                Some(StockLineFilter::new().id(EqualFilter::equal_to("item_a_line_a"))),
-                None,
-                None,
-            )
-            .unwrap();
-
-        assert_eq!(result.count, 1);
-        assert_eq!(result.rows[0].stock_line_row.id, "item_a_line_a");
-
-        let result = service
-            .get_stock_lines(
-                &context,
-                None,
-                Some(StockLineFilter::new().id(EqualFilter::equal_any(vec![
-                    "item_a_line_a".to_owned(),
-                    "item_a_line_b".to_owned(),
-                ]))),
-                None,
-                None,
-            )
-            .unwrap();
-
-        assert_eq!(result.count, 2);
-        assert_eq!(result.rows[0].stock_line_row.id, "item_a_line_a");
-        assert_eq!(result.rows[1].stock_line_row.id, "item_a_line_b");
-    }
-
-    fn order_dates_with_nulls_last(a: &Option<NaiveDate>, b: &Option<NaiveDate>) -> Ordering {
-        match (a, b) {
-            (Some(a), Some(b)) => a.cmp(b),
-            (Some(_), None) => Ordering::Less,
-            (None, Some(_)) => Ordering::Greater,
-            (None, None) => Ordering::Equal,
-        }
-    }
-    fn order_dates_with_nulls_first(a: &Option<NaiveDate>, b: &Option<NaiveDate>) -> Ordering {
-        match (a, b) {
-            (Some(a), Some(b)) => b.cmp(a),
-            (Some(_), None) => Ordering::Greater,
-            (None, Some(_)) => Ordering::Less,
-            (None, None) => Ordering::Equal,
-        }
-    }
-
-    #[actix_rt::test]
-    async fn stock_line_service_sort() {
-        let (mock_data, _, connection_manager, _) =
-            setup_all("test_stock_line_sort", MockDataInserts::all()).await;
-
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.basic_context().unwrap();
-        let service = service_provider.stock_line_service;
-        let mut stock_lines = mock_data["base"].stock_lines.clone();
-        let filter = Some(StockLineFilter {
-            id: Some(EqualFilter::equal_any(
-                stock_lines
-                    .clone()
-                    .into_iter()
-                    .map(|stock_line| stock_line.id)
-                    .collect(),
-            )),
-            item_id: None,
-            location_id: None,
-            is_available: None,
-            expiry_date: None,
-            store_id: None,
-            item_code_or_name: None,
-            has_packs_in_store: None,
-            location: None,
-        });
-
-        // Test ExpiryDate sort with default sort order
-        let result = service
-            .get_stock_lines(
-                &context,
-                None,
-                filter,
-                Some(Sort {
-                    key: StockLineSortField::ExpiryDate,
-                    desc: None,
-                }),
-                None,
-            )
-            .unwrap();
-
-        stock_lines.sort_by(|a, b| order_dates_with_nulls_last(&a.expiry_date, &b.expiry_date));
-
-        let result_expiry_dates: Vec<String> = result
-            .rows
-            .into_iter()
-            .map(|stock_line| match stock_line.stock_line_row.expiry_date {
-                Some(date) => date.format("%Y-%m-%d").to_string(),
-                None => "".to_string(),
-            })
-            .collect();
-        let sorted_expiry_dates: Vec<String> = stock_lines
-            .into_iter()
-            .map(|stock_line| match stock_line.expiry_date {
-                Some(date) => date.format("%Y-%m-%d").to_string(),
-                None => "".to_string(),
-            })
-            .collect();
-
-        assert_eq!(result_expiry_dates, sorted_expiry_dates);
-
-        let mut stock_lines = mock_data["base"].stock_lines.clone();
-        let filter = Some(StockLineFilter {
-            id: Some(EqualFilter::equal_any(
-                stock_lines
-                    .clone()
-                    .into_iter()
-                    .map(|stock_line| stock_line.id)
-                    .collect(),
-            )),
-            item_id: None,
-            location_id: None,
-            is_available: None,
-            expiry_date: None,
-            store_id: None,
-            item_code_or_name: None,
-            has_packs_in_store: None,
-            location: None,
-        });
-
-        // Test ExpiryDate sort with desc sort order
-        let result = service
-            .get_stock_lines(
-                &context,
-                None,
-                filter,
-                Some(Sort {
-                    key: StockLineSortField::ExpiryDate,
-                    desc: Some(true),
-                }),
-                None,
-            )
-            .unwrap();
-
-        stock_lines.sort_by(|a, b| order_dates_with_nulls_first(&a.expiry_date, &b.expiry_date));
-
-        let result_expiry_dates: Vec<String> = result
-            .rows
-            .into_iter()
-            .map(|stock_line| match stock_line.stock_line_row.expiry_date {
-                Some(date) => date.format("%Y-%m-%d").to_string(),
-                None => "".to_string(),
-            })
-            .collect();
-        let sorted_expiry_dates: Vec<String> = stock_lines
-            .into_iter()
-            .map(|stock_line| match stock_line.expiry_date {
-                Some(date) => date.format("%Y-%m-%d").to_string(),
-                None => "".to_string(),
-            })
-            .collect();
-
-        assert_eq!(result_expiry_dates, sorted_expiry_dates);
+        assert!(periods[0].rnr_form_row.is_none());
+        // rnr_form_row found for correct period (period_2_a, JAN)
+        assert!(periods[1].rnr_form_row.is_some());
     }
 }
