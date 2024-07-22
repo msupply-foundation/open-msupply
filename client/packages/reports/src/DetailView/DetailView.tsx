@@ -1,51 +1,90 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   BasicSpinner,
   NothingHere,
   useBreadcrumbs,
   useParams,
-  useUrlQueryParams,
+  useUrlQuery,
 } from '@openmsupply-client/common';
-import { useGenerateReport, useReport } from '@openmsupply-client/system';
+import {
+  ReportArgumentsModal,
+  ReportRowFragment,
+  useGenerateReport,
+  useReport,
+} from '@openmsupply-client/system';
 import { Environment } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButton';
+import { JsonData } from 'packages/programs/src';
 
 export const DetailView = () => {
   const { id } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const { data } = useReport(id ?? '');
+  const { data: report } = useReport(id ?? '');
   const { mutateAsync, isLoading } = useGenerateReport();
   const [fileId, setFileId] = useState<string | undefined>();
-  const { urlQuery } = useUrlQueryParams();
+  const {
+    updateQuery,
+    urlQuery: { reportArgs: reportArgsJson },
+  } = useUrlQuery({ skipParse: ['reportArgs'] });
+
+  // When reportWithArgs is undefined, args modal is closed
+  const [reportWithArgs, setReportWithArgs] = useState<
+    ReportRowFragment | undefined
+  >();
+
+  // Report should be loaded if id is available
+  const isReportDescriptionLoading = !report?.id;
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 0: data?.name ?? '' });
-  }, [data?.name]);
+    if (isReportDescriptionLoading) return;
 
-  const report = async () => {
-    if (!data) return;
+    setCustomBreadcrumbs({ 0: report.name ?? '' });
 
-    const reportArgs = urlQuery['reportArgs']
-      ? JSON.parse(urlQuery['reportArgs'].toString())
-      : undefined;
-
-    const fileId = await mutateAsync({
-      reportId: data.id,
-      args: reportArgs,
-      dataId: '',
-    });
-    setFileId(fileId);
-  };
-
-  useEffect(() => {
-    if (id) {
-      report();
+    // Initial report generation
+    if (!report.argumentSchema) {
+      generateReport(report, {});
+      return;
     }
-  }, [id]);
+
+    let reportArgs =
+      (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
+
+    if (!!reportArgs) {
+      generateReport(report, reportArgs, false);
+      return;
+    }
+
+    // No urlQuery parameters exist, open modal
+    openReportArgumentsModal();
+  }, [isReportDescriptionLoading]);
+
+  const generateReport = useCallback(
+    async (
+      report: ReportRowFragment,
+      args: JsonData,
+      shouldUpdateQuery = true
+    ) => {
+      if (shouldUpdateQuery) {
+        updateQuery({ reportArgs: JSON.stringify(args) });
+      }
+      const fileId = await mutateAsync({
+        reportId: report.id,
+        args,
+        dataId: '',
+      });
+      setFileId(fileId);
+    },
+    []
+  );
+
+  const openReportArgumentsModal = useCallback(() => {
+    if (isReportDescriptionLoading) return;
+    setReportWithArgs(report);
+  }, []);
 
   const url = `${Environment.FILE_URL}${fileId}`;
 
-  if (!data) {
+  if (isReportDescriptionLoading) {
     return <NothingHere />;
   }
 
@@ -56,15 +95,18 @@ export const DetailView = () => {
         <>
           <iframe src={url} width="100%" />
           <AppBarButtons
-            report={data}
-            isDisabled={!!data.argumentSchema}
-            mutateAsync={mutateAsync}
-            setFileId={setFileId}
+            isDisabled={!report.argumentSchema}
+            onFilterOpen={openReportArgumentsModal}
           />
         </>
       ) : (
         <NothingHere />
       )}
+      <ReportArgumentsModal
+        report={reportWithArgs}
+        onReset={() => setReportWithArgs(undefined)}
+        onArgumentsSelected={generateReport}
+      />
     </>
   );
 };
