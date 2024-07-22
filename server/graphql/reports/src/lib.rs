@@ -4,6 +4,7 @@ use graphql_core::{generic_inputs::GenerateReportSortInput, pagination::Paginati
 use reports::{
     report, reports, ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse,
 };
+use service::report::report_service::GenerateFormat as ServiceGenerateFormat;
 
 mod generate;
 mod reports;
@@ -59,24 +60,7 @@ impl ReportQueries {
         format: Option<GenerateFormat>,
         sort: Option<GenerateReportSortInput>,
     ) -> Result<GenerateReportResponse> {
-        let report_format = match format {
-            Some(GenerateFormat::Html) => {
-                Some(service::report::report_service::GenerateFormat::Html)
-            }
-            Some(GenerateFormat::Pdf) | None => {
-                Some(service::report::report_service::GenerateFormat::Pdf)
-            }
-        };
-        generate_report(
-            ctx,
-            store_id,
-            report_id,
-            data_id,
-            arguments,
-            report_format,
-            sort,
-        )
-        .await
+        generate_report(ctx, store_id, report_id, data_id, arguments, format, sort).await
     }
 
     /// Can be used when developing reports, e.g. to generate a report that is not already in the
@@ -89,7 +73,17 @@ impl ReportQueries {
         #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
+        format: Option<GenerateFormat>,
     ) -> Result<GenerateReportResponse> {
-        generate_report_definition(ctx, store_id, name, report, data_id, arguments).await
+        generate_report_definition(ctx, store_id, name, report, data_id, arguments, format).await
+    }
+}
+
+impl GenerateFormat {
+    fn to_domain(self) -> ServiceGenerateFormat {
+        match self {
+            GenerateFormat::Pdf => ServiceGenerateFormat::Pdf,
+            GenerateFormat::Html => ServiceGenerateFormat::Html,
+        }
     }
 }
