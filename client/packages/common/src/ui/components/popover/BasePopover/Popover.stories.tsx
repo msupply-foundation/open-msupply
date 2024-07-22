@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import Box from '@mui/material/Box';
 import { BasePopover } from '../BasePopover';
 import { BaseButton } from '../../buttons';
@@ -12,7 +12,7 @@ export default {
   component: BasePopover,
 };
 
-const Example: Story = () => {
+const Example: StoryFn = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<VirtualElement | null>(null);
 

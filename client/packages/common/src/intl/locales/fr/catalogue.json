@@ -64,5 +64,6 @@
   "messages.error-deleting-reasons_few": "{{count}} raisons n'ont pas pu être supprimées",
   "messages.error-deleting-reasons_many": "{{count}} raisons n'ont pas pu être supprimées",
   "messages.error-deleting-reasons_other": "{{count}} raisons n'ont pas pu être supprimées",
-  "messages.confirm-delete-reasons_many": "Cela supprimera définitivement {{count}} raisons"
+  "messages.confirm-delete-reasons_many": "Cela supprimera définitivement {{count}} raisons",
+  "heading.schedule": "Calendrier"
 }

@@ -8,7 +8,6 @@ import {
   useFormatNumber,
   useUrlQueryParams,
   ColumnDescription,
-  NumUtils,
   ColumnDataAccessor,
   TooltipTextCell,
 } from '@openmsupply-client/common';
@@ -101,8 +100,7 @@ export const useRequestColumns = () => {
         align: ColumnAlign.Right,
         Cell: PackVariantQuantityCell({
           getItemId: r => r.itemId,
-          getQuantity: r =>
-            NumUtils.round(r.itemStats.averageMonthlyConsumption),
+          getQuantity: r => r.itemStats.averageMonthlyConsumption,
         }),
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
@@ -115,9 +113,7 @@ export const useRequestColumns = () => {
       Cell: PackVariantQuantityCell({
         getItemId: r => r.itemId,
         getQuantity: r =>
-          NumUtils.round(
-            r.itemStats.averageMonthlyConsumption * maxMonthsOfStock
-          ),
+          r.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
       }),
       getSortValue: rowData =>
         rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
@@ -130,7 +126,7 @@ export const useRequestColumns = () => {
       width: 200,
       Cell: PackVariantQuantityCell({
         getItemId: r => r.itemId,
-        getQuantity: r => NumUtils.round(r.suggestedQuantity),
+        getQuantity: r => r.suggestedQuantity,
       }),
       getSortValue: rowData => rowData.suggestedQuantity,
     },
@@ -141,7 +137,7 @@ export const useRequestColumns = () => {
       width: 150,
       Cell: PackVariantQuantityCell({
         getItemId: r => r.itemId,
-        getQuantity: r => NumUtils.round(r.requestedQuantity),
+        getQuantity: r => r.requestedQuantity,
       }),
       getSortValue: rowData => rowData.requestedQuantity,
     },
@@ -154,8 +150,7 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       Cell: PackVariantQuantityCell({
         getItemId: r => r.itemId,
-        getQuantity: r =>
-          NumUtils.round(r.linkedRequisitionLine?.approvedQuantity ?? 0, 2),
+        getQuantity: r => r.linkedRequisitionLine?.approvedQuantity ?? 0,
       }),
       sortable: false,
     });

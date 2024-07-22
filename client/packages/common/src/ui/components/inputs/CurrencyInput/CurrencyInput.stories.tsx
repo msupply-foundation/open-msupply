@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { CurrencyInput } from './CurrencyInput';
 import { Grid, Typography } from '@mui/material';
@@ -10,9 +10,9 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof CurrencyInput>;
+} as Meta<typeof CurrencyInput>;
 
-const Template: ComponentStory<typeof CurrencyInput> = () => {
+const Template: StoryFn<typeof CurrencyInput> = () => {
   const [value1, setValue1] = React.useState(0);
 
   return (

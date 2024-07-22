@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { ConfirmationModal } from './ConfirmationModal';
 import { BaseButton } from '../../buttons';
 import { useToggle } from '../../../../hooks';
@@ -11,7 +11,7 @@ export default {
   component: ConfirmationModal,
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const modalControl = useToggle(false);
 
   return (
@@ -31,7 +31,7 @@ const Template: Story = () => {
   );
 };
 
-const Loading: Story = () => {
+const Loading: StoryFn = () => {
   const modalControl = useToggle(false);
 
   return (
@@ -52,7 +52,7 @@ const Loading: Story = () => {
   );
 };
 
-const UseConfirmationModalHook: Story = () => {
+const UseConfirmationModalHook: StoryFn = () => {
   const getConfirmation = useConfirmationModal({
     title: 'Are you sure?',
     message: 'This will delete all your data.',

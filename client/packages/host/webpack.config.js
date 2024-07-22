@@ -8,7 +8,6 @@ const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const EncodingPlugin = require('webpack-encoding-plugin');
 const fs = require('fs');
 
 const localPlugins = () => {
@@ -149,7 +148,7 @@ module.exports = env => {
         LOCAL_PLUGINS: JSON.stringify(localPlugins()),
         LANG_VERSION: Date.now(),
       }),
-      bundleAnalyzerPlugin,
+      // bundleAnalyzerPlugin,
       new HtmlWebpackPlugin({
         favicon: './public/favicon.ico',
         template: './public/index.html',
@@ -189,9 +188,6 @@ module.exports = env => {
             'react-singleton-context': { singleton: true, eager: true },
           },
         ],
-      }),
-      new EncodingPlugin({
-        encoding: 'UTF-16',
       }),
     ],
   };

@@ -32,6 +32,7 @@ import {
   ColdChainRouter,
   ManageRouter,
   ProgramsRouter,
+  ReportsRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -148,6 +149,12 @@ export const Site: FC = () => {
                         .addWildCard()
                         .build()}
                       element={<ProgramsRouter />}
+                    />
+                    <Route
+                      path={RouteBuilder.create(AppRoute.Reports)
+                        .addWildCard()
+                        .build()}
+                      element={<ReportsRouter />}
                     />
                     <Route
                       path="/"

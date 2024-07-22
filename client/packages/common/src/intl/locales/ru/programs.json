@@ -12,5 +12,7 @@
     "control.search.reset-button": "Отвязать сопоставленного пациента",
     "label.diastolic": "Диастолическое",
     "label.systolic": "Систолическое",
-    "label.bmi-prev-height-message": "Используя высоту {{height}}м из предыдущего измерения"
+    "label.bmi-prev-height-message": "Используя высоту {{height}}м из предыдущего измерения",
+    "button.add-form": "Добавить Форму",
+    "error.no-rnr-forms": "О&З Формы не найдены"
 }

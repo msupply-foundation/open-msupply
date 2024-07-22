@@ -35,11 +35,6 @@ const DEVICE_CLOSE_DELAY = 5000;
 const OMSUPPLY_BARCODE =
   '19,16,3,0,111,112,101,110,32,109,83,117,112,112,108,121,0,24,11';
 
-// App data store
-type StoreType = {
-  [key: string]: string | null;
-};
-
 class Scanner {
   device: HID.HID | undefined;
   barcodeScanner: BarcodeScanner | undefined;
@@ -70,19 +65,25 @@ class Scanner {
   }
 
   scanDevices(window: BrowserWindow) {
-    const devices: BarcodeScanner[] = [];
     // if a scanner is already connected, we'll need to close it in order to open it
     if (this.device) {
       this.device?.close();
     }
 
-    HID.devices().forEach(device => {
-      devices.push({ ...device, connected: false });
+    this.scanDevicesAsync(window);
+  }
+
+  async scanDevicesAsync(window: BrowserWindow) {
+    // note that HID.devicesAsync (and HID.devices) are costly, as they enumerate all USB and (potentially bluetooth) devices
+    // see https://github.com/node-hid/node-hid?tab=readme-ov-file#cost-of-hiddevices-hiddevicesasync-new-hidhid-and-hidasyncopen-for-detecting-device-plugunplug
+    const devices = await HID.devicesAsync();
+
+    devices.forEach(device => {
       if (device.path) {
         try {
           const hid = new HID.HID(device.vendorId, device.productId);
 
-          // close the devices after a delay
+          // close the device after a delay
           const timeout = setTimeout(() => {
             try {
               hid.close();
@@ -110,7 +111,6 @@ class Scanner {
         }
       }
     });
-    return devices;
   }
 
   start() {
@@ -132,7 +132,15 @@ class Scanner {
   }
 }
 
-const store = new ElectronStore<StoreType>();
+// the typescript typing for ElectronStore now requires us to build as ESM modules
+// in order to get the ts defs for 'conf' which gives the get/set/clear methods
+// because we aren't building ESM, have manually typed the class
+const store = new ElectronStore() as unknown as {
+  clear: () => void;
+  get: (key: string, defaultValue: string | null) => string | null;
+  set: (key: string, value: string | null) => void;
+};
+
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
 
 let connectedServer: FrontEndHost | null = null;

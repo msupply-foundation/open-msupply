@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { useToggle } from '@common/hooks';
 import { AlertModal } from './AlertModal';
 import { Button } from '@mui/material';
@@ -7,9 +7,9 @@ import { Button } from '@mui/material';
 export default {
   title: 'Modals/AlertModal',
   component: AlertModal,
-} as ComponentMeta<typeof AlertModal>;
+} as Meta<typeof AlertModal>;
 
-const Template: ComponentStory<typeof AlertModal> = () => {
+const Template: StoryFn<typeof AlertModal> = () => {
   const { isOn, toggle } = useToggle();
   return (
     <>

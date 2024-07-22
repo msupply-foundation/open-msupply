@@ -307,11 +307,11 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_batch_perscription() {
+    async fn test_graphql_batch_prescription() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             BatchMutations,
-            "test_graphql_batch_perscription",
+            "test_graphql_batch_prescription",
             MockDataInserts::all(),
         )
         .await;
@@ -321,13 +321,6 @@ mod test {
             batchPrescription(input: $input, storeId: $storeId) {
               insertPrescriptions {
                 id
-                response {
-                  ... on InsertPrescriptionError {
-                    error {
-                      __typename
-                    }
-                  }
-                }
               }
               insertPrescriptionLines {
                 id
@@ -389,17 +382,7 @@ mod test {
 
         let expected = json!({
             "batchPrescription": {
-              "insertPrescriptions": [
-                {
-                  "id": "id1",
-                  "response": {
-                    "error": {
-                      "__typename": "OtherPartyNotAPatient"
-                    }
-                  }
-                }
-              ],
-
+              "insertPrescriptions": null,
               "insertPrescriptionLines": [
                 {
                   "id": "id2",
@@ -463,12 +446,7 @@ mod test {
         // Structured Errors
         let test_service = TestService(Box::new(|_| {
             Ok(BatchPrescriptionResult {
-                insert_prescription: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertPrescription| {
-                        input.id = "id1".to_string()
-                    }),
-                    result: Err(InsertPrescriptionError::OtherPartyNotAPatient),
-                }],
+                insert_prescription: vec![],
                 insert_line: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertStockOutLine| {
                         input.id = "id2".to_string()
@@ -512,10 +490,11 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(BatchPrescriptionResult {
                 insert_prescription: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertPrescription| {
-                        input.id = "id1".to_string()
-                    }),
-                    result: Err(InsertPrescriptionError::OtherPartyNotAPatient),
+                    input: InsertPrescription {
+                        id: "id1".to_string(),
+                        patient_id: "id2".to_string(),
+                    },
+                    result: Err(InsertPrescriptionError::PatientDoesNotExist),
                 }],
                 insert_line: vec![InputWithResult {
                     input: inline_init(|input: &mut InsertStockOutLine| {
@@ -533,13 +512,13 @@ mod test {
             })
         }));
         let expected_message = "Bad user input";
-        let expected_extensions = json!({ "input": format!("{:#?}", "id12") });
+
         assert_standard_graphql_error!(
             &settings,
             &mutation,
             &variables,
             &expected_message,
-            Some(expected_extensions),
+            None,
             Some(service_provider(test_service, &connection_manager))
         );
 
