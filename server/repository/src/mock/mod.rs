@@ -28,6 +28,7 @@ mod program;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
+mod rnr_form;
 mod sensor;
 mod stock_line;
 mod stocktake;
@@ -83,6 +84,7 @@ pub use program::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
+pub use rnr_form::*;
 pub use sensor::*;
 pub use stock_line::*;
 pub use stocktake::*;
@@ -581,6 +583,11 @@ impl MockDataInserts {
         self.demographic_indicators = true;
         self
     }
+
+    pub fn rnr_forms(mut self) -> Self {
+        self.rnr_forms = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -659,6 +666,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             asset_logs: mock_asset_logs(),
             demographic_indicators: mock_demographic_indicators(),
             properties: mock_properties(),
+            rnr_forms: mock_rnr_forms(),
             ..Default::default()
         },
     );

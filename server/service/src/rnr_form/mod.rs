@@ -2,12 +2,15 @@ use crate::{service_provider::ServiceContext, ListError, ListResult};
 
 use repository::{PaginationOption, RepositoryError, RnRForm, RnRFormFilter, RnRFormSort};
 
+use self::insert::{insert_rnr_form, InsertRnRForm, InsertRnRFormError};
 use self::query::{get_rnr_form, get_rnr_forms};
 use self::schedules_with_periods::{get_schedules_with_periods_by_program, PeriodSchedule};
 
+pub mod insert;
 pub mod query;
 pub mod schedules_with_periods;
 mod tests;
+mod validate;
 
 pub trait RnRFormServiceTrait: Sync + Send {
     fn get_rnr_forms(
@@ -35,6 +38,14 @@ pub trait RnRFormServiceTrait: Sync + Send {
         program_id: &str,
     ) -> Result<Vec<PeriodSchedule>, RepositoryError> {
         get_schedules_with_periods_by_program(ctx, program_id)
+    }
+
+    fn insert_rnr_form(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertRnRForm,
+    ) -> Result<RnRForm, InsertRnRFormError> {
+        insert_rnr_form(ctx, input)
     }
 }
 
