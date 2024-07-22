@@ -10,7 +10,7 @@ doctest = false
 [dependencies]
 
 util = { path = "../util" }
-
+clap = { workspace = true }
 chrono = { workspace = true }
 rand = { workspace = true }
 diesel = { version = "2.2.1", default-features = false, features = [

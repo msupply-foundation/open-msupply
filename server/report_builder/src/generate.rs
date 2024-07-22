@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use std::{fs, path::Path};
 
+use crate::Format;
+
 const AUTH_QUERY: &str = r#"
 query AuthToken($username: String!, $password: String) {
   authToken(password: $password, username: $username) {
@@ -22,8 +24,8 @@ query AuthToken($username: String!, $password: String) {
 "#;
 
 const PRINT_QUERY: &str = r#"
-query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON) {
-  generateReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments) {
+query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON, $format: GenerateFormat) {
+  generateReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments, format: $format) {
     ... on GenerateReportNode {
       __typename
       fileId
@@ -88,6 +90,7 @@ fn generate_request(
     report: serde_json::Value,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
+    format: Format,
 ) -> anyhow::Result<String> {
     let body = serde_json::json!({
       "query": PRINT_QUERY,
@@ -96,7 +99,8 @@ fn generate_request(
         "dataId": data_id,
         "name": name,
         "report": report,
-        "arguments": arguments
+        "arguments": arguments,
+        "format": format
       }
     });
     let response = reqwest::blocking::Client::new()
@@ -169,6 +173,7 @@ pub fn generate_report(
     report_file: String,
     data_id: Option<String>,
     arguments_file: Option<String>,
+    format: Format,
 ) -> anyhow::Result<()> {
     let arguments = if let Some(arguments_file) = arguments_file {
         println!("> Load arguments from: {}", arguments_file);
@@ -221,6 +226,7 @@ pub fn generate_report(
         report,
         data_id,
         arguments,
+        format,
     )
     .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
 

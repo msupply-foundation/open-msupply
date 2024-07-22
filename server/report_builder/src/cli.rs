@@ -15,6 +15,7 @@ fn main() -> anyhow::Result<()> {
                 args.report,
                 args.data_id,
                 args.arguments_file,
+                args.format.unwrap_or_default(),
             )?;
         }
     };
