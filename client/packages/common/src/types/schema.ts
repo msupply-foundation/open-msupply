@@ -4874,7 +4874,6 @@ export type PeriodScheduleNode = {
 export type PeriodSchedulesConnector = {
   __typename: 'PeriodSchedulesConnector';
   nodes: Array<PeriodScheduleNode>;
-  totalCount: Scalars['Int']['output'];
 };
 
 export type PeriodSchedulesResponse = PeriodSchedulesConnector;
