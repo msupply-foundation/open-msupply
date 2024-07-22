@@ -50,6 +50,7 @@ pub trait Delete: DebugTrait {
 }
 
 pub trait Upsert: DebugTrait {
+    // Upsert returns a changelog id if the table is tracked in changelog
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
 
     // Test only
