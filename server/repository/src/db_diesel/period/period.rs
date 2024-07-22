@@ -30,7 +30,6 @@ pub struct PeriodFilter {
     pub period_schedule_id: Option<EqualFilter<String>>,
     pub end_date: Option<DateFilter>,
     pub rnr_form_program_id: Option<EqualFilter<String>>,
-    // pub used_in_rnr_form_for_program_id: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
