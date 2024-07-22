@@ -5245,6 +5245,7 @@ export type Queries = {
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   programs: ProgramsResponse;
+  rAndRForms: RnRFormsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -5691,6 +5692,14 @@ export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesRAndRFormsArgs = {
+  filter?: InputMaybe<RnRFormFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<RnRFormSortInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -6287,6 +6296,49 @@ export type ReturnReasonSortInput = {
   /** Sort query result by `key` */
   key: ReturnReasonSortFieldInput;
 };
+
+export type RnRFormConnector = {
+  __typename: 'RnRFormConnector';
+  nodes: Array<RnRFormNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type RnRFormFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type RnRFormNode = {
+  __typename: 'RnRFormNode';
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  periodId: Scalars['String']['output'];
+  periodName: Scalars['String']['output'];
+  programId: Scalars['String']['output'];
+  programName: Scalars['String']['output'];
+  supplierName: Scalars['String']['output'];
+};
+
+export enum RnRFormSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  Period = 'period',
+  Program = 'program',
+  Status = 'status',
+  SupplierName = 'supplierName'
+}
+
+export type RnRFormSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: RnRFormSortFieldInput;
+};
+
+export type RnRFormsResponse = RnRFormConnector;
 
 export type SensorConnector = {
   __typename: 'SensorConnector';
@@ -7861,6 +7913,8 @@ export enum UserPermission {
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',
+  RnRFormMutate = 'RN_R_FORM_MUTATE',
+  RnRFormQuery = 'RN_R_FORM_QUERY',
   SensorMutate = 'SENSOR_MUTATE',
   SensorQuery = 'SENSOR_QUERY',
   ServerAdmin = 'SERVER_ADMIN',

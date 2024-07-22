@@ -43,6 +43,7 @@ use crate::{
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
@@ -84,6 +85,7 @@ pub struct ServiceProvider {
     pub requisition_line_service: Box<dyn RequisitionLineServiceTrait>,
     pub general_service: Box<dyn GeneralServiceTrait>,
     pub clinician_service: Box<dyn ClinicianServiceTrait>,
+    pub rnr_form_service: Box<dyn RnRFormServiceTrait>,
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
@@ -223,6 +225,7 @@ impl ServiceProvider {
             demographic_service: Box::new(crate::demographic::DemographicService {}),
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
+            rnr_form_service: Box::new(RnRFormService {}),
         }
     }
 

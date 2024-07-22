@@ -4,6 +4,7 @@ use repository::{
     ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceStatus, StorageConnection,
     StorageConnectionManager,
 };
+
 use repository::{PaginationOption, RepositoryError};
 use util::constants::SYSTEM_USER_ID;
 use util::uuid::uuid;
@@ -57,7 +58,8 @@ pub fn activity_log_entry(
         changed_from,
     };
 
-    ActivityLogRowRepository::new(&ctx.connection).insert_one(log)
+    let _change_log_id = ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?;
+    Ok(())
 }
 
 pub fn system_activity_log_entry(
@@ -77,7 +79,8 @@ pub fn system_activity_log_entry(
         changed_to: None,
     };
 
-    ActivityLogRowRepository::new(connection).insert_one(log)
+    let _change_log_id = ActivityLogRowRepository::new(connection).insert_one(log)?;
+    Ok(())
 }
 
 pub fn log_type_from_invoice_status(status: &InvoiceStatus, prescription: bool) -> ActivityLogType {
