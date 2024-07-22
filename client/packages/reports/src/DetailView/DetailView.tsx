@@ -55,7 +55,12 @@ export const DetailView = () => {
       {fileId ? (
         <>
           <iframe src={url} width="100%" />
-          <AppBarButtons report={data} isDisabled={!!data.argumentSchema} />
+          <AppBarButtons
+            report={data}
+            isDisabled={!!data.argumentSchema}
+            mutateAsync={mutateAsync}
+            setFileId={setFileId}
+          />
         </>
       ) : (
         <NothingHere />

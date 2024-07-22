@@ -4,29 +4,30 @@ import {
   ButtonWithIcon,
   FilterIcon,
   Grid,
-  RouteBuilder,
-  useNavigate,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import {
+  GenerateReportParams,
   ReportArgumentsModal,
   ReportRowFragment,
 } from '@openmsupply-client/system';
 import { JsonData } from '@openmsupply-client/programs';
-import { AppRoute } from 'packages/config/src';
 
 interface AppBarButtonsProps {
   report: ReportRowFragment;
+  setFileId: (fileId: string | undefined) => void;
+  mutateAsync: (params: GenerateReportParams) => Promise<string>;
   isDisabled: boolean;
 }
 
 export const AppBarButtonsComponent = ({
   report,
+  setFileId,
+  mutateAsync,
   isDisabled,
 }: AppBarButtonsProps) => {
   const t = useTranslation();
-  const navigate = useNavigate();
   const { updateQuery } = useUrlQuery();
 
   const [reportWithArgs, setReportWithArgs] = useState<ReportRowFragment>();
@@ -37,14 +38,15 @@ export const AppBarButtonsComponent = ({
     }
   };
   const reportArgs = useCallback(
-    async (args: JsonData | undefined) => {
+    async (report: ReportRowFragment, args: JsonData | undefined) => {
       const stringifyArgs = JSON.stringify(args);
       updateQuery({ reportArgs: stringifyArgs });
-      navigate(
-        RouteBuilder.create(AppRoute.Reports)
-          .addPart(`${report.id}?reportArgs=${stringifyArgs}`)
-          .build()
-      );
+      const file = await mutateAsync({
+        reportId: report.id,
+        args,
+        dataId: '',
+      });
+      setFileId(file);
     },
     [report.id]
   );
