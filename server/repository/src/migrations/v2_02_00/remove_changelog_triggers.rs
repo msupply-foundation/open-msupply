@@ -114,5 +114,28 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#,
     )?;
 
+    // Drop the changelog functions
+
+    sql!(
+        connection,
+        r#"
+            DROP FUNCTION IF EXISTS update_changelog;
+            DROP FUNCTION IF EXISTS upsert_invoice_changelog;
+            DROP FUNCTION IF EXISTS delete_requisition_line_changelog;
+            DROP FUNCTION IF EXISTS upsert_activity_log_changelog;
+            DROP FUNCTION IF EXISTS delete_barcode_changelog;
+            DROP FUNCTION IF EXISTS upsert_barcode_changelog;
+            DROP FUNCTION IF EXISTS update_changelog_upsert_with_sync;
+            DROP FUNCTION IF EXISTS upsert_clinician_store_join_changelog;
+            DROP FUNCTION IF EXISTS delete_invoice_changelog;
+            DROP FUNCTION IF EXISTS upsert_invoice_line_changelog;
+            DROP FUNCTION IF EXISTS delete_invoice_line_changelog;
+            DROP FUNCTION IF EXISTS upsert_name_store_join_changelog;
+            DROP FUNCTION IF EXISTS upsert_requisition_changelog;
+            DROP FUNCTION IF EXISTS delete_requisition_changelog;
+            DROP FUNCTION IF EXISTS upsert_requisition_line_changelog;
+        "#,
+    )?;
+
     Ok(())
 }

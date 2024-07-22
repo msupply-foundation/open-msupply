@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { create } from 'zustand';
+import { createWithEqualityFn } from 'zustand/traditional';
 import { PackVariantFragment, VariantFragment, usePackVariants } from '../api';
 import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
@@ -15,7 +15,7 @@ interface PackVariantState {
   setItems: (newItems: PackVariantFragment[]) => void;
 }
 
-const usePackVariantStore = create<PackVariantState>(set => {
+const usePackVariantStore = createWithEqualityFn<PackVariantState>(set => {
   return {
     items: {},
     setItems: newItems =>

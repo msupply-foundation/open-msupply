@@ -3,7 +3,9 @@
 export { AlertIcon } from './Alert';
 export { ArrowLeftIcon } from './ArrowLeft';
 export { ArrowRightIcon } from './ArrowRight';
+export { BarIcon } from './Bar';
 export { BarChartIcon } from './BarChart';
+export { BarChart2Icon } from './BarChart2';
 export { BookIcon } from './Book';
 export { CartIcon } from './Cart';
 export { CentralIcon } from './Central';
@@ -66,7 +68,7 @@ export { SuppliersIcon } from './Suppliers';
 export { ThermometerIcon } from './Thermometer';
 export { ToolsIcon } from './Tools';
 export { TranslateIcon } from './Translate';
-export { BarChart2Icon } from './BarChart2';
+export { TrendingDownIcon } from './TrendingDown';
 export { TruckIcon } from './Truck';
 export { UnhappyMan } from './UnhappyMan';
 export { UploadIcon } from './Upload';

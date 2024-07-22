@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { TabList, Tab, TabPanel, TabContext } from './Tabs';
 import { useTabs } from './useTabs';
 import { Box } from '@mui/material';
@@ -7,7 +7,7 @@ import { Box } from '@mui/material';
 export default {
   title: 'Navigation/Tabs',
   component: TabList,
-} as ComponentMeta<typeof TabList>;
+} as Meta<typeof TabList>;
 
 const ExampleTabs = () => {
   const { currentTab, onChangeTab } = useTabs('hotpink');
@@ -43,6 +43,6 @@ const ExampleTabs = () => {
   );
 };
 
-const Template: ComponentStory<typeof TabList> = () => <ExampleTabs />;
+const Template: StoryFn<typeof TabList> = () => <ExampleTabs />;
 
 export const Primary = Template.bind({});

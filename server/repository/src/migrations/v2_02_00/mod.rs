@@ -6,6 +6,9 @@ mod add_asset_internal_location_changelog;
 mod create_missing_master_list_and_program;
 mod create_system_user;
 mod remove_changelog_triggers;
+mod report_add_report_context;
+mod rnr_form;
+mod store_preferences_for_reports;
 
 pub(crate) struct V2_02_00;
 
@@ -19,6 +22,9 @@ impl Migration for V2_02_00 {
         remove_changelog_triggers::migrate(connection)?;
         create_missing_master_list_and_program::migrate(connection)?;
         create_system_user::migrate(connection)?;
+        store_preferences_for_reports::migrate(connection)?;
+        rnr_form::migrate(connection)?;
+        report_add_report_context::migrate(connection)?;
         Ok(())
     }
 }

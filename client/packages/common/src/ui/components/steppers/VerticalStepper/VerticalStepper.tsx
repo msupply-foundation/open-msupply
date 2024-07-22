@@ -68,6 +68,9 @@ const Circle = (props: StepIconProps) => {
       colors.backgroundColor = 'white';
     }
 
+    // 'error' isn't a valid attribute for a div component
+    delete rest.error;
+
     return (
       <Box
         sx={{

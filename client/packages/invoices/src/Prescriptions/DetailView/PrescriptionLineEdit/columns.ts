@@ -5,7 +5,6 @@ import {
   ColumnDescription,
   ExpiryDateCell,
   LocationCell,
-  NumUtils,
   NumberCell,
   useColumns,
 } from '@openmsupply-client/common';
@@ -95,8 +94,7 @@ export const usePrescriptionLineEditColumns = ({
       {
         label: 'label.unit-quantity-issued',
         labelProps: { unit },
-        accessor: ({ rowData }) =>
-          NumUtils.floatMultiply(rowData.numberOfPacks, rowData.packSize),
+        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
         width: 120,
       },
     ],
@@ -136,8 +134,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
     [
       'unitQuantity',
       {
-        accessor: ({ rowData }) =>
-          NumUtils.floatMultiply(rowData.packSize, rowData.numberOfPacks),
+        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
       },
     ],
   ]);

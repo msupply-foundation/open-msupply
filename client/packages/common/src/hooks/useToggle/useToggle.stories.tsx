@@ -1,14 +1,14 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useToggle } from './useToggle';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { BaseButton } from '@common/components';
 
 export default {
   title: 'Hooks/useToggle',
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const { isOn, toggle, toggleOn, toggleOff } = useToggle();
 
   return (

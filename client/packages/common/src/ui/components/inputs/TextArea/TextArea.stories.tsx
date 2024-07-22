@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { TextArea } from './TextArea';
 import { Box, Typography } from '@mui/material';
@@ -10,9 +10,9 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof TextArea>;
+} as Meta<typeof TextArea>;
 
-const Template: ComponentStory<typeof TextArea> = () => (
+const Template: StoryFn<typeof TextArea> = () => (
   <Box>
     <Box
       padding={2}

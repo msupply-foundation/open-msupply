@@ -90,5 +90,23 @@ export const gapsNameProperties: {
       allowedValues: null,
       remoteEditable: true,
     },
+    {
+      id: '86cb041d-96d3-40f1-874e-4189f4796790',
+      propertyId: 'penta_3',
+      key: 'penta_3',
+      name: 'Penta-3 Coverage',
+      valueType: PropertyNodeValueType.String,
+      allowedValues: 'High,Medium,Low,Unknown',
+      remoteEditable: true,
+    },
+    {
+      id: '9cc3ac59-061e-4e3f-af13-d2b6d9a52dea',
+      propertyId: 'zero_dose',
+      key: 'zero_dose',
+      name: 'Zero Dose Coverage',
+      valueType: PropertyNodeValueType.String,
+      allowedValues: 'High,Medium,Low,Unknown',
+      remoteEditable: true,
+    },
   ],
 };

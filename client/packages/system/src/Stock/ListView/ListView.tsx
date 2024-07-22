@@ -11,7 +11,6 @@ import {
   ColumnDescription,
   usePluginColumns,
   TooltipTextCell,
-  NumUtils,
   useNavigate,
   RouteBuilder,
 } from '@openmsupply-client/common';
@@ -125,7 +124,6 @@ const StockListComponent: FC = () => {
       'numberOfPacks',
       {
         accessor: ({ rowData }) => rowData.totalNumberOfPacks,
-        Cell: TooltipTextCell,
         width: 150,
       },
     ],
@@ -133,11 +131,10 @@ const StockListComponent: FC = () => {
       'stockOnHand',
       {
         accessor: ({ rowData }) =>
-          NumUtils.floatMultiply(rowData.totalNumberOfPacks, rowData.packSize),
+          rowData.totalNumberOfPacks * rowData.packSize,
         label: 'label.soh',
         description: 'description.soh',
         sortable: false,
-        Cell: TooltipTextCell,
         width: 125,
       },
     ],

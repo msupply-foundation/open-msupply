@@ -5,4 +5,5 @@ export interface RepackDraft {
   numberOfPacks: number;
   newLocationId?: string;
   locationName?: string;
+  newLocationName?: string;
 }

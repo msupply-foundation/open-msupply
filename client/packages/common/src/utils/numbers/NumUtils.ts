@@ -30,15 +30,6 @@ export const NumUtils = {
     return Math.round(value * multiplier) / multiplier;
   },
   /**
-   * Multiplies two float numbers avoiding "float artefacts".
-   * For example: 110.4 * 29 = 3201.6000000000004
-   * while floatMultiply(110.4, 29) = 3201.6
-   */
-  floatMultiply: (left: number, right: number): number => {
-    // Use a hacky(?) correction factor of 100:
-    return (100 * left * right) / 100;
-  },
-  /**
    * This constant should be used for values that are potentially send to a backend API that expects
    * an unsigned 32 bit integer and thus would reject Number.MAX_SAFE_INTEGER.
    * For example, JS number max size is `2^53 - 1` while the Rust u32 size is `2^32 - 1`.

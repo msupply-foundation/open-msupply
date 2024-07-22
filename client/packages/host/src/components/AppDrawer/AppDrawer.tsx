@@ -22,6 +22,7 @@ import {
   UserPermission,
   RouteBuilder,
   useConfirmationModal,
+  ReportsIcon,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -219,16 +220,16 @@ export const AppDrawer: React.FC = () => {
           <ColdChainNav store={store} />
           <ProgramsNav store={store} />
           <ManageNav store={store} />
+          <AppNavLink
+            to={AppRoute.Reports}
+            icon={<ReportsIcon fontSize="small" color="primary" />}
+            text={t('reports')}
+          />
 
           {/* <AppNavLink
             to={AppRoute.Tools}
             icon={<ToolsIcon fontSize="small" color="primary" />}
             text={t('tools')}
-          /> */}
-          {/* <AppNavLink
-            to={AppRoute.Reports}
-            icon={<ReportsIcon fontSize="small" color="primary" />}
-            text={t('reports')}
           /> */}
           {/* <AppNavLink
             to={AppRoute.Messages}

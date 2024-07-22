@@ -81,9 +81,7 @@ export const useStocktakeColumns = ({
         getSortValue: row => {
           return row.item?.code ?? '';
         },
-        accessor: ({ rowData }) => {
-          return rowData.item?.code ?? '';
-        },
+        accessor: ({ rowData }) => rowData.item?.code ?? '',
       },
     ],
     [
@@ -162,9 +160,7 @@ export const useStocktakeColumns = ({
           getSortValue: row => {
             return row.item?.unitName ?? '';
           },
-          accessor: ({ rowData }) => {
-            return rowData.item?.unitName ?? '';
-          },
+          accessor: ({ rowData }) => rowData.item?.unitName ?? '',
           sortable: false,
         },
       ],
@@ -223,12 +219,13 @@ export const useStocktakeColumns = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
-          return (
-            lines.reduce(
-              (total, line) => total + (line.countedNumberOfPacks ?? 0),
-              0
-            ) ?? 0
-          ).toString();
+          const countedLines = lines.flatMap(
+            ({ countedNumberOfPacks: counted }) =>
+              typeof counted === 'number' ? [counted] : []
+          );
+          // No counted lines
+          if (countedLines.length === 0) return null;
+          return countedLines.reduce((total, counted) => total + counted, 0);
         } else {
           return rowData.countedNumberOfPacks;
         }

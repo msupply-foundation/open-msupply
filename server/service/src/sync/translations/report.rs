@@ -35,6 +35,7 @@ pub enum LegacyReportContext {
 
     #[serde(rename = "Repack Finalised")]
     Repack,
+    Report,
     #[serde(other)]
     Others,
 }
@@ -103,6 +104,7 @@ impl SyncTranslation for ReportTranslation {
             LegacyReportContext::Patient => ContextType::Patient,
             LegacyReportContext::Dispensary => ContextType::Dispensary,
             LegacyReportContext::Repack => ContextType::Repack,
+            LegacyReportContext::Report => ContextType::Report,
             LegacyReportContext::Others => {
                 return Ok(PullTranslateResult::Ignored(
                     "Unsupported report context".to_string(),

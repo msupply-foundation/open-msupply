@@ -66,6 +66,7 @@ use service::programs::patient::patient_search_central;
 use types::program::ProgramFilterInput;
 use types::program::ProgramSortInput;
 use types::program::ProgramsResponse;
+use types::r_and_r_form::{RnRFormFilterInput, RnRFormSortInput, RnRFormsResponse};
 
 mod mutations;
 
@@ -250,6 +251,17 @@ impl ProgramsQueries {
         sort: Option<ProgramSortInput>,
     ) -> Result<ProgramsResponse> {
         programs(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn r_and_r_forms(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<RnRFormFilterInput>,
+        sort: Option<RnRFormSortInput>,
+    ) -> Result<RnRFormsResponse> {
+        r_and_r_forms(ctx, store_id, page, filter, sort)
     }
 }
 

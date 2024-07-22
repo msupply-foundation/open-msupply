@@ -20,6 +20,12 @@ table! {
         om_program_module -> Bool,
         vaccine_module -> Bool,
         issue_in_foreign_currency -> Bool,
+        monthly_consumption_look_back_period -> Double,
+        months_lead_time -> Double,
+        months_overstock -> Double,
+        months_understock -> Double,
+        months_items_expire -> Double,
+        stocktake_frequency -> Double,
     }
 }
 
@@ -36,7 +42,7 @@ pub enum StorePreferenceType {
     StorePreferences,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = store_preference)]
 pub struct StorePreferenceRow {
     pub id: String, // store_id
@@ -48,6 +54,12 @@ pub struct StorePreferenceRow {
     pub om_program_module: bool,
     pub vaccine_module: bool,
     pub issue_in_foreign_currency: bool,
+    pub monthly_consumption_look_back_period: f64,
+    pub months_lead_time: f64,
+    pub months_overstock: f64,
+    pub months_understock: f64,
+    pub months_items_expire: f64,
+    pub stocktake_frequency: f64,
 }
 
 pub struct StorePreferenceRowRepository<'a> {
