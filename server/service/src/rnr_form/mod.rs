@@ -6,6 +6,7 @@ use self::insert::{insert_rnr_form, InsertRnRForm, InsertRnRFormError};
 use self::query::{get_rnr_form, get_rnr_forms};
 use self::schedules_with_periods::{get_schedules_with_periods_by_program, PeriodSchedule};
 
+mod generate_rnr_form_lines;
 pub mod insert;
 pub mod query;
 pub mod schedules_with_periods;
