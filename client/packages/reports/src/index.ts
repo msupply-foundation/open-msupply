@@ -1,1 +1,1 @@
-export { Reports } from './ReportService';
+export { default as ReportsService } from './ReportsService';

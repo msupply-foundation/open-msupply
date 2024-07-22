@@ -11,9 +11,15 @@ fragment ReportRow on ReportNode {
   }
 }
 
+query report($storeId: String!, $id: String!) {
+  report(storeId: $storeId, id: $id) {
+    ...ReportRow
+  }
+}
+
 query reports(
   $storeId: String!
-  $key: String!
+  $key: ReportSortFieldInput!
   $desc: Boolean
   $filter: ReportFilterInput
 ) {

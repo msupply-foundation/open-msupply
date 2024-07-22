@@ -1,6 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { Box, Card, CircularProgress, Grid, Typography } from '@mui/material';
-import { SvgIconProps } from '@common/icons';
+import { Box, Card, CircularProgress, Typography } from '@mui/material';
 
 const Loading = () => (
   <Box display="flex" flex={1} justifyContent="center" alignItems="center">
@@ -11,14 +10,12 @@ const Loading = () => (
 interface WidgetProps {
   height?: number | string;
   title: string;
-  Icon?: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
 }
 
 export const Widget: React.FC<PropsWithChildren<WidgetProps>> = ({
   children,
   height = '100%',
   title,
-  Icon,
 }) => (
   <Card
     sx={{
@@ -32,21 +29,9 @@ export const Widget: React.FC<PropsWithChildren<WidgetProps>> = ({
       boxShadow: theme => theme.shadows[2],
     }}
   >
-    <Grid container alignItems="center">
-      {Icon && (
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          sx={{ width: 48 }}
-        >
-          <Icon color="primary" />
-        </Box>
-      )}
-      <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
-        {title}
-      </Typography>
-    </Grid>
+    <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
+      {title}
+    </Typography>
 
     <React.Suspense fallback={<Loading />}>{children}</React.Suspense>
   </Card>

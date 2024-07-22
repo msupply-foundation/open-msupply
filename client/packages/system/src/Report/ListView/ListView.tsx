@@ -16,9 +16,10 @@ import {
   TooltipTextCell,
 } from '@openmsupply-client/common';
 import { JsonData } from '@openmsupply-client/programs';
-import { useReport, ReportRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
 import { ReportArgumentsModal } from '../components/ReportArgumentsModal';
+import { usePrintReport, useReportList } from '../api/hooks';
+import { ReportRowFragment } from '../api';
 
 const PrintingDialog: React.FC<{ isPrinting: boolean }> = ({ isPrinting }) => {
   const { Modal, showDialog, hideDialog } = useDialog();
@@ -75,16 +76,14 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
     filters: [{ key: 'name' }],
   });
   const queryParams = { filterBy, offset, sortBy };
-  const { data, isError, isLoading } = useReport.document.list({
-    context,
-    queryParams,
-  });
+  const { data, isLoading, isError } = useReportList({ context, queryParams });
+
   const pagination = { page, first, offset };
   const t = useTranslation();
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
-  const { print, isPrinting } = useReport.utils.print();
+  const { print, isPrinting } = usePrintReport();
 
   // Wait a little bit before showing the modal, e.g. when the report prints very quickly, don't
   // show the modal.
@@ -92,7 +91,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
 
   const columns = useColumns<ReportRowFragment>(
     [
-    ['name', { width: 300, Cell: TooltipTextCell }],
+      ['name', { width: 300, Cell: TooltipTextCell }],
       {
         accessor: ({ rowData }) => rowData.context,
         key: 'context',

@@ -82,18 +82,19 @@ impl<'a> DocumentRegistryRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
+    // pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    //     diesel::delete(
+    //         document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
+    //     )
+    //     .execute(self.connection.lock().connection())?;
+    //     Ok(())
+    // }
 }
 
 impl Upsert for DocumentRegistryRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        DocumentRegistryRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        DocumentRegistryRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
