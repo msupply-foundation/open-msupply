@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StocktakeRowFragment = { __typename: 'StocktakeNode', id: string, comment?: string | null, description?: string | null, createdDatetime: string, finalisedDatetime?: string | null, stocktakeDate?: string | null, stocktakeNumber: number, status: Types.StocktakeNodeStatus, isLocked: boolean };
 
 export type StocktakeLineFragment = { __typename: 'StocktakeLineNode', stocktakeId: string, batch?: string | null, itemId: string, itemName: string, id: string, expiryDate?: string | null, packSize?: number | null, snapshotNumberOfPacks: number, countedNumberOfPacks?: number | null, sellPricePerPack?: number | null, costPricePerPack?: number | null, comment?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string } | null, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }, inventoryAdjustmentReason?: { __typename: 'InventoryAdjustmentReasonNode', id: string, reason: string } | null };
@@ -379,36 +379,36 @@ export const InsertStocktakeDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     stocktakes(variables: StocktakesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StocktakesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StocktakesQuery>(StocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakes', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StocktakesQuery>(StocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakes', 'query', variables);
     },
     stocktake(variables: StocktakeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StocktakeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StocktakeQuery>(StocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktake', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StocktakeQuery>(StocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktake', 'query', variables);
     },
     stocktakeByNumber(variables: StocktakeByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StocktakeByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StocktakeByNumberQuery>(StocktakeByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakeByNumber', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StocktakeByNumberQuery>(StocktakeByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakeByNumber', 'query', variables);
     },
     stocktakeLines(variables: StocktakeLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StocktakeLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StocktakeLinesQuery>(StocktakeLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakeLines', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StocktakeLinesQuery>(StocktakeLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stocktakeLines', 'query', variables);
     },
     upsertStocktakeLines(variables: UpsertStocktakeLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertStocktakeLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertStocktakeLinesMutation>(UpsertStocktakeLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertStocktakeLines', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertStocktakeLinesMutation>(UpsertStocktakeLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertStocktakeLines', 'mutation', variables);
     },
     deleteStocktakes(variables: DeleteStocktakesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteStocktakesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteStocktakesMutation>(DeleteStocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteStocktakes', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteStocktakesMutation>(DeleteStocktakesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteStocktakes', 'mutation', variables);
     },
     updateStocktake(variables: UpdateStocktakeMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStocktakeMutation>(UpdateStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStocktake', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStocktakeMutation>(UpdateStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStocktake', 'mutation', variables);
     },
     insertStocktake(variables: InsertStocktakeMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertStocktakeMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertStocktakeMutation>(InsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStocktake', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertStocktakeMutation>(InsertStocktakeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStocktake', 'mutation', variables);
     }
   };
 }

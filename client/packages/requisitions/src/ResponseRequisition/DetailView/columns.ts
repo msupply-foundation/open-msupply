@@ -6,7 +6,6 @@ import {
   getCommentPopoverColumn,
   useUrlQueryParams,
   ColumnDescription,
-  NumUtils,
   TooltipTextCell,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
@@ -66,8 +65,7 @@ export const useResponseColumns = () => {
         sortable: false,
         Cell: PackVariantQuantityCell({
           getItemId: row => row.itemId,
-          getQuantity: row =>
-            NumUtils.round(row.itemStats.availableStockOnHand),
+          getQuantity: row => row.itemStats.availableStockOnHand,
         }),
       },
     ],
@@ -82,9 +80,7 @@ export const useResponseColumns = () => {
       Cell: PackVariantQuantityCell({
         getItemId: row => row.itemId,
         getQuantity: row =>
-          NumUtils.round(
-            row?.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0
-          ),
+          row?.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0,
       }),
     },
     [
@@ -93,7 +89,7 @@ export const useResponseColumns = () => {
         getSortValue: rowData => rowData.requestedQuantity,
         Cell: PackVariantQuantityCell({
           getItemId: row => row.itemId,
-          getQuantity: row => NumUtils.round(row.requestedQuantity ?? 0),
+          getQuantity: row => row.requestedQuantity ?? 0,
         }),
         width: 150,
       },
@@ -107,7 +103,7 @@ export const useResponseColumns = () => {
       sortable: false,
       Cell: PackVariantQuantityCell({
         getItemId: row => row.itemId,
-        getQuantity: row => NumUtils.round(row.approvedQuantity),
+        getQuantity: row => row.approvedQuantity,
       }),
     });
     columnDefinitions.push({
@@ -123,7 +119,7 @@ export const useResponseColumns = () => {
       getSortValue: rowData => rowData.supplyQuantity,
       Cell: PackVariantQuantityCell({
         getItemId: row => row.itemId,
-        getQuantity: row => NumUtils.round(row.supplyQuantity),
+        getQuantity: row => row.supplyQuantity,
       }),
     },
   ]);
@@ -136,7 +132,7 @@ export const useResponseColumns = () => {
     getSortValue: rowData => rowData.alreadyIssued,
     Cell: PackVariantQuantityCell({
       getItemId: row => row.itemId,
-      getQuantity: row => NumUtils.round(row.alreadyIssued),
+      getQuantity: row => row.alreadyIssued,
     }),
     width: 100,
   });
@@ -149,7 +145,7 @@ export const useResponseColumns = () => {
     getSortValue: rowData => rowData.remainingQuantityToSupply,
     Cell: PackVariantQuantityCell({
       getItemId: row => row.itemId,
-      getQuantity: row => NumUtils.round(row.remainingQuantityToSupply),
+      getQuantity: row => row.remainingQuantityToSupply,
     }),
   });
   columnDefinitions.push(GenericColumnKey.Selection);

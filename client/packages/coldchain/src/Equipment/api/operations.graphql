@@ -163,7 +163,7 @@ query assetById($storeId: String!, $assetId: String!) {
 
 query assetLogs(
   $filter: AssetLogFilterInput!
-  $sort: AssetLogSortInput
+  $sort: [AssetLogSortInput!]
   $storeId: String!
 ) {
   assetLogs(filter: $filter, sort: $sort, storeId: $storeId) {

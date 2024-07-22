@@ -95,6 +95,8 @@ const mapRoute = (route: string): RouteMapping => {
       };
     case inRoute(AppRoute.ImmunisationPrograms):
       return { title: 'immunisations', docs: '/programs/immunizations/' };
+    case inRoute(AppRoute.RnRForms):
+      return { title: 'r-and-r-forms', docs: '/programs/r-and-r-forms/' };
     default:
       return { title: undefined, docs: '/introduction/' };
   }

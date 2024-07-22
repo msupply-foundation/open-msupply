@@ -89,6 +89,7 @@ pub enum ChangelogTableName {
     AssetCatalogueItem,
     AssetCatalogueItemProperty,
     AssetCatalogueProperty,
+    AssetInternalLocation,
     #[default]
     SyncFileReference,
     Asset,
@@ -98,6 +99,7 @@ pub enum ChangelogTableName {
     Property,
     NameProperty,
     NameOmsFields,
+    RnRForm,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -142,6 +144,7 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueType => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::AssetInternalLocation => ChangeLogSyncStyle::Remote,
             ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
             ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
@@ -151,6 +154,7 @@ impl ChangelogTableName {
             ChangelogTableName::Property => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
+            ChangelogTableName::RnRForm => ChangeLogSyncStyle::Central,
         }
     }
 }

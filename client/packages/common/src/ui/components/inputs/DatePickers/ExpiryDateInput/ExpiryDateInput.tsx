@@ -1,6 +1,6 @@
 import React, { FC, useRef } from 'react';
 import { BaseDatePickerInput } from '../BaseDatePickerInput';
-import lastDayOfMonth from 'date-fns/lastDayOfMonth';
+import { lastDayOfMonth } from 'date-fns/lastDayOfMonth';
 
 interface ExpiryDateInputProps {
   value: Date | null;
