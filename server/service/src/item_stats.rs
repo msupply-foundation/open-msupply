@@ -17,6 +17,7 @@ pub struct ItemStatsFilter {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ItemStats {
+    pub total_consumption: f64,
     pub average_monthly_consumption: f64,
     pub available_stock_on_hand: f64,
     pub item_id: String,
@@ -133,6 +134,7 @@ impl ItemStats {
                 .get(&stock_on_hand.item_id)
                 .map(|consumption| *consumption / amc_lookback_months)
                 .unwrap_or_default(),
+                total_consumption: consumption_map.get(&stock_on_hand.item_id).copied().unwrap_or_default(),
             })
             .collect()
     }
@@ -144,6 +146,8 @@ impl ItemStats {
             available_stock_on_hand: row.available_stock_on_hand,
             item_id: requisition_line.item_row.id.clone(),
             item_name: requisition_line.item_row.name.clone(),
+            // TODO: Implement total consumption
+            total_consumption: 0.0,
         }
     }
 }
