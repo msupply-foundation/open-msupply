@@ -821,12 +821,6 @@ mutation createRnRForm($storeId: String!, $input: InsertRnRFormInput!) {
       __typename
       ...RnRForm
     }
-    ... on InsertRnRFormError {
-      __typename
-      error {
-        description
-      }
-    }
   }
 }
 

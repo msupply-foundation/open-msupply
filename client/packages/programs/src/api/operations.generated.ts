@@ -322,7 +322,7 @@ export type CreateRnRFormMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateRnRFormMutation = { __typename: 'Mutations', insertRnrForm: { __typename: 'InsertRnRFormError', error: { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDatetime: string, supplierName: string } };
+export type CreateRnRFormMutation = { __typename: 'Mutations', insertRnrForm: { __typename: 'RnRFormNode', id: string, programId: string, programName: string, periodId: string, periodName: string, createdDatetime: string, supplierName: string } };
 
 export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
 
@@ -1144,12 +1144,6 @@ export const CreateRnRFormDocument = gql`
     ... on RnRFormNode {
       __typename
       ...RnRForm
-    }
-    ... on InsertRnRFormError {
-      __typename
-      error {
-        description
-      }
     }
   }
 }

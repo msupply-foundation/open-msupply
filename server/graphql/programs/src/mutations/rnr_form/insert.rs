@@ -1,7 +1,6 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::RecordAlreadyExist,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -38,21 +37,9 @@ impl From<InsertRnRFormInput> for InsertRnRForm {
     }
 }
 
-#[derive(SimpleObject)]
-pub struct InsertRnRFormError {
-    pub error: InsertRnRFormErrorInterface,
-}
-
-#[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
-pub enum InsertRnRFormErrorInterface {
-    RAndRFormAlreadyExists(RecordAlreadyExist),
-}
-
 #[derive(Union)]
 pub enum InsertRnRFormResponse {
     Response(RnRFormNode),
-    Error(InsertRnRFormError),
 }
 
 pub fn insert_rnr_form(
@@ -85,13 +72,11 @@ pub fn insert_rnr_form(
             period_row,
             supplier_row: name_row,
         })),
-        Err(error) => Ok(InsertRnRFormResponse::Error(InsertRnRFormError {
-            error: map_error(error)?,
-        })),
+        Err(error) => map_error(error),
     }
 }
 
-fn map_error(error: ServiceError) -> Result<InsertRnRFormErrorInterface> {
+fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 

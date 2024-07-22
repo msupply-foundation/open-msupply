@@ -2858,15 +2858,6 @@ export type InsertRequestRequisitionResponseWithId = {
   response: InsertRequestRequisitionResponse;
 };
 
-export type InsertRnRFormError = {
-  __typename: 'InsertRnRFormError';
-  error: InsertRnRFormErrorInterface;
-};
-
-export type InsertRnRFormErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type InsertRnRFormInput = {
   id: Scalars['String']['input'];
   periodId: Scalars['String']['input'];
@@ -2874,7 +2865,7 @@ export type InsertRnRFormInput = {
   supplierId: Scalars['String']['input'];
 };
 
-export type InsertRnRFormResponse = InsertRnRFormError | RnRFormNode;
+export type InsertRnRFormResponse = RnRFormNode;
 
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
@@ -5920,7 +5911,7 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & InsertRnRFormErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };

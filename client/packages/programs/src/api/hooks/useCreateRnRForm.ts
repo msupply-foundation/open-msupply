@@ -1,7 +1,6 @@
 import {
   FnUtils,
   isEmpty,
-  noOtherVariants,
   SchedulePeriodNode,
   useMutation,
 } from '@openmsupply-client/common';
@@ -82,15 +81,6 @@ const useCreate = () => {
       const result = apiResult.insertRnrForm;
 
       if (result.__typename === 'RnRFormNode') return result;
-
-      if (result.__typename === 'InsertRnRFormError') {
-        if (result.error.__typename === 'RecordAlreadyExist') {
-          // setErrorMessage(t('error.program-already-exists'));
-        } else {
-          noOtherVariants(result.error.__typename);
-        }
-        return;
-      }
     }
 
     throw new Error('Unable to create R&R Form');
