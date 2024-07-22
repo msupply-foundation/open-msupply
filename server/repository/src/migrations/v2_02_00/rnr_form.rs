@@ -60,7 +60,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 requested_quantity {DOUBLE} NOT NULL,
 
                 comment TEXT,
-                confirmed BOOLEAN NOT NULL DEFAULT FALSE,
+                confirmed BOOLEAN NOT NULL DEFAULT FALSE
             );
 
         "#

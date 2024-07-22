@@ -4,6 +4,7 @@ use crate::StorageConnection;
 
 mod create_missing_master_list_and_program;
 mod create_system_user;
+mod item_ven;
 mod report_add_report_context;
 mod rnr_form;
 mod store_preferences_for_reports;
@@ -21,6 +22,7 @@ impl Migration for V2_02_00 {
         store_preferences_for_reports::migrate(connection)?;
         rnr_form::migrate(connection)?;
         report_add_report_context::migrate(connection)?;
+        item_ven::migrate(connection)?;
         Ok(())
     }
 }
