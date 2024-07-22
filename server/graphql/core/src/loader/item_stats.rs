@@ -12,7 +12,7 @@ pub struct ItemsStatsForItemLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-pub type ItemStatsLoaderInputPayload = Option<u32>; // amc_lookback_months
+pub type ItemStatsLoaderInputPayload = Option<f64>; // amc_lookback_months
 pub type ItemStatsLoaderInput = IdPair<ItemStatsLoaderInputPayload>;
 impl ItemStatsLoaderInput {
     pub fn new(store_id: &str, item_id: &str, payload: ItemStatsLoaderInputPayload) -> Self {

@@ -3,9 +3,7 @@ use std::{collections::HashMap, ops::Neg};
 use crate::service_provider::ServiceContext;
 use chrono::Duration;
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
-    RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
-    StorageConnection,
+    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter, RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection, StorePreferenceRowRepository
 };
 use util::{
     constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
@@ -30,7 +28,7 @@ pub trait ItemStatsServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        amc_lookback_months: Option<u32>,
+        amc_lookback_months: Option<f64>,
         filter: Option<ItemStatsFilter>,
     ) -> Result<Vec<ItemStats>, RepositoryError> {
         get_item_stats(ctx, store_id, amc_lookback_months, filter)
@@ -43,22 +41,37 @@ impl ItemStatsServiceTrait for ItemStatsService {}
 pub fn get_item_stats(
     ctx: &ServiceContext,
     store_id: &str,
-    amc_lookback_months: Option<u32>,
+    amc_lookback_months: Option<f64>,
     filter: Option<ItemStatsFilter>,
 ) -> Result<Vec<ItemStats>, RepositoryError> {
     let ItemStatsFilter {
         item_id: item_id_filter,
     } = filter.unwrap_or_default();
 
-    let amc_lookback_months = amc_lookback_months.unwrap_or(DEFAULT_AMC_LOOKBACK_MONTHS);
+    let default_amc = StorePreferenceRowRepository::new(&ctx.connection)
+        .find_one_by_id(store_id)?
+        .map_or(DEFAULT_AMC_LOOKBACK_MONTHS.into(), |row| {
+            if row.monthly_consumption_look_back_period == 0.0 {
+            DEFAULT_AMC_LOOKBACK_MONTHS.into()
+            } else {
+            row.monthly_consumption_look_back_period
+            }
+        });
+
+    let amc_lookback_months = match amc_lookback_months {
+        Some(months) => months,
+        None => default_amc,
+    };
+
+    let consumption_rows = get_consumption_rows(
+        &ctx.connection,
+        store_id,
+        item_id_filter.clone(),
+        amc_lookback_months,
+    )?;
 
     Ok(ItemStats::new_vec(
-        get_consumption_rows(
-            &ctx.connection,
-            store_id,
-            item_id_filter.clone(),
-            amc_lookback_months,
-        )?,
+        consumption_rows.clone(),
         get_stock_on_hand_rows(&ctx.connection, store_id, item_id_filter)?,
         amc_lookback_months,
     ))
@@ -68,10 +81,10 @@ pub fn get_consumption_rows(
     connection: &StorageConnection,
     store_id: &str,
     item_id_filter: Option<EqualFilter<String>>,
-    amc_lookback_months: u32,
+    amc_lookback_months: f64,
 ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
     let start_date = date_now_with_offset(Duration::days(
-        (amc_lookback_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64,
+        (amc_lookback_months * NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64,
     ));
 
     let filter = ConsumptionFilter {
@@ -100,10 +113,10 @@ impl ItemStats {
     fn new_vec(
         consumption_rows: Vec<ConsumptionRow>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
-        amc_lookback_months: u32,
+        amc_lookback_months: f64,
     ) -> Vec<Self> {
         let mut consumption_map = HashMap::new();
-        for consumption_row in consumption_rows.into_iter() {
+        for consumption_row in consumption_rows.clone().into_iter() {
             let item_total_consumption = consumption_map
                 .entry(consumption_row.item_id.clone())
                 .or_insert(0.0);
@@ -117,9 +130,9 @@ impl ItemStats {
                 item_id: stock_on_hand.item_id.clone(),
                 item_name: stock_on_hand.item_name.clone(),
                 average_monthly_consumption: consumption_map
-                    .get(&stock_on_hand.item_id)
-                    .map(|consumption| *consumption / amc_lookback_months as f64)
-                    .unwrap_or_default(),
+                .get(&stock_on_hand.item_id)
+                .map(|consumption| *consumption / amc_lookback_months)
+                .unwrap_or_default(),
             })
             .collect()
     }
@@ -149,7 +162,7 @@ impl ItemStatsFilter {
 mod test {
     use repository::{
         mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
-        test_db, EqualFilter,
+        test_db, EqualFilter
     };
 
     use crate::{item_stats::ItemStatsFilter, service_provider::ServiceProvider};
