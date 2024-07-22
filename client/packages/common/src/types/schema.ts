@@ -5253,6 +5253,7 @@ export type Queries = {
   refreshToken: RefreshTokenResponse;
   repack: RepackResponse;
   repacksByStockLine: RepackConnector;
+  report: ReportResponse;
   /** Queries a list of available reports */
   reports: ReportsResponse;
   requisition: RequisitionResponse;
@@ -5715,6 +5716,12 @@ export type QueriesRepacksByStockLineArgs = {
 };
 
 
+export type QueriesReportArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -5956,6 +5963,7 @@ export enum ReportContext {
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
   Repack = 'REPACK',
+  Report = 'REPORT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
@@ -5977,6 +5985,8 @@ export type ReportNode = {
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
 };
+
+export type ReportResponse = ReportNode;
 
 export enum ReportSortFieldInput {
   Id = 'id',

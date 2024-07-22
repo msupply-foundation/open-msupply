@@ -7,11 +7,11 @@ import {
   useNotification,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
-import { useReportApi } from './useReportApi';
 import { Printer } from '@bcyesil/capacitor-plugin-printer';
 import { JsonData } from '@openmsupply-client/programs';
+import { useReportGraphQL } from '../useReportGraphQL';
 
-type PrintReportParams = {
+export type PrintReportParams = {
   reportId: string;
   dataId?: string;
   args?: JsonData;
@@ -60,14 +60,29 @@ const printPage = (url: string) => {
 };
 
 export const usePrintReport = () => {
-  const api = useReportApi();
+  const { reportApi, storeId } = useReportGraphQL();
   const { error } = useNotification();
-  const { mutate, isLoading } = useMutation<
-    string,
-    Error,
-    PrintReportParams,
-    unknown
-  >(params => api.get.print(params), {
+
+  const mutationFn = async (params: PrintReportParams) => {
+    const { dataId, reportId, args, sort } = params;
+
+    const result = await reportApi.printReport({
+      dataId,
+      reportId,
+      storeId,
+      format: EnvUtils.printFormat,
+      arguments: args,
+      sort,
+    });
+    if (result?.printReport?.__typename === 'PrintReportNode') {
+      return result.printReport.fileId;
+    }
+
+    throw new Error('Unable to print report');
+  };
+
+  const { mutate, isLoading } = useMutation({
+    mutationFn,
     onSuccess: fileId => {
       if (!fileId) throw new Error('Error printing report');
       const url = `${Environment.FILE_URL}${fileId}`;
@@ -78,7 +93,7 @@ export const usePrintReport = () => {
         win?.focus();
       }
     },
-    onError: e => {
+    onError: (e: Error) => {
       error(e.message)();
     },
   });
