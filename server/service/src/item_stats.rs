@@ -162,7 +162,7 @@ impl ItemStatsFilter {
 mod test {
     use repository::{
         mock::{mock_store_a, mock_store_b, test_item_stats, MockDataInserts},
-        test_db, EqualFilter
+        test_db, EqualFilter, StorePreferenceRow, StorePreferenceRowRepository,
     };
 
     use crate::{item_stats::ItemStatsFilter, service_provider::ServiceProvider};
@@ -207,9 +207,37 @@ mod test {
             test_item_stats::item2_amc_3_months()
         );
 
-        // Reduce to looking back 10 days
+        // Reduce to looking back 1 month
         let mut item_stats = service
-            .get_item_stats(&context, &mock_store_a().id, Some(1), filter.clone())
+            .get_item_stats(&context, &mock_store_a().id, Some(1.0), filter.clone())
+            .unwrap();
+        item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+
+        assert_eq!(item_stats.len(), 2);
+        assert_eq!(
+            item_stats[0].available_stock_on_hand,
+            test_item_stats::item_1_soh()
+        );
+        assert_eq!(
+            item_stats[1].available_stock_on_hand,
+            test_item_stats::item_2_soh()
+        );
+
+        assert_eq!(
+            item_stats[0].average_monthly_consumption,
+            test_item_stats::item1_amc_1_months()
+        );
+
+        // Reduce to looking back 1 month through store pref
+        StorePreferenceRowRepository::new(&context.connection)
+            .upsert_one(&StorePreferenceRow {
+                id: mock_store_a().id.clone(),
+                monthly_consumption_look_back_period: 1.0,
+                ..Default::default()
+            })
+            .unwrap();
+        let mut item_stats = service
+            .get_item_stats(&context, &mock_store_a().id, None, filter.clone())
             .unwrap();
         item_stats.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 

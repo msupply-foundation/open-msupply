@@ -6,6 +6,7 @@ pub struct ItemStatsNode {
 
 #[Object]
 impl ItemStatsNode {
+
     pub async fn average_monthly_consumption(&self) -> f64 {
         self.item_stats.average_monthly_consumption
     }
