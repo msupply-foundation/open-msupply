@@ -5,11 +5,11 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{program_node::ProgramNode, rnr_form::RnRFormNode};
-use repository::{NameRow, PeriodRow, ProgramRow, RnRFormRow};
+use graphql_types::types::rnr_form::RnRFormNode;
+use repository::RnRForm;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    // program::insert_immunisation::{InsertRnRForm, InsertRnRFormError as ServiceError},
+    rnr_form::insert::{InsertRnRForm, InsertRnRFormError as ServiceError},
 };
 
 #[derive(InputObject)]
@@ -20,14 +20,23 @@ pub struct InsertRnRFormInput {
     pub period_id: String,
 }
 
-// impl From<InsertRnRFormInput> for InsertRnRForm {
-//     fn from(input: InsertRnRFormInput) -> Self {
-//         Self {
-//             id: input.id,
-//             name: input.name,
-//         }
-//     }
-// }
+impl From<InsertRnRFormInput> for InsertRnRForm {
+    fn from(
+        InsertRnRFormInput {
+            id,
+            supplier_id,
+            program_id,
+            period_id,
+        }: InsertRnRFormInput,
+    ) -> Self {
+        Self {
+            id,
+            supplier_id,
+            program_id,
+            period_id,
+        }
+    }
+}
 
 #[derive(SimpleObject)]
 pub struct InsertRnRFormError {
@@ -39,26 +48,6 @@ pub struct InsertRnRFormError {
 pub enum InsertRnRFormErrorInterface {
     RAndRFormAlreadyExists(RecordAlreadyExist),
 }
-
-// fn map_error(error: ServiceError) -> Result<InsertRnRFormErrorInterface> {
-//     use StandardGraphqlError::*;
-//     let formatted_error = format!("{:#?}", error);
-
-//     let graphql_error = match error {
-//         // Structured errors
-//         ServiceError::RnRFormAlreadyExists => {
-//             return Ok(InsertRnRFormErrorInterface::ProgramAlreadyExists(
-//                 RecordAlreadyExist,
-//             ))
-//         }
-
-//         // Standard Graphql Errors
-//         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
-//         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-//     };
-
-//     Err(graphql_error.extend())
-// }
 
 #[derive(Union)]
 pub enum InsertRnRFormResponse {
@@ -80,21 +69,46 @@ pub fn insert_rnr_form(
     )?;
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-    // match service_provider
-    //     .program_service
-    //     .insert_rnr_form(&service_context, input.into())
-    // {
-    //     Ok(row) => Ok(InsertRnRFormResponse::Response(ProgramNode {
-    //         program_row: row,
-    //     })),
-    //     Err(error) => Ok(InsertRnRFormResponse::Error(InsertRnRFormError {
-    //         error: map_error(error)?,
-    //     })),
-    // }
-    Ok(InsertRnRFormResponse::Response(RnRFormNode {
-        rnr_form_row: RnRFormRow::default(),
-        program_row: ProgramRow::default(),
-        period_row: PeriodRow::default(),
-        supplier_row: NameRow::default(),
-    }))
+    match service_provider
+        .rnr_form_service
+        .insert_rnr_form(&service_context, input.into())
+    {
+        Ok(RnRForm {
+            rnr_form_row,
+            name_row,
+            store_row: _,
+            period_row,
+            program_row,
+        }) => Ok(InsertRnRFormResponse::Response(RnRFormNode {
+            rnr_form_row,
+            program_row,
+            period_row,
+            supplier_row: name_row,
+        })),
+        Err(error) => Ok(InsertRnRFormResponse::Error(InsertRnRFormError {
+            error: map_error(error)?,
+        })),
+    }
+}
+
+fn map_error(error: ServiceError) -> Result<InsertRnRFormErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        ServiceError::RnRFormAlreadyExists
+        | ServiceError::SupplierDoesNotExist
+        | ServiceError::SupplierNotVisible
+        | ServiceError::NotASupplier
+        | ServiceError::ProgramDoesNotExist
+        | ServiceError::PeriodDoesNotExist
+        | ServiceError::PeriodNotInProgramSchedule
+        | ServiceError::RnRFormAlreadyExistsForPeriod => BadUserInput(formatted_error),
+
+        ServiceError::InternalError(_)
+        | ServiceError::NewlyCreatedRnRFormDoesNotExist
+        | ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
