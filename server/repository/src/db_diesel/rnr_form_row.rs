@@ -127,11 +127,6 @@ impl<'a> RnRFormRowRepository<'a> {
 }
 
 impl Upsert for RnRFormRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = RnRFormRowRepository::new(con).upsert_one(self)?;
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = RnRFormRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))

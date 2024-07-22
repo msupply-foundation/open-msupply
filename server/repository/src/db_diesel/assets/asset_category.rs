@@ -161,7 +161,7 @@ mod tests {
             name: class_name.clone(),
         };
         let class_row_repo = AssetClassRowRepository::new(&storage_connection);
-        class_row_repo.insert_one(&class_row).unwrap();
+        class_row_repo.upsert_one(&class_row).unwrap();
 
         // Create the category
         let id = "test_id".to_string();
@@ -169,7 +169,7 @@ mod tests {
 
         // Insert a row
         let _category_row =
-            AssetCategoryRowRepository::new(&storage_connection).insert_one(&AssetCategoryRow {
+            AssetCategoryRowRepository::new(&storage_connection).upsert_one(&AssetCategoryRow {
                 id: id.clone(),
                 name: name.clone(),
                 class_id: class_id.clone(),

@@ -146,7 +146,7 @@ mod tests {
 
         // Insert a row
         let _reference_data_row =
-            AssetClassRowRepository::new(&storage_connection).insert_one(&AssetClassRow {
+            AssetClassRowRepository::new(&storage_connection).upsert_one(&AssetClassRow {
                 id: id.clone(),
                 name: name.clone(),
             });
