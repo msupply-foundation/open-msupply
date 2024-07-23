@@ -5804,6 +5804,7 @@ export type QueriesReturnReasonsArgs = {
 
 export type QueriesSchedulesWithPeriodsByProgramArgs = {
   programId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 

@@ -270,9 +270,10 @@ impl ProgramsQueries {
     pub async fn schedules_with_periods_by_program(
         &self,
         ctx: &Context<'_>,
+        store_id: String,
         program_id: String,
     ) -> Result<PeriodSchedulesResponse> {
-        get_schedules_with_periods_by_program(ctx, program_id)
+        get_schedules_with_periods_by_program(ctx, store_id, program_id)
     }
 }
 
