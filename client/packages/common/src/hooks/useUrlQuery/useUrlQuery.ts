@@ -45,10 +45,11 @@ const numberRangeRegex = new RegExp(
 );
 
 interface useUrlQueryProps {
-  // an array of keys - the values of which should not be parsed before
-  // returning by default the value of parameters will be coerced to a number if
-  // !isNaN and to boolean if 'true' or 'false'. Specify keys here if you wish
-  // to opt out of this
+  // an array of keys - the values of which should not be parsed before returning.
+  // By default the value of parameters will be coerced as follows:
+  // - Booleans: 'true' => true, 'false' => false
+  // - Numbers: any string that doesn't return NaN when cast to a number e.g. '24' => 24
+  // Specify keys here if you wish to opt out of this
   skipParse?: string[];
 }
 
