@@ -84,7 +84,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         {
             let changelog_repo = ChangelogRepository::new(&previous_connection);
             let cursor = changelog_repo.latest_cursor().unwrap();
-            integrate(&previous_connection, &integration_records).unwrap();
+            integrate(&previous_connection, &integration_records, None).unwrap();
             // Need to reset is_sync_update since we've inserted test data with sync methods
             // they need to sync to central (if is_sync_update is set to true they will not sync to central)
             changelog_repo.reset_is_sync_update(cursor).unwrap();
@@ -116,7 +116,7 @@ fn replace_system_name_ids(
         .expect("Cannot find inventory adjustment name");
 
     for record in records {
-        let IntegrationOperation::Upsert(record, None) = record else {
+        let IntegrationOperation::Upsert(record) = record else {
             continue;
         };
 

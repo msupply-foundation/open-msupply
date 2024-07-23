@@ -113,11 +113,6 @@ impl<'a> AssetPropertyRowRepository<'a> {
 }
 
 impl Upsert for AssetPropertyRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = AssetPropertyRowRepository::new(con).upsert_one(self)?;
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = AssetPropertyRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))

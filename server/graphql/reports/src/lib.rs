@@ -1,7 +1,9 @@
 use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use printing::{print_report, print_report_definition, PrintReportResponse};
-use reports::{reports, ReportFilterInput, ReportSortInput, ReportsResponse};
+use reports::{
+    report, reports, ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse,
+};
 
 mod printing;
 mod reports;
@@ -17,6 +19,15 @@ pub enum PrintFormat {
 
 #[Object]
 impl ReportQueries {
+    pub async fn report(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<ReportResponse> {
+        report(ctx, store_id, id)
+    }
+
     /// Queries a list of available reports
     pub async fn reports(
         &self,

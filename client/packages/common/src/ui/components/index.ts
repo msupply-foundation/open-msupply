@@ -22,6 +22,7 @@ import MuiLink from '@mui/material/Link';
 import StepLabel from '@mui/material/StepLabel';
 import Step from '@mui/material/Step';
 import Stepper from '@mui/material/Stepper';
+import Card from '@mui/material/Card';
 import {
   DatePicker,
   DatePickerProps,
@@ -83,4 +84,5 @@ export {
   DateTimePicker,
   DateTimePickerProps,
   FormLabel,
+  Card,
 };
