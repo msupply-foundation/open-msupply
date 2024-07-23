@@ -12,7 +12,6 @@ import {
   Card,
   Grid,
   Typography,
-  useUrlQuery,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { JsonData } from '@openmsupply-client/programs';
@@ -39,12 +38,10 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
   setReportWithArgs,
 }) => {
   const navigate = useNavigate();
-  const { updateQuery } = useUrlQuery();
 
   const reportArgs = useCallback(
     (report: ReportRowFragment, args: JsonData | undefined) => {
       const stringifyArgs = JSON.stringify(args);
-      updateQuery({ reportArgs: stringifyArgs });
       navigate(
         RouteBuilder.create(AppRoute.Reports)
           .addPart(`${report.id}?reportArgs=${stringifyArgs}`)
