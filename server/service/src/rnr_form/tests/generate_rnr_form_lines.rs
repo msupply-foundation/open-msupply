@@ -54,9 +54,11 @@ mod generate_rnr_form_lines {
 
         let result = generate_rnr_form_lines(
             &context,
+            &context.store_id,
             &rnr_form_id,
             &mock_master_list_program_b().master_list.id,
             mock_period_2_a(),
+            None,
         )
         .unwrap();
 

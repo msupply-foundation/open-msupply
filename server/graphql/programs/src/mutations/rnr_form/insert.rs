@@ -81,6 +81,8 @@ fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
+    // TODO; structured error for: u need to finish the previous one?
+
     let graphql_error = match error {
         ServiceError::RnRFormAlreadyExists
         | ServiceError::SupplierDoesNotExist

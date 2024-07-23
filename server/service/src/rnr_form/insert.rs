@@ -6,9 +6,9 @@ use crate::{
 
 use chrono::Utc;
 use repository::{
-    ActivityLogType, PeriodRow, ProgramRequisitionSettingsRowRepository, RepositoryError, RnRForm,
-    RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, RnRFormStatus,
-    StorageConnection,
+    ActivityLogType, EqualFilter, PeriodRow, ProgramRequisitionSettingsRowRepository,
+    RepositoryError, RnRForm, RnRFormFilter, RnRFormLineRow, RnRFormLineRowRepository,
+    RnRFormRepository, RnRFormRow, RnRFormRowRepository, RnRFormStatus, StorageConnection,
 };
 
 use super::{
@@ -152,6 +152,18 @@ fn generate(
 ) -> Result<(RnRFormRow, Vec<RnRFormLineRow>), RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
 
+    // TODO: this should be in validate, need to get previous period and see if previous form exists
+    // if no, do any forms exist? if yes, error
+
+    // TODO: error if trying to create another before prev is finalised!!
+    // Query one, as query sorts by created date, should return latest
+    let previous_form = RnRFormRepository::new(&ctx.connection).query_one(
+        RnRFormFilter::new()
+            .store_id(EqualFilter::equal_to(&ctx.store_id))
+            .program_id(EqualFilter::equal_to(&program_id))
+            .period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id)),
+    )?;
+
     let rnr_form = RnRFormRow {
         id,
         period_id,
@@ -165,7 +177,14 @@ fn generate(
         linked_requisition_id: None,
     };
 
-    let rnr_form_lines = generate_rnr_form_lines(ctx, &rnr_form.id, master_list_id, period)?;
+    let rnr_form_lines = generate_rnr_form_lines(
+        ctx,
+        &ctx.store_id,
+        &rnr_form.id,
+        master_list_id,
+        period,
+        previous_form,
+    )?;
 
     Ok((rnr_form, rnr_form_lines))
 }
