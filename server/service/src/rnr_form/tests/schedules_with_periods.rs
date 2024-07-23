@@ -1,12 +1,11 @@
 #[cfg(test)]
 mod query {
     use repository::mock::{
-        mock_name_tag_1, mock_name_tag_2, mock_period_2_a, mock_period_2_b, mock_period_schedule_2,
-        mock_store_a, MockData,
+        mock_name_tag_1, mock_name_tag_2, mock_period_2_b, mock_period_schedule_2, MockData,
     };
     use repository::mock::{mock_program_b, MockDataInserts};
     use repository::test_db::setup_all_with_data;
-    use repository::{ProgramRequisitionSettingsRow, RnRFormRow};
+    use repository::ProgramRequisitionSettingsRow;
 
     use crate::service_provider::ServiceProvider;
 
@@ -32,14 +31,6 @@ mod query {
                         period_schedule_id: mock_period_schedule_2().id,
                     },
                 ],
-                rnr_forms: vec![RnRFormRow {
-                    id: "rnr_form_1".to_string(),
-                    store_id: mock_store_a().id,
-                    name_link_id: String::from("name_store_b"),
-                    period_id: mock_period_2_a().id,
-                    program_id: mock_program_b().id,
-                    ..Default::default()
-                }],
                 ..MockData::default()
             },
         )

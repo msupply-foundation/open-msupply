@@ -7,6 +7,13 @@ pub fn context_program_a() -> ContextRow {
     }
 }
 
+pub fn context_program_b() -> ContextRow {
+    ContextRow {
+        id: "program_b".to_string(),
+        name: "Context for program_b".to_string(),
+    }
+}
+
 pub fn context_immunisation_program() -> ContextRow {
     ContextRow {
         id: "immunisation_program".to_string(),
@@ -15,5 +22,9 @@ pub fn context_immunisation_program() -> ContextRow {
 }
 
 pub fn mock_contexts() -> Vec<ContextRow> {
-    vec![context_program_a(), context_immunisation_program()]
+    vec![
+        context_program_a(),
+        context_program_b(),
+        context_immunisation_program(),
+    ]
 }
