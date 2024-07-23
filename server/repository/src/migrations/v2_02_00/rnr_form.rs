@@ -5,7 +5,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-          CREATE TYPE rnr_form_status AS ENUM (
+          CREATE TYPE rn_r_form_status AS ENUM (
             'DRAFT',
             'FINALISED'
           );
@@ -13,7 +13,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     )?;
 
     const RNR_FORM_STATUS_ENUM_TYPE: &str = if cfg!(feature = "postgres") {
-        "rnr_form_status"
+        "rn_r_form_status"
     } else {
         "TEXT"
     };

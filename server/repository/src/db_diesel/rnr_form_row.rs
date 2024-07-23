@@ -97,7 +97,7 @@ impl<'a> RnRFormRowRepository<'a> {
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::RnRForm,
+            table_name: ChangelogTableName::RnrForm,
             record_id,
             row_action: action,
             store_id: None,
