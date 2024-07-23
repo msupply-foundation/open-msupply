@@ -343,6 +343,7 @@ export type PeriodFragment = { __typename: 'PeriodNode', id: string, name: strin
 export type PeriodScheduleFragment = { __typename: 'PeriodScheduleNode', id: string, name: string, periods: Array<{ __typename: 'SchedulePeriodNode', id: string, inUse: boolean, period: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } }> };
 
 export type SchedulesAndPeriodsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
   programId: Types.Scalars['String']['input'];
 }>;
 
@@ -1168,8 +1169,8 @@ export const ProgramsDocument = gql`
 }
     ${ProgramFragmentDoc}`;
 export const SchedulesAndPeriodsDocument = gql`
-    query schedulesAndPeriods($programId: String!) {
-  schedulesWithPeriodsByProgram(programId: $programId) {
+    query schedulesAndPeriods($storeId: String!, $programId: String!) {
+  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
     __typename
     ... on PeriodSchedulesConnector {
       nodes {

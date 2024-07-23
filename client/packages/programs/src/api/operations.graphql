@@ -873,8 +873,8 @@ fragment PeriodSchedule on PeriodScheduleNode {
   }
 }
 
-query schedulesAndPeriods($programId: String!) {
-  schedulesWithPeriodsByProgram(programId: $programId) {
+query schedulesAndPeriods($storeId: String!, $programId: String!) {
+  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
     __typename
     ... on PeriodSchedulesConnector {
       nodes {

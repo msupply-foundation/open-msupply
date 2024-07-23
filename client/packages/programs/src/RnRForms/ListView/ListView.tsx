@@ -66,7 +66,7 @@ const RnRFormListComponent = () => {
 
   return (
     <>
-      <RnRFormCreateModal isOpen={isOpen} onClose={onClose} />
+      {isOpen && <RnRFormCreateModal isOpen={isOpen} onClose={onClose} />}
       <Toolbar />
       <AppBarButtons onCreate={onOpen} />
       <DataTable

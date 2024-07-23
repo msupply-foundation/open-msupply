@@ -1,14 +1,10 @@
-import {
-  ProgramSortFieldInput,
-  useQuery,
-} from '@openmsupply-client/common';
+import { ProgramSortFieldInput, useQuery } from '@openmsupply-client/common';
 import { ProgramFragment } from '../operations.generated';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { LIST, PROGRAM } from './keys';
 
 export const useProgramList = () => {
   const { api, storeId } = useProgramsGraphQL();
-
 
   const queryKey = [PROGRAM, LIST];
   const queryFn = async (): Promise<{
@@ -21,7 +17,7 @@ export const useProgramList = () => {
 
     const query = await api.programs({
       storeId,
-      first: 1000, // TODO: remove arbitrary limit
+      first: 1000,
       offset: 0,
       key: ProgramSortFieldInput.Name,
       desc: false,
