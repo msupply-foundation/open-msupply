@@ -56,7 +56,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 stock_out_duration INTEGER NOT NULL,
                 final_balance {DOUBLE} NOT NULL,
                 maximum_quantity {DOUBLE} NOT NULL,
-                expiration_date {DATE},
+                expiry_date {DATE},
                 requested_quantity {DOUBLE} NOT NULL,
 
                 comment TEXT,
