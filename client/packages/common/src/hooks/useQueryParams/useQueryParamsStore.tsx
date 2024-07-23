@@ -15,7 +15,6 @@ export interface QueryParamsState<T extends RecordWithId> {
   pagination: PaginationController;
   sort: SortController<T>;
   filter: FilterController;
-  reportArgs: string;
   paramList: () => {
     first: number;
     offset: number;
@@ -142,7 +141,6 @@ export const createQueryParamsStore = <T extends RecordWithId>({
           return { ...state, filter: { ...rest, filterBy } };
         }),
     },
-    reportArgs: '',
     paramList: () => {
       const { pagination, sort, filter } = get();
       return {
