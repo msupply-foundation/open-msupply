@@ -4,6 +4,7 @@ import {
   Grid,
   ReportContext,
   TrendingDownIcon,
+  useAuthContext,
   useTranslation,
 } from '@openmsupply-client/common';
 import { AppBarButtons } from './AppBarButton';
@@ -13,6 +14,7 @@ import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
 
 export const ListView = () => {
   const t = useTranslation('reports');
+  const { store } = useAuthContext();
   const { data } = useReportList({
     queryParams: {
       filterBy: {
@@ -30,6 +32,11 @@ export const ListView = () => {
   );
   const expiringReports = data?.nodes?.filter(
     report => report?.subContext === 'Expiring'
+  );
+  const programReports = data?.nodes?.filter(
+    report =>
+      report?.subContext === 'HIVCareProgram' &&
+      report?.context === ReportContext.Dispensary
   );
   const onReportClick = (report: ReportRowFragment) => {
     if (report.argumentSchema) {
@@ -63,6 +70,16 @@ export const ListView = () => {
           reportWithArgs={reportWithArgs}
           setReportWithArgs={setReportWithArgs}
         />
+        {store?.preferences?.omProgramModule && (
+          <ReportWidget
+            title={t('label.programs')}
+            Icon={TrendingDownIcon}
+            reports={programReports}
+            onReportClick={onReportClick}
+            reportWithArgs={reportWithArgs}
+            setReportWithArgs={setReportWithArgs}
+          />
+        )}
       </Grid>
 
       <AppBarButtons />
