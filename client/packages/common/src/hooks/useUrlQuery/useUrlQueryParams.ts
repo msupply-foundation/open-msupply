@@ -139,6 +139,7 @@ export const useUrlQueryParams = ({
       isDesc: urlQuery['dir'] === 'desc',
     } as SortBy<unknown>,
     filterBy: filter.filterBy,
+    reportArgs: urlQuery['reportArgs'],
   };
 
   return {

@@ -38,7 +38,7 @@ query reports(
   }
 }
 
-query printReport(
+query generateReport(
   $storeId: String!
   $reportId: String!
   $dataId: String
@@ -46,7 +46,7 @@ query printReport(
   $format: PrintFormat
   $sort: PrintReportSortInput
 ) {
-  printReport(
+  generateReport(
     dataId: $dataId
     reportId: $reportId
     storeId: $storeId
