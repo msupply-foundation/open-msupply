@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Neg};
 
 use crate::service_provider::ServiceContext;
-use chrono::Duration;
+use chrono::{Duration, NaiveDate};
 use repository::{
     ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
     RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
@@ -9,7 +9,7 @@ use repository::{
 };
 use util::{
     constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
-    date_now_with_offset,
+    date_now, date_with_offset,
 };
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -51,13 +51,15 @@ pub fn get_item_stats(
     } = filter.unwrap_or_default();
 
     let amc_lookback_months = amc_lookback_months.unwrap_or(DEFAULT_AMC_LOOKBACK_MONTHS);
+    let lookback_days = (amc_lookback_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64;
 
     Ok(ItemStats::new_vec(
         get_consumption_rows(
             &ctx.connection,
             store_id,
             item_id_filter.clone(),
-            amc_lookback_months,
+            lookback_days,
+            &date_now(),
         )?,
         get_stock_on_hand_rows(&ctx.connection, store_id, item_id_filter)?,
         amc_lookback_months,
@@ -68,16 +70,15 @@ pub fn get_consumption_rows(
     connection: &StorageConnection,
     store_id: &str,
     item_id_filter: Option<EqualFilter<String>>,
-    amc_lookback_months: u32,
+    lookback_days: i64,
+    end_date: &NaiveDate,
 ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
-    let start_date = date_now_with_offset(Duration::days(
-        (amc_lookback_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64,
-    ));
+    let start_date = date_with_offset(end_date, Duration::days(lookback_days));
 
     let filter = ConsumptionFilter {
         item_id: item_id_filter,
         store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::after_or_equal_to(start_date)),
+        date: Some(DateFilter::date_range(&start_date, end_date)),
     };
 
     ConsumptionRepository::new(connection).query(Some(filter))
@@ -96,19 +97,24 @@ pub fn get_stock_on_hand_rows(
     StockOnHandRepository::new(connection).query(Some(filter))
 }
 
+pub fn get_consumption_map(consumption_rows: Vec<ConsumptionRow>) -> HashMap<String, f64> {
+    let mut consumption_map = HashMap::new();
+    for consumption_row in consumption_rows.into_iter() {
+        let item_total_consumption = consumption_map
+            .entry(consumption_row.item_id.clone())
+            .or_insert(0.0);
+        *item_total_consumption += consumption_row.quantity;
+    }
+    consumption_map
+}
+
 impl ItemStats {
     fn new_vec(
         consumption_rows: Vec<ConsumptionRow>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
         amc_lookback_months: u32,
     ) -> Vec<Self> {
-        let mut consumption_map = HashMap::new();
-        for consumption_row in consumption_rows.into_iter() {
-            let item_total_consumption = consumption_map
-                .entry(consumption_row.item_id.clone())
-                .or_insert(0.0);
-            *item_total_consumption += consumption_row.quantity;
-        }
+        let consumption_map = get_consumption_map(consumption_rows);
 
         stock_on_hand_rows
             .into_iter()
