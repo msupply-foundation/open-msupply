@@ -48,6 +48,8 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("asset", "created_datetime"),
         ("asset", "modified_datetime"),
         ("sync_file_reference", "created_datetime"),
+        ("rnr_form", "created_datetime"),
+        ("rnr_form", "finalised_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
