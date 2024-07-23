@@ -26,11 +26,11 @@ query AuthToken($username: String!, $password: String) {
 const PRINT_QUERY: &str = r#"
 query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON, $format: PrintFormat) {
   generateReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments, format: $format) {
-    ... on GenerateReportNode {
+    ... on PrintReportNode {
       __typename
       fileId
     }
-    ... on GenerateReportError {
+    ... on PrintReportError {
       __typename
       error {
         description
@@ -111,7 +111,7 @@ fn generate_request(
     let status = response.status();
     let gql_result: GraphQlResponse = response.json()?;
     let result = &gql_result.data["generateReportDefinition"];
-    if result["__typename"] != "GenerateReportNode" {
+    if result["__typename"] != "PrintReportNode" {
         return Err(anyhow::Error::msg(format!(
             "Failed to generate report: status={:?}  {:#?}",
             status, gql_result
