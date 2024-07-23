@@ -43,8 +43,8 @@ query generateReport(
   $reportId: String!
   $dataId: String
   $arguments: JSON
-  $format: GenerateFormat
-  $sort: GenerateReportSortInput
+  $format: PrintFormat
+  $sort: PrintReportSortInput
 ) {
   generateReport(
     dataId: $dataId
@@ -54,11 +54,11 @@ query generateReport(
     arguments: $arguments
     sort: $sort
   ) {
-    ... on GenerateReportNode {
+    ... on PrintReportNode {
       __typename
       fileId
     }
-    ... on GenerateReportError {
+    ... on PrintReportError {
       __typename
       error {
         ... on FailedToFetchReportData {

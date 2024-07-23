@@ -1,5 +1,5 @@
 import { LocaleKey } from '@common/intl';
-import { GenerateFormat } from '@common/types';
+import { PrintFormat } from '@common/types';
 import { AppRoute } from '@openmsupply-client/config';
 
 export enum Platform {
@@ -126,5 +126,5 @@ export const EnvUtils = {
   isTouchScreen,
   mapRoute,
   platform,
-  generateFormat: GenerateFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
+  printFormat: PrintFormat.Html, // platform === Platform.Android ? PrintFormat.Html : PrintFormat.Pdf,
 };

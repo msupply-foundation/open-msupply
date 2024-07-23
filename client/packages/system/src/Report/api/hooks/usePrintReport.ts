@@ -1,8 +1,8 @@
 import {
   EnvUtils,
   Platform,
-  GenerateFormat,
-  GenerateReportSortInput,
+  PrintFormat,
+  PrintReportSortInput,
   useMutation,
   useNotification,
 } from '@openmsupply-client/common';
@@ -15,7 +15,7 @@ export type GenerateReportParams = {
   reportId: string;
   dataId?: string;
   args?: JsonData;
-  sort?: GenerateReportSortInput;
+  sort?: PrintReportSortInput;
 };
 
 const setClose = (frame: HTMLIFrameElement) => () => {
@@ -70,23 +70,23 @@ export const usePrintReport = () => {
       dataId,
       reportId,
       storeId,
-      format: EnvUtils.generateFormat,
+      format: EnvUtils.printFormat,
       arguments: args,
       sort,
     });
-    if (result?.generateReport?.__typename === 'GenerateReportNode') {
+    if (result?.generateReport?.__typename === 'PrintReportNode') {
       return result.generateReport.fileId;
     }
 
-    throw new Error('Unable to generate report');
+    throw new Error('Unable to print report');
   };
 
   const { mutate, isLoading } = useMutation({
     mutationFn,
     onSuccess: fileId => {
-      if (!fileId) throw new Error('Error generating report');
+      if (!fileId) throw new Error('Error printing report');
       const url = `${Environment.FILE_URL}${fileId}`;
-      if (EnvUtils.generateFormat === GenerateFormat.Html) {
+      if (EnvUtils.printFormat === PrintFormat.Html) {
         printPage(url);
       } else {
         const win = window.open(url, '_blank');

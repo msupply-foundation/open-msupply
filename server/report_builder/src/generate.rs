@@ -24,7 +24,7 @@ query AuthToken($username: String!, $password: String) {
 "#;
 
 const PRINT_QUERY: &str = r#"
-query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON, $format: GenerateFormat) {
+query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON, $format: PrintFormat) {
   generateReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments, format: $format) {
     ... on GenerateReportNode {
       __typename

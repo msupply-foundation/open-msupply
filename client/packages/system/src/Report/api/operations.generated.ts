@@ -28,12 +28,12 @@ export type GenerateReportQueryVariables = Types.Exact<{
   reportId: Types.Scalars['String']['input'];
   dataId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   arguments?: Types.InputMaybe<Types.Scalars['JSON']['input']>;
-  format?: Types.InputMaybe<Types.GenerateFormat>;
-  sort?: Types.InputMaybe<Types.GenerateReportSortInput>;
+  format?: Types.InputMaybe<Types.PrintFormat>;
+  sort?: Types.InputMaybe<Types.PrintReportSortInput>;
 }>;
 
 
-export type GenerateReportQuery = { __typename: 'Queries', generateReport: { __typename: 'GenerateReportError', error: { __typename: 'FailedToFetchReportData', description: string, errors: any } } | { __typename: 'GenerateReportNode', fileId: string } };
+export type GenerateReportQuery = { __typename: 'Queries', generateReport: { __typename: 'PrintReportError', error: { __typename: 'FailedToFetchReportData', description: string, errors: any } } | { __typename: 'PrintReportNode', fileId: string } };
 
 export const ReportRowFragmentDoc = gql`
     fragment ReportRow on ReportNode {
@@ -70,7 +70,7 @@ export const ReportsDocument = gql`
 }
     ${ReportRowFragmentDoc}`;
 export const GenerateReportDocument = gql`
-    query generateReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: GenerateFormat, $sort: GenerateReportSortInput) {
+    query generateReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: PrintFormat, $sort: PrintReportSortInput) {
   generateReport(
     dataId: $dataId
     reportId: $reportId
@@ -79,11 +79,11 @@ export const GenerateReportDocument = gql`
     arguments: $arguments
     sort: $sort
   ) {
-    ... on GenerateReportNode {
+    ... on PrintReportNode {
       __typename
       fileId
     }
-    ... on GenerateReportError {
+    ... on PrintReportError {
       __typename
       error {
         ... on FailedToFetchReportData {
