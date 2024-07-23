@@ -83,7 +83,7 @@ pub fn generate_rnr_form_lines(
                 final_balance,
                 maximum_quantity,
                 // stock lines for item, find earliest expiry or blank
-                expiration_date: None,
+                expiry_date: None,
                 requested_quantity: maximum_quantity - final_balance,
                 comment: None,
                 confirmed: false,
