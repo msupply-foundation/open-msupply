@@ -1,3 +1,4 @@
+use chrono::Datelike;
 use repository::{
     EqualFilter, MasterListLineFilter, MasterListLineRepository, PeriodRow, RepositoryError,
     RnRFormLineRow,
@@ -5,9 +6,12 @@ use repository::{
 use util::uuid::uuid;
 
 use crate::{
-    item_stats::{get_item_stats, ItemStatsFilter},
+    item_stats::{get_consumption_map, get_consumption_rows},
     service_provider::ServiceContext,
 };
+
+// Make this a store pref... in OMS?
+const TARGET_MOS: i32 = 2;
 
 pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
@@ -15,58 +19,52 @@ pub fn generate_rnr_form_lines(
     master_list_id: &str,
     period: PeriodRow,
 ) -> Result<Vec<RnRFormLineRow>, RepositoryError> {
-    let master_list_lines = MasterListLineRepository::new(&ctx.connection).query_by_filter(
-        MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id)),
-    )?;
+    let master_list_item_ids = get_master_list_item_ids(&ctx, master_list_id)?;
 
-    let item_ids = master_list_lines
-        .into_iter()
-        .map(|line| line.item_id)
-        .collect();
-
-    let item_stats_rows = get_item_stats(
-        ctx,
-        &ctx.store_id,
-        None,
-        Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids))),
-    )?;
-
-    let period_length = period
+    let lookback_months = get_lookback_months(&period);
+    let period_length_in_days = period
         .end_date
         .signed_duration_since(period.start_date)
-        .num_days() as f64;
+        .num_days();
 
-    // TODO: oms store pref?? one day :)
-    let target_mos = 2;
+    let consumption_rows = get_consumption_rows(
+        &ctx.connection,
+        &ctx.store_id,
+        Some(EqualFilter::equal_any(master_list_item_ids.clone())),
+        period_length_in_days,
+        &period.end_date,
+    )?;
+    let consumption_map = get_consumption_map(consumption_rows);
 
-    let rnr_form_lines = item_stats_rows
+    let rnr_form_lines = master_list_item_ids
         .into_iter()
-        .map(|item_stat| {
+        .map(|item_id| {
             // TODO consumption view needs prescriptions added!
             // consumed over period
-            let quantity_consumed = 0.0;
+            let quantity_consumed = consumption_map.get(&item_id).copied().unwrap_or_default();
 
             // evolution series (?) - points where soh is 0?
-            let stock_out_duration = 0;
+            let stock_out_duration: i32 = 0;
 
-            let time_in_stock = period_length - stock_out_duration as f64;
+            let days_in_stock = period_length_in_days - stock_out_duration as i64;
 
-            let adjusted_quantity_consumed = match time_in_stock {
-                0.0 => 0.0,
-                time_in_stock => quantity_consumed * period_length / time_in_stock,
+            let adjusted_quantity_consumed = match days_in_stock {
+                0 => 0.0,
+                days_in_stock => quantity_consumed * (period_length_in_days / days_in_stock) as f64,
             };
 
             // should be total incoming?
             let quantity_received = 0.0;
             let final_balance = 0.0;
 
-            let amc = item_stat.average_monthly_consumption;
-            let maximum_quantity = amc * target_mos as f64;
+            let amc = quantity_consumed / lookback_months as f64;
+
+            let maximum_quantity = amc * TARGET_MOS as f64;
 
             RnRFormLineRow {
                 id: uuid(),
                 rnr_form_id: rnr_form_id.to_string(),
-                item_id: item_stat.item_id,
+                item_id,
                 average_monthly_consumption: amc,
                 // from prev rnr, if exists, else bal on opening date
                 initial_balance: 0.0,
@@ -92,4 +90,28 @@ pub fn generate_rnr_form_lines(
         .collect();
 
     Ok(rnr_form_lines)
+}
+
+pub fn get_lookback_months(period: &PeriodRow) -> u32 {
+    let years_since_start = period
+        .end_date
+        .years_since(period.start_date)
+        .unwrap_or_default();
+
+    // TODO: what to do here if period is less than month?
+    // e.g. 1st to 31st rather than 1st to 1st of next month? is that a training thing?
+    let months_since_start = (12 + period.end_date.month() - period.start_date.month()) % 12;
+
+    (years_since_start * 12) + months_since_start
+}
+
+fn get_master_list_item_ids(
+    ctx: &ServiceContext,
+    master_list_id: &str,
+) -> Result<Vec<String>, RepositoryError> {
+    MasterListLineRepository::new(&ctx.connection)
+        .query_by_filter(
+            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id)),
+        )
+        .map(|lines| lines.into_iter().map(|line| line.item_id).collect())
 }

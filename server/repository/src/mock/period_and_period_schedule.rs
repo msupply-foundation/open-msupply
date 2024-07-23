@@ -33,7 +33,7 @@ pub fn mock_period_2_a() -> PeriodRow {
         name: "January 2024".to_string(),
         period_schedule_id: "mock_period_schedule_2".to_string(),
         start_date: NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
-        end_date: NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+        end_date: NaiveDate::from_ymd_opt(2024, 2, 1).unwrap(),
     }
 }
 pub fn mock_period_2_b() -> PeriodRow {
@@ -42,7 +42,7 @@ pub fn mock_period_2_b() -> PeriodRow {
         name: "February 2024".to_string(),
         period_schedule_id: "mock_period_schedule_2".to_string(),
         start_date: NaiveDate::from_ymd_opt(2024, 2, 1).unwrap(),
-        end_date: NaiveDate::from_ymd_opt(2024, 2, 29).unwrap(),
+        end_date: NaiveDate::from_ymd_opt(2024, 3, 1).unwrap(),
     }
 }
 
