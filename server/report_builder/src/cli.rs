@@ -1,5 +1,5 @@
 use clap::Parser;
-use report_builder::{build::build, generate::generate_report, Action, Args};
+use report_builder::{build::build, print::generate_report, Action, Args};
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();

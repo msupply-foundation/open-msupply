@@ -1,14 +1,14 @@
 use async_graphql::*;
 use chrono::Utc;
-use graphql_core::generic_inputs::GenerateReportSortInput;
+use graphql_core::generic_inputs::PrintReportSortInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use repository::query_json;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::definition::{GenerateReportSort, GraphQlQuery, ReportDefinition, SQLQuery};
+use service::report::definition::{PrintReportSort, GraphQlQuery, ReportDefinition, SQLQuery};
 use service::report::report_service::{ReportError, ResolvedReportQuery};
 
-use crate::GenerateFormat;
+use crate::PrintFormat;
 
 pub struct FailedToFetchReportData {
     errors: serde_json::Value,
@@ -26,22 +26,22 @@ impl FailedToFetchReportData {
 
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
-pub enum GenerateReportErrorInterface {
+pub enum PrintReportErrorInterface {
     FailedToFetchReportData(FailedToFetchReportData),
 }
 
 #[derive(SimpleObject)]
-pub struct GenerateReportError {
-    pub error: GenerateReportErrorInterface,
+pub struct PrintReportError {
+    pub error: PrintReportErrorInterface,
 }
 
 #[derive(PartialEq, Debug)]
-pub struct GenerateReportNode {
+pub struct PrintReportNode {
     file_id: String,
 }
 
 #[Object]
-impl GenerateReportNode {
+impl PrintReportNode {
     /// Return the file id of the generated report.
     /// The file can be fetched using the /files?id={id} endpoint
     pub async fn file_id(&self) -> &str {
@@ -50,9 +50,9 @@ impl GenerateReportNode {
 }
 
 #[derive(Union)]
-pub enum GenerateReportResponse {
-    Error(GenerateReportError),
-    Response(GenerateReportNode),
+pub enum PrintReportResponse {
+    Error(PrintReportError),
+    Response(PrintReportNode),
 }
 
 pub async fn generate_report(
@@ -61,9 +61,9 @@ pub async fn generate_report(
     report_id: String,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
-    format: Option<GenerateFormat>,
-    sort: Option<GenerateReportSortInput>,
-) -> Result<GenerateReportResponse> {
+    format: Option<PrintFormat>,
+    sort: Option<PrintReportSortInput>,
+) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -81,7 +81,7 @@ pub async fn generate_report(
     let resolved_report = match service.resolve_report(&service_context, &report_id) {
         Ok(resolved_report) => resolved_report,
         Err(err) => {
-            return Ok(GenerateReportResponse::Error(GenerateReportError {
+            return Ok(PrintReportResponse::Error(PrintReportError {
                 error: map_error(err)?,
             }))
         }
@@ -101,8 +101,8 @@ pub async fn generate_report(
     let report_data = match result {
         FetchResult::Data(data) => data,
         FetchResult::Error(errors) => {
-            return Ok(GenerateReportResponse::Error(GenerateReportError {
-                error: GenerateReportErrorInterface::FailedToFetchReportData(
+            return Ok(PrintReportResponse::Error(PrintReportError {
+                error: PrintReportErrorInterface::FailedToFetchReportData(
                     FailedToFetchReportData { errors },
                 ),
             }))
@@ -115,17 +115,17 @@ pub async fn generate_report(
         &resolved_report,
         report_data,
         arguments,
-        format.map(GenerateFormat::to_domain),
+        format.map(PrintFormat::to_domain),
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
-            return Ok(GenerateReportResponse::Error(GenerateReportError {
+            return Ok(PrintReportResponse::Error(PrintReportError {
                 error: map_error(err)?,
             }))
         }
     };
 
-    Ok(GenerateReportResponse::Response(GenerateReportNode {
+    Ok(PrintReportResponse::Response(PrintReportNode {
         file_id,
     }))
 }
@@ -137,8 +137,8 @@ pub async fn generate_report_definition(
     report: serde_json::Value,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
-    format: Option<GenerateFormat>,
-) -> Result<GenerateReportResponse> {
+    format: Option<PrintFormat>,
+) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -161,7 +161,7 @@ pub async fn generate_report_definition(
     ) {
         Ok(resolved_report) => resolved_report,
         Err(err) => {
-            return Ok(GenerateReportResponse::Error(GenerateReportError {
+            return Ok(PrintReportResponse::Error(PrintReportError {
                 error: map_error(err)?,
             }))
         }
@@ -181,8 +181,8 @@ pub async fn generate_report_definition(
     let report_data = match result {
         FetchResult::Data(data) => data,
         FetchResult::Error(errors) => {
-            return Ok(GenerateReportResponse::Error(GenerateReportError {
-                error: GenerateReportErrorInterface::FailedToFetchReportData(
+            return Ok(PrintReportResponse::Error(PrintReportError {
+                error: PrintReportErrorInterface::FailedToFetchReportData(
                     FailedToFetchReportData { errors },
                 ),
             }))
@@ -195,17 +195,17 @@ pub async fn generate_report_definition(
         &resolved_report,
         report_data,
         arguments,
-        format.map(GenerateFormat::to_domain),
+        format.map(PrintFormat::to_domain),
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
-            return Ok(GenerateReportResponse::Error(GenerateReportError {
+            return Ok(PrintReportResponse::Error(PrintReportError {
                 error: map_error(err)?,
             }))
         }
     };
 
-    Ok(GenerateReportResponse::Response(GenerateReportNode {
+    Ok(PrintReportResponse::Response(PrintReportNode {
         file_id,
     }))
 }
@@ -221,7 +221,7 @@ fn query_variables(
     store_id: &str,
     data_id: &Option<String>,
     arguments: &Option<serde_json::Value>,
-    sort: &Option<GenerateReportSort>,
+    sort: &Option<PrintReportSort>,
     query_variables: &Option<serde_json::Value>,
 ) -> serde_json::Map<String, serde_json::Value> {
     let mut variables = match query_variables {
@@ -278,7 +278,7 @@ async fn fetch_data(
     store_id: &str,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
-    sort: Option<GenerateReportSort>,
+    sort: Option<PrintReportSort>,
 ) -> anyhow::Result<FetchResult> {
     let graphql_query: Vec<_> = queries
         .iter()
@@ -356,7 +356,7 @@ async fn fetch_graphql_data(
     Ok(FetchResult::Data(response.data.into_json()?))
 }
 
-fn map_error(error: ReportError) -> Result<GenerateReportErrorInterface> {
+fn map_error(error: ReportError) -> Result<PrintReportErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {

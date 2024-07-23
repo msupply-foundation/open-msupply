@@ -2039,7 +2039,7 @@ export type ExistingLinesInput = {
   returnId: Scalars['String']['input'];
 };
 
-export type FailedToFetchReportData = GenerateReportErrorInterface & {
+export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String']['output'];
   errors: Scalars['JSON']['output'];
@@ -2137,11 +2137,6 @@ export enum GenderType {
   Unknown = 'UNKNOWN'
 }
 
-export enum GenerateFormat {
-  Html = 'HTML',
-  Pdf = 'PDF'
-}
-
 export type GenerateInboundReturnLinesInput = {
   existingLinesInput?: InputMaybe<ExistingLinesInput>;
   /** The ids of the outbound shipment lines to generate new return lines for */
@@ -2161,37 +2156,6 @@ export type GenerateOutboundReturnLinesInput = {
 };
 
 export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
-
-export type GenerateReportError = {
-  __typename: 'GenerateReportError';
-  error: GenerateReportErrorInterface;
-};
-
-export type GenerateReportErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type GenerateReportNode = {
-  __typename: 'GenerateReportNode';
-  /**
-   * Return the file id of the generated report.
-   * The file can be fetched using the /files?id={id} endpoint
-   */
-  fileId: Scalars['String']['output'];
-};
-
-export type GenerateReportResponse = GenerateReportError | GenerateReportNode;
-
-/** This struct is used to sort report data by a key and in descending or ascending order */
-export type GenerateReportSortInput = {
-  /**
-   * Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: Scalars['String']['input'];
-};
 
 export type GeneratedInboundReturnLineConnector = {
   __typename: 'GeneratedInboundReturnLineConnector';
@@ -4939,6 +4903,42 @@ export type PricingNode = {
   totalBeforeTax: Scalars['Float']['output'];
 };
 
+export enum PrintFormat {
+  Html = 'HTML',
+  Pdf = 'PDF'
+}
+
+export type PrintReportError = {
+  __typename: 'PrintReportError';
+  error: PrintReportErrorInterface;
+};
+
+export type PrintReportErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type PrintReportNode = {
+  __typename: 'PrintReportNode';
+  /**
+   * Return the file id of the generated report.
+   * The file can be fetched using the /files?id={id} endpoint
+   */
+  fileId: Scalars['String']['output'];
+};
+
+export type PrintReportResponse = PrintReportError | PrintReportNode;
+
+/** This struct is used to sort report data by a key and in descending or ascending order */
+export type PrintReportSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: Scalars['String']['input'];
+};
+
 export type ProgramConnector = {
   __typename: 'ProgramConnector';
   nodes: Array<ProgramNode>;
@@ -5198,12 +5198,12 @@ export type Queries = {
    * which is referred to by the report_id.
    * The generated report can be retrieved from the `/files` endpoint using the returned file id.
    */
-  generateReport: GenerateReportResponse;
+  generateReport: PrintReportResponse;
   /**
    * Can be used when developing reports, e.g. to generate a report that is not already in the
    * system.
    */
-  generateReportDefinition: GenerateReportResponse;
+  generateReportDefinition: PrintReportResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -5510,9 +5510,9 @@ export type QueriesGenerateOutboundReturnLinesArgs = {
 export type QueriesGenerateReportArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
-  format?: InputMaybe<GenerateFormat>;
+  format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String']['input'];
-  sort?: InputMaybe<GenerateReportSortInput>;
+  sort?: InputMaybe<PrintReportSortInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -5520,6 +5520,7 @@ export type QueriesGenerateReportArgs = {
 export type QueriesGenerateReportDefinitionArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<PrintFormat>;
   name?: InputMaybe<Scalars['String']['input']>;
   report: Scalars['JSON']['input'];
   storeId: Scalars['String']['input'];
@@ -5562,7 +5563,7 @@ export type QueriesInvoiceLinesArgs = {
   filter?: InputMaybe<InvoiceLineFilterInput>;
   invoiceId: Scalars['String']['input'];
   page?: InputMaybe<PaginationInput>;
-  reportSort?: InputMaybe<GenerateReportSortInput>;
+  reportSort?: InputMaybe<PrintReportSortInput>;
   sort?: InputMaybe<Array<InvoiceLineSortInput>>;
   storeId: Scalars['String']['input'];
 };
@@ -5815,7 +5816,7 @@ export type QueriesStocktakeByNumberArgs = {
 export type QueriesStocktakeLinesArgs = {
   filter?: InputMaybe<StocktakeLineFilterInput>;
   page?: InputMaybe<PaginationInput>;
-  reportSort?: InputMaybe<GenerateReportSortInput>;
+  reportSort?: InputMaybe<PrintReportSortInput>;
   sort?: InputMaybe<Array<StocktakeLineSortInput>>;
   stocktakeId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];

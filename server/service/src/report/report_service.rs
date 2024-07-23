@@ -21,7 +21,7 @@ use super::{
     html_printing::html_to_pdf,
 };
 
-pub enum GenerateFormat {
+pub enum PrintFormat {
     Pdf,
     Html,
 }
@@ -102,22 +102,22 @@ pub trait ReportServiceTrait: Sync + Send {
         resolve_report_definition(ctx, name, report_definition)
     }
 
-    /// Converts a HTML report to a file for the target GenerateFormat and returns file id
+    /// Converts a HTML report to a file for the target PrintFormat and returns file id
     fn generate_html_report(
         &self,
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
         report_data: serde_json::Value,
         arguments: Option<serde_json::Value>,
-        format: Option<GenerateFormat>,
+        format: Option<PrintFormat>,
     ) -> Result<String, ReportError> {
         let document = generate_report(report, report_data, arguments)?;
 
         match format {
-            Some(GenerateFormat::Html) => {
+            Some(PrintFormat::Html) => {
                 generate_html_report_to_html(base_dir, document, report.name.clone())
             }
-            Some(GenerateFormat::Pdf) | None => {
+            Some(PrintFormat::Pdf) | None => {
                 generate_html_report_to_pdf(base_dir, document, report.name.clone())
             }
         }

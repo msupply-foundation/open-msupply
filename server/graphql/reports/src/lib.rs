@@ -1,19 +1,19 @@
 use async_graphql::*;
-use generate::{generate_report, generate_report_definition, GenerateReportResponse};
-use graphql_core::{generic_inputs::GenerateReportSortInput, pagination::PaginationInput};
+use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
+use print::{generate_report, generate_report_definition, PrintReportResponse};
 use reports::{
     report, reports, ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse,
 };
-use service::report::report_service::GenerateFormat as ServiceGenerateFormat;
+use service::report::report_service::PrintFormat as ServicePrintFormat;
 
-mod generate;
+mod print;
 mod reports;
 
 #[derive(Default, Clone)]
 pub struct ReportQueries;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum GenerateFormat {
+pub enum PrintFormat {
     Pdf,
     Html,
 }
@@ -57,9 +57,9 @@ impl ReportQueries {
         )]
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
-        format: Option<GenerateFormat>,
-        sort: Option<GenerateReportSortInput>,
-    ) -> Result<GenerateReportResponse> {
+        format: Option<PrintFormat>,
+        sort: Option<PrintReportSortInput>,
+    ) -> Result<PrintReportResponse> {
         generate_report(ctx, store_id, report_id, data_id, arguments, format, sort).await
     }
 
@@ -73,17 +73,17 @@ impl ReportQueries {
         #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
-        format: Option<GenerateFormat>,
-    ) -> Result<GenerateReportResponse> {
+        format: Option<PrintFormat>,
+    ) -> Result<PrintReportResponse> {
         generate_report_definition(ctx, store_id, name, report, data_id, arguments, format).await
     }
 }
 
-impl GenerateFormat {
-    fn to_domain(self) -> ServiceGenerateFormat {
+impl PrintFormat {
+    fn to_domain(self) -> ServicePrintFormat {
         match self {
-            GenerateFormat::Pdf => ServiceGenerateFormat::Pdf,
-            GenerateFormat::Html => ServiceGenerateFormat::Html,
+            PrintFormat::Pdf => ServicePrintFormat::Pdf,
+            PrintFormat::Html => ServicePrintFormat::Html,
         }
     }
 }

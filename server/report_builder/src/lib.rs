@@ -1,5 +1,5 @@
 pub mod build;
-pub mod generate;
+pub mod print;
 
 use clap::{Parser, Subcommand, ValueEnum};
 use serde::Serialize;

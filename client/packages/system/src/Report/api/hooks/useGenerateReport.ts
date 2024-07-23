@@ -1,4 +1,4 @@
-import { GenerateFormat } from '@common/types';
+import { PrintFormat } from '@common/types';
 import { useReportGraphQL } from '../useReportGraphQL';
 import { GenerateReportParams } from './usePrintReport';
 import { useMutation } from '@openmsupply-client/common';
@@ -13,11 +13,11 @@ export const useGenerateReport = () => {
       dataId,
       reportId,
       storeId,
-      format: GenerateFormat.Html,
+      format: PrintFormat.Html,
       arguments: args,
       sort,
     });
-    if (result?.generateReport?.__typename === 'GenerateReportNode') {
+    if (result?.generateReport?.__typename === 'PrintReportNode') {
       return result.generateReport.fileId;
     }
 
