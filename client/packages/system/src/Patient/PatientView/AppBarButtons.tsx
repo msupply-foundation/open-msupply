@@ -9,7 +9,11 @@ import {
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { AddButton } from './AddButton';
-import { ReportRowFragment, ReportSelector, useReport } from '../../Report';
+import {
+  ReportRowFragment,
+  ReportSelector,
+  usePrintReport,
+} from '../../Report';
 import { usePatient } from '../api';
 import { JsonData, useProgramEnrolments } from '@openmsupply-client/programs';
 
@@ -18,7 +22,7 @@ export const AppBarButtons: FC<{
   store?: UserStoreNodeFragment;
 }> = ({ disabled, store }) => {
   const t = useTranslation();
-  const { print, isPrinting } = useReport.utils.print();
+  const { print, isPrinting } = usePrintReport();
   const patientId = usePatient.utils.id();
   const printReport = (
     report: ReportRowFragment,

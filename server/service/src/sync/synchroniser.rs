@@ -323,7 +323,8 @@ pub fn integrate_and_translate_sync_buffer(
         let table_order = pull_integration_order(&translators);
 
         let sync_buffer = SyncBuffer::new(connection);
-        let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+        let translation_and_integration =
+            TranslationAndIntegration::new(connection, &sync_buffer, source_site_id);
 
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
