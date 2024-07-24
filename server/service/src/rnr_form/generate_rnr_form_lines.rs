@@ -16,7 +16,6 @@ use crate::{
 // Make this a store pref... in OMS?
 const TARGET_MOS: i32 = 2;
 
-// TODO: separate store id!!!
 pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
     store_id: &str,
@@ -35,7 +34,7 @@ pub fn generate_rnr_form_lines(
 
     let consumption_rows = get_consumption_rows(
         &ctx.connection,
-        &ctx.store_id,
+        store_id,
         Some(EqualFilter::equal_any(master_list_item_ids.clone())),
         period_length_in_days,
         &period.end_date,
@@ -43,7 +42,7 @@ pub fn generate_rnr_form_lines(
 
     // let replenishment_rows = get_stock_on_hand_rows(
     //     &ctx.connection,
-    //     &ctx.store_id,
+    //     store_id,
     //     Some(EqualFilter::equal_any(master_list_item_ids.clone())),
     // )?;
 
@@ -69,7 +68,7 @@ pub fn generate_rnr_form_lines(
 
             let stock_out_duration: i32 = get_stock_out_duration(
                 &ctx.connection,
-                &ctx.store_id,
+                store_id,
                 &item_id,
                 // where in datetime?
                 period.end_date.into(),
