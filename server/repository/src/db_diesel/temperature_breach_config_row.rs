@@ -6,6 +6,8 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
+
 use diesel::prelude::*;
 
 table! {
@@ -18,14 +20,6 @@ table! {
         store_id -> Text,
         minimum_temperature -> Double,
         maximum_temperature -> Double,
-    }
-}
-
-table! {
-    #[sql_name = "temperature_breach_config"]
-    temperature_breach_config_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
     }
 }
 
@@ -57,19 +51,30 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         TemperatureBreachConfigRowRepository { connection }
     }
 
-    pub fn _upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(temperature_breach_config_dsl::temperature_breach_config)
             .values(row)
             .on_conflict(temperature_breach_config_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        Ok(())
+    fn insert_changelog(
+        &self,
+        row: &TemperatureBreachConfigRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::TemperatureBreachConfig,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(

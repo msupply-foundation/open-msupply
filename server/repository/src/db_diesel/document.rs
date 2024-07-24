@@ -10,6 +10,7 @@ use crate::{
     },
     NameLinkRow, NameRow,
 };
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
@@ -52,13 +53,6 @@ table! {
     }
 }
 
-table! {
-    #[sql_name = "document"]
-    document_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
 joinable!(document -> name_link (owner_name_link_id));
 allow_tables_to_appear_in_same_query!(document, name);
 allow_tables_to_appear_in_same_query!(document, name_link);
@@ -233,27 +227,27 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    fn _insert(&self, doc: &Document) -> Result<(), RepositoryError> {
+    pub fn insert(&self, doc: &Document) -> Result<i64, RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(doc, RowActionType::Upsert)
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(document_is_sync_update::table.find(id))
-            .set(document_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(self.connection.lock().connection())?;
+    fn insert_changelog(
+        &self,
+        row: &Document,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Document,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
 
-        Ok(())
-    }
-
-    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
-        diesel::insert_into(document::dsl::document)
-            .values(doc.to_row()?)
-            .execute(self.connection.lock().connection())?;
-        self.toggle_is_sync_update(&doc.id, false)?;
-        Ok(())
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     /// Get a specific document version
@@ -268,23 +262,6 @@ impl<'a> DocumentRepository<'a> {
             Some(row) => Some(to_document(row)?),
             None => None,
         })
-    }
-
-    pub fn sync_insert(&self, row: &Document) -> Result<(), RepositoryError> {
-        self.insert(row)?;
-        self.toggle_is_sync_update(&row.id, true)?;
-
-        Ok(())
-    }
-
-    #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = document_is_sync_update::table
-            .find(id)
-            .select(document_is_sync_update::dsl::is_sync_update)
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
     }
 
     pub fn count(&self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
@@ -457,63 +434,5 @@ impl Document {
             owner_name_link_id: self.owner_name_id.to_owned(),
             context_id: self.context_id.to_owned(),
         })
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use util::uuid::uuid;
-
-    use crate::{
-        document::to_document, mock::MockDataInserts, test_db::setup_all, ContextRow,
-        ContextRowRepository, DocumentRepository, DocumentRow,
-    };
-
-    #[actix_rt::test]
-    async fn document_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
-            "document_is_sync_update",
-            MockDataInserts::none().items().units(),
-        )
-        .await;
-
-        let context_row = ContextRow {
-            id: "id".to_string(),
-            name: "name".to_string(),
-        };
-        ContextRowRepository::new(&connection)
-            .upsert_one(&context_row)
-            .unwrap();
-
-        let repo = DocumentRepository::new(&connection);
-
-        let base_row = DocumentRow {
-            data: "{}".to_string(),
-            parent_ids: "[]".to_string(),
-            context_id: context_row.id.clone(),
-            ..Default::default()
-        };
-
-        // Two rows, to make sure is_sync_update update only affects one row
-        let row = DocumentRow {
-            id: uuid(),
-            parent_ids: "[]".to_string(),
-            ..base_row.clone()
-        };
-        let row2 = DocumentRow {
-            id: uuid(),
-            parent_ids: "[]".to_string(),
-            context_id: context_row.id.clone(),
-            ..base_row.clone()
-        };
-
-        // First insert
-        repo.insert(&to_document((row.clone(), None)).unwrap())
-            .unwrap();
-        repo.sync_insert(&to_document((row2.clone(), None)).unwrap())
-            .unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(true)));
     }
 }

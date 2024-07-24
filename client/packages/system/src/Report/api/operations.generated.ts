@@ -5,6 +5,14 @@ import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ReportRowFragment = { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null };
 
+export type ReportQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  id: Types.Scalars['String']['input'];
+}>;
+
+
+export type ReportQuery = { __typename: 'Queries', report: { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null } };
+
 export type ReportsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   key: Types.ReportSortFieldInput;
@@ -41,6 +49,13 @@ export const ReportRowFragmentDoc = gql`
   }
 }
     `;
+export const ReportDocument = gql`
+    query report($storeId: String!, $id: String!) {
+  report(storeId: $storeId, id: $id) {
+    ...ReportRow
+  }
+}
+    ${ReportRowFragmentDoc}`;
 export const ReportsDocument = gql`
     query reports($storeId: String!, $key: ReportSortFieldInput!, $desc: Boolean, $filter: ReportFilterInput) {
   reports(storeId: $storeId, sort: {key: $key, desc: $desc}, filter: $filter) {
@@ -90,6 +105,9 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    report(variables: ReportQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ReportQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ReportQuery>(ReportDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'report', 'query', variables);
+    },
     reports(variables: ReportsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ReportsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReportsQuery>(ReportsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'reports', 'query', variables);
     },
