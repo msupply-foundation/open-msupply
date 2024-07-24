@@ -4,7 +4,7 @@ use super::{
     PeriodScheduleRow,
 };
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed, LeftJoin},
+    dsl::{And, Eq, InnerJoin, IntoBoxed, LeftJoin, On},
     prelude::*,
 };
 
@@ -51,23 +51,23 @@ impl<'a> PeriodRepository<'a> {
         PeriodRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<PeriodFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
-        Ok(query
-            .count()
-            .get_result(self.connection.lock().connection())?)
-    }
-
-    pub fn query_by_filter(&self, filter: PeriodFilter) -> Result<Vec<Period>, RepositoryError> {
-        self.query(Some(filter), None)
+    pub fn query_by_filter(
+        &self,
+        store_id: String,
+        program_id: String,
+        filter: PeriodFilter,
+    ) -> Result<Vec<Period>, RepositoryError> {
+        self.query(store_id, program_id, Some(filter), None)
     }
 
     pub fn query(
         &self,
+        store_id: String,
+        program_id: String,
         filter: Option<PeriodFilter>,
         sort: Option<PeriodSort>,
     ) -> Result<Vec<Period>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = create_filtered_query(store_id, program_id, filter);
         if let Some(sort) = sort {
             match sort.key {
                 PeriodSortField::Id => {
@@ -93,16 +93,35 @@ fn to_domain((period_row, period_schedule_row, rnr_form_row): PeriodJoin) -> Per
     }
 }
 
+// rnr_form_dsl::period_id.eq(period_dsl::id)
+type PeriodIdEqualToId = Eq<rnr_form_dsl::period_id, period_dsl::id>;
+// rnr_form_dsl::store_id.eq(store_id)
+type StoreIdEqualToStr = Eq<rnr_form_dsl::store_id, String>;
+// rnr_form_dsl::program_id.eq(store_id)
+type ProgramIdEqualToStr = Eq<rnr_form_dsl::program_id, String>;
+
+type OnRnrFormToPeriodJoin =
+    On<rnr_form::table, And<And<PeriodIdEqualToId, StoreIdEqualToStr>, ProgramIdEqualToStr>>;
+
 type BoxedPeriodQuery = IntoBoxed<
     'static,
-    LeftJoin<InnerJoin<period::table, period_schedule::table>, rnr_form::table>,
+    LeftJoin<InnerJoin<period::table, period_schedule::table>, OnRnrFormToPeriodJoin>,
     DBType,
 >;
 
-fn create_filtered_query(filter: Option<PeriodFilter>) -> BoxedPeriodQuery {
+fn create_filtered_query(
+    store_id: String,
+    program_id: String,
+    filter: Option<PeriodFilter>,
+) -> BoxedPeriodQuery {
     let mut query = period_dsl::period
         .inner_join(period_schedule_dsl::period_schedule)
-        .left_join(rnr_form_dsl::rnr_form)
+        .left_join(
+            rnr_form_dsl::rnr_form.on(rnr_form_dsl::period_id
+                .eq(period_dsl::id)
+                .and(rnr_form_dsl::store_id.eq(store_id))
+                .and(rnr_form_dsl::program_id.eq(program_id))),
+        )
         .into_boxed();
 
     if let Some(filter) = filter {
@@ -138,13 +157,13 @@ impl PeriodFilter {
         self
     }
 
-    pub fn end_date(mut self, filter: DateFilter) -> Self {
-        self.end_date = Some(filter);
+    pub fn rnr_form_program_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.rnr_form_program_id = Some(filter);
         self
     }
 
-    pub fn rnr_form_program_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.rnr_form_program_id = Some(filter);
+    pub fn end_date(mut self, filter: DateFilter) -> Self {
+        self.end_date = Some(filter);
         self
     }
 }

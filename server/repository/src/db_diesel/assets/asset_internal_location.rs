@@ -169,7 +169,7 @@ mod tests {
         };
 
         AssetInternalLocationRowRepository::new(&storage_connection)
-            .insert_one(&asset_location)
+            .upsert_one(&asset_location)
             .unwrap();
 
         // Query by id

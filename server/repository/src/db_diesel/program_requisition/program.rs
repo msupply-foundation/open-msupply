@@ -105,6 +105,7 @@ fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery
     }
 
     query = query.filter(program_dsl::deleted_datetime.is_null());
+    query = query.filter(program_dsl::id.ne("missing_program"));
 
     query
 }
