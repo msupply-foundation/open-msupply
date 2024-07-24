@@ -60,6 +60,7 @@ export const ListView = () => {
           onReportClick={onReportClick}
           reportWithArgs={reportWithArgs}
           setReportWithArgs={setReportWithArgs}
+          hasReports={stockAndItemReports?.length !== 0}
         />
         <ReportWidget
           title={t('heading.expiring')}
@@ -68,6 +69,7 @@ export const ListView = () => {
           onReportClick={onReportClick}
           reportWithArgs={reportWithArgs}
           setReportWithArgs={setReportWithArgs}
+          hasReports={expiringReports?.length !== 0}
         />
         {store?.preferences?.omProgramModule && (
           <ReportWidget
@@ -77,6 +79,7 @@ export const ListView = () => {
             onReportClick={onReportClick}
             reportWithArgs={reportWithArgs}
             setReportWithArgs={setReportWithArgs}
+            hasReports={programReports?.length !== 0}
           />
         )}
       </Grid>
