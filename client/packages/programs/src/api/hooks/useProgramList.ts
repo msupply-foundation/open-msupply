@@ -1,4 +1,8 @@
-import { ProgramSortFieldInput, useQuery } from '@openmsupply-client/common';
+import {
+  ProgramFilterInput,
+  ProgramSortFieldInput,
+  useQuery,
+} from '@openmsupply-client/common';
 import { ProgramFragment } from '../operations.generated';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { LIST, PROGRAM } from './keys';
@@ -11,8 +15,11 @@ export const useProgramList = () => {
     nodes: ProgramFragment[];
     totalCount: number;
   }> => {
-    const filter = {
+    const filter: ProgramFilterInput = {
       isImmunisation: false,
+      existsForStoreId: {
+        equalTo: storeId,
+      },
     };
 
     const query = await api.programs({

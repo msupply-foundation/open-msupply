@@ -99,7 +99,6 @@ fn validate(
         CheckOtherPartyType::Supplier,
     )?;
 
-    // TODO... for store! How?
     let program = check_program_exists(connection, &input.program_id)?
         .ok_or(InsertRnRFormError::ProgramDoesNotExist)?;
 

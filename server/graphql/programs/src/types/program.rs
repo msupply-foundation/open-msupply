@@ -52,6 +52,7 @@ pub struct ProgramFilterInput {
     pub name: Option<StringFilterInput>,
     pub context_id: Option<EqualFilterStringInput>,
     pub is_immunisation: Option<bool>,
+    pub exists_for_store_id: Option<EqualFilterStringInput>,
 }
 impl From<ProgramFilterInput> for ProgramFilter {
     fn from(f: ProgramFilterInput) -> Self {
@@ -60,6 +61,7 @@ impl From<ProgramFilterInput> for ProgramFilter {
             name: f.name.map(StringFilter::from),
             context_id: f.context_id.map(EqualFilter::from),
             is_immunisation: f.is_immunisation,
+            exists_for_store_id: f.exists_for_store_id.map(EqualFilter::from),
         }
     }
 }
