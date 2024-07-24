@@ -4,7 +4,7 @@ import { JsonData, JsonForm } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog } from '@common/hooks';
 import { DialogButton } from '@common/components';
-import { useAuthContext } from 'packages/common/src';
+import { useAuthContext } from '@openmsupply-client/common';
 
 export type ReportArgumentsModalProps = {
   /** Modal is shown if there is an argument schema present */
@@ -37,6 +37,19 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     return null;
   }
 
+  const {
+    monthlyConsumptionLookBackPeriod,
+    monthsOverstock,
+    monthsUnderstock,
+  } = store?.preferences ?? {};
+
+  const jsonData = {
+    monthlyConsumptionLookBackPeriod,
+    monthsOverstock,
+    monthsUnderstock,
+    ...(data as object),
+  };
+
   return (
     <Modal
       title="Report arguments"
@@ -54,13 +67,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
       }
     >
       <JsonForm
-        data={{
-          monthlyConsumptionLookBackPeriod:
-            store?.preferences.monthlyConsumptionLookBackPeriod,
-          monthsOverstock: store?.preferences.monthsOverstock,
-          monthsUnderstock: store?.preferences.monthsUnderstock,
-          ...(data as object),
-        }}
+        data={jsonData}
         jsonSchema={report.argumentSchema.jsonSchema}
         uiSchema={report.argumentSchema.uiSchema}
         isError={false}
