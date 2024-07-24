@@ -63,6 +63,7 @@ mod query {
             .get_schedules_with_periods_by_program(&context, "store_b", &mock_program_b().id)
             .unwrap();
         let periods = &result[0].periods;
+        assert_eq!(periods.len(), 2);
 
         assert!(periods.iter().all(|period| period.rnr_form_row.is_none()));
     }
