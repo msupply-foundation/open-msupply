@@ -3,7 +3,9 @@ use std::{collections::HashMap, ops::Neg};
 use crate::service_provider::ServiceContext;
 use chrono::Duration;
 use repository::{
-    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter, RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow, StorageConnection, StorePreferenceRowRepository
+    ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
+    RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
+    StorageConnection, StorePreferenceRowRepository,
 };
 use util::{
     constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
@@ -49,19 +51,19 @@ pub fn get_item_stats(
         item_id: item_id_filter,
     } = filter.unwrap_or_default();
 
-    let default_amc = StorePreferenceRowRepository::new(&ctx.connection)
+    let default_amc_lookback_months = StorePreferenceRowRepository::new(&ctx.connection)
         .find_one_by_id(store_id)?
         .map_or(DEFAULT_AMC_LOOKBACK_MONTHS.into(), |row| {
             if row.monthly_consumption_look_back_period == 0.0 {
-            DEFAULT_AMC_LOOKBACK_MONTHS.into()
+                DEFAULT_AMC_LOOKBACK_MONTHS.into()
             } else {
-            row.monthly_consumption_look_back_period
+                row.monthly_consumption_look_back_period
             }
         });
 
     let amc_lookback_months = match amc_lookback_months {
         Some(months) => months,
-        None => default_amc,
+        None => default_amc_lookback_months,
     };
 
     let consumption_rows = get_consumption_rows(
@@ -131,10 +133,13 @@ impl ItemStats {
                 item_id: stock_on_hand.item_id.clone(),
                 item_name: stock_on_hand.item_name.clone(),
                 average_monthly_consumption: consumption_map
-                .get(&stock_on_hand.item_id)
-                .map(|consumption| *consumption / amc_lookback_months)
-                .unwrap_or_default(),
-                total_consumption: consumption_map.get(&stock_on_hand.item_id).copied().unwrap_or_default(),
+                    .get(&stock_on_hand.item_id)
+                    .map(|consumption| *consumption / amc_lookback_months)
+                    .unwrap_or_default(),
+                total_consumption: consumption_map
+                    .get(&stock_on_hand.item_id)
+                    .copied()
+                    .unwrap_or_default(),
             })
             .collect()
     }
