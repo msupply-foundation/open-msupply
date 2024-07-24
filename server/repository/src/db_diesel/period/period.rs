@@ -97,7 +97,7 @@ fn to_domain((period_row, period_schedule_row, rnr_form_row): PeriodJoin) -> Per
 type PeriodIdEqualToId = Eq<rnr_form_dsl::period_id, period_dsl::id>;
 // rnr_form_dsl::store_id.eq(store_id)
 type StoreIdEqualToStr = Eq<rnr_form_dsl::store_id, String>;
-// rnr_form_dsl::program_id.eq(store_id)
+// rnr_form_dsl::program_id.eq(program_id)
 type ProgramIdEqualToStr = Eq<rnr_form_dsl::program_id, String>;
 
 type OnRnrFormToPeriodJoin =
