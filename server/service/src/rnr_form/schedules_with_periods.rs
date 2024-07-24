@@ -39,11 +39,10 @@ pub fn get_schedules_with_periods_by_program(
             let period_filter = PeriodFilter::new()
                 .period_schedule_id(EqualFilter::equal_to(&schedule_id))
                 .rnr_form_program_id(EqualFilter::equal_to_or_null(program_id))
-                .store_id(EqualFilter::equal_to_or_null(store_id))
-                // .store_id(EqualFilter::equal_to(store_id))
                 .end_date(DateFilter::before_or_equal_to(Utc::now().date_naive()));
 
             let closed_periods = period_repo.query(
+                store_id.to_string(),
                 Some(period_filter),
                 Some(PeriodSort {
                     key: PeriodSortField::EndDate,
