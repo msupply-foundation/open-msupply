@@ -14,6 +14,8 @@ table! {
         name -> Text,
         code -> Text,
         unit_id -> Nullable<Text>,
+        strength -> Nullable<Text>,
+        ven_category -> crate::db_diesel::item_row::VENCategoryMapping,
         default_pack_size -> Double,
         #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemTypeMapping,
         // TODO, this is temporary, remove
@@ -43,6 +45,16 @@ pub enum ItemType {
     NonStock,
 }
 
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum VENCategory {
+    V,
+    E,
+    N,
+    #[default]
+    NotAssigned,
+}
+
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
 #[diesel(table_name = item)]
 pub struct ItemRow {
@@ -50,6 +62,8 @@ pub struct ItemRow {
     pub name: String,
     pub code: String,
     pub unit_id: Option<String>,
+    pub strength: Option<String>,
+    pub ven_category: VENCategory,
     pub default_pack_size: f64,
     #[diesel(column_name = type_)]
     pub r#type: ItemType,
@@ -71,6 +85,8 @@ impl Default for ItemRow {
             legacy_record: Default::default(),
             is_active: true,
             is_vaccine: false,
+            strength: Default::default(),
+            ven_category: VENCategory::NotAssigned,
         }
     }
 }

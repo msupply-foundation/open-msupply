@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, Period, PeriodFilter, PeriodRepository, PeriodRow, PeriodRowRepository,
-    ProgramRow, ProgramRowRepository, RepositoryError, RnRFormRow, RnRFormRowRepository,
-    StorageConnection,
+    EqualFilter, MasterListFilter, MasterListRepository, Period, PeriodFilter, PeriodRepository,
+    PeriodRow, PeriodRowRepository, ProgramRow, ProgramRowRepository, RepositoryError, RnRFormRow,
+    RnRFormRowRepository, StorageConnection,
 };
 
 pub fn check_rnr_form_exists(
@@ -48,4 +48,18 @@ pub fn check_rnr_form_exists_for_period(
                 .rnr_form_program_id(EqualFilter::equal_to(program_id)),
         )?
         .pop())
+}
+
+pub fn check_master_list_exists(
+    connection: &StorageConnection,
+    store_id: &str,
+    master_list_id: &str,
+) -> Result<bool, RepositoryError> {
+    let count = MasterListRepository::new(connection).count(Some(
+        MasterListFilter::new()
+            .id(EqualFilter::equal_to(master_list_id))
+            .exists_for_store_id(EqualFilter::equal_to(store_id)),
+    ))?;
+
+    Ok(count > 0)
 }

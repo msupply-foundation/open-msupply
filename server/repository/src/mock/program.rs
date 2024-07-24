@@ -2,6 +2,7 @@ use crate::ProgramRow;
 
 use super::{
     context_immunisation_program, context_program_a, context_program_b, mock_master_list_program,
+    mock_master_list_program_b,
 };
 
 pub fn mock_program_a() -> ProgramRow {
@@ -17,7 +18,7 @@ pub fn mock_program_a() -> ProgramRow {
 pub fn mock_program_b() -> ProgramRow {
     ProgramRow {
         id: "program_b".to_string(),
-        master_list_id: None,
+        master_list_id: Some(mock_master_list_program_b().master_list.id),
         name: "program_b".to_string(),
         context_id: context_program_b().id,
         is_immunisation: false,
