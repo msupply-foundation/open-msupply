@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import {
-  BarIcon,
   Grid,
   ReportContext,
-  TrendingDownIcon,
   useAuthContext,
   useTranslation,
 } from '@openmsupply-client/common';
+import { BarIcon, InvoiceIcon, TrendingDownIcon } from '@common/icons';
+import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
 import { ReportWidget } from '../components';
-import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
 
 export const ListView = () => {
   const t = useTranslation('reports');
@@ -73,7 +72,7 @@ export const ListView = () => {
         {store?.preferences?.omProgramModule && (
           <ReportWidget
             title={t('label.programs')}
-            Icon={TrendingDownIcon}
+            Icon={InvoiceIcon}
             reports={programReports}
             onReportClick={onReportClick}
             reportWithArgs={reportWithArgs}

@@ -62,7 +62,9 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
         flexDirection: 'column',
         margin: 1.375,
         flex: 1,
-        boxShadow: theme => theme.shadows[2],
+        boxShadow: 'none',
+        border: '1px solid',
+        borderColor: 'border',
       }}
     >
       <Grid container alignItems="center">
@@ -70,11 +72,17 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
           display="flex"
           alignItems="center"
           justifyContent="center"
-          sx={{ width: 48 }}
+          sx={{
+            width: 64,
+            backgroundColor: 'background.icon',
+            borderRadius: 4,
+            height: 64,
+            marginRight: 1.5,
+          }}
         >
           <Icon color="primary" />
         </Grid>
-        <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }}>
+        <Typography sx={{ fontSize: '24px', fontWeight: 'bold' }}>
           {title}
         </Typography>
       </Grid>
@@ -108,17 +116,21 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                   <Grid
                     sx={{
                       display: 'flex',
+                      paddingLeft: 1,
                     }}
                   >
                     <Typography
                       variant="h6"
                       sx={{
+                        color: 'secondary.main',
+                        fontWeight: 'bold',
                         paddingBottom: 2,
                       }}
                     >
                       {report?.name}
                     </Typography>
                     <ChevronDownIcon
+                      color="secondary"
                       sx={{
                         transform: 'rotate(-90deg)',
                         marginLeft: 1,
