@@ -4,7 +4,7 @@ import { JsonData, JsonForm } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog } from '@common/hooks';
 import { DialogButton } from '@common/components';
-import { useAuthContext } from 'packages/common/src';
+import { useAuthContext } from '@openmsupply-client/common';
 
 export type ReportArgumentsModalProps = {
   /** Modal is shown if there is an argument schema present */
