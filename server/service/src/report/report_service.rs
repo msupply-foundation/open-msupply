@@ -103,7 +103,7 @@ pub trait ReportServiceTrait: Sync + Send {
     }
 
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
-    fn print_html_report(
+    fn generate_html_report(
         &self,
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
@@ -115,17 +115,17 @@ pub trait ReportServiceTrait: Sync + Send {
 
         match format {
             Some(PrintFormat::Html) => {
-                print_html_report_to_html(base_dir, document, report.name.clone())
+                generate_html_report_to_html(base_dir, document, report.name.clone())
             }
             Some(PrintFormat::Pdf) | None => {
-                print_html_report_to_pdf(base_dir, document, report.name.clone())
+                generate_html_report_to_pdf(base_dir, document, report.name.clone())
             }
         }
     }
 }
 
 /// Converts a HTML report to a pdf file and returns the file id
-fn print_html_report_to_pdf(
+fn generate_html_report_to_pdf(
     base_dir: &Option<String>,
     document: GeneratedReport,
     report_name: String,
@@ -149,7 +149,7 @@ fn print_html_report_to_pdf(
 }
 
 /// Converts the report to a HTML file and returns the file id
-fn print_html_report_to_html(
+fn generate_html_report_to_html(
     base_dir: &Option<String>,
     document: GeneratedReport,
     report_name: String,

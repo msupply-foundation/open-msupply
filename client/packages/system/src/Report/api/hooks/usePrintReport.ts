@@ -11,7 +11,7 @@ import { Printer } from '@bcyesil/capacitor-plugin-printer';
 import { JsonData } from '@openmsupply-client/programs';
 import { useReportGraphQL } from '../useReportGraphQL';
 
-export type PrintReportParams = {
+export type GenerateReportParams = {
   reportId: string;
   dataId?: string;
   args?: JsonData;
@@ -63,10 +63,10 @@ export const usePrintReport = () => {
   const { reportApi, storeId } = useReportGraphQL();
   const { error } = useNotification();
 
-  const mutationFn = async (params: PrintReportParams) => {
+  const mutationFn = async (params: GenerateReportParams) => {
     const { dataId, reportId, args, sort } = params;
 
-    const result = await reportApi.printReport({
+    const result = await reportApi.generateReport({
       dataId,
       reportId,
       storeId,
@@ -74,8 +74,8 @@ export const usePrintReport = () => {
       arguments: args,
       sort,
     });
-    if (result?.printReport?.__typename === 'PrintReportNode') {
-      return result.printReport.fileId;
+    if (result?.generateReport?.__typename === 'PrintReportNode') {
+      return result.generateReport.fileId;
     }
 
     throw new Error('Unable to print report');

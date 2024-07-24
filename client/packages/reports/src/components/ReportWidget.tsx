@@ -3,7 +3,6 @@ import { ChevronDownIcon, SvgIconProps } from '@common/icons';
 import {
   ReportRowFragment,
   ReportArgumentsModal,
-  useReportStore,
 } from '@openmsupply-client/system';
 import {
   BasicSpinner,
@@ -40,16 +39,16 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
 }) => {
   const navigate = useNavigate();
 
-  const { setId, setArgs } = useReportStore();
-
   const reportArgs = useCallback(
     (report: ReportRowFragment, args: JsonData | undefined) => {
-      setArgs(report.id, args);
+      const stringifyArgs = JSON.stringify(args);
       navigate(
-        RouteBuilder.create(AppRoute.Reports).addPart(report.id).build()
+        RouteBuilder.create(AppRoute.Reports)
+          .addPart(`${report.id}?reportArgs=${stringifyArgs}`)
+          .build()
       );
     },
-    [setArgs, navigate]
+    [navigate]
   );
 
   return (
@@ -96,7 +95,6 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                     textDecoration: 'none',
                   }}
                   onClick={() => {
-                    setId(report.id);
                     onReportClick(report);
                   }}
                   to={

@@ -6,8 +6,9 @@ use cli::RefreshDatesRepository;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 use repository::{
-    get_storage_connection_manager, test_db, KeyType, KeyValueStoreRepository,
-    SyncBufferRowRepository,
+    get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
+    FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
+    ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use server::configuration;
@@ -99,6 +100,36 @@ enum Action {
         /// Path to the certificate file matching the private key
         #[clap(short, long)]
         cert: String,
+    },
+    /// Helper tool to upsert report to local omSupply instance, helpful when developing reports, especially with argument schema
+    UpsertReport {
+        /// Report id (any user defined id)
+        #[clap(short, long)]
+        id: String,
+
+        /// Path to the report
+        #[clap(short, long)]
+        report_path: String,
+
+        /// Path to the arguments json form schema
+        #[clap(long)]
+        arguments_path: Option<String>,
+
+        /// Path to the arguments json form UI schema
+        #[clap(long)]
+        arguments_ui_path: Option<String>,
+
+        /// Report name
+        #[clap(short, long)]
+        name: String,
+
+        /// Report type/context
+        #[clap(short, long)]
+        context: ContextType,
+
+        /// Report sub context
+        #[clap(short, long)]
+        sub_context: Option<String>,
     },
 }
 
@@ -357,6 +388,59 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
+        Action::UpsertReport {
+            id,
+            report_path,
+            arguments_path,
+            arguments_ui_path,
+            name,
+            context,
+            sub_context,
+        } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
+            let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
+
+            let argument_schema_id = existing_report
+                .map(|r| r.argument_schema.as_ref().map(|r| r.id.clone()))
+                .flatten();
+
+            let form_schema_json = match (arguments_path, arguments_ui_path) {
+                (Some(_), None) | (None, Some(_)) => {
+                    return Err(anyhow!(
+                        "When arguments path are specified both paths must be present"
+                    ))
+                }
+                (Some(arguments_path), Some(arguments_ui_path)) => {
+                    Some(schema_from_row(FormSchemaRow {
+                        id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                        r#type: "reportArgument".to_string(),
+                        json_schema: fs::read_to_string(arguments_path)?,
+                        ui_schema: fs::read_to_string(arguments_ui_path)?,
+                    })?)
+                }
+                (None, None) => None,
+            };
+
+            if let Some(form_schema_json) = &form_schema_json {
+                FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
+            }
+
+            ReportRowRepository::new(&con).upsert_one(&ReportRow {
+                id,
+                name,
+                r#type: repository::ReportType::OmSupply,
+                template: fs::read_to_string(report_path)?,
+                context,
+                sub_context,
+                argument_schema_id: form_schema_json.map(|r| r.id.clone()),
+                comment: None,
+            })?;
+
+            info!("Report upserted");
+        }
     }
 
     Ok(())

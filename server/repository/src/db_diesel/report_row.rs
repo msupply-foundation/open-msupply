@@ -4,6 +4,7 @@ use super::{
 
 use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
+use clap::ValueEnum;
 use diesel::prelude::*;
 
 use diesel_derive_enum::DbEnum;
@@ -14,7 +15,7 @@ pub enum ReportType {
     OmSupply,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, ValueEnum)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ContextType {
     Asset,

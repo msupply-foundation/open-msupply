@@ -5,8 +5,10 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use repository::query_json;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
-use service::report::report_service::{PrintFormat, ReportError, ResolvedReportQuery};
+use service::report::definition::{PrintReportSort, GraphQlQuery, ReportDefinition, SQLQuery};
+use service::report::report_service::{ReportError, ResolvedReportQuery};
+
+use crate::PrintFormat;
 
 pub struct FailedToFetchReportData {
     errors: serde_json::Value,
@@ -40,7 +42,7 @@ pub struct PrintReportNode {
 
 #[Object]
 impl PrintReportNode {
-    /// Return the file id of the printed report.
+    /// Return the file id of the generated report.
     /// The file can be fetched using the /files?id={id} endpoint
     pub async fn file_id(&self) -> &str {
         &self.file_id
@@ -53,7 +55,7 @@ pub enum PrintReportResponse {
     Response(PrintReportNode),
 }
 
-pub async fn print_report(
+pub async fn generate_report(
     ctx: &Context<'_>,
     store_id: String,
     report_id: String,
@@ -107,13 +109,13 @@ pub async fn print_report(
         }
     };
 
-    // print the report with the fetched data
-    let file_id = match service.print_html_report(
+    // generate the report with the fetched data
+    let file_id = match service.generate_html_report(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
         arguments,
-        format,
+        format.map(PrintFormat::to_domain),
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
@@ -123,16 +125,19 @@ pub async fn print_report(
         }
     };
 
-    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
+    Ok(PrintReportResponse::Response(PrintReportNode {
+        file_id,
+    }))
 }
 
-pub async fn print_report_definition(
+pub async fn generate_report_definition(
     ctx: &Context<'_>,
     store_id: String,
     name: Option<String>,
     report: serde_json::Value,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
+    format: Option<PrintFormat>,
 ) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
@@ -184,13 +189,13 @@ pub async fn print_report_definition(
         }
     };
 
-    // print the report with the fetched data
-    let file_id = match service.print_html_report(
+    // generate the report with the fetched data
+    let file_id = match service.generate_html_report(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
         arguments,
-        None,
+        format.map(PrintFormat::to_domain),
     ) {
         Ok(file_id) => file_id,
         Err(err) => {
@@ -200,7 +205,9 @@ pub async fn print_report_definition(
         }
     };
 
-    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
+    Ok(PrintReportResponse::Response(PrintReportNode {
+        file_id,
+    }))
 }
 
 enum FetchResult {
