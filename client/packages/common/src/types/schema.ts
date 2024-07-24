@@ -5104,6 +5104,7 @@ export type ProgramEventSortInput = {
 
 export type ProgramFilterInput = {
   contextId?: InputMaybe<EqualFilterStringInput>;
+  existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
