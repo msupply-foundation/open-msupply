@@ -51,7 +51,7 @@ pub fn get_item_stats(
     } = filter.unwrap_or_default();
 
     let amc_lookback_months = amc_lookback_months.unwrap_or(DEFAULT_AMC_LOOKBACK_MONTHS);
-    let lookback_days = (amc_lookback_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH).neg() as i64;
+    let lookback_days = (amc_lookback_months as f64 * NUMBER_OF_DAYS_IN_A_MONTH) as i64;
 
     Ok(ItemStats::new_vec(
         get_consumption_rows(
@@ -73,7 +73,7 @@ pub fn get_consumption_rows(
     lookback_days: i64,
     end_date: &NaiveDate,
 ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
-    let start_date = date_with_offset(end_date, Duration::days(lookback_days));
+    let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
 
     let filter = ConsumptionFilter {
         item_id: item_id_filter,

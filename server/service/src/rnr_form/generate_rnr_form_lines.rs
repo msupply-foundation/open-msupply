@@ -1,11 +1,12 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Neg};
 
-use chrono::{Datelike, NaiveDateTime};
+use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime};
 use repository::{
-    EqualFilter, MasterListLineFilter, MasterListLineRepository, PeriodRow, RepositoryError,
-    RnRForm, RnRFormLineRow, RnRFormLineRowRepository, StorageConnection,
+    AdjustmentFilter, AdjustmentRepository, DateFilter, EqualFilter, MasterListLineFilter,
+    MasterListLineRepository, PeriodRow, ReplenishmentFilter, ReplenishmentRepository,
+    RepositoryError, RnRForm, RnRFormLineRow, RnRFormLineRowRepository, StorageConnection,
 };
-use util::{date_now, uuid::uuid};
+use util::{date_now, date_with_offset, uuid::uuid};
 
 use crate::{
     item_stats::{get_consumption_map, get_consumption_rows},
@@ -32,22 +33,33 @@ pub fn generate_rnr_form_lines(
         .signed_duration_since(period.start_date)
         .num_days();
 
+    let item_id_filter = EqualFilter::equal_any(master_list_item_ids.clone());
+
     let consumption_rows = get_consumption_rows(
         &ctx.connection,
         store_id,
-        Some(EqualFilter::equal_any(master_list_item_ids.clone())),
+        Some(item_id_filter.clone()),
         period_length_in_days,
         &period.end_date,
     )?;
 
-    // let replenishment_rows = get_stock_on_hand_rows(
-    //     &ctx.connection,
-    //     store_id,
-    //     Some(EqualFilter::equal_any(master_list_item_ids.clone())),
-    // )?;
-
-    // TODO: use historic consumption!!!
+    // TODO: all of these one method lol
     let consumption_map = get_consumption_map(consumption_rows);
+
+    let replenishment_map = get_replenishment_map(
+        &ctx.connection,
+        store_id,
+        Some(item_id_filter.clone()),
+        period_length_in_days,
+        &period.end_date,
+    )?;
+    let adjustment_map = get_adjustments_map(
+        &ctx.connection,
+        store_id,
+        Some(item_id_filter.clone()),
+        period_length_in_days,
+        &period.end_date,
+    )?;
 
     let previous_rnr_form_lines_by_item_id =
         get_last_rnr_form_lines(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
@@ -61,18 +73,21 @@ pub fn generate_rnr_form_lines(
                 .unwrap_or(get_opening_balance());
 
             let quantity_consumed = consumption_map.get(&item_id).copied().unwrap_or_default();
+            let quantity_received = replenishment_map.get(&item_id).copied().unwrap_or_default();
 
-            // should be total incoming?
-            let quantity_received = 0.0;
-            let final_balance = 0.0;
+            // TODO: does this go up and down properly?
+            let adjustments = adjustment_map.get(&item_id).copied().unwrap_or_default();
+
+            let final_balance =
+                initial_balance + quantity_received - quantity_consumed + adjustments;
 
             let stock_out_duration: i32 = get_stock_out_duration(
                 &ctx.connection,
                 store_id,
                 &item_id,
-                // where in datetime?
+                // TODO: where in datetime?
                 period.end_date.into(),
-                period_length_in_days,
+                period_length_in_days as u32,
                 final_balance,
             )?;
 
@@ -80,7 +95,9 @@ pub fn generate_rnr_form_lines(
 
             let adjusted_quantity_consumed = match days_in_stock {
                 0 => 0.0,
-                days_in_stock => quantity_consumed * (period_length_in_days / days_in_stock) as f64,
+                days_in_stock => {
+                    quantity_consumed * period_length_in_days as f64 / days_in_stock as f64
+                }
             };
 
             let amc = quantity_consumed / lookback_months as f64;
@@ -97,7 +114,7 @@ pub fn generate_rnr_form_lines(
                 quantity_consumed,
                 stock_out_duration,
                 // all adjustments (adjustments and returns over period)
-                adjustments: 0.0,
+                adjustments,
 
                 adjusted_quantity_consumed,
                 // SOH on date
@@ -124,7 +141,6 @@ pub fn get_lookback_months(period: &PeriodRow) -> u32 {
     // TODO; use historic consumption i think that does this for us already :eyes
     // TODO: what to do here if period is less than month?
     // TODO: THIS IS WHAT WE DOO OOPS
-    // e.g. 1st to 31st rather than 1st to 1st of next month? is that a training thing?
     let months_since_start = (12 + period.end_date.month() - period.start_date.month()) % 12;
 
     (years_since_start * 12) + months_since_start
@@ -141,22 +157,20 @@ fn get_master_list_item_ids(
         .map(|lines| lines.into_iter().map(|line| line.item_id).collect())
 }
 
+// TODO: test this rip
 fn get_last_rnr_form_lines(
     connection: &StorageConnection,
     previous_form_id: Option<String>,
 ) -> Result<HashMap<String, RnRFormLineRow>, RepositoryError> {
     let mut form_lines_by_item_id = HashMap::new();
 
-    match previous_form_id {
-        Some(previous_form_id) => {
-            let rows = RnRFormLineRowRepository::new(connection)
-                .find_many_by_rnr_form_id(&previous_form_id)?;
+    if let Some(previous_form_id) = previous_form_id {
+        let rows = RnRFormLineRowRepository::new(connection)
+            .find_many_by_rnr_form_id(&previous_form_id)?;
 
-            for row in rows.into_iter() {
-                form_lines_by_item_id.insert(row.item_id.clone(), row);
-            }
+        for row in rows.into_iter() {
+            form_lines_by_item_id.insert(row.item_id.clone(), row);
         }
-        None => (),
     }
 
     Ok(form_lines_by_item_id)
@@ -165,7 +179,7 @@ fn get_last_rnr_form_lines(
 fn get_opening_balance() -> f64 {
     // get current SOH, subtract all movements until date... could be v expenny!!
     // shooould only be on first one.
-    0.0
+    2.0
 }
 
 fn get_stock_out_duration(
@@ -173,7 +187,7 @@ fn get_stock_out_duration(
     store_id: &str,
     item_id: &str,
     end_datetime: NaiveDateTime,
-    days_in_period: i64,
+    days_in_period: u32,
     closing_quantity: f64,
 ) -> Result<i32, RepositoryError> {
     let evolution = get_stock_evolution_for_item(
@@ -187,7 +201,7 @@ fn get_stock_out_duration(
         0,
         0.0,
         StockEvolutionOptions {
-            number_of_historic_data_points: days_in_period as u32,
+            number_of_historic_data_points: days_in_period,
             number_of_projected_data_points: 0,
         },
     )?;
@@ -199,4 +213,59 @@ fn get_stock_out_duration(
         .count();
 
     Ok(days_out_of_stock as i32)
+}
+
+pub fn get_replenishment_map(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_id_filter: Option<EqualFilter<String>>,
+    lookback_days: i64,
+    end_date: &NaiveDate,
+) -> Result<HashMap<String, f64>, RepositoryError> {
+    let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
+
+    let filter = ReplenishmentFilter {
+        item_id: item_id_filter,
+        store_id: Some(EqualFilter::equal_to(store_id)),
+        date: Some(DateFilter::date_range(&start_date, end_date)),
+    };
+
+    let replenishment_rows = ReplenishmentRepository::new(connection).query(Some(filter))?;
+
+    let mut replenishment_map = HashMap::new();
+    for rep_row in replenishment_rows.into_iter() {
+        let item_total_replenishment = replenishment_map
+            .entry(rep_row.item_id.clone())
+            .or_insert(0.0);
+        *item_total_replenishment += rep_row.quantity;
+    }
+
+    Ok(replenishment_map)
+}
+pub fn get_adjustments_map(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_id_filter: Option<EqualFilter<String>>,
+    lookback_days: i64,
+    end_date: &NaiveDate,
+) -> Result<HashMap<String, f64>, RepositoryError> {
+    let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
+
+    let filter = AdjustmentFilter {
+        item_id: item_id_filter,
+        store_id: Some(EqualFilter::equal_to(store_id)),
+        date: Some(DateFilter::date_range(&start_date, end_date)),
+    };
+
+    let adjustment_rows = AdjustmentRepository::new(connection).query(Some(filter))?;
+
+    let mut adjustment_map = HashMap::new();
+    for adjustment_row in adjustment_rows.into_iter() {
+        let item_total_adjustments = adjustment_map
+            .entry(adjustment_row.item_id.clone())
+            .or_insert(0.0);
+        *item_total_adjustments += adjustment_row.quantity;
+    }
+
+    Ok(adjustment_map)
 }

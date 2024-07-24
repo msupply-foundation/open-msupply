@@ -400,6 +400,7 @@ impl MockDataInserts {
     }
 
     pub fn items(mut self) -> Self {
+        self.units = true;
         self.items = true;
         self
     }
@@ -509,6 +510,7 @@ impl MockDataInserts {
     }
 
     pub fn programs(mut self) -> Self {
+        self.contexts = true;
         self.programs = true;
         self
     }
@@ -585,6 +587,10 @@ impl MockDataInserts {
     }
 
     pub fn rnr_forms(mut self) -> Self {
+        self.period_schedules = true;
+        self.periods = true;
+        self.contexts = true;
+        self.programs = true;
         self.rnr_forms = true;
         self
     }
