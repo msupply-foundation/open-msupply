@@ -1,4 +1,6 @@
 use chrono::{DateTime, Utc};
+use fast_scraper::{Html, Selector};
+use headless_chrome::browser::tab::element;
 use repository::{
     PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
     ReportType, RepositoryError,
@@ -18,12 +20,14 @@ use super::{
     definition::{
         GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef, SQLQuery, TeraTemplate,
     },
+    // excel_printing::html_to_excel,
     html_printing::html_to_pdf,
 };
 
 pub enum PrintFormat {
     Pdf,
     Html,
+    Excel,
 }
 
 #[derive(Debug)]
@@ -113,6 +117,9 @@ pub trait ReportServiceTrait: Sync + Send {
             Some(PrintFormat::Html) => {
                 print_html_report_to_html(base_dir, document, report.name.clone())
             }
+            Some(PrintFormat::Excel) => {
+                print_html_report_to_excel(base_dir, document, report.name.clone())
+            }
             Some(PrintFormat::Pdf) | None => {
                 print_html_report_to_pdf(base_dir, document, report.name.clone())
             }
@@ -161,6 +168,66 @@ fn print_html_report_to_html(
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
     Ok(file.id)
+}
+
+/// Converts the report to an Excel file and returns the file id
+fn print_html_report_to_excel(
+    base_dir: &Option<String>,
+    document: GeneratedReport,
+    report_name: String,
+) -> Result<String, ReportError> {
+    let id = uuid();
+    // TODO use a proper tmp dir here instead of base_dir?
+    // let excel = html_to_excel(base_dir, &format_html_document(document), &id)
+    //     .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
+
+    // let doc = Html::parse_document(&format_html_document(document));
+
+    let mut book = umya_spreadsheet::new_file();
+    // let _ = book.new_sheet("Report");
+
+    // TO-DO: Process document data into book
+    let fragment = Html::parse_fragment(&format_html_document(document));
+    let table_selector = Selector::parse("table").unwrap();
+    let row_selector = Selector::parse("tr").unwrap();
+    let cell_selector = Selector::parse("td").unwrap();
+
+    let table = fragment.select(&table_selector).next().unwrap();
+    // for element in table.select(&row_selector).enumerate() {
+    //     book
+    // }
+
+    book.get_sheet_by_name_mut("Sheet1")
+        .unwrap()
+        .get_cell_mut("A1")
+        .set_value("TEST1");
+    book.get_sheet_by_name_mut("Sheet1")
+        .unwrap()
+        .get_cell_mut("B2")
+        .set_value("TEST2");
+    book.get_sheet_by_name_mut("Sheet1")
+        .unwrap()
+        .get_cell_mut("C3")
+        .set_value("TEST3");
+
+    let path = std::path::Path::new("/Users/carl/Desktop/_OUTPUT/test.xlsx");
+
+    let _ = umya_spreadsheet::writer::xlsx::write(&book, &path);
+
+    // let file_service = StaticFileService::new(base_dir)
+    //     .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+    // let now: DateTime<Utc> = SystemTime::now().into();
+
+    // let file = file_service
+    //     .store_file(
+    //         &format!("{}_{}.xls", now.format("%Y%m%d_%H%M%S"), report_name),
+    //         StaticFileCategory::Temporary,
+    //         &book,
+    //     )
+    //     .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+    // Ok(file.id)
+
+    Ok("temp".to_string())
 }
 
 /// Puts the document content, header and footer into a <html> template.

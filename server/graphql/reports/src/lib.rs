@@ -14,6 +14,7 @@ pub struct ReportQueries;
 pub enum PrintFormat {
     Pdf,
     Html,
+    Excel,
 }
 
 #[Object]
@@ -73,6 +74,7 @@ impl PrintFormat {
         match self {
             PrintFormat::Pdf => ServicePrintFormat::Pdf,
             PrintFormat::Html => ServicePrintFormat::Html,
+            PrintFormat::Excel => ServicePrintFormat::Excel,
         }
     }
 }

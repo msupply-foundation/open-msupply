@@ -58,6 +58,7 @@ pub enum Format {
     #[default]
     Pdf,
     Html,
+    Excel,
 }
 
 #[derive(clap::Args)]
