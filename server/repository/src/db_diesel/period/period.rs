@@ -27,6 +27,7 @@ pub struct Period {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct PeriodFilter {
     pub id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
     pub period_schedule_id: Option<EqualFilter<String>>,
     pub end_date: Option<DateFilter>,
     pub rnr_form_program_id: Option<EqualFilter<String>>,
@@ -111,6 +112,7 @@ fn create_filtered_query(filter: Option<PeriodFilter>) -> BoxedPeriodQuery {
             period_schedule_id,
             end_date,
             rnr_form_program_id,
+            store_id,
         } = filter;
 
         apply_equal_filter!(query, id, period_dsl::id);
@@ -118,6 +120,7 @@ fn create_filtered_query(filter: Option<PeriodFilter>) -> BoxedPeriodQuery {
         apply_date_filter!(query, end_date, period_dsl::end_date);
 
         apply_equal_filter!(query, rnr_form_program_id, rnr_form_dsl::program_id);
+        apply_equal_filter!(query, store_id, rnr_form_dsl::store_id);
     }
 
     query
@@ -140,6 +143,11 @@ impl PeriodFilter {
 
     pub fn end_date(mut self, filter: DateFilter) -> Self {
         self.end_date = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 

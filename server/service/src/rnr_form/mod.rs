@@ -35,17 +35,19 @@ pub trait RnRFormServiceTrait: Sync + Send {
     fn get_schedules_with_periods_by_program(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         program_id: &str,
     ) -> Result<Vec<PeriodSchedule>, RepositoryError> {
-        get_schedules_with_periods_by_program(ctx, program_id)
+        get_schedules_with_periods_by_program(ctx, store_id, program_id)
     }
 
     fn insert_rnr_form(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: InsertRnRForm,
     ) -> Result<RnRForm, InsertRnRFormError> {
-        insert_rnr_form(ctx, input)
+        insert_rnr_form(ctx, store_id, input)
     }
 }
 

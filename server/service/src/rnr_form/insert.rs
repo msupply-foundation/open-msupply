@@ -42,14 +42,15 @@ pub enum InsertRnRFormError {
 
 pub fn insert_rnr_form(
     ctx: &ServiceContext,
+    store_id: &str,
     input: InsertRnRForm,
 ) -> Result<RnRForm, InsertRnRFormError> {
     let rnr_form = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &ctx.store_id, &input)?;
+            validate(connection, store_id, &input)?;
 
-            let rnr_form = generate(input, &ctx.store_id);
+            let rnr_form = generate(input, store_id);
 
             let rnr_form_repo = RnRFormRowRepository::new(connection);
 
@@ -88,6 +89,7 @@ fn validate(
         CheckOtherPartyType::Supplier,
     )?;
 
+    // TODO... for store!
     if check_program_exists(connection, &input.program_id)?.is_none() {
         return Err(InsertRnRFormError::ProgramDoesNotExist);
     }
@@ -109,7 +111,8 @@ fn validate(
         return Err(InsertRnRFormError::PeriodNotInProgramSchedule);
     }
 
-    if check_rnr_form_exists_for_period(connection, &input.period_id, &input.program_id)?.is_some()
+    if check_rnr_form_exists_for_period(connection, store_id, &input.period_id, &input.program_id)?
+        .is_some()
     {
         return Err(InsertRnRFormError::RnRFormAlreadyExistsForPeriod);
     };
