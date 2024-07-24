@@ -103,7 +103,6 @@ impl StringFilter {
 #[derive(Clone, PartialEq, Debug)]
 pub struct EqualFilter<T> {
     pub equal_to: Option<T>,
-    pub equal_to_or_null: Option<T>,
     pub not_equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
     pub equal_any_or_null: Option<Vec<T>>,
@@ -116,7 +115,6 @@ impl<T> Default for EqualFilter<T> {
         Self {
             equal_to: None,
             not_equal_to: None,
-            equal_to_or_null: None,
             equal_any: None,
             equal_any_or_null: None,
             not_equal_all: None,
@@ -165,10 +163,6 @@ impl EqualFilter<f64> {
 impl EqualFilter<String> {
     pub fn equal_to(value: &str) -> Self {
         inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
-    }
-
-    pub fn equal_to_or_null(value: &str) -> Self {
-        inline_init(|r: &mut Self| r.equal_to_or_null = Some(value.to_owned()))
     }
 
     pub fn not_equal_to(value: &str) -> Self {

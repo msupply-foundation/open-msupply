@@ -42,6 +42,7 @@ pub fn check_rnr_form_exists_for_period(
     Ok(PeriodRepository::new(connection)
         .query_by_filter(
             store_id.to_string(),
+            program_id.to_string(),
             PeriodFilter::new()
                 .id(EqualFilter::equal_to(period_id))
                 .rnr_form_program_id(EqualFilter::equal_to(program_id)),
