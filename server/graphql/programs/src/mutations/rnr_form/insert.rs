@@ -89,6 +89,9 @@ fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
         | ServiceError::ProgramDoesNotExist
         | ServiceError::PeriodDoesNotExist
         | ServiceError::PeriodNotInProgramSchedule
+        | ServiceError::PeriodNotNextInSequence
+        | ServiceError::PeriodNotClosed
+        | ServiceError::PreviousRnRFormNotFinalised
         | ServiceError::RnRFormAlreadyExistsForPeriod => BadUserInput(formatted_error),
 
         ServiceError::InternalError(_)
