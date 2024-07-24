@@ -175,5 +175,17 @@
   "error.problem-saving": "Произошла ошибка: возникла проблема с сохранением данных.",
   "error.scanner-not-connected": "Сканер не подключен. Чтобы подключить сканер, перейдите в раздел Администратор > Устройства.",
   "error.something-wrong": "Упс! Что-то пошло не так.",
-  "error.unable-to-detect-scanner": "Невозможно обнаружить сканер"
+  "error.unable-to-detect-scanner": "Невозможно обнаружить сканер",
+  "filename.asset-categories": "категории-ресурсов",
+  "filename.cold-chain-equipment": "холодильное-оборудование",
+  "error.unique-value-violation": "Запись с таким {{ field }} уже существует",
+  "heading.custom": "Пользовательское",
+  "heading.configuration": "Конфигурация",
+  "filename.facilities-properties": "импорт-свойств-объектов",
+  "filename.inbound-returns": "входящие-возвраты",
+  "filename.inbounds": "входящие-поставки",
+  "error.unable-to-read-barcode": "Невозможно прочитать штрих-код",
+  "error.no-properties-to-import": "Для ваших объектов нет настроенных свойств для импорта",
+  "error.unable-to-load-data": "Произошла ошибка: возникла проблема с загрузкой данных.",
+  "error.unable-to-load-server-log": "Журналы сервера не найдены. Проверьте свою конфигурацию, чтобы узнать, включены ли журналы сервера."
 }
