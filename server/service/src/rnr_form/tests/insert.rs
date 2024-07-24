@@ -2,12 +2,13 @@
 mod query {
     use chrono::Duration;
     use repository::mock::{
-        mock_name_b, mock_name_store_b, mock_name_store_c, mock_period, mock_period_2_a,
-        mock_period_2_b, mock_rnr_form_a, mock_store_a, mock_store_b, MockData,
+        mock_immunisation_program_a, mock_name_b, mock_name_store_b, mock_name_store_c,
+        mock_period, mock_period_2_a, mock_period_2_b, mock_rnr_form_a, mock_store_a, mock_store_b,
+        MockData,
     };
     use repository::mock::{mock_program_b, MockDataInserts};
     use repository::test_db::setup_all_with_data;
-    use repository::{NameStoreJoinRow, PeriodRow, RnRFormRowRepository};
+    use repository::{NameStoreJoinRow, PeriodRow, RnRFormLineRowRepository, RnRFormRowRepository};
     use util::{date_now, date_now_with_offset};
 
     use crate::rnr_form::insert::{InsertRnRForm, InsertRnRFormError};
@@ -107,6 +108,21 @@ mod query {
                 }
             ),
             Err(InsertRnRFormError::ProgramDoesNotExist)
+        );
+
+        // ProgramHasNoMasterList
+        assert_eq!(
+            service.insert_rnr_form(
+                &context,
+                &store_id,
+                InsertRnRForm {
+                    id: "new_id".to_string(),
+                    supplier_id: mock_name_store_c().id,
+                    program_id: mock_immunisation_program_a().id,
+                    ..Default::default()
+                }
+            ),
+            Err(InsertRnRFormError::ProgramHasNoMasterList)
         );
 
         // PeriodDoesNotExist
@@ -251,6 +267,14 @@ mod query {
             .unwrap();
 
         assert_eq!(form.id, "new_rnr_id");
+
+        let form_lines = RnRFormLineRowRepository::new(&context.connection)
+            .find_many_by_rnr_form_id("new_rnr_id")
+            .unwrap();
+
+        // one line created, from master list
+        assert_eq!(form_lines.len(), 1);
+        assert_eq!(form_lines[0].item_id, "item_query_test1");
 
         // Can create same supplier/program/period in a different store
         context.store_id = mock_store_b().id;

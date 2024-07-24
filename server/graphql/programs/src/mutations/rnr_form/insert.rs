@@ -89,6 +89,7 @@ fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
         | ServiceError::ProgramDoesNotExist
         | ServiceError::PeriodDoesNotExist
         | ServiceError::PeriodNotInProgramSchedule
+        | ServiceError::ProgramHasNoMasterList
         | ServiceError::PeriodNotNextInSequence
         | ServiceError::PeriodNotClosed
         | ServiceError::PreviousRnRFormNotFinalised
