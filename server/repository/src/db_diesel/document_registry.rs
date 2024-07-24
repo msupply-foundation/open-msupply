@@ -209,6 +209,7 @@ impl DocumentRegistryCategory {
             not_equal_all: None,
             equal_any_or_null: None,
             is_null: None,
+            equal_to_or_null: None,
         }
     }
 }

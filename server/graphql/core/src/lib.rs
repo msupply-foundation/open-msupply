@@ -138,6 +138,7 @@ macro_rules! map_filter {
             equal_any_or_null: None,
             not_equal_all: None,
             is_null: None,
+            equal_to_or_null: None,
         }
     }};
 }

@@ -35,6 +35,7 @@ pub fn check_period_exists(
 
 pub fn check_rnr_form_exists_for_period(
     connection: &StorageConnection,
+    store_id: &str,
     period_id: &str,
     program_id: &str,
 ) -> Result<Option<Period>, RepositoryError> {
@@ -42,6 +43,7 @@ pub fn check_rnr_form_exists_for_period(
         .query_by_filter(
             PeriodFilter::new()
                 .id(EqualFilter::equal_to(period_id))
+                .store_id(EqualFilter::equal_to(store_id))
                 .rnr_form_program_id(EqualFilter::equal_to(program_id)),
         )?
         .pop())

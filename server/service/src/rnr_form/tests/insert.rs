@@ -2,11 +2,11 @@
 mod query {
     use repository::mock::{
         mock_name_b, mock_name_store_b, mock_name_store_c, mock_period, mock_period_2_a,
-        mock_period_2_b, mock_rnr_form_a, mock_store_a,
+        mock_period_2_b, mock_rnr_form_a, mock_store_a, mock_store_b, MockData,
     };
     use repository::mock::{mock_program_b, MockDataInserts};
-    use repository::test_db::setup_all;
-    use repository::RnRFormRowRepository;
+    use repository::test_db::{setup_all, setup_all_with_data};
+    use repository::{NameStoreJoinRow, RnRFormRowRepository};
 
     use crate::rnr_form::insert::{InsertRnRForm, InsertRnRFormError};
     use crate::service_provider::ServiceProvider;
@@ -22,10 +22,12 @@ mod query {
             .unwrap();
         let service = service_provider.rnr_form_service;
 
+        let store_id = &mock_store_a().id;
         // RnRFormAlreadyExists
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &store_id,
                 InsertRnRForm {
                     id: mock_rnr_form_a().id,
                     ..Default::default()
@@ -38,6 +40,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &store_id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: "not-exists".to_string(),
@@ -51,6 +54,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &store_id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     // not visible in store A
@@ -65,6 +69,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &store_id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_b().id,
@@ -78,6 +83,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &store_id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -92,6 +98,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &store_id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -106,6 +113,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &store_id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -121,6 +129,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &store_id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -135,22 +144,42 @@ mod query {
 
     #[actix_rt::test]
     async fn insert_rnr_form_success() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_rnr_form_success", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_rnr_form_success",
+            MockDataInserts::all(),
+            MockData {
+                // make supplier store C visible in store B
+                name_store_joins: vec![NameStoreJoinRow {
+                    id: String::from("name_store_b_join_c"),
+                    name_link_id: String::from("name_store_c"),
+                    store_id: String::from("store_b"),
+                    name_is_customer: false,
+                    name_is_supplier: true,
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
-        let _result = service_provider.rnr_form_service.insert_rnr_form(
-            &context,
-            InsertRnRForm {
-                id: "new_rnr_id".to_string(),
-                supplier_id: mock_name_store_c().id,
-                program_id: mock_program_b().id,
-                period_id: mock_period_2_b().id,
-            },
-        );
+
+        // Can create
+        let _result = service_provider
+            .rnr_form_service
+            .insert_rnr_form(
+                &context,
+                &mock_store_a().id,
+                InsertRnRForm {
+                    id: "new_rnr_id".to_string(),
+                    supplier_id: mock_name_store_c().id,
+                    program_id: mock_program_b().id,
+                    period_id: mock_period_2_b().id,
+                },
+            )
+            .unwrap();
 
         let form = RnRFormRowRepository::new(&context.connection)
             .find_one_by_id("new_rnr_id")
@@ -158,5 +187,22 @@ mod query {
             .unwrap();
 
         assert_eq!(form.id, "new_rnr_id");
+
+        // Can create same supplier/program/period in a different store
+        context.store_id = mock_store_b().id;
+
+        let _result = service_provider
+            .rnr_form_service
+            .insert_rnr_form(
+                &context,
+                &mock_store_b().id,
+                InsertRnRForm {
+                    id: "same_but_diff_store".to_string(),
+                    supplier_id: mock_name_store_c().id,
+                    program_id: mock_program_b().id,
+                    period_id: mock_period_2_b().id,
+                },
+            )
+            .unwrap();
     }
 }
