@@ -1,20 +1,35 @@
 #[cfg(test)]
 mod query {
+    use chrono::Duration;
     use repository::mock::{
         mock_name_b, mock_name_store_b, mock_name_store_c, mock_period, mock_period_2_a,
         mock_period_2_b, mock_rnr_form_a, mock_store_a, mock_store_b, MockData,
     };
     use repository::mock::{mock_program_b, MockDataInserts};
-    use repository::test_db::{setup_all, setup_all_with_data};
-    use repository::{NameStoreJoinRow, RnRFormRowRepository};
+    use repository::test_db::setup_all_with_data;
+    use repository::{NameStoreJoinRow, PeriodRow, RnRFormRowRepository};
+    use util::{date_now, date_now_with_offset};
 
     use crate::rnr_form::insert::{InsertRnRForm, InsertRnRFormError};
     use crate::service_provider::ServiceProvider;
 
     #[actix_rt::test]
     async fn insert_rnr_form_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_rnr_form_errors", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_rnr_form_errors",
+            MockDataInserts::all(),
+            MockData {
+                periods: vec![PeriodRow {
+                    id: "future_period".to_string(),
+                    name: "Future closing".to_string(),
+                    period_schedule_id: "mock_period_schedule_2".to_string(),
+                    start_date: date_now(),
+                    end_date: date_now_with_offset(Duration::days(1)),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -125,6 +140,22 @@ mod query {
             Err(InsertRnRFormError::PeriodNotInProgramSchedule)
         );
 
+        // PeriodNotClosed
+        assert_eq!(
+            service.insert_rnr_form(
+                &context,
+                &store_id,
+                InsertRnRForm {
+                    id: "new_id".to_string(),
+                    supplier_id: mock_name_store_c().id,
+                    program_id: mock_program_b().id,
+                    // set to close a day from now()
+                    period_id: "future_period".to_string(),
+                }
+            ),
+            Err(InsertRnRFormError::PeriodNotClosed)
+        );
+
         // RnRFormAlreadyExistsForPeriod
         assert_eq!(
             service.insert_rnr_form(
@@ -140,6 +171,39 @@ mod query {
             ),
             Err(InsertRnRFormError::RnRFormAlreadyExistsForPeriod)
         );
+
+        // TODO: next PR!
+        // // PreviousRnRFormNotFinalised
+        // assert_eq!(
+        //     service.insert_rnr_form(
+        //         &context,
+        //         &store_id,
+        //         InsertRnRForm {
+        //             id: "new_id".to_string(),
+        //             supplier_id: mock_name_store_c().id,
+        //             program_id: mock_program_b().id,
+        //             // RNR form A already exists with this period
+        //             period_id: mock_period_2_a().id,
+        //         }
+        //     ),
+        //     Err(InsertRnRFormError::PreviousRnRFormNotFinalised)
+        // );
+
+        // // PeriodNotNextInSequence
+        // assert_eq!(
+        //     service.insert_rnr_form(
+        //         &context,
+        //         &store_id,
+        //         InsertRnRForm {
+        //             id: "new_id".to_string(),
+        //             supplier_id: mock_name_store_c().id,
+        //             program_id: mock_program_b().id,
+        //             // from period_schedule_1, which is not assigned to program B
+        //             period_id: mock_period().id,
+        //         }
+        //     ),
+        //     Err(InsertRnRFormError::PeriodNotNextInSequence)
+        // );
     }
 
     #[actix_rt::test]

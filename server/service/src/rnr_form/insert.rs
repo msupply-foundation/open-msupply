@@ -36,6 +36,9 @@ pub enum InsertRnRFormError {
     ProgramDoesNotExist,
     PeriodDoesNotExist,
     PeriodNotInProgramSchedule,
+    PeriodNotNextInSequence,
+    PeriodNotClosed,
+    PreviousRnRFormNotFinalised,
     RnRFormAlreadyExistsForPeriod,
     NewlyCreatedRnRFormDoesNotExist,
 }
@@ -89,7 +92,7 @@ fn validate(
         CheckOtherPartyType::Supplier,
     )?;
 
-    // TODO... for store!
+    // TODO... for store! How?
     if check_program_exists(connection, &input.program_id)?.is_none() {
         return Err(InsertRnRFormError::ProgramDoesNotExist);
     }
@@ -101,12 +104,17 @@ fn validate(
         }
     };
 
+    if period.end_date > Utc::now().naive_utc().into() {
+        return Err(InsertRnRFormError::PeriodNotClosed);
+    }
+
     let period_schedule_ids = ProgramRequisitionSettingsRowRepository::new(connection)
         .find_many_by_program_id(&input.program_id)?
         .iter()
         .map(|s| s.period_schedule_id.clone())
         .collect::<Vec<String>>();
 
+    // Check if period is part of one of the period schedules for the program
     if !period_schedule_ids.contains(&period.period_schedule_id) {
         return Err(InsertRnRFormError::PeriodNotInProgramSchedule);
     }
