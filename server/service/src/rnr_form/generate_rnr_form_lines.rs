@@ -1,21 +1,21 @@
 use std::{collections::HashMap, ops::Neg};
 
-use chrono::{Datelike, Duration, NaiveDate, NaiveDateTime};
+use chrono::{Duration, NaiveDate, NaiveDateTime};
 use repository::{
-    AdjustmentFilter, AdjustmentRepository, DateFilter, EqualFilter, MasterListLineFilter,
-    MasterListLineRepository, PeriodRow, ReplenishmentFilter, ReplenishmentRepository,
-    RepositoryError, RnRForm, RnRFormLineRow, RnRFormLineRowRepository, StorageConnection,
+    AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
+    EqualFilter, MasterListLineFilter, MasterListLineRepository, PeriodRow, ReplenishmentFilter,
+    ReplenishmentRepository, RepositoryError, RnRForm, RnRFormLineRow, RnRFormLineRowRepository,
+    StorageConnection,
 };
-use util::{date_now, date_with_offset, uuid::uuid};
+use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, date_with_offset, uuid::uuid};
 
 use crate::{
-    item_stats::{get_consumption_map, get_consumption_rows},
     requisition_line::chart::{get_stock_evolution_for_item, StockEvolutionOptions},
     service_provider::ServiceContext,
 };
 
-// Make this a store pref... in OMS?
-const TARGET_MOS: i32 = 2;
+// Would be nice if this was an OMS store pref
+const TARGET_MOS: f64 = 2.0;
 
 pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
@@ -27,40 +27,21 @@ pub fn generate_rnr_form_lines(
 ) -> Result<Vec<RnRFormLineRow>, RepositoryError> {
     let master_list_item_ids = get_master_list_item_ids(&ctx, master_list_id)?;
 
-    let lookback_months = get_lookback_months(&period);
-    let period_length_in_days = period
-        .end_date
-        .signed_duration_since(period.start_date)
-        .num_days();
+    let period_length_in_days = get_period_length(&period);
+    // TODO: maybe sep amc calc
+    // let lookback_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
+    let lookback_months = period_length_in_days as f64 / 31.0; // tehe
 
-    let item_id_filter = EqualFilter::equal_any(master_list_item_ids.clone());
-
-    let consumption_rows = get_consumption_rows(
+    // Get consumption/replenishment/adjustment stats for each item in the master list
+    let usage_by_item_map = get_usage_map(
         &ctx.connection,
         store_id,
-        Some(item_id_filter.clone()),
+        Some(EqualFilter::equal_any(master_list_item_ids.clone())),
         period_length_in_days,
         &period.end_date,
     )?;
 
-    // TODO: all of these one method lol
-    let consumption_map = get_consumption_map(consumption_rows);
-
-    let replenishment_map = get_replenishment_map(
-        &ctx.connection,
-        store_id,
-        Some(item_id_filter.clone()),
-        period_length_in_days,
-        &period.end_date,
-    )?;
-    let adjustment_map = get_adjustments_map(
-        &ctx.connection,
-        store_id,
-        Some(item_id_filter.clone()),
-        period_length_in_days,
-        &period.end_date,
-    )?;
-
+    // Get previous form data for intial balance
     let previous_rnr_form_lines_by_item_id =
         get_last_rnr_form_lines(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
 
@@ -72,16 +53,12 @@ pub fn generate_rnr_form_lines(
                 .map(|line| line.final_balance)
                 .unwrap_or(get_opening_balance());
 
-            let quantity_consumed = consumption_map.get(&item_id).copied().unwrap_or_default();
-            let quantity_received = replenishment_map.get(&item_id).copied().unwrap_or_default();
-
-            // TODO: does this go up and down properly?
-            let adjustments = adjustment_map.get(&item_id).copied().unwrap_or_default();
+            let usage = usage_by_item_map.get(&item_id).copied().unwrap_or_default();
 
             let final_balance =
-                initial_balance + quantity_received - quantity_consumed + adjustments;
+                initial_balance + usage.replenished - usage.consumed + usage.adjusted;
 
-            let stock_out_duration: i32 = get_stock_out_duration(
+            let stock_out_duration = get_stock_out_duration(
                 &ctx.connection,
                 store_id,
                 &item_id,
@@ -96,13 +73,14 @@ pub fn generate_rnr_form_lines(
             let adjusted_quantity_consumed = match days_in_stock {
                 0 => 0.0,
                 days_in_stock => {
-                    quantity_consumed * period_length_in_days as f64 / days_in_stock as f64
+                    usage.consumed * period_length_in_days as f64 / days_in_stock as f64
                 }
             };
 
-            let amc = quantity_consumed / lookback_months as f64;
+            // that's not amc, that's this period... should it be something else?
+            let amc = usage.consumed / lookback_months;
 
-            let maximum_quantity = amc * TARGET_MOS as f64;
+            let maximum_quantity = amc * TARGET_MOS;
 
             Ok(RnRFormLineRow {
                 id: uuid(),
@@ -110,18 +88,17 @@ pub fn generate_rnr_form_lines(
                 item_id,
                 average_monthly_consumption: amc,
                 initial_balance,
-                quantity_received,
-                quantity_consumed,
+                quantity_received: usage.replenished,
+                quantity_consumed: usage.consumed,
                 stock_out_duration,
-                // all adjustments (adjustments and returns over period)
-                adjustments,
+                adjustments: usage.adjusted,
 
                 adjusted_quantity_consumed,
-                // SOH on date
                 final_balance,
                 maximum_quantity,
                 // stock lines for item, find earliest expiry or blank
                 expiry_date: None,
+                // OR ZERO
                 requested_quantity: maximum_quantity - final_balance,
                 comment: None,
                 confirmed: false,
@@ -130,20 +107,6 @@ pub fn generate_rnr_form_lines(
         .collect::<Result<Vec<RnRFormLineRow>, RepositoryError>>();
 
     rnr_form_lines
-}
-
-pub fn get_lookback_months(period: &PeriodRow) -> u32 {
-    let years_since_start = period
-        .end_date
-        .years_since(period.start_date)
-        .unwrap_or_default();
-
-    // TODO; use historic consumption i think that does this for us already :eyes
-    // TODO: what to do here if period is less than month?
-    // TODO: THIS IS WHAT WE DOO OOPS
-    let months_since_start = (12 + period.end_date.month() - period.start_date.month()) % 12;
-
-    (years_since_start * 12) + months_since_start
 }
 
 fn get_master_list_item_ids(
@@ -215,57 +178,69 @@ fn get_stock_out_duration(
     Ok(days_out_of_stock as i32)
 }
 
-pub fn get_replenishment_map(
-    connection: &StorageConnection,
-    store_id: &str,
-    item_id_filter: Option<EqualFilter<String>>,
-    lookback_days: i64,
-    end_date: &NaiveDate,
-) -> Result<HashMap<String, f64>, RepositoryError> {
-    let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
-
-    let filter = ReplenishmentFilter {
-        item_id: item_id_filter,
-        store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::date_range(&start_date, end_date)),
-    };
-
-    let replenishment_rows = ReplenishmentRepository::new(connection).query(Some(filter))?;
-
-    let mut replenishment_map = HashMap::new();
-    for rep_row in replenishment_rows.into_iter() {
-        let item_total_replenishment = replenishment_map
-            .entry(rep_row.item_id.clone())
-            .or_insert(0.0);
-        *item_total_replenishment += rep_row.quantity;
-    }
-
-    Ok(replenishment_map)
+#[derive(Debug, PartialEq, Default, Copy, Clone)]
+pub struct UsageStats {
+    pub consumed: f64,
+    pub replenished: f64,
+    pub adjusted: f64,
 }
-pub fn get_adjustments_map(
+
+pub fn get_usage_map(
     connection: &StorageConnection,
     store_id: &str,
     item_id_filter: Option<EqualFilter<String>>,
     lookback_days: i64,
     end_date: &NaiveDate,
-) -> Result<HashMap<String, f64>, RepositoryError> {
+) -> Result<HashMap<String, UsageStats>, RepositoryError> {
     let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
+    let store_id_filter = Some(EqualFilter::equal_to(store_id));
+    let date_filter = Some(DateFilter::date_range(&start_date, end_date));
 
-    let filter = AdjustmentFilter {
+    let consumption_rows =
+        ConsumptionRepository::new(connection).query(Some(ConsumptionFilter {
+            item_id: item_id_filter.clone(),
+            store_id: store_id_filter.clone(),
+            date: date_filter.clone(),
+        }))?;
+    let replenishment_rows =
+        ReplenishmentRepository::new(connection).query(Some(ReplenishmentFilter {
+            item_id: item_id_filter.clone(),
+            store_id: store_id_filter.clone(),
+            date: date_filter.clone(),
+        }))?;
+    let adjustment_rows = AdjustmentRepository::new(connection).query(Some(AdjustmentFilter {
         item_id: item_id_filter,
-        store_id: Some(EqualFilter::equal_to(store_id)),
-        date: Some(DateFilter::date_range(&start_date, end_date)),
-    };
+        store_id: store_id_filter,
+        date: date_filter,
+    }))?;
 
-    let adjustment_rows = AdjustmentRepository::new(connection).query(Some(filter))?;
+    let mut usage_map = HashMap::new();
 
-    let mut adjustment_map = HashMap::new();
+    for consumption_row in consumption_rows.into_iter() {
+        let item = usage_map
+            .entry(consumption_row.item_id.clone())
+            .or_insert(UsageStats::default());
+        item.consumed += consumption_row.quantity;
+    }
+    for replenishment_row in replenishment_rows.into_iter() {
+        let item = usage_map
+            .entry(replenishment_row.item_id.clone())
+            .or_insert(UsageStats::default());
+        item.replenished += replenishment_row.quantity;
+    }
     for adjustment_row in adjustment_rows.into_iter() {
-        let item_total_adjustments = adjustment_map
+        let item = usage_map
             .entry(adjustment_row.item_id.clone())
-            .or_insert(0.0);
-        *item_total_adjustments += adjustment_row.quantity;
+            .or_insert(UsageStats::default());
+        item.adjusted += adjustment_row.quantity;
     }
 
-    Ok(adjustment_map)
+    Ok(usage_map)
+}
+
+fn get_period_length(period: &PeriodRow) -> i64 {
+    period
+        .end_date
+        .signed_duration_since(period.start_date)
+        .num_days()
 }
