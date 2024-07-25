@@ -3,9 +3,11 @@ use std::{collections::HashMap, ops::Neg};
 use chrono::{Duration, NaiveDate, NaiveDateTime};
 use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
-    EqualFilter, MasterListLineFilter, MasterListLineRepository, PeriodRow, ReplenishmentFilter,
-    ReplenishmentRepository, RepositoryError, RnRForm, RnRFormLineRow, RnRFormLineRowRepository,
-    StorageConnection,
+    DatetimeFilter, EqualFilter, MasterListLineFilter, MasterListLineRepository, Pagination,
+    PeriodRow, ReplenishmentFilter, ReplenishmentRepository, RepositoryError, RnRForm,
+    RnRFormLineRow, RnRFormLineRowRepository, StockLineFilter, StockLineRepository, StockLineSort,
+    StockLineSortField, StockMovementFilter, StockMovementRepository, StockOnHandFilter,
+    StockOnHandRepository, StorageConnection,
 };
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, date_with_offset, uuid::uuid};
 
@@ -28,9 +30,7 @@ pub fn generate_rnr_form_lines(
     let master_list_item_ids = get_master_list_item_ids(&ctx, master_list_id)?;
 
     let period_length_in_days = get_period_length(&period);
-    // TODO: maybe sep amc calc
-    // let lookback_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
-    let lookback_months = period_length_in_days as f64 / 31.0; // tehe
+    let lookback_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
 
     // Get consumption/replenishment/adjustment stats for each item in the master list
     let usage_by_item_map = get_usage_map(
@@ -41,17 +41,20 @@ pub fn generate_rnr_form_lines(
         &period.end_date,
     )?;
 
-    // Get previous form data for intial balance
+    // Get previous form data for initial balances
     let previous_rnr_form_lines_by_item_id =
         get_last_rnr_form_lines(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
 
     let rnr_form_lines = master_list_item_ids
         .into_iter()
         .map(|item_id| {
-            let initial_balance = previous_rnr_form_lines_by_item_id
-                .get(&item_id)
-                .map(|line| line.final_balance)
-                .unwrap_or(get_opening_balance());
+            let initial_balance = get_opening_balance(
+                &ctx.connection,
+                previous_rnr_form_lines_by_item_id.get(&item_id),
+                store_id,
+                &item_id,
+                period.start_date,
+            )?;
 
             let usage = usage_by_item_map.get(&item_id).copied().unwrap_or_default();
 
@@ -68,19 +71,25 @@ pub fn generate_rnr_form_lines(
                 final_balance,
             )?;
 
-            let days_in_stock = period_length_in_days - stock_out_duration as i64;
+            let adjusted_quantity_consumed = get_adjusted_quantity_consumed(
+                period_length_in_days,
+                stock_out_duration as i64,
+                usage.consumed,
+            );
 
-            let adjusted_quantity_consumed = match days_in_stock {
-                0 => 0.0,
-                days_in_stock => {
-                    usage.consumed * period_length_in_days as f64 / days_in_stock as f64
-                }
-            };
-
-            // that's not amc, that's this period... should it be something else?
+            // This is only AMC for this period (if periods are monthly, this is redundant...)
+            // Should it be the default we have elsewhere... 3 months lookback?
             let amc = usage.consumed / lookback_months;
 
             let maximum_quantity = amc * TARGET_MOS;
+
+            let requested_quantity = if maximum_quantity - final_balance > 0.0 {
+                maximum_quantity - final_balance
+            } else {
+                0.0
+            };
+
+            let earliest_expiry = get_earliest_expiry(&ctx.connection, store_id, &item_id)?;
 
             Ok(RnRFormLineRow {
                 id: uuid(),
@@ -96,10 +105,8 @@ pub fn generate_rnr_form_lines(
                 adjusted_quantity_consumed,
                 final_balance,
                 maximum_quantity,
-                // stock lines for item, find earliest expiry or blank
-                expiry_date: None,
-                // OR ZERO
-                requested_quantity: maximum_quantity - final_balance,
+                expiry_date: earliest_expiry,
+                requested_quantity,
                 comment: None,
                 confirmed: false,
             })
@@ -120,7 +127,6 @@ fn get_master_list_item_ids(
         .map(|lines| lines.into_iter().map(|line| line.item_id).collect())
 }
 
-// TODO: test this rip
 fn get_last_rnr_form_lines(
     connection: &StorageConnection,
     previous_form_id: Option<String>,
@@ -139,13 +145,46 @@ fn get_last_rnr_form_lines(
     Ok(form_lines_by_item_id)
 }
 
-fn get_opening_balance() -> f64 {
-    // get current SOH, subtract all movements until date... could be v expenny!!
-    // shooould only be on first one.
-    2.0
+pub fn get_opening_balance(
+    connection: &StorageConnection,
+    previous_row: Option<&RnRFormLineRow>,
+    store_id: &str,
+    item_id: &str,
+    start_date: NaiveDate,
+) -> Result<f64, RepositoryError> {
+    if let Some(previous_row) = previous_row {
+        return Ok(previous_row.final_balance);
+    }
+
+    // Get rows
+    let filter = StockMovementFilter::new()
+        .store_id(EqualFilter::equal_to(store_id))
+        .item_id(EqualFilter::equal_to(item_id))
+        .datetime(DatetimeFilter::date_range(
+            start_date.into(),
+            date_now().into(),
+        ));
+
+    let stock_movement_rows = StockMovementRepository::new(connection).query(Some(filter))?;
+
+    let total_movements: f64 = stock_movement_rows
+        .into_iter()
+        .map(|row| row.quantity)
+        .sum();
+
+    let available_stock_on_hand = StockOnHandRepository::new(connection)
+        .query_one(
+            StockOnHandFilter::new()
+                .store_id(EqualFilter::equal_to(store_id))
+                .item_id(EqualFilter::equal_to(item_id)),
+        )?
+        .map(|row| row.available_stock_on_hand)
+        .unwrap_or(0.0);
+
+    Ok(available_stock_on_hand - total_movements)
 }
 
-fn get_stock_out_duration(
+pub fn get_stock_out_duration(
     connection: &StorageConnection,
     store_id: &str,
     item_id: &str,
@@ -159,10 +198,9 @@ fn get_stock_out_duration(
         item_id,
         end_datetime,
         closing_quantity as u32,
-        // These 3 values are actually only used for future projections, so we don't care about them
-        date_now(),
-        0,
-        0.0,
+        date_now(), // only used for future projections, not needed here
+        0,          // only used for future projections, not needed here
+        0.0,        // only used for future projections, not needed here
         StockEvolutionOptions {
             number_of_historic_data_points: days_in_period,
             number_of_projected_data_points: 0,
@@ -176,6 +214,21 @@ fn get_stock_out_duration(
         .count();
 
     Ok(days_out_of_stock as i32)
+}
+
+pub fn get_adjusted_quantity_consumed(
+    period_length_in_days: i64,
+    stock_out_duration: i64,
+    consumed: f64,
+) -> f64 {
+    let days_in_stock = period_length_in_days - stock_out_duration;
+
+    let adjusted_quantity_consumed = match days_in_stock {
+        0 => 0.0,
+        days_in_stock => consumed * period_length_in_days as f64 / days_in_stock as f64,
+    };
+
+    adjusted_quantity_consumed
 }
 
 #[derive(Debug, PartialEq, Default, Copy, Clone)]
@@ -236,6 +289,36 @@ pub fn get_usage_map(
     }
 
     Ok(usage_map)
+}
+
+pub fn get_earliest_expiry(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_id: &str,
+) -> Result<Option<NaiveDate>, RepositoryError> {
+    let filter = StockLineFilter::new()
+        .store_id(EqualFilter::equal_to(store_id))
+        .item_id(EqualFilter::equal_to(item_id))
+        // TODO: this is available stock _now_, but not what would have been available at the closing time of the period!
+        // Also, should it be available or in store?
+        .is_available(true);
+
+    let earliest_expiring = StockLineRepository::new(connection)
+        .query(
+            Pagination::all(),
+            Some(filter),
+            Some(StockLineSort {
+                key: StockLineSortField::ExpiryDate,
+                // Descending, then pop last entry for earliest expiry
+                desc: Some(true),
+            }),
+            Some(store_id.to_string()),
+        )?
+        .pop();
+
+    Ok(earliest_expiring
+        .map(|line| line.stock_line_row.expiry_date)
+        .flatten())
 }
 
 fn get_period_length(period: &PeriodRow) -> i64 {
