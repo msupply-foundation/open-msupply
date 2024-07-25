@@ -55,6 +55,7 @@ fragment ItemRowWithStats on ItemNode {
     averageMonthlyConsumption
     availableStockOnHand
     availableMonthsOfStockOnHand
+    totalConsumption
   }
 }
 
@@ -92,6 +93,7 @@ fragment Item on ItemNode {
     averageMonthlyConsumption
     availableStockOnHand
     availableMonthsOfStockOnHand
+    totalConsumption
   }
 }
 
@@ -180,6 +182,7 @@ fragment ItemsWithStats on ItemNode {
     averageMonthlyConsumption
     availableStockOnHand
     availableMonthsOfStockOnHand
+    totalConsumption
   }
 }
 

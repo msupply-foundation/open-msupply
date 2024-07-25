@@ -37,9 +37,7 @@ pub struct FormSchemaRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-pub(crate) fn schema_from_row(
-    schema_row: FormSchemaRow,
-) -> Result<FormSchemaJson, RepositoryError> {
+pub fn schema_from_row(schema_row: FormSchemaRow) -> Result<FormSchemaJson, RepositoryError> {
     let json_schema: serde_json::Value =
         serde_json::from_str(&schema_row.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't deserialize json schema".to_string(),
