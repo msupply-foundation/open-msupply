@@ -141,8 +141,7 @@ fn validate(
         return Err(InsertRnRFormError::RnRFormAlreadyExistsForPeriod);
     };
 
-    // BIG TODO BUDDY!
-    // Query one, as query sorts by created date, will return latest // tODO double check
+    // Query one, as query sorts by created date, will return latest
     let most_recent_form = RnRFormRepository::new(&ctx.connection).query_one(
         RnRFormFilter::new()
             .store_id(EqualFilter::equal_to(&ctx.store_id))
