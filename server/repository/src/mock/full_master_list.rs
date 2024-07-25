@@ -93,12 +93,12 @@ pub fn mock_master_list_program_b() -> FullMockMasterList {
         },
         joins: vec![
             MasterListNameJoinRow {
-                id: "master_list_program_store_a".to_owned(),
+                id: "master_list_program_b_store_a".to_owned(),
                 master_list_id: "master_list_program_b".to_owned(),
                 name_link_id: mock_name_store_a().id,
             },
             MasterListNameJoinRow {
-                id: "master_list_program_store_b".to_owned(),
+                id: "master_list_program_b_store_b".to_owned(),
                 master_list_id: "master_list_program_b".to_owned(),
                 name_link_id: mock_name_store_b().id,
             },
