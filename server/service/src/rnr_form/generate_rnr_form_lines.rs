@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Neg};
 
-use chrono::{Duration, NaiveDate, NaiveDateTime};
+use chrono::{Duration, NaiveDate};
 use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
     DatetimeFilter, EqualFilter, MasterListLineFilter, MasterListLineRepository, Pagination,
@@ -65,8 +65,7 @@ pub fn generate_rnr_form_lines(
                 &ctx.connection,
                 store_id,
                 &item_id,
-                // TODO: where in datetime?
-                period.end_date.into(),
+                period.end_date,
                 period_length_in_days as u32,
                 final_balance,
             )?;
@@ -188,10 +187,18 @@ pub fn get_stock_out_duration(
     connection: &StorageConnection,
     store_id: &str,
     item_id: &str,
-    end_datetime: NaiveDateTime,
+    end_date: NaiveDate,
     days_in_period: u32,
     closing_quantity: f64,
 ) -> Result<i32, RepositoryError> {
+    let end_datetime = end_date
+        .and_hms_milli_opt(23, 59, 59, 999)
+        // Should always be able to create end of day datetime, so this error shouldn't be possible
+        .ok_or(RepositoryError::as_db_error(
+            "Could not determine closing datetime",
+            "",
+        ))?;
+
     let evolution = get_stock_evolution_for_item(
         connection,
         store_id,
@@ -242,9 +249,11 @@ pub fn get_usage_map(
     connection: &StorageConnection,
     store_id: &str,
     item_id_filter: Option<EqualFilter<String>>,
-    lookback_days: i64,
+    period_length_in_days: i64,
     end_date: &NaiveDate,
 ) -> Result<HashMap<String, UsageStats>, RepositoryError> {
+    let lookback_days = period_length_in_days - 1; // period length is inclusive
+
     let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
     let store_id_filter = Some(EqualFilter::equal_to(store_id));
     let date_filter = Some(DateFilter::date_range(&start_date, end_date));
@@ -326,4 +335,5 @@ fn get_period_length(period: &PeriodRow) -> i64 {
         .end_date
         .signed_duration_since(period.start_date)
         .num_days()
+        + 1 // To be inclusive of end date
 }

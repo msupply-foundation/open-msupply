@@ -81,8 +81,6 @@ fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
-    // TODO; structured error for: u need to finish the previous one?
-
     let graphql_error = match error {
         ServiceError::RnRFormAlreadyExists
         | ServiceError::SupplierDoesNotExist
@@ -92,9 +90,12 @@ fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
         | ServiceError::PeriodDoesNotExist
         | ServiceError::PeriodNotInProgramSchedule
         | ServiceError::ProgramHasNoMasterList
+
+        // TODO: these three either need to be prevented in UI or made into structured errors!
         | ServiceError::PeriodNotNextInSequence
         | ServiceError::PeriodNotClosed
         | ServiceError::PreviousRnRFormNotFinalised
+
         | ServiceError::RnRFormAlreadyExistsForPeriod => BadUserInput(formatted_error),
 
         ServiceError::InternalError(_)
