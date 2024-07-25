@@ -141,7 +141,7 @@ impl RequisitionLineNode {
     pub async fn item_stats(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<u32>,
+        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
     ) -> Result<ItemStatsNode> {
         if self.requisition_row().r#type == RequisitionType::Request {
             return Ok(ItemStatsNode {
