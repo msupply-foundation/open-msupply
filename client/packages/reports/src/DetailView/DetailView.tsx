@@ -10,6 +10,7 @@ import {
   ReportArgumentsModal,
   ReportRowFragment,
   useGenerateReport,
+  usePrintReport,
   useReport,
 } from '@openmsupply-client/system';
 import { Environment } from '@openmsupply-client/config';
@@ -22,6 +23,8 @@ export const DetailView = () => {
   const { data: report } = useReport(id ?? '');
   const { mutateAsync, isLoading } = useGenerateReport();
   const [fileId, setFileId] = useState<string | undefined>();
+  const { print, isPrinting } = usePrintReport();
+
   const {
     updateQuery,
     urlQuery: { reportArgs: reportArgsJson },
@@ -82,6 +85,21 @@ export const DetailView = () => {
     setReportWithArgs(report);
   }, []);
 
+  const printReport = useCallback(() => {
+    if (report === undefined) {
+      return;
+    }
+
+    let reportArgs =
+      (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
+
+    print({
+      reportId: report.id,
+      dataId: '',
+      args: reportArgs,
+    });
+  }, [report, reportArgsJson]);
+
   const url = `${Environment.FILE_URL}${fileId}`;
 
   if (isReportDescriptionLoading) {
@@ -97,6 +115,8 @@ export const DetailView = () => {
           <AppBarButtons
             isDisabled={!report.argumentSchema}
             onFilterOpen={openReportArgumentsModal}
+            printReport={printReport}
+            isPrinting={isPrinting}
           />
         </>
       ) : (
