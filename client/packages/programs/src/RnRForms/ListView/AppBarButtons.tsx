@@ -20,7 +20,6 @@ export const AppBarButtons = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          startIcon={<PlusCircleIcon />}
           variant="outlined"
           onClick={onCreate}
           Icon={<PlusCircleIcon />}

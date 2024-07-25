@@ -32,6 +32,8 @@ pub struct RnRForm {
 pub struct RnRFormFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub program_id: Option<EqualFilter<String>>,
+    pub period_schedule_id: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
 }
 
@@ -157,12 +159,17 @@ fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
             id,
             created_datetime,
             store_id,
+            program_id,
+            period_schedule_id,
         } = f;
 
         apply_equal_filter!(query, id, rnr_form_dsl::id);
         apply_equal_filter!(query, store_id, rnr_form_dsl::store_id);
+        apply_equal_filter!(query, program_id, rnr_form_dsl::program_id);
 
         apply_date_time_filter!(query, created_datetime, rnr_form_dsl::created_datetime);
+
+        apply_equal_filter!(query, period_schedule_id, period_dsl::period_schedule_id);
     }
     query
 }
@@ -193,6 +200,16 @@ impl RnRFormFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.program_id = Some(filter);
+        self
+    }
+
+    pub fn period_schedule_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.period_schedule_id = Some(filter);
         self
     }
 

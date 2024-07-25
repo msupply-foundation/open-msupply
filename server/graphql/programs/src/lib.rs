@@ -59,6 +59,7 @@ use mutations::program_patient::insert::*;
 use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
+use mutations::rnr_form::insert::{insert_rnr_form, InsertRnRFormInput, InsertRnRFormResponse};
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
@@ -72,6 +73,8 @@ mod mutations;
 
 mod queries;
 pub mod types;
+use crate::types::period_schedule::PeriodSchedulesResponse;
+
 use self::queries::*;
 
 #[derive(Default, Clone)]
@@ -263,6 +266,15 @@ impl ProgramsQueries {
     ) -> Result<RnRFormsResponse> {
         r_and_r_forms(ctx, store_id, page, filter, sort)
     }
+
+    pub async fn schedules_with_periods_by_program(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        program_id: String,
+    ) -> Result<PeriodSchedulesResponse> {
+        get_schedules_with_periods_by_program(ctx, store_id, program_id)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -394,6 +406,15 @@ impl ProgramsMutations {
         input: UpdateContactTraceInput,
     ) -> Result<UpdateContactTraceResponse> {
         update_contact_trace(ctx, store_id, input)
+    }
+
+    pub async fn insert_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertRnRFormInput,
+    ) -> Result<InsertRnRFormResponse> {
+        insert_rnr_form(ctx, store_id, input)
     }
 }
 

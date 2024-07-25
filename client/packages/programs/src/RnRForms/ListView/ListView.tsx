@@ -9,11 +9,13 @@ import {
   useTranslation,
   createTableStore,
   createQueryParamsStore,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useRnRFormList } from '../../api';
 import { RnRFormFragment } from '../../api/operations.generated';
+import { RnRFormCreateModal } from './RnRFormCreateModal';
 
 const RnRFormListComponent = () => {
   const {
@@ -32,6 +34,8 @@ const RnRFormListComponent = () => {
     first,
   };
   const { data, isLoading, isError } = useRnRFormList(queryParams);
+
+  const { isOpen, onClose, onOpen } = useEditModal();
 
   const columns = useColumns<RnRFormFragment>(
     [
@@ -62,12 +66,9 @@ const RnRFormListComponent = () => {
 
   return (
     <>
+      {isOpen && <RnRFormCreateModal isOpen={isOpen} onClose={onClose} />}
       <Toolbar />
-      <AppBarButtons
-        onCreate={() => {
-          /* TODO */
-        }}
-      />
+      <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'rnr-form-list'}
         pagination={{ ...pagination }}

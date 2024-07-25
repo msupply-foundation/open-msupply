@@ -14,5 +14,7 @@
   "error.no-rnr-forms": "No R&R Forms found",
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
   "label.diastolic": "Diastolic",
+  "label.new-rnr-form": "New R&R Form",
+  "label.schedule": "Schedule",
   "label.systolic": "Systolic"
 }

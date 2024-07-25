@@ -1,11 +1,14 @@
-use crate::{migrations::sql, StorageConnection};
+use crate::{
+    migrations::{sql, DATE, DOUBLE},
+    StorageConnection,
+};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     #[cfg(feature = "postgres")]
     sql!(
         connection,
         r#"
-          CREATE TYPE rnr_form_status AS ENUM (
+          CREATE TYPE rn_r_form_status AS ENUM (
             'DRAFT',
             'FINALISED'
           );
@@ -13,10 +16,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     )?;
 
     const RNR_FORM_STATUS_ENUM_TYPE: &str = if cfg!(feature = "postgres") {
-        "rnr_form_status"
+        "rn_r_form_status"
     } else {
         "TEXT"
     };
+
     sql!(
         connection,
         r#"
@@ -35,13 +39,44 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#
     )?;
 
+    sql!(
+        connection,
+        r#"
+           CREATE TABLE rnr_form_line (
+                id TEXT NOT NULL PRIMARY KEY,
+                rnr_form_id TEXT NOT NULL REFERENCES rnr_form(id),
+                item_id TEXT NOT NULL REFERENCES item(id),
+                average_monthly_consumption {DOUBLE} NOT NULL,
+
+                initial_balance {DOUBLE} NOT NULL,
+                quantity_received {DOUBLE} NOT NULL,
+                quantity_consumed {DOUBLE} NOT NULL,
+                adjusted_quantity_consumed {DOUBLE} NOT NULL,
+                adjustments {DOUBLE} NOT NULL,
+                stock_out_duration INTEGER NOT NULL,
+                final_balance {DOUBLE} NOT NULL,
+                maximum_quantity {DOUBLE} NOT NULL,
+                expiry_date {DATE},
+                requested_quantity {DOUBLE} NOT NULL,
+
+                comment TEXT,
+                confirmed BOOLEAN NOT NULL DEFAULT FALSE
+            );
+
+        "#
+    )?;
+
     #[cfg(feature = "postgres")]
     sql!(
         connection,
         r#"
             ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'RNR_FORM_QUERY';
             ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'RNR_FORM_MUTATE';
-            ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'rn_r_form';
+
+            ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'rnr_form';
+            ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'rnr_form_line';
+
+            ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'RNR_FORM_CREATED';
         "#
     )?;
 
