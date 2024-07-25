@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
-use repository::{NameRow, PeriodRow, ProgramRow, RnRFormRow};
+use repository::{NameRow, PeriodRow, ProgramRow, RnRForm, RnRFormRow};
 
 pub struct RnRFormNode {
     pub rnr_form_row: RnRFormRow,
@@ -37,5 +37,24 @@ impl RnRFormNode {
 
     pub async fn period_name(&self) -> &str {
         &self.period_row.name
+    }
+}
+
+impl RnRFormNode {
+    pub fn from_domain(form: RnRForm) -> RnRFormNode {
+        let RnRForm {
+            rnr_form_row,
+            name_row,
+            period_row,
+            program_row,
+            store_row: _,
+        } = form;
+
+        RnRFormNode {
+            rnr_form_row,
+            program_row,
+            period_row,
+            supplier_row: name_row,
+        }
     }
 }

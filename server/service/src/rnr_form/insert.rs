@@ -45,6 +45,7 @@ pub enum InsertRnRFormError {
 
 pub fn insert_rnr_form(
     ctx: &ServiceContext,
+    store_id: &str,
     input: InsertRnRForm,
 ) -> Result<RnRForm, InsertRnRFormError> {
     let rnr_form = ctx
@@ -70,7 +71,7 @@ pub fn insert_rnr_form(
                 None,
             )?;
 
-            get_rnr_form(ctx, rnr_form.id)
+            get_rnr_form(ctx, store_id, rnr_form.id)
                 .map_err(InsertRnRFormError::DatabaseError)?
                 .ok_or(InsertRnRFormError::NewlyCreatedRnRFormDoesNotExist)
         })
