@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::mock::{
-        mock_name_tag_1, mock_name_tag_2, mock_period_2_b, mock_period_schedule_2, MockData,
+        mock_name_tag_1, mock_name_tag_2, mock_period_2_c, mock_period_schedule_2, MockData,
     };
     use repository::mock::{mock_program_b, MockDataInserts};
     use repository::test_db::setup_all_with_data;
@@ -49,21 +49,21 @@ mod query {
         assert_eq!(result[0].schedule_row.id, mock_period_schedule_2().id);
 
         let periods = &result[0].periods;
-        assert_eq!(periods.len(), 2);
+        assert_eq!(periods.len(), 3);
 
-        // sorted in descending order, so period_2_b (FEB, newer) should be first
-        assert_eq!(periods[0].period_row.id, mock_period_2_b().id);
+        // sorted in descending order, so period_2_c (MAR, newer) should be first
+        assert_eq!(periods[0].period_row.id, mock_period_2_c().id);
 
         assert!(periods[0].rnr_form_row.is_none());
         // rnr_form_row (mock_rnr_form_a) found for correct period (period_2_a, JAN)
-        assert!(periods[1].rnr_form_row.is_some());
+        assert!(periods[2].rnr_form_row.is_some());
 
         // rnr_form not found for another store
         let result = service
             .get_schedules_with_periods_by_program(&context, "store_b", &mock_program_b().id)
             .unwrap();
         let periods = &result[0].periods;
-        assert_eq!(periods.len(), 2);
+        assert_eq!(periods.len(), 3);
 
         assert!(periods.iter().all(|period| period.rnr_form_row.is_none()));
     }
