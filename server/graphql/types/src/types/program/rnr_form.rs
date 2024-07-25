@@ -1,6 +1,10 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use dataloader::DataLoader;
+use graphql_core::{loader::RnRFormLinesByRnRFormIdLoader, ContextExt};
 use repository::{NameRow, PeriodRow, ProgramRow, RnRForm, RnRFormRow};
+
+use super::rnr_form_line::RnRFormLineNode;
 
 pub struct RnRFormNode {
     pub rnr_form_row: RnRFormRow,
@@ -37,6 +41,19 @@ impl RnRFormNode {
 
     pub async fn period_name(&self) -> &str {
         &self.period_row.name
+    }
+
+    pub async fn lines(&self, ctx: &Context<'_>) -> Result<Vec<RnRFormLineNode>> {
+        let loader = ctx.get_loader::<DataLoader<RnRFormLinesByRnRFormIdLoader>>();
+        let result = match loader.load_one(self.rnr_form_row.id.to_string()).await? {
+            Some(lines) => lines
+                .into_iter()
+                .map(RnRFormLineNode::from_domain)
+                .collect(),
+            None => vec![],
+        };
+
+        Ok(result)
     }
 }
 
