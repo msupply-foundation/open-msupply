@@ -3,7 +3,7 @@ use super::{
     invoice_line_row::invoice_line, invoice_row::invoice, item_row::item, location_row::location,
     master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
     master_list_row::master_list, name_row::name, name_store_join::name_store_join,
-    name_tag_join::name_tag_join, period::period,
+    name_tag_join::name_tag_join, period::period_row::period,
     program_requisition::program_requisition_order_type_row::program_requisition_order_type,
     program_requisition::program_requisition_settings_row::program_requisition_settings,
     program_row::program, requisition_line_row::requisition_line, requisition_row::requisition,

@@ -66,6 +66,8 @@ impl From<RnRFormFilterInput> for RnRFormFilter {
             id: f.id.map(EqualFilter::from),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             store_id: f.store_id.map(EqualFilter::from),
+            program_id: None,
+            period_schedule_id: None,
         }
     }
 }

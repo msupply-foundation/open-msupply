@@ -258,6 +258,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 default_pack_size: 1.0,
                 is_active: true,
                 is_vaccine: false,
+                ..Default::default()
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -273,6 +274,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 default_pack_size: 2.0,
                 is_active: true,
                 is_vaccine: false,
+                ..Default::default()
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -291,6 +293,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 default_pack_size: 1.0,
                 is_active: true,
                 is_vaccine: true,
+                ..Default::default()
             },
         ),
     ]

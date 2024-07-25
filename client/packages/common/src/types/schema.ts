@@ -116,6 +116,7 @@ export enum ActivityLogNodeType {
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
+  RnrFormCreated = 'RNR_FORM_CREATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
@@ -2857,6 +2858,15 @@ export type InsertRequestRequisitionResponseWithId = {
   response: InsertRequestRequisitionResponse;
 };
 
+export type InsertRnRFormInput = {
+  id: Scalars['String']['input'];
+  periodId: Scalars['String']['input'];
+  programId: Scalars['String']['input'];
+  supplierId: Scalars['String']['input'];
+};
+
+export type InsertRnRFormResponse = RnRFormNode;
+
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
@@ -3764,6 +3774,7 @@ export type Mutations = {
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
+  insertRnrForm: InsertRnRFormResponse;
   insertStockLine: InsertStockLineLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
@@ -4155,6 +4166,12 @@ export type MutationsInsertRequestRequisitionArgs = {
 
 export type MutationsInsertRequestRequisitionLineArgs = {
   input: InsertRequestRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertRnrFormArgs = {
+  input: InsertRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4848,6 +4865,20 @@ export type PeriodNode = {
   startDate: Scalars['NaiveDate']['output'];
 };
 
+export type PeriodScheduleNode = {
+  __typename: 'PeriodScheduleNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  periods: Array<SchedulePeriodNode>;
+};
+
+export type PeriodSchedulesConnector = {
+  __typename: 'PeriodSchedulesConnector';
+  nodes: Array<PeriodScheduleNode>;
+};
+
+export type PeriodSchedulesResponse = PeriodSchedulesConnector;
+
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   pluginName?: InputMaybe<EqualFilterStringInput>;
@@ -5074,6 +5105,7 @@ export type ProgramEventSortInput = {
 
 export type ProgramFilterInput = {
   contextId?: InputMaybe<EqualFilterStringInput>;
+  existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
@@ -5264,6 +5296,7 @@ export type Queries = {
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   returnReasons: ReturnReasonResponse;
+  schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
   stockCounts: StockCounts;
@@ -5776,6 +5809,12 @@ export type QueriesReturnReasonsArgs = {
   filter?: InputMaybe<ReturnReasonFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReturnReasonSortInput>>;
+};
+
+
+export type QueriesSchedulesWithPeriodsByProgramArgs = {
+  programId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -6341,6 +6380,13 @@ export type RnRFormSortInput = {
 };
 
 export type RnRFormsResponse = RnRFormConnector;
+
+export type SchedulePeriodNode = {
+  __typename: 'SchedulePeriodNode';
+  id: Scalars['String']['output'];
+  inUse: Scalars['Boolean']['output'];
+  period: PeriodNode;
+};
 
 export type SensorConnector = {
   __typename: 'SensorConnector';
