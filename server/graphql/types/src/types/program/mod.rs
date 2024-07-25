@@ -7,3 +7,4 @@ pub mod program_enrolment;
 pub mod program_event;
 pub mod program_node;
 pub mod rnr_form;
+pub mod rnr_form_line;

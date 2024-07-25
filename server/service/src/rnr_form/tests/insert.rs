@@ -26,6 +26,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: mock_rnr_form_a().id,
                     ..Default::default()
@@ -38,6 +39,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: "not-exists".to_string(),
@@ -51,6 +53,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     // not visible in store A
@@ -65,6 +68,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_b().id,
@@ -78,6 +82,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -92,6 +97,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -106,6 +112,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -120,6 +127,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -135,6 +143,7 @@ mod query {
         assert_eq!(
             service.insert_rnr_form(
                 &context,
+                &mock_store_a().id,
                 InsertRnRForm {
                     id: "new_id".to_string(),
                     supplier_id: mock_name_store_c().id,
@@ -158,6 +167,7 @@ mod query {
             .unwrap();
         let _result = service_provider.rnr_form_service.insert_rnr_form(
             &context,
+            &mock_store_a().id,
             InsertRnRForm {
                 id: "new_rnr_id".to_string(),
                 supplier_id: mock_name_store_c().id,
