@@ -212,6 +212,11 @@ export const AppDrawer: React.FC = () => {
             icon={<DashboardIcon fontSize="small" color="primary" />}
             text={t('dashboard')}
           />
+          <AppNavLink
+            to={AppRoute.Reports}
+            icon={<ReportsIcon fontSize="small" color="primary" />}
+            text={t('reports')}
+          />
           <DistributionNav />
           <ReplenishmentNav />
           <CatalogueNav />
@@ -220,11 +225,6 @@ export const AppDrawer: React.FC = () => {
           <ColdChainNav store={store} />
           <ProgramsNav store={store} />
           <ManageNav store={store} />
-          <AppNavLink
-            to={AppRoute.Reports}
-            icon={<ReportsIcon fontSize="small" color="primary" />}
-            text={t('reports')}
-          />
 
           {/* <AppNavLink
             to={AppRoute.Tools}

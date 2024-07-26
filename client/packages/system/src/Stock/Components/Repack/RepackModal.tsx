@@ -30,7 +30,7 @@ import {
   ReportRowFragment,
   ReportSelector,
   useActivityLog,
-  useReport,
+  usePrintReport,
 } from '@openmsupply-client/system';
 import { RepackFragment } from '../../api';
 import { useRepackColumns } from './column';
@@ -77,7 +77,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const showRepackDetail = invoiceId || isNew;
   const showLogEvent = !!logData?.nodes.length;
 
-  const { print, isPrinting } = useReport.utils.print();
+  const { print, isPrinting } = usePrintReport();
 
   const printReport = (report: ReportRowFragment) => {
     if (!repacks) return;

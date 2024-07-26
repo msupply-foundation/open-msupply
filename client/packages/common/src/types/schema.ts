@@ -3414,6 +3414,7 @@ export type ItemStatsNode = {
   availableMonthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  totalConsumption: Scalars['Float']['output'];
 };
 
 export type ItemsResponse = ItemConnector;
@@ -4951,7 +4952,7 @@ export type PrintReportErrorInterface = {
 export type PrintReportNode = {
   __typename: 'PrintReportNode';
   /**
-   * Return the file id of the printed report.
+   * Return the file id of the generated report.
    * The file can be fetched using the /files?id={id} endpoint
    */
   fileId: Scalars['String']['output'];
@@ -5104,6 +5105,7 @@ export type ProgramEventSortInput = {
 
 export type ProgramFilterInput = {
   contextId?: InputMaybe<EqualFilterStringInput>;
+  existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
@@ -5222,6 +5224,19 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
+  /**
+   * Creates a generated report.
+   *
+   * All details about the report, e.g. the output format, are specified in the report definition
+   * which is referred to by the report_id.
+   * The generated report can be retrieved from the `/files` endpoint using the returned file id.
+   */
+  generateReport: PrintReportResponse;
+  /**
+   * Can be used when developing reports, e.g. to generate a report that is not already in the
+   * system.
+   */
+  generateReportDefinition: PrintReportResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -5259,19 +5274,6 @@ export type Queries = {
   patients: PatientResponse;
   pluginData: PluginDataResponse;
   plugins: Array<PluginNode>;
-  /**
-   * Creates a printed report.
-   *
-   * All details about the report, e.g. the output format, are specified in the report definition
-   * which is referred to by the report_id.
-   * The printed report can be retrieved from the `/files` endpoint using the returned file id.
-   */
-  printReport: PrintReportResponse;
-  /**
-   * Can be used when developing reports, e.g. to print a report that is not already in the
-   * system.
-   */
-  printReportDefinition: PrintReportResponse;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
@@ -5285,6 +5287,7 @@ export type Queries = {
   refreshToken: RefreshTokenResponse;
   repack: RepackResponse;
   repacksByStockLine: RepackConnector;
+  report: ReportResponse;
   /** Queries a list of available reports */
   reports: ReportsResponse;
   requisition: RequisitionResponse;
@@ -5539,6 +5542,26 @@ export type QueriesGenerateOutboundReturnLinesArgs = {
 };
 
 
+export type QueriesGenerateReportArgs = {
+  arguments?: InputMaybe<Scalars['JSON']['input']>;
+  dataId?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<PrintFormat>;
+  reportId: Scalars['String']['input'];
+  sort?: InputMaybe<PrintReportSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesGenerateReportDefinitionArgs = {
+  arguments?: InputMaybe<Scalars['JSON']['input']>;
+  dataId?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<PrintFormat>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  report: Scalars['JSON']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesInsertPrescriptionArgs = {
   input: InsertPrescriptionInput;
   storeId: Scalars['String']['input'];
@@ -5681,25 +5704,6 @@ export type QueriesPluginDataArgs = {
 };
 
 
-export type QueriesPrintReportArgs = {
-  arguments?: InputMaybe<Scalars['JSON']['input']>;
-  dataId?: InputMaybe<Scalars['String']['input']>;
-  format?: InputMaybe<PrintFormat>;
-  reportId: Scalars['String']['input'];
-  sort?: InputMaybe<PrintReportSortInput>;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type QueriesPrintReportDefinitionArgs = {
-  arguments?: InputMaybe<Scalars['JSON']['input']>;
-  dataId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  report: Scalars['JSON']['input'];
-  storeId: Scalars['String']['input'];
-};
-
-
 export type QueriesProgramEnrolmentsArgs = {
   filter?: InputMaybe<ProgramEnrolmentFilterInput>;
   sort?: InputMaybe<ProgramEnrolmentSortInput>;
@@ -5750,6 +5754,12 @@ export type QueriesRepackArgs = {
 
 export type QueriesRepacksByStockLineArgs = {
   stockLineId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesReportArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -6023,6 +6033,8 @@ export type ReportNode = {
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
 };
+
+export type ReportResponse = ReportNode;
 
 export enum ReportSortFieldInput {
   Id = 'id',

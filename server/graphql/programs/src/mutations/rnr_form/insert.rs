@@ -55,7 +55,7 @@ pub fn insert_rnr_form(
         },
     )?;
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     match service_provider.rnr_form_service.insert_rnr_form(
         &service_context,
         &store_id,
@@ -90,6 +90,9 @@ fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
         | ServiceError::PeriodDoesNotExist
         | ServiceError::PeriodNotInProgramSchedule
         | ServiceError::ProgramHasNoMasterList
+        | ServiceError::PeriodNotNextInSequence
+        | ServiceError::PeriodNotClosed
+        | ServiceError::PreviousRnRFormNotFinalised
         | ServiceError::RnRFormAlreadyExistsForPeriod => BadUserInput(formatted_error),
 
         ServiceError::InternalError(_)

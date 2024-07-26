@@ -4470,6 +4470,7 @@ dependencies = [
  "actix-rt",
  "anyhow",
  "chrono",
+ "clap",
  "diesel",
  "diesel-derive-enum",
  "diesel_migrations",

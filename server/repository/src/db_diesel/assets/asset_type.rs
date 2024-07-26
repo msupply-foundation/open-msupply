@@ -162,7 +162,7 @@ mod tests {
             name: class_name.clone(),
         };
         let class_row_repo = AssetClassRowRepository::new(&storage_connection);
-        class_row_repo.insert_one(&class_row).unwrap();
+        class_row_repo.upsert_one(&class_row).unwrap();
 
         // Create a category
         let category_id = "test_category_id".to_string();
@@ -173,7 +173,7 @@ mod tests {
             class_id: class_id.clone(),
         };
         let category_row_repo = AssetCategoryRowRepository::new(&storage_connection);
-        category_row_repo.insert_one(&category_row).unwrap();
+        category_row_repo.upsert_one(&category_row).unwrap();
 
         // Create the type
         let id = "test_id".to_string();
@@ -181,7 +181,7 @@ mod tests {
 
         // Insert a row
         let _type_row =
-            AssetTypeRowRepository::new(&storage_connection).insert_one(&AssetTypeRow {
+            AssetTypeRowRepository::new(&storage_connection).upsert_one(&AssetTypeRow {
                 id: id.clone(),
                 name: name.clone(),
                 category_id: category_id.clone(),

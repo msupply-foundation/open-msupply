@@ -6,6 +6,10 @@ use super::{
 };
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType,
+    StocktakeRowRepository,
+};
 
 use diesel::prelude::*;
 
@@ -76,20 +80,51 @@ impl<'a> StocktakeLineRowRepository<'a> {
         StocktakeLineRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(stocktake_line_dsl::stocktake_line)
             .values(row)
             .on_conflict(stocktake_line_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    fn insert_changelog(
+        &self,
+        row: &StocktakeLineRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let stocktake_row =
+            StocktakeRowRepository::new(self.connection).find_one_by_id(&row.stocktake_id)?;
+        let stocktake = match stocktake_row {
+            Some(stocktake) => stocktake,
+            None => return Err(RepositoryError::NotFound),
+        };
+
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::StocktakeLine,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(stocktake.store_id.clone()),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
+    }
+
+    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(stocktake_line_dsl::stocktake_line.filter(stocktake_line_dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeLineRow>, RepositoryError> {
@@ -115,7 +150,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
 pub struct StocktakeLineRowDelete(pub String);
 // For tests only
 impl Delete for StocktakeLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         StocktakeLineRowRepository::new(con).delete(&self.0)
     }
     // Test only
@@ -128,8 +163,9 @@ impl Delete for StocktakeLineRowDelete {
 }
 
 impl Upsert for StocktakeLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StocktakeLineRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = StocktakeLineRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

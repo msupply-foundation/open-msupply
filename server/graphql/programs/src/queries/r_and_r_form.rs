@@ -99,11 +99,11 @@ pub fn get_schedules_with_periods_by_program(
         },
     )?;
     let service_provider = ctx.service_provider();
-    let context = service_provider.context(store_id, user.user_id)?;
+    let context = service_provider.context(store_id.clone(), user.user_id)?;
 
     let result = service_provider
         .rnr_form_service
-        .get_schedules_with_periods_by_program(&context, &program_id)
+        .get_schedules_with_periods_by_program(&context, &store_id, &program_id)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
     Ok(PeriodSchedulesResponse::Response(

@@ -11,6 +11,12 @@ fragment ReportRow on ReportNode {
   }
 }
 
+query report($storeId: String!, $id: String!) {
+  report(storeId: $storeId, id: $id) {
+    ...ReportRow
+  }
+}
+
 query reports(
   $storeId: String!
   $key: ReportSortFieldInput!
@@ -32,7 +38,7 @@ query reports(
   }
 }
 
-query printReport(
+query generateReport(
   $storeId: String!
   $reportId: String!
   $dataId: String
@@ -40,7 +46,7 @@ query printReport(
   $format: PrintFormat
   $sort: PrintReportSortInput
 ) {
-  printReport(
+  generateReport(
     dataId: $dataId
     reportId: $reportId
     storeId: $storeId
