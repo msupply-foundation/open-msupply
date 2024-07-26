@@ -5,12 +5,14 @@ use repository::{PaginationOption, RepositoryError, RnRForm, RnRFormFilter, RnRF
 use self::insert::{insert_rnr_form, InsertRnRForm, InsertRnRFormError};
 use self::query::{get_rnr_form, get_rnr_forms};
 use self::schedules_with_periods::{get_schedules_with_periods_by_program, PeriodSchedule};
+use self::update::{update_rnr_form, UpdateRnRForm, UpdateRnRFormError};
 
 mod generate_rnr_form_lines;
 pub mod insert;
 pub mod query;
 pub mod schedules_with_periods;
 mod tests;
+pub mod update;
 mod validate;
 
 pub trait RnRFormServiceTrait: Sync + Send {
@@ -49,6 +51,14 @@ pub trait RnRFormServiceTrait: Sync + Send {
         input: InsertRnRForm,
     ) -> Result<RnRForm, InsertRnRFormError> {
         insert_rnr_form(ctx, store_id, input)
+    }
+
+    fn update_rnr_form(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateRnRForm,
+    ) -> Result<RnRForm, UpdateRnRFormError> {
+        update_rnr_form(ctx, input)
     }
 }
 
