@@ -10,8 +10,8 @@ import {
   InputWithLabelRow,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import { SupplierSearchInput } from '@openmsupply-client/system';
 import { ProgramSearchInput } from './ProgramSearchInput';
-import { SupplierSearchInput } from 'packages/system/src';
 import { useCreateRnRForm, useSchedulesAndPeriods } from '../../api';
 
 interface RnRFormCreateModalProps {
