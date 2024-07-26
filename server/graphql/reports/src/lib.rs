@@ -1,9 +1,12 @@
 use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
-use printing::{print_report, print_report_definition, PrintReportResponse};
-use reports::{reports, ReportFilterInput, ReportSortInput, ReportsResponse};
+use print::{generate_report, generate_report_definition, PrintReportResponse};
+use reports::{
+    report, reports, ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse,
+};
+use service::report::report_service::PrintFormat as ServicePrintFormat;
 
-mod printing;
+mod print;
 mod reports;
 
 #[derive(Default, Clone)]
@@ -17,6 +20,15 @@ pub enum PrintFormat {
 
 #[Object]
 impl ReportQueries {
+    pub async fn report(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<ReportResponse> {
+        report(ctx, store_id, id)
+    }
+
     /// Queries a list of available reports
     pub async fn reports(
         &self,
@@ -29,54 +41,49 @@ impl ReportQueries {
         reports(ctx, store_id, page, filter, sort)
     }
 
-    /// Creates a printed report.
+    /// Creates a generated report.
     ///
     /// All details about the report, e.g. the output format, are specified in the report definition
     /// which is referred to by the report_id.
-    /// The printed report can be retrieved from the `/files` endpoint using the returned file id.
-    pub async fn print_report(
+    /// The generated report can be retrieved from the `/files` endpoint using the returned file id.
+    pub async fn generate_report(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "The id of the report to be printed")] _report_id: String,
+        #[graphql(desc = "The id of the report to be generated")] _report_id: String,
         report_id: String,
         #[graphql(
-            desc = "The data id that should be used for the report, e.g. the invoice id when printing an invoice"
+            desc = "The data id that should be used for the report, e.g. the invoice id when generating an invoice"
         )]
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
         sort: Option<PrintReportSortInput>,
     ) -> Result<PrintReportResponse> {
-        let report_format = match format {
-            Some(PrintFormat::Html) => Some(service::report::report_service::PrintFormat::Html),
-            Some(PrintFormat::Pdf) | None => {
-                Some(service::report::report_service::PrintFormat::Pdf)
-            }
-        };
-        print_report(
-            ctx,
-            store_id,
-            report_id,
-            data_id,
-            arguments,
-            report_format,
-            sort,
-        )
-        .await
+        generate_report(ctx, store_id, report_id, data_id, arguments, format, sort).await
     }
 
-    /// Can be used when developing reports, e.g. to print a report that is not already in the
+    /// Can be used when developing reports, e.g. to generate a report that is not already in the
     /// system.
-    pub async fn print_report_definition(
+    pub async fn generate_report_definition(
         &self,
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Name of the report")] name: Option<String>,
-        #[graphql(desc = "The report definition to be printed")] report: serde_json::Value,
+        #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
+        format: Option<PrintFormat>,
     ) -> Result<PrintReportResponse> {
-        print_report_definition(ctx, store_id, name, report, data_id, arguments).await
+        generate_report_definition(ctx, store_id, name, report, data_id, arguments, format).await
+    }
+}
+
+impl PrintFormat {
+    fn to_domain(self) -> ServicePrintFormat {
+        match self {
+            PrintFormat::Pdf => ServicePrintFormat::Pdf,
+            PrintFormat::Html => ServicePrintFormat::Html,
+        }
     }
 }

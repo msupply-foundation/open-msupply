@@ -1,24 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  BarIcon,
   Grid,
-  TrendingDownIcon,
+  ReportContext,
+  useAuthContext,
   useTranslation,
 } from '@openmsupply-client/common';
+import { BarIcon, InvoiceIcon, TrendingDownIcon } from '@common/icons';
+import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
-import { useReport } from '@openmsupply-client/system';
 import { ReportWidget } from '../components';
 
 export const ListView = () => {
   const t = useTranslation('reports');
-  const { data } = useReport.document.list({});
+  const { store } = useAuthContext();
+  const { data } = useReportList({
+    queryParams: {
+      filterBy: {
+        context: { equalAny: [ReportContext.Report, ReportContext.Dispensary] },
+      },
+      sortBy: { key: 'name', direction: 'asc' },
+      offset: 0,
+    },
+  });
+  const [reportWithArgs, setReportWithArgs] = useState<
+    ReportRowFragment | undefined
+  >();
   const stockAndItemReports = data?.nodes?.filter(
     report => report?.subContext === 'StockAndItems'
   );
   const expiringReports = data?.nodes?.filter(
     report => report?.subContext === 'Expiring'
   );
+  const programReports = data?.nodes?.filter(
+    report =>
+      report?.subContext === 'HIVCareProgram' &&
+      report?.context === ReportContext.Dispensary
+  );
+  const onReportClick = (report: ReportRowFragment) => {
+    if (report.argumentSchema) {
+      setReportWithArgs(report);
+    }
+  };
 
   return (
     <>
@@ -34,12 +57,31 @@ export const ListView = () => {
           title={t('heading.stock-and-items')}
           Icon={BarIcon}
           reports={stockAndItemReports}
+          onReportClick={onReportClick}
+          reportWithArgs={reportWithArgs}
+          setReportWithArgs={setReportWithArgs}
+          hasReports={stockAndItemReports?.length !== 0}
         />
         <ReportWidget
           title={t('heading.expiring')}
           Icon={TrendingDownIcon}
           reports={expiringReports}
+          onReportClick={onReportClick}
+          reportWithArgs={reportWithArgs}
+          setReportWithArgs={setReportWithArgs}
+          hasReports={expiringReports?.length !== 0}
         />
+        {store?.preferences?.omProgramModule && (
+          <ReportWidget
+            title={t('label.programs')}
+            Icon={InvoiceIcon}
+            reports={programReports}
+            onReportClick={onReportClick}
+            reportWithArgs={reportWithArgs}
+            setReportWithArgs={setReportWithArgs}
+            hasReports={programReports?.length !== 0}
+          />
+        )}
       </Grid>
 
       <AppBarButtons />

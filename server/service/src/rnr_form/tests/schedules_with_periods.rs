@@ -41,10 +41,10 @@ mod query {
         let service = service_provider.rnr_form_service;
 
         let result = service
-            .get_schedules_with_periods_by_program(&context, &mock_program_b().id)
+            .get_schedules_with_periods_by_program(&context, "store_a", &mock_program_b().id)
             .unwrap();
 
-        // dedupes
+        // dedupes schedules
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].schedule_row.id, mock_period_schedule_2().id);
 
@@ -55,7 +55,16 @@ mod query {
         assert_eq!(periods[0].period_row.id, mock_period_2_b().id);
 
         assert!(periods[0].rnr_form_row.is_none());
-        // rnr_form_row found for correct period (period_2_a, JAN)
+        // rnr_form_row (mock_rnr_form_a) found for correct period (period_2_a, JAN)
         assert!(periods[1].rnr_form_row.is_some());
+
+        // rnr_form not found for another store
+        let result = service
+            .get_schedules_with_periods_by_program(&context, "store_b", &mock_program_b().id)
+            .unwrap();
+        let periods = &result[0].periods;
+        assert_eq!(periods.len(), 2);
+
+        assert!(periods.iter().all(|period| period.rnr_form_row.is_none()));
     }
 }

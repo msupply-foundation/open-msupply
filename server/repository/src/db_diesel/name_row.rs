@@ -58,14 +58,6 @@ table! {
 
 table! {
     #[sql_name = "name"]
-    name_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
-table! {
-    #[sql_name = "name"]
     name_oms_fields (id) {
         id -> Text,
         properties -> Nullable<Text>,
@@ -233,14 +225,14 @@ impl<'a> NameRowRepository<'a> {
         self._upsert_one(row)?;
         insert_or_ignore_name_link(self.connection, row)?;
 
-        self.insert_changelog(row.id.clone(), RowActionType::Upsert, None)
+        self.insert_changelog(row.id.clone(), RowActionType::Upsert)
     }
 
-    pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
+    pub fn mark_deleted(&self, name_id: &str) -> Result<i64, RepositoryError> {
         diesel::update(name.filter(id.eq(name_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(name_id.to_owned(), RowActionType::Delete)
     }
 
     pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
@@ -294,20 +286,18 @@ impl<'a> NameRowRepository<'a> {
             .set(name_oms_fields::properties.eq(properties))
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog_oms_fields(name_id.to_owned(), RowActionType::Upsert, None)
+        self.insert_changelog_oms_fields(name_id.to_owned(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
         record_id: String,
         row_action: RowActionType,
-        store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::Name,
             record_id,
             row_action,
-            store_id,
             ..Default::default()
         };
         ChangelogRepository::new(self.connection).insert(&row)
@@ -317,13 +307,11 @@ impl<'a> NameRowRepository<'a> {
         &self,
         record_id: String,
         row_action: RowActionType,
-        store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::NameOmsFields,
             record_id,
             row_action,
-            store_id,
             ..Default::default()
         };
         ChangelogRepository::new(self.connection).insert(&row)
@@ -334,8 +322,9 @@ impl<'a> NameRowRepository<'a> {
 pub struct NameRowDelete(pub String);
 // TODO soft delete
 impl Delete for NameRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameRowRepository::new(con).mark_deleted(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = NameRowRepository::new(con).mark_deleted(&self.0)?;
+        Ok(Some(change_log_id))
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -347,11 +336,6 @@ impl Delete for NameRowDelete {
 }
 
 impl Upsert for NameRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _changelog_id = NameRowRepository::new(con).upsert_one(self);
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = NameRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
@@ -367,12 +351,6 @@ impl Upsert for NameRow {
 }
 
 impl Upsert for NameOmsFieldsRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _changelog_id =
-            NameRowRepository::new(con).update_properties(&self.id, &self.properties);
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id =
             NameRowRepository::new(con).update_properties(&self.id, &self.properties)?;

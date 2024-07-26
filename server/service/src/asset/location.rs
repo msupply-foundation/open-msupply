@@ -26,7 +26,7 @@ pub fn set_asset_location(
                     asset_id: asset_id.to_string(),
                     location_id: location,
                 };
-                repo.insert_one(&location_row)?;
+                repo.upsert_one(&location_row)?;
             }
             Ok(())
         })

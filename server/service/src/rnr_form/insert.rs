@@ -39,6 +39,9 @@ pub enum InsertRnRFormError {
     ProgramHasNoMasterList,
     PeriodDoesNotExist,
     PeriodNotInProgramSchedule,
+    PeriodNotNextInSequence,
+    PeriodNotClosed,
+    PreviousRnRFormNotFinalised,
     RnRFormAlreadyExistsForPeriod,
     NewlyCreatedRnRFormDoesNotExist,
 }
@@ -51,7 +54,7 @@ pub fn insert_rnr_form(
     let rnr_form = ctx
         .connection
         .transaction_sync(|connection| {
-            let (period_row, master_list_id) = validate(connection, &ctx.store_id, &input)?;
+            let (period_row, master_list_id) = validate(connection, store_id, &input)?;
             let (rnr_form, rnr_form_lines) = generate(ctx, input, period_row, &master_list_id)?;
 
             let rnr_form_repo = RnRFormRowRepository::new(connection);
@@ -111,19 +114,23 @@ fn validate(
     let period = check_period_exists(connection, &input.period_id)?
         .ok_or(InsertRnRFormError::PeriodDoesNotExist)?;
 
-    // find all period schedules for the provided program
+    if period.end_date > Utc::now().naive_utc().into() {
+        return Err(InsertRnRFormError::PeriodNotClosed);
+    }
+
     let period_schedule_ids = ProgramRequisitionSettingsRowRepository::new(connection)
         .find_many_by_program_id(&input.program_id)?
         .iter()
         .map(|s| s.period_schedule_id.clone())
         .collect::<Vec<String>>();
 
-    // check period is part of one of those schedules
+    // Check if period is part of one of the period schedules for the program
     if !period_schedule_ids.contains(&period.period_schedule_id) {
         return Err(InsertRnRFormError::PeriodNotInProgramSchedule);
     }
 
-    if check_rnr_form_exists_for_period(connection, &input.period_id, &input.program_id)?.is_some()
+    if check_rnr_form_exists_for_period(connection, store_id, &input.period_id, &input.program_id)?
+        .is_some()
     {
         return Err(InsertRnRFormError::RnRFormAlreadyExistsForPeriod);
     };

@@ -15,6 +15,7 @@ pub struct PeriodSchedule {
 
 pub fn get_schedules_with_periods_by_program(
     ctx: &ServiceContext,
+    store_id: &str,
     program_id: &str,
 ) -> Result<Vec<PeriodSchedule>, RepositoryError> {
     let settings_repo = ProgramRequisitionSettingsRowRepository::new(&ctx.connection);
@@ -37,10 +38,11 @@ pub fn get_schedules_with_periods_by_program(
         .map(|schedule_id| {
             let period_filter = PeriodFilter::new()
                 .period_schedule_id(EqualFilter::equal_to(&schedule_id))
-                .rnr_form_program_id(EqualFilter::equal_any_or_null(vec![program_id.to_string()]))
                 .end_date(DateFilter::before_or_equal_to(Utc::now().date_naive()));
 
             let closed_periods = period_repo.query(
+                store_id.to_string(),
+                program_id.to_string(),
                 Some(period_filter),
                 Some(PeriodSort {
                     key: PeriodSortField::EndDate,

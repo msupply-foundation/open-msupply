@@ -48,5 +48,6 @@
     "label.new-encounter": "Новая Встреча",
     "label.patient": "Пациент",
     "label.patients": "Пациенты",
-    "label.recorded-contact-differs": "Записанный Контакт: {{recordedName}}"
+    "label.recorded-contact-differs": "Записанный Контакт: {{recordedName}}",
+    "messages.click-to-fetch": "Нажмите, чтобы получить запись пациента с центрального сервера"
 }

@@ -137,11 +137,6 @@ impl<'a> AssetRowRepository<'a> {
 }
 
 impl Upsert for AssetRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        AssetRowRepository::new(con).upsert_one(self)?;
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))

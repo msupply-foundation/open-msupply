@@ -52,7 +52,7 @@ impl ItemNode {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<u32>,
+        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
