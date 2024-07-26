@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod query {
+mod insert {
     use chrono::Duration;
     use repository::mock::{
         mock_immunisation_program_a, mock_name_b, mock_name_store_b, mock_name_store_c,
