@@ -5,7 +5,7 @@ use repository::{
     PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
     ReportType, RepositoryError,
 };
-use std::{collections::HashMap, time::SystemTime};
+use std::{cell, collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
@@ -176,58 +176,62 @@ fn print_html_report_to_excel(
     document: GeneratedReport,
     report_name: String,
 ) -> Result<String, ReportError> {
-    let id = uuid();
-    // TODO use a proper tmp dir here instead of base_dir?
-    // let excel = html_to_excel(base_dir, &format_html_document(document), &id)
-    //     .map_err(|err| ReportError::HTMLToPDFError(format!("{}", err)))?;
-
-    // let doc = Html::parse_document(&format_html_document(document));
+    let sheet_name = "Report";
 
     let mut book = umya_spreadsheet::new_file();
-    // let _ = book.new_sheet("Report");
+    let _ = book
+        .set_sheet_name(0, sheet_name)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
 
-    // TO-DO: Process document data into book
     let fragment = Html::parse_fragment(&format_html_document(document));
-    let table_selector = Selector::parse("table").unwrap();
+    let container_selector = Selector::parse(r#"div[class="container"]"#).unwrap();
+    let table_head_selector = Selector::parse("thead").unwrap();
+    let table_body_selector = Selector::parse("tbody").unwrap();
     let row_selector = Selector::parse("tr").unwrap();
     let cell_selector = Selector::parse("td").unwrap();
 
-    let table = fragment.select(&table_selector).next().unwrap();
-    // for element in table.select(&row_selector).enumerate() {
-    //     book
-    // }
+    let container = fragment.select(&container_selector).next().unwrap();
+    let header = container.select(&table_head_selector).next().unwrap();
+    let header_row = header.select(&row_selector).next().unwrap();
+    for cell in header_row.select(&cell_selector).enumerate() {
+        book.get_sheet_by_name_mut(sheet_name)
+            .unwrap()
+            .get_cell_mut((cell.0 as u32 + 1, 1))
+            .set_value(cell.1.inner_html());
+        book.get_sheet_by_name_mut(sheet_name)
+            .unwrap()
+            .get_cell_mut((cell.0 as u32 + 1, 1))
+            .get_style_mut()
+            .get_font_mut()
+            .set_bold(true);
+    }
 
-    book.get_sheet_by_name_mut("Sheet1")
-        .unwrap()
-        .get_cell_mut("A1")
-        .set_value("TEST1");
-    book.get_sheet_by_name_mut("Sheet1")
-        .unwrap()
-        .get_cell_mut("B2")
-        .set_value("TEST2");
-    book.get_sheet_by_name_mut("Sheet1")
-        .unwrap()
-        .get_cell_mut("C3")
-        .set_value("TEST3");
+    let table_body = container.select(&table_body_selector).next().unwrap();
+    for row in table_body.select(&row_selector).enumerate() {
+        for cell in row.1.select(&cell_selector).enumerate() {
+            book.get_sheet_by_name_mut(sheet_name)
+                .unwrap()
+                .get_cell_mut((cell.0 as u32 + 1, row.0 as u32 + 2))
+                .set_value(cell.1.inner_html());
+        }
+    }
 
-    let path = std::path::Path::new("/Users/carl/Desktop/_OUTPUT/test.xlsx");
+    let now: DateTime<Utc> = SystemTime::now().into();
+    let file_service = StaticFileService::new(base_dir)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
 
-    let _ = umya_spreadsheet::writer::xlsx::write(&book, &path);
+    let reserved_file = file_service
+        .reserve_file(
+            &format!("{}_{}.xlsx", now.format("%Y%m%d_%H%M%S"), report_name),
+            &StaticFileCategory::Temporary,
+            None,
+        )
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
 
-    // let file_service = StaticFileService::new(base_dir)
-    //     .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-    // let now: DateTime<Utc> = SystemTime::now().into();
+    umya_spreadsheet::writer::xlsx::write(&book, reserved_file.path)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
 
-    // let file = file_service
-    //     .store_file(
-    //         &format!("{}_{}.xls", now.format("%Y%m%d_%H%M%S"), report_name),
-    //         StaticFileCategory::Temporary,
-    //         &book,
-    //     )
-    //     .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
-    // Ok(file.id)
-
-    Ok("temp".to_string())
+    Ok(reserved_file.id)
 }
 
 /// Puts the document content, header and footer into a <html> template.
