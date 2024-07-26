@@ -1,40 +1,34 @@
 import React, { useEffect } from 'react';
 import {
-  // DetailViewSkeleton,
+  DetailViewSkeleton,
   useNavigate,
   useTranslation,
   AlertModal,
   RouteBuilder,
   DetailTabs,
   useBreadcrumbs,
+  useParams,
+  TableProvider,
+  createTableStore,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { ContentArea } from './ContentArea';
-// import { useResponse, ResponseLineFragment } from '../api';
-// import { ResponseLineEdit } from './ResponseLineEdit';
+import { useRnRForm } from '../../api';
 
 export const RnRFormDetailView = () => {
-  // const isDisabled = useResponse.utils.isDisabled();
-  // const { data, isLoading } = useResponse.document.get();
+  const { id = '' } = useParams();
+
+  const { data, isLoading } = useRnRForm({ rnrFormId: id });
   const navigate = useNavigate();
   const t = useTranslation('programs');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
-  // const onRowClick = useCallback(
-  //   (line: ResponseLineFragment) => {
-  //     onOpen(line);
-  //   },
-  //   [onOpen]
-  // );
-
-  // if (isLoading) return <DetailViewSkeleton />;
-  const data = { id: '1' };
   const tabs = [
     {
-      Component: <ContentArea />,
+      Component: <ContentArea data={data?.lines ?? []} />,
       value: 'Details',
     },
     {
@@ -44,13 +38,17 @@ export const RnRFormDetailView = () => {
   ];
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 1: 'April 2024' });
-  }, [setCustomBreadcrumbs]);
+    setCustomBreadcrumbs({ 1: data?.periodName ?? '' });
+  }, [setCustomBreadcrumbs, data]);
+
+  if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
     <>
       <AppBarButtons />
-      <DetailTabs tabs={tabs} />
+      <TableProvider createStore={createTableStore}>
+        <DetailTabs tabs={tabs} />
+      </TableProvider>
 
       <Footer />
     </>
