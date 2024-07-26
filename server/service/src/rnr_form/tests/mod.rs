@@ -9,3 +9,6 @@ mod generate_rnr_form_lines;
 
 #[cfg(test)]
 mod update;
+
+#[cfg(test)]
+mod finalise;
