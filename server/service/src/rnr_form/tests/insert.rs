@@ -4,7 +4,7 @@ mod insert {
     use repository::mock::{
         mock_immunisation_program_a, mock_name_b, mock_name_store_b, mock_name_store_c,
         mock_period, mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_rnr_form_a,
-        mock_store_a, mock_store_b, MockData,
+        mock_rnr_form_b, mock_store_a, mock_store_b, MockData,
     };
     use repository::mock::{mock_program_b, MockDataInserts};
     use repository::test_db::setup_all_with_data;
@@ -21,7 +21,13 @@ mod insert {
     async fn insert_rnr_form_errors() {
         let (_, _, connection_manager, _) = setup_all_with_data(
             "insert_rnr_form_errors",
-            MockDataInserts::all(),
+            MockDataInserts::none()
+                .stores()
+                .name_store_joins()
+                .items()
+                .periods()
+                .program_requisition_settings()
+                .full_master_list(),
             MockData {
                 periods: vec![PeriodRow {
                     id: "future_period".to_string(),
@@ -29,6 +35,10 @@ mod insert {
                     period_schedule_id: "mock_period_schedule_2".to_string(),
                     start_date: date_now(),
                     end_date: date_now_with_offset(Duration::days(1)),
+                }],
+                rnr_forms: vec![RnRFormRow {
+                    status: RnRFormStatus::Draft,
+                    ..mock_rnr_form_a()
                 }],
                 ..Default::default()
             },
@@ -252,7 +262,7 @@ mod insert {
         RnRFormRowRepository::new(&context.connection)
             .upsert_one(&RnRFormRow {
                 status: RnRFormStatus::Finalised,
-                ..mock_rnr_form_a()
+                ..mock_rnr_form_b()
             })
             .unwrap();
 
@@ -266,7 +276,7 @@ mod insert {
                     id: "new_rnr_id".to_string(),
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
-                    period_id: mock_period_2_b().id,
+                    period_id: mock_period_2_c().id,
                 },
             )
             .unwrap();

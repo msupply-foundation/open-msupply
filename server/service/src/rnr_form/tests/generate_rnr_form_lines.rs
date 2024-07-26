@@ -84,14 +84,17 @@ mod generate_rnr_form_lines {
                 item_id: item_query_test1().id,
                 average_monthly_consumption: 2.9032258064516125, // ideally 3.0
                 initial_balance: 2.0,
-                quantity_received: 5.0,
-                quantity_consumed: 3.0,
+                snapshot_quantity_received: 5.0,
+                snapshot_quantity_consumed: 3.0,
+                snapshot_adjustments: -1.0,
                 stock_out_duration: 8,
-                adjustments: -1.0,
                 adjusted_quantity_consumed: 4.043478260869565, // 3.0 * 31 /23
                 final_balance: 3.0,
                 maximum_quantity: 5.806451612903225, // 2*AMC, ideally 6.0
                 requested_quantity: 2.806451612903225, // max - final balance, ideally 3.0
+                entered_quantity_received: None,
+                entered_quantity_consumed: None,
+                entered_adjustments: None,
                 expiry_date: None,
                 comment: None,
                 confirmed: false,

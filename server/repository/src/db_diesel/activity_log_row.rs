@@ -75,6 +75,7 @@ pub enum ActivityLogType {
     ProgramUpdated,
     VaccineCourseUpdated,
     RnrFormCreated,
+    RnrFormUpdated,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
