@@ -2,8 +2,8 @@ use chrono::{DateTime, Utc};
 use fast_scraper::{Html, Selector};
 use headless_chrome::browser::tab::element;
 use repository::{
-    PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository, ReportSort,
-    ReportType, RepositoryError,
+    EqualFilter, PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository,
+    ReportSort, ReportType, RepositoryError,
 };
 use std::{cell, collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
@@ -73,6 +73,10 @@ pub struct GeneratedReport {
 }
 
 pub trait ReportServiceTrait: Sync + Send {
+    fn get_report(&self, ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError> {
+        get_report(ctx, id)
+    }
+
     fn query_reports(
         &self,
         ctx: &ServiceContext,
@@ -103,7 +107,7 @@ pub trait ReportServiceTrait: Sync + Send {
     }
 
     /// Converts a HTML report to a file for the target PrintFormat and returns file id
-    fn print_html_report(
+    fn generate_html_report(
         &self,
         base_dir: &Option<String>,
         report: &ResolvedReportDefinition,
@@ -115,20 +119,20 @@ pub trait ReportServiceTrait: Sync + Send {
 
         match format {
             Some(PrintFormat::Html) => {
-                print_html_report_to_html(base_dir, document, report.name.clone())
+                generate_html_report_to_html(base_dir, document, report.name.clone())
             }
             Some(PrintFormat::Excel) => {
                 print_html_report_to_excel(base_dir, document, report.name.clone())
             }
             Some(PrintFormat::Pdf) | None => {
-                print_html_report_to_pdf(base_dir, document, report.name.clone())
+                generate_html_report_to_pdf(base_dir, document, report.name.clone())
             }
         }
     }
 }
 
 /// Converts a HTML report to a pdf file and returns the file id
-fn print_html_report_to_pdf(
+fn generate_html_report_to_pdf(
     base_dir: &Option<String>,
     document: GeneratedReport,
     report_name: String,
@@ -152,7 +156,7 @@ fn print_html_report_to_pdf(
 }
 
 /// Converts the report to a HTML file and returns the file id
-fn print_html_report_to_html(
+fn generate_html_report_to_html(
     base_dir: &Option<String>,
     document: GeneratedReport,
     report_name: String,
@@ -272,6 +276,13 @@ impl ReportServiceTrait for ReportService {}
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
+
+fn get_report(ctx: &ServiceContext, id: &str) -> Result<Report, RepositoryError> {
+    ReportRepository::new(&ctx.connection)
+        .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id)))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)
+}
 
 fn query_reports(
     ctx: &ServiceContext,

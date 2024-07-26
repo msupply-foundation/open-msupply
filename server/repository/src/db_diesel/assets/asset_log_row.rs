@@ -145,11 +145,6 @@ impl<'a> AssetLogRowRepository<'a> {
 }
 
 impl Upsert for AssetLogRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = AssetLogRowRepository::new(con).upsert_one(self)?;
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
         let cursor_id = AssetLogRowRepository::new(con).upsert_one(self)?;

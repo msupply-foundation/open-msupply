@@ -38,8 +38,8 @@
   "label.add-batch": "Ajouter lot",
   "label.allocated": "Alloué(e)",
   "label.amc": "CMM",
-  "label.any": "Tout",
-  "label.customer-name": "Nom du client",
+  "label.any": "Tous",
+  "label.customer-name": "Nom du patient",
   "label.customer-ref": "Référence client",
   "label.group-by-item": "Grouper par article",
   "label.edited-by": "Édité(e) par",
@@ -69,7 +69,7 @@
   "messages.outbound-shipment-created-on": "Livraison sortante créée le {{date}}",
   "messages.customer-requisition-created-on": "Commande client créée le {{date}}",
   "messages.off-hold-confirmation": "Cela permettra de réactiver les changements de statut",
-  "messages.no-stock-available": "Pas de stock disponible",
+  "messages.no-stock-available": "Il n'y a pas de stock disponible",
   "messages.cant-delete-requisitions": "Vous pouvez uniquement supprimer les réquisitions avec un statut 'Brouillon'",
   "messages.click-to-return-to-shipments": "Le bon de livraison recherché est introuvable. Cliquez sur OK pour retourner à la liste des bons de livraison",
   "messages.confirm-add-from-master-list": "Êtes-vous sûr(e) de vouloir ajouter tous les articles de la liste maîtresse ?",
@@ -143,11 +143,11 @@
   "messages.return-saved": "Retour sauvegardé 🥳",
   "messages.confirm-not-fully-supplied_few": "Si vous finalisez, vous ne pourrez plus fournir d'autres articles à ce client depuis cette commande.\n\n{{count}} lignes dans cette commande n'ont pas été totalement fournies.\nSouhaitez vous continuer quand même ?",
   "messages.confirm-not-fully-supplied_many": "Si vous finalisez, vous ne pourrez plus fournir d'autres articles à ce client depuis cette commande.\n\n{{count}} lignes dans cette commande n'ont pas été totalement fournies.\nSouhaitez vous continuer quand même ?",
-  "messages.stock-on-hold": "Certaines lignes de stock sont bloquées et ne peuvent pas être allouées.",
+  "messages.stock-on-hold": "Certaines lignes de stock sont allouées et ne peuvent pas être attribuées.",
   "messages.click-to-return-to-inbound-returns": "Impossible de trouver un retour avec ce numéro. Cliquer sur OK pour retourner à la liste des retours client",
   "messages.confirm-not-fully-supplied_one": "Si vous finalisez, vous ne pourrez pas fournir d'autres articles à ce client depuis cette commande.\n\n{{count}} lignes dans cette commande n'ont pas été totalement fournies pour le client.\nSouhaitez-vous continuer quand même ?",
   "messages.confirm-not-fully-supplied_other": "Si vous finalisez, vous ne pourrez plus fournir d'autres articles à ce client depuis cette commande.\n\n{{count}} lignes dans cette commande n'ont pas été totalement fournies.\nSouhaitez vous continuer quand même ?",
   "messages.deleted-shipments_few": "{{count}} transactions supprimées",
   "messages.deleted-requisitions_few": "{{count}} Commandes client supprimées",
-  "messages.stock-expired": "Certaines lignes de stock sont expirées et ne pourront pas être allouées automatiquement."
+  "messages.stock-expired": "Certaines lignes de stock sont expirées et ne seront pas attribuées automatiquement."
 }

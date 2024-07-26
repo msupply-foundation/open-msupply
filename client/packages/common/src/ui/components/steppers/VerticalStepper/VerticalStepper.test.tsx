@@ -25,9 +25,9 @@ describe('VerticalStepper', () => {
     const node2 = getByText('catalogue');
     const node3 = getByText('customers');
 
-    expect(node1).toBeInTheDocument();
-    expect(node2).toBeInTheDocument();
-    expect(node3).toBeInTheDocument();
+    expect(node1).toBeDefined();
+    expect(node2).toBeDefined();
+    expect(node3).toBeDefined();
   });
 
   it('renders the correct active/completed states correctly', () => {
@@ -47,7 +47,7 @@ describe('VerticalStepper', () => {
     const node1 = getByTestId('completed');
     const node2 = getByTestId('activecompleted');
 
-    expect(node1).toBeInTheDocument();
-    expect(node2).toBeInTheDocument();
+    expect(node1).toBeDefined();
+    expect(node2).toBeDefined();
   });
 });

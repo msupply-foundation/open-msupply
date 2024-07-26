@@ -141,5 +141,6 @@
   "indicators-demographics": "Демография",
   "label.edit-store-properties": "Редактировать свойства хранилища",
   "label.initialise-store-properties": "Инициализация свойств хранилища для GAPS",
-  "label.initialised": "Инициализировано"
+  "label.initialised": "Инициализировано",
+  "r-and-r-forms": "О&З Формы (Отчеты и Заявки)"
 }

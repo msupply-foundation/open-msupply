@@ -3,10 +3,12 @@ import { RouteBuilder, Navigate, useMatch } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
 const ReportRouter = React.lazy(
-  () => import('@openmsupply-client/reports/src/ReportService')
+  () => import('@openmsupply-client/reports/src/ReportsService')
 );
 
-const fullReportsPath = RouteBuilder.create(AppRoute.Reports).build();
+const fullReportsPath = RouteBuilder.create(AppRoute.Reports)
+  .addWildCard()
+  .build();
 
 export const ReportsRouter: FC = () => {
   const goToReports = useMatch(fullReportsPath);

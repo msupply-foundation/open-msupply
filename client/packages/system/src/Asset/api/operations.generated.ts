@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, subCatalogue: string, properties: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
 export type AssetPropertyFragment = { __typename: 'AssetPropertyNode', id: string, key: string, name: string, allowedValues?: string | null, valueType: Types.PropertyNodeValueType };
@@ -16,7 +16,7 @@ export type AssetCatalogueItemsQueryVariables = Types.Exact<{
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.AssetCatalogueItemSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ItemFilterInput>;
+  filter?: Types.InputMaybe<Types.AssetCatalogueItemFilterInput>;
 }>;
 
 
@@ -30,14 +30,14 @@ export type AssetCatalogueItemByIdQueryVariables = Types.Exact<{
 export type AssetCatalogueItemByIdQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, subCatalogue: string, properties: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
 
 export type AssetClassesQueryVariables = Types.Exact<{
-  sort?: Types.InputMaybe<Types.AssetClassSortInput>;
+  sort?: Types.InputMaybe<Array<Types.AssetClassSortInput> | Types.AssetClassSortInput>;
 }>;
 
 
 export type AssetClassesQuery = { __typename: 'Queries', assetClasses: { __typename: 'AssetClassConnector', totalCount: number, nodes: Array<{ __typename: 'AssetClassNode', id: string, name: string }> } };
 
 export type AssetTypesQueryVariables = Types.Exact<{
-  sort?: Types.InputMaybe<Types.AssetTypeSortInput>;
+  sort?: Types.InputMaybe<Array<Types.AssetTypeSortInput> | Types.AssetTypeSortInput>;
   filter?: Types.InputMaybe<Types.AssetTypeFilterInput>;
 }>;
 
@@ -45,7 +45,7 @@ export type AssetTypesQueryVariables = Types.Exact<{
 export type AssetTypesQuery = { __typename: 'Queries', assetTypes: { __typename: 'AssetTypeConnector', totalCount: number, nodes: Array<{ __typename: 'AssetTypeNode', id: string, name: string, categoryId: string }> } };
 
 export type AssetCategoriesQueryVariables = Types.Exact<{
-  sort?: Types.InputMaybe<Types.AssetCategorySortInput>;
+  sort?: Types.InputMaybe<Array<Types.AssetCategorySortInput> | Types.AssetCategorySortInput>;
   filter?: Types.InputMaybe<Types.AssetCategoryFilterInput>;
 }>;
 
@@ -61,7 +61,7 @@ export type AssetPropertiesQuery = { __typename: 'Queries', assetProperties: { _
 
 export type AssetLogReasonsQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.AssetLogReasonFilterInput>;
-  sort?: Types.InputMaybe<Types.AssetLogReasonSortInput>;
+  sort?: Types.InputMaybe<Array<Types.AssetLogReasonSortInput> | Types.AssetLogReasonSortInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -154,7 +154,7 @@ export const AssetLogReasonFragmentDoc = gql`
 }
     `;
 export const AssetCatalogueItemsDocument = gql`
-    query assetCatalogueItems($first: Int, $offset: Int, $key: AssetCatalogueItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
+    query assetCatalogueItems($first: Int, $offset: Int, $key: AssetCatalogueItemSortFieldInput!, $desc: Boolean, $filter: AssetCatalogueItemFilterInput) {
   assetCatalogueItems(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
@@ -182,7 +182,7 @@ export const AssetCatalogueItemByIdDocument = gql`
 }
     ${AssetCatalogueItemFragmentDoc}`;
 export const AssetClassesDocument = gql`
-    query assetClasses($sort: AssetClassSortInput) {
+    query assetClasses($sort: [AssetClassSortInput!]) {
   assetClasses(sort: $sort) {
     ... on AssetClassConnector {
       nodes {
@@ -195,7 +195,7 @@ export const AssetClassesDocument = gql`
 }
     `;
 export const AssetTypesDocument = gql`
-    query assetTypes($sort: AssetTypeSortInput, $filter: AssetTypeFilterInput) {
+    query assetTypes($sort: [AssetTypeSortInput!], $filter: AssetTypeFilterInput) {
   assetTypes(sort: $sort, filter: $filter) {
     ... on AssetTypeConnector {
       nodes {
@@ -209,7 +209,7 @@ export const AssetTypesDocument = gql`
 }
     `;
 export const AssetCategoriesDocument = gql`
-    query assetCategories($sort: AssetCategorySortInput, $filter: AssetCategoryFilterInput) {
+    query assetCategories($sort: [AssetCategorySortInput!], $filter: AssetCategoryFilterInput) {
   assetCategories(sort: $sort, filter: $filter) {
     ... on AssetCategoryConnector {
       nodes {
@@ -236,7 +236,7 @@ export const AssetPropertiesDocument = gql`
 }
     ${AssetPropertyFragmentDoc}`;
 export const AssetLogReasonsDocument = gql`
-    query assetLogReasons($filter: AssetLogReasonFilterInput, $sort: AssetLogReasonSortInput, $storeId: String!) {
+    query assetLogReasons($filter: AssetLogReasonFilterInput, $sort: [AssetLogReasonSortInput!], $storeId: String!) {
   assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
     ... on AssetLogReasonConnector {
       __typename
@@ -343,45 +343,45 @@ export const DeleteLogReasonDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     assetCatalogueItems(variables: AssetCatalogueItemsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCatalogueItemsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetCatalogueItemsQuery>(AssetCatalogueItemsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueItems', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetCatalogueItemsQuery>(AssetCatalogueItemsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueItems', 'query', variables);
     },
     assetCatalogueItemById(variables: AssetCatalogueItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCatalogueItemByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetCatalogueItemByIdQuery>(AssetCatalogueItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueItemById', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetCatalogueItemByIdQuery>(AssetCatalogueItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueItemById', 'query', variables);
     },
     assetClasses(variables?: AssetClassesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetClassesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetClassesQuery>(AssetClassesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetClasses', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetClassesQuery>(AssetClassesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetClasses', 'query', variables);
     },
     assetTypes(variables?: AssetTypesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetTypesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetTypesQuery>(AssetTypesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetTypes', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetTypesQuery>(AssetTypesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetTypes', 'query', variables);
     },
     assetCategories(variables?: AssetCategoriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCategoriesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetCategoriesQuery>(AssetCategoriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCategories', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetCategoriesQuery>(AssetCategoriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCategories', 'query', variables);
     },
     assetProperties(variables?: AssetPropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetPropertiesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetPropertiesQuery>(AssetPropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetProperties', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetPropertiesQuery>(AssetPropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetProperties', 'query', variables);
     },
     assetLogReasons(variables: AssetLogReasonsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetLogReasonsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetLogReasonsQuery>(AssetLogReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLogReasons', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetLogReasonsQuery>(AssetLogReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLogReasons', 'query', variables);
     },
     insertAssetCatalogueItem(variables: InsertAssetCatalogueItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetCatalogueItemMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetCatalogueItemMutation>(InsertAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetCatalogueItem', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetCatalogueItemMutation>(InsertAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetCatalogueItem', 'mutation', variables);
     },
     deleteAssetCatalogueItem(variables: DeleteAssetCatalogueItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteAssetCatalogueItemMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteAssetCatalogueItemMutation>(DeleteAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteAssetCatalogueItem', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteAssetCatalogueItemMutation>(DeleteAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteAssetCatalogueItem', 'mutation', variables);
     },
     insertAssetLogReason(variables: InsertAssetLogReasonMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetLogReasonMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogReasonMutation>(InsertAssetLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLogReason', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogReasonMutation>(InsertAssetLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLogReason', 'mutation', variables);
     },
     deleteLogReason(variables: DeleteLogReasonMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteLogReasonMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteLogReasonMutation>(DeleteLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLogReason', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteLogReasonMutation>(DeleteLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLogReason', 'mutation', variables);
     }
   };
 }
