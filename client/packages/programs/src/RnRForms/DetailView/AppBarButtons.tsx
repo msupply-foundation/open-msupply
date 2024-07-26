@@ -8,28 +8,34 @@ import {
   Platform,
   PrinterIcon,
   ReportContext,
+  useParams,
   useTranslation,
 } from '@openmsupply-client/common';
 import {
-  // ReportRowFragment,
+  ReportRowFragment,
   ReportSelector,
-  useReport,
+  usePrintReport,
 } from '@openmsupply-client/system';
-// import { useRnR } from '../../api';
-// import { JsonData } from '@openmsupply-client/programs';
+import { useRnRForm } from '../../api';
+import { JsonData } from '@openmsupply-client/programs';
 
 export const AppBarButtonsComponent = () => {
-  // const { data } = useRnR.document.get();
-  const { /* print, */ isPrinting } = useReport.utils.print();
+  const { id = '' } = useParams();
+  const { data /* isLoading */ } = useRnRForm({ rnrFormId: id });
+  const { print, isPrinting } = usePrintReport();
   const t = useTranslation();
 
-  const printReport = () =>
-    // report: ReportRowFragment,
-    // args: JsonData | undefined
-    {
-      // if (!data) return;
-      // print({ reportId: report.id, dataId: data?.id, args });
-    };
+  const printReport = (
+    report: ReportRowFragment,
+    args: JsonData | undefined
+  ) => {
+    if (!data) return;
+    print({
+      reportId: report.id,
+      dataId: data?.id,
+      args,
+    });
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -48,7 +54,6 @@ export const AppBarButtonsComponent = () => {
         </ReportSelector>
         <LoadingButton
           startIcon={<DownloadIcon />}
-          // isLoading={isLoading}
           variant="outlined"
           onClick={() => {}}
           disabled={EnvUtils.platform === Platform.Android}
