@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -107,27 +107,27 @@ export const InboundShipmentCountsDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     stockCounts(variables: StockCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StockCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts', 'query', variables);
     },
     itemCounts(variables: ItemCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemCountsQuery>(ItemCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemCountsQuery>(ItemCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemCounts', 'query', variables);
     },
     requisitionCounts(variables: RequisitionCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequisitionCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query', variables);
     },
     outboundShipmentCounts(variables: OutboundShipmentCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<OutboundShipmentCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<OutboundShipmentCountsQuery>(OutboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundShipmentCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<OutboundShipmentCountsQuery>(OutboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundShipmentCounts', 'query', variables);
     },
     inboundShipmentCounts(variables: InboundShipmentCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InboundShipmentCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InboundShipmentCountsQuery>(InboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundShipmentCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<InboundShipmentCountsQuery>(InboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundShipmentCounts', 'query', variables);
     }
   };
 }

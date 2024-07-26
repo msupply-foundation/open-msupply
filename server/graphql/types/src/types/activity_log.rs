@@ -68,6 +68,7 @@ pub enum ActivityLogNodeType {
     ProgramCreated,
     ProgramUpdated,
     VaccineCourseUpdated,
+    RnrFormCreated,
 }
 
 #[Object]
@@ -191,6 +192,7 @@ impl ActivityLogNodeType {
             from::VaccineCourseUpdated => to::VaccineCourseUpdated,
             from::ProgramCreated => to::ProgramCreated,
             from::ProgramUpdated => to::ProgramUpdated,
+            from::RnrFormCreated => to::RnrFormCreated,
         }
     }
 
@@ -244,6 +246,7 @@ impl ActivityLogNodeType {
             from::VaccineCourseUpdated => to::VaccineCourseUpdated,
             from::ProgramCreated => to::ProgramCreated,
             from::ProgramUpdated => to::ProgramUpdated,
+            from::RnrFormCreated => to::RnrFormCreated,
         }
     }
 }

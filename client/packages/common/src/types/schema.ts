@@ -116,6 +116,7 @@ export enum ActivityLogNodeType {
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
+  RnrFormCreated = 'RNR_FORM_CREATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
@@ -2857,6 +2858,15 @@ export type InsertRequestRequisitionResponseWithId = {
   response: InsertRequestRequisitionResponse;
 };
 
+export type InsertRnRFormInput = {
+  id: Scalars['String']['input'];
+  periodId: Scalars['String']['input'];
+  programId: Scalars['String']['input'];
+  supplierId: Scalars['String']['input'];
+};
+
+export type InsertRnRFormResponse = RnRFormNode;
+
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']['input']>;
@@ -3404,6 +3414,7 @@ export type ItemStatsNode = {
   availableMonthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  totalConsumption: Scalars['Float']['output'];
 };
 
 export type ItemsResponse = ItemConnector;
@@ -3763,6 +3774,7 @@ export type Mutations = {
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
+  insertRnrForm: InsertRnRFormResponse;
   insertStockLine: InsertStockLineLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
@@ -4154,6 +4166,12 @@ export type MutationsInsertRequestRequisitionArgs = {
 
 export type MutationsInsertRequestRequisitionLineArgs = {
   input: InsertRequestRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertRnrFormArgs = {
+  input: InsertRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4847,6 +4865,20 @@ export type PeriodNode = {
   startDate: Scalars['NaiveDate']['output'];
 };
 
+export type PeriodScheduleNode = {
+  __typename: 'PeriodScheduleNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  periods: Array<SchedulePeriodNode>;
+};
+
+export type PeriodSchedulesConnector = {
+  __typename: 'PeriodSchedulesConnector';
+  nodes: Array<PeriodScheduleNode>;
+};
+
+export type PeriodSchedulesResponse = PeriodSchedulesConnector;
+
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   pluginName?: InputMaybe<EqualFilterStringInput>;
@@ -4920,7 +4952,7 @@ export type PrintReportErrorInterface = {
 export type PrintReportNode = {
   __typename: 'PrintReportNode';
   /**
-   * Return the file id of the printed report.
+   * Return the file id of the generated report.
    * The file can be fetched using the /files?id={id} endpoint
    */
   fileId: Scalars['String']['output'];
@@ -5073,6 +5105,7 @@ export type ProgramEventSortInput = {
 
 export type ProgramFilterInput = {
   contextId?: InputMaybe<EqualFilterStringInput>;
+  existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
@@ -5191,6 +5224,19 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
+  /**
+   * Creates a generated report.
+   *
+   * All details about the report, e.g. the output format, are specified in the report definition
+   * which is referred to by the report_id.
+   * The generated report can be retrieved from the `/files` endpoint using the returned file id.
+   */
+  generateReport: PrintReportResponse;
+  /**
+   * Can be used when developing reports, e.g. to generate a report that is not already in the
+   * system.
+   */
+  generateReportDefinition: PrintReportResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -5228,23 +5274,11 @@ export type Queries = {
   patients: PatientResponse;
   pluginData: PluginDataResponse;
   plugins: Array<PluginNode>;
-  /**
-   * Creates a printed report.
-   *
-   * All details about the report, e.g. the output format, are specified in the report definition
-   * which is referred to by the report_id.
-   * The printed report can be retrieved from the `/files` endpoint using the returned file id.
-   */
-  printReport: PrintReportResponse;
-  /**
-   * Can be used when developing reports, e.g. to print a report that is not already in the
-   * system.
-   */
-  printReportDefinition: PrintReportResponse;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   programs: ProgramsResponse;
+  rAndRForms: RnRFormsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -5252,6 +5286,7 @@ export type Queries = {
   refreshToken: RefreshTokenResponse;
   repack: RepackResponse;
   repacksByStockLine: RepackConnector;
+  report: ReportResponse;
   /** Queries a list of available reports */
   reports: ReportsResponse;
   requisition: RequisitionResponse;
@@ -5261,6 +5296,7 @@ export type Queries = {
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   returnReasons: ReturnReasonResponse;
+  schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
   stockCounts: StockCounts;
@@ -5505,6 +5541,26 @@ export type QueriesGenerateOutboundReturnLinesArgs = {
 };
 
 
+export type QueriesGenerateReportArgs = {
+  arguments?: InputMaybe<Scalars['JSON']['input']>;
+  dataId?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<PrintFormat>;
+  reportId: Scalars['String']['input'];
+  sort?: InputMaybe<PrintReportSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesGenerateReportDefinitionArgs = {
+  arguments?: InputMaybe<Scalars['JSON']['input']>;
+  dataId?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<PrintFormat>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  report: Scalars['JSON']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesInsertPrescriptionArgs = {
   input: InsertPrescriptionInput;
   storeId: Scalars['String']['input'];
@@ -5647,25 +5703,6 @@ export type QueriesPluginDataArgs = {
 };
 
 
-export type QueriesPrintReportArgs = {
-  arguments?: InputMaybe<Scalars['JSON']['input']>;
-  dataId?: InputMaybe<Scalars['String']['input']>;
-  format?: InputMaybe<PrintFormat>;
-  reportId: Scalars['String']['input'];
-  sort?: InputMaybe<PrintReportSortInput>;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type QueriesPrintReportDefinitionArgs = {
-  arguments?: InputMaybe<Scalars['JSON']['input']>;
-  dataId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  report: Scalars['JSON']['input'];
-  storeId: Scalars['String']['input'];
-};
-
-
 export type QueriesProgramEnrolmentsArgs = {
   filter?: InputMaybe<ProgramEnrolmentFilterInput>;
   sort?: InputMaybe<ProgramEnrolmentSortInput>;
@@ -5694,6 +5731,14 @@ export type QueriesProgramsArgs = {
 };
 
 
+export type QueriesRAndRFormsArgs = {
+  filter?: InputMaybe<RnRFormFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<RnRFormSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesRepackArgs = {
   invoiceId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -5702,6 +5747,12 @@ export type QueriesRepackArgs = {
 
 export type QueriesRepacksByStockLineArgs = {
   stockLineId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesReportArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -5758,6 +5809,12 @@ export type QueriesReturnReasonsArgs = {
   filter?: InputMaybe<ReturnReasonFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReturnReasonSortInput>>;
+};
+
+
+export type QueriesSchedulesWithPeriodsByProgramArgs = {
+  programId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -5947,6 +6004,7 @@ export enum ReportContext {
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
   Repack = 'REPACK',
+  Report = 'REPORT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
@@ -5968,6 +6026,8 @@ export type ReportNode = {
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
 };
+
+export type ReportResponse = ReportNode;
 
 export enum ReportSortFieldInput {
   Id = 'id',
@@ -6276,6 +6336,56 @@ export type ReturnReasonSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ReturnReasonSortFieldInput;
+};
+
+export type RnRFormConnector = {
+  __typename: 'RnRFormConnector';
+  nodes: Array<RnRFormNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type RnRFormFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type RnRFormNode = {
+  __typename: 'RnRFormNode';
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  periodId: Scalars['String']['output'];
+  periodName: Scalars['String']['output'];
+  programId: Scalars['String']['output'];
+  programName: Scalars['String']['output'];
+  supplierName: Scalars['String']['output'];
+};
+
+export enum RnRFormSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  Period = 'period',
+  Program = 'program',
+  Status = 'status',
+  SupplierName = 'supplierName'
+}
+
+export type RnRFormSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: RnRFormSortFieldInput;
+};
+
+export type RnRFormsResponse = RnRFormConnector;
+
+export type SchedulePeriodNode = {
+  __typename: 'SchedulePeriodNode';
+  id: Scalars['String']['output'];
+  inUse: Scalars['Boolean']['output'];
+  period: PeriodNode;
 };
 
 export type SensorConnector = {
@@ -7851,6 +7961,8 @@ export enum UserPermission {
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',
+  RnRFormMutate = 'RN_R_FORM_MUTATE',
+  RnRFormQuery = 'RN_R_FORM_QUERY',
   SensorMutate = 'SENSOR_MUTATE',
   SensorQuery = 'SENSOR_QUERY',
   ServerAdmin = 'SERVER_ADMIN',

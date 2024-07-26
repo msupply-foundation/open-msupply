@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type MasterListItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
 
 export type MasterListLineFragment = { __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } };
@@ -143,24 +143,24 @@ export const MasterListLinesDocument = gql`
 }
     ${MasterListLineFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     masterLists(variables: MasterListsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsQuery>(MasterListsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterLists', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsQuery>(MasterListsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterLists', 'query', variables);
     },
     masterListsByItemId(variables: MasterListsByItemIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListsByItemIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsByItemIdQuery>(MasterListsByItemIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterListsByItemId', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsByItemIdQuery>(MasterListsByItemIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterListsByItemId', 'query', variables);
     },
     masterList(variables: MasterListQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MasterListQuery>(MasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterList', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListQuery>(MasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterList', 'query', variables);
     },
     masterListLines(variables: MasterListLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MasterListLinesQuery>(MasterListLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterListLines', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListLinesQuery>(MasterListLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterListLines', 'query', variables);
     }
   };
 }

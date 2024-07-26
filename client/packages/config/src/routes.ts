@@ -58,6 +58,8 @@ export enum AppRoute {
   LogReasons = 'log-reasons',
   ImmunisationPrograms = 'immunisations',
 
+  RnRForms = 'r-and-r-forms',
+
   PageNotFound = 'page-not-found',
 }
 

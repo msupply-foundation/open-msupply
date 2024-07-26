@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, nameId: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, isDisabled: boolean, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean, monthlyConsumptionLookBackPeriod: number, monthsLeadTime: number, monthsOverstock: number, monthsUnderstock: number, monthsItemsExpire: number, stocktakeFrequency: number } };
 
 export type AuthTokenQueryVariables = Types.Exact<{
@@ -253,36 +253,36 @@ export const LastSuccessfulUserSyncDocument = gql`
 }
     ${UpdateUserFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     authToken(variables: AuthTokenQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AuthTokenQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AuthTokenQuery>(AuthTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'authToken', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<AuthTokenQuery>(AuthTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'authToken', 'query', variables);
     },
     me(variables?: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MeQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'me', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'me', 'query', variables);
     },
     isCentralServer(variables?: IsCentralServerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<IsCentralServerQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<IsCentralServerQuery>(IsCentralServerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'isCentralServer', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<IsCentralServerQuery>(IsCentralServerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'isCentralServer', 'query', variables);
     },
     refreshToken(variables?: RefreshTokenQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RefreshTokenQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RefreshTokenQuery>(RefreshTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'refreshToken', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<RefreshTokenQuery>(RefreshTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'refreshToken', 'query', variables);
     },
     permissions(variables: PermissionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PermissionsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PermissionsQuery>(PermissionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'permissions', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PermissionsQuery>(PermissionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'permissions', 'query', variables);
     },
     storePreferences(variables: StorePreferencesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StorePreferencesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StorePreferencesQuery>(StorePreferencesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'storePreferences', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StorePreferencesQuery>(StorePreferencesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'storePreferences', 'query', variables);
     },
     updateUser(variables?: UpdateUserMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateUserMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateUserMutation>(UpdateUserDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateUser', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateUserMutation>(UpdateUserDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateUser', 'mutation', variables);
     },
     lastSuccessfulUserSync(variables?: LastSuccessfulUserSyncQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LastSuccessfulUserSyncQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LastSuccessfulUserSyncQuery>(LastSuccessfulUserSyncDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'lastSuccessfulUserSync', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<LastSuccessfulUserSyncQuery>(LastSuccessfulUserSyncDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'lastSuccessfulUserSync', 'query', variables);
     }
   };
 }

@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type TemperatureNotificationBreachFragment = { __typename: 'TemperatureBreachNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
 
 export type TemperatureExcursionFragment = { __typename: 'TemperatureExcursionNode', id: string, startDatetime: string, maxOrMinTemperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
@@ -67,15 +67,15 @@ export const TemperatureNotificationsDocument = gql`
     ${TemperatureNotificationBreachFragmentDoc}
 ${TemperatureExcursionFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     temperatureNotifications(variables: TemperatureNotificationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<TemperatureNotificationsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<TemperatureNotificationsQuery>(TemperatureNotificationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'temperatureNotifications', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<TemperatureNotificationsQuery>(TemperatureNotificationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'temperatureNotifications', 'query', variables);
     }
   };
 }

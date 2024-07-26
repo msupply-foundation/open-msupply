@@ -12,13 +12,10 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  useReport,
-} from '@openmsupply-client/system';
+import { ReportSelector, usePrintReport } from '@openmsupply-client/system';
 import { JsonData } from '@openmsupply-client/programs';
 import { isStocktakeDisabled } from '../../utils';
+import { ReportRowFragment } from '@openmsupply-client/system';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
@@ -29,7 +26,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
 }) => {
   const { OpenButton } = useDetailPanel();
   const t = useTranslation();
-  const { print, isPrinting } = useReport.utils.print();
+  const { print, isPrinting } = usePrintReport();
   const { data } = useStocktake.document.get();
   const isDisabled = !data || isStocktakeDisabled(data);
 

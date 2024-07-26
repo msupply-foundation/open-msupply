@@ -61,8 +61,9 @@ impl<'a> NameTagRowRepository<'a> {
 }
 
 impl Upsert for NameTagRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameTagRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        NameTagRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

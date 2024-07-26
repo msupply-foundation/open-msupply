@@ -24,7 +24,7 @@
   "heading.target-quantity": "Quantité Cible",
   "heading.tax": "Taxe",
   "heading.total": "Total",
-  "info.automatic-shipment": "Ce bon de livraison a été automatiquement créé à la suite d'un transfert depuis un autre dépôt. Vous ne pouvez pas le modifier tant qu'il n'a pas été confirmé comme 'Livré(e)'.",
+  "info.automatic-shipment": "Ce bon de livraison a été automatiquement créé à la suite d'un transfert depuis un autre dépôt.",
   "info.cannot-edit-program-requisition": "On ne peut pas modifier le fournisseur, le MDS minimum et maximum ou ajouter des articles dans un bon de commande \"programme\".",
   "info.manual-shipment": "Cette expédition a été créée manuellement. Le statut 'Livré(e) ne sera pas mis à jour automatiquement.",
   "label.add-batch": "Ajouter lot",
@@ -154,5 +154,7 @@
   "messages.select-rows-to-return": "Sélectionner les lignes pour les retourner",
   "messages.deleted-requisitions_few": "{{count}} commandes supprimées",
   "messages.deleted-requisitions_many": "{{count}} commandes supprimées",
-  "messages.return-saved": "Retour sauvegardé 🥳"
+  "messages.return-saved": "Retour sauvegardé 🥳",
+  "error.batch-is-reserved": "Le lot est déjà réservé/émis",
+  "error.inbound-shipment-not-editable": "L'expédition entrante n'est pas modifiable."
 }

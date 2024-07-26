@@ -89,8 +89,9 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
 pub struct InventoryAdjustmentReasonRowDelete(pub String);
 // TODO soft delete
 impl Delete for InventoryAdjustmentReasonRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InventoryAdjustmentReasonRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        InventoryAdjustmentReasonRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -102,8 +103,9 @@ impl Delete for InventoryAdjustmentReasonRowDelete {
 }
 
 impl Upsert for InventoryAdjustmentReasonRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InventoryAdjustmentReasonRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        InventoryAdjustmentReasonRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
