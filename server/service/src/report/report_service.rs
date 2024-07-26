@@ -1,11 +1,10 @@
 use chrono::{DateTime, Utc};
 use fast_scraper::{Html, Selector};
-use headless_chrome::browser::tab::element;
 use repository::{
     EqualFilter, PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository,
     ReportSort, ReportType, RepositoryError,
 };
-use std::{cell, collections::HashMap, time::SystemTime};
+use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
