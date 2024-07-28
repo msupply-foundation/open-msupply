@@ -21,7 +21,7 @@ export const DetailView = () => {
   const { id } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data: report, isLoading: isReportLoading } = useReport(id ?? '');
-  const { mutateAsync, isLoading } = useGenerateReport();
+  const { mutateAsync, isLoading: isGeneratingReport } = useGenerateReport();
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
 
@@ -97,7 +97,7 @@ export const DetailView = () => {
 
   return (
     <>
-      {(isLoading || isReportLoading) && <BasicSpinner />}
+      {(isGeneratingReport || isReportLoading) && <BasicSpinner />}
       {fileId ? (
         <>
           <iframe src={url} width="100%" />
