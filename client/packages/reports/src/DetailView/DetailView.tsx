@@ -20,7 +20,7 @@ import { JsonData } from '@openmsupply-client/programs';
 export const DetailView = () => {
   const { id } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const { data: report } = useReport(id ?? '');
+  const { data: report, isLoading: isReportLoading } = useReport(id ?? '');
   const { mutateAsync, isLoading } = useGenerateReport();
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
@@ -29,17 +29,16 @@ export const DetailView = () => {
     updateQuery,
     urlQuery: { reportArgs: reportArgsJson },
   } = useUrlQuery({ skipParse: ['reportArgs'] });
+  const reportArgs =
+    (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
 
   // When reportWithArgs is undefined, args modal is closed
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
 
-  // Report should be loaded if id is available
-  const isReportDescriptionLoading = !report?.id;
-
   useEffect(() => {
-    if (isReportDescriptionLoading) return;
+    if (!report?.id) return;
 
     setCustomBreadcrumbs({ 0: report.name ?? '' });
 
@@ -49,9 +48,6 @@ export const DetailView = () => {
       return;
     }
 
-    let reportArgs =
-      (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
-
     if (!!reportArgs) {
       generateReport(report, reportArgs, false);
       return;
@@ -59,7 +55,7 @@ export const DetailView = () => {
 
     // No urlQuery parameters exist, open modal
     openReportArgumentsModal();
-  }, [isReportDescriptionLoading]);
+  }, [report]);
 
   const generateReport = useCallback(
     async (
@@ -81,7 +77,7 @@ export const DetailView = () => {
   );
 
   const openReportArgumentsModal = useCallback(() => {
-    if (isReportDescriptionLoading) return;
+    if (!report) return;
     setReportWithArgs(report);
   }, []);
 
@@ -89,9 +85,6 @@ export const DetailView = () => {
     if (report === undefined) {
       return;
     }
-
-    let reportArgs =
-      (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
 
     print({
       reportId: report.id,
@@ -102,18 +95,14 @@ export const DetailView = () => {
 
   const url = `${Environment.FILE_URL}${fileId}`;
 
-  if (isReportDescriptionLoading) {
-    return <NothingHere />;
-  }
-
   return (
     <>
-      {isLoading && <BasicSpinner />}
+      {(isLoading || isReportLoading) && <BasicSpinner />}
       {fileId ? (
         <>
           <iframe src={url} width="100%" />
           <AppBarButtons
-            isDisabled={!report.argumentSchema}
+            isDisabled={!report?.argumentSchema}
             onFilterOpen={openReportArgumentsModal}
             printReport={printReport}
             isPrinting={isPrinting}
