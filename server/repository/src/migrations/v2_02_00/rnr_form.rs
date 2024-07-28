@@ -81,6 +81,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'RNR_FORM_CREATED';
             ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'RNR_FORM_UPDATED';
+            ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'RNR_FORM_FINALISED';
         "#
     )?;
 
