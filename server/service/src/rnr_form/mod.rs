@@ -2,11 +2,13 @@ use crate::{service_provider::ServiceContext, ListError, ListResult};
 
 use repository::{PaginationOption, RepositoryError, RnRForm, RnRFormFilter, RnRFormSort};
 
+use self::finalise::{finalise_rnr_form, FinaliseRnRForm, FinaliseRnRFormError};
 use self::insert::{insert_rnr_form, InsertRnRForm, InsertRnRFormError};
 use self::query::{get_rnr_form, get_rnr_forms};
 use self::schedules_with_periods::{get_schedules_with_periods_by_program, PeriodSchedule};
 use self::update::{update_rnr_form, UpdateRnRForm, UpdateRnRFormError};
 
+pub mod finalise;
 mod generate_rnr_form_lines;
 pub mod insert;
 pub mod query;
@@ -59,6 +61,14 @@ pub trait RnRFormServiceTrait: Sync + Send {
         input: UpdateRnRForm,
     ) -> Result<RnRForm, UpdateRnRFormError> {
         update_rnr_form(ctx, input)
+    }
+
+    fn finalise_rnr_form(
+        &self,
+        ctx: &ServiceContext,
+        input: FinaliseRnRForm,
+    ) -> Result<RnRForm, FinaliseRnRFormError> {
+        finalise_rnr_form(ctx, input)
     }
 }
 
