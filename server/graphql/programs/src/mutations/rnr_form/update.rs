@@ -51,10 +51,11 @@ pub fn update_rnr_form(
     )?;
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    match service_provider
-        .rnr_form_service
-        .update_rnr_form(&service_context, UpdateRnRFormInput::to_domain(input))
-    {
+    match service_provider.rnr_form_service.update_rnr_form(
+        &service_context,
+        &store_id,
+        UpdateRnRFormInput::to_domain(input),
+    ) {
         Ok(RnRForm {
             rnr_form_row,
             name_row,

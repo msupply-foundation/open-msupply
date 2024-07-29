@@ -35,10 +35,11 @@ pub fn finalise_rnr_form(
     )?;
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
-    match service_provider
-        .rnr_form_service
-        .finalise_rnr_form(&service_context, FinaliseRnRFormInput::to_domain(input))
-    {
+    match service_provider.rnr_form_service.finalise_rnr_form(
+        &service_context,
+        &store_id,
+        FinaliseRnRFormInput::to_domain(input),
+    ) {
         Ok(RnRForm {
             rnr_form_row,
             name_row,

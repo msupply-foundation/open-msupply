@@ -23,6 +23,7 @@ pub enum FinaliseRnRFormError {
 
 pub fn finalise_rnr_form(
     ctx: &ServiceContext,
+    store_id: &str,
     input: FinaliseRnRForm,
 ) -> Result<RnRForm, FinaliseRnRFormError> {
     let rnr_form = ctx
@@ -43,7 +44,7 @@ pub fn finalise_rnr_form(
                 None,
             )?;
 
-            get_rnr_form(ctx, input.id)
+            get_rnr_form(ctx, store_id, input.id)
                 .map_err(FinaliseRnRFormError::DatabaseError)?
                 .ok_or(FinaliseRnRFormError::FinalisedRnRFormDoesNotExist)
         })

@@ -32,10 +32,14 @@ impl RnRFormLineNode {
         self.rnr_form_line_row.initial_balance
     }
     pub async fn quantity_received(&self) -> f64 {
-        self.rnr_form_line_row.quantity_received
+        self.rnr_form_line_row
+            .entered_quantity_received
+            .unwrap_or(self.rnr_form_line_row.snapshot_quantity_received)
     }
     pub async fn quantity_consumed(&self) -> f64 {
-        self.rnr_form_line_row.quantity_consumed
+        self.rnr_form_line_row
+            .entered_quantity_consumed
+            .unwrap_or(self.rnr_form_line_row.snapshot_quantity_consumed)
     }
 
     pub async fn adjusted_quantity_consumed(&self) -> f64 {
@@ -43,7 +47,9 @@ impl RnRFormLineNode {
     }
 
     pub async fn adjustments(&self) -> f64 {
-        self.rnr_form_line_row.adjustments
+        self.rnr_form_line_row
+            .entered_adjustments
+            .unwrap_or(self.rnr_form_line_row.snapshot_adjustments)
     }
 
     pub async fn stock_out_duration(&self) -> i32 {

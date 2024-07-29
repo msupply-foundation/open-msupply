@@ -51,6 +51,7 @@ pub enum UpdateRnRFormLineError {
 
 pub fn update_rnr_form(
     ctx: &ServiceContext,
+    store_id: &str,
     input: UpdateRnRForm,
 ) -> Result<RnRForm, UpdateRnRFormError> {
     let rnr_form = ctx
@@ -73,7 +74,7 @@ pub fn update_rnr_form(
                 None,
             )?;
 
-            get_rnr_form(ctx, input.id)
+            get_rnr_form(ctx, store_id, input.id)
                 .map_err(UpdateRnRFormError::DatabaseError)?
                 .ok_or(UpdateRnRFormError::UpdatedRnRFormDoesNotExist)
         })
