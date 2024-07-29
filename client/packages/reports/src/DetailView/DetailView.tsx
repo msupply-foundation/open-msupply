@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/system';
 import { Environment } from '@openmsupply-client/config';
 import { AppBarButtons } from './AppBarButton';
-import { JsonData } from 'packages/programs/src';
+import { JsonData } from '@openmsupply-client/programs';
 
 export const DetailView = () => {
   const { id } = useParams();
