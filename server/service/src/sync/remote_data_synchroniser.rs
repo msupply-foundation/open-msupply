@@ -143,8 +143,10 @@ impl RemoteDataSynchroniser {
                 data,
             } = sync_batch;
 
-            let sync_buffer_rows =
-                CommonSyncRecord::to_buffer_rows(data.into_iter().map(|r| r.record).collect())?;
+            let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+                data.into_iter().map(|r| r.record).collect(),
+                None, // Everything from mSupply Central Server is considered to not have a source_site_id
+            )?;
 
             let number_of_pulled_records = sync_buffer_rows.len() as u64;
 
