@@ -59,17 +59,19 @@ pub trait RnRFormServiceTrait: Sync + Send {
     fn update_rnr_form(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: UpdateRnRForm,
     ) -> Result<RnRForm, UpdateRnRFormError> {
-        update_rnr_form(ctx, input)
+        update_rnr_form(ctx, store_id, input)
     }
 
     fn finalise_rnr_form(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: FinaliseRnRForm,
     ) -> Result<RnRForm, FinaliseRnRFormError> {
-        finalise_rnr_form(ctx, input)
+        finalise_rnr_form(ctx,store_id,  input)
     }
 }
 

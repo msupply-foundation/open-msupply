@@ -23,11 +23,13 @@ mod update {
             .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.rnr_form_service;
+        let store_id = mock_store_a().id;
 
         // RnRFormDoesNotExist
         assert_eq!(
             service.update_rnr_form(
                 &context,
+                &store_id,
                 UpdateRnRForm {
                     id: "invalid".to_string(),
                     ..Default::default()
@@ -40,6 +42,7 @@ mod update {
         assert_eq!(
             service.update_rnr_form(
                 &context,
+                &store_id,
                 UpdateRnRForm {
                     id: mock_rnr_form_a().id,
                     ..Default::default()
@@ -52,6 +55,7 @@ mod update {
         assert_eq!(
             service.update_rnr_form(
                 &context,
+                &store_id,
                 UpdateRnRForm {
                     id: mock_rnr_form_b().id,
                     lines: vec![UpdateRnRFormLine {
@@ -70,6 +74,7 @@ mod update {
         assert_eq!(
             service.update_rnr_form(
                 &context,
+                &store_id,
                 UpdateRnRForm {
                     id: mock_rnr_form_b().id,
                     lines: vec![UpdateRnRFormLine {
@@ -88,6 +93,7 @@ mod update {
         assert_eq!(
             service.update_rnr_form(
                 &context,
+                &store_id,
                 UpdateRnRForm {
                     id: mock_rnr_form_b().id,
                     lines: vec![UpdateRnRFormLine {
@@ -110,6 +116,7 @@ mod update {
         assert_eq!(
             service.update_rnr_form(
                 &context,
+                &store_id,
                 UpdateRnRForm {
                     id: mock_rnr_form_b().id,
                     lines: vec![UpdateRnRFormLine {
@@ -141,6 +148,7 @@ mod update {
             .rnr_form_service
             .update_rnr_form(
                 &context,
+                &mock_store_a().id,
                 UpdateRnRForm {
                     id: mock_rnr_form_b().id,
                     lines: vec![UpdateRnRFormLine {

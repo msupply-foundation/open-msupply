@@ -18,11 +18,13 @@ mod finalise {
             .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.rnr_form_service;
+        let store_id = mock_store_a().id;
 
         // RnRFormDoesNotExist
         assert_eq!(
             service.finalise_rnr_form(
                 &context,
+                &store_id,
                 FinaliseRnRForm {
                     id: "invalid".to_string(),
                     ..Default::default()
@@ -35,6 +37,7 @@ mod finalise {
         assert_eq!(
             service.finalise_rnr_form(
                 &context,
+                &store_id,
                 FinaliseRnRForm {
                     id: mock_rnr_form_a().id,
                     ..Default::default()
@@ -58,6 +61,7 @@ mod finalise {
             .rnr_form_service
             .finalise_rnr_form(
                 &context,
+                &mock_store_a().id,
                 FinaliseRnRForm {
                     id: mock_rnr_form_b().id,
                 },
