@@ -6,10 +6,30 @@ pub struct ItemStatsNode {
 
 #[Object]
 impl ItemStatsNode {
+    pub async fn this_month_consumption(&self) -> Option<f64> {
+        self.item_stats.this_month_consumption
+    }
+
+    pub async fn last_month_consumption(&self) -> Option<f64> {
+        self.item_stats.last_month_consumption
+    }
+
+    pub async fn last_three_months_consumption(&self) -> Option<f64> {
+        self.item_stats.last_three_months_consumption
+    }
+
+    pub async fn expiring_in_six_months(&self) -> Option<i64> {
+        self.item_stats.expiring_in_six_months
+    }
+
+    pub async fn expiring_in_a_year(&self) -> Option<i64> {
+        self.item_stats.expiring_in_a_year
+    }
+
     pub async fn total_consumption(&self) -> f64 {
         self.item_stats.total_consumption
     }
-    
+
     pub async fn average_monthly_consumption(&self) -> f64 {
         self.item_stats.average_monthly_consumption
     }
