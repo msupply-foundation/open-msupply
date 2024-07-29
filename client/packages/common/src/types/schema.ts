@@ -6409,8 +6409,14 @@ export type RnRFormNode = {
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
+  status: RnRFormNodeStatus;
   supplierName: Scalars['String']['output'];
 };
+
+export enum RnRFormNodeStatus {
+  Draft = 'DRAFT',
+  Finalised = 'FINALISED'
+}
 
 export type RnRFormResponse = NodeError | RnRFormNode;
 

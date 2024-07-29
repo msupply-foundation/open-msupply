@@ -21,7 +21,9 @@ import { JsonData } from '@openmsupply-client/programs';
 
 export const AppBarButtonsComponent = () => {
   const { id = '' } = useParams();
-  const { data /* isLoading */ } = useRnRForm({ rnrFormId: id });
+  const {
+    query: { data },
+  } = useRnRForm({ rnrFormId: id });
   const { print, isPrinting } = usePrintReport();
   const t = useTranslation();
 

@@ -2,7 +2,8 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use graphql_core::{loader::RnRFormLinesByRnRFormIdLoader, ContextExt};
-use repository::{NameRow, PeriodRow, ProgramRow, RnRForm, RnRFormRow};
+use repository::{NameRow, PeriodRow, ProgramRow, RnRForm, RnRFormRow, RnRFormStatus};
+use serde::Serialize;
 
 use super::rnr_form_line::RnRFormLineNode;
 
@@ -21,6 +22,10 @@ impl RnRFormNode {
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.rnr_form_row.created_datetime, Utc)
+    }
+
+    pub async fn status(&self) -> RnRFormNodeStatus {
+        RnRFormNodeStatus::from_domain(&self.rnr_form_row.status)
     }
 
     pub async fn program_id(&self) -> &str {
@@ -72,6 +77,20 @@ impl RnRFormNode {
             program_row,
             period_row,
             supplier_row: name_row,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+pub enum RnRFormNodeStatus {
+    Draft,
+    Finalised,
+}
+impl RnRFormNodeStatus {
+    pub fn from_domain(status: &RnRFormStatus) -> Self {
+        match status {
+            RnRFormStatus::Draft => RnRFormNodeStatus::Draft,
+            RnRFormStatus::Finalised => RnRFormNodeStatus::Finalised,
         }
     }
 }

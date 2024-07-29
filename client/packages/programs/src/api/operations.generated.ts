@@ -302,7 +302,7 @@ export type DeleteVaccineCourseMutationVariables = Types.Exact<{
 
 export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', deleteVaccineCourse: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteVaccineCourseError' } } } };
 
-export type RnRFormFragment = { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string };
+export type RnRFormFragment = { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus };
 
 export type RnRFormLineFragment = { __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, requestedQuantity: number, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } };
 
@@ -316,7 +316,7 @@ export type RnrFormsQueryVariables = Types.Exact<{
 }>;
 
 
-export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string }> } };
+export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus }> } };
 
 export type CreateRnRFormMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -324,7 +324,7 @@ export type CreateRnRFormMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateRnRFormMutation = { __typename: 'Mutations', insertRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string } };
+export type CreateRnRFormMutation = { __typename: 'Mutations', insertRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus } };
 
 export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
 
@@ -358,7 +358,15 @@ export type RAndRFormDetailQueryVariables = Types.Exact<{
 }>;
 
 
-export type RAndRFormDetailQuery = { __typename: 'Queries', rAndRForm: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string, lines: Array<{ __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, requestedQuantity: number, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } }> } };
+export type RAndRFormDetailQuery = { __typename: 'Queries', rAndRForm: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus, lines: Array<{ __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, requestedQuantity: number, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } }> } };
+
+export type FinaliseRnRFormMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.FinaliseRnRFormInput;
+}>;
+
+
+export type FinaliseRnRFormMutation = { __typename: 'Mutations', finaliseRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus } };
 
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
@@ -645,6 +653,7 @@ export const RnRFormFragmentDoc = gql`
   programId
   programName
   supplierName
+  status
 }
     `;
 export const RnRFormLineFragmentDoc = gql`
@@ -1234,6 +1243,17 @@ export const RAndRFormDetailDocument = gql`
 }
     ${RnRFormFragmentDoc}
 ${RnRFormLineFragmentDoc}`;
+export const FinaliseRnRFormDocument = gql`
+    mutation finaliseRnRForm($storeId: String!, $input: FinaliseRnRFormInput!) {
+  finaliseRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+    }
+  }
+}
+    ${RnRFormFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -1346,6 +1366,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     rAndRFormDetail(variables: RAndRFormDetailQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RAndRFormDetailQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RAndRFormDetailQuery>(RAndRFormDetailDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rAndRFormDetail', 'query', variables);
+    },
+    finaliseRnRForm(variables: FinaliseRnRFormMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FinaliseRnRFormMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<FinaliseRnRFormMutation>(FinaliseRnRFormDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'finaliseRnRForm', 'mutation', variables);
     }
   };
 }
