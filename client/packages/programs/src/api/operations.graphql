@@ -809,6 +809,8 @@ fragment RnRFormLine on RnRFormLineNode {
     code
     name
     unitName
+    strength
+    venCategory
   }
 }
 
