@@ -1,11 +1,11 @@
 use std::{collections::HashMap, ops::Neg};
 
 use crate::service_provider::ServiceContext;
-use chrono::Duration;
+use chrono::{Datelike, Duration, Utc};
 use repository::{
     ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
-    RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
-    StorageConnection, StorePreferenceRowRepository,
+    RepositoryError, RequisitionLine, StockLineFilter, StockLineRepository, StockOnHandFilter,
+    StockOnHandRepository, StockOnHandRow, StorageConnection, StorePreferenceRowRepository,
 };
 use util::{
     constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
@@ -19,6 +19,11 @@ pub struct ItemStatsFilter {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct ItemStats {
+    pub this_month_consumption: Option<f64>,
+    pub last_month_consumption: Option<f64>,
+    pub last_three_months_consumption: Option<f64>,
+    pub expiring_in_six_months: Option<i64>,
+    pub expiring_in_a_year: Option<i64>,
     pub total_consumption: f64,
     pub average_monthly_consumption: f64,
     pub available_stock_on_hand: f64,
@@ -75,8 +80,9 @@ pub fn get_item_stats(
 
     Ok(ItemStats::new_vec(
         consumption_rows.clone(),
-        get_stock_on_hand_rows(&ctx.connection, store_id, item_id_filter)?,
+        get_stock_on_hand_rows(&ctx.connection, store_id, item_id_filter.clone())?,
         amc_lookback_months,
+        get_expiring_lines_count(&ctx.connection, store_id, item_id_filter)?,
     ))
 }
 
@@ -112,11 +118,67 @@ pub fn get_stock_on_hand_rows(
     StockOnHandRepository::new(connection).query(Some(filter))
 }
 
+pub fn get_expiring_lines_count(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_id_filter: Option<EqualFilter<String>>,
+) -> Result<HashMap<String, (i64, i64)>, RepositoryError> {
+    let current_date = Utc::now().date_naive();
+    let six_months_from_now = current_date + Duration::days(180);
+    let a_year_from_now = current_date + Duration::days(365);
+
+    let repo = StockLineRepository::new(connection);
+
+    let filter = StockLineFilter {
+        store_id: Some(EqualFilter::equal_to(store_id)),
+        item_id: item_id_filter,
+        is_available: Some(true),
+        ..Default::default()
+    };
+
+    let expiring_in_six_months = repo.query_by_filter(
+        filter.clone().expiry_date(DateFilter {
+            before_or_equal_to: Some(six_months_from_now),
+            after_or_equal_to: Some(current_date),
+            equal_to: None,
+        }),
+        None,
+    )?;
+
+    let expiring_in_a_year = repo.query_by_filter(
+        filter.expiry_date(DateFilter {
+            before_or_equal_to: Some(a_year_from_now),
+            after_or_equal_to: Some(current_date),
+            equal_to: None,
+        }),
+        None,
+    )?;
+
+    let mut expiring_count = HashMap::new();
+
+    for stock_line in expiring_in_six_months {
+        let count = expiring_count
+            .entry(stock_line.item_row.id.clone())
+            .or_insert((0, 0));
+        count.0 += 1
+    }
+
+    for stock_line in expiring_in_a_year {
+        let count = expiring_count
+            .entry(stock_line.item_row.id.clone())
+            .or_insert((0, 0));
+        count.1 += 1
+    }
+
+    Ok(expiring_count)
+}
+
 impl ItemStats {
     fn new_vec(
         consumption_rows: Vec<ConsumptionRow>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
         amc_lookback_months: f64,
+        expiring_count: HashMap<String, (i64, i64)>,
     ) -> Vec<Self> {
         let mut consumption_map = HashMap::new();
         for consumption_row in consumption_rows.clone().into_iter() {
@@ -125,6 +187,14 @@ impl ItemStats {
                 .or_insert(0.0);
             *item_total_consumption += consumption_row.quantity;
         }
+
+        let current_date = Utc::now();
+        let this_month = current_date.with_day(1).unwrap().date_naive();
+        let last_month = (current_date - Duration::days(30))
+            .with_day(1)
+            .unwrap()
+            .date_naive();
+        let three_months_ago = (current_date - Duration::days(90)).date_naive();
 
         stock_on_hand_rows
             .into_iter()
@@ -140,6 +210,41 @@ impl ItemStats {
                     .get(&stock_on_hand.item_id)
                     .copied()
                     .unwrap_or_default(),
+                this_month_consumption: Some(
+                    consumption_rows
+                        .iter()
+                        .filter(|row| {
+                            row.item_id == stock_on_hand.item_id && row.date >= this_month
+                        })
+                        .map(|row| row.quantity)
+                        .sum(),
+                ),
+                last_month_consumption: Some(
+                    consumption_rows
+                        .iter()
+                        .filter(|row| {
+                            row.item_id == stock_on_hand.item_id
+                                && row.date >= last_month
+                                && row.date < this_month
+                        })
+                        .map(|row| row.quantity)
+                        .sum(),
+                ),
+                last_three_months_consumption: Some(
+                    consumption_rows
+                        .iter()
+                        .filter(|row| {
+                            row.item_id == stock_on_hand.item_id && row.date >= three_months_ago
+                        })
+                        .map(|row| row.quantity)
+                        .sum(),
+                ),
+                expiring_in_six_months: expiring_count
+                    .get(&stock_on_hand.item_id)
+                    .map(|(six_months, _)| *six_months),
+                expiring_in_a_year: expiring_count
+                    .get(&stock_on_hand.item_id)
+                    .map(|(_, a_year)| *a_year),
             })
             .collect()
     }
@@ -153,6 +258,11 @@ impl ItemStats {
             item_name: requisition_line.item_row.name.clone(),
             // TODO: Implement total consumption
             total_consumption: 0.0,
+            this_month_consumption: None,
+            last_month_consumption: None,
+            last_three_months_consumption: None,
+            expiring_in_six_months: None,
+            expiring_in_a_year: None,
         }
     }
 }
