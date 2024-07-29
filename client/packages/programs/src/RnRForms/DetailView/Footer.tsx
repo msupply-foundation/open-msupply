@@ -1,15 +1,21 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   AppFooterPortal,
   DialogButton,
   useBreadcrumbs,
+  useTranslation,
+  RnRFormNodeStatus,
 } from '@openmsupply-client/common';
+import { useRnRForm } from '../../api';
 
-export const Footer: FC = () => {
-  // const { data } = useResponse.document.get();
+export const Footer = ({ rnrFormId }: { rnrFormId: string }) => {
+  const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
-  const data = {};
+  const {
+    query: { data },
+    finalise: { finalise, isFinalising },
+  } = useRnRForm({ rnrFormId });
 
   return (
     <AppFooterPortal
@@ -27,7 +33,16 @@ export const Footer: FC = () => {
                 onClick={() => navigateUpOne()}
                 variant={'cancel'}
               />
-              <DialogButton onClick={() => {}} variant={'ok'} />
+              <DialogButton
+                // TODO: confirmation modal,
+                // disable finalise when dirty fields
+                disabled={
+                  isFinalising || data.status === RnRFormNodeStatus.Finalised
+                }
+                onClick={() => finalise()}
+                variant={'ok'}
+                customLabel={t('label.finalise')}
+              />
             </Box>
           </Box>
         )

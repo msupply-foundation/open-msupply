@@ -787,6 +787,7 @@ fragment RnRForm on RnRFormNode {
   programId
   programName
   supplierName
+  status
 }
 
 fragment RnRFormLine on RnRFormLineNode {
@@ -921,6 +922,16 @@ query rAndRFormDetail($rnrFormId: String!, $storeId: String!) {
       lines {
         ...RnRFormLine
       }
+    }
+  }
+}
+
+mutation finaliseRnRForm($storeId: String!, $input: FinaliseRnRFormInput!) {
+  finaliseRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
     }
   }
 }
