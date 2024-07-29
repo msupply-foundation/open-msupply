@@ -3,10 +3,10 @@ use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::translations::master_list::MasterListTranslation;
-use crate::sync::translations::name::NameTranslation;
-use crate::sync::translations::period::PeriodTranslation;
-use crate::sync::translations::store::StoreTranslation;
+use crate::sync::translations::{
+    master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
+    program_requisition_settings::ProgramRequisitionSettingsTranslation, store::StoreTranslation,
+};
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -28,6 +28,7 @@ impl SyncTranslation for RnRFormTranslation {
     fn pull_dependencies(&self) -> Vec<&'static str> {
         vec![
             MasterListTranslation.table_name(),
+            ProgramRequisitionSettingsTranslation.table_name(),
             PeriodTranslation.table_name(),
             StoreTranslation.table_name(),
             NameTranslation.table_name(),
