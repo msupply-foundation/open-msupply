@@ -17,6 +17,7 @@ export * from './useImmunisationProgram';
 export * from './useImmunisationProgramList';
 export * from './useVaccineCourse';
 export * from './useVaccineCourseList';
+export * from './useRnRForm';
 export * from './useRnRFormList';
 export * from './useProgramList';
 export * from './useSchedulesAndPeriods';
