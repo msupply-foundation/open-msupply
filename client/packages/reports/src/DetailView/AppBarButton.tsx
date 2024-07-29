@@ -10,14 +10,14 @@ import {
 
 interface AppBarButtonsProps {
   onFilterOpen: () => void;
-  isDisabled: boolean;
+  isFilterDisabled: boolean;
   printReport: () => void;
   isPrinting: boolean;
 }
 
 export const AppBarButtonsComponent = ({
   onFilterOpen,
-  isDisabled,
+  isFilterDisabled,
   printReport,
   isPrinting,
 }: AppBarButtonsProps) => {
@@ -27,7 +27,7 @@ export const AppBarButtonsComponent = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          disabled={isDisabled}
+          disabled={isFilterDisabled}
           label={t('label.filters')}
           Icon={<FilterIcon />}
           onClick={() => onFilterOpen()}
