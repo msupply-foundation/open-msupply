@@ -1,12 +1,9 @@
 use repository::{
-    rnr_form_row::{RnRFormRow, RnRFormRowRepository},
+    rnr_form_line_row::{RnRFormLineRow, RnRFormLineRowRepository},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::translations::master_list::MasterListTranslation;
-use crate::sync::translations::name::NameTranslation;
-use crate::sync::translations::period::PeriodTranslation;
-use crate::sync::translations::store::StoreTranslation;
+use crate::sync::translations::rnr_form::RnRFormTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -15,23 +12,18 @@ use super::{
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(RnRFormTranslation)
+    Box::new(RnRFormLineTranslation)
 }
 
-pub(crate) struct RnRFormTranslation;
+pub(crate) struct RnRFormLineTranslation;
 
-impl SyncTranslation for RnRFormTranslation {
+impl SyncTranslation for RnRFormLineTranslation {
     fn table_name(&self) -> &'static str {
-        "rnr_form"
+        "rnr_form_line"
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
-        vec![
-            MasterListTranslation.table_name(),
-            PeriodTranslation.table_name(),
-            StoreTranslation.table_name(),
-            NameTranslation.table_name(),
-        ]
+        vec![RnRFormTranslation.table_name()]
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -40,12 +32,12 @@ impl SyncTranslation for RnRFormTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            RnRFormRow,
+            RnRFormLineRow,
         >(&sync_record.data)?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::RnrForm)
+        Some(ChangelogTableName::RnrFormLine)
     }
 
     fn should_translate_to_sync_record(
@@ -69,10 +61,10 @@ impl SyncTranslation for RnRFormTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = RnRFormRowRepository::new(connection)
+        let row = RnRFormLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "RnRForm row ({}) not found",
+                "RnRFormLine row ({}) not found",
                 changelog.record_id
             )))?;
 
@@ -91,11 +83,11 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_rnr_form_translation() {
-        use crate::sync::test::test_data::rnr_form as test_data;
-        let translator = RnRFormTranslation;
+        use crate::sync::test::test_data::rnr_form_line as test_data;
+        let translator = RnRFormLineTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_rnr_form_translation", MockDataInserts::all()).await;
+            setup_all("test_rnr_form_line_translation", MockDataInserts::all()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

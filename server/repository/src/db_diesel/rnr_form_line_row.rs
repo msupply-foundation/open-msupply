@@ -6,6 +6,7 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     rnr_form_line (id) {
@@ -34,7 +35,9 @@ joinable!(rnr_form_line -> item (item_id));
 allow_tables_to_appear_in_same_query!(rnr_form_line, rnr_form);
 allow_tables_to_appear_in_same_query!(rnr_form_line, item);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
+)]
 #[diesel(table_name = rnr_form_line)]
 #[diesel(treat_none_as_null = true)]
 pub struct RnRFormLineRow {
