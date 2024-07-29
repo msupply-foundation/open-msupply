@@ -6,7 +6,7 @@ import { REPORT } from './keys';
 export const useReport = (id: string) => {
   const { reportApi, storeId } = useReportGraphQL();
 
-  const queryKey = [REPORT, storeId];
+  const queryKey = [REPORT, storeId, id];
   const queryFn = async (): Promise<ReportRowFragment> => {
     const result = await reportApi.report({
       storeId,

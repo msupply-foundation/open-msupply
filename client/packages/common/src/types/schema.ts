@@ -5286,6 +5286,7 @@ export type Queries = {
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   programs: ProgramsResponse;
+  rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
@@ -5735,6 +5736,12 @@ export type QueriesProgramsArgs = {
   filter?: InputMaybe<ProgramFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ProgramSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesRAndRFormArgs = {
+  rnrFormId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -6358,16 +6365,40 @@ export type RnRFormFilterInput = {
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type RnRFormLineNode = {
+  __typename: 'RnRFormLineNode';
+  adjustedQuantityConsumed: Scalars['Float']['output'];
+  adjustments: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
+  comment?: Maybe<Scalars['String']['output']>;
+  confirmed: Scalars['Boolean']['output'];
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  finalBalance: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  initialBalance: Scalars['Float']['output'];
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  maximumQuantity: Scalars['Float']['output'];
+  quantityConsumed: Scalars['Float']['output'];
+  quantityReceived: Scalars['Float']['output'];
+  requestedQuantity: Scalars['Float']['output'];
+  rnrFormId: Scalars['String']['output'];
+  stockOutDuration: Scalars['Int']['output'];
+};
+
 export type RnRFormNode = {
   __typename: 'RnRFormNode';
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
+  lines: Array<RnRFormLineNode>;
   periodId: Scalars['String']['output'];
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
   supplierName: Scalars['String']['output'];
 };
+
+export type RnRFormResponse = NodeError | RnRFormNode;
 
 export enum RnRFormSortFieldInput {
   CreatedDatetime = 'createdDatetime',
