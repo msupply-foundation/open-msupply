@@ -11,9 +11,9 @@ const programsFullPath = RouteBuilder.create(AppRoute.Programs)
   .build();
 
 export const ProgramsRouter: FC = () => {
-  const gotoImmunisations = useMatch(programsFullPath);
+  const gotoPrograms = useMatch(programsFullPath);
 
-  if (gotoImmunisations) {
+  if (gotoPrograms) {
     return <ProgramService />;
   }
 
