@@ -3,7 +3,7 @@ mod update {
     use repository::mock::MockDataInserts;
     use repository::mock::{
         mock_rnr_form_a, mock_rnr_form_a_line_a, mock_rnr_form_b, mock_rnr_form_b_line_a,
-        mock_store_a,
+        mock_store_a, mock_store_b,
     };
     use repository::test_db::setup_all;
     use repository::{RnRFormLineRow, RnRFormLineRowRepository};
@@ -36,6 +36,19 @@ mod update {
                 }
             ),
             Err(UpdateRnRFormError::RnRFormDoesNotExist)
+        );
+
+        // RnRFormDoesNotBelongToStore
+        assert_eq!(
+            service.update_rnr_form(
+                &context,
+                &mock_store_b().id,
+                UpdateRnRForm {
+                    id: mock_rnr_form_a().id,
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateRnRFormError::RnRFormDoesNotBelongToStore)
         );
 
         // RnRFormAlreadyFinalised
