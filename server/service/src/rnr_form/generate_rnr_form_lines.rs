@@ -155,10 +155,10 @@ pub fn get_opening_balance(
         return Ok(previous_row.final_balance);
     }
 
-   /*
-   Find all the store movement values between the start_date and now
-   Take those stock movements away from the current stock on hand, to retrospectively calculate what was available at that time.
-   */
+    /*
+    Find all the store movement values between the start_date and now
+    Take those stock movements away from the current stock on hand, to retrospectively calculate what was available at that time.
+    */
     let filter = StockMovementFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
         .item_id(EqualFilter::equal_to(item_id))
@@ -234,7 +234,7 @@ pub fn get_adjusted_quantity_consumed(
     let days_in_stock = period_length_in_days - stock_out_duration;
 
     let adjusted_quantity_consumed = match days_in_stock {
-        0 => 0.0,
+        0 => consumed,
         days_in_stock => consumed * period_length_in_days as f64 / days_in_stock as f64,
     };
 
