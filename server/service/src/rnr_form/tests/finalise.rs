@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod finalise {
-    use repository::mock::MockDataInserts;
     use repository::mock::{mock_rnr_form_a, mock_rnr_form_b, mock_store_a};
+    use repository::mock::{mock_store_b, MockDataInserts};
     use repository::test_db::setup_all;
     use repository::{RnRFormRowRepository, RnRFormStatus};
 
@@ -27,10 +27,21 @@ mod finalise {
                 &store_id,
                 FinaliseRnRForm {
                     id: "invalid".to_string(),
-                    ..Default::default()
                 }
             ),
             Err(FinaliseRnRFormError::RnRFormDoesNotExist)
+        );
+
+        // RnRFormDoesNotBelongToStore
+        assert_eq!(
+            service.finalise_rnr_form(
+                &context,
+                &mock_store_b().id, // Different store
+                FinaliseRnRForm {
+                    id: mock_rnr_form_a().id,
+                }
+            ),
+            Err(FinaliseRnRFormError::RnRFormDoesNotBelongToStore)
         );
 
         // RnRFormAlreadyFinalised
@@ -40,7 +51,6 @@ mod finalise {
                 &store_id,
                 FinaliseRnRForm {
                     id: mock_rnr_form_a().id,
-                    ..Default::default()
                 }
             ),
             Err(FinaliseRnRFormError::RnRFormAlreadyFinalised)

@@ -61,9 +61,9 @@ fn map_error(error: ServiceError) -> Result<FinaliseRnRFormResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        ServiceError::RnRFormDoesNotExist | ServiceError::RnRFormAlreadyFinalised => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::RnRFormDoesNotExist
+        | ServiceError::RnRFormDoesNotBelongToStore
+        | ServiceError::RnRFormAlreadyFinalised => BadUserInput(formatted_error),
 
         ServiceError::InternalError(_)
         | ServiceError::FinalisedRnRFormDoesNotExist

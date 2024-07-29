@@ -41,6 +41,8 @@ pub fn mock_rnr_form_a_line_a() -> RnRFormLineRow {
         id: "rnr_form_a_line_a".to_string(),
         rnr_form_id: mock_rnr_form_a().id,
         item_id: item_query_test1().id,
+        final_balance: 5.0,
+        average_monthly_consumption: 5.0,
         ..Default::default()
     }
 }
@@ -55,6 +57,7 @@ pub fn mock_rnr_form_b_line_a() -> RnRFormLineRow {
         snapshot_quantity_consumed: 7.0,
         snapshot_adjustments: -1.0,
         final_balance: 7.0,
+        average_monthly_consumption: 7.0,
         ..Default::default()
     }
 }

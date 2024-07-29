@@ -15,6 +15,7 @@ pub struct UpdateRnRFormLine {
     pub adjustments: Option<f64>,
     pub stock_out_duration: i32,
     pub adjusted_quantity_consumed: f64,
+    pub average_monthly_consumption: f64,
     pub final_balance: f64,
     pub maximum_quantity: f64,
     pub requested_quantity: f64,
@@ -33,6 +34,7 @@ pub enum UpdateRnRFormError {
     DatabaseError(RepositoryError),
     InternalError(String),
     RnRFormDoesNotExist,
+    RnRFormDoesNotBelongToStore,
     RnRFormAlreadyFinalised,
     UpdatedRnRFormDoesNotExist,
     LineError {
@@ -57,7 +59,7 @@ pub fn update_rnr_form(
     let rnr_form = ctx
         .connection
         .transaction_sync(|connection| {
-            let line_data = validate(ctx, &input)?;
+            let line_data = validate(ctx, store_id, &input)?;
             let rnr_form_lines = generate(line_data);
 
             let rnr_form_line_repo = RnRFormLineRowRepository::new(connection);
@@ -85,12 +87,17 @@ pub fn update_rnr_form(
 
 fn validate(
     ctx: &ServiceContext,
+    store_id: &str,
     input: &UpdateRnRForm,
 ) -> Result<Vec<(UpdateRnRFormLine, RnRFormLineRow)>, UpdateRnRFormError> {
     let connection = &ctx.connection;
 
     let rnr_form = check_rnr_form_exists(connection, &input.id)?
         .ok_or(UpdateRnRFormError::RnRFormDoesNotExist)?;
+
+    if rnr_form.store_id != store_id {
+        return Err(UpdateRnRFormError::RnRFormDoesNotBelongToStore);
+    };
 
     if rnr_form.status == RnRFormStatus::Finalised {
         return Err(UpdateRnRFormError::RnRFormAlreadyFinalised);
@@ -159,25 +166,47 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
         .map(
             |(
                 UpdateRnRFormLine {
-                    id,
+                    id: _,
                     quantity_received,
                     quantity_consumed,
                     adjustments,
                     stock_out_duration,
                     adjusted_quantity_consumed,
+                    average_monthly_consumption,
                     final_balance,
                     maximum_quantity,
                     requested_quantity,
                     comment,
                     confirmed,
                 },
-                existing_line,
+                RnRFormLineRow {
+                    id,
+                    rnr_form_id,
+                    item_id,
+                    initial_balance,
+                    snapshot_quantity_received,
+                    snapshot_quantity_consumed,
+                    snapshot_adjustments,
+                    expiry_date,
+                    average_monthly_consumption: _,
+                    entered_quantity_received: _,
+                    entered_quantity_consumed: _,
+                    entered_adjustments: _,
+                    adjusted_quantity_consumed: _,
+                    stock_out_duration: _,
+                    final_balance: _,
+                    maximum_quantity: _,
+                    requested_quantity: _,
+                    comment: _,
+                    confirmed: _,
+                },
             )| {
                 RnRFormLineRow {
                     id,
                     entered_quantity_received: quantity_received,
                     entered_quantity_consumed: quantity_consumed,
                     entered_adjustments: adjustments,
+                    average_monthly_consumption,
                     stock_out_duration,
                     adjusted_quantity_consumed,
                     final_balance,
@@ -185,7 +214,14 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     requested_quantity,
                     comment,
                     confirmed,
-                    ..existing_line
+                    // From the original row
+                    rnr_form_id,
+                    item_id,
+                    initial_balance,
+                    snapshot_quantity_received,
+                    snapshot_quantity_consumed,
+                    snapshot_adjustments,
+                    expiry_date,
                 }
             },
         )
