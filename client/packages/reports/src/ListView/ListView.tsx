@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import {
-  BarIcon,
   Grid,
   ReportContext,
-  TrendingDownIcon,
+  useAuthContext,
   useTranslation,
 } from '@openmsupply-client/common';
+import { BarIcon, InvoiceIcon, TrendingDownIcon } from '@common/icons';
+import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
 import { ReportWidget } from '../components';
-import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
 
 export const ListView = () => {
   const t = useTranslation('reports');
+  const { store } = useAuthContext();
   const { data } = useReportList({
     queryParams: {
       filterBy: {
@@ -30,6 +31,11 @@ export const ListView = () => {
   );
   const expiringReports = data?.nodes?.filter(
     report => report?.subContext === 'Expiring'
+  );
+  const programReports = data?.nodes?.filter(
+    report =>
+      report?.subContext === 'HIVCareProgram' &&
+      report?.context === ReportContext.Dispensary
   );
   const onReportClick = (report: ReportRowFragment) => {
     if (report.argumentSchema) {
@@ -54,6 +60,7 @@ export const ListView = () => {
           onReportClick={onReportClick}
           reportWithArgs={reportWithArgs}
           setReportWithArgs={setReportWithArgs}
+          hasReports={stockAndItemReports?.length !== 0}
         />
         <ReportWidget
           title={t('heading.expiring')}
@@ -62,7 +69,19 @@ export const ListView = () => {
           onReportClick={onReportClick}
           reportWithArgs={reportWithArgs}
           setReportWithArgs={setReportWithArgs}
+          hasReports={expiringReports?.length !== 0}
         />
+        {store?.preferences?.omProgramModule && (
+          <ReportWidget
+            title={t('label.programs')}
+            Icon={InvoiceIcon}
+            reports={programReports}
+            onReportClick={onReportClick}
+            reportWithArgs={reportWithArgs}
+            setReportWithArgs={setReportWithArgs}
+            hasReports={programReports?.length !== 0}
+          />
+        )}
       </Grid>
 
       <AppBarButtons />

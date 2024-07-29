@@ -30,9 +30,10 @@ pub trait RnRFormServiceTrait: Sync + Send {
     fn get_rnr_form(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         rnr_form_id: String,
     ) -> Result<Option<RnRForm>, RepositoryError> {
-        get_rnr_form(ctx, rnr_form_id)
+        get_rnr_form(ctx, store_id, rnr_form_id)
     }
 
     fn get_schedules_with_periods_by_program(
