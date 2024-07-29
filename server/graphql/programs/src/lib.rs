@@ -59,6 +59,9 @@ use mutations::program_patient::insert::*;
 use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
+use mutations::rnr_form::finalise::{
+    finalise_rnr_form, FinaliseRnRFormInput, FinaliseRnRFormResponse,
+};
 use mutations::rnr_form::insert::{insert_rnr_form, InsertRnRFormInput, InsertRnRFormResponse};
 use mutations::rnr_form::update::update_rnr_form;
 use mutations::rnr_form::update::UpdateRnRFormInput;
@@ -427,6 +430,15 @@ impl ProgramsMutations {
         input: UpdateRnRFormInput,
     ) -> Result<UpdateRnRFormResponse> {
         update_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn finalise_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: FinaliseRnRFormInput,
+    ) -> Result<FinaliseRnRFormResponse> {
+        finalise_rnr_form(ctx, store_id, input)
     }
 }
 
