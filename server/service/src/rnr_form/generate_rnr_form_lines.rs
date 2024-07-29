@@ -5,9 +5,9 @@ use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
     DatetimeFilter, EqualFilter, MasterListLineFilter, MasterListLineRepository, Pagination,
     PeriodRow, ReplenishmentFilter, ReplenishmentRepository, RepositoryError, RnRForm,
-    RnRFormLineRow, RnRFormLineRowRepository, StockLineFilter, StockLineRepository, StockLineSort,
-    StockLineSortField, StockMovementFilter, StockMovementRepository, StockOnHandFilter,
-    StockOnHandRepository, StorageConnection,
+    RnRFormFilter, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRepository, StockLineFilter,
+    StockLineRepository, StockLineSort, StockLineSortField, StockMovementFilter,
+    StockMovementRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, date_with_offset, uuid::uuid};
 
@@ -23,6 +23,7 @@ pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
     store_id: &str,
     rnr_form_id: &str,
+    program_id: &str,
     master_list_id: &str,
     period: PeriodRow,
     previous_form: Option<RnRForm>,
@@ -30,7 +31,6 @@ pub fn generate_rnr_form_lines(
     let master_list_item_ids = get_master_list_item_ids(&ctx, master_list_id)?;
 
     let period_length_in_days = get_period_length(&period);
-    let lookback_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
 
     // Get consumption/replenishment/adjustment stats for each item in the master list
     let usage_by_item_map = get_usage_map(
@@ -43,7 +43,16 @@ pub fn generate_rnr_form_lines(
 
     // Get previous form data for initial balances
     let previous_rnr_form_lines_by_item_id =
-        get_last_rnr_form_lines(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
+        get_rnr_form_lines_map(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
+
+    // Get previous form AMC averages for each item
+    let previous_amc_averages = get_previous_amc_averages(
+        &ctx.connection,
+        RnRFormFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
+            .period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id))
+            .program_id(EqualFilter::equal_to(&program_id)),
+    )?;
 
     // Generate line for each item in the master list
     let rnr_form_lines = master_list_item_ids
@@ -80,11 +89,11 @@ pub fn generate_rnr_form_lines(
                 usage.consumed,
             );
 
-            // This is only AMC for this period (if periods are monthly, this is redundant...)
-            // Should it be the default we have elsewhere... 3 months lookback?
-            let amc_this_period = adjusted_quantity_consumed / lookback_months;
-
-            let amc = amc_this_period;
+            let amc = get_amc(
+                period_length_in_days,
+                adjusted_quantity_consumed,
+                previous_amc_averages.get(&item_id).unwrap_or(&vec![]),
+            );
 
             let maximum_quantity = amc * TARGET_MOS;
 
@@ -136,7 +145,7 @@ fn get_master_list_item_ids(
         .map(|lines| lines.into_iter().map(|line| line.item_id).collect())
 }
 
-fn get_last_rnr_form_lines(
+fn get_rnr_form_lines_map(
     connection: &StorageConnection,
     previous_form_id: Option<String>,
 ) -> Result<HashMap<String, RnRFormLineRow>, RepositoryError> {
@@ -149,6 +158,54 @@ fn get_last_rnr_form_lines(
         for row in rows.into_iter() {
             form_lines_by_item_id.insert(row.item_id.clone(), row);
         }
+    }
+
+    Ok(form_lines_by_item_id)
+}
+
+pub fn get_amc(
+    period_length_in_days: i64,
+    adjusted_quantity_consumed: f64,
+    previous_amc_averages: &Vec<f64>,
+) -> f64 {
+    let period_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
+    let amc_this_period = adjusted_quantity_consumed / period_months;
+
+    let num_of_periods = previous_amc_averages.len() + 1;
+
+    (previous_amc_averages.into_iter().sum::<f64>() + amc_this_period) / num_of_periods as f64
+}
+
+pub fn get_previous_amc_averages(
+    connection: &StorageConnection,
+    filter: RnRFormFilter,
+) -> Result<HashMap<String, Vec<f64>>, RepositoryError> {
+    let previous_forms = RnRFormRepository::new(connection).query_by_filter(filter)?;
+
+    let len = previous_forms.len();
+
+    let prev_form_ids = match len {
+        // If no previous forms, return
+        0 => return Ok(HashMap::new()),
+        // If only one previous form, just use that
+        1 => vec![previous_forms[0].rnr_form_row.id.clone()],
+        // For now, we'll just average the last two forms... could do more periods/customise this!
+        _ => previous_forms[len - 2..len]
+            .iter()
+            .map(|f| f.rnr_form_row.id.clone())
+            .collect(),
+    };
+
+    let mut form_lines_by_item_id = HashMap::new();
+
+    let rows =
+        RnRFormLineRowRepository::new(connection).find_many_by_rnr_form_ids(prev_form_ids)?;
+
+    for row in rows.into_iter() {
+        let amc_values = form_lines_by_item_id
+            .entry(row.item_id.clone())
+            .or_insert(vec![]);
+        amc_values.push(row.average_monthly_consumption);
     }
 
     Ok(form_lines_by_item_id)
