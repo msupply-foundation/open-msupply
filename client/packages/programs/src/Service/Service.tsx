@@ -3,21 +3,24 @@ import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ImmunisationProgramListView } from '../ImmunisationProgramListView';
 import { ImmunisationProgramDetailView } from '../ImmunisationProgramDetailView';
-import { RnRFormListView } from '../RnRForms';
+import { RnRFormDetailView, RnRFormListView } from '../RnRForms';
 
 export const ProgramService: FC = () => {
   const immunisationProgramsRoute = RouteBuilder.create(
     AppRoute.ImmunisationPrograms
   ).build();
+
   const immunisationProgramRoute = RouteBuilder.create(
     AppRoute.ImmunisationPrograms
   )
     .addPart(':id')
     .build();
 
-  const rnrFormsRoute = RouteBuilder.create(
-    AppRoute.RnRForms
-  ).build();
+  const rnrFormsRoute = RouteBuilder.create(AppRoute.RnRForms).build();
+
+  const rnrFormRoute = RouteBuilder.create(AppRoute.RnRForms)
+    .addPart(':id')
+    .build();
 
   return (
     <Routes>
@@ -29,10 +32,8 @@ export const ProgramService: FC = () => {
         path={immunisationProgramRoute}
         element={<ImmunisationProgramDetailView />}
       />
-      <Route
-        path={rnrFormsRoute}
-        element={<RnRFormListView />}
-      />
+      <Route path={rnrFormsRoute} element={<RnRFormListView />} />
+      <Route path={rnrFormRoute} element={<RnRFormDetailView />} />
     </Routes>
   );
 };

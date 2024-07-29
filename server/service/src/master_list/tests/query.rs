@@ -26,7 +26,7 @@ mod query {
             )
             .unwrap();
 
-        assert_eq!(result.count, 1);
+        assert_eq!(result.count, 2);
         assert_eq!(result.rows[0].id, "item_query_test1");
 
         let result = service

@@ -3,8 +3,8 @@ mod query {
     use chrono::Duration;
     use repository::mock::{
         mock_immunisation_program_a, mock_name_b, mock_name_store_b, mock_name_store_c,
-        mock_period, mock_period_2_a, mock_period_2_b, mock_rnr_form_a, mock_store_a, mock_store_b,
-        MockData,
+        mock_period, mock_period_2_a, mock_period_2_b, mock_program_a, mock_rnr_form_a,
+        mock_store_a, mock_store_b, MockData,
     };
     use repository::mock::{mock_program_b, MockDataInserts};
     use repository::test_db::setup_all_with_data;
@@ -287,8 +287,8 @@ mod query {
                 InsertRnRForm {
                     id: "same_but_diff_store".to_string(),
                     supplier_id: mock_name_store_c().id,
-                    program_id: mock_program_b().id,
-                    period_id: mock_period_2_b().id,
+                    program_id: mock_program_a().id,
+                    period_id: mock_period().id,
                 },
             )
             .unwrap();

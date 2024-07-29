@@ -31,9 +31,15 @@ pub fn get_rnr_forms(
     })
 }
 
-pub fn get_rnr_form(ctx: &ServiceContext, id: String) -> Result<Option<RnRForm>, RepositoryError> {
+pub fn get_rnr_form(
+    ctx: &ServiceContext,
+    store_id: &str,
+    id: String,
+) -> Result<Option<RnRForm>, RepositoryError> {
     let repository = RnRFormRepository::new(&ctx.connection);
-    Ok(repository
-        .query_by_filter(RnRFormFilter::new().id(EqualFilter::equal_to(&id)))?
-        .pop())
+    let filter = RnRFormFilter::new()
+        .id(EqualFilter::equal_to(&id))
+        .store_id(EqualFilter::equal_to(store_id));
+
+    Ok(repository.query_by_filter(filter)?.pop())
 }
