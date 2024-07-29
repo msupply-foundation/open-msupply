@@ -300,9 +300,11 @@ mod insert {
             form_lines[0].initial_balance,
             mock_rnr_form_b_line_a().final_balance
         );
+        // AMC considers previous form
+        assert_eq!(form_lines[0].average_monthly_consumption, 4.0); // 5 (A) + 7 (B) + 0 (this period) / 3
 
         // Can create same supplier/program/period in a different store
-        // Also - there are no previous forms in store B - checking can start from period B
+        // Also - there are no previous forms in store B - checking can start from period C
         context.store_id = mock_store_b().id;
 
         let _result = service_provider
@@ -314,7 +316,7 @@ mod insert {
                     id: "same_but_diff_store".to_string(),
                     supplier_id: mock_name_store_c().id,
                     program_id: mock_program_b().id,
-                    period_id: mock_period_2_b().id,
+                    period_id: mock_period_2_c().id,
                 },
             )
             .unwrap();
