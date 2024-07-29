@@ -3,7 +3,7 @@ use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::translations::rnr_form::RnRFormTranslation;
+use crate::sync::translations::{item::ItemTranslation, rnr_form::RnRFormTranslation};
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -23,7 +23,10 @@ impl SyncTranslation for RnRFormLineTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
-        vec![RnRFormTranslation.table_name()]
+        vec![
+            RnRFormTranslation.table_name(),
+            ItemTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(
