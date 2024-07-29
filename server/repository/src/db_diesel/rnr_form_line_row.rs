@@ -122,6 +122,16 @@ impl<'a> RnRFormLineRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_rnr_form_ids(
+        &self,
+        form_ids: Vec<String>,
+    ) -> Result<Vec<RnRFormLineRow>, RepositoryError> {
+        let result = rnr_form_line
+            .filter(rnr_form_id.eq_any(form_ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn delete(&self, rnr_form_line_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(rnr_form_line)
             .filter(id.eq(rnr_form_line_id))

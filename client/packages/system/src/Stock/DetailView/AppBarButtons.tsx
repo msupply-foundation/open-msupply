@@ -23,13 +23,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          // disabled={isDisabled}
           label={t('button.repack')}
           Icon={<StockIcon />}
           onClick={openRepack}
         />
         <ButtonWithIcon
-          // disabled={isDisabled}
           label={t('button.adjust')}
           Icon={<BarChart2Icon />}
           onClick={openAdjust}
