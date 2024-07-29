@@ -191,7 +191,6 @@ impl IntegrationOperation {
         connection: &StorageConnection,
         source_site_id: Option<i32>,
     ) -> Result<(), RepositoryError> {
-        log::info!("integrate: {:?}", source_site_id);
         match self {
             IntegrationOperation::Upsert(upsert) => {
                 let cursor_id = upsert.upsert(connection)?;
