@@ -3358,9 +3358,10 @@ export type ItemNode = {
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
   stats: ItemStatsNode;
-  strength: Scalars['String']['output'];
+  strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
   weight: Scalars['Float']['output'];
@@ -7788,6 +7789,7 @@ export type UpdateRnRFormInput = {
 export type UpdateRnRFormLineInput = {
   adjustedQuantityConsumed: Scalars['Float']['input'];
   adjustments?: InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption: Scalars['Float']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   confirmed: Scalars['Boolean']['input'];
   finalBalance: Scalars['Float']['input'];
@@ -8181,3 +8183,10 @@ export type VariantWithPackSizeAlreadyExists = InsertPackVariantErrorInterface &
   __typename: 'VariantWithPackSizeAlreadyExists';
   description: Scalars['String']['output'];
 };
+
+export enum VenCategoryType {
+  E = 'E',
+  N = 'N',
+  NotAssigned = 'NOT_ASSIGNED',
+  V = 'V'
+}
