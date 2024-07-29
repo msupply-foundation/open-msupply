@@ -45,8 +45,10 @@ impl CentralDataSynchroniser {
             logger.progress(SyncStepProgress::PullCentral, max_cursor - start_cursor)?;
 
             let last_cursor_in_batch = data.last().map(|r| r.cursor).unwrap_or(start_cursor);
-            let sync_buffer_rows =
-                CommonSyncRecord::to_buffer_rows(data.into_iter().map(|r| r.record).collect())?;
+            let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+                data.into_iter().map(|r| r.record).collect(),
+                None, // Everything from mSupply Central Server is considered to not have a source_site_id
+            )?;
 
             // Upsert sync buffer rows in a transaction together with cursor update
             connection
