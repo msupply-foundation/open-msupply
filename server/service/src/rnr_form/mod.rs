@@ -57,9 +57,10 @@ pub trait RnRFormServiceTrait: Sync + Send {
     fn update_rnr_form(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: UpdateRnRForm,
     ) -> Result<RnRForm, UpdateRnRFormError> {
-        update_rnr_form(ctx, input)
+        update_rnr_form(ctx, store_id, input)
     }
 }
 
