@@ -172,6 +172,11 @@ fn generate_html_report_to_html(
     Ok(file.id)
 }
 
+// See tests below and structure in format_html_document
+const HEADER_CELLS_SELECTOR: &'static str = ".paging tbody thead tr td";
+const BODY_ROWS_SELECTOR: &'static str = ".paging tbody tbody tr";
+const CELL_SELECTOR: &'static str = "td";
+
 /// Converts the report to an Excel file and returns the file id
 fn print_html_report_to_excel(
     base_dir: &Option<String>,
@@ -181,38 +186,24 @@ fn print_html_report_to_excel(
     let sheet_name = "Report";
 
     let mut book = umya_spreadsheet::new_file();
-    let _ = book
-        .set_sheet_name(0, sheet_name)
-        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+    book.set_sheet_name(0, sheet_name).unwrap();
+    let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
 
     let fragment = Html::parse_fragment(&format_html_document(document));
-    let container_selector = Selector::parse(r#"div[class="container"]"#).unwrap();
-    let table_head_selector = Selector::parse("thead").unwrap();
-    let table_body_selector = Selector::parse("tbody").unwrap();
-    let row_selector = Selector::parse("tr").unwrap();
-    let cell_selector = Selector::parse("td").unwrap();
+    let header_cells_selector = Selector::parse(HEADER_CELLS_SELECTOR).unwrap();
+    let body_rows_selector = Selector::parse(BODY_ROWS_SELECTOR).unwrap();
+    let cell_selector = Selector::parse(CELL_SELECTOR).unwrap();
 
-    let container = fragment.select(&container_selector).next().unwrap();
-    let header = container.select(&table_head_selector).next().unwrap();
-    let header_row = header.select(&row_selector).next().unwrap();
-    for cell in header_row.select(&cell_selector).enumerate() {
-        book.get_sheet_by_name_mut(sheet_name)
-            .unwrap()
-            .get_cell_mut((cell.0 as u32 + 1, 1))
-            .set_value(cell.1.inner_html());
-        book.get_sheet_by_name_mut(sheet_name)
-            .unwrap()
-            .get_cell_mut((cell.0 as u32 + 1, 1))
-            .get_style_mut()
-            .get_font_mut()
-            .set_bold(true);
+    for (index, html_cell) in fragment.select(&header_cells_selector).enumerate() {
+        let cell = sheet.get_cell_mut((index as u32 + 1, 1));
+
+        cell.set_value(html_cell.inner_html());
+        cell.get_style_mut().get_font_mut().set_bold(true);
     }
 
-    let table_body = container.select(&table_body_selector).next().unwrap();
-    for row in table_body.select(&row_selector).enumerate() {
+    for row in fragment.select(&body_rows_selector).enumerate() {
         for cell in row.1.select(&cell_selector).enumerate() {
-            book.get_sheet_by_name_mut(sheet_name)
-                .unwrap()
+            sheet
                 .get_cell_mut((cell.0 as u32 + 1, row.0 as u32 + 2))
                 .set_value(cell.1.inner_html());
         }
@@ -677,5 +668,100 @@ mod report_service_test {
         )
         .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");
+    }
+}
+
+#[cfg(test)]
+mod report_to_excel_test {
+    use super::*;
+    use fast_scraper::{Html, Selector};
+
+    const test_html: &'static str = r#"
+<html>
+   <body>
+      <table class="paging">
+         <thead>
+            <tr>
+               <td></td>
+            </tr>
+         </thead>
+         <tbody>
+            <tr>
+               <td>
+                  <style>
+                  </style>
+                  <div class="container">
+                     <table>
+                        <thead>
+                           <tr class="heading">
+                              <td>First Header</td>
+                              <td>Second Header</td>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr>
+                              <td>Row One Cell One</td>
+                              <td>Row One Cell Two</td>
+                           </tr>
+                           <tr>
+                              <td>Row Two Cell One</td>
+                              <td>Row Two Cell Two</td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
+               </td>
+            </tr>
+         </tbody>
+         <tfoot>
+            <tr>
+               <td></td>
+            </tr>
+         </tfoot>
+      </table>
+   </body>
+</html>
+
+    "#;
+
+    #[test]
+    fn test_selectors() {
+        let html = Html::parse_fragment(&test_html);
+        let selector = Selector::parse(HEADER_CELLS_SELECTOR).unwrap();
+
+        assert_eq!(
+            html.select(&selector)
+                .map(|c| c.inner_html())
+                .collect::<Vec<String>>(),
+            vec!["First Header".to_string(), "Second Header".to_string()]
+        );
+
+        let rows_selector = Selector::parse(BODY_ROWS_SELECTOR).unwrap();
+        let cell_selector = Selector::parse(CELL_SELECTOR).unwrap();
+        let mut rows = html.select(&rows_selector);
+
+        assert_eq!(
+            rows.next()
+                .unwrap()
+                .select(&cell_selector)
+                .map(|c| c.inner_html())
+                .collect::<Vec<String>>(),
+            vec![
+                "Row One Cell One".to_string(),
+                "Row One Cell Two".to_string()
+            ]
+        );
+
+        assert_eq!(
+            rows.next()
+                .unwrap()
+                .select(&cell_selector)
+                .map(|c| c.inner_html())
+                .collect::<Vec<String>>(),
+            vec![
+                "Row Two Cell One".to_string(),
+                "Row Two Cell Two".to_string()
+            ]
+        );
     }
 }
