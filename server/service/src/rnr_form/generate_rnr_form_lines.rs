@@ -5,9 +5,9 @@ use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
     DatetimeFilter, EqualFilter, MasterListLineFilter, MasterListLineRepository, Pagination,
     PeriodRow, ReplenishmentFilter, ReplenishmentRepository, RepositoryError, RnRForm,
-    RnRFormLineRow, RnRFormLineRowRepository, StockLineFilter, StockLineRepository, StockLineSort,
-    StockLineSortField, StockMovementFilter, StockMovementRepository, StockOnHandFilter,
-    StockOnHandRepository, StorageConnection,
+    RnRFormFilter, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRepository, StockLineFilter,
+    StockLineRepository, StockLineSort, StockLineSortField, StockMovementFilter,
+    StockMovementRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, date_with_offset, uuid::uuid};
 
@@ -23,6 +23,7 @@ pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
     store_id: &str,
     rnr_form_id: &str,
+    program_id: &str,
     master_list_id: &str,
     period: PeriodRow,
     previous_form: Option<RnRForm>,
@@ -30,7 +31,6 @@ pub fn generate_rnr_form_lines(
     let master_list_item_ids = get_master_list_item_ids(&ctx, master_list_id)?;
 
     let period_length_in_days = get_period_length(&period);
-    let lookback_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
 
     // Get consumption/replenishment/adjustment stats for each item in the master list
     let usage_by_item_map = get_usage_map(
@@ -43,11 +43,24 @@ pub fn generate_rnr_form_lines(
 
     // Get previous form data for initial balances
     let previous_rnr_form_lines_by_item_id =
-        get_last_rnr_form_lines(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
+        get_rnr_form_lines_map(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
 
+    // Get previous form AMC averages for each item
+    let previous_amc_averages = get_previous_amc_averages(
+        &ctx.connection,
+        RnRFormFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
+            .period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id))
+            .program_id(EqualFilter::equal_to(&program_id)),
+    )?;
+
+    // Generate line for each item in the master list
     let rnr_form_lines = master_list_item_ids
         .into_iter()
         .map(|item_id| {
+            // Initial balance is either:
+            // - Use the previous form's final balance
+            // - If not available, calculate retrospectively from stock movements
             let initial_balance = get_opening_balance(
                 &ctx.connection,
                 previous_rnr_form_lines_by_item_id.get(&item_id),
@@ -76,9 +89,11 @@ pub fn generate_rnr_form_lines(
                 usage.consumed,
             );
 
-            // This is only AMC for this period (if periods are monthly, this is redundant...)
-            // Should it be the default we have elsewhere... 3 months lookback?
-            let amc = usage.consumed / lookback_months;
+            let amc = get_amc(
+                period_length_in_days,
+                adjusted_quantity_consumed,
+                previous_amc_averages.get(&item_id).unwrap_or(&vec![]),
+            );
 
             let maximum_quantity = amc * TARGET_MOS;
 
@@ -119,6 +134,10 @@ pub fn generate_rnr_form_lines(
     rnr_form_lines
 }
 
+// ---- ---- ---- ----
+// HELPER FUNCTIONS
+// ---- ---- ---- ----
+
 fn get_master_list_item_ids(
     ctx: &ServiceContext,
     master_list_id: &str,
@@ -130,7 +149,7 @@ fn get_master_list_item_ids(
         .map(|lines| lines.into_iter().map(|line| line.item_id).collect())
 }
 
-fn get_last_rnr_form_lines(
+fn get_rnr_form_lines_map(
     connection: &StorageConnection,
     previous_form_id: Option<String>,
 ) -> Result<HashMap<String, RnRFormLineRow>, RepositoryError> {
@@ -148,6 +167,54 @@ fn get_last_rnr_form_lines(
     Ok(form_lines_by_item_id)
 }
 
+pub fn get_amc(
+    period_length_in_days: i64,
+    adjusted_quantity_consumed: f64,
+    previous_amc_averages: &Vec<f64>,
+) -> f64 {
+    let period_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
+    let amc_this_period = adjusted_quantity_consumed / period_months;
+
+    let num_of_periods = previous_amc_averages.len() + 1;
+
+    (previous_amc_averages.into_iter().sum::<f64>() + amc_this_period) / num_of_periods as f64
+}
+
+pub fn get_previous_amc_averages(
+    connection: &StorageConnection,
+    filter: RnRFormFilter,
+) -> Result<HashMap<String, Vec<f64>>, RepositoryError> {
+    let previous_forms = RnRFormRepository::new(connection).query_by_filter(filter)?;
+
+    let len = previous_forms.len();
+
+    let prev_form_ids = match len {
+        // If no previous forms, return
+        0 => return Ok(HashMap::new()),
+        // If only one previous form, just use that
+        1 => vec![previous_forms[0].rnr_form_row.id.clone()],
+        // For now, we'll just average the last two forms... could do more periods/customise this!
+        _ => previous_forms[len - 2..len]
+            .iter()
+            .map(|f| f.rnr_form_row.id.clone())
+            .collect(),
+    };
+
+    let mut form_lines_by_item_id = HashMap::new();
+
+    let rows =
+        RnRFormLineRowRepository::new(connection).find_many_by_rnr_form_ids(prev_form_ids)?;
+
+    for row in rows.into_iter() {
+        let amc_values = form_lines_by_item_id
+            .entry(row.item_id.clone())
+            .or_insert(vec![]);
+        amc_values.push(row.average_monthly_consumption);
+    }
+
+    Ok(form_lines_by_item_id)
+}
+
 pub fn get_opening_balance(
     connection: &StorageConnection,
     previous_row: Option<&RnRFormLineRow>,
@@ -159,7 +226,8 @@ pub fn get_opening_balance(
         return Ok(previous_row.final_balance);
     }
 
-    // Get rows
+    // Find all the store movement values between the start_date and now
+    // Take those stock movements away from the current stock on hand, to retrospectively calculate what was available at that time.
     let filter = StockMovementFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
         .item_id(EqualFilter::equal_to(item_id))
@@ -170,12 +238,12 @@ pub fn get_opening_balance(
 
     let stock_movement_rows = StockMovementRepository::new(connection).query(Some(filter))?;
 
-    let total_movements: f64 = stock_movement_rows
+    let total_movements_since_start_date: f64 = stock_movement_rows
         .into_iter()
         .map(|row| row.quantity)
         .sum();
 
-    let available_stock_on_hand = StockOnHandRepository::new(connection)
+    let stock_on_hand_now = StockOnHandRepository::new(connection)
         .query_one(
             StockOnHandFilter::new()
                 .store_id(EqualFilter::equal_to(store_id))
@@ -184,7 +252,7 @@ pub fn get_opening_balance(
         .map(|row| row.available_stock_on_hand)
         .unwrap_or(0.0);
 
-    Ok(available_stock_on_hand - total_movements)
+    Ok(stock_on_hand_now - total_movements_since_start_date)
 }
 
 pub fn get_stock_out_duration(
@@ -227,6 +295,7 @@ pub fn get_stock_out_duration(
     Ok(days_out_of_stock as i32)
 }
 
+// If stock had been available for the entire period, this is the quantity that 'would' have been consumed
 pub fn get_adjusted_quantity_consumed(
     period_length_in_days: i64,
     stock_out_duration: i64,
@@ -235,7 +304,7 @@ pub fn get_adjusted_quantity_consumed(
     let days_in_stock = period_length_in_days - stock_out_duration;
 
     let adjusted_quantity_consumed = match days_in_stock {
-        0 => 0.0,
+        0 => consumed,
         days_in_stock => consumed * period_length_in_days as f64 / days_in_stock as f64,
     };
 
@@ -256,12 +325,14 @@ pub fn get_usage_map(
     period_length_in_days: i64,
     end_date: &NaiveDate,
 ) -> Result<HashMap<String, UsageStats>, RepositoryError> {
-    let lookback_days = period_length_in_days - 1; // period length is inclusive
+    // period length is inclusive, so -1, otherwise `start_date` would actually be end_date of last period
+    let lookback_days = period_length_in_days - 1;
 
     let start_date = date_with_offset(end_date, Duration::days(lookback_days).neg());
     let store_id_filter = Some(EqualFilter::equal_to(store_id));
     let date_filter = Some(DateFilter::date_range(&start_date, end_date));
 
+    // Get all usage rows for the period
     let consumption_rows =
         ConsumptionRepository::new(connection).query(Some(ConsumptionFilter {
             item_id: item_id_filter.clone(),
@@ -282,6 +353,7 @@ pub fn get_usage_map(
 
     let mut usage_map = HashMap::new();
 
+    // Total up usage stats for each item
     for consumption_row in consumption_rows.into_iter() {
         let item = usage_map
             .entry(consumption_row.item_id.clone())
@@ -312,8 +384,7 @@ pub fn get_earliest_expiry(
     let filter = StockLineFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
         .item_id(EqualFilter::equal_to(item_id))
-        // TODO: this is available stock _now_, but not what would have been available at the closing time of the period!
-        // Also, should it be available or in store?
+        // Note: this is available stock _now_, not what would have been available at the closing time of the period
         .is_available(true);
 
     let earliest_expiring = StockLineRepository::new(connection)

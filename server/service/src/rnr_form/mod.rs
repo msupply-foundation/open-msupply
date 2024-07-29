@@ -71,7 +71,7 @@ pub trait RnRFormServiceTrait: Sync + Send {
         store_id: &str,
         input: FinaliseRnRForm,
     ) -> Result<RnRForm, FinaliseRnRFormError> {
-        finalise_rnr_form(ctx,store_id,  input)
+        finalise_rnr_form(ctx, store_id, input)
     }
 }
 

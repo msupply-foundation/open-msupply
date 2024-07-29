@@ -3,18 +3,19 @@ mod generate_rnr_form_lines {
     use chrono::NaiveDate;
     use repository::mock::{
         item_query_test1, mock_item_a, mock_master_list_program_b, mock_name_invad,
-        mock_period_2_a, mock_rnr_form_a, MockData,
+        mock_period_2_a, mock_program_b, mock_rnr_form_a, MockData,
     };
     use repository::mock::{mock_store_a, MockDataInserts};
     use repository::test_db::setup_all_with_data;
     use repository::{
         EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
-        RnRFormLineRow, StockLineRow,
+        RnRFormFilter, RnRFormLineRow, RnRFormRow, StockLineRow,
     };
 
     use crate::rnr_form::generate_rnr_form_lines::{
-        generate_rnr_form_lines, get_adjusted_quantity_consumed, get_earliest_expiry,
-        get_opening_balance, get_stock_out_duration, get_usage_map, UsageStats,
+        generate_rnr_form_lines, get_adjusted_quantity_consumed, get_amc, get_earliest_expiry,
+        get_opening_balance, get_previous_amc_averages, get_stock_out_duration, get_usage_map,
+        UsageStats,
     };
     use crate::service_provider::ServiceProvider;
 
@@ -65,6 +66,7 @@ mod generate_rnr_form_lines {
             &context,
             &context.store_id,
             &rnr_form_id,
+            &mock_rnr_form_a().program_id,
             &mock_master_list_program_b().master_list.id,
             mock_period_2_a(),
             None,
@@ -75,26 +77,27 @@ mod generate_rnr_form_lines {
         let line = result[0].clone();
         let line_id = line.id.clone();
 
-        // AMC calculated used const NUMBER_OF_DAYS_IN_A_MONTH rather than actual # days in given month...
         assert_eq!(
             line,
             RnRFormLineRow {
                 id: line_id,
                 rnr_form_id,
                 item_id: item_query_test1().id,
-                average_monthly_consumption: 2.9032258064516125, // ideally 3.0
                 initial_balance: 2.0,
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 3.0,
                 snapshot_adjustments: -1.0,
                 stock_out_duration: 8,
-                adjusted_quantity_consumed: 4.043478260869565, // 3.0 * 31 /23
+                adjusted_quantity_consumed: 4.043478260869565, // 3.0 * 31 / 23
+                // AMC calculated used const NUMBER_OF_DAYS_IN_A_MONTH rather than actual # days in given month...
+                // would ideally be same as adjusted_quantity_consumed here...
+                average_monthly_consumption: 3.913043478260869,
                 final_balance: 3.0,
-                maximum_quantity: 5.806451612903225, // 2*AMC, ideally 6.0
-                requested_quantity: 2.806451612903225, // max - final balance, ideally 3.0
                 entered_quantity_received: None,
                 entered_quantity_consumed: None,
                 entered_adjustments: None,
+                maximum_quantity: 7.826086956521738,   // 2*AMC
+                requested_quantity: 4.826086956521738, // max - final balance
                 expiry_date: None,
                 comment: None,
                 confirmed: false,
@@ -290,15 +293,142 @@ mod generate_rnr_form_lines {
 
     #[actix_rt::test]
     async fn test_get_adjusted_quantity_consumed() {
-        // if stock_out for whole period, adjusted quantity consumed is 0
+        // if stock_out for whole period, just returns what is consumed
         // (there shouldn't be any consumption if there's a stock out, but we'll set it to 4 for testing purposes)
-        assert_eq!(get_adjusted_quantity_consumed(10, 10, 4.0), 0.0);
+        assert_eq!(get_adjusted_quantity_consumed(10, 10, 4.0), 4.0);
 
         // if no stock out, adjusted matches consumption
         assert_eq!(get_adjusted_quantity_consumed(10, 0, 4.0), 4.0);
 
         // adjusts consumption for a partial stock out
         assert_eq!(get_adjusted_quantity_consumed(10, 5, 4.0), 8.0);
+    }
+
+    #[actix_rt::test]
+    async fn test_get_previous_amc_averages() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_get_previous_amc_averages",
+            MockDataInserts::all(),
+            MockData {
+                rnr_forms: vec![
+                    RnRFormRow {
+                        id: "rnr_form_1".to_string(),
+                        name_link_id: "name_store_b".to_string(),
+                        store_id: mock_store_a().id,
+                        program_id: mock_program_b().id,
+                        period_id: mock_period_2_a().id,
+                        created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                    RnRFormRow {
+                        id: "rnr_form_2".to_string(),
+                        name_link_id: "name_store_b".to_string(),
+                        store_id: mock_store_a().id,
+                        program_id: mock_program_b().id,
+                        period_id: mock_period_2_a().id,
+                        created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                    RnRFormRow {
+                        id: "rnr_form_3".to_string(),
+                        name_link_id: "name_store_b".to_string(),
+                        store_id: mock_store_a().id,
+                        program_id: mock_program_b().id,
+                        period_id: mock_period_2_a().id,
+                        created_datetime: NaiveDate::from_ymd_opt(2024, 3, 1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                ],
+                rnr_form_lines: vec![
+                    RnRFormLineRow {
+                        id: "rnr_form_1_line_a".to_string(),
+                        rnr_form_id: "rnr_form_1".to_string(),
+                        item_id: item_query_test1().id,
+                        average_monthly_consumption: 1.0,
+                        ..Default::default()
+                    },
+                    RnRFormLineRow {
+                        id: "rnr_form_2_line_a".to_string(),
+                        rnr_form_id: "rnr_form_2".to_string(),
+                        item_id: item_query_test1().id,
+                        average_monthly_consumption: 2.0,
+                        ..Default::default()
+                    },
+                    RnRFormLineRow {
+                        id: "rnr_form_3_line_a".to_string(),
+                        rnr_form_id: "rnr_form_3".to_string(),
+                        item_id: item_query_test1().id,
+                        average_monthly_consumption: 3.0,
+                        ..Default::default()
+                    },
+                ],
+                ..MockData::default()
+            },
+        )
+        .await;
+
+        // When no rnr_forms, map will be empty
+        let result = get_previous_amc_averages(
+            &connection,
+            // Filter so that no rnr_forms are returned
+            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists")),
+        )
+        .unwrap();
+        assert_eq!(result.get(&item_query_test1().id), None);
+
+        // When only one rnr_form, map includes that one
+        let result = get_previous_amc_averages(
+            &connection,
+            // Filter so that no rnr_forms are returned
+            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1")),
+        )
+        .unwrap();
+        assert_eq!(result.get(&item_query_test1().id), Some(&vec![1.0]));
+
+        // When many rnr forms, it gets the most recent two
+        let result = get_previous_amc_averages(
+            &connection,
+            // Filter so that no rnr_forms are returned
+            RnRFormFilter::new().id(EqualFilter::equal_any(vec![
+                "rnr_form_1".to_string(),
+                "rnr_form_2".to_string(),
+                "rnr_form_3".to_string(),
+            ])),
+        )
+        .unwrap();
+        assert_eq!(result.get(&item_query_test1().id), Some(&vec![2.0, 3.0]));
+    }
+
+    #[actix_rt::test]
+    async fn test_get_amc() {
+        // if no previous AMC average, returns AMC for the current period
+        assert_eq!(
+            get_amc(
+                60,      // 2 month period
+                20.0,    // 20 consumed in period
+                &vec![]  // no previous AMCs
+            ),
+            10.0 // AMC should be 10 packs per month
+        );
+
+        // if there is a previous AMC average, average that with the current period
+        assert_eq!(
+            get_amc(
+                60,                // 2 month period
+                20.0,              // 20 consumed in period
+                &vec![15.0, 11.0]  // AMC across previous periods
+            ),
+            12.0 // 10 per month this period, averaged with 15 and 11
+        );
     }
 
     // ---- TEST DATA ----

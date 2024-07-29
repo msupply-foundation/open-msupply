@@ -17,6 +17,7 @@ pub enum FinaliseRnRFormError {
     DatabaseError(RepositoryError),
     InternalError(String),
     RnRFormDoesNotExist,
+    RnRFormDoesNotBelongToStore,
     RnRFormAlreadyFinalised,
     FinalisedRnRFormDoesNotExist,
 }
@@ -29,7 +30,7 @@ pub fn finalise_rnr_form(
     let rnr_form = ctx
         .connection
         .transaction_sync(|connection| {
-            let rnr_form = validate(ctx, &input)?;
+            let rnr_form = validate(ctx, store_id, &input)?;
             let finalised_form = generate(rnr_form);
 
             let rnr_form_repo = RnRFormRowRepository::new(connection);
@@ -55,12 +56,17 @@ pub fn finalise_rnr_form(
 
 fn validate(
     ctx: &ServiceContext,
+    store_id: &str,
     input: &FinaliseRnRForm,
 ) -> Result<RnRFormRow, FinaliseRnRFormError> {
     let connection = &ctx.connection;
 
     let rnr_form = check_rnr_form_exists(connection, &input.id)?
         .ok_or(FinaliseRnRFormError::RnRFormDoesNotExist)?;
+
+    if rnr_form.store_id != store_id {
+        return Err(FinaliseRnRFormError::RnRFormDoesNotBelongToStore);
+    };
 
     if rnr_form.status == RnRFormStatus::Finalised {
         return Err(FinaliseRnRFormError::RnRFormAlreadyFinalised);
