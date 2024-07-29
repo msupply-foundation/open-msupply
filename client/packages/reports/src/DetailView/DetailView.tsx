@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   BasicSpinner,
-  NothingHere,
   useBreadcrumbs,
   useParams,
   useUrlQuery,
@@ -10,6 +9,7 @@ import {
   ReportArgumentsModal,
   ReportRowFragment,
   useGenerateReport,
+  usePrintReport,
   useReport,
 } from '@openmsupply-client/system';
 import { Environment } from '@openmsupply-client/config';
@@ -18,26 +18,40 @@ import { JsonData } from '@openmsupply-client/programs';
 
 export const DetailView = () => {
   const { id } = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { data: report } = useReport(id ?? '');
-  const { mutateAsync, isLoading } = useGenerateReport();
-  const [fileId, setFileId] = useState<string | undefined>();
   const {
-    updateQuery,
     urlQuery: { reportArgs: reportArgsJson },
   } = useUrlQuery({ skipParse: ['reportArgs'] });
+
+  const reportArgs =
+    (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
+
+  return !report?.id ? (
+    <BasicSpinner />
+  ) : (
+    <DetailViewInner report={report} reportArgs={reportArgs} />
+  );
+};
+
+const DetailViewInner = ({
+  report,
+  reportArgs,
+}: {
+  report: ReportRowFragment;
+  reportArgs: JsonData;
+}) => {
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { mutateAsync } = useGenerateReport();
+  const [fileId, setFileId] = useState<string | undefined>();
+  const { print, isPrinting } = usePrintReport();
+  const { updateQuery } = useUrlQuery();
 
   // When reportWithArgs is undefined, args modal is closed
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
 
-  // Report should be loaded if id is available
-  const isReportDescriptionLoading = !report?.id;
-
   useEffect(() => {
-    if (isReportDescriptionLoading) return;
-
     setCustomBreadcrumbs({ 0: report.name ?? '' });
 
     // Initial report generation
@@ -46,17 +60,14 @@ export const DetailView = () => {
       return;
     }
 
-    let reportArgs =
-      (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
-
     if (!!reportArgs) {
       generateReport(report, reportArgs, false);
       return;
     }
 
-    // No urlQuery parameters exist, open modal
+    // No urlQuery/reportArgs parameters exist, open modal
     openReportArgumentsModal();
-  }, [isReportDescriptionLoading]);
+  }, []);
 
   const generateReport = useCallback(
     async (
@@ -67,6 +78,7 @@ export const DetailView = () => {
       if (shouldUpdateQuery) {
         updateQuery({ reportArgs: JSON.stringify(args) });
       }
+      setFileId(undefined);
       const fileId = await mutateAsync({
         reportId: report.id,
         args,
@@ -78,35 +90,34 @@ export const DetailView = () => {
   );
 
   const openReportArgumentsModal = useCallback(() => {
-    if (isReportDescriptionLoading) return;
     setReportWithArgs(report);
   }, []);
 
-  const url = `${Environment.FILE_URL}${fileId}`;
+  const printReport = useCallback(() => {
+    print({
+      reportId: report.id,
+      dataId: '',
+      args: reportArgs,
+    });
+  }, [reportArgs]);
 
-  if (isReportDescriptionLoading) {
-    return <NothingHere />;
-  }
+  const url = `${Environment.FILE_URL}${fileId}`;
 
   return (
     <>
-      {isLoading && <BasicSpinner />}
-      {fileId ? (
-        <>
-          <iframe src={url} width="100%" />
-          <AppBarButtons
-            isDisabled={!report.argumentSchema}
-            onFilterOpen={openReportArgumentsModal}
-          />
-        </>
-      ) : (
-        <NothingHere />
-      )}
+      <AppBarButtons
+        isFilterDisabled={!report?.argumentSchema}
+        onFilterOpen={openReportArgumentsModal}
+        printReport={printReport}
+        isPrinting={isPrinting}
+      />
       <ReportArgumentsModal
         report={reportWithArgs}
         onReset={() => setReportWithArgs(undefined)}
         onArgumentsSelected={generateReport}
       />
+
+      {!fileId ? <BasicSpinner /> : <iframe src={url} width="100%" />}
     </>
   );
 };
