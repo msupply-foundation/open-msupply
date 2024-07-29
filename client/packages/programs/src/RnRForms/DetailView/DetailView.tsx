@@ -21,7 +21,9 @@ import { useRnRForm } from '../../api';
 export const RnRFormDetailView = () => {
   const { id = '' } = useParams();
 
-  const { data, isLoading } = useRnRForm({ rnrFormId: id });
+  const {
+    query: { data, isLoading },
+  } = useRnRForm({ rnrFormId: id });
   const navigate = useNavigate();
   const t = useTranslation('programs');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -29,11 +31,11 @@ export const RnRFormDetailView = () => {
   const tabs = [
     {
       Component: <ContentArea data={data?.lines ?? []} />,
-      value: 'Details',
+      value: t('label.details'),
     },
     {
       Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: 'Log',
+      value: t('label.log'),
     },
   ];
 
@@ -50,7 +52,7 @@ export const RnRFormDetailView = () => {
         <DetailTabs tabs={tabs} />
       </TableProvider>
 
-      <Footer />
+      <Footer rnrFormId={data.id} />
     </>
   ) : (
     <AlertModal
