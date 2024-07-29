@@ -155,7 +155,10 @@ pub fn get_opening_balance(
         return Ok(previous_row.final_balance);
     }
 
-    // Get rows
+   /*
+   Find all the store movement values between the start_date and now
+   Take those stock movements away from the current stock on hand, to retrospectively calculate what was available at that time.
+   */
     let filter = StockMovementFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
         .item_id(EqualFilter::equal_to(item_id))
