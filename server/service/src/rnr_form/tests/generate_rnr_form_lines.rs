@@ -84,15 +84,18 @@ mod generate_rnr_form_lines {
                 rnr_form_id,
                 item_id: item_query_test1().id,
                 initial_balance: 2.0,
-                quantity_received: 5.0,
-                quantity_consumed: 3.0,
+                snapshot_quantity_received: 5.0,
+                snapshot_quantity_consumed: 3.0,
+                snapshot_adjustments: -1.0,
                 stock_out_duration: 8,
-                adjustments: -1.0,
                 adjusted_quantity_consumed: 4.043478260869565, // 3.0 * 31 / 23
                 // AMC calculated used const NUMBER_OF_DAYS_IN_A_MONTH rather than actual # days in given month...
                 // would ideally be same as adjusted_quantity_consumed here...
                 average_monthly_consumption: 3.913043478260869,
                 final_balance: 3.0,
+                entered_quantity_received: None,
+                entered_quantity_consumed: None,
+                entered_adjustments: None,
                 maximum_quantity: 7.826086956521738,   // 2*AMC
                 requested_quantity: 4.826086956521738, // max - final balance
                 expiry_date: None,
@@ -301,58 +304,109 @@ mod generate_rnr_form_lines {
         assert_eq!(get_adjusted_quantity_consumed(10, 5, 4.0), 8.0);
     }
 
-    // TODO: implement in the next PR!
-    // #[actix_rt::test]
-    // async fn test_get_previous_amc_averages() {
-    //     let (_, connection, _, _) = setup_all_with_data(
-    //         "test_get_previous_amc_averages",
-    //         MockDataInserts::none()
-    //             .stores()
-    //             .name_store_joins()
-    //             .items()
-    //             .rnr_forms()
-    //             .full_master_list(),
-    //         MockData {
-    //             rnr_forms: vec![
-    //                 RnRFormRow {
-    //                     id: "rnr_form_1".to_string(),
-    //                     name_link_id: "name_store_b".to_string(),
-    //                     store_id: mock_store_a().id,
-    //                     program_id: mock_program_b().id,
-    //                     period_id: mock_period_2_a().id,
-    //                     ..Default::default()
-    //                 },
-    //                 RnRFormRow {
-    //                     id: "rnr_form_2".to_string(),
-    //                     name_link_id: "name_store_b".to_string(),
-    //                     store_id: mock_store_a().id,
-    //                     program_id: mock_program_b().id,
-    //                     period_id: mock_period_2_a().id,
-    //                     ..Default::default()
-    //                 },
-    //                 RnRFormRow {
-    //                     id: "rnr_form_3".to_string(),
-    //                     name_link_id: "name_store_b".to_string(),
-    //                     store_id: mock_store_a().id,
-    //                     program_id: mock_program_b().id,
-    //                     period_id: mock_period_2_a().id,
-    //                     ..Default::default()
-    //                 },
-    //             ],
-    //             rnr_form_lines
-    //             ..MockData::default()
-    //         },
-    //     )
-    //     .await;
+    #[actix_rt::test]
+    async fn test_get_previous_amc_averages() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_get_previous_amc_averages",
+            MockDataInserts::all(),
+            MockData {
+                rnr_forms: vec![
+                    RnRFormRow {
+                        id: "rnr_form_1".to_string(),
+                        name_link_id: "name_store_b".to_string(),
+                        store_id: mock_store_a().id,
+                        program_id: mock_program_b().id,
+                        period_id: mock_period_2_a().id,
+                        created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                    RnRFormRow {
+                        id: "rnr_form_2".to_string(),
+                        name_link_id: "name_store_b".to_string(),
+                        store_id: mock_store_a().id,
+                        program_id: mock_program_b().id,
+                        period_id: mock_period_2_a().id,
+                        created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                    RnRFormRow {
+                        id: "rnr_form_3".to_string(),
+                        name_link_id: "name_store_b".to_string(),
+                        store_id: mock_store_a().id,
+                        program_id: mock_program_b().id,
+                        period_id: mock_period_2_a().id,
+                        created_datetime: NaiveDate::from_ymd_opt(2024, 3, 1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap(),
+                        ..Default::default()
+                    },
+                ],
+                rnr_form_lines: vec![
+                    RnRFormLineRow {
+                        id: "rnr_form_1_line_a".to_string(),
+                        rnr_form_id: "rnr_form_1".to_string(),
+                        item_id: item_query_test1().id,
+                        average_monthly_consumption: 1.0,
+                        ..Default::default()
+                    },
+                    RnRFormLineRow {
+                        id: "rnr_form_2_line_a".to_string(),
+                        rnr_form_id: "rnr_form_2".to_string(),
+                        item_id: item_query_test1().id,
+                        average_monthly_consumption: 2.0,
+                        ..Default::default()
+                    },
+                    RnRFormLineRow {
+                        id: "rnr_form_3_line_a".to_string(),
+                        rnr_form_id: "rnr_form_3".to_string(),
+                        item_id: item_query_test1().id,
+                        average_monthly_consumption: 3.0,
+                        ..Default::default()
+                    },
+                ],
+                ..MockData::default()
+            },
+        )
+        .await;
 
-    //     // When no rnr_forms, map will be empty
-    //     let result = get_previous_amc_averages(
-    //         &connection,
-    //         RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1")),
-    //     )
-    //     .unwrap();
-    //     assert_eq!(result.get(&item_query_test1().id), None);
-    // }
+        // When no rnr_forms, map will be empty
+        let result = get_previous_amc_averages(
+            &connection,
+            // Filter so that no rnr_forms are returned
+            RnRFormFilter::new().id(EqualFilter::equal_to("not-exists")),
+        )
+        .unwrap();
+        assert_eq!(result.get(&item_query_test1().id), None);
+
+        // When only one rnr_form, map includes that one
+        let result = get_previous_amc_averages(
+            &connection,
+            // Filter so that no rnr_forms are returned
+            RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1")),
+        )
+        .unwrap();
+        assert_eq!(result.get(&item_query_test1().id), Some(&vec![1.0]));
+
+        // When many rnr forms, it gets the most recent two
+        let result = get_previous_amc_averages(
+            &connection,
+            // Filter so that no rnr_forms are returned
+            RnRFormFilter::new().id(EqualFilter::equal_any(vec![
+                "rnr_form_1".to_string(),
+                "rnr_form_2".to_string(),
+                "rnr_form_3".to_string(),
+            ])),
+        )
+        .unwrap();
+        assert_eq!(result.get(&item_query_test1().id), Some(&vec![2.0, 3.0]));
+    }
 
     #[actix_rt::test]
     async fn test_get_amc() {
