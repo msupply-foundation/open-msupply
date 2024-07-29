@@ -25,6 +25,7 @@ pub struct UpdateRnRFormLineInput {
     pub adjustments: Option<f64>,
     pub stock_out_duration: i32,
     pub adjusted_quantity_consumed: f64,
+    pub average_monthly_consumption: f64,
     pub final_balance: f64,
     pub maximum_quantity: f64,
     pub requested_quantity: f64,
@@ -79,6 +80,7 @@ fn map_error(error: ServiceError) -> Result<UpdateRnRFormResponse> {
     let graphql_error = match error {
         ServiceError::RnRFormDoesNotExist
         | ServiceError::RnRFormAlreadyFinalised
+        | ServiceError::RnRFormDoesNotBelongToStore
         // Currently, all line errors _should_ be prevented in the UI
         // If that changes, will need to add structured errors here
         | ServiceError::LineError { .. } => BadUserInput(formatted_error),
@@ -112,6 +114,7 @@ impl UpdateRnRFormLineInput {
             adjustments,
             stock_out_duration,
             adjusted_quantity_consumed,
+            average_monthly_consumption,
             final_balance,
             maximum_quantity,
             requested_quantity,
@@ -126,6 +129,7 @@ impl UpdateRnRFormLineInput {
             adjustments,
             stock_out_duration,
             adjusted_quantity_consumed,
+            average_monthly_consumption,
             final_balance,
             maximum_quantity,
             requested_quantity,
