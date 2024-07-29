@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 
-use crate::RnRFormRow;
+use crate::{RnRFormRow, RnRFormStatus};
 
 use super::{mock_period_2_a, mock_program_b, mock_store_a};
 
@@ -15,6 +15,7 @@ pub fn mock_rnr_form_a() -> RnRFormRow {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap(),
+        status: RnRFormStatus::Draft,
         ..Default::default()
     }
 }
