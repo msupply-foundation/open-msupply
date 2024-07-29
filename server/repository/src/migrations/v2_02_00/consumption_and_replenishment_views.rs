@@ -63,6 +63,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
               OR invoice_type='INVENTORY_REDUCTION';
         "#,
     )?;
+    // NOTE: Repacks not captured here, as they only affect stock line levels, rather than item totals!
 
     Ok(())
 }

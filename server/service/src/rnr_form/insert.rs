@@ -56,8 +56,14 @@ pub fn insert_rnr_form(
         .connection
         .transaction_sync(|connection| {
             let (previous_rnr_form, period_row, master_list_id) = validate(ctx, store_id, &input)?;
-            let (rnr_form, rnr_form_lines) =
-                generate(ctx, input, previous_rnr_form, period_row, &master_list_id)?;
+            let (rnr_form, rnr_form_lines) = generate(
+                ctx,
+                store_id,
+                input,
+                previous_rnr_form,
+                period_row,
+                &master_list_id,
+            )?;
 
             let rnr_form_repo = RnRFormRowRepository::new(connection);
             let rnr_form_line_repo = RnRFormLineRowRepository::new(connection);
@@ -178,6 +184,7 @@ fn validate(
 
 fn generate(
     ctx: &ServiceContext,
+    store_id: &str,
     InsertRnRForm {
         id,
         supplier_id,
@@ -193,10 +200,10 @@ fn generate(
     let rnr_form = RnRFormRow {
         id,
         period_id,
-        program_id,
+        program_id: program_id.clone(),
         name_link_id: supplier_id,
         created_datetime: current_datetime,
-        store_id: ctx.store_id.clone(),
+        store_id: store_id.to_string(),
         // default
         finalised_datetime: None,
         status: RnRFormStatus::Draft,
@@ -205,8 +212,9 @@ fn generate(
 
     let rnr_form_lines = generate_rnr_form_lines(
         ctx,
-        &ctx.store_id,
+        &store_id,
         &rnr_form.id,
+        &program_id,
         master_list_id,
         period,
         previous_rnr_form,
