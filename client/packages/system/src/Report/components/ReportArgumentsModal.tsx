@@ -2,7 +2,7 @@ import React, { FC, useState } from 'react';
 
 import { JsonData, JsonForm } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
-import { useDialog } from '@common/hooks';
+import { useDebounceCallback, useDialog } from '@common/hooks';
 import { DialogButton } from '@common/components';
 import { useAuthContext } from '@openmsupply-client/common';
 
@@ -33,6 +33,14 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     onClose: cleanUp,
   });
 
+  const onArgumentsSelectedDebounced = useDebounceCallback(
+    (report, data) => {
+      onArgumentsSelected(report, data);
+    },
+    [],
+    750
+  );
+
   if (!report?.argumentSchema) {
     return null;
   }
@@ -60,7 +68,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
           variant="ok"
           disabled={!!error}
           onClick={async () => {
-            onArgumentsSelected(report, data);
+            onArgumentsSelectedDebounced(report, data);
             cleanUp();
           }}
         />
