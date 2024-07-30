@@ -13,6 +13,7 @@ use crate::sync_api_error::SyncErrorNode;
 
 pub struct SyncStatusNode {
     started: NaiveDateTime,
+    duration_in_seconds: i64,
     finished: Option<NaiveDateTime>,
 }
 
@@ -20,6 +21,10 @@ pub struct SyncStatusNode {
 impl SyncStatusNode {
     async fn started(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_naive_utc_and_offset(self.started, Utc)
+    }
+
+    async fn duration_in_seconds(&self) -> i64 {
+        self.duration_in_seconds
     }
 
     async fn finished(&self) -> Option<DateTime<Utc>> {
@@ -110,10 +115,12 @@ pub fn latest_sync_status(
         error: error.map(SyncErrorNode::from_sync_log_error),
         summary: SyncStatusNode {
             started: summary.started,
+            duration_in_seconds: summary.duration_in_seconds,
             finished: summary.finished,
         },
         prepare_initial: prepare_initial.map(|status| SyncStatusNode {
             started: status.started,
+            duration_in_seconds: status.duration_in_seconds,
             finished: status.finished,
         }),
         integration: integration.map(|status| SyncStatusWithProgressNode {
@@ -144,6 +151,7 @@ pub fn latest_sync_status(
             None => None,
             Some(last_successful_sync_status) => Some(SyncStatusNode {
                 started: last_successful_sync_status.summary.started,
+                duration_in_seconds: last_successful_sync_status.summary.duration_in_seconds,
                 finished: last_successful_sync_status.summary.finished,
             }),
         },
