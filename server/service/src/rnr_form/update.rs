@@ -150,11 +150,6 @@ fn validate(
             if initial_balance + quantity_received - quantity_consumed + adjustments
                 != final_balance
             {
-                println!(
-                    "mytotal: {}, final_balance: {}",
-                    initial_balance + quantity_received - quantity_consumed + adjustments,
-                    final_balance
-                );
                 return Err(UpdateRnRFormError::LineError {
                     line_id: line.id.clone(),
                     error: UpdateRnRFormLineError::ValuesDoNotBalance,
