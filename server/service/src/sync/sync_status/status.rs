@@ -19,6 +19,7 @@ use super::SyncLogError;
 
 pub struct SyncStatus {
     pub started: NaiveDateTime,
+    pub duration_in_seconds: i64,
     pub finished: Option<NaiveDateTime>,
 }
 
@@ -78,18 +79,27 @@ impl FullSyncStatus {
             push_v6_progress_done,
             integration_progress_total,
             integration_progress_done,
+            duration_in_seconds,
         } = sync_log_row;
         let error = SyncLogError::from_sync_log_row(&sync_log_row);
+        let prepare_initial_duration = match prepare_initial_finished_datetime {
+            Some(finished) => {
+                (finished - prepare_initial_started_datetime.unwrap_or(finished)).num_seconds()
+            }
+            None => 0,
+        };
 
         FullSyncStatus {
             is_syncing: finished_datetime.is_none() && error.is_none(),
             error,
             summary: SyncStatus {
                 started: started_datetime,
+                duration_in_seconds,
                 finished: finished_datetime,
             },
             prepare_initial: prepare_initial_started_datetime.map(|started| SyncStatus {
                 started,
+                duration_in_seconds: prepare_initial_duration,
                 finished: prepare_initial_finished_datetime,
             }),
             integration: integration_started_datetime.map(|started| SyncStatusWithProgress {
@@ -319,6 +329,7 @@ impl Default for SyncStatus {
     fn default() -> Self {
         Self {
             started: Defaults::naive_date_time(),
+            duration_in_seconds: Default::default(),
             finished: Default::default(),
         }
     }

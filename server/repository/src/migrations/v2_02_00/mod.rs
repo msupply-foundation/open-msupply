@@ -11,6 +11,7 @@ mod remove_changelog_triggers;
 mod report_add_report_context;
 mod rnr_form;
 mod store_preferences_for_reports;
+mod sync;
 
 pub(crate) struct V2_02_00;
 
@@ -29,6 +30,7 @@ impl Migration for V2_02_00 {
         report_add_report_context::migrate(connection)?;
         item_ven::migrate(connection)?;
         consumption_and_replenishment_views::migrate(connection)?;
+        sync::migrate(connection)?;
         Ok(())
     }
 }
