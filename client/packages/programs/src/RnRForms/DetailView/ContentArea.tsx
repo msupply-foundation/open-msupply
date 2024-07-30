@@ -8,6 +8,7 @@ import {
   NothingHere,
   NumericTextInput,
   Table,
+  useNotification,
   useTheme,
   useTranslation,
   VenCategoryType,
@@ -16,9 +17,15 @@ import { RnRFormLineFragment } from '../../api/operations.generated';
 
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
+  saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  periodLength: number;
 }
 
-export const ContentArea = ({ data }: ContentAreaProps) => {
+export const ContentArea = ({
+  data,
+  saveLine,
+  periodLength,
+}: ContentAreaProps) => {
   const t = useTranslation('replenishment');
 
   return data.length === 0 ? (
@@ -49,9 +56,9 @@ export const ContentArea = ({ data }: ContentAreaProps) => {
             <th>{t('label.rnr-initial-balance')}</th>
             <th>{t('label.rnr-received')}</th>
             <th>{t('label.rnr-consumed')}</th>
+            <th>{t('label.rnr-consumed-adjusted')}</th>
             <th>{t('label.rnr-adjustments')}</th>
             <th>{t('label.rnr-stock-out-duration')}</th>
-            <th>{t('label.rnr-consumed-adjusted')}</th>
             <th>{t('label.rnr-final-balance')}</th>
             <th>{t('label.amc')}</th>
             <th>{t('label.rnr-maximum-quantity')}</th>
@@ -64,7 +71,12 @@ export const ContentArea = ({ data }: ContentAreaProps) => {
 
         <tbody>
           {data.map((line, index) => (
-            <RnRFormLine key={index} line={line} />
+            <RnRFormLine
+              key={index}
+              line={line}
+              periodLength={periodLength}
+              saveLine={saveLine}
+            />
           ))}
         </tbody>
       </Table>
@@ -72,17 +84,57 @@ export const ContentArea = ({ data }: ContentAreaProps) => {
   );
 };
 
-export const RnRFormLine = ({ line }: { line: RnRFormLineFragment }) => {
+export const RnRFormLine = ({
+  line,
+  saveLine,
+  periodLength,
+}: {
+  line: RnRFormLineFragment;
+  periodLength: number;
+  saveLine: (line: RnRFormLineFragment) => Promise<void>;
+}) => {
   const theme = useTheme();
+  const { error } = useNotification();
 
   const [patch, setPatch] = useState<Partial<RnRFormLineFragment>>({});
   const draft = { ...line, ...patch };
-  const updateDraft = (update: Partial<RnRFormLineFragment>) =>
-    setPatch({
+
+  const updateDraft = (update: Partial<RnRFormLineFragment>) => {
+    const newPatch = {
       ...patch,
       confirmed: false,
       ...update,
+    };
+
+    const {
+      initialBalance,
+      quantityConsumed,
+      quantityReceived,
+      adjustments,
+      stockOutDuration,
+    } = { ...draft, ...newPatch };
+
+    const finalBalance =
+      initialBalance + quantityReceived - quantityConsumed + adjustments;
+
+    const stockAvailableDays = periodLength - stockOutDuration;
+    const adjustedQuantityConsumed = stockAvailableDays
+      ? quantityConsumed * (periodLength / stockAvailableDays)
+      : quantityConsumed;
+
+    const averageMonthlyConsumption = adjustedQuantityConsumed; // TODO!
+    const maximumQuantity = averageMonthlyConsumption * 2;
+    const requestedQuantity = maximumQuantity - finalBalance;
+
+    setPatch({
+      ...newPatch,
+      finalBalance,
+      adjustedQuantityConsumed,
+      averageMonthlyConsumption,
+      maximumQuantity,
+      requestedQuantity,
     });
+  };
 
   const venCategory =
     draft.item.venCategory === VenCategoryType.NotAssigned
@@ -124,6 +176,16 @@ export const RnRFormLine = ({ line }: { line: RnRFormLineFragment }) => {
         onChange={val => updateDraft({ quantityConsumed: val })}
         textColor={textColor}
       />
+
+      {/* Readonly calculated value */}
+      <RnRNumberCell
+        disabled
+        textColor={textColor}
+        value={draft.adjustedQuantityConsumed}
+        onChange={() => {}}
+      />
+
+      {/* Losses/adjustments and stock out */}
       <RnRNumberCell
         value={draft.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
@@ -133,15 +195,10 @@ export const RnRFormLine = ({ line }: { line: RnRFormLineFragment }) => {
         value={draft.stockOutDuration}
         textColor={textColor}
         onChange={val => updateDraft({ stockOutDuration: val })}
+        max={periodLength}
       />
 
       {/* Readonly calculated values */}
-      <RnRNumberCell
-        disabled
-        textColor={textColor}
-        value={draft.adjustedQuantityConsumed}
-        onChange={() => {}}
-      />
       <RnRNumberCell
         disabled
         value={draft.finalBalance}
@@ -200,9 +257,13 @@ export const RnRFormLine = ({ line }: { line: RnRFormLineFragment }) => {
         <Checkbox
           checked={!!draft.confirmed}
           size="medium"
-          onClick={() => {
-            // TODO: save here!
-            updateDraft({ confirmed: !draft.confirmed });
+          onClick={async () => {
+            try {
+              await saveLine({ ...draft, confirmed: !draft.confirmed });
+              setPatch({});
+            } catch (e) {
+              error((e as Error).message)();
+            }
           }}
         />
       </td>
@@ -215,11 +276,13 @@ const RnRNumberCell = ({
   disabled,
   onChange,
   textColor,
+  max,
 }: {
   value: number;
   disabled?: boolean;
   onChange: (val: number) => void;
   textColor?: string;
+  max?: number;
 }) => {
   const theme = useTheme();
   const backgroundColor = disabled ? theme.palette.background.drawer : 'white';
@@ -230,14 +293,15 @@ const RnRNumberCell = ({
         InputProps={{
           sx: {
             backgroundColor,
-            '& .MuiInput-input, .MuiInput-input.Mui-disabled': {
-              color: textColor,
+            '& .MuiInput-input': {
+              WebkitTextFillColor: textColor,
             },
           },
         }}
         value={value}
         disabled={disabled}
         onChange={val => onChange(val ?? 0)}
+        max={max}
       />
     </td>
   );

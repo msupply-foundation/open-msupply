@@ -6407,6 +6407,7 @@ export type RnRFormNode = {
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
   periodId: Scalars['String']['output'];
+  periodLength: Scalars['Int']['output'];
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
@@ -7792,8 +7793,10 @@ export type UpdateRnRFormLineInput = {
   averageMonthlyConsumption: Scalars['Float']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   confirmed: Scalars['Boolean']['input'];
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   finalBalance: Scalars['Float']['input'];
   id: Scalars['String']['input'];
+  initialBalance: Scalars['Float']['input'];
   maximumQuantity: Scalars['Float']['input'];
   quantityConsumed?: InputMaybe<Scalars['Float']['input']>;
   quantityReceived?: InputMaybe<Scalars['Float']['input']>;
