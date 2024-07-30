@@ -40,7 +40,6 @@ import {
   Locale,
   FirstWeekContainsDate,
   ParseOptions,
-  formatDuration,
 } from 'date-fns';
 import { getTimezoneOffset } from 'date-fns-tz';
 
@@ -132,7 +131,6 @@ export const DateUtils = {
   isBefore,
   isEqual,
   isValid,
-  formatDuration,
   formatRFC3339: (date: Date | null | undefined) =>
     isValid(date) ? formatRFC3339(date as Date) : undefined,
   age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
@@ -146,6 +144,8 @@ export const DateUtils = {
   endOfWeek,
   setMilliseconds,
   getCurrentYear: () => getYear(new Date()),
+  formatDuration: (date: Date | string | number): string =>
+    formatIfValid(dateInputHandler(date), 'HH:mm:ss'),
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
