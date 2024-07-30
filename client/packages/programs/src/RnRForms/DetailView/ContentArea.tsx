@@ -77,93 +77,132 @@ export const RnRFormLine = ({ line }: { line: RnRFormLineFragment }) => {
 
   const [patch, setPatch] = useState<Partial<RnRFormLineFragment>>({});
   const draft = { ...line, ...patch };
+  const updateDraft = (update: Partial<RnRFormLineFragment>) =>
+    setPatch({
+      ...patch,
+      confirmed: false,
+      ...update,
+    });
 
   const venCategory =
     draft.item.venCategory === VenCategoryType.NotAssigned
       ? ''
       : draft.item.venCategory;
 
+  const textColor = draft.confirmed
+    ? theme.palette.text.disabled
+    : theme.palette.text.primary;
+
   const readOnlyColumn = {
     backgroundColor: theme.palette.background.drawer,
     padding: '5px',
+    color: textColor,
   };
 
   return (
     <tr>
+      {/* Read only Item data */}
       <td style={readOnlyColumn}>{draft.item.code}</td>
       <td style={readOnlyColumn}>{draft.item.name}</td>
       <td style={readOnlyColumn}>{draft.item.strength}</td>
       <td style={readOnlyColumn}>{draft.item.unitName}</td>
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>{venCategory}</td>
+
+      {/* Enterable consumption data */}
       <RnRNumberCell
         value={draft.initialBalance}
-        onChange={val => setPatch({ ...patch, initialBalance: val })}
+        onChange={val => updateDraft({ initialBalance: val })}
+        textColor={textColor}
       />
       <RnRNumberCell
         value={draft.quantityReceived}
-        onChange={val => setPatch({ ...patch, quantityReceived: val })}
+        onChange={val => updateDraft({ quantityReceived: val })}
+        textColor={textColor}
       />
       <RnRNumberCell
         value={draft.quantityConsumed}
-        onChange={val => setPatch({ ...patch, quantityConsumed: val })}
+        onChange={val => updateDraft({ quantityConsumed: val })}
+        textColor={textColor}
       />
       <RnRNumberCell
         value={draft.adjustments}
-        onChange={val => setPatch({ ...patch, adjustments: val })}
+        onChange={val => updateDraft({ adjustments: val })}
+        textColor={textColor}
       />
       <RnRNumberCell
         value={draft.stockOutDuration}
-        onChange={val => setPatch({ ...patch, stockOutDuration: val })}
+        textColor={textColor}
+        onChange={val => updateDraft({ stockOutDuration: val })}
       />
+
+      {/* Readonly calculated values */}
       <RnRNumberCell
         disabled
+        textColor={textColor}
         value={draft.adjustedQuantityConsumed}
         onChange={() => {}}
       />
-      <RnRNumberCell disabled value={draft.finalBalance} onChange={() => {}} />
+      <RnRNumberCell
+        disabled
+        value={draft.finalBalance}
+        textColor={textColor}
+        onChange={() => {}}
+      />
       <RnRNumberCell
         disabled
         value={draft.averageMonthlyConsumption}
         onChange={() => {}}
+        textColor={textColor}
       />
       <RnRNumberCell
         disabled
         value={draft.maximumQuantity}
         onChange={() => {}}
+        textColor={textColor}
       />
+
+      {/* Enterable fields: expiry, requested quantity, comment */}
       <td>
         <DatePicker
-          sx={{ width: '160px', '& fieldset': { border: 'none' } }}
+          sx={{
+            width: '160px',
+            '& fieldset': { border: 'none' },
+            '& input': { color: textColor },
+          }}
           value={draft.expiryDate ? new Date(draft.expiryDate) : null}
           onChange={date =>
-            setPatch({ ...patch, expiryDate: Formatter.naiveDate(date) })
+            updateDraft({ expiryDate: Formatter.naiveDate(date) })
           }
         />
       </td>
       <RnRNumberCell
         value={draft.requestedQuantity}
-        onChange={val => setPatch({ ...patch, requestedQuantity: val })}
+        onChange={val => updateDraft({ requestedQuantity: val })}
+        textColor={textColor}
       />
       <td>
         <BasicTextInput
           multiline
-          sx={{ width: '200px' }}
+          sx={{ width: '200px', color: textColor }}
           InputProps={{
             sx: {
               backgroundColor: theme.palette.background.default,
+              '& .MuiInput-input': { color: textColor },
             },
           }}
           value={draft.comment ?? ''}
-          onChange={e => setPatch({ ...patch, comment: e.target.value })}
+          onChange={e => updateDraft({ comment: e.target.value })}
         />
       </td>
+
+      {/* Confirm the line */}
       <td style={{ textAlign: 'center' }}>
         <Checkbox
           checked={!!draft.confirmed}
           size="medium"
           onClick={() => {
             // TODO: save here!
-            setPatch({ ...patch, confirmed: !draft.confirmed });
+            updateDraft({ confirmed: !draft.confirmed });
           }}
         />
       </td>
@@ -175,23 +214,25 @@ const RnRNumberCell = ({
   value,
   disabled,
   onChange,
+  textColor,
 }: {
   value: number;
   disabled?: boolean;
   onChange: (val: number) => void;
+  textColor?: string;
 }) => {
   const theme = useTheme();
-  const disabledStyle = {
-    backgroundColor: theme.palette.background.drawer,
-    // color: theme.palette.text.disabled,
-  };
+  const backgroundColor = disabled ? theme.palette.background.drawer : 'white';
 
   return (
-    <td style={disabled ? disabledStyle : {}}>
+    <td style={{ backgroundColor }}>
       <NumericTextInput
         InputProps={{
           sx: {
-            backgroundColor: disabled ? disabledStyle.backgroundColor : 'white',
+            backgroundColor,
+            '& .MuiInput-input, .MuiInput-input.Mui-disabled': {
+              color: textColor,
+            },
           },
         }}
         value={value}
