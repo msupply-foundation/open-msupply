@@ -173,19 +173,20 @@ fn get_rnr_form_lines_map(
 pub fn get_amc(
     period_length_in_days: i64,
     adjusted_quantity_consumed: f64,
-    previous_amc_averages: &Vec<f64>,
+    previous_monthly_consumption_values: &Vec<f64>,
 ) -> (f64, f64) {
     let period_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
     let monthly_consumption_this_period = adjusted_quantity_consumed / period_months;
 
-    if previous_amc_averages.is_empty() {
+    if previous_monthly_consumption_values.is_empty() {
         return (0.0, monthly_consumption_this_period);
     };
 
-    // Average AMC values from previous R&R forms - we provide this value to frontend for if it needs
-    // to recalculate AMC for this period
-    let num_previous_data_points = previous_amc_averages.len() as f64;
-    let total_previous_monthly_consumption = previous_amc_averages.iter().sum::<f64>();
+    // Average monthly consumption values from previous R&R forms
+    // We provide this value to frontend for if it needs to recalculate AMC for this period
+    let num_previous_data_points = previous_monthly_consumption_values.len() as f64;
+    let total_previous_monthly_consumption =
+        previous_monthly_consumption_values.iter().sum::<f64>();
     let previous_amc = total_previous_monthly_consumption / num_previous_data_points;
 
     // Calculate AMC for this period
@@ -216,6 +217,7 @@ pub fn get_previous_monthly_consumption(
 
     let line_repo = RnRFormLineRowRepository::new(connection);
 
+    // For each of the previous forms, collate the monthly consumption values for each item
     for form in prev_forms {
         let period_length_in_days = get_period_length(&form.period_row);
         let period_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
