@@ -80,6 +80,8 @@ const RnRFormDetailViewComponent = ({
     setCustomBreadcrumbs({ 1: data.periodName });
   }, [setCustomBreadcrumbs, data.periodName]);
 
+  const linesUnconfirmed = data.lines.some(line => !line.confirmed);
+
   return (
     <>
       <AppBarButtons />
@@ -87,7 +89,7 @@ const RnRFormDetailViewComponent = ({
         <DetailTabs tabs={tabs} />
       </TableProvider>
 
-      <Footer rnrFormId={data.id} />
+      <Footer rnrFormId={data.id} linesUnconfirmed={linesUnconfirmed} />
     </>
   );
 };
