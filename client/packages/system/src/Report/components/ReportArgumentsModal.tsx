@@ -41,12 +41,14 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     monthlyConsumptionLookBackPeriod,
     monthsOverstock,
     monthsUnderstock,
+    monthsItemsExpire,
   } = store?.preferences ?? {};
 
   const jsonData = {
     monthlyConsumptionLookBackPeriod,
     monthsOverstock,
     monthsUnderstock,
+    monthsItemsExpire,
     ...(data as object),
   };
 
