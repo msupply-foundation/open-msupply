@@ -116,6 +116,7 @@ export const RnRFormLine = ({
       quantityReceived,
       adjustments,
       stockOutDuration,
+      previousAverageMonthlyConsumption,
     } = { ...draft, ...newPatch };
 
     const finalBalance =
@@ -126,7 +127,12 @@ export const RnRFormLine = ({
       ? quantityConsumed * (periodLength / stockAvailableDays)
       : quantityConsumed;
 
-    const averageMonthlyConsumption = adjustedQuantityConsumed; // TODO!
+    // This calculation might be a plugin in future!
+    const averageMonthlyConsumption =
+      // Average of the last 3 months (including the current month)
+      // TODO: what if don't want to consider previous months?
+      (2 * previousAverageMonthlyConsumption + adjustedQuantityConsumed) / 3;
+
     const maximumQuantity = averageMonthlyConsumption * 2;
 
     const neededQuantity = maximumQuantity - finalBalance;

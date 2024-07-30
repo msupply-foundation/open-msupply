@@ -47,6 +47,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 rnr_form_id TEXT NOT NULL REFERENCES rnr_form(id),
                 item_id TEXT NOT NULL REFERENCES item(id),
                 average_monthly_consumption {DOUBLE} NOT NULL,
+                previous_average_monthly_consumption {DOUBLE} NOT NULL,
 
                 initial_balance {DOUBLE} NOT NULL,
                 snapshot_quantity_received {DOUBLE} NOT NULL,
