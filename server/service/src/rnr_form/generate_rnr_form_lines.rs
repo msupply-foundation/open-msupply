@@ -48,7 +48,7 @@ pub fn generate_rnr_form_lines(
         get_rnr_form_lines_map(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
 
     // Get previous form AMC averages for each item
-    let previous_amc_averages = get_previous_amc_averages(
+    let previous_amc_averages = get_previous_monthly_consumption(
         &ctx.connection,
         RnRFormFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
@@ -91,7 +91,7 @@ pub fn generate_rnr_form_lines(
                 usage.consumed,
             );
 
-            let amc = get_amc(
+            let (previous_amc, amc) = get_amc(
                 period_length_in_days,
                 adjusted_quantity_consumed,
                 previous_amc_averages.get(&item_id).unwrap_or(&vec![]),
@@ -111,6 +111,7 @@ pub fn generate_rnr_form_lines(
                 id: uuid(),
                 rnr_form_id: rnr_form_id.to_string(),
                 item_id,
+                previous_average_monthly_consumption: previous_amc,
                 average_monthly_consumption: amc,
                 initial_balance,
 
@@ -173,16 +174,28 @@ pub fn get_amc(
     period_length_in_days: i64,
     adjusted_quantity_consumed: f64,
     previous_amc_averages: &Vec<f64>,
-) -> f64 {
+) -> (f64, f64) {
     let period_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
-    let amc_this_period = adjusted_quantity_consumed / period_months;
+    let monthly_consumption_this_period = adjusted_quantity_consumed / period_months;
 
-    let num_of_periods = previous_amc_averages.len() + 1;
+    if previous_amc_averages.is_empty() {
+        return (0.0, monthly_consumption_this_period);
+    };
 
-    (previous_amc_averages.into_iter().sum::<f64>() + amc_this_period) / num_of_periods as f64
+    // Average AMC values from previous R&R forms - we provide this value to frontend for if it needs
+    // to recalculate AMC for this period
+    let num_previous_data_points = previous_amc_averages.len() as f64;
+    let total_previous_monthly_consumption = previous_amc_averages.iter().sum::<f64>();
+    let previous_amc = total_previous_monthly_consumption / num_previous_data_points;
+
+    // Calculate AMC for this period
+    let this_period_amc = (total_previous_monthly_consumption + monthly_consumption_this_period)
+        / (num_previous_data_points + 1.0);
+
+    (previous_amc, this_period_amc)
 }
 
-pub fn get_previous_amc_averages(
+pub fn get_previous_monthly_consumption(
     connection: &StorageConnection,
     filter: RnRFormFilter,
 ) -> Result<HashMap<String, Vec<f64>>, RepositoryError> {
@@ -190,31 +203,37 @@ pub fn get_previous_amc_averages(
 
     let len = previous_forms.len();
 
-    let prev_form_ids = match len {
+    let prev_forms = match len {
         // If no previous forms, return
         0 => return Ok(HashMap::new()),
         // If only one previous form, just use that
-        1 => vec![previous_forms[0].rnr_form_row.id.clone()],
+        1 => vec![previous_forms[0].clone()],
         // For now, we'll just average the last two forms... could do more periods/customise this!
-        _ => previous_forms[len - 2..len]
-            .iter()
-            .map(|f| f.rnr_form_row.id.clone())
-            .collect(),
+        _ => previous_forms[len - 2..len].to_vec(),
     };
 
-    let mut form_lines_by_item_id = HashMap::new();
+    let mut monthly_consumption_by_item_id = HashMap::new();
 
-    let rows =
-        RnRFormLineRowRepository::new(connection).find_many_by_rnr_form_ids(prev_form_ids)?;
+    let line_repo = RnRFormLineRowRepository::new(connection);
 
-    for row in rows.into_iter() {
-        let amc_values = form_lines_by_item_id
-            .entry(row.item_id.clone())
-            .or_insert(vec![]);
-        amc_values.push(row.average_monthly_consumption);
+    for form in prev_forms {
+        let period_length_in_days = get_period_length(&form.period_row);
+        let period_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
+
+        let lines = line_repo.find_many_by_rnr_form_id(&form.rnr_form_row.id)?;
+
+        for line in lines.into_iter() {
+            let amc_values = monthly_consumption_by_item_id
+                .entry(line.item_id.clone())
+                .or_insert(vec![]);
+
+            let monthly_consumption_this_period = line.adjusted_quantity_consumed / period_months;
+
+            amc_values.push(monthly_consumption_this_period);
+        }
     }
 
-    Ok(form_lines_by_item_id)
+    Ok(monthly_consumption_by_item_id)
 }
 
 pub fn get_opening_balance(

@@ -794,6 +794,7 @@ fragment RnRForm on RnRFormNode {
 fragment RnRFormLine on RnRFormLineNode {
   id
   averageMonthlyConsumption
+  previousAverageMonthlyConsumption
   initialBalance
   quantityReceived
   quantityConsumed
