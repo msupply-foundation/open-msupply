@@ -37,6 +37,8 @@ pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
+pub(crate) mod rnr_form;
+pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
 pub(crate) mod special;
 pub(crate) mod stock_line;
@@ -124,6 +126,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         asset_property::boxed(),
         //Sync file reference
         sync_file_reference::boxed(),
+        // RnR Form
+        rnr_form::boxed(),
+        rnr_form_line::boxed(),
     ]
 }
 
