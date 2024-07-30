@@ -8,6 +8,7 @@ import {
   NothingHere,
   NumericTextInput,
   Table,
+  useBufferState,
   useNotification,
   useTheme,
   useTranslation,
@@ -28,7 +29,10 @@ export const ContentArea = ({
 }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
 
-  return data.length === 0 ? (
+  // TODO: move to backend, should join on item and sort by name!
+  const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));
+
+  return lines.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
   ) : (
     <Box flex={1} padding={2}>
@@ -70,9 +74,9 @@ export const ContentArea = ({
         </thead>
 
         <tbody>
-          {data.map((line, index) => (
+          {lines.map(line => (
             <RnRFormLine
-              key={index}
+              key={line.id}
               line={line}
               periodLength={periodLength}
               saveLine={saveLine}
@@ -124,7 +128,9 @@ export const RnRFormLine = ({
 
     const averageMonthlyConsumption = adjustedQuantityConsumed; // TODO!
     const maximumQuantity = averageMonthlyConsumption * 2;
-    const requestedQuantity = maximumQuantity - finalBalance;
+
+    const neededQuantity = maximumQuantity - finalBalance;
+    const requestedQuantity = neededQuantity > 0 ? neededQuantity : 0;
 
     setPatch({
       ...newPatch,
@@ -190,6 +196,7 @@ export const RnRFormLine = ({
         value={draft.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
         textColor={textColor}
+        allowNegative
       />
       <RnRNumberCell
         value={draft.stockOutDuration}
@@ -277,15 +284,19 @@ const RnRNumberCell = ({
   onChange,
   textColor,
   max,
+  allowNegative,
 }: {
   value: number;
   disabled?: boolean;
   onChange: (val: number) => void;
   textColor?: string;
   max?: number;
+  allowNegative?: boolean;
 }) => {
   const theme = useTheme();
   const backgroundColor = disabled ? theme.palette.background.drawer : 'white';
+
+  const [buffer, setBuffer] = useBufferState<number | undefined>(value);
 
   return (
     <td style={{ backgroundColor }}>
@@ -298,10 +309,14 @@ const RnRNumberCell = ({
             },
           },
         }}
-        value={value}
+        value={buffer}
         disabled={disabled}
-        onChange={val => onChange(val ?? 0)}
+        onChange={newValue => {
+          setBuffer(newValue);
+          if (newValue !== undefined) onChange(newValue);
+        }}
         max={max}
+        allowNegative={allowNegative}
       />
     </td>
   );
