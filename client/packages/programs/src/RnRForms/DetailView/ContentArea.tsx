@@ -20,12 +20,14 @@ interface ContentAreaProps {
   data: RnRFormLineFragment[];
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
   periodLength: number;
+  disabled: boolean;
 }
 
 export const ContentArea = ({
   data,
   saveLine,
   periodLength,
+  disabled,
 }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
 
@@ -80,6 +82,7 @@ export const ContentArea = ({
               line={line}
               periodLength={periodLength}
               saveLine={saveLine}
+              disabled={disabled}
             />
           ))}
         </tbody>
@@ -92,10 +95,12 @@ export const RnRFormLine = ({
   line,
   saveLine,
   periodLength,
+  disabled,
 }: {
   line: RnRFormLineFragment;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  disabled: boolean;
 }) => {
   const theme = useTheme();
   const { error } = useNotification();
@@ -153,9 +158,10 @@ export const RnRFormLine = ({
       ? ''
       : draft.item.venCategory;
 
-  const textColor = draft.confirmed
-    ? theme.palette.text.disabled
-    : theme.palette.text.primary;
+  const textColor =
+    disabled || draft.confirmed
+      ? theme.palette.text.disabled
+      : theme.palette.text.primary;
 
   const readOnlyColumn = {
     backgroundColor: theme.palette.background.drawer,
@@ -177,21 +183,24 @@ export const RnRFormLine = ({
         value={draft.initialBalance}
         onChange={val => updateDraft({ initialBalance: val })}
         textColor={textColor}
+        disabled={disabled}
       />
       <RnRNumberCell
         value={draft.quantityReceived}
         onChange={val => updateDraft({ quantityReceived: val })}
         textColor={textColor}
+        disabled={disabled}
       />
       <RnRNumberCell
         value={draft.quantityConsumed}
         onChange={val => updateDraft({ quantityConsumed: val })}
         textColor={textColor}
+        disabled={disabled}
       />
 
       {/* Readonly calculated value */}
       <RnRNumberCell
-        disabled
+        readOnly
         textColor={textColor}
         value={draft.adjustedQuantityConsumed}
         onChange={() => {}}
@@ -203,29 +212,31 @@ export const RnRFormLine = ({
         onChange={val => updateDraft({ adjustments: val })}
         textColor={textColor}
         allowNegative
+        disabled={disabled}
       />
       <RnRNumberCell
         value={draft.stockOutDuration}
         textColor={textColor}
         onChange={val => updateDraft({ stockOutDuration: val })}
         max={periodLength}
+        disabled={disabled}
       />
 
       {/* Readonly calculated values */}
       <RnRNumberCell
-        disabled
+        readOnly
         value={draft.finalBalance}
         textColor={textColor}
         onChange={() => {}}
       />
       <RnRNumberCell
-        disabled
+        readOnly
         value={draft.averageMonthlyConsumption}
         onChange={() => {}}
         textColor={textColor}
       />
       <RnRNumberCell
-        disabled
+        readOnly
         value={draft.maximumQuantity}
         onChange={() => {}}
         textColor={textColor}
@@ -243,12 +254,14 @@ export const RnRFormLine = ({
           onChange={date =>
             updateDraft({ expiryDate: Formatter.naiveDate(date) })
           }
+          disabled={disabled}
         />
       </td>
       <RnRNumberCell
         value={draft.requestedQuantity}
         onChange={val => updateDraft({ requestedQuantity: val })}
         textColor={textColor}
+        disabled={disabled}
       />
       <td>
         <BasicTextInput
@@ -262,6 +275,7 @@ export const RnRFormLine = ({
           }}
           value={draft.comment ?? ''}
           onChange={e => updateDraft({ comment: e.target.value })}
+          disabled={disabled}
         />
       </td>
 
@@ -278,6 +292,7 @@ export const RnRFormLine = ({
               error((e as Error).message)();
             }
           }}
+          disabled={disabled}
         />
       </td>
     </tr>
@@ -287,6 +302,7 @@ export const RnRFormLine = ({
 const RnRNumberCell = ({
   value,
   disabled,
+  readOnly,
   onChange,
   textColor,
   max,
@@ -294,13 +310,14 @@ const RnRNumberCell = ({
 }: {
   value: number;
   disabled?: boolean;
+  readOnly?: boolean;
   onChange: (val: number) => void;
   textColor?: string;
   max?: number;
   allowNegative?: boolean;
 }) => {
   const theme = useTheme();
-  const backgroundColor = disabled ? theme.palette.background.drawer : 'white';
+  const backgroundColor = readOnly ? theme.palette.background.drawer : 'white';
 
   const [buffer, setBuffer] = useBufferState<number | undefined>(value);
 
@@ -316,7 +333,7 @@ const RnRNumberCell = ({
           },
         }}
         value={buffer}
-        disabled={disabled}
+        disabled={readOnly ?? disabled}
         onChange={newValue => {
           setBuffer(newValue);
           if (newValue !== undefined) onChange(newValue);

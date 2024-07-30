@@ -10,6 +10,7 @@ import {
   useParams,
   TableProvider,
   createTableStore,
+  RnRFormNodeStatus,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -66,6 +67,7 @@ const RnRFormDetailViewComponent = ({
           periodLength={data.periodLength}
           data={data.lines}
           saveLine={saveLine}
+          disabled={data.status === RnRFormNodeStatus.Finalised}
         />
       ),
       value: t('label.details'),
