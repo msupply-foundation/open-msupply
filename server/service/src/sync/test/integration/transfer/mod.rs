@@ -31,7 +31,6 @@ struct SyncIntegrationTransferContext {
     item1: ItemRow,
     item2: ItemRow,
     service_item: ItemRow,
-    currency: CurrencyRow,
 }
 
 async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferContext {
