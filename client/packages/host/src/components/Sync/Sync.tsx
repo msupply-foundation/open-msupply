@@ -86,6 +86,14 @@ export const Sync = () => {
     await updateUser();
     await onManualSync();
   };
+  const durationAsDate = new Date(
+    0,
+    0,
+    0,
+    0,
+    0,
+    syncStatus?.summary?.durationInSeconds || 0
+  );
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
@@ -119,9 +127,7 @@ export const Sync = () => {
         <Row title={t('sync-info.last-sync-duration')}>
           <Grid display="flex" container gap={1}>
             <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
-              {DateUtils.formatDuration({
-                seconds: syncStatus?.summary?.durationInSeconds || 0,
-              })}
+              {DateUtils.formatDuration(durationAsDate)}
             </Grid>
           </Grid>
         </Row>
