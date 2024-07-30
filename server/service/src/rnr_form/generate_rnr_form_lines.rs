@@ -16,6 +16,8 @@ use crate::{
     service_provider::ServiceContext,
 };
 
+use super::get_period_length;
+
 // Would be nice if this was an OMS store pref
 const TARGET_MOS: f64 = 2.0;
 
@@ -403,12 +405,4 @@ pub fn get_earliest_expiry(
     Ok(earliest_expiring
         .map(|line| line.stock_line_row.expiry_date)
         .flatten())
-}
-
-fn get_period_length(period: &PeriodRow) -> i64 {
-    period
-        .end_date
-        .signed_duration_since(period.start_date)
-        .num_days()
-        + 1 // To be inclusive of end date
 }

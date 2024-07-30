@@ -784,6 +784,7 @@ fragment RnRForm on RnRFormNode {
   createdDatetime
   periodId
   periodName
+  periodLength
   programId
   programName
   supplierName
@@ -924,6 +925,16 @@ query rAndRFormDetail($rnrFormId: String!, $storeId: String!) {
       lines {
         ...RnRFormLine
       }
+    }
+  }
+}
+
+mutation updateRnRFormLines($storeId: String!, $input: UpdateRnRFormInput!) {
+  updateRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
     }
   }
 }
