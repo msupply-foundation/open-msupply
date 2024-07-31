@@ -37,15 +37,14 @@ pub fn finalise_rnr_form(
         .connection
         .transaction_sync(|connection| {
             let rnr_form = validate(ctx, store_id, &input)?;
-            let finalised_form = generate(rnr_form);
 
+            // Create an internal order based on the RnR form
+            let requisition_id = create_internal_order(ctx, rnr_form.clone())?;
+
+            let finalised_form = generate(rnr_form, requisition_id);
             let rnr_form_repo = RnRFormRowRepository::new(connection);
 
             rnr_form_repo.upsert_one(&finalised_form)?;
-
-            // Create an internal order based on the finalised RnR form
-
-            create_internal_order(ctx, finalised_form)?;
 
             activity_log_entry(
                 ctx,
@@ -85,12 +84,13 @@ fn validate(
     Ok(rnr_form)
 }
 
-fn generate(existing_row: RnRFormRow) -> RnRFormRow {
+fn generate(existing_row: RnRFormRow, requisition_id: String) -> RnRFormRow {
     let current_datetime = Utc::now().naive_utc();
 
     RnRFormRow {
         finalised_datetime: Some(current_datetime),
         status: RnRFormStatus::Finalised,
+        linked_requisition_id: Some(requisition_id),
         ..existing_row
     }
 }
@@ -104,7 +104,7 @@ impl From<RepositoryError> for FinaliseRnRFormError {
 fn create_internal_order(
     ctx: &ServiceContext,
     rnr_form: RnRFormRow,
-) -> Result<(), FinaliseRnRFormError> {
+) -> Result<String, FinaliseRnRFormError> {
     // Internal Orders are known as requisitions in the code base
     let requisition_row = RequisitionRow {
         id: uuid(),
@@ -170,7 +170,7 @@ fn create_internal_order(
                 .map(|item| item.name.clone())
                 .unwrap_or_default(),
             requested_quantity: rnr_form_line.requested_quantity,
-            suggested_quantity: rnr_form_line.requested_quantity, // TODO This is user enterable, should we also re-calc this?
+            suggested_quantity: rnr_form_line.maximum_quantity,
             supply_quantity: 0.0,
             available_stock_on_hand: rnr_form_line.final_balance,
             average_monthly_consumption: rnr_form_line.average_monthly_consumption,
@@ -178,11 +178,11 @@ fn create_internal_order(
             approved_quantity: 0.0,
             approval_comment: None,
             comment: None,
-            // TODO add Cust_pre_stock_balance, Cust_stock_received, Cust_stock_ord, Cust_stock_adj (in mSupply but no OMS Yet)
+            // TODO add Cust_pre_stock_balance, Cust_stock_received, Cust_stock_ord, Cust_stock_adj (in mSupply but not in OMS Yet)
         };
 
         requisition_line_repo.upsert_one(&requisition_line)?;
     }
 
-    Ok(())
+    Ok(requisition_row.id)
 }

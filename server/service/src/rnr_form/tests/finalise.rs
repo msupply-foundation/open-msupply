@@ -93,14 +93,14 @@ mod finalise {
             .unwrap();
 
         assert_eq!(updated_row.status, RnRFormStatus::Finalised);
+        assert!(updated_row.linked_requisition_id.is_some());
 
         // Check the internal order (requisition) has been created
 
         let requisition = RequisitionRepository::new(&context.connection)
-            .query_one(
-                RequisitionFilter::new()
-                    .requisition_number(EqualFilter::equal_to_i64(last_requisition_number + 1)),
-            )
+            .query_one(RequisitionFilter::new().id(EqualFilter::equal_to(
+                updated_row.linked_requisition_id.as_ref().unwrap(),
+            )))
             .unwrap()
             .unwrap();
 
