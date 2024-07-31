@@ -144,6 +144,8 @@ export const DateUtils = {
   endOfWeek,
   setMilliseconds,
   getCurrentYear: () => getYear(new Date()),
+  formatDuration: (date: Date | string | number): string =>
+    formatIfValid(dateInputHandler(date), 'HH:mm:ss'),
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,

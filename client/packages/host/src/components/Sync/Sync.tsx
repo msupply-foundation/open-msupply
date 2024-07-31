@@ -7,6 +7,7 @@ import {
   LoadingButton,
   RadioIcon,
   Typography,
+  UNDEFINED_STRING_VALUE,
   useAuthContext,
   useFormatDateTime,
   useNativeClient,
@@ -53,11 +54,14 @@ const useHostSync = () => {
 
   return {
     isLoading: !!syncStatus?.isSyncing || isLoading,
-    latestSyncDate: DateUtils.getDateOrNull(
-      syncStatus?.summary.started || null
+    latestSyncStart: DateUtils.getDateOrNull(
+      syncStatus?.summary?.started || null
+    ),
+    latestSyncFinish: DateUtils.getDateOrNull(
+      syncStatus?.summary?.finished || null
     ),
     latestSuccessfulSyncDate: DateUtils.getDateOrNull(
-      syncStatus?.lastSuccessfulSync?.started || null
+      syncStatus?.lastSuccessfulSync?.finished || null
     ),
     onManualSync,
     syncStatus,
@@ -69,23 +73,27 @@ export const Sync = () => {
   const t = useTranslation('app');
   const {
     syncStatus,
-    latestSyncDate,
+    latestSyncStart,
+    latestSyncFinish,
     latestSuccessfulSyncDate,
     numberOfRecordsInPushQueue,
     isLoading,
     onManualSync,
   } = useHostSync();
-  const {
-    updateUserIsLoading,
-    lastSuccessfulSync,
-    updateUser,
-    updateUserError,
-  } = useAuthContext();
+  const { updateUserIsLoading, updateUser } = useAuthContext();
 
   const sync = async () => {
     await updateUser();
     await onManualSync();
   };
+  const durationAsDate = new Date(
+    0,
+    0,
+    0,
+    0,
+    0,
+    syncStatus?.summary?.durationInSeconds || 0
+  );
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
@@ -97,28 +105,35 @@ export const Sync = () => {
         style={{ padding: '15 15 50 15', minWidth: 650 }}
         flexWrap="nowrap"
       >
-        <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
+        <Typography variant="h5" color="primary" style={{ paddingBottom: 10 }}>
           {t('heading.synchronise-status')}
+        </Typography>
+        <Typography style={{ paddingBottom: 15, fontSize: 12, maxWidth: 650 }}>
+          {t('sync-info.summary')
+            .split('\n')
+            .map(line => (
+              <div>{line}</div>
+            ))}
         </Typography>
         <Row title={t('sync-info.number-to-push')}>
           <Typography>{numberOfRecordsInPushQueue}</Typography>
         </Row>
-        <Row title={t('sync-info.last-sync')}>
-          <FormattedSyncDate date={latestSyncDate} />
+        <Row title={t('sync-info.last-sync-start')}>
+          <FormattedSyncDate date={latestSyncStart} />
         </Row>
-        <Row title={t('sync-info.user-last-updated')}>
-          <FormattedSyncDate
-            date={DateUtils.getDateOrNull(lastSuccessfulSync || null)}
-          />
-          {!!updateUserError && (
-            <Typography color="error">{updateUserError}</Typography>
-          )}
+        <Row title={t('sync-info.last-sync-finish')}>
+          <FormattedSyncDate date={latestSyncFinish} />
         </Row>
-        {!!syncStatus?.error ? (
-          <Row title={t('sync-info.last-successful-sync')}>
-            <FormattedSyncDate date={latestSuccessfulSyncDate} />
-          </Row>
-        ) : null}
+        <Row title={t('sync-info.last-sync-duration')}>
+          <Grid display="flex" container gap={1}>
+            <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
+              {DateUtils.formatDuration(durationAsDate)}
+            </Grid>
+          </Grid>
+        </Row>
+        <Row title={t('sync-info.last-successful-sync')}>
+          <FormattedSyncDate date={latestSuccessfulSyncDate} />
+        </Row>
         <Row>
           <LoadingButton
             isLoading={isLoading || updateUserIsLoading}
@@ -160,7 +175,7 @@ const FormattedSyncDate = ({ date }: { date: Date | null }) => {
   const t = useTranslation();
   const { localisedDistanceToNow, relativeDateTime } = useFormatDateTime();
 
-  if (!date) return null;
+  if (!date) return UNDEFINED_STRING_VALUE;
 
   const relativeTime = `( ${t('messages.ago', {
     time: localisedDistanceToNow(date),
