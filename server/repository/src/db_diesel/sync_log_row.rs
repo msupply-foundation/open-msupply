@@ -58,7 +58,7 @@ table! {
         integration_progress_done -> Nullable<Integer>,
         error_message -> Nullable<Text>,
         error_code -> Nullable<crate::db_diesel::sync_log_row::SyncApiErrorCodeMapping>,
-        duration_in_seconds -> BigInt,
+        duration_in_seconds -> Integer,
     }
 }
 
@@ -97,7 +97,7 @@ pub struct SyncLogRow {
     pub integration_progress_done: Option<i32>,
     pub error_message: Option<String>,
     pub error_code: Option<SyncApiErrorCode>,
-    pub duration_in_seconds: i64,
+    pub duration_in_seconds: i32,
 }
 
 impl Default for SyncLogRow {
