@@ -6,6 +6,7 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     rnr_form_line (id) {
@@ -14,10 +15,13 @@ table! {
         item_id -> Text,
         average_monthly_consumption -> Double,
         initial_balance -> Double,
-        quantity_received -> Double,
-        quantity_consumed -> Double,
+        snapshot_quantity_received -> Double,
+        snapshot_quantity_consumed -> Double,
+        snapshot_adjustments -> Double,
+        entered_quantity_received -> Nullable<Double>,
+        entered_quantity_consumed -> Nullable<Double>,
+        entered_adjustments -> Nullable<Double>,
         adjusted_quantity_consumed -> Double,
-        adjustments -> Double,
         stock_out_duration -> Integer,
         final_balance -> Double,
         maximum_quantity -> Double,
@@ -34,7 +38,9 @@ joinable!(rnr_form_line -> item (item_id));
 allow_tables_to_appear_in_same_query!(rnr_form_line, rnr_form);
 allow_tables_to_appear_in_same_query!(rnr_form_line, item);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
+)]
 #[diesel(table_name = rnr_form_line)]
 #[diesel(treat_none_as_null = true)]
 pub struct RnRFormLineRow {
@@ -43,10 +49,13 @@ pub struct RnRFormLineRow {
     pub item_id: String,
     pub average_monthly_consumption: f64,
     pub initial_balance: f64,
-    pub quantity_received: f64,
-    pub quantity_consumed: f64,
+    pub snapshot_quantity_received: f64,
+    pub snapshot_quantity_consumed: f64,
+    pub snapshot_adjustments: f64,
+    pub entered_quantity_received: Option<f64>,
+    pub entered_quantity_consumed: Option<f64>,
+    pub entered_adjustments: Option<f64>,
     pub adjusted_quantity_consumed: f64,
-    pub adjustments: f64,
     pub stock_out_duration: i32,
     pub final_balance: f64,
     pub maximum_quantity: f64,
@@ -118,6 +127,16 @@ impl<'a> RnRFormLineRowRepository<'a> {
     ) -> Result<Vec<RnRFormLineRow>, RepositoryError> {
         let result = rnr_form_line
             .filter(rnr_form_id.eq(form_id))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_rnr_form_ids(
+        &self,
+        form_ids: Vec<String>,
+    ) -> Result<Vec<RnRFormLineRow>, RepositoryError> {
+        let result = rnr_form_line
+            .filter(rnr_form_id.eq_any(form_ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }

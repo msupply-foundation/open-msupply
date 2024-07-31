@@ -107,7 +107,7 @@ For each step:
 - Completely Re Sync
 - Check IntegrationRecords in TestData against database
 
-## Open mSupply Central
+## Open mSupply Central (Central Data)
 
 For each step:
 
@@ -115,6 +115,19 @@ For each step:
 - Request and wait for sync of open mSupply central server (which will sync the central data we just created in original mSupply central server)
 - Perform graphql data mutations on open mSupply central server
 - Sync (remote site)
+- Check IntegrationRecords in TestData against database
+
+## Open mSupply Central (Remote Data)
+
+For each step:
+
+- Upsert central data specified in TestData
+- Request and wait for sync of open mSupply central server (which will sync the central data we just created in original mSupply central server)
+- Perform graphql data mutations on open mSupply central server
+- Sync (remote site)
+- Upsert/Delete (on remote server) IntegrationRecords in TestData 
+- Sync (remote site)
+- Completely Re Sync
 - Check IntegrationRecords in TestData against database
 
 # How do they work (Transfers)

@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod add_asset_internal_location_changelog;
+mod consumption_and_replenishment_views;
 mod create_missing_master_list_and_program;
 mod create_system_user;
 mod item_ven;
@@ -10,6 +11,7 @@ mod remove_changelog_triggers;
 mod report_add_report_context;
 mod rnr_form;
 mod store_preferences_for_reports;
+mod sync;
 
 pub(crate) struct V2_02_00;
 
@@ -27,6 +29,8 @@ impl Migration for V2_02_00 {
         rnr_form::migrate(connection)?;
         report_add_report_context::migrate(connection)?;
         item_ven::migrate(connection)?;
+        consumption_and_replenishment_views::migrate(connection)?;
+        sync::migrate(connection)?;
         Ok(())
     }
 }

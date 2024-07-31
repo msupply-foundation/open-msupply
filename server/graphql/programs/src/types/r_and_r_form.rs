@@ -1,6 +1,9 @@
 use async_graphql::*;
 
-use graphql_core::generic_filters::{DatetimeFilterInput, EqualFilterStringInput};
+use graphql_core::{
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    simple_generic_errors::NodeError,
+};
 use graphql_types::types::rnr_form::RnRFormNode;
 use repository::{
     DatetimeFilter, EqualFilter, RnRForm, RnRFormFilter, RnRFormSort, RnRFormSortField,
@@ -16,6 +19,12 @@ pub struct RnRFormConnector {
 #[derive(Union)]
 pub enum RnRFormsResponse {
     Response(RnRFormConnector),
+}
+
+#[derive(Union)]
+pub enum RnRFormResponse {
+    Response(RnRFormNode),
+    Error(NodeError),
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

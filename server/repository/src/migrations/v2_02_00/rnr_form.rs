@@ -49,10 +49,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 average_monthly_consumption {DOUBLE} NOT NULL,
 
                 initial_balance {DOUBLE} NOT NULL,
-                quantity_received {DOUBLE} NOT NULL,
-                quantity_consumed {DOUBLE} NOT NULL,
+                snapshot_quantity_received {DOUBLE} NOT NULL,
+                snapshot_quantity_consumed {DOUBLE} NOT NULL,
+                snapshot_adjustments {DOUBLE} NOT NULL,
+                entered_quantity_received {DOUBLE},
+                entered_quantity_consumed {DOUBLE},
+                entered_adjustments {DOUBLE},
                 adjusted_quantity_consumed {DOUBLE} NOT NULL,
-                adjustments {DOUBLE} NOT NULL,
                 stock_out_duration INTEGER NOT NULL,
                 final_balance {DOUBLE} NOT NULL,
                 maximum_quantity {DOUBLE} NOT NULL,
@@ -77,6 +80,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'rnr_form_line';
 
             ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'RNR_FORM_CREATED';
+            ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'RNR_FORM_UPDATED';
+            ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'RNR_FORM_FINALISED';
         "#
     )?;
 

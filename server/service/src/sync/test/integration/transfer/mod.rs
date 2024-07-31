@@ -31,7 +31,6 @@ struct SyncIntegrationTransferContext {
     item1: ItemRow,
     item2: ItemRow,
     service_item: ItemRow,
-    currency: CurrencyRow,
 }
 
 async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferContext {
@@ -77,7 +76,7 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
         .await
         .expect("Problem inserting central data");
 
-    let (item1, item2, service_item, currency, central_data) = items_and_currency();
+    let (item1, item2, service_item, _currency, central_data) = items_and_currency();
     central_server_configurations
         .upsert_records(central_data)
         .await
@@ -109,7 +108,6 @@ async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferC
         item1,
         item2,
         service_item,
-        currency,
     }
 }
 
