@@ -6941,6 +6941,7 @@ export type SyncSettingsNode = {
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
+  durationInSeconds: Scalars['Int']['output'];
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
 };
@@ -7788,6 +7789,7 @@ export type UpdateRnRFormInput = {
 export type UpdateRnRFormLineInput = {
   adjustedQuantityConsumed: Scalars['Float']['input'];
   adjustments?: InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption: Scalars['Float']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   confirmed: Scalars['Boolean']['input'];
   finalBalance: Scalars['Float']['input'];
