@@ -107,6 +107,7 @@ const useUpdateLine = (rnrFormId: string) => {
   return useMutation({
     mutationFn,
     onSuccess: () => queryClient.invalidateQueries([RNR_FORM]),
+    onError: () => {},
   });
 };
 const useFinalise = (id: string) => {
