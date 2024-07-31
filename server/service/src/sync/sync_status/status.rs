@@ -19,7 +19,7 @@ use super::SyncLogError;
 
 pub struct SyncStatus {
     pub started: NaiveDateTime,
-    pub duration_in_seconds: i64,
+    pub duration_in_seconds: i32,
     pub finished: Option<NaiveDateTime>,
 }
 
@@ -83,9 +83,8 @@ impl FullSyncStatus {
         } = sync_log_row;
         let error = SyncLogError::from_sync_log_row(&sync_log_row);
         let prepare_initial_duration = match prepare_initial_finished_datetime {
-            Some(finished) => {
-                (finished - prepare_initial_started_datetime.unwrap_or(finished)).num_seconds()
-            }
+            Some(finished) => (finished - prepare_initial_started_datetime.unwrap_or(finished))
+                .num_seconds() as i32,
             None => 0,
         };
 

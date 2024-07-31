@@ -13,7 +13,7 @@ use crate::sync_api_error::SyncErrorNode;
 
 pub struct SyncStatusNode {
     started: NaiveDateTime,
-    duration_in_seconds: i64,
+    duration_in_seconds: i32,
     finished: Option<NaiveDateTime>,
 }
 
@@ -23,7 +23,7 @@ impl SyncStatusNode {
         DateTime::<Utc>::from_naive_utc_and_offset(self.started, Utc)
     }
 
-    async fn duration_in_seconds(&self) -> i64 {
+    async fn duration_in_seconds(&self) -> i32 {
         self.duration_in_seconds
     }
 

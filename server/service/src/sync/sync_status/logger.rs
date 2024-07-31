@@ -79,7 +79,7 @@ impl<'a> SyncLogger<'a> {
         self.row = SyncLogRow {
             finished_datetime: Some(chrono::Utc::now().naive_utc()),
             duration_in_seconds: (chrono::Utc::now().naive_utc() - self.row.started_datetime)
-                .num_seconds(),
+                .num_seconds() as i32,
             ..self.row.clone()
         };
 
@@ -121,7 +121,7 @@ impl<'a> SyncLogger<'a> {
             },
         };
         self.row.duration_in_seconds =
-            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds();
+            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
@@ -191,7 +191,7 @@ impl<'a> SyncLogger<'a> {
 
         info!("Sync step finished {:?}", step);
         self.row.duration_in_seconds =
-            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds();
+            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
@@ -301,7 +301,7 @@ impl<'a> SyncLogger<'a> {
             }
         };
         self.row.duration_in_seconds =
-            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds();
+            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
