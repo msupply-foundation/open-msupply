@@ -47,8 +47,6 @@ pub fn finalise_rnr_form(
 
             create_internal_order(ctx, finalised_form)?;
 
-            // Set the status of the internal order to 'Sent'
-
             activity_log_entry(
                 ctx,
                 ActivityLogType::RnrFormFinalised,
