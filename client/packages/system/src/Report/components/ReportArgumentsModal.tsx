@@ -62,14 +62,14 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
           variant="ok"
           disabled={!!error}
           onClick={async () => {
-            onArgumentsSelected(report, data);
+            onArgumentsSelected(report, jsonData);
             cleanUp();
           }}
         />
       }
     >
       <JsonForm
-        data={jsonData}
+        data={data}
         jsonSchema={report.argumentSchema.jsonSchema}
         uiSchema={report.argumentSchema.uiSchema}
         isError={false}
