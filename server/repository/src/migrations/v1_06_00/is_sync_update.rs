@@ -210,12 +210,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     )
     .is_err()
     {
-        println!("Database migration warning: Failed to add is_sync_update column to name, name_store_join, clinician and clinician_store_join as current version is < 1.2.00");
+        log::debug!("Database migration warning: Failed to add is_sync_update column to name, name_store_join, clinician and clinician_store_join as current version is < 1.2.00");
     }
 
     // these statements would have had the same problem
     if migrate_triggers(connection).is_err() {
-        println!("Database migration warning: Failed to add triggers for is_sync_update as version is < 1.2.00");
+        log::debug!("Database migration warning: Failed to add triggers for is_sync_update as version is < 1.2.00");
     }
 
     Ok(())
