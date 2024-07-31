@@ -12,9 +12,11 @@
   "control.search.reset-button": "Unlink matched patient",
   "control.search.searching-label": "Searching...",
   "error.no-rnr-forms": "No R&R Forms found",
+  "error.rnr-not-found": "R&R Form not found",
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
   "label.diastolic": "Diastolic",
   "label.new-rnr-form": "New R&R Form",
   "label.schedule": "Schedule",
-  "label.systolic": "Systolic"
+  "label.systolic": "Systolic",
+  "messages.click-to-return-to-rnr-list": "Click here to return to the list of R&R Forms"
 }

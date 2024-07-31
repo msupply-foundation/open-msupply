@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   BasicSpinner,
-  NothingHere,
   useBreadcrumbs,
   useParams,
   useUrlQuery,
@@ -19,18 +18,33 @@ import { JsonData } from '@openmsupply-client/programs';
 
 export const DetailView = () => {
   const { id } = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const { data: report, isLoading: isReportLoading } = useReport(id ?? '');
-  const { mutateAsync, isLoading: isGeneratingReport } = useGenerateReport();
-  const [fileId, setFileId] = useState<string | undefined>();
-  const { print, isPrinting } = usePrintReport();
-
+  const { data: report } = useReport(id ?? '');
   const {
-    updateQuery,
     urlQuery: { reportArgs: reportArgsJson },
   } = useUrlQuery({ skipParse: ['reportArgs'] });
+
   const reportArgs =
     (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
+
+  return !report?.id ? (
+    <BasicSpinner />
+  ) : (
+    <DetailViewInner report={report} reportArgs={reportArgs} />
+  );
+};
+
+const DetailViewInner = ({
+  report,
+  reportArgs,
+}: {
+  report: ReportRowFragment;
+  reportArgs: JsonData;
+}) => {
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { mutateAsync } = useGenerateReport();
+  const [fileId, setFileId] = useState<string | undefined>();
+  const { print, isPrinting } = usePrintReport();
+  const { updateQuery } = useUrlQuery();
 
   // When reportWithArgs is undefined, args modal is closed
   const [reportWithArgs, setReportWithArgs] = useState<
@@ -38,8 +52,6 @@ export const DetailView = () => {
   >();
 
   useEffect(() => {
-    if (!report?.id) return;
-
     setCustomBreadcrumbs({ 0: report.name ?? '' });
 
     // Initial report generation
@@ -53,9 +65,9 @@ export const DetailView = () => {
       return;
     }
 
-    // No urlQuery parameters exist, open modal
+    // No urlQuery/reportArgs parameters exist, open modal
     openReportArgumentsModal();
-  }, [report]);
+  }, []);
 
   const generateReport = useCallback(
     async (
@@ -66,6 +78,7 @@ export const DetailView = () => {
       if (shouldUpdateQuery) {
         updateQuery({ reportArgs: JSON.stringify(args) });
       }
+      setFileId(undefined);
       const fileId = await mutateAsync({
         reportId: report.id,
         args,
@@ -77,45 +90,34 @@ export const DetailView = () => {
   );
 
   const openReportArgumentsModal = useCallback(() => {
-    if (!report) return;
     setReportWithArgs(report);
   }, []);
 
   const printReport = useCallback(() => {
-    if (report === undefined) {
-      return;
-    }
-
     print({
       reportId: report.id,
       dataId: '',
       args: reportArgs,
     });
-  }, [report, reportArgsJson]);
+  }, [reportArgs]);
 
   const url = `${Environment.FILE_URL}${fileId}`;
 
   return (
     <>
-      {(isGeneratingReport || isReportLoading) && <BasicSpinner />}
-      {fileId ? (
-        <>
-          <iframe src={url} width="100%" />
-          <AppBarButtons
-            isDisabled={!report?.argumentSchema}
-            onFilterOpen={openReportArgumentsModal}
-            printReport={printReport}
-            isPrinting={isPrinting}
-          />
-        </>
-      ) : (
-        <NothingHere />
-      )}
+      <AppBarButtons
+        isFilterDisabled={!report?.argumentSchema}
+        onFilterOpen={openReportArgumentsModal}
+        printReport={printReport}
+        isPrinting={isPrinting}
+      />
       <ReportArgumentsModal
         report={reportWithArgs}
         onReset={() => setReportWithArgs(undefined)}
         onArgumentsSelected={generateReport}
       />
+
+      {!fileId ? <BasicSpinner /> : <iframe src={url} width="100%" />}
     </>
   );
 };

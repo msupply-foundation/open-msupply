@@ -27,5 +27,7 @@
   "label.shipment": "Поставка",
   "button.return-lines": "Обработать возврат выбранных строк",
   "button.requested-to-suggested": "Использовать Рекомендуемые Количества",
-  "label.location": "Локация"
+  "label.location": "Локация",
+  "label.stock-on-hand": "Запасы в Наличии",
+  "label.add-charges": "Добавить плату"
 }

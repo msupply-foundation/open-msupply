@@ -148,7 +148,7 @@ module.exports = env => {
         LOCAL_PLUGINS: JSON.stringify(localPlugins()),
         LANG_VERSION: Date.now(),
       }),
-      // bundleAnalyzerPlugin,
+      bundleAnalyzerPlugin,
       new HtmlWebpackPlugin({
         favicon: './public/favicon.ico',
         template: './public/index.html',
