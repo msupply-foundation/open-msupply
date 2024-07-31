@@ -524,6 +524,7 @@ fn get_push_and_error_sync_status_tester(
                     r.push_v6.clone_from(&current_status.push_v6);
                     r.pull_central.clone_from(&current_status.pull_central);
                     r.pull_v6.clone_from(&current_status.pull_v6);
+                    r.summary.duration_in_seconds = current_status.summary.duration_in_seconds;
                     r
                 });
                 assert_eq!(current_status, new_status);
