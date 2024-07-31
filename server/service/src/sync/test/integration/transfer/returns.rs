@@ -17,7 +17,6 @@ async fn integration_sync_return_transfers_normal() {
         item1,
         item2,
         service_item,
-        currency: _,
     } = initialise_transfer_sites("sync_return_transfers_normal").await;
 
     let test = async move {
@@ -178,7 +177,6 @@ async fn integration_sync_return_transfers_delete() {
         item1,
         item2,
         service_item,
-        currency: _,
     } = initialise_transfer_sites("return_transfers_delete").await;
 
     let test = async move {
@@ -286,7 +284,6 @@ async fn integration_sync_return_transfers_initialise() {
         item1,
         item2,
         service_item,
-        currency: _,
     } = initialise_transfer_sites(identifier).await;
 
     let test = async move {
