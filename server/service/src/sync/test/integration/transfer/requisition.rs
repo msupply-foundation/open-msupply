@@ -16,7 +16,6 @@ async fn integration_sync_requisition_transfers_normal() {
         item1,
         item2,
         service_item: _,
-        currency: _,
     } = initialise_transfer_sites("requisition_transfers_normal").await;
 
     let test = async move {
@@ -98,7 +97,6 @@ async fn integration_sync_requisition_transfers_initialisation() {
         item1,
         item2,
         service_item: _,
-        currency: _,
     } = initialise_transfer_sites(identifier).await;
 
     let test = async move {
