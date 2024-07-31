@@ -58,6 +58,7 @@ table! {
         integration_progress_done -> Nullable<Integer>,
         error_message -> Nullable<Text>,
         error_code -> Nullable<crate::db_diesel::sync_log_row::SyncApiErrorCodeMapping>,
+        duration_in_seconds -> Integer,
     }
 }
 
@@ -96,6 +97,7 @@ pub struct SyncLogRow {
     pub integration_progress_done: Option<i32>,
     pub error_message: Option<String>,
     pub error_code: Option<SyncApiErrorCode>,
+    pub duration_in_seconds: i32,
 }
 
 impl Default for SyncLogRow {
@@ -132,6 +134,7 @@ impl Default for SyncLogRow {
             push_v6_finished_datetime: Default::default(),
             push_v6_progress_total: Default::default(),
             push_v6_progress_done: Default::default(),
+            duration_in_seconds: Default::default(),
         }
     }
 }
