@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use fast_scraper::{Html, Selector};
+use fast_scraper::{ElementRef, Html, Selector};
 use repository::{
     EqualFilter, PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository,
     ReportSort, ReportType, RepositoryError,
@@ -172,10 +172,40 @@ fn generate_html_report_to_html(
     Ok(file.id)
 }
 
-// See tests below and structure in format_html_document
-const HEADER_CELLS_SELECTOR: &'static str = ".paging tbody thead tr td";
-const BODY_ROWS_SELECTOR: &'static str = ".paging tbody tbody tr";
-const CELL_SELECTOR: &'static str = "td";
+struct Selectors<'a> {
+    html: &'a Html,
+}
+
+impl<'a> Selectors<'a> {
+    fn new(html: &'a Html) -> Self {
+        Self { html }
+    }
+
+    fn headers(&self) -> Vec<&str> {
+        let headers_selector = Selector::parse(".paging tbody thead tr td").unwrap();
+        self.html
+            .select(&headers_selector)
+            .map(inner_text)
+            .collect()
+    }
+
+    fn rows_and_cells(&self) -> Vec<Vec<&str>> {
+        let rows_selector = Selector::parse(".paging tbody tbody tr").unwrap();
+        let cells_selector = Selector::parse("td").unwrap();
+        self.html
+            .select(&rows_selector)
+            .map(|row| row.select(&cells_selector).map(inner_text).collect())
+            .collect()
+    }
+}
+
+fn inner_text(element_ref: ElementRef) -> &str {
+    element_ref
+        .text()
+        .find(|t| t.trim().len() > 0)
+        .map(|t| t.trim())
+        .unwrap_or_default()
+}
 
 /// Converts the report to an Excel file and returns the file id
 fn print_html_report_to_excel(
@@ -190,22 +220,21 @@ fn print_html_report_to_excel(
     let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
 
     let fragment = Html::parse_fragment(&format_html_document(document));
-    let header_cells_selector = Selector::parse(HEADER_CELLS_SELECTOR).unwrap();
-    let body_rows_selector = Selector::parse(BODY_ROWS_SELECTOR).unwrap();
-    let cell_selector = Selector::parse(CELL_SELECTOR).unwrap();
 
-    for (index, html_cell) in fragment.select(&header_cells_selector).enumerate() {
+    let selectors = Selectors::new(&fragment); // Store Html when creating
+
+    for (index, header) in selectors.headers().into_iter().enumerate() {
         let cell = sheet.get_cell_mut((index as u32 + 1, 1));
 
-        cell.set_value(html_cell.inner_html());
+        cell.set_value(header);
         cell.get_style_mut().get_font_mut().set_bold(true);
     }
 
-    for row in fragment.select(&body_rows_selector).enumerate() {
-        for cell in row.1.select(&cell_selector).enumerate() {
+    for (row_index, row) in selectors.rows_and_cells().into_iter().enumerate() {
+        for (cell_index, cell) in row.into_iter().enumerate() {
             sheet
-                .get_cell_mut((cell.0 as u32 + 1, row.0 as u32 + 2))
-                .set_value(cell.1.inner_html());
+                .get_cell_mut((cell_index as u32 + 1, row_index as u32 + 2))
+                .set_value(cell);
         }
     }
 
@@ -674,9 +703,12 @@ mod report_service_test {
 #[cfg(test)]
 mod report_to_excel_test {
     use super::*;
-    use fast_scraper::{Html, Selector};
+    use fast_scraper::Html;
 
-    const test_html: &'static str = r#"
+    #[test]
+    fn test_selectors() {
+        let html = Html::parse_fragment(
+            r#"
 <html>
    <body>
       <table class="paging">
@@ -722,46 +754,54 @@ mod report_to_excel_test {
    </body>
 </html>
 
-    "#;
+    "#,
+        );
+
+        let selectors = Selectors::new(&html);
+
+        assert_eq!(selectors.headers(), vec!["First Header", "Second Header"]);
+
+        assert_eq!(
+            selectors.rows_and_cells(),
+            vec![
+                vec!["Row One Cell One", "Row One Cell Two"],
+                vec!["Row Two Cell One", "Row Two Cell Two"]
+            ]
+        );
+    }
 
     #[test]
-    fn test_selectors() {
-        let html = Html::parse_fragment(&test_html);
-        let selector = Selector::parse(HEADER_CELLS_SELECTOR).unwrap();
+    fn test_inner_text() {
+        let html = Html::parse_fragment(
+            r#"
+<html>
+   <body>
+      <table>
+         <tbody>
+            <tr>
+               <td class="status"> 
+                  <span class="out-of-stock">Out of Stock</span>
+               </td>
+                <td class="status"> 
+                  Out of Stock
+               </td>
+            </tr>
+         </tbody>
+      </table>         
+   </body>
+</html>
 
-        assert_eq!(
-            html.select(&selector)
-                .map(|c| c.inner_html())
-                .collect::<Vec<String>>(),
-            vec!["First Header".to_string(), "Second Header".to_string()]
+        "#,
         );
 
-        let rows_selector = Selector::parse(BODY_ROWS_SELECTOR).unwrap();
-        let cell_selector = Selector::parse(CELL_SELECTOR).unwrap();
-        let mut rows = html.select(&rows_selector);
+        let cells_selector = Selector::parse("td").unwrap();
+        let mut cells = html.select(&cells_selector);
+        let cell = cells.next().unwrap();
 
-        assert_eq!(
-            rows.next()
-                .unwrap()
-                .select(&cell_selector)
-                .map(|c| c.inner_html())
-                .collect::<Vec<String>>(),
-            vec![
-                "Row One Cell One".to_string(),
-                "Row One Cell Two".to_string()
-            ]
-        );
+        assert_eq!(inner_text(cell), "Out of Stock");
 
-        assert_eq!(
-            rows.next()
-                .unwrap()
-                .select(&cell_selector)
-                .map(|c| c.inner_html())
-                .collect::<Vec<String>>(),
-            vec![
-                "Row Two Cell One".to_string(),
-                "Row Two Cell Two".to_string()
-            ]
-        );
+        let cell = cells.next().unwrap();
+
+        assert_eq!(inner_text(cell), "Out of Stock");
     }
 }
