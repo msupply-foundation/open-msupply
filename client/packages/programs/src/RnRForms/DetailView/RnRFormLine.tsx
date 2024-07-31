@@ -94,8 +94,12 @@ export const RnRFormLine = ({
   return (
     <tr>
       {/* Read only Item data */}
-      <td style={readOnlyColumn}>{draft.item.code}</td>
-      <td style={readOnlyColumn}>{draft.item.name}</td>
+      <td className="sticky-column first-column" style={readOnlyColumn}>
+        {draft.item.code}
+      </td>
+      <td style={readOnlyColumn} className="sticky-column second-column">
+        {draft.item.name}
+      </td>
       <td style={readOnlyColumn}>{draft.item.strength}</td>
       <td style={readOnlyColumn}>{draft.item.unitName}</td>
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>{venCategory}</td>

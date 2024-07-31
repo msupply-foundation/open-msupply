@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Box,
+  GlobalStyles,
   NothingHere,
   Table,
   useTranslation,
@@ -30,24 +31,46 @@ export const ContentArea = ({
     <NothingHere body={t('error.no-items')} />
   ) : (
     <Box flex={1} padding={2}>
+      <GlobalStyles
+        styles={{
+          '.sticky-column': {
+            backgroundColor: '#fff',
+            position: 'sticky',
+            zIndex: 99,
+          },
+          '.first-column': {
+            position: '-webkit-sticky',
+            left: 16,
+            width: 80,
+          },
+          '.second-column': {
+            position: '-webkit-sticky',
+            left: 89,
+            minWidth: '300px',
+            borderRight: '1px solid blue',
+          },
+        }}
+      />
       <Table
         sx={{
           '& th': {
             textAlign: 'left',
             padding: 1,
             fontWeight: 'bold',
-            border: '1px solid lightgray',
+            border: '1px solid',
+            borderColor: 'gray.light',
           },
           '& td': {
             padding: '2px',
-            border: '1px solid lightgray',
+            border: '1px solid',
+            borderColor: 'gray.light',
           },
         }}
       >
         <thead>
           <tr>
-            <th style={{ width: '80px' }}>{t('label.code')}</th>
-            <th style={{ minWidth: '300px' }}>{t('label.name')}</th>
+            <th className="sticky-column first-column">{t('label.code')}</th>
+            <th className="sticky-column second-column">{t('label.name')}</th>
             <th>{t('label.strength')}</th>
             <th>{t('label.unit')}</th>
             <th>{t('label.ven')}</th>
