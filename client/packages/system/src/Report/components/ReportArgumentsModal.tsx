@@ -19,7 +19,20 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   onArgumentsSelected,
 }) => {
   const { store } = useAuthContext();
-  const [data, setData] = useState<JsonData>({});
+
+  const {
+    monthlyConsumptionLookBackPeriod,
+    monthsOverstock,
+    monthsUnderstock,
+    monthsItemsExpire,
+  } = store?.preferences ?? {};
+
+  const [data, setData] = useState<JsonData>({
+    monthlyConsumptionLookBackPeriod,
+    monthsOverstock,
+    monthsUnderstock,
+    monthsItemsExpire,
+  });
   const [error, setError] = useState<string | false>(false);
 
   // clean up when modal is closed
@@ -37,21 +50,6 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     return null;
   }
 
-  const {
-    monthlyConsumptionLookBackPeriod,
-    monthsOverstock,
-    monthsUnderstock,
-    monthsItemsExpire,
-  } = store?.preferences ?? {};
-
-  const jsonData = {
-    monthlyConsumptionLookBackPeriod,
-    monthsOverstock,
-    monthsUnderstock,
-    monthsItemsExpire,
-    ...(data as object),
-  };
-
   return (
     <Modal
       title="Report arguments"
@@ -62,7 +60,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
           variant="ok"
           disabled={!!error}
           onClick={async () => {
-            onArgumentsSelected(report, jsonData);
+            onArgumentsSelected(report, data);
             cleanUp();
           }}
         />
