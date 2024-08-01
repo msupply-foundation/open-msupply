@@ -1,5 +1,6 @@
 import {
   EnvUtils,
+  FileUtils,
   Platform,
   PrintFormat,
   PrintReportSortInput,
@@ -16,6 +17,7 @@ export type GenerateReportParams = {
   dataId?: string;
   args?: JsonData;
   sort?: PrintReportSortInput;
+  format?: PrintFormat;
 };
 
 const setClose = (frame: HTMLIFrameElement) => () => {
@@ -77,8 +79,6 @@ export const usePrintReport = () => {
     if (result?.generateReport?.__typename === 'PrintReportNode') {
       return result.generateReport.fileId;
     }
-
-    throw new Error('Unable to print report');
   };
 
   const { mutate, isLoading } = useMutation({
@@ -89,8 +89,7 @@ export const usePrintReport = () => {
       if (EnvUtils.printFormat === PrintFormat.Html) {
         printPage(url);
       } else {
-        const win = window.open(url, '_blank');
-        win?.focus();
+        FileUtils.downloadFile(url);
       }
     },
     onError: (e: Error) => {
