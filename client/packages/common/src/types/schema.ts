@@ -117,6 +117,8 @@ export enum ActivityLogNodeType {
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   RnrFormCreated = 'RNR_FORM_CREATED',
+  RnrFormFinalised = 'RNR_FORM_FINALISED',
+  RnrFormUpdated = 'RNR_FORM_UPDATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
@@ -2046,6 +2048,12 @@ export type FailedToFetchReportData = PrintReportErrorInterface & {
   errors: Scalars['JSON']['output'];
 };
 
+export type FinaliseRnRFormInput = {
+  id: Scalars['String']['input'];
+};
+
+export type FinaliseRnRFormResponse = RnRFormNode;
+
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
@@ -3370,7 +3378,7 @@ export type ItemNodeAvailableStockOnHandArgs = {
 
 
 export type ItemNodeStatsArgs = {
-  amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
+  amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -3737,6 +3745,7 @@ export type Mutations = {
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
+  finaliseRnrForm: FinaliseRnRFormResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
@@ -3819,6 +3828,7 @@ export type Mutations = {
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
   updateResponseRequisitionLine: UpdateResponseRequisitionLineResponse;
+  updateRnrForm: UpdateRnRFormResponse;
   updateSensor: UpdateSensorResponse;
   updateStockLine: UpdateStockLineLineResponse;
   updateStocktake: UpdateStocktakeResponse;
@@ -4001,6 +4011,12 @@ export type MutationsDeleteStocktakeArgs = {
 
 export type MutationsDeleteStocktakeLineArgs = {
   input: DeleteStocktakeLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsFinaliseRnrFormArgs = {
+  input: FinaliseRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4380,6 +4396,12 @@ export type MutationsUpdateResponseRequisitionArgs = {
 
 export type MutationsUpdateResponseRequisitionLineArgs = {
   input: UpdateResponseRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateRnrFormArgs = {
+  input: UpdateRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5278,6 +5300,7 @@ export type Queries = {
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   programs: ProgramsResponse;
+  rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
@@ -5731,6 +5754,12 @@ export type QueriesProgramsArgs = {
 };
 
 
+export type QueriesRAndRFormArgs = {
+  rnrFormId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesRAndRFormsArgs = {
   filter?: InputMaybe<RnRFormFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -6147,7 +6176,7 @@ export type RequisitionLineNode = {
 
 
 export type RequisitionLineNodeItemStatsArgs = {
-  amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
+  amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type RequisitionLineStatsError = {
@@ -6350,16 +6379,46 @@ export type RnRFormFilterInput = {
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type RnRFormLineNode = {
+  __typename: 'RnRFormLineNode';
+  adjustedQuantityConsumed: Scalars['Float']['output'];
+  adjustments: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
+  comment?: Maybe<Scalars['String']['output']>;
+  confirmed: Scalars['Boolean']['output'];
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  finalBalance: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  initialBalance: Scalars['Float']['output'];
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  maximumQuantity: Scalars['Float']['output'];
+  quantityConsumed: Scalars['Float']['output'];
+  quantityReceived: Scalars['Float']['output'];
+  requestedQuantity: Scalars['Float']['output'];
+  rnrFormId: Scalars['String']['output'];
+  stockOutDuration: Scalars['Int']['output'];
+};
+
 export type RnRFormNode = {
   __typename: 'RnRFormNode';
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
+  lines: Array<RnRFormLineNode>;
   periodId: Scalars['String']['output'];
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
+  status: RnRFormNodeStatus;
   supplierName: Scalars['String']['output'];
 };
+
+export enum RnRFormNodeStatus {
+  Draft = 'DRAFT',
+  Finalised = 'FINALISED'
+}
+
+export type RnRFormResponse = NodeError | RnRFormNode;
 
 export enum RnRFormSortFieldInput {
   CreatedDatetime = 'createdDatetime',
@@ -6882,6 +6941,7 @@ export type SyncSettingsNode = {
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
+  durationInSeconds: Scalars['Int']['output'];
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
 };
@@ -7720,6 +7780,28 @@ export type UpdateResult = {
   logo?: Maybe<Scalars['String']['output']>;
   theme?: Maybe<Scalars['String']['output']>;
 };
+
+export type UpdateRnRFormInput = {
+  id: Scalars['String']['input'];
+  lines: Array<UpdateRnRFormLineInput>;
+};
+
+export type UpdateRnRFormLineInput = {
+  adjustedQuantityConsumed: Scalars['Float']['input'];
+  adjustments?: InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption: Scalars['Float']['input'];
+  comment?: InputMaybe<Scalars['String']['input']>;
+  confirmed: Scalars['Boolean']['input'];
+  finalBalance: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
+  maximumQuantity: Scalars['Float']['input'];
+  quantityConsumed?: InputMaybe<Scalars['Float']['input']>;
+  quantityReceived?: InputMaybe<Scalars['Float']['input']>;
+  requestedQuantity: Scalars['Float']['input'];
+  stockOutDuration: Scalars['Int']['input'];
+};
+
+export type UpdateRnRFormResponse = RnRFormNode;
 
 export type UpdateSensorError = {
   __typename: 'UpdateSensorError';

@@ -90,9 +90,12 @@ fn map_error(error: ServiceError) -> Result<InsertRnRFormResponse> {
         | ServiceError::PeriodDoesNotExist
         | ServiceError::PeriodNotInProgramSchedule
         | ServiceError::ProgramHasNoMasterList
+
+        // TODO: these three either need to be prevented in UI or made into structured errors!
         | ServiceError::PeriodNotNextInSequence
         | ServiceError::PeriodNotClosed
         | ServiceError::PreviousRnRFormNotFinalised
+
         | ServiceError::RnRFormAlreadyExistsForPeriod => BadUserInput(formatted_error),
 
         ServiceError::InternalError(_)

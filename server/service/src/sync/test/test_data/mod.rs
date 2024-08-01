@@ -36,6 +36,8 @@ pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
+pub(crate) mod rnr_form;
+pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
 pub(crate) mod special;
 pub(crate) mod stock_line;
@@ -85,6 +87,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut asset_property::test_pull_upsert_records());
     test_records.append(&mut property::test_pull_upsert_records());
     test_records.append(&mut name_property::test_pull_upsert_records());
+
     test_records
 }
 
@@ -108,6 +111,9 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records.append(&mut currency::test_pull_upsert_records());
+    test_records.append(&mut rnr_form::test_pull_upsert_records());
+    test_records.append(&mut rnr_form_line::test_pull_upsert_records());
+
     test_records
 }
 
@@ -123,6 +129,7 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut unit::test_pull_delete_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_delete_records());
+
     test_records
 }
 
@@ -175,6 +182,8 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut name_oms_fields::test_v6_central_push_records());
     test_records.append(&mut property::test_v6_central_push_records());
     test_records.append(&mut name_property::test_v6_central_push_records());
+    test_records.append(&mut rnr_form::test_v6_records());
+    test_records.append(&mut rnr_form_line::test_v6_records());
 
     test_records
 }
