@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useDialog,
   Grid,
@@ -33,6 +33,14 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
   const { data: schedulesAndPeriods } = useSchedulesAndPeriods(
     draft.program?.id ?? ''
   );
+
+  // If there is only schedule, set it automatically
+  useEffect(() => {
+    if (schedulesAndPeriods?.nodes.length == 1 && !draft.schedule) {
+      updateDraft({ schedule: schedulesAndPeriods.nodes[0]! }); // if length is 1, the first element must exist
+    }
+    // Rerun if schedules change (i.e. when program changes)
+  }, [schedulesAndPeriods?.nodes?.[0]?.id]);
 
   const width = '350px';
 
@@ -71,16 +79,6 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
     >
       <Grid flexDirection="column" display="flex" gap={2}>
         <InputWithLabelRow
-          label={t('label.supplier')}
-          Input={
-            <SupplierSearchInput
-              width={350}
-              onChange={supplier => updateDraft({ supplier })}
-              value={draft.supplier}
-            />
-          }
-        />
-        <InputWithLabelRow
           label={t('label.program')}
           Input={
             <ProgramSearchInput
@@ -103,7 +101,6 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
               width={width}
               disabled={!draft.program}
               optionKey="name"
-              // TODO: autoselect!
               options={schedulesAndPeriods?.nodes ?? []}
               value={draft.schedule}
               onChange={(_, schedule) =>
@@ -124,6 +121,17 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
               options={draft.schedule?.periods ?? []}
               value={draft.period}
               onChange={(_, period) => period && updateDraft({ period })}
+            />
+          }
+        />
+
+        <InputWithLabelRow
+          label={t('label.supplier')}
+          Input={
+            <SupplierSearchInput
+              width={350}
+              onChange={supplier => updateDraft({ supplier })}
+              value={draft.supplier}
             />
           }
         />
