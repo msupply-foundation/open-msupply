@@ -14,5 +14,10 @@
     "label.systolic": "Систолическое",
     "label.bmi-prev-height-message": "Используя высоту {{height}}м из предыдущего измерения",
     "button.add-form": "Добавить Форму",
-    "error.no-rnr-forms": "О&З Формы не найдены"
+    "error.no-rnr-forms": "О&З Формы не найдены",
+    "label.new-rnr-form": "Новая О&З Форма",
+    "label.schedule": "Расписание",
+    "error.rnr-not-found": "О&З Форма не найдена",
+    "messages.click-to-return-to-rnr-list": "Нажмите сюда, чтобы вернуться к списку О&З Форм",
+    "messages.all-lines-must-be-confirmed": "Все линии должны быть подтверждены, прежде чем форма О&З может быть завершена"
 }

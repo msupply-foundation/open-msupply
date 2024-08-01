@@ -61,7 +61,10 @@ fn validate(
 ) -> Result<RnRFormRow, FinaliseRnRFormError> {
     let connection = &ctx.connection;
 
-    let rnr_form = check_rnr_form_exists(connection, &input.id)?
+    let RnRForm {
+        rnr_form_row: rnr_form,
+        ..
+    } = check_rnr_form_exists(connection, &input.id)?
         .ok_or(FinaliseRnRFormError::RnRFormDoesNotExist)?;
 
     if rnr_form.store_id != store_id {

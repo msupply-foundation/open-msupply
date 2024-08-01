@@ -18,5 +18,6 @@
   "label.new-rnr-form": "New R&R Form",
   "label.schedule": "Schedule",
   "label.systolic": "Systolic",
-  "messages.click-to-return-to-rnr-list": "Click here to return to the list of R&R Forms"
+  "messages.click-to-return-to-rnr-list": "Click here to return to the list of R&R Forms",
+  "messages.all-lines-must-be-confirmed": "All lines must be confirmed before the R&R form can be finalised"
 }
