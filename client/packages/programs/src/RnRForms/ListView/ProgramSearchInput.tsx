@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Autocomplete } from '@openmsupply-client/common';
 import { ProgramFragment } from '../../api/operations.generated';
 import { useProgramList } from '../../api';
@@ -15,6 +15,13 @@ export const ProgramSearchInput = ({
   width,
 }: ProgramSearchInputProps) => {
   const { data, isLoading } = useProgramList();
+
+  // If there is only one value, set it automatically
+  useEffect(() => {
+    if (data?.nodes.length == 1 && !value) {
+      onChange(data.nodes[0]!); // if length is 1, the first element must exist
+    }
+  }, [data?.nodes.length]);
 
   return (
     <Autocomplete
