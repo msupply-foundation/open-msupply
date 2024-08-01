@@ -79,6 +79,8 @@ export const usePrintReport = () => {
     if (result?.generateReport?.__typename === 'PrintReportNode') {
       return result.generateReport.fileId;
     }
+
+    throw new Error('Unable to print report');
   };
 
   const { mutate, isLoading } = useMutation({
