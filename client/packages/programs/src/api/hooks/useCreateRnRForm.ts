@@ -10,8 +10,9 @@ import {
 } from '../operations.generated';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { RNR_FORM } from './keys';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NameRowFragment } from '@openmsupply-client/system';
+import { useRnRFormList } from '.';
 
 interface RnRFormDraft {
   supplier: NameRowFragment | null;
@@ -22,13 +23,40 @@ interface RnRFormDraft {
 
 export const useCreateRnRForm = () => {
   const { mutateAsync, isLoading, error } = useCreate();
-
   const [draft, setDraft] = useState<RnRFormDraft>({
     supplier: null,
     program: null,
     schedule: null,
     period: null,
   });
+
+  // TODO: probably needs to filter down to prog and sched so we can determine period!
+  const { data } = useRnRFormList({
+    sortBy: {
+      key: 'createdDatetime',
+      direction: 'desc',
+    },
+  });
+  const previousForm = data?.nodes[0];
+
+  useEffect(() => {
+    // If there is a most recent previous form, and draft is blank
+    if (previousForm && draft.program === null) {
+      // Default to the same supplier and program as previous
+      setDraft({
+        ...draft,
+        supplier: {
+          id: previousForm.supplierId,
+          name: previousForm.supplierName,
+        } as NameRowFragment,
+        program: {
+          __typename: `ProgramNode`,
+          id: previousForm.programId,
+          name: previousForm.programName,
+        },
+      });
+    }
+  }, [!!previousForm]);
 
   const clearDraft = () => {
     setDraft({
