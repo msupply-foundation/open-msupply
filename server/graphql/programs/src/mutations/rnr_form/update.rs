@@ -1,5 +1,6 @@
 use async_graphql::*;
 
+use chrono::NaiveDate;
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -23,9 +24,11 @@ pub struct UpdateRnRFormLineInput {
     pub quantity_received: Option<f64>,
     pub quantity_consumed: Option<f64>,
     pub adjustments: Option<f64>,
+    pub expiry_date: Option<NaiveDate>,
     pub stock_out_duration: i32,
     pub adjusted_quantity_consumed: f64,
     pub average_monthly_consumption: f64,
+    pub initial_balance: f64,
     pub final_balance: f64,
     pub maximum_quantity: f64,
     pub requested_quantity: f64,
@@ -120,6 +123,8 @@ impl UpdateRnRFormLineInput {
             requested_quantity,
             comment,
             confirmed,
+            expiry_date,
+            initial_balance,
         }: UpdateRnRFormLineInput,
     ) -> UpdateRnRFormLine {
         UpdateRnRFormLine {
@@ -135,6 +140,8 @@ impl UpdateRnRFormLineInput {
             requested_quantity,
             comment,
             confirmed,
+            expiry_date,
+            initial_balance,
         }
     }
 }

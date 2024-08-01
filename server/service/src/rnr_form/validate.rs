@@ -1,14 +1,15 @@
 use repository::{
     EqualFilter, MasterListFilter, MasterListRepository, Period, PeriodFilter, PeriodRepository,
-    PeriodRow, PeriodRowRepository, ProgramRow, ProgramRowRepository, RepositoryError, RnRFormRow,
-    RnRFormRowRepository, StorageConnection,
+    PeriodRow, PeriodRowRepository, ProgramRow, ProgramRowRepository, RepositoryError, RnRForm,
+    RnRFormFilter, RnRFormRepository, StorageConnection,
 };
 
 pub fn check_rnr_form_exists(
     connection: &StorageConnection,
     rnr_form_id: &str,
-) -> Result<Option<RnRFormRow>, RepositoryError> {
-    RnRFormRowRepository::new(connection).find_one_by_id(rnr_form_id)
+) -> Result<Option<RnRForm>, RepositoryError> {
+    RnRFormRepository::new(connection)
+        .query_one(RnRFormFilter::new().id(EqualFilter::equal_to(rnr_form_id)))
 }
 
 pub fn check_rnr_form_does_not_exist(

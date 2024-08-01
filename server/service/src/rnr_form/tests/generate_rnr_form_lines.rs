@@ -3,7 +3,8 @@ mod generate_rnr_form_lines {
     use chrono::NaiveDate;
     use repository::mock::{
         item_query_test1, mock_item_a, mock_master_list_program_b, mock_name_invad,
-        mock_period_2_a, mock_program_b, mock_rnr_form_a, MockData,
+        mock_period_2_a, mock_period_2_b, mock_period_2_c, mock_program_b, mock_rnr_form_a,
+        MockData,
     };
     use repository::mock::{mock_store_a, MockDataInserts};
     use repository::test_db::setup_all_with_data;
@@ -14,8 +15,8 @@ mod generate_rnr_form_lines {
 
     use crate::rnr_form::generate_rnr_form_lines::{
         generate_rnr_form_lines, get_adjusted_quantity_consumed, get_amc, get_earliest_expiry,
-        get_opening_balance, get_previous_amc_averages, get_stock_out_duration, get_usage_map,
-        UsageStats,
+        get_opening_balance, get_previous_monthly_consumption, get_stock_out_duration,
+        get_usage_map, UsageStats,
     };
     use crate::service_provider::ServiceProvider;
 
@@ -92,6 +93,7 @@ mod generate_rnr_form_lines {
                 // AMC calculated used const NUMBER_OF_DAYS_IN_A_MONTH rather than actual # days in given month...
                 // would ideally be same as adjusted_quantity_consumed here...
                 average_monthly_consumption: 3.913043478260869,
+                previous_average_monthly_consumption: 0.0,
                 final_balance: 3.0,
                 entered_quantity_received: None,
                 entered_quantity_consumed: None,
@@ -305,9 +307,9 @@ mod generate_rnr_form_lines {
     }
 
     #[actix_rt::test]
-    async fn test_get_previous_amc_averages() {
+    async fn test_get_previous_monthly_consumption() {
         let (_, connection, _, _) = setup_all_with_data(
-            "test_get_previous_amc_averages",
+            "test_get_previous_monthly_consumption",
             MockDataInserts::all(),
             MockData {
                 rnr_forms: vec![
@@ -328,7 +330,7 @@ mod generate_rnr_form_lines {
                         name_link_id: "name_store_b".to_string(),
                         store_id: mock_store_a().id,
                         program_id: mock_program_b().id,
-                        period_id: mock_period_2_a().id,
+                        period_id: mock_period_2_b().id,
                         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                             .unwrap()
                             .and_hms_opt(0, 0, 0)
@@ -340,7 +342,7 @@ mod generate_rnr_form_lines {
                         name_link_id: "name_store_b".to_string(),
                         store_id: mock_store_a().id,
                         program_id: mock_program_b().id,
-                        period_id: mock_period_2_a().id,
+                        period_id: mock_period_2_c().id,
                         created_datetime: NaiveDate::from_ymd_opt(2024, 3, 1)
                             .unwrap()
                             .and_hms_opt(0, 0, 0)
@@ -353,21 +355,21 @@ mod generate_rnr_form_lines {
                         id: "rnr_form_1_line_a".to_string(),
                         rnr_form_id: "rnr_form_1".to_string(),
                         item_id: item_query_test1().id,
-                        average_monthly_consumption: 1.0,
+                        adjusted_quantity_consumed: 1.0,
                         ..Default::default()
                     },
                     RnRFormLineRow {
                         id: "rnr_form_2_line_a".to_string(),
                         rnr_form_id: "rnr_form_2".to_string(),
                         item_id: item_query_test1().id,
-                        average_monthly_consumption: 2.0,
+                        adjusted_quantity_consumed: 2.0,
                         ..Default::default()
                     },
                     RnRFormLineRow {
                         id: "rnr_form_3_line_a".to_string(),
                         rnr_form_id: "rnr_form_3".to_string(),
                         item_id: item_query_test1().id,
-                        average_monthly_consumption: 3.0,
+                        adjusted_quantity_consumed: 3.0,
                         ..Default::default()
                     },
                 ],
@@ -377,7 +379,7 @@ mod generate_rnr_form_lines {
         .await;
 
         // When no rnr_forms, map will be empty
-        let result = get_previous_amc_averages(
+        let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
             RnRFormFilter::new().id(EqualFilter::equal_to("not-exists")),
@@ -386,16 +388,20 @@ mod generate_rnr_form_lines {
         assert_eq!(result.get(&item_query_test1().id), None);
 
         // When only one rnr_form, map includes that one
-        let result = get_previous_amc_averages(
+        let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
             RnRFormFilter::new().id(EqualFilter::equal_to("rnr_form_1")),
         )
         .unwrap();
-        assert_eq!(result.get(&item_query_test1().id), Some(&vec![1.0]));
+        assert_eq!(
+            result.get(&item_query_test1().id),
+            // adjusted consumption for the month
+            Some(&vec![0.9677419354838709])
+        );
 
         // When many rnr forms, it gets the most recent two
-        let result = get_previous_amc_averages(
+        let result = get_previous_monthly_consumption(
             &connection,
             // Filter so that no rnr_forms are returned
             RnRFormFilter::new().id(EqualFilter::equal_any(vec![
@@ -405,7 +411,11 @@ mod generate_rnr_form_lines {
             ])),
         )
         .unwrap();
-        assert_eq!(result.get(&item_query_test1().id), Some(&vec![2.0, 3.0]));
+        assert_eq!(
+            result.get(&item_query_test1().id),
+            // adjusted consumption for the month
+            Some(&vec![2.0689655172413794, 2.9032258064516125])
+        );
     }
 
     #[actix_rt::test]
@@ -417,7 +427,10 @@ mod generate_rnr_form_lines {
                 20.0,    // 20 consumed in period
                 &vec![]  // no previous AMCs
             ),
-            10.0 // AMC should be 10 packs per month
+            (
+                0.0,  // No previous AMC
+                10.0  // AMC should be 10 packs per month
+            )
         );
 
         // if there is a previous AMC average, average that with the current period
@@ -427,7 +440,10 @@ mod generate_rnr_form_lines {
                 20.0,              // 20 consumed in period
                 &vec![15.0, 11.0]  // AMC across previous periods
             ),
-            12.0 // 10 per month this period, averaged with 15 and 11
+            (
+                13.0, // 15 and 11 average for last two months
+                12.0  // 10 per month this period, averaged with 15 and 11
+            )
         );
     }
 

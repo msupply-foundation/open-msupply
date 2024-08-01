@@ -79,5 +79,8 @@
   "label.select-rows-to-allocate-them": "Выберите строки, чтобы распределить их",
   "label.supply-quantity": "Количество для поставки",
   "message.placeholder-line": "Для дополнительного запрашиваемого количества была создана резервная строка",
-  "message.placeholder-lines-cannot-be-returned": "Резервные строки не могут быть возвращены"
+  "message.placeholder-lines-cannot-be-returned": "Резервные строки не могут быть возвращены",
+  "messages.stock-expired": "Срок действия некоторых линий запасов истек, и они не будут распределены автоматически.",
+  "messages.stock-on-hold": "Некоторые строки запасов находятся в режиме ожидания и не могут быть распределены.",
+  "messages.no-stock-available": "Не имеется в наличии"
 }
