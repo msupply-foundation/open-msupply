@@ -272,5 +272,6 @@
   "label.date": "Дата",
   "label.date-created": "Дата Создания",
   "label.default-pack-size": "Размер упаковки по умолчанию",
-  "label.current-population": "Текущее население"
+  "label.current-population": "Текущее население",
+  "label.strength": "Прочность"
 }
