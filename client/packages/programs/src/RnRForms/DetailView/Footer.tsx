@@ -6,16 +6,37 @@ import {
   useBreadcrumbs,
   useTranslation,
   RnRFormNodeStatus,
+  useNotification,
 } from '@openmsupply-client/common';
 import { useRnRForm } from '../../api';
 
-export const Footer = ({ rnrFormId }: { rnrFormId: string }) => {
-  const t = useTranslation();
+export const Footer = ({
+  rnrFormId,
+  linesUnconfirmed,
+}: {
+  rnrFormId: string;
+  linesUnconfirmed: boolean;
+}) => {
+  const t = useTranslation('programs');
   const { navigateUpOne } = useBreadcrumbs();
+  const { error, info, success } = useNotification();
   const {
     query: { data },
     finalise: { finalise, isFinalising },
   } = useRnRForm({ rnrFormId });
+
+  const onFinalise = async () => {
+    if (linesUnconfirmed) {
+      info(t('messages.all-lines-must-be-confirmed'))();
+      return;
+    }
+    try {
+      await finalise();
+      success(t('label.finalised'))();
+    } catch (e) {
+      error((e as Error).message)();
+    }
+  };
 
   return (
     <AppFooterPortal
@@ -34,14 +55,16 @@ export const Footer = ({ rnrFormId }: { rnrFormId: string }) => {
                 variant={'cancel'}
               />
               <DialogButton
-                // TODO: confirmation modal,
-                // disable finalise when dirty fields
                 disabled={
                   isFinalising || data.status === RnRFormNodeStatus.Finalised
                 }
-                onClick={() => finalise()}
+                onClick={onFinalise}
                 variant={'ok'}
-                customLabel={t('label.finalise')}
+                customLabel={
+                  data.status === RnRFormNodeStatus.Finalised
+                    ? t('label.finalised')
+                    : t('label.finalise')
+                }
               />
             </Box>
           </Box>

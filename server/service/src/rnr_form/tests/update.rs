@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod update {
+    use chrono::NaiveDate;
     use repository::mock::MockDataInserts;
     use repository::mock::{
         mock_rnr_form_a, mock_rnr_form_a_line_a, mock_rnr_form_b, mock_rnr_form_b_line_a,
@@ -114,6 +115,7 @@ mod update {
                         adjustments: Some(0.0),
                         quantity_received: Some(1.0),
                         quantity_consumed: Some(1.0),
+                        initial_balance: 10.0,
                         final_balance: 6.0, // initial is 10, so +1 -1 should equal 10
                         ..Default::default()
                     }]
@@ -122,6 +124,52 @@ mod update {
             Err(UpdateRnRFormError::LineError {
                 line_id: mock_rnr_form_b_line_a().id,
                 error: UpdateRnRFormLineError::ValuesDoNotBalance
+            })
+        );
+
+        // StockOutDurationExceedsPeriod
+        assert_eq!(
+            service.update_rnr_form(
+                &context,
+                &store_id,
+                UpdateRnRForm {
+                    id: mock_rnr_form_b().id,
+                    lines: vec![UpdateRnRFormLine {
+                        id: mock_rnr_form_b_line_a().id,
+                        stock_out_duration: 100, // period is only a month
+                        initial_balance: 10.0,
+                        final_balance: 7.0,
+                        ..Default::default()
+                    }]
+                }
+            ),
+            Err(UpdateRnRFormError::LineError {
+                line_id: mock_rnr_form_b_line_a().id,
+                error: UpdateRnRFormLineError::StockOutDurationExceedsPeriod
+            })
+        );
+
+        // FinalBalanceCannotBeNegative
+        assert_eq!(
+            service.update_rnr_form(
+                &context,
+                &store_id,
+                UpdateRnRForm {
+                    id: mock_rnr_form_b().id,
+                    lines: vec![UpdateRnRFormLine {
+                        id: mock_rnr_form_b_line_a().id,
+                        initial_balance: 0.0,
+                        quantity_consumed: Some(7.0),
+                        quantity_received: Some(0.0),
+                        adjustments: Some(0.0),
+                        final_balance: -7.0,
+                        ..Default::default()
+                    }]
+                }
+            ),
+            Err(UpdateRnRFormError::LineError {
+                line_id: mock_rnr_form_b_line_a().id,
+                error: UpdateRnRFormLineError::FinalBalanceCannotBeNegative
             })
         );
 
@@ -134,6 +182,7 @@ mod update {
                     id: mock_rnr_form_b().id,
                     lines: vec![UpdateRnRFormLine {
                         id: mock_rnr_form_b_line_a().id,
+                        initial_balance: 10.0,
                         final_balance: 7.0,
                         requested_quantity: -10.0,
                         ..Default::default()
@@ -170,8 +219,10 @@ mod update {
                         quantity_consumed: Some(8.0),
                         comment: Some("hello".to_string()),
                         confirmed: true,
+                        initial_balance: 10.0,
                         final_balance: 5.0,
                         requested_quantity: 13.0,
+                        expiry_date: NaiveDate::from_ymd_opt(2021, 1, 1),
                         ..Default::default()
                     }],
                 },
@@ -189,7 +240,7 @@ mod update {
                 id: mock_rnr_form_b_line_a().id,
                 rnr_form_id: mock_rnr_form_b().id,
                 item_id: mock_rnr_form_b_line_a().item_id,
-                initial_balance: mock_rnr_form_b_line_a().initial_balance,
+                initial_balance: 10.0,
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 7.0,
                 snapshot_adjustments: -1.0,
@@ -199,12 +250,13 @@ mod update {
                 requested_quantity: 13.0,
                 comment: Some("hello".to_string()),
                 confirmed: true,
+                expiry_date: NaiveDate::from_ymd_opt(2021, 1, 1),
                 average_monthly_consumption: 0.0,
                 entered_adjustments: None,
                 adjusted_quantity_consumed: 0.0,
                 stock_out_duration: 0,
                 maximum_quantity: 0.0,
-                expiry_date: None,
+                previous_average_monthly_consumption: 0.0,
             }
         );
     }
