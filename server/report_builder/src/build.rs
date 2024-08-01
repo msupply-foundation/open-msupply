@@ -1,4 +1,5 @@
 use anyhow::Result;
+use base64::prelude::*;
 use service::report::definition::{
     DefaultQuery, GraphQlQuery, Manifest, ReportDefinition, ReportDefinitionEntry,
     ReportDefinitionIndex, ReportOutputType, SQLQuery, TeraTemplate,
@@ -7,6 +8,7 @@ use std::{
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
+    process::Command,
 };
 
 use crate::BuildArgs;
@@ -99,6 +101,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         header: None,
         footer: None,
         query: vec![],
+        convert_data: None,
     };
     let mut entries: HashMap<String, ReportDefinitionEntry> = HashMap::new();
 
@@ -234,6 +237,49 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         };
 
         entries.insert(name, value);
+    }
+
+    // convert_data
+    if let Some(convert_data) = &args.convert_data {
+        let manifest_path = &format!("./{}/Cargo.toml", convert_data);
+
+        if Path::new(&manifest_path).exists() {
+            let target_dir = format!(
+                "./{}/target/wasm32-unknown-unknown/release/{}.wasm",
+                convert_data, convert_data
+            );
+
+            Command::new("cargo")
+                .args([
+                    "build",
+                    "--release",
+                    "--target",
+                    "wasm32-unknown-unknown",
+                    "--manifest-path",
+                    &manifest_path,
+                ])
+                .output()
+                .unwrap();
+
+            let encoded = BASE64_STANDARD.encode(fs::read(target_dir).unwrap());
+
+            index.convert_data = Some(encoded)
+        } else {
+            let js = &format!("./{}/convert_data.js", convert_data);
+
+            let ts = &format!("./{}/convert_data.d.ts", convert_data);
+
+            let wasm = &format!("./{}/convert_data.wasm", convert_data);
+
+            Command::new("extism-js")
+                .args([&js, "-i", &ts, "-o", &wasm])
+                .output()
+                .unwrap();
+
+            let encoded = BASE64_STANDARD.encode(fs::read(wasm).unwrap());
+
+            index.convert_data = Some(encoded)
+        }
     }
 
     Ok(ReportDefinition { index, entries })
