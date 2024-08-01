@@ -18,5 +18,6 @@
     "label.new-rnr-form": "Новая О&З Форма",
     "label.schedule": "Расписание",
     "error.rnr-not-found": "О&З Форма не найдена",
-    "messages.click-to-return-to-rnr-list": "Нажмите сюда, чтобы вернуться к списку О&З Форм"
+    "messages.click-to-return-to-rnr-list": "Нажмите сюда, чтобы вернуться к списку О&З Форм",
+    "messages.all-lines-must-be-confirmed": "Все линии должны быть подтверждены, прежде чем форма О&З может быть завершена"
 }
