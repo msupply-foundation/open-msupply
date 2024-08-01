@@ -46,7 +46,7 @@
   "messages.confirm-delete-stocktake": "Это навсегда удалит Инвентаризацию №{{number}}",
   "messages.confirm-delete-stocktake_lines_one": "Это навсегда удалит 1 линию инвентаризации",
   "messages.unlocked-description": "Это позволит снова вносить изменения в инвентаризацию.",
-  "messages.select-rows-to-delete": "Выберите ряды для удаления",
+  "messages.select-rows-to-delete": "Выберите строки, чтобы удалить их",
   "label.adjust-by": "на",
   "label.current-num-of-packs": "Текущее количество упаковок",
   "label.decrease-qty": "Уменьшить количество",

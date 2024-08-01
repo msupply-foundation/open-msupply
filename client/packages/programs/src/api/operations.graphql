@@ -781,12 +781,35 @@ mutation deleteVaccineCourse($vaccineCourseId: String!) {
 
 fragment RnRForm on RnRFormNode {
   id
-  programId
-  programName
+  createdDatetime
   periodId
   periodName
-  createdDatetime
+  programId
+  programName
   supplierName
+  status
+}
+
+fragment RnRFormLine on RnRFormLineNode {
+  id
+  averageMonthlyConsumption
+  initialBalance
+  quantityReceived
+  quantityConsumed
+  adjustedQuantityConsumed
+  adjustments
+  stockOutDuration
+  finalBalance
+  maximumQuantity
+  expiryDate
+  requestedQuantity
+  comment
+  confirmed
+  item {
+    code
+    name
+    unitName
+  }
 }
 
 query rnrForms(
@@ -880,6 +903,35 @@ query schedulesAndPeriods($storeId: String!, $programId: String!) {
       nodes {
         ...PeriodSchedule
       }
+    }
+  }
+}
+
+query rAndRFormDetail($rnrFormId: String!, $storeId: String!) {
+  rAndRForm(rnrFormId: $rnrFormId, storeId: $storeId) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+      lines {
+        ...RnRFormLine
+      }
+    }
+  }
+}
+
+mutation finaliseRnRForm($storeId: String!, $input: FinaliseRnRFormInput!) {
+  finaliseRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
     }
   }
 }

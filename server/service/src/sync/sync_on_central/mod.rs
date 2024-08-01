@@ -175,8 +175,10 @@ pub async fn push(
 
     let records_in_this_batch = records.len() as u64;
 
-    let sync_buffer_rows =
-        CommonSyncRecord::to_buffer_rows(records.into_iter().map(|r| r.record).collect())?;
+    let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+        records.into_iter().map(|r| r.record).collect(),
+        Some(response.site_id),
+    )?;
 
     ctx.connection
         .transaction_sync(|t_con| {

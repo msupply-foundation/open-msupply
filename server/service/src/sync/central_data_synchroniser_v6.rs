@@ -110,8 +110,10 @@ impl SynchroniserV6 {
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
             let last_cursor_in_batch = records.last().map(|r| r.cursor).unwrap_or(start_cursor);
-            let sync_buffer_rows =
-                CommonSyncRecord::to_buffer_rows(records.into_iter().map(|r| r.record).collect())?;
+            let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+                records.into_iter().map(|r| r.record).collect(),
+                None, // Everything from open-mSupply Central Server is considered to not have a source_site_id
+            )?;
             // Upsert sync buffer rows in a transaction together with cursor update
             connection
                 .transaction_sync(|t_con| {

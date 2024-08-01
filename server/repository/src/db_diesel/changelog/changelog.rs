@@ -155,8 +155,8 @@ impl ChangelogTableName {
             ChangelogTableName::Property => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
-            ChangelogTableName::RnrForm => ChangeLogSyncStyle::Central,
-            ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Central,
+            ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,
         }
     }
 }

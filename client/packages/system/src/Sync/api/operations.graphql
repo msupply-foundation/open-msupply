@@ -44,6 +44,7 @@ mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
 fragment SyncStatus on SyncStatusNode {
   __typename
   finished
+  durationInSeconds
   started
 }
 

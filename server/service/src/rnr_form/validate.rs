@@ -33,7 +33,7 @@ pub fn check_period_exists(
     PeriodRowRepository::new(connection).find_one_by_id(period_id)
 }
 
-pub fn check_rnr_form_exists_for_period(
+pub fn check_rnr_form_already_exists_for_period(
     connection: &StorageConnection,
     store_id: &str,
     period_id: &str,

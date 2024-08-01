@@ -45,11 +45,25 @@ pub fn mock_period_2_b() -> PeriodRow {
         end_date: NaiveDate::from_ymd_opt(2024, 2, 29).unwrap(),
     }
 }
+pub fn mock_period_2_c() -> PeriodRow {
+    PeriodRow {
+        id: "period_2_c".to_string(),
+        name: "March 2024".to_string(),
+        period_schedule_id: "mock_period_schedule_2".to_string(),
+        start_date: NaiveDate::from_ymd_opt(2024, 3, 1).unwrap(),
+        end_date: NaiveDate::from_ymd_opt(2024, 3, 31).unwrap(),
+    }
+}
 
 pub fn mock_period_schedules() -> Vec<PeriodScheduleRow> {
     vec![mock_period_schedule_1(), mock_period_schedule_2()]
 }
 
 pub fn mock_periods() -> Vec<PeriodRow> {
-    vec![mock_period(), mock_period_2_a(), mock_period_2_b()]
+    vec![
+        mock_period(),
+        mock_period_2_a(),
+        mock_period_2_b(),
+        mock_period_2_c(),
+    ]
 }

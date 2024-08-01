@@ -6,17 +6,18 @@ use crate::{
 
 use chrono::Utc;
 use repository::{
-    ActivityLogType, PeriodRow, ProgramRequisitionSettingsRowRepository, RepositoryError, RnRForm,
-    RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, RnRFormStatus,
-    StorageConnection,
+    ActivityLogType, EqualFilter, PeriodRow, RepositoryError, RnRForm, RnRFormFilter,
+    RnRFormLineRow, RnRFormLineRowRepository, RnRFormRepository, RnRFormRow, RnRFormRowRepository,
+    RnRFormStatus,
 };
 
 use super::{
     generate_rnr_form_lines::generate_rnr_form_lines,
     query::get_rnr_form,
+    schedules_with_periods::get_schedules_with_periods_by_program,
     validate::{
         check_master_list_exists, check_period_exists, check_program_exists,
-        check_rnr_form_does_not_exist, check_rnr_form_exists_for_period,
+        check_rnr_form_already_exists_for_period, check_rnr_form_does_not_exist,
     },
 };
 #[derive(Default, Debug, PartialEq, Clone)]
@@ -54,8 +55,15 @@ pub fn insert_rnr_form(
     let rnr_form = ctx
         .connection
         .transaction_sync(|connection| {
-            let (period_row, master_list_id) = validate(connection, store_id, &input)?;
-            let (rnr_form, rnr_form_lines) = generate(ctx, input, period_row, &master_list_id)?;
+            let (previous_rnr_form, period_row, master_list_id) = validate(ctx, store_id, &input)?;
+            let (rnr_form, rnr_form_lines) = generate(
+                ctx,
+                store_id,
+                input,
+                previous_rnr_form,
+                period_row,
+                &master_list_id,
+            )?;
 
             let rnr_form_repo = RnRFormRowRepository::new(connection);
             let rnr_form_line_repo = RnRFormLineRowRepository::new(connection);
@@ -74,7 +82,7 @@ pub fn insert_rnr_form(
                 None,
             )?;
 
-            get_rnr_form(ctx, rnr_form.id)
+            get_rnr_form(ctx, store_id, rnr_form.id)
                 .map_err(InsertRnRFormError::DatabaseError)?
                 .ok_or(InsertRnRFormError::NewlyCreatedRnRFormDoesNotExist)
         })
@@ -84,10 +92,12 @@ pub fn insert_rnr_form(
 }
 
 fn validate(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     store_id: &str,
     input: &InsertRnRForm,
-) -> Result<(PeriodRow, String), InsertRnRFormError> {
+) -> Result<(Option<RnRForm>, PeriodRow, String), InsertRnRFormError> {
+    let connection = &ctx.connection;
+
     if !check_rnr_form_does_not_exist(connection, &input.id)? {
         return Err(InsertRnRFormError::RnRFormAlreadyExists);
     }
@@ -118,34 +128,70 @@ fn validate(
         return Err(InsertRnRFormError::PeriodNotClosed);
     }
 
-    let period_schedule_ids = ProgramRequisitionSettingsRowRepository::new(connection)
-        .find_many_by_program_id(&input.program_id)?
-        .iter()
-        .map(|s| s.period_schedule_id.clone())
-        .collect::<Vec<String>>();
+    let schedules = get_schedules_with_periods_by_program(ctx, store_id, &input.program_id)?;
 
     // Check if period is part of one of the period schedules for the program
-    if !period_schedule_ids.contains(&period.period_schedule_id) {
-        return Err(InsertRnRFormError::PeriodNotInProgramSchedule);
-    }
+    let schedule = schedules
+        .iter()
+        .find(|s| s.schedule_row.id == period.period_schedule_id)
+        .ok_or(InsertRnRFormError::PeriodNotInProgramSchedule)?;
 
-    if check_rnr_form_exists_for_period(connection, store_id, &input.period_id, &input.program_id)?
-        .is_some()
+    if check_rnr_form_already_exists_for_period(
+        connection,
+        store_id,
+        &input.period_id,
+        &input.program_id,
+    )?
+    .is_some()
     {
         return Err(InsertRnRFormError::RnRFormAlreadyExistsForPeriod);
     };
 
-    Ok((period, master_list_id))
+    // Query one, as query sorts by created date, will return latest
+    let most_recent_form = RnRFormRepository::new(&ctx.connection).query_one(
+        RnRFormFilter::new()
+            .store_id(EqualFilter::equal_to(&ctx.store_id))
+            .program_id(EqualFilter::equal_to(&input.program_id))
+            .period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id)),
+    )?;
+
+    if let Some(form) = most_recent_form.clone() {
+        let previous_period = schedule
+            .periods
+            .iter()
+            .position(|p| p.period_row.id == form.period_row.id)
+            // this should never happen, we've already checked it's there
+            .ok_or(InsertRnRFormError::PeriodNotInProgramSchedule)?;
+
+        let this_period = schedule
+            .periods
+            .iter()
+            .position(|p| p.period_row.id == period.id)
+            // this should never happen, we've already checked it's there
+            .ok_or(InsertRnRFormError::PeriodNotInProgramSchedule)?;
+
+        if previous_period != this_period + 1 {
+            return Err(InsertRnRFormError::PeriodNotNextInSequence);
+        }
+
+        if form.rnr_form_row.status != RnRFormStatus::Finalised {
+            return Err(InsertRnRFormError::PreviousRnRFormNotFinalised);
+        }
+    }
+
+    Ok((most_recent_form, period, master_list_id))
 }
 
 fn generate(
     ctx: &ServiceContext,
+    store_id: &str,
     InsertRnRForm {
         id,
         supplier_id,
         program_id,
         period_id,
     }: InsertRnRForm,
+    previous_rnr_form: Option<RnRForm>,
     period: PeriodRow,
     master_list_id: &str,
 ) -> Result<(RnRFormRow, Vec<RnRFormLineRow>), RepositoryError> {
@@ -154,17 +200,25 @@ fn generate(
     let rnr_form = RnRFormRow {
         id,
         period_id,
-        program_id,
+        program_id: program_id.clone(),
         name_link_id: supplier_id,
         created_datetime: current_datetime,
-        store_id: ctx.store_id.clone(),
+        store_id: store_id.to_string(),
         // default
         finalised_datetime: None,
         status: RnRFormStatus::Draft,
         linked_requisition_id: None,
     };
 
-    let rnr_form_lines = generate_rnr_form_lines(ctx, &rnr_form.id, master_list_id, period)?;
+    let rnr_form_lines = generate_rnr_form_lines(
+        ctx,
+        &store_id,
+        &rnr_form.id,
+        &program_id,
+        master_list_id,
+        period,
+        previous_rnr_form,
+    )?;
 
     Ok((rnr_form, rnr_form_lines))
 }
