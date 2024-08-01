@@ -4,6 +4,7 @@ use dataloader::DataLoader;
 use graphql_core::{loader::RnRFormLinesByRnRFormIdLoader, ContextExt};
 use repository::{NameRow, PeriodRow, ProgramRow, RnRForm, RnRFormRow, RnRFormStatus};
 use serde::Serialize;
+use service::rnr_form::get_period_length;
 
 use super::rnr_form_line::RnRFormLineNode;
 
@@ -46,6 +47,10 @@ impl RnRFormNode {
 
     pub async fn period_name(&self) -> &str {
         &self.period_row.name
+    }
+
+    pub async fn period_length(&self) -> i64 {
+        get_period_length(&self.period_row)
     }
 
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<Vec<RnRFormLineNode>> {

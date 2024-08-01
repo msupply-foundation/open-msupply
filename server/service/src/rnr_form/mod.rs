@@ -1,6 +1,8 @@
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 
-use repository::{PaginationOption, RepositoryError, RnRForm, RnRFormFilter, RnRFormSort};
+use repository::{
+    PaginationOption, PeriodRow, RepositoryError, RnRForm, RnRFormFilter, RnRFormSort,
+};
 
 use self::finalise::{finalise_rnr_form, FinaliseRnRForm, FinaliseRnRFormError};
 use self::insert::{insert_rnr_form, InsertRnRForm, InsertRnRFormError};
@@ -77,3 +79,11 @@ pub trait RnRFormServiceTrait: Sync + Send {
 
 pub struct RnRFormService;
 impl RnRFormServiceTrait for RnRFormService {}
+
+pub fn get_period_length(period: &PeriodRow) -> i64 {
+    period
+        .end_date
+        .signed_duration_since(period.start_date)
+        .num_days()
+        + 1 // To be inclusive of end date
+}

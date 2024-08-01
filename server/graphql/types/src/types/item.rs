@@ -11,7 +11,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Item, ItemRow, ItemType};
+use repository::{Item, ItemRow, ItemType, VENCategory};
 use serde_json::json;
 use service::ListResult;
 
@@ -46,6 +46,14 @@ impl ItemNode {
 
     pub async fn r#type(&self) -> ItemNodeType {
         ItemNodeType::from_domain(&self.row().r#type)
+    }
+
+    pub async fn strength(&self) -> &Option<String> {
+        &self.row().strength
+    }
+
+    pub async fn ven_category(&self) -> VenCategoryType {
+        VenCategoryType::from_domain(&self.row().ven_category)
     }
 
     pub async fn stats(
@@ -155,10 +163,6 @@ impl ItemNode {
         self.legacy_f64("weight")
     }
 
-    pub async fn strength(&self) -> String {
-        self.legacy_string("strength")
-    }
-
     pub async fn atc_category(&self) -> String {
         self.legacy_string("atc_category")
     }
@@ -199,6 +203,25 @@ impl ItemNodeType {
             ItemNodeType::Stock => ItemType::Stock,
             ItemNodeType::Service => ItemType::Service,
             ItemNodeType::NonStock => ItemType::NonStock,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum VenCategoryType {
+    V,
+    E,
+    N,
+    NotAssigned,
+}
+
+impl VenCategoryType {
+    pub fn from_domain(from: &VENCategory) -> VenCategoryType {
+        match from {
+            VENCategory::V => VenCategoryType::V,
+            VENCategory::E => VenCategoryType::E,
+            VENCategory::N => VenCategoryType::N,
+            VENCategory::NotAssigned => VenCategoryType::NotAssigned,
         }
     }
 }
