@@ -38,6 +38,7 @@ export const AppBarButtonsComponent = () => {
         <ReportSelector
           context={ReportContext.Requisition}
           onPrint={printReport}
+          queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
         >
           <LoadingButton
             variant="outlined"
