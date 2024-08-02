@@ -272,7 +272,7 @@ pub fn get_opening_balance(
                 .store_id(EqualFilter::equal_to(store_id))
                 .item_id(EqualFilter::equal_to(item_id)),
         )?
-        .map(|row| row.available_stock_on_hand)
+        .map(|row| row.total_stock_on_hand)
         .unwrap_or(0.0);
 
     Ok(stock_on_hand_now - total_movements_since_start_date)
