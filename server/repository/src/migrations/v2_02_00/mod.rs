@@ -1,4 +1,4 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationContext};
 
 use crate::StorageConnection;
 
@@ -20,17 +20,39 @@ impl Migration for V2_02_00 {
         Version::from_str("2.2.0")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate_pre_release(
+        &self,
+        _connection: &StorageConnection,
+        ctx: &MigrationContext,
+    ) -> anyhow::Result<()> {
+        if ctx.database_version.pre_release == Some("RC1".to_string()) {
+            // fix_rc1::migrate(connection)?;
+        }
+
+        Ok(()) // RC migration is allowed for any version return error here to block the rc migration running
+    }
+
+    fn migrate_with_context(
+        &self,
+        connection: &StorageConnection,
+        ctx: &MigrationContext,
+    ) -> anyhow::Result<()> {
+        // Any migrations that can be re-run safely
         add_asset_internal_location_changelog::migrate(connection)?;
         remove_changelog_triggers::migrate(connection)?;
         create_missing_master_list_and_program::migrate(connection)?;
         create_system_user::migrate(connection)?;
-        store_preferences_for_reports::migrate(connection)?;
-        rnr_form::migrate(connection)?;
         report_add_report_context::migrate(connection)?;
-        item_ven::migrate(connection)?;
+
+        // Any migrations that should already be applied in the previous version will be skipped
+        if !ctx.database_version.is_equivalent(&self.version()) {
+            rnr_form::migrate(connection)?;
+            store_preferences_for_reports::migrate(connection)?;
+            item_ven::migrate(connection)?;
+            sync::migrate(connection)?;
+        }
         consumption_and_replenishment_views::migrate(connection)?;
-        sync::migrate(connection)?;
+
         Ok(())
     }
 }

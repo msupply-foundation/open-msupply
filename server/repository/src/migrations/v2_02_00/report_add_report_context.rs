@@ -5,7 +5,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-            ALTER TYPE context_type ADD VALUE 'REPORT';
+            ALTER TYPE context_type ADD VALUE IF NOT EXISTS 'REPORT';
             "#
         )?;
     }
