@@ -136,6 +136,13 @@ export const DateUtils = {
   age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
   ageInDays: (date: Date | string) =>
     differenceInDays(Date.now(), dateInputHandler(date)),
+  ageInMonthsAndDays: (date: Date | string) => {
+    const months = differenceInMonths(Date.now(), date);
+    const days = differenceInDays(Date.now(), addMonths(date, months));
+    return { months, days };
+  },
+  differenceInMonths,
+  differenceInDays,
   startOfDay,
   startOfToday,
   endOfDay,
