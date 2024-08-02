@@ -5,12 +5,15 @@
         {
             "name": "projectWords",
             "path": "./project-words.txt"
-        },
+        }
     ],
     "dictionaries": [
         "projectWords"
     ],
     "words": [],
-    "ignoreWords": [],
+    "ignoreWords": [
+        "tbody",
+        "thead"
+    ],
     "import": []
 }

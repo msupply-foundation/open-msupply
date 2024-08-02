@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { Box, TextField, Typography } from '@mui/material';
 import { BaseButton } from '@common/components';
 import { useInterval } from './useInterval';
@@ -8,7 +8,7 @@ export default {
   title: 'Hooks/useInterval',
 };
 
-const Interval: Story = () => {
+const Interval: StoryFn = () => {
   const [interval, setInterval] = useState(1000);
   const [count, setCount] = useState(0);
   const [isRunning, setIsRunning] = useState(false);

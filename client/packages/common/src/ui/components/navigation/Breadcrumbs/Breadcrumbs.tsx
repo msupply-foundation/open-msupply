@@ -15,7 +15,7 @@ export const Breadcrumb = styled(Link)({
 });
 
 export const Breadcrumbs = ({
-  topLevelPaths = [AppRoute.Settings, AppRoute.Sync],
+  topLevelPaths = [AppRoute.Settings, AppRoute.Sync, AppRoute.Reports],
 }: {
   topLevelPaths?: string[];
 }) => {

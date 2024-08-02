@@ -5,16 +5,15 @@
   "main": "./src/index.ts",
   "private": true,
   "devDependencies": {
-    "@capacitor-community/keep-awake": "^4.0.0",
-    "copy-webpack-plugin": "^11.0.0",
-    "find-up": "^6.3.0",
+    "@capacitor-community/keep-awake": "^5.0.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "find-up": "^7.0.0",
     "html-webpack-plugin": "^5.5.0",
-    "react-refresh": "0.14.0",
+    "react-refresh": "0.14.2",
     "serve": "^14.2.0",
     "webpack": "^5.88.1",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.12.0",
-    "webpack-encoding-plugin": "^0.3.1"
+    "webpack-dev-server": "^5.0.4"
   },
   "scripts": {
     "start": "webpack-cli serve",
@@ -27,7 +26,7 @@
     "eslint": "eslint ./src"
   },
   "dependencies": {
-    "@fontsource-variable/inter": "^5.0.5",
+    "@fontsource-variable/inter": "^5.0.19",
     "@openmsupply-client/coldchain": "^0.0.0",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
@@ -36,6 +35,7 @@
     "@openmsupply-client/invoices": "^0.0.0",
     "@openmsupply-client/requisitions": "^0.0.0",
     "@openmsupply-client/system": "^0.0.0",
+    "@openmsupply-client/reports": "^0.0.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.4",
     "history": "^5.1.0",
     "react": "^18.0.0",

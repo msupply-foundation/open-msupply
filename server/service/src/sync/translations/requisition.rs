@@ -705,8 +705,7 @@ mod tests {
             Ok( PullTranslateResult::IntegrationOperations(out)) => out
         );
 
-        let mut upsert =
-            assert_variant!(op.pop(), Some(IntegrationOperation::Upsert(out, _)) => out);
+        let mut upsert = assert_variant!(op.pop(), Some(IntegrationOperation::Upsert(out)) => out);
 
         let requisition_row = upsert
             .as_mut_any()

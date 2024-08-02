@@ -7,7 +7,7 @@ use actix_web::{
 };
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    mock::{insert_extra_mock_data, mock_store_a, mock_store_b, MockData, MockDataInserts},
+    mock::{insert_extra_mock_data, mock_store_b, MockData, MockDataInserts},
     ChangelogRepository, KeyType, KeyValueStoreRow, LocationRow,
 };
 use tokio::sync::Mutex;
@@ -110,7 +110,7 @@ async fn sync_status() {
                 .map(|i| {
                     inline_init(|r: &mut LocationRow| {
                         r.id = i.to_string();
-                        r.store_id = mock_store_a().id;
+                        r.store_id = mock_store_b().id;
                     })
                 })
                 .collect();
@@ -524,6 +524,7 @@ fn get_push_and_error_sync_status_tester(
                     r.push_v6.clone_from(&current_status.push_v6);
                     r.pull_central.clone_from(&current_status.pull_central);
                     r.pull_v6.clone_from(&current_status.pull_v6);
+                    r.summary.duration_in_seconds = current_status.summary.duration_in_seconds;
                     r
                 });
                 assert_eq!(current_status, new_status);

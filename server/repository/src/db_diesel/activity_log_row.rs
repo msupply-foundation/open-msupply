@@ -3,6 +3,7 @@ use super::{activity_log_row::activity_log::dsl as activity_log_dsl, StorageConn
 use crate::{
     db_diesel::store_row::store, repository_error::RepositoryError, user_account, Delete, Upsert,
 };
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -73,6 +74,9 @@ pub enum ActivityLogType {
     ProgramCreated,
     ProgramUpdated,
     VaccineCourseUpdated,
+    RnrFormCreated,
+    RnrFormUpdated,
+    RnrFormFinalised,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
@@ -99,11 +103,27 @@ impl<'a> ActivityLogRowRepository<'a> {
         ActivityLogRowRepository { connection }
     }
 
-    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(activity_log_dsl::activity_log)
             .values(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
+    }
+
+    fn insert_changelog(
+        &self,
+        row: &ActivityLogRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::ActivityLog,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: row.store_id.clone(),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<ActivityLogRow>, RepositoryError> {
@@ -123,8 +143,9 @@ impl<'a> ActivityLogRowRepository<'a> {
 }
 
 impl Upsert for ActivityLogRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ActivityLogRowRepository::new(con).insert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = ActivityLogRowRepository::new(con).insert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
@@ -140,9 +161,9 @@ impl Upsert for ActivityLogRow {
 // Only used in tests
 pub struct ActivityLogRowDelete(pub String);
 impl Delete for ActivityLogRowDelete {
-    fn delete(&self, _: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, _: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         // Not deleting in tests, just want to check asserted_deleted
-        Ok(())
+        Ok(None)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {

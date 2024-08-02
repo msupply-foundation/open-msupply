@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use std::{fs, path::Path};
 
+use crate::Format;
+
 const AUTH_QUERY: &str = r#"
 query AuthToken($username: String!, $password: String) {
   authToken(password: $password, username: $username) {
@@ -22,8 +24,8 @@ query AuthToken($username: String!, $password: String) {
 "#;
 
 const PRINT_QUERY: &str = r#"
-query PrintReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON) {
-  printReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments) {
+query GenerateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON, $format: PrintFormat) {
+  generateReportDefinition(dataId: $dataId, name: $name, report: $report, storeId: $storeId, arguments: $arguments, format: $format) {
     ... on PrintReportNode {
       __typename
       fileId
@@ -80,7 +82,7 @@ fn token_request(url: Url, config: &Config) -> anyhow::Result<String> {
     Ok(auth_token["token"].as_str().unwrap().to_string())
 }
 
-fn print_request(
+fn generate_request(
     url: Url,
     token: &str,
     store_id: &str,
@@ -88,6 +90,7 @@ fn print_request(
     report: serde_json::Value,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
+    format: Format,
 ) -> anyhow::Result<String> {
     let body = serde_json::json!({
       "query": PRINT_QUERY,
@@ -96,7 +99,8 @@ fn print_request(
         "dataId": data_id,
         "name": name,
         "report": report,
-        "arguments": arguments
+        "arguments": arguments,
+        "format": format
       }
     });
     let response = reqwest::blocking::Client::new()
@@ -106,10 +110,10 @@ fn print_request(
         .send()?;
     let status = response.status();
     let gql_result: GraphQlResponse = response.json()?;
-    let result = &gql_result.data["printReportDefinition"];
+    let result = &gql_result.data["generateReportDefinition"];
     if result["__typename"] != "PrintReportNode" {
         return Err(anyhow::Error::msg(format!(
-            "Failed to print report: status={:?}  {:#?}",
+            "Failed to generate report: status={:?}  {:#?}",
             status, gql_result
         )));
     }
@@ -162,13 +166,14 @@ fn fetch_file(
     Ok(output_filename)
 }
 
-pub fn print_report(
+pub fn generate_report(
     config_path: String,
     store_id: String,
     output_filename: Option<String>,
     report_file: String,
     data_id: Option<String>,
     arguments_file: Option<String>,
+    format: Format,
 ) -> anyhow::Result<()> {
     let arguments = if let Some(arguments_file) = arguments_file {
         println!("> Load arguments from: {}", arguments_file);
@@ -207,13 +212,13 @@ pub fn print_report(
         ))
     })?;
 
-    println!("> Send report print request ");
+    println!("> Send report generate request ");
     let file_name = output_filename.as_ref().and_then(|p| {
         Path::new(&p)
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
     });
-    let file_id = print_request(
+    let file_id = generate_request(
         gql_url.clone(),
         &token,
         &store_id,
@@ -221,6 +226,7 @@ pub fn print_report(
         report,
         data_id,
         arguments,
+        format,
     )
     .map_err(|err| anyhow::Error::msg(format!("Failed to fetch report data: {}", err)))?;
 

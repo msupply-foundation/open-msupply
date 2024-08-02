@@ -22,7 +22,7 @@ actix-web = { workspace = true }
 actix-files = { workspace = true }
 actix-multipart = { workspace = true }
 jsonschema = "0.18.0"
-jsonwebtoken = "8.0.1"
+jsonwebtoken = "9.3.0"
 log = { workspace = true }
 reqwest = { workspace = true }
 url = "2.5.1"
@@ -54,6 +54,8 @@ walkdir = "2.5.0"
 x509-parser = { version = "0.16", features = ["verify"] }
 telnet = "0.2.1"
 tempfile = "3.10.1"
+fast_scraper = "0.14.5"
+umya-spreadsheet = "2.0.0"
 
 
 [dev-dependencies]
@@ -64,7 +66,7 @@ assert_approx_eq = "1.1.0"
 
 [features]
 default = ["sqlite"]
-integration_test = []
+integration_test = ["repository/integration_test"]
 sqlite = ["repository/sqlite"]
 memory = ["repository/sqlite"]
 postgres = ["repository/postgres"]

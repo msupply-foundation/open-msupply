@@ -1,9 +1,9 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { StockOutLineFragmentDoc } from '../../StockOut/operations.generated';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type PrescriptionRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, currencyRate: number, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, itemName: string, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null };
 
 export type PrescriptionsQueryVariables = Types.Exact<{
@@ -33,7 +33,7 @@ export type InsertPrescriptionMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertPrescriptionMutation = { __typename: 'Mutations', insertPrescription: { __typename: 'InsertPrescriptionError', error: { __typename: 'OtherPartyNotAPatient', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type InsertPrescriptionMutation = { __typename: 'Mutations', insertPrescription: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export type UpsertPrescriptionMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -41,7 +41,7 @@ export type UpsertPrescriptionMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpsertPrescriptionMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deletePrescriptions?: Array<{ __typename: 'DeletePrescriptionResponseWithId', id: string, response: { __typename: 'DeletePrescriptionError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, insertPrescriptionLines?: Array<{ __typename: 'InsertPrescriptionLineResponseWithId', id: string, response: { __typename: 'InsertPrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertPrescriptions?: Array<{ __typename: 'InsertPrescriptionResponseWithId', id: string, response: { __typename: 'InsertPrescriptionError', error: { __typename: 'OtherPartyNotAPatient', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode' } }> | null, updatePrescriptionLines?: Array<{ __typename: 'UpdatePrescriptionLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdatePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string, batch: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode' } } | { __typename: 'RecordNotFound', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } }> | null, updatePrescriptions?: Array<{ __typename: 'UpdatePrescriptionResponseWithId', id: string, response: { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdatePrescriptionError', error: { __typename: 'CanOnlyChangeToPickedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'OtherPartyNotAPatient', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
+export type UpsertPrescriptionMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deletePrescriptions?: Array<{ __typename: 'DeletePrescriptionResponseWithId', id: string, response: { __typename: 'DeletePrescriptionError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, insertPrescriptionLines?: Array<{ __typename: 'InsertPrescriptionLineResponseWithId', id: string, response: { __typename: 'InsertPrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertPrescriptions?: Array<{ __typename: 'InsertPrescriptionResponseWithId', id: string }> | null, updatePrescriptionLines?: Array<{ __typename: 'UpdatePrescriptionLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdatePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string, batch: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode' } } | { __typename: 'RecordNotFound', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } }> | null, updatePrescriptions?: Array<{ __typename: 'UpdatePrescriptionResponseWithId', id: string, response: { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdatePrescriptionError', error: { __typename: 'CanOnlyChangeToPickedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
 
 export type DeletePrescriptionsMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -173,21 +173,6 @@ export const InsertPrescriptionDocument = gql`
       id
       invoiceNumber
     }
-    ... on InsertPrescriptionError {
-      __typename
-      error {
-        description
-        ... on OtherPartyNotVisible {
-          __typename
-          description
-        }
-        ... on OtherPartyNotAPatient {
-          __typename
-          description
-        }
-        description
-      }
-    }
   }
 }
     `;
@@ -261,14 +246,6 @@ export const UpsertPrescriptionDocument = gql`
     }
     insertPrescriptions {
       id
-      response {
-        ... on InsertPrescriptionError {
-          __typename
-          error {
-            description
-          }
-        }
-      }
     }
     updatePrescriptionLines {
       id
@@ -423,30 +400,30 @@ export const DeletePrescriptionLinesDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     prescriptions(variables: PrescriptionsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrescriptionsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionsQuery>(PrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptions', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionsQuery>(PrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptions', 'query', variables);
     },
     prescriptionByNumber(variables: PrescriptionByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrescriptionByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionByNumberQuery>(PrescriptionByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptionByNumber', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionByNumberQuery>(PrescriptionByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptionByNumber', 'query', variables);
     },
     insertPrescription(variables: InsertPrescriptionMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPrescriptionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertPrescriptionMutation>(InsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPrescription', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertPrescriptionMutation>(InsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPrescription', 'mutation', variables);
     },
     upsertPrescription(variables: UpsertPrescriptionMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertPrescriptionMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpsertPrescriptionMutation>(UpsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertPrescription', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpsertPrescriptionMutation>(UpsertPrescriptionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertPrescription', 'mutation', variables);
     },
     deletePrescriptions(variables: DeletePrescriptionsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionsMutation>(DeletePrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptions', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionsMutation>(DeletePrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptions', 'mutation', variables);
     },
     deletePrescriptionLines(variables: DeletePrescriptionLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation', variables);
     }
   };
 }

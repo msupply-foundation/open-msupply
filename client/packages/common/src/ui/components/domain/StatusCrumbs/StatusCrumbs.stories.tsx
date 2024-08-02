@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import Stack from '@mui/material/Stack';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
@@ -42,7 +42,7 @@ const defaultStatusLog: Record<string, string | null> = {
   DELIVERED: draft.deliveredDatetime,
 };
 
-const Template: ComponentStory<typeof StatusCrumbs> = () => {
+const Template: StoryFn<typeof StatusCrumbs> = () => {
   const [currentStatus, setCurrentStatus] = useState(statuses[4]);
   const [statusLog, setStatusLog] = useState(defaultStatusLog);
 
@@ -101,4 +101,4 @@ export const Primary = Template.bind({});
 export default {
   title: 'Components/StatusCrumbs',
   component: StatusCrumbs,
-} as ComponentMeta<typeof StatusCrumbs>;
+} as Meta<typeof StatusCrumbs>;

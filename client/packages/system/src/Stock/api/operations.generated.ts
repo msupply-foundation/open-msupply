@@ -1,16 +1,16 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockLineRowFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } };
 
 export type RepackStockLineFragment = { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null };
 
 export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: string, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null } };
 
-export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string };
+export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemName: string, numberOfPacks: number, itemCode: string, stockLine?: { __typename: 'StockLineNode', id: string } | null }> } };
 
 export type LedgerRowFragment = { __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId?: string | null, storeId: string };
 
@@ -74,7 +74,7 @@ export type InsertRepackMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError', error: { __typename: 'CannotHaveFractionalPack', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string } };
+export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError', error: { __typename: 'CannotHaveFractionalPack', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemName: string, numberOfPacks: number, itemCode: string, stockLine?: { __typename: 'StockLineNode', id: string } | null }> } } };
 
 export type CreateInventoryAdjustmentMutationVariables = Types.Exact<{
   input: Types.CreateInventoryAdjustmentInput;
@@ -82,7 +82,7 @@ export type CreateInventoryAdjustmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError' } | { __typename: 'InvoiceNode', id: string } };
+export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError', error: { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemName: string, numberOfPacks: number, itemCode: string, stockLine?: { __typename: 'StockLineNode', id: string } | null }> } } };
 
 export type InsertStockLineMutationVariables = Types.Exact<{
   input: Types.InsertStockLineInput;
@@ -144,6 +144,17 @@ export const RepackFragmentDoc = gql`
 export const InvoiceRowFragmentDoc = gql`
     fragment InvoiceRow on InvoiceNode {
   id
+  lines {
+    nodes {
+      id
+      itemName
+      numberOfPacks
+      itemCode
+      stockLine {
+        id
+      }
+    }
+  }
 }
     `;
 export const LedgerRowFragmentDoc = gql`
@@ -265,9 +276,20 @@ export const InsertRepackDocument = gql`
 export const CreateInventoryAdjustmentDocument = gql`
     mutation createInventoryAdjustment($input: CreateInventoryAdjustmentInput!, $storeId: String!) {
   createInventoryAdjustment(input: $input, storeId: $storeId) {
+    __typename
     ... on InvoiceNode {
       __typename
       ...InvoiceRow
+    }
+    ... on CreateInventoryAdjustmentError {
+      __typename
+      error {
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+      }
     }
   }
 }
@@ -283,39 +305,39 @@ export const InsertStockLineDocument = gql`
 }
     ${StockLineRowFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     stockLines(variables: StockLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StockLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StockLinesQuery>(StockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockLines', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StockLinesQuery>(StockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockLines', 'query', variables);
     },
     stockLine(variables: StockLineQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StockLineQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StockLineQuery>(StockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockLine', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StockLineQuery>(StockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockLine', 'query', variables);
     },
     ledger(variables: LedgerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LedgerQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LedgerQuery>(LedgerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ledger', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<LedgerQuery>(LedgerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ledger', 'query', variables);
     },
     updateStockLine(variables: UpdateStockLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateStockLineMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStockLineMutation>(UpdateStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStockLine', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateStockLineMutation>(UpdateStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStockLine', 'mutation', variables);
     },
     repack(variables: RepackQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RepackQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RepackQuery>(RepackDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'repack', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<RepackQuery>(RepackDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'repack', 'query', variables);
     },
     repacksByStockLine(variables: RepacksByStockLineQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RepacksByStockLineQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RepacksByStockLineQuery>(RepacksByStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'repacksByStockLine', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<RepacksByStockLineQuery>(RepacksByStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'repacksByStockLine', 'query', variables);
     },
     insertRepack(variables: InsertRepackMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRepackMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertRepackMutation>(InsertRepackDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRepack', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertRepackMutation>(InsertRepackDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRepack', 'mutation', variables);
     },
     createInventoryAdjustment(variables: CreateInventoryAdjustmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CreateInventoryAdjustmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateInventoryAdjustmentMutation>(CreateInventoryAdjustmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createInventoryAdjustment', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateInventoryAdjustmentMutation>(CreateInventoryAdjustmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createInventoryAdjustment', 'mutation', variables);
     },
     insertStockLine(variables: InsertStockLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertStockLineMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertStockLineMutation>(InsertStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStockLine', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertStockLineMutation>(InsertStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStockLine', 'mutation', variables);
     }
   };
 }

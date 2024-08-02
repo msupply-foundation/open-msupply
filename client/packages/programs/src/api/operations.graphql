@@ -55,7 +55,7 @@ query documents(
 
 query documentRegistries(
   $filter: DocumentRegistryFilterInput
-  $sort: DocumentRegistrySortInput
+  $sort: [DocumentRegistrySortInput!]
   $storeId: String!
 ) {
   documentRegistries(filter: $filter, sort: $sort, storeId: $storeId) {
@@ -120,7 +120,7 @@ fragment ProgramEvent on ProgramEventNode {
 query encounterFields(
   $storeId: String!
   $patientId: String!
-  $fields: [String!]
+  $fields: [String!]!
 ) {
   encounterFields(
     input: { fields: $fields }
@@ -180,7 +180,7 @@ fragment Encounter on EncounterNode {
 
 query encountersWithDocument(
   $storeId: String!
-  $key: EncounterSortFieldInput
+  $key: EncounterSortFieldInput!
   $desc: Boolean
   $filter: EncounterFilterInput
   $page: PaginationInput
@@ -263,11 +263,11 @@ fragment EncounterRow on EncounterNode {
 
 query encounters(
   $storeId: String!
-  $key: EncounterSortFieldInput
+  $key: EncounterSortFieldInput!
   $desc: Boolean
   $filter: EncounterFilterInput
   $page: PaginationInput
-  $eventTime: String!
+  $eventTime: DateTime
 ) {
   encounters(
     storeId: $storeId
@@ -334,7 +334,7 @@ query programEnrolments(
   $key: ProgramEnrolmentSortFieldInput!
   $desc: Boolean
   $filter: ProgramEnrolmentFilterInput
-  $eventTime: String!
+  $eventTime: DateTime
 ) {
   programEnrolments(
     storeId: $storeId
@@ -459,7 +459,7 @@ query formSchemas($filter: FormSchemaFilterInput) {
 }
 
 query activeProgramEvents(
-  $at: String
+  $at: DateTime
   $storeId: String!
   $filter: ProgramEventFilterInput
   $page: PaginationInput
@@ -520,7 +520,7 @@ fragment ContactTraceRow on ContactTraceNode {
 
 query contactTraces(
   $storeId: String!
-  $key: ContactTraceSortFieldInput
+  $key: ContactTraceSortFieldInput!
   $desc: Boolean
   $filter: ContactTraceFilterInput
   $page: PaginationInput
@@ -567,6 +567,385 @@ mutation updateContactTrace(
     ... on ContactTraceNode {
       __typename
       ...ContactTrace
+    }
+  }
+}
+
+fragment ImmunisationProgram on ProgramNode {
+  id
+  name
+  vaccineCourses {
+    name
+  }
+}
+
+fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
+  id
+  doseNumber
+  label
+}
+
+fragment VaccineCourseItem on VaccineCourseItemNode {
+  id
+  itemId
+  name
+}
+
+query immunisationPrograms(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...ImmunisationProgram
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertImmunisationProgram(
+  $input: InsertImmunisationProgramInput!
+  $storeId: String!
+) {
+  centralServer {
+    program {
+      insertImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on InsertImmunisationProgramError {
+          __typename
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation updateImmunisationProgram(
+  $input: UpdateImmunisationProgramInput!
+  $storeId: String!
+) {
+  centralServer {
+    program {
+      updateImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on UpdateImmunisationProgramError {
+          __typename
+          error {
+            ... on UniqueValueViolation {
+              __typename
+              field
+            }
+            description
+          }
+        }
+      }
+    }
+  }
+}
+fragment VaccineCourse on VaccineCourseNode {
+  id
+  name
+  programId
+  demographicIndicatorId
+  doses
+  coverageRate
+  wastageRate
+  isActive
+  demographicIndicator {
+    name
+    id
+    baseYear
+  }
+  vaccineCourseItems {
+    ...VaccineCourseItem
+  }
+  vaccineCourseSchedules {
+    ...VaccineCourseSchedule
+  }
+}
+
+query vaccineCourses(
+  $first: Int
+  $offset: Int
+  $key: VaccineCourseSortFieldInput!
+  $desc: Boolean
+  $filter: VaccineCourseFilterInput
+) {
+  vaccineCourses(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on VaccineCourseConnector {
+      __typename
+      nodes {
+        ...VaccineCourse
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertVaccineCourse(
+  $input: InsertVaccineCourseInput!
+  $storeId: String!
+) {
+  centralServer {
+    vaccineCourse {
+      insertVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
+        ... on VaccineCourseNode {
+          ...VaccineCourse
+        }
+        ... on InsertVaccineCourseError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation updateVaccineCourse(
+  $input: UpdateVaccineCourseInput!
+  $storeId: String!
+) {
+  centralServer {
+    vaccineCourse {
+      updateVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
+        ... on VaccineCourseNode {
+          __typename
+          ...VaccineCourse
+        }
+        ... on UpdateVaccineCourseError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteImmunisationProgram($immunisationProgramId: String!) {
+  centralServer {
+    program {
+      deleteImmunisationProgram(immunisationProgramId: $immunisationProgramId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation deleteVaccineCourse($vaccineCourseId: String!) {
+  centralServer {
+    vaccineCourse {
+      deleteVaccineCourse(vaccineCourseId: $vaccineCourseId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+fragment RnRForm on RnRFormNode {
+  id
+  createdDatetime
+  periodId
+  periodName
+  periodLength
+  programId
+  programName
+  supplierName
+  status
+}
+
+fragment RnRFormLine on RnRFormLineNode {
+  id
+  averageMonthlyConsumption
+  previousAverageMonthlyConsumption
+  initialBalance
+  quantityReceived
+  quantityConsumed
+  adjustedQuantityConsumed
+  adjustments
+  stockOutDuration
+  finalBalance
+  maximumQuantity
+  expiryDate
+  requestedQuantity
+  comment
+  confirmed
+  item {
+    code
+    name
+    unitName
+    strength
+    venCategory
+  }
+}
+
+query rnrForms(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: RnRFormSortFieldInput!
+  $desc: Boolean
+  $filter: RnRFormFilterInput
+) {
+  rAndRForms(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on RnRFormConnector {
+      __typename
+      nodes {
+        __typename
+        ...RnRForm
+      }
+      totalCount
+    }
+  }
+}
+
+mutation createRnRForm($storeId: String!, $input: InsertRnRFormInput!) {
+  insertRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+    }
+  }
+}
+
+fragment Program on ProgramNode {
+  id
+  name
+}
+
+query programs(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
+      }
+      totalCount
+    }
+  }
+}
+
+fragment Period on PeriodNode {
+  id
+  name
+  startDate
+  endDate
+}
+
+fragment PeriodSchedule on PeriodScheduleNode {
+  id
+  name
+  periods {
+    id
+    inUse
+    period {
+      ...Period
+    }
+  }
+}
+
+query schedulesAndPeriods($storeId: String!, $programId: String!) {
+  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
+    __typename
+    ... on PeriodSchedulesConnector {
+      nodes {
+        ...PeriodSchedule
+      }
+    }
+  }
+}
+
+query rAndRFormDetail($rnrFormId: String!, $storeId: String!) {
+  rAndRForm(rnrFormId: $rnrFormId, storeId: $storeId) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+      lines {
+        ...RnRFormLine
+      }
+    }
+  }
+}
+
+mutation updateRnRFormLines($storeId: String!, $input: UpdateRnRFormInput!) {
+  updateRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+    }
+  }
+}
+
+mutation finaliseRnRForm($storeId: String!, $input: FinaliseRnRFormInput!) {
+  finaliseRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
     }
   }
 }

@@ -46,6 +46,7 @@ export type ImportRow = {
   catalogueItemCode: string | null | undefined;
   serialNumber: string | null | undefined;
   installationDate: string | null | undefined;
+  replacementDate: string | null | undefined;
   id: string;
   notes: string;
   errorMessage: string;
@@ -57,42 +58,30 @@ export type ImportRow = {
 export type LineNumber = {
   lineNumber: number;
 };
+
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<DraftAsset> => ({
-  assetNumber: row.assetNumber,
-  catalogueItemId: catalogueItemData
-    ?.filter(
-      (item: { code: string | null | undefined }) =>
-        item.code == row.catalogueItemCode
-    )
-    ?.map((item: { id: string }) => item.id)
-    .pop(),
-  serialNumber: row.serialNumber,
-  installationDate: row.installationDate,
-  id: row.id,
-  notes: row.notes,
-  store: row.store
-    ? { ...row.store, __typename: 'StoreNode', storeName: '' }
-    : null,
-  parsedProperties: row.properties,
-});
+): Partial<DraftAsset> => {
+  const catalogueItemId = catalogueItemData?.find(
+    item => item.code === row.catalogueItemCode
+  )?.id;
+  const { properties: parsedProperties, store, ...rest } = row;
+
+  return {
+    ...rest,
+    catalogueItemId,
+    store: store ? { ...store, __typename: 'StoreNode', storeName: '' } : null,
+    parsedProperties,
+  };
+};
 
 export const toExportEquipment = (
   row: ImportRow,
   index: number
 ): Partial<ImportRow & LineNumber> => ({
-  assetNumber: row.assetNumber,
-  catalogueItemCode: row.catalogueItemCode,
-  serialNumber: row.serialNumber,
-  installationDate: row.installationDate,
-  id: row.id,
-  notes: row.notes,
+  ...row,
   lineNumber: index + 2,
-  errorMessage: row.errorMessage,
-  store: row.store,
-  properties: row.properties,
 });
 
 export const toUpdateEquipmentInput = (
@@ -130,6 +119,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     fetchAsync,
     isLoading,
   } = useAssetData.document.listAll();
+  const { data: properties } = useAssetData.utils.properties();
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
@@ -148,7 +138,8 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         toExportEquipment(row, index)
       ),
       t,
-      isCentralServer
+      isCentralServer,
+      properties?.map(p => p.key) ?? []
     );
     FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
     success(t('success'))();

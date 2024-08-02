@@ -20,7 +20,8 @@ type DialogButtonVariant =
   | 'save'
   | 'copy'
   | 'delete'
-  | 'export';
+  | 'export'
+  | 'close';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -91,6 +92,12 @@ const getButtonProps = (
         icon: <DownloadIcon />,
         labelKey: 'button.export',
         variant: 'contained',
+      };
+    case 'close':
+      return {
+        icon: <XCircleIcon />,
+        labelKey: 'button.close',
+        variant: 'outlined',
       };
   }
 };

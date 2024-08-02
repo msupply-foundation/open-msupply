@@ -1,5 +1,5 @@
 import React from 'react';
-import { Args, ComponentMeta, Story } from '@storybook/react';
+import { Args, Meta, StoryFn } from '@storybook/react';
 import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
 import { useColumns } from '../../hooks';
@@ -11,7 +11,7 @@ export default {
   argTypes: {
     backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof DataRow>;
+} as Meta<typeof DataRow>;
 
 interface StoryRow {
   id: string;
@@ -19,7 +19,7 @@ interface StoryRow {
   comment?: string;
 }
 
-const Template: Story = ({ onClick, generateRowTooltip = () => '' }) => {
+const Template: StoryFn = ({ onClick, generateRowTooltip = () => '' }) => {
   const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const columns = useColumns<StoryRow>(['type', 'status', 'comment']);

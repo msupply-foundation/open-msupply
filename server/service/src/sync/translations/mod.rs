@@ -37,6 +37,8 @@ pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
+pub(crate) mod rnr_form;
+pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
 pub(crate) mod special;
 pub(crate) mod stock_line;
@@ -124,6 +126,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         asset_property::boxed(),
         //Sync file reference
         sync_file_reference::boxed(),
+        // RnR Form
+        rnr_form::boxed(),
+        rnr_form_line::boxed(),
     ]
 }
 
@@ -161,8 +166,8 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
 
 #[derive(Debug)]
 pub(crate) enum IntegrationOperation {
-    Upsert(Box<dyn Upsert>, Option<i32>), // Upsert record, and source_site_id
-    Delete(Box<dyn Delete>),              // Todo: add source site id?
+    Upsert(Box<dyn Upsert>), // Upsert record
+    Delete(Box<dyn Delete>), // Delete record
 }
 
 impl IntegrationOperation {
@@ -170,7 +175,7 @@ impl IntegrationOperation {
     where
         U: Upsert + 'static,
     {
-        Self::Upsert(Box::new(upsert), None) // TODO?
+        Self::Upsert(Box::new(upsert))
     }
 
     pub(crate) fn delete<U>(delete: U) -> Self
@@ -212,19 +217,9 @@ impl PullTranslateResult {
         Self::IntegrationOperations(
             upsert
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert), None)) // Source site is added later using add_source_site_id
+                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert))) // Source site is added later using add_source_site_id
                 .collect(),
         )
-    }
-
-    pub(crate) fn add_source_site_id(&mut self, source_site_id: i32) {
-        if let Self::IntegrationOperations(operations) = self {
-            for operation in operations {
-                if let IntegrationOperation::Upsert(_, ref mut site_id) = operation {
-                    *site_id = Some(source_site_id);
-                }
-            }
-        }
     }
 
     pub(crate) fn delete<U>(upsert: U) -> Self
@@ -241,7 +236,7 @@ impl PullTranslateResult {
         Self::IntegrationOperations(
             upsert
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Delete(Box::new(upsert)))
+                .map(|upsert| IntegrationOperation::Delete(Box::new(upsert))) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }

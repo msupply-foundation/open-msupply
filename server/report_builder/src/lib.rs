@@ -1,7 +1,8 @@
 pub mod build;
 pub mod print;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use serde::Serialize;
 
 #[derive(Parser)]
 #[clap(version, about)]
@@ -51,6 +52,15 @@ pub struct BuildArgs {
     pub query_sql: Option<Vec<String>>,
 }
 
+#[derive(ValueEnum, Default, Clone, Serialize)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum Format {
+    #[default]
+    Pdf,
+    Html,
+    Excel,
+}
+
 #[derive(clap::Args)]
 pub struct PrintArgs {
     /// Path to the report definition json file
@@ -63,6 +73,8 @@ pub struct PrintArgs {
     pub data_id: Option<String>,
     #[clap(long)]
     pub arguments_file: Option<String>,
+    #[clap(long)]
+    pub format: Option<Format>,
     /// The output file path
     #[clap(long)]
     pub output: Option<String>,

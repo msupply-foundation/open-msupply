@@ -49,7 +49,7 @@ export type AccountBlocked = AuthTokenErrorInterface & {
 export type ActiveEncounterEventFilterInput = {
   data?: InputMaybe<StringFilterInput>;
   /**
-   * 	Only include events that are for the current encounter, i.e. have matching encounter type
+   * Only include events that are for the current encounter, i.e. have matching encounter type
    * and matching encounter name of the current encounter. If not set all events with matching
    * encounter type are returned.
    */
@@ -116,6 +116,9 @@ export enum ActivityLogNodeType {
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
+  RnrFormCreated = 'RNR_FORM_CREATED',
+  RnrFormFinalised = 'RNR_FORM_FINALISED',
+  RnrFormUpdated = 'RNR_FORM_UPDATED',
   SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
@@ -143,7 +146,7 @@ export enum ActivityLogSortFieldInput {
 
 export type ActivityLogSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -465,7 +468,7 @@ export enum AssetLogReasonSortFieldInput {
 
 export type AssetLogReasonSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -482,7 +485,7 @@ export enum AssetLogSortFieldInput {
 
 export type AssetLogSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -576,7 +579,7 @@ export enum AssetSortFieldInput {
 
 export type AssetSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -967,7 +970,7 @@ export enum ClinicianSortFieldInput {
 
 export type ClinicianSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1078,7 +1081,7 @@ export enum ContactTraceSortFieldInput {
 
 export type ContactTraceSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1146,7 +1149,7 @@ export enum CurrencySortFieldInput {
 
 export type CurrencySortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1682,7 +1685,7 @@ export type DocumentConnector = {
 export type DocumentFilterInput = {
   contextId?: InputMaybe<EqualFilterStringInput>;
   /**
-   * 	This filter makes it possible to search the raw text json data.
+   * This filter makes it possible to search the raw text json data.
    * Be beware of potential performance issues.
    */
   data?: InputMaybe<StringFilterInput>;
@@ -1751,7 +1754,7 @@ export enum DocumentRegistrySortFieldInput {
 
 export type DocumentRegistrySortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1771,7 +1774,7 @@ export enum DocumentSortFieldInput {
 
 export type DocumentSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1791,7 +1794,7 @@ export type EncounterEventFilterInput = {
   data?: InputMaybe<StringFilterInput>;
   datetime?: InputMaybe<DatetimeFilterInput>;
   /**
-   * 	Only include events that are for the current encounter, i.e. have matching encounter type
+   * Only include events that are for the current encounter, i.e. have matching encounter type
    * and matching encounter name of the current encounter. If not set all events with matching
    * encounter type are returned.
    */
@@ -1896,7 +1899,7 @@ export enum EncounterSortFieldInput {
 
 export type EncounterSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2045,6 +2048,12 @@ export type FailedToFetchReportData = PrintReportErrorInterface & {
   errors: Scalars['JSON']['output'];
 };
 
+export type FinaliseRnRFormInput = {
+  id: Scalars['String']['input'];
+};
+
+export type FinaliseRnRFormResponse = RnRFormNode;
+
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
@@ -2087,7 +2096,7 @@ export enum FormSchemaSortFieldInput {
 
 export type FormSchemaSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -2210,8 +2219,11 @@ export type InitialisationStatusNode = {
 };
 
 export enum InitialisationStatusType {
+  /** Fuly initialised */
   Initialised = 'INITIALISED',
+  /** Sync settings were set and sync was attempted at least once */
   Initialising = 'INITIALISING',
+  /** Sync settings are not set and sync was not attempted */
   PreInitialisation = 'PRE_INITIALISATION'
 }
 
@@ -2341,7 +2353,7 @@ export type InsertDemographicIndicatorInput = {
   basePopulation?: InputMaybe<Scalars['Int']['input']>;
   baseYear: Scalars['Int']['input'];
   id: Scalars['String']['input'];
-  name: Scalars['String']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
   populationPercentage?: InputMaybe<Scalars['Float']['input']>;
   year1Projection?: InputMaybe<Scalars['Int']['input']>;
   year2Projection?: InputMaybe<Scalars['Int']['input']>;
@@ -2700,15 +2712,6 @@ export type InsertPluginDataInput = {
 
 export type InsertPluginDataResponse = PluginDataNode;
 
-export type InsertPrescriptionError = {
-  __typename: 'InsertPrescriptionError';
-  error: InsertPrescriptionErrorInterface;
-};
-
-export type InsertPrescriptionErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type InsertPrescriptionInput = {
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
@@ -2739,7 +2742,7 @@ export type InsertPrescriptionLineResponseWithId = {
   response: InsertPrescriptionLineResponse;
 };
 
-export type InsertPrescriptionResponse = InsertPrescriptionError | InvoiceNode;
+export type InsertPrescriptionResponse = InvoiceNode;
 
 export type InsertPrescriptionResponseWithId = {
   __typename: 'InsertPrescriptionResponseWithId';
@@ -2862,6 +2865,15 @@ export type InsertRequestRequisitionResponseWithId = {
   id: Scalars['String']['output'];
   response: InsertRequestRequisitionResponse;
 };
+
+export type InsertRnRFormInput = {
+  id: Scalars['String']['input'];
+  periodId: Scalars['String']['input'];
+  programId: Scalars['String']['input'];
+  supplierId: Scalars['String']['input'];
+};
+
+export type InsertRnRFormResponse = RnRFormNode;
 
 export type InsertStockLineInput = {
   /** Empty barcode will unlink barcode from StockLine */
@@ -3010,7 +3022,7 @@ export enum InventoryAdjustmentReasonSortFieldInput {
 
 export type InventoryAdjustmentReasonSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3123,17 +3135,21 @@ export enum InvoiceLineNodeType {
 }
 
 export enum InvoiceLineSortFieldInput {
+  /** Invoice line batch */
   Batch = 'batch',
+  /** Invoice line expiry date */
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
+  /** Invoice line item stock location name */
   LocationName = 'locationName',
+  /** Invoice line pack size */
   PackSize = 'packSize'
 }
 
 export type InvoiceLineSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3198,11 +3214,48 @@ export type InvoiceNodeOtherPartyArgs = {
 };
 
 export enum InvoiceNodeStatus {
+  /**
+   * General description: Outbound Shipment is ready for picking (all unallocated lines need to be fullfilled)
+   * Outbound Shipment: Invoice can only be turned to allocated status when
+   * all unallocated lines are fullfilled
+   * Inbound Shipment: not applicable
+   */
   Allocated = 'ALLOCATED',
+  /**
+   * General description: Inbound Shipment was received
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Stock is introduced and can be issued
+   */
   Delivered = 'DELIVERED',
+  /**
+   * Outbound Shipment: available_number_of_packs in a stock line gets
+   * updated when items are added to the invoice.
+   * Inbound Shipment: No stock changes in this status, only manually entered
+   * inbound Shipments have new status
+   */
   New = 'NEW',
+  /**
+   * General description: Outbound Shipment was picked from shelf and ready for Shipment
+   * Outbound Shipment: available_number_of_packs and
+   * total_number_of_packs get updated when items are added to the invoice
+   * Inbound Shipment: For inter store stock transfers an inbound Shipment
+   * is created when corresponding outbound Shipment is picked and ready for
+   * Shipment, inbound Shipment is not editable in this status
+   */
   Picked = 'PICKED',
+  /**
+   * General description: Outbound Shipment is sent out for delivery
+   * Outbound Shipment: Becomes not editable
+   * Inbound Shipment: For inter store stock transfers an inbound Shipment
+   * becomes editable when this status is set as a result of corresponding
+   * outbound Shipment being chagned to shipped (this is similar to New status)
+   */
   Shipped = 'SHIPPED',
+  /**
+   * General description: Received inbound Shipment was counted and verified
+   * Outbound Shipment: Status is updated based on corresponding inbound Shipment
+   * Inbound Shipment: Becomes not editable
+   */
   Verified = 'VERIFIED'
 }
 
@@ -3237,7 +3290,7 @@ export enum InvoiceSortFieldInput {
 
 export type InvoiceSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3280,7 +3333,10 @@ export type ItemFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVaccine?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Items that are visible in this store. This filter is void if `is_visible_or_on_hand` is true */
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Items that are visible in this store OR there is available stock of that item in this store */
+  isVisibleOrOnHand?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
@@ -3302,9 +3358,10 @@ export type ItemNode = {
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
   stats: ItemStatsNode;
-  strength: Scalars['String']['output'];
+  strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
   weight: Scalars['Float']['output'];
@@ -3322,7 +3379,7 @@ export type ItemNodeAvailableStockOnHandArgs = {
 
 
 export type ItemNodeStatsArgs = {
-  amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
+  amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
   storeId: Scalars['String']['input'];
 };
 
@@ -3353,7 +3410,7 @@ export enum ItemSortFieldInput {
 
 export type ItemSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3366,6 +3423,7 @@ export type ItemStatsNode = {
   availableMonthsOfStockOnHand?: Maybe<Scalars['Float']['output']>;
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  totalConsumption: Scalars['Float']['output'];
 };
 
 export type ItemsResponse = ItemConnector;
@@ -3424,7 +3482,7 @@ export type LedgerNode = {
   invoiceType: InvoiceNodeType;
   itemId: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  quantity: Scalars['Int']['output'];
+  quantity: Scalars['Float']['output'];
   reason?: Maybe<Scalars['String']['output']>;
   stockLineId?: Maybe<Scalars['String']['output']>;
   storeId: Scalars['String']['output'];
@@ -3443,7 +3501,7 @@ export enum LedgerSortFieldInput {
 
 export type LedgerSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the
+   * Sort query result is sorted descending or ascending (if not provided the
    * default is ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3510,7 +3568,7 @@ export enum LocationSortFieldInput {
 
 export type LocationSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3591,7 +3649,7 @@ export enum MasterListLineSortFieldInput {
 
 export type MasterListLineSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3628,7 +3686,7 @@ export enum MasterListSortFieldInput {
 
 export type MasterListSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -3688,6 +3746,7 @@ export type Mutations = {
   deleteRequestRequisitionLine: DeleteRequestRequisitionLineResponse;
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
+  finaliseRnrForm: FinaliseRnRFormResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
   insertAssetLog: InsertAssetLogResponse;
@@ -3725,6 +3784,7 @@ export type Mutations = {
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
+  insertRnrForm: InsertRnRFormResponse;
   insertStockLine: InsertStockLineLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
@@ -3769,6 +3829,7 @@ export type Mutations = {
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
   updateResponseRequisitionLine: UpdateResponseRequisitionLineResponse;
+  updateRnrForm: UpdateRnRFormResponse;
   updateSensor: UpdateSensorResponse;
   updateStockLine: UpdateStockLineLineResponse;
   updateStocktake: UpdateStocktakeResponse;
@@ -3955,6 +4016,12 @@ export type MutationsDeleteStocktakeLineArgs = {
 };
 
 
+export type MutationsFinaliseRnrFormArgs = {
+  input: FinaliseRnRFormInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsInitialiseSiteArgs = {
   input: SyncSettingsInput;
 };
@@ -4116,6 +4183,12 @@ export type MutationsInsertRequestRequisitionArgs = {
 
 export type MutationsInsertRequestRequisitionLineArgs = {
   input: InsertRequestRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertRnrFormArgs = {
+  input: InsertRnRFormInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4328,6 +4401,12 @@ export type MutationsUpdateResponseRequisitionLineArgs = {
 };
 
 
+export type MutationsUpdateRnrFormArgs = {
+  input: UpdateRnRFormInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsUpdateSensorArgs = {
   input: UpdateSensorInput;
   storeId: Scalars['String']['input'];
@@ -4388,13 +4467,12 @@ export type NameFilterInput = {
   isCustomer?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by donor property */
   isDonor?: InputMaybe<Scalars['Boolean']['input']>;
-  isPatient?: InputMaybe<Scalars['Boolean']['input']>;
   /** Is this name a store */
   isStore?: InputMaybe<Scalars['Boolean']['input']>;
   /** Filter by supplier property */
   isSupplier?: InputMaybe<Scalars['Boolean']['input']>;
   /**
-   * 	Show system names (defaults to false)
+   * Show system names (defaults to false)
    * System names don't have name_store_join thus if queried with true filter, is_visible filter should also be true or null
    * if is_visible is set to true and is_system_name is also true no system names will be returned
    */
@@ -4447,7 +4525,6 @@ export enum NameNodeType {
   Facility = 'FACILITY',
   Invad = 'INVAD',
   Others = 'OTHERS',
-  Patient = 'PATIENT',
   Repack = 'REPACK',
   Store = 'STORE'
 }
@@ -4474,7 +4551,7 @@ export enum NameSortFieldInput {
 
 export type NameSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4583,17 +4660,12 @@ export type OtherPartyNotACustomer = InsertErrorInterface & InsertInboundReturnE
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotAPatient = InsertPrescriptionErrorInterface & UpdatePrescriptionErrorInterface & {
-  __typename: 'OtherPartyNotAPatient';
-  description: Scalars['String']['output'];
-};
-
 export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String']['output'];
 };
@@ -4800,7 +4872,7 @@ export enum PatientSortFieldInput {
 
 export type PatientSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4815,6 +4887,20 @@ export type PeriodNode = {
   name: Scalars['String']['output'];
   startDate: Scalars['NaiveDate']['output'];
 };
+
+export type PeriodScheduleNode = {
+  __typename: 'PeriodScheduleNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  periods: Array<SchedulePeriodNode>;
+};
+
+export type PeriodSchedulesConnector = {
+  __typename: 'PeriodSchedulesConnector';
+  nodes: Array<PeriodScheduleNode>;
+};
+
+export type PeriodSchedulesResponse = PeriodSchedulesConnector;
 
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
@@ -4845,7 +4931,7 @@ export enum PluginDataSortFieldInput {
 
 export type PluginDataSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4889,7 +4975,7 @@ export type PrintReportErrorInterface = {
 export type PrintReportNode = {
   __typename: 'PrintReportNode';
   /**
-   * Return the file id of the printed report.
+   * Return the file id of the generated report.
    * The file can be fetched using the /files?id={id} endpoint
    */
   fileId: Scalars['String']['output'];
@@ -4900,7 +4986,7 @@ export type PrintReportResponse = PrintReportError | PrintReportNode;
 /** This struct is used to sort report data by a key and in descending or ascending order */
 export type PrintReportSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -4979,7 +5065,7 @@ export enum ProgramEnrolmentSortFieldInput {
 
 export type ProgramEnrolmentSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -5032,7 +5118,7 @@ export enum ProgramEventSortFieldInput {
 
 export type ProgramEventSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -5042,6 +5128,7 @@ export type ProgramEventSortInput = {
 
 export type ProgramFilterInput = {
   contextId?: InputMaybe<EqualFilterStringInput>;
+  existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isImmunisation?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
@@ -5077,7 +5164,7 @@ export enum ProgramSortFieldInput {
 
 export type ProgramSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -5160,6 +5247,19 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
+  /**
+   * Creates a generated report.
+   *
+   * All details about the report, e.g. the output format, are specified in the report definition
+   * which is referred to by the report_id.
+   * The generated report can be retrieved from the `/files` endpoint using the returned file id.
+   */
+  generateReport: PrintReportResponse;
+  /**
+   * Can be used when developing reports, e.g. to generate a report that is not already in the
+   * system.
+   */
+  generateReportDefinition: PrintReportResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -5197,23 +5297,12 @@ export type Queries = {
   patients: PatientResponse;
   pluginData: PluginDataResponse;
   plugins: Array<PluginNode>;
-  /**
-   * Creates a printed report.
-   *
-   * All details about the report, e.g. the output format, are specified in the report definition
-   * which is referred to by the report_id.
-   * The printed report can be retrieved from the `/files` endpoint using the returned file id.
-   */
-  printReport: PrintReportResponse;
-  /**
-   * Can be used when developing reports, e.g. to print a report that is not already in the
-   * system.
-   */
-  printReportDefinition: PrintReportResponse;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   programs: ProgramsResponse;
+  rAndRForm: RnRFormResponse;
+  rAndRForms: RnRFormsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -5221,6 +5310,7 @@ export type Queries = {
   refreshToken: RefreshTokenResponse;
   repack: RepackResponse;
   repacksByStockLine: RepackConnector;
+  report: ReportResponse;
   /** Queries a list of available reports */
   reports: ReportsResponse;
   requisition: RequisitionResponse;
@@ -5230,6 +5320,7 @@ export type Queries = {
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   returnReasons: ReturnReasonResponse;
+  schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
   stockCounts: StockCounts;
@@ -5474,6 +5565,26 @@ export type QueriesGenerateOutboundReturnLinesArgs = {
 };
 
 
+export type QueriesGenerateReportArgs = {
+  arguments?: InputMaybe<Scalars['JSON']['input']>;
+  dataId?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<PrintFormat>;
+  reportId: Scalars['String']['input'];
+  sort?: InputMaybe<PrintReportSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesGenerateReportDefinitionArgs = {
+  arguments?: InputMaybe<Scalars['JSON']['input']>;
+  dataId?: InputMaybe<Scalars['String']['input']>;
+  format?: InputMaybe<PrintFormat>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  report: Scalars['JSON']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesInsertPrescriptionArgs = {
   input: InsertPrescriptionInput;
   storeId: Scalars['String']['input'];
@@ -5616,25 +5727,6 @@ export type QueriesPluginDataArgs = {
 };
 
 
-export type QueriesPrintReportArgs = {
-  arguments?: InputMaybe<Scalars['JSON']['input']>;
-  dataId?: InputMaybe<Scalars['String']['input']>;
-  format?: InputMaybe<PrintFormat>;
-  reportId: Scalars['String']['input'];
-  sort?: InputMaybe<PrintReportSortInput>;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type QueriesPrintReportDefinitionArgs = {
-  arguments?: InputMaybe<Scalars['JSON']['input']>;
-  dataId?: InputMaybe<Scalars['String']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  report: Scalars['JSON']['input'];
-  storeId: Scalars['String']['input'];
-};
-
-
 export type QueriesProgramEnrolmentsArgs = {
   filter?: InputMaybe<ProgramEnrolmentFilterInput>;
   sort?: InputMaybe<ProgramEnrolmentSortInput>;
@@ -5663,6 +5755,20 @@ export type QueriesProgramsArgs = {
 };
 
 
+export type QueriesRAndRFormArgs = {
+  rnrFormId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesRAndRFormsArgs = {
+  filter?: InputMaybe<RnRFormFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<RnRFormSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesRepackArgs = {
   invoiceId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -5671,6 +5777,12 @@ export type QueriesRepackArgs = {
 
 export type QueriesRepacksByStockLineArgs = {
   stockLineId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesReportArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -5727,6 +5839,12 @@ export type QueriesReturnReasonsArgs = {
   filter?: InputMaybe<ReturnReasonFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReturnReasonSortInput>>;
+};
+
+
+export type QueriesSchedulesWithPeriodsByProgramArgs = {
+  programId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -5916,6 +6034,7 @@ export enum ReportContext {
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
   Repack = 'REPACK',
+  Report = 'REPORT',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
@@ -5938,6 +6057,8 @@ export type ReportNode = {
   subContext?: Maybe<Scalars['String']['output']>;
 };
 
+export type ReportResponse = ReportNode;
+
 export enum ReportSortFieldInput {
   Id = 'id',
   Name = 'name'
@@ -5945,7 +6066,7 @@ export enum ReportSortFieldInput {
 
 export type ReportSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -5981,6 +6102,7 @@ export type RequisitionCounts = {
 };
 
 export type RequisitionFilterInput = {
+  aShipmentHasBeenCreated?: InputMaybe<Scalars['Boolean']['input']>;
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -6055,7 +6177,7 @@ export type RequisitionLineNode = {
 
 
 export type RequisitionLineNodeItemStatsArgs = {
-  amcLookbackMonths?: InputMaybe<Scalars['Int']['input']>;
+  amcLookbackMonths?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type RequisitionLineStatsError = {
@@ -6131,21 +6253,33 @@ export type RequisitionNodeOtherPartyArgs = {
 
 /** Approval status is applicable to response requisition only */
 export enum RequisitionNodeApprovalStatus {
+  /** Approved */
   Approved = 'APPROVED',
+  /** Approval was denied, requisition is not editable */
   Denied = 'DENIED',
   None = 'NONE',
+  /** Pending authorisation, requisition should not be editable */
   Pending = 'PENDING'
 }
 
 export enum RequisitionNodeStatus {
+  /** New requisition when manually created */
   Draft = 'DRAFT',
+  /**
+   * Response requisition: When supplier finished fulfilling requisition, locked for future editing
+   * Request requisition: When response requisition is finalised
+   */
   Finalised = 'FINALISED',
+  /** New requisition when automatically created, only applicable to response requisition when it's duplicated in supplying store from request requisition */
   New = 'NEW',
+  /** Request requisition is sent and locked for future editing, only applicable to request requisition */
   Sent = 'SENT'
 }
 
 export enum RequisitionNodeType {
+  /** Requisition created by store that is ordering stock */
   Request = 'REQUEST',
+  /** Supplying store requisition in response to request requisition */
   Response = 'RESPONSE'
 }
 
@@ -6169,7 +6303,7 @@ export enum RequisitionSortFieldInput {
 
 export type RequisitionSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6226,12 +6360,94 @@ export enum ReturnReasonSortFieldInput {
 
 export type ReturnReasonSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ReturnReasonSortFieldInput;
+};
+
+export type RnRFormConnector = {
+  __typename: 'RnRFormConnector';
+  nodes: Array<RnRFormNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type RnRFormFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type RnRFormLineNode = {
+  __typename: 'RnRFormLineNode';
+  adjustedQuantityConsumed: Scalars['Float']['output'];
+  adjustments: Scalars['Float']['output'];
+  averageMonthlyConsumption: Scalars['Float']['output'];
+  comment?: Maybe<Scalars['String']['output']>;
+  confirmed: Scalars['Boolean']['output'];
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  finalBalance: Scalars['Float']['output'];
+  id: Scalars['String']['output'];
+  initialBalance: Scalars['Float']['output'];
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  maximumQuantity: Scalars['Float']['output'];
+  previousAverageMonthlyConsumption: Scalars['Float']['output'];
+  quantityConsumed: Scalars['Float']['output'];
+  quantityReceived: Scalars['Float']['output'];
+  requestedQuantity: Scalars['Float']['output'];
+  rnrFormId: Scalars['String']['output'];
+  stockOutDuration: Scalars['Int']['output'];
+};
+
+export type RnRFormNode = {
+  __typename: 'RnRFormNode';
+  createdDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  lines: Array<RnRFormLineNode>;
+  periodId: Scalars['String']['output'];
+  periodLength: Scalars['Int']['output'];
+  periodName: Scalars['String']['output'];
+  programId: Scalars['String']['output'];
+  programName: Scalars['String']['output'];
+  status: RnRFormNodeStatus;
+  supplierName: Scalars['String']['output'];
+};
+
+export enum RnRFormNodeStatus {
+  Draft = 'DRAFT',
+  Finalised = 'FINALISED'
+}
+
+export type RnRFormResponse = NodeError | RnRFormNode;
+
+export enum RnRFormSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  Period = 'period',
+  Program = 'program',
+  Status = 'status',
+  SupplierName = 'supplierName'
+}
+
+export type RnRFormSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: RnRFormSortFieldInput;
+};
+
+export type RnRFormsResponse = RnRFormConnector;
+
+export type SchedulePeriodNode = {
+  __typename: 'SchedulePeriodNode';
+  id: Scalars['String']['output'];
+  inUse: Scalars['Boolean']['output'];
+  period: PeriodNode;
 };
 
 export type SensorConnector = {
@@ -6276,7 +6492,7 @@ export enum SensorSortFieldInput {
 
 export type SensorSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6401,7 +6617,7 @@ export enum StockLineSortFieldInput {
 
 export type StockLineSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6477,17 +6693,21 @@ export type StocktakeLineNode = {
 };
 
 export enum StocktakeLineSortFieldInput {
+  /** Stocktake line batch */
   Batch = 'batch',
+  /** Stocktake line expiry date */
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
+  /** Stocktake line item stock location code */
   LocationCode = 'locationCode',
+  /** Stocktake line pack size */
   PackSize = 'packSize'
 }
 
 export type StocktakeLineSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6534,7 +6754,7 @@ export enum StocktakeSortFieldInput {
 
 export type StocktakeSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6589,10 +6809,16 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String']['output'];
   issueInForeignCurrency: Scalars['Boolean']['output'];
+  monthlyConsumptionLookBackPeriod: Scalars['Float']['output'];
+  monthsItemsExpire: Scalars['Float']['output'];
+  monthsLeadTime: Scalars['Float']['output'];
+  monthsOverstock: Scalars['Float']['output'];
+  monthsUnderstock: Scalars['Float']['output'];
   omProgramModule: Scalars['Boolean']['output'];
   packToOne: Scalars['Boolean']['output'];
   requestRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
   responseRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
+  stocktakeFrequency: Scalars['Float']['output'];
   vaccineModule: Scalars['Boolean']['output'];
 };
 
@@ -6606,7 +6832,7 @@ export enum StoreSortFieldInput {
 
 export type StoreSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6718,6 +6944,7 @@ export type SyncSettingsNode = {
 
 export type SyncStatusNode = {
   __typename: 'SyncStatusNode';
+  durationInSeconds: Scalars['Int']['output'];
   finished?: Maybe<Scalars['DateTime']['output']>;
   started: Scalars['DateTime']['output'];
 };
@@ -6780,7 +7007,7 @@ export enum TemperatureBreachSortFieldInput {
 
 export type TemperatureBreachSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -6838,7 +7065,7 @@ export enum TemperatureLogSortFieldInput {
 
 export type TemperatureLogSortInput = {
   /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * Sort query result is sorted descending or ascending (if not provided the default is
    * ascending)
    */
   desc?: InputMaybe<Scalars['Boolean']['input']>;
@@ -7220,7 +7447,7 @@ export type UpdateOutboundShipmentInput = {
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   /**
-   * 	When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
+   * When changing the status from DRAFT to CONFIRMED or FINALISED the total_number_of_packs for
    * existing invoice items gets updated.
    */
   status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
@@ -7557,6 +7784,30 @@ export type UpdateResult = {
   theme?: Maybe<Scalars['String']['output']>;
 };
 
+export type UpdateRnRFormInput = {
+  id: Scalars['String']['input'];
+  lines: Array<UpdateRnRFormLineInput>;
+};
+
+export type UpdateRnRFormLineInput = {
+  adjustedQuantityConsumed: Scalars['Float']['input'];
+  adjustments?: InputMaybe<Scalars['Float']['input']>;
+  averageMonthlyConsumption: Scalars['Float']['input'];
+  comment?: InputMaybe<Scalars['String']['input']>;
+  confirmed: Scalars['Boolean']['input'];
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  finalBalance: Scalars['Float']['input'];
+  id: Scalars['String']['input'];
+  initialBalance: Scalars['Float']['input'];
+  maximumQuantity: Scalars['Float']['input'];
+  quantityConsumed?: InputMaybe<Scalars['Float']['input']>;
+  quantityReceived?: InputMaybe<Scalars['Float']['input']>;
+  requestedQuantity: Scalars['Float']['input'];
+  stockOutDuration: Scalars['Int']['input'];
+};
+
+export type UpdateRnRFormResponse = RnRFormNode;
+
 export type UpdateSensorError = {
   __typename: 'UpdateSensorError';
   error: UpdateSensorErrorInterface;
@@ -7797,6 +8048,8 @@ export enum UserPermission {
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',
+  RnRFormMutate = 'RN_R_FORM_MUTATE',
+  RnRFormQuery = 'RN_R_FORM_QUERY',
   SensorMutate = 'SENSOR_MUTATE',
   SensorQuery = 'SENSOR_QUERY',
   ServerAdmin = 'SERVER_ADMIN',
@@ -7823,6 +8076,7 @@ export type UserStoreNode = {
   createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
+  isDisabled: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   nameId: Scalars['String']['output'];
   preferences: StorePreferenceNode;
@@ -7934,3 +8188,10 @@ export type VariantWithPackSizeAlreadyExists = InsertPackVariantErrorInterface &
   __typename: 'VariantWithPackSizeAlreadyExists';
   description: Scalars['String']['output'];
 };
+
+export enum VenCategoryType {
+  E = 'E',
+  N = 'N',
+  NotAssigned = 'NOT_ASSIGNED',
+  V = 'V'
+}

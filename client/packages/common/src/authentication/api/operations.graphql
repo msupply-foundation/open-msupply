@@ -12,9 +12,16 @@ fragment UserStoreNode on UserStoreNode {
     omProgramModule
     vaccineModule
     issueInForeignCurrency
+    monthlyConsumptionLookBackPeriod
+    monthsLeadTime
+    monthsOverstock
+    monthsUnderstock
+    monthsItemsExpire
+    stocktakeFrequency
   }
   createdDate
   homeCurrencyCode
+  isDisabled
 }
 
 query authToken($username: String!, $password: String!) {

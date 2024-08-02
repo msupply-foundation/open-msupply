@@ -1,6 +1,6 @@
 import React, { FC, PropsWithChildren, useState } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 
 import {
   DialogButton,
@@ -56,7 +56,7 @@ const Wrapper: FC<PropsWithChildren<{ text: string }>> = ({
   );
 };
 
-const Template: Story<{ color: 'primary' | 'secondary' }> = ({ color }) => {
+const Template: StoryFn<{ color: 'primary' | 'secondary' }> = ({ color }) => {
   const t = useTranslation('app');
   const [selected, setSelected] = useState(false);
   const [selectedColor, setColor] = useState<Color>({

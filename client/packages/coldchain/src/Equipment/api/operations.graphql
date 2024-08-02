@@ -24,10 +24,13 @@ fragment AssetRow on AssetNode {
   catalogueItem {
     manufacturer
     model
+    code
   }
   assetType {
     name
   }
+  properties
+  catalogProperties
 }
 
 fragment Asset on AssetNode {
@@ -160,7 +163,7 @@ query assetById($storeId: String!, $assetId: String!) {
 
 query assetLogs(
   $filter: AssetLogFilterInput!
-  $sort: AssetLogSortInput
+  $sort: [AssetLogSortInput!]
   $storeId: String!
 ) {
   assetLogs(filter: $filter, sort: $sort, storeId: $storeId) {

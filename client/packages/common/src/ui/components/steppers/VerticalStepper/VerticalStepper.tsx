@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 import StepConnector, {
   stepConnectorClasses,
 } from '@mui/material/StepConnector';
-import { styled } from '@mui/material';
+import { StepIconProps, styled } from '@mui/material';
 
 interface StepDefinition {
   label: string;
@@ -48,44 +48,49 @@ const StyledConnector = styled(StepConnector)(({ theme }) => ({
   },
 }));
 
-const Circle = styled('div', {
-  shouldForwardProp: prop =>
-    prop !== 'completed' && prop !== 'active' && prop !== 'error',
-})<{
-  completed: boolean;
-  active: boolean;
-}>(({ active, completed, theme }) => {
-  // Base colours for all uncompleted and non-active steps.
-  const colors = {
-    borderColor: theme.palette.gray.pale,
-    backgroundColor: theme.palette.gray.pale,
-  };
+const Circle = (props: StepIconProps) => {
+  const { active, completed, ...rest } = props;
+  {
+    // Base colours for all uncompleted and non-active steps.
+    const colors = {
+      borderColor: 'gray.pale',
+      backgroundColor: 'gray.pale',
+    };
 
-  // If the step is completed, then everything is light.
-  if (completed) {
-    colors.backgroundColor = theme.palette.secondary.light;
-    colors.borderColor = theme.palette.secondary.light;
+    // If the step is completed, then everything is light.
+    if (completed) {
+      colors.backgroundColor = 'secondary.light';
+      colors.borderColor = 'secondary.light';
+    }
+
+    // If the step is active, the center of the circle is white
+    if (active) {
+      colors.backgroundColor = 'white';
+    }
+
+    // 'error' isn't a valid attribute for a div component
+    delete rest.error;
+
+    return (
+      <Box
+        sx={{
+          border: 'solid',
+
+          // These numbers are arbitrary and are just what look good to me.
+          // our designs have the circle icon at 16px - with the border I
+          // believe this is 15px.. either 4px on the border or 13px on the
+          // dimensions and it looks a bit off.. maybe this isn't how it works.
+          borderWidth: '4px',
+          width: '16px',
+          height: '16px',
+          borderRadius: '16px',
+          ...colors,
+        }}
+        {...rest}
+      />
+    );
   }
-
-  // If the step is active, the center of the circle is white
-  if (active) {
-    colors.backgroundColor = 'white';
-  }
-
-  return {
-    border: 'solid',
-
-    // These numbers are arbitrary and are just what look good to me.
-    // our designs have the circle icon at 16px - with the border I
-    // believe this is 15px.. either 4px on the border or 13px on the
-    // dimensions and it looks a bit off.. maybe this isn't how it works.
-    borderWidth: '4px',
-    width: '16px',
-    height: '16px',
-    borderRadius: '16px',
-    ...colors,
-  };
-});
+};
 
 export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => (
   <Box flex={1}>
@@ -98,8 +103,8 @@ export const VerticalStepper: FC<StepperProps> = ({ activeStep, steps }) => (
         const isActive = index === activeStep;
         const isCompleted = index <= activeStep;
 
-        // There is no accessability role that I can find to accurately describe
-        // a stepper, so turning to testids to mark the active/completed steps
+        // There is no accessibility role that I can find to accurately describe
+        // a stepper, so turning to test ids to mark the active/completed steps
         // for tests
         let testId = '';
         if (isActive) testId += 'active';

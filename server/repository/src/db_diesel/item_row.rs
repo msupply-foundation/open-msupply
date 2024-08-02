@@ -14,6 +14,8 @@ table! {
         name -> Text,
         code -> Text,
         unit_id -> Nullable<Text>,
+        strength -> Nullable<Text>,
+        ven_category -> crate::db_diesel::item_row::VENCategoryMapping,
         default_pack_size -> Double,
         #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemTypeMapping,
         // TODO, this is temporary, remove
@@ -43,6 +45,16 @@ pub enum ItemType {
     NonStock,
 }
 
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum VENCategory {
+    V,
+    E,
+    N,
+    #[default]
+    NotAssigned,
+}
+
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset)]
 #[diesel(table_name = item)]
 pub struct ItemRow {
@@ -50,6 +62,8 @@ pub struct ItemRow {
     pub name: String,
     pub code: String,
     pub unit_id: Option<String>,
+    pub strength: Option<String>,
+    pub ven_category: VENCategory,
     pub default_pack_size: f64,
     #[diesel(column_name = type_)]
     pub r#type: ItemType,
@@ -71,6 +85,8 @@ impl Default for ItemRow {
             legacy_record: Default::default(),
             is_active: true,
             is_vaccine: false,
+            strength: Default::default(),
+            ven_category: VENCategory::NotAssigned,
         }
     }
 }
@@ -137,7 +153,7 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &Vec<String>) -> Result<Vec<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq_any(ids))
             .load(self.connection.lock().connection())?;
@@ -155,8 +171,9 @@ impl<'a> ItemRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ItemRowDelete(pub String);
 impl Delete for ItemRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ItemRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ItemRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -171,8 +188,9 @@ impl Delete for ItemRowDelete {
 }
 
 impl Upsert for ItemRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ItemRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ItemRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

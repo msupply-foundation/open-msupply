@@ -1,8 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type InventoryAdjustmentReasonRowFragment = { __typename: 'InventoryAdjustmentReasonNode', id: string, type: Types.InventoryAdjustmentReasonNodeType, reason: string };
 
 export type InventoryAdjustmentReasonsQueryVariables = Types.Exact<{
@@ -39,15 +39,15 @@ export const InventoryAdjustmentReasonsDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     inventoryAdjustmentReasons(variables?: InventoryAdjustmentReasonsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InventoryAdjustmentReasonsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InventoryAdjustmentReasonsQuery>(InventoryAdjustmentReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inventoryAdjustmentReasons', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<InventoryAdjustmentReasonsQuery>(InventoryAdjustmentReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inventoryAdjustmentReasons', 'query', variables);
     }
   };
 }

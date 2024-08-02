@@ -17,14 +17,20 @@ import {
   LoadingButton,
   PrinterIcon,
   StockLineNode,
+  useConfirmationModal,
+  useNavigate,
+  RouteBuilder,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
 import {
   ReportRowFragment,
   ReportSelector,
   useActivityLog,
-  useReport,
+  usePrintReport,
 } from '@openmsupply-client/system';
 import { RepackFragment } from '../../api';
 import { useRepackColumns } from './column';
@@ -43,6 +49,11 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const { error, success } = useNotification();
+  const getRedirectConfirmation = useConfirmationModal({
+    title: t('title.repack-complete'),
+    message: t('messages.all-packs-repacked'),
+  });
+  const navigate = useNavigate();
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
@@ -66,7 +77,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const showRepackDetail = invoiceId || isNew;
   const showLogEvent = !!logData?.nodes.length;
 
-  const { print, isPrinting } = useReport.utils.print();
+  const { print, isPrinting } = usePrintReport();
 
   const printReport = (report: ReportRowFragment) => {
     if (!repacks) return;
@@ -104,7 +115,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const getFormData = () => {
     const isNewRepack = !repackData;
-
     if (isNewRepack) {
       return {
         ...draft,
@@ -113,17 +123,23 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       };
     }
 
-    const { numberOfPacks, packSize } = repackData.from;
-    const { packSize: newPackSize, location } = repackData.to;
+    const { numberOfPacks, packSize, location: fromLocation } = repackData.from;
+    const { packSize: newPackSize, location: toLocation } = repackData.to;
     return {
       stockLineId: stockLine.id,
       numberOfPacks,
       packSize,
       newPackSize,
-      locationName: location?.name,
-      newLocationId: location?.id,
+      locationName: fromLocation?.name,
+      newLocationId: toLocation?.id,
+      newLocationName: toLocation?.name,
     };
   };
+
+  const newRepack = useCallbackWithPermission(
+    UserPermission.CreateRepack,
+    onNewClick
+  );
 
   return (
     <Modal
@@ -140,12 +156,27 @@ export const RepackModal: FC<RepackModalControlProps> = ({
               const result = await onInsert();
               const errorMessage = mapStructuredErrors(result);
 
+              // The new stockline is the first of two lines in the resulting
+              // invoice
+              const newLineId =
+                result.__typename === 'InvoiceNode'
+                  ? result?.lines?.nodes?.[0]?.stockLine?.id ?? ''
+                  : '';
+
               if (errorMessage) {
                 error(errorMessage)();
               } else {
                 if (stockLine?.totalNumberOfPacks === draft.numberOfPacks) {
                   onClose();
-                  success(t('messages.all-packs-repacked'))();
+                  getRedirectConfirmation({
+                    onConfirm: () =>
+                      navigate(
+                        RouteBuilder.create(AppRoute.Inventory)
+                          .addPart(AppRoute.Stock)
+                          .addPart(newLineId)
+                          .build()
+                      ),
+                  });
                 } else {
                   success(t('messages.saved'))();
                 }
@@ -202,7 +233,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             <ButtonWithIcon
               label={t('label.new')}
               Icon={<PlusCircleIcon />}
-              onClick={onNewClick}
+              onClick={newRepack}
             />
           </Box>
         </Box>

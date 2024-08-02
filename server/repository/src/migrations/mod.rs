@@ -55,13 +55,13 @@ pub(crate) trait Migration {
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
     }
-    fn rc_pre_migrate(
+    fn migrate_pre_release(
         &self,
         _connection: &StorageConnection,
         ctx: &MigrationContext,
     ) -> anyhow::Result<()> {
         Err(anyhow::anyhow!(
-            "RC migration not allowed for version {}",
+            "Pre release migration not allowed for version {}",
             ctx.database_version
         ))
     }
@@ -178,13 +178,13 @@ pub fn migrate(
         {
             log::warn!("Database version is pre-release, running pre-release migration");
             migration
-                .rc_pre_migrate(connection, &migration_context)
+                .migrate_pre_release(connection, &migration_context)
                 .map_err(|source| MigrationError::MigrationError {
                     source,
                     version: migration_version.clone(),
                 })?;
 
-            set_migrated_from_rc(connection)?;
+            set_migrated_from_pre_release(connection)?;
 
             let result = migration.migrate_with_context(connection, &migration_context);
             match result {
@@ -255,7 +255,7 @@ fn set_migration_error(
         .set_string(KeyType::DatabaseMigrationError, Some(error_message))
 }
 
-fn set_migrated_from_rc(connection: &StorageConnection) -> Result<(), RepositoryError> {
+fn set_migrated_from_pre_release(connection: &StorageConnection) -> Result<(), RepositoryError> {
     KeyValueStoreRepository::new(connection)
         .set_bool(KeyType::DatabaseMigratedFromPreRelease, Some(true))
 }

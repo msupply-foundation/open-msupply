@@ -1,18 +1,37 @@
 import { NumUtils } from '@common/utils';
-import {
-  DemographicIndicatorFragment,
-  DemographicProjectionFragment,
-} from '../api/operations.generated';
+
+import { DemographicProjectionFragment } from '../api/operations.generated';
 
 import { GENERAL_POPULATION_ID } from '../api';
-import { HeaderData, HeaderValue, Row } from '../types';
+import { HeaderData, Row } from '../types';
+import {
+  InsertDemographicIndicatorInput,
+  UpdateDemographicIndicatorInput,
+} from '@common/types';
 
-export const toIndicatorFragment = (
+export const toInsertIndicator = (
   row: Row,
   indexPopulation?: number
-): DemographicIndicatorFragment => {
+): InsertDemographicIndicatorInput => {
   return {
-    __typename: 'DemographicIndicatorNode',
+    id: row.id,
+    name: row.name?.trim() === '' ? undefined : row.name,
+    baseYear: row.baseYear,
+    basePopulation: indexPopulation ?? row.basePopulation,
+    populationPercentage: row.percentage ?? 0,
+    year1Projection: row[1],
+    year2Projection: row[2],
+    year3Projection: row[3],
+    year4Projection: row[4],
+    year5Projection: row[5],
+  };
+};
+
+export const toUpdateIndicator = (
+  row: Row,
+  indexPopulation?: number
+): UpdateDemographicIndicatorInput => {
+  return {
     id: row.id,
     name: row.name,
     baseYear: row.baseYear,
@@ -32,16 +51,12 @@ export const recursiveCalculate = (
   row: Row,
   indexValue: number | undefined
 ): number => {
-  const headerValue = updatedHeader[
-    String(key) as keyof HeaderData
-  ] as HeaderValue;
-  if (key > 0) {
-    return headerValue
-      ? (NumUtils.round(
-          recursiveCalculate(key - 1, updatedHeader, row, indexValue) *
-            ((headerValue.value ?? 0) / 100 + 1)
-        ) as number)
-      : 0;
+  if (isHeaderDataYearKey(key)) {
+    const headerValue = updatedHeader[key];
+    return NumUtils.round(
+      recursiveCalculate(key - 1, updatedHeader, row, indexValue) *
+        ((headerValue.value ?? 0) / 100 + 1)
+    );
   } else {
     return NumUtils.round(
       (indexValue ?? row.basePopulation ?? 0) * ((row?.percentage ?? 0) / 100)
@@ -127,10 +142,23 @@ export const toDemographicIndicatorRow = (row: {
   name: row.name,
   baseYear: row.baseYear ?? 0,
   basePopulation: row.basePopulation ?? 0,
-  0: row.year1Projection ?? 0,
-  1: row.year2Projection ?? 0,
-  2: row.year3Projection ?? 0,
-  3: row.year4Projection ?? 0,
-  4: row.year5Projection ?? 0,
+  0: (row.basePopulation ?? 0) * (row.populationPercentage ?? 0)/100,
+  1: row.year1Projection ?? 0,
+  2: row.year2Projection ?? 0,
+  3: row.year3Projection ?? 0,
+  4: row.year4Projection ?? 0,
   5: row.year5Projection ?? 0,
 });
+
+export function isHeaderDataYearKey(key: number): key is 1 | 2 | 3 | 4 | 5 {
+  switch (key) {
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+      return true;
+    default:
+      return false;
+  }
+}

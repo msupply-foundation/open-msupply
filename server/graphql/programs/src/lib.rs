@@ -59,6 +59,13 @@ use mutations::program_patient::insert::*;
 use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
+use mutations::rnr_form::finalise::{
+    finalise_rnr_form, FinaliseRnRFormInput, FinaliseRnRFormResponse,
+};
+use mutations::rnr_form::insert::{insert_rnr_form, InsertRnRFormInput, InsertRnRFormResponse};
+use mutations::rnr_form::update::update_rnr_form;
+use mutations::rnr_form::update::UpdateRnRFormInput;
+use mutations::rnr_form::update::UpdateRnRFormResponse;
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
@@ -66,11 +73,15 @@ use service::programs::patient::patient_search_central;
 use types::program::ProgramFilterInput;
 use types::program::ProgramSortInput;
 use types::program::ProgramsResponse;
+use types::r_and_r_form::RnRFormResponse;
+use types::r_and_r_form::{RnRFormFilterInput, RnRFormSortInput, RnRFormsResponse};
 
 mod mutations;
 
 mod queries;
 pub mod types;
+use crate::types::period_schedule::PeriodSchedulesResponse;
+
 use self::queries::*;
 
 #[derive(Default, Clone)]
@@ -251,6 +262,35 @@ impl ProgramsQueries {
     ) -> Result<ProgramsResponse> {
         programs(ctx, store_id, page, filter, sort)
     }
+
+    pub async fn r_and_r_forms(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<RnRFormFilterInput>,
+        sort: Option<RnRFormSortInput>,
+    ) -> Result<RnRFormsResponse> {
+        r_and_r_forms(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn r_and_r_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        rnr_form_id: String,
+    ) -> Result<RnRFormResponse> {
+        r_and_r_form(ctx, store_id, rnr_form_id)
+    }
+
+    pub async fn schedules_with_periods_by_program(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        program_id: String,
+    ) -> Result<PeriodSchedulesResponse> {
+        get_schedules_with_periods_by_program(ctx, store_id, program_id)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -382,6 +422,33 @@ impl ProgramsMutations {
         input: UpdateContactTraceInput,
     ) -> Result<UpdateContactTraceResponse> {
         update_contact_trace(ctx, store_id, input)
+    }
+
+    pub async fn insert_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertRnRFormInput,
+    ) -> Result<InsertRnRFormResponse> {
+        insert_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn update_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateRnRFormInput,
+    ) -> Result<UpdateRnRFormResponse> {
+        update_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn finalise_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: FinaliseRnRFormInput,
+    ) -> Result<FinaliseRnRFormResponse> {
+        finalise_rnr_form(ctx, store_id, input)
     }
 }
 

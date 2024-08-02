@@ -28,6 +28,7 @@ mod program;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
+mod rnr_form;
 mod sensor;
 mod stock_line;
 mod stocktake;
@@ -83,6 +84,7 @@ pub use program::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
+pub use rnr_form::*;
 pub use sensor::*;
 pub use stock_line::*;
 pub use stocktake::*;
@@ -128,13 +130,13 @@ use crate::{
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, PropertyRow,
     PropertyRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, ReturnReasonRow, ReturnReasonRowRepository, SensorRow,
-    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
-    SyncLogRowRepository, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
-    TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
-    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    RequisitionRowRepository, ReturnReasonRow, ReturnReasonRowRepository, RnRFormLineRow,
+    RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, SensorRow, SensorRowRepository,
+    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow,
+    SyncBufferRowRepository, SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
+    TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
+    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{activity_log::mock_activity_logs, unit::mock_units};
@@ -201,6 +203,8 @@ pub struct MockData {
     pub asset_logs: Vec<AssetLogRow>,
     pub demographic_indicators: Vec<DemographicIndicatorRow>,
     pub properties: Vec<PropertyRow>,
+    pub rnr_forms: Vec<RnRFormRow>,
+    pub rnr_form_lines: Vec<RnRFormLineRow>,
 }
 
 impl MockData {
@@ -269,6 +273,8 @@ pub struct MockDataInserts {
     pub asset_logs: bool,
     pub demographic_indicators: bool,
     pub properties: bool,
+    pub rnr_forms: bool,
+    pub rnr_form_lines: bool,
 }
 
 impl MockDataInserts {
@@ -326,6 +332,8 @@ impl MockDataInserts {
             asset_logs: true,
             demographic_indicators: true,
             properties: true,
+            rnr_forms: true,
+            rnr_form_lines: true,
         }
     }
 
@@ -369,6 +377,7 @@ impl MockDataInserts {
     }
 
     pub fn periods(mut self) -> Self {
+        self.period_schedules = true;
         self.periods = true;
         self
     }
@@ -395,6 +404,7 @@ impl MockDataInserts {
     }
 
     pub fn items(mut self) -> Self {
+        self.units = true;
         self.items = true;
         self
     }
@@ -504,6 +514,7 @@ impl MockDataInserts {
     }
 
     pub fn programs(mut self) -> Self {
+        self.contexts = true;
         self.programs = true;
         self
     }
@@ -519,6 +530,9 @@ impl MockDataInserts {
     }
 
     pub fn program_requisition_settings(mut self) -> Self {
+        self.contexts = true;
+        self.programs = true;
+        self.name_tags = true;
         self.program_requisition_settings = true;
         self
     }
@@ -576,6 +590,25 @@ impl MockDataInserts {
 
     pub fn properties(mut self) -> Self {
         self.demographic_indicators = true;
+        self
+    }
+
+    pub fn rnr_forms(mut self) -> Self {
+        self.period_schedules = true;
+        self.periods = true;
+        self.contexts = true;
+        self.programs = true;
+        self.rnr_forms = true;
+        self
+    }
+
+    pub fn rnr_forms_lines(mut self) -> Self {
+        self.period_schedules = true;
+        self.periods = true;
+        self.contexts = true;
+        self.programs = true;
+        self.rnr_forms = true;
+        self.rnr_form_lines = true;
         self
     }
 }
@@ -656,6 +689,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             asset_logs: mock_asset_logs(),
             demographic_indicators: mock_demographic_indicators(),
             properties: mock_properties(),
+            rnr_forms: mock_rnr_forms(),
+            rnr_form_lines: mock_rnr_form_lines(),
             ..Default::default()
         },
     );
@@ -1090,6 +1125,20 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.rnr_forms {
+            let repo = RnRFormRowRepository::new(connection);
+            for row in &mock_data.rnr_forms {
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.rnr_form_lines {
+            let repo = RnRFormLineRowRepository::new(connection);
+            for row in &mock_data.rnr_form_lines {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1151,6 +1200,8 @@ impl MockData {
             mut currencies,
             mut demographic_indicators,
             mut properties,
+            mut rnr_forms,
+            mut rnr_form_lines,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1209,6 +1260,8 @@ impl MockData {
         self.demographic_indicators
             .append(&mut demographic_indicators);
         self.properties.append(&mut properties);
+        self.rnr_forms.append(&mut rnr_forms);
+        self.rnr_form_lines.append(&mut rnr_form_lines);
         self
     }
 }

@@ -67,7 +67,7 @@ const mapRoute = (route: string): RouteMapping => {
     case inRoute(AppRoute.Sync):
       return { title: 'sync', docs: '/sync/synchronisation/' };
     case inRoute(AppRoute.Settings):
-      return { title: 'settings', docs: '/administration/' };
+      return { title: 'settings', docs: '/settings/' };
     case inRoute(AppRoute.Patients):
       return { title: 'patients', docs: '/dispensary/patients/' };
     case inRoute(AppRoute.Prescription):
@@ -95,6 +95,8 @@ const mapRoute = (route: string): RouteMapping => {
       };
     case inRoute(AppRoute.ImmunisationPrograms):
       return { title: 'immunisations', docs: '/programs/immunizations/' };
+    case inRoute(AppRoute.RnRForms):
+      return { title: 'r-and-r-forms', docs: '/programs/r-and-r-forms/' };
     default:
       return { title: undefined, docs: '/introduction/' };
   }

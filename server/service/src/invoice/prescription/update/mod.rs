@@ -39,10 +39,7 @@ pub enum UpdatePrescriptionError {
     NotAPrescriptionInvoice,
     NotThisStoreInvoice,
     ClinicianDoesNotExist,
-    // Name validation
-    OtherPartyDoesNotExist,
-    OtherPartyNotVisible,
-    OtherPartyNotAPatient,
+    PatientDoesNotExist,
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),

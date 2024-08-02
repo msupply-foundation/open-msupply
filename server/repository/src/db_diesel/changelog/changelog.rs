@@ -89,6 +89,7 @@ pub enum ChangelogTableName {
     AssetCatalogueItem,
     AssetCatalogueItemProperty,
     AssetCatalogueProperty,
+    AssetInternalLocation,
     #[default]
     SyncFileReference,
     Asset,
@@ -98,6 +99,8 @@ pub enum ChangelogTableName {
     Property,
     NameProperty,
     NameOmsFields,
+    RnrForm,
+    RnrFormLine,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -142,6 +145,7 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueType => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::AssetInternalLocation => ChangeLogSyncStyle::Remote,
             ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
             ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
@@ -151,6 +155,8 @@ impl ChangelogTableName {
             ChangelogTableName::Property => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
+            ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,
         }
     }
 }
@@ -324,7 +330,7 @@ impl<'a> ChangelogRepository<'a> {
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via
     // PullUpsertRecord (but not through sync)
-    #[cfg(test)]
+    #[cfg(feature = "integration_test")]
     pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
         diesel::update(changelog::table)
             .set(changelog::is_sync_update.eq(false))

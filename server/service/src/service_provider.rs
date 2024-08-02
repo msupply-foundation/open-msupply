@@ -27,7 +27,6 @@ use crate::{
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
-    missing_program::create_missing_master_list_and_program,
     name::{NameService, NameServiceTrait},
     pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
@@ -44,6 +43,7 @@ use crate::{
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
@@ -55,7 +55,6 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
-    system_user::create_system_user,
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
@@ -86,6 +85,7 @@ pub struct ServiceProvider {
     pub requisition_line_service: Box<dyn RequisitionLineServiceTrait>,
     pub general_service: Box<dyn GeneralServiceTrait>,
     pub clinician_service: Box<dyn ClinicianServiceTrait>,
+    pub rnr_form_service: Box<dyn RnRFormServiceTrait>,
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
@@ -225,6 +225,7 @@ impl ServiceProvider {
             demographic_service: Box::new(crate::demographic::DemographicService {}),
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
+            rnr_form_service: Box::new(RnRFormService {}),
         }
     }
 
@@ -286,20 +287,6 @@ pub trait GeneralServiceTrait: Sync + Send {
         filter: StoreFilter,
     ) -> Result<Option<Store>, RepositoryError> {
         get_store(ctx, filter)
-    }
-
-    fn create_system_user(
-        &self,
-        service_provider: &ServiceProvider,
-    ) -> Result<(), RepositoryError> {
-        create_system_user(service_provider)
-    }
-
-    fn create_missing_master_list_and_program(
-        &self,
-        service_provider: &ServiceProvider,
-    ) -> Result<(), RepositoryError> {
-        create_missing_master_list_and_program(service_provider)
     }
 }
 

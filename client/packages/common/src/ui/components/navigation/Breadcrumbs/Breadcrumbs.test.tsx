@@ -8,6 +8,7 @@ import {
 } from '../../../../utils';
 import { Route } from 'react-router';
 import { Breadcrumbs } from './Breadcrumbs';
+import '@testing-library/jest-dom';
 
 describe('Breadcrumbs', () => {
   it('does not render the top level part of the current URL', () => {

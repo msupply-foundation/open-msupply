@@ -14,6 +14,8 @@ import {
   useUrlQuery,
   useToggle,
   StockLineNode,
+  useCallbackWithPermission,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButtons';
@@ -41,7 +43,7 @@ export const StockLineDetailView: React.FC = () => {
   } = useUrlQuery();
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
   const repackModalController = useToggle();
   const adjustmentModalController = useToggle();
@@ -85,12 +87,21 @@ export const StockLineDetailView: React.FC = () => {
     title: t('heading.are-you-sure'),
   });
 
+  const onCancel = () => {
+    resetDraft();
+    navigateUpOne();
+  };
+
   const showCancelConfirmation = useConfirmationModal({
-    onConfirm: resetDraft,
+    onConfirm: onCancel,
     message: t('messages.confirm-cancel-generic'),
     title: t('heading.are-you-sure'),
   });
 
+  const openInventoryAdjustmentModal = useCallbackWithPermission(
+    UserPermission.InventoryAdjustmentMutate,
+    adjustmentModalController.toggleOn
+  );
   const tabs = [
     {
       Component: (
@@ -118,6 +129,7 @@ export const StockLineDetailView: React.FC = () => {
     showSaveConfirmation,
     showCancelConfirmation,
     disabled: !isDirty && !hasPluginChanged,
+    isDirty,
   };
 
   return (
@@ -138,7 +150,7 @@ export const StockLineDetailView: React.FC = () => {
       )}
       <AppBarButtons
         openRepack={repackModalController.toggleOn}
-        openAdjust={adjustmentModalController.toggleOn}
+        openAdjust={openInventoryAdjustmentModal}
       />
       <TableProvider createStore={createTableStore}>
         <DetailTabs tabs={tabs} />

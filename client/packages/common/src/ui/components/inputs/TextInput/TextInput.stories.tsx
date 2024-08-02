@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Grid, Paper, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { BasicTextInput } from './BasicTextInput';
 import { InputWithLabelRow } from './InputWithLabelRow';
 import { NumericTextInput } from './';
@@ -18,7 +18,7 @@ const StyledPaper = styled(Paper)({
   width: 300,
 });
 
-const Template: Story = () => (
+const Template: StoryFn = () => (
   <Grid>
     <Grid item>
       <Grid container spacing={1}>
@@ -51,7 +51,7 @@ const Template: Story = () => (
   </Grid>
 );
 
-const NumericTemplate: Story = () => {
+const NumericTemplate: StoryFn = () => {
   const [positive, setPositive] = useState<number | undefined>();
   const [negative, setNegative] = useState<number | undefined>();
   const [decimal, setDecimal] = useState<number | undefined>();

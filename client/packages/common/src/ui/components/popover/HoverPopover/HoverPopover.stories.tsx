@@ -1,5 +1,5 @@
 import React from 'react';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { HoverPopover } from './HoverPopover';
 import { UnhappyMan } from '@common/icons';
 import { Box } from '@mui/material';
@@ -10,7 +10,7 @@ export default {
   component: HoverPopover,
 };
 
-const Example: Story = () => {
+const Example: StoryFn = () => {
   return (
     <>
       <HoverPopover

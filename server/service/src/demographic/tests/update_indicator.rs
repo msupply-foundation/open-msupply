@@ -40,7 +40,7 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id1.clone(),
-                    name: name_1.clone(),
+                    name: Some(name_1.clone()),
                     base_year: base_year_1,
                     ..Default::default()
                 },
@@ -55,7 +55,7 @@ mod query {
                 &ctx,
                 InsertDemographicIndicator {
                     id: id_2.clone(),
-                    name: name_2.clone(),
+                    name: Some(name_2),
                     base_year: base_year_1,
                     ..Default::default()
                 },

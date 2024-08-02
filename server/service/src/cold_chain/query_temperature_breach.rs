@@ -2,8 +2,8 @@ use repository::temperature_breach::{
     TemperatureBreach, TemperatureBreachFilter, TemperatureBreachRepository, TemperatureBreachSort,
 };
 use repository::{
-    EqualFilter, PaginationOption, RepositoryError, StorageConnection,
-    TemperatureBreachRowRepository, TemperatureBreachType, TemperatureLogFilter,
+    EqualFilter, PaginationOption, RepositoryError, StorageConnection, TemperatureBreachRow,
+    TemperatureBreachRowRepository, TemperatureBreachType, TemperatureLog, TemperatureLogFilter,
     TemperatureLogRepository,
 };
 
@@ -46,6 +46,34 @@ pub fn get_temperature_breach(
     }
 }
 
+pub fn get_max_or_min_log_temperature(
+    breach: &TemperatureBreachRow,
+    logs: &Vec<TemperatureLog>,
+) -> Option<f64> {
+    let mut min_or_max_option = None;
+    let mut min_or_max = 0.0;
+
+    for log in logs {
+        if min_or_max_option.is_none() {
+            min_or_max = log.temperature_log_row.temperature;
+        }
+
+        if log.temperature_log_row.temperature < breach.threshold_minimum
+            && log.temperature_log_row.temperature < min_or_max
+        {
+            min_or_max = log.temperature_log_row.temperature;
+            min_or_max_option = Some(min_or_max);
+        } else if log.temperature_log_row.temperature > breach.threshold_maximum
+            && log.temperature_log_row.temperature > min_or_max
+        {
+            min_or_max = log.temperature_log_row.temperature;
+            min_or_max_option = Some(min_or_max);
+        }
+    }
+
+    min_or_max_option
+}
+
 pub fn get_max_or_min_breach_temperature(
     connection: &StorageConnection,
     id: &str,
@@ -59,15 +87,20 @@ pub fn get_max_or_min_breach_temperature(
                 TemperatureBreachFilter::new().id(EqualFilter::equal_to(id)),
             ))?;
 
-    match breach.r#type {
-        TemperatureBreachType::HotConsecutive | TemperatureBreachType::HotCumulative => Ok(logs
+    let max_or_min_from_logs = match breach.r#type {
+        TemperatureBreachType::HotConsecutive | TemperatureBreachType::HotCumulative => logs
             .iter()
             .map(|log| log.temperature_log_row.temperature)
-            .max_by(|a, b| a.partial_cmp(b).unwrap())),
-        TemperatureBreachType::ColdConsecutive | TemperatureBreachType::ColdCumulative => Ok(logs
+            .max_by(|a, b| a.partial_cmp(b).unwrap()),
+        TemperatureBreachType::ColdConsecutive | TemperatureBreachType::ColdCumulative => logs
             .iter()
             .map(|log| log.temperature_log_row.temperature)
-            .min_by(|a, b| a.partial_cmp(b).unwrap())),
-        TemperatureBreachType::Excursion => Ok(None),
+            .min_by(|a, b| a.partial_cmp(b).unwrap()),
+        TemperatureBreachType::Excursion => get_max_or_min_log_temperature(&breach, &logs),
+    };
+
+    match max_or_min_from_logs {
+        Some(value) => Ok(Some(value)),
+        None => Ok(None),
     }
 }

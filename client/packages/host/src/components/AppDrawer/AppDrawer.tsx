@@ -22,6 +22,7 @@ import {
   UserPermission,
   RouteBuilder,
   useConfirmationModal,
+  ReportsIcon,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -211,6 +212,11 @@ export const AppDrawer: React.FC = () => {
             icon={<DashboardIcon fontSize="small" color="primary" />}
             text={t('dashboard')}
           />
+          <AppNavLink
+            to={AppRoute.Reports}
+            icon={<ReportsIcon fontSize="small" color="primary" />}
+            text={t('reports')}
+          />
           <DistributionNav />
           <ReplenishmentNav />
           <CatalogueNav />
@@ -224,11 +230,6 @@ export const AppDrawer: React.FC = () => {
             to={AppRoute.Tools}
             icon={<ToolsIcon fontSize="small" color="primary" />}
             text={t('tools')}
-          /> */}
-          {/* <AppNavLink
-            to={AppRoute.Reports}
-            icon={<ReportsIcon fontSize="small" color="primary" />}
-            text={t('reports')}
           /> */}
           {/* <AppNavLink
             to={AppRoute.Messages}

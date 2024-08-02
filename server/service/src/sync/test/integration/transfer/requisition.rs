@@ -1,7 +1,3 @@
-use repository::ItemRow;
-use serde_json::json;
-use util::{inline_init, uuid::uuid};
-
 use crate::{
     processors::transfer::requisition::test::RequisitionTransferTester,
     sync::test::integration::transfer::{new_instance_of_existing_site, sync_and_delay},
@@ -12,29 +8,15 @@ use super::{initialise_transfer_sites, SyncIntegrationTransferContext};
 #[actix_rt::test]
 async fn integration_sync_requisition_transfers_normal() {
     // util::init_logger(util::LogLevel::Info);
-    let item1 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
-    let item2 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
     let SyncIntegrationTransferContext {
         site_1: request_site,
         site_2: response_site,
         site_1_processors_task: request_site_processors_task,
         site_2_processors_task: response_site_processors_task,
-    } = initialise_transfer_sites(
-        json!({
-            "item": [
-                {"ID": item1.id, "type_of": "general"},
-                {"ID": item2.id, "type_of": "general"},
-            ]
-        }),
-        "requisition_transfers_normal",
-    )
-    .await;
+        item1,
+        item2,
+        service_item: _,
+    } = initialise_transfer_sites("requisition_transfers_normal").await;
 
     let test = async move {
         let mut tester = RequisitionTransferTester::new(
@@ -107,29 +89,15 @@ async fn integration_sync_requisition_transfers_initialisation() {
     // util::init_logger(util::LogLevel::Info);
     let identifier = "requisition_transfers_initialisation";
 
-    let item1 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
-    let item2 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
     let SyncIntegrationTransferContext {
         site_1: request_site,
         site_2: response_site,
         site_1_processors_task: request_site_processors_task,
         site_2_processors_task: response_site_processors_task,
-    } = initialise_transfer_sites(
-        json!({
-            "item": [
-                {"ID": item1.id, "type_of": "general"},
-                {"ID": item2.id, "type_of": "general"},
-            ]
-        }),
-        identifier,
-    )
-    .await;
+        item1,
+        item2,
+        service_item: _,
+    } = initialise_transfer_sites(identifier).await;
 
     let test = async move {
         let tester = RequisitionTransferTester::new(

@@ -10,7 +10,7 @@ doctest = false
 [dependencies]
 
 util = { path = "../util" }
-
+clap = { workspace = true }
 chrono = { workspace = true }
 rand = { workspace = true }
 diesel = { version = "2.2.1", default-features = false, features = [
@@ -34,7 +34,7 @@ log = { workspace = true }
 # Migration script embeds package.json from repository root, single files is embeded and accessed
 # via ::get(""), which doesn't work in debug (test) mode on linux, debug-embed features makes rust-embed
 # behave as if it is in release mode 
-rust-embed = { version = "6.4.0", features = ["debug-embed"] }
+rust-embed = { version = "8.4.0", features = ["debug-embed"] }
 anyhow.workspace = true
 pretty_assertions = { workspace = true }
 strum = { workspace = true }
