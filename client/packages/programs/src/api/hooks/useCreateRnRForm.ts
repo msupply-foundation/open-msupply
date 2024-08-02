@@ -36,13 +36,16 @@ export const useCreateRnRForm = () => {
       key: 'createdDatetime',
       direction: 'desc',
     },
+    filterBy: {
+      periodScheduleId: { equalTo: draft.schedule?.id },
+      programId: { equalTo: draft.program?.id },
+    },
   });
   const previousForm = data?.nodes[0];
 
+  // Default to the same supplier and program as most recent previous form, if exists
   useEffect(() => {
-    // If there is a most recent previous form, and draft is blank
-    if (previousForm && draft.program === null) {
-      // Default to the same supplier and program as previous
+    if (previousForm && draft.supplier?.id !== previousForm.supplierId) {
       setDraft({
         ...draft,
         supplier: {
@@ -76,6 +79,7 @@ export const useCreateRnRForm = () => {
   const create = async () => await mutateAsync(draft);
 
   return {
+    previousForm,
     draft,
     updateDraft,
     clearDraft,

@@ -8,6 +8,9 @@ import {
   RouteBuilder,
   Autocomplete,
   InputWithLabelRow,
+  SchedulePeriodNode,
+  RnRFormNodeStatus,
+  Typography,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
@@ -27,29 +30,31 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
   const t = useTranslation('programs');
   const navigate = useNavigate();
 
-  const { draft, updateDraft, clearDraft, create, isIncomplete } =
+  const { previousForm, draft, updateDraft, clearDraft, create, isIncomplete } =
     useCreateRnRForm();
 
   const { data: schedulesAndPeriods } = useSchedulesAndPeriods(
     draft.program?.id ?? ''
   );
 
-  // If there is only schedule, set it automatically
+  // If there is only one schedule (and no other has been selected) set it automatically
   useEffect(() => {
     if (schedulesAndPeriods?.nodes.length == 1 && !draft.schedule) {
       updateDraft({ schedule: schedulesAndPeriods.nodes[0]! }); // if length is 1, the first element must exist
     }
     // Rerun if schedules change (i.e. when program changes)
-  }, [schedulesAndPeriods?.nodes?.[0]?.id]);
+  }, [schedulesAndPeriods?.nodes]);
 
   const width = '350px';
+  const prevFormNotFinalised =
+    !!previousForm && previousForm.status !== RnRFormNodeStatus.Finalised;
 
   return (
     <Modal
       okButton={
         <DialogButton
           variant="ok"
-          disabled={isIncomplete}
+          disabled={isIncomplete || prevFormNotFinalised}
           onClick={async () => {
             try {
               const result = await create();
@@ -106,24 +111,36 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
               onChange={(_, schedule) =>
                 schedule && updateDraft({ schedule, period: null })
               }
+              clearable={false}
             />
           }
         />
         <InputWithLabelRow
           label={t('label.period')}
           Input={
-            <Autocomplete
+            <PeriodSelect
               width={width}
               disabled={!draft.program}
-              // TODO: only enable oldest available period!... autoselect!
-              getOptionDisabled={option => option.inUse}
-              getOptionLabel={option => option.period.name}
               options={draft.schedule?.periods ?? []}
               value={draft.period}
-              onChange={(_, period) => period && updateDraft({ period })}
+              onChange={period => updateDraft({ period })}
+              mostRecentUsedPeriodId={previousForm?.periodId}
             />
           }
         />
+        {/* TOOD: no more periods.. */}
+        {prevFormNotFinalised && (
+          <Typography
+            sx={{
+              fontStyle: 'italic',
+              color: 'gray.dark',
+              fontSize: 'small',
+              width: '450px',
+            }}
+          >
+            {t('messages.finalise-previous-form')}
+          </Typography>
+        )}
 
         <InputWithLabelRow
           label={t('label.supplier')}
@@ -137,5 +154,52 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
         />
       </Grid>
     </Modal>
+  );
+};
+
+const PeriodSelect = ({
+  width,
+  disabled,
+  options,
+  value,
+  mostRecentUsedPeriodId,
+  onChange,
+}: {
+  width: string;
+  disabled: boolean;
+  options: SchedulePeriodNode[];
+  value: SchedulePeriodNode | null;
+  mostRecentUsedPeriodId?: string;
+  onChange: (period: SchedulePeriodNode) => void;
+}) => {
+  const mostRecentUsedPeriodIdx = options.findIndex(
+    period => period.id === mostRecentUsedPeriodId
+  );
+
+  // NOTE! This assumes periods are in order, newest ones at the top
+  const nextPeriod = options[mostRecentUsedPeriodIdx - 1];
+
+  if (mostRecentUsedPeriodId && !nextPeriod) {
+    // TODO: show no avialable periods..
+    console.log('hello');
+  }
+
+  useEffect(() => {
+    if (nextPeriod && value !== nextPeriod) onChange(nextPeriod);
+  }, [nextPeriod]);
+
+  return (
+    <Autocomplete
+      width={width}
+      disabled={disabled}
+      getOptionDisabled={option =>
+        !!mostRecentUsedPeriodId && option.id !== nextPeriod?.id
+      }
+      getOptionLabel={option => option.period.name}
+      options={options}
+      value={value}
+      onChange={(_, period) => period && onChange(period)}
+      clearable={false}
+    />
   );
 };
