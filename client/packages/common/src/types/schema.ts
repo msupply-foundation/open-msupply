@@ -3358,9 +3358,10 @@ export type ItemNode = {
   name: Scalars['String']['output'];
   outerPackSize: Scalars['Int']['output'];
   stats: ItemStatsNode;
-  strength: Scalars['String']['output'];
+  strength?: Maybe<Scalars['String']['output']>;
   type: ItemNodeType;
   unitName?: Maybe<Scalars['String']['output']>;
+  venCategory: VenCategoryType;
   volumePerOuterPack: Scalars['Float']['output'];
   volumePerPack: Scalars['Float']['output'];
   weight: Scalars['Float']['output'];
@@ -6394,6 +6395,7 @@ export type RnRFormLineNode = {
   item: ItemNode;
   itemId: Scalars['String']['output'];
   maximumQuantity: Scalars['Float']['output'];
+  previousAverageMonthlyConsumption: Scalars['Float']['output'];
   quantityConsumed: Scalars['Float']['output'];
   quantityReceived: Scalars['Float']['output'];
   requestedQuantity: Scalars['Float']['output'];
@@ -6407,6 +6409,7 @@ export type RnRFormNode = {
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
   periodId: Scalars['String']['output'];
+  periodLength: Scalars['Int']['output'];
   periodName: Scalars['String']['output'];
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
@@ -7793,8 +7796,10 @@ export type UpdateRnRFormLineInput = {
   averageMonthlyConsumption: Scalars['Float']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   confirmed: Scalars['Boolean']['input'];
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   finalBalance: Scalars['Float']['input'];
   id: Scalars['String']['input'];
+  initialBalance: Scalars['Float']['input'];
   maximumQuantity: Scalars['Float']['input'];
   quantityConsumed?: InputMaybe<Scalars['Float']['input']>;
   quantityReceived?: InputMaybe<Scalars['Float']['input']>;
@@ -8184,3 +8189,10 @@ export type VariantWithPackSizeAlreadyExists = InsertPackVariantErrorInterface &
   __typename: 'VariantWithPackSizeAlreadyExists';
   description: Scalars['String']['output'];
 };
+
+export enum VenCategoryType {
+  E = 'E',
+  N = 'N',
+  NotAssigned = 'NOT_ASSIGNED',
+  V = 'V'
+}

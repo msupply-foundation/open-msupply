@@ -19,7 +19,20 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   onArgumentsSelected,
 }) => {
   const { store } = useAuthContext();
-  const [data, setData] = useState<JsonData>({});
+
+  const {
+    monthlyConsumptionLookBackPeriod,
+    monthsOverstock,
+    monthsUnderstock,
+    monthsItemsExpire,
+  } = store?.preferences ?? {};
+
+  const [data, setData] = useState<JsonData>({
+    monthlyConsumptionLookBackPeriod,
+    monthsOverstock,
+    monthsUnderstock,
+    monthsItemsExpire,
+  });
   const [error, setError] = useState<string | false>(false);
 
   // clean up when modal is closed
@@ -36,21 +49,6 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   if (!report?.argumentSchema) {
     return null;
   }
-
-  const {
-    monthlyConsumptionLookBackPeriod,
-    monthsOverstock,
-    monthsUnderstock,
-    monthsItemsExpire,
-  } = store?.preferences ?? {};
-
-  const jsonData = {
-    monthlyConsumptionLookBackPeriod,
-    monthsOverstock,
-    monthsUnderstock,
-    monthsItemsExpire,
-    ...(data as object),
-  };
 
   return (
     <Modal
@@ -69,7 +67,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
       }
     >
       <JsonForm
-        data={jsonData}
+        data={data}
         jsonSchema={report.argumentSchema.jsonSchema}
         uiSchema={report.argumentSchema.uiSchema}
         isError={false}
