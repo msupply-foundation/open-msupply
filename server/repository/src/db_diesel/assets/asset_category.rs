@@ -147,7 +147,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_category_query_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_asset_category_query_repository",
             MockDataInserts::none(),
         )
@@ -160,24 +160,23 @@ mod tests {
             id: class_id.clone(),
             name: class_name.clone(),
         };
-        let class_row_repo = AssetClassRowRepository::new(&mut storage_connection);
-        class_row_repo.insert_one(&class_row).unwrap();
+        let class_row_repo = AssetClassRowRepository::new(&storage_connection);
+        class_row_repo.upsert_one(&class_row).unwrap();
 
         // Create the category
         let id = "test_id".to_string();
         let name = "test_name".to_string();
 
         // Insert a row
-        let _category_row = AssetCategoryRowRepository::new(&mut storage_connection).insert_one(
-            &AssetCategoryRow {
+        let _category_row =
+            AssetCategoryRowRepository::new(&storage_connection).upsert_one(&AssetCategoryRow {
                 id: id.clone(),
                 name: name.clone(),
                 class_id: class_id.clone(),
-            },
-        );
+            });
 
         // Query by id
-        let category = AssetCategoryRepository::new(&mut storage_connection)
+        let category = AssetCategoryRepository::new(&storage_connection)
             .query_one(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
@@ -185,7 +184,7 @@ mod tests {
         assert_eq!(category.name, name);
 
         // Query by name
-        let category = AssetCategoryRepository::new(&mut storage_connection)
+        let category = AssetCategoryRepository::new(&storage_connection)
             .query_one(AssetCategoryFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();

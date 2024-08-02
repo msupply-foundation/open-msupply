@@ -54,7 +54,7 @@ pub fn get_stock_evolution_for_item(
             points.last_historic_datetime,
         ));
 
-    let stock_on_hand_rows = StockMovementRepository::new(&connection).query(Some(filter))?;
+    let stock_on_hand_rows = StockMovementRepository::new(connection).query(Some(filter))?;
     // Calculate
     Ok(StockEvolutionResult {
         historic_stock: calculate_historic_stock_evolution(
@@ -144,13 +144,13 @@ fn calculate_historic_stock_evolution(
         // On reference_datetime's date we should should have reference_stock_on_hand
         // SOH at the start of next day is current day SOH
         let next_day = date_with_days_offset(&reference_date, 1);
-        let day_movements = stock_on_hand_rows.iter().fold(0, |movement, row| {
+        let day_movements = stock_on_hand_rows.iter().fold(0.0, |movement, row| {
             if within_range(next_day, row.datetime) {
                 movement + row.quantity
             } else {
                 movement
             }
-        }) as f64;
+        });
         // Reverse ledger thus substraction
         running_stock_on_hand -= day_movements;
         result.push(StockEvolution {
@@ -254,28 +254,28 @@ mod tests {
                 ],
                 vec![
                     inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                         r.datetime = NaiveDate::from_ymd_opt(2021, 1, 2)
                             .unwrap()
                             .and_hms_opt(10, 0, 0)
                             .unwrap();
                     }),
                     inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = -20;
+                        r.quantity = -20.0;
                         r.datetime = NaiveDate::from_ymd_opt(2021, 1, 2)
                             .unwrap()
                             .and_hms_opt(7, 0, 0)
                             .unwrap();
                     }),
                     inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = 15;
+                        r.quantity = 15.0;
                         r.datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                             .unwrap()
                             .and_hms_opt(2, 0, 0)
                             .unwrap();
                     }),
                     inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = 7;
+                        r.quantity = 7.0;
                         r.datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                             .unwrap()
                             .and_hms_opt(2, 0, 0)
@@ -283,7 +283,7 @@ mod tests {
                     }),
                     // Not counted
                     inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = -20;
+                        r.quantity = -20.0;
                         r.datetime = NaiveDate::from_ymd_opt(2020, 12, 31)
                             .unwrap()
                             .and_hms_opt(2, 0, 0)
@@ -291,7 +291,7 @@ mod tests {
                     }),
                     // Not counted
                     inline_init(|r: &mut StockMovementRow| {
-                        r.quantity = -100;
+                        r.quantity = -100.0;
                         r.datetime = NaiveDate::from_ymd_opt(2021, 1, 3)
                             .unwrap()
                             .and_hms_opt(2, 0, 0)

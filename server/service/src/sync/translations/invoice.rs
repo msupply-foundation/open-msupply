@@ -12,7 +12,7 @@ use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
-    NameRow, NameRowRepository, StorageConnection, StoreRowRepository, SyncBufferRow,
+    NameRow, NameRowRepository, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -184,7 +184,7 @@ pub struct LegacyTransactRow {
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
-/// receiving store.
+/// receiving store. Same for Inbound Returns.
 /// In the current version of mSupply all om_ fields get copied though.
 /// When receiving the transferred invoice on the omSupply store the "si" get translated to
 /// outbound shipments because the om_type will override to legacy type field.
@@ -204,6 +204,12 @@ fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
         return data;
     };
     if legacy_type == LegacyTransactType::Si && om_type == InvoiceType::OutboundShipment {
+        let Some(obj) = data.as_object_mut() else {
+            return data;
+        };
+        obj.retain(|key, _| !key.starts_with("om_"));
+    }
+    if legacy_type == LegacyTransactType::Cc && om_type == InvoiceType::OutboundReturn {
         let Some(obj) = data.as_object_mut() else {
             return data;
         };
@@ -247,27 +253,36 @@ impl SyncTranslation for InvoiceTranslation {
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
 
         let name = NameRowRepository::new(connection)
-            .find_one_by_id(&data.name_ID)
-            .ok()
-            .flatten()
+            .find_one_by_id(&data.name_ID)?
             .ok_or(anyhow::Error::msg(format!(
                 "Missing name: {}",
                 data.name_ID
             )))?;
 
-        let name_store_id = StoreRowRepository::new(connection)
-            .find_one_by_name_id(&data.name_ID)?
-            .map(|store_row| store_row.id);
+        let name_store_id = StoreRepository::new(connection)
+            .query_by_filter(StoreFilter::new().name_id(EqualFilter::equal_to(&data.name_ID)))?
+            .pop()
+            .map(|store| store.store_row.id);
 
-        let invoice_type = invoice_type(&data, &name).ok_or(anyhow::Error::msg(format!(
-            "Unsupported invoice type: {:?} (mode: {:?})",
-            data._type, data.mode
-        )))?;
-        let invoice_status =
-            invoice_status(&invoice_type, &data).ok_or(anyhow::Error::msg(format!(
-                "Unsupported invoice status: {:?} (type: {:?})",
-                data.status, data._type
-            )))?;
+        let invoice_type = match invoice_type(&data, &name) {
+            Some(invoice_type) => invoice_type,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported invoice type {:?}",
+                    data._type
+                )))
+            }
+        };
+        let invoice_status = match invoice_status(&invoice_type, &data) {
+            Some(invoice_status) => invoice_status,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported invoice status {:?} (type: {:?}",
+                    data.status, data._type
+                )))
+            }
+        };
+
         let mapping = map_legacy(&invoice_type, &data);
 
         let currency_id = match data.currency_id {
@@ -341,8 +356,6 @@ impl SyncTranslation for InvoiceTranslation {
             return Err(anyhow::anyhow!("Invoice not found"));
         };
 
-        // log::info!("Translating invoice row: {:#?}", invoice_row);
-
         let confirm_datetime = to_legacy_confirm_time(&invoice.invoice_row);
 
         let Invoice {
@@ -380,13 +393,25 @@ impl SyncTranslation for InvoiceTranslation {
             ..
         } = invoice;
 
-        let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
-            "Invalid invoice type: {:?}",
-            r#type
-        )))?;
-        let legacy_status = legacy_invoice_status(&r#type, &status).ok_or(anyhow::Error::msg(
-            format!("Invalid invoice status: {:?}", r#status),
-        ))?;
+        let _type = match legacy_invoice_type(&r#type) {
+            Some(_type) => _type,
+            None => {
+                return Ok(PushTranslateResult::Ignored(format!(
+                    "Unsupported invoice type {:?}",
+                    r#type
+                )))
+            }
+        };
+
+        let legacy_status = match legacy_invoice_status(&r#type, &status) {
+            Some(legacy_status) => legacy_status,
+            None => {
+                return Ok(PushTranslateResult::Ignored(format!(
+                    "Unsupported invoice status: {:?}",
+                    status
+                )))
+            }
+        };
 
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
@@ -432,12 +457,6 @@ impl SyncTranslation for InvoiceTranslation {
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
-
-        // log::info!(
-        //     "Translated row {}",
-        //     serde_json::to_string_pretty(&json_record)
-        //         .unwrap_or("Failed to stringify json".to_string())
-        // );
 
         Ok(PushTranslateResult::upsert(
             changelog,
@@ -565,12 +584,11 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
             }
             _ => {}
         },
-        InvoiceType::Repack => match data.status {
-            LegacyTransactStatus::Fn => {
+        InvoiceType::Repack => {
+            if let LegacyTransactStatus::Fn = data.status {
                 mapping.verified_datetime = confirm_datetime;
             }
-            _ => {}
-        },
+        }
     };
     mapping
 }
@@ -636,8 +654,7 @@ fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Optio
             LegacyTransactStatus::Fn => InvoiceStatus::Verified,
             _ => return None,
         },
-        // mSupply will alert users to finalise any repacks if they have un-finalised repacks
-        // before they migrate to Open mSupply.
+        // mSupply will delete any unfinalised repacks before migration
         InvoiceType::Repack => match data.status {
             LegacyTransactStatus::Fn => InvoiceStatus::Verified,
             _ => return None,

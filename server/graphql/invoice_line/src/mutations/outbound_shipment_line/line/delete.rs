@@ -63,7 +63,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 
 #[derive(Interface)]
 #[graphql(name = "DeleteOutboundShipmentLineErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
@@ -98,9 +98,11 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             )))
         }
         // Standard Graphql Errors
-        NotThisInvoiceLine(_) | InvoiceTypeDoesNotMatch | NoInvoiceType | NotThisStoreInvoice => {
-            StandardGraphqlError::BadUserInput(formatted_error)
-        }
+        NotThisInvoiceLine(_)
+        | InvoiceTypeDoesNotMatch
+        | NoInvoiceType
+        | NotThisStoreInvoice
+        | StockLineDoesNotExist => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
     };
 

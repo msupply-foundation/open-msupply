@@ -49,6 +49,11 @@ const assetParsers = {
     serialNumber: input.serialNumber,
     storeId: input.store?.id,
     typeId: input.typeId,
+    properties: JSON.stringify(input.parsedProperties),
+    donorNameId: input.donorNameId,
+    warrantyStart: input.warrantyStart,
+    warrantyEnd: input.warrantyEnd,
+    needsReplacement: input.needsReplacement,
   }),
   toUpdate: (input: Partial<DraftAsset>): UpdateAssetInput => ({
     id: input.id ?? '',
@@ -60,6 +65,11 @@ const assetParsers = {
     serialNumber: setNullableInput('serialNumber', input),
     storeId: setNullableInput('id', input.store),
     locationIds: input.locationIds,
+    properties: JSON.stringify(input.parsedProperties),
+    donorNameId: setNullableInput('donorNameId', input),
+    warrantyStart: setNullableInput('warrantyStart', input),
+    warrantyEnd: setNullableInput('warrantyEnd', input),
+    needsReplacement: input.needsReplacement,
   }),
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',
@@ -87,19 +97,21 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Asset not found');
     },
-    list: async ({
-      first,
-      offset,
-      sortBy,
-      filterBy,
-    }: ListParams<AssetFragment>) => {
+    list: async (
+      { first, offset, sortBy, filterBy }: ListParams<AssetFragment>,
+      storeCode?: string
+    ) => {
       const result = await sdk.assets({
         first,
         offset,
         key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, classId: { equalTo: CCE_CLASS_ID } },
+        filter: {
+          ...filterBy,
+          ...(storeCode ? { store: { equalTo: storeCode } } : {}),
+          classId: { equalTo: CCE_CLASS_ID },
+        },
       });
 
       const items = result?.assets;

@@ -1,6 +1,6 @@
 use super::{stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl, StorageConnection};
 
-use crate::{diesel_macros::apply_equal_filter, EqualFilter, RepositoryError};
+use crate::{diesel_macros::apply_equal_filter, item_link, EqualFilter, RepositoryError};
 use diesel::prelude::*;
 
 table! {
@@ -9,7 +9,7 @@ table! {
         item_id -> Text,
         item_name -> Text,
         store_id -> Text,
-        available_stock_on_hand -> BigInt,
+        available_stock_on_hand -> Double,
     }
 }
 
@@ -19,7 +19,7 @@ pub struct StockOnHandRow {
     pub item_id: String,
     pub item_name: String,
     pub store_id: String,
-    pub available_stock_on_hand: i64,
+    pub available_stock_on_hand: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -27,6 +27,9 @@ pub struct StockOnHandFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
 }
+
+joinable!(stock_on_hand -> item_link (item_id));
+allow_tables_to_appear_in_same_query!(item_link, stock_on_hand);
 
 pub struct StockOnHandRepository<'a> {
     connection: &'a StorageConnection,

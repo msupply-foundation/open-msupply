@@ -20,7 +20,7 @@ pub struct AddNewStockLine {
     pub number_of_packs: f64,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
-    pub pack_size: u32,
+    pub pack_size: f64,
     pub on_hold: bool,
     pub batch: Option<String>,
     pub location: Option<NullableUpdate<String>>,
@@ -63,10 +63,10 @@ pub fn add_new_stock_line(
 
             // Add invoice line (and introduce stock line)
             insert_stock_in_line(ctx, stock_in_line)
-                .map_err(|error| AddNewStockLineError::LineInsertError(error))?;
+                .map_err(AddNewStockLineError::LineInsertError)?;
 
             // Add inventory adjustment reason to the invoice line
-            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
             invoice_line_repo.update_inventory_adjustment_reason_id(
                 &update_inventory_adjustment_reason.invoice_line_id,
                 update_inventory_adjustment_reason.reason_id,
@@ -207,7 +207,7 @@ mod test {
                 &context,
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
-                    pack_size: 0,
+                    pack_size: 0.0,
                     ..Default::default()
                 }
             ),
@@ -248,7 +248,7 @@ mod test {
                 &context,
                 AddNewStockLine {
                     stock_line_id: "new".to_string(),
-                    pack_size: 1,
+                    pack_size: 1.0,
                     number_of_packs: 2.0,
                     item_id: mock_item_a().id,
                     inventory_adjustment_reason_id: Some(addition_reason().id),
@@ -330,7 +330,7 @@ mod test {
             &context,
             AddNewStockLine {
                 stock_line_id: "new".to_string(),
-                pack_size: 1,
+                pack_size: 1.0,
                 number_of_packs: 2.0,
                 item_id: mock_item_a().id,
                 inventory_adjustment_reason_id: None, // Check *no* error when reasons not defined and not provided

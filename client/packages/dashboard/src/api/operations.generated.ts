@@ -1,9 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type StockCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -108,113 +107,28 @@ export const InboundShipmentCountsDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     stockCounts(variables: StockCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StockCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts', 'query', variables);
     },
     itemCounts(variables: ItemCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemCountsQuery>(ItemCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemCountsQuery>(ItemCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemCounts', 'query', variables);
     },
     requisitionCounts(variables: RequisitionCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequisitionCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query', variables);
     },
     outboundShipmentCounts(variables: OutboundShipmentCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<OutboundShipmentCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<OutboundShipmentCountsQuery>(OutboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundShipmentCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<OutboundShipmentCountsQuery>(OutboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundShipmentCounts', 'query', variables);
     },
     inboundShipmentCounts(variables: InboundShipmentCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InboundShipmentCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InboundShipmentCountsQuery>(InboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundShipmentCounts', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<InboundShipmentCountsQuery>(InboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundShipmentCounts', 'query', variables);
     }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockStockCountsQuery((req, res, ctx) => {
- *   const { storeId, daysTillExpired, timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ stockCounts })
- *   )
- * })
- */
-export const mockStockCountsQuery = (resolver: ResponseResolver<GraphQLRequest<StockCountsQueryVariables>, GraphQLContext<StockCountsQuery>, any>) =>
-  graphql.query<StockCountsQuery, StockCountsQueryVariables>(
-    'stockCounts',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockItemCountsQuery((req, res, ctx) => {
- *   const { storeId, lowStockThreshold } = req.variables;
- *   return res(
- *     ctx.data({ itemCounts })
- *   )
- * })
- */
-export const mockItemCountsQuery = (resolver: ResponseResolver<GraphQLRequest<ItemCountsQueryVariables>, GraphQLContext<ItemCountsQuery>, any>) =>
-  graphql.query<ItemCountsQuery, ItemCountsQueryVariables>(
-    'itemCounts',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRequisitionCountsQuery((req, res, ctx) => {
- *   const { storeId } = req.variables;
- *   return res(
- *     ctx.data({ requisitionCounts })
- *   )
- * })
- */
-export const mockRequisitionCountsQuery = (resolver: ResponseResolver<GraphQLRequest<RequisitionCountsQueryVariables>, GraphQLContext<RequisitionCountsQuery>, any>) =>
-  graphql.query<RequisitionCountsQuery, RequisitionCountsQueryVariables>(
-    'requisitionCounts',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockOutboundShipmentCountsQuery((req, res, ctx) => {
- *   const { storeId, timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ invoiceCounts })
- *   )
- * })
- */
-export const mockOutboundShipmentCountsQuery = (resolver: ResponseResolver<GraphQLRequest<OutboundShipmentCountsQueryVariables>, GraphQLContext<OutboundShipmentCountsQuery>, any>) =>
-  graphql.query<OutboundShipmentCountsQuery, OutboundShipmentCountsQueryVariables>(
-    'outboundShipmentCounts',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInboundShipmentCountsQuery((req, res, ctx) => {
- *   const { storeId, timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ invoiceCounts })
- *   )
- * })
- */
-export const mockInboundShipmentCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InboundShipmentCountsQueryVariables>, GraphQLContext<InboundShipmentCountsQuery>, any>) =>
-  graphql.query<InboundShipmentCountsQuery, InboundShipmentCountsQueryVariables>(
-    'inboundShipmentCounts',
-    resolver
-  )

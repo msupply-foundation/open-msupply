@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ComponentMeta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
 import { useColumns } from '../../hooks';
@@ -8,7 +8,7 @@ import { SortBy } from '@common/hooks';
 export default {
   title: 'Table/HeaderRow',
   component: HeaderRow,
-} as ComponentMeta<typeof HeaderRow>;
+} as Meta<typeof HeaderRow>;
 
 type Test = {
   id: string;
@@ -16,7 +16,7 @@ type Test = {
   packSize: number;
 };
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const [sortBy, setSortBy] = useState<SortBy<Test>>({
     key: 'name',
     isDesc: false,

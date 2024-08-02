@@ -38,7 +38,6 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         ClinicianLinkRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, clinician_link_row: &ClinicianLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician_link_dsl::clinician_link)
             .values(clinician_link_row)
@@ -49,15 +48,6 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         Ok(())
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, clinician_link_row: &ClinicianLinkRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(clinician_link_dsl::clinician_link)
-            .values(clinician_link_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(feature = "postgres")]
     pub fn insert_one_or_ignore(
         &self,
         clinician_link_row: &ClinicianLinkRow,
@@ -66,17 +56,6 @@ impl<'a> ClinicianLinkRowRepository<'a> {
             .values(clinician_link_row)
             .on_conflict(clinician_link::id)
             .do_nothing()
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn insert_one_or_ignore(
-        &self,
-        clinician_link_row: &ClinicianLinkRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::insert_or_ignore_into(clinician_link_dsl::clinician_link)
-            .values(clinician_link_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -127,8 +106,9 @@ impl<'a> ClinicianLinkRowRepository<'a> {
 }
 
 impl Upsert for ClinicianLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ClinicianLinkRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ClinicianLinkRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

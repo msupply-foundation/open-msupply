@@ -26,7 +26,7 @@ mod query {
             )
             .unwrap();
 
-        assert_eq!(result.count, 1);
+        assert_eq!(result.count, 2);
         assert_eq!(result.rows[0].id, "item_query_test1");
 
         let result = service
@@ -62,6 +62,35 @@ mod query {
                 Some(
                     MasterListFilter::new()
                         .exists_for_store_id(EqualFilter::equal_to("not_a_real_store")),
+                ),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.count, 0);
+
+        // Test is_program filters
+        let result = service
+            .get_master_lists(
+                &context,
+                None,
+                Some(
+                    MasterListFilter::new()
+                        .name(StringFilter::equal_to("master_list_program_name"))
+                        .is_program(true),
+                ),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.count, 1);
+
+        let result = service
+            .get_master_lists(
+                &context,
+                None,
+                Some(
+                    MasterListFilter::new()
+                        .name(StringFilter::equal_to("master_list_program_name"))
+                        .is_program(false),
                 ),
                 None,
             )

@@ -27,21 +27,12 @@ impl<'a> ContextRowRepository<'a> {
         ContextRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ContextRow) -> Result<(), RepositoryError> {
         diesel::insert_into(context::dsl::context)
             .values(row)
             .on_conflict(context::dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ContextRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(context::dsl::context)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -68,8 +59,9 @@ impl<'a> ContextRowRepository<'a> {
 }
 
 impl Upsert for ContextRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ContextRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ContextRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

@@ -16,12 +16,14 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   assetType {
     name
   }
+  properties
 }
 
-fragment AssetProperty on AssetCataloguePropertyNode {
+fragment AssetProperty on AssetPropertyNode {
   id
-  allowedValues
+  key
   name
+  allowedValues
   valueType
 }
 
@@ -53,7 +55,7 @@ query assetCatalogueItems(
   $offset: Int
   $key: AssetCatalogueItemSortFieldInput!
   $desc: Boolean
-  $filter: ItemFilterInput
+  $filter: AssetCatalogueItemFilterInput
 ) {
   assetCatalogueItems(
     page: { first: $first, offset: $offset }
@@ -80,7 +82,7 @@ query assetCatalogueItemById($assetCatalogueItemId: String!) {
   }
 }
 
-query assetClasses($sort: AssetClassSortInput) {
+query assetClasses($sort: [AssetClassSortInput!]) {
   assetClasses(sort: $sort) {
     ... on AssetClassConnector {
       nodes {
@@ -92,7 +94,7 @@ query assetClasses($sort: AssetClassSortInput) {
   }
 }
 
-query assetTypes($sort: AssetTypeSortInput, $filter: AssetTypeFilterInput) {
+query assetTypes($sort: [AssetTypeSortInput!], $filter: AssetTypeFilterInput) {
   assetTypes(sort: $sort, filter: $filter) {
     ... on AssetTypeConnector {
       nodes {
@@ -106,7 +108,7 @@ query assetTypes($sort: AssetTypeSortInput, $filter: AssetTypeFilterInput) {
 }
 
 query assetCategories(
-  $sort: AssetCategorySortInput
+  $sort: [AssetCategorySortInput!]
   $filter: AssetCategoryFilterInput
 ) {
   assetCategories(sort: $sort, filter: $filter) {
@@ -121,24 +123,21 @@ query assetCategories(
   }
 }
 
-query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
-  assetCatalogueProperties(filter: $filter) {
-    ... on AssetCataloguePropertyConnector {
+query assetProperties($filter: AssetPropertyFilterInput) {
+  assetProperties(filter: $filter) {
+    ... on AssetPropertyConnector {
       __typename
       nodes {
         __typename
         ...AssetProperty
       }
     }
-    ... on NodeError {
-      __typename
-    }
   }
 }
 
 query assetLogReasons(
   $filter: AssetLogReasonFilterInput
-  $sort: AssetLogReasonSortInput
+  $sort: [AssetLogReasonSortInput!]
   $storeId: String!
 ) {
   assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
@@ -197,28 +196,6 @@ mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
           id
         }
         ... on DeleteAssetCatalogueItemError {
-          error {
-            description
-          }
-        }
-      }
-    }
-  }
-}
-
-mutation insertAssetCatalogueItemProperty(
-  $storeId: String!
-  $input: InsertAssetCatalogueItemPropertyInput!
-) {
-  centralServer {
-    assetCatalogue {
-      insertAssetCatalogueItemProperty(input: $input, storeId: $storeId) {
-        ... on AssetCatalogueItemPropertyNode {
-          __typename
-          id
-        }
-        ... on InsertAssetCatalogueItemPropertyError {
-          __typename
           error {
             description
           }

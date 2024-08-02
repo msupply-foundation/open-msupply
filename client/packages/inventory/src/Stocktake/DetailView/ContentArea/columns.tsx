@@ -15,6 +15,7 @@ import {
   useColumnUtils,
   NumberCell,
   ColumnDescription,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import {
   InventoryAdjustmentReasonRowFragment,
@@ -80,9 +81,7 @@ export const useStocktakeColumns = ({
         getSortValue: row => {
           return row.item?.code ?? '';
         },
-        accessor: ({ rowData }) => {
-          return rowData.item?.code ?? '';
-        },
+        accessor: ({ rowData }) => rowData.item?.code ?? '',
       },
     ],
     [
@@ -161,9 +160,7 @@ export const useStocktakeColumns = ({
           getSortValue: row => {
             return row.item?.unitName ?? '';
           },
-          accessor: ({ rowData }) => {
-            return rowData.item?.unitName ?? '';
-          },
+          accessor: ({ rowData }) => rowData.item?.unitName ?? '',
           sortable: false,
         },
       ],
@@ -211,7 +208,9 @@ export const useStocktakeColumns = ({
       label: 'label.counted-num-of-packs',
       description: 'description.counted-num-of-packs',
       align: ColumnAlign.Right,
-      Cell: props => <NumberCell {...props} defaultValue={'-'} />,
+      Cell: props => (
+        <NumberCell {...props} defaultValue={UNDEFINED_STRING_VALUE} />
+      ),
       getIsError: row =>
         getLinesFromRow(row).some(
           r => getError(r)?.__typename === 'StockLineReducedBelowZero'
@@ -220,12 +219,13 @@ export const useStocktakeColumns = ({
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
           const { lines } = rowData;
-          return (
-            lines.reduce(
-              (total, line) => total + (line.countedNumberOfPacks ?? 0),
-              0
-            ) ?? 0
-          ).toString();
+          const countedLines = lines.flatMap(
+            ({ countedNumberOfPacks: counted }) =>
+              typeof counted === 'number' ? [counted] : []
+          );
+          // No counted lines
+          if (countedLines.length === 0) return null;
+          return countedLines.reduce((total, counted) => total + counted, 0);
         } else {
           return rowData.countedNumberOfPacks;
         }

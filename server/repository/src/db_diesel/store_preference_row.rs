@@ -20,6 +20,12 @@ table! {
         om_program_module -> Bool,
         vaccine_module -> Bool,
         issue_in_foreign_currency -> Bool,
+        monthly_consumption_look_back_period -> Double,
+        months_lead_time -> Double,
+        months_overstock -> Double,
+        months_understock -> Double,
+        months_items_expire -> Double,
+        stocktake_frequency -> Double,
     }
 }
 
@@ -29,13 +35,14 @@ allow_tables_to_appear_in_same_query!(store_preference, store);
 allow_tables_to_appear_in_same_query!(store_preference, user_store_join);
 allow_tables_to_appear_in_same_query!(store_preference, user_account);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StorePreferenceType {
+    #[default]
     StorePreferences,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = store_preference)]
 pub struct StorePreferenceRow {
     pub id: String, // store_id
@@ -47,21 +54,12 @@ pub struct StorePreferenceRow {
     pub om_program_module: bool,
     pub vaccine_module: bool,
     pub issue_in_foreign_currency: bool,
-}
-
-impl Default for StorePreferenceRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            r#type: StorePreferenceType::StorePreferences,
-            pack_to_one: Default::default(),
-            response_requisition_requires_authorisation: Default::default(),
-            request_requisition_requires_authorisation: Default::default(),
-            om_program_module: Default::default(),
-            vaccine_module: Default::default(),
-            issue_in_foreign_currency: Default::default(),
-        }
-    }
+    pub monthly_consumption_look_back_period: f64,
+    pub months_lead_time: f64,
+    pub months_overstock: f64,
+    pub months_understock: f64,
+    pub months_items_expire: f64,
+    pub stocktake_frequency: f64,
 }
 
 pub struct StorePreferenceRowRepository<'a> {
@@ -73,21 +71,12 @@ impl<'a> StorePreferenceRowRepository<'a> {
         StorePreferenceRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_preference_dsl::store_preference)
             .values(row)
             .on_conflict(store_preference_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(store_preference_dsl::store_preference)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -112,8 +101,9 @@ impl<'a> StorePreferenceRowRepository<'a> {
 }
 
 impl Upsert for StorePreferenceRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StorePreferenceRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        StorePreferenceRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

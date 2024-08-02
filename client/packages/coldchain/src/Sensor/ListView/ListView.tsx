@@ -11,6 +11,7 @@ import {
   useEditModal,
   useUrlQuery,
   SensorNodeType,
+  UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
 import { SensorEditModal } from '../Components';
@@ -57,20 +58,19 @@ export const SensorListView: FC = () => {
         accessor: ({ rowData }) => {
           const batteryLevel = rowData.batteryLevel;
 
-          return batteryLevel ? `${batteryLevel}%` : '-';
+          return batteryLevel ? `${batteryLevel}%` : UNDEFINED_STRING_VALUE;
         },
         sortable: false,
       },
       {
         key: 'lastReading',
         label: 'label.last-reading',
-        accessor: ({ rowData }) => {
-          return !!rowData.latestTemperatureLog?.nodes[0]?.temperature
+        accessor: ({ rowData }) =>
+          !!rowData.latestTemperatureLog?.nodes[0]?.temperature
             ? `${formatTemperature(
                 rowData.latestTemperatureLog?.nodes[0]?.temperature
               )}`
-            : '-';
-        },
+            : UNDEFINED_STRING_VALUE,
         sortable: false,
       },
       {

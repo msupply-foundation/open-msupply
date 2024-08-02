@@ -1,8 +1,9 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { Formatter } from '@common/utils';
-import { MasterListRowFragment } from '.';
+import { AssetPropertyFragment, MasterListRowFragment } from '.';
 import { LocationRowFragment } from './Location/api';
 import { StockLineRowFragment } from './Stock/api';
+import { PropertyNode } from '@common/types';
 
 export const locationsToCsv = (
   invoices: LocationRowFragment[],
@@ -76,4 +77,57 @@ export const stockLinesToCsv = (
     node.supplierName,
   ]);
   return Formatter.csv({ fields, data });
+};
+
+interface ParsedRow {
+  id: string;
+  [key: string]: string | undefined;
+}
+
+export const processProperties = <
+  T extends { properties: Record<string, string> },
+>(
+  properties: AssetPropertyFragment[] | PropertyNode[],
+  row: ParsedRow,
+  importRow: T,
+  rowErrors: string[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  properties.forEach(property => {
+    const value = row[property.name] ?? row[property.key];
+    if (!!value?.trim()) {
+      if (!!property.allowedValues) {
+        const allowedValues = property.allowedValues.split(',');
+        if (allowedValues.every(v => v !== value)) {
+          rowErrors.push(
+            t('error.invalid-field-value', {
+              field: property.name,
+              value: value,
+            })
+          );
+        }
+      }
+      switch (property.valueType) {
+        case 'INTEGER':
+        case 'FLOAT':
+          if (Number.isNaN(Number(value))) {
+            rowErrors.push(
+              t('error.invalid-field-value', {
+                field: property.name,
+                value: value,
+              })
+            );
+          }
+          importRow.properties[property.key] = value;
+          break;
+        case 'BOOLEAN':
+          const isTrue =
+            value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+          importRow.properties[property.key] = isTrue ? 'true' : 'false';
+          break;
+        default:
+          importRow.properties[property.key] = value;
+      }
+    }
+  });
 };

@@ -52,7 +52,7 @@ fn event_target_filter(target: &EventTarget) -> ProgramEventFilter {
         .document_type(EqualFilter::equal_to(&target.document_type))
         .r#type(EqualFilter::equal_to(&target.r#type));
     if let Some(document_name) = &target.document_name {
-        filter = filter.document_name(EqualFilter::equal_to(&document_name));
+        filter = filter.document_name(EqualFilter::equal_to(document_name));
     }
     filter
 }
@@ -68,11 +68,11 @@ fn remove_event_stack(
         Pagination::one(),
         Some(event_target_filter(event_target).datetime(DatetimeFilter::equal_to(datetime))),
         Some(ProgramEventSort {
-            key: ProgramEventSortField::ActiveStartDatetime,
+            key: ProgramEventSortField::ActiveEndDatetime,
             desc: Some(true),
         }),
     )?;
-    let Some(longest) = stack_events.get(0).map(|it| &it.program_event_row) else {
+    let Some(longest) = stack_events.first().map(|it| &it.program_event_row) else {
         // no stack found -> done
         return Ok(());
     };
@@ -91,7 +91,7 @@ fn remove_event_stack(
                     .active_end_datetime(DatetimeFilter::equal_to(datetime)),
             ),
             Some(ProgramEventSort {
-                key: ProgramEventSortField::ActiveStartDatetime,
+                key: ProgramEventSortField::ActiveEndDatetime,
                 desc: Some(true),
             }),
         )?
@@ -129,13 +129,13 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         let repository = ProgramEventRepository::new(&ctx.connection);
 
         let filter = if let Some(allowed_ctx) = allowed_ctx {
-            let mut filter = filter.unwrap_or(ProgramEventFilter::new());
+            let mut filter = filter.unwrap_or_default();
             // restrict query results to allowed entries
             filter.context_id = Some(
                 filter
                     .context_id
                     .unwrap_or_default()
-                    .restrict_results(&allowed_ctx),
+                    .restrict_results(allowed_ctx),
             );
             Some(filter)
         } else {
@@ -157,7 +157,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<ProgramEvent>, ListError> {
         let filter = filter
-            .unwrap_or(ProgramEventFilter::new())
+            .unwrap_or_default()
             .active_start_datetime(DatetimeFilter::before_or_equal_to(at))
             .active_end_datetime(DatetimeFilter::after_or_equal_to(
                 // TODO: add an `after` filter
@@ -182,7 +182,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         context_id: &str,
         events: Vec<EventInput>,
     ) -> Result<(), RepositoryError> {
-        let result = connection
+        connection
             .transaction_sync(|con| -> Result<(), RepositoryError> {
                 // TODO do we need to lock rows in case events are updated concurrently?
                 let repo = ProgramEventRepository::new(con);
@@ -207,7 +207,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                                 r#type: row.r#type,
                             };
 
-                            map.entry(target).or_insert(vec![]);
+                            map.entry(target).or_default();
                             map
                         },
                     )
@@ -222,7 +222,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                                 r#type: it.r#type,
                             };
 
-                            map.entry(target).or_insert(vec![]).push(StackEvent {
+                            map.entry(target).or_default().push(StackEvent {
                                 // sanitise active_start_datetime to not be small than datetime
                                 active_start_datetime: datetime.max(it.active_start_datetime),
                                 name: it.name,
@@ -253,7 +253,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                     )?;
 
                     let active_end_datetime = if let Some(active_end_datetime) = overlaps
-                        .get(0)
+                        .first()
                         .map(|it| it.program_event_row.active_end_datetime)
                     {
                         active_end_datetime
@@ -321,7 +321,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                 Ok(())
             })
             .map_err(|err| err.to_inner_error())?;
-        Ok(result)
+        Ok(())
     }
 }
 
@@ -821,7 +821,7 @@ mod test {
         events.sort_by(|a, b| {
             a.datetime
                 .cmp(&b.datetime)
-                .then_with(|| a.active_start_datetime.cmp(&b.active_start_datetime))
+                .then_with(|| a.active_end_datetime.cmp(&b.active_end_datetime))
         });
 
         // init with first datetime
@@ -864,10 +864,16 @@ mod test {
                         event.data
                     );
                 }
-                assert!(event.active_end_datetime >= prev_event_end);
+                assert!(
+                    event.active_end_datetime >= prev_event_end,
+                    "event.active_end_datetime: {}, prev_event_end: {}",
+                    event.active_end_datetime,
+                    prev_event_end
+                );
                 prev_event_end = event.active_end_datetime;
             }
         }
+        assert_eq!(prev_event_end, max_datetime());
     }
 
     #[actix_rt::test]

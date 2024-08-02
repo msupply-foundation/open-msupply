@@ -2,7 +2,7 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_status_change,
     check_store,
 };
-use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
+use crate::validate::check_patient_exists;
 use repository::{ClinicianRowRepository, RepositoryError};
 use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
@@ -32,18 +32,7 @@ pub fn validate(
     let status_changed = check_status_change(&invoice, patch.full_status());
 
     if let Some(patient_id) = &patch.patient_id {
-        check_other_party(
-            connection,
-            store_id,
-            patient_id,
-            CheckOtherPartyType::Patient,
-        )
-        .map_err(|e| match e {
-            OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
-            OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
-            OtherPartyErrors::TypeMismatched => OtherPartyNotAPatient,
-            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
-        })?;
+        check_patient_exists(connection, patient_id)?.ok_or(PatientDoesNotExist)?;
     }
 
     Ok((invoice, status_changed))

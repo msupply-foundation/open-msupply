@@ -30,6 +30,8 @@ pub enum UserPermission {
     RequisitionQuery,
     RequisitionMutate,
     RequisitionSend,
+    RnRFormQuery,
+    RnRFormMutate,
     OutboundShipmentQuery,
     OutboundShipmentMutate,
     InboundShipmentQuery,
@@ -53,6 +55,8 @@ pub enum UserPermission {
     AssetMutate,
     AssetQuery,
     AssetCatalogueItemMutate,
+    NamePropertiesMutate,
+    EditCentralData,
 }
 
 #[Object]
@@ -109,6 +113,8 @@ impl UserPermission {
             PermissionType::InventoryAdjustmentMutate => UserPermission::InventoryAdjustmentMutate,
             PermissionType::RequisitionQuery => UserPermission::RequisitionQuery,
             PermissionType::RequisitionMutate => UserPermission::RequisitionMutate,
+            PermissionType::RnrFormQuery => UserPermission::RnRFormQuery,
+            PermissionType::RnrFormMutate => UserPermission::RnRFormMutate,
             PermissionType::RequisitionSend => UserPermission::RequisitionSend,
             PermissionType::OutboundShipmentQuery => UserPermission::OutboundShipmentQuery,
             PermissionType::OutboundShipmentMutate => UserPermission::OutboundShipmentMutate,
@@ -136,6 +142,8 @@ impl UserPermission {
             PermissionType::AssetMutate => UserPermission::AssetMutate,
             PermissionType::AssetQuery => UserPermission::AssetQuery,
             PermissionType::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
+            PermissionType::NamePropertiesMutate => UserPermission::NamePropertiesMutate,
+            PermissionType::EditCentralData => UserPermission::EditCentralData,
         }
     }
 
@@ -156,6 +164,8 @@ impl UserPermission {
             UserPermission::RequisitionQuery => PermissionType::RequisitionQuery,
             UserPermission::RequisitionMutate => PermissionType::RequisitionMutate,
             UserPermission::RequisitionSend => PermissionType::RequisitionSend,
+            UserPermission::RnRFormQuery => PermissionType::RnrFormQuery,
+            UserPermission::RnRFormMutate => PermissionType::RnrFormMutate,
             UserPermission::OutboundShipmentQuery => PermissionType::OutboundShipmentQuery,
             UserPermission::OutboundShipmentMutate => PermissionType::OutboundShipmentMutate,
             UserPermission::InboundShipmentQuery => PermissionType::InboundShipmentQuery,
@@ -181,6 +191,8 @@ impl UserPermission {
             UserPermission::AssetMutate => PermissionType::AssetMutate,
             UserPermission::AssetQuery => PermissionType::AssetQuery,
             UserPermission::AssetCatalogueItemMutate => PermissionType::AssetCatalogueItemMutate,
+            UserPermission::NamePropertiesMutate => PermissionType::NamePropertiesMutate,
+            UserPermission::EditCentralData => PermissionType::EditCentralData,
         }
     }
 }

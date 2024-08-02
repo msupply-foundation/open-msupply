@@ -63,7 +63,7 @@ const OutboundShipmentListViewComponent: FC = () => {
       ],
       [
         'invoiceNumber',
-        { description: 'description.invoice-number', maxWidth: 110 },
+        { description: 'description.invoice-number', width: 150 },
       ],
       'createdDatetime',
       {
@@ -71,6 +71,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         key: 'theirReference',
         label: 'label.reference',
         Cell: TooltipTextCell,
+        width: 175,
       },
       [
         'comment',
@@ -82,7 +83,7 @@ const OutboundShipmentListViewComponent: FC = () => {
         'totalAfterTax',
         {
           accessor: ({ rowData }) => rowData.pricing.totalAfterTax,
-          width: '100%',
+          width: 125,
         },
       ],
       'selection',

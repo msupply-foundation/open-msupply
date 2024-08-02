@@ -1,0 +1,16 @@
+{
+    "control.note.text-label": "Texte",
+    "control.search.below-min-chars": "Veuillez saisir au moins {{minChars}} caractères",
+    "control.search.error.no-data": "Impossible d'extraire le chemin « {{docPath}} » du document",
+    "control.search.error.no-document": "Impossible d'accéder au document demandé",
+    "control.adherence-status-warning": "Nombre de pilules : après la dernière visite = {{previousCountOnHand}} < avant la visite = {{remainingCount}}",
+    "control.note.author-label": "Auteur",
+    "control.search.error.no-patient-contact": "Aucun contact patient correspondant n'a été trouvé",
+    "control.search.matching-patients": "Nous avons trouvé des patients existants qui correspondent aux données saisies ci-dessus. Veuillez sélectionner dans cette liste si applicable",
+    "control.search.no-results-label": "Aucun résultat",
+    "control.search.reset-button": "Dissocier le patient correspondant",
+    "control.search.searching-label": "Recherche...",
+    "label.bmi-prev-height-message": "En utilisant la hauteur de {{height}}m de la mesure précédente",
+    "label.diastolic": "Diastolique",
+    "label.systolic": "Systolique"
+}

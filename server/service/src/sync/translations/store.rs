@@ -33,6 +33,8 @@ pub struct LegacyStoreRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub created_date: Option<NaiveDate>,
+    #[serde(rename = "disabled")]
+    is_disabled: bool,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -65,13 +67,13 @@ impl SyncTranslation for StoreTranslation {
         // (i.e. return type) Translation Not Matches, Translation Ignored (with message ?) and Translated records
         if let "HIS" | "DRG" | "SM" = &data.code[..] {
             return Ok(PullTranslateResult::Ignored(
-                "Ignoring not implemented system names".to_string(),
+                "System names not implemented".to_string(),
             ));
         }
 
         if data.name_id.is_empty() {
             return Ok(PullTranslateResult::Ignored(
-                "Ignore stores without name".to_string(),
+                "Store has no name".to_string(),
             ));
         }
 
@@ -82,12 +84,13 @@ impl SyncTranslation for StoreTranslation {
 
         let result = StoreRow {
             id: data.id,
-            name_id: data.name_id,
+            name_link_id: data.name_id,
             code: data.code,
             site_id: data.site_id,
             logo: data.logo,
             store_mode,
             created_date: data.created_date,
+            is_disabled: data.is_disabled,
         };
 
         Ok(PullTranslateResult::upsert(result))

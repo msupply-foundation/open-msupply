@@ -37,9 +37,7 @@ pub struct FormSchemaRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-pub(crate) fn schema_from_row(
-    schema_row: FormSchemaRow,
-) -> Result<FormSchemaJson, RepositoryError> {
+pub fn schema_from_row(schema_row: FormSchemaRow) -> Result<FormSchemaJson, RepositoryError> {
     let json_schema: serde_json::Value =
         serde_json::from_str(&schema_row.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Can't deserialize json schema".to_string(),
@@ -82,7 +80,6 @@ impl<'a> FormSchemaRowRepository<'a> {
         FormSchemaRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::insert_into(form_schema::dsl::form_schema)
@@ -90,15 +87,6 @@ impl<'a> FormSchemaRowRepository<'a> {
             .on_conflict(form_schema::dsl::id)
             .do_update()
             .set(&row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
-        let row = row_from_schema(schema)?;
-        diesel::replace_into(form_schema::dsl::form_schema)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -130,8 +118,9 @@ impl<'a> FormSchemaRowRepository<'a> {
 }
 
 impl Upsert for FormSchemaJson {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        FormSchemaRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        FormSchemaRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

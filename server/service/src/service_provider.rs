@@ -13,6 +13,7 @@ use crate::{
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
+    demographic::DemographicServiceTrait,
     display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
     document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
@@ -26,11 +27,11 @@ use crate::{
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
-    missing_program::create_missing_master_list_and_program,
-    name::get_names,
+    name::{NameService, NameServiceTrait},
     pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     processors::ProcessorsTrigger,
+    program::ProgramServiceTrait,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
@@ -42,6 +43,7 @@ use crate::{
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
@@ -53,13 +55,13 @@ use crate::{
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
-    system_user::create_system_user,
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
 };
 use repository::{
-    Name, NameFilter, NameSort, PaginationOption, RepositoryError, StorageConnection,
-    StorageConnectionManager, Store, StoreFilter, StoreSort,
+    PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
+    StoreFilter, StoreSort,
 };
 
 pub struct ServiceProvider {
@@ -73,6 +75,7 @@ pub struct ServiceProvider {
     pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
     pub cold_chain_service: Box<dyn ColdChainServiceTrait>,
 
+    pub name_service: Box<dyn NameServiceTrait>,
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stocktake_service: Box<dyn StocktakeServiceTrait>,
@@ -82,6 +85,7 @@ pub struct ServiceProvider {
     pub requisition_line_service: Box<dyn RequisitionLineServiceTrait>,
     pub general_service: Box<dyn GeneralServiceTrait>,
     pub clinician_service: Box<dyn ClinicianServiceTrait>,
+    pub rnr_form_service: Box<dyn RnRFormServiceTrait>,
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
@@ -132,6 +136,11 @@ pub struct ServiceProvider {
     pub asset_service: Box<dyn AssetServiceTrait>,
     // Label Printer
     pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
+    // Demographic
+    pub demographic_service: Box<dyn DemographicServiceTrait>,
+    // Vaccine Course
+    pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
+    pub program_service: Box<dyn ProgramServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -212,6 +221,11 @@ impl ServiceProvider {
             label_printer_settings_service: Box::new(
                 crate::label_printer_settings_service::LabelPrinterSettingsService {},
             ),
+            name_service: Box::new(NameService {}),
+            demographic_service: Box::new(crate::demographic::DemographicService {}),
+            vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
+            program_service: Box::new(crate::program::ProgramService {}),
+            rnr_form_service: Box::new(RnRFormService {}),
         }
     }
 
@@ -257,17 +271,6 @@ impl ServiceContext {
 }
 
 pub trait GeneralServiceTrait: Sync + Send {
-    fn get_names(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        pagination: Option<PaginationOption>,
-        filter: Option<NameFilter>,
-        sort: Option<NameSort>,
-    ) -> Result<ListResult<Name>, ListError> {
-        get_names(ctx, store_id, pagination, filter, sort)
-    }
-
     fn get_stores(
         &self,
         ctx: &ServiceContext,
@@ -284,20 +287,6 @@ pub trait GeneralServiceTrait: Sync + Send {
         filter: StoreFilter,
     ) -> Result<Option<Store>, RepositoryError> {
         get_store(ctx, filter)
-    }
-
-    fn create_system_user(
-        &self,
-        service_provider: &ServiceProvider,
-    ) -> Result<(), RepositoryError> {
-        create_system_user(service_provider)
-    }
-
-    fn create_missing_master_list_and_program(
-        &self,
-        service_provider: &ServiceProvider,
-    ) -> Result<(), RepositoryError> {
-        create_missing_master_list_and_program(service_provider)
     }
 }
 

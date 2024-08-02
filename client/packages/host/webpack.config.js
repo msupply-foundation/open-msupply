@@ -8,7 +8,6 @@ const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-const EncodingPlugin = require('webpack-encoding-plugin');
 const fs = require('fs');
 
 const localPlugins = () => {
@@ -156,7 +155,6 @@ module.exports = env => {
       }),
       new CopyPlugin({
         patterns: [
-          { from: './public/mockServiceWorker.js', to: 'mockServiceWorker.js' },
           { from: './public/medical-icons.css', to: 'medical-icons.css' },
           { from: './public/game', to: 'game' },
           {
@@ -190,9 +188,6 @@ module.exports = env => {
             'react-singleton-context': { singleton: true, eager: true },
           },
         ],
-      }),
-      new EncodingPlugin({
-        encoding: 'UTF-16',
       }),
     ],
   };

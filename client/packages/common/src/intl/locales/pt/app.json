@@ -79,7 +79,7 @@
   "initialise.body": "Para começar, vamos precisar ajustar as configurações para sincronizar com mSupply. Por favor, insira os valores e clique em Salvar.\n\nSe você não tem certeza do que inserir, contacte support@msupply.foundation.",
   "admin": "Administrador",
   "cmdk.drawer-toggle": "Alternar Menu",
-  "error.integration-timeout-reached": "A integração com o servidor central atingiu o tempo limite",
+  "error.integration-timeout-reached": "A integração com o servidor central atingiu o tempo limite. Por favor tente novamente mais tarde.",
   "login.body": "Se você administra um armazém de distribuição de produtos farmacêuticos , ou é um produtor que precisa de dezenas de usuários conectados, ou uma pequena farmácia, mSupply é um parceiro valioso.",
   "store-details": "Código do Armazém: {{code}}",
   "suppliers": "Fornecedores",
@@ -90,5 +90,17 @@
   "error.site-mismatch": "Incompatibilidade de locais",
   "label.site": "Local:",
   "cmdk.goto-patients": "Ir até: Pacientes",
-  "cmdk.goto-prescriptions": "Ir até: Prescrições"
+  "cmdk.goto-prescriptions": "Ir até: Prescrições",
+  "assets": "Bens",
+  "log-reasons": "Registrar razões",
+  "cmdk.goto-cold-chain-equipment": "Vá até: equipamento de cadeia de frios",
+  "error.connection-error-hint": "Verifique sua conexão de rede",
+  "easter-egg": "Ovo de páscoa",
+  "cmdk.goto-cold-chain-monitoring": "Vá até: monitoramento de cadeia de frios",
+  "equipment": "Equipamento",
+  "error.sync-api-incompatible-hint": "O servidor central da mSupply precisa ser atualizado antes que possa se conectar - por favor contacte support@msupply.foundation",
+  "error.sync-v6-api-incompatible": "A versão Sync V6 API não é compatível",
+  "discovery.use-server-mode": "Nota: Atualmente estás utilizando o modo cliente. Para trocar para o modo de servidor local, clique no botão abaixo.",
+  "error.sync-v6-api-incompatible-hint": "O servidor central da Open mSupply precisa ser atualizado antes que possa se conectar - por favor contacte support@msupply.foundation",
+  "error.internal-error": "O servidor está experienciando um problema."
 }

@@ -106,13 +106,12 @@ pub fn update_outbound_return_lines(
             }
 
             get_invoice(ctx, None, &input.outbound_return_id)
-                .map_err(|error| UpdateOutboundReturnLinesError::DatabaseError(error))?
+                .map_err(UpdateOutboundReturnLinesError::DatabaseError)?
                 .ok_or(UpdateOutboundReturnLinesError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_invoice_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
 
     Ok(outbound_return)
 }
@@ -271,7 +270,6 @@ mod test {
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineInsertError {
@@ -294,7 +292,6 @@ mod test {
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineUpdateError {
@@ -318,7 +315,6 @@ mod test {
                             reason_id: Some("does_not_exist".to_string()),
                             ..Default::default()
                         }],
-                        ..Default::default()
                     },
                 ),
             Err(ServiceError::LineReturnReasonUpdateError {
@@ -380,7 +376,6 @@ mod test {
                             ..Default::default()
                         },
                     ],
-                    ..Default::default()
                 },
             )
             .unwrap();
@@ -392,10 +387,7 @@ mod test {
         assert_eq!(updated_lines.len(), 2);
 
         // new line was added
-        assert!(updated_lines
-            .iter()
-            .find(|line| line.id == "line1")
-            .is_some());
+        assert!(updated_lines.iter().any(|line| line.id == "line1"));
 
         // existing line was updated with new num of packs
         assert_eq!(
@@ -408,9 +400,8 @@ mod test {
         );
 
         // zeroed line was deleted
-        assert!(updated_lines
+        assert!(!updated_lines
             .iter()
-            .find(|line| line.id == mock_outbound_return_a_invoice_line_b().id)
-            .is_none());
+            .any(|line| line.id == mock_outbound_return_a_invoice_line_b().id));
     }
 }

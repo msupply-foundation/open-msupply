@@ -4,6 +4,7 @@ import { JsonData, JsonForm } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog } from '@common/hooks';
 import { DialogButton } from '@common/components';
+import { useAuthContext } from '@openmsupply-client/common';
 
 export type ReportArgumentsModalProps = {
   /** Modal is shown if there is an argument schema present */
@@ -17,7 +18,21 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   onReset,
   onArgumentsSelected,
 }) => {
-  const [data, setData] = useState<JsonData>({});
+  const { store } = useAuthContext();
+
+  const {
+    monthlyConsumptionLookBackPeriod,
+    monthsOverstock,
+    monthsUnderstock,
+    monthsItemsExpire,
+  } = store?.preferences ?? {};
+
+  const [data, setData] = useState<JsonData>({
+    monthlyConsumptionLookBackPeriod,
+    monthsOverstock,
+    monthsUnderstock,
+    monthsItemsExpire,
+  });
   const [error, setError] = useState<string | false>(false);
 
   // clean up when modal is closed

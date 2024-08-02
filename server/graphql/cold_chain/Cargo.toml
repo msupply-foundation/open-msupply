@@ -17,7 +17,7 @@ graphql_asset = { path = "../asset" }
 
 async-graphql = { workspace = true }
 chrono = { workspace = true }
-regex = "1.5"
+regex = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }
@@ -30,3 +30,6 @@ util = { path = "../../util" }
 default = ["sqlite"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
+
+[lints]
+workspace = true

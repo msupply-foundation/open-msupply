@@ -11,7 +11,7 @@ pub type NodeError = ErrorWrapper<NodeErrorInterface>;
 
 // Generic Node Error Interface
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum NodeErrorInterface {
     DatabaseError(DatabaseError),
     RecordNotFound(RecordNotFound),
@@ -152,6 +152,14 @@ impl RecordAlreadyExist {
     }
 }
 
+pub struct RecordProgramCombinationAlreadyExists;
+#[Object]
+impl RecordProgramCombinationAlreadyExists {
+    pub async fn description(&self) -> &str {
+        "Course name already exists on this program"
+    }
+}
+
 pub struct RecordBelongsToAnotherStore;
 #[Object]
 impl RecordBelongsToAnotherStore {
@@ -260,6 +268,7 @@ impl InvoiceLineBelongsToAnotherInvoice {
 pub enum UniqueValueKey {
     Code,
     Serial,
+    Name,
 }
 
 pub struct UniqueValueViolation(pub UniqueValueKey);

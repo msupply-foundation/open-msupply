@@ -24,6 +24,7 @@ import {
   Hidden,
   Typography,
   styled,
+  isEmpty,
 } from '@openmsupply-client/common';
 import { ModalProps, useDialog } from '@common/hooks';
 import {
@@ -32,7 +33,6 @@ import {
   renderLayoutElements,
   withAjvProps,
 } from '@jsonforms/material-renderers';
-import { isEmpty } from 'lodash';
 
 interface CategoryModalProps extends ModalProps {
   isOpen: boolean;

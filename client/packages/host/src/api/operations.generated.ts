@@ -1,9 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type DatabaseSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
@@ -39,6 +38,13 @@ export type UpdateLabelPrinterSettingsMutationVariables = Types.Exact<{
 
 
 export type UpdateLabelPrinterSettingsMutation = { __typename: 'Mutations', updateLabelPrinterSettings: { __typename: 'LabelPrinterUpdateResult', success: boolean } | { __typename: 'UpdateLabelPrinterSettingsError' } };
+
+export type ConfigureNamePropertiesMutationVariables = Types.Exact<{
+  input: Array<Types.ConfigureNamePropertyInput> | Types.ConfigureNamePropertyInput;
+}>;
+
+
+export type ConfigureNamePropertiesMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', general: { __typename: 'CentralGeneralMutations', configureNameProperties: { __typename: 'Success', success: boolean } } } };
 
 
 export const DatabaseSettingsDocument = gql`
@@ -110,131 +116,50 @@ export const UpdateLabelPrinterSettingsDocument = gql`
   }
 }
     `;
+export const ConfigureNamePropertiesDocument = gql`
+    mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
+  centralServer {
+    general {
+      configureNameProperties(input: $input) {
+        __typename
+        ... on Success {
+          __typename
+          success
+        }
+      }
+    }
+  }
+}
+    `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     databaseSettings(variables?: DatabaseSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DatabaseSettingsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DatabaseSettingsQuery>(DatabaseSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'databaseSettings', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<DatabaseSettingsQuery>(DatabaseSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'databaseSettings', 'query', variables);
     },
     displaySettings(variables: DisplaySettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DisplaySettingsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DisplaySettingsQuery>(DisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'displaySettings', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<DisplaySettingsQuery>(DisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'displaySettings', 'query', variables);
     },
     plugins(variables?: PluginsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PluginsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<PluginsQuery>(PluginsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'plugins', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<PluginsQuery>(PluginsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'plugins', 'query', variables);
     },
     labelPrinterSettings(variables?: LabelPrinterSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LabelPrinterSettingsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<LabelPrinterSettingsQuery>(LabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'labelPrinterSettings', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<LabelPrinterSettingsQuery>(LabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'labelPrinterSettings', 'query', variables);
     },
     updateDisplaySettings(variables: UpdateDisplaySettingsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateDisplaySettingsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateDisplaySettingsMutation>(UpdateDisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateDisplaySettings', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateDisplaySettingsMutation>(UpdateDisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateDisplaySettings', 'mutation', variables);
     },
     updateLabelPrinterSettings(variables: UpdateLabelPrinterSettingsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateLabelPrinterSettingsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLabelPrinterSettingsMutation>(UpdateLabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLabelPrinterSettings', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLabelPrinterSettingsMutation>(UpdateLabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLabelPrinterSettings', 'mutation', variables);
+    },
+    configureNameProperties(variables: ConfigureNamePropertiesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ConfigureNamePropertiesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ConfigureNamePropertiesMutation>(ConfigureNamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'configureNameProperties', 'mutation', variables);
     }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDatabaseSettingsQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ databaseSettings })
- *   )
- * })
- */
-export const mockDatabaseSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<DatabaseSettingsQueryVariables>, GraphQLContext<DatabaseSettingsQuery>, any>) =>
-  graphql.query<DatabaseSettingsQuery, DatabaseSettingsQueryVariables>(
-    'databaseSettings',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDisplaySettingsQuery((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ displaySettings })
- *   )
- * })
- */
-export const mockDisplaySettingsQuery = (resolver: ResponseResolver<GraphQLRequest<DisplaySettingsQueryVariables>, GraphQLContext<DisplaySettingsQuery>, any>) =>
-  graphql.query<DisplaySettingsQuery, DisplaySettingsQueryVariables>(
-    'displaySettings',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockPluginsQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ plugins })
- *   )
- * })
- */
-export const mockPluginsQuery = (resolver: ResponseResolver<GraphQLRequest<PluginsQueryVariables>, GraphQLContext<PluginsQuery>, any>) =>
-  graphql.query<PluginsQuery, PluginsQueryVariables>(
-    'plugins',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockLabelPrinterSettingsQuery((req, res, ctx) => {
- *   return res(
- *     ctx.data({ labelPrinterSettings })
- *   )
- * })
- */
-export const mockLabelPrinterSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<LabelPrinterSettingsQueryVariables>, GraphQLContext<LabelPrinterSettingsQuery>, any>) =>
-  graphql.query<LabelPrinterSettingsQuery, LabelPrinterSettingsQueryVariables>(
-    'labelPrinterSettings',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateDisplaySettingsMutation((req, res, ctx) => {
- *   const { displaySettings } = req.variables;
- *   return res(
- *     ctx.data({ updateDisplaySettings })
- *   )
- * })
- */
-export const mockUpdateDisplaySettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateDisplaySettingsMutationVariables>, GraphQLContext<UpdateDisplaySettingsMutation>, any>) =>
-  graphql.mutation<UpdateDisplaySettingsMutation, UpdateDisplaySettingsMutationVariables>(
-    'updateDisplaySettings',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateLabelPrinterSettingsMutation((req, res, ctx) => {
- *   const { labelPrinterSettings } = req.variables;
- *   return res(
- *     ctx.data({ updateLabelPrinterSettings })
- *   )
- * })
- */
-export const mockUpdateLabelPrinterSettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLabelPrinterSettingsMutationVariables>, GraphQLContext<UpdateLabelPrinterSettingsMutation>, any>) =>
-  graphql.mutation<UpdateLabelPrinterSettingsMutation, UpdateLabelPrinterSettingsMutationVariables>(
-    'updateLabelPrinterSettings',
-    resolver
-  )

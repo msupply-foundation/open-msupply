@@ -1,6 +1,9 @@
 use super::program_row::{program, program::dsl as program_dsl};
 use crate::{
+    db_diesel::{master_list_row::master_list, store_row::store},
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    master_list_name_join::master_list_name_join,
+    name_link,
     repository_error::RepositoryError,
     DBType, ProgramRow, StorageConnection, StringFilter,
 };
@@ -15,6 +18,8 @@ pub struct ProgramFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub context_id: Option<EqualFilter<String>>,
+    pub is_immunisation: Option<bool>,
+    pub exists_for_store_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -92,12 +97,41 @@ fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery
             id,
             name,
             context_id,
+            is_immunisation,
+            exists_for_store_id,
         } = f;
 
         apply_equal_filter!(query, id, program_dsl::id);
         apply_string_filter!(query, name, program_dsl::name);
         apply_equal_filter!(query, context_id, program_dsl::context_id);
+        if let Some(is_immunisation) = is_immunisation {
+            query = query.filter(program_dsl::is_immunisation.eq(is_immunisation));
+        }
+
+        if exists_for_store_id.is_some() {
+            let mut master_list_name_join_query = program_dsl::program
+                .select(program_dsl::id)
+                .distinct()
+                .left_join(
+                    master_list::dsl::master_list.left_join(
+                        master_list_name_join::dsl::master_list_name_join
+                            .left_join(name_link::dsl::name_link.left_join(store::dsl::store)),
+                    ),
+                )
+                .into_boxed();
+
+            apply_equal_filter!(
+                master_list_name_join_query,
+                exists_for_store_id,
+                store::dsl::id
+            );
+
+            query = query.filter(program_dsl::id.eq_any(master_list_name_join_query));
+        }
     }
+
+    query = query.filter(program_dsl::deleted_datetime.is_null());
+    query = query.filter(program_dsl::id.ne("missing_program"));
 
     query
 }
@@ -119,6 +153,11 @@ impl ProgramFilter {
 
     pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
         self.context_id = Some(filter);
+        self
+    }
+
+    pub fn is_immunisation(mut self, filter: bool) -> Self {
+        self.is_immunisation = Some(filter);
         self
     }
 }

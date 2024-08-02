@@ -144,7 +144,7 @@ mod test {
             service.insert_outbound_shipment_service_line(
                 &context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.id = draft_shipment.lines[0].line.id.clone();
+                    r.id.clone_from(&draft_shipment.lines[0].line.id);
                 }),
             ),
             Err(ServiceError::LineAlreadyExists)
@@ -166,7 +166,7 @@ mod test {
             service.insert_outbound_shipment_service_line(
                 &context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = draft_shipment.invoice.id.clone();
+                    r.invoice_id.clone_from(&draft_shipment.invoice.id);
                     r.item_id = Some("invalid".to_string())
                 }),
             ),
@@ -178,7 +178,7 @@ mod test {
             service.insert_outbound_shipment_service_line(
                 &context,
                 inline_init(|r: &mut InsertOutboundShipmentServiceLine| {
-                    r.invoice_id = draft_shipment.invoice.id.clone();
+                    r.invoice_id.clone_from(&draft_shipment.invoice.id);
                     r.item_id = Some(mock_item_a().id)
                 }),
             ),
@@ -212,7 +212,7 @@ mod test {
             .unwrap();
 
         let line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id_option("new_line_id")
+            .find_one_by_id("new_line_id")
             .unwrap()
             .unwrap();
 
@@ -252,7 +252,7 @@ mod test {
             .unwrap();
 
         let line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id_option("new_line2_id")
+            .find_one_by_id("new_line2_id")
             .unwrap()
             .unwrap();
 

@@ -14,14 +14,17 @@ use repository::{
 use crate::static_files::{StaticFile, StaticFileCategory};
 use crate::sync::api::SyncApiV5;
 use crate::sync::api_v6::SyncApiV6;
-use crate::sync::settings::SYNC_VERSION;
+use crate::sync::settings::SYNC_V5_VERSION;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
 
-use super::api_v6::{SyncApiErrorV6, SyncApiV6CreatingError};
 use super::settings::SyncSettings;
 use super::{
     api::SyncApiV5CreatingError,
     api_v6::{SyncApiErrorVariantV6, SyncParsedErrorV6},
+};
+use super::{
+    api_v6::{SyncApiErrorV6, SyncApiV6CreatingError},
+    settings::SYNC_V6_VERSION,
 };
 
 pub static MAX_UPLOAD_ATTEMPTS: i32 = 7 * 24; // 7 days * 24 hours Retry sending for up to for 1 week before giving up
@@ -70,8 +73,9 @@ impl FileSynchroniser {
         static_file_service: Arc<StaticFileService>,
     ) -> anyhow::Result<Self> {
         // Create SyncApiV6 instance
-        let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, SYNC_VERSION)?;
-        let sync_api_v6 = SyncApiV6::new(sync_v6_url, &sync_v5_settings)?;
+        let sync_v5_settings =
+            SyncApiV5::new_settings(&settings, &service_provider, SYNC_V5_VERSION)?;
+        let sync_api_v6 = SyncApiV6::new(sync_v6_url, &sync_v5_settings, SYNC_V6_VERSION)?;
 
         Ok(Self {
             sync_api_v6,
@@ -90,7 +94,7 @@ impl FileSynchroniser {
         let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
 
         let sync_file_ref = sync_file_repo
-            .find_one_by_id(&file_id)?
+            .find_one_by_id(file_id)?
             .ok_or(Error::FileDoesNotExist(file_id.to_string()))?;
 
         let download_result = self
@@ -154,7 +158,7 @@ impl FileSynchroniser {
 
         let upload_result = self
             .sync_api_v6
-            .upload_file(&sync_file_reference, &file.name, file_handle)
+            .upload_file(sync_file_reference, &file.name, file_handle)
             .await;
 
         let Err(error) = upload_result
@@ -187,8 +191,7 @@ impl FileSynchroniser {
             let retry_at = match error.source {
                 SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncFileNotFound(_)) => {
                     // wait 1 minute before retrying
-                    let retry_at = Utc::now().naive_utc() + Duration::minutes(1);
-                    retry_at
+                    Utc::now().naive_utc() + Duration::minutes(1)
                 }
                 _ => {
                     Utc::now().naive_utc()

@@ -3,7 +3,7 @@ import React, { useMemo, useState, useEffect, FC } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
-import addMinutes from 'date-fns/addMinutes';
+import { addMinutes } from 'date-fns/addMinutes';
 import { useLogin, useGetUserPermissions, useRefreshToken } from './api/hooks';
 
 import { AuthenticationResponse } from './api';
@@ -149,7 +149,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     lastSuccessfulSync,
     updateUser,
     error: updateUserError,
-  } = useUpdateUserInfo(setCookie, cookie);
+  } = useUpdateUserInfo(setCookie, cookie, mostRecentCredentials);
 
   const logout = () => {
     Cookies.remove('auth');

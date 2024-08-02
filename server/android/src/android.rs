@@ -23,8 +23,8 @@ pub mod android {
     static SERVER_BUCKET: Mutex<Option<ServerBucket>> = Mutex::new(None);
 
     #[no_mangle]
-    pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
-        env: JNIEnv,
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_startServer(
+        mut env: JNIEnv,
         _: JClass,
         port: jchar,
         files_dir: JString,
@@ -32,11 +32,11 @@ pub mod android {
         android_id: JString,
     ) {
         let (off_switch, off_switch_receiver) = mpsc::channel(1);
-        let files_dir: String = env.get_string(files_dir).unwrap().into();
+        let files_dir: String = env.get_string(&files_dir).unwrap().into();
         let files_dir = PathBuf::from(&files_dir);
-        let android_id: String = env.get_string(android_id).unwrap().into();
+        let android_id: String = env.get_string(&android_id).unwrap().into();
         let db_path = files_dir.join("omsupply-database");
-        let cache_dir: String = env.get_string(cache_dir).unwrap().into();
+        let cache_dir: String = env.get_string(&cache_dir).unwrap().into();
 
         let settings = Settings {
             server: ServerSettings {
@@ -81,10 +81,7 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub unsafe extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(
-        _: JNIEnv,
-        _: JClass,
-    ) {
+    pub extern "C" fn Java_org_openmsupply_client_RemoteServer_stopServer(_: JNIEnv, _: JClass) {
         let ServerBucket { off_switch, thread } = SERVER_BUCKET.lock().unwrap().take().unwrap();
         futures::executor::block_on(off_switch.send(())).unwrap();
         thread.join().unwrap();

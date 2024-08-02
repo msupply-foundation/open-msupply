@@ -1,38 +1,54 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetRowFragment } from './api';
-import { Formatter } from '@common/utils';
-import { PropertyNodeValueType, StatusType } from '@common/types';
+import { Formatter, ObjUtils } from '@common/utils';
+import { StatusType } from '@common/types';
 import { ImportRow, LineNumber } from './ImportAsset';
-import { PropertyValue } from './types';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
-export const assetsToCsv = (
-  items: AssetRowFragment[],
-  t: TypedTFunction<LocaleKey>
-) => {
-  const fields: string[] = [
-    'id',
+function baseAssetFields(t: TypedTFunction<LocaleKey>) {
+  return [
     t('label.asset-number'),
-    t('label.created-datetime'),
-    t('label.modified-datetime'),
+    t('label.catalogue-item-code'),
     t('label.installation-date'),
     t('label.replacement-date'),
     t('label.serial'),
-    t('label.notes'),
+    t('label.asset-notes'),
   ];
+}
 
-  const data = items.map(node => [
-    node.id,
-    node.assetNumber,
-    Formatter.csvDateTimeString(node.createdDatetime),
-    Formatter.csvDateTimeString(node.modifiedDatetime),
-    Formatter.csvDateString(node.installationDate),
-    Formatter.csvDateString(node.replacementDate),
-    node.serialNumber,
-    node.notes,
-  ]);
+export const assetsToCsv = (
+  items: AssetRowFragment[],
+  t: TypedTFunction<LocaleKey>,
+  properties: string[]
+) => {
+  const fields: string[] = ['id'].concat(baseAssetFields(t));
+
+  fields.push(t('label.created-datetime'), t('label.modified-datetime'));
+
+  fields.push(...properties);
+
+  const data = items.map(node => {
+    const parsedProperties = ObjUtils.parse(node.properties);
+    const parsedCatalogProperties = ObjUtils.parse(node.catalogProperties);
+
+    return [
+      node.id,
+      node.assetNumber,
+      node.catalogueItem?.code ?? '',
+      Formatter.csvDateString(node.installationDate),
+      Formatter.csvDateString(node.replacementDate),
+      node.serialNumber,
+      node.notes,
+      Formatter.csvDateTimeString(node.createdDatetime),
+      Formatter.csvDateTimeString(node.modifiedDatetime),
+      ...properties.map(
+        key => parsedCatalogProperties[key] ?? parsedProperties[key] ?? ''
+      ),
+    ];
+  });
+
   return Formatter.csv({ fields, data });
 };
 
@@ -73,21 +89,29 @@ export const parseLogStatus = (
 export const importEquipmentToCsvWithErrors = (
   assets: Partial<ImportRow & LineNumber>[],
   t: TypedTFunction<LocaleKey>,
-  isCentralServer: boolean
+  isCentralServer: boolean,
+  properties?: string[]
 ) => {
-  const fields: string[] = [];
-  fields.push(t('label.asset-number'));
-  fields.push(t('label.catalogue-item-code'));
+  const props = properties ?? [];
+
+  const fields: string[] = [
+    t('label.asset-number'),
+    t('label.catalogue-item-code'),
+  ];
 
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
 
-  fields.push(t('label.asset-notes'));
-  fields.push(t('label.serial'));
-  fields.push(t('label.installation-date'));
-  fields.push(t('label.line-number'));
-  fields.push(t('label.error-message'));
+  fields.push(
+    t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
+    t('label.replacement-date'),
+    t('label.line-number'),
+    ...props,
+    t('label.error-message')
+  );
 
   const data = assets.map(node => {
     const mapped: (string | number | null | undefined)[] = [
@@ -95,11 +119,16 @@ export const importEquipmentToCsvWithErrors = (
       node.catalogueItemCode,
     ];
     if (isCentralServer) mapped.push(node.store?.code);
-    mapped.push(node.notes);
-    mapped.push(node.serialNumber);
-    mapped.push(node.installationDate);
-    mapped.push(node.lineNumber);
-    mapped.push(node.errorMessage);
+    mapped.push(
+      node.notes,
+      node.serialNumber,
+      node.installationDate,
+      node.replacementDate,
+      node.lineNumber,
+      ...props.map(key => node.properties?.[key] ?? ''),
+      node.errorMessage
+    );
+
     return mapped;
   });
   return Formatter.csv({ fields, data });
@@ -108,48 +137,31 @@ export const importEquipmentToCsvWithErrors = (
 export const importEquipmentToCsv = (
   assets: Partial<ImportRow>[],
   t: TypedTFunction<LocaleKey>,
-  isCentralServer: boolean = false
+  isCentralServer: boolean = false,
+  properties?: string[]
 ) => {
-  const fields: string[] = [
-    t('label.asset-number'),
-    t('label.catalogue-item-code'),
-  ];
+  const fields = baseAssetFields(t);
   if (isCentralServer) {
     fields.push(t('label.store'));
   }
-  fields.push(t('label.asset-notes'));
-  fields.push(t('label.serial'));
-  fields.push(t('label.installation-date'));
+
+  const props = properties ?? [];
+  fields.push(...props);
 
   const data = assets.map(node => {
     const row = [
       node.assetNumber,
       node.catalogueItemCode,
-      node.notes,
-      node.serialNumber,
       node.installationDate,
+      node.replacementDate,
+      node.serialNumber,
+      node.notes,
     ];
+
     if (isCentralServer) row.push(node.store?.code);
-    return row;
+
+    return row.concat(props.map(key => node.properties?.[key] ?? ''));
   });
 
   return Formatter.csv({ fields, data });
-};
-
-export const formatPropertyValue = (
-  propertyValue: PropertyValue,
-  t: TypedTFunction<LocaleKey>
-) => {
-  switch (propertyValue.valueType) {
-    case PropertyNodeValueType.Boolean:
-      return propertyValue.valueBool ? t('messages.yes') : t('messages.no');
-    case PropertyNodeValueType.Float:
-      return propertyValue.valueFloat?.toString();
-    case PropertyNodeValueType.Integer:
-      return propertyValue.valueInt?.toString();
-    case PropertyNodeValueType.String:
-      return propertyValue.valueString;
-    default:
-      return undefined;
-  }
 };

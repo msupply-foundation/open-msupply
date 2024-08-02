@@ -78,6 +78,8 @@ impl<'a> SyncLogger<'a> {
     pub fn done(&mut self) -> Result<(), SyncLoggerError> {
         self.row = SyncLogRow {
             finished_datetime: Some(chrono::Utc::now().naive_utc()),
+            duration_in_seconds: (chrono::Utc::now().naive_utc() - self.row.started_datetime)
+                .num_seconds() as i32,
             ..self.row.clone()
         };
 
@@ -118,6 +120,8 @@ impl<'a> SyncLogger<'a> {
                 ..self.row.clone()
             },
         };
+        self.row.duration_in_seconds =
+            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
@@ -186,6 +190,8 @@ impl<'a> SyncLogger<'a> {
         };
 
         info!("Sync step finished {:?}", step);
+        self.row.duration_in_seconds =
+            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
@@ -294,6 +300,8 @@ impl<'a> SyncLogger<'a> {
                 }
             }
         };
+        self.row.duration_in_seconds =
+            (chrono::Utc::now().naive_utc() - self.row.started_datetime).num_seconds() as i32;
 
         self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
@@ -356,6 +364,10 @@ impl SyncLogError {
             | SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
                 SyncParsedErrorV6::LegacyServerError(source),
             )) => &source.code,
+
+            SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
+                SyncParsedErrorV6::SyncVersionMismatch(_, _, _),
+            )) => return Self::new(SyncApiErrorCode::V6ApiVersionIncompatible, sync_error),
 
             // map connection errors
             SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))

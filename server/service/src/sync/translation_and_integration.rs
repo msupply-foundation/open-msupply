@@ -4,7 +4,7 @@ use super::{
     translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
 };
 use crate::usize_to_u64;
-use log::warn;
+use log::{debug, warn};
 use repository::*;
 use std::collections::HashMap;
 
@@ -13,6 +13,7 @@ static PROGRESS_STEP_LEN: usize = 100;
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
     sync_buffer: &'a SyncBuffer<'a>,
+    source_site_id: Option<i32>,
 }
 
 #[derive(Default, Debug)]
@@ -28,10 +29,12 @@ impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(
         connection: &'a StorageConnection,
         sync_buffer: &'a SyncBuffer,
+        source_site_id: Option<i32>,
     ) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
             connection,
             sync_buffer,
+            source_site_id,
         }
     }
 
@@ -40,16 +43,15 @@ impl<'a> TranslationAndIntegration<'a> {
         &self,
         sync_record: &SyncBufferRow,
         translators: &SyncTranslators,
-    ) -> Result<Option<Vec<IntegrationOperation>>, anyhow::Error> {
+    ) -> Result<Vec<PullTranslateResult>, anyhow::Error> {
         let mut translation_results = Vec::new();
 
         for translator in translators.iter() {
             if !translator.should_translate_from_sync_record(sync_record) {
                 continue;
             }
-            let source_site_id = sync_record.source_site_id.clone();
 
-            let mut translation_result = match sync_record.action {
+            let translation_result = match sync_record.action {
                 SyncAction::Upsert => translator
                     .try_translate_from_upsert_sync_record(self.connection, sync_record)?,
                 SyncAction::Delete => translator
@@ -59,33 +61,15 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
             };
 
-            // Add source_site_id to translation result if it exists in the sync buffer row
-            match source_site_id {
-                Some(id) => translation_result.add_source_site_id(id),
-                None => {}
-            }
-
-            match translation_result {
-                PullTranslateResult::IntegrationOperations(records) => {
-                    translation_results.push(records)
-                }
-                PullTranslateResult::Ignored(ignore_message) => {
-                    log::debug!("Ignored record in push translation: {}", ignore_message)
-                }
-                PullTranslateResult::NotMatched => {}
-            }
+            translation_results.push(translation_result);
         }
 
-        if translation_results.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(translation_results.into_iter().flatten().collect()))
-        }
+        Ok(translation_results)
     }
 
     pub(crate) fn translate_and_integrate_sync_records(
         &self,
-        sync_records: Vec<SyncBufferRow>,
+        sync_records: &[SyncBufferRow],
         translators: &Vec<Box<dyn SyncTranslation>>,
         mut logger: Option<&mut SyncLogger>,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
@@ -106,53 +90,81 @@ impl<'a> TranslationAndIntegration<'a> {
             }
         };
 
-        for (number_of_records_integrated, sync_record) in sync_records.into_iter().enumerate() {
-            let translation_result = match self.translate_sync_record(&sync_record, translators) {
-                Ok(translation_result) => translation_result,
-                // Record error in sync buffer and in result, continue to next sync_record
-                Err(translation_error) => {
-                    self.sync_buffer
-                        .record_integration_error(&sync_record, &translation_error)?;
-                    result.insert_error(&sync_record.table_name);
-                    warn!(
-                        "{:?} {:?} {:?}",
-                        translation_error, sync_record.record_id, sync_record.table_name
-                    );
-                    // Next sync_record
-                    continue;
-                }
-            };
+        for (number_of_records_integrated, sync_record) in sync_records.iter().enumerate() {
+            let pull_translation_results =
+                match self.translate_sync_record(sync_record, translators) {
+                    Ok(translation_result) => translation_result,
+                    // Record error in sync buffer and in result, continue to next sync_record
+                    Err(translation_error) => {
+                        self.sync_buffer
+                            .record_integration_error(sync_record, &translation_error)?;
+                        result.insert_error(&sync_record.table_name);
+                        warn!(
+                            "{:?} {:?} {:?}",
+                            translation_error, sync_record.record_id, sync_record.table_name
+                        );
+                        // Next sync_record
+                        continue;
+                    }
+                };
 
-            let integration_records = match translation_result {
-                Some(integration_records) => integration_records,
-                // Record translator not found error in sync buffer and in result, continue to next sync_record
-                None => {
-                    let error = anyhow::anyhow!("Translator for record not found");
-                    self.sync_buffer
-                        .record_integration_error(&sync_record, &error)?;
-                    result.insert_error(&sync_record.table_name);
-                    warn!(
-                        "{:?} {:?} {:?}",
-                        error, sync_record.record_id, sync_record.table_name
-                    );
-                    // Next sync_record
-                    continue;
+            let mut integration_records = Vec::new();
+            let mut ignored = false;
+            for pull_translation_result in pull_translation_results {
+                match pull_translation_result {
+                    PullTranslateResult::IntegrationOperations(mut operations) => {
+                        integration_records.append(&mut operations)
+                    }
+                    PullTranslateResult::Ignored(ignore_message) => {
+                        ignored = true;
+                        self.sync_buffer.record_integration_error(
+                            sync_record,
+                            &anyhow::anyhow!("Ignored: {}", ignore_message),
+                        )?;
+                        result.insert_error(&sync_record.table_name);
+
+                        debug!(
+                            "Ignored record: {:?} {:?} {:?}",
+                            ignore_message, sync_record.record_id, sync_record.table_name
+                        );
+                        continue;
+                    }
+                    PullTranslateResult::NotMatched => {}
                 }
-            };
+            }
+
+            if ignored {
+                continue;
+            }
+
+            // Record translator not found error in sync buffer and in result, continue to next sync_record
+            if integration_records.is_empty() {
+                let error = anyhow::anyhow!("Translator for record not found");
+                self.sync_buffer
+                    .record_integration_error(sync_record, &error)?;
+                result.insert_error(&sync_record.table_name);
+                warn!(
+                    "{:?} {:?} {:?}",
+                    error, sync_record.record_id, sync_record.table_name
+                );
+                // Next sync_record
+                continue;
+            }
 
             // Integrate
-            let integration_result = integrate(self.connection, &integration_records);
+            let integration_result =
+                integrate(self.connection, &integration_records, self.source_site_id);
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
-                        .record_successful_integration(&sync_record)?;
+                        .record_successful_integration(sync_record)?;
                     result.insert_success(&sync_record.table_name)
                 }
                 // Record database_error in sync buffer and in result
                 Err(database_error) => {
                     let error = anyhow::anyhow!("{:?}", database_error);
                     self.sync_buffer
-                        .record_integration_error(&sync_record, &error)?;
+                        .record_integration_error(sync_record, &error)?;
                     result.insert_error(&sync_record.table_name);
                     warn!(
                         "{:?} {:?} {:?}",
@@ -174,22 +186,33 @@ impl<'a> TranslationAndIntegration<'a> {
 }
 
 impl IntegrationOperation {
-    fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+    fn integrate(
+        &self,
+        connection: &StorageConnection,
+        source_site_id: Option<i32>,
+    ) -> Result<(), RepositoryError> {
         match self {
-            IntegrationOperation::Upsert(upsert, source_site_id) => {
+            IntegrationOperation::Upsert(upsert) => {
                 let cursor_id = upsert.upsert(connection)?;
 
                 // Update the change log if we get a cursor id
                 if let Some(cursor_id) = cursor_id {
-                    ChangelogRepository::new(connection).set_source_site_id_and_is_sync_update(
-                        cursor_id,
-                        source_site_id.to_owned(),
-                    )?;
+                    ChangelogRepository::new(connection)
+                        .set_source_site_id_and_is_sync_update(cursor_id, source_site_id)?;
                 }
                 Ok(())
             }
 
-            IntegrationOperation::Delete(delete) => delete.delete(connection),
+            IntegrationOperation::Delete(delete) => {
+                let cursor_id = delete.delete(connection)?;
+
+                // Update the change log if we get a cursor id
+                if let Some(cursor_id) = cursor_id {
+                    ChangelogRepository::new(connection)
+                        .set_source_site_id_and_is_sync_update(cursor_id, source_site_id)?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -197,25 +220,24 @@ impl IntegrationOperation {
 pub(crate) fn integrate(
     connection: &StorageConnection,
     integration_records: &[IntegrationOperation],
+    source_site_id: Option<i32>,
 ) -> Result<(), RepositoryError> {
-    // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
-    let start_nested_transaction = {
-        connection
-            .lock()
-            .transaction_level::<RepositoryError>()
-            .map_err(|e| e.to_inner_error())?
-            > 0
-    };
-
     for integration_record in integration_records.iter() {
-        // Integrate every record in a sub transaction. This is mainly for Postgres where the
-        // whole transaction fails when there is a DB error (not a problem in sqlite).
-        if start_nested_transaction {
+        if cfg!(feature = "postgres") {
+            // In Postgres the parent transaction fails when there is a DB error in any of the
+            // statements executed in the transaction. Thus, integrate every record in a nested
+            // transaction to catch potential errors (e.g. foreign key violations).
+            // Note, this is not a problem in Sqlite.
             connection
-                .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
+                .transaction_sync_etc(
+                    |sub_tx| integration_record.integrate(sub_tx, source_site_id),
+                    false,
+                )
                 .map_err(|e| e.to_inner_error())?;
         } else {
-            integration_record.integrate(connection)?;
+            // For Sqlite, integrating without nested transaction is faster, especially if there are
+            // errors (see the bench_error_performance() test).
+            integration_record.integrate(connection, source_site_id)?;
         }
     }
 
@@ -242,7 +264,7 @@ impl TranslationAndIntegrationResults {
 mod test {
     use super::*;
     use repository::mock::MockDataInserts;
-    use util::{assert_matches, inline_init};
+    use util::{assert_matches, inline_init, uuid::uuid};
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
@@ -262,11 +284,12 @@ mod test {
                             r.id = "unit".to_string();
                         },
                     ))],
+                    None,
                 );
 
                 assert_eq!(result, Ok(()));
 
-                // Fails due to referencial constraint
+                // Fails due to referential constraint
                 let result = integrate(
                     connection,
                     &[IntegrationOperation::upsert(inline_init(
@@ -275,6 +298,7 @@ mod test {
                             r.unit_id = Some("invalid".to_string());
                         },
                     ))],
+                    None,
                 );
 
                 assert_ne!(result, Ok(()));
@@ -285,7 +309,7 @@ mod test {
 
         // Record should exist
         assert_matches!(
-            UnitRowRepository::new(&connection).find_one_by_id_option("unit"),
+            UnitRowRepository::new(&connection).find_one_by_id("unit"),
             Ok(Some(_))
         );
 
@@ -294,5 +318,82 @@ mod test {
             ItemRowRepository::new(&connection).find_active_by_id("item"),
             Ok(None)
         );
+    }
+
+    //#[actix_rt::test]
+    #[allow(dead_code)]
+    async fn bench_error_performance() {
+        let (_, connection, _, _) =
+            test_db::setup_all("bench_error_performance", MockDataInserts::none()).await;
+
+        let insert_batch = |with_error: bool, n: i32, parent_tx: bool, nested_tx: bool| {
+            let mut records = vec![];
+            for i in 0..n {
+                records.push(inline_init(|r: &mut ItemRow| {
+                    r.id = uuid();
+                    r.unit_id = if with_error {
+                        // Create invalid ItemRow
+                        if i % 20 == 0 {
+                            None
+                        } else {
+                            Some("invalid".to_string())
+                        }
+                    } else {
+                        None
+                    };
+                }));
+            }
+            let insert = |connection: &StorageConnection| {
+                for record in records {
+                    // ignore errors
+                    if nested_tx {
+                        let _ = connection.transaction_sync_etc(
+                            |connection| ItemRowRepository::new(connection).upsert_one(&record),
+                            false,
+                        );
+                    } else {
+                        let _ = ItemRowRepository::new(connection).upsert_one(&record);
+                    };
+                }
+            };
+
+            let start = std::time::SystemTime::now();
+            if parent_tx {
+                let _: Result<(), RepositoryError> = connection
+                    .transaction_sync(|con| {
+                        insert(con);
+                        Ok(())
+                    })
+                    .map_err::<RepositoryError, _>(|e| e.to_inner_error());
+            } else {
+                insert(&connection);
+            };
+            println!(
+                "with_error: {with_error}, n: {n}, parent_tx: {parent_tx}, nested_tx: {nested_tx}, Time: {:?}",
+                start.elapsed().unwrap()
+            );
+        };
+
+        let run_all_tx_combinations = |with_error: bool, n: i32| {
+            println!("Batch size: {n}");
+            insert_batch(with_error, n, false, false);
+            insert_batch(with_error, n, false, true);
+            insert_batch(with_error, n, true, false);
+            insert_batch(with_error, n, true, true);
+        };
+        let run = |with_error: bool| {
+            println!("Warm up");
+            insert_batch(with_error, 64, true, true);
+
+            run_all_tx_combinations(with_error, 64);
+            run_all_tx_combinations(with_error, 500);
+            run_all_tx_combinations(with_error, 10000);
+        };
+        println!("With error:");
+        run(true);
+        // For comparison, insert same records without error. Note, later batch will be added to
+        // data from earlier batches which potentially results in a slowdown.
+        println!("Without error:");
+        run(false);
     }
 }

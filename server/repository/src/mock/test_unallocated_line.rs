@@ -21,9 +21,9 @@ pub fn mock_test_unallocated_line() -> MockData {
 
 pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = "unallocated_line_new_invoice".to_owned();
-        r.name_link_id = "name_store_a".to_owned();
-        r.store_id = "store_c".to_owned();
+        r.id = "unallocated_line_new_invoice".to_string();
+        r.name_link_id = "name_store_a".to_string();
+        r.store_id = "store_c".to_string();
         r.invoice_number = 1;
         r.r#type = InvoiceType::OutboundShipment;
         r.status = InvoiceStatus::New;
@@ -36,16 +36,16 @@ pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
 
 pub fn mock_unallocated_line() -> InvoiceLineRow {
     InvoiceLineRow {
-        id: "unallocated_line_new_invoice_line_1".to_owned(),
-        invoice_id: "unallocated_line_new_invoice".to_owned(),
-        item_link_id: "item_a".to_owned(),
-        item_name: "Item A".to_owned(),
-        item_code: "item_a_code".to_owned(),
+        id: "unallocated_line_new_invoice_line_1".to_string(),
+        invoice_id: "unallocated_line_new_invoice".to_string(),
+        item_link_id: "item_a".to_string(),
+        item_name: "Item A".to_string(),
+        item_code: "item_a_code".to_string(),
         stock_line_id: None,
         location_id: None,
         batch: None,
         expiry_date: None,
-        pack_size: 1,
+        pack_size: 1.0,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_before_tax: 0.0,
@@ -64,9 +64,9 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
 // to make sure filtering for `UnallocatedLineForItemAlreadyExistsInInvoice` is done for invoice (not globally)
 pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = "unallocated_line_new_invoice2".to_owned();
-        r.name_link_id = "name_store_a".to_owned();
-        r.store_id = "store_a".to_owned();
+        r.id = "unallocated_line_new_invoice2".to_string();
+        r.name_link_id = "name_store_a".to_string();
+        r.store_id = "store_a".to_string();
         r.invoice_number = 2;
         r.r#type = InvoiceType::OutboundShipment;
         r.status = InvoiceStatus::New;
@@ -79,16 +79,16 @@ pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
 
 pub fn mock_unallocated_line2() -> InvoiceLineRow {
     InvoiceLineRow {
-        id: "unallocated_line_new_invoice2_line_1".to_owned(),
-        invoice_id: "unallocated_line_new_invoice2".to_owned(),
-        item_link_id: "item_b".to_owned(),
-        item_name: "Item B".to_owned(),
-        item_code: "item_b_code".to_owned(),
+        id: "unallocated_line_new_invoice2_line_1".to_string(),
+        invoice_id: "unallocated_line_new_invoice2".to_string(),
+        item_link_id: "item_b".to_string(),
+        item_name: "Item B".to_string(),
+        item_code: "item_b_code".to_string(),
         stock_line_id: None,
         location_id: None,
         batch: None,
         expiry_date: None,
-        pack_size: 1,
+        pack_size: 1.0,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_before_tax: 0.0,
@@ -105,9 +105,9 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
 
 pub fn mock_allocated_invoice() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = "unallocated_line_allocated_invoice".to_owned();
-        r.name_link_id = "name_store_a".to_owned();
-        r.store_id = "store_a".to_owned();
+        r.id = "unallocated_line_allocated_invoice".to_string();
+        r.name_link_id = "name_store_a".to_string();
+        r.store_id = "store_a".to_string();
         r.invoice_number = 1;
         r.r#type = InvoiceType::OutboundShipment;
         r.status = InvoiceStatus::Allocated;

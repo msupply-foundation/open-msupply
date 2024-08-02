@@ -8,8 +8,8 @@ use graphql_core::{
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::inbound_shipment_line::{
-    DeleteInboundShipmentLine as ServiceInput, DeleteInboundShipmentLineError as ServiceError,
+use service::invoice_line::stock_in_line::{
+    DeleteStockInLine as ServiceInput, DeleteStockInLineError as ServiceError, StockInType,
 };
 
 #[derive(InputObject)]
@@ -46,13 +46,13 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     map_response(
         service_provider
             .invoice_line_service
-            .delete_inbound_shipment_line(&service_context, input.to_domain()),
+            .delete_stock_in_line(&service_context, input.to_domain()),
     )
 }
 
 #[derive(Interface)]
 #[graphql(name = "DeleteInboundShipmentLineErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
@@ -63,7 +63,10 @@ pub enum DeleteErrorInterface {
 impl DeleteInput {
     pub fn to_domain(self) -> ServiceInput {
         let DeleteInput { id } = self;
-        ServiceInput { id }
+        ServiceInput {
+            id,
+            r#type: StockInType::InboundShipment,
+        }
     }
 }
 
@@ -101,9 +104,9 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
             return Ok(DeleteErrorInterface::BatchIsReserved(BatchIsReserved {}))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
-        ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::NotThisInvoiceLine(_)
+        | ServiceError::NotAStockIn
+        | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::LineUsedInStocktake => InternalError(formatted_error),
     };
@@ -122,9 +125,9 @@ mod test {
 
     use service::{
         invoice_line::{
-            inbound_shipment_line::{
-                DeleteInboundShipmentLine as ServiceInput,
-                DeleteInboundShipmentLineError as ServiceError,
+            stock_in_line::{
+                DeleteStockInLine as ServiceInput, DeleteStockInLineError as ServiceError,
+                StockInType,
             },
             InvoiceLineServiceTrait,
         },
@@ -138,7 +141,7 @@ mod test {
     pub struct TestService(pub Box<DeleteLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn delete_inbound_shipment_line(
+        fn delete_stock_in_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -281,7 +284,7 @@ mod test {
         );
 
         //NotAnInboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnInboundShipment)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAStockIn)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -348,6 +351,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
+                    r#type: StockInType::InboundShipment
                 }
             );
             Ok("deleted id".to_owned())

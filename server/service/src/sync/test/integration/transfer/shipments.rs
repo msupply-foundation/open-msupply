@@ -1,7 +1,3 @@
-use repository::{CurrencyRow, ItemRow};
-use serde_json::json;
-use util::{inline_init, uuid::uuid};
-
 use crate::{
     processors::transfer::invoice::test::InvoiceTransferTester,
     sync::test::integration::transfer::{new_instance_of_existing_site, sync_and_delay},
@@ -13,40 +9,15 @@ use super::{initialise_transfer_sites, SyncIntegrationTransferContext};
 async fn integration_sync_shipment_transfers_normal() {
     // util::init_logger(util::LogLevel::Info);
 
-    let item1 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
-    let item2 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
-    let currency = inline_init(|r: &mut CurrencyRow| {
-        r.id = String::from("currency_a");
-        r.code = String::from("USD");
-        r.rate = 1.0;
-        r.is_home_currency = true;
-        r.is_active = true;
-    });
-
     let SyncIntegrationTransferContext {
         site_1: outbound_and_response_site,
         site_2: inbound_and_request_site,
         site_1_processors_task: outbound_and_response_site_processors_task,
         site_2_processors_task: inbound_and_request_site_processors_task,
-    } = initialise_transfer_sites(
-        json!({
-            "item": [
-                {"ID": item1.id, "type_of": "general"},
-                {"ID": item2.id, "type_of": "general"},
-            ],
-            "currency": [
-                {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
-            ]
-        }),
-        "sync_shipment_transfers_normal",
-    )
-    .await;
+        item1,
+        item2,
+        service_item,
+    } = initialise_transfer_sites("sync_shipment_transfers_normal").await;
 
     let test = async move {
         let mut tester = InvoiceTransferTester::new(
@@ -56,6 +27,7 @@ async fn integration_sync_shipment_transfers_normal() {
             None,
             &item1,
             &item2,
+            &service_item,
         );
 
         log::info!(
@@ -177,40 +149,15 @@ async fn integration_sync_shipment_transfers_normal() {
 async fn integration_sync_shipment_transfers_delete() {
     // util::init_logger(util::LogLevel::Info);
 
-    let item1 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
-    let item2 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
-    let currency = inline_init(|r: &mut CurrencyRow| {
-        r.id = String::from("currency_a");
-        r.code = String::from("USD");
-        r.rate = 1.0;
-        r.is_home_currency = true;
-        r.is_active = true;
-    });
-
     let SyncIntegrationTransferContext {
         site_1: outbound_and_response_site,
         site_2: inbound_and_request_site,
         site_1_processors_task: outbound_and_response_site_processors_task,
         site_2_processors_task: inbound_and_request_site_processors_task,
-    } = initialise_transfer_sites(
-        json!({
-            "item": [
-                {"ID": item1.id, "type_of": "general"},
-                {"ID": item2.id, "type_of": "general"},
-            ],
-            "currency": [
-                {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
-            ]
-        }),
-        "shipment_transfers_delete",
-    )
-    .await;
+        item1,
+        item2,
+        service_item,
+    } = initialise_transfer_sites("shipment_transfers_delete").await;
 
     let test = async move {
         let mut tester = InvoiceTransferTester::new(
@@ -220,6 +167,7 @@ async fn integration_sync_shipment_transfers_delete() {
             None,
             &item1,
             &item2,
+            &service_item,
         );
 
         log::info!(
@@ -287,40 +235,15 @@ async fn integration_sync_shipment_transfers_initialise() {
     // util::init_logger(util::LogLevel::Info);
     let identifier = "shipment_transfers_initialise";
 
-    let item1 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
-    let item2 = inline_init(|r: &mut ItemRow| {
-        r.id = uuid();
-    });
-
-    let currency = inline_init(|r: &mut CurrencyRow| {
-        r.id = String::from("currency_a");
-        r.code = String::from("USD");
-        r.rate = 1.0;
-        r.is_home_currency = true;
-        r.is_active = true;
-    });
-
     let SyncIntegrationTransferContext {
         site_1: outbound_and_response_site,
         site_2: inbound_and_request_site,
         site_1_processors_task: outbound_and_response_site_processors_task,
         site_2_processors_task: inbound_and_request_site_processors_task,
-    } = initialise_transfer_sites(
-        json!({
-            "item": [
-                {"ID": item1.id, "type_of": "general"},
-                {"ID": item2.id, "type_of": "general"},
-            ],
-            "currency": [
-                {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
-            ]
-        }),
-        identifier,
-    )
-    .await;
+        item1,
+        item2,
+        service_item,
+    } = initialise_transfer_sites(identifier).await;
 
     let test = async move {
         let mut tester = InvoiceTransferTester::new(
@@ -330,6 +253,7 @@ async fn integration_sync_shipment_transfers_initialise() {
             None,
             &item1,
             &item2,
+            &service_item,
         );
 
         log::info!(

@@ -28,21 +28,12 @@ impl<'a> PeriodScheduleRowRepository<'a> {
         PeriodScheduleRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &PeriodScheduleRow) -> Result<(), RepositoryError> {
         diesel::insert_into(period_schedule_dsl::period_schedule)
             .values(row)
             .on_conflict(period_schedule_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &PeriodScheduleRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(period_schedule_dsl::period_schedule)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -68,8 +59,9 @@ impl<'a> PeriodScheduleRowRepository<'a> {
 }
 
 impl Upsert for PeriodScheduleRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        PeriodScheduleRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        PeriodScheduleRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

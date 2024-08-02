@@ -2,14 +2,16 @@ use chrono::Utc;
 use repository::RepositoryError;
 use repository::{
     ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, StockLine, StockLineRowRepository,
+    InvoiceStatus, StockLine,
 };
 
-use super::generate::generate;
+use super::generate::{generate, GenerateResult, InsertStockInOrOutLine};
 use super::validate::validate;
 
 use crate::activity_log::activity_log_entry;
 use crate::invoice::query::get_invoice;
+use crate::invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLineError};
+use crate::invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError};
 use crate::service_provider::ServiceContext;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -44,6 +46,8 @@ pub enum InsertInventoryAdjustmentError {
     NewlyCreatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     InternalError(String),
+    StockInLineInsertError(InsertStockInLineError),
+    StockOutLineInsertError(InsertStockOutLineError),
 }
 
 pub fn insert_inventory_adjustment(
@@ -54,19 +58,41 @@ pub fn insert_inventory_adjustment(
         .connection
         .transaction_sync(|connection| {
             let stock_line = validate(connection, &ctx.store_id, &input)?;
-            let (new_invoice, invoice_line, stock_line_row) =
-                generate(connection, &ctx.store_id, &ctx.user_id, input, stock_line)?;
+            let GenerateResult {
+                invoice,
+                insert_stock_in_or_out_line,
+                update_inventory_adjustment_reason,
+            } = generate(connection, &ctx.store_id, &ctx.user_id, input, stock_line)?;
 
+            // Create Inventory Adjustment in New status
             let invoice_row_repo = InvoiceRowRepository::new(connection);
+            invoice_row_repo.upsert_one(&invoice)?;
 
-            invoice_row_repo.upsert_one(&new_invoice)?;
-            InvoiceLineRowRepository::new(connection).upsert_one(&invoice_line)?;
-            StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
+            // Add invoice line (and update stock line)
+            match insert_stock_in_or_out_line {
+                InsertStockInOrOutLine::StockIn(stock_in_line) => {
+                    insert_stock_in_line(ctx, stock_in_line).map_err(|error| {
+                        InsertInventoryAdjustmentError::StockInLineInsertError(error)
+                    })?;
+                }
+                InsertStockInOrOutLine::StockOut(stock_out_line) => {
+                    insert_stock_out_line(ctx, stock_out_line).map_err(|error| {
+                        InsertInventoryAdjustmentError::StockOutLineInsertError(error)
+                    })?;
+                }
+            }
+
+            // Add inventory adjustment reason to the invoice line
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
+            invoice_line_repo.update_inventory_adjustment_reason_id(
+                &update_inventory_adjustment_reason.invoice_line_id,
+                update_inventory_adjustment_reason.reason_id,
+            )?;
 
             let verified_invoice = InvoiceRow {
                 status: InvoiceStatus::Verified,
                 verified_datetime: Some(Utc::now().naive_utc()),
-                ..new_invoice
+                ..invoice
             };
 
             invoice_row_repo.upsert_one(&verified_invoice)?;
@@ -243,7 +269,6 @@ mod test {
                         crate::invoice::inventory_adjustment::AdjustmentType::Reduction,
                     adjustment: 50.0,
                     inventory_adjustment_reason_id: Some(reduction_reason().id),
-                    ..Default::default()
                 }
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))
@@ -251,9 +276,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn insert_inventory_adjustment_success() {
-        let (_, connection, connection_manager, _) = setup_all(
-            "insert_inventory_adjustment_success",
+    async fn insert_inventory_adjustment_success_no_reasons() {
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_inventory_adjustment_success_no_reasons",
             MockDataInserts::all(),
         )
         .await;
@@ -275,6 +300,21 @@ mod test {
         );
 
         assert!(result.is_ok());
+    }
+
+    #[actix_rt::test]
+    async fn insert_inventory_adjustment_success() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_inventory_adjustment_success",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
 
         // Positive adjustment
         let created_invoice = service
@@ -290,10 +330,12 @@ mod test {
 
         let retrieved_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&created_invoice.invoice_row.id)
+            .unwrap()
             .unwrap();
 
         let updated_stockline = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_a().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -307,12 +349,12 @@ mod test {
 
         assert_eq!(
             updated_stockline.available_number_of_packs,
-            mock_stock_line_a().available_number_of_packs + 3.0
+            mock_stock_line_a().available_number_of_packs + 2.0
         );
 
         assert_eq!(
             updated_stockline.total_number_of_packs,
-            mock_stock_line_a().total_number_of_packs + 3.0
+            mock_stock_line_a().total_number_of_packs + 2.0
         );
 
         // Negative adjustment
@@ -330,10 +372,12 @@ mod test {
 
         let retrieved_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&created_invoice.invoice_row.id)
+            .unwrap()
             .unwrap();
 
         let updated_stockline = StockLineRowRepository::new(&connection)
             .find_one_by_id(&mock_stock_line_b().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(

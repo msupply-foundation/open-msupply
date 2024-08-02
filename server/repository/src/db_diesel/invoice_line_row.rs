@@ -6,6 +6,10 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
+use crate::{
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, InvoiceRowRepository,
+    RowActionType,
+};
 use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
@@ -24,7 +28,7 @@ table! {
         location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
-        pack_size -> Integer,
+        pack_size -> Double,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
         total_before_tax -> Double,
@@ -48,19 +52,14 @@ joinable!(invoice_line -> return_reason (return_reason_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineType {
+    #[default]
     StockIn,
     StockOut,
     UnallocatedStock,
     Service,
-}
-
-impl Default for InvoiceLineType {
-    fn default() -> Self {
-        Self::StockIn
-    }
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -76,7 +75,7 @@ pub struct InvoiceLineRow {
     pub location_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub cost_price_per_pack: f64,
     /// Sell price before tax
     pub sell_price_per_pack: f64,
@@ -102,23 +101,36 @@ impl<'a> InvoiceLineRowRepository<'a> {
         InvoiceLineRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(invoice_line)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(invoice_line)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+    fn insert_changelog(
+        &self,
+        row: &InvoiceLineRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let invoice = InvoiceRowRepository::new(self.connection).find_one_by_id(&row.invoice_id)?;
+        let invoice = match invoice {
+            Some(invoice) => invoice,
+            None => return Err(RepositoryError::NotFound),
+        };
+
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::InvoiceLine,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(invoice.store_id.clone()),
+            name_link_id: Some(invoice.name_link_id.clone()),
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn update_inventory_adjustment_reason_id(
@@ -175,28 +187,21 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, invoice_line_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(invoice_line_id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(invoice_line.filter(id.eq(invoice_line_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
-    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
-        let result = invoice_line
-            .filter(id.eq(record_id))
-            .first(self.connection.lock().connection());
-        result.map_err(RepositoryError::from)
-    }
-
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
-        let result = invoice_line
-            .filter(id.eq_any(ids))
-            .load(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    // TODO replace find_one_by_id with this one
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         invoice_line_id: &str,
     ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
@@ -204,6 +209,13 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .filter(id.eq(invoice_line_id))
             .first(self.connection.lock().connection())
             .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
+        let result = invoice_line
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -232,27 +244,29 @@ impl<'a> InvoiceLineRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct InvoiceLineRowDelete(pub String);
 impl Delete for InvoiceLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InvoiceLineRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = InvoiceLineRowRepository::new(con).delete(&self.0)?;
+        Ok(change_log_id)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            InvoiceLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
 }
 
 impl Upsert for InvoiceLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InvoiceLineRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = InvoiceLineRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            InvoiceLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

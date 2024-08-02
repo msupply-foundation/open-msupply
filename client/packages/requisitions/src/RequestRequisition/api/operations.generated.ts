@@ -1,17 +1,16 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ItemWithStatsFragment = { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type ItemWithStatsFragment = { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number } };
 
 export type RequestRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null };
 
-export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } } };
+export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number } } };
 
-export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null };
+export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null };
 
 export type ConsumptionHistoryFragment = { __typename: 'ConsumptionHistoryNode', averageMonthlyConsumption: number, consumption: number, date: string, isCurrent: boolean, isHistoric: boolean };
 
@@ -21,7 +20,7 @@ export type RequestByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type RequestByNumberQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null } };
+export type RequestByNumberQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemName: string, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, totalConsumption: number } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null } };
 
 export type RequisitionLineChartQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -162,6 +161,7 @@ export const ItemWithStatsFragmentDoc = gql`
     averageMonthlyConsumption
     availableStockOnHand
     availableMonthsOfStockOnHand
+    totalConsumption
   }
 }
     `;
@@ -619,273 +619,52 @@ export const ProgramSettingsDocument = gql`
 }
     ${ProgramSettingsFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     requestByNumber(variables: RequestByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestByNumberQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestByNumberQuery>(RequestByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requestByNumber', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestByNumberQuery>(RequestByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requestByNumber', 'query', variables);
     },
     requisitionLineChart(variables: RequisitionLineChartQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequisitionLineChartQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionLineChartQuery>(RequisitionLineChartDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionLineChart', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionLineChartQuery>(RequisitionLineChartDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionLineChart', 'query', variables);
     },
     requests(variables: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requests', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requests', 'query', variables);
     },
     insertRequestLine(variables: InsertRequestLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRequestLineMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestLineMutation>(InsertRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequestLine', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestLineMutation>(InsertRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequestLine', 'mutation', variables);
     },
     updateRequestLine(variables: UpdateRequestLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateRequestLineMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestLineMutation>(UpdateRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequestLine', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestLineMutation>(UpdateRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequestLine', 'mutation', variables);
     },
     addFromMasterList(variables: AddFromMasterListMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddFromMasterListMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AddFromMasterListMutation>(AddFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addFromMasterList', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<AddFromMasterListMutation>(AddFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addFromMasterList', 'mutation', variables);
     },
     deleteRequestLines(variables: DeleteRequestLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestLinesMutation>(DeleteRequestLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequestLines', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestLinesMutation>(DeleteRequestLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequestLines', 'mutation', variables);
     },
     useSuggestedQuantity(variables: UseSuggestedQuantityMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UseSuggestedQuantityMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UseSuggestedQuantityMutation>(UseSuggestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'useSuggestedQuantity', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UseSuggestedQuantityMutation>(UseSuggestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'useSuggestedQuantity', 'mutation', variables);
     },
     insertRequest(variables: InsertRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestMutation>(InsertRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequest', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestMutation>(InsertRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequest', 'mutation', variables);
     },
     insertProgramRequest(variables: InsertProgramRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertProgramRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramRequestMutation>(InsertProgramRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramRequest', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramRequestMutation>(InsertProgramRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramRequest', 'mutation', variables);
     },
     updateRequest(variables: UpdateRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestMutation>(UpdateRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequest', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestMutation>(UpdateRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequest', 'mutation', variables);
     },
     deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation', variables);
     },
     programSettings(variables: ProgramSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramSettingsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramSettingsQuery>(ProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programSettings', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramSettingsQuery>(ProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programSettings', 'query', variables);
     }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRequestByNumberQuery((req, res, ctx) => {
- *   const { storeId, requisitionNumber } = req.variables;
- *   return res(
- *     ctx.data({ requisitionByNumber })
- *   )
- * })
- */
-export const mockRequestByNumberQuery = (resolver: ResponseResolver<GraphQLRequest<RequestByNumberQueryVariables>, GraphQLContext<RequestByNumberQuery>, any>) =>
-  graphql.query<RequestByNumberQuery, RequestByNumberQueryVariables>(
-    'requestByNumber',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRequisitionLineChartQuery((req, res, ctx) => {
- *   const { storeId, requisitionLineId } = req.variables;
- *   return res(
- *     ctx.data({ requisitionLineChart })
- *   )
- * })
- */
-export const mockRequisitionLineChartQuery = (resolver: ResponseResolver<GraphQLRequest<RequisitionLineChartQueryVariables>, GraphQLContext<RequisitionLineChartQuery>, any>) =>
-  graphql.query<RequisitionLineChartQuery, RequisitionLineChartQueryVariables>(
-    'requisitionLineChart',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRequestsQuery((req, res, ctx) => {
- *   const { storeId, filter, page, sort } = req.variables;
- *   return res(
- *     ctx.data({ requisitions })
- *   )
- * })
- */
-export const mockRequestsQuery = (resolver: ResponseResolver<GraphQLRequest<RequestsQueryVariables>, GraphQLContext<RequestsQuery>, any>) =>
-  graphql.query<RequestsQuery, RequestsQueryVariables>(
-    'requests',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertRequestLineMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertRequestRequisitionLine })
- *   )
- * })
- */
-export const mockInsertRequestLineMutation = (resolver: ResponseResolver<GraphQLRequest<InsertRequestLineMutationVariables>, GraphQLContext<InsertRequestLineMutation>, any>) =>
-  graphql.mutation<InsertRequestLineMutation, InsertRequestLineMutationVariables>(
-    'insertRequestLine',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateRequestLineMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateRequestRequisitionLine })
- *   )
- * })
- */
-export const mockUpdateRequestLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateRequestLineMutationVariables>, GraphQLContext<UpdateRequestLineMutation>, any>) =>
-  graphql.mutation<UpdateRequestLineMutation, UpdateRequestLineMutationVariables>(
-    'updateRequestLine',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAddFromMasterListMutation((req, res, ctx) => {
- *   const { storeId, requestId, masterListId } = req.variables;
- *   return res(
- *     ctx.data({ addFromMasterList })
- *   )
- * })
- */
-export const mockAddFromMasterListMutation = (resolver: ResponseResolver<GraphQLRequest<AddFromMasterListMutationVariables>, GraphQLContext<AddFromMasterListMutation>, any>) =>
-  graphql.mutation<AddFromMasterListMutation, AddFromMasterListMutationVariables>(
-    'addFromMasterList',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteRequestLinesMutation((req, res, ctx) => {
- *   const { ids, storeId } = req.variables;
- *   return res(
- *     ctx.data({ batchRequestRequisition })
- *   )
- * })
- */
-export const mockDeleteRequestLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteRequestLinesMutationVariables>, GraphQLContext<DeleteRequestLinesMutation>, any>) =>
-  graphql.mutation<DeleteRequestLinesMutation, DeleteRequestLinesMutationVariables>(
-    'deleteRequestLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUseSuggestedQuantityMutation((req, res, ctx) => {
- *   const { requestId, storeId } = req.variables;
- *   return res(
- *     ctx.data({ useSuggestedQuantity })
- *   )
- * })
- */
-export const mockUseSuggestedQuantityMutation = (resolver: ResponseResolver<GraphQLRequest<UseSuggestedQuantityMutationVariables>, GraphQLContext<UseSuggestedQuantityMutation>, any>) =>
-  graphql.mutation<UseSuggestedQuantityMutation, UseSuggestedQuantityMutationVariables>(
-    'useSuggestedQuantity',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertRequestMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertRequestRequisition })
- *   )
- * })
- */
-export const mockInsertRequestMutation = (resolver: ResponseResolver<GraphQLRequest<InsertRequestMutationVariables>, GraphQLContext<InsertRequestMutation>, any>) =>
-  graphql.mutation<InsertRequestMutation, InsertRequestMutationVariables>(
-    'insertRequest',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertProgramRequestMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertProgramRequestRequisition })
- *   )
- * })
- */
-export const mockInsertProgramRequestMutation = (resolver: ResponseResolver<GraphQLRequest<InsertProgramRequestMutationVariables>, GraphQLContext<InsertProgramRequestMutation>, any>) =>
-  graphql.mutation<InsertProgramRequestMutation, InsertProgramRequestMutationVariables>(
-    'insertProgramRequest',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateRequestMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateRequestRequisition })
- *   )
- * })
- */
-export const mockUpdateRequestMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateRequestMutationVariables>, GraphQLContext<UpdateRequestMutation>, any>) =>
-  graphql.mutation<UpdateRequestMutation, UpdateRequestMutationVariables>(
-    'updateRequest',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDeleteRequestMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ batchRequestRequisition })
- *   )
- * })
- */
-export const mockDeleteRequestMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteRequestMutationVariables>, GraphQLContext<DeleteRequestMutation>, any>) =>
-  graphql.mutation<DeleteRequestMutation, DeleteRequestMutationVariables>(
-    'deleteRequest',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockProgramSettingsQuery((req, res, ctx) => {
- *   const { storeId } = req.variables;
- *   return res(
- *     ctx.data({ programRequisitionSettings })
- *   )
- * })
- */
-export const mockProgramSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramSettingsQueryVariables>, GraphQLContext<ProgramSettingsQuery>, any>) =>
-  graphql.query<ProgramSettingsQuery, ProgramSettingsQueryVariables>(
-    'programSettings',
-    resolver
-  )

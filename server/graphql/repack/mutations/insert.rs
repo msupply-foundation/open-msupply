@@ -16,13 +16,13 @@ use service::{
 pub struct InsertRepackInput {
     pub stock_line_id: String,
     pub number_of_packs: f64,
-    pub new_pack_size: i32,
+    pub new_pack_size: f64,
     pub new_location_id: Option<String>,
 }
 
 #[derive(Interface)]
 #[graphql(name = "InsertRepackErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
     CannotHaveFractionalPack(CannotHaveFractionalPack),

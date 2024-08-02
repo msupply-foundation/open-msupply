@@ -1,8 +1,8 @@
-use super::period_row::period::dsl as period_dsl;
+use super::period_row::period::dsl::*;
 
 use crate::{
-    db_diesel::name_link_row::name_link, repository_error::RepositoryError, StorageConnection,
-    Upsert,
+    db_diesel::name_link_row::name_link, period_schedule_row::period_schedule,
+    repository_error::RepositoryError, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -28,7 +28,10 @@ pub struct PeriodRow {
     pub end_date: NaiveDate,
 }
 
+joinable!(period -> period_schedule (period_schedule_id));
+
 allow_tables_to_appear_in_same_query!(period, name_link);
+allow_tables_to_appear_in_same_query!(period, period_schedule);
 
 pub struct PeriodRowRepository<'a> {
     connection: &'a StorageConnection,
@@ -39,28 +42,19 @@ impl<'a> PeriodRowRepository<'a> {
         PeriodRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &PeriodRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(period_dsl::period)
+        diesel::insert_into(period)
             .values(row)
-            .on_conflict(period_dsl::id)
+            .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &PeriodRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(period_dsl::period)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<PeriodRow>, RepositoryError> {
-        let result = period_dsl::period
-            .filter(period_dsl::id.eq(id))
+    pub fn find_one_by_id(&self, period_id: &str) -> Result<Option<PeriodRow>, RepositoryError> {
+        let result = period
+            .filter(id.eq(period_id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -70,16 +64,17 @@ impl<'a> PeriodRowRepository<'a> {
         &self,
         period_schedule_ids: Vec<&str>,
     ) -> Result<Vec<PeriodRow>, RepositoryError> {
-        let result = period_dsl::period
-            .filter(period_dsl::period_schedule_id.eq_any(period_schedule_ids))
+        let result = period
+            .filter(period_schedule_id.eq_any(period_schedule_ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
 }
 
 impl Upsert for PeriodRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        PeriodRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        PeriodRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

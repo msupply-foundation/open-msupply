@@ -237,6 +237,13 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let return_reason_loader = DataLoader::new(
+        ReturnReasonLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -267,6 +274,7 @@ pub async fn get_loaders(
     loaders.insert(asset_location_loader);
     loaders.insert(file_sync_reference_loader);
     loaders.insert(asset_log_reason_loader);
+    loaders.insert(return_reason_loader);
     loaders.insert(DataLoader::new(
         PatientLoader {
             service_provider: service_provider.clone(),
@@ -334,11 +342,41 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     ));
+
     loaders.insert(DataLoader::new(
-        AssetCatalogueItemPropertyLoader {
+        DemographicIndicatorLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,
     ));
+
+    loaders.insert(DataLoader::new(
+        VaccineCourseByProgramIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        VaccineCourseItemByVaccineCourseIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        VaccineCourseScheduleByVaccineCourseIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        RnRFormLinesByRnRFormIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
     loaders
 }

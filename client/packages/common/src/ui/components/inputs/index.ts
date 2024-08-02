@@ -10,3 +10,4 @@ export * from './TimePickers';
 export * from './Switch';
 export * from './Filters';
 export * from './Upload';
+export * from './PropertyInput';

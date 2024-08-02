@@ -4,21 +4,9 @@ use repository::{
     StockLineFilter, StockLineRepository, StorageConnection,
 };
 
-pub fn check_line_does_not_exist(
-    connection: &StorageConnection,
-    id: &str,
-) -> Result<bool, RepositoryError> {
-    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Err(RepositoryError::NotFound) => Ok(true),
-        Err(error) => Err(error),
-        Ok(_) => Ok(false),
-    }
-}
-
 pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     if let Some(number_of_packs) = number_of_packs_option {
+        // Don't use <= 0.0 or else can't 0 out inbound shipment lines
         if number_of_packs < 0.0 {
             return false;
         }
@@ -33,20 +21,14 @@ pub fn check_item_exists(
     ItemRowRepository::new(connection).find_active_by_id(id)
 }
 
-pub fn check_line_row_exists_option(
+pub fn check_line_row_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
-    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
-
-    match result {
-        Ok(line) => Ok(Some(line)),
-        Err(RepositoryError::NotFound) => Ok(None),
-        Err(error) => Err(error),
-    }
+    InvoiceLineRowRepository::new(connection).find_one_by_id(id)
 }
 
-pub fn check_line_exists_option(
+pub fn check_line_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<InvoiceLine>, RepositoryError> {

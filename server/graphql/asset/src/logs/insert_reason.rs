@@ -78,7 +78,7 @@ pub enum InsertAssetLogReasonResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertAssetLogReasonErrorInterface {
     AssetLogReasonAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),
@@ -120,7 +120,7 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    use crate::AssetLogReasonMutations;
+    use crate::logs::AssetLogReasonMutations;
 
     type InsertAssetLogReasonMethod = dyn Fn(InsertAssetLogReason) -> Result<AssetLogReason, InsertAssetLogReasonError>
         + Sync

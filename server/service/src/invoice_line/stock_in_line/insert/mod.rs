@@ -18,13 +18,17 @@ use self::generate::GenerateResult;
 
 use super::StockInType;
 
+// TODO: future improvement - would be nice to have two variants of this
+// - StockInLine that also creates a new stock line (e.g. inbound shipment)
+// - StockInLine that adjusts existing stock line (e.g. inventory adjustment)
+//  - This one could be accept more `None` values and populate them from the existing stock line
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertStockInLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
     pub location: Option<NullableUpdate<String>>,
-    pub pack_size: u32,
+    pub pack_size: f64,
     pub batch: Option<String>,
     pub note: Option<String>,
     pub cost_price_per_pack: f64,
@@ -34,6 +38,7 @@ pub struct InsertStockInLine {
     pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
     pub r#type: StockInType,
+    /// If None, new stock line will be generated
     pub stock_line_id: Option<String>,
     pub barcode: Option<String>,
     pub stock_on_hold: bool,
@@ -48,29 +53,29 @@ pub fn insert_stock_in_line(
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (item, invoice) = validate(&input, &ctx.store_id, connection)?;
             let GenerateResult {
                 invoice: invoice_user_update,
                 invoice_line,
                 stock_line,
                 barcode,
-            } = generate(&connection, &ctx.user_id, input, item, invoice)?;
+            } = generate(connection, &ctx.user_id, input, item, invoice)?;
 
             if let Some(barcode_row) = barcode {
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
             }
 
             if let Some(stock_line_row) = stock_line {
-                StockLineRowRepository::new(&connection).upsert_one(&stock_line_row)?;
+                StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
             }
-            InvoiceLineRowRepository::new(&connection).upsert_one(&invoice_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&invoice_line)?;
 
             if let Some(invoice_row) = invoice_user_update {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             get_invoice_line(ctx, &invoice_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -88,7 +93,7 @@ pub enum InsertStockInLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
     NewlyCreatedLineDoesNotExist,
 }
 
@@ -113,16 +118,11 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        barcode::{BarcodeFilter, BarcodeRepository},
-        mock::{
+        barcode::{BarcodeFilter, BarcodeRepository}, mock::{
             mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
             mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
             mock_user_account_a, MockData, MockDataInserts,
-        },
-        test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow,
-        StorePreferenceRowRepository,
+        }, test_db::{setup_all, setup_all_with_data}, EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow, StorePreferenceRowRepository
     };
     use util::{inline_edit, inline_init};
 
@@ -180,23 +180,23 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.pack_size = 0;
+                    r.pack_size = 0.0;
                 }),
             ),
             Err(ServiceError::PackSizeBelowOne)
         );
 
-        // NumberOfPacksBelowOne
+        // NumberOfPacksBelowZero
         assert_eq!(
             insert_stock_in_line(
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.pack_size = 1;
-                    r.number_of_packs = 0.0;
+                    r.pack_size = 1.0;
+                    r.number_of_packs = -1.0;
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // ItemNotFound
@@ -205,7 +205,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.item_id = "invalid".to_string();
                 }),
@@ -219,7 +219,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.item_id = mock_item_a().id;
                     r.location = Some(NullableUpdate {
@@ -236,7 +236,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.item_id = mock_item_a().id;
                     r.invoice_id = "new invoice id".to_string();
@@ -251,8 +251,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
+                    r.item_id.clone_from(&mock_item_a().id);
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.invoice_id = mock_outbound_shipment_e().id;
                 }),
@@ -266,8 +266,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
+                    r.item_id.clone_from(&mock_item_a().id);
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.invoice_id = verified_inbound_return().id; // VERIFIED
                 }),
@@ -281,7 +281,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.item_id = mock_item_a().id;
                     r.invoice_id = mock_inbound_return_a().id; // Store B
@@ -309,7 +309,7 @@ mod test {
                 r.id = "new_invoice_line_id".to_string();
                 r.invoice_id = mock_inbound_return_a().id;
                 r.item_id = mock_item_a().id;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.number_of_packs = 1.0;
                 r.barcode = Some(gtin.clone());
             }),
@@ -333,7 +333,7 @@ mod test {
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new_invoice_line_id".to_string();
                 u.item_link_id = mock_item_a().id;
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u.number_of_packs = 1.0;
                 u
             })
@@ -364,7 +364,7 @@ mod test {
                 r.id = "new_invoice_line_pack_to_one".to_string();
                 r.invoice_id = mock_inbound_return_a().id;
                 r.item_id = mock_item_a().id;
-                r.pack_size = 10;
+                r.pack_size = 10.0;
                 r.number_of_packs = 20.0;
                 r.sell_price_per_pack = 100.0;
             }),
@@ -373,6 +373,7 @@ mod test {
 
         let inbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id("new_invoice_line_pack_to_one")
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -380,7 +381,7 @@ mod test {
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new_invoice_line_pack_to_one".to_string();
                 u.item_link_id = mock_item_a().id;
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u.number_of_packs = 200.0;
                 u.sell_price_per_pack = 10.0;
                 u

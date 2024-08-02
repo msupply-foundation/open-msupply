@@ -30,21 +30,12 @@ impl<'a> ItemLinkRowRepository<'a> {
         ItemLinkRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_link_dsl::item_link)
             .values(item_link_row)
             .on_conflict(item_link::id)
             .do_update()
             .set(item_link_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(item_link_dsl::item_link)
-            .values(item_link_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -56,20 +47,11 @@ impl<'a> ItemLinkRowRepository<'a> {
         Ok(())
     }
 
-    #[cfg(feature = "postgres")]
     pub fn insert_one_or_ignore(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_link_dsl::item_link)
             .values(item_link_row)
             .on_conflict(item_link::id)
             .do_nothing()
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn insert_one_or_ignore(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
-        diesel::insert_or_ignore_into(item_link_dsl::item_link)
-            .values(item_link_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -115,8 +97,9 @@ impl<'a> ItemLinkRowRepository<'a> {
 }
 
 impl Upsert for ItemLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ItemLinkRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ItemLinkRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

@@ -8,8 +8,6 @@ import {
   ExternalNavLink,
   List,
   PowerIcon,
-  // RadioIcon,
-  // ReportsIcon,
   SettingsIcon,
   Theme,
   IconButton,
@@ -24,7 +22,7 @@ import {
   UserPermission,
   RouteBuilder,
   useConfirmationModal,
-  useIsCentralServerApi,
+  ReportsIcon,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -33,6 +31,8 @@ import {
   InventoryNav,
   DispensaryNav,
   ReplenishmentNav,
+  ManageNav,
+  ProgramsNav,
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
@@ -149,7 +149,6 @@ export const AppDrawer: React.FC = () => {
   const { logout, userHasPermission, store } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const isCentralServer = useIsCentralServerApi();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -197,20 +196,6 @@ export const AppDrawer: React.FC = () => {
       isOpen={drawer.isOpen}
     >
       <ToolbarIconContainer>
-        {isCentralServer ? (
-          <Box
-            style={{
-              float: 'left',
-              position: 'absolute',
-              zIndex: 99,
-              top: 40,
-              backgroundColor: '#fff',
-              opacity: 0.75,
-            }}
-          >
-            {t(drawer.isOpen ? 'label.central-server' : 'label.central')}
-          </Box>
-        ) : null}
         <IconButton
           label={t(
             drawer.isOpen ? 'button.close-the-menu' : 'button.open-the-menu'
@@ -227,22 +212,24 @@ export const AppDrawer: React.FC = () => {
             icon={<DashboardIcon fontSize="small" color="primary" />}
             text={t('dashboard')}
           />
+          <AppNavLink
+            to={AppRoute.Reports}
+            icon={<ReportsIcon fontSize="small" color="primary" />}
+            text={t('reports')}
+          />
           <DistributionNav />
           <ReplenishmentNav />
           <CatalogueNav />
           <InventoryNav />
           <DispensaryNav store={store} />
           <ColdChainNav store={store} />
+          <ProgramsNav store={store} />
+          <ManageNav store={store} />
 
           {/* <AppNavLink
             to={AppRoute.Tools}
             icon={<ToolsIcon fontSize="small" color="primary" />}
             text={t('tools')}
-          /> */}
-          {/* <AppNavLink
-            to={AppRoute.Reports}
-            icon={<ReportsIcon fontSize="small" color="primary" />}
-            text={t('reports')}
           /> */}
           {/* <AppNavLink
             to={AppRoute.Messages}
@@ -262,9 +249,9 @@ export const AppDrawer: React.FC = () => {
           />
           <SyncNavLink />
           <AppNavLink
-            to={AppRoute.Admin}
+            to={AppRoute.Settings}
             icon={<SettingsIcon fontSize="small" color="primary" />}
-            text={t('admin')}
+            text={t('settings')}
             visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink

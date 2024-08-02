@@ -1,9 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id: string, category: Types.DocumentRegistryCategoryNode, documentType: string, contextId: string, name?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any };
 
 export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, timestamp: string, type: string, data: any, user?: { __typename: 'UserNode', userId: string, username: string, email?: string | null } | null, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, category: Types.DocumentRegistryCategoryNode, documentType: string, contextId: string, name?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null };
@@ -28,7 +27,7 @@ export type DocumentsQuery = { __typename: 'Queries', documents: { __typename: '
 
 export type DocumentRegistriesQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.DocumentRegistryFilterInput>;
-  sort?: Types.InputMaybe<Types.DocumentRegistrySortInput>;
+  sort?: Types.InputMaybe<Array<Types.DocumentRegistrySortInput> | Types.DocumentRegistrySortInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -58,7 +57,7 @@ export type ProgramEventFragment = { __typename: 'ProgramEventNode', activeStart
 export type EncounterFieldsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   patientId: Types.Scalars['String']['input'];
-  fields?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+  fields: Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input'];
 }>;
 
 
@@ -70,7 +69,7 @@ export type EncounterFragment = { __typename: 'EncounterNode', id: string, conte
 
 export type EncountersWithDocumentQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  key?: Types.InputMaybe<Types.EncounterSortFieldInput>;
+  key: Types.EncounterSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.EncounterFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -99,11 +98,11 @@ export type EncounterRowFragment = { __typename: 'EncounterNode', id: string, co
 
 export type EncountersQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  key?: Types.InputMaybe<Types.EncounterSortFieldInput>;
+  key: Types.EncounterSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.EncounterFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
-  eventTime: Types.Scalars['String']['input'];
+  eventTime?: Types.InputMaybe<Types.Scalars['DateTime']['input']>;
 }>;
 
 
@@ -132,7 +131,7 @@ export type ProgramEnrolmentsQueryVariables = Types.Exact<{
   key: Types.ProgramEnrolmentSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ProgramEnrolmentFilterInput>;
-  eventTime: Types.Scalars['String']['input'];
+  eventTime?: Types.InputMaybe<Types.Scalars['DateTime']['input']>;
 }>;
 
 
@@ -186,7 +185,7 @@ export type FormSchemasQueryVariables = Types.Exact<{
 export type FormSchemasQuery = { __typename: 'Queries', formSchemas: { __typename: 'FormSchemaConnector', nodes: Array<{ __typename: 'FormSchemaNode', id: string, jsonSchema: any, type: string, uiSchema: any }> } };
 
 export type ActiveProgramEventsQueryVariables = Types.Exact<{
-  at?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  at?: Types.InputMaybe<Types.Scalars['DateTime']['input']>;
   storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.ProgramEventFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -199,7 +198,7 @@ export type ContactTraceRowFragment = { __typename: 'ContactTraceNode', contactT
 
 export type ContactTracesQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  key?: Types.InputMaybe<Types.ContactTraceSortFieldInput>;
+  key: Types.ContactTraceSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ContactTraceFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -225,6 +224,157 @@ export type UpdateContactTraceMutationVariables = Types.Exact<{
 
 
 export type UpdateContactTraceMutation = { __typename: 'Mutations', updateContactTrace: { __typename: 'ContactTraceNode', id: string, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, timestamp: string, type: string, data: any, user?: { __typename: 'UserNode', userId: string, username: string, email?: string | null } | null, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, category: Types.DocumentRegistryCategoryNode, documentType: string, contextId: string, name?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } } };
+
+export type ImmunisationProgramFragment = { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null };
+
+export type VaccineCourseScheduleFragment = { __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string };
+
+export type VaccineCourseItemFragment = { __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string };
+
+export type ImmunisationProgramsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.ProgramSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
+}>;
+
+
+export type ImmunisationProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null }> } };
+
+export type InsertImmunisationProgramMutationVariables = Types.Exact<{
+  input: Types.InsertImmunisationProgramInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type InsertImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', insertImmunisationProgram: { __typename: 'InsertImmunisationProgramError', error: { __typename: 'RecordAlreadyExist', description: string } } | { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } } } };
+
+export type UpdateImmunisationProgramMutationVariables = Types.Exact<{
+  input: Types.UpdateImmunisationProgramInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type UpdateImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', updateImmunisationProgram: { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } | { __typename: 'UpdateImmunisationProgramError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', field: Types.UniqueValueKey, description: string } } } } };
+
+export type VaccineCourseFragment = { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null };
+
+export type VaccineCoursesQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.VaccineCourseSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.VaccineCourseFilterInput>;
+}>;
+
+
+export type VaccineCoursesQuery = { __typename: 'Queries', vaccineCourses: { __typename: 'VaccineCourseConnector', totalCount: number, nodes: Array<{ __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null }> } };
+
+export type InsertVaccineCourseMutationVariables = Types.Exact<{
+  input: Types.InsertVaccineCourseInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type InsertVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', insertVaccineCourse: { __typename: 'InsertVaccineCourseError', error: { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null } } } };
+
+export type UpdateVaccineCourseMutationVariables = Types.Exact<{
+  input: Types.UpdateVaccineCourseInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type UpdateVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', updateVaccineCourse: { __typename: 'UpdateVaccineCourseError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null } } } };
+
+export type DeleteImmunisationProgramMutationVariables = Types.Exact<{
+  immunisationProgramId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', deleteImmunisationProgram: { __typename: 'DeleteImmunisationProgramError' } | { __typename: 'DeleteResponse', id: string } } } };
+
+export type DeleteVaccineCourseMutationVariables = Types.Exact<{
+  vaccineCourseId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', deleteVaccineCourse: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteVaccineCourseError' } } } };
+
+export type RnRFormFragment = { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus };
+
+export type RnRFormLineFragment = { __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, previousAverageMonthlyConsumption: number, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, requestedQuantity: number, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null, strength?: string | null, venCategory: Types.VenCategoryType } };
+
+export type RnrFormsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.RnRFormSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.RnRFormFilterInput>;
+}>;
+
+
+export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus }> } };
+
+export type CreateRnRFormMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertRnRFormInput;
+}>;
+
+
+export type CreateRnRFormMutation = { __typename: 'Mutations', insertRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus } };
+
+export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
+
+export type ProgramsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.ProgramSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
+}>;
+
+
+export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
+
+export type PeriodFragment = { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string };
+
+export type PeriodScheduleFragment = { __typename: 'PeriodScheduleNode', id: string, name: string, periods: Array<{ __typename: 'SchedulePeriodNode', id: string, inUse: boolean, period: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } }> };
+
+export type SchedulesAndPeriodsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  programId: Types.Scalars['String']['input'];
+}>;
+
+
+export type SchedulesAndPeriodsQuery = { __typename: 'Queries', schedulesWithPeriodsByProgram: { __typename: 'PeriodSchedulesConnector', nodes: Array<{ __typename: 'PeriodScheduleNode', id: string, name: string, periods: Array<{ __typename: 'SchedulePeriodNode', id: string, inUse: boolean, period: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } }> }> } };
+
+export type RAndRFormDetailQueryVariables = Types.Exact<{
+  rnrFormId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type RAndRFormDetailQuery = { __typename: 'Queries', rAndRForm: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus, lines: Array<{ __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, previousAverageMonthlyConsumption: number, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, requestedQuantity: number, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null, strength?: string | null, venCategory: Types.VenCategoryType } }> } };
+
+export type UpdateRnRFormLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateRnRFormInput;
+}>;
+
+
+export type UpdateRnRFormLinesMutation = { __typename: 'Mutations', updateRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus } };
+
+export type FinaliseRnRFormMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.FinaliseRnRFormInput;
+}>;
+
+
+export type FinaliseRnRFormMutation = { __typename: 'Mutations', finaliseRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus } };
 
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
@@ -455,6 +605,119 @@ export const ContactTraceFragmentDoc = gql`
   }
 }
     ${DocumentFragmentDoc}`;
+export const ImmunisationProgramFragmentDoc = gql`
+    fragment ImmunisationProgram on ProgramNode {
+  id
+  name
+  vaccineCourses {
+    name
+  }
+}
+    `;
+export const VaccineCourseItemFragmentDoc = gql`
+    fragment VaccineCourseItem on VaccineCourseItemNode {
+  id
+  itemId
+  name
+}
+    `;
+export const VaccineCourseScheduleFragmentDoc = gql`
+    fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
+  id
+  doseNumber
+  label
+}
+    `;
+export const VaccineCourseFragmentDoc = gql`
+    fragment VaccineCourse on VaccineCourseNode {
+  id
+  name
+  programId
+  demographicIndicatorId
+  doses
+  coverageRate
+  wastageRate
+  isActive
+  demographicIndicator {
+    name
+    id
+    baseYear
+  }
+  vaccineCourseItems {
+    ...VaccineCourseItem
+  }
+  vaccineCourseSchedules {
+    ...VaccineCourseSchedule
+  }
+}
+    ${VaccineCourseItemFragmentDoc}
+${VaccineCourseScheduleFragmentDoc}`;
+export const RnRFormFragmentDoc = gql`
+    fragment RnRForm on RnRFormNode {
+  id
+  createdDatetime
+  periodId
+  periodName
+  periodLength
+  programId
+  programName
+  supplierName
+  status
+}
+    `;
+export const RnRFormLineFragmentDoc = gql`
+    fragment RnRFormLine on RnRFormLineNode {
+  id
+  averageMonthlyConsumption
+  previousAverageMonthlyConsumption
+  initialBalance
+  quantityReceived
+  quantityConsumed
+  adjustedQuantityConsumed
+  adjustments
+  stockOutDuration
+  finalBalance
+  maximumQuantity
+  expiryDate
+  requestedQuantity
+  comment
+  confirmed
+  item {
+    code
+    name
+    unitName
+    strength
+    venCategory
+  }
+}
+    `;
+export const ProgramFragmentDoc = gql`
+    fragment Program on ProgramNode {
+  id
+  name
+}
+    `;
+export const PeriodFragmentDoc = gql`
+    fragment Period on PeriodNode {
+  id
+  name
+  startDate
+  endDate
+}
+    `;
+export const PeriodScheduleFragmentDoc = gql`
+    fragment PeriodSchedule on PeriodScheduleNode {
+  id
+  name
+  periods {
+    id
+    inUse
+    period {
+      ...Period
+    }
+  }
+}
+    ${PeriodFragmentDoc}`;
 export const DocumentByNameDocument = gql`
     query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
@@ -478,7 +741,7 @@ export const DocumentsDocument = gql`
 }
     ${DocumentFragmentDoc}`;
 export const DocumentRegistriesDocument = gql`
-    query documentRegistries($filter: DocumentRegistryFilterInput, $sort: DocumentRegistrySortInput, $storeId: String!) {
+    query documentRegistries($filter: DocumentRegistryFilterInput, $sort: [DocumentRegistrySortInput!], $storeId: String!) {
   documentRegistries(filter: $filter, sort: $sort, storeId: $storeId) {
     ... on DocumentRegistryConnector {
       __typename
@@ -525,7 +788,7 @@ export const AllocateProgramNumberDocument = gql`
 }
     `;
 export const EncounterFieldsDocument = gql`
-    query encounterFields($storeId: String!, $patientId: String!, $fields: [String!]) {
+    query encounterFields($storeId: String!, $patientId: String!, $fields: [String!]!) {
   encounterFields(
     input: {fields: $fields}
     storeId: $storeId
@@ -543,7 +806,7 @@ export const EncounterFieldsDocument = gql`
 }
     ${EncounterFieldsFragmentDoc}`;
 export const EncountersWithDocumentDocument = gql`
-    query encountersWithDocument($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput) {
+    query encountersWithDocument($storeId: String!, $key: EncounterSortFieldInput!, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput) {
   encounters(
     storeId: $storeId
     sort: {key: $key, desc: $desc}
@@ -591,7 +854,7 @@ export const EncounterByDocNameDocument = gql`
 }
     ${EncounterFragmentDoc}`;
 export const EncountersDocument = gql`
-    query encounters($storeId: String!, $key: EncounterSortFieldInput, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput, $eventTime: String!) {
+    query encounters($storeId: String!, $key: EncounterSortFieldInput!, $desc: Boolean, $filter: EncounterFilterInput, $page: PaginationInput, $eventTime: DateTime) {
   encounters(
     storeId: $storeId
     sort: {key: $key, desc: $desc}
@@ -630,7 +893,7 @@ export const UpdateEncounterDocument = gql`
 }
     ${EncounterFragmentDoc}`;
 export const ProgramEnrolmentsDocument = gql`
-    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput!, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $eventTime: String!) {
+    query programEnrolments($storeId: String!, $key: ProgramEnrolmentSortFieldInput!, $desc: Boolean, $filter: ProgramEnrolmentFilterInput, $eventTime: DateTime) {
   programEnrolments(
     storeId: $storeId
     sort: {key: $key, desc: $desc}
@@ -710,7 +973,7 @@ export const FormSchemasDocument = gql`
 }
     ${FormSchemaFragmentDoc}`;
 export const ActiveProgramEventsDocument = gql`
-    query activeProgramEvents($at: String, $storeId: String!, $filter: ProgramEventFilterInput, $page: PaginationInput) {
+    query activeProgramEvents($at: DateTime, $storeId: String!, $filter: ProgramEventFilterInput, $page: PaginationInput) {
   activeProgramEvents(at: $at, storeId: $storeId, filter: $filter, page: $page) {
     ... on ProgramEventConnector {
       __typename
@@ -724,7 +987,7 @@ export const ActiveProgramEventsDocument = gql`
 }
     ${ProgramEventFragmentDoc}`;
 export const ContactTracesDocument = gql`
-    query contactTraces($storeId: String!, $key: ContactTraceSortFieldInput, $desc: Boolean, $filter: ContactTraceFilterInput, $page: PaginationInput) {
+    query contactTraces($storeId: String!, $key: ContactTraceSortFieldInput!, $desc: Boolean, $filter: ContactTraceFilterInput, $page: PaginationInput) {
   contactTraces(
     storeId: $storeId
     filter: $filter
@@ -760,454 +1023,379 @@ export const UpdateContactTraceDocument = gql`
   }
 }
     ${ContactTraceFragmentDoc}`;
+export const ImmunisationProgramsDocument = gql`
+    query immunisationPrograms($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
+  programs(
+    storeId: $storeId
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...ImmunisationProgram
+      }
+      totalCount
+    }
+  }
+}
+    ${ImmunisationProgramFragmentDoc}`;
+export const InsertImmunisationProgramDocument = gql`
+    mutation insertImmunisationProgram($input: InsertImmunisationProgramInput!, $storeId: String!) {
+  centralServer {
+    program {
+      insertImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on InsertImmunisationProgramError {
+          __typename
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    ${ImmunisationProgramFragmentDoc}`;
+export const UpdateImmunisationProgramDocument = gql`
+    mutation updateImmunisationProgram($input: UpdateImmunisationProgramInput!, $storeId: String!) {
+  centralServer {
+    program {
+      updateImmunisationProgram(input: $input, storeId: $storeId) {
+        __typename
+        ... on ProgramNode {
+          ...ImmunisationProgram
+        }
+        ... on UpdateImmunisationProgramError {
+          __typename
+          error {
+            ... on UniqueValueViolation {
+              __typename
+              field
+            }
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    ${ImmunisationProgramFragmentDoc}`;
+export const VaccineCoursesDocument = gql`
+    query vaccineCourses($first: Int, $offset: Int, $key: VaccineCourseSortFieldInput!, $desc: Boolean, $filter: VaccineCourseFilterInput) {
+  vaccineCourses(
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on VaccineCourseConnector {
+      __typename
+      nodes {
+        ...VaccineCourse
+      }
+      totalCount
+    }
+  }
+}
+    ${VaccineCourseFragmentDoc}`;
+export const InsertVaccineCourseDocument = gql`
+    mutation insertVaccineCourse($input: InsertVaccineCourseInput!, $storeId: String!) {
+  centralServer {
+    vaccineCourse {
+      insertVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
+        ... on VaccineCourseNode {
+          ...VaccineCourse
+        }
+        ... on InsertVaccineCourseError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    ${VaccineCourseFragmentDoc}`;
+export const UpdateVaccineCourseDocument = gql`
+    mutation updateVaccineCourse($input: UpdateVaccineCourseInput!, $storeId: String!) {
+  centralServer {
+    vaccineCourse {
+      updateVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
+        ... on VaccineCourseNode {
+          __typename
+          ...VaccineCourse
+        }
+        ... on UpdateVaccineCourseError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    ${VaccineCourseFragmentDoc}`;
+export const DeleteImmunisationProgramDocument = gql`
+    mutation deleteImmunisationProgram($immunisationProgramId: String!) {
+  centralServer {
+    program {
+      deleteImmunisationProgram(immunisationProgramId: $immunisationProgramId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
+export const DeleteVaccineCourseDocument = gql`
+    mutation deleteVaccineCourse($vaccineCourseId: String!) {
+  centralServer {
+    vaccineCourse {
+      deleteVaccineCourse(vaccineCourseId: $vaccineCourseId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+    `;
+export const RnrFormsDocument = gql`
+    query rnrForms($storeId: String!, $first: Int, $offset: Int, $key: RnRFormSortFieldInput!, $desc: Boolean, $filter: RnRFormFilterInput) {
+  rAndRForms(
+    storeId: $storeId
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on RnRFormConnector {
+      __typename
+      nodes {
+        __typename
+        ...RnRForm
+      }
+      totalCount
+    }
+  }
+}
+    ${RnRFormFragmentDoc}`;
+export const CreateRnRFormDocument = gql`
+    mutation createRnRForm($storeId: String!, $input: InsertRnRFormInput!) {
+  insertRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+    }
+  }
+}
+    ${RnRFormFragmentDoc}`;
+export const ProgramsDocument = gql`
+    query programs($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
+  programs(
+    storeId: $storeId
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
+      }
+      totalCount
+    }
+  }
+}
+    ${ProgramFragmentDoc}`;
+export const SchedulesAndPeriodsDocument = gql`
+    query schedulesAndPeriods($storeId: String!, $programId: String!) {
+  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
+    __typename
+    ... on PeriodSchedulesConnector {
+      nodes {
+        ...PeriodSchedule
+      }
+    }
+  }
+}
+    ${PeriodScheduleFragmentDoc}`;
+export const RAndRFormDetailDocument = gql`
+    query rAndRFormDetail($rnrFormId: String!, $storeId: String!) {
+  rAndRForm(rnrFormId: $rnrFormId, storeId: $storeId) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+      lines {
+        ...RnRFormLine
+      }
+    }
+  }
+}
+    ${RnRFormFragmentDoc}
+${RnRFormLineFragmentDoc}`;
+export const UpdateRnRFormLinesDocument = gql`
+    mutation updateRnRFormLines($storeId: String!, $input: UpdateRnRFormInput!) {
+  updateRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+    }
+  }
+}
+    ${RnRFormFragmentDoc}`;
+export const FinaliseRnRFormDocument = gql`
+    mutation finaliseRnRForm($storeId: String!, $input: FinaliseRnRFormInput!) {
+  finaliseRnrForm(storeId: $storeId, input: $input) {
+    __typename
+    ... on RnRFormNode {
+      __typename
+      ...RnRForm
+    }
+  }
+}
+    ${RnRFormFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     documentByName(variables: DocumentByNameQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DocumentByNameQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DocumentByNameQuery>(DocumentByNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentByName', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<DocumentByNameQuery>(DocumentByNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentByName', 'query', variables);
     },
     documents(variables: DocumentsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DocumentsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DocumentsQuery>(DocumentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documents', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<DocumentsQuery>(DocumentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documents', 'query', variables);
     },
     documentRegistries(variables: DocumentRegistriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DocumentRegistriesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesQuery>(DocumentRegistriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistries', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesQuery>(DocumentRegistriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistries', 'query', variables);
     },
     getDocumentHistory(variables: GetDocumentHistoryQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetDocumentHistoryQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetDocumentHistoryQuery>(GetDocumentHistoryDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getDocumentHistory', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<GetDocumentHistoryQuery>(GetDocumentHistoryDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getDocumentHistory', 'query', variables);
     },
     allocateProgramNumber(variables: AllocateProgramNumberMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AllocateProgramNumberMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AllocateProgramNumberMutation>(AllocateProgramNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'allocateProgramNumber', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<AllocateProgramNumberMutation>(AllocateProgramNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'allocateProgramNumber', 'mutation', variables);
     },
     encounterFields(variables: EncounterFieldsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<EncounterFieldsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<EncounterFieldsQuery>(EncounterFieldsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterFields', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<EncounterFieldsQuery>(EncounterFieldsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterFields', 'query', variables);
     },
     encountersWithDocument(variables: EncountersWithDocumentQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<EncountersWithDocumentQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<EncountersWithDocumentQuery>(EncountersWithDocumentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encountersWithDocument', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<EncountersWithDocumentQuery>(EncountersWithDocumentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encountersWithDocument', 'query', variables);
     },
     encounterById(variables: EncounterByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<EncounterByIdQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<EncounterByIdQuery>(EncounterByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterById', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<EncounterByIdQuery>(EncounterByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterById', 'query', variables);
     },
     encounterByDocName(variables: EncounterByDocNameQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<EncounterByDocNameQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<EncounterByDocNameQuery>(EncounterByDocNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterByDocName', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<EncounterByDocNameQuery>(EncounterByDocNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounterByDocName', 'query', variables);
     },
     encounters(variables: EncountersQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<EncountersQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<EncountersQuery>(EncountersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounters', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<EncountersQuery>(EncountersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'encounters', 'query', variables);
     },
     insertEncounter(variables: InsertEncounterMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertEncounterMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertEncounterMutation>(InsertEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertEncounter', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertEncounterMutation>(InsertEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertEncounter', 'mutation', variables);
     },
     updateEncounter(variables: UpdateEncounterMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateEncounterMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateEncounterMutation>(UpdateEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateEncounter', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateEncounterMutation>(UpdateEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateEncounter', 'mutation', variables);
     },
     programEnrolments(variables: ProgramEnrolmentsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramEnrolmentsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramEnrolmentsQuery>(ProgramEnrolmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEnrolments', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramEnrolmentsQuery>(ProgramEnrolmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEnrolments', 'query', variables);
     },
     programEnrolmentByDocName(variables: ProgramEnrolmentByDocNameQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramEnrolmentByDocNameQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramEnrolmentByDocNameQuery>(ProgramEnrolmentByDocNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEnrolmentByDocName', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramEnrolmentByDocNameQuery>(ProgramEnrolmentByDocNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEnrolmentByDocName', 'query', variables);
     },
     insertProgramEnrolment(variables: InsertProgramEnrolmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertProgramEnrolmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramEnrolmentMutation>(InsertProgramEnrolmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramEnrolment', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramEnrolmentMutation>(InsertProgramEnrolmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramEnrolment', 'mutation', variables);
     },
     updateProgramEnrolment(variables: UpdateProgramEnrolmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateProgramEnrolmentMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateProgramEnrolmentMutation>(UpdateProgramEnrolmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateProgramEnrolment', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateProgramEnrolmentMutation>(UpdateProgramEnrolmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateProgramEnrolment', 'mutation', variables);
     },
     clinicians(variables: CliniciansQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CliniciansQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CliniciansQuery>(CliniciansDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'clinicians', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<CliniciansQuery>(CliniciansDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'clinicians', 'query', variables);
     },
     formSchemas(variables?: FormSchemasQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FormSchemasQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<FormSchemasQuery>(FormSchemasDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'formSchemas', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<FormSchemasQuery>(FormSchemasDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'formSchemas', 'query', variables);
     },
     activeProgramEvents(variables: ActiveProgramEventsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ActiveProgramEventsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ActiveProgramEventsQuery>(ActiveProgramEventsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'activeProgramEvents', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ActiveProgramEventsQuery>(ActiveProgramEventsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'activeProgramEvents', 'query', variables);
     },
     contactTraces(variables: ContactTracesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ContactTracesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ContactTracesQuery>(ContactTracesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'contactTraces', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ContactTracesQuery>(ContactTracesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'contactTraces', 'query', variables);
     },
     insertContactTrace(variables: InsertContactTraceMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertContactTraceMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertContactTraceMutation>(InsertContactTraceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertContactTrace', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertContactTraceMutation>(InsertContactTraceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertContactTrace', 'mutation', variables);
     },
     updateContactTrace(variables: UpdateContactTraceMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateContactTraceMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateContactTraceMutation>(UpdateContactTraceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateContactTrace', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateContactTraceMutation>(UpdateContactTraceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateContactTrace', 'mutation', variables);
+    },
+    immunisationPrograms(variables: ImmunisationProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ImmunisationProgramsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ImmunisationProgramsQuery>(ImmunisationProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'immunisationPrograms', 'query', variables);
+    },
+    insertImmunisationProgram(variables: InsertImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertImmunisationProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertImmunisationProgramMutation>(InsertImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertImmunisationProgram', 'mutation', variables);
+    },
+    updateImmunisationProgram(variables: UpdateImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateImmunisationProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateImmunisationProgramMutation>(UpdateImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateImmunisationProgram', 'mutation', variables);
+    },
+    vaccineCourses(variables: VaccineCoursesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccineCoursesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<VaccineCoursesQuery>(VaccineCoursesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccineCourses', 'query', variables);
+    },
+    insertVaccineCourse(variables: InsertVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertVaccineCourseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertVaccineCourseMutation>(InsertVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertVaccineCourse', 'mutation', variables);
+    },
+    updateVaccineCourse(variables: UpdateVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateVaccineCourseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateVaccineCourseMutation>(UpdateVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateVaccineCourse', 'mutation', variables);
+    },
+    deleteImmunisationProgram(variables: DeleteImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteImmunisationProgramMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteImmunisationProgramMutation>(DeleteImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteImmunisationProgram', 'mutation', variables);
+    },
+    deleteVaccineCourse(variables: DeleteVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteVaccineCourseMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteVaccineCourseMutation>(DeleteVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteVaccineCourse', 'mutation', variables);
+    },
+    rnrForms(variables: RnrFormsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RnrFormsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RnrFormsQuery>(RnrFormsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rnrForms', 'query', variables);
+    },
+    createRnRForm(variables: CreateRnRFormMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CreateRnRFormMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateRnRFormMutation>(CreateRnRFormDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createRnRForm', 'mutation', variables);
+    },
+    programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
+    },
+    schedulesAndPeriods(variables: SchedulesAndPeriodsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SchedulesAndPeriodsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<SchedulesAndPeriodsQuery>(SchedulesAndPeriodsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'schedulesAndPeriods', 'query', variables);
+    },
+    rAndRFormDetail(variables: RAndRFormDetailQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RAndRFormDetailQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RAndRFormDetailQuery>(RAndRFormDetailDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rAndRFormDetail', 'query', variables);
+    },
+    updateRnRFormLines(variables: UpdateRnRFormLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateRnRFormLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRnRFormLinesMutation>(UpdateRnRFormLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRnRFormLines', 'mutation', variables);
+    },
+    finaliseRnRForm(variables: FinaliseRnRFormMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FinaliseRnRFormMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<FinaliseRnRFormMutation>(FinaliseRnRFormDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'finaliseRnRForm', 'mutation', variables);
     }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDocumentByNameQuery((req, res, ctx) => {
- *   const { name, storeId } = req.variables;
- *   return res(
- *     ctx.data({ document })
- *   )
- * })
- */
-export const mockDocumentByNameQuery = (resolver: ResponseResolver<GraphQLRequest<DocumentByNameQueryVariables>, GraphQLContext<DocumentByNameQuery>, any>) =>
-  graphql.query<DocumentByNameQuery, DocumentByNameQueryVariables>(
-    'documentByName',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDocumentsQuery((req, res, ctx) => {
- *   const { storeId, page, filter, sort } = req.variables;
- *   return res(
- *     ctx.data({ documents })
- *   )
- * })
- */
-export const mockDocumentsQuery = (resolver: ResponseResolver<GraphQLRequest<DocumentsQueryVariables>, GraphQLContext<DocumentsQuery>, any>) =>
-  graphql.query<DocumentsQuery, DocumentsQueryVariables>(
-    'documents',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockDocumentRegistriesQuery((req, res, ctx) => {
- *   const { filter, sort, storeId } = req.variables;
- *   return res(
- *     ctx.data({ documentRegistries })
- *   )
- * })
- */
-export const mockDocumentRegistriesQuery = (resolver: ResponseResolver<GraphQLRequest<DocumentRegistriesQueryVariables>, GraphQLContext<DocumentRegistriesQuery>, any>) =>
-  graphql.query<DocumentRegistriesQuery, DocumentRegistriesQueryVariables>(
-    'documentRegistries',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockGetDocumentHistoryQuery((req, res, ctx) => {
- *   const { storeId, name } = req.variables;
- *   return res(
- *     ctx.data({ documentHistory })
- *   )
- * })
- */
-export const mockGetDocumentHistoryQuery = (resolver: ResponseResolver<GraphQLRequest<GetDocumentHistoryQueryVariables>, GraphQLContext<GetDocumentHistoryQuery>, any>) =>
-  graphql.query<GetDocumentHistoryQuery, GetDocumentHistoryQueryVariables>(
-    'getDocumentHistory',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAllocateProgramNumberMutation((req, res, ctx) => {
- *   const { numberName, storeId } = req.variables;
- *   return res(
- *     ctx.data({ allocateProgramNumber })
- *   )
- * })
- */
-export const mockAllocateProgramNumberMutation = (resolver: ResponseResolver<GraphQLRequest<AllocateProgramNumberMutationVariables>, GraphQLContext<AllocateProgramNumberMutation>, any>) =>
-  graphql.mutation<AllocateProgramNumberMutation, AllocateProgramNumberMutationVariables>(
-    'allocateProgramNumber',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockEncounterFieldsQuery((req, res, ctx) => {
- *   const { storeId, patientId, fields } = req.variables;
- *   return res(
- *     ctx.data({ encounterFields })
- *   )
- * })
- */
-export const mockEncounterFieldsQuery = (resolver: ResponseResolver<GraphQLRequest<EncounterFieldsQueryVariables>, GraphQLContext<EncounterFieldsQuery>, any>) =>
-  graphql.query<EncounterFieldsQuery, EncounterFieldsQueryVariables>(
-    'encounterFields',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockEncountersWithDocumentQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, page } = req.variables;
- *   return res(
- *     ctx.data({ encounters })
- *   )
- * })
- */
-export const mockEncountersWithDocumentQuery = (resolver: ResponseResolver<GraphQLRequest<EncountersWithDocumentQueryVariables>, GraphQLContext<EncountersWithDocumentQuery>, any>) =>
-  graphql.query<EncountersWithDocumentQuery, EncountersWithDocumentQueryVariables>(
-    'encountersWithDocument',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockEncounterByIdQuery((req, res, ctx) => {
- *   const { storeId, encounterId } = req.variables;
- *   return res(
- *     ctx.data({ encounters })
- *   )
- * })
- */
-export const mockEncounterByIdQuery = (resolver: ResponseResolver<GraphQLRequest<EncounterByIdQueryVariables>, GraphQLContext<EncounterByIdQuery>, any>) =>
-  graphql.query<EncounterByIdQuery, EncounterByIdQueryVariables>(
-    'encounterById',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockEncounterByDocNameQuery((req, res, ctx) => {
- *   const { storeId, documentName } = req.variables;
- *   return res(
- *     ctx.data({ encounters })
- *   )
- * })
- */
-export const mockEncounterByDocNameQuery = (resolver: ResponseResolver<GraphQLRequest<EncounterByDocNameQueryVariables>, GraphQLContext<EncounterByDocNameQuery>, any>) =>
-  graphql.query<EncounterByDocNameQuery, EncounterByDocNameQueryVariables>(
-    'encounterByDocName',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockEncountersQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, page, eventTime } = req.variables;
- *   return res(
- *     ctx.data({ encounters })
- *   )
- * })
- */
-export const mockEncountersQuery = (resolver: ResponseResolver<GraphQLRequest<EncountersQueryVariables>, GraphQLContext<EncountersQuery>, any>) =>
-  graphql.query<EncountersQuery, EncountersQueryVariables>(
-    'encounters',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertEncounterMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertEncounter })
- *   )
- * })
- */
-export const mockInsertEncounterMutation = (resolver: ResponseResolver<GraphQLRequest<InsertEncounterMutationVariables>, GraphQLContext<InsertEncounterMutation>, any>) =>
-  graphql.mutation<InsertEncounterMutation, InsertEncounterMutationVariables>(
-    'insertEncounter',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateEncounterMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateEncounter })
- *   )
- * })
- */
-export const mockUpdateEncounterMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateEncounterMutationVariables>, GraphQLContext<UpdateEncounterMutation>, any>) =>
-  graphql.mutation<UpdateEncounterMutation, UpdateEncounterMutationVariables>(
-    'updateEncounter',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockProgramEnrolmentsQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, eventTime } = req.variables;
- *   return res(
- *     ctx.data({ programEnrolments })
- *   )
- * })
- */
-export const mockProgramEnrolmentsQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramEnrolmentsQueryVariables>, GraphQLContext<ProgramEnrolmentsQuery>, any>) =>
-  graphql.query<ProgramEnrolmentsQuery, ProgramEnrolmentsQueryVariables>(
-    'programEnrolments',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockProgramEnrolmentByDocNameQuery((req, res, ctx) => {
- *   const { storeId, documentName } = req.variables;
- *   return res(
- *     ctx.data({ programEnrolments })
- *   )
- * })
- */
-export const mockProgramEnrolmentByDocNameQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramEnrolmentByDocNameQueryVariables>, GraphQLContext<ProgramEnrolmentByDocNameQuery>, any>) =>
-  graphql.query<ProgramEnrolmentByDocNameQuery, ProgramEnrolmentByDocNameQueryVariables>(
-    'programEnrolmentByDocName',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertProgramEnrolmentMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertProgramEnrolment })
- *   )
- * })
- */
-export const mockInsertProgramEnrolmentMutation = (resolver: ResponseResolver<GraphQLRequest<InsertProgramEnrolmentMutationVariables>, GraphQLContext<InsertProgramEnrolmentMutation>, any>) =>
-  graphql.mutation<InsertProgramEnrolmentMutation, InsertProgramEnrolmentMutationVariables>(
-    'insertProgramEnrolment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateProgramEnrolmentMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateProgramEnrolment })
- *   )
- * })
- */
-export const mockUpdateProgramEnrolmentMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateProgramEnrolmentMutationVariables>, GraphQLContext<UpdateProgramEnrolmentMutation>, any>) =>
-  graphql.mutation<UpdateProgramEnrolmentMutation, UpdateProgramEnrolmentMutationVariables>(
-    'updateProgramEnrolment',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockCliniciansQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter } = req.variables;
- *   return res(
- *     ctx.data({ clinicians })
- *   )
- * })
- */
-export const mockCliniciansQuery = (resolver: ResponseResolver<GraphQLRequest<CliniciansQueryVariables>, GraphQLContext<CliniciansQuery>, any>) =>
-  graphql.query<CliniciansQuery, CliniciansQueryVariables>(
-    'clinicians',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockFormSchemasQuery((req, res, ctx) => {
- *   const { filter } = req.variables;
- *   return res(
- *     ctx.data({ formSchemas })
- *   )
- * })
- */
-export const mockFormSchemasQuery = (resolver: ResponseResolver<GraphQLRequest<FormSchemasQueryVariables>, GraphQLContext<FormSchemasQuery>, any>) =>
-  graphql.query<FormSchemasQuery, FormSchemasQueryVariables>(
-    'formSchemas',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockActiveProgramEventsQuery((req, res, ctx) => {
- *   const { at, storeId, filter, page } = req.variables;
- *   return res(
- *     ctx.data({ activeProgramEvents })
- *   )
- * })
- */
-export const mockActiveProgramEventsQuery = (resolver: ResponseResolver<GraphQLRequest<ActiveProgramEventsQueryVariables>, GraphQLContext<ActiveProgramEventsQuery>, any>) =>
-  graphql.query<ActiveProgramEventsQuery, ActiveProgramEventsQueryVariables>(
-    'activeProgramEvents',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockContactTracesQuery((req, res, ctx) => {
- *   const { storeId, key, desc, filter, page } = req.variables;
- *   return res(
- *     ctx.data({ contactTraces })
- *   )
- * })
- */
-export const mockContactTracesQuery = (resolver: ResponseResolver<GraphQLRequest<ContactTracesQueryVariables>, GraphQLContext<ContactTracesQuery>, any>) =>
-  graphql.query<ContactTracesQuery, ContactTracesQueryVariables>(
-    'contactTraces',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertContactTraceMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ insertContactTrace })
- *   )
- * })
- */
-export const mockInsertContactTraceMutation = (resolver: ResponseResolver<GraphQLRequest<InsertContactTraceMutationVariables>, GraphQLContext<InsertContactTraceMutation>, any>) =>
-  graphql.mutation<InsertContactTraceMutation, InsertContactTraceMutationVariables>(
-    'insertContactTrace',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateContactTraceMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ updateContactTrace })
- *   )
- * })
- */
-export const mockUpdateContactTraceMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateContactTraceMutationVariables>, GraphQLContext<UpdateContactTraceMutation>, any>) =>
-  graphql.mutation<UpdateContactTraceMutation, UpdateContactTraceMutationVariables>(
-    'updateContactTrace',
-    resolver
-  )

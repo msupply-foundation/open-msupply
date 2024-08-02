@@ -24,10 +24,13 @@ fragment AssetRow on AssetNode {
   catalogueItem {
     manufacturer
     model
+    code
   }
   assetType {
     name
   }
+  properties
+  catalogProperties
 }
 
 fragment Asset on AssetNode {
@@ -53,15 +56,8 @@ fragment Asset on AssetNode {
     }
     totalCount
   }
-  properties {
-    id
-    name
-    valueString
-    valueFloat
-    valueBool
-    valueInt
-    valueType
-  }
+  properties
+  catalogProperties
   modifiedDatetime
   notes
   replacementDate
@@ -84,14 +80,25 @@ fragment Asset on AssetNode {
     model
   }
   assetType {
+    id
     name
   }
   assetClass {
+    id
     name
   }
   assetCategory {
+    id
     name
   }
+  donorNameId
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  warrantyStart
+  warrantyEnd
+  needsReplacement
 }
 
 fragment ColdchainAssetLog on AssetLogNode {
@@ -156,7 +163,7 @@ query assetById($storeId: String!, $assetId: String!) {
 
 query assetLogs(
   $filter: AssetLogFilterInput!
-  $sort: AssetLogSortInput
+  $sort: [AssetLogSortInput!]
   $storeId: String!
 ) {
   assetLogs(filter: $filter, sort: $sort, storeId: $storeId) {

@@ -4,6 +4,7 @@ use super::{
     master_list_line_row::master_list_line::dsl as master_list_line_dsl,
     master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
     master_list_row::master_list::dsl as master_list_dsl,
+    stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl,
     store_row::store::dsl as store_dsl,
     unit_row::{unit, unit::dsl as unit_dsl},
     DBType, ItemRow, ItemType, StorageConnection, UnitRow,
@@ -44,10 +45,13 @@ pub struct ItemFilter {
     pub name: Option<StringFilter>,
     pub code: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ItemType>>,
-    /// If true it only returns ItemAndMasterList that have a name join row
+    /// If true it only returns ItemAndMasterList that have a name join row (void if is_visible_or_on_hand is true!)
     pub is_visible: Option<bool>,
+    /// If true it returns ItemAndMasterList that have a name join row, or items with stock on hand
+    pub is_visible_or_on_hand: Option<bool>,
     pub code_or_name: Option<StringFilter>,
     pub is_active: Option<bool>,
+    pub is_vaccine: Option<bool>,
 }
 
 impl ItemFilter {
@@ -87,6 +91,16 @@ impl ItemFilter {
 
     pub fn is_active(mut self, value: bool) -> Self {
         self.is_active = Some(value);
+        self
+    }
+
+    pub fn is_vaccine(mut self, value: bool) -> Self {
+        self.is_vaccine = Some(value);
+        self
+    }
+
+    pub fn has_stock_on_hand(mut self, value: bool) -> Self {
+        self.is_visible_or_on_hand = Some(value);
         self
     }
 }
@@ -189,6 +203,8 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             is_visible,
             code_or_name,
             is_active,
+            is_vaccine,
+            is_visible_or_on_hand,
         } = f;
 
         // or filter need to be applied before and filters
@@ -206,6 +222,10 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             query = query.filter(item_dsl::is_active.eq(is_active));
         }
 
+        if let Some(is_vaccine) = is_vaccine {
+            query = query.filter(item_dsl::is_vaccine.eq(is_vaccine));
+        }
+
         let visible_item_ids = item_link_dsl::item_link
             .select(item_link_dsl::item_id)
             .inner_join(
@@ -221,17 +241,35 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                     .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
             )
             .inner_join(
-                store_dsl::store.on(store_dsl::name_id
+                store_dsl::store.on(store_dsl::name_link_id
                     .eq(master_list_name_join_dsl::name_link_id)
                     .and(store_dsl::id.eq(store_id.clone()))),
             )
             .filter(store_dsl::id.eq(store_id.clone()))
             .into_boxed();
 
-        query = match is_visible {
-            Some(true) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
-            Some(false) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
-            None => query,
+        let item_ids_with_stock_on_hand = item_link_dsl::item_link
+            .select(item_link_dsl::item_id)
+            .inner_join(stock_on_hand_dsl::stock_on_hand)
+            .filter(stock_on_hand_dsl::available_stock_on_hand.gt(0.0))
+            .group_by(item_link_dsl::item_id)
+            .into_boxed();
+
+        query = match (is_visible_or_on_hand, is_visible) {
+            // visible items AND non-visible items with stock on hand
+            (Some(true), _) => query.filter(
+                item_dsl::id
+                    .eq_any(visible_item_ids)
+                    .or(item_dsl::id.eq_any(item_ids_with_stock_on_hand)),
+            ),
+            // visible items
+            (_, Some(true)) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
+
+            // invisible items
+            (_, Some(false)) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
+
+            // no visibility filters
+            (_, _) => query,
         }
     }
     query
@@ -266,8 +304,9 @@ mod tests {
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
         ItemRowRepository, ItemType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
-        StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StockLineRow,
+        StockLineRowRepository, StoreRow, StoreRowRepository, StringFilter,
+        DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -297,18 +336,18 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) =
+        let (_, storage_connection, _, _) =
             test_db::setup_all("test_item_query_repository", MockDataInserts::none()).await;
 
         let rows = data();
         for row in rows.iter() {
-            ItemRowRepository::new(&mut storage_connection)
+            ItemRowRepository::new(&storage_connection)
                 .upsert_one(row)
                 .unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
-        let item_query_repository = ItemRepository::new(&mut storage_connection);
+        let item_query_repository = ItemRepository::new(&storage_connection);
 
         // Test
         // .count()
@@ -378,7 +417,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_item_query_filter_repository() {
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_item_query_filter_repository",
             MockDataInserts::none()
                 .units()
@@ -387,7 +426,7 @@ mod tests {
                 .full_master_list(),
         )
         .await;
-        let item_query_repository = ItemRepository::new(&mut storage_connection);
+        let item_query_repository = ItemRepository::new(&storage_connection);
 
         // test any id filter:
         let results = item_query_repository
@@ -451,7 +490,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository_visibility() {
         // Prepare
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_item_query_repository_visibility",
             MockDataInserts::none(),
         )
@@ -459,33 +498,33 @@ mod tests {
 
         let item_rows = vec![
             inline_init(|r: &mut ItemRow| {
-                r.id = "item1".to_owned();
-                r.name = "name1".to_owned();
-                r.code = "name1".to_owned();
+                r.id = "item1".to_string();
+                r.name = "name1".to_string();
+                r.code = "name1".to_string();
                 r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
-                r.id = "item2".to_owned();
-                r.name = "name2".to_owned();
-                r.code = "name2".to_owned();
+                r.id = "item2".to_string();
+                r.name = "name2".to_string();
+                r.code = "name2".to_string();
                 r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
-                r.id = "item3".to_owned();
-                r.name = "name3".to_owned();
-                r.code = "name3".to_owned();
+                r.id = "item3".to_string();
+                r.name = "name3".to_string();
+                r.code = "name3".to_string();
                 r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
-                r.id = "item4".to_owned();
-                r.name = "name4".to_owned();
-                r.code = "name4".to_owned();
+                r.id = "item4".to_string();
+                r.name = "name4".to_string();
+                r.code = "name4".to_string();
                 r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
-                r.id = "item5".to_owned();
-                r.name = "name5".to_owned();
-                r.code = "name5".to_owned();
+                r.id = "item5".to_string();
+                r.name = "name5".to_string();
+                r.code = "name5".to_string();
                 r.r#type = ItemType::Stock;
             }),
         ];
@@ -500,109 +539,109 @@ mod tests {
 
         let master_list_rows = vec![
             MasterListRow {
-                id: "master_list1".to_owned(),
-                name: "".to_owned(),
-                code: "".to_owned(),
-                description: "".to_owned(),
+                id: "master_list1".to_string(),
+                name: "".to_string(),
+                code: "".to_string(),
+                description: "".to_string(),
                 is_active: true,
             },
             MasterListRow {
-                id: "master_list2".to_owned(),
-                name: "".to_owned(),
-                code: "".to_owned(),
-                description: "".to_owned(),
+                id: "master_list2".to_string(),
+                name: "".to_string(),
+                code: "".to_string(),
+                description: "".to_string(),
                 is_active: true,
             },
         ];
 
         let master_list_line_rows = vec![
             MasterListLineRow {
-                id: "id1".to_owned(),
-                item_link_id: "item1".to_owned(),
-                master_list_id: "master_list1".to_owned(),
+                id: "id1".to_string(),
+                item_link_id: "item1".to_string(),
+                master_list_id: "master_list1".to_string(),
             },
             MasterListLineRow {
-                id: "id2".to_owned(),
-                item_link_id: "item2".to_owned(),
-                master_list_id: "master_list1".to_owned(),
+                id: "id2".to_string(),
+                item_link_id: "item2".to_string(),
+                master_list_id: "master_list1".to_string(),
             },
             MasterListLineRow {
-                id: "id3".to_owned(),
-                item_link_id: "item3".to_owned(),
-                master_list_id: "master_list2".to_owned(),
+                id: "id3".to_string(),
+                item_link_id: "item3".to_string(),
+                master_list_id: "master_list2".to_string(),
             },
             MasterListLineRow {
-                id: "id4".to_owned(),
-                item_link_id: "item4".to_owned(),
-                master_list_id: "master_list2".to_owned(),
+                id: "id4".to_string(),
+                item_link_id: "item4".to_string(),
+                master_list_id: "master_list2".to_string(),
             },
         ];
 
         let name_row = inline_init(|r: &mut NameRow| {
-            r.id = "name1".to_owned();
-            r.name = "".to_owned();
-            r.code = "".to_owned();
+            r.id = "name1".to_string();
+            r.name = "".to_string();
+            r.code = "".to_string();
             r.is_supplier = true;
             r.is_customer = true;
         });
 
         let store_row = inline_init(|r: &mut StoreRow| {
-            r.id = "name1_store".to_owned();
-            r.name_id = "name1".to_owned();
+            r.id = "name1_store".to_string();
+            r.name_link_id = "name1".to_string();
         });
 
         let master_list_name_join_1 = MasterListNameJoinRow {
-            id: "id1".to_owned(),
-            name_link_id: "name1".to_owned(),
-            master_list_id: "master_list1".to_owned(),
+            id: "id1".to_string(),
+            name_link_id: "name1".to_string(),
+            master_list_id: "master_list1".to_string(),
         };
 
         for row in item_rows.iter() {
-            ItemRowRepository::new(&mut storage_connection)
+            ItemRowRepository::new(&storage_connection)
                 .upsert_one(row)
                 .unwrap();
         }
 
         for row in item_link_rows.iter() {
-            ItemLinkRowRepository::new(&mut storage_connection)
+            ItemLinkRowRepository::new(&storage_connection)
                 .upsert_one(row)
                 .unwrap();
         }
 
         for row in master_list_rows {
-            MasterListRowRepository::new(&mut storage_connection)
+            MasterListRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
 
         for row in master_list_line_rows {
-            MasterListLineRowRepository::new(&mut storage_connection)
+            MasterListLineRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
 
-        NameRowRepository::new(&mut storage_connection)
+        NameRowRepository::new(&storage_connection)
             .upsert_one(&name_row)
             .unwrap();
 
-        StoreRowRepository::new(&mut storage_connection)
+        StoreRowRepository::new(&storage_connection)
             .upsert_one(&store_row)
             .unwrap();
 
         // Before adding any joins
-        let results0 = ItemRepository::new(&mut storage_connection)
+        let results0 = ItemRepository::new(&storage_connection)
             .query(Pagination::new(), None, None, None)
             .unwrap();
 
         assert_eq!(results0, item_rows);
 
         // item1 and item2 visible
-        MasterListNameJoinRepository::new(&mut storage_connection)
+        MasterListNameJoinRepository::new(&storage_connection)
             .upsert_one(&master_list_name_join_1)
             .unwrap();
 
         // test is_visible filter:
-        let results = ItemRepository::new(&mut storage_connection)
+        let results = ItemRepository::new(&storage_connection)
             .query(
                 Pagination::new(),
                 // query invisible rows
@@ -613,7 +652,7 @@ mod tests {
             .unwrap();
         assert_eq!(results.len(), 3);
         // get visible rows
-        let results = ItemRepository::new(&mut storage_connection)
+        let results = ItemRepository::new(&storage_connection)
             .query(
                 Pagination::new(),
                 Some(ItemFilter::new().is_visible(true)),
@@ -622,6 +661,39 @@ mod tests {
             )
             .unwrap();
         assert_eq!(results.len(), 2);
+
+        // Test has_stock_on_hand filter
+
+        // Add stock for item 3 (which is invisible)
+        StockLineRowRepository::new(&storage_connection)
+            .upsert_one(&StockLineRow {
+                id: "stock_line_for_item_3".to_string(),
+                item_link_id: "item3".to_string(),
+                store_id: "name1_store".to_string(),
+                available_number_of_packs: 5.0,
+                pack_size: 1.0,
+                ..Default::default()
+            })
+            .unwrap();
+
+        // get visible rows + non visible rows with stock on hand
+        let results = ItemRepository::new(&storage_connection)
+            .query(
+                Pagination::new(),
+                Some(ItemFilter::new().is_visible(true).has_stock_on_hand(true)),
+                None,
+                Some("name1_store".to_string()),
+            )
+            .unwrap();
+
+        // item 1 & 2 == visible, item 3 == has stock
+        assert_eq!(
+            results
+                .into_iter()
+                .map(|r| r.item_row.id)
+                .collect::<Vec<String>>(),
+            vec!["item1", "item2", "item3"]
+        );
     }
 
     #[actix_rt::test]

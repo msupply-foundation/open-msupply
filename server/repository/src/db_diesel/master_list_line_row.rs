@@ -37,7 +37,6 @@ impl<'a> MasterListLineRowRepository<'a> {
         MasterListLineRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list_line)
             .values(row)
@@ -48,25 +47,7 @@ impl<'a> MasterListLineRowRepository<'a> {
         Ok(())
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(master_list_line)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    pub async fn find_one_by_id(
-        &self,
-        line_id: &str,
-    ) -> Result<MasterListLineRow, RepositoryError> {
-        let result = master_list_line
-            .filter(id.eq(line_id))
-            .first(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         line_id: &str,
     ) -> Result<Option<MasterListLineRow>, RepositoryError> {
@@ -85,14 +66,15 @@ impl<'a> MasterListLineRowRepository<'a> {
 }
 
 impl Upsert for MasterListLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListLineRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        MasterListLineRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            MasterListLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            MasterListLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
@@ -101,13 +83,14 @@ impl Upsert for MasterListLineRow {
 #[derive(Debug, Clone)]
 pub struct MasterListLineRowDelete(pub String);
 impl Delete for MasterListLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListLineRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        MasterListLineRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            MasterListLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            MasterListLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }

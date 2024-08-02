@@ -135,21 +135,12 @@ impl<'a> ContactTraceRowRepository<'a> {
         ContactTraceRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
             .on_conflict(contact_trace::dsl::id)
             .do_update()
             .set(row.to_raw())
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(contact_trace::dsl::contact_trace)
-            .values(row.to_raw())
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -210,8 +201,8 @@ mod tests {
 
         // the query result should point to the actual name_ids
         let mut expected = row;
-        expected.patient_id = patient_link.name_id.clone();
-        expected.contact_patient_id = Some(patient_link.name_id.clone());
+        expected.patient_id.clone_from(&patient_link.name_id);
+        expected.contact_patient_id = Some(patient_link.name_id);
         let contact_trace = ContactTraceRepository::new(&connection)
             .query(Pagination::all(), None, None)
             .unwrap()

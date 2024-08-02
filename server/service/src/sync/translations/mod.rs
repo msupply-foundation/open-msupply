@@ -1,12 +1,11 @@
 pub(crate) mod activity_log;
 pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
-pub(crate) mod asset_catalogue_item_property;
-pub(crate) mod asset_catalogue_property;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
 pub(crate) mod asset_log;
 pub(crate) mod asset_log_reason;
+pub(crate) mod asset_property;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
@@ -24,6 +23,8 @@ pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
+pub(crate) mod name_oms_fields;
+pub(crate) mod name_property;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
@@ -31,10 +32,13 @@ pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_requisition_settings;
+pub(crate) mod property;
 pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
+pub(crate) mod rnr_form;
+pub(crate) mod rnr_form_line;
 pub(crate) mod sensor;
 pub(crate) mod special;
 pub(crate) mod stock_line;
@@ -79,6 +83,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         store_preference::boxed(),
         form_schema::boxed(),
         document_registry::boxed(),
+        property::boxed(),
+        name_property::boxed(),
         // Remote
         location::boxed(),
         location_movement::boxed(),
@@ -103,6 +109,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         temperature_log::boxed(),
         pack_variant::boxed(),
         // Special translations
+        name_oms_fields::boxed(),
         special::name_to_name_store_join::boxed(),
         // Merge
         special::name_merge::boxed(),
@@ -114,12 +121,14 @@ pub(crate) fn all_translators() -> SyncTranslators {
         asset_category::boxed(),
         asset_type::boxed(),
         asset_catalogue_item::boxed(),
-        asset_catalogue_item_property::boxed(),
-        asset_catalogue_property::boxed(),
         asset_log::boxed(),
         asset_log_reason::boxed(),
+        asset_property::boxed(),
         //Sync file reference
         sync_file_reference::boxed(),
+        // RnR Form
+        rnr_form::boxed(),
+        rnr_form_line::boxed(),
     ]
 }
 
@@ -157,8 +166,8 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
 
 #[derive(Debug)]
 pub(crate) enum IntegrationOperation {
-    Upsert(Box<dyn Upsert>, Option<i32>), // Upsert record, and source_site_id
-    Delete(Box<dyn Delete>),              // Todo: add source site id?
+    Upsert(Box<dyn Upsert>), // Upsert record
+    Delete(Box<dyn Delete>), // Delete record
 }
 
 impl IntegrationOperation {
@@ -166,7 +175,7 @@ impl IntegrationOperation {
     where
         U: Upsert + 'static,
     {
-        Self::Upsert(Box::new(upsert), None) // TODO?
+        Self::Upsert(Box::new(upsert))
     }
 
     pub(crate) fn delete<U>(delete: U) -> Self
@@ -208,22 +217,9 @@ impl PullTranslateResult {
         Self::IntegrationOperations(
             upsert
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert), None)) // Source site is added later using add_source_site_id
+                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert))) // Source site is added later using add_source_site_id
                 .collect(),
         )
-    }
-
-    pub(crate) fn add_source_site_id(&mut self, source_site_id: i32) {
-        match self {
-            Self::IntegrationOperations(operations) => {
-                for operation in operations {
-                    if let IntegrationOperation::Upsert(_, ref mut site_id) = operation {
-                        *site_id = Some(source_site_id);
-                    }
-                }
-            }
-            _ => {}
-        }
     }
 
     pub(crate) fn delete<U>(upsert: U) -> Self
@@ -240,7 +236,7 @@ impl PullTranslateResult {
         Self::IntegrationOperations(
             upsert
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Delete(Box::new(upsert)))
+                .map(|upsert| IntegrationOperation::Delete(Box::new(upsert))) // Source site is added later using add_source_site_id
                 .collect(),
         )
     }
@@ -473,9 +469,9 @@ fn is_active_record_on_site(
     let result = match &record {
         ActiveRecordCheck::InvoiceLine { invoice_id } => {
             let invoice = InvoiceRepository::new(connection)
-                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(&invoice_id)))
+                .query_one(InvoiceFilter::new().id(EqualFilter::equal_to(invoice_id)))
                 .map_err(Error::DatabaseError)?
-                .ok_or_else(|| Error::ParentRecordNotFound(record))?;
+                .ok_or(Error::ParentRecordNotFound(record))?;
             invoice.store_row.site_id == site_id
         }
     };

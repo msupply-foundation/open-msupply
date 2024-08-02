@@ -1,8 +1,12 @@
 use crate::{
+    check_location_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_batch, check_location_exists, check_pack_size,
-        validate::{check_item_exists, check_line_belongs_to_invoice, check_line_exists_option},
+        stock_in_line::{check_batch, check_pack_size},
+        validate::{
+            check_item_exists, check_line_belongs_to_invoice, check_line_exists,
+            check_number_of_packs,
+        },
     },
 };
 use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
@@ -16,14 +20,14 @@ pub fn validate(
 ) -> Result<(InvoiceLine, Option<ItemRow>, InvoiceRow), UpdateStockInLineError> {
     use UpdateStockInLineError::*;
 
-    let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let line_row = &line.invoice_line_row;
 
-    if !check_pack_size(input.pack_size.clone()) {
+    if !check_pack_size(input.pack_size) {
         return Err(PackSizeBelowOne);
     }
-    if !check_number_of_packs(input.number_of_packs.clone()) {
-        return Err(NumberOfPacksBelowOne);
+    if !check_number_of_packs(input.number_of_packs) {
+        return Err(NumberOfPacksBelowZero);
     }
 
     let item = check_item_option(&input.item_id, connection)?;
@@ -44,10 +48,8 @@ pub fn validate(
     if !check_batch(line_row, connection)? {
         return Err(BatchIsReserved);
     }
-    if let Some(location) = &input.location {
-        if !check_location_exists(&location.value, connection)? {
-            return Err(LocationDoesNotExist);
-        }
+    if !check_location_exists(connection, store_id, &input.location)? {
+        return Err(LocationDoesNotExist);
     }
 
     if !check_line_belongs_to_invoice(line_row, &invoice) {
@@ -68,13 +70,4 @@ fn check_item_option(
     } else {
         Ok(None)
     }
-}
-
-fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
-    if let Some(number_of_packs) = number_of_packs_option {
-        if number_of_packs < 1.0 {
-            return false;
-        }
-    }
-    true
 }

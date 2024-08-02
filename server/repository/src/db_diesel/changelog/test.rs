@@ -37,8 +37,9 @@ async fn test_changelog() {
         inline_init(|r: &mut ChangelogRow| {
             r.cursor = starting_cursor as i64 + 1;
             r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id.clone();
+            r.record_id = mock_location_1().id;
             r.row_action = RowActionType::Upsert;
+            r.store_id = Some(mock_location_1().store_id.clone());
         })
     );
 
@@ -65,8 +66,9 @@ async fn test_changelog() {
         inline_init(|r: &mut ChangelogRow| {
             r.cursor = starting_cursor as i64 + 2;
             r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id.clone();
+            r.record_id = mock_location_1().id;
             r.row_action = RowActionType::Upsert;
+            r.store_id = Some(mock_location_1().store_id.clone());
         })
     );
 
@@ -80,8 +82,9 @@ async fn test_changelog() {
         inline_init(|r: &mut ChangelogRow| {
             r.cursor = starting_cursor as i64 + 2;
             r.table_name = ChangelogTableName::Location;
-            r.record_id = mock_location_1().id.clone();
+            r.record_id = mock_location_1().id;
             r.row_action = RowActionType::Upsert;
+            r.store_id = Some(mock_location_1().store_id.clone());
         })
     );
 
@@ -95,14 +98,16 @@ async fn test_changelog() {
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 2;
                 r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_1().id.clone();
+                r.record_id = mock_location_1().id;
                 r.row_action = RowActionType::Upsert;
+                r.store_id = Some(mock_location_1().store_id.clone());
             }),
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 3;
                 r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_on_hold().id.clone();
+                r.record_id = mock_location_on_hold().id;
                 r.row_action = RowActionType::Upsert;
+                r.store_id = Some(mock_location_on_hold().store_id.clone());
             })
         ]
     );
@@ -117,14 +122,16 @@ async fn test_changelog() {
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 2;
                 r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_1().id.clone();
+                r.record_id = mock_location_1().id;
                 r.row_action = RowActionType::Upsert;
+                r.store_id = Some(mock_location_1().store_id.clone());
             }),
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 4;
                 r.table_name = ChangelogTableName::Location;
-                r.record_id = mock_location_on_hold().id.clone();
+                r.record_id = mock_location_on_hold().id;
                 r.row_action = RowActionType::Delete;
+                r.store_id = Some(mock_location_on_hold().store_id.clone());
             })
         ]
     );
@@ -135,7 +142,7 @@ async fn test_changelog_iteration() {
     let (_, connection, _, _) =
         test_db::setup_all("test_changelog_2", MockDataInserts::none().names().stores()).await;
 
-    // use names entries to populate the changelog (via the trigger)
+    // use names entries to populate the changelog
     let location_repo = LocationRowRepository::new(&connection);
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
@@ -353,7 +360,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn store() -> StoreRow {
         inline_init(|r: &mut StoreRow| {
             r.id = "store".to_string();
-            r.name_id = name().id
+            r.name_link_id = name().id
         })
     }
 
@@ -443,7 +450,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         |connection, r| {
             InvoiceLineRowRepository::new(connection)
                 .upsert_one(r)
-                .unwrap()
+                .unwrap();
         },
     );
 
@@ -461,7 +468,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         |connection, r| {
             InvoiceLineRowRepository::new(connection)
                 .delete(&r.id)
-                .unwrap()
+                .unwrap();
         },
     );
 
@@ -492,7 +499,9 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             store_id: invoice().store_id,
         },
         RowActionType::Upsert,
-        |connection, r| InvoiceRowRepository::new(connection).upsert_one(r).unwrap(),
+        |connection, r| {
+            InvoiceRowRepository::new(connection).upsert_one(r).unwrap();
+        },
     );
 
     // Invoice Delete
@@ -506,7 +515,9 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             store_id: invoice().store_id,
         },
         RowActionType::Delete,
-        |connection, r| InvoiceRowRepository::new(connection).delete(&r.id).unwrap(),
+        |connection, r| {
+            InvoiceRowRepository::new(connection).delete(&r.id).unwrap();
+        },
     );
 
     // Requisition Line Insert
@@ -539,7 +550,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         |connection, r| {
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(r)
-                .unwrap()
+                .unwrap();
         },
     );
 
@@ -557,7 +568,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         |connection, r| {
             RequisitionLineRowRepository::new(connection)
                 .delete(&r.id)
-                .unwrap()
+                .unwrap();
         },
     );
 
@@ -591,7 +602,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         |connection, r| {
             RequisitionRowRepository::new(connection)
                 .upsert_one(r)
-                .unwrap()
+                .unwrap();
         },
     );
 
@@ -609,7 +620,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         |connection, r| {
             RequisitionRowRepository::new(connection)
                 .delete(&r.id)
-                .unwrap()
+                .unwrap();
         },
     );
 }

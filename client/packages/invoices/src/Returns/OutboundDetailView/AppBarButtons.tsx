@@ -13,9 +13,9 @@ import {
 } from '@openmsupply-client/common';
 import { useReturns } from '../api';
 import {
-  useReport,
   ReportRowFragment,
   ReportSelector,
+  usePrintReport,
 } from '@openmsupply-client/system';
 import { JsonData } from '@openmsupply-client/programs';
 import { Draft } from '../..';
@@ -31,7 +31,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { data } = useReturns.document.outboundReturn();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
-  const { print, isPrinting } = useReport.utils.print();
+  const { print, isPrinting } = usePrintReport();
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();

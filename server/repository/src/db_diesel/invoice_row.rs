@@ -7,6 +7,7 @@ use super::{
 };
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::{dsl::max, prelude::*};
 
@@ -159,43 +160,47 @@ impl<'a> InvoiceRowRepository<'a> {
         InvoiceRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(invoice)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(invoice)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+    fn insert_changelog(
+        &self,
+        row: &InvoiceRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Invoice,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: Some(row.name_link_id.clone()),
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
-    pub fn delete(&self, invoice_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, invoice_id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(invoice_id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(invoice.filter(id.eq(invoice_id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
-    pub fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
-        let result = invoice
-            .filter(id.eq(invoice_id))
-            .first(self.connection.lock().connection());
-        result.map_err(RepositoryError::from)
-    }
-
-    // TODO replace find_one_by_id with this one
-    pub fn find_one_by_id_option(
-        &self,
-        invoice_id: &str,
-    ) -> Result<Option<InvoiceRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, invoice_id: &str) -> Result<Option<InvoiceRow>, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
             .first(self.connection.lock().connection())
@@ -226,27 +231,29 @@ impl<'a> InvoiceRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct InvoiceRowDelete(pub String);
 impl Delete for InvoiceRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InvoiceRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = InvoiceRowRepository::new(con).delete(&self.0)?;
+        Ok(change_log_id)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceRowRepository::new(con).find_one_by_id_option(&self.0),
+            InvoiceRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
 }
 
 impl Upsert for InvoiceRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InvoiceRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = InvoiceRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceRowRepository::new(con).find_one_by_id_option(&self.id),
+            InvoiceRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

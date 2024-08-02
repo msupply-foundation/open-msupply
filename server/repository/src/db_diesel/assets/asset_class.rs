@@ -138,7 +138,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_class_query_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) =
+        let (_, storage_connection, _, _) =
             test_db::setup_all("test_asset_class_query_repository", MockDataInserts::none()).await;
 
         let id = "test_id".to_string();
@@ -146,13 +146,13 @@ mod tests {
 
         // Insert a row
         let _reference_data_row =
-            AssetClassRowRepository::new(&mut storage_connection).insert_one(&AssetClassRow {
+            AssetClassRowRepository::new(&storage_connection).upsert_one(&AssetClassRow {
                 id: id.clone(),
                 name: name.clone(),
             });
 
         // Query by id
-        let reference_data = AssetClassRepository::new(&mut storage_connection)
+        let reference_data = AssetClassRepository::new(&storage_connection)
             .query_one(AssetClassFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
@@ -160,7 +160,7 @@ mod tests {
         assert_eq!(reference_data.name, name);
 
         // Query by name
-        let reference_data = AssetClassRepository::new(&mut storage_connection)
+        let reference_data = AssetClassRepository::new(&storage_connection)
             .query_one(AssetClassFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();

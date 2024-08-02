@@ -14,9 +14,11 @@ use diesel::prelude::*;
 table! {
     program (id) {
         id -> Text,
-        master_list_id -> Text,
+        master_list_id -> Nullable<Text>,
         name -> Text,
         context_id -> Text,
+        is_immunisation -> Bool,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -29,9 +31,11 @@ allow_tables_to_appear_in_same_query!(program, name_link);
 #[diesel(table_name = program)]
 pub struct ProgramRow {
     pub id: String, // Master list id
-    pub master_list_id: String,
+    pub master_list_id: Option<String>,
     pub name: String,
     pub context_id: String,
+    pub is_immunisation: bool,
+    pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
 
 pub struct ProgramRowRepository<'a> {
@@ -43,21 +47,12 @@ impl<'a> ProgramRowRepository<'a> {
         ProgramRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_dsl::program)
             .values(row)
             .on_conflict(program_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(program_dsl::program)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -69,11 +64,19 @@ impl<'a> ProgramRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn mark_deleted(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::update(program_dsl::program.filter(program_dsl::id.eq(id)))
+            .set(program_dsl::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
 }
 
 impl Upsert for ProgramRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ProgramRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

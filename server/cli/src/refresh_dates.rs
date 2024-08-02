@@ -48,6 +48,8 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("asset", "created_datetime"),
         ("asset", "modified_datetime"),
         ("sync_file_reference", "created_datetime"),
+        ("rnr_form", "created_datetime"),
+        ("rnr_form", "finalised_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -107,6 +109,9 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("currency", "date_updated"),
         ("asset", "installation_date"),
         ("asset", "replacement_date"),
+        ("asset", "warranty_start"),
+        ("asset", "warranty_end"),
+        ("rnr_form_line", "expiry_date"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -607,6 +612,7 @@ mod tests {
 
         let invoice1_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice1().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -622,6 +628,7 @@ mod tests {
 
         let invoice2_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice2().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -643,6 +650,7 @@ mod tests {
 
         let stock_line1_result = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line1().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(

@@ -4,8 +4,8 @@ use crate::{ItemLinkRow, ItemRow, ItemType};
 
 pub fn mock_item_link_from_item(item: &ItemRow) -> ItemLinkRow {
     inline_init(|r: &mut ItemLinkRow| {
-        r.id = item.id.clone();
-        r.item_id = item.id.clone();
+        r.id.clone_from(&item.id);
+        r.item_id.clone_from(&item.id);
     })
 }
 
@@ -47,9 +47,9 @@ pub fn mock_item_d() -> ItemRow {
 pub fn mock_item_e() -> ItemRow {
     let id = "item_e".to_string();
     inline_init(|r: &mut ItemRow| {
-        r.id = id.clone();
-        r.name = id.clone();
-        r.code = id.clone();
+        r.id.clone_from(&id);
+        r.name.clone_from(&id);
+        r.code.clone_from(&id);
         r.r#type = ItemType::Stock;
     })
 }
@@ -57,22 +57,22 @@ pub fn mock_item_e() -> ItemRow {
 pub fn mock_item_f() -> ItemRow {
     let id = "item_f".to_string();
     inline_init(|r: &mut ItemRow| {
-        r.id = id.clone();
-        r.name = id.clone();
-        r.code = id.clone();
+        r.id.clone_from(&id);
+        r.name.clone_from(&id);
+        r.code.clone_from(&id);
         r.r#type = ItemType::Stock;
-        r.default_pack_size = 1;
+        r.default_pack_size = 1.0;
     })
 }
 
 pub fn mock_item_g() -> ItemRow {
     let id = "item_g".to_string();
     inline_init(|r: &mut ItemRow| {
-        r.id = id.clone();
-        r.name = id.clone();
-        r.code = id.clone();
+        r.id.clone_from(&id);
+        r.name.clone_from(&id);
+        r.code.clone_from(&id);
         r.r#type = ItemType::Stock;
-        r.default_pack_size = 1;
+        r.default_pack_size = 1.0;
     })
 }
 
@@ -91,7 +91,7 @@ pub fn item_query_test2() -> ItemRow {
         r.name = String::from("name_item_query_test2");
         r.code = String::from("code_item_query_test2");
         r.unit_id = Some("item_query_test2".to_owned());
-        r.default_pack_size = 1;
+        r.default_pack_size = 1.0;
         r.r#type = ItemType::Stock;
     })
 }

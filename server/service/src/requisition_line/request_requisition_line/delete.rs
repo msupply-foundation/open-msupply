@@ -33,9 +33,9 @@ pub fn delete_request_requisition_line(
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
 
-            RequisitionLineRowRepository::new(&connection)
+            RequisitionLineRowRepository::new(connection)
                 .delete(&input.id)
-                .map_err(|error| OutError::DatabaseError(error))
+                .map_err(OutError::DatabaseError)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(input.id)

@@ -75,7 +75,6 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
 }) => (
   <NumberInputCell
     {...props}
-    min={0}
     isRequired={rowData.numberOfPacks === 0}
     rowData={rowData}
   />
@@ -121,7 +120,7 @@ export const QuantityTableComponent: FC<
       [
         'unitQuantity',
         {
-          accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+          accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
         },
       ],
     ],
@@ -164,9 +163,7 @@ export const PricingTableComponent: FC<
     [
       'batch',
       {
-        accessor: ({ rowData }) => {
-          return rowData.batch || '';
-        },
+        accessor: ({ rowData }) => rowData.batch || '',
       },
     ],
   ];
@@ -293,9 +290,7 @@ export const LocationTableComponent: FC<TableProps> = ({
       [
         'batch',
         {
-          accessor: ({ rowData }) => {
-            return rowData.batch || '';
-          },
+          accessor: ({ rowData }) => rowData.batch || '',
         },
       ],
       [getLocationInputColumn(), { setter: updateDraftLine, width: 800 }],

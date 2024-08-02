@@ -2,9 +2,7 @@ use repository::{InvoiceLine, InvoiceRow, InvoiceType, ItemRow, ItemType, Storag
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
-    invoice_line::validate::{
-        check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
-    },
+    invoice_line::validate::{check_item_exists, check_line_belongs_to_invoice, check_line_exists},
 };
 
 use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError};
@@ -16,7 +14,7 @@ pub fn validate(
 ) -> Result<(InvoiceLine, InvoiceRow, ItemRow), UpdateInboundShipmentServiceLineError> {
     use UpdateInboundShipmentServiceLineError::*;
 
-    let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let invoice = check_invoice_exists(&line.invoice_line_row.invoice_id, connection)?
         .ok_or(InvoiceDoesNotExist)?;
 

@@ -10,7 +10,6 @@ use crate::{
     service_provider::ServiceContext,
     stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::{query::get_stocktake_line, validate::check_stocktake_line_exist},
-    u32_to_i32,
     validate::check_store_id_matches,
     NullableUpdate,
 };
@@ -29,7 +28,7 @@ pub struct UpdateStocktakeLine {
     pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: Option<u32>,
+    pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
@@ -84,7 +83,7 @@ fn validate(
     }
 
     let stocktake_reduction_amount =
-        stocktake_reduction_amount(&input.counted_number_of_packs, &stocktake_line_row);
+        stocktake_reduction_amount(&input.counted_number_of_packs, stocktake_line_row);
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
         && stocktake_reduction_amount != 0.0
@@ -160,7 +159,7 @@ fn generate(
         item_name: existing_line.item_name,
         expiry_date: expiry_date.or(existing_line.expiry_date),
         batch: batch.or(existing_line.batch),
-        pack_size: pack_size.map(u32_to_i32).or(existing_line.pack_size),
+        pack_size: pack_size.or(existing_line.pack_size),
         cost_price_per_pack: cost_price_per_pack.or(existing_line.cost_price_per_pack),
         sell_price_per_pack: sell_price_per_pack.or(existing_line.sell_price_per_pack),
         note: note.or(existing_line.note),
@@ -178,7 +177,7 @@ pub fn update_stocktake_line(
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
             let new_stocktake_line = generate(existing, input)?;
-            StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
+            StocktakeLineRowRepository::new(connection).upsert_one(&new_stocktake_line)?;
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(UpdateStocktakeLineError::InternalError(
@@ -441,7 +440,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 inline_init(|r: &mut UpdateStocktakeLine| {
-                    r.id = stocktake_line_a.id.clone();
+                    r.id.clone_from(&stocktake_line_a.id);
                 }),
             )
             .unwrap();
@@ -454,7 +453,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 inline_init(|r: &mut UpdateStocktakeLine| {
-                    r.id = stocktake_line_a.id.clone();
+                    r.id.clone_from(&stocktake_line_a.id);
                     r.location = Some(NullableUpdate {
                         value: Some(location.id.clone()),
                     });
@@ -502,7 +501,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 inline_init(|r: &mut UpdateStocktakeLine| {
-                    r.id = stocktake_line_a.id.clone();
+                    r.id.clone_from(&stocktake_line_a.id);
                     r.counted_number_of_packs = Some(140.0);
                     r.inventory_adjustment_reason_id = Some(positive_reason().id)
                 }),
@@ -519,7 +518,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 inline_init(|r: &mut UpdateStocktakeLine| {
-                    r.id = stocktake_line_a.id.clone();
+                    r.id.clone_from(&stocktake_line_a.id);
                     r.counted_number_of_packs = Some(10.0);
                     r.inventory_adjustment_reason_id = Some(negative_reason().id)
                 }),
@@ -536,7 +535,7 @@ mod stocktake_line_test {
             .update_stocktake_line(
                 &context,
                 inline_init(|r: &mut UpdateStocktakeLine| {
-                    r.id = stocktake_line.id.clone();
+                    r.id.clone_from(&stocktake_line.id);
                     r.comment = Some("Some comment".to_string());
                 }),
             )
@@ -545,8 +544,8 @@ mod stocktake_line_test {
         assert_eq!(
             result.line,
             inline_init(|r: &mut StocktakeLineRow| {
-                r.id = stocktake_line.id.clone();
-                r.stocktake_id = result.line.stocktake_id.clone();
+                r.id.clone_from(&stocktake_line.id);
+                r.stocktake_id.clone_from(&result.line.stocktake_id);
                 r.snapshot_number_of_packs = 10.0;
                 r.item_link_id = stocktake_line.item_link_id;
                 r.item_name = stocktake_line.item_name;

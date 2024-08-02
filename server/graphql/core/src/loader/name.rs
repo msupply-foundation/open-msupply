@@ -26,7 +26,6 @@ pub struct NameByIdLoader {
     pub service_provider: Data<ServiceProvider>,
 }
 
-#[async_trait::async_trait]
 impl Loader<NameByIdLoaderInput> for NameByIdLoader {
     type Value = Name;
     type Error = async_graphql::Error;
@@ -47,7 +46,7 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
         for (store_id, names) in store_name_map {
             let names = self
                 .service_provider
-                .general_service
+                .name_service
                 .get_names(
                     &service_context,
                     &store_id,

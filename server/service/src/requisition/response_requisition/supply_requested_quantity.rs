@@ -45,14 +45,14 @@ pub fn supply_requested_quantity(
                 &input.response_requisition_id,
             )?;
 
-            let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
+            let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
             for requisition_line_row in update_requisition_line_rows {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
             }
 
             if let Some(requisition_row) = requisition_row_option {
-                RequisitionRowRepository::new(&connection).upsert_one(&requisition_row)?;
+                RequisitionRowRepository::new(connection).upsert_one(&requisition_row)?;
             }
 
             match RequisitionLineRepository::new(connection).query_by_filter(
@@ -283,7 +283,7 @@ mod test {
             let row = requisition_line_row.requisition_line_row;
             line_repo
                 .upsert_one(&RequisitionLineRow {
-                    approved_quantity: row.requested_quantity + 3,
+                    approved_quantity: row.requested_quantity + 3.0,
                     ..row
                 })
                 .unwrap();

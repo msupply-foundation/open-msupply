@@ -154,7 +154,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_location_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_asset_location_query_repository",
             MockDataInserts::none().assets().locations(),
         )
@@ -168,12 +168,12 @@ mod tests {
             location_id: mock_location_1().id,
         };
 
-        AssetInternalLocationRowRepository::new(&mut storage_connection)
-            .insert_one(&asset_location)
+        AssetInternalLocationRowRepository::new(&storage_connection)
+            .upsert_one(&asset_location)
             .unwrap();
 
         // Query by id
-        let result = AssetInternalLocationRepository::new(&mut storage_connection)
+        let result = AssetInternalLocationRepository::new(&storage_connection)
             .query_one(
                 AssetInternalLocationFilter::new().id(EqualFilter::equal_to(&asset_location_id)),
             )

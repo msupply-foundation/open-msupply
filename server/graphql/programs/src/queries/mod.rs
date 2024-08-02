@@ -21,3 +21,7 @@ pub use self::encounter_fields::*;
 pub mod document_registry;
 pub use self::document_registry::*;
 pub mod contact_trace;
+pub mod program;
+pub mod r_and_r_form;
+pub use self::program::*;
+pub use self::r_and_r_form::*;

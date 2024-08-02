@@ -1,4 +1,6 @@
-use super::{common::FullMockMasterList, mock_name_store_b, mock_program_master_list_test};
+use super::{
+    common::FullMockMasterList, mock_name_store_a, mock_name_store_b, mock_program_master_list_test,
+};
 use crate::{MasterListLineRow, MasterListNameJoinRow, MasterListRow};
 
 pub fn mock_full_master_lists() -> Vec<FullMockMasterList> {
@@ -7,6 +9,7 @@ pub fn mock_full_master_lists() -> Vec<FullMockMasterList> {
         mock_master_list_master_list_filter_test(),
         mock_master_list_master_list_line_filter_test(),
         mock_master_list_program(),
+        mock_master_list_program_b(),
     ]
 }
 
@@ -75,6 +78,35 @@ pub fn mock_master_list_program() -> FullMockMasterList {
             id: "program_item".to_owned(),
             item_link_id: "item_query_test1".to_owned(),
             master_list_id: "master_list_program".to_owned(),
+        }],
+    }
+}
+
+pub fn mock_master_list_program_b() -> FullMockMasterList {
+    FullMockMasterList {
+        master_list: MasterListRow {
+            id: "master_list_program_b".to_owned(),
+            name: "master_list_program_b_name".to_owned(),
+            code: "master_list_program_b_code".to_owned(),
+            description: "master_list_program_b_description".to_owned(),
+            is_active: true,
+        },
+        joins: vec![
+            MasterListNameJoinRow {
+                id: "master_list_program_b_store_a".to_owned(),
+                master_list_id: "master_list_program_b".to_owned(),
+                name_link_id: mock_name_store_a().id,
+            },
+            MasterListNameJoinRow {
+                id: "master_list_program_b_store_b".to_owned(),
+                master_list_id: "master_list_program_b".to_owned(),
+                name_link_id: mock_name_store_b().id,
+            },
+        ],
+        lines: vec![MasterListLineRow {
+            id: "program_b_item".to_owned(),
+            item_link_id: "item_query_test1".to_owned(),
+            master_list_id: "master_list_program_b".to_owned(),
         }],
     }
 }

@@ -89,7 +89,7 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     InvoiceDoesNotExist(RecordNotFound),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
@@ -123,10 +123,8 @@ impl UpdateInput {
             their_reference,
             colour,
             transport_reference,
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
+            tax: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
             }),
             currency_id,
             currency_rate,

@@ -19,11 +19,8 @@ pub struct InsertPrescription {
 #[derive(Debug, PartialEq)]
 pub enum InsertPrescriptionError {
     InvoiceAlreadyExists,
-    NotAPerscription,
-    // Name validation
-    OtherPartyDoesNotExist,
-    OtherPartyNotVisible,
-    OtherPartyNotAPatient,
+    NotAPrescription,
+    PatientDoesNotExist,
     // Internal error
     NewlyCreatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
@@ -38,7 +35,7 @@ pub fn insert_prescription(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &ctx.store_id, &input)?;
+            validate(connection, &input)?;
             let new_invoice = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
@@ -139,13 +136,13 @@ mod test {
             service.insert_prescription(
                 &context,
                 inline_init(|r: &mut InsertPrescription| {
-                    r.id = mock_prescription_a().id.clone();
-                    r.patient_id = mock_patient().id.clone();
+                    r.id.clone_from(&mock_prescription_a().id);
+                    r.patient_id.clone_from(&mock_patient().id);
                 })
             ),
             Err(ServiceError::InvoiceAlreadyExists)
         );
-        // OtherPartyDoesNotExist
+        // PatientDoesNotExist
         assert_eq!(
             service.insert_prescription(
                 &context,
@@ -154,29 +151,7 @@ mod test {
                     r.patient_id = "invalid".to_string();
                 })
             ),
-            Err(ServiceError::OtherPartyDoesNotExist)
-        );
-        // OtherPartyNotVisible
-        assert_eq!(
-            service.insert_prescription(
-                &context,
-                inline_init(|r: &mut InsertPrescription| {
-                    r.id = "new_id".to_string();
-                    r.patient_id = not_visible().id;
-                })
-            ),
-            Err(ServiceError::OtherPartyNotVisible)
-        );
-        // OtherPartyNotAPatient
-        assert_eq!(
-            service.insert_prescription(
-                &context,
-                inline_init(|r: &mut InsertPrescription| {
-                    r.id = "new_id".to_string();
-                    r.patient_id = not_a_patient().id;
-                })
-            ),
-            Err(ServiceError::OtherPartyNotAPatient)
+            Err(ServiceError::PatientDoesNotExist)
         );
     }
 
@@ -227,6 +202,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("new_id")
+            .unwrap()
             .unwrap();
 
         assert_eq!(

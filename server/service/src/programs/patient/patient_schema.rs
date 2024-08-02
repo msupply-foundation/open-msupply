@@ -9,6 +9,7 @@ schemafy::schemafy!("src/programs/schemas/patient.json");
 pub type SchemaPatient = Patient;
 pub type SchemaGender = Gender;
 
+#[allow(clippy::derivable_impls)]
 impl Default for SchemaPatient {
     fn default() -> Self {
         Self {

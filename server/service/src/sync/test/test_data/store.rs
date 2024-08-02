@@ -55,8 +55,8 @@ fn store_1() -> TestSyncIncomingRecord {
         TABLE_NAME,
         STORE_1,
         inline_init(|s: &mut StoreRow| {
-            s.id = STORE_1.0.to_owned();
-            s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
+            s.id = STORE_1.0.to_string();
+            s.name_link_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
             s.code = "GEN".to_string();
             s.site_id = 1;
             s.logo = Some("No logo".to_string());
@@ -113,13 +113,11 @@ const STORE_2: (&str, &str) = (
 
 fn store_2() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored(
-            "Ignoring not implemented system names".to_string(),
-        ),
+        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TABLE_NAME.to_owned();
-            r.record_id = STORE_2.0.to_owned();
-            r.data = STORE_2.1.to_owned();
+            r.table_name = TABLE_NAME.to_string();
+            r.record_id = STORE_2.0.to_string();
+            r.data = STORE_2.1.to_string();
         }),
         extra_data: None,
     }
@@ -173,13 +171,11 @@ const STORE_3: (&str, &str) = (
 
 fn store_3() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored(
-            "Ignoring not implemented system names".to_string(),
-        ),
+        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TABLE_NAME.to_owned();
-            r.record_id = STORE_3.0.to_owned();
-            r.data = STORE_3.1.to_owned();
+            r.table_name = TABLE_NAME.to_string();
+            r.record_id = STORE_3.0.to_string();
+            r.data = STORE_3.1.to_string();
         }),
         extra_data: None,
     }
@@ -233,13 +229,11 @@ const STORE_4: (&str, &str) = (
 
 fn store_4() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord {
-        translated_record: PullTranslateResult::Ignored(
-            "Ignoring not implemented system names".to_string(),
-        ),
+        translated_record: PullTranslateResult::Ignored("System names not implemented".to_string()),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = TABLE_NAME.to_owned();
-            r.record_id = STORE_4.0.to_owned();
-            r.data = STORE_4.1.to_owned();
+            r.table_name = TABLE_NAME.to_string();
+            r.record_id = STORE_4.0.to_string();
+            r.data = STORE_4.1.to_string();
         }),
         extra_data: None,
     }

@@ -3,7 +3,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::{repository_error::RepositoryError, Upsert};
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -39,21 +39,12 @@ impl<'a> MasterListRowRepository<'a> {
         MasterListRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(master_list)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -77,8 +68,9 @@ impl<'a> MasterListRowRepository<'a> {
 }
 
 impl Upsert for MasterListRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        MasterListRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
@@ -86,6 +78,23 @@ impl Upsert for MasterListRow {
         assert_eq!(
             MasterListRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MasterListRowDelete(pub String);
+impl Delete for MasterListRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        MasterListRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
+    }
+
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            MasterListRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
         )
     }
 }

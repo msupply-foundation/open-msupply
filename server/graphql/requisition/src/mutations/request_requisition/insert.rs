@@ -32,7 +32,7 @@ pub struct InsertInput {
 
 #[derive(Interface)]
 #[graphql(name = "InsertRequestRequisitionErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotASupplier(OtherPartyNotASupplier),

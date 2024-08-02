@@ -20,13 +20,13 @@ pub struct InsertInput {
     pub id: String,
     pub item_id: String,
     pub requisition_id: String,
-    pub requested_quantity: Option<u32>,
+    pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
 }
 
 #[derive(Interface)]
 #[graphql(name = "InsertRequestRequisitionLineErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     RequisitionDoesNotExist(ForeignKeyError),
     CannotEditRequisition(CannotEditRequisition),
@@ -392,7 +392,7 @@ mod test {
                     id: "new line id input".to_string(),
                     item_id: mock_item_a().id,
                     requisition_id: "requisition id input".to_string(),
-                    requested_quantity: Some(1),
+                    requested_quantity: Some(1.0),
                     comment: Some("comment".to_string())
                 }
             );

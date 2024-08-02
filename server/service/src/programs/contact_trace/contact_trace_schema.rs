@@ -9,6 +9,7 @@ schemafy::schemafy!("src/programs/schemas/contact_trace.json");
 pub type SchemaContactTrace = ContactTrace;
 pub type SchemaGender = Gender;
 
+#[allow(clippy::derivable_impls)]
 impl Default for SchemaContactTrace {
     fn default() -> Self {
         SchemaContactTrace {

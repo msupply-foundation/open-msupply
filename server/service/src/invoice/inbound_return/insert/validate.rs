@@ -1,9 +1,6 @@
 use repository::{InvoiceRow, InvoiceStatus, InvoiceType, Name, StorageConnection};
 
-use crate::invoice::{
-    check_invoice_does_not_exists, check_invoice_exists, check_invoice_type, check_store,
-    InvoiceAlreadyExistsError,
-};
+use crate::invoice::{check_invoice_exists, check_invoice_type, check_store};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 
 use super::{InsertInboundReturn, InsertInboundReturnError};
@@ -14,10 +11,9 @@ pub fn validate(
     input: &InsertInboundReturn,
 ) -> Result<Name, InsertInboundReturnError> {
     use InsertInboundReturnError::*;
-    check_invoice_does_not_exists(&input.id, connection).map_err(|e| match e {
-        InvoiceAlreadyExistsError::InvoiceAlreadyExists => InvoiceAlreadyExists,
-        InvoiceAlreadyExistsError::RepositoryError(err) => DatabaseError(err),
-    })?;
+    if (check_invoice_exists(&input.id, connection)?).is_some() {
+        return Err(InvoiceAlreadyExists);
+    }
 
     if let Some(outbound_shipment_id) = &input.outbound_shipment_id {
         let outbound_shipment = check_invoice_exists(outbound_shipment_id, connection)?
@@ -51,8 +47,8 @@ pub fn validate(
 }
 
 fn check_outbound_shipment_is_returnable(outbound_shipment: &InvoiceRow) -> bool {
-    match outbound_shipment.status {
-        InvoiceStatus::Shipped | InvoiceStatus::Delivered | InvoiceStatus::Verified => true,
-        _ => false,
-    }
+    matches!(
+        outbound_shipment.status,
+        InvoiceStatus::Shipped | InvoiceStatus::Delivered | InvoiceStatus::Verified
+    )
 }

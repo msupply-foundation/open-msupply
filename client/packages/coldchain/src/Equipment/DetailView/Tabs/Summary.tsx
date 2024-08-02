@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AutocompleteMulti,
   BasicTextInput,
+  Checkbox,
   DateTimePickerInput,
   InputWithLabelRow,
   Typography,
@@ -11,12 +12,17 @@ import {
   ArrayUtils,
   Box,
   Formatter,
+  UNDEFINED_STRING_VALUE,
   useAuthContext,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
-import { formatPropertyValue } from '../../utils';
-import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
+import {
+  DonorSearchInput,
+  NameRowFragment,
+  StoreRowFragment,
+  StoreSearchInput,
+} from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 interface SummaryProps {
   draft?: DraftAsset;
@@ -79,7 +85,7 @@ const Row = ({
 }) => (
   <Box paddingTop={1.5}>
     <InputWithLabelRow
-      labelWidth="150px"
+      labelWidth="160px"
       label={label}
       labelProps={{
         sx: {
@@ -127,6 +133,14 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     reason: string
   ) => {
     if (reason === 'clear') onChange({ store: null });
+  };
+
+  const onDonorInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') onChange({ donor: null, donorNameId: null });
   };
 
   return (
@@ -181,6 +195,26 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               format="P"
               onChange={date =>
                 onChange({ replacementDate: Formatter.naiveDate(date) })
+              }
+              textFieldProps={{ fullWidth: true }}
+            />
+          </Row>
+          <Row label={t('label.warranty-start-date')}>
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(draft.warrantyStart)}
+              format="P"
+              onChange={date =>
+                onChange({ warrantyStart: Formatter.naiveDate(date) })
+              }
+              textFieldProps={{ fullWidth: true }}
+            />
+          </Row>
+          <Row label={t('label.warranty-end-date')}>
+            <DateTimePickerInput
+              value={DateUtils.getDateOrNull(draft.warrantyEnd)}
+              format="P"
+              onChange={date =>
+                onChange({ warrantyEnd: Formatter.naiveDate(date) })
               }
               textFieldProps={{ fullWidth: true }}
             />
@@ -244,25 +278,18 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
           <Row label={t('label.reason')}>
             <BasicTextInput
-              value={draft.statusLog?.reason?.reason ?? '-'}
+              value={draft.statusLog?.reason?.reason ?? UNDEFINED_STRING_VALUE}
               disabled
               fullWidth
             />
           </Row>
+          <Row label={t('label.needs-replacement')}>
+            <Checkbox
+              checked={Boolean(draft.needsReplacement)}
+              onChange={e => onChange({ needsReplacement: e.target.checked })}
+            />
+          </Row>
         </Section>
-        {draft.properties.length === 0 ? null : (
-          <Section heading={t('label.catalogue-properties')}>
-            {draft.properties.map(property => (
-              <Row key={property.id} label={property.name}>
-                <BasicTextInput
-                  value={formatPropertyValue(property, t)}
-                  disabled
-                  fullWidth
-                />
-              </Row>
-            ))}
-          </Section>
-        )}
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput
@@ -271,6 +298,16 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               fullWidth
               multiline
               rows={4}
+            />
+          </Row>
+        </Section>
+        <Section heading={t('label.donor')}>
+          <Row label={t('label.donor')}>
+            <DonorSearchInput
+              value={draft.donor as NameRowFragment} // Using as NameRowFragment is ok, because the comparison function is based on the id
+              onChange={e => onChange({ donor: e, donorNameId: e?.id })}
+              onInputChange={onDonorInputChange}
+              clearable
             />
           </Row>
         </Section>

@@ -4,6 +4,7 @@ use super::{
 };
 
 use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError, Delete, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -16,7 +17,7 @@ table! {
         store_id -> Text,
         location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
-        pack_size -> Integer,
+        pack_size -> Double,
         cost_price_per_pack -> Double,
         sell_price_per_pack -> Double,
         available_number_of_packs -> Double,
@@ -46,7 +47,7 @@ pub struct StockLineRow {
     pub store_id: String,
     pub location_id: Option<String>,
     pub batch: Option<String>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub available_number_of_packs: f64,
@@ -67,35 +68,51 @@ impl<'a> StockLineRowRepository<'a> {
         StockLineRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &StockLineRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(stock_line_dsl::stock_line)
             .values(row)
             .on_conflict(stock_line_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(stock_line_dsl::stock_line)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+    fn insert_changelog(
+        &self,
+        row: &StockLineRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::StockLine,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(stock_line_dsl::stock_line.filter(stock_line_dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        Ok(Some(change_log_id))
     }
 
-    pub fn find_one_by_id(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
         let result = stock_line_dsl::stock_line
-            .filter(stock_line_dsl::id.eq(stock_line_id))
-            .first(self.connection.lock().connection())?;
+            .filter(stock_line_dsl::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
         Ok(result)
     }
 
@@ -104,14 +121,6 @@ impl<'a> StockLineRowRepository<'a> {
             .filter(stock_line_dsl::id.eq_any(ids))
             .load::<StockLineRow>(self.connection.lock().connection())
             .map_err(RepositoryError::from)
-    }
-
-    pub fn find_one_by_id_option(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
-        let result = stock_line_dsl::stock_line
-            .filter(stock_line_dsl::id.eq(id))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
     }
 
     pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
@@ -126,27 +135,28 @@ impl<'a> StockLineRowRepository<'a> {
 pub struct StockLineRowDelete(pub String);
 // For tests only
 impl Delete for StockLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         StockLineRowRepository::new(con).delete(&self.0)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            StockLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
 }
 
 impl Upsert for StockLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        StockLineRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = StockLineRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            StockLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

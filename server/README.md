@@ -103,13 +103,14 @@ Explore API available on `http://localhost:8000/graphql` with build in playgroun
 
 Open mSupply server can be launched in both modes, this is controlled via `Site is open mSupply central server` configuration in legacy mSupply site settings, more info in [Sync Docs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/README.md#open-msupply-central-server) and [Integration Test Docs](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/test/integration/README.md#4-open-msupply-central-server).
 
-From version 2.0 omSupply would require both legacy and omSupply central server for full configuration/syncrhonisation. To start both omSupply central and omSupply remote:
+From version 2.0 omSupply would require both legacy and omSupply central server for full configuration/synchronisation. To start both omSupply central and omSupply remote:
+
 - Create two sites as per [above "Set up sync with mSupply central" instructions](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/test/integration/README.md#4-open-msupply-central-server)
 - Configure one site to be central server by checking `Site is open mSupply central server` and entering the URL with which remote sites can reach this site in the field `This site url`
 - `cargo run` twice but change port, database and sync settings in yaml file or overwrite with env variables
 
-For example, two sites running locally from the same repo,  __central__ and  __test__, for __central__ site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055. 
-Comment out all sync settings in yaml and can start  __central__ with `APP_SERVER__PORT=2055 APP_DATABASE__DATABASE_NAME="central_test" cargo run` front end would be started with `yarn start -- -- --env API_HOST='http://localhost:2055' --port 3005` (--port is for webpack port), and then start  __test__ with `cargo run` and `yarn && yarn start-local` from respective folders. The first site would be initialised with `central` site credentials first, and second sites with  __test__ credentials,  __test__ site would sync with both legacy mSupply and omSupply central server (this  __central__ site), and __central__ site would synchronise with legacy mSupply server only
+For example, two sites running locally from the same repo, __central__ and __test__, for __central__ site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055.
+Comment out all sync settings in yaml and can start  __central__ with `APP__SERVER__PORT=2055 APP__DATABASE__DATABASE_NAME="central_test" cargo run` front end would be started with `yarn start -- -- --env API_HOST='http://localhost:2055' --port 3005` (--port is for webpack port), and then start  __test__ with `cargo run` and `yarn && yarn start-local` from respective folders. The first site would be initialised with `central` site credentials first, and second sites with  __test__ credentials,  __test__ site would sync with both legacy mSupply and omSupply central server (this  __central__ site), and __central__ site would synchronise with legacy mSupply server only
 
 
 ### Start server in watch mode
@@ -210,13 +211,13 @@ If you want to ensure all your changes have been written to the main sqlite data
 
 `note`: yaml configurations are likely to be deprecated to .env, thus documentations is limited for .yaml.
 
-In `configurations` folder you'll find `.yaml` config files, there is `base`, `local` (will overwrite/expand `base` in dev mode), `production` (will overwrite/expand other configs when `APP_ENVIRONMENT=production ).
+In `configurations` folder you'll find `.yaml` config files, there is `base`, `local` (will overwrite/expand `base` in dev mode), `production` (will overwrite/expand other configs when `APP__ENVIRONMENT=production ).
 
-You can use env variable to overwrite any configurations, can use dot notation with `__` (two underscore) to specify nested value. Env vars configuration overrides start with `APP_`.
+You can use env variable to overwrite any configurations, can use dot notation with `__` (two underscore) to specify nested value. Env vars configuration overrides start with `APP__`.
 
 ```bash
 # example, will overwrite sync.url config in yaml
-APP_SYNC__URL='http://localhost:8001' cargo run
+APP__SYNC__URL='http://localhost:8001' cargo run
 ```
 
 ## Export initialisation
@@ -235,7 +236,8 @@ cargo run --bin remote_server_cli -- export-initialisation -n 'reference2' -u 'u
 
 ## SSL/https
 
-- To enable ssl place the `key.pem` and `cert.pem` files into the `certs` directory.
+- To enable ssl place the `key.pem` and `cert.pem` files into the
+  `app_data/certs` directory.
 - Update the server.host variable in the configuration if needed
 - In production (-release build) server must be running with ssl
 
@@ -243,9 +245,9 @@ cargo run --bin remote_server_cli -- export-initialisation -n 'reference2' -u 'u
 
 ```bash
 # Ensure certs directory exits
-mkdir -p certs
+mkdir -p app_data/certs
 # Testing cert for CN=localhost
-openssl req -x509 -newkey rsa:4096 -nodes -keyout certs/key.pem -out certs/cert.pem -days 365 -subj '/CN=localhost'
+openssl req -x509 -newkey rsa:4096 -nodes -keyout app_data/certs/key.pem -out app_data/certs/cert.pem -days 365 -subj '/CN=localhost'
 ```
 
 # Test
@@ -264,6 +266,10 @@ cargo test --features postgres
 - To run sync integration test
 
 See [Sync Integration Tests](service/src/sync/test/integration/README.md)
+
+Note, to speed-up tests database templates are used (Sqlite + Postrgres), e.g. to reuse fully migrated databases from previous tests.
+To disable this you can set the environment variable `MSUPPLY_NO_TEST_DB_TEMPLATE=true`.
+However, in general this should not be needed but might be useful if you suspect a bug in the test template code.
 
 ## Building docs
 

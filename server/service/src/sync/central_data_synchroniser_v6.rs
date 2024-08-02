@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    api::{ParsingSyncRecordError, SyncApiSettings},
+    api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiSettings},
     api_v6::{SyncApiErrorV6, SyncApiV6, SyncApiV6CreatingError},
     get_sync_push_changelogs_filter,
     sync_status::logger::{SyncLogger, SyncLoggerError},
@@ -20,8 +20,7 @@ use super::{
 };
 
 use repository::{
-    ChangelogRepository, KeyType, RepositoryError, StorageConnection, SyncBufferRow,
-    SyncBufferRowRepository,
+    ChangelogRepository, KeyType, RepositoryError, StorageConnection, SyncBufferRowRepository,
 };
 use thiserror::Error;
 
@@ -67,9 +66,10 @@ impl SynchroniserV6 {
     pub(crate) fn new(
         url: &str,
         sync_v5_settings: &SyncApiSettings,
+        sync_v6_version: u32,
     ) -> Result<Self, SyncApiV6CreatingError> {
         Ok(Self {
-            sync_api_v6: SyncApiV6::new(url, sync_v5_settings)?,
+            sync_api_v6: SyncApiV6::new(url, sync_v5_settings, sync_v6_version)?,
         })
     }
 
@@ -95,32 +95,34 @@ impl SynchroniserV6 {
         let cursor_controller = CursorController::new(KeyType::SyncPullCursorV6);
         // TODO protection from infinite loop
         loop {
-            let cursor = cursor_controller.get(&connection)?;
+            let start_cursor = cursor_controller.get(connection)?;
 
             let SyncBatchV6 {
                 end_cursor,
                 total_records,
-                records,
                 is_last_batch,
+                records,
             } = self
                 .sync_api_v6
-                .pull(cursor, batch_size, is_initialised)
+                .pull(start_cursor, batch_size, is_initialised)
                 .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
-            for SyncRecordV6 { cursor, record } in records {
-                let buffer_row = record.to_buffer_row(None)?;
-
-                insert_one_and_update_cursor(
-                    connection,
-                    &cursor_controller,
-                    &buffer_row,
-                    cursor as u64,
-                )?;
-            }
-
-            cursor_controller.update(&connection, end_cursor + 1)?;
+            let last_cursor_in_batch = records.last().map(|r| r.cursor).unwrap_or(start_cursor);
+            let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+                records.into_iter().map(|r| r.record).collect(),
+                None, // Everything from open-mSupply Central Server is considered to not have a source_site_id
+            )?;
+            // Upsert sync buffer rows in a transaction together with cursor update
+            connection
+                .transaction_sync(|t_con| {
+                    SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)?;
+                    cursor_controller.update(t_con, last_cursor_in_batch + 1)
+                })
+                .map_err(|e| e.to_inner_error())?;
+            // TODO it's likely that above update to cursor is redundant, this comment is to record this observation in a PR https://github.com/msupply-foundation/open-msupply/pull/4283/files/ac66350bc5aee585a10c2a8450e8d2abeffc527b#r1656344877
+            cursor_controller.update(connection, end_cursor + 1)?;
 
             if is_last_batch {
                 break;
@@ -221,18 +223,4 @@ impl SynchroniserV6 {
 
         Ok(())
     }
-}
-
-fn insert_one_and_update_cursor(
-    connection: &StorageConnection,
-    cursor_controller: &CursorController,
-    row: &SyncBufferRow,
-    cursor: u64,
-) -> Result<(), RepositoryError> {
-    connection
-        .transaction_sync(|con| {
-            SyncBufferRowRepository::new(con).upsert_one(row)?;
-            cursor_controller.update(con, cursor + 1)
-        })
-        .map_err(|e| e.to_inner_error())
 }

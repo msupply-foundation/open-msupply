@@ -3,12 +3,10 @@ use crate::{
         calculate_foreign_currency_total, calculate_total_after_tax,
         generate_invoice_user_id_update,
     },
-    invoice_line::{
-        inbound_shipment_line::generate::convert_invoice_line_to_single_pack,
-        stock_in_line::{generate_batch, StockLineInput},
+    invoice_line::stock_in_line::{
+        convert_invoice_line_to_single_pack, generate_batch, StockLineInput,
     },
     store_preference::get_store_preferences,
-    u32_to_i32,
 };
 use repository::{
     InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow,
@@ -17,6 +15,13 @@ use repository::{
 
 use super::UpdateStockInLine;
 
+pub struct GenerateResult {
+    pub invoice_row_option: Option<InvoiceRow>,
+    pub updated_line: InvoiceLineRow,
+    pub upsert_batch_option: Option<StockLineRow>,
+    pub batch_to_delete_id: Option<String>,
+}
+
 pub fn generate(
     connection: &StorageConnection,
     user_id: &str,
@@ -24,15 +29,7 @@ pub fn generate(
     current_line: InvoiceLine,
     new_item_option: Option<ItemRow>,
     existing_invoice_row: InvoiceRow,
-) -> Result<
-    (
-        Option<InvoiceRow>,
-        InvoiceLineRow,
-        Option<StockLineRow>,
-        Option<String>,
-    ),
-    RepositoryError,
-> {
+) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
@@ -52,30 +49,37 @@ pub fn generate(
     };
 
     let upsert_batch_option = if existing_invoice_row.status != InvoiceStatus::New {
+        // There will be a batch_to_delete_id if the item has changed
+        // If item has changed, we want a new stock line, otherwise keep existing
+        let stock_line_id = match batch_to_delete_id {
+            Some(_) => None, // will generate new stock line
+            None => update_line.stock_line_id.clone(),
+        };
+
         let new_batch = generate_batch(
-            // There will be a batch_to_delete_id if the item has changed
-            // If item has changed, we want a new stock line, otherwise keep existing
-            batch_to_delete_id.is_none(),
+            connection,
             update_line.clone(),
             StockLineInput {
+                stock_line_id,
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_link_id: existing_invoice_row.name_link_id.clone(),
                 on_hold: false,
                 barcode_id: None,
+                overwrite_stock_levels: true,
             },
-        );
+        )?;
         update_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
     } else {
         None
     };
 
-    Ok((
-        generate_invoice_user_id_update(user_id, existing_invoice_row),
-        update_line,
+    Ok(GenerateResult {
+        invoice_row_option: generate_invoice_user_id_update(user_id, existing_invoice_row),
+        updated_line: update_line,
         upsert_batch_option,
         batch_to_delete_id,
-    ))
+    })
 }
 
 fn get_batch_to_delete_id(
@@ -117,7 +121,7 @@ fn generate_line(
 ) -> Result<InvoiceLineRow, RepositoryError> {
     let mut update_line = current_line;
 
-    update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
+    update_line.pack_size = pack_size.unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
     update_line.note = note.or(update_line.note);
     update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);
@@ -146,7 +150,7 @@ fn generate_line(
     update_line.total_before_tax = if let Some(total_before_tax) = total_before_tax {
         total_before_tax
     } else if number_of_packs.is_some() || cost_price_per_pack.is_some() {
-        update_line.cost_price_per_pack * update_line.number_of_packs as f64
+        update_line.cost_price_per_pack * update_line.number_of_packs
     } else {
         update_line.total_before_tax
     };

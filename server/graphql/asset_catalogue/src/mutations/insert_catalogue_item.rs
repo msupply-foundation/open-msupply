@@ -54,6 +54,7 @@ pub struct InsertAssetCatalogueItemInput {
     pub manufacturer: Option<String>,
     pub model: String,
     pub type_id: String,
+    pub properties: Option<String>,
 }
 
 impl From<InsertAssetCatalogueItemInput> for InsertAssetCatalogueItem {
@@ -67,6 +68,7 @@ impl From<InsertAssetCatalogueItemInput> for InsertAssetCatalogueItem {
             manufacturer,
             model,
             type_id,
+            properties,
         }: InsertAssetCatalogueItemInput,
     ) -> Self {
         InsertAssetCatalogueItem {
@@ -78,6 +80,7 @@ impl From<InsertAssetCatalogueItemInput> for InsertAssetCatalogueItem {
             manufacturer,
             model,
             type_id,
+            properties,
         }
     }
 }
@@ -112,7 +115,7 @@ pub enum InsertAssetCatalogueItemResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertAssetCatalogueItemErrorInterface {
     ItemAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),

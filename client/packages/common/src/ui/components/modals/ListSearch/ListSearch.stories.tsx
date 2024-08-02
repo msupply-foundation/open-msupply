@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import { Story } from '@storybook/react';
+import { StoryFn } from '@storybook/react';
 import { ListSearch } from './ListSearch';
 import { BaseButton } from '../../buttons';
 import { useTranslation } from '@common/intl';
@@ -14,7 +14,7 @@ const options = Array.from({ length: 100 }).map((_, i) => ({
   name: `${i}`,
 }));
 
-const Template: Story = () => {
+const Template: StoryFn = () => {
   const [open, setOpen] = React.useState(false);
   const t = useTranslation('app');
 

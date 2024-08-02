@@ -141,7 +141,6 @@ export const createQueryParamsStore = <T extends RecordWithId>({
           return { ...state, filter: { ...rest, filterBy } };
         }),
     },
-
     paramList: () => {
       const { pagination, sort, filter } = get();
       return {

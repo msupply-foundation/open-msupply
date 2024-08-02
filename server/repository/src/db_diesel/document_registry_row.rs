@@ -56,21 +56,12 @@ impl<'a> DocumentRegistryRowRepository<'a> {
         DocumentRegistryRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
         diesel::insert_into(document_registry_dsl::document_registry)
             .values(row)
             .on_conflict(document_registry_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(document_registry_dsl::document_registry)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -91,18 +82,19 @@ impl<'a> DocumentRegistryRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
-        )
-        .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
+    // pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    //     diesel::delete(
+    //         document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
+    //     )
+    //     .execute(self.connection.lock().connection())?;
+    //     Ok(())
+    // }
 }
 
 impl Upsert for DocumentRegistryRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        DocumentRegistryRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        DocumentRegistryRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

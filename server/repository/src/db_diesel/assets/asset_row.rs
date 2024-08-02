@@ -28,6 +28,11 @@ table! {
         created_datetime -> Timestamp,
         modified_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
+        properties -> Nullable<Text>,
+        donor_name_id -> Nullable<Text>,
+        warranty_start -> Nullable<Date>,
+        warranty_end -> Nullable<Date>,
+        needs_replacement -> Nullable<Bool>,
     }
 }
 
@@ -56,6 +61,11 @@ pub struct AssetRow {
     pub created_datetime: NaiveDateTime,
     pub modified_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
+    pub properties: Option<String>,
+    pub donor_name_id: Option<String>,
+    pub warranty_start: Option<NaiveDate>,
+    pub warranty_end: Option<NaiveDate>,
+    pub needs_replacement: Option<bool>,
 }
 
 pub struct AssetRowRepository<'a> {
@@ -67,21 +77,12 @@ impl<'a> AssetRowRepository<'a> {
         AssetRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset)
             .values(asset_row)
             .on_conflict(id)
             .do_update()
             .set(asset_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(asset)
-            .values(asset_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -108,7 +109,7 @@ impl<'a> AssetRowRepository<'a> {
             store_id: row.map(|r| r.store_id).unwrap_or(None),
             ..Default::default()
         };
-        ChangelogRepository::new(&self.connection).insert(&row)
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetRow>, RepositoryError> {
@@ -136,11 +137,6 @@ impl<'a> AssetRowRepository<'a> {
 }
 
 impl Upsert for AssetRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = AssetRowRepository::new(con).upsert_one(self)?;
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))

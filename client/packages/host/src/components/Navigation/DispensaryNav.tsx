@@ -42,7 +42,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
             end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
-              .addQuery({ sort: 'code' })
+              .addQuery({ sort: 'createdDatetime', dir: 'desc' })
               .build()}
             text={t('patients')}
           />
@@ -61,14 +61,6 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
               .addPart(AppRoute.Encounter)
               .build()}
             text={t('encounter')}
-          />
-          <AppNavLink
-            visible={isProgramModule}
-            end
-            to={RouteBuilder.create(AppRoute.Dispensary)
-              .addPart(AppRoute.Reports)
-              .build()}
-            text={t('reports')}
           />
         </List>
       </Collapse>

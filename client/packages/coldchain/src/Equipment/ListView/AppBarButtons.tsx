@@ -13,13 +13,13 @@ import {
   PlusCircleIcon,
   ToggleState,
   UploadIcon,
-  useDisabledNotificationToast,
-  useAuthContext,
   UserPermission,
+  useCallbackWithPermission,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
 import { AddFromScannerButton } from './AddFromScannerButton';
+import { useAssetData } from '@openmsupply-client/system';
 
 export const AppBarButtonsComponent = ({
   importModalController,
@@ -31,16 +31,14 @@ export const AppBarButtonsComponent = ({
   const { success, error } = useNotification();
   const t = useTranslation('coldchain');
   const { fetchAsync, isLoading } = useAssets.document.listAll();
-  const { userHasPermission } = useAuthContext();
-  const showDisabledNotification = useDisabledNotificationToast(
+  const { data: properties } = useAssetData.utils.properties();
+
+  const onAdd = useCallbackWithPermission(
+    UserPermission.AssetMutate,
+    modalController.toggleOn,
     t('error.no-asset-create-permission')
   );
 
-  const onAdd = () => {
-    if (userHasPermission(UserPermission.AssetMutate))
-      modalController.toggleOn();
-    else showDisabledNotification();
-  };
   const csvExport = async () => {
     const data = await fetchAsync();
     if (!data || !data?.nodes.length) {
@@ -48,7 +46,7 @@ export const AppBarButtonsComponent = ({
       return;
     }
 
-    const csv = assetsToCsv(data.nodes, t);
+    const csv = assetsToCsv(data.nodes, t, properties?.map(p => p.key) ?? []);
     FileUtils.exportCSV(csv, t('filename.cold-chain-equipment'));
     success(t('success'))();
   };

@@ -6,11 +6,11 @@ import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
 import { RTLProvider } from './RTLProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
 import { PropsWithChildrenOnly } from '@common/types';
 import { createRegisteredContext } from 'react-singleton-context';
-import { useIntlUtils } from '..';
+import { useIntlUtils } from '@common/intl';
 
 /**
  * Need a cache with the rtl plugin for when we are using rtl.
@@ -46,7 +46,6 @@ export const ThemeProviderProxy: FC<PropsWithChildrenOnly> = ({ children }) => {
 
 const ThemeProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const appTheme = useAppTheme();
-
   const { getLocale } = useIntlUtils();
 
   return (

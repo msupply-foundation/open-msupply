@@ -2,6 +2,7 @@ import {
   DisplaySettingsInput,
   DisplaySettingsHash,
   LabelPrinterSettingsInput,
+  ConfigureNamePropertyInput,
 } from '@openmsupply-client/common';
 
 import { Sdk } from './operations.generated';
@@ -39,5 +40,10 @@ export const getHostQueries = (sdk: Sdk) => ({
       labelPrinterSettings,
     });
     return result?.updateLabelPrinterSettings;
+  },
+
+  configureNameProperties: async (input: ConfigureNamePropertyInput[]) => {
+    const result = await sdk.configureNameProperties({ input });
+    return result?.centralServer.general.configureNameProperties;
   },
 });

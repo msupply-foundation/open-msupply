@@ -210,12 +210,12 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_asset_log_query_repository() {
-        let (_, mut storage_connection, _, _) = test_db::setup_all(
+        let (_, storage_connection, _, _) = test_db::setup_all(
             "test_asset_log_sort_query_repository",
             MockDataInserts::none().assets().asset_logs(),
         )
         .await;
-        let asset_log_repository = AssetLogRepository::new(&mut storage_connection);
+        let asset_log_repository = AssetLogRepository::new(&storage_connection);
 
         // test query by one
 
@@ -228,7 +228,6 @@ mod tests {
         assert_eq!(log.id, asset_log_id);
 
         // test query multiple
-
         let logs = asset_log_repository
             .query(Pagination::new(), None, None)
             .unwrap();
@@ -236,7 +235,6 @@ mod tests {
         assert_eq!(logs.len(), mock_asset_logs().len());
 
         // test query multiple with sort
-
         let logs_sorted_by_datetime = asset_log_repository
             .query(
                 Pagination::new(),

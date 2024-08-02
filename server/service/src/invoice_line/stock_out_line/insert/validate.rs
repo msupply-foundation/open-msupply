@@ -4,7 +4,7 @@ use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
-        validate::{check_line_does_not_exist, check_number_of_packs},
+        validate::{check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
 };
@@ -18,7 +18,7 @@ pub fn validate(
 ) -> Result<(ItemRow, InvoiceRow, StockLine), InsertStockOutLineError> {
     use InsertStockOutLineError::*;
 
-    if !check_line_does_not_exist(connection, &input.id)? {
+    if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
     let batch =
@@ -30,7 +30,7 @@ pub fn validate(
         check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
     if invoice.status != InvoiceStatus::New && !check_number_of_packs(Some(input.number_of_packs)) {
-        return Err(NumberOfPacksBelowOne);
+        return Err(NumberOfPacksBelowZero);
     }
 
     if !check_store(&invoice, store_id) {
@@ -49,12 +49,8 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
-    if let Some(r#type) = &input.r#type {
-        if !check_invoice_type(&invoice, r#type.to_domain()) {
-            return Err(InvoiceTypeDoesNotMatch);
-        }
-    } else {
-        return Err(NoInvoiceType);
+    if !check_invoice_type(&invoice, input.r#type.to_domain()) {
+        return Err(InvoiceTypeDoesNotMatch);
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);

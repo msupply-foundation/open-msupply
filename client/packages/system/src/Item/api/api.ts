@@ -87,7 +87,10 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       first,
       offset,
       sortBy,
-    }: ListParams<ItemRowFragment>) => {
+      includeNonVisibleWithStockOnHand,
+    }: ListParams<ItemRowFragment> & {
+      includeNonVisibleWithStockOnHand?: boolean;
+    }) => {
       const result = await sdk.itemStockOnHand({
         key: itemParsers.toSortField(sortBy),
         first,
@@ -97,8 +100,36 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
+          [includeNonVisibleWithStockOnHand
+            ? 'isVisibleOrOnHand'
+            : 'isVisible']: true,
           isVisible: true,
           isActive: true,
+        },
+      });
+
+      const { items } = result;
+
+      if (result?.items?.__typename === 'ItemConnector') {
+        return items;
+      }
+
+      throw new Error('Could not fetch items');
+    },
+    vaccineItems: async ({
+      filterBy,
+      first,
+      offset,
+      sortBy,
+    }: ListParams<ItemRowFragment>) => {
+      const result = await sdk.items({
+        key: itemParsers.toSortField(sortBy),
+        first,
+        offset,
+        storeId,
+        filter: {
+          ...filterBy,
+          isVaccine: true,
         },
       });
 
@@ -126,7 +157,8 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         // because service items don't have SOH & AMC so it's odd to show them alongside stock items
         filter: {
           ...filterBy,
-          isVisible: true,
+          // includes non-visible items that have stock on hand
+          isVisibleOrOnHand: true,
           isActive: true,
         },
       });

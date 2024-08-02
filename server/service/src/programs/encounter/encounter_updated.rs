@@ -75,16 +75,15 @@ fn update_encounter_row(
     clinician_id: Option<String>,
     program_row: ProgramRow,
 ) -> Result<(), RepositoryError> {
-    let status = if let Some(status) = validated_encounter.encounter.status {
-        Some(match status {
+    let status = validated_encounter
+        .encounter
+        .status
+        .map(|status| match status {
             encounter_schema::EncounterStatus::Pending => EncounterStatus::Pending,
             encounter_schema::EncounterStatus::Visited => EncounterStatus::Visited,
             encounter_schema::EncounterStatus::Cancelled => EncounterStatus::Cancelled,
             encounter_schema::EncounterStatus::Deleted => EncounterStatus::Deleted,
-        })
-    } else {
-        None
-    };
+        });
 
     let repo = EncounterRepository::new(con);
     let encounter = repo

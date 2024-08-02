@@ -110,7 +110,7 @@ pub fn mock_stock_line_stocktake_surplus() -> StockLineRow {
         store_id: String::from("store_a"),
         batch: Some(String::from("item_a_batch_b")),
         available_number_of_packs: 20.0,
-        pack_size: 1,
+        pack_size: 1.0,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_number_of_packs: 30.0,
@@ -156,7 +156,7 @@ pub fn mock_stock_line_stocktake_deficit() -> StockLineRow {
         store_id: String::from("store_a"),
         batch: Some(String::from("item_a_batch_b")),
         available_number_of_packs: 20.0,
-        pack_size: 1,
+        pack_size: 1.0,
         cost_price_per_pack: 0.0,
         sell_price_per_pack: 0.0,
         total_number_of_packs: 30.0,
@@ -257,7 +257,7 @@ pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
         r.item_link_id = mock_item_a().id;
         r.expiry_date = Some(NaiveDate::from_ymd_opt(2022, 12, 14).unwrap());
         r.batch = Some("batch".to_string());
-        r.pack_size = Some(10);
+        r.pack_size = Some(10.0);
         r.cost_price_per_pack = Some(11.0);
         r.sell_price_per_pack = Some(12.0);
         r.note = Some("note".to_string());
@@ -265,30 +265,31 @@ pub fn mock_stocktake_line_new_stock_line() -> StocktakeLineRow {
 }
 
 pub fn test_stocktake_data() -> MockData {
-    let mut data: MockData = Default::default();
-    data.stocktakes = vec![
-        mock_stocktake_without_lines(),
-        mock_stocktake_finalised(),
-        mock_stocktake_finalised_without_lines(),
-        mock_stocktake_stock_surplus(),
-        mock_stocktake_stock_deficit(),
-        mock_stocktake_no_lines(),
-        mock_stocktake_no_count_change(),
-        mock_stocktake_full_edit(),
-        mock_stocktake_new_stock_line(),
-        mock_locked_stocktake(),
-    ];
-    data.stocktake_lines = vec![
-        mock_stocktake_line_finalised(),
-        mock_stocktake_line_stock_surplus(),
-        mock_stocktake_line_stock_deficit(),
-        mock_stocktake_line_no_count_change(),
-        mock_stocktake_line_new_stock_line(),
-        mock_locked_stocktake_line(),
-    ];
-    data.stock_lines = vec![
-        mock_stock_line_stocktake_surplus(),
-        mock_stock_line_stocktake_deficit(),
-    ];
-    data
+    MockData {
+        stocktakes: vec![
+            mock_stocktake_without_lines(),
+            mock_stocktake_finalised(),
+            mock_stocktake_finalised_without_lines(),
+            mock_stocktake_stock_surplus(),
+            mock_stocktake_stock_deficit(),
+            mock_stocktake_no_lines(),
+            mock_stocktake_no_count_change(),
+            mock_stocktake_full_edit(),
+            mock_stocktake_new_stock_line(),
+            mock_locked_stocktake(),
+        ],
+        stocktake_lines: vec![
+            mock_stocktake_line_finalised(),
+            mock_stocktake_line_stock_surplus(),
+            mock_stocktake_line_stock_deficit(),
+            mock_stocktake_line_no_count_change(),
+            mock_stocktake_line_new_stock_line(),
+            mock_locked_stocktake_line(),
+        ],
+        stock_lines: vec![
+            mock_stock_line_stocktake_surplus(),
+            mock_stock_line_stocktake_deficit(),
+        ],
+        ..Default::default()
+    }
 }

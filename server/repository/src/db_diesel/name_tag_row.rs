@@ -27,21 +27,12 @@ impl<'a> NameTagRowRepository<'a> {
         NameTagRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &NameTagRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_tag_dsl::name_tag)
             .values(row)
             .on_conflict(name_tag_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &NameTagRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(name_tag_dsl::name_tag)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -70,8 +61,9 @@ impl<'a> NameTagRowRepository<'a> {
 }
 
 impl Upsert for NameTagRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameTagRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        NameTagRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

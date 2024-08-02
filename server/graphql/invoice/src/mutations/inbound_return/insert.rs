@@ -29,7 +29,7 @@ pub struct InboundReturnLineInput {
     pub item_id: String,
     pub reason_id: Option<String>,
     pub note: Option<String>,
-    pub pack_size: u32,
+    pub pack_size: f64,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
 }
@@ -75,7 +75,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 
 #[derive(Interface)]
 #[graphql(name = "InsertInboundReturnErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum InsertErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotACustomer(OtherPartyNotACustomer),

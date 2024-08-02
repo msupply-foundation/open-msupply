@@ -1,9 +1,9 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Grow } from '.';
 import { UnhappyMan } from '@common/icons';
 
-const Template: ComponentStory<typeof Grow> = args => (
+const Template: StoryFn<typeof Grow> = args => (
   <Grow in {...args}>
     <div>
       <UnhappyMan />
@@ -21,4 +21,4 @@ TransformOrigin.args = { timeout: 1000, style: { transformOrigin: '0 0 0' } };
 export default {
   title: 'Animations/Grow',
   component: Grow,
-} as ComponentMeta<typeof Grow>;
+} as Meta<typeof Grow>;

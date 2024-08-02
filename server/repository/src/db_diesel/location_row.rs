@@ -3,6 +3,7 @@ use super::{
     location_row::location::dsl as location_dsl, name_link_row::name_link, store_row::store,
     RepositoryError, StorageConnection,
 };
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
@@ -40,25 +41,31 @@ impl<'a> LocationRowRepository<'a> {
         LocationRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &LocationRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(location_dsl::location)
             .values(row)
             .on_conflict(location_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(location_dsl::location)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
+    fn insert_changelog(
+        &self,
+        row: &LocationRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Location,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
 
+        ChangelogRepository::new(self.connection).insert(&row)
+    }
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
         match location_dsl::location
             .filter(location_dsl::id.eq(id))
@@ -76,10 +83,19 @@ impl<'a> LocationRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<Option<i64>, RepositoryError> {
+        let old_row = self.find_one_by_id(id)?;
+        let change_log_id = match old_row {
+            Some(old_row) => self.insert_changelog(&old_row, RowActionType::Delete)?,
+            None => {
+                return Ok(None);
+            }
+        };
+
         diesel::delete(location_dsl::location.filter(location_dsl::id.eq(id)))
             .execute(self.connection.lock().connection())?;
-        Ok(())
+
+        Ok(Some(change_log_id))
     }
 }
 
@@ -87,7 +103,7 @@ impl<'a> LocationRowRepository<'a> {
 // Only used in tests
 pub struct LocationRowDelete(pub String);
 impl Delete for LocationRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         LocationRowRepository::new(con).delete(&self.0)
     }
     // Test only
@@ -100,8 +116,9 @@ impl Delete for LocationRowDelete {
 }
 
 impl Upsert for LocationRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        LocationRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = LocationRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

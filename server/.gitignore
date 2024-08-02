@@ -18,6 +18,7 @@ schema.graphql
 *.sqlite-shm
 # test template DB marker
 ___template_needs_update.marker
+___template_needs_update_pg.marker
 
 # directories used by the server at runtime
 plugins

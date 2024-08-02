@@ -6,6 +6,7 @@ use serde::Serialize;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::Upsert;
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use diesel::prelude::*;
 
@@ -37,30 +38,29 @@ impl<'a> AssetCategoryRowRepository<'a> {
         AssetCategoryRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, asset_category_row: &AssetCategoryRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(
+        &self,
+        asset_category_row: &AssetCategoryRow,
+    ) -> Result<i64, RepositoryError> {
         diesel::insert_into(asset_category)
             .values(asset_category_row)
             .on_conflict(id)
             .do_update()
             .set(asset_category_row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(&asset_category_row.id, RowActionType::Upsert)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, asset_category_row: &AssetCategoryRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(asset_category)
-            .values(asset_category_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
+    fn insert_changelog(&self, uid: &str, action: RowActionType) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::AssetCategory,
+            record_id: uid.to_string(),
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
 
-    pub fn insert_one(&self, asset_category_row: &AssetCategoryRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(asset_category)
-            .values(asset_category_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetCategoryRow>, RepositoryError> {
@@ -79,17 +79,18 @@ impl<'a> AssetCategoryRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, asset_category_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(asset_category)
-            .filter(id.eq(asset_category_id))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
+    // pub fn delete(&self, asset_category_id: &str) -> Result<(), RepositoryError> {
+    //     diesel::delete(asset_category)
+    //         .filter(id.eq(asset_category_id))
+    //         .execute(self.connection.lock().connection())?;
+    //     Ok(())
+    // }
 }
 
 impl Upsert for AssetCategoryRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        AssetCategoryRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = AssetCategoryRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

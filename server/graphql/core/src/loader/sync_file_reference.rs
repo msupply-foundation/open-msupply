@@ -12,7 +12,6 @@ pub struct SyncFileReferenceLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for SyncFileReferenceLoader {
     type Value = Vec<SyncFileReference>;
     type Error = RepositoryError;
@@ -41,9 +40,7 @@ impl Loader<String> for SyncFileReferenceLoader {
                 .sync_file_reference_row
                 .record_id
                 .clone();
-            let list = map
-                .entry(asset_id)
-                .or_insert_with(|| Vec::<SyncFileReference>::new());
+            let list = map.entry(asset_id).or_default();
             list.push(sync_file_reference);
         }
 

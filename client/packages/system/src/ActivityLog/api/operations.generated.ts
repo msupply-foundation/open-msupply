@@ -1,15 +1,14 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type ActivityLogRowFragment = { __typename: 'ActivityLogNode', id: string, datetime: string, to?: string | null, from?: string | null, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null };
 
 export type ActivityLogsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  sort?: Types.InputMaybe<Types.ActivityLogSortInput>;
+  sort?: Types.InputMaybe<Array<Types.ActivityLogSortInput> | Types.ActivityLogSortInput>;
   filter?: Types.InputMaybe<Types.ActivityLogFilterInput>;
 }>;
 
@@ -31,7 +30,7 @@ export const ActivityLogRowFragmentDoc = gql`
 }
     `;
 export const ActivityLogsDocument = gql`
-    query activityLogs($first: Int, $offset: Int, $sort: ActivityLogSortInput, $filter: ActivityLogFilterInput) {
+    query activityLogs($first: Int, $offset: Int, $sort: [ActivityLogSortInput!], $filter: ActivityLogFilterInput) {
   activityLogs(
     filter: $filter
     page: {first: $first, offset: $offset}
@@ -47,33 +46,16 @@ export const ActivityLogsDocument = gql`
 }
     ${ActivityLogRowFragmentDoc}`;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     activityLogs(variables?: ActivityLogsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ActivityLogsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ActivityLogsQuery>(ActivityLogsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'activityLogs', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<ActivityLogsQuery>(ActivityLogsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'activityLogs', 'query', variables);
     }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockActivityLogsQuery((req, res, ctx) => {
- *   const { first, offset, sort, filter } = req.variables;
- *   return res(
- *     ctx.data({ activityLogs })
- *   )
- * })
- */
-export const mockActivityLogsQuery = (resolver: ResponseResolver<GraphQLRequest<ActivityLogsQueryVariables>, GraphQLContext<ActivityLogsQuery>, any>) =>
-  graphql.query<ActivityLogsQuery, ActivityLogsQueryVariables>(
-    'activityLogs',
-    resolver
-  )

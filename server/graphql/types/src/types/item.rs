@@ -11,7 +11,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Item, ItemRow, ItemType};
+use repository::{Item, ItemRow, ItemType, VENCategory};
 use serde_json::json;
 use service::ListResult;
 
@@ -48,11 +48,19 @@ impl ItemNode {
         ItemNodeType::from_domain(&self.row().r#type)
     }
 
+    pub async fn strength(&self) -> &Option<String> {
+        &self.row().strength
+    }
+
+    pub async fn ven_category(&self) -> VenCategoryType {
+        VenCategoryType::from_domain(&self.row().ven_category)
+    }
+
     pub async fn stats(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<u32>,
+        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
     ) -> Result<ItemStatsNode> {
         let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
         let result = loader
@@ -131,7 +139,7 @@ impl ItemNode {
         self.legacy_bool("is_vaccine")
     }
 
-    pub async fn default_pack_size(&self) -> i32 {
+    pub async fn default_pack_size(&self) -> f64 {
         self.row().default_pack_size
     }
 
@@ -153,10 +161,6 @@ impl ItemNode {
 
     pub async fn weight(&self) -> f64 {
         self.legacy_f64("weight")
-    }
-
-    pub async fn strength(&self) -> String {
-        self.legacy_string("strength")
     }
 
     pub async fn atc_category(&self) -> String {
@@ -199,6 +203,25 @@ impl ItemNodeType {
             ItemNodeType::Stock => ItemType::Stock,
             ItemNodeType::Service => ItemType::Service,
             ItemNodeType::NonStock => ItemType::NonStock,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum VenCategoryType {
+    V,
+    E,
+    N,
+    NotAssigned,
+}
+
+impl VenCategoryType {
+    pub fn from_domain(from: &VENCategory) -> VenCategoryType {
+        match from {
+            VENCategory::V => VenCategoryType::V,
+            VENCategory::E => VenCategoryType::E,
+            VENCategory::N => VenCategoryType::N,
+            VENCategory::NotAssigned => VenCategoryType::NotAssigned,
         }
     }
 }

@@ -42,7 +42,6 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         AssetLogReasonRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn _upsert_one(
         &self,
         asset_log_reason_row: &AssetLogReasonRow,
@@ -52,17 +51,6 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_log_reason_row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(
-        &self,
-        asset_log_reason_row: &AssetLogReasonRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::replace_into(asset_log_reason)
-            .values(asset_log_reason_row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -120,13 +108,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
 }
 
 impl Upsert for AssetLogReasonRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _cursor_id = AssetLogReasonRowRepository::new(con).upsert_one(self)?;
-        Ok(())
-    }
-
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
         let cursor_id = AssetLogReasonRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }

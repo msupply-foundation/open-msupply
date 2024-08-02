@@ -32,7 +32,7 @@ mod query {
             service.update_sensor(
                 &context,
                 UpdateSensor {
-                    id: "invalid".to_owned(),
+                    id: "invalid".to_string(),
                     location_id: None,
                     name: None,
                     is_active: None,
@@ -106,7 +106,7 @@ mod query {
 
         // Success with all changes and serial that is not unique accross stores
         let mut sensor = sensors_in_store[1].clone();
-        sensor.sensor_row.name = "new_sensor_name".to_owned();
+        sensor.sensor_row.name = "new_sensor_name".to_string();
         sensor.sensor_row.is_active = !sensor.sensor_row.is_active;
         sensor.sensor_row.location_id = Some("location_1".to_string());
 

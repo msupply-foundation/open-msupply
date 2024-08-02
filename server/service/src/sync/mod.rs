@@ -44,12 +44,12 @@ pub(crate) struct ActiveStoresOnSite {
 pub(crate) fn get_sync_push_changelogs_filter(
     connection: &StorageConnection,
 ) -> Result<Option<ChangelogFilter>, GetActiveStoresOnSiteError> {
-    let active_stores = ActiveStoresOnSite::get(&connection)?;
+    let active_stores = ActiveStoresOnSite::get(connection)?;
 
     Ok(Some(
         ChangelogFilter::new()
             .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids()))
-            .is_sync_update(EqualFilter::equal_or_null_bool(false)),
+            .is_sync_update(EqualFilter::equal_or_null_bool(false)), // TODO: change to `source_site_id IS NULL`
     ))
 }
 
@@ -107,10 +107,7 @@ static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
 
 impl CentralServerConfig {
     fn inner_is_central_server(&self) -> bool {
-        match self {
-            Self::IsCentralServer => true,
-            _ => false,
-        }
+        matches!(self, Self::IsCentralServer)
     }
 
     fn new(site_info: &SiteInfoV5) -> Self {

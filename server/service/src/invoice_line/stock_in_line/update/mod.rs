@@ -12,7 +12,7 @@ use repository::{
 mod generate;
 mod validate;
 
-use generate::generate;
+use generate::{generate, GenerateResult};
 use validate::validate;
 
 use super::StockInType;
@@ -22,7 +22,7 @@ pub struct UpdateStockInLine {
     pub id: String,
     pub item_id: Option<String>,
     pub location: Option<NullableUpdate<String>>,
-    pub pack_size: Option<u32>,
+    pub pack_size: Option<f64>,
     pub batch: Option<String>,
     pub note: Option<String>,
     pub cost_price_per_pack: Option<f64>,
@@ -43,29 +43,33 @@ pub fn update_stock_in_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (line, item, invoice) = validate(&input, &ctx.store_id, connection)?;
 
-            let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(connection, &ctx.user_id, input, line, item, invoice)?;
+            let GenerateResult {
+                invoice_row_option,
+                updated_line,
+                upsert_batch_option,
+                batch_to_delete_id,
+            } = generate(connection, &ctx.user_id, input, line, item, invoice)?;
 
-            let stock_line_repository = StockLineRowRepository::new(&connection);
+            let stock_line_repository = StockLineRowRepository::new(connection);
 
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_repository.upsert_one(&upsert_batch)?;
             }
 
-            InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
 
-            if let Some(id) = delete_batch_id_option {
+            if let Some(id) = batch_to_delete_id {
                 stock_line_repository.delete(&id)?;
             }
 
             if let Some(invoice_row) = invoice_row_option {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             get_invoice_line(ctx, &updated_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -84,7 +88,7 @@ pub enum UpdateStockInLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
@@ -199,23 +203,23 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
                     r.id = mock_inbound_return_a_invoice_line_a().id;
-                    r.pack_size = Some(0);
+                    r.pack_size = Some(0.0);
                 }),
             ),
             Err(ServiceError::PackSizeBelowOne)
         );
 
-        // NumberOfPacksBelowOne
+        // NumberOfPacksBelowZero
         assert_eq!(
             update_stock_in_line(
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
                     r.id = mock_inbound_return_a_invoice_line_a().id;
-                    r.pack_size = Some(1);
-                    r.number_of_packs = Some(0.0);
+                    r.pack_size = Some(1.0);
+                    r.number_of_packs = Some(-1.0);
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // ItemNotFound
@@ -225,7 +229,7 @@ mod test {
                 inline_init(|r: &mut UpdateStockInLine| {
                     r.id = mock_inbound_return_a_invoice_line_a().id;
                     r.item_id = Some("invalid".to_string());
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -238,7 +242,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
                     r.id = mock_outbound_return_a_invoice_line_a().id;
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -252,7 +256,7 @@ mod test {
                 inline_init(|r: &mut UpdateStockInLine| {
                     r.id = verified_return_line().id;
                     r.item_id = Some(mock_item_a().id.clone());
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -266,7 +270,7 @@ mod test {
                 inline_init(|r: &mut UpdateStockInLine| {
                     r.id = mock_inbound_return_a_invoice_line_b().id; // line number_of_packs and stock_line available_number_of_packs are different
                     r.item_id = Some(mock_item_b().id);
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -281,7 +285,7 @@ mod test {
                 inline_init(|r: &mut UpdateStockInLine| {
                     r.id = mock_inbound_return_a_invoice_line_a().id;
                     r.item_id = Some(mock_item_a().id);
-                    r.pack_size = Some(1);
+                    r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
             ),
@@ -304,8 +308,8 @@ mod test {
         update_stock_in_line(
             &context,
             inline_init(|r: &mut UpdateStockInLine| {
-                r.id = return_line_id.clone();
-                r.pack_size = Some(2);
+                r.id.clone_from(&return_line_id);
+                r.pack_size = Some(2.0);
                 r.number_of_packs = Some(3.0);
             }),
         )
@@ -313,13 +317,14 @@ mod test {
 
         let inbound_line_update = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&return_line_id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
             inbound_line_update,
             inline_edit(&inbound_line_update, |mut u| {
-                u.id = return_line_id.clone();
-                u.pack_size = 2;
+                u.id.clone_from(&return_line_id);
+                u.pack_size = 2.0;
                 u.number_of_packs = 3.0;
                 u
             })
@@ -338,8 +343,8 @@ mod test {
         update_stock_in_line(
             &context,
             inline_init(|r: &mut UpdateStockInLine| {
-                r.id = return_line_id.clone();
-                r.pack_size = Some(20);
+                r.id.clone_from(&return_line_id);
+                r.pack_size = Some(20.0);
                 r.number_of_packs = Some(20.0);
                 r.sell_price_per_pack = Some(100.0);
                 r.cost_price_per_pack = Some(60.0);
@@ -349,13 +354,14 @@ mod test {
 
         let inbound_line = InvoiceLineRowRepository::new(&connection)
             .find_one_by_id(&return_line_id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
                 u.id = return_line_id;
-                u.pack_size = 1;
+                u.pack_size = 1.0;
                 u.number_of_packs = 400.0;
                 u.sell_price_per_pack = 5.0;
                 u.cost_price_per_pack = 3.0;

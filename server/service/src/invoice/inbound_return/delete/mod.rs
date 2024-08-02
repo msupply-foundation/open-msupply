@@ -20,7 +20,7 @@ pub fn delete_inbound_return(
 ) -> Result<String, DeleteInboundReturnError> {
     ctx.connection
         .transaction_sync(|connection| {
-            validate(&id, &ctx.store_id, &connection)?;
+            validate(&id, &ctx.store_id, connection)?;
 
             let lines = get_lines_for_invoice(connection, &id)?;
             for line in lines {
@@ -37,12 +37,12 @@ pub fn delete_inbound_return(
                 })?;
             }
 
-            InvoiceRowRepository::new(&connection)
+            InvoiceRowRepository::new(connection)
                 .delete(&id)
-                .map_err(|error| DeleteInboundReturnError::DatabaseError(error))?;
+                .map_err(DeleteInboundReturnError::DatabaseError)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceDeleted,
                 Some(id.to_owned()),
                 None,
@@ -219,7 +219,7 @@ mod test {
         // test entry has been deleted
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id_option(&return_to_delete().id)
+                .find_one_by_id(&return_to_delete().id)
                 .unwrap(),
             None
         );
@@ -227,7 +227,7 @@ mod test {
         // stock has been deleted
         assert_eq!(
             stock_line_row_repo
-                .find_one_by_id_option(&stock_line().id)
+                .find_one_by_id(&stock_line().id)
                 .unwrap(),
             None
         )

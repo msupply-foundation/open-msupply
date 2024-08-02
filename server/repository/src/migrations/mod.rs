@@ -1,3 +1,4 @@
+pub mod constants;
 mod types;
 mod v1_00_04;
 mod v1_01_01;
@@ -19,6 +20,7 @@ mod v1_06_00;
 mod v1_07_00;
 mod v2_00_00;
 mod v2_01_00;
+mod v2_02_00;
 mod version;
 
 pub(crate) use self::types::*;
@@ -69,14 +71,6 @@ pub fn migrate(
 ) -> Result<Version, MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
         Box::new(V1_00_04),
-        #[cfg(test)]
-        Box::new(templates::adding_table::V1_00_05),
-        #[cfg(test)]
-        Box::new(templates::data_migration::V1_00_06),
-        #[cfg(test)]
-        Box::new(templates::data_and_schema::V1_00_07),
-        #[cfg(test)]
-        Box::new(templates::add_data_from_sync_buffer::V1_00_08),
         Box::new(V1_01_01),
         Box::new(V1_01_02),
         Box::new(V1_01_03),
@@ -96,6 +90,7 @@ pub fn migrate(
         Box::new(v1_07_00::V1_07_00),
         Box::new(v2_00_00::V2_00_00),
         Box::new(v2_01_00::V2_01_00),
+        Box::new(v2_02_00::V2_02_00),
     ];
 
     // Historic diesel migrations
@@ -180,7 +175,7 @@ pub(crate) struct SqlError(String, #[source] RepositoryError);
 
 /// Will try and execute diesel query return SQL error which contains debug version of SQL statements
 #[cfg(test)] // uncomment this when used in queries outside of tests
-pub(crate) fn execute_sql_with_error<'a, Q>(
+pub(crate) fn execute_sql_with_error<Q>(
     connection: &StorageConnection,
     query: Q,
 ) -> Result<usize, SqlError>

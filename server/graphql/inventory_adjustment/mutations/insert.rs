@@ -88,7 +88,7 @@ impl CreateInventoryAdjustmentInput {
 
 #[derive(Interface)]
 #[graphql(name = "InsertInventoryAdjustmentErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
 }
@@ -112,6 +112,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::AdjustmentReasonNotProvided => BadUserInput(formatted_error),
 
         ServiceError::NewlyCreatedInvoiceDoesNotExist
+        | ServiceError::StockInLineInsertError(_)
+        | ServiceError::StockOutLineInsertError(_)
         | ServiceError::InternalError(_)
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

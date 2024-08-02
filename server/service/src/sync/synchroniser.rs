@@ -20,7 +20,7 @@ use super::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
     },
-    settings::{SyncSettings, SYNC_VERSION},
+    settings::{SyncSettings, SYNC_V5_VERSION, SYNC_V6_VERSION},
     sync_buffer::SyncBuffer,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
@@ -35,6 +35,7 @@ pub struct Synchroniser {
     central: CentralDataSynchroniser,
     sync_v5_settings: SyncApiSettings,
     remote: RemoteDataSynchroniser,
+    sync_v6_version: u32,
 }
 
 #[derive(Error)]
@@ -107,13 +108,14 @@ impl Synchroniser {
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
     ) -> anyhow::Result<Self> {
-        Self::new_with_version(settings, service_provider, SYNC_VERSION)
+        Self::new_with_version(settings, service_provider, SYNC_V5_VERSION, SYNC_V6_VERSION)
     }
 
     pub(crate) fn new_with_version(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
         sync_version: u32,
+        sync_v6_version: u32,
     ) -> anyhow::Result<Self> {
         let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, sync_version)?;
         let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
@@ -125,6 +127,7 @@ impl Synchroniser {
             service_provider,
             central: CentralDataSynchroniser { sync_api_v5 },
             sync_v5_settings,
+            sync_v6_version,
         })
     }
 
@@ -152,7 +155,7 @@ impl Synchroniser {
         let batch_size = &self.settings.batch_size;
         let sync_status_service = &self.service_provider.sync_status_service;
 
-        if self.service_provider.settings.is_sync_disabled(&ctx)? {
+        if self.service_provider.settings.is_sync_disabled(ctx)? {
             // TODO logger ?
             warn!("Sync is disabled, skipping");
             return Ok(());
@@ -186,7 +189,8 @@ impl Synchroniser {
             CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
             CentralServerConfig::IsCentralServer => None,
             CentralServerConfig::CentralServerUrl(url) => {
-                let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
+                let v6_sync =
+                    SynchroniserV6::new(&url, &self.sync_v5_settings, self.sync_v6_version)?;
                 Some(v6_sync)
             }
         };
@@ -254,7 +258,6 @@ impl Synchroniser {
 
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
-            is_initialised,
             // Only pass in logger during initialisation
             match is_initialised {
                 false => Some(logger),
@@ -287,10 +290,9 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
-pub fn integrate_and_translate_sync_buffer<'a>(
+pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
-    execute_in_transaction: bool,
-    logger: Option<&mut SyncLogger<'a>>,
+    logger: Option<&mut SyncLogger<'_>>,
     source_site_id: Option<i32>,
 ) -> Result<
     (
@@ -321,7 +323,8 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         let table_order = pull_integration_order(&translators);
 
         let sync_buffer = SyncBuffer::new(connection);
-        let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+        let translation_and_integration =
+            TranslationAndIntegration::new(connection, &sync_buffer, source_site_id);
 
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
@@ -339,7 +342,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
-                upsert_sync_buffer_records.clone(),
+                &upsert_sync_buffer_records,
                 &translators,
                 logger,
             )?;
@@ -347,7 +350,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
-                delete_sync_buffer_records.clone(),
+                &delete_sync_buffer_records,
                 &translators,
                 None,
             )?;
@@ -357,9 +360,10 @@ pub fn integrate_and_translate_sync_buffer<'a>(
             &table_order,
             source_site_id,
         )?;
+
         let merge_integration_result: TranslationAndIntegrationResults =
             translation_and_integration.translate_and_integrate_sync_records(
-                merge_sync_buffer_records,
+                &merge_sync_buffer_records,
                 &translators,
                 None,
             )?;
@@ -371,13 +375,9 @@ pub fn integrate_and_translate_sync_buffer<'a>(
         ))
     };
 
-    let result = if execute_in_transaction {
-        connection
-            .transaction_sync(integrate_and_translate)
-            .map_err::<RepositoryError, _>(|e| e.to_inner_error())
-    } else {
-        integrate_and_translate(&connection)
-    }?;
+    let result = connection
+        .transaction_sync(integrate_and_translate)
+        .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
 
     Ok(result)
 }
@@ -385,7 +385,7 @@ pub fn integrate_and_translate_sync_buffer<'a>(
 #[cfg(test)]
 mod tests {
     use repository::mock::MockDataInserts;
-    use util::{assert_matches, inline_init};
+    use util::inline_init;
 
     use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
@@ -408,12 +408,10 @@ mod tests {
         .unwrap();
 
         // First check that synch fails (due to wrong url)
-
-        assert_matches!(s.sync().await, Err(_));
+        assert!(s.sync().await.is_err());
 
         // Check that disabling return Ok(())
         service.disable_sync(&ctx).unwrap();
-
-        assert_matches!(s.sync().await, Ok(_));
+        assert!(s.sync().await.is_ok());
     }
 }

@@ -52,7 +52,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
 
 #[derive(Interface)]
 #[graphql(name = "DeleteInboundShipmentErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
@@ -118,7 +118,7 @@ mod test {
             },
             InvoiceServiceTrait,
         },
-        invoice_line::inbound_shipment_line::DeleteInboundShipmentLineError,
+        invoice_line::stock_in_line::DeleteStockInLineError,
         service_provider::{ServiceContext, ServiceProvider},
     };
 
@@ -260,7 +260,7 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::LineDeleteError {
                 line_id: "n/a".to_string(),
-                error: DeleteInboundShipmentLineError::LineDoesNotExist,
+                error: DeleteStockInLineError::LineDoesNotExist,
             })
         }));
         let expected_message = "Internal error";
@@ -331,8 +331,8 @@ mod test {
         assert_eq!(
             InvoiceRowRepository::new(&connection)
                 .find_one_by_id("deleted id")
-                .expect_err("Invoice doesn't exist"),
-            RepositoryError::NotFound
+                .unwrap(),
+            None
         );
     }
 }

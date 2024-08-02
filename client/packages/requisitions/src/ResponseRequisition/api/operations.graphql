@@ -150,6 +150,10 @@ fragment ResponseRow on RequisitionNode {
     endDate
   }
   orderType
+  shipments {
+    __typename
+    totalCount
+  }
 }
 
 query responses(

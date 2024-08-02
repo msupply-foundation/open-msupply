@@ -116,7 +116,6 @@
   "heading.server-error": "Ошибка Сервера",
   "inventory-addition": "Пополнение Инвентаря",
   "inventory-reduction": "Сокращение Инвентаря",
-  "label.central": "Центральный",
   "label.central-server": "Центральный сервер",
   "settings.label-printing": "Печать Лейблов",
   "settings.printer-label-height": "Высота лейбла",
@@ -132,5 +131,16 @@
   "error.account-blocked": "Аккаунт заблокирован до окончания срока действия периода блокировки",
   "error.internal-error": "Сервер столкнулся с проблемой.",
   "cmdk.goto-cold-chain-monitoring": "Перейти к: Контроль холодильной цепи",
-  "error.sync-api-incompatible-hint": "Необходимо обновить mSupply Центральный Сервер до более новой версии - пожалуйста, свяжитесь с support@msupply.org.nz"
+  "error.sync-api-incompatible-hint": "Необходимо обновить mSupply Центральный Сервер до более новой версии - пожалуйста, свяжитесь с support@msupply.foundation",
+  "error.sync-v6-api-incompatible": "Версия API Sync V6 несовместима",
+  "error.sync-v6-api-incompatible-hint": "Необходимо обновить Open mSupply Центральный Сервер до более новой версии - пожалуйста, свяжитесь с support@msupply.foundation",
+  "facilities": "Объекты",
+  "manage": "Управлять",
+  "settings": "Настройки",
+  "immunisations": "Прививки",
+  "indicators-demographics": "Демография",
+  "label.edit-store-properties": "Редактировать свойства хранилища",
+  "label.initialise-store-properties": "Инициализация свойств хранилища для GAPS",
+  "label.initialised": "Инициализировано",
+  "r-and-r-forms": "О&З Формы (Отчеты и Заявки)"
 }

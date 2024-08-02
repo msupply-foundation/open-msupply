@@ -30,7 +30,7 @@ pub struct UpdateInput {
     pub counted_number_of_packs: Option<f64>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: Option<u32>,
+    pub pack_size: Option<f64>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub note: Option<String>,
@@ -46,7 +46,7 @@ pub enum UpdateResponse {
 
 #[derive(Interface)]
 #[graphql(name = "UpdateStocktakeLineErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     CannotEditStocktake(CannotEditStocktake),
     StockLineReducedBelowZero(StockLineReducedBelowZero),
@@ -273,7 +273,7 @@ mod test {
                     item_name: "item name".to_string(),
                     batch: Some("batch".to_string()),
                     expiry_date: Some(NaiveDate::from_ymd_opt(2023, 1, 22).unwrap()),
-                    pack_size: Some(10),
+                    pack_size: Some(10.0),
                     cost_price_per_pack: Some(10.0),
                     sell_price_per_pack: Some(12.0),
                     note: Some("note".to_string()),

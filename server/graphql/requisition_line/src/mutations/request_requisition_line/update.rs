@@ -18,13 +18,13 @@ use service::{
 #[graphql(name = "UpdateRequestRequisitionLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub requested_quantity: Option<u32>,
+    pub requested_quantity: Option<f64>,
     pub comment: Option<String>,
 }
 
 #[derive(Interface)]
 #[graphql(name = "UpdateRequestRequisitionLineErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     RequisitionDoesNotExist(ForeignKeyError),
@@ -327,7 +327,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "update line id input".to_string(),
-                    requested_quantity: Some(1),
+                    requested_quantity: Some(1.0),
                     comment: Some("comment".to_string())
                 }
             );

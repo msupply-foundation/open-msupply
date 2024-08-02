@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use repository::StocktakeLine;
-use service::{i32_to_u32, usize_to_u32};
+use service::usize_to_u32;
 
 use graphql_core::{
     loader::{
@@ -94,8 +94,8 @@ impl StocktakeLineNode {
         &self.line.line.expiry_date
     }
 
-    pub async fn pack_size(&self) -> Option<u32> {
-        self.line.line.pack_size.map(i32_to_u32)
+    pub async fn pack_size(&self) -> Option<f64> {
+        self.line.line.pack_size
     }
 
     pub async fn cost_price_per_pack(&self) -> &Option<f64> {

@@ -6,9 +6,10 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    ActivityLogType, ApprovalStatusType, ItemRow, NumberRowType, RepositoryError, Requisition,
-    RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection,
+    ActivityLogType, ApprovalStatusType, EqualFilter, ItemRow, NumberRowType, RepositoryError,
+    Requisition, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection, StoreFilter,
+    StoreRepository,
 };
 use util::uuid::uuid;
 
@@ -111,7 +112,13 @@ fn generate_response_requisition(
     record_for_processing: &RequisitionTransferProcessorRecord,
 ) -> Result<RequisitionRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
-    let name_link_id = request_requisition.store_row.name_id.clone();
+    let store_name = StoreRepository::new(connection)
+        .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(
+            &record_for_processing.requisition.store_row.id,
+        )))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?
+        .name_row;
 
     let request_requisition_row = &request_requisition.requisition_row;
 
@@ -143,7 +150,7 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_link_id,
+        name_link_id: store_name.id,
         store_id,
         r#type: RequisitionType::Response,
         status: RequisitionStatus::New,
@@ -210,8 +217,8 @@ fn generate_response_requisition_lines(
                 comment: comment.clone(),
                 item_name,
                 // Default
-                supply_quantity: 0,
-                approved_quantity: 0,
+                supply_quantity: 0.0,
+                approved_quantity: 0.0,
                 approval_comment: None,
             },
         )

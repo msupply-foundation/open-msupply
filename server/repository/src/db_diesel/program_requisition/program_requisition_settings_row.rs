@@ -41,21 +41,12 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         ProgramRequisitionSettingsRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ProgramRequisitionSettingsRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_requisition_settings_dsl::program_requisition_settings)
             .values(row)
             .on_conflict(program_requisition_settings_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRequisitionSettingsRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(program_requisition_settings_dsl::program_requisition_settings)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -94,8 +85,9 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ProgramRequisitionSettingsRowDelete(pub String);
 impl Delete for ProgramRequisitionSettingsRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ProgramRequisitionSettingsRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRequisitionSettingsRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -107,8 +99,9 @@ impl Delete for ProgramRequisitionSettingsRowDelete {
 }
 
 impl Upsert for ProgramRequisitionSettingsRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ProgramRequisitionSettingsRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRequisitionSettingsRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

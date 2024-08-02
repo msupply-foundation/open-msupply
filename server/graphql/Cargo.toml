@@ -15,12 +15,14 @@ util = { path = "../util" }
 graphql_core = { path = "core" }
 
 graphql_asset = { path = "asset" }
+graphql_demographic = { path = "demographic" }
 graphql_general = { path = "general" }
 graphql_cold_chain = { path = "cold_chain" }
 graphql_asset_catalogue = { path = "asset_catalogue" }
 graphql_inventory_adjustment = { path = "inventory_adjustment" }
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
+graphql_vaccine_course = { path = "vaccine_course" }
 graphql_location = { path = "location" }
 graphql_pack_variant = { path = "pack_variant" }
 graphql_programs = { path = "programs" }
@@ -45,7 +47,7 @@ chrono = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-tokio = { version = "1.17.0", features = ["macros"] }
+tokio = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }

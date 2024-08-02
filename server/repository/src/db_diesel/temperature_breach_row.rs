@@ -4,6 +4,7 @@ use super::{
 };
 
 use crate::{repository_error::RepositoryError, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -75,28 +76,30 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         TemperatureBreachRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn _upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &TemperatureBreachRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(temperature_breach_dsl::temperature_breach)
             .values(row)
             .on_conflict(temperature_breach_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(temperature_breach_dsl::temperature_breach)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
+    fn insert_changelog(
+        &self,
+        row: &TemperatureBreachRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::TemperatureBreach,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
 
-    pub fn upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        Ok(())
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(
@@ -121,8 +124,9 @@ impl<'a> TemperatureBreachRowRepository<'a> {
 }
 
 impl Upsert for TemperatureBreachRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        TemperatureBreachRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = TemperatureBreachRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

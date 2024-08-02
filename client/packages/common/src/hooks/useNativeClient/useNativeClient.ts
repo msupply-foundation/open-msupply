@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useMutation } from 'react-query';
-import { uniqWith } from 'lodash';
+import { uniqWith } from '@common/utils';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { Capacitor } from '@capacitor/core';
 import {
@@ -117,16 +117,22 @@ export const useNativeClient = ({
     // Currently only supported on native platforms via capacitor
     if (!Capacitor.isNativePlatform()) return;
 
-    const result = await KeepAwake.isSupported();
-    if (result.isSupported) await KeepAwake.allowSleep();
+    try {
+      const result = await KeepAwake.isSupported();
+      if (result.isSupported) await KeepAwake.allowSleep();
+      // If KeepAwake has errors, just swallow them
+    } catch {}
   };
 
   const keepAwake = async () => {
     // Currently only supported on native platforms via capacitor
     if (!Capacitor.isNativePlatform()) return;
 
-    const result = await KeepAwake.isSupported();
-    if (result.isSupported) await KeepAwake.keepAwake();
+    try {
+      const result = await KeepAwake.isSupported();
+      if (result.isSupported) await KeepAwake.keepAwake();
+      // If KeepAwake has errors, just swallow them
+    } catch {}
   };
 
   const saveFile = async (fileInfo: FileInfo) => {
