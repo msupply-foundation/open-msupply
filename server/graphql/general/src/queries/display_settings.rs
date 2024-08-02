@@ -33,7 +33,8 @@ fn match_node(
     hash: String,
 ) -> Option<DisplaySettingNode> {
     match node {
-        Some(setting) => match setting.hash == hash || setting.value.is_empty() {
+        // If the value is empty we need to return a value to indicate that the value should be reset
+        Some(setting) => match setting.hash == hash {
             true => None,
             false => Some(DisplaySettingNode::from_domain(setting)),
         },
