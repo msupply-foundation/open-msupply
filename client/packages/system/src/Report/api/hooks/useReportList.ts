@@ -11,8 +11,8 @@ import { LIST, REPORT } from './keys';
 
 export type ReportListParams = {
   filterBy: ReportFilterInput | null;
-  sortBy: SortBy<ReportRowFragment>;
-  offset: number;
+  sortBy?: SortBy<ReportRowFragment>;
+  offset?: number;
 };
 
 export const useReportList = ({
@@ -39,15 +39,12 @@ export const useReportList = ({
     nodes: ReportRowFragment[];
     totalCount: number;
   }> => {
-    const filter =
-      context || subContext
-        ? {
-            context: context ? { equalTo: context } : null,
-            subContext: subContext ? { equalTo: subContext } : null,
-          }
-        : null;
     const query = await reportApi.reports({
-      filter: { ...filterBy, ...filter },
+      filter: {
+        ...filterBy,
+        ...(context ? { context: { equalTo: context } } : null),
+        ...(subContext ? { subContext: { equalTo: subContext } } : null),
+      },
       key: sortBy.key as ReportSortFieldInput,
       desc: sortBy.isDesc,
       storeId,
