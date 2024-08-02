@@ -141,8 +141,6 @@ export const DateUtils = {
     const days = differenceInDays(Date.now(), addMonths(date, months));
     return { months, days };
   },
-  differenceInMonths,
-  differenceInDays,
   startOfDay,
   startOfToday,
   endOfDay,
