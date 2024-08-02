@@ -37,7 +37,6 @@ impl<'a> MasterListNameJoinRepository<'a> {
         MasterListNameJoinRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list_name_join)
             .values(row)
@@ -48,25 +47,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
         Ok(())
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(master_list_name_join)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    pub async fn find_one_by_id(
-        &self,
-        record_id: &str,
-    ) -> Result<MasterListNameJoinRow, RepositoryError> {
-        let result = master_list_name_join
-            .filter(id.eq(record_id))
-            .first(self.connection.lock().connection())?;
-        Ok(result)
-    }
-
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         record_id: &str,
     ) -> Result<Option<MasterListNameJoinRow>, RepositoryError> {
@@ -87,27 +68,29 @@ impl<'a> MasterListNameJoinRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct MasterListNameJoinRowDelete(pub String);
 impl Delete for MasterListNameJoinRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListNameJoinRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        MasterListNameJoinRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            MasterListNameJoinRepository::new(con).find_one_by_id_option(&self.0),
+            MasterListNameJoinRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
 }
 
 impl Upsert for MasterListNameJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        MasterListNameJoinRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        MasterListNameJoinRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            MasterListNameJoinRepository::new(con).find_one_by_id_option(&self.id),
+            MasterListNameJoinRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

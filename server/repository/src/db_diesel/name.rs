@@ -7,15 +7,20 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{
+        apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
+    },
+    name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameLinkRow, NameType, Pagination, Sort, StringFilter,
+    EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameType, Pagination, Sort,
+    StringFilter,
 };
 
 use diesel::{
     dsl::{And, Eq, IntoBoxed, LeftJoin, On},
     helper_types::InnerJoin,
     prelude::*,
+    query_source::Alias,
 };
 use util::{constants::SYSTEM_NAME_CODES, inline_init};
 
@@ -24,6 +29,7 @@ pub struct Name {
     pub name_row: NameRow,
     pub name_store_join_row: Option<NameStoreJoinRow>,
     pub store_row: Option<StoreRow>,
+    pub properties: Option<String>,
 }
 
 #[derive(Clone, Default, PartialEq, Debug)]
@@ -33,7 +39,7 @@ pub struct NameFilter {
     pub code: Option<StringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
-    pub is_patient: Option<bool>,
+    pub is_donor: Option<bool>,
     pub is_store: Option<bool>,
     pub store_code: Option<StringFilter>,
     pub is_visible: Option<bool>,
@@ -45,6 +51,8 @@ pub struct NameFilter {
     pub address2: Option<StringFilter>,
     pub country: Option<StringFilter>,
     pub email: Option<StringFilter>,
+
+    pub code_or_name: Option<StringFilter>,
 }
 
 impl EqualFilter<NameType> {
@@ -68,8 +76,8 @@ pub type NameSort = Sort<NameSortField>;
 
 type NameAndNameStoreJoin = (
     NameRow,
-    (NameLinkRow, Option<NameStoreJoinRow>),
-    Option<StoreRow>,
+    (NameLinkRow, Option<NameStoreJoinRow>, Option<StoreRow>),
+    NameOmsFieldsRow,
 );
 
 pub struct NameRepository<'a> {
@@ -154,17 +162,20 @@ impl<'a> NameRepository<'a> {
 
     /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
     /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
-    /// but it's considered invisible in subseqent filters.
+    /// but it's considered invisible in subsequent filters.
     pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
         let mut query = name_dsl::name
             .inner_join(
-                name_link_dsl::name_link.left_join(
-                    name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_link_id
-                        .eq(name_link_dsl::id)
-                        .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
-                ),
+                name_link_dsl::name_link
+                    .left_join(
+                        name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_link_id
+                            .eq(name_link_dsl::id)
+                            .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
+                    )
+                    .left_join(store_dsl::store),
             )
-            .left_join(store_dsl::store)
+            .inner_join(name_oms_fields_alias)
+            .filter(name_dsl::type_.ne(NameType::Patient))
             .into_boxed();
 
         if let Some(f) = filter {
@@ -174,6 +185,7 @@ impl<'a> NameRepository<'a> {
                 code,
                 is_customer,
                 is_supplier,
+                is_donor,
                 is_store,
                 store_code,
                 is_visible,
@@ -184,8 +196,14 @@ impl<'a> NameRepository<'a> {
                 address2,
                 country,
                 email,
-                is_patient,
+                code_or_name,
             } = f;
+
+            // or filter need to be applied before and filters
+            if code_or_name.is_some() {
+                apply_string_filter!(query, code_or_name.clone(), name_dsl::code);
+                apply_string_or_filter!(query, code_or_name, name_dsl::name_);
+            }
 
             apply_equal_filter!(query, id, name_dsl::id);
             apply_string_filter!(query, code, name_dsl::code);
@@ -207,9 +225,8 @@ impl<'a> NameRepository<'a> {
                 query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
             }
 
-            query = match is_patient {
-                Some(true) => query.filter(name_dsl::type_.eq(NameType::Patient)),
-                Some(false) => query.filter(name_dsl::type_.ne(NameType::Patient)),
+            query = match is_donor {
+                Some(bool) => query.filter(name_dsl::is_donor.eq(bool)),
                 None => query,
             };
 
@@ -240,12 +257,13 @@ impl<'a> NameRepository<'a> {
 
 impl Name {
     pub fn from_join(
-        (name_row, (_name_link_row, name_store_join_row), store_row): NameAndNameStoreJoin,
+        (name_row, (_name_link_row, name_store_join_row, store_row), name_oms_fields): NameAndNameStoreJoin,
     ) -> Name {
         Name {
             name_row,
             name_store_join_row,
             store_row,
+            properties: name_oms_fields.properties,
         }
     }
 
@@ -267,9 +285,12 @@ type OnNameStoreJoinToNameLinkJoin =
 
 type BoxedNameQuery = IntoBoxed<
     'static,
-    LeftJoin<
-        InnerJoin<name::table, LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>>,
-        store::table,
+    InnerJoin<
+        InnerJoin<
+            name::table,
+            LeftJoin<LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>, store::table>,
+        >,
+        Alias<NameOmsFields>,
     >,
     DBType,
 >;
@@ -324,13 +345,13 @@ impl NameFilter {
         self
     }
 
-    pub fn is_patient(mut self, value: bool) -> Self {
-        self.is_patient = Some(value);
+    pub fn r#type(mut self, filter: EqualFilter<NameType>) -> Self {
+        self.r#type = Some(filter);
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<NameType>) -> Self {
-        self.r#type = Some(filter);
+    pub fn code_or_name(mut self, filter: StringFilter) -> Self {
+        self.code_or_name = Some(filter);
         self
     }
 }
@@ -348,10 +369,6 @@ impl Name {
             .as_ref()
             .map(|name_store_join_row| name_store_join_row.name_is_supplier)
             .unwrap_or(false)
-    }
-
-    pub fn is_patient(&self) -> bool {
-        self.name_row.r#type == NameType::Patient
     }
 
     pub fn is_visible(&self) -> bool {
@@ -372,15 +389,12 @@ impl Name {
 }
 
 impl NameType {
-    pub fn equal_to(&self) -> EqualFilter<NameType> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            equal_any_or_null: None,
-            is_null: None,
-        }
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 }
 
@@ -421,6 +435,7 @@ mod tests {
                 }),
                 name_store_join_row: None,
                 store_row: None,
+                properties: None,
             });
         }
         (rows, queries)
@@ -429,12 +444,12 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
-        let (_, mut storage_connection, _, _) =
+        let (_, storage_connection, _, _) =
             test_db::setup_all("test_name_query_repository", MockDataInserts::none()).await;
 
         let (rows, queries) = data();
         for row in rows {
-            NameRowRepository::new(&mut storage_connection)
+            NameRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
@@ -446,7 +461,7 @@ mod tests {
         // .count()
         assert_eq!(
             usize::try_from(
-                NameRepository::new(&mut storage_connection)
+                NameRepository::new(&storage_connection)
                     .count(store_id, None)
                     .unwrap()
             )
@@ -456,7 +471,7 @@ mod tests {
 
         // .query, no pagination (default)
         assert_eq!(
-            NameRepository::new(&mut storage_connection)
+            NameRepository::new(&storage_connection)
                 .query(store_id, Pagination::new(), None, None)
                 .unwrap()
                 .len(),
@@ -464,7 +479,7 @@ mod tests {
         );
 
         // .query, pagination (offset 10)
-        let result = NameRepository::new(&mut storage_connection)
+        let result = NameRepository::new(&storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -483,7 +498,7 @@ mod tests {
         );
 
         // .query, pagination (first 10)
-        let result = NameRepository::new(&mut storage_connection)
+        let result = NameRepository::new(&storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -498,7 +513,7 @@ mod tests {
         assert_eq!(*result.last().unwrap(), queries[9]);
 
         // .query, pagination (offset 150, first 90) <- more then records in table
-        let result = NameRepository::new(&mut storage_connection)
+        let result = NameRepository::new(&storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -667,7 +682,7 @@ mod tests {
         assert_eq!(result.len(), 1);
         assert_eq!(
             result.first().unwrap().name_row.id,
-            mock_test_name_query_store_2().name_id
+            mock_test_name_query_store_2().name_link_id
         );
 
         // Test is visible

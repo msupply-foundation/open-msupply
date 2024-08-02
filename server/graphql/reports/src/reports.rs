@@ -44,6 +44,7 @@ pub enum ReportContext {
     Repack,
     OutboundReturn,
     InboundReturn,
+    Report,
 }
 
 #[derive(InputObject, Clone)]
@@ -59,6 +60,11 @@ pub struct ReportFilterInput {
     pub name: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
     pub sub_context: Option<EqualFilterStringInput>,
+}
+
+#[derive(Union)]
+pub enum ReportResponse {
+    Report(ReportNode),
 }
 
 #[derive(Union)]
@@ -102,6 +108,26 @@ impl ReportNode {
             .clone()
             .map(|schema| FormSchemaNode { schema })
     }
+}
+
+pub fn report(ctx: &Context<'_>, store_id: String, id: String) -> Result<ReportResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::Report,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id, user.user_id)?;
+
+    let report = service_provider
+        .report_service
+        .get_report(&service_context, &id)
+        .map_err(StandardGraphqlError::from_repository_error)?;
+
+    Ok(ReportResponse::Report(ReportNode { row: report }))
 }
 
 pub fn reports(
@@ -179,6 +205,7 @@ impl ReportContext {
             ReportContext::Repack => ReportContextDomain::Repack,
             ReportContext::OutboundReturn => ReportContextDomain::OutboundReturn,
             ReportContext::InboundReturn => ReportContextDomain::InboundReturn,
+            ReportContext::Report => ReportContextDomain::Report,
         }
     }
 
@@ -195,6 +222,7 @@ impl ReportContext {
             ReportContextDomain::Repack => ReportContext::Repack,
             ReportContextDomain::OutboundReturn => ReportContext::OutboundReturn,
             ReportContextDomain::InboundReturn => ReportContext::InboundReturn,
+            ReportContextDomain::Report => ReportContext::Report,
         }
     }
 }

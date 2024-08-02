@@ -91,7 +91,7 @@ pub fn get_requisition_line_chart(
     if let Some(last) = consumption_history.last() {
         consumption_history.push(ConsumptionHistory {
             consumption: average_monthly_consumption as u32,
-            average_monthly_consumption: average_monthly_consumption as f64,
+            average_monthly_consumption,
             date: last_day_of_the_month(&date_with_months_offset(&last.date, 1)),
         });
     }
@@ -107,7 +107,7 @@ pub fn get_requisition_line_chart(
         available_stock_on_hand as u32,
         *expected_delivery_date,
         requested_quantity as u32,
-        average_monthly_consumption as f64,
+        average_monthly_consumption,
         stock_evolution_options,
     )?;
 
@@ -149,18 +149,17 @@ impl From<RepositoryError> for OutError {
 impl SuggestedQuantityCalculation {
     pub fn from_requisition_line(from: &RequisitionLine) -> Self {
         let threshold = if from.requisition_row.min_months_of_stock == 0.0 {
-            from.requisition_row.max_months_of_stock as f64
+            from.requisition_row.max_months_of_stock
         } else {
-            from.requisition_row.min_months_of_stock as f64
+            from.requisition_row.min_months_of_stock
         };
         SuggestedQuantityCalculation {
-            average_monthly_consumption: from.requisition_line_row.average_monthly_consumption
-                as f64,
+            average_monthly_consumption: from.requisition_line_row.average_monthly_consumption,
             stock_on_hand: from.requisition_line_row.available_stock_on_hand as u32,
-            minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
+            minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption
                 * threshold,
-            maximum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
-                * from.requisition_row.max_months_of_stock as f64,
+            maximum_stock_on_hand: from.requisition_line_row.average_monthly_consumption
+                * from.requisition_row.max_months_of_stock,
             suggested: from.requisition_line_row.suggested_quantity as u32,
         }
     }
@@ -244,7 +243,7 @@ mod test {
         fn store() -> StoreRow {
             inline_init(|s: &mut StoreRow| {
                 s.id = "store".to_string();
-                s.name_id = name().id;
+                s.name_link_id = name().id;
                 s.code = "n/a".to_string();
             })
         }
@@ -270,7 +269,7 @@ mod test {
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
                 );
-                r.average_monthly_consumption = 333;
+                r.average_monthly_consumption = 333.0;
             })
         }
 
@@ -278,24 +277,24 @@ mod test {
             let invoice_id = uuid();
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
-                    r.id = invoice_id.clone();
+                    r.id.clone_from(&invoice_id);
                     r.store_id = store().id;
                     r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
-                    r.invoice_id = invoice_id.clone();
+                    r.invoice_id.clone_from(&invoice_id);
                     r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
                     r.item_link_id = mock_item_a().id;
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
             })
         }
@@ -488,7 +487,7 @@ mod test {
         fn store() -> StoreRow {
             inline_init(|s: &mut StoreRow| {
                 s.id = "store".to_string();
-                s.name_id = name().id;
+                s.name_link_id = name().id;
                 s.code = "n/a".to_string();
             })
         }
@@ -514,9 +513,9 @@ mod test {
                         .and_hms_opt(12, 10, 11)
                         .unwrap(),
                 );
-                r.average_monthly_consumption = 25 * NUMBER_OF_DAYS_IN_A_MONTH as i32;
-                r.available_stock_on_hand = 30;
-                r.requested_quantity = 100;
+                r.average_monthly_consumption = 25.0 * NUMBER_OF_DAYS_IN_A_MONTH;
+                r.available_stock_on_hand = 30.0;
+                r.requested_quantity = 100.0;
             })
         }
 
@@ -524,24 +523,24 @@ mod test {
             let invoice_id = uuid();
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
-                    r.id = invoice_id.clone();
+                    r.id.clone_from(&invoice_id);
                     r.store_id = store().id;
                     r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
-                    r.invoice_id = invoice_id.clone();
+                    r.invoice_id.clone_from(&invoice_id);
                     r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
                     r.item_link_id = mock_item_a().id;
-                    r.pack_size = 1;
+                    r.pack_size = 1.0;
                 })];
             })
         }

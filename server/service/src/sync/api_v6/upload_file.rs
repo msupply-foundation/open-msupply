@@ -15,6 +15,7 @@ impl SyncApiV6 {
         let Self {
             sync_v5_settings,
             url,
+            sync_v6_version,
         } = self;
 
         let route = "upload_file";
@@ -33,6 +34,7 @@ impl SyncApiV6 {
         let json_request = SyncUploadFileRequestV6 {
             file_id: sync_file_reference_row.id.clone(),
             sync_v5_settings: sync_v5_settings.clone(),
+            sync_v6_version: *sync_v6_version,
         };
 
         let request = client.put(url.clone()).multipart(
@@ -45,7 +47,7 @@ impl SyncApiV6 {
         let error = match response_or_err(result).await {
             Ok(SyncUploadFileResponseV6::Data(data)) => return Ok(data),
             Ok(SyncUploadFileResponseV6::Error(error)) => error.into(),
-            Err(error) => error.into(),
+            Err(error) => error,
         };
 
         Err(error_with_url(error))

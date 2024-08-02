@@ -49,15 +49,15 @@ pub fn create_requisition_shipment(
                 fulfillments,
             )?;
 
-            InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+            InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
 
-            let invoice_line_repository = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_repository = InvoiceLineRowRepository::new(connection);
             for row in invoice_line_rows {
                 invoice_line_repository.upsert_one(&row)?;
             }
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceCreated,
                 Some(invoice_row.id.to_owned()),
                 None,
@@ -65,7 +65,7 @@ pub fn create_requisition_shipment(
             )?;
 
             // TODO use invoice service if it accepts ctx
-            let mut result = InvoiceRepository::new(&connection)
+            let mut result = InvoiceRepository::new(connection)
                 .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&invoice_row.id)))?;
 
             result.pop().ok_or(OutError::CreatedInvoiceDoesNotExist)

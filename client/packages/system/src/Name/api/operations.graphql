@@ -11,6 +11,20 @@ fragment NameRow on NameNode {
   }
 }
 
+fragment FacilityNameRow on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  isOnHold
+  name
+  store {
+    id
+    code
+  }
+  properties
+}
+
 fragment Name on NameNode {
   address1
   address2
@@ -34,6 +48,15 @@ fragment Name on NameNode {
     id
     code
   }
+  properties
+}
+
+fragment Property on PropertyNode {
+  id
+  key
+  name
+  allowedValues
+  valueType
 }
 
 query names(
@@ -60,6 +83,30 @@ query names(
   }
 }
 
+query facilities(
+  $storeId: String!
+  $key: NameSortFieldInput!
+  $desc: Boolean
+  $first: Int
+  $offset: Int
+  $filter: NameFilterInput
+) {
+  names(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...FacilityNameRow
+      }
+      totalCount
+    }
+  }
+}
+
 query nameById($storeId: String!, $nameId: String!) {
   names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
     ... on NameConnector {
@@ -68,6 +115,40 @@ query nameById($storeId: String!, $nameId: String!) {
         ...Name
       }
       totalCount
+    }
+  }
+}
+
+query nameProperties {
+  nameProperties {
+    ... on NamePropertyConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        remoteEditable
+        property {
+          ...Property
+        }
+      }
+    }
+  }
+}
+
+mutation updateNameProperties(
+  $storeId: String!
+  $input: UpdateNamePropertiesInput!
+) {
+  updateNameProperties(storeId: $storeId, input: $input) {
+    __typename
+    ... on NameNode {
+      ...Name
+    }
+    ... on UpdateNamePropertiesError {
+      error {
+        __typename
+        description
+      }
     }
   }
 }

@@ -15,8 +15,11 @@ use crate::{
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
-        api::SyncApiV5, api_v6::SiteStatusV6, synchroniser::integrate_and_translate_sync_buffer,
-        translations::ToSyncRecordTranslationType, CentralServerConfig,
+        api::{CommonSyncRecord, SyncApiV5},
+        api_v6::SiteStatusV6,
+        synchroniser::integrate_and_translate_sync_buffer,
+        translations::ToSyncRecordTranslationType,
+        CentralServerConfig,
     },
 };
 
@@ -29,6 +32,10 @@ use super::{
     translations::translate_changelogs_to_sync_records,
 };
 
+// See ../README.md for when to increment versions!
+static MIN_VERSION: u32 = 0;
+static MAX_VERSION: u32 = 1;
+
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(
     service_provider: &ServiceProvider,
@@ -37,6 +44,7 @@ pub async fn pull(
         batch_size,
         sync_v5_settings,
         is_initialised,
+        sync_v6_version,
     }: SyncPullRequestV6,
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -44,6 +52,15 @@ pub async fn pull(
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
     // Check credentials again mSupply central server
     let response = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -111,6 +128,7 @@ pub async fn push(
     SyncPushRequestV6 {
         batch,
         sync_v5_settings,
+        sync_v6_version,
     }: SyncPushRequestV6,
 ) -> Result<SyncPushSuccessV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -118,6 +136,15 @@ pub async fn push(
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
     // Check credentials again mSupply central server
     let response = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -145,14 +172,19 @@ pub async fn push(
     } = batch;
 
     let ctx = service_provider.basic_context()?;
-    let repo = SyncBufferRowRepository::new(&ctx.connection);
 
     let records_in_this_batch = records.len() as u64;
-    for SyncRecordV6 { record, .. } in records {
-        let buffer_row = record.to_buffer_row(Some(response.site_id))?;
 
-        repo.upsert_one(&buffer_row)?;
-    }
+    let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+        records.into_iter().map(|r| r.record).collect(),
+        Some(response.site_id),
+    )?;
+
+    ctx.connection
+        .transaction_sync(|t_con| {
+            SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
+        })
+        .map_err(|e| e.to_inner_error())?;
 
     if is_last_batch {
         spawn_integration(service_provider, response.site_id);
@@ -164,12 +196,23 @@ pub async fn push(
 }
 
 pub async fn get_site_status(
-    SiteStatusRequestV6 { sync_v5_settings }: SiteStatusRequestV6,
+    SiteStatusRequestV6 {
+        sync_v5_settings,
+        sync_v6_version,
+    }: SiteStatusRequestV6,
 ) -> Result<SiteStatusV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
+    }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
     }
 
     let response = SyncApiV5::new(sync_v5_settings)
@@ -183,7 +226,7 @@ pub async fn get_site_status(
     Ok(SiteStatusV6 { is_integrating })
 }
 
-fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) -> () {
+fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) {
     tokio::spawn(async move {
         let ctx = match service_provider.basic_context() {
             Ok(ctx) => ctx,
@@ -195,7 +238,7 @@ fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) -> ()
 
         set_integrating(site_id, true);
 
-        match integrate_and_translate_sync_buffer(&ctx.connection, true, None, Some(site_id)) {
+        match integrate_and_translate_sync_buffer(&ctx.connection, None, Some(site_id)) {
             Ok(_) => {
                 log::info!("Integration complete for site {}", site_id);
             }
@@ -216,6 +259,7 @@ pub async fn download_file(
         table_name,
         record_id,
         sync_v5_settings,
+        sync_v6_version,
     }: SyncDownloadFileRequestV6,
 ) -> Result<(actix_files::NamedFile, StaticFile), SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -230,6 +274,15 @@ pub async fn download_file(
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
     // Check credentials again mSupply central server
     let _ = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -258,6 +311,7 @@ pub async fn upload_file(
     SyncUploadFileRequestV6 {
         file_id,
         sync_v5_settings,
+        sync_v6_version,
     }: SyncUploadFileRequestV6,
     file_part: TempFile,
 ) -> Result<(), SyncParsedErrorV6> {
@@ -268,6 +322,15 @@ pub async fn upload_file(
     if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
+
+    if !is_sync_version_compatible(sync_v6_version) {
+        return Err(Error::SyncVersionMismatch(
+            MIN_VERSION,
+            MAX_VERSION,
+            sync_v6_version,
+        ));
+    }
+
     // Check credentials again mSupply central server
     let _ = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
@@ -317,4 +380,8 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
     } else {
         sites_being_integrated.retain(|id| *id != site_id);
     }
+}
+
+fn is_sync_version_compatible(sync_v6_version: u32) -> bool {
+    MIN_VERSION <= sync_v6_version && sync_v6_version <= MAX_VERSION
 }

@@ -119,7 +119,7 @@ impl LoginService {
             Ok(user_info) => {
                 let service_ctx =
                     service_provider.context("".to_string(), user_info.user.id.clone())?;
-                username = user_info.user.name.clone();
+                username.clone_from(&user_info.user.name);
                 LoginService::update_user(&service_ctx, &input.password, user_info)
                     .map_err(LoginError::UpdateUserError)?;
             }
@@ -163,7 +163,7 @@ impl LoginService {
             Err(err) => return Err(err.into()),
         };
 
-        service_ctx.user_id = user_account.id.clone();
+        service_ctx.user_id.clone_from(&user_account.id);
 
         activity_log_entry(
             &service_ctx,
@@ -389,9 +389,7 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
                 output.insert(PermissionType::StocktakeMutate);
             }
             // inventory adjustments
-            Permissions::EnterInventoryAdjustments
-            | Permissions::EditInventoryAdjustments
-            | Permissions::FinaliseInventoryAdjustments => {
+            Permissions::EnterInventoryAdjustments => {
                 output.insert(PermissionType::InventoryAdjustmentMutate);
             }
             // customer invoices
@@ -429,9 +427,11 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             // requisitions
             Permissions::ViewRequisitions => {
                 output.insert(PermissionType::RequisitionQuery);
+                output.insert(PermissionType::RnrFormQuery);
             }
             Permissions::CreateAndEditRequisitions => {
                 output.insert(PermissionType::RequisitionMutate);
+                output.insert(PermissionType::RnrFormMutate);
             }
             Permissions::ConfirmInternalOrderSent => {
                 output.insert(PermissionType::RequisitionSend);
@@ -474,6 +474,12 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionTyp
             }
             Permissions::SetupAssets => {
                 output.insert(PermissionType::AssetCatalogueItemMutate);
+            }
+            Permissions::EditCustomerSupplierManufacturerNames => {
+                output.insert(PermissionType::NamePropertiesMutate);
+            }
+            Permissions::EditCentralData => {
+                output.insert(PermissionType::EditCentralData);
             }
             _ => continue,
         }
@@ -619,7 +625,7 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Ok(_));
+            assert!(result.is_ok());
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {

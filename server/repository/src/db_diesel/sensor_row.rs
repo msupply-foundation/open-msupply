@@ -4,6 +4,7 @@ use super::{
 };
 
 use crate::{repository_error::RepositoryError, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -89,28 +90,30 @@ impl<'a> SensorRowRepository<'a> {
         SensorRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
-    pub fn _upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &SensorRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(sensor_dsl::sensor)
             .values(row)
             .on_conflict(sensor_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        Ok(())
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(sensor_dsl::sensor)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
+    fn insert_changelog(
+        &self,
+        row: &SensorRow,
+        action: RowActionType,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Sensor,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            name_link_id: None,
+        };
 
-    pub fn upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        Ok(())
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SensorRow>, RepositoryError> {
@@ -129,8 +132,9 @@ impl<'a> SensorRowRepository<'a> {
 }
 
 impl Upsert for SensorRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        SensorRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let change_log_id = SensorRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(change_log_id))
     }
 
     // Test only

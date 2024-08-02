@@ -31,6 +31,7 @@ pub enum Resource {
     RouteMe,
     // name
     QueryName,
+    MutateNameProperties,
     // location
     QueryLocation,
     MutateLocation,
@@ -109,6 +110,10 @@ pub enum Resource {
     MutateProgram,
     MutateEncounter,
     MutateContactTrace,
+    // RnR
+    QueryRnRForms,
+    MutateRnRForms,
+
     SyncInfo,
     ManualSync,
     QueryInventoryAdjustmentReasons,
@@ -118,6 +123,13 @@ pub enum Resource {
     MutateAsset,
     MutateAssetCatalogueItem,
     QueryAsset,
+    // demographic
+    QueryDemographic,
+    MutateDemographic,
+    // vaccine course
+    MutateVaccineCourse,
+    QueryVaccineCourse,
+    MutateImmunisationProgram,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -132,6 +144,10 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     // name
     map.insert(Resource::QueryName, PermissionDSL::HasStoreAccess);
+    map.insert(
+        Resource::MutateNameProperties,
+        PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+    );
 
     // location
     map.insert(Resource::QueryLocation, PermissionDSL::HasStoreAccess);
@@ -316,6 +332,21 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(PermissionType::RequisitionSend),
         ]),
     );
+    // r&r form
+    map.insert(
+        Resource::QueryRnRForms,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RnrFormQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateRnRForms,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RnrFormMutate),
+        ]),
+    );
     // invoice
     map.insert(
         Resource::QueryInvoice,
@@ -451,9 +482,12 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryProgram,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![
+                PermissionDSL::HasStoreAccess,
+                PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+            ]),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
         ]),
     );
     map.insert(
@@ -523,6 +557,26 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::QueryAsset,
         PermissionDSL::HasPermission(PermissionType::AssetQuery),
+    );
+    map.insert(
+        Resource::QueryDemographic,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateDemographic,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::MutateVaccineCourse,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::MutateImmunisationProgram,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::QueryVaccineCourse,
+        PermissionDSL::NoPermissionRequired,
     );
 
     map
@@ -634,7 +688,7 @@ pub struct ResourceAccessRequest {
 }
 
 fn validate_resource_permissions(
-    user_id: &str,
+    _user_id: &str,
     user_permissions: &[UserPermissionRow],
     resource_request: &ResourceAccessRequest,
     required_permissions: &PermissionDSL,
@@ -649,7 +703,7 @@ fn validate_resource_permissions(
     //     user_permissions, resource_permission
     // );
 
-    Ok(match required_permissions {
+    match required_permissions {
         PermissionDSL::HasPermission(permission) => {
             if user_permissions.iter().any(|p| &p.permission == permission) {
                 return Ok(());
@@ -697,22 +751,20 @@ fn validate_resource_permissions(
         }
         PermissionDSL::And(children) => {
             for child in children {
-                if let Err(err) = validate_resource_permissions(
-                    user_id,
+                validate_resource_permissions(
+                    _user_id,
                     user_permissions,
                     resource_request,
                     child,
                     dynamic_permissions,
-                ) {
-                    return Err(err);
-                }
+                )?
             }
         }
         PermissionDSL::Any(children) => {
             let mut found_any = false;
             for child in children {
                 if validate_resource_permissions(
-                    user_id,
+                    _user_id,
                     user_permissions,
                     resource_request,
                     child,
@@ -730,7 +782,8 @@ fn validate_resource_permissions(
             }
             return Ok(());
         }
-    })
+    };
+    Ok(())
 }
 
 pub trait AuthServiceTrait: Send + Sync {
@@ -747,11 +800,17 @@ pub struct AuthService {
     pub resource_permissions: HashMap<Resource, PermissionDSL>,
 }
 
-impl AuthService {
-    pub fn new() -> Self {
+impl Default for AuthService {
+    fn default() -> Self {
         AuthService {
             resource_permissions: all_permissions(),
         }
+    }
+}
+
+impl AuthService {
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
@@ -1253,7 +1312,7 @@ mod permission_validation_test {
         fn store() -> StoreRow {
             inline_init(|s: &mut StoreRow| {
                 s.id = "store".to_string();
-                s.name_id = name().id;
+                s.name_link_id = name().id;
                 s.code = "n/a".to_string();
             })
         }

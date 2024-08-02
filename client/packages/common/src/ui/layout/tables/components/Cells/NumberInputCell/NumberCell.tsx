@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import { useFormatNumber } from '@common/intl';
 import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
@@ -16,6 +16,7 @@ export const NumberCell = <T extends RecordWithId>({
   defaultValue?: string | number;
 }) => {
   const value = column.accessor({ rowData }) as number;
+  const hasMoreThanTwoDp = (value * 100) % 1 !== 0;
   const formattedValue = useFormatNumber().round(value, 2);
 
   const displayValue =
@@ -30,16 +31,18 @@ export const NumberCell = <T extends RecordWithId>({
         padding: '4px 8px',
       }}
     >
-      <Typography
-        style={{
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          textAlign: 'right',
-          fontSize: 'inherit',
-        }}
-      >
-        {displayValue}
-      </Typography>
+      <Tooltip title={value.toString()}>
+        <Typography
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            textAlign: 'right',
+            fontSize: 'inherit',
+          }}
+        >
+          {!!hasMoreThanTwoDp ? `${displayValue}...` : displayValue}
+        </Typography>
+      </Tooltip>
     </Box>
   );
 };

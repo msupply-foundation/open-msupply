@@ -1,8 +1,9 @@
 use crate::{
+    check_location_exists,
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_location_exists, check_pack_size,
-        validate::{check_item_exists, check_line_does_not_exist},
+        stock_in_line::check_pack_size,
+        validate::{check_item_exists, check_line_exists, check_number_of_packs},
     },
 };
 use repository::{InvoiceRow, ItemRow, StorageConnection};
@@ -15,22 +16,19 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow), InsertStockInLineError> {
     use InsertStockInLineError::*;
-
-    if !check_line_does_not_exist(connection, &input.id)? {
+    if (check_line_exists(connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
     if !check_pack_size(Some(input.pack_size)) {
         return Err(PackSizeBelowOne);
     }
     if !check_number_of_packs(Some(input.number_of_packs)) {
-        return Err(NumberOfPacksBelowOne);
+        return Err(NumberOfPacksBelowZero);
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
-    if let Some(location) = &input.location {
-        if !check_location_exists(&location.value, connection)? {
-            return Err(LocationDoesNotExist);
-        }
+    if !check_location_exists(connection, store_id, &input.location)? {
+        return Err(LocationDoesNotExist);
     }
 
     let invoice =
@@ -49,13 +47,4 @@ pub fn validate(
     // TODO: LocationDoesNotBelongToCurrentStore
 
     Ok((item, invoice))
-}
-
-pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
-    if let Some(number_of_packs) = number_of_packs_option {
-        if number_of_packs < 1.0 {
-            return false;
-        }
-    }
-    true
 }

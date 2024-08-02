@@ -29,16 +29,20 @@ impl UserStoreNode {
         &self.user_store.store_row.code
     }
 
+    pub async fn name_id(&self) -> &str {
+        &self.user_store.store_row.name_link_id
+    }
+
     pub async fn name(&self, ctx: &Context<'_>) -> Result<String> {
         let loader = ctx.get_loader::<DataLoader<NameRowLoader>>();
 
         let name_row = loader
-            .load_one(self.user_store.store_row.name_id.clone())
+            .load_one(self.user_store.store_row.name_link_id.clone())
             .await?
             .ok_or(
                 StandardGraphqlError::InternalError(format!(
                     "Cannot find name ({}) for store ({})",
-                    self.user_store.store_row.name_id, self.user_store.store_row.id
+                    self.user_store.store_row.name_link_id, self.user_store.store_row.id
                 ))
                 .extend(),
             )?;
@@ -76,6 +80,10 @@ impl UserStoreNode {
             Some(home_currency) => Ok(Some(home_currency.currency_row.code)),
             None => Ok(None),
         }
+    }
+
+    pub async fn is_disabled(&self) -> bool {
+        self.user_store.store_row.is_disabled
     }
 }
 

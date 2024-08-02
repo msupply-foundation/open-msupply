@@ -1,9 +1,8 @@
 import * as Types from '@openmsupply-client/common';
 
-import { GraphQLClient } from 'graphql-request';
-import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
+import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
-import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type TemperatureBreachFragment = { __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, durationMilliseconds: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, comment?: string | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', code: string, name: string } | null };
 
 export type Temperature_BreachesQueryVariables = Types.Exact<{
@@ -74,53 +73,19 @@ export const UpdateTemperatureBreachDocument = gql`
 }
     `;
 
-export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
+export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
 
-const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType) => action();
+const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationType, _variables) => action();
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
     temperature_breaches(variables: Temperature_BreachesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<Temperature_BreachesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<Temperature_BreachesQuery>(Temperature_BreachesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'temperature_breaches', 'query');
+      return withWrapper((wrappedRequestHeaders) => client.request<Temperature_BreachesQuery>(Temperature_BreachesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'temperature_breaches', 'query', variables);
     },
     updateTemperatureBreach(variables: UpdateTemperatureBreachMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateTemperatureBreachMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateTemperatureBreachMutation>(UpdateTemperatureBreachDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateTemperatureBreach', 'mutation');
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateTemperatureBreachMutation>(UpdateTemperatureBreachDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateTemperatureBreach', 'mutation', variables);
     }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockTemperatureBreachesQuery((req, res, ctx) => {
- *   const { page, sort, filter, storeId } = req.variables;
- *   return res(
- *     ctx.data({ temperatureBreaches })
- *   )
- * })
- */
-export const mockTemperatureBreachesQuery = (resolver: ResponseResolver<GraphQLRequest<Temperature_BreachesQueryVariables>, GraphQLContext<Temperature_BreachesQuery>, any>) =>
-  graphql.query<Temperature_BreachesQuery, Temperature_BreachesQueryVariables>(
-    'temperature_breaches',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockUpdateTemperatureBreachMutation((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
- *   return res(
- *     ctx.data({ updateTemperatureBreach })
- *   )
- * })
- */
-export const mockUpdateTemperatureBreachMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateTemperatureBreachMutationVariables>, GraphQLContext<UpdateTemperatureBreachMutation>, any>) =>
-  graphql.mutation<UpdateTemperatureBreachMutation, UpdateTemperatureBreachMutationVariables>(
-    'updateTemperatureBreach',
-    resolver
-  )

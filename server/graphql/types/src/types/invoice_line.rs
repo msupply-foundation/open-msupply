@@ -1,9 +1,9 @@
-use super::{ItemNode, LocationNode, PricingNode, StockLineNode};
+use super::{ItemNode, LocationNode, PricingNode, ReturnReasonNode, StockLineNode};
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
-    loader::{ItemLoader, LocationByIdLoader, StockLineByIdLoader},
+    loader::{ItemLoader, LocationByIdLoader, ReturnReasonLoader, StockLineByIdLoader},
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
@@ -87,7 +87,7 @@ impl InvoiceLineNode {
         )
     }
     // Quantity
-    pub async fn pack_size(&self) -> i32 {
+    pub async fn pack_size(&self) -> f64 {
         self.row().pack_size
     }
     pub async fn number_of_packs(&self) -> f64 {
@@ -163,6 +163,19 @@ impl InvoiceLineNode {
     }
     pub async fn return_reason_id(&self) -> &Option<String> {
         &self.row().return_reason_id
+    }
+
+    pub async fn return_reason(&self, ctx: &Context<'_>) -> Result<Option<ReturnReasonNode>> {
+        let loader = ctx.get_loader::<DataLoader<ReturnReasonLoader>>();
+
+        let return_reason_id = match &self.row().return_reason_id {
+            Some(return_reason_id) => return_reason_id,
+            None => return Ok(None),
+        };
+
+        let result = loader.load_one(return_reason_id.clone()).await?;
+
+        Ok(result.map(ReturnReasonNode::from_domain))
     }
 }
 
@@ -261,7 +274,7 @@ mod test {
                             r.item_link_id = "line_item_id".to_string();
                             r.item_name = "line_item_name".to_string();
                             r.item_code = "line_item_code".to_string();
-                            r.pack_size = 1;
+                            r.pack_size = 1.0;
                             r.number_of_packs = 2.0;
                             r.batch = Some("line_batch".to_string());
                             r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
@@ -288,7 +301,7 @@ mod test {
                 "itemId": "line_item_id",
                 "itemName": "line_item_name",
                 "itemCode": "line_item_code",
-                "packSize": 1,
+                "packSize": 1.0,
                 "numberOfPacks": 2.0,
                 "batch": "line_batch",
                 "expiryDate": "2021-01-01",

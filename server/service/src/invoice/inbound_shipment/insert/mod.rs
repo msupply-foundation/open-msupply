@@ -147,8 +147,8 @@ mod test {
             service.insert_inbound_shipment(
                 &context,
                 inline_init(|r: &mut InsertInboundShipment| {
-                    r.id = mock_inbound_shipment_c().id.clone();
-                    r.other_party_id = mock_name_a().id.clone();
+                    r.id.clone_from(&mock_inbound_shipment_c().id);
+                    r.other_party_id.clone_from(&mock_name_a().id);
                 })
             ),
             Err(ServiceError::InvoiceAlreadyExists)
@@ -236,6 +236,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("new_id")
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -262,6 +263,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("test_on_hold")
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -279,13 +281,15 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "test_name_store_id_linked".to_string();
-                    r.other_party_id = mock_name_linked_to_store_join().name_link_id.clone();
+                    r.other_party_id
+                        .clone_from(&mock_name_linked_to_store_join().name_link_id);
                 }),
             )
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("test_name_store_id_linked")
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -302,13 +306,15 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertInboundShipment| {
                     r.id = "test_name_store_id_not_linked".to_string();
-                    r.other_party_id = mock_name_not_linked_to_store().id.clone();
+                    r.other_party_id
+                        .clone_from(&mock_name_not_linked_to_store().id);
                 }),
             )
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("test_name_store_id_not_linked")
+            .unwrap()
             .unwrap();
 
         assert_eq!(invoice.name_store_id, None);

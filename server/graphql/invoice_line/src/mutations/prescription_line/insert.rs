@@ -71,7 +71,7 @@ pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<InsertRes
 
 #[derive(Interface)]
 #[graphql(name = "InsertPrescriptionLineErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum InsertErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),
@@ -133,10 +133,9 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         // Standard Graphql Errors
         NotThisStoreInvoice
-        | NoInvoiceType
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
-        | NumberOfPacksBelowOne => StandardGraphqlError::BadUserInput(formatted_error),
+        | NumberOfPacksBelowZero => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }
@@ -157,13 +156,20 @@ impl InsertInput {
 
         ServiceInput {
             id,
-            r#type: Some(StockOutType::Prescription),
+            r#type: StockOutType::Prescription,
             invoice_id,
             stock_line_id,
             number_of_packs,
+            note,
+            // Default
             total_before_tax: None,
             tax_percentage: None,
-            note,
+            location_id: None,
+            batch: None,
+            pack_size: None,
+            expiry_date: None,
+            cost_price_per_pack: None,
+            sell_price_per_pack: None,
         }
     }
 }
@@ -455,8 +461,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
+        //NumberOfPacksBelowZero
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -524,13 +530,19 @@ mod test {
                 input,
                 ServiceInput {
                     id: "new id".to_string(),
-                    r#type: Some(StockOutType::Prescription),
+                    r#type: StockOutType::Prescription,
                     invoice_id: "invoice input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: None,
                     note: None,
                     tax_percentage: None,
+                    location_id: None,
+                    batch: None,
+                    pack_size: None,
+                    expiry_date: None,
+                    cost_price_per_pack: None,
+                    sell_price_per_pack: None
                 }
             );
             Ok(InvoiceLine {

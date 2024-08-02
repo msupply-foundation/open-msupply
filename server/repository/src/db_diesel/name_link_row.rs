@@ -28,7 +28,6 @@ impl<'a> NameLinkRowRepository<'a> {
         NameLinkRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_link)
             .values(row)
@@ -39,28 +38,11 @@ impl<'a> NameLinkRowRepository<'a> {
         Ok(())
     }
 
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(name_link)
-            .values(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(feature = "postgres")]
     pub fn insert_one_or_ignore(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_link)
             .values(row)
             .on_conflict(name_link::id)
             .do_nothing()
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn insert_one_or_ignore(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
-        diesel::insert_or_ignore_into(name_link)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -92,8 +74,9 @@ impl<'a> NameLinkRowRepository<'a> {
 }
 
 impl Upsert for NameLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameLinkRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        NameLinkRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

@@ -11,7 +11,6 @@ pub struct AssetCatalogueItemLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for AssetCatalogueItemLoader {
     type Value = AssetCatalogueItemRow;
     type Error = RepositoryError;

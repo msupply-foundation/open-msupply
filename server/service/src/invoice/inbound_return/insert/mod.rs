@@ -70,7 +70,7 @@ pub fn insert_inbound_return(
                 other_party,
             )?;
 
-            InvoiceRowRepository::new(&connection).upsert_one(&inbound_return)?;
+            InvoiceRowRepository::new(connection).upsert_one(&inbound_return)?;
 
             for line in insert_stock_in_lines {
                 insert_stock_in_line(ctx, line.clone()).map_err(|error| {
@@ -91,7 +91,7 @@ pub fn insert_inbound_return(
             }
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceCreated,
                 Some(inbound_return.id.to_owned()),
                 None,
@@ -99,7 +99,7 @@ pub fn insert_inbound_return(
             )?;
 
             get_invoice(ctx, None, &inbound_return.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -270,7 +270,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertInboundReturn| {
                     r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id.clone();
+                    r.other_party_id.clone_from(&not_visible().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotVisible)
@@ -282,7 +282,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertInboundReturn| {
                     r.id = "new_id".to_string();
-                    r.other_party_id = not_a_customer().id.clone();
+                    r.other_party_id.clone_from(&not_a_customer().id);
                 })
             ),
             Err(ServiceError::OtherPartyNotACustomer)
@@ -320,7 +320,7 @@ mod test {
                         id: "new_line_id".to_string(),
                         item_id: mock_item_a().id,
                         number_of_packs: 1.0,
-                        pack_size: 1,
+                        pack_size: 1.0,
                         reason_id: Some("does_not_exist".to_string()),
                         ..Default::default()
                     }],
@@ -383,7 +383,7 @@ mod test {
                             reason_id: Some(return_reason().id),
                             number_of_packs: 1.0,
                             item_id: mock_item_a().id,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             ..Default::default()
                         },
                         InboundReturnLineInput {
@@ -391,7 +391,7 @@ mod test {
                             reason_id: Some(return_reason().id),
                             number_of_packs: 0.0,
                             item_id: mock_item_b().id,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             ..Default::default()
                         },
                     ];
@@ -401,6 +401,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("new_inbound_return_id")
+            .unwrap()
             .unwrap();
 
         assert_eq!(invoice.id, "new_inbound_return_id");

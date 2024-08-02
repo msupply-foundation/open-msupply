@@ -6,8 +6,8 @@ use crate::item_stats::{get_item_stats, ItemStatsFilter};
 use crate::service_provider::ServiceContext;
 
 pub struct GenerateSuggestedQuantity {
-    pub average_monthly_consumption: i32,
-    pub available_stock_on_hand: i32,
+    pub average_monthly_consumption: f64,
+    pub available_stock_on_hand: f64,
     pub min_months_of_stock: f64,
     pub max_months_of_stock: f64,
 }
@@ -19,11 +19,11 @@ pub fn generate_suggested_quantity(
         min_months_of_stock,
         max_months_of_stock,
     }: GenerateSuggestedQuantity,
-) -> i32 {
-    if average_monthly_consumption == 0 {
-        return 0;
+) -> f64 {
+    if average_monthly_consumption == 0.0 {
+        return 0.0;
     }
-    let months_of_stock = available_stock_on_hand as f64 / average_monthly_consumption as f64;
+    let months_of_stock = available_stock_on_hand / average_monthly_consumption;
 
     let default_min_months_of_stock = if min_months_of_stock == 0.0 {
         max_months_of_stock
@@ -32,10 +32,10 @@ pub fn generate_suggested_quantity(
     };
 
     if max_months_of_stock == 0.0 || (months_of_stock > default_min_months_of_stock) {
-        return 0;
+        return 0.0;
     }
 
-    ((max_months_of_stock - months_of_stock) * average_monthly_consumption as f64) as i32
+    (max_months_of_stock - months_of_stock) * average_monthly_consumption
 }
 
 pub fn generate_requisition_lines(
@@ -54,8 +54,8 @@ pub fn generate_requisition_lines(
     let result = item_stats_rows
         .into_iter()
         .map(|item_stats| {
-            let average_monthly_consumption = item_stats.average_monthly_consumption as i32;
-            let available_stock_on_hand = item_stats.available_stock_on_hand as i32;
+            let average_monthly_consumption = item_stats.average_monthly_consumption;
+            let available_stock_on_hand = item_stats.available_stock_on_hand;
             let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
                 average_monthly_consumption,
                 available_stock_on_hand,
@@ -74,9 +74,9 @@ pub fn generate_requisition_lines(
                 snapshot_datetime: Some(Utc::now().naive_utc()),
                 // Default
                 comment: None,
-                supply_quantity: 0,
-                requested_quantity: 0,
-                approved_quantity: 0,
+                supply_quantity: 0.0,
+                requested_quantity: 0.0,
+                approved_quantity: 0.0,
                 approval_comment: None,
             }
         })

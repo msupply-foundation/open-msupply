@@ -57,7 +57,7 @@ impl StandardGraphqlError {
         StandardGraphqlError::from(error).extend()
     }
 
-    pub fn from_str(str_slice: &str) -> async_graphql::Error {
+    pub fn from_str_slice(str_slice: &str) -> async_graphql::Error {
         StandardGraphqlError::InternalError(str_slice.to_string()).extend()
     }
 
@@ -94,8 +94,8 @@ pub fn validate_auth(
                     msg,
                     required_permissions,
                 } => StandardGraphqlError::Forbidden(format!(
-                    "{}, Required permissions: {:?}",
-                    msg, required_permissions
+                    "{}, Required permissions: {:?}, Store: {:?}",
+                    msg, required_permissions, access_request.store_id
                 )),
             },
             AuthError::InternalError(err) => StandardGraphqlError::InternalError(err),

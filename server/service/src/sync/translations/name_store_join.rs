@@ -1,7 +1,7 @@
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
     NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete,
-    StorageConnection, StoreRowRepository, SyncBufferRow,
+    StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -71,13 +71,13 @@ impl SyncTranslation for NameStoreJoinTranslation {
             }
         };
 
-        if let Some(store) = StoreRowRepository::new(connection)
-            .find_one_by_id(&data.store_id)
-            .unwrap_or(None)
+        if let Some(store) = StoreRepository::new(connection)
+            .query_by_filter(StoreFilter::new().id(EqualFilter::equal_to(&data.store_id)))?
+            .pop()
         {
             // if the name_store_join is referencing itself, then exclude it
             // this is an invalid configuration which shouldn't be possible.. but is
-            if store.name_id == data.name_id {
+            if store.name_row.id == data.name_id {
                 return Ok(PullTranslateResult::Ignored(
                     "Name store join references itself".to_string(),
                 ));

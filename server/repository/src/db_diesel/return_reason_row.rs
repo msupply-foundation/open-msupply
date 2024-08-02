@@ -12,22 +12,12 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = return_reason)]
 pub struct ReturnReasonRow {
     pub id: String,
     pub is_active: bool,
     pub reason: String,
-}
-
-impl Default for ReturnReasonRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            is_active: false,
-            reason: Default::default(),
-        }
-    }
 }
 
 pub struct ReturnReasonRowRepository<'a> {
@@ -39,21 +29,12 @@ impl<'a> ReturnReasonRowRepository<'a> {
         ReturnReasonRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
         diesel::insert_into(return_reason_dsl::return_reason)
             .values(row)
             .on_conflict(return_reason_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(return_reason_dsl::return_reason)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -75,8 +56,9 @@ impl<'a> ReturnReasonRowRepository<'a> {
 }
 
 impl Upsert for ReturnReasonRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ReturnReasonRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ReturnReasonRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

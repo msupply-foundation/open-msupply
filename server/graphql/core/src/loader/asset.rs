@@ -15,7 +15,6 @@ pub struct AssetByLocationLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for AssetByLocationLoader {
     type Value = Vec<Asset>;
     type Error = RepositoryError;
@@ -46,7 +45,7 @@ impl Loader<String> for AssetByLocationLoader {
                 .unwrap_or(&"".to_string())
                 .to_owned();
 
-            let list = map.entry(location_id).or_insert_with(Vec::<Asset>::new);
+            let list = map.entry(location_id).or_default();
             list.push(asset);
         }
 

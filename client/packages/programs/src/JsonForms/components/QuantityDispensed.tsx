@@ -17,7 +17,7 @@ import {
   DefaultFormRowSx,
   FORM_LABEL_WIDTH,
 } from '../common';
-import { get as extractProperty } from 'lodash';
+import { extractProperty } from '@common/utils';
 import { z } from 'zod';
 
 const Options = z

@@ -45,7 +45,7 @@ impl ReturnReasonConnector {
             nodes: return_reasons
                 .rows
                 .into_iter()
-                .map(|return_reason| ReturnReasonNode::from_domain(return_reason))
+                .map(ReturnReasonNode::from_domain)
                 .collect(),
         }
     }

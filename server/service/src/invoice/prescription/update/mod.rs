@@ -39,10 +39,7 @@ pub enum UpdatePrescriptionError {
     NotAPrescriptionInvoice,
     NotThisStoreInvoice,
     ClinicianDoesNotExist,
-    // Name validation
-    OtherPartyDoesNotExist,
-    OtherPartyNotVisible,
-    OtherPartyNotAPatient,
+    PatientDoesNotExist,
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
@@ -139,7 +136,7 @@ mod test {
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
     };
-    use util::{assert_matches, inline_edit, inline_init};
+    use util::{inline_edit, inline_init};
 
     use crate::{
         invoice::prescription::{UpdatePrescription, UpdatePrescriptionStatus},
@@ -326,10 +323,11 @@ mod test {
 
         let result = service.update_prescription(&context, get_update());
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
 
         let updated_record = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&prescription().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -388,6 +386,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&prescription().id)
+            .unwrap()
             .unwrap();
         let invoice_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id(&invoice.id)

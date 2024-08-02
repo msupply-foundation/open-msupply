@@ -44,7 +44,7 @@ joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
 #[cfg(not(feature = "postgres"))]
-sql_function!(
+define_sql_function!(
     fn last_insert_rowid() -> BigInt
 );
 
@@ -89,11 +89,18 @@ pub enum ChangelogTableName {
     AssetCatalogueItem,
     AssetCatalogueItemProperty,
     AssetCatalogueProperty,
+    AssetInternalLocation,
     #[default]
     SyncFileReference,
     Asset,
     AssetLog,
     AssetLogReason,
+    AssetProperty,
+    Property,
+    NameProperty,
+    NameOmsFields,
+    RnrForm,
+    RnrFormLine,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -138,11 +145,18 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueType => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::AssetInternalLocation => ChangeLogSyncStyle::Remote,
             ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
             ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetLogReason => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetProperty => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Property => ChangeLogSyncStyle::Central,
+            ChangelogTableName::NameProperty => ChangeLogSyncStyle::Central,
+            ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
+            ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,
         }
     }
 }
@@ -316,7 +330,7 @@ impl<'a> ChangelogRepository<'a> {
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via
     // PullUpsertRecord (but not through sync)
-    #[cfg(test)]
+    #[cfg(feature = "integration_test")]
     pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
         diesel::update(changelog::table)
             .set(changelog::is_sync_update.eq(false))

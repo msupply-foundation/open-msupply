@@ -130,23 +130,34 @@ impl RemoteDataSynchroniser {
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), RemotePullError> {
         let step_progress = SyncStepProgress::PullRemote;
-        let sync_buffer_repository = SyncBufferRowRepository::new(connection);
 
         loop {
             let sync_batch = self.sync_api_v5.get_queued_records(batch_size).await?;
 
             // queued_length is number of remote pull records awaiting acknowledgement
             // at this point it's number of records waiting to be pulled including records in this pull batch
-            let remaining = sync_batch.queue_length;
+
             let sync_ids = sync_batch.extract_sync_ids();
-            let sync_buffer_rows = sync_batch.to_sync_buffer_rows()?;
+            let RemoteSyncBatchV5 {
+                queue_length: remaining,
+                data,
+            } = sync_batch;
+
+            let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+                data.into_iter().map(|r| r.record).collect(),
+                None, // Everything from mSupply Central Server is considered to not have a source_site_id
+            )?;
 
             let number_of_pulled_records = sync_buffer_rows.len() as u64;
 
             logger.progress(step_progress.clone(), remaining)?;
 
             if number_of_pulled_records > 0 {
-                sync_buffer_repository.upsert_many(&sync_buffer_rows)?;
+                connection
+                    .transaction_sync(|t_con| {
+                        SyncBufferRowRepository::new(t_con).upsert_many(&sync_buffer_rows)
+                    })
+                    .map_err(|e| e.to_inner_error())?;
 
                 self.sync_api_v5.post_acknowledged_records(sync_ids).await?;
             } else {

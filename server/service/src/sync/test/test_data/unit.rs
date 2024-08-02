@@ -34,6 +34,16 @@ const UNIT_3: (&str, &str) = (
     }"#,
 );
 
+const UNIT_4: (&str, &str) = (
+    "97674EFD5DFD4D8CABCAF58AAB4ED054",
+    r#"{
+        "ID": "97674EFD5DFD4D8CABCAF58AAB4ED054",
+        "units": "Vial",
+        "comment": "This is a vial unit type",
+        "order_number": 3
+    }"#,
+);
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         TestSyncIncomingRecord::new_pull_upsert(
@@ -66,6 +76,17 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 name: "Bottle".to_owned(),
                 description: Some("This is a bottle unit type".to_owned()),
                 index: 2,
+                is_active: true,
+            },
+        ),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            UNIT_4,
+            UnitRow {
+                id: UNIT_4.0.to_owned(),
+                name: "Vial".to_owned(),
+                description: Some("This is a vial unit type".to_owned()),
+                index: 3,
                 is_active: true,
             },
         ),

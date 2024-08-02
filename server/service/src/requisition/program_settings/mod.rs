@@ -72,7 +72,6 @@ mod test {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
             name_link_id: mock_name_store_a().id,
-            ..Default::default()
         };
         let name_tag2 = NameTagRow {
             id: "name_tag2".to_string(),
@@ -82,7 +81,6 @@ mod test {
             id: "name_tag_join2".to_string(),
             name_tag_id: name_tag2.id.clone(),
             name_link_id: mock_name_store_a().id,
-            ..Default::default()
         };
 
         // Two programs, with master list both joined to store a
@@ -102,7 +100,7 @@ mod test {
         };
         let program1 = ProgramRow {
             id: "program1".to_string(),
-            master_list_id: master_list1.id.clone(),
+            master_list_id: Some(master_list1.id.clone()),
             context_id: context1.id.clone(),
             ..Default::default()
         };
@@ -122,7 +120,7 @@ mod test {
         };
         let program2 = ProgramRow {
             id: "program2".to_string(),
-            master_list_id: master_list2.id.clone(),
+            master_list_id: Some(master_list2.id.clone()),
             context_id: context2.id.clone(),
             ..Default::default()
         };
@@ -163,7 +161,6 @@ mod test {
             program_id: program1.id.clone(),
             name_tag_id: name_tag1.id.clone(),
             period_schedule_id: period_schedule1.id.clone(),
-            ..Default::default()
         };
         let order_type1 = ProgramRequisitionOrderTypeRow {
             id: "order_type1".to_string(),
@@ -177,7 +174,6 @@ mod test {
             program_id: program2.id.clone(),
             name_tag_id: name_tag2.id.clone(),
             period_schedule_id: period_schedule2.id.clone(),
-            ..Default::default()
         };
         let order_type2 = ProgramRequisitionOrderTypeRow {
             id: "order_type2".to_string(),
@@ -310,6 +306,7 @@ mod test {
                             name_row: mock_name_store_b(),
                             name_store_join_row: Some(name_store_join1.clone()),
                             store_row: Some(mock_store_b()),
+                            properties: None,
                         },
                         program: program1.clone(),
                     }]
@@ -334,6 +331,7 @@ mod test {
                             name_row: mock_name_store_c(),
                             name_store_join_row: Some(name_store_join2.clone()),
                             store_row: Some(mock_store_c()),
+                            properties: None,
                         },
                         program: program2.clone(),
                     }]

@@ -265,18 +265,6 @@ pub async fn start_server(
         .run(),
     );
 
-    // ADD SYSTEM USER
-    service_provider
-        .general_service
-        .create_system_user(&service_provider)
-        .unwrap();
-
-    // CREATE MISSING MASTER LIST AND PROGRAM
-    service_provider
-        .general_service
-        .create_missing_master_list_and_program(&service_provider)
-        .unwrap();
-
     // START SERVER
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());
@@ -313,7 +301,7 @@ pub async fn start_server(
 
     http_server = match certificates.config() {
         Some(config) => http_server
-            .bind_rustls(settings.server.address(), config)
+            .bind_rustls_0_23(settings.server.address(), config)
             .unwrap(),
         None => http_server.bind(settings.server.address()).unwrap(),
     };

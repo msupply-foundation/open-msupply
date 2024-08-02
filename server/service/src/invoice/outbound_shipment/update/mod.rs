@@ -116,8 +116,7 @@ pub fn update_outbound_shipment(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_invoice_transfer_processors();
+    ctx.processors_trigger.trigger_invoice_transfer_processors();
 
     Ok(invoice)
 }
@@ -178,7 +177,7 @@ mod test {
         InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
         NameStoreJoinRow, StockLineRow, StockLineRowRepository,
     };
-    use util::{assert_matches, inline_edit, inline_init};
+    use util::{inline_edit, inline_init};
 
     use crate::{
         invoice::outbound_shipment::update::{
@@ -340,7 +339,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineType::UnallocatedStock;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.number_of_packs = 0.0;
             })
         }
@@ -356,7 +355,7 @@ mod test {
         .await;
 
         assert_eq!(
-            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            InvoiceLineRowRepository::new(&connection).find_one_by_id(&invoice_line().id),
             Ok(Some(invoice_line()))
         );
 
@@ -375,7 +374,7 @@ mod test {
         assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
 
         assert_eq!(
-            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            InvoiceLineRowRepository::new(&connection).find_one_by_id(&invoice_line().id),
             Ok(None)
         );
     }
@@ -443,10 +442,11 @@ mod test {
 
         let result = service.update_outbound_shipment(&context, get_update());
 
-        assert_matches!(result, Ok(_));
+        assert!(result.is_ok());
 
         let updated_record = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice().id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -511,6 +511,7 @@ mod test {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&mock_outbound_shipment_c().id)
+            .unwrap()
             .unwrap();
         let invoice_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id(&invoice.id)
@@ -555,7 +556,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.available_number_of_packs = 8.0;
                 r.total_number_of_packs = 10.0;
-                r.pack_size = 1;
+                r.pack_size = 1.0;
                 r.item_link_id = mock_item_a().id;
             })
         }
@@ -612,7 +613,10 @@ mod test {
             u
         });
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id(&new_stock_line.id)
+                .unwrap()
+                .unwrap(),
             new_stock_line
         );
 
@@ -631,7 +635,10 @@ mod test {
 
         // Stock line should not have changed
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id(&new_stock_line.id)
+                .unwrap()
+                .unwrap(),
             new_stock_line
         );
 
@@ -649,7 +656,10 @@ mod test {
         let stock_line_repo = StockLineRowRepository::new(&connection);
         // Stock line should not have changed
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id(&new_stock_line.id)
+                .unwrap()
+                .unwrap(),
             new_stock_line
         );
 
@@ -692,7 +702,10 @@ mod test {
 
         // Stock line total_number_of_packs should have been reduced
         assert_eq!(
-            stock_line_repo.find_one_by_id(&stock_line().id).unwrap(),
+            stock_line_repo
+                .find_one_by_id(&stock_line().id)
+                .unwrap()
+                .unwrap(),
             inline_edit(&stock_line(), |mut u| {
                 u.total_number_of_packs = 8.0;
                 u

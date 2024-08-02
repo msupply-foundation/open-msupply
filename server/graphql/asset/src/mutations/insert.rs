@@ -32,9 +32,9 @@ pub fn insert_asset(
     // add store_id if not inserting from central server
     let asset_input;
     if !CentralServerConfig::is_central_server() {
-        match input.clone().store_id {
+        match &input.store_id {
             Some(input_store_id) => {
-                if input_store_id != store_id.to_owned() {
+                if input_store_id != store_id {
                     return Ok(InsertAssetResponse::Error(InsertAssetError {
                         error: InsertAssetErrorInterface::PermissionError(NoPermissionForThisStore),
                     }));
@@ -81,6 +81,11 @@ pub struct InsertAssetInput {
     pub type_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
+    pub properties: Option<String>,
+    pub donor_name_id: Option<String>,
+    pub warranty_start: Option<NaiveDate>,
+    pub warranty_end: Option<NaiveDate>,
+    pub needs_replacement: Option<bool>,
 }
 
 impl From<InsertAssetInput> for InsertAsset {
@@ -97,6 +102,11 @@ impl From<InsertAssetInput> for InsertAsset {
             category_id,
             class_id,
             type_id,
+            properties,
+            donor_name_id,
+            warranty_start,
+            warranty_end,
+            needs_replacement,
         }: InsertAssetInput,
     ) -> Self {
         InsertAsset {
@@ -111,6 +121,11 @@ impl From<InsertAssetInput> for InsertAsset {
             category_id,
             class_id,
             type_id,
+            properties,
+            donor_name_id,
+            warranty_start,
+            warranty_end,
+            needs_replacement,
         }
     }
 }
@@ -126,7 +141,7 @@ pub enum InsertAssetResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum InsertAssetErrorInterface {
     AssetAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),

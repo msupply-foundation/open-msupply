@@ -11,7 +11,6 @@ pub struct SensorByIdLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
-#[async_trait::async_trait]
 impl Loader<String> for SensorByIdLoader {
     type Value = Sensor;
     type Error = RepositoryError;

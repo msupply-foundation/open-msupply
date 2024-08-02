@@ -24,7 +24,7 @@ pub async fn initialise_site(
         .sync_status_service
         .get_initialisation_status(&service_context)?;
     if initialisation_status != InitialisationStatus::PreInitialisation {
-        return Err(StandardGraphqlError::from_str(
+        return Err(StandardGraphqlError::from_str_slice(
             "Cannot initialise after PreInitialisation sync state",
         ));
     }

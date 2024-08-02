@@ -14,7 +14,7 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 ## Usage
 
-- Install dependencies (Using node v16+ and using yarn):
+- Install dependencies (Using node v20+ and using yarn):
 
 `yarn install`
 
@@ -28,7 +28,7 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 - If there are feature flags in use, they are set as environment variables. For example:
 
-`yarn start-local-features FEATURE_INVENTORY_ADJUSTMENTS=true`
+`yarn start-local FEATURE_INVENTORY_ADJUSTMENTS=true`
 
 - Bundle for production:
 

@@ -106,7 +106,7 @@ pub fn update_inbound_return_lines(
             }
 
             get_invoice(ctx, None, &input.inbound_return_id)
-                .map_err(|error| UpdateInboundReturnLinesError::DatabaseError(error))?
+                .map_err(UpdateInboundReturnLinesError::DatabaseError)?
                 .ok_or(UpdateInboundReturnLinesError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -264,11 +264,10 @@ mod test {
                         inbound_return_id: mock_inbound_return_a().id,
                         inbound_return_lines: vec![InboundReturnLineInput {
                             id: "new_line".to_string(),
-                            pack_size: 0,
+                            pack_size: 0.0,
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineInsertError {
@@ -287,11 +286,10 @@ mod test {
                         inbound_return_id: mock_inbound_return_a().id,
                         inbound_return_lines: vec![InboundReturnLineInput {
                             id: mock_inbound_return_a_invoice_line_a().id,
-                            pack_size: 0,
+                            pack_size: 0.0,
                             number_of_packs: 1.0,
                             ..Default::default()
                         }],
-                        ..Default::default()
                     }
                 ),
             Err(ServiceError::LineUpdateError {
@@ -311,12 +309,11 @@ mod test {
                         inbound_return_lines: vec![InboundReturnLineInput {
                             id: "new_line_id".to_string(),
                             number_of_packs: 1.0,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             item_id: mock_item_a().id,
                             reason_id: Some("does_not_exist".to_string()),
                             ..Default::default()
                         }],
-                        ..Default::default()
                     },
                 ),
             Err(ServiceError::LineReturnReasonUpdateError {
@@ -371,7 +368,7 @@ mod test {
                         InboundReturnLineInput {
                             id: "line1".to_string(), // create
                             number_of_packs: 1.0,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             item_id: mock_item_a().id,
                             reason_id: Some(return_reason().id),
                             ..Default::default()
@@ -379,7 +376,7 @@ mod test {
                         InboundReturnLineInput {
                             id: mock_inbound_return_a_invoice_line_a().id, // update
                             number_of_packs: 2.0,
-                            pack_size: 1,
+                            pack_size: 1.0,
                             item_id: mock_item_a().id,
                             reason_id: Some(return_reason().id),
                             ..Default::default()
@@ -390,7 +387,6 @@ mod test {
                             ..Default::default()
                         },
                     ],
-                    ..Default::default()
                 },
             )
             .unwrap();
@@ -402,10 +398,7 @@ mod test {
         assert_eq!(updated_lines.len(), 3);
 
         // new line was added
-        assert!(updated_lines
-            .iter()
-            .find(|line| line.id == "line1")
-            .is_some());
+        assert!(updated_lines.iter().any(|line| line.id == "line1"));
 
         // existing line was updated
         let updated_line = updated_lines
@@ -416,9 +409,8 @@ mod test {
         assert_eq!(updated_line.return_reason_id, Some(return_reason().id));
 
         // zeroed line was deleted
-        assert!(updated_lines
+        assert!(!updated_lines
             .iter()
-            .find(|line| line.id == line_to_delete().id)
-            .is_none());
+            .any(|line| line.id == line_to_delete().id));
     }
 }

@@ -15,7 +15,7 @@ pub struct RequisitionLineFilter {
     pub requisition_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<RequisitionType>>,
     pub item_id: Option<EqualFilter<String>>,
-    pub requested_quantity: Option<EqualFilter<i32>>,
+    pub requested_quantity: Option<EqualFilter<f64>>,
     pub status: Option<EqualFilter<RequisitionStatus>>,
 }
 
@@ -39,7 +39,7 @@ impl RequisitionLineFilter {
         self
     }
 
-    pub fn requested_quantity(mut self, filter: EqualFilter<i32>) -> Self {
+    pub fn requested_quantity(mut self, filter: EqualFilter<f64>) -> Self {
         self.requested_quantity = Some(filter);
         self
     }

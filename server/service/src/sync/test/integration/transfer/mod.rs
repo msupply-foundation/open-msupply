@@ -9,7 +9,7 @@ use crate::{
     service_provider::ServiceProvider,
     sync::{synchroniser::Synchroniser, test::integration::init_test_context},
 };
-use repository::{StorageConnection, StoreRow, StoreRowRepository};
+use repository::{CurrencyRow, ItemRow, ItemType, StorageConnection, StoreRow, StoreRowRepository};
 use serde_json::json;
 use std::{sync::Arc, time::Duration};
 use tokio::task::JoinHandle;
@@ -28,12 +28,12 @@ struct SyncIntegrationTransferContext {
     site_1_processors_task: JoinHandle<()>,
     site_2: SiteContext,
     site_2_processors_task: JoinHandle<()>,
+    item1: ItemRow,
+    item2: ItemRow,
+    service_item: ItemRow,
 }
 
-async fn initialise_transfer_sites(
-    central_data: serde_json::Value,
-    identifier: &str,
-) -> SyncIntegrationTransferContext {
+async fn initialise_transfer_sites(identifier: &str) -> SyncIntegrationTransferContext {
     let central_server_configurations = ConfigureCentralServer::from_env();
 
     let site_1_config = central_server_configurations
@@ -76,6 +76,7 @@ async fn initialise_transfer_sites(
         .await
         .expect("Problem inserting central data");
 
+    let (item1, item2, service_item, _currency, central_data) = items_and_currency();
     central_server_configurations
         .upsert_records(central_data)
         .await
@@ -104,6 +105,9 @@ async fn initialise_transfer_sites(
         site_1_processors_task,
         site_2,
         site_2_processors_task,
+        item1,
+        item2,
+        service_item,
     }
 }
 
@@ -122,6 +126,49 @@ fn to_site_context_and_processors_task(
         },
         sync_context.processors_task,
     )
+}
+
+fn items_and_currency() -> (ItemRow, ItemRow, ItemRow, CurrencyRow, serde_json::Value) {
+    let item1 = ItemRow {
+        id: uuid(),
+        code: uuid(),
+        ..Default::default()
+    };
+
+    let item2 = ItemRow {
+        id: uuid(),
+        code: uuid(),
+        ..Default::default()
+    };
+
+    let service_item = ItemRow {
+        id: uuid(),
+        code: uuid(),
+        r#type: ItemType::Service,
+        ..Default::default()
+    };
+
+    let currency = CurrencyRow {
+        id: String::from("currency_a"),
+        code: String::from("USD"),
+        rate: 1.0,
+        is_home_currency: true,
+        is_active: true,
+        ..Default::default()
+    };
+
+    let json = json!({
+        "item": [
+            {"ID": item1.id, "type_of": "general", "code": item1.code},
+            {"ID": item2.id, "type_of": "general", "code": item2.code},
+            {"ID": service_item.id, "type_of": "service", "code": service_item.code},
+        ],
+        "currency": [
+            {"ID": currency.id, "currency": currency.code, "rate": currency.rate, "is_home_currency": currency.is_home_currency}
+        ]
+    });
+
+    (item1, item2, service_item, currency, json)
 }
 
 async fn new_instance_of_existing_site(

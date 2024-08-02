@@ -21,6 +21,7 @@ mod common_stock;
 pub mod currency;
 pub mod cursor_controller;
 pub mod dashboard;
+pub mod demographic;
 pub mod display_settings_service;
 pub mod document;
 pub mod inventory_adjustment_reason;
@@ -34,8 +35,8 @@ pub mod location;
 pub mod log_service;
 pub mod login;
 pub mod master_list;
-pub mod missing_program;
 pub mod name;
+pub mod name_property;
 pub mod number;
 pub mod pack_variant;
 pub mod permission;
@@ -43,12 +44,14 @@ pub mod plugin;
 pub mod plugin_data;
 pub mod print;
 pub mod processors;
+pub mod program;
 pub mod programs;
 pub mod repack;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
 pub mod return_reason;
+pub mod rnr_form;
 pub mod sensor;
 pub mod service_provider;
 pub mod settings;
@@ -60,11 +63,11 @@ pub mod stocktake_line;
 pub mod store;
 pub mod store_preference;
 pub mod sync;
-pub mod system_user;
 pub mod temperature_excursion;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
+pub mod vaccine_course;
 pub mod validate;
 
 #[cfg(test)]
@@ -142,6 +145,7 @@ pub struct BatchMutationsProcessor<'a> {
     ctx: &'a ServiceContext,
 }
 
+#[allow(clippy::type_complexity)]
 impl<'a> BatchMutationsProcessor<'a> {
     pub fn new(ctx: &'a ServiceContext) -> BatchMutationsProcessor<'a> {
         BatchMutationsProcessor { ctx }
@@ -264,10 +268,6 @@ pub fn usize_to_u32(num: usize) -> u32 {
 }
 
 pub fn usize_to_i32(num: usize) -> i32 {
-    num.try_into().unwrap_or(0)
-}
-
-pub fn u32_to_i32(num: u32) -> i32 {
     num.try_into().unwrap_or(0)
 }
 

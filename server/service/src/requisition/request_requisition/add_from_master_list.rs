@@ -40,7 +40,7 @@ pub fn add_from_master_list(
             let requisition_row = validate(connection, &ctx.store_id, &input)?;
             let new_requisition_line_rows = generate(ctx, &ctx.store_id, requisition_row, &input)?;
 
-            let requisition_line_row_repository = RequisitionLineRowRepository::new(&connection);
+            let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
 
             for requisition_line_row in new_requisition_line_rows {
                 requisition_line_row_repository.upsert_one(&requisition_line_row)?;
@@ -111,12 +111,12 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    Ok(generate_requisition_lines(
+    generate_requisition_lines(
         ctx,
         store_id,
         &requisition_row,
         items_ids_not_in_requisition,
-    )?)
+    )
 }
 
 pub fn check_master_list_for_store(
@@ -141,6 +141,7 @@ impl From<RepositoryError> for AddFromMasterListError {
 
 #[cfg(test)]
 mod test {
+    use assert_approx_eq::assert_approx_eq;
     use repository::{
         mock::{
             common::FullMockMasterList,
@@ -324,7 +325,7 @@ mod test {
             .into_iter()
             .map(|requisition_line| requisition_line.item_row.id)
             .collect();
-        item_ids.sort_by(|a, b| a.cmp(&b));
+        item_ids.sort();
 
         let mut test_item_ids = vec![
             mock_item_a().id,
@@ -334,7 +335,7 @@ mod test {
             test_item_stats::item().id,
             test_item_stats::item2().id,
         ];
-        test_item_ids.sort_by(|a, b| a.cmp(&b));
+        test_item_ids.sort();
 
         assert_eq!(item_ids, test_item_ids);
         let line = lines
@@ -344,17 +345,16 @@ mod test {
 
         assert_eq!(
             line.requisition_line_row.available_stock_on_hand,
-            test_item_stats::item_1_soh() as i32
+            test_item_stats::item_1_soh()
         );
         assert_eq!(
             line.requisition_line_row.average_monthly_consumption,
-            test_item_stats::item1_amc_3_months() as i32
+            test_item_stats::item1_amc_3_months()
         );
-        assert_eq!(
+        assert_approx_eq!(
             line.requisition_line_row.suggested_quantity,
             // 10 = requisition max_mos
-            test_item_stats::item1_amc_3_months() as i32 * 10
-                - test_item_stats::item_1_soh() as i32
+            test_item_stats::item1_amc_3_months() * 10.0 - test_item_stats::item_1_soh()
         );
 
         let line = lines
@@ -364,17 +364,16 @@ mod test {
 
         assert_eq!(
             line.requisition_line_row.available_stock_on_hand,
-            test_item_stats::item_2_soh() as i32
+            test_item_stats::item_2_soh()
         );
         assert_eq!(
             line.requisition_line_row.average_monthly_consumption,
-            test_item_stats::item2_amc_3_months() as i32
+            test_item_stats::item2_amc_3_months()
         );
         assert_eq!(
             line.requisition_line_row.suggested_quantity,
             // 10 = requisition max_mos
-            test_item_stats::item2_amc_3_months() as i32 * 10
-                - test_item_stats::item_2_soh() as i32
+            test_item_stats::item2_amc_3_months() * 10.0 - test_item_stats::item_2_soh()
         );
     }
 }

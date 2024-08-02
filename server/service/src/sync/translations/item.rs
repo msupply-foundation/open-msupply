@@ -1,4 +1,4 @@
-use repository::{ItemRow, ItemRowDelete, ItemType, StorageConnection, SyncBufferRow};
+use repository::{ItemRow, ItemRowDelete, ItemType, StorageConnection, SyncBufferRow, VENCategory};
 use serde::Deserialize;
 
 use crate::sync::{sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation};
@@ -22,7 +22,11 @@ pub struct LegacyItemRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     unit_ID: Option<String>,
     type_of: LegacyItemType,
-    default_pack_size: u32,
+    default_pack_size: f64,
+    is_vaccine: bool,
+    VEN_category: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    strength: Option<String>,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemType {
@@ -30,6 +34,14 @@ fn to_item_type(type_of: LegacyItemType) -> ItemType {
         LegacyItemType::non_stock => ItemType::NonStock,
         LegacyItemType::service => ItemType::Service,
         LegacyItemType::general => ItemType::Stock,
+    }
+}
+fn to_ven_category(ven_category: String) -> VENCategory {
+    match ven_category.as_str() {
+        "V" => VENCategory::V,
+        "E" => VENCategory::E,
+        "N" => VENCategory::N,
+        _ => VENCategory::NotAssigned,
     }
 }
 
@@ -68,8 +80,11 @@ impl SyncTranslation for ItemTranslation {
             unit_id: data.unit_ID,
             r#type: to_item_type(data.type_of),
             legacy_record: ordered_simple_json(&sync_record.data)?,
-            default_pack_size: data.default_pack_size as i32,
+            default_pack_size: data.default_pack_size,
             is_active: true,
+            is_vaccine: data.is_vaccine,
+            strength: data.strength,
+            ven_category: to_ven_category(data.VEN_category),
         };
 
         Ok(PullTranslateResult::upsert(result))

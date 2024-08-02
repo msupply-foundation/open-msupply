@@ -74,7 +74,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
 #[derive(Interface)]
 #[graphql(name = "UpdateInboundShipmentErrorInterface")]
-#[graphql(field(name = "description", type = "&str"))]
+#[graphql(field(name = "description", ty = "&str"))]
 pub enum UpdateErrorInterface {
     RecordNotFound(RecordNotFound),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
@@ -108,10 +108,8 @@ impl UpdateInput {
             comment,
             their_reference,
             colour,
-            tax: tax.and_then(|tax| {
-                Some(ShipmentTaxUpdate {
-                    percentage: tax.percentage,
-                })
+            tax: tax.map(|tax| ShipmentTaxUpdate {
+                percentage: tax.percentage,
             }),
             currency_id,
             currency_rate,
@@ -564,6 +562,7 @@ mod test {
 
         let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("inbound_shipment_c")
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -592,6 +591,7 @@ mod test {
 
         let new_invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id("inbound_shipment_c")
+            .unwrap()
             .unwrap();
 
         assert_eq!(new_invoice.name_store_id, None);

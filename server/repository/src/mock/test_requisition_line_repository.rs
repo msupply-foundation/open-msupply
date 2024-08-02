@@ -17,24 +17,24 @@ pub fn mock_test_requisition_line_repository() -> MockData {
 
 pub fn mock_draft_request_requisition_line() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_draft_request_requisition_line".to_owned();
+        r.id = "mock_draft_request_requisition_line".to_string();
         r.requisition_id = mock_request_draft_requisition().id;
         r.item_link_id = mock_item_a().id;
-        r.requested_quantity = 10;
-        r.suggested_quantity = 3;
-        r.available_stock_on_hand = 1;
-        r.average_monthly_consumption = 10;
+        r.requested_quantity = 10.0;
+        r.suggested_quantity = 3.0;
+        r.available_stock_on_hand = 1.0;
+        r.average_monthly_consumption = 10.0;
     })
 }
 
 pub fn mock_draft_request_requisition_line2() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_draft_request_requisition_line2".to_owned();
+        r.id = "mock_draft_request_requisition_line2".to_string();
         r.requisition_id = mock_request_draft_requisition().id;
         r.item_link_id = mock_item_a().id;
-        r.requested_quantity = 10;
-        r.suggested_quantity = 3;
-        r.available_stock_on_hand = 1;
-        r.average_monthly_consumption = 10;
+        r.requested_quantity = 10.0;
+        r.suggested_quantity = 3.0;
+        r.available_stock_on_hand = 1.0;
+        r.average_monthly_consumption = 10.0;
     })
 }

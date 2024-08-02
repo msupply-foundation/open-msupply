@@ -56,21 +56,12 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
         InventoryAdjustmentReasonRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
         diesel::insert_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .values(row)
             .on_conflict(inventory_adjustment_reason_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -98,8 +89,9 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
 pub struct InventoryAdjustmentReasonRowDelete(pub String);
 // TODO soft delete
 impl Delete for InventoryAdjustmentReasonRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InventoryAdjustmentReasonRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        InventoryAdjustmentReasonRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -111,8 +103,9 @@ impl Delete for InventoryAdjustmentReasonRowDelete {
 }
 
 impl Upsert for InventoryAdjustmentReasonRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        InventoryAdjustmentReasonRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        InventoryAdjustmentReasonRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

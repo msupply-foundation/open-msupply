@@ -50,7 +50,7 @@ pub fn get_historic_consumption_for_item(
             &points.last_date,
         ));
 
-    let consumption_rows = ConsumptionRepository::new(&connection).query(Some(filter))?;
+    let consumption_rows = ConsumptionRepository::new(connection).query(Some(filter))?;
     // Calculate historic consumption
     let result = points
         .rows
@@ -135,7 +135,7 @@ fn calculate_consumption(
     consumption_rows: &Vec<ConsumptionRow>,
 ) -> ConsumptionHistory {
     // https://github.com/openmsupply/remote-server/issues/972
-    let total_consumption_amc = consumption_rows.iter().fold(0, |sum, row| {
+    let total_consumption_amc = consumption_rows.iter().fold(0.0, |sum, row| {
         if within_range(&start_of_amc_lookup, &end_of_amc_lookup, &row.date) {
             sum + row.quantity
         } else {
@@ -144,7 +144,7 @@ fn calculate_consumption(
     });
     let days_in_amc_lookup = (end_of_amc_lookup - start_of_amc_lookup).num_days();
 
-    let consumption = consumption_rows.iter().fold(0, |sum, row| {
+    let consumption = consumption_rows.iter().fold(0.0, |sum, row| {
         if within_range(
             &start_of_consumption_lookup,
             &end_of_consumption_lookup,
@@ -158,7 +158,7 @@ fn calculate_consumption(
 
     ConsumptionHistory {
         consumption,
-        average_monthly_consumption: total_consumption_amc as f64 / days_in_amc_lookup as f64
+        average_monthly_consumption: total_consumption_amc / days_in_amc_lookup as f64
             * NUMBER_OF_DAYS_IN_A_MONTH,
         date: reference_date,
     }
@@ -227,47 +227,47 @@ mod tests {
                 &vec![
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2021, 2, 1).unwrap();
-                        r.quantity = 1000;
+                        r.quantity = 1000.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2021, 1, 31).unwrap();
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2021, 1, 20).unwrap();
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2020, 12, 3).unwrap();
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2020, 12, 2).unwrap();
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2020, 11, 11).unwrap();
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2020, 10, 5).unwrap();
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2020, 10, 7).unwrap();
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2020, 10, 1).unwrap();
-                        r.quantity = 10;
+                        r.quantity = 10.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2020, 9, 30).unwrap();
-                        r.quantity = 1000;
+                        r.quantity = 1000.0;
                     }),
                     inline_init(|r: &mut ConsumptionRow| {
                         r.date = NaiveDate::from_ymd_opt(2020, 2, 10).unwrap();
-                        r.quantity = 1000;
+                        r.quantity = 1000.0;
                     })
                 ]
             ),

@@ -63,6 +63,14 @@ pub enum ActivityLogNodeType {
     AssetCatalogueItemPropertyCreated,
     AssetLogReasonCreated,
     AssetLogReasonDeleted,
+    AssetPropertyCreated,
+    VaccineCourseCreated,
+    ProgramCreated,
+    ProgramUpdated,
+    VaccineCourseUpdated,
+    RnrFormCreated,
+    RnrFormUpdated,
+    RnrFormFinalised,
 }
 
 #[Object]
@@ -181,6 +189,14 @@ impl ActivityLogNodeType {
             from::AssetCatalogueItemPropertyCreated => to::AssetCatalogueItemPropertyCreated,
             from::AssetLogReasonCreated => to::AssetLogReasonCreated,
             from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
+            from::AssetPropertyCreated => to::AssetPropertyCreated,
+            from::VaccineCourseCreated => to::VaccineCourseCreated,
+            from::VaccineCourseUpdated => to::VaccineCourseUpdated,
+            from::ProgramCreated => to::ProgramCreated,
+            from::ProgramUpdated => to::ProgramUpdated,
+            from::RnrFormCreated => to::RnrFormCreated,
+            from::RnrFormUpdated => to::RnrFormUpdated,
+            from::RnrFormFinalised => to::RnrFormFinalised,
         }
     }
 
@@ -229,6 +245,14 @@ impl ActivityLogNodeType {
             from::AssetCatalogueItemPropertyCreated => to::AssetCatalogueItemPropertyCreated,
             from::AssetLogReasonCreated => to::AssetLogReasonCreated,
             from::AssetLogReasonDeleted => to::AssetLogReasonDeleted,
+            from::AssetPropertyCreated => to::AssetPropertyCreated,
+            from::VaccineCourseCreated => to::VaccineCourseCreated,
+            from::VaccineCourseUpdated => to::VaccineCourseUpdated,
+            from::ProgramCreated => to::ProgramCreated,
+            from::ProgramUpdated => to::ProgramUpdated,
+            from::RnrFormCreated => to::RnrFormCreated,
+            from::RnrFormUpdated => to::RnrFormUpdated,
+            from::RnrFormFinalised => to::RnrFormFinalised,
         }
     }
 }

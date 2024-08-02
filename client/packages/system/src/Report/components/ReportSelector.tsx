@@ -8,15 +8,17 @@ import {
   PaperPopoverSection,
   usePaperClickPopover,
 } from '@common/components';
-import { ReportRowFragment, useReport } from '../api';
 import { ReportArgumentsModal } from './ReportArgumentsModal';
 import { JsonData } from '@openmsupply-client/programs';
+import { ReportListParams, useReportList } from '../api/hooks';
+import { ReportRowFragment } from '../api';
 
 interface ReportSelectorProps {
   context?: ReportContext;
   subContext?: string;
   onPrint: (report: ReportRowFragment, args: JsonData | undefined) => void;
   disabled?: boolean;
+  queryParams?: ReportListParams;
 }
 
 const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
@@ -43,9 +45,14 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   children,
   onPrint,
   disabled,
+  queryParams,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReport.document.list({ context, subContext });
+  const { data, isLoading } = useReportList({
+    context,
+    subContext,
+    queryParams,
+  });
   const t = useTranslation('app');
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined

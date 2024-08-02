@@ -55,7 +55,7 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub expiry_date: Option<NaiveDate>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     #[serde(rename = "cost_price")]
     pub cost_price_per_pack: f64,
     #[serde(rename = "sell_price")]
@@ -145,13 +145,21 @@ impl SyncTranslation for InvoiceLineTranslation {
                 }
             });
 
-        let line_type = to_invoice_line_type(&r#type).ok_or(anyhow::Error::msg(format!(
-            "Unsupported trans_line type: {:?}",
-            r#type
-        )))?;
+        let line_type = match to_invoice_line_type(&r#type) {
+            Some(line_type) => line_type,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported line type {:?}",
+                    r#type
+                )))
+            }
+        };
 
-        let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code {
-            Some(item_code) => {
+        let item_code = item_code.unwrap_or("".to_string());
+        let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code
+            .is_empty()
+        {
+            false => {
                 // use new om_* fields
                 (
                     item_code,
@@ -160,7 +168,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     total_after_tax.unwrap_or(0.0),
                 )
             }
-            None => {
+            true => {
                 let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
@@ -193,8 +201,8 @@ impl SyncTranslation for InvoiceLineTranslation {
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
         let is_stock_line_valid = match stock_line_id {
             Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(stock_line_id)
-                .is_ok(),
+                .find_one_by_id(stock_line_id)?
+                .is_some(),
             None => true,
         };
 

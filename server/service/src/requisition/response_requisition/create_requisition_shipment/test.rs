@@ -103,6 +103,7 @@ mod test_update {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice.invoice_row.id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(
@@ -144,8 +145,8 @@ mod test_update {
             .update_response_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateResponseRequisitionLine| {
-                    r.id = mock_new_response_requisition_test().lines[0].id.clone();
-                    r.supply_quantity = Some(100);
+                    r.id.clone_from(&mock_new_response_requisition_test().lines[0].id);
+                    r.supply_quantity = Some(100.0);
                 }),
             )
             .unwrap();
@@ -161,6 +162,7 @@ mod test_update {
 
         let invoice = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice.invoice_row.id)
+            .unwrap()
             .unwrap();
 
         assert_eq!(

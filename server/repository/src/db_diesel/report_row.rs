@@ -4,6 +4,7 @@ use super::{
 
 use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
+use clap::ValueEnum;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
@@ -15,7 +16,7 @@ pub enum ReportType {
     OmSupply,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ContextType {
@@ -32,6 +33,7 @@ pub enum ContextType {
     Repack,
     OutboundReturn,
     InboundReturn,
+    Report,
 }
 
 table! {
@@ -99,21 +101,12 @@ impl<'a> ReportRowRepository<'a> {
         Ok(result)
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::insert_into(report_dsl::report)
             .values(row)
             .on_conflict(report_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(report_dsl::report)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -128,8 +121,9 @@ impl<'a> ReportRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ReportRowDelete(pub String);
 impl Delete for ReportRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ReportRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ReportRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -141,8 +135,9 @@ impl Delete for ReportRowDelete {
 }
 
 impl Upsert for ReportRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ReportRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ReportRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

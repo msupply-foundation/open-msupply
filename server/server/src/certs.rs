@@ -8,7 +8,7 @@ use std::{
     path::PathBuf,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CertFiles {
     pub private_cert_file: String,
     pub public_cert_file: String,
@@ -37,38 +37,43 @@ pub fn find_certs(server_settings: &ServerSettings) -> Option<CertFiles> {
 
 /// Load rustls server config
 pub fn load_certs_rustls(cert_files: CertFiles) -> Result<ServerConfig, anyhow::Error> {
-    let certfile = std::fs::File::open(&cert_files.public_cert_file)?;
-    let mut reader = BufReader::new(certfile);
-    let certs = rustls_pemfile::certs(&mut reader)?
-        .into_iter()
-        .map(rustls::Certificate)
+    let pub_cert_file = std::fs::File::open(cert_files.clone().public_cert_file)?;
+    let mut pub_reader = BufReader::new(pub_cert_file);
+    let certs = rustls_pemfile::certs(&mut pub_reader)
+        .map(|cert| match cert {
+            Ok(cert) => cert,
+            Err(_) => {
+                panic!("Error loading certificate");
+            }
+        })
         .collect();
 
-    let private_key = load_private_key_rusttls(&cert_files.private_cert_file)?;
+    let private_cert_file = std::fs::File::open(cert_files.clone().private_cert_file)?;
+    let mut private_reader = BufReader::new(private_cert_file);
+
+    let result = rustls::crypto::ring::default_provider().install_default();
+    if let Err(e) = result {
+        panic!(
+            "Unable to install rustls::crypto::ring default provider: {:#?}",
+            e
+        );
+    }
+
+    let private_key = rustls_pemfile::read_one(&mut private_reader)?
+        .map(|key| match key {
+            rustls_pemfile::Item::Pkcs1Key(key) => rustls::pki_types::PrivateKeyDer::Pkcs1(key),
+            rustls_pemfile::Item::Sec1Key(key) => rustls::pki_types::PrivateKeyDer::Sec1(key),
+            rustls_pemfile::Item::Pkcs8Key(key) => rustls::pki_types::PrivateKeyDer::Pkcs8(key),
+            _ => {
+                panic!("Error loading private key");
+            }
+        })
+        .ok_or_else(|| anyhow::Error::msg("No private key found"))?;
 
     let config = ServerConfig::builder()
-        .with_safe_defaults()
         .with_no_client_auth()
         .with_single_cert(certs, private_key)?;
     Ok(config)
-}
-
-/// Helper to load a rustls::PrivateKey
-fn load_private_key_rusttls(filename: &str) -> Result<rustls::PrivateKey, anyhow::Error> {
-    let keyfile = std::fs::File::open(filename)?;
-    let mut reader = BufReader::new(keyfile);
-
-    loop {
-        match rustls_pemfile::read_one(&mut reader)? {
-            Some(rustls_pemfile::Item::RSAKey(key)) => return Ok(rustls::PrivateKey(key)),
-            Some(rustls_pemfile::Item::PKCS8Key(key)) => return Ok(rustls::PrivateKey(key)),
-            Some(rustls_pemfile::Item::ECKey(key)) => return Ok(rustls::PrivateKey(key)),
-            None => break,
-            _ => {}
-        }
-    }
-
-    Err(anyhow::Error::msg("No private key found"))
 }
 
 pub struct Certificates {
@@ -118,11 +123,12 @@ impl Certificates {
 
         let key_file = cert_dir.join(PRIVATE_CERT_FILE);
         let mut file = std::fs::File::create(&key_file)?;
-        file.write_all(cert.serialize_private_key_pem().as_bytes())?;
+        let private_cert_buffer = cert.key_pair.serialize_pem();
+        file.write_all(private_cert_buffer.as_bytes())?;
 
         let cert_file = cert_dir.join(PUBLIC_CERT_FILE);
         let mut file = std::fs::File::create(&cert_file)?;
-        let public_cert_buffer = cert.serialize_pem()?;
+        let public_cert_buffer = cert.cert.pem();
         file.write_all(public_cert_buffer.as_bytes())?;
 
         Ok(CertFiles {

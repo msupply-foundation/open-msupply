@@ -1,0 +1,19 @@
+{
+    "version": "0.2",
+    "ignorePaths": [],
+    "dictionaryDefinitions": [
+        {
+            "name": "projectWords",
+            "path": "./project-words.txt"
+        }
+    ],
+    "dictionaries": [
+        "projectWords"
+    ],
+    "words": [],
+    "ignoreWords": [
+        "tbody",
+        "thead"
+    ],
+    "import": []
+}

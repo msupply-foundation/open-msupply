@@ -1,6 +1,5 @@
 import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
 import { ColumnAlign, ColumnFormat } from '../columns/types';
-import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
 import { CurrencyCell, NumberCell, TooltipTextCell } from '../components';
@@ -84,12 +83,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'expiryDate',
     label: 'label.expiry',
     width: 110,
-    formatter: dateString => {
-      if (dateString === '[multiple]') return '[multiple]';
-      return dateString
-        ? Formatter.expiryDate(new Date(dateString as string)) || ''
-        : '';
-    },
+    format: ColumnFormat.Date,
   },
 
   itemCode: {
@@ -140,7 +134,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.created',
     key: 'createdDatetime',
     format: ColumnFormat.Date,
-    width: 130,
+    width: 150,
   },
   stocktakeDate: {
     label: 'label.date',
@@ -180,12 +174,13 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'heading.description',
     key: 'description',
     width: 250,
+    Cell: TooltipTextCell,
   },
   selection: getCheckboxSelectionColumn(),
   code: {
     label: 'label.code',
     key: 'code',
-    width: 20,
+    width: 100,
     Cell: TooltipTextCell,
   },
   packSize: {
@@ -242,6 +237,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'unitQuantity',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: NumberCell,
   },
   itemUnit: {
     label: 'label.unit',
@@ -275,6 +271,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'availableStockOnHand',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: NumberCell,
   },
   theirReference: {
     label: 'label.reference',

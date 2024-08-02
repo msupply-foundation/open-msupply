@@ -1,6 +1,7 @@
 use repository::{
-    EqualFilter, Name, NameFilter, NameRepository, RepositoryError, StorageConnection,
-    StoreRowRepository,
+    property::{PropertyFilter, PropertyRepository},
+    EqualFilter, Name, NameFilter, NameRepository, Patient, PatientFilter, PatientRepository,
+    RepositoryError, StorageConnection, StoreRowRepository, StringFilter,
 };
 
 pub fn check_store_id_matches(store_id_a: &str, store_id_b: &str) -> bool {
@@ -26,7 +27,6 @@ pub enum OtherPartyErrors {
 pub enum CheckOtherPartyType {
     Customer,
     Supplier,
-    Patient,
 }
 
 pub fn get_other_party(
@@ -40,6 +40,16 @@ pub fn get_other_party(
     )
 }
 
+pub fn check_patient_exists(
+    connection: &StorageConnection,
+    patient_id: &str,
+) -> Result<Option<Patient>, RepositoryError> {
+    PatientRepository::new(connection).query_one(
+        PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
+        None,
+    )
+}
+
 pub fn check_other_party(
     connection: &StorageConnection,
     store_id: &str,
@@ -49,9 +59,7 @@ pub fn check_other_party(
     let other_party = get_other_party(connection, store_id, other_party_id)?
         .ok_or(OtherPartyErrors::OtherPartyDoesNotExist)?;
 
-    // Error will only happen if other party is not a patient since you can prescribe
-    // to patients on the same site.
-    if !other_party.is_visible() && !other_party.is_patient() {
+    if !other_party.is_visible() {
         return Err(OtherPartyErrors::OtherPartyNotVisible);
     }
 
@@ -67,15 +75,23 @@ pub fn check_other_party(
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }
-
-        CheckOtherPartyType::Patient => {
-            if !other_party.is_patient() {
-                return Err(OtherPartyErrors::TypeMismatched);
-            }
-        }
     };
 
     Ok(other_party)
+}
+
+pub fn check_property_key_does_not_exist(
+    connection: &StorageConnection,
+    key: &str,
+    property_id: &str,
+) -> Result<bool, RepositoryError> {
+    let filter = PropertyFilter::new()
+        .key(StringFilter::equal_to(key))
+        .id(EqualFilter::not_equal_to(property_id));
+
+    let found = PropertyRepository::new(connection).query_by_filter(filter)?;
+
+    Ok(found.is_empty())
 }
 
 impl From<RepositoryError> for OtherPartyErrors {

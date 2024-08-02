@@ -10,14 +10,17 @@ import {
   Box,
   useNotification,
   AdjustmentTypeInput,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
-import { DraftStockLine, useStockLine } from '../api';
+import { useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
 import {
   InventoryAdjustmentReasonSearchInput,
   StockItemSearchInput,
 } from '../..';
 import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
+import { AppRoute } from '@openmsupply-client/config';
 
 interface NewStockLineModalProps {
   isOpen: boolean;
@@ -29,25 +32,33 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   onClose,
 }) => {
   const t = useTranslation('inventory');
+  const navigate = useNavigate();
   const { success } = useNotification();
 
   const { Modal } = useDialog({ isOpen, onClose });
 
-  const { draft, setDraft, create } = useStockLine();
-
-  const onUpdate = (patch: Partial<DraftStockLine>) => {
-    setDraft({ ...draft, ...patch });
-  };
+  const {
+    query: { isLoading },
+    draft,
+    updatePatch,
+    create: { create },
+  } = useStockLine();
 
   const isDisabled =
     !draft.itemId || !draft.packSize || !draft.totalNumberOfPacks;
 
   const save = async () => {
     try {
-      await create();
+      const result = await create();
       const successSnack = success(t('messages.stock-line-saved'));
       successSnack();
       onClose();
+      navigate(
+        RouteBuilder.create(AppRoute.Inventory)
+          .addPart(AppRoute.Stock)
+          .addPart(result.insertStockLine.id)
+          .build()
+      );
     } catch {
       // todo
     }
@@ -83,7 +94,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
               disabled={!!draft.itemId}
               currentItemId={draft.itemId}
               onChange={newItem =>
-                newItem && onUpdate({ itemId: newItem.id, item: newItem })
+                newItem && updatePatch({ itemId: newItem.id, item: newItem })
               }
             />
           </Grid>
@@ -92,7 +103,13 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
 
         {draft.itemId && (
           <Grid item width={'100%'}>
-            <StockLineForm draft={draft} onUpdate={onUpdate} packEditable />
+            <StockLineForm
+              draft={draft}
+              loading={isLoading}
+              onUpdate={updatePatch}
+              packEditable
+              isInModal
+            />
 
             <Grid item width={'50%'}>
               <StyledInputRow
@@ -104,7 +121,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
                       adjustmentType={AdjustmentTypeInput.Addition}
                       value={draft.inventoryAdjustmentReason}
                       onChange={reason =>
-                        onUpdate({ inventoryAdjustmentReason: reason })
+                        updatePatch({ inventoryAdjustmentReason: reason })
                       }
                     />
                   </Box>

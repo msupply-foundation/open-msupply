@@ -60,21 +60,12 @@ impl<'a> UserAccountRowRepository<'a> {
         UserAccountRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_account_dsl::user_account)
             .values(row)
             .on_conflict(user_account_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(user_account_dsl::user_account)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -135,8 +126,9 @@ impl<'a> UserAccountRowRepository<'a> {
 }
 
 impl Upsert for UserAccountRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UserAccountRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        UserAccountRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
@@ -167,7 +159,7 @@ mod test {
         for variant in LanguageType::iter() {
             let id = format!("{:?}", variant);
             let result = repo.insert_one(&inline_init(|r: &mut UserAccountRow| {
-                r.id = id.clone();
+                r.id.clone_from(&id);
                 r.language = variant.clone();
             }));
             assert_eq!(result, Ok(()));

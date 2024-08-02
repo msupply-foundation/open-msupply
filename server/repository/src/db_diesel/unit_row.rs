@@ -31,21 +31,12 @@ impl<'a> UnitRowRepository<'a> {
         UnitRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::insert_into(unit)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(unit)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -57,7 +48,7 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_id_option(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
             .first(self.connection.lock().connection())
@@ -84,13 +75,14 @@ impl<'a> UnitRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct UnitRowDelete(pub String);
 impl Delete for UnitRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UnitRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        UnitRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
-            UnitRowRepository::new(con).find_one_by_id_option(&self.0),
+            UnitRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(UnitRow {
                 is_active: false,
                 ..
@@ -100,14 +92,15 @@ impl Delete for UnitRowDelete {
 }
 
 impl Upsert for UnitRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        UnitRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        UnitRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            UnitRowRepository::new(con).find_one_by_id_option(&self.id),
+            UnitRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

@@ -5,43 +5,32 @@ import {
   InputWithLabelRow,
   NumericTextInput,
   TextWithLabelRow,
+  UNDEFINED_STRING_VALUE,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  LocationRowFragment,
-  Repack,
-  StockLineFragment,
-  useStock,
-} from '@openmsupply-client/system';
+import { LocationRowFragment, RepackDraft } from '@openmsupply-client/system';
 import { LocationSearchInput } from '../../..';
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useState } from 'react';
 
 const INPUT_WIDTH = 100;
 
 interface RepackEditFormProps {
-  invoiceId?: string;
-  stockLine: StockLineFragment | null;
-  onChange: (repack: Repack) => void;
-  draft: Repack;
+  onChange: (repack: Partial<RepackDraft>) => void;
+  data: RepackDraft;
+  isNew: boolean;
+  availableNumberOfPacks: number;
 }
 
 export const RepackEditForm: FC<RepackEditFormProps> = ({
-  invoiceId,
   onChange,
-  stockLine,
-  draft,
+  data,
+  isNew,
+  availableNumberOfPacks,
 }) => {
   const t = useTranslation('inventory');
-  const { data } = useStock.repack.get(invoiceId ?? '');
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
-  const { availableNumberOfPacks = 0 } = stockLine ?? {};
-  const textProps = { textAlign: 'end' as 'end' | 'start', paddingRight: 3 };
+  const textProps = { textAlign: 'end' as 'end' | 'start' };
   const labelProps = { sx: { width: 0 } };
-  const isNew = !invoiceId;
-
-  useEffect(() => {
-    setLocation(null);
-  }, [data]);
 
   return (
     <Box justifyContent="center">
@@ -51,7 +40,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           {isNew && (
             <TextWithLabelRow
               label={t('label.packs-available')}
-              text={String(availableNumberOfPacks)}
+              text={String(availableNumberOfPacks ?? '')}
               textProps={textProps}
               labelProps={labelProps}
             />
@@ -68,9 +57,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                   })
                 }
                 width={INPUT_WIDTH}
-                value={
-                  isNew ? draft.numberOfPacks : data?.from.numberOfPacks ?? 0
-                }
+                value={data.numberOfPacks}
                 max={availableNumberOfPacks}
                 disabled={!isNew}
               />
@@ -78,21 +65,13 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           />
           <TextWithLabelRow
             label={t('label.pack-size')}
-            text={
-              isNew
-                ? String(stockLine?.packSize ?? '')
-                : String(data?.from.packSize ?? '')
-            }
+            text={String(data.packSize ?? '')}
             textProps={textProps}
             labelProps={labelProps}
           />
           <TextWithLabelRow
             label={t('label.location')}
-            text={
-              isNew
-                ? String(stockLine?.location?.name ?? '-')
-                : String(data?.to.location?.name ?? '-')
-            }
+            text={data?.locationName ?? UNDEFINED_STRING_VALUE}
             textProps={textProps}
             labelProps={labelProps}
           />
@@ -115,14 +94,10 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           {isNew && <Box height={24} />}
           <TextWithLabelRow
             label={t('label.new-num-packs')}
-            text={
-              isNew
-                ? (
-                    ((draft.numberOfPacks ?? 0) * (stockLine?.packSize ?? 0)) /
-                    (draft.newPackSize || 1)
-                  ).toFixed(2)
-                : String(data?.to.numberOfPacks ?? '')
-            }
+            text={(
+              ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
+              (data.newPackSize || 1)
+            ).toFixed(2)}
             textProps={textProps}
             labelProps={labelProps}
           />
@@ -137,29 +112,38 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
                   })
                 }
                 width={INPUT_WIDTH}
-                value={isNew ? draft.newPackSize : data?.to.packSize ?? 0}
+                value={data.newPackSize}
                 disabled={!isNew}
               />
             }
           />
-          <InputWithLabelRow
-            label={t('label.new-location')}
-            labelWidth="100%"
-            Input={
-              <LocationSearchInput
-                autoFocus={false}
-                disabled={!isNew}
-                selectedLocation={location}
-                width={160}
-                onChange={location => {
-                  setLocation(location);
-                  onChange({
-                    newLocationId: location?.id,
-                  });
-                }}
-              />
-            }
-          />
+          {data.newLocationName || !isNew ? (
+            <TextWithLabelRow
+              label={t('label.new-location')}
+              text={data.newLocationName ?? UNDEFINED_STRING_VALUE}
+              textProps={textProps}
+              labelProps={labelProps}
+            />
+          ) : (
+            <InputWithLabelRow
+              label={t('label.new-location')}
+              labelWidth="100%"
+              Input={
+                <LocationSearchInput
+                  autoFocus={false}
+                  disabled={!isNew}
+                  selectedLocation={location}
+                  width={160}
+                  onChange={location => {
+                    setLocation(location);
+                    onChange({
+                      newLocationId: location?.id,
+                    });
+                  }}
+                />
+              }
+            />
+          )}
         </Box>
       </Box>
     </Box>

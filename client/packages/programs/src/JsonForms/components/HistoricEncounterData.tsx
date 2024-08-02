@@ -7,7 +7,6 @@ import {
   Layout,
 } from '@jsonforms/core';
 import { JsonForms, withJsonFormsLayoutProps } from '@jsonforms/react';
-import { isEmpty } from 'lodash';
 import { z } from 'zod';
 import { renderLayoutElements } from '@jsonforms/material-renderers';
 import { FORM_GAP, useZodOptionsValidation } from '../common';
@@ -15,6 +14,7 @@ import { useDocument, useEncounter, useProgramEvents } from '../../api';
 import { Box, FormLabel } from '@mui/material';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { Typography } from '@common/components';
+import { isEmpty } from '@common/utils';
 
 /**
  * Group-like layout control that displays historic encounter data as readonly if a certain

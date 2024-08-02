@@ -15,7 +15,7 @@ pub struct InboundReturnLine {
     pub item_row: ItemRow,
     pub packs_issued: Option<f64>,
     pub batch: Option<String>,
-    pub pack_size: i32,
+    pub pack_size: f64,
     pub stock_line_id: Option<String>,
     pub expiry_date: Option<NaiveDate>,
 }
@@ -50,7 +50,7 @@ pub fn generate_inbound_return_lines(
     // return existing first, then new lines
     let return_lines: Vec<InboundReturnLine> = existing_return_lines
         .into_iter()
-        .chain(new_return_lines.into_iter())
+        .chain(new_return_lines)
         .collect();
 
     Ok(ListResult {
@@ -102,7 +102,7 @@ impl InboundReturnLine {
             id: line.invoice_line_row.id.clone(),
             reason_id: line.invoice_line_row.return_reason_id.clone(),
             note: line.invoice_line_row.note.clone(),
-            number_of_packs: line.invoice_line_row.number_of_packs.clone(),
+            number_of_packs: line.invoice_line_row.number_of_packs,
             stock_line_id: line.invoice_line_row.stock_line_id.clone(),
             // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
             // to store a linked invoice line of the outbound shipment against the inbound return line

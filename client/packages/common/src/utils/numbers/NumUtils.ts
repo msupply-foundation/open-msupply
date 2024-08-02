@@ -19,6 +19,11 @@ export const NumUtils = {
 
     return constrain(parsed, min, max);
   },
+  /**
+   * Round a value to a given precision.
+   *
+   * For example, round(10.232, 2) gives 10.23
+   */
   round: (value: number, dp = 0): number => {
     if (dp === Infinity) return value;
     const multiplier = 10 ** dp;

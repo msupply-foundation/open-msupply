@@ -21,7 +21,7 @@ use std::str;
 
 mod tests;
 
-sql_function!(fn lower(x: Text) -> Text);
+define_sql_function!(fn lower(x: Text) -> Text);
 
 #[cfg(feature = "postgres")]
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/postgres");
@@ -44,21 +44,14 @@ pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
 
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError>;
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
     // Test only
     fn assert_deleted(&self, con: &StorageConnection);
 }
 
 pub trait Upsert: DebugTrait {
-    // TODO:(Long term) DELETE THIS TRAIT METHOD AND REMOVE TRIGGERS?
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError>;
-
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        self.upsert_sync(con)?;
-        // When not using triggers to create changelog records, this is where you may want to implement changelog logic
-        // This function should return the id of the changelog record created...
-        Ok(None)
-    }
+    // Upsert returns a changelog id if the table is tracked in changelog
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError>;
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection);

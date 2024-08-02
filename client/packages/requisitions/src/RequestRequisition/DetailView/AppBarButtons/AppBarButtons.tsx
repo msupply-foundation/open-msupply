@@ -13,7 +13,7 @@ import {
 import {
   ReportRowFragment,
   ReportSelector,
-  useReport,
+  usePrintReport,
 } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { UseSuggestedQuantityButton } from './UseSuggestedQuantityButton';
@@ -33,7 +33,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('distribution');
   const { data } = useRequest.document.get();
-  const { print, isPrinting } = useReport.utils.print();
+  const { print, isPrinting } = usePrintReport();
 
   const printReport = (
     report: ReportRowFragment,
@@ -59,6 +59,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <ReportSelector
           context={ReportContext.Requisition}
           onPrint={printReport}
+          // Filters out reports that have a subContext (i.e. `R&R`)
+          queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
         >
           <LoadingButton
             variant="outlined"

@@ -1,8 +1,5 @@
 use async_graphql::*;
-use graphql_core::simple_generic_errors::{
-    CannotReverseInvoiceStatus, NodeError, OtherPartyNotAPatient, OtherPartyNotVisible,
-    RecordNotFound,
-};
+use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
@@ -78,13 +75,11 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "description", type = "String"))]
+#[graphql(field(name = "description", ty = "String"))]
 pub enum UpdatePrescriptionErrorInterface {
     InvoiceDoesNotExist(RecordNotFound),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     InvoiceIsNotEditable(InvoiceIsNotEditable),
-    OtherPartyNotVisible(OtherPartyNotVisible),
-    OtherPartyNotAPatient(OtherPartyNotAPatient),
     CanOnlyChangeToPickedWhenNoUnallocatedLines(CanOnlyChangeToPickedWhenNoUnallocatedLines),
 }
 
@@ -128,21 +123,11 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
             ))
         }
 
-        ServiceError::OtherPartyNotAPatient => {
-            return Ok(UpdatePrescriptionErrorInterface::OtherPartyNotAPatient(
-                OtherPartyNotAPatient,
-            ))
-        }
-        ServiceError::OtherPartyNotVisible => {
-            return Ok(UpdatePrescriptionErrorInterface::OtherPartyNotVisible(
-                OtherPartyNotVisible,
-            ))
-        }
         // Standard Graphql Errors
         ServiceError::NotAPrescriptionInvoice
         | ServiceError::ClinicianDoesNotExist
         | ServiceError::NotThisStoreInvoice
-        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::PatientDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_)
         | ServiceError::InvoiceLineHasNoStockLine(_)
         | ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
@@ -274,44 +259,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //OtherPartyNotASupplier
-        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotAPatient)));
-
-        let expected = json!({
-            "updatePrescription" : {
-                "error": {
-                    "__typename": "OtherPartyNotAPatient"
-                }
-            }
-        });
-
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // OtherPartyNotVisible
-        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotVisible)));
-
-        let expected = json!({
-            "updatePrescription" : {
-                "error": {
-                    "__typename": "OtherPartyNotVisible"
-                }
-            }
-        });
-
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //NotThisStoreInvoice
         let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
         let expected_message = "Bad user input";
@@ -336,8 +283,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //OtherPartyDoesNotExist
-        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
+        //PatientDoesNotExist
+        let test_service = TestService(Box::new(|_| Err(ServiceError::PatientDoesNotExist)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

@@ -27,6 +27,9 @@ use mutations::{
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
+    update_name_properties::{
+        update_name_properties, UpdateNamePropertiesInput, UpdateNamePropertiesResponse,
+    },
     update_user,
 };
 use queries::{
@@ -347,7 +350,7 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<ReturnReasonSortInput>>,
     ) -> Result<ReturnReasonResponse> {
-        return_reasons(&ctx, page, filter, sort)
+        return_reasons(ctx, page, filter, sort)
     }
 
     /// Generates new inbound return lines in memory, based on outbound return line ids.
@@ -359,7 +362,7 @@ impl GeneralQueries {
         store_id: String,
         input: GenerateInboundReturnLinesInput,
     ) -> Result<GenerateInboundReturnLinesResponse> {
-        generate_inbound_return_lines(&ctx, store_id, input)
+        generate_inbound_return_lines(ctx, store_id, input)
     }
 
     pub async fn label_printer_settings(
@@ -367,6 +370,10 @@ impl GeneralQueries {
         ctx: &Context<'_>,
     ) -> Result<Option<LabelPrinterSettingNode>> {
         label_printer_settings(ctx)
+    }
+
+    pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
+        name_properties(ctx)
     }
 }
 
@@ -433,6 +440,15 @@ impl GeneralMutations {
     ) -> Result<UpdateLabelPrinterSettingsResponse> {
         update_label_printer_settings(ctx, input)
     }
+
+    pub async fn update_name_properties(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateNamePropertiesInput,
+    ) -> Result<UpdateNamePropertiesResponse> {
+        update_name_properties(ctx, &store_id, input)
+    }
 }
 
 /// Auth is not checked during initialisation stage
@@ -489,5 +505,20 @@ impl DiscoveryQueries {
         ctx: &Context<'_>,
     ) -> Result<InitialisationStatusNode> {
         initialisation_status(ctx)
+    }
+}
+
+// Central server only mutations
+#[derive(Default, Clone)]
+pub struct CentralGeneralMutations;
+
+#[Object]
+impl CentralGeneralMutations {
+    pub async fn configure_name_properties(
+        &self,
+        ctx: &Context<'_>,
+        input: Vec<ConfigureNamePropertyInput>,
+    ) -> Result<ConfigureNamePropertiesResponse> {
+        configure_name_properties(ctx, input)
     }
 }

@@ -41,21 +41,12 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         ProgramRequisitionOrderTypeRowRepository { connection }
     }
 
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_requisition_order_type_dsl::program_requisition_order_type)
             .values(row)
             .on_conflict(program_requisition_order_type_dsl::id)
             .do_update()
             .set(row)
-            .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(program_requisition_order_type_dsl::program_requisition_order_type)
-            .values(row)
             .execute(self.connection.lock().connection())?;
         Ok(())
     }
@@ -95,8 +86,9 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ProgramRequisitionOrderTypeRowDelete(pub String);
 impl Delete for ProgramRequisitionOrderTypeRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ProgramRequisitionOrderTypeRowRepository::new(con).delete(&self.0)
+    fn delete(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRequisitionOrderTypeRowRepository::new(con).delete(&self.0)?;
+        Ok(None) // Table not in Changelog
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
@@ -108,8 +100,9 @@ impl Delete for ProgramRequisitionOrderTypeRowDelete {
 }
 
 impl Upsert for ProgramRequisitionOrderTypeRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)?;
+        Ok(None) // Table not in Changelog
     }
 
     // Test only

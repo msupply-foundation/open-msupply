@@ -24,7 +24,7 @@ pub enum InsertAssetError {
     AssetNumberAlreadyExists,
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
@@ -37,6 +37,11 @@ pub struct InsertAsset {
     pub type_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
+    pub properties: Option<String>,
+    pub donor_name_id: Option<String>,
+    pub warranty_start: Option<NaiveDate>,
+    pub warranty_end: Option<NaiveDate>,
+    pub needs_replacement: Option<bool>,
 }
 
 pub fn insert_asset(
@@ -91,7 +96,7 @@ pub fn validate(
     }
 
     if let Some(asset_number) = &input.asset_number {
-        if check_asset_number_exists(&asset_number, connection)?.len() == 1 {
+        if check_asset_number_exists(asset_number, connection)?.len() == 1 {
             return Err(InsertAssetError::AssetNumberAlreadyExists);
         }
     }
@@ -122,6 +127,11 @@ pub fn generate(
         category_id,
         class_id,
         type_id,
+        properties,
+        donor_name_id,
+        warranty_start,
+        warranty_end,
+        needs_replacement,
     }: InsertAsset,
 ) -> AssetRow {
     AssetRow {
@@ -139,6 +149,11 @@ pub fn generate(
         asset_category_id: Some(category_id.unwrap_or_default()),
         asset_class_id: Some(class_id.unwrap_or_default()),
         asset_type_id: Some(type_id.unwrap_or_default()),
+        properties,
+        donor_name_id,
+        warranty_start,
+        warranty_end,
+        needs_replacement,
     }
 }
 
