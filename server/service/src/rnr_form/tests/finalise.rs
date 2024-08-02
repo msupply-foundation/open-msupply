@@ -5,8 +5,8 @@ mod finalise {
     use repository::test_db::setup_all;
     use repository::{
         EqualFilter, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionRepository, RequisitionRowRepository, RequisitionStatus,
-        RnRFormLineRowRepository, RnRFormRowRepository, RnRFormStatus,
+        RequisitionRepository, RequisitionStatus, RnRFormLineRowRepository, RnRFormRowRepository,
+        RnRFormStatus,
     };
 
     use crate::rnr_form::finalise::{FinaliseRnRForm, FinaliseRnRFormError};
