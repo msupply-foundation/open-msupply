@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use fast_scraper::{ElementRef, Html, Selector};
 use repository::{
     EqualFilter, PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository,
     ReportSort, ReportType, RepositoryError,
@@ -24,6 +25,7 @@ use super::{
 pub enum PrintFormat {
     Pdf,
     Html,
+    Excel,
 }
 
 #[derive(Debug)]
@@ -117,6 +119,9 @@ pub trait ReportServiceTrait: Sync + Send {
             Some(PrintFormat::Html) => {
                 generate_html_report_to_html(base_dir, document, report.name.clone())
             }
+            Some(PrintFormat::Excel) => {
+                print_html_report_to_excel(base_dir, document, report.name.clone())
+            }
             Some(PrintFormat::Pdf) | None => {
                 generate_html_report_to_pdf(base_dir, document, report.name.clone())
             }
@@ -165,6 +170,90 @@ fn generate_html_report_to_html(
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
     Ok(file.id)
+}
+
+struct Selectors<'a> {
+    html: &'a Html,
+}
+
+impl<'a> Selectors<'a> {
+    fn new(html: &'a Html) -> Self {
+        Self { html }
+    }
+
+    fn headers(&self) -> Vec<&str> {
+        let headers_selector = Selector::parse(".paging tbody thead tr td").unwrap();
+        self.html
+            .select(&headers_selector)
+            .map(inner_text)
+            .collect()
+    }
+
+    fn rows_and_cells(&self) -> Vec<Vec<&str>> {
+        let rows_selector = Selector::parse(".paging tbody tbody tr").unwrap();
+        let cells_selector = Selector::parse("td").unwrap();
+        self.html
+            .select(&rows_selector)
+            .map(|row| row.select(&cells_selector).map(inner_text).collect())
+            .collect()
+    }
+}
+
+fn inner_text(element_ref: ElementRef) -> &str {
+    element_ref
+        .text()
+        .find(|t| t.trim().len() > 0)
+        .map(|t| t.trim())
+        .unwrap_or_default()
+}
+
+/// Converts the report to an Excel file and returns the file id
+fn print_html_report_to_excel(
+    base_dir: &Option<String>,
+    document: GeneratedReport,
+    report_name: String,
+) -> Result<String, ReportError> {
+    let sheet_name = "Report";
+
+    let mut book = umya_spreadsheet::new_file();
+    book.set_sheet_name(0, sheet_name).unwrap();
+    let sheet = book.get_sheet_by_name_mut(sheet_name).unwrap();
+
+    let fragment = Html::parse_fragment(&format_html_document(document));
+
+    let selectors = Selectors::new(&fragment); // Store Html when creating
+
+    for (index, header) in selectors.headers().into_iter().enumerate() {
+        let cell = sheet.get_cell_mut((index as u32 + 1, 1));
+
+        cell.set_value(header);
+        cell.get_style_mut().get_font_mut().set_bold(true);
+    }
+
+    for (row_index, row) in selectors.rows_and_cells().into_iter().enumerate() {
+        for (cell_index, cell) in row.into_iter().enumerate() {
+            sheet
+                .get_cell_mut((cell_index as u32 + 1, row_index as u32 + 2))
+                .set_value(cell);
+        }
+    }
+
+    let now: DateTime<Utc> = SystemTime::now().into();
+    let file_service = StaticFileService::new(base_dir)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+
+    let reserved_file = file_service
+        .reserve_file(
+            &format!("{}_{}.xlsx", now.format("%Y%m%d_%H%M%S"), report_name),
+            &StaticFileCategory::Temporary,
+            None,
+        )
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+
+    umya_spreadsheet::writer::xlsx::write(&book, reserved_file.path)
+        .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
+
+    Ok(reserved_file.id)
 }
 
 /// Puts the document content, header and footer into a <html> template.
@@ -608,5 +697,111 @@ mod report_service_test {
         )
         .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");
+    }
+}
+
+#[cfg(test)]
+mod report_to_excel_test {
+    use super::*;
+    use fast_scraper::Html;
+
+    #[test]
+    fn test_selectors() {
+        let html = Html::parse_fragment(
+            r#"
+<html>
+   <body>
+      <table class="paging">
+         <thead>
+            <tr>
+               <td></td>
+            </tr>
+         </thead>
+         <tbody>
+            <tr>
+               <td>
+                  <style>
+                  </style>
+                  <div class="container">
+                     <table>
+                        <thead>
+                           <tr class="heading">
+                              <td>First Header</td>
+                              <td>Second Header</td>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr>
+                              <td>Row One Cell One</td>
+                              <td>Row One Cell Two</td>
+                           </tr>
+                           <tr>
+                              <td>Row Two Cell One</td>
+                              <td>Row Two Cell Two</td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
+               </td>
+            </tr>
+         </tbody>
+         <tfoot>
+            <tr>
+               <td></td>
+            </tr>
+         </tfoot>
+      </table>
+   </body>
+</html>
+
+    "#,
+        );
+
+        let selectors = Selectors::new(&html);
+
+        assert_eq!(selectors.headers(), vec!["First Header", "Second Header"]);
+
+        assert_eq!(
+            selectors.rows_and_cells(),
+            vec![
+                vec!["Row One Cell One", "Row One Cell Two"],
+                vec!["Row Two Cell One", "Row Two Cell Two"]
+            ]
+        );
+    }
+
+    #[test]
+    fn test_inner_text() {
+        let html = Html::parse_fragment(
+            r#"
+<html>
+   <body>
+      <table>
+         <tbody>
+            <tr>
+               <td class="status"> 
+                  <span class="out-of-stock">Out of Stock</span>
+               </td>
+                <td class="status"> 
+                  Out of Stock
+               </td>
+            </tr>
+         </tbody>
+      </table>         
+   </body>
+</html>
+
+        "#,
+        );
+
+        let cells_selector = Selector::parse("td").unwrap();
+        let mut cells = html.select(&cells_selector);
+        let cell = cells.next().unwrap();
+
+        assert_eq!(inner_text(cell), "Out of Stock");
+
+        let cell = cells.next().unwrap();
+
+        assert_eq!(inner_text(cell), "Out of Stock");
     }
 }
