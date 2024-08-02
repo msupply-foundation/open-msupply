@@ -71,11 +71,6 @@ mod finalise {
             .context(mock_store_a().id, "".to_string())
             .unwrap();
 
-        let last_requisition_number = RequisitionRowRepository::new(&context.connection)
-            .find_max_requisition_number(repository::RequisitionType::Request, &mock_store_a().id)
-            .unwrap()
-            .unwrap_or_default();
-
         let _result = service_provider
             .rnr_form_service
             .finalise_rnr_form(
