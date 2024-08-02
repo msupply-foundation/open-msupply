@@ -124,5 +124,16 @@
     "messages.confirm-delete-assets_other": "Это навсегда удалит {{count}} выбранных ресурсов.",
     "messages.confirm-delete-immunisation-programs_one": "Это навсегда удалит эту Программу Иммунизации.",
     "messages.confirm-delete-immunisation-programs_other": "Это навсегда удалит {{count}} выбранных Программ Иммунизации.",
-    "messages.confirm-delete-vaccine-courses_one": "Это навсегда удалит этот курс вакцинации"
+    "messages.confirm-delete-vaccine-courses_one": "Это навсегда удалит этот курс вакцинации",
+    "messages.deleted-immunisation-programs_one": "Удалена {{count}} программа иммунизации",
+    "messages.deleted-immunisation-programs_other": "Удалено {{count}} программ иммунизации",
+    "messages.confirm-delete-document": "Этот документ будет удален.",
+    "messages.fridge-tag-import-successful": "Успех! Импортировано {{numberOfLogs}} записей и {{numberOfBreaches}} нарушений.",
+    "messages.deleted-assets_one": "Удален {{count}} ресурс",
+    "messages.deleted-assets_other": "Удалено {{count}} ресурсов",
+    "messages.device": "Устройство:",
+    "messages.confirm-delete-vaccine-courses_other": "Это навсегда удалит {{count}} выбранных курсов вакцинации",
+    "messages.confirm-sensor-update": "Это подтвердит изменения, которые вы сделали для этого датчика",
+    "messages.deleted-vaccine-courses_one": "Удалён 1 курс вакцинации",
+    "messages.deleted-vaccine-courses_other": "Удалены {{count}} курсов вакцинации"
 }
