@@ -273,7 +273,7 @@ These are unhandled errors, they will result in connection close.
 
 <details>
 <summary>Further Info</summary>
-If there is a rust `panic` in web request process, it seems the connection just closes, we can probably handle this better _{TODO}_, would assume we can catch these panics in actix-web. Ofcourse we will try to eliminate them, but it's possible that some panics will sneak in (i.e. if we use panic vs return result method from external 
+If there is a rust `panic` in web request process, it seems the connection just closes, we can probably handle this better _{TODO}_, would assume we can catch these panics in actix-web. Of course we will try to eliminate them, but it's possible that some panics will sneak in (i.e. if we use panic vs return result method from external 
 crates)
 </details>
 &nbsp;
