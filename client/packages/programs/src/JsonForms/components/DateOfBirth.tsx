@@ -15,13 +15,9 @@ import {
   Box,
   DetailInputWithLabelRow,
   NumericTextInput,
+  Typography,
 } from '@openmsupply-client/common';
-import {
-  FORM_LABEL_COLUMN_WIDTH,
-  DefaultFormRowSx,
-  FORM_GAP,
-  FORM_LABEL_WIDTH,
-} from '../common';
+import { DefaultFormRowSx, FORM_GAP, FORM_LABEL_WIDTH } from '../common';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
@@ -77,6 +73,9 @@ const UIComponent = (props: ControlProps) => {
   if (!props.visible) {
     return null;
   }
+
+  const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
+
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
@@ -101,21 +100,24 @@ const UIComponent = (props: ControlProps) => {
               },
             }}
           />
-          <Box
-            flex={0}
-            style={{ textAlign: 'end' }}
-            flexBasis={FORM_LABEL_COLUMN_WIDTH}
-          >
+
+          <Box flex={0} style={{ textAlign: 'end' }}>
             <FormLabel sx={{ fontWeight: 'bold' }}>{t('label.age')}:</FormLabel>
           </Box>
-          <Box flex={0}>
-            <NumericTextInput
-              value={age}
-              sx={{ width: 65 }}
-              onChange={onChangeAge}
-              disabled={!props.enabled}
-            />
-          </Box>
+          {(age ?? 1 >= 1) ? (
+            <Box flex={0}>
+              <NumericTextInput
+                value={age}
+                sx={{ width: 65 }}
+                onChange={onChangeAge}
+                disabled={!props.enabled}
+              />
+            </Box>
+          ) : (
+            <Typography fontSize="85%" whiteSpace="nowrap">
+              {t('label.age-months-days', { months, days })}
+            </Typography>
+          )}
         </Box>
       }
     />
