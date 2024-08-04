@@ -418,7 +418,6 @@ mod test {
               "msupplyUniversalCode": "universal code",
               "msupplyUniversalName": "universal name",
               "outerPackSize": 10,
-              "strength": "1.5mg",
               "volumePerOuterPack": 11.2,
               "volumePerPack": 0.5,
               "weight": 10.5
@@ -439,7 +438,6 @@ mod test {
                volumePerOuterPack
                margin
                weight
-               strength
                atcCategory
                ddd
             }
