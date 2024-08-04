@@ -7,12 +7,13 @@ import {
 import {
   PeriodScheduleFragment,
   ProgramFragment,
+  RnRFormFragment,
 } from '../operations.generated';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { RNR_FORM } from './keys';
-import { useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { NameRowFragment } from '@openmsupply-client/system';
-import { useRnRFormList } from '.';
+import { useRnRFormList, useSchedulesAndPeriods } from '.';
 
 interface RnRFormDraft {
   supplier: NameRowFragment | null;
@@ -30,7 +31,6 @@ export const useCreateRnRForm = () => {
     period: null,
   });
 
-  // TODO: probably needs to filter down to prog and sched so we can determine period!
   const { data } = useRnRFormList({
     sortBy: {
       key: 'createdDatetime',
@@ -43,23 +43,13 @@ export const useCreateRnRForm = () => {
   });
   const previousForm = data?.nodes[0];
 
-  // Default to the same supplier and program as most recent previous form, if exists
-  useEffect(() => {
-    if (previousForm && draft.supplier?.id !== previousForm.supplierId) {
-      setDraft({
-        ...draft,
-        supplier: {
-          id: previousForm.supplierId,
-          name: previousForm.supplierName,
-        } as NameRowFragment,
-        program: {
-          __typename: `ProgramNode`,
-          id: previousForm.programId,
-          name: previousForm.programName,
-        },
-      });
-    }
-  }, [!!previousForm]);
+  useDefaultsFromPreviousForm({ previousForm, setDraft });
+
+  useScheduleAndPeriodAutoSelect({
+    draft,
+    setDraft,
+    mostRecentUsedPeriodId: previousForm?.periodId,
+  });
 
   const clearDraft = () => {
     setDraft({
@@ -70,7 +60,7 @@ export const useCreateRnRForm = () => {
     });
   };
   const updateDraft = (patch: Partial<RnRFormDraft>) => {
-    setDraft({ ...draft, ...patch });
+    setDraft(draft => ({ ...draft, ...patch }));
   };
 
   const isIncomplete =
@@ -124,4 +114,78 @@ const useCreate = () => {
       // All forms need to be re-fetched to include the new one
       queryClient.invalidateQueries([RNR_FORM]),
   });
+};
+
+const useDefaultsFromPreviousForm = ({
+  previousForm,
+  setDraft,
+}: {
+  previousForm?: RnRFormFragment;
+  setDraft: Dispatch<SetStateAction<RnRFormDraft>>;
+}) => {
+  // Default to the same supplier and program as most recent previous form, if exists
+  useEffect(() => {
+    if (previousForm) {
+      setDraft(draft => ({
+        ...draft,
+        supplier: {
+          id: previousForm.supplierId,
+          name: previousForm.supplierName,
+        } as NameRowFragment,
+        program: {
+          __typename: `ProgramNode`,
+          id: previousForm.programId,
+          name: previousForm.programName,
+        },
+      }));
+    }
+  }, [!!previousForm]);
+};
+
+const useScheduleAndPeriodAutoSelect = ({
+  mostRecentUsedPeriodId,
+  draft,
+  setDraft,
+}: {
+  mostRecentUsedPeriodId?: string;
+  draft: RnRFormDraft;
+  setDraft: Dispatch<SetStateAction<RnRFormDraft>>;
+}) => {
+  const { data: schedulesAndPeriods } = useSchedulesAndPeriods(
+    draft.program?.id ?? ''
+  );
+
+  // If there is only one schedule (and no other has been selected) set it automatically
+  useEffect(() => {
+    if (schedulesAndPeriods?.nodes.length == 1 && !draft.schedule) {
+      const onlySchedule = schedulesAndPeriods.nodes[0]!; // if length is 1, the first element must exist
+
+      setDraft(draft => ({
+        ...draft,
+        schedule: onlySchedule,
+      }));
+    }
+  }, [schedulesAndPeriods?.nodes]);
+
+  // Select the next period in the schedule
+  useEffect(() => {
+    setDraft(prevDraft => {
+      const { schedule } = prevDraft;
+
+      if (!schedule) return prevDraft;
+
+      const mostRecentUsedPeriodIdx = schedule.periods.findIndex(
+        period => period.id === mostRecentUsedPeriodId
+      );
+
+      // NOTE! This assumes periods are in order, newest ones at the top
+      const nextPeriod = schedule.periods[mostRecentUsedPeriodIdx - 1];
+
+      return {
+        ...prevDraft,
+        period: nextPeriod ?? null,
+      };
+    });
+    // Rerun if schedule changes
+  }, [draft.schedule, mostRecentUsedPeriodId]);
 };

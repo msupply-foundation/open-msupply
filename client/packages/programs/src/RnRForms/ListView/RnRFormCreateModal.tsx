@@ -1,7 +1,8 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   useDialog,
   Grid,
+  Box,
   DialogButton,
   useTranslation,
   useNavigate,
@@ -37,14 +38,6 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
     draft.program?.id ?? ''
   );
 
-  // If there is only one schedule (and no other has been selected) set it automatically
-  useEffect(() => {
-    if (schedulesAndPeriods?.nodes.length == 1 && !draft.schedule) {
-      updateDraft({ schedule: schedulesAndPeriods.nodes[0]! }); // if length is 1, the first element must exist
-    }
-    // Rerun if schedules change (i.e. when program changes)
-  }, [schedulesAndPeriods?.nodes]);
-
   const width = '350px';
   const prevFormNotFinalised =
     !!previousForm && previousForm.status !== RnRFormNodeStatus.Finalised;
@@ -65,6 +58,7 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
                     .addPart(result.id)
                     .build()
                 );
+              clearDraft();
             } catch (e) {
               console.error(e);
             }
@@ -124,23 +118,19 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
               options={draft.schedule?.periods ?? []}
               value={draft.period}
               onChange={period => updateDraft({ period })}
-              mostRecentUsedPeriodId={previousForm?.periodId}
+              previousFormExists={!!previousForm}
+              errorMessage={
+                prevFormNotFinalised
+                  ? t('messages.finalise-previous-form')
+                  : // If there is a previous form, the next period should be set automatically
+                    // If not, no periods are available
+                    !!previousForm && !draft.period
+                    ? t('messages.no-available-periods')
+                    : undefined
+              }
             />
           }
         />
-        {/* TOOD: no more periods.. */}
-        {prevFormNotFinalised && (
-          <Typography
-            sx={{
-              fontStyle: 'italic',
-              color: 'gray.dark',
-              fontSize: 'small',
-              width: '450px',
-            }}
-          >
-            {t('messages.finalise-previous-form')}
-          </Typography>
-        )}
 
         <InputWithLabelRow
           label={t('label.supplier')}
@@ -162,44 +152,44 @@ const PeriodSelect = ({
   disabled,
   options,
   value,
-  mostRecentUsedPeriodId,
+  errorMessage,
+  previousFormExists = false,
   onChange,
 }: {
   width: string;
   disabled: boolean;
   options: SchedulePeriodNode[];
   value: SchedulePeriodNode | null;
-  mostRecentUsedPeriodId?: string;
   onChange: (period: SchedulePeriodNode) => void;
+  previousFormExists?: boolean;
+  errorMessage?: string;
 }) => {
-  const mostRecentUsedPeriodIdx = options.findIndex(
-    period => period.id === mostRecentUsedPeriodId
-  );
-
-  // NOTE! This assumes periods are in order, newest ones at the top
-  const nextPeriod = options[mostRecentUsedPeriodIdx - 1];
-
-  if (mostRecentUsedPeriodId && !nextPeriod) {
-    // TODO: show no avialable periods..
-    console.log('hello');
-  }
-
-  useEffect(() => {
-    if (nextPeriod && value !== nextPeriod) onChange(nextPeriod);
-  }, [nextPeriod]);
-
   return (
-    <Autocomplete
-      width={width}
-      disabled={disabled}
-      getOptionDisabled={option =>
-        !!mostRecentUsedPeriodId && option.id !== nextPeriod?.id
-      }
-      getOptionLabel={option => option.period.name}
-      options={options}
-      value={value}
-      onChange={(_, period) => period && onChange(period)}
-      clearable={false}
-    />
+    <Box display="flex" flexDirection="column">
+      <Autocomplete
+        width={width}
+        disabled={disabled}
+        getOptionDisabled={option =>
+          previousFormExists && option.id !== value?.id
+        }
+        getOptionLabel={option => option.period.name}
+        options={options}
+        value={value}
+        onChange={(_, period) => period && onChange(period)}
+        clearable={false}
+      />
+      {errorMessage && (
+        <Typography
+          sx={{
+            fontStyle: 'italic',
+            color: 'gray.dark',
+            fontSize: 'small',
+            width,
+          }}
+        >
+          {errorMessage}
+        </Typography>
+      )}
+    </Box>
   );
 };
