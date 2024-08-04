@@ -95,6 +95,12 @@ const PatientListComponent: FC = () => {
       label: 'label.gender',
       formatter: gender =>Formatter.enumCase(gender as string ?? ''),
     },
+    {
+      key: 'dateOfBirth',
+      label: 'label.date-of-birth',
+      formatter: dateString =>
+        dateString ? localisedDate((dateString as string) || '') : '',
+    },
   ];
 
   if (store?.preferences.omProgramModule) {
