@@ -9,15 +9,15 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use repository::{
     DateFilter, EqualFilter, Pagination, PaginationOption, Patient, PatientFilter,
-    ProgramEnrolmentFilter, StringFilter,
+    ProgramEnrolmentFilter, StringFilter, GenderType as GenderRepo
 };
+use serde::Serialize;
 use service::programs::patient::main_patient_doc_name;
 use service::programs::patient::patient_updated::patient_draft_document;
 use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
 use crate::types::program_enrolment::ProgramEnrolmentNode;
-use crate::types::{EqualFilterGenderInput, GenderInput, GenderType};
 
 use super::contact_trace::{
     ContactTraceConnector, ContactTraceFilterInput, ContactTraceNode, ContactTraceResponse,
@@ -26,6 +26,7 @@ use super::contact_trace::{
 use super::program_enrolment::{
     ProgramEnrolmentConnector, ProgramEnrolmentFilterInput, ProgramEnrolmentResponse,
 };
+
 
 #[derive(InputObject, Clone)]
 pub struct PatientFilterInput {
@@ -74,6 +75,78 @@ pub struct PatientNode {
     pub store_id: String,
     pub patient: Patient,
     pub allowed_ctx: Vec<String>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum GenderInput {
+    Female,
+    Male,
+    TransgenderMale,
+    TransgenderMaleHormone,
+    TransgenderMaleSurgical,
+    TransgenderFemale,
+    TransgenderFemaleHormone,
+    TransgenderFemaleSurgical,
+    Unknown,
+    NonBinary,
+}
+
+impl GenderInput {
+    pub fn to_domain(self) -> GenderRepo {
+        match self {
+            GenderInput::Female => GenderRepo::Female,
+            GenderInput::Male => GenderRepo::Male,
+            GenderInput::TransgenderMale => GenderRepo::TransgenderMale,
+            GenderInput::TransgenderMaleHormone => GenderRepo::TransgenderMaleHormone,
+            GenderInput::TransgenderMaleSurgical => GenderRepo::TransgenderMaleSurgical,
+            GenderInput::TransgenderFemale => GenderRepo::TransgenderFemale,
+            GenderInput::TransgenderFemaleHormone => GenderRepo::TransgenderFemaleHormone,
+            GenderInput::TransgenderFemaleSurgical => GenderRepo::TransgenderFemaleSurgical,
+            GenderInput::Unknown => GenderRepo::Unknown,
+            GenderInput::NonBinary => GenderRepo::NonBinary,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterGenderInput {
+    pub equal_to: Option<GenderInput>,
+    pub equal_any: Option<Vec<GenderInput>>,
+    pub not_equal_to: Option<GenderInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum GenderType {
+    Female,
+    Male,
+    Transgender,
+    TransgenderMale,
+    TransgenderMaleHormone,
+    TransgenderMaleSurgical,
+    TransgenderFemale,
+    TransgenderFemaleHormone,
+    TransgenderFemaleSurgical,
+    Unknown,
+    NonBinary,
+}
+impl GenderType {
+    pub fn from_domain(gender: &GenderRepo) -> Self {
+        match gender {
+            GenderRepo::Female => GenderType::Female,
+            GenderRepo::Male => GenderType::Male,
+            GenderRepo::Transgender => GenderType::Transgender,
+            GenderRepo::TransgenderMale => GenderType::TransgenderMale,
+            GenderRepo::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
+            GenderRepo::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,
+            GenderRepo::TransgenderFemale => GenderType::TransgenderFemale,
+            GenderRepo::TransgenderFemaleHormone => GenderType::TransgenderFemaleHormone,
+            GenderRepo::TransgenderFemaleSurgical => GenderType::TransgenderFemaleSurgical,
+            GenderRepo::Unknown => GenderType::Unknown,
+            GenderRepo::NonBinary => GenderType::NonBinary,
+        }
+    }
 }
 
 #[Object]

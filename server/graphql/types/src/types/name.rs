@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
-use repository::{GenderType as GenderRepo, Name, NameRow, NameType};
+use repository::{ Name, NameRow, NameType};
 
 use graphql_core::{
     loader::StoreByIdLoader, simple_generic_errors::NodeError,
@@ -9,46 +9,7 @@ use graphql_core::{
 };
 use serde::Serialize;
 
-use super::StoreNode;
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum GenderInput {
-    Female,
-    Male,
-    TransgenderMale,
-    TransgenderMaleHormone,
-    TransgenderMaleSurgical,
-    TransgenderFemale,
-    TransgenderFemaleHormone,
-    TransgenderFemaleSurgical,
-    Unknown,
-    NonBinary,
-}
-
-impl GenderInput {
-    pub fn to_domain(self) -> GenderRepo {
-        match self {
-            GenderInput::Female => GenderRepo::Female,
-            GenderInput::Male => GenderRepo::Male,
-            GenderInput::TransgenderMale => GenderRepo::TransgenderMale,
-            GenderInput::TransgenderMaleHormone => GenderRepo::TransgenderMaleHormone,
-            GenderInput::TransgenderMaleSurgical => GenderRepo::TransgenderMaleSurgical,
-            GenderInput::TransgenderFemale => GenderRepo::TransgenderFemale,
-            GenderInput::TransgenderFemaleHormone => GenderRepo::TransgenderFemaleHormone,
-            GenderInput::TransgenderFemaleSurgical => GenderRepo::TransgenderFemaleSurgical,
-            GenderInput::Unknown => GenderRepo::Unknown,
-            GenderInput::NonBinary => GenderRepo::NonBinary,
-        }
-    }
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterGenderInput {
-    pub equal_to: Option<GenderInput>,
-    pub equal_any: Option<Vec<GenderInput>>,
-    pub not_equal_to: Option<GenderInput>,
-}
+use super::{patient::GenderType, StoreNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -85,38 +46,6 @@ impl NameNodeType {
     }
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum GenderType {
-    Female,
-    Male,
-    Transgender,
-    TransgenderMale,
-    TransgenderMaleHormone,
-    TransgenderMaleSurgical,
-    TransgenderFemale,
-    TransgenderFemaleHormone,
-    TransgenderFemaleSurgical,
-    Unknown,
-    NonBinary,
-}
-impl GenderType {
-    pub fn from_domain(gender: &GenderRepo) -> Self {
-        match gender {
-            GenderRepo::Female => GenderType::Female,
-            GenderRepo::Male => GenderType::Male,
-            GenderRepo::Transgender => GenderType::Transgender,
-            GenderRepo::TransgenderMale => GenderType::TransgenderMale,
-            GenderRepo::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
-            GenderRepo::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,
-            GenderRepo::TransgenderFemale => GenderType::TransgenderFemale,
-            GenderRepo::TransgenderFemaleHormone => GenderType::TransgenderFemaleHormone,
-            GenderRepo::TransgenderFemaleSurgical => GenderType::TransgenderFemaleSurgical,
-            GenderRepo::Unknown => GenderType::Unknown,
-            GenderRepo::NonBinary => GenderType::NonBinary,
-        }
-    }
-}
 
 #[Object]
 impl NameNode {
@@ -274,6 +203,7 @@ mod test {
     use repository::mock::MockDataInserts;
     use serde_json::json;
     use util::inline_init;
+    use repository::GenderType as GenderRepo;
 
     use super::*;
 
