@@ -142,13 +142,13 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                         />
                       </Grid>
                     </Link>
-                    <ReportArgumentsModal
-                      report={reportWithArgs}
-                      onReset={() => setReportWithArgs(undefined)}
-                      onArgumentsSelected={reportArgs}
-                    />
                   </React.Fragment>
                 ))}
+                <ReportArgumentsModal
+                  report={reportWithArgs}
+                  onReset={() => setReportWithArgs(undefined)}
+                  onArgumentsSelected={reportArgs}
+                />
               </Grid>
             )}
           </React.Suspense>
