@@ -29,7 +29,9 @@ export const ProgramSearchInput = ({
       loading={isLoading}
       options={data?.nodes ?? []}
       optionKey="name"
-      onChange={(_, value) => value && onChange(value)}
+      onChange={(_, newVal) =>
+        newVal && newVal.id !== value?.id && onChange(newVal)
+      }
       value={value ? { label: value.name, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       clearable={false}

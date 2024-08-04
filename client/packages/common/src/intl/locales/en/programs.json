@@ -21,5 +21,5 @@
   "messages.click-to-return-to-rnr-list": "Click here to return to the list of R&R Forms",
   "messages.all-lines-must-be-confirmed": "All lines must be confirmed before the R&R form can be finalised",
   "messages.finalise-previous-form": "Finalise the previous R&R form in this schedule to create the next one",
-  "messages.no-more-periods": "No more periods found for schedule"
+  "messages.no-available-periods": "No available periods found for schedule"
 }
