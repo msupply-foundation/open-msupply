@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{patient::PatientNode, GenderInput};
+use graphql_types::types::patient::{GenderInput, PatientNode};
 use repository::NameType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
