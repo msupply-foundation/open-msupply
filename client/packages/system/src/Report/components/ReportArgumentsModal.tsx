@@ -55,6 +55,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
       title="Report arguments"
       cancelButton={<DialogButton variant="cancel" onClick={cleanUp} />}
       slideAnimation={false}
+      width={500}
       okButton={
         <DialogButton
           variant="ok"
