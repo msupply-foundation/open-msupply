@@ -375,10 +375,6 @@ impl Name {
             .unwrap_or(false)
     }
 
-    pub fn is_patient(&self) -> bool {
-        self.name_row.r#type == NameRowType::Patient
-    }
-
     pub fn is_visible(&self) -> bool {
         self.name_store_join_row.is_some()
     }
