@@ -97,6 +97,7 @@ export const ListView = () => {
           />
         )}
         <ReportArgumentsModal
+          key={reportWithArgs?.id}
           report={reportWithArgs}
           onReset={() => setReportWithArgs(undefined)}
           onArgumentsSelected={reportArgs}
