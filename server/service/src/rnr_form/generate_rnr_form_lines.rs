@@ -30,7 +30,7 @@ pub fn generate_rnr_form_lines(
     period: PeriodRow,
     previous_form: Option<RnRForm>,
 ) -> Result<Vec<RnRFormLineRow>, RepositoryError> {
-    let master_list_item_ids = get_master_list_item_ids(&ctx, master_list_id)?;
+    let master_list_item_ids = get_master_list_item_ids(ctx, master_list_id)?;
 
     let period_length_in_days = get_period_length(&period);
 
@@ -53,7 +53,7 @@ pub fn generate_rnr_form_lines(
         RnRFormFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
             .period_schedule_id(EqualFilter::equal_to(&period.period_schedule_id))
-            .program_id(EqualFilter::equal_to(&program_id)),
+            .program_id(EqualFilter::equal_to(program_id)),
     )?;
 
     // Generate line for each item in the master list
@@ -326,12 +326,10 @@ pub fn get_adjusted_quantity_consumed(
 ) -> f64 {
     let days_in_stock = period_length_in_days - stock_out_duration;
 
-    let adjusted_quantity_consumed = match days_in_stock {
+    match days_in_stock {
         0 => consumed,
         days_in_stock => consumed * period_length_in_days as f64 / days_in_stock as f64,
-    };
-
-    adjusted_quantity_consumed
+    }
 }
 
 #[derive(Debug, PartialEq, Default, Copy, Clone)]
@@ -423,7 +421,5 @@ pub fn get_earliest_expiry(
         )?
         .pop();
 
-    Ok(earliest_expiring
-        .map(|line| line.stock_line_row.expiry_date)
-        .flatten())
+    Ok(earliest_expiring.and_then(|line| line.stock_line_row.expiry_date))
 }

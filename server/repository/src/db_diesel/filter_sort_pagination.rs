@@ -130,7 +130,7 @@ impl<F> EqualFilter<F> {
             not_equal_to: not_equal_to.map(T::from),
             equal_any_or_null: equal_any_or_null.map(|r| r.into_iter().map(T::from).collect()),
             not_equal_all: not_equal_all.map(|r| r.into_iter().map(T::from).collect()),
-            is_null: is_null.map(|r| r),
+            is_null,
         }
     }
 }
