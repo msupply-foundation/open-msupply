@@ -4959,6 +4959,7 @@ export type PricingNode = {
 };
 
 export enum PrintFormat {
+  Excel = 'EXCEL',
   Html = 'HTML',
   Pdf = 'PDF'
 }
