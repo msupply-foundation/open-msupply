@@ -27,7 +27,7 @@ table! {
 pub enum ActivityLogType {
     InvoiceCreated,
 }
-
+#[allow(dead_code)]
 pub(crate) struct V1_00_07;
 
 impl Migration for V1_00_07 {
