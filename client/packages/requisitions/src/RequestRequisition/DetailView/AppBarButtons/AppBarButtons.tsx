@@ -59,6 +59,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <ReportSelector
           context={ReportContext.Requisition}
           onPrint={printReport}
+          // Filters out reports that have a subContext (i.e. `R&R`)
+          queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
         >
           <LoadingButton
             variant="outlined"

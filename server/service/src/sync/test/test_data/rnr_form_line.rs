@@ -23,7 +23,8 @@ const RNR_FORM_LINE_1: (&str, &str) = (
         "expiry_date": null,
         "requested_quantity": 0.0,
         "comment": null,
-        "confirmed": false
+        "confirmed": false,
+        previous_average_monthly_consumption: 0.0
     }"#,
 );
 
@@ -48,6 +49,7 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         requested_quantity: 0.0,
         comment: None,
         confirmed: false,
+        previous_average_monthly_consumption: 0.0,
     }
 }
 

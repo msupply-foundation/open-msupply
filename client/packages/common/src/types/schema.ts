@@ -1032,7 +1032,7 @@ export type ContactTraceFilterInput = {
   datetime?: InputMaybe<DatetimeFilterInput>;
   documentName?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
-  gender?: InputMaybe<EqualFilterGenderInput>;
+  gender?: InputMaybe<EqualFilterGenderType>;
   id?: InputMaybe<EqualFilterStringInput>;
   lastName?: InputMaybe<StringFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
@@ -1939,10 +1939,10 @@ export type EqualFilterEncounterStatusInput = {
   notEqualTo?: InputMaybe<EncounterNodeStatus>;
 };
 
-export type EqualFilterGenderInput = {
-  equalAny?: InputMaybe<Array<GenderInput>>;
-  equalTo?: InputMaybe<GenderInput>;
-  notEqualTo?: InputMaybe<GenderInput>;
+export type EqualFilterGenderType = {
+  equalAny?: InputMaybe<Array<GenderType>>;
+  equalTo?: InputMaybe<GenderType>;
+  notEqualTo?: InputMaybe<GenderType>;
 };
 
 export type EqualFilterInventoryAdjustmentReasonTypeInput = {
@@ -2118,19 +2118,6 @@ export type FullSyncStatusNode = {
   pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
 };
-
-export enum GenderInput {
-  Female = 'FEMALE',
-  Male = 'MALE',
-  NonBinary = 'NON_BINARY',
-  TransgenderFemale = 'TRANSGENDER_FEMALE',
-  TransgenderFemaleHormone = 'TRANSGENDER_FEMALE_HORMONE',
-  TransgenderFemaleSurgical = 'TRANSGENDER_FEMALE_SURGICAL',
-  TransgenderMale = 'TRANSGENDER_MALE',
-  TransgenderMaleHormone = 'TRANSGENDER_MALE_HORMONE',
-  TransgenderMaleSurgical = 'TRANSGENDER_MALE_SURGICAL',
-  Unknown = 'UNKNOWN'
-}
 
 export enum GenderType {
   Female = 'FEMALE',
@@ -2693,7 +2680,7 @@ export type InsertPatientInput = {
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
   dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderInput>;
+  gender?: InputMaybe<GenderType>;
   id: Scalars['String']['input'];
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
@@ -4767,7 +4754,7 @@ export type PatientFilterInput = {
   dateOfDeath?: InputMaybe<DateFilterInput>;
   email?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
-  gender?: InputMaybe<EqualFilterGenderInput>;
+  gender?: InputMaybe<EqualFilterGenderType>;
   id?: InputMaybe<EqualFilterStringInput>;
   identifier?: InputMaybe<StringFilterInput>;
   lastName?: InputMaybe<StringFilterInput>;
@@ -4840,7 +4827,7 @@ export type PatientSearchInput = {
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderInput>;
+  gender?: InputMaybe<GenderType>;
   identifier?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4959,6 +4946,7 @@ export type PricingNode = {
 };
 
 export enum PrintFormat {
+  Excel = 'EXCEL',
   Html = 'HTML',
   Pdf = 'PDF'
 }
@@ -7588,7 +7576,7 @@ export type UpdatePatientInput = {
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
   dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<GenderInput>;
+  gender?: InputMaybe<GenderType>;
   id: Scalars['String']['input'];
   isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
