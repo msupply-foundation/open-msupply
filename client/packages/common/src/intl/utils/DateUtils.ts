@@ -137,6 +137,8 @@ export const DateUtils = {
   ageInDays: (date: Date | string) =>
     differenceInDays(Date.now(), dateInputHandler(date)),
   ageInMonthsAndDays: (date: Date | string) => {
+    // from: 01-03-2024 to 02-08-2024 = 5 months, 1 day
+    // from: 03-03-2024 to 02-08-2024 = 4 months, 30 days
     const months = differenceInMonths(Date.now(), date);
     const days = differenceInDays(Date.now(), addMonths(date, months));
     return { months, days };
