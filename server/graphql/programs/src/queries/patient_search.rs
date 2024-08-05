@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::patient::{GenderInput, PatientNode};
+use graphql_types::types::patient::{GenderType, PatientNode};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::PatientSearch,
@@ -16,7 +16,7 @@ pub struct PatientSearchInput {
     first_name: Option<String>,
     last_name: Option<String>,
     date_of_birth: Option<NaiveDate>,
-    gender: Option<GenderInput>,
+    gender: Option<GenderType>,
     identifier: Option<String>,
 }
 

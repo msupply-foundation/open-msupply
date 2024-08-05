@@ -8,8 +8,8 @@ use graphql_core::{map_filter, ContextExt};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use repository::{
-    DateFilter, EqualFilter, Pagination, PaginationOption, Patient, PatientFilter,
-    ProgramEnrolmentFilter, StringFilter, GenderType as GenderRepo
+    DateFilter, EqualFilter, GenderType as GenderRepo, Pagination, PaginationOption, Patient,
+    PatientFilter, ProgramEnrolmentFilter, StringFilter,
 };
 use serde::Serialize;
 use service::programs::patient::main_patient_doc_name;
@@ -27,7 +27,6 @@ use super::program_enrolment::{
     ProgramEnrolmentConnector, ProgramEnrolmentFilterInput, ProgramEnrolmentResponse,
 };
 
-
 #[derive(InputObject, Clone)]
 pub struct PatientFilterInput {
     pub id: Option<EqualFilterStringInput>,
@@ -36,7 +35,7 @@ pub struct PatientFilterInput {
     pub code_2: Option<StringFilterInput>,
     pub first_name: Option<StringFilterInput>,
     pub last_name: Option<StringFilterInput>,
-    pub gender: Option<EqualFilterGenderInput>,
+    pub gender: Option<EqualFilterGenderType>,
     pub date_of_birth: Option<DateFilterInput>,
     pub phone: Option<StringFilterInput>,
     pub address1: Option<StringFilterInput>,
@@ -57,7 +56,7 @@ impl From<PatientFilterInput> for PatientFilter {
             code_2: f.code_2.map(StringFilter::from),
             first_name: f.first_name.map(StringFilter::from),
             last_name: f.last_name.map(StringFilter::from),
-            gender: f.gender.map(|t| map_filter!(t, GenderInput::to_domain)),
+            gender: f.gender.map(|t| map_filter!(t, GenderType::to_domain)),
             date_of_birth: f.date_of_birth.map(DateFilter::from),
             phone: f.phone.map(StringFilter::from),
             address1: f.address1.map(StringFilter::from),
@@ -75,45 +74,6 @@ pub struct PatientNode {
     pub store_id: String,
     pub patient: Patient,
     pub allowed_ctx: Vec<String>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum GenderInput {
-    Female,
-    Male,
-    TransgenderMale,
-    TransgenderMaleHormone,
-    TransgenderMaleSurgical,
-    TransgenderFemale,
-    TransgenderFemaleHormone,
-    TransgenderFemaleSurgical,
-    Unknown,
-    NonBinary,
-}
-
-impl GenderInput {
-    pub fn to_domain(self) -> GenderRepo {
-        match self {
-            GenderInput::Female => GenderRepo::Female,
-            GenderInput::Male => GenderRepo::Male,
-            GenderInput::TransgenderMale => GenderRepo::TransgenderMale,
-            GenderInput::TransgenderMaleHormone => GenderRepo::TransgenderMaleHormone,
-            GenderInput::TransgenderMaleSurgical => GenderRepo::TransgenderMaleSurgical,
-            GenderInput::TransgenderFemale => GenderRepo::TransgenderFemale,
-            GenderInput::TransgenderFemaleHormone => GenderRepo::TransgenderFemaleHormone,
-            GenderInput::TransgenderFemaleSurgical => GenderRepo::TransgenderFemaleSurgical,
-            GenderInput::Unknown => GenderRepo::Unknown,
-            GenderInput::NonBinary => GenderRepo::NonBinary,
-        }
-    }
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterGenderInput {
-    pub equal_to: Option<GenderInput>,
-    pub equal_any: Option<Vec<GenderInput>>,
-    pub not_equal_to: Option<GenderInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -147,6 +107,29 @@ impl GenderType {
             GenderRepo::NonBinary => GenderType::NonBinary,
         }
     }
+
+    pub fn to_domain(self) -> GenderRepo {
+        match self {
+            GenderType::Female => GenderRepo::Female,
+            GenderType::Male => GenderRepo::Male,
+            GenderType::TransgenderMale => GenderRepo::TransgenderMale,
+            GenderType::TransgenderMaleHormone => GenderRepo::TransgenderMaleHormone,
+            GenderType::TransgenderMaleSurgical => GenderRepo::TransgenderMaleSurgical,
+            GenderType::TransgenderFemale => GenderRepo::TransgenderFemale,
+            GenderType::TransgenderFemaleHormone => GenderRepo::TransgenderFemaleHormone,
+            GenderType::TransgenderFemaleSurgical => GenderRepo::TransgenderFemaleSurgical,
+            GenderType::Unknown => GenderRepo::Unknown,
+            GenderType::NonBinary => GenderRepo::NonBinary,
+            GenderType::Transgender => GenderRepo::Transgender,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterGenderType {
+    pub equal_to: Option<GenderType>,
+    pub equal_any: Option<Vec<GenderType>>,
+    pub not_equal_to: Option<GenderType>,
 }
 
 #[Object]
