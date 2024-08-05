@@ -48,6 +48,7 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         requested_quantity: 0.0,
         comment: None,
         confirmed: false,
+        previous_average_monthly_consumption: 0.0,
     }
 }
 
