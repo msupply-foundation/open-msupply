@@ -5,8 +5,8 @@ mod finalise {
     use repository::test_db::setup_all;
     use repository::{
         EqualFilter, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionRepository, RequisitionRowRepository, RequisitionStatus,
-        RnRFormLineRowRepository, RnRFormRowRepository, RnRFormStatus,
+        RequisitionRepository, RequisitionStatus, RnRFormLineRowRepository, RnRFormRowRepository,
+        RnRFormStatus,
     };
 
     use crate::rnr_form::finalise::{FinaliseRnRForm, FinaliseRnRFormError};
@@ -70,11 +70,6 @@ mod finalise {
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
             .unwrap();
-
-        let last_requisition_number = RequisitionRowRepository::new(&context.connection)
-            .find_max_requisition_number(repository::RequisitionType::Request, &mock_store_a().id)
-            .unwrap()
-            .unwrap_or_default();
 
         let _result = service_provider
             .rnr_form_service
