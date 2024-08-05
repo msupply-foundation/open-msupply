@@ -15,9 +15,10 @@ use repository::{
     DateFilter, DatetimeFilter, EqualFilter, ProgramRow, StringFilter,
 };
 
-
 use super::{
-    document::DocumentNode, patient::{EqualFilterGenderInput, GenderInput, PatientNode, GenderType}, program_enrolment::ProgramEnrolmentNode,
+    document::DocumentNode,
+    patient::{EqualFilterGenderType, GenderType, PatientNode},
+    program_enrolment::ProgramEnrolmentNode,
     program_node::ProgramNode,
 };
 
@@ -87,7 +88,7 @@ pub struct ContactTraceFilterInput {
     pub contact_trace_id: Option<StringFilterInput>,
     pub first_name: Option<StringFilterInput>,
     pub last_name: Option<StringFilterInput>,
-    pub gender: Option<EqualFilterGenderInput>,
+    pub gender: Option<EqualFilterGenderType>,
     pub date_of_birth: Option<DateFilterInput>,
 }
 
@@ -119,7 +120,7 @@ impl ContactTraceFilterInput {
             last_name: last_name.map(StringFilter::from),
             patient_id: patient_id.map(EqualFilter::from),
             program_context_id: None,
-            gender: gender.map(|t| map_filter!(t, GenderInput::to_domain)),
+            gender: gender.map(|t| map_filter!(t, GenderType::to_domain)),
             date_of_birth: date_of_birth.map(DateFilter::from),
         }
     }
