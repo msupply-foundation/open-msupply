@@ -3,7 +3,11 @@ mod finalise {
     use repository::mock::{mock_rnr_form_a, mock_rnr_form_b, mock_store_a};
     use repository::mock::{mock_store_b, MockDataInserts};
     use repository::test_db::setup_all;
-    use repository::{RnRFormRowRepository, RnRFormStatus};
+    use repository::{
+        EqualFilter, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionRepository, RequisitionStatus, RnRFormLineRowRepository, RnRFormRowRepository,
+        RnRFormStatus,
+    };
 
     use crate::rnr_form::finalise::{FinaliseRnRForm, FinaliseRnRFormError};
     use crate::service_provider::ServiceProvider;
@@ -84,5 +88,34 @@ mod finalise {
             .unwrap();
 
         assert_eq!(updated_row.status, RnRFormStatus::Finalised);
+        assert!(updated_row.linked_requisition_id.is_some());
+
+        // Check the internal order (requisition) has been created
+
+        let requisition = RequisitionRepository::new(&context.connection)
+            .query_one(RequisitionFilter::new().id(EqualFilter::equal_to(
+                updated_row.linked_requisition_id.as_ref().unwrap(),
+            )))
+            .unwrap()
+            .unwrap();
+
+        // Check the status of the internal order is 'Sent'
+        assert_eq!(requisition.requisition_row.status, RequisitionStatus::Sent);
+
+        // Check the store of the internal order is the same as the RnR form
+        assert_eq!(requisition.requisition_row.store_id, mock_store_a().id);
+
+        // Check the same number of lines in the internal order as the RnR form
+        let rnr_line_count = RnRFormLineRowRepository::new(&context.connection)
+            .find_many_by_rnr_form_id(&mock_rnr_form_b().id)
+            .unwrap()
+            .len();
+        let requisition_line_count = RequisitionLineRepository::new(&context.connection)
+            .count(Some(RequisitionLineFilter::new().requisition_id(
+                EqualFilter::equal_to(&requisition.requisition_row.id),
+            )))
+            .unwrap() as usize;
+
+        assert_eq!(rnr_line_count, requisition_line_count);
     }
 }
