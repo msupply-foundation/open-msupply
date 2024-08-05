@@ -5,7 +5,7 @@ use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, GenderType, NameRow, NameRowDelete, NameRowRepository,
-    NameType, StorageConnection, SyncBufferRow,
+    NameRowType, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
-pub enum LegacyNameType {
+pub enum LegacyNameRowType {
     #[serde(rename = "facility")]
     Facility,
     #[serde(rename = "patient")]
@@ -31,16 +31,16 @@ pub enum LegacyNameType {
     Others,
 }
 
-impl LegacyNameType {
-    fn to_name_type(&self) -> NameType {
+impl LegacyNameRowType {
+    fn to_name_type(&self) -> NameRowType {
         match self {
-            LegacyNameType::Facility => NameType::Facility,
-            LegacyNameType::Patient => NameType::Patient,
-            LegacyNameType::Build => NameType::Build,
-            LegacyNameType::Invad => NameType::Invad,
-            LegacyNameType::Repack => NameType::Repack,
-            LegacyNameType::Store => NameType::Store,
-            LegacyNameType::Others => NameType::Others,
+            LegacyNameRowType::Facility => NameRowType::Facility,
+            LegacyNameRowType::Patient => NameRowType::Patient,
+            LegacyNameRowType::Build => NameRowType::Build,
+            LegacyNameRowType::Invad => NameRowType::Invad,
+            LegacyNameRowType::Repack => NameRowType::Repack,
+            LegacyNameRowType::Store => NameRowType::Store,
+            LegacyNameRowType::Others => NameRowType::Others,
         }
     }
 }
@@ -52,7 +52,7 @@ pub struct LegacyNameRow {
     pub id: String,
     pub name: String,
     pub code: String,
-    pub r#type: LegacyNameType,
+    pub r#type: LegacyNameRowType,
     #[serde(rename = "customer")]
     pub is_customer: bool,
     #[serde(rename = "supplier")]
@@ -217,7 +217,7 @@ impl SyncTranslation for NameTranslation {
             on_hold,
             is_deceased,
             national_health_number,
-            gender: gender.or(if legacy_type == LegacyNameType::Patient {
+            gender: gender.or(if legacy_type == LegacyNameRowType::Patient {
                 if female {
                     Some(GenderType::Female)
                 } else {
@@ -294,7 +294,7 @@ impl SyncTranslation for NameTranslation {
         }
 
         let patient_type = match r#type {
-            NameType::Patient => LegacyNameType::Patient,
+            NameRowType::Patient => LegacyNameRowType::Patient,
             _ => {
                 return Ok(PushTranslateResult::Ignored(
                     "Only push name records that belong to patients".to_string(),

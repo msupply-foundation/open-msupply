@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    EqualFilter, GenderType, NameRow, NameRowRepository, NameType, Patient, PatientFilter,
+    EqualFilter, GenderType, NameRow, NameRowRepository, NameRowType, Patient, PatientFilter,
     RepositoryError, StorageConnection, TransactionError,
 };
 
@@ -28,7 +28,7 @@ fn validate(con: &StorageConnection, input: &UpdatePatient) -> Result<NameRow, U
         return Err(UpdatePatientError::PatientDoesNotExists);
     };
 
-    if existing.r#type != NameType::Patient {
+    if existing.r#type != NameRowType::Patient {
         return Err(UpdatePatientError::NotAPatient);
     }
 
