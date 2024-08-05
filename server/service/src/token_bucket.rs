@@ -21,7 +21,7 @@ fn token_hash(token: &str) -> String {
 /// There are two ways a token can expire prematurely:
 /// 1) User logs out and token is removed from the bucket
 /// 2) Token expiry time is reduce (server side), e.g. when an token has been renewed and the old
-/// token should expiry sooner.
+///     token should expiry sooner.
 #[derive(Default)]
 pub struct TokenBucket {
     users: HashMap<String, Vec<TokenInfo>>,

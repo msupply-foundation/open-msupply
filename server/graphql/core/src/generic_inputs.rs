@@ -15,8 +15,8 @@ pub struct TaxInput {
 /// This is done to encode the following cases (using `mutableValue` from previous example):
 /// 1) if `mutableValue` is `null | undefined`, nothing is updated
 /// 2) if `mutableValue` object is set:
-///   a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
-///   b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+///     a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+///     b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
 #[derive(InputObject, Clone)]
 #[graphql(concrete(name = "NullableStringUpdate", params(String)))]
 #[graphql(concrete(name = "NullableDateUpdate", params(NaiveDate)))]
