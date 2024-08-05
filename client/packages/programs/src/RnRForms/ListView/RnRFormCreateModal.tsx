@@ -42,6 +42,16 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
   const prevFormNotFinalised =
     !!previousForm && previousForm.status !== RnRFormNodeStatus.Finalised;
 
+  const getPeriodError = (): string | undefined => {
+    if (prevFormNotFinalised) return t('messages.finalise-previous-form');
+
+    // If there is a previous form, the next period should be set automatically
+    // If not, no periods are available
+    return !!previousForm && !draft.period
+      ? t('messages.no-available-periods')
+      : undefined;
+  };
+
   return (
     <Modal
       okButton={
@@ -119,15 +129,7 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
               value={draft.period}
               onChange={period => updateDraft({ period })}
               previousFormExists={!!previousForm}
-              errorMessage={
-                prevFormNotFinalised
-                  ? t('messages.finalise-previous-form')
-                  : // If there is a previous form, the next period should be set automatically
-                    // If not, no periods are available
-                    !!previousForm && !draft.period
-                    ? t('messages.no-available-periods')
-                    : undefined
-              }
+              errorMessage={getPeriodError()}
             />
           }
         />
@@ -182,7 +184,7 @@ const PeriodSelect = ({
         <Typography
           sx={{
             fontStyle: 'italic',
-            color: 'gray.dark',
+            color: 'error.main',
             fontSize: 'small',
             width,
           }}
