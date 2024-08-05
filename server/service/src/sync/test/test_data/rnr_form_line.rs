@@ -24,7 +24,7 @@ const RNR_FORM_LINE_1: (&str, &str) = (
         "requested_quantity": 0.0,
         "comment": null,
         "confirmed": false,
-        previous_average_monthly_consumption: 0.0
+        "previous_average_monthly_consumption": 0.0
     }"#,
 );
 
