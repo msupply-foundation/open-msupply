@@ -32,12 +32,13 @@ table! {
     }
 }
 
-#[allow(non_snake_case)]
+#[allow(non_snake_case, unused)]
 #[derive(Deserialize)]
 pub struct LegacyStoreRow {
     disabled: bool,
 }
 
+#[allow(dead_code)]
 pub(crate) struct V1_00_08;
 
 impl Migration for V1_00_08 {
