@@ -6365,6 +6365,8 @@ export type RnRFormConnector = {
 export type RnRFormFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  periodScheduleId?: InputMaybe<EqualFilterStringInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -6401,6 +6403,7 @@ export type RnRFormNode = {
   programId: Scalars['String']['output'];
   programName: Scalars['String']['output'];
   status: RnRFormNodeStatus;
+  supplierId: Scalars['String']['output'];
   supplierName: Scalars['String']['output'];
 };
 
