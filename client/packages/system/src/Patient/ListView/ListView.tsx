@@ -13,6 +13,7 @@ import {
   useAuthContext,
   useNavigate,
   ColumnDescription,
+  Formatter,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -92,6 +93,7 @@ const PatientListComponent: FC = () => {
     {
       key: 'gender',
       label: 'label.gender',
+      formatter: gender =>Formatter.enumCase(gender as string ?? ''),
     },
     {
       key: 'dateOfBirth',
