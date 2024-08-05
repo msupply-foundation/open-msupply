@@ -3,7 +3,7 @@ use util::{
     inline_init,
 };
 
-use crate::{NameLinkRow, NameRow, NameType};
+use crate::{NameLinkRow, NameRow, NameRowType};
 
 pub fn mock_name_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
@@ -110,7 +110,7 @@ pub fn mock_name_repack() -> NameRow {
         r.id = REPACK_NAME_CODE.to_string();
         r.name = REPACK_NAME_CODE.to_string();
         r.code = REPACK_NAME_CODE.to_string();
-        r.r#type = NameType::Repack;
+        r.r#type = NameRowType::Repack;
     })
 }
 
@@ -120,7 +120,7 @@ pub fn mock_patient() -> NameRow {
         r.name = String::from("testId");
         r.code = String::from("testId");
         r.is_customer = true;
-        r.r#type = NameType::Patient;
+        r.r#type = NameRowType::Patient;
     })
 }
 
@@ -130,7 +130,7 @@ pub fn mock_patient_b() -> NameRow {
         r.name = String::from("patient2");
         r.code = String::from("patient2");
         r.is_customer = true;
-        r.r#type = NameType::Patient;
+        r.r#type = NameRowType::Patient;
     })
 }
 
@@ -141,7 +141,7 @@ fn mock_merged_patient() -> NameRow {
         r.name = String::from("softdeleted");
         r.code = String::from("softdeleted");
         r.is_customer = true;
-        r.r#type = NameType::Patient;
+        r.r#type = NameRowType::Patient;
     })
 }
 
