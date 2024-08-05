@@ -44,6 +44,7 @@ export const AppBarButtonsComponent = () => {
       <Grid container gap={1}>
         <ReportSelector
           context={ReportContext.Requisition}
+          subContext="R&R"
           onPrint={printReport}
         >
           <LoadingButton
