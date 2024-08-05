@@ -115,7 +115,8 @@ const UIComponent = (props: ControlProps) => {
             </Box>
           ) : (
             <Typography fontSize="85%" whiteSpace="nowrap">
-              {t('label.age-months-days', { months, days })}
+              {months > 0 && t('label.age-months', { count: months })}{' '}
+              {t('label.age-days', { count: days })}
             </Typography>
           )}
         </Box>
