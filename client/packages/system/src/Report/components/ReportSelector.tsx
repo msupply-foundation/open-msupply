@@ -140,6 +140,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       )}
 
       <ReportArgumentsModal
+        key={reportWithArgs?.id}
         report={reportWithArgs}
         onReset={() => setReportWithArgs(undefined)}
         onArgumentsSelected={onPrint}
