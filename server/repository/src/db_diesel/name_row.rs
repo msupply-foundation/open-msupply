@@ -325,13 +325,6 @@ impl NameRowType {
             ..Default::default()
         }
     }
-
-    pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        EqualFilter {
-            not_equal_to: Some(self.clone()),
-            ..Default::default()
-        }
-    }
 }
 
 impl From<NameRowType> for NameType {
