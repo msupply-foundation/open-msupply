@@ -3060,7 +3060,7 @@ export type InvoiceFilterInput = {
   verifiedDatetime?: InputMaybe<DatetimeFilterInput>;
 };
 
-export type InvoiceIsNotEditable = UpdateErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & {
+export type InvoiceIsNotEditable = UpdateErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateReturnNameErrorInterface & {
   __typename: 'InvoiceIsNotEditable';
   description: Scalars['String']['output'];
 };
@@ -3795,6 +3795,7 @@ export type Mutations = {
   updateNameProperties: UpdateNamePropertiesResponse;
   updateOutboundReturn: UpdateOutboundReturnResponse;
   updateOutboundReturnLines: UpdateOutboundReturnLinesResponse;
+  updateOutboundReturnName: UpdateOutboundReturnNameResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
   updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
@@ -4298,6 +4299,12 @@ export type MutationsUpdateOutboundReturnLinesArgs = {
 };
 
 
+export type MutationsUpdateOutboundReturnNameArgs = {
+  input: UpdateOutboundReturnNameInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsUpdateOutboundShipmentArgs = {
   input: UpdateOutboundShipmentInput;
   storeId: Scalars['String']['input'];
@@ -4645,12 +4652,12 @@ export type OtherPartyNotACustomer = InsertErrorInterface & InsertInboundReturnE
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateReturnNameErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateReturnNameErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String']['output'];
 };
@@ -5947,7 +5954,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAsse
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteErrorInterface & DeleteImmunisationProgramErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteErrorInterface & DeleteImmunisationProgramErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnNameErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -7415,6 +7422,18 @@ export type UpdateOutboundReturnLinesInput = {
 
 export type UpdateOutboundReturnLinesResponse = InvoiceNode;
 
+export type UpdateOutboundReturnNameError = {
+  __typename: 'UpdateOutboundReturnNameError';
+  error: UpdateReturnNameErrorInterface;
+};
+
+export type UpdateOutboundReturnNameInput = {
+  id: Scalars['String']['input'];
+  otherPartyId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateOutboundReturnNameResponse = InvoiceNode | UpdateOutboundReturnNameError;
+
 export type UpdateOutboundReturnResponse = InvoiceNode;
 
 export enum UpdateOutboundReturnStatusInput {
@@ -7771,6 +7790,10 @@ export type UpdateResult = {
   __typename: 'UpdateResult';
   logo?: Maybe<Scalars['String']['output']>;
   theme?: Maybe<Scalars['String']['output']>;
+};
+
+export type UpdateReturnNameErrorInterface = {
+  description: Scalars['String']['output'];
 };
 
 export type UpdateRnRFormInput = {
