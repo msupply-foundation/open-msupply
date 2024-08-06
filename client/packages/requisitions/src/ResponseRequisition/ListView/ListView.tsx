@@ -95,25 +95,27 @@ export const ResponseRequisitionListView: FC = () => {
   ];
 
   if (program) {
-    columnDefinitions.push({
-      key: 'programName',
-      accessor: ({ rowData }) => rowData.programName,
-      label: 'label.program',
-      description: 'description.program',
-      sortable: true,
-    });
-    columnDefinitions.push({
-      key: 'orderType',
-      accessor: ({ rowData }) => rowData.orderType,
-      label: 'label.order-type',
-      sortable: true,
-    });
-    columnDefinitions.push({
-      key: 'period',
-      accessor: ({ rowData }) => rowData.period?.name ?? '',
-      label: 'label.period',
-      sortable: true,
-    });
+    columnDefinitions.push(
+      {
+        key: 'programName',
+        accessor: ({ rowData }) => rowData.programName,
+        label: 'label.program',
+        description: 'description.program',
+        sortable: true,
+      },
+      {
+        key: 'orderType',
+        accessor: ({ rowData }) => rowData.orderType,
+        label: 'label.order-type',
+        sortable: true,
+      },
+      {
+        key: 'period',
+        accessor: ({ rowData }) => rowData.period?.name ?? '',
+        label: 'label.period',
+        sortable: true,
+      }
+    );
   }
 
   if (authoriseResponseRequisitions) {
