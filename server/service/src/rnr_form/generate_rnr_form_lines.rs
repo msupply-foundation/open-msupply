@@ -313,9 +313,14 @@ pub fn get_stock_out_duration(
         .historic_stock
         .into_iter()
         .filter(|point| point.quantity == 0.0)
-        .count();
+        .count() as i32;
 
-    Ok(days_out_of_stock as i32)
+    if days_out_of_stock == days_in_period as i32 {
+        // If there was no consumption data, we'll set stock out duration to 0 and let the user input this
+        Ok(0)
+    } else {
+        Ok(days_out_of_stock)
+    }
 }
 
 // If stock had been available for the entire period, this is the quantity that 'would' have been consumed
