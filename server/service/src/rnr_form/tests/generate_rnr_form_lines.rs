@@ -98,8 +98,9 @@ mod generate_rnr_form_lines {
                 entered_quantity_received: None,
                 entered_quantity_consumed: None,
                 entered_adjustments: None,
-                maximum_quantity: 7.826086956521738,   // 2*AMC
-                requested_quantity: 4.826086956521738, // max - final balance
+                maximum_quantity: 7.826086956521738, // 2*AMC
+                calculated_requested_quantity: 4.826086956521738, // max - final balance
+                entered_requested_quantity: None,
                 expiry_date: None,
                 comment: None,
                 confirmed: false,

@@ -61,7 +61,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 final_balance {DOUBLE} NOT NULL,
                 maximum_quantity {DOUBLE} NOT NULL,
                 expiry_date {DATE},
-                requested_quantity {DOUBLE} NOT NULL,
+                calculated_requested_quantity {DOUBLE} NOT NULL,
+                entered_requested_quantity {DOUBLE},
 
                 comment TEXT,
                 confirmed BOOLEAN NOT NULL DEFAULT FALSE

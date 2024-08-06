@@ -172,7 +172,9 @@ fn create_internal_order(
                 .get(&rnr_form_line.item_id)
                 .map(|item| item.name.clone())
                 .unwrap_or_default(),
-            requested_quantity: rnr_form_line.requested_quantity,
+            requested_quantity: rnr_form_line
+                .entered_requested_quantity
+                .unwrap_or(rnr_form_line.calculated_requested_quantity),
             suggested_quantity: rnr_form_line.maximum_quantity,
             supply_quantity: 0.0,
             available_stock_on_hand: rnr_form_line.final_balance,

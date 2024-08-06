@@ -99,7 +99,7 @@ pub fn generate_rnr_form_lines(
 
             let maximum_quantity = amc * TARGET_MOS;
 
-            let requested_quantity = if maximum_quantity - final_balance > 0.0 {
+            let calculated_requested_quantity = if maximum_quantity - final_balance > 0.0 {
                 maximum_quantity - final_balance
             } else {
                 0.0
@@ -127,7 +127,8 @@ pub fn generate_rnr_form_lines(
                 final_balance,
                 maximum_quantity,
                 expiry_date: earliest_expiry,
-                requested_quantity,
+                calculated_requested_quantity,
+                entered_requested_quantity: None,
                 comment: None,
                 confirmed: false,
             })
