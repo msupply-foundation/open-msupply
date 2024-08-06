@@ -191,6 +191,16 @@ impl InvoiceMutations {
     ) -> Result<outbound_return::update::UpdateResponse> {
         outbound_return::update::update(ctx, &store_id, input)
     }
+
+    async fn update_outbound_return_name(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_return::update_name::UpdateNameInput,
+    ) -> Result<outbound_return::update_name::UpdateNameResponse> {
+        outbound_return::update_name::update_name(ctx, &store_id, input)
+    }
+
     async fn update_outbound_return_lines(
         &self,
         ctx: &Context<'_>,
