@@ -68,6 +68,8 @@ pub struct RnRFormFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub store_id: Option<EqualFilterStringInput>,
+    pub program_id: Option<EqualFilterStringInput>,
+    pub period_schedule_id: Option<EqualFilterStringInput>,
 }
 impl From<RnRFormFilterInput> for RnRFormFilter {
     fn from(f: RnRFormFilterInput) -> Self {
@@ -75,8 +77,8 @@ impl From<RnRFormFilterInput> for RnRFormFilter {
             id: f.id.map(EqualFilter::from),
             created_datetime: f.created_datetime.map(DatetimeFilter::from),
             store_id: f.store_id.map(EqualFilter::from),
-            program_id: None,
-            period_schedule_id: None,
+            program_id: f.program_id.map(EqualFilter::from),
+            period_schedule_id: f.period_schedule_id.map(EqualFilter::from),
         }
     }
 }

@@ -25,7 +25,20 @@ const exportFile = (data: string, type: string, title?: string) => {
   }
 };
 
+const downloadFile = async (url: string) => {
+  const res = await fetch(url);
+  const data = await res.blob();
+  const header = res.headers.get('Content-Disposition');
+  const filename = header?.match(/filename="(.+)"/)?.[1];
+  const a = document.createElement('a');
+  a.href = window.URL.createObjectURL(data);
+  if (filename) a.download = filename;
+  a.click();
+  a.remove();
+};
+
 export const FileUtils = {
   exportCSV: (data: string, title: string) =>
     exportFile(data, 'text/csv', title),
+  downloadFile,
 };

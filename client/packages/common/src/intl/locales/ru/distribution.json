@@ -82,5 +82,20 @@
   "message.placeholder-lines-cannot-be-returned": "Резервные строки не могут быть возвращены",
   "messages.stock-expired": "Срок действия некоторых линий запасов истек, и они не будут распределены автоматически.",
   "messages.stock-on-hold": "Некоторые строки запасов находятся в режиме ожидания и не могут быть распределены.",
-  "messages.no-stock-available": "Не имеется в наличии"
+  "messages.no-stock-available": "Не имеется в наличии",
+  "messages.cant-delete-requisitions": "Удалять заявки на закупку можно только со статусом 'Черновик'",
+  "messages.allocated-lines-failed_one": "{{count}} строка не распределена",
+  "messages.allocated-lines-failed_few": "{{count}} строки не распределено",
+  "messages.allocated-lines-failed_many": "{{count}} строк не распределены",
+  "messages.allocated-lines-failed_other": "{{count}} строк не распределены",
+  "messages.no-shipments-yet": "Пока не создано ни одной поставки.",
+  "messages.by-user": "{{username}}",
+  "messages.off-hold-confirmation": "Это позволит снова менять статусы",
+  "messages.on-hold-confirmation": "Это предотвратит дальнейшие изменения статуса до тех пор, пока не будет снято удержание",
+  "messages.allocated-lines-partial_one": "Частично распределена {{count}} строка",
+  "messages.allocated-lines-partial_few": "Частично распределено {{count}} строки",
+  "messages.allocated-lines-partial_many": "Частично распределены {{count}} строк",
+  "messages.allocated-lines-partial_other": "Частично распределены {{count}} строк",
+  "messages.edit-service-charges": "Редактировать платы за обслуживание",
+  "label.shipment-created": "Поставка создана"
 }
