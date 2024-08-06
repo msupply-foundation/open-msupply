@@ -22,6 +22,7 @@ impl RequisitionTransferProcessor for AssignRequisitionNumberProcessor {
     /// 3. Source requisition is Status is Sent
     /// 4. Response requisition exists
     /// 5. Response requisition requisition_number is -1
+    ///
     /// Only runs once:
     /// 6. Because new response requisition is allocated a requisition_number
     fn try_process_record(

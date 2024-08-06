@@ -1,9 +1,9 @@
 use crate::sync::{
     test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
-    translations::name::{LegacyNameRow, LegacyNameType},
+    translations::name::{LegacyNameRow, LegacyNameRowType},
 };
 use chrono::NaiveDate;
-use repository::{GenderType, NameRow, NameRowDelete, NameType};
+use repository::{GenderType, NameRow, NameRowDelete, NameRowType};
 use serde_json::json;
 
 const TABLE_NAME: &str = "name";
@@ -114,7 +114,7 @@ fn name_1() -> TestSyncIncomingRecord {
             id: NAME_1.0.to_owned(),
             name: "General".to_owned(),
             code: "GEN".to_owned(),
-            r#type: NameType::Patient,
+            r#type: NameRowType::Patient,
             is_supplier: true,
             is_customer: true,
             is_deceased: false,
@@ -255,7 +255,7 @@ fn name_2() -> TestSyncIncomingRecord {
             id: NAME_2.0.to_owned(),
             name: "Birch Store".to_owned(),
             code: "SNA".to_owned(),
-            r#type: NameType::Facility,
+            r#type: NameRowType::Facility,
             is_customer: true,
             is_supplier: false,
             supplying_store_id: None,
@@ -390,7 +390,7 @@ fn name_3() -> TestSyncIncomingRecord {
             id: NAME_3.0.to_owned(),
             name: "Birch Store 2".to_owned(),
             code: "SNA".to_owned(),
-            r#type: NameType::Facility,
+            r#type: NameRowType::Facility,
             is_customer: true,
             is_supplier: false,
             supplying_store_id: None,
@@ -526,7 +526,7 @@ fn name_4() -> TestSyncIncomingRecord {
             id: NAME_4.0.to_string(),
             name: "Moemoe, Alex".to_string(),
             code: "00102/19/00".to_string(),
-            r#type: repository::NameType::Patient,
+            r#type: repository::NameRowType::Patient,
             is_customer: true,
             is_supplier: false,
             supplying_store_id: Some("store_a".to_string()),
@@ -568,7 +568,7 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
             id: NAME_1.0.to_owned(),
             name: "General".to_owned(),
             code: "GEN".to_owned(),
-            r#type: LegacyNameType::Patient,
+            r#type: LegacyNameRowType::Patient,
             is_supplier: true,
             is_customer: true,
             is_deceased: false,
@@ -611,7 +611,7 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
             id: NAME_4.0.to_string(),
             name: "Moemoe, Alex".to_string(),
             code: "00102/19/00".to_string(),
-            r#type: LegacyNameType::Patient,
+            r#type: LegacyNameRowType::Patient,
             is_customer: true,
             is_supplier: false,
             supplying_store_id: Some("store_a".to_string()),

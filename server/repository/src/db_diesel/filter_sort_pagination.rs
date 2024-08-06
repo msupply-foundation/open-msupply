@@ -110,6 +110,30 @@ pub struct EqualFilter<T> {
     pub is_null: Option<bool>,
 }
 
+impl<F> EqualFilter<F> {
+    pub(crate) fn convert_filter<T>(self) -> EqualFilter<T>
+    where
+        T: From<F>,
+    {
+        let EqualFilter {
+            equal_to,
+            equal_any,
+            not_equal_to,
+            equal_any_or_null,
+            not_equal_all,
+            is_null,
+        } = self;
+
+        EqualFilter {
+            equal_to: equal_to.map(T::from),
+            equal_any: equal_any.map(|r| r.into_iter().map(T::from).collect()),
+            not_equal_to: not_equal_to.map(T::from),
+            equal_any_or_null: equal_any_or_null.map(|r| r.into_iter().map(T::from).collect()),
+            not_equal_all: not_equal_all.map(|r| r.into_iter().map(T::from).collect()),
+            is_null,
+        }
+    }
+}
 impl<T> Default for EqualFilter<T> {
     fn default() -> Self {
         Self {

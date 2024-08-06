@@ -212,7 +212,7 @@ fn generate(
 
     let rnr_form_lines = generate_rnr_form_lines(
         ctx,
-        &store_id,
+        store_id,
         &rnr_form.id,
         &program_id,
         master_list_id,

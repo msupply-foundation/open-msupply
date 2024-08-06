@@ -4508,10 +4508,8 @@ export type NameNode = {
 };
 
 export enum NameNodeType {
-  Build = 'BUILD',
   Facility = 'FACILITY',
   Invad = 'INVAD',
-  Others = 'OTHERS',
   Repack = 'REPACK',
   Store = 'STORE'
 }
