@@ -47,8 +47,8 @@ pub fn generate_rnr_form_lines(
     let previous_rnr_form_lines_by_item_id =
         get_rnr_form_lines_map(&ctx.connection, previous_form.map(|f| f.rnr_form_row.id))?;
 
-    // Get previous form AMC averages for each item
-    let previous_amc_averages = get_previous_monthly_consumption(
+    // Get monthly consumption for each item from previous forms
+    let previous_monthly_consumption = get_previous_monthly_consumption(
         &ctx.connection,
         RnRFormFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
@@ -91,13 +91,25 @@ pub fn generate_rnr_form_lines(
                 usage.consumed,
             );
 
-            let (previous_amc, amc) = get_amc(
+            let previous_monthly_consumption = match previous_monthly_consumption.get(&item_id) {
+                Some(monthly_consumption) => monthly_consumption.clone(),
+                None => vec![],
+            };
+
+            let average_monthly_consumption = get_amc(
                 period_length_in_days,
                 adjusted_quantity_consumed,
-                previous_amc_averages.get(&item_id).unwrap_or(&vec![]),
+                &previous_monthly_consumption,
             );
 
-            let maximum_quantity = amc * TARGET_MOS;
+            // We store these on the R&R form line so the frontend can recalculate AMC if needed
+            let previous_monthly_consumption_values = previous_monthly_consumption
+                .iter()
+                .map(|v| v.to_string())
+                .collect::<Vec<String>>()
+                .join(",");
+
+            let maximum_quantity = average_monthly_consumption * TARGET_MOS;
 
             let requested_quantity = if maximum_quantity - final_balance > 0.0 {
                 maximum_quantity - final_balance
@@ -111,8 +123,8 @@ pub fn generate_rnr_form_lines(
                 id: uuid(),
                 rnr_form_id: rnr_form_id.to_string(),
                 item_id,
-                previous_average_monthly_consumption: previous_amc,
-                average_monthly_consumption: amc,
+                previous_monthly_consumption_values,
+                average_monthly_consumption,
                 initial_balance,
 
                 snapshot_quantity_received: usage.replenished,
@@ -174,26 +186,22 @@ pub fn get_amc(
     period_length_in_days: i64,
     adjusted_quantity_consumed: f64,
     previous_monthly_consumption_values: &Vec<f64>,
-) -> (f64, f64) {
+) -> f64 {
     let period_months = period_length_in_days as f64 / NUMBER_OF_DAYS_IN_A_MONTH;
     let monthly_consumption_this_period = adjusted_quantity_consumed / period_months;
 
-    if previous_monthly_consumption_values.is_empty() {
-        return (0.0, monthly_consumption_this_period);
-    };
-
-    // Average monthly consumption values from previous R&R forms
-    // We provide this value to frontend for if it needs to recalculate AMC for this period
+    // In `get_previous_monthly_consumption` we only ever take the last 2 forms
+    // but if requirements change this calculation can accept more
     let num_previous_data_points = previous_monthly_consumption_values.len() as f64;
+
     let total_previous_monthly_consumption =
         previous_monthly_consumption_values.iter().sum::<f64>();
-    let previous_amc = total_previous_monthly_consumption / num_previous_data_points;
 
     // Calculate AMC for this period
     let this_period_amc = (total_previous_monthly_consumption + monthly_consumption_this_period)
         / (num_previous_data_points + 1.0);
 
-    (previous_amc, this_period_amc)
+    this_period_amc
 }
 
 pub fn get_previous_monthly_consumption(
