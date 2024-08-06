@@ -2,6 +2,7 @@ import React from 'react';
 import {
   AppBarButtonsPortal,
   ButtonWithIcon,
+  DownloadIcon,
   FilterIcon,
   Grid,
   PrinterIcon,
@@ -12,6 +13,7 @@ interface AppBarButtonsProps {
   onFilterOpen: () => void;
   isFilterDisabled: boolean;
   printReport: () => void;
+  exportReport: () => void;
   isPrinting: boolean;
 }
 
@@ -19,6 +21,7 @@ export const AppBarButtonsComponent = ({
   onFilterOpen,
   isFilterDisabled,
   printReport,
+  exportReport,
   isPrinting,
 }: AppBarButtonsProps) => {
   const t = useTranslation();
@@ -37,6 +40,12 @@ export const AppBarButtonsComponent = ({
           label={t('button.print')}
           Icon={<PrinterIcon />}
           onClick={() => printReport()}
+        />
+        <ButtonWithIcon
+          disabled={isPrinting}
+          label={t('button.export')}
+          Icon={<DownloadIcon />}
+          onClick={() => exportReport()}
         />
       </Grid>
     </AppBarButtonsPortal>

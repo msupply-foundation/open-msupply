@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   BasicSpinner,
+  FileUtils,
+  PrintFormat,
   useBreadcrumbs,
   useParams,
   useUrlQuery,
@@ -101,6 +103,19 @@ const DetailViewInner = ({
     });
   }, [reportArgs]);
 
+  const exportExcelReport = useCallback(async () => {
+    const fileId = await mutateAsync({
+      reportId: report.id,
+      args: reportArgs,
+      dataId: '',
+      format: PrintFormat.Excel,
+    });
+
+    if (!fileId) throw new Error('Error generating Excel report');
+    const url = `${Environment.FILE_URL}${fileId}`;
+    FileUtils.downloadFile(url);
+  }, [reportArgs]);
+
   const url = `${Environment.FILE_URL}${fileId}`;
 
   return (
@@ -109,6 +124,7 @@ const DetailViewInner = ({
         isFilterDisabled={!report?.argumentSchema}
         onFilterOpen={openReportArgumentsModal}
         printReport={printReport}
+        exportReport={exportExcelReport}
         isPrinting={isPrinting}
       />
       <ReportArgumentsModal

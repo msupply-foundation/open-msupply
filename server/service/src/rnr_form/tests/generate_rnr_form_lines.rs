@@ -49,7 +49,7 @@ mod generate_rnr_form_lines {
                     item_link_id: item_query_test1().id,
                     store_id: mock_store_a().id,
                     pack_size: 1.0,
-                    available_number_of_packs: 3.0,
+                    total_number_of_packs: 3.0,
                     ..Default::default()
                 }],
                 ..MockData::default()
@@ -167,7 +167,7 @@ mod generate_rnr_form_lines {
                     item_link_id: item_query_test1().id,
                     store_id: mock_store_a().id,
                     pack_size: 1.0,
-                    available_number_of_packs: 10.0,
+                    total_number_of_packs: 10.0,
                     ..Default::default()
                 }],
                 ..MockData::default()

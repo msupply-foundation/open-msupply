@@ -22,7 +22,10 @@ const RnRFormListComponent = () => {
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
-  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
+  } = useUrlQueryParams({
+    filters: [{ key: 'name' }],
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+  });
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('programs');

@@ -278,5 +278,21 @@
   "label.requested-packs": "Запрошенные упаковки",
   "label.program": "Программа",
   "label.period": "Период",
-  "label.soh": "Запасы в Наличии"
+  "label.soh": "Запасы в Наличии",
+  "label.end-of-supply": "Конец Снабжения",
+  "label.enrolment-datetime": "Дата Зачисления",
+  "label.event": "Событие",
+  "label.fc-line-total": "Итого по Строке Первоначальной Стоимости",
+  "messages.no-properties": "Свойства не заданы",
+  "label.dps": "Размер Упаковки по Умолчанию",
+  "label.encounters": "Встречи",
+  "label.enrolment-patient-id": "Идентификатор Пациента при Зачислении",
+  "label.enrolment-program": "Программа",
+  "label.enter-pack-size": "Введите размер упаковки:",
+  "label.expand": "Расширить",
+  "label.expand-all": "Расширить все",
+  "label.expiring-soon": "Скоро Истекает",
+  "label.expiry": "Срок годности",
+  "label.fc-cost-price": "Себестоимость Первоначальной Стоимости",
+  "messages.import-generic": "успешный импорт"
 }
