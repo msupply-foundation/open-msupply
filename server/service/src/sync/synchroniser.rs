@@ -80,20 +80,20 @@ impl std::fmt::Debug for SyncError {
 /// There are three types of data that is synced between the central server and the remote server:
 ///
 /// 1) `central data`: Central data is managed by the central server and is readonly for the remote
-/// server. The remote server pulls the central data on a regular basis.
+///     server. The remote server pulls the central data on a regular basis.
 /// 2) `remote data`: Remote data is managed by the remote server and is edited exclusively by the
-/// remote server. The remote server pushes (backs up) the remote data regularly to the central
-/// server. When a remote server instance is initialized the first time, existing remote data is
-/// fetched from the central server in an "initial pull", e.g. when a remote server has been
-/// re-installed and needs to fetch existing data.
+///     remote server. The remote server pushes (backs up) the remote data regularly to the central
+///     server. When a remote server instance is initialized the first time, existing remote data is
+///     fetched from the central server in an "initial pull", e.g. when a remote server has been
+///     re-installed and needs to fetch existing data.
 /// 3) `messages`: messages are dispatched by the central server between different sites (different
-/// remote servers) that are connected to the same central server. For example, a requisition
-/// request from site A to site B is dispatched from site A to site B.
-/// Messages are transmitted as remote data, i.e. they are pulled from the central server in the
-/// same way as remote data.
-/// Messages have the same data format as regular remote data and are only interpreted as messages
-/// by the receiving remote server, e.g. if data doesn't belong to the local remote server it must
-/// by a message.
+///     remote servers) that are connected to the same central server. For example, a requisition
+///     request from site A to site B is dispatched from site A to site B.
+///     Messages are transmitted as remote data, i.e. they are pulled from the central server in the
+///     same way as remote data.
+///     Messages have the same data format as regular remote data and are only interpreted as messages
+///     by the receiving remote server, e.g. if data doesn't belong to the local remote server it must
+///     by a message.
 ///
 /// Sync process:
 /// 1) Central data is regularly pulled from the central server.

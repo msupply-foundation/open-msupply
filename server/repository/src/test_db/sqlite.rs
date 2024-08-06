@@ -109,7 +109,7 @@ pub(crate) async fn setup_with_version(
                 .to_string_lossy()
                 .starts_with("___template_")
             {
-                fs::remove_file(&entry.path()).unwrap();
+                fs::remove_file(entry.path()).unwrap();
             }
         }
         // remove marker
