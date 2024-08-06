@@ -12,6 +12,7 @@ import {
   VenCategoryType,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../../api/operations.generated';
+import { getAmc } from './getAmc';
 
 export const RnRFormLine = ({
   line,
@@ -43,7 +44,7 @@ export const RnRFormLine = ({
       quantityReceived,
       adjustments,
       stockOutDuration,
-      previousAverageMonthlyConsumption,
+      previousMonthlyConsumptionValues,
     } = { ...draft, ...newPatch };
 
     const finalBalance =
@@ -56,10 +57,11 @@ export const RnRFormLine = ({
       : quantityConsumed;
 
     // This calculation might be a plugin in future!
-    const averageMonthlyConsumption =
-      // Average of the last 3 months (including the current month)
-      // TODO: what if don't want to consider previous months?
-      (2 * previousAverageMonthlyConsumption + adjustedQuantityConsumed) / 3;
+    const averageMonthlyConsumption = getAmc(
+      previousMonthlyConsumptionValues,
+      adjustedQuantityConsumed,
+      periodLength
+    );
 
     const maximumQuantity = averageMonthlyConsumption * 2;
 

@@ -6382,7 +6382,7 @@ export type RnRFormLineNode = {
   item: ItemNode;
   itemId: Scalars['String']['output'];
   maximumQuantity: Scalars['Float']['output'];
-  previousAverageMonthlyConsumption: Scalars['Float']['output'];
+  previousMonthlyConsumptionValues: Scalars['String']['output'];
   quantityConsumed: Scalars['Float']['output'];
   quantityReceived: Scalars['Float']['output'];
   requestedQuantity: Scalars['Float']['output'];

@@ -212,7 +212,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     snapshot_quantity_received,
                     snapshot_quantity_consumed,
                     snapshot_adjustments,
-                    previous_average_monthly_consumption,
+                    previous_monthly_consumption_values,
                     initial_balance: _,
                     expiry_date: _,
                     average_monthly_consumption: _,
@@ -249,7 +249,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     snapshot_quantity_received,
                     snapshot_quantity_consumed,
                     snapshot_adjustments,
-                    previous_average_monthly_consumption,
+                    previous_monthly_consumption_values,
                 }
             },
         )
