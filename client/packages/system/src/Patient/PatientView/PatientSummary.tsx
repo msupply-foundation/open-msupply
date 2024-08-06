@@ -59,7 +59,7 @@ export const PatientSummary: FC = () => {
         />
         <SummaryRow
           label="label.gender"
-          value={Formatter.sentenceCase(String(patient?.gender ?? ''))}
+          value={Formatter.enumCase(String(patient?.gender ?? ''))}
         />
         <SummaryRow
           label="label.date-of-birth"
