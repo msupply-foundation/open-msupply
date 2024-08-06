@@ -22,6 +22,7 @@ mod v2_00_00;
 mod v2_01_00;
 mod v2_02_00;
 mod version;
+mod views;
 
 pub(crate) use self::types::*;
 use self::v1_00_04::V1_00_04;
@@ -55,6 +56,8 @@ pub enum MigrationError {
     DatabaseVersionIsPreRelease(Version),
     #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
+    #[error("Problem dropping or re-creating views")]
+    DatabaseViewsError(),
     #[error("Error during migration ({version})")]
     MigrationError {
         source: anyhow::Error,
@@ -115,6 +118,12 @@ pub fn migrate(
         ));
     }
 
+    // After v2.3 we drop all views and re-create them
+    let min_version_for_dropping_views = Version::from_str("2.2.0");
+    if database_version >= min_version_for_dropping_views {
+        let _ = drop_views(connection);
+    }
+
     for migration in migrations {
         let migration_version = migration.version();
 
@@ -145,6 +154,12 @@ pub fn migrate(
                 })?;
             set_database_version(connection, &migration_version)?;
         }
+    }
+
+    // Recreate views
+    if database_version >= min_version_for_dropping_views {
+        let _ = rebuild_views(connection);
+        // .map_err(|_source| MigrationError::DatabaseViewsError {})?;
     }
 
     set_database_version(connection, &to_version)?;
@@ -212,3 +227,4 @@ macro_rules! sql {
 }
 
 pub(crate) use sql;
+use views::{drop_views, rebuild_views};
