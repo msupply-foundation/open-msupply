@@ -3,6 +3,7 @@ pub mod generate_outbound_return_lines;
 pub mod insert;
 pub mod update;
 pub mod update_lines;
+pub mod update_name;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct OutboundReturnLineInput {
