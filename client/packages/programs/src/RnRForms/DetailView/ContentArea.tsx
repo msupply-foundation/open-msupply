@@ -45,7 +45,7 @@ export const ContentArea = ({
           },
           '.second-column': {
             position: '-webkit-sticky',
-            left: 89,
+            left: 88,
             minWidth: '300px',
             borderRight: '1px solid blue',
           },
