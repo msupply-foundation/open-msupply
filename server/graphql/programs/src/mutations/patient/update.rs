@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{patient::PatientNode, GenderInput};
+use graphql_types::types::patient::{GenderType, PatientNode};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::{UpdatePatient, UpdatePatientError},
@@ -21,7 +21,7 @@ pub struct UpdatePatientInput {
     pub code_2: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub gender: Option<GenderInput>,
+    pub gender: Option<GenderType>,
     pub date_of_birth: Option<NaiveDate>,
     pub address1: Option<String>,
     pub phone: Option<String>,

@@ -10,6 +10,7 @@ table! {
         item_name -> Text,
         store_id -> Text,
         available_stock_on_hand -> Double,
+        total_stock_on_hand -> Double,
     }
 }
 
@@ -20,6 +21,7 @@ pub struct StockOnHandRow {
     pub item_name: String,
     pub store_id: String,
     pub available_stock_on_hand: f64,
+    pub total_stock_on_hand: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
