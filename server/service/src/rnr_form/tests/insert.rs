@@ -301,7 +301,7 @@ mod insert {
             mock_rnr_form_b_line_a().final_balance
         );
         // AMC considers previous form
-        assert_eq!(form_lines[0].average_monthly_consumption, 4.0); // 5 (A) + 7 (B) + 0 (this period) / 3
+        assert_eq!(form_lines[0].average_monthly_consumption, 4.026696329254727); // 5 (Form A) + 7 (Form B) + 0 (this period) / 3 ... decimals due to more/less than 30 days in period
 
         // Can create same supplier/program/period in a different store
         // Also - there are no previous forms in store B - checking can start from period C
