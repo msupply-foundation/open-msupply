@@ -11,13 +11,14 @@ import {
   createQueryParamsStore,
   useEditModal,
   useTableStore,
+  RnRFormNodeStatus,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { useRnRFormList } from '../../api';
 import { RnRFormFragment } from '../../api/operations.generated';
 import { RnRFormCreateModal } from './RnRFormCreateModal';
-import { isRnRFormDisabled } from '../../utils';
+import { getStatusTranslator, isRnRFormDisabled } from '../../utils';
 
 const RnRFormListComponent = () => {
   const {
@@ -63,10 +64,14 @@ const RnRFormListComponent = () => {
         key: 'supplierName',
         label: 'label.supplier',
       },
-      {
-        key: 'status',
-        label: 'label.status',
-      },
+      [
+        'status',
+        {
+          label: 'label.status',
+          formatter: status =>
+            getStatusTranslator(t)(status as RnRFormNodeStatus),
+        },
+      ],
     ],
     {
       onChangeSortBy: updateSortQuery,
