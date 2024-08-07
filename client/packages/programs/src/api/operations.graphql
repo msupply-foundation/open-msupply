@@ -28,6 +28,36 @@ fragment Document on DocumentNode {
   }
 }
 
+fragment Program on ProgramNode {
+  id
+  name
+}
+
+query programs(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
+      }
+      totalCount
+    }
+  }
+}
+
 query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
     __typename
@@ -683,35 +713,6 @@ fragment VaccineCourse on VaccineCourseNode {
   }
   vaccineCourseSchedules {
     ...VaccineCourseSchedule
-  }
-}
-fragment Program on ProgramNode {
-  id
-  name
-}
-
-query programs(
-  $storeId: String!
-  $first: Int
-  $offset: Int
-  $key: ProgramSortFieldInput!
-  $desc: Boolean
-  $filter: ProgramFilterInput
-) {
-  programs(
-    storeId: $storeId
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on ProgramConnector {
-      __typename
-      nodes {
-        __typename
-        ...Program
-      }
-      totalCount
-    }
   }
 }
 

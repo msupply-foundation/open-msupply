@@ -7,6 +7,20 @@ export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id:
 
 export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, timestamp: string, type: string, data: any, user?: { __typename: 'UserNode', userId: string, username: string, email?: string | null } | null, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, category: Types.DocumentRegistryCategoryNode, documentType: string, contextId: string, name?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null };
 
+export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
+
+export type ProgramsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.ProgramSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
+}>;
+
+
+export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
+
 export type DocumentByNameQueryVariables = Types.Exact<{
   name: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
@@ -261,20 +275,6 @@ export type UpdateImmunisationProgramMutation = { __typename: 'Mutations', centr
 
 export type VaccineCourseFragment = { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, doses: number, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseSchedules?: Array<{ __typename: 'VaccineCourseScheduleNode', id: string, doseNumber: number, label: string }> | null };
 
-export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
-
-export type ProgramsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  key: Types.ProgramSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
-}>;
-
-
-export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
-
 export type VaccineCoursesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -316,6 +316,12 @@ export type DeleteVaccineCourseMutationVariables = Types.Exact<{
 
 export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', deleteVaccineCourse: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteVaccineCourseError' } } } };
 
+export const ProgramFragmentDoc = gql`
+    fragment Program on ProgramNode {
+  id
+  name
+}
+    `;
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
   fields
@@ -592,12 +598,25 @@ export const VaccineCourseFragmentDoc = gql`
 }
     ${VaccineCourseItemFragmentDoc}
 ${VaccineCourseScheduleFragmentDoc}`;
-export const ProgramFragmentDoc = gql`
-    fragment Program on ProgramNode {
-  id
-  name
+export const ProgramsDocument = gql`
+    query programs($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
+  programs(
+    storeId: $storeId
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
+      }
+      totalCount
+    }
+  }
 }
-    `;
+    ${ProgramFragmentDoc}`;
 export const DocumentByNameDocument = gql`
     query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
@@ -967,25 +986,6 @@ export const UpdateImmunisationProgramDocument = gql`
   }
 }
     ${ImmunisationProgramFragmentDoc}`;
-export const ProgramsDocument = gql`
-    query programs($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
-  programs(
-    storeId: $storeId
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on ProgramConnector {
-      __typename
-      nodes {
-        __typename
-        ...Program
-      }
-      totalCount
-    }
-  }
-}
-    ${ProgramFragmentDoc}`;
 export const VaccineCoursesDocument = gql`
     query vaccineCourses($first: Int, $offset: Int, $key: VaccineCourseSortFieldInput!, $desc: Boolean, $filter: VaccineCourseFilterInput) {
   vaccineCourses(
@@ -1080,6 +1080,9 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
+    },
     documentByName(variables: DocumentByNameQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DocumentByNameQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentByNameQuery>(DocumentByNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentByName', 'query', variables);
     },
@@ -1154,9 +1157,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateImmunisationProgram(variables: UpdateImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateImmunisationProgramMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateImmunisationProgramMutation>(UpdateImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateImmunisationProgram', 'mutation', variables);
-    },
-    programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
     },
     vaccineCourses(variables: VaccineCoursesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccineCoursesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<VaccineCoursesQuery>(VaccineCoursesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccineCourses', 'query', variables);

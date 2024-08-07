@@ -6,7 +6,6 @@ import {
 } from '@openmsupply-client/common';
 import {
   PeriodScheduleFragment,
-  ProgramFragment,
   RnRFormFragment,
 } from '../operations.generated';
 import { useRnRGraphQL } from '../useRnRGraphQL';
@@ -14,6 +13,7 @@ import { RNR_FORM } from './keys';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { NameRowFragment } from '@openmsupply-client/system';
 import { useRnRFormList, useSchedulesAndPeriods } from '.';
+import { ProgramFragment } from '@openmsupply-client/programs';
 
 interface RnRFormDraft {
   supplier: NameRowFragment | null;
