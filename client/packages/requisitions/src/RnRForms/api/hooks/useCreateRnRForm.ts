@@ -9,7 +9,7 @@ import {
   ProgramFragment,
   RnRFormFragment,
 } from '../operations.generated';
-import { useProgramsGraphQL } from '../useProgramsGraphQL';
+import { useRnRGraphQL } from '../useRnRGraphQL';
 import { RNR_FORM } from './keys';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { NameRowFragment } from '@openmsupply-client/system';
@@ -81,7 +81,7 @@ export const useCreateRnRForm = () => {
 };
 
 const useCreate = () => {
-  const { api, storeId, queryClient } = useProgramsGraphQL();
+  const { api, storeId, queryClient } = useRnRGraphQL();
 
   const mutationFn = async (draft: RnRFormDraft) => {
     if (!draft.supplier || !draft.program || !draft.schedule || !draft.period) {

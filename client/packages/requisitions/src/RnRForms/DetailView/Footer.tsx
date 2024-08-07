@@ -8,7 +8,7 @@ import {
   RnRFormNodeStatus,
   useNotification,
 } from '@openmsupply-client/common';
-import { useRnRForm } from '../../api';
+import { useRnRForm } from '../api';
 
 export const Footer = ({
   rnrFormId,

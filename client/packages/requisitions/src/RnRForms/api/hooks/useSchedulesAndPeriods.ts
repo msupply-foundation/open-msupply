@@ -1,9 +1,9 @@
 import { useQuery } from '@openmsupply-client/common';
-import { useProgramsGraphQL } from '../useProgramsGraphQL';
+import { useRnRGraphQL } from '../useRnRGraphQL';
 import { SCHEDULE, LIST } from './keys';
 
 export const useSchedulesAndPeriods = (programId: string) => {
-  const { api, storeId } = useProgramsGraphQL();
+  const { api, storeId } = useRnRGraphQL();
 
   const queryKey = [SCHEDULE, LIST, programId];
   const queryFn = async () => {

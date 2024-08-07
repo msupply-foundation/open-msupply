@@ -4,11 +4,11 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { ProgramFragment } from '../operations.generated';
-import { useProgramsGraphQL } from '../useProgramsGraphQL';
+import { useRnRGraphQL } from '../useRnRGraphQL';
 import { LIST, PROGRAM } from './keys';
 
 export const useProgramList = () => {
-  const { api, storeId } = useProgramsGraphQL();
+  const { api, storeId } = useRnRGraphQL();
 
   const queryKey = [PROGRAM, LIST];
   const queryFn = async (): Promise<{

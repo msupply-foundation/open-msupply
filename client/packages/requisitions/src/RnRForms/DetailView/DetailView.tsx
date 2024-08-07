@@ -17,8 +17,8 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { ContentArea } from './ContentArea';
-import { RnRForm, useRnRForm } from '../../api';
-import { RnRFormLineFragment } from '../../api/operations.generated';
+import { RnRForm, useRnRForm } from '../api';
+import { RnRFormLineFragment } from '../api/operations.generated';
 
 export const RnRFormDetailView = () => {
   const { id = '' } = useParams();

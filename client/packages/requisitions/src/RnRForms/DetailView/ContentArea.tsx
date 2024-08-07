@@ -6,7 +6,7 @@ import {
   Table,
   useTranslation,
 } from '@openmsupply-client/common';
-import { RnRFormLineFragment } from '../../api/operations.generated';
+import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
 
 interface ContentAreaProps {
