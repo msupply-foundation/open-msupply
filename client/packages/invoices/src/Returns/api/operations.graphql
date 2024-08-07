@@ -50,9 +50,6 @@ fragment OutboundReturn on InvoiceNode {
 
   otherPartyName
   otherPartyId
-  otherPartyStore {
-    code
-  }
 
   otherParty(storeId: $storeId) {
     __typename
@@ -103,9 +100,6 @@ fragment InboundReturn on InvoiceNode {
 
   otherPartyId
   otherPartyName
-  otherPartyStore {
-    code
-  }
 
   user {
     __typename

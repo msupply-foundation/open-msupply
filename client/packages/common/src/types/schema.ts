@@ -3171,7 +3171,6 @@ export type InvoiceNode = {
   otherParty: NameNode;
   otherPartyId: Scalars['String']['output'];
   otherPartyName: Scalars['String']['output'];
-  otherPartyStore?: Maybe<StoreNode>;
   patient?: Maybe<PatientNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']['output']>;
   pricing: PricingNode;
