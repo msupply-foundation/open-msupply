@@ -113,6 +113,7 @@ impl GenderType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[PgType = "name_type"]
 pub enum NameRowType {
     Facility,
     Patient,
