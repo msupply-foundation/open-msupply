@@ -17,7 +17,7 @@ import {
   ReportSelector,
   usePrintReport,
 } from '@openmsupply-client/system';
-import { useRnRForm } from '../../api';
+import { useRnRForm } from '../api';
 import { JsonData } from '@openmsupply-client/programs';
 
 export const AppBarButtonsComponent = () => {

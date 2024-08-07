@@ -8,7 +8,7 @@ import {
   RnRFormNodeStatus,
   useNotification,
 } from '@openmsupply-client/common';
-import { useRnRForm } from '../../api';
+import { useRnRForm } from '../api';
 
 export const Footer = ({
   rnrFormId,
@@ -17,7 +17,7 @@ export const Footer = ({
   rnrFormId: string;
   linesUnconfirmed: boolean;
 }) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
   const { navigateUpOne } = useBreadcrumbs();
   const { error, info, success } = useNotification();
   const {
