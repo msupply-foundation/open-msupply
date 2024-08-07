@@ -15,6 +15,7 @@ import {
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { InboundReturnFragment, useReturns } from '../api';
+import { CustomerSearchInput } from 'packages/system/src';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('distribution');
@@ -22,11 +23,17 @@ export const Toolbar: FC = () => {
 
   const { bufferedState, setBufferedState } =
     useReturns.document.inboundReturn();
-  const { otherPartyName, theirReference, id = '' } = bufferedState ?? {};
+  const {
+    otherParty,
+    theirReference,
+    id,
+    linkedShipment = '',
+  } = bufferedState ?? {};
 
-  const onDelete = useReturns.lines.deleteSelectedInboundLines({
-    returnId: id,
-  });
+  const onDelete = () => {
+    if (!id) return;
+    useReturns.lines.deleteSelectedInboundLines({ returnId: id });
+  };
   const { debouncedMutateAsync } = useReturns.document.updateInboundReturn();
 
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
@@ -48,10 +55,18 @@ export const Toolbar: FC = () => {
       >
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
-            {otherPartyName && (
+            {otherParty && (
               <InputWithLabelRow
-                label={t('label.customer-name')}
-                Input={<BasicTextInput value={otherPartyName} disabled />}
+                label={t('label.supplier-name')}
+                Input={
+                  <CustomerSearchInput
+                    disabled={isDisabled || !!linkedShipment}
+                    value={otherParty}
+                    onChange={name => {
+                      update({ otherPartyId: name.id });
+                    }}
+                  />
+                }
               />
             )}
             <InputWithLabelRow
