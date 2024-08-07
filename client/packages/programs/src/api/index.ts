@@ -6,6 +6,7 @@ export {
   ContactTraceRowFragment,
   ContactTraceFragment,
   VaccineCourseFragment,
-  ImmunisationProgramFragment
+  ImmunisationProgramFragment,
 } from './operations.generated';
 export * from './hooks';
+export * from './useProgramsGraphQL';
