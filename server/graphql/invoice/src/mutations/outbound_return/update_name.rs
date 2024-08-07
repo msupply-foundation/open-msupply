@@ -327,9 +327,6 @@ mod test {
                     ... on InvoiceNode {
                         id
                         otherPartyId
-                        otherPartyStore {
-                            id
-                        }
                     }
                     ... on UpdateOutboundReturnNameError {
                         error {
@@ -369,7 +366,6 @@ mod test {
             "updateOutboundReturnName": {
                 "id": mock_outbound_return_a().id,
                 "otherPartyId": mock_name_store_a().id,
-                "otherPartyStore": null
             }
           }
         );
