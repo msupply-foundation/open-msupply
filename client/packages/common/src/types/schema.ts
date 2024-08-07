@@ -4647,7 +4647,7 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
-export type OtherPartyNotACustomer = InsertErrorInterface & InsertInboundReturnErrorInterface & UpdateNameErrorInterface & {
+export type OtherPartyNotACustomer = InsertErrorInterface & InsertInboundReturnErrorInterface & UpdateInboundReturnErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String']['output'];
 };
@@ -4657,7 +4657,7 @@ export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & Inser
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateReturnNameErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundReturnErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateReturnNameErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String']['output'];
 };
@@ -7245,11 +7245,21 @@ export type UpdateImmunisationProgramInput = {
 
 export type UpdateImmunisationProgramResponse = ProgramNode | UpdateImmunisationProgramError;
 
+export type UpdateInboundReturnError = {
+  __typename: 'UpdateInboundReturnError';
+  error: UpdateInboundReturnErrorInterface;
+};
+
+export type UpdateInboundReturnErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type UpdateInboundReturnInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateInboundReturnStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -7261,7 +7271,7 @@ export type UpdateInboundReturnLinesInput = {
 
 export type UpdateInboundReturnLinesResponse = InvoiceNode;
 
-export type UpdateInboundReturnResponse = InvoiceNode;
+export type UpdateInboundReturnResponse = InvoiceNode | UpdateInboundReturnError;
 
 export enum UpdateInboundReturnStatusInput {
   Delivered = 'DELIVERED',
