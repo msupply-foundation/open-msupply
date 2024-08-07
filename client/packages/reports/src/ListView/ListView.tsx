@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   Grid,
+  NothingHere,
   ReportContext,
   RouteBuilder,
   useAuthContext,
@@ -63,6 +64,15 @@ export const ListView = () => {
     },
     [navigate]
   );
+
+  if (
+    !store?.preferences?.omProgramModule ||
+    !stockAndItemReports?.length ||
+    !expiringReports?.length
+  ) {
+    return <NothingHere body={t('message.contact-support')} />;
+  }
+
   return (
     <>
       <Grid
