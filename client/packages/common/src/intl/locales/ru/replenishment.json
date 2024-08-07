@@ -89,5 +89,10 @@
   "messages.cant-delete-requisitions": "Удалять заявки на закупку можно только со статусом 'Черновик'",
   "label.number-months_few": "{{count}} Месяца",
   "messages.period-not-available": "Нет доступных периодов",
-  "messages.requested-to-suggested": "В результате все строки с запрошенным количеством будут установлены на предлагаемое количество."
+  "messages.requested-to-suggested": "В результате все строки с запрошенным количеством будут установлены на предлагаемое количество.",
+  "messages.confirm-status-as": "Подтвердить статус как $t({{status}})?",
+  "messages.confirm-inbound-status-as": "Подтвердить статус как $t({{status}})?",
+  "messages.could-not-save": "Не удалось Сохранить",
+  "messages.deleted-returns_one": "Удален 1 возврат",
+  "messages.deleted-returns_other": "Удалено {{count}} возвратов"
 }
