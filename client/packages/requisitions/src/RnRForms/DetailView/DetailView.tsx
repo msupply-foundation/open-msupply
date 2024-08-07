@@ -28,7 +28,7 @@ export const RnRFormDetailView = () => {
     updateLine: { updateLine },
   } = useRnRForm({ rnrFormId: id });
   const navigate = useNavigate();
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -39,7 +39,7 @@ export const RnRFormDetailView = () => {
       open={true}
       onOk={() =>
         navigate(
-          RouteBuilder.create(AppRoute.Programs)
+          RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.RnRForms)
             .build()
         )
@@ -57,7 +57,7 @@ const RnRFormDetailViewComponent = ({
   data: RnRForm;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
 }) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   const tabs = [

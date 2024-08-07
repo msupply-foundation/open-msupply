@@ -17,7 +17,7 @@ export const Footer = ({
   rnrFormId: string;
   linesUnconfirmed: boolean;
 }) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
   const { navigateUpOne } = useBreadcrumbs();
   const { error, info, success } = useNotification();
   const {

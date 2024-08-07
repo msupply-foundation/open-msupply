@@ -24,7 +24,7 @@ interface HeaderCellProps {
 }
 
 const HeaderCell = ({ label, tooltip }: HeaderCellProps) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   return tooltip === undefined ? (
     <th>{t(label)}</th>
@@ -44,7 +44,7 @@ export const ContentArea = ({
   periodLength,
   disabled,
 }: ContentAreaProps) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   // TODO: move to backend, should join on item and sort by name!
   const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));
