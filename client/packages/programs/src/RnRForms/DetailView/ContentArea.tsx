@@ -4,6 +4,8 @@ import {
   GlobalStyles,
   NothingHere,
   Table,
+  useConfirmOnLeaving,
+  useDirtyCheck,
   useTranslation,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../../api/operations.generated';
@@ -23,6 +25,9 @@ export const ContentArea = ({
   disabled,
 }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
+
+  // const { isDirty, setIsDirty } = useDirtyCheck();
+  useConfirmOnLeaving(true);
 
   // TODO: move to backend, should join on item and sort by name!
   const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));

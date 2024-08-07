@@ -27,6 +27,7 @@ export const Footer = ({
 
   const onFinalise = async () => {
     if (linesUnconfirmed) {
+      // TODO: confirmation dialog/popup here
       info(t('messages.all-lines-must-be-confirmed'))();
       return;
     }
