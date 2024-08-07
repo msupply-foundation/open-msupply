@@ -1,4 +1,6 @@
 use crate::migrations::*;
+
+#[allow(dead_code)]
 pub(crate) struct V1_00_05;
 
 impl Migration for V1_00_05 {
