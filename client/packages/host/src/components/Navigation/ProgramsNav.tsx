@@ -19,7 +19,8 @@ export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   );
   const t = useTranslation('app');
   const isCentralServer = useIsCentralServerApi();
-  const immunisationsVisible = isCentralServer && store?.preferences.vaccineModule;
+  const immunisationsVisible =
+    isCentralServer && store?.preferences.vaccineModule;
   const rnrVisible = store?.preferences.omProgramModule;
 
   return (
