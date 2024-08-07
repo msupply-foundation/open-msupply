@@ -45,12 +45,7 @@ type Options = z.infer<typeof Options>;
 // Validates the option and parses the pattern into RegEx
 const useOptions = (
   options?: Record<string, unknown>
-): {
-  errors?: string;
-  options?: Options;
-  pattern?: RegExp;
-  useDebounce?: boolean;
-} => {
+): { errors?: string; options?: Options; pattern?: RegExp } => {
   const [regexError, setRegexErrors] = useState<string | undefined>();
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
@@ -102,7 +97,6 @@ const UIComponent = (props: ControlProps) => {
     errors: zErrors,
     options: schemaOptions,
     pattern,
-    useDebounce = true,
   } = useOptions(props.uischema.options);
   const customErrors = usePatternValidation(path, pattern, data);
   const error = !!errors || !!zErrors || !!customErrors;
@@ -133,6 +127,7 @@ const UIComponent = (props: ControlProps) => {
   const rows = schemaOptions?.rows;
 
   const width = schemaOptions?.width ?? '100%';
+  const useDebounce = schemaOptions?.useDebounce ?? true;
 
   return (
     <DetailInputWithLabelRow
