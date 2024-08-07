@@ -118,10 +118,10 @@ pub fn migrate(
         ));
     }
 
-    // After v2.3 we drop all views and re-create them
+    // From v2.2 we drop all views and re-create them
     let min_version_for_dropping_views = Version::from_str("2.2.0");
     if database_version >= min_version_for_dropping_views {
-        let _ = drop_views(connection);
+        drop_views(connection).map_err(|_source| MigrationError::DatabaseViewsError {})?;
     }
 
     for migration in migrations {
@@ -158,8 +158,7 @@ pub fn migrate(
 
     // Recreate views
     if database_version >= min_version_for_dropping_views {
-        let _ = rebuild_views(connection);
-        // .map_err(|_source| MigrationError::DatabaseViewsError {})?;
+        rebuild_views(connection).map_err(|_source| MigrationError::DatabaseViewsError {})?;
     }
 
     set_database_version(connection, &to_version)?;
