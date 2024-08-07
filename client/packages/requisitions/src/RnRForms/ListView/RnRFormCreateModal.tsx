@@ -15,8 +15,8 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { ProgramSearchInput } from './ProgramSearchInput';
-import { useCreateRnRForm, useSchedulesAndPeriods } from '../../api';
+import { ProgramSearchInput } from '@openmsupply-client/programs';
+import { useCreateRnRForm, useSchedulesAndPeriods } from '../api';
 
 interface RnRFormCreateModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
   onClose,
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
   const navigate = useNavigate();
 
   const { previousForm, draft, updateDraft, clearDraft, create, isIncomplete } =
@@ -63,7 +63,7 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
               const result = await create();
               if (result)
                 navigate(
-                  RouteBuilder.create(AppRoute.Programs)
+                  RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.RnRForms)
                     .addPart(result.id)
                     .build()

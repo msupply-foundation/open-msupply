@@ -28,6 +28,36 @@ fragment Document on DocumentNode {
   }
 }
 
+fragment Program on ProgramNode {
+  id
+  name
+}
+
+query programs(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
+      }
+      totalCount
+    }
+  }
+}
+
 query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
     __typename
@@ -775,179 +805,6 @@ mutation deleteVaccineCourse($vaccineCourseId: String!) {
           id
         }
       }
-    }
-  }
-}
-
-fragment RnRForm on RnRFormNode {
-  id
-  createdDatetime
-  periodId
-  periodName
-  periodLength
-  programId
-  programName
-  supplierName
-  supplierId
-  status
-}
-
-fragment RnRFormLine on RnRFormLineNode {
-  id
-  averageMonthlyConsumption
-  previousMonthlyConsumptionValues
-  initialBalance
-  quantityReceived
-  quantityConsumed
-  adjustedQuantityConsumed
-  adjustments
-  stockOutDuration
-  finalBalance
-  maximumQuantity
-  expiryDate
-  calculatedRequestedQuantity
-  enteredRequestedQuantity
-  comment
-  confirmed
-  item {
-    code
-    name
-    unitName
-    strength
-    venCategory
-  }
-}
-
-query rnrForms(
-  $storeId: String!
-  $first: Int
-  $offset: Int
-  $key: RnRFormSortFieldInput!
-  $desc: Boolean
-  $filter: RnRFormFilterInput
-) {
-  rAndRForms(
-    storeId: $storeId
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on RnRFormConnector {
-      __typename
-      nodes {
-        __typename
-        ...RnRForm
-      }
-      totalCount
-    }
-  }
-}
-
-mutation createRnRForm($storeId: String!, $input: InsertRnRFormInput!) {
-  insertRnrForm(storeId: $storeId, input: $input) {
-    __typename
-    ... on RnRFormNode {
-      __typename
-      ...RnRForm
-    }
-  }
-}
-
-fragment Program on ProgramNode {
-  id
-  name
-}
-
-query programs(
-  $storeId: String!
-  $first: Int
-  $offset: Int
-  $key: ProgramSortFieldInput!
-  $desc: Boolean
-  $filter: ProgramFilterInput
-) {
-  programs(
-    storeId: $storeId
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
-    ... on ProgramConnector {
-      __typename
-      nodes {
-        __typename
-        ...Program
-      }
-      totalCount
-    }
-  }
-}
-
-fragment Period on PeriodNode {
-  id
-  name
-  startDate
-  endDate
-}
-
-fragment PeriodSchedule on PeriodScheduleNode {
-  id
-  name
-  periods {
-    id
-    inUse
-    period {
-      ...Period
-    }
-  }
-}
-
-query schedulesAndPeriods($storeId: String!, $programId: String!) {
-  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
-    __typename
-    ... on PeriodSchedulesConnector {
-      nodes {
-        ...PeriodSchedule
-      }
-    }
-  }
-}
-
-query rAndRFormDetail($rnrFormId: String!, $storeId: String!) {
-  rAndRForm(rnrFormId: $rnrFormId, storeId: $storeId) {
-    __typename
-    ... on NodeError {
-      __typename
-      error {
-        description
-      }
-    }
-    ... on RnRFormNode {
-      __typename
-      ...RnRForm
-      lines {
-        ...RnRFormLine
-      }
-    }
-  }
-}
-
-mutation updateRnRFormLines($storeId: String!, $input: UpdateRnRFormInput!) {
-  updateRnrForm(storeId: $storeId, input: $input) {
-    __typename
-    ... on RnRFormNode {
-      __typename
-      ...RnRForm
-    }
-  }
-}
-
-mutation finaliseRnRForm($storeId: String!, $input: FinaliseRnRFormInput!) {
-  finaliseRnrForm(storeId: $storeId, input: $input) {
-    __typename
-    ... on RnRFormNode {
-      __typename
-      ...RnRForm
     }
   }
 }

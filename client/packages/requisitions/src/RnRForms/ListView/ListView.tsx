@@ -15,10 +15,10 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { useRnRFormList } from '../../api';
-import { RnRFormFragment } from '../../api/operations.generated';
+import { useRnRFormList } from '../api';
+import { RnRFormFragment } from '../api/operations.generated';
 import { RnRFormCreateModal } from './RnRFormCreateModal';
-import { getStatusTranslator, isRnRFormDisabled } from '../../utils';
+import { getStatusTranslator, isRnRFormDisabled } from '../utils';
 
 const RnRFormListComponent = () => {
   const {
@@ -33,7 +33,7 @@ const RnRFormListComponent = () => {
 
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   const queryParams = {
     filterBy,
