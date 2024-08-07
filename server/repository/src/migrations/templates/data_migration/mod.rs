@@ -22,6 +22,7 @@ table! {
     }
 }
 
+#[allow(dead_code)]
 pub(crate) struct V1_00_06;
 
 impl Migration for V1_00_06 {
