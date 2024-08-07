@@ -2,6 +2,7 @@
   "heading.tax": "Налог",
   "label.draft": "Черновик",
   "heading.are-you-sure": "Вы уверены?",
+  "button.add-form": "Добавить Форму",
   "button.add-from-master-list": "Добавить из главного списка",
   "error.requisition-not-found": "Внутренний Заказ не найден",
   "error.no-internal-orders": "Нет внутренних заказов для отображения.",
@@ -11,6 +12,7 @@
   "label.add-batch": "Добавить партию",
   "label.finalised": "Завершено",
   "label.pricing": "Цена",
+  "label.schedule": "Расписание",
   "label.cant-delete-disabled": "Возможно удаление строк только со статусом 'Новый'",
   "button.new-shipment": "Новая Поставка",
   "error.shipment-not-found": "Поставка не найдена",
@@ -89,5 +91,6 @@
   "messages.cant-delete-requisitions": "Удалять заявки на закупку можно только со статусом 'Черновик'",
   "label.number-months_few": "{{count}} Месяца",
   "messages.period-not-available": "Нет доступных периодов",
-  "messages.requested-to-suggested": "В результате все строки с запрошенным количеством будут установлены на предлагаемое количество."
+  "messages.requested-to-suggested": "В результате все строки с запрошенным количеством будут установлены на предлагаемое количество.",
+  "messages.click-to-return-to-rnr-list": "Нажмите сюда, чтобы вернуться к списку О&З Форм"
 }
