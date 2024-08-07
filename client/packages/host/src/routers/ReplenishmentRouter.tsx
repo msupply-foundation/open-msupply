@@ -29,13 +29,19 @@ const fullOutboundReturnsPath = RouteBuilder.create(AppRoute.Replenishment)
   .addWildCard()
   .build();
 
+const fullRnRPath = RouteBuilder.create(AppRoute.Replenishment)
+  .addPart(AppRoute.RnRForms)
+  .addWildCard()
+  .build();
+
 const fullSuppliersPath = RouteBuilder.create(AppRoute.Replenishment)
   .addPart(AppRoute.Suppliers)
   .addWildCard()
   .build();
 
 export const ReplenishmentRouter: FC = () => {
-  const gotoRequisition = useMatch(fullInternalOrderPath);
+  const gotoRequisition =
+    useMatch(fullInternalOrderPath) || useMatch(fullRnRPath);
   const gotoSuppliers = useMatch(fullSuppliersPath);
   const gotoInboundShipment = useMatch(fullInboundShipmentPath);
   const gotoReturns = useMatch(fullOutboundReturnsPath);
