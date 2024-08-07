@@ -70,7 +70,7 @@
   "messages.allocated-lines_many": "Распределено {{count}} строк",
   "messages.allocated-lines_other": "Распределено {{count}} строк",
   "label.edited-by": "Отредактировано",
-  "label.issue": "Проблема",
+  "label.issue": "Выпустить",
   "label.group-by-item": "Группировать по Товарам",
   "label.customer-ref": "Номер Клиента",
   "label.no-unallocated-rows-selected": "Все выбранные строки уже распределены",

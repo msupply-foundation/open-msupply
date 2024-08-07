@@ -10,7 +10,7 @@ use crate::{
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, GenderType, NameType, Pagination, ProgramEnrolmentFilter,
+    DateFilter, EqualFilter, GenderType, NameRowType, Pagination, ProgramEnrolmentFilter,
     ProgramEnrolmentRepository, Sort, StringFilter,
 };
 
@@ -261,7 +261,7 @@ impl<'a> PatientRepository<'a> {
         query = query.filter(name_dsl::deleted_datetime.is_null());
         apply_equal_filter!(
             query,
-            Some(NameType::equal_to(&NameType::Patient)),
+            Some(NameRowType::equal_to(&NameRowType::Patient)),
             name_dsl::type_
         );
         query
@@ -361,7 +361,7 @@ mod tests {
 
     use crate::{
         mock::{mock_program_a, MockDataInserts},
-        test_db, DateFilter, EqualFilter, NameRow, NameRowRepository, NameType, PatientFilter,
+        test_db, DateFilter, EqualFilter, NameRow, NameRowRepository, NameRowType, PatientFilter,
         PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, StringFilter,
     };
 
@@ -384,7 +384,7 @@ mod tests {
 
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
-            row.r#type = NameType::Patient;
+            row.r#type = NameRowType::Patient;
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
@@ -422,7 +422,7 @@ mod tests {
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.name = "test_name".to_string();
-            row.r#type = NameType::Patient;
+            row.r#type = NameRowType::Patient;
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
@@ -434,7 +434,7 @@ mod tests {
         let patient_row_a = inline_init(|row: &mut NameRow| {
             row.id = "patient_a".to_string();
             row.name = "patient_a_name".to_string();
-            row.r#type = NameType::Patient;
+            row.r#type = NameRowType::Patient;
             row.code = "example111".to_string();
             row.national_health_number = Some("patient_a_nhn".to_string());
         });
@@ -442,7 +442,7 @@ mod tests {
         let patient_row_b = inline_init(|row: &mut NameRow| {
             row.id = "patient_b".to_string();
             row.name = "patient_b_name".to_string();
-            row.r#type = NameType::Patient;
+            row.r#type = NameRowType::Patient;
             row.code = "patient_b_code".to_string();
             row.national_health_number = Some("example222".to_string());
         });
@@ -450,7 +450,7 @@ mod tests {
         let patient_row_c = inline_init(|row: &mut NameRow| {
             row.id = "patient_c".to_string();
             row.name = "example_name".to_string();
-            row.r#type = NameType::Patient;
+            row.r#type = NameRowType::Patient;
             row.code = "code333".to_string();
             row.national_health_number = Some("patient_c_nhn".to_string());
         });
@@ -564,7 +564,7 @@ mod tests {
         // add name and name_store_join
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
-            row.r#type = NameType::Patient;
+            row.r#type = NameRowType::Patient;
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
@@ -609,7 +609,7 @@ mod tests {
 
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
-            row.r#type = NameType::Patient;
+            row.r#type = NameRowType::Patient;
         });
         NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
@@ -629,7 +629,7 @@ mod tests {
         // Add date of death
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
-            row.r#type = NameType::Patient;
+            row.r#type = NameRowType::Patient;
             row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap())
         });
         NameRowRepository::new(&connection)

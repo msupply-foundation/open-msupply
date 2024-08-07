@@ -12,7 +12,7 @@ use crate::{
     },
     name_oms_fields_alias,
     repository_error::RepositoryError,
-    EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameType, Pagination, Sort,
+    EqualFilter, NameLinkRow, NameOmsFields, NameOmsFieldsRow, NameRowType, Pagination, Sort,
     StringFilter,
 };
 
@@ -32,6 +32,14 @@ pub struct Name {
     pub properties: Option<String>,
 }
 
+#[derive(Clone, Default, PartialEq, Debug)]
+pub enum NameType {
+    Facility,
+    Invad,
+    Repack,
+    #[default]
+    Store,
+}
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct NameFilter {
     pub id: Option<EqualFilter<String>>,
@@ -53,12 +61,6 @@ pub struct NameFilter {
     pub email: Option<StringFilter>,
 
     pub code_or_name: Option<StringFilter>,
-}
-
-impl EqualFilter<NameType> {
-    pub fn equal_to_name_type(value: &NameType) -> Self {
-        inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
-    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -175,7 +177,7 @@ impl<'a> NameRepository<'a> {
                     .left_join(store_dsl::store),
             )
             .inner_join(name_oms_fields_alias)
-            .filter(name_dsl::type_.ne(NameType::Patient))
+            .filter(name_dsl::type_.ne(NameRowType::Patient))
             .into_boxed();
 
         if let Some(f) = filter {
@@ -210,6 +212,8 @@ impl<'a> NameRepository<'a> {
 
             apply_string_filter!(query, name, name_dsl::name_);
             apply_string_filter!(query, store_code, store_dsl::code);
+
+            let r#type = r#type.map(|r| r.convert_filter::<NameRowType>());
             apply_equal_filter!(query, r#type, name_dsl::type_);
 
             apply_string_filter!(query, phone, name_dsl::phone);
@@ -392,9 +396,18 @@ impl NameType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
+}
 
-    pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
+impl From<NameType> for NameRowType {
+    fn from(from_value: NameType) -> NameRowType {
+        use NameRowType as to;
+        use NameType as from;
+        match from_value {
+            from::Facility => to::Facility,
+            from::Invad => to::Invad,
+            from::Repack => to::Repack,
+            from::Store => to::Store,
+        }
     }
 }
 

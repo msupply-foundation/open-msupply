@@ -52,7 +52,7 @@ pub fn get_schedules_with_periods_by_program(
 
             let schedule_row = PeriodScheduleRowRepository::new(&ctx.connection)
                 .find_one_by_id(&schedule_id)?
-                .ok_or_else(|| RepositoryError::NotFound)?;
+                .ok_or(RepositoryError::NotFound)?;
 
             Ok(PeriodSchedule {
                 schedule_row,

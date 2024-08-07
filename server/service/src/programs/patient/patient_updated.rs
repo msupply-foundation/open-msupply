@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
     EqualFilter, GenderType, NameRow, NameRowRepository, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, NameType, Patient, RepositoryError,
+    NameStoreJoinRepository, NameStoreJoinRow, NameRowType, Patient, RepositoryError,
     StorageConnection,
 };
 use std::str::FromStr;
@@ -105,7 +105,7 @@ pub(crate) fn patient_to_name_row(
         id: id.clone(),
         name: patient_name(&first_name, &last_name),
         code: code.unwrap_or("".to_string()),
-        r#type: NameType::Patient,
+        r#type: NameRowType::Patient,
         is_customer: existing_name.map(|n| n.is_customer).unwrap_or(true),
         is_supplier: existing_name.map(|n| n.is_supplier).unwrap_or(false),
         // supplying_store_id is the home store for a patient and is needed for mSupply compatibility

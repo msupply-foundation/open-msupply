@@ -82,7 +82,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameStoreJoinRow, NameType,
+        InvoiceRowRepository, NameRow, NameStoreJoinRow, NameRowType,
     };
     use util::{inline_edit, inline_init};
 
@@ -160,7 +160,7 @@ mod test {
         fn patient() -> NameRow {
             inline_init(|r: &mut NameRow| {
                 r.id = "patient".to_string();
-                r.r#type = NameType::Patient;
+                r.r#type = NameRowType::Patient;
             })
         }
 
