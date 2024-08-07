@@ -17,12 +17,14 @@ import { getAmc } from './getAmc';
 export const RnRFormLine = ({
   line,
   saveLine,
+  markDirty,
   periodLength,
   disabled,
 }: {
   line: RnRFormLineFragment;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  markDirty: (id: string) => void;
   disabled: boolean;
 }) => {
   const theme = useTheme();
@@ -77,6 +79,7 @@ export const RnRFormLine = ({
       maximumQuantity,
       calculatedRequestedQuantity,
     });
+    markDirty(draft.id);
   };
 
   const venCategory =
