@@ -6,7 +6,7 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    NameRow, NameStoreJoinRow, NameStoreJoinRowDelete, NameType, StoreMode, StoreRow,
+    NameRow, NameStoreJoinRow, NameStoreJoinRowDelete, NameRowType, StoreMode, StoreRow,
 };
 
 use serde_json::json;
@@ -25,7 +25,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             id: uuid(),
             name: uuid(),
             code: small_uuid(),
-            r#type: NameType::Facility,
+            r#type: NameRowType::Facility,
             is_customer: true,
             is_supplier: true,
             supplying_store_id: None,
@@ -83,7 +83,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
 
         let name_row2 = inline_init(|r: &mut NameRow| {
             r.id = uuid();
-            r.r#type = NameType::Facility;
+            r.r#type = NameRowType::Facility;
             r.is_customer = true;
             r.is_supplier = false;
         });

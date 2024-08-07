@@ -24,8 +24,8 @@ impl RnRFormLineNode {
         &self.rnr_form_line_row.item_id
     }
 
-    pub async fn previous_average_monthly_consumption(&self) -> f64 {
-        self.rnr_form_line_row.previous_average_monthly_consumption
+    pub async fn previous_monthly_consumption_values(&self) -> &str {
+        &self.rnr_form_line_row.previous_monthly_consumption_values
     }
 
     pub async fn average_monthly_consumption(&self) -> f64 {
@@ -72,8 +72,12 @@ impl RnRFormLineNode {
         self.rnr_form_line_row.expiry_date
     }
 
-    pub async fn requested_quantity(&self) -> f64 {
-        self.rnr_form_line_row.requested_quantity
+    pub async fn calculated_requested_quantity(&self) -> f64 {
+        self.rnr_form_line_row.calculated_requested_quantity
+    }
+
+    pub async fn entered_requested_quantity(&self) -> Option<f64> {
+        self.rnr_form_line_row.entered_requested_quantity
     }
 
     pub async fn comment(&self) -> Option<String> {

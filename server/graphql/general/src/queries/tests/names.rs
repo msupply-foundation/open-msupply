@@ -199,10 +199,7 @@ mod graphql {
             assert_eq!(store_code, Some(StringFilter::like("store code like")));
             assert_eq!(is_visible, Some(false));
             assert_eq!(is_system_name, Some(true));
-            assert_eq!(
-                r#type,
-                Some(EqualFilter::equal_to_name_type(&NameType::Store))
-            );
+            assert_eq!(r#type, Some(NameType::Store.equal_to()));
 
             assert_eq!(phone, Some(StringFilter::equal_to("01234")));
             assert_eq!(address1, Some(StringFilter::equal_to("address1")));

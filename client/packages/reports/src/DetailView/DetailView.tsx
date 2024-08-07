@@ -128,6 +128,7 @@ const DetailViewInner = ({
         isPrinting={isPrinting}
       />
       <ReportArgumentsModal
+        key={report.id}
         report={reportWithArgs}
         onReset={() => setReportWithArgs(undefined)}
         onArgumentsSelected={generateReport}

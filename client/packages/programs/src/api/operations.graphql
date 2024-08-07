@@ -795,7 +795,7 @@ fragment RnRForm on RnRFormNode {
 fragment RnRFormLine on RnRFormLineNode {
   id
   averageMonthlyConsumption
-  previousAverageMonthlyConsumption
+  previousMonthlyConsumptionValues
   initialBalance
   quantityReceived
   quantityConsumed
@@ -805,7 +805,8 @@ fragment RnRFormLine on RnRFormLineNode {
   finalBalance
   maximumQuantity
   expiryDate
-  requestedQuantity
+  calculatedRequestedQuantity
+  enteredRequestedQuantity
   comment
   confirmed
   item {

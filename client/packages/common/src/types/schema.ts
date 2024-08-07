@@ -4508,10 +4508,8 @@ export type NameNode = {
 };
 
 export enum NameNodeType {
-  Build = 'BUILD',
   Facility = 'FACILITY',
   Invad = 'INVAD',
-  Others = 'OTHERS',
   Repack = 'REPACK',
   Store = 'STORE'
 }
@@ -6375,8 +6373,10 @@ export type RnRFormLineNode = {
   adjustedQuantityConsumed: Scalars['Float']['output'];
   adjustments: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  calculatedRequestedQuantity: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
   confirmed: Scalars['Boolean']['output'];
+  enteredRequestedQuantity?: Maybe<Scalars['Float']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   finalBalance: Scalars['Float']['output'];
   id: Scalars['String']['output'];
@@ -6384,10 +6384,9 @@ export type RnRFormLineNode = {
   item: ItemNode;
   itemId: Scalars['String']['output'];
   maximumQuantity: Scalars['Float']['output'];
-  previousAverageMonthlyConsumption: Scalars['Float']['output'];
+  previousMonthlyConsumptionValues: Scalars['String']['output'];
   quantityConsumed: Scalars['Float']['output'];
   quantityReceived: Scalars['Float']['output'];
-  requestedQuantity: Scalars['Float']['output'];
   rnrFormId: Scalars['String']['output'];
   stockOutDuration: Scalars['Int']['output'];
 };
@@ -7784,8 +7783,10 @@ export type UpdateRnRFormLineInput = {
   adjustedQuantityConsumed: Scalars['Float']['input'];
   adjustments?: InputMaybe<Scalars['Float']['input']>;
   averageMonthlyConsumption: Scalars['Float']['input'];
+  calculatedRequestedQuantity: Scalars['Float']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   confirmed: Scalars['Boolean']['input'];
+  enteredRequestedQuantity?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   finalBalance: Scalars['Float']['input'];
   id: Scalars['String']['input'];
@@ -7793,7 +7794,6 @@ export type UpdateRnRFormLineInput = {
   maximumQuantity: Scalars['Float']['input'];
   quantityConsumed?: InputMaybe<Scalars['Float']['input']>;
   quantityReceived?: InputMaybe<Scalars['Float']['input']>;
-  requestedQuantity: Scalars['Float']['input'];
   stockOutDuration: Scalars['Int']['input'];
 };
 

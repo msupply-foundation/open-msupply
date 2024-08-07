@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Grid,
   ReportContext,
+  RouteBuilder,
   useAuthContext,
+  useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
 import { BarIcon, InvoiceIcon, TrendingDownIcon } from '@common/icons';
-import { useReportList, ReportRowFragment } from '@openmsupply-client/system';
+import {
+  useReportList,
+  ReportRowFragment,
+  ReportArgumentsModal,
+} from '@openmsupply-client/system';
 import { AppBarButtons } from './AppBarButton';
 import { SidePanel } from './SidePanel';
 import { ReportWidget } from '../components';
+import { JsonData } from 'packages/programs/src';
+import { AppRoute } from 'packages/config/src';
 
 export const ListView = () => {
   const t = useTranslation('reports');
   const { store } = useAuthContext();
+  const navigate = useNavigate();
   const { data } = useReportList({
     queryParams: {
       filterBy: {
@@ -43,6 +52,17 @@ export const ListView = () => {
     }
   };
 
+  const reportArgs = useCallback(
+    (report: ReportRowFragment, args: JsonData | undefined) => {
+      const stringifyArgs = JSON.stringify(args);
+      navigate(
+        RouteBuilder.create(AppRoute.Reports)
+          .addPart(`${report.id}?reportArgs=${stringifyArgs}`)
+          .build()
+      );
+    },
+    [navigate]
+  );
   return (
     <>
       <Grid
@@ -58,8 +78,6 @@ export const ListView = () => {
           Icon={BarIcon}
           reports={stockAndItemReports}
           onReportClick={onReportClick}
-          reportWithArgs={reportWithArgs}
-          setReportWithArgs={setReportWithArgs}
           hasReports={stockAndItemReports?.length !== 0}
         />
         <ReportWidget
@@ -67,8 +85,6 @@ export const ListView = () => {
           Icon={TrendingDownIcon}
           reports={expiringReports}
           onReportClick={onReportClick}
-          reportWithArgs={reportWithArgs}
-          setReportWithArgs={setReportWithArgs}
           hasReports={expiringReports?.length !== 0}
         />
         {store?.preferences?.omProgramModule && (
@@ -77,11 +93,15 @@ export const ListView = () => {
             Icon={InvoiceIcon}
             reports={programReports}
             onReportClick={onReportClick}
-            reportWithArgs={reportWithArgs}
-            setReportWithArgs={setReportWithArgs}
             hasReports={programReports?.length !== 0}
           />
         )}
+        <ReportArgumentsModal
+          key={reportWithArgs?.id}
+          report={reportWithArgs}
+          onReset={() => setReportWithArgs(undefined)}
+          onArgumentsSelected={reportArgs}
+        />
       </Grid>
 
       <AppBarButtons />

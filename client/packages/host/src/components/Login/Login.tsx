@@ -104,7 +104,10 @@ export const Login = () => {
       LocalStorage.setItem('/theme/logohash', customLogo.hash);
     }
     if (!!customTheme) {
-      LocalStorage.setItem('/theme/custom', JSON.parse(customTheme.value));
+      LocalStorage.setItem(
+        '/theme/custom',
+        !!customTheme.value ? JSON.parse(customTheme.value) : ''
+      );
       LocalStorage.setItem('/theme/customhash', customTheme.hash);
     }
   }, [displaySettings]);

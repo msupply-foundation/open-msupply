@@ -36,6 +36,7 @@ export const RequestRequisitionListView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
   const modalController = useToggle();
+  const { data: programSettings } = useRequest.utils.programSettings();
 
   const { mutate: onUpdate } = useRequest.document.update();
   const {
@@ -65,27 +66,34 @@ export const RequestRequisitionListView: FC = () => {
       width: 90,
     },
     ['createdDatetime', { width: 150 }],
-    {
-      key: 'programName',
-      accessor: ({ rowData }) => rowData.programName,
-      label: 'label.program',
-      description: 'description.program',
-      sortable: true,
-      width: 150,
-    },
-    {
-      key: 'orderType',
-      accessor: ({ rowData }) => rowData.orderType,
-      label: 'label.order-type',
-      sortable: true,
-    },
+  ];
 
-    {
-      key: 'period',
-      accessor: ({ rowData }) => rowData.period?.name ?? '',
-      label: 'label.period',
-      sortable: true,
-    },
+  if (programSettings && programSettings.length > 0) {
+    columnDefinitions.push(
+      {
+        key: 'programName',
+        accessor: ({ rowData }) => rowData.programName,
+        label: 'label.program',
+        description: 'description.program',
+        sortable: true,
+        width: 150,
+      },
+      {
+        key: 'orderType',
+        accessor: ({ rowData }) => rowData.orderType,
+        label: 'label.order-type',
+        sortable: true,
+      },
+      {
+        key: 'period',
+        accessor: ({ rowData }) => rowData.period?.name ?? '',
+        label: 'label.period',
+        sortable: true,
+      }
+    );
+  }
+
+  columnDefinitions.push(
     [
       'status',
       {
@@ -94,8 +102,8 @@ export const RequestRequisitionListView: FC = () => {
           getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
       },
     ],
-    ['comment', { width: '100%', Cell: TooltipTextCell }],
-  ];
+    ['comment', { width: '100%', Cell: TooltipTextCell }]
+  );
 
   if (requireSupplierAuthorisation) {
     columnDefinitions.push({

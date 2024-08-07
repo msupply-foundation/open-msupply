@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::patient::{GenderType, PatientNode};
-use repository::NameType;
+use repository::NameRowType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::{InsertPatient as ServiceInput, InsertPatientError},
@@ -108,7 +108,7 @@ impl InsertPatientInput {
             phone,
             date_of_death,
             is_deceased,
-            r#type: NameType::Patient,
+            r#type: NameRowType::Patient,
         }
     }
 }
