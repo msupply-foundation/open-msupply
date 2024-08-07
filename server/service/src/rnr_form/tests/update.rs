@@ -184,7 +184,8 @@ mod update {
                         id: mock_rnr_form_b_line_a().id,
                         initial_balance: 10.0,
                         final_balance: 7.0,
-                        requested_quantity: -10.0,
+                        calculated_requested_quantity: 0.0,
+                        entered_requested_quantity: Some(-10.0),
                         ..Default::default()
                     }]
                 }
@@ -221,7 +222,8 @@ mod update {
                         confirmed: true,
                         initial_balance: 10.0,
                         final_balance: 5.0,
-                        requested_quantity: 13.0,
+                        calculated_requested_quantity: 13.0,
+                        entered_requested_quantity: Some(14.0),
                         expiry_date: NaiveDate::from_ymd_opt(2021, 1, 1),
                         ..Default::default()
                     }],
@@ -247,7 +249,7 @@ mod update {
                 final_balance: 5.0,
                 entered_quantity_received: Some(4.0),
                 entered_quantity_consumed: Some(8.0),
-                requested_quantity: 13.0,
+                calculated_requested_quantity: 13.0,
                 comment: Some("hello".to_string()),
                 confirmed: true,
                 expiry_date: NaiveDate::from_ymd_opt(2021, 1, 1),
@@ -257,6 +259,7 @@ mod update {
                 stock_out_duration: 0,
                 maximum_quantity: 0.0,
                 previous_monthly_consumption_values: "".to_string(),
+                entered_requested_quantity: Some(14.0)
             }
         );
     }

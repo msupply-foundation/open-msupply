@@ -66,7 +66,8 @@ export const RnRFormLine = ({
     const maximumQuantity = averageMonthlyConsumption * 2;
 
     const neededQuantity = maximumQuantity - finalBalance;
-    const requestedQuantity = neededQuantity > 0 ? neededQuantity : 0;
+
+    const calculatedRequestedQuantity = neededQuantity > 0 ? neededQuantity : 0;
 
     setPatch({
       ...newPatch,
@@ -74,7 +75,7 @@ export const RnRFormLine = ({
       adjustedQuantityConsumed,
       averageMonthlyConsumption,
       maximumQuantity,
-      requestedQuantity,
+      calculatedRequestedQuantity,
     });
   };
 
@@ -187,8 +188,10 @@ export const RnRFormLine = ({
         />
       </td>
       <RnRNumberCell
-        value={draft.requestedQuantity}
-        onChange={val => updateDraft({ requestedQuantity: val })}
+        value={
+          draft.enteredRequestedQuantity ?? draft.calculatedRequestedQuantity
+        }
+        onChange={val => updateDraft({ enteredRequestedQuantity: val })}
         textColor={textColor}
         disabled={disabled}
       />

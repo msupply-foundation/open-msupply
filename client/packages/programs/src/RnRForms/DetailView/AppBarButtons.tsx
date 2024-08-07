@@ -7,6 +7,7 @@ import {
   LoadingButton,
   Platform,
   PrinterIcon,
+  PrintFormat,
   ReportContext,
   useParams,
   useTranslation,
@@ -27,17 +28,17 @@ export const AppBarButtonsComponent = () => {
   const { print, isPrinting } = usePrintReport();
   const t = useTranslation();
 
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    if (!data) return;
-    print({
-      reportId: report.id,
-      dataId: data?.id,
-      args,
-    });
-  };
+  const printReport =
+    (format: PrintFormat) =>
+    (report: ReportRowFragment, args: JsonData | undefined) => {
+      if (!data) return;
+      print({
+        reportId: report.id,
+        dataId: data?.id,
+        args,
+        format,
+      });
+    };
 
   return (
     <AppBarButtonsPortal>
@@ -45,7 +46,7 @@ export const AppBarButtonsComponent = () => {
         <ReportSelector
           context={ReportContext.Requisition}
           subContext="R&R"
-          onPrint={printReport}
+          onPrint={printReport(PrintFormat.Html)}
         >
           <LoadingButton
             variant="outlined"
@@ -55,15 +56,21 @@ export const AppBarButtonsComponent = () => {
             {t('button.print')}
           </LoadingButton>
         </ReportSelector>
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          variant="outlined"
-          onClick={() => {}}
-          disabled={EnvUtils.platform === Platform.Android}
-          isLoading={false}
+
+        <ReportSelector
+          context={ReportContext.Requisition}
+          subContext="R&R"
+          onPrint={printReport(PrintFormat.Excel)}
         >
-          {t('button.export')}
-        </LoadingButton>
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            disabled={EnvUtils.platform === Platform.Android}
+            isLoading={isPrinting}
+          >
+            {t('button.export')}
+          </LoadingButton>
+        </ReportSelector>
       </Grid>
     </AppBarButtonsPortal>
   );
