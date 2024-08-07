@@ -10,11 +10,7 @@
   "control.search.no-results-label": "No results",
   "control.search.reset-button": "Unlink matched patient",
   "control.search.searching-label": "Searching...",
-  "description.expiry": "The closest expiry date of current stock on hand",
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
   "label.diastolic": "Diastolic",
-  "label.systolic": "Systolic",
-  "messages.all-lines-must-be-confirmed": "All lines must be confirmed before the R&R form can be finalised",
-  "messages.finalise-previous-form": "Finalise the previous R&R form in this schedule to create the next one",
-  "messages.no-available-periods": "No available periods found for schedule"
+  "label.systolic": "Systolic"
 }
