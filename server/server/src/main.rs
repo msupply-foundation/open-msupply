@@ -1,5 +1,3 @@
-#![allow(where_clauses_object_safety)]
-
 use server::{configuration, logging_init, start_server};
 use service::settings::Settings;
 // use std::sync::mpsc;
