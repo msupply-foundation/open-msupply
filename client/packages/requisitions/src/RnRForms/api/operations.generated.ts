@@ -11,8 +11,6 @@ export type PeriodFragment = { __typename: 'PeriodNode', id: string, name: strin
 
 export type PeriodScheduleFragment = { __typename: 'PeriodScheduleNode', id: string, name: string, periods: Array<{ __typename: 'SchedulePeriodNode', id: string, inUse: boolean, period: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } }> };
 
-export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
-
 export type RnrFormsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -24,18 +22,6 @@ export type RnrFormsQueryVariables = Types.Exact<{
 
 
 export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, supplierId: string, status: Types.RnRFormNodeStatus }> } };
-
-export type ProgramsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  key: Types.ProgramSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
-}>;
-
-
-export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
 
 export type SchedulesAndPeriodsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -139,12 +125,6 @@ export const PeriodScheduleFragmentDoc = gql`
   }
 }
     ${PeriodFragmentDoc}`;
-export const ProgramFragmentDoc = gql`
-    fragment Program on ProgramNode {
-  id
-  name
-}
-    `;
 export const RnrFormsDocument = gql`
     query rnrForms($storeId: String!, $first: Int, $offset: Int, $key: RnRFormSortFieldInput!, $desc: Boolean, $filter: RnRFormFilterInput) {
   rAndRForms(
@@ -164,25 +144,6 @@ export const RnrFormsDocument = gql`
   }
 }
     ${RnRFormFragmentDoc}`;
-export const ProgramsDocument = gql`
-    query programs($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
-  programs(
-    storeId: $storeId
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on ProgramConnector {
-      __typename
-      nodes {
-        __typename
-        ...Program
-      }
-      totalCount
-    }
-  }
-}
-    ${ProgramFragmentDoc}`;
 export const SchedulesAndPeriodsDocument = gql`
     query schedulesAndPeriods($storeId: String!, $programId: String!) {
   schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
@@ -259,9 +220,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     rnrForms(variables: RnrFormsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RnrFormsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RnrFormsQuery>(RnrFormsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rnrForms', 'query', variables);
-    },
-    programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
     },
     schedulesAndPeriods(variables: SchedulesAndPeriodsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SchedulesAndPeriodsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<SchedulesAndPeriodsQuery>(SchedulesAndPeriodsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'schedulesAndPeriods', 'query', variables);

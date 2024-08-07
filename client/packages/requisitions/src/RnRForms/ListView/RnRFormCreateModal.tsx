@@ -15,7 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { ProgramSearchInput } from './ProgramSearchInput';
+import { ProgramSearchInput } from '@openmsupply-client/programs';
 import { useCreateRnRForm, useSchedulesAndPeriods } from '../api';
 
 interface RnRFormCreateModalProps {
