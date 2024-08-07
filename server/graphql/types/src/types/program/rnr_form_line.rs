@@ -72,8 +72,12 @@ impl RnRFormLineNode {
         self.rnr_form_line_row.expiry_date
     }
 
-    pub async fn requested_quantity(&self) -> f64 {
-        self.rnr_form_line_row.requested_quantity
+    pub async fn calculated_requested_quantity(&self) -> f64 {
+        self.rnr_form_line_row.calculated_requested_quantity
+    }
+
+    pub async fn entered_requested_quantity(&self) -> Option<f64> {
+        self.rnr_form_line_row.entered_requested_quantity
     }
 
     pub async fn comment(&self) -> Option<String> {

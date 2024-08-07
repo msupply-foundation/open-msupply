@@ -98,8 +98,9 @@ mod generate_rnr_form_lines {
                 entered_quantity_received: None,
                 entered_quantity_consumed: None,
                 entered_adjustments: None,
-                maximum_quantity: 7.826086956521738,   // 2*AMC
-                requested_quantity: 4.826086956521738, // max - final balance
+                maximum_quantity: 7.826086956521738, // 2*AMC
+                calculated_requested_quantity: 4.826086956521738, // max - final balance
+                entered_requested_quantity: None,
                 expiry_date: None,
                 comment: None,
                 confirmed: false,
@@ -230,6 +231,19 @@ mod generate_rnr_form_lines {
         .unwrap();
 
         assert_eq!(result, 8);
+
+        // If no transactions, stock out duration is 0
+        let result = get_stock_out_duration(
+            &connection,
+            &mock_store_a().id,
+            &mock_item_a().id, // different item, which we have no transactions for
+            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+            31,
+            0.0, // closing balance
+        )
+        .unwrap();
+
+        assert_eq!(result, 0);
     }
 
     #[actix_rt::test]

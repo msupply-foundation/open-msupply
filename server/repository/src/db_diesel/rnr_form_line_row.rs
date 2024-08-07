@@ -27,7 +27,8 @@ table! {
         final_balance -> Double,
         maximum_quantity -> Double,
         expiry_date -> Nullable<Date>,
-        requested_quantity -> Double,
+        calculated_requested_quantity -> Double,
+        entered_requested_quantity -> Nullable<Double>,
         comment -> Nullable<Text>,
         confirmed -> Bool,
     }
@@ -62,7 +63,8 @@ pub struct RnRFormLineRow {
     pub final_balance: f64,
     pub maximum_quantity: f64,
     pub expiry_date: Option<NaiveDate>,
-    pub requested_quantity: f64,
+    pub calculated_requested_quantity: f64,
+    pub entered_requested_quantity: Option<f64>,
     pub comment: Option<String>,
     pub confirmed: bool,
 }

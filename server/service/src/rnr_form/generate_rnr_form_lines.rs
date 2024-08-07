@@ -111,7 +111,7 @@ pub fn generate_rnr_form_lines(
 
             let maximum_quantity = average_monthly_consumption * TARGET_MOS;
 
-            let requested_quantity = if maximum_quantity - final_balance > 0.0 {
+            let calculated_requested_quantity = if maximum_quantity - final_balance > 0.0 {
                 maximum_quantity - final_balance
             } else {
                 0.0
@@ -139,7 +139,8 @@ pub fn generate_rnr_form_lines(
                 final_balance,
                 maximum_quantity,
                 expiry_date: earliest_expiry,
-                requested_quantity,
+                calculated_requested_quantity,
+                entered_requested_quantity: None,
                 comment: None,
                 confirmed: false,
             })
@@ -321,9 +322,14 @@ pub fn get_stock_out_duration(
         .historic_stock
         .into_iter()
         .filter(|point| point.quantity == 0.0)
-        .count();
+        .count() as i32;
 
-    Ok(days_out_of_stock as i32)
+    if days_out_of_stock == days_in_period as i32 {
+        // If there was no consumption data, we'll set stock out duration to 0 and let the user input this
+        Ok(0)
+    } else {
+        Ok(days_out_of_stock)
+    }
 }
 
 // If stock had been available for the entire period, this is the quantity that 'would' have been consumed
