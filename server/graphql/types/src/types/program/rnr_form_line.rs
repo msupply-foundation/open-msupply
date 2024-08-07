@@ -24,8 +24,8 @@ impl RnRFormLineNode {
         &self.rnr_form_line_row.item_id
     }
 
-    pub async fn previous_average_monthly_consumption(&self) -> f64 {
-        self.rnr_form_line_row.previous_average_monthly_consumption
+    pub async fn previous_monthly_consumption_values(&self) -> &str {
+        &self.rnr_form_line_row.previous_monthly_consumption_values
     }
 
     pub async fn average_monthly_consumption(&self) -> f64 {

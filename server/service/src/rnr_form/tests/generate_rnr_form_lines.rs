@@ -93,7 +93,7 @@ mod generate_rnr_form_lines {
                 // AMC calculated used const NUMBER_OF_DAYS_IN_A_MONTH rather than actual # days in given month...
                 // would ideally be same as adjusted_quantity_consumed here...
                 average_monthly_consumption: 3.913043478260869,
-                previous_average_monthly_consumption: 0.0,
+                previous_monthly_consumption_values: "".to_string(),
                 final_balance: 3.0,
                 entered_quantity_received: None,
                 entered_quantity_consumed: None,
@@ -441,10 +441,7 @@ mod generate_rnr_form_lines {
                 20.0,    // 20 consumed in period
                 &vec![]  // no previous AMCs
             ),
-            (
-                0.0,  // No previous AMC
-                10.0  // AMC should be 10 packs per month
-            )
+            10.0 // AMC should be 10 packs per month
         );
 
         // if there is a previous AMC average, average that with the current period
@@ -454,10 +451,7 @@ mod generate_rnr_form_lines {
                 20.0,              // 20 consumed in period
                 &vec![15.0, 11.0]  // AMC across previous periods
             ),
-            (
-                13.0, // 15 and 11 average for last two months
-                12.0  // 10 per month this period, averaged with 15 and 11
-            )
+            12.0 // 10 per month this period, averaged with 15 and 11
         );
     }
 

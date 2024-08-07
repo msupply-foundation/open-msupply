@@ -258,7 +258,7 @@ mod update {
                 adjusted_quantity_consumed: 0.0,
                 stock_out_duration: 0,
                 maximum_quantity: 0.0,
-                previous_average_monthly_consumption: 0.0,
+                previous_monthly_consumption_values: "".to_string(),
                 entered_requested_quantity: Some(14.0)
             }
         );
