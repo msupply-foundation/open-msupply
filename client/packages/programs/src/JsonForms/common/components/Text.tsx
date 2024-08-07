@@ -32,6 +32,10 @@ const Options = z
      * if `multiline === false`)
      */
     rows: z.number().optional(),
+    /**
+     * Should component debounce it's input, optional default = true
+     */
+    useDebounce: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -41,7 +45,12 @@ type Options = z.infer<typeof Options>;
 // Validates the option and parses the pattern into RegEx
 const useOptions = (
   options?: Record<string, unknown>
-): { errors?: string; options?: Options; pattern?: RegExp } => {
+): {
+  errors?: string;
+  options?: Options;
+  pattern?: RegExp;
+  useDebounce?: boolean;
+} => {
   const [regexError, setRegexErrors] = useState<string | undefined>();
   const { errors: zErrors, options: schemaOptions } = useZodOptionsValidation(
     Options,
@@ -93,14 +102,17 @@ const UIComponent = (props: ControlProps) => {
     errors: zErrors,
     options: schemaOptions,
     pattern,
+    useDebounce = true,
   } = useOptions(props.uischema.options);
   const customErrors = usePatternValidation(path, pattern, data);
   const error = !!errors || !!zErrors || !!customErrors;
-  const { text, onChange } = useDebouncedTextInput(
+  const onChange = (value: string | undefined) =>
+    handleChange(path, !!value ? value : undefined);
+  const { text, onChange: onDebounceChange } = useDebouncedTextInput(
     data,
-    (value: string | undefined) =>
-      handleChange(path, !!value ? value : undefined)
+    onChange
   );
+
   const t = useTranslation();
 
   const examples =
@@ -111,7 +123,7 @@ const UIComponent = (props: ControlProps) => {
       ? t('error.json-bad-format-with-examples', {
           examples: examples.join('", "'),
         })
-      : zErrors ?? errors ?? customErrors;
+      : (zErrors ?? errors ?? customErrors);
 
   if (!props.visible) {
     return null;
@@ -130,7 +142,10 @@ const UIComponent = (props: ControlProps) => {
         value: text ?? '',
         sx: { width },
         style: { flexBasis: '100%' },
-        onChange: e => onChange(e.target.value ?? ''),
+        onChange: e =>
+          useDebounce
+            ? onDebounceChange(e.target.value ?? '')
+            : onChange(e.target.value ?? ''),
         disabled: !props.enabled,
         error,
         helperText,
