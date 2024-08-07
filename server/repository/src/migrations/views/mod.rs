@@ -6,25 +6,25 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
       DROP VIEW IF EXISTS invoice_stats;
-      DROP VIEW IF EXISTS invoice_line_stock_movement;
+      DROP VIEW IF EXISTS consumption;
+      DROP VIEW IF EXISTS replenishment;
+      DROP VIEW IF EXISTS adjustments;
+      DROP VIEW IF EXISTS stock_movement;
       DROP VIEW IF EXISTS outbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inbound_shipment_stock_movement;
       DROP VIEW IF EXISTS inventory_adjustment_stock_movement;
-      DROP VIEW IF EXISTS stock_movement;
-      DROP VIEW IF EXISTS consumption;
+      DROP VIEW IF EXISTS invoice_line_stock_movement;
       DROP VIEW IF EXISTS stock_on_hand;
       DROP VIEW IF EXISTS changelog_deduped;
       DROP VIEW IF EXISTS latest_document;
-      DROP VIEW IF EXISTS adjustments;
       DROP VIEW IF EXISTS contact_trace_name_link_view;
       DROP VIEW IF EXISTS latest_asset_log;
-      DROP VIEW IF EXISTS replenishment;
-      DROP VIEW IF EXISTS report_document;
       DROP VIEW IF EXISTS report_encounter;
       DROP VIEW IF EXISTS report_patient;
       DROP VIEW IF EXISTS report_program_enrolment;
       DROP VIEW IF EXISTS report_program_event;
       DROP VIEW IF EXISTS report_store;
+      DROP VIEW IF EXISTS report_document;
       DROP VIEW IF EXISTS requisitions_in_period;
       DROP VIEW IF EXISTS store_items;
     "#
@@ -45,37 +45,6 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     sql!(
         connection,
         r#"
-  CREATE VIEW replenishment AS
-    SELECT
-        'n/a' as id,
-        items_and_stores.item_id AS item_id,
-        items_and_stores.store_id AS store_id,
-        {absolute}(COALESCE(stock_movement.quantity, 0)) AS quantity,
-        date(stock_movement.datetime) AS date
-    FROM
-        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-    LEFT OUTER JOIN stock_movement
-        ON stock_movement.item_id = items_and_stores.item_id
-            AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='INBOUND_SHIPMENT';
-
-  CREATE VIEW adjustments AS
-    SELECT
-        'n/a' as id,
-        items_and_stores.item_id AS item_id,
-        items_and_stores.store_id AS store_id,
-        stock_movement.quantity AS quantity,
-        date(stock_movement.datetime) AS date
-    FROM
-        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
-    LEFT OUTER JOIN stock_movement
-        ON stock_movement.item_id = items_and_stores.item_id
-            AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='INBOUND_RETURN'
-      OR invoice_type='OUTBOUND_RETURN'
-      OR invoice_type='INVENTORY_ADDITION'
-      OR invoice_type='INVENTORY_REDUCTION';
-
   CREATE VIEW invoice_line_stock_movement AS 
     SELECT
         invoice_line.id,
@@ -152,10 +121,71 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     WHERE invoice.type IN ('INVENTORY_REDUCTION', 'INVENTORY_ADDITION') 
         AND verified_datetime IS NOT NULL;
 
-    CREATE VIEW stock_movement AS
-    SELECT * FROM outbound_shipment_stock_movement
-    UNION SELECT * from inbound_shipment_stock_movement
-    UNION SELECT * from inventory_adjustment_stock_movement;
+  CREATE VIEW stock_movement AS
+    WITH all_movements AS (
+      SELECT
+        invoice_line_stock_movement.id AS id,
+        quantity_movement AS quantity,
+        item_link_id AS item_id,
+        store_id,
+        CASE WHEN invoice.type IN (
+            'OUTBOUND_SHIPMENT', 'OUTBOUND_RETURN',
+            'PRESCRIPTION'
+        ) THEN picked_datetime
+                    WHEN invoice.type IN (
+            'INBOUND_SHIPMENT', 'INBOUND_RETURN'
+        ) THEN delivered_datetime
+                    WHEN invoice.type IN (
+            'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
+        ) THEN verified_datetime
+            END AS datetime,
+        name,
+        invoice.type AS invoice_type,
+        inventory_adjustment_reason.reason as inventory_adjustment_reason,
+        return_reason.reason as return_reason,
+        stock_line_id
+    FROM
+        invoice_line_stock_movement
+        LEFT JOIN inventory_adjustment_reason ON invoice_line_stock_movement.inventory_adjustment_reason_id = inventory_adjustment_reason.id
+        LEFT JOIN return_reason ON invoice_line_stock_movement.return_reason_id = return_reason.id
+        JOIN invoice ON invoice.id = invoice_line_stock_movement.invoice_id
+        JOIN name_link ON invoice.name_link_id = name_link.id
+        JOIN name ON name_link.name_id = name.id
+    )
+    SELECT * FROM all_movements
+    WHERE datetime IS NOT NULL;
+
+  CREATE VIEW replenishment AS
+    SELECT
+        'n/a' as id,
+        items_and_stores.item_id AS item_id,
+        items_and_stores.store_id AS store_id,
+        {absolute}(COALESCE(stock_movement.quantity, 0)) AS quantity,
+        date(stock_movement.datetime) AS date
+    FROM
+        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
+    LEFT OUTER JOIN stock_movement
+        ON stock_movement.item_id = items_and_stores.item_id
+            AND stock_movement.store_id = items_and_stores.store_id
+    WHERE invoice_type='INBOUND_SHIPMENT';
+
+  CREATE VIEW adjustments AS
+    SELECT
+        'n/a' as id,
+        items_and_stores.item_id AS item_id,
+        items_and_stores.store_id AS store_id,
+        stock_movement.quantity AS quantity,
+        date(stock_movement.datetime) AS date
+    FROM
+        (SELECT item.id AS item_id, store.id AS store_id FROM item, store) as items_and_stores
+    LEFT OUTER JOIN stock_movement
+        ON stock_movement.item_id = items_and_stores.item_id
+            AND stock_movement.store_id = items_and_stores.store_id
+    WHERE invoice_type='INBOUND_RETURN'
+      OR invoice_type='OUTBOUND_RETURN'
+      OR invoice_type='INVENTORY_ADDITION'
+      OR invoice_type='INVENTORY_REDUCTION';
+
           
   -- https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/aggregator_stockConsumption.4dm
   -- TODO sc type ?
@@ -304,7 +334,8 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         store.logo,
         name.name
     FROM store
-    JOIN name ON store.name_id = name.id;
+    JOIN name_link ON store.name_link_id = name_link.id
+    JOIN name ON name_link.name_id = name.id;
 
   CREATE VIEW report_patient AS
     SELECT
@@ -364,9 +395,9 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line.invoice_id,
           SUM(invoice_line.total_before_tax) AS total_before_tax,
         SUM(invoice_line.total_after_tax) AS total_after_tax,
-          (SUM(invoice_line.total_after_tax) / SUM(invoice_line.total_before_tax) - 1) * 100 AS tax_percentage,
-          SUM(invoice_line.foreign_currency_price_before_tax) + (SUM(invoice_line.foreign_currency_price_before_tax) * COALESCE(invoice_line.tax, 0) / 100) AS foreign_currency_total_after_tax,
-        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
+          COALESCE((SUM(invoice_line.total_after_tax) / NULLIF(SUM(invoice_line.total_before_tax), 0) - 1), 0) * 100 AS tax_percentage,
+          COALESCE(SUM(invoice_line.foreign_currency_price_before_tax), 0) + (COALESCE(SUM(invoice_line.foreign_currency_price_before_tax), 0) * (COALESCE((SUM(invoice_line.total_after_tax) / NULLIF(SUM(invoice_line.total_before_tax), 0) - 1), 0))) AS foreign_currency_total_after_tax,
+          COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
         COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
         COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
           COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
@@ -408,12 +439,12 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         invoice_line.invoice_id,
           SUM(invoice_line.total_before_tax) AS total_before_tax,
         SUM(invoice_line.total_after_tax) AS total_after_tax,
-          COALESCE((SUM(invoice_line.total_after_tax) / NULLIF(SUM(invoice_line.total_before_tax), 0) - 1), 0) * 100 AS tax_percentage,
-          COALESCE(SUM(invoice_line.foreign_currency_price_before_tax), 0) + (COALESCE(SUM(invoice_line.foreign_currency_price_before_tax), 0) * (COALESCE((SUM(invoice_line.total_after_tax) / NULLIF(SUM(invoice_line.total_before_tax), 0) - 1), 0))) AS foreign_currency_total_after_tax,
-          COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
+          (SUM(invoice_line.total_after_tax) / SUM(invoice_line.total_before_tax) - 1) * 100 AS tax_percentage,
+          SUM(invoice_line.foreign_currency_price_before_tax) + (SUM(invoice_line.foreign_currency_price_before_tax) * COALESCE(invoice_line.tax, 0) / 100) AS foreign_currency_total_after_tax,
+        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
         COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
         COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
-        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
+          COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_after_tax
       FROM
         invoice_line
       GROUP BY
