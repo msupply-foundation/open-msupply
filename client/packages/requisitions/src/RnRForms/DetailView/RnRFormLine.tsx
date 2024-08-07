@@ -11,7 +11,7 @@ import {
   useTheme,
   VenCategoryType,
 } from '@openmsupply-client/common';
-import { RnRFormLineFragment } from '../../api/operations.generated';
+import { RnRFormLineFragment } from '../api/operations.generated';
 import { getAmc } from './getAmc';
 
 export const RnRFormLine = ({
