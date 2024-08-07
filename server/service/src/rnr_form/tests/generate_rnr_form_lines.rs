@@ -231,6 +231,19 @@ mod generate_rnr_form_lines {
         .unwrap();
 
         assert_eq!(result, 8);
+
+        // If no transactions, stock out duration is 0
+        let result = get_stock_out_duration(
+            &connection,
+            &mock_store_a().id,
+            &mock_item_a().id, // different item, which we have no transactions for
+            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+            31,
+            0.0, // closing balance
+        )
+        .unwrap();
+
+        assert_eq!(result, 0);
     }
 
     #[actix_rt::test]
