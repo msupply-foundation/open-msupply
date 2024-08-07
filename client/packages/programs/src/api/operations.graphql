@@ -805,7 +805,8 @@ fragment RnRFormLine on RnRFormLineNode {
   finalBalance
   maximumQuantity
   expiryDate
-  requestedQuantity
+  calculatedRequestedQuantity
+  enteredRequestedQuantity
   comment
   confirmed
   item {

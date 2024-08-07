@@ -21,7 +21,7 @@ const RNR_FORM_LINE_1: (&str, &str) = (
         "final_balance": 0.0,
         "maximum_quantity": 0.0,
         "expiry_date": null,
-        "requested_quantity": 0.0,
+        "calculated_requested_quantity": 0.0,
         "comment": null,
         "confirmed": false, 
         "previous_average_monthly_consumption": 0.0
@@ -46,7 +46,8 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         final_balance: 0.0,
         maximum_quantity: 0.0,
         expiry_date: None,
-        requested_quantity: 0.0,
+        calculated_requested_quantity: 0.0,
+        entered_requested_quantity: None,
         comment: None,
         confirmed: false,
         previous_average_monthly_consumption: 0.0,
