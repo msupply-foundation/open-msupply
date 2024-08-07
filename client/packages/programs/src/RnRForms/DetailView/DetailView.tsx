@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DetailViewSkeleton,
   useNavigate,
@@ -11,6 +11,7 @@ import {
   TableProvider,
   createTableStore,
   RnRFormNodeStatus,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -30,10 +31,28 @@ export const RnRFormDetailView = () => {
   const navigate = useNavigate();
   const t = useTranslation('programs');
 
+  //todo clear on finalise? yah gotta clear on confirm all
+  const [dirtyLines, setDirtyLines] = useState<string[]>([]);
+
+  useConfirmOnLeaving(dirtyLines.length > 0);
+
+  const saveLine = async (line: RnRFormLineFragment) => {
+    setDirtyLines(lines => lines.filter(id => id !== line.id));
+    updateLine(line);
+  };
+
+  const markDirty = (id: string) => {
+    if (!dirtyLines.includes(id)) setDirtyLines(lines => [...lines, id]);
+  };
+
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <RnRFormDetailViewComponent data={data} saveLine={updateLine} />
+    <RnRFormDetailViewComponent
+      data={data}
+      saveLine={saveLine}
+      markDirty={markDirty}
+    />
   ) : (
     <AlertModal
       open={true}
@@ -53,9 +72,11 @@ export const RnRFormDetailView = () => {
 const RnRFormDetailViewComponent = ({
   data,
   saveLine,
+  markDirty,
 }: {
   data: RnRForm;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  markDirty: (id: string) => void;
 }) => {
   const t = useTranslation('programs');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
@@ -68,6 +89,7 @@ const RnRFormDetailViewComponent = ({
           data={data.lines}
           saveLine={saveLine}
           disabled={data.status === RnRFormNodeStatus.Finalised}
+          markDirty={markDirty}
         />
       ),
       value: t('label.details'),
