@@ -51,10 +51,7 @@ export const Footer = ({
             height={64}
           >
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <DialogButton
-                onClick={() => navigateUpOne()}
-                variant={'cancel'}
-              />
+              <DialogButton onClick={() => navigateUpOne()} variant={'close'} />
               <DialogButton
                 disabled={
                   isFinalising || data.status === RnRFormNodeStatus.Finalised
