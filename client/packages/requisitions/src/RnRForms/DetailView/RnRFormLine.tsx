@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  AlertIcon,
   BasicTextInput,
   Checkbox,
   DatePicker,
@@ -12,7 +13,7 @@ import {
   VenCategoryType,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
-import { getAmc } from './getAmc';
+import { getAlarmLevel, getAmc } from './helpers';
 
 export const RnRFormLine = ({
   line,
@@ -69,6 +70,8 @@ export const RnRFormLine = ({
 
     const calculatedRequestedQuantity = neededQuantity > 0 ? neededQuantity : 0;
 
+    const alarm = getAlarmLevel(finalBalance, maximumQuantity);
+
     setPatch({
       ...newPatch,
       finalBalance,
@@ -76,6 +79,7 @@ export const RnRFormLine = ({
       averageMonthlyConsumption,
       maximumQuantity,
       calculatedRequestedQuantity,
+      alarm,
     });
   };
 
@@ -195,6 +199,16 @@ export const RnRFormLine = ({
         textColor={textColor}
         disabled={disabled}
       />
+      <td style={{ ...readOnlyColumn, textAlign: 'center' }}>
+        {draft.alarm && (
+          <AlertIcon
+            double={draft.alarm === '!!'}
+            sx={{
+              color: draft.alarm === '!!' ? 'error.main' : 'primary.light',
+            }}
+          />
+        )}
+      </td>
       <td>
         <BasicTextInput
           multiline
