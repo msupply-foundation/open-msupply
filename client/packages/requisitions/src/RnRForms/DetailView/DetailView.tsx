@@ -31,28 +31,10 @@ export const RnRFormDetailView = () => {
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 
-  //todo clear on finalise? yah gotta clear on confirm all
-  const [dirtyLines, setDirtyLines] = useState<string[]>([]);
-
-  useConfirmOnLeaving(dirtyLines.length > 0);
-
-  const saveLine = async (line: RnRFormLineFragment) => {
-    setDirtyLines(lines => lines.filter(id => id !== line.id));
-    updateLine(line);
-  };
-
-  const markDirty = (id: string) => {
-    if (!dirtyLines.includes(id)) setDirtyLines(lines => [...lines, id]);
-  };
-
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <RnRFormDetailViewComponent
-      data={data}
-      saveLine={saveLine}
-      markDirty={markDirty}
-    />
+    <RnRFormDetailViewComponent data={data} updateLine={updateLine} />
   ) : (
     <AlertModal
       open={true}
@@ -71,15 +53,26 @@ export const RnRFormDetailView = () => {
 
 const RnRFormDetailViewComponent = ({
   data,
-  saveLine,
-  markDirty,
+  updateLine,
 }: {
   data: RnRForm;
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
-  markDirty: (id: string) => void;
+  updateLine: (line: RnRFormLineFragment) => Promise<void>;
 }) => {
   const t = useTranslation('replenishment');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+
+  const [dirtyLines, setDirtyLines] = useState<string[]>([]);
+
+  useConfirmOnLeaving(dirtyLines.length > 0);
+
+  const saveLine = async (line: RnRFormLineFragment) => {
+    setDirtyLines(lines => lines.filter(id => id !== line.id));
+    updateLine(line);
+  };
+
+  const markDirty = (id: string) => {
+    if (!dirtyLines.includes(id)) setDirtyLines(lines => [...lines, id]);
+  };
 
   const tabs = [
     {
@@ -113,7 +106,11 @@ const RnRFormDetailViewComponent = ({
         <DetailTabs tabs={tabs} />
       </TableProvider>
 
-      <Footer rnrFormId={data.id} linesUnconfirmed={linesUnconfirmed} />
+      <Footer
+        rnrFormId={data.id}
+        unsavedChanges={dirtyLines.length > 0}
+        linesUnconfirmed={linesUnconfirmed}
+      />
     </>
   );
 };
