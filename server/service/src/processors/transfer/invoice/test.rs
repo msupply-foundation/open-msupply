@@ -11,10 +11,10 @@ use util::{inline_edit, inline_init, uuid::uuid};
 
 use crate::{
     invoice::{
-        inbound_return::{UpdateInboundReturn, UpdateInboundReturnStatus},
+        customer_return::{UpdateInboundReturn, UpdateInboundReturnStatus},
         inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
-        outbound_return::update::{UpdateOutboundReturn, UpdateOutboundReturnStatus},
         outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
+        supplier_return::update::{UpdateOutboundReturn, UpdateOutboundReturnStatus},
     },
     invoice_line::stock_out_line::{StockOutType, UpdateStockOutLine},
     processors::test_helpers::exec_concurrent,

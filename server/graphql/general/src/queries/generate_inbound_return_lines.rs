@@ -7,7 +7,7 @@ use graphql_core::{
 use graphql_types::types::GeneratedInboundReturnLineConnector;
 use service::auth::{Resource, ResourceAccessRequest};
 
-use service::invoice::inbound_return::{
+use service::invoice::customer_return::{
     ExistingLinesInput as ExistingLinesServiceInput,
     GenerateInboundReturnLinesInput as ServiceInput,
 };

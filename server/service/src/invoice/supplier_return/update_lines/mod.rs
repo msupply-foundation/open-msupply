@@ -19,20 +19,20 @@ use validate::validate;
 
 use self::generate::GenerateResult;
 
-use super::OutboundReturnLineInput;
+use super::SupplierReturnLineInput;
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct UpdateOutboundReturnLines {
-    pub outbound_return_id: String,
-    pub outbound_return_lines: Vec<OutboundReturnLineInput>,
+pub struct UpdateSupplierReturnLines {
+    pub supplier_return_id: String,
+    pub supplier_return_lines: Vec<SupplierReturnLineInput>,
 }
 
 #[derive(PartialEq, Debug)]
-pub enum UpdateOutboundReturnLinesError {
+pub enum UpdateSupplierReturnLinesError {
     ReturnDoesNotExist,
     ReturnDoesNotBelongToCurrentStore,
     ReturnIsNotEditable,
-    NotAnOutboundReturn,
+    NotAnSupplierReturn,
     UpdatedReturnDoesNotExist,
     // Line Errors
     LineInsertError {
@@ -54,14 +54,14 @@ pub enum UpdateOutboundReturnLinesError {
     DatabaseError(RepositoryError),
 }
 
-pub fn update_outbound_return_lines(
+pub fn update_supplier_return_lines(
     ctx: &ServiceContext,
-    input: UpdateOutboundReturnLines,
-) -> Result<Invoice, UpdateOutboundReturnLinesError> {
-    let outbound_return = ctx
+    input: UpdateSupplierReturnLines,
+) -> Result<Invoice, UpdateSupplierReturnLinesError> {
+    let supplier_return = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &ctx.store_id, &input.outbound_return_id)?;
+            validate(connection, &ctx.store_id, &input.supplier_return_id)?;
             let GenerateResult {
                 lines_to_add,
                 lines_to_update,
@@ -71,7 +71,7 @@ pub fn update_outbound_return_lines(
 
             for line in lines_to_add {
                 insert_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    UpdateOutboundReturnLinesError::LineInsertError {
+                    UpdateSupplierReturnLinesError::LineInsertError {
                         line_id: line.id,
                         error,
                     }
@@ -80,7 +80,7 @@ pub fn update_outbound_return_lines(
 
             for line in lines_to_update {
                 update_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    UpdateOutboundReturnLinesError::LineUpdateError {
+                    UpdateSupplierReturnLinesError::LineUpdateError {
                         line_id: line.id,
                         error,
                     }
@@ -89,7 +89,7 @@ pub fn update_outbound_return_lines(
 
             for line in lines_to_delete {
                 delete_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    UpdateOutboundReturnLinesError::LineDeleteError {
+                    UpdateSupplierReturnLinesError::LineDeleteError {
                         line_id: line.id,
                         error,
                     }
@@ -98,27 +98,27 @@ pub fn update_outbound_return_lines(
 
             for line in update_line_return_reasons {
                 update_return_reason_id(ctx, line.clone()).map_err(|error| {
-                    UpdateOutboundReturnLinesError::LineReturnReasonUpdateError {
+                    UpdateSupplierReturnLinesError::LineReturnReasonUpdateError {
                         line_id: line.line_id,
                         error,
                     }
                 })?;
             }
 
-            get_invoice(ctx, None, &input.outbound_return_id)
-                .map_err(UpdateOutboundReturnLinesError::DatabaseError)?
-                .ok_or(UpdateOutboundReturnLinesError::UpdatedReturnDoesNotExist)
+            get_invoice(ctx, None, &input.supplier_return_id)
+                .map_err(UpdateSupplierReturnLinesError::DatabaseError)?
+                .ok_or(UpdateSupplierReturnLinesError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
     ctx.processors_trigger.trigger_invoice_transfer_processors();
 
-    Ok(outbound_return)
+    Ok(supplier_return)
 }
 
-impl From<RepositoryError> for UpdateOutboundReturnLinesError {
+impl From<RepositoryError> for UpdateSupplierReturnLinesError {
     fn from(error: RepositoryError) -> Self {
-        UpdateOutboundReturnLinesError::DatabaseError(error)
+        UpdateSupplierReturnLinesError::DatabaseError(error)
     }
 }
 
@@ -127,9 +127,9 @@ mod test {
     use crate::{
         invoice::supplier_return::{
             update_lines::{
-                UpdateOutboundReturnLines, UpdateOutboundReturnLinesError as ServiceError,
+                UpdateSupplierReturnLines, UpdateSupplierReturnLinesError as ServiceError,
             },
-            OutboundReturnLineInput,
+            SupplierReturnLineInput,
         },
         invoice_line::{
             stock_out_line::{InsertStockOutLineError, UpdateStockOutLineError},
@@ -139,9 +139,9 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_item_a, mock_name_store_a, mock_outbound_return_a,
-            mock_outbound_return_a_invoice_line_a, mock_outbound_return_a_invoice_line_b,
-            mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
+            mock_item_a, mock_name_store_a, mock_outbound_shipment_e, mock_stock_line_a,
+            mock_store_a, mock_store_b, mock_supplier_return_a,
+            mock_supplier_return_a_invoice_line_a, mock_supplier_return_a_invoice_line_b,
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -150,12 +150,12 @@ mod test {
     };
 
     #[actix_rt::test]
-    async fn test_update_outbound_return_lines_errors() {
+    async fn test_update_supplier_return_lines_errors() {
         fn base_test_return() -> InvoiceRow {
             InvoiceRow {
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
-                r#type: InvoiceType::OutboundReturn,
+                r#type: InvoiceType::SupplierReturn,
                 status: InvoiceStatus::New,
                 ..Default::default()
             }
@@ -185,7 +185,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_update_outbound_return_lines_errors",
+            "test_update_supplier_return_lines_errors",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![wrong_store(), shipped_return()],
@@ -204,38 +204,38 @@ mod test {
         assert_eq!(
             service_provider
                 .invoice_service
-                .update_outbound_return_lines(
+                .update_supplier_return_lines(
                     &context,
-                    UpdateOutboundReturnLines {
-                        outbound_return_id: "non-existent-id".to_string(),
+                    UpdateSupplierReturnLines {
+                        supplier_return_id: "non-existent-id".to_string(),
                         ..Default::default()
                     }
                 ),
             Err(ServiceError::ReturnDoesNotExist)
         );
 
-        // NotAnOutboundReturn
+        // NotAnSupplierReturn
         assert_eq!(
             service_provider
                 .invoice_service
-                .update_outbound_return_lines(
+                .update_supplier_return_lines(
                     &context,
-                    UpdateOutboundReturnLines {
-                        outbound_return_id: mock_outbound_shipment_e().id,
+                    UpdateSupplierReturnLines {
+                        supplier_return_id: mock_outbound_shipment_e().id,
                         ..Default::default()
                     }
                 ),
-            Err(ServiceError::NotAnOutboundReturn)
+            Err(ServiceError::NotAnSupplierReturn)
         );
 
         // ReturnDoesNotBelongToCurrentStore
         assert_eq!(
             service_provider
                 .invoice_service
-                .update_outbound_return_lines(
+                .update_supplier_return_lines(
                     &context,
-                    UpdateOutboundReturnLines {
-                        outbound_return_id: wrong_store().id,
+                    UpdateSupplierReturnLines {
+                        supplier_return_id: wrong_store().id,
                         ..Default::default()
                     }
                 ),
@@ -246,10 +246,10 @@ mod test {
         assert_eq!(
             service_provider
                 .invoice_service
-                .update_outbound_return_lines(
+                .update_supplier_return_lines(
                     &context,
-                    UpdateOutboundReturnLines {
-                        outbound_return_id: shipped_return().id,
+                    UpdateSupplierReturnLines {
+                        supplier_return_id: shipped_return().id,
                         ..Default::default()
                     }
                 ),
@@ -260,11 +260,11 @@ mod test {
         assert_eq!(
             service_provider
                 .invoice_service
-                .update_outbound_return_lines(
+                .update_supplier_return_lines(
                     &context,
-                    UpdateOutboundReturnLines {
-                        outbound_return_id: mock_outbound_return_a().id,
-                        outbound_return_lines: vec![OutboundReturnLineInput {
+                    UpdateSupplierReturnLines {
+                        supplier_return_id: mock_supplier_return_a().id,
+                        supplier_return_lines: vec![SupplierReturnLineInput {
                             id: "new_line".to_string(),
                             stock_line_id: "does_not_exist".to_string(),
                             number_of_packs: 1.0,
@@ -282,12 +282,12 @@ mod test {
         assert_eq!(
             service_provider
                 .invoice_service
-                .update_outbound_return_lines(
+                .update_supplier_return_lines(
                     &context,
-                    UpdateOutboundReturnLines {
-                        outbound_return_id: mock_outbound_return_a().id,
-                        outbound_return_lines: vec![OutboundReturnLineInput {
-                            id: mock_outbound_return_a_invoice_line_a().id,
+                    UpdateSupplierReturnLines {
+                        supplier_return_id: mock_supplier_return_a().id,
+                        supplier_return_lines: vec![SupplierReturnLineInput {
+                            id: mock_supplier_return_a_invoice_line_a().id,
                             stock_line_id: "does_not_exist".to_string(),
                             number_of_packs: 1.0,
                             ..Default::default()
@@ -295,7 +295,7 @@ mod test {
                     }
                 ),
             Err(ServiceError::LineUpdateError {
-                line_id: mock_outbound_return_a_invoice_line_a().id,
+                line_id: mock_supplier_return_a_invoice_line_a().id,
                 error: UpdateStockOutLineError::StockLineNotFound,
             }),
         );
@@ -304,11 +304,11 @@ mod test {
         assert_eq!(
             service_provider
                 .invoice_service
-                .update_outbound_return_lines(
+                .update_supplier_return_lines(
                     &context,
-                    UpdateOutboundReturnLines {
-                        outbound_return_id: mock_outbound_return_a().id,
-                        outbound_return_lines: vec![OutboundReturnLineInput {
+                    UpdateSupplierReturnLines {
+                        supplier_return_id: mock_supplier_return_a().id,
+                        supplier_return_lines: vec![SupplierReturnLineInput {
                             id: "new_line_id".to_string(),
                             number_of_packs: 1.0,
                             stock_line_id: "item_b_line_a".to_string(),
@@ -325,7 +325,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_update_outbound_return_lines_success() {
+    async fn test_update_supplier_return_lines_success() {
         fn return_reason() -> ReturnReasonRow {
             ReturnReasonRow {
                 id: "return_reason".to_string(),
@@ -335,7 +335,7 @@ mod test {
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "test_update_outbound_return_lines_success",
+            "test_update_supplier_return_lines_success",
             MockDataInserts::all(),
             MockData {
                 return_reasons: vec![return_reason()],
@@ -351,27 +351,27 @@ mod test {
 
         service_provider
             .invoice_service
-            .update_outbound_return_lines(
+            .update_supplier_return_lines(
                 &context,
-                UpdateOutboundReturnLines {
-                    outbound_return_id: mock_outbound_return_a().id,
-                    outbound_return_lines: vec![
-                        OutboundReturnLineInput {
+                UpdateSupplierReturnLines {
+                    supplier_return_id: mock_supplier_return_a().id,
+                    supplier_return_lines: vec![
+                        SupplierReturnLineInput {
                             id: "line1".to_string(), // create
                             number_of_packs: 1.0,
                             stock_line_id: "item_b_line_a".to_string(),
                             reason_id: Some(return_reason().id),
                             ..Default::default()
                         },
-                        OutboundReturnLineInput {
-                            id: mock_outbound_return_a_invoice_line_a().id, // update
+                        SupplierReturnLineInput {
+                            id: mock_supplier_return_a_invoice_line_a().id, // update
                             number_of_packs: 2.0,
                             stock_line_id: mock_stock_line_a().id,
                             reason_id: Some(return_reason().id),
                             ..Default::default()
                         },
-                        OutboundReturnLineInput {
-                            id: mock_outbound_return_a_invoice_line_b().id,
+                        SupplierReturnLineInput {
+                            id: mock_supplier_return_a_invoice_line_b().id,
                             number_of_packs: 0.0, // delete
                             ..Default::default()
                         },
@@ -381,7 +381,7 @@ mod test {
             .unwrap();
 
         let updated_lines = InvoiceLineRowRepository::new(&connection)
-            .find_many_by_invoice_id(&mock_outbound_return_a().id)
+            .find_many_by_invoice_id(&mock_supplier_return_a().id)
             .unwrap();
 
         assert_eq!(updated_lines.len(), 2);
@@ -393,7 +393,7 @@ mod test {
         assert_eq!(
             updated_lines
                 .iter()
-                .find(|line| line.id == mock_outbound_return_a_invoice_line_a().id)
+                .find(|line| line.id == mock_supplier_return_a_invoice_line_a().id)
                 .unwrap()
                 .number_of_packs,
             2.0
@@ -402,6 +402,6 @@ mod test {
         // zeroed line was deleted
         assert!(!updated_lines
             .iter()
-            .any(|line| line.id == mock_outbound_return_a_invoice_line_b().id));
+            .any(|line| line.id == mock_supplier_return_a_invoice_line_b().id));
     }
 }

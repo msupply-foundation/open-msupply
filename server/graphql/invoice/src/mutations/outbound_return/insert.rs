@@ -7,11 +7,11 @@ use graphql_core::{
 };
 use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::outbound_return::insert::{
+use service::invoice::supplier_return::insert::{
     InsertOutboundReturn as ServiceInput, InsertOutboundReturnError as ServiceError,
 };
 
-use service::invoice::outbound_return::OutboundReturnLineInput as OutboundReturnLineServiceInput;
+use service::invoice::supplier_return::OutboundReturnLineInput as OutboundReturnLineServiceInput;
 
 #[derive(InputObject)]
 #[graphql(name = "OutboundReturnInput")]

@@ -7,7 +7,7 @@ use crate::invoice_line::{
     update_return_reason_id::UpdateLineReturnReason,
 };
 
-use super::UpdateOutboundReturnLines;
+use super::UpdateSupplierReturnLines;
 
 pub struct GenerateResult {
     pub lines_to_add: Vec<InsertStockOutLine>,
@@ -18,13 +18,13 @@ pub struct GenerateResult {
 
 pub fn generate(
     connection: &StorageConnection,
-    UpdateOutboundReturnLines {
-        outbound_return_id,
-        outbound_return_lines,
-    }: UpdateOutboundReturnLines,
+    UpdateSupplierReturnLines {
+        supplier_return_id,
+        supplier_return_lines,
+    }: UpdateSupplierReturnLines,
 ) -> Result<GenerateResult, RepositoryError> {
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&outbound_return_id)),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&supplier_return_id)),
     )?;
     let check_already_exists = |id: &str| {
         existing_lines
@@ -32,17 +32,17 @@ pub fn generate(
             .any(|line| line.invoice_line_row.id == id)
     };
 
-    let lines_to_add = outbound_return_lines
+    let lines_to_add = supplier_return_lines
         .clone()
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0 && !check_already_exists(&line.id))
         .map(|line| InsertStockOutLine {
             id: line.id,
-            invoice_id: outbound_return_id.clone(),
+            invoice_id: supplier_return_id.clone(),
             number_of_packs: line.number_of_packs,
             stock_line_id: line.stock_line_id,
             note: line.note,
-            r#type: StockOutType::OutboundReturn,
+            r#type: StockOutType::SupplierReturn,
             // Default
             tax_percentage: None,
             total_before_tax: None,
@@ -55,7 +55,7 @@ pub fn generate(
         })
         .collect();
 
-    let lines_to_update = outbound_return_lines
+    let lines_to_update = supplier_return_lines
         .clone()
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0 && check_already_exists(&line.id))
@@ -64,23 +64,23 @@ pub fn generate(
             stock_line_id: Some(line.stock_line_id),
             number_of_packs: Some(line.number_of_packs),
             note: line.note,
-            r#type: Some(StockOutType::OutboundReturn),
+            r#type: Some(StockOutType::SupplierReturn),
             tax: None,
             total_before_tax: None,
         })
         .collect();
 
-    let lines_to_delete = outbound_return_lines
+    let lines_to_delete = supplier_return_lines
         .clone()
         .into_iter()
         .filter(|line| line.number_of_packs <= 0.0 && check_already_exists(&line.id))
         .map(|line| DeleteStockOutLine {
             id: line.id,
-            r#type: Some(StockOutType::OutboundReturn),
+            r#type: Some(StockOutType::SupplierReturn),
         })
         .collect();
 
-    let update_line_return_reasons = outbound_return_lines
+    let update_line_return_reasons = supplier_return_lines
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0)
         .map(|line| UpdateLineReturnReason {

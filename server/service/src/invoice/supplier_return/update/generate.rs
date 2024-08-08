@@ -5,7 +5,7 @@ use crate::invoice::common::{
     generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
 };
 
-use super::{UpdateOutboundReturn, UpdateOutboundReturnError, UpdateOutboundReturnStatus};
+use super::{UpdateSupplierReturn, UpdateSupplierReturnError, UpdateSupplierReturnStatus};
 
 pub struct GenerateResult {
     pub updated_return: InvoiceRow,
@@ -14,17 +14,17 @@ pub struct GenerateResult {
 
 pub fn generate(
     connection: &StorageConnection,
-    UpdateOutboundReturn {
-        outbound_return_id,
+    UpdateSupplierReturn {
+        supplier_return_id,
         comment,
         status,
         on_hold,
         their_reference,
         colour,
         transport_reference,
-    }: UpdateOutboundReturn,
+    }: UpdateSupplierReturn,
     existing_return: InvoiceRow,
-) -> Result<GenerateResult, UpdateOutboundReturnError> {
+) -> Result<GenerateResult, UpdateSupplierReturnError> {
     let mut updated_return = existing_return.clone();
 
     updated_return.comment = comment.or(existing_return.comment);
@@ -44,13 +44,13 @@ pub fn generate(
 
     let stock_lines_to_update = if should_update_total_number_of_packs {
         Some(
-            generate_batches_total_number_of_packs_update(&outbound_return_id, connection)
+            generate_batches_total_number_of_packs_update(&supplier_return_id, connection)
                 .map_err(|e| match e {
                     InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(line) => {
-                        UpdateOutboundReturnError::InvoiceLineHasNoStockLine(line)
+                        UpdateSupplierReturnError::InvoiceLineHasNoStockLine(line)
                     }
                     InvoiceLineHasNoStockLine::DatabaseError(e) => {
-                        UpdateOutboundReturnError::DatabaseError(e)
+                        UpdateSupplierReturnError::DatabaseError(e)
                     }
                 })?,
         )
@@ -65,9 +65,9 @@ pub fn generate(
 }
 
 fn changed_status(
-    status: &Option<UpdateOutboundReturnStatus>,
+    status: &Option<UpdateSupplierReturnStatus>,
     existing_status: &InvoiceStatus,
-) -> Option<UpdateOutboundReturnStatus> {
+) -> Option<UpdateSupplierReturnStatus> {
     let new_status = match status {
         Some(status) => status,
         None => return None, // Status is not changing
@@ -82,10 +82,10 @@ fn changed_status(
 }
 
 fn set_new_status_datetime(
-    outbound_return: &mut InvoiceRow,
-    status: &Option<UpdateOutboundReturnStatus>,
+    supplier_return: &mut InvoiceRow,
+    status: &Option<UpdateSupplierReturnStatus>,
 ) {
-    let new_status = match changed_status(status, &outbound_return.status) {
+    let new_status = match changed_status(status, &supplier_return.status) {
         Some(status) => status,
         None => return, // There's no status to update
     };
@@ -93,24 +93,24 @@ fn set_new_status_datetime(
     let current_datetime = Utc::now().naive_utc();
 
     // Status sequence for outbound return: New, Picked, Shipped
-    match (&outbound_return.status, new_status) {
+    match (&supplier_return.status, new_status) {
         // From Shipped to Any, ignore
         (InvoiceStatus::Shipped, _) => {}
 
         // From New to Picked
-        (InvoiceStatus::New, UpdateOutboundReturnStatus::Picked) => {
-            outbound_return.picked_datetime = Some(current_datetime);
+        (InvoiceStatus::New, UpdateSupplierReturnStatus::Picked) => {
+            supplier_return.picked_datetime = Some(current_datetime);
         }
 
         // From New to Shipped
-        (InvoiceStatus::New, UpdateOutboundReturnStatus::Shipped) => {
-            outbound_return.picked_datetime = Some(current_datetime);
-            outbound_return.shipped_datetime = Some(current_datetime)
+        (InvoiceStatus::New, UpdateSupplierReturnStatus::Shipped) => {
+            supplier_return.picked_datetime = Some(current_datetime);
+            supplier_return.shipped_datetime = Some(current_datetime)
         }
 
         // From Picked to Shipped
-        (InvoiceStatus::Picked, UpdateOutboundReturnStatus::Shipped) => {
-            outbound_return.shipped_datetime = Some(current_datetime)
+        (InvoiceStatus::Picked, UpdateSupplierReturnStatus::Shipped) => {
+            supplier_return.shipped_datetime = Some(current_datetime)
         }
         _ => {}
     }
@@ -118,7 +118,7 @@ fn set_new_status_datetime(
 
 fn should_update_stock_lines_total_number_of_packs(
     existing_status: &InvoiceStatus,
-    status: &Option<UpdateOutboundReturnStatus>,
+    status: &Option<UpdateSupplierReturnStatus>,
 ) -> bool {
     let new_status = match changed_status(status, existing_status) {
         Some(status) => status,
@@ -129,7 +129,7 @@ fn should_update_stock_lines_total_number_of_packs(
         (
             // From New to Picked, or New to Shipped
             InvoiceStatus::New,
-            UpdateOutboundReturnStatus::Picked | UpdateOutboundReturnStatus::Shipped,
+            UpdateSupplierReturnStatus::Picked | UpdateSupplierReturnStatus::Shipped,
         ) => true,
         _ => false,
     }

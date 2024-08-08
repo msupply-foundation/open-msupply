@@ -5,17 +5,17 @@ use crate::invoice::{
     check_status_change, check_store, InvoiceRowStatusError,
 };
 
-use super::{UpdateOutboundReturn, UpdateOutboundReturnError};
+use super::{UpdateSupplierReturn, UpdateSupplierReturnError};
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &UpdateOutboundReturn,
-) -> Result<(InvoiceRow, bool), UpdateOutboundReturnError> {
-    use UpdateOutboundReturnError::*;
+    input: &UpdateSupplierReturn,
+) -> Result<(InvoiceRow, bool), UpdateSupplierReturnError> {
+    use UpdateSupplierReturnError::*;
 
     let return_row =
-        check_invoice_exists(&input.outbound_return_id, connection)?.ok_or(ReturnDoesNotExist)?;
+        check_invoice_exists(&input.supplier_return_id, connection)?.ok_or(ReturnDoesNotExist)?;
 
     if !check_store(&return_row, store_id) {
         return Err(ReturnDoesNotBelongToCurrentStore);
@@ -23,8 +23,8 @@ pub fn validate(
     if !check_invoice_is_editable(&return_row) {
         return Err(ReturnIsNotEditable);
     }
-    if !check_invoice_type(&return_row, InvoiceType::OutboundReturn) {
-        return Err(NotAnOutboundReturn);
+    if !check_invoice_type(&return_row, InvoiceType::SupplierReturn) {
+        return Err(NotAnSupplierReturn);
     }
 
     // Status check
