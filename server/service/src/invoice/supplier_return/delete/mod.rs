@@ -92,7 +92,7 @@ mod test {
     };
 
     use crate::{
-        invoice::outbound_return::delete::DeleteOutboundReturnError as ServiceError,
+        invoice::supplier_return::delete::DeleteOutboundReturnError as ServiceError,
         service_provider::ServiceProvider,
     };
 

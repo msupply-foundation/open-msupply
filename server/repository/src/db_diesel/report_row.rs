@@ -29,8 +29,8 @@ pub enum ContextType {
     Patient,
     Dispensary,
     Repack,
-    OutboundReturn,
-    InboundReturn,
+    SupplierReturn,
+    CustomerReturn,
     Report,
 }
 

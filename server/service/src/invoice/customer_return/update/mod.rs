@@ -15,15 +15,15 @@ use validate::validate;
 use self::generate::LineAndStockLine;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum UpdateInboundReturnStatus {
+pub enum UpdateCustomerReturnStatus {
     Delivered,
     Verified,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct UpdateInboundReturn {
+pub struct UpdateCustomerReturn {
     pub id: String,
-    pub status: Option<UpdateInboundReturnStatus>,
+    pub status: Option<UpdateCustomerReturnStatus>,
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub colour: Option<String>,
@@ -31,11 +31,11 @@ pub struct UpdateInboundReturn {
     pub other_party_id: Option<String>,
 }
 
-type OutError = UpdateInboundReturnError;
+type OutError = UpdateCustomerReturnError;
 
-pub fn update_inbound_return(
+pub fn update_customer_return(
     ctx: &ServiceContext,
-    patch: UpdateInboundReturn,
+    patch: UpdateCustomerReturn,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
@@ -87,9 +87,9 @@ pub fn update_inbound_return(
 }
 
 #[derive(Debug, PartialEq)]
-pub enum UpdateInboundReturnError {
+pub enum UpdateCustomerReturnError {
     InvoiceDoesNotExist,
-    NotAnInboundReturn,
+    NotAnCustomerReturn,
     NotThisStoreInvoice,
     CannotReverseInvoiceStatus,
     ReturnIsNotEditable,
@@ -103,15 +103,15 @@ pub enum UpdateInboundReturnError {
     UpdatedInvoiceDoesNotExist,
 }
 
-impl From<RepositoryError> for UpdateInboundReturnError {
+impl From<RepositoryError> for UpdateCustomerReturnError {
     fn from(error: RepositoryError) -> Self {
-        UpdateInboundReturnError::DatabaseError(error)
+        UpdateCustomerReturnError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for UpdateInboundReturnError
+impl<ERR> From<WithDBError<ERR>> for UpdateCustomerReturnError
 where
-    ERR: Into<UpdateInboundReturnError>,
+    ERR: Into<UpdateCustomerReturnError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {
@@ -121,16 +121,16 @@ where
     }
 }
 
-impl UpdateInboundReturnStatus {
+impl UpdateCustomerReturnStatus {
     pub fn as_invoice_row_status(&self) -> InvoiceStatus {
         match self {
-            UpdateInboundReturnStatus::Delivered => InvoiceStatus::Delivered,
-            UpdateInboundReturnStatus::Verified => InvoiceStatus::Verified,
+            UpdateCustomerReturnStatus::Delivered => InvoiceStatus::Delivered,
+            UpdateCustomerReturnStatus::Verified => InvoiceStatus::Verified,
         }
     }
 }
 
-impl UpdateInboundReturn {
+impl UpdateCustomerReturn {
     pub fn invoice_row_status_option(&self) -> Option<InvoiceStatus> {
         self.status
             .as_ref()
@@ -142,8 +142,8 @@ impl UpdateInboundReturn {
 mod test {
     use repository::{
         mock::{
-            currency_a, mock_inbound_return_a, mock_inbound_return_b,
-            mock_inbound_return_b_invoice_line_a, mock_name_store_a, mock_outbound_shipment_e,
+            currency_a, mock_customer_return_a, mock_customer_return_b,
+            mock_customer_return_b_invoice_line_a, mock_name_store_a, mock_outbound_shipment_e,
             mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
@@ -154,16 +154,16 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        invoice::inbound_return::{UpdateInboundReturn, UpdateInboundReturnStatus},
+        invoice::customer_return::{UpdateCustomerReturn, UpdateCustomerReturnStatus},
         service_provider::ServiceProvider,
     };
 
-    use super::UpdateInboundReturnError;
+    use super::UpdateCustomerReturnError;
 
-    type ServiceError = UpdateInboundReturnError;
+    type ServiceError = UpdateCustomerReturnError;
 
     #[actix_rt::test]
-    async fn update_inbound_return_errors() {
+    async fn update_customer_return_errors() {
         fn not_visible() -> NameRow {
             inline_init(|r: &mut NameRow| {
                 r.id = "not_visible".to_string();
@@ -191,7 +191,7 @@ mod test {
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceType::InboundReturn,
+                r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::Verified,
                 ..Default::default()
             }
@@ -202,7 +202,7 @@ mod test {
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceType::InboundReturn,
+                r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::New,
                 on_hold: true,
                 ..Default::default()
@@ -210,7 +210,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "update_inbound_return_errors",
+            "update_customer_return_errors",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.names = vec![not_visible(), not_a_supplier()];
@@ -228,9 +228,9 @@ mod test {
 
         //InvoiceDoesNotExist
         assert_eq!(
-            service.update_inbound_return(
+            service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateInboundReturn| {
+                inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id = "invalid".to_string();
                 })
             ),
@@ -239,31 +239,31 @@ mod test {
 
         //NotThisStoreInvoice
         assert_eq!(
-            service.update_inbound_return(
+            service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateInboundReturn| {
-                    r.id = mock_inbound_return_a().id; // store b invoice
+                inline_init(|r: &mut UpdateCustomerReturn| {
+                    r.id = mock_customer_return_a().id; // store b invoice
                 })
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
 
-        //NotAnInboundReturn
+        //NotAnCustomerReturn
         assert_eq!(
-            service.update_inbound_return(
+            service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateInboundReturn| {
+                inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id = mock_outbound_shipment_e().id;
                 })
             ),
-            Err(ServiceError::NotAnInboundReturn)
+            Err(ServiceError::NotAnCustomerReturn)
         );
 
         //ReturnIsNotEditable
         assert_eq!(
-            service.update_inbound_return(
+            service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateInboundReturn| {
+                inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id = verified_return().id;
                 })
             ),
@@ -272,11 +272,11 @@ mod test {
 
         //CannotChangeStatusOfInvoiceOnHold
         assert_eq!(
-            service.update_inbound_return(
+            service.update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateInboundReturn| {
+                inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id = on_hold_return().id;
-                    r.status = Some(UpdateInboundReturnStatus::Delivered);
+                    r.status = Some(UpdateCustomerReturnStatus::Delivered);
                 })
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
@@ -284,9 +284,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn update_inbound_return_success() {
+    async fn update_customer_return_success() {
         let (_, connection, connection_manager, _) =
-            setup_all("update_inbound_return_success", MockDataInserts::all()).await;
+            setup_all("update_customer_return_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -294,13 +294,13 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let invoice_id = mock_inbound_return_b().id;
+        let invoice_id = mock_customer_return_b().id;
 
         /* -------
          * Setting NEW inbound return to DELIVERED
          */
-        let return_line_filter =
-            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&mock_inbound_return_b().id));
+        let return_line_filter = InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
 
         let invoice_line_repo = InvoiceLineRepository::new(&connection);
 
@@ -314,11 +314,11 @@ mod test {
             .all(|l| l.invoice_line_row.stock_line_id.is_none()));
 
         let updated_return = service
-            .update_inbound_return(
+            .update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateInboundReturn| {
+                inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id.clone_from(&invoice_id);
-                    r.status = Some(UpdateInboundReturnStatus::Delivered);
+                    r.status = Some(UpdateCustomerReturnStatus::Delivered);
                 }),
             )
             .unwrap();
@@ -349,7 +349,7 @@ mod test {
         // data from invoice line was added to the new stock line
         assert_eq!(
             stock_line_delivered.batch,
-            mock_inbound_return_b_invoice_line_a().batch
+            mock_customer_return_b_invoice_line_a().batch
         );
 
         // log is added
@@ -366,11 +366,11 @@ mod test {
          */
 
         let updated_return = service
-            .update_inbound_return(
+            .update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateInboundReturn| {
+                inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id = invoice_id;
-                    r.status = Some(UpdateInboundReturnStatus::Verified);
+                    r.status = Some(UpdateCustomerReturnStatus::Verified);
                 }),
             )
             .unwrap();
@@ -402,9 +402,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn update_inbound_return_success_new_to_verified() {
+    async fn update_customer_return_success_new_to_verified() {
         let (_, connection, connection_manager, _) = setup_all(
-            "update_inbound_return_success_new_to_verified",
+            "update_customer_return_success_new_to_verified",
             MockDataInserts::all(),
         )
         .await;
@@ -415,13 +415,13 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let invoice_id = mock_inbound_return_b().id;
+        let invoice_id = mock_customer_return_b().id;
 
         /* -------
          * Setting NEW inbound return to VERIFIED
          */
-        let return_line_filter =
-            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&mock_inbound_return_b().id));
+        let return_line_filter = InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
 
         let invoice_line_repo = InvoiceLineRepository::new(&connection);
 
@@ -435,11 +435,11 @@ mod test {
             .all(|l| l.invoice_line_row.stock_line_id.is_none()));
 
         let updated_return = service
-            .update_inbound_return(
+            .update_customer_return(
                 &context,
-                inline_init(|r: &mut UpdateInboundReturn| {
+                inline_init(|r: &mut UpdateCustomerReturn| {
                     r.id.clone_from(&invoice_id);
-                    r.status = Some(UpdateInboundReturnStatus::Verified);
+                    r.status = Some(UpdateCustomerReturnStatus::Verified);
                 }),
             )
             .unwrap();
@@ -470,7 +470,7 @@ mod test {
         // data from invoice line was added to the new stock line
         assert_eq!(
             stock_line.batch,
-            mock_inbound_return_b_invoice_line_a().batch
+            mock_customer_return_b_invoice_line_a().batch
         );
     }
 }

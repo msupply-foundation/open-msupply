@@ -133,7 +133,7 @@ fn generate_line(
 
 fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &InvoiceRow) -> bool {
     match stock_in_type {
-        StockInType::InboundShipment | StockInType::InboundReturn => {
+        StockInType::InboundShipment | StockInType::CustomerReturn => {
             existing_invoice_row.status != InvoiceStatus::New
         }
         StockInType::InventoryAddition => true,

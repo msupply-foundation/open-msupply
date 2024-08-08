@@ -16,18 +16,18 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
-use super::InboundReturnLineInput;
+use super::CustomerReturnLineInput;
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct InsertInboundReturn {
+pub struct InsertCustomerReturn {
     pub id: String,
     pub other_party_id: String,
     pub outbound_shipment_id: Option<String>,
-    pub inbound_return_lines: Vec<InboundReturnLineInput>,
+    pub customer_return_lines: Vec<CustomerReturnLineInput>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum InsertInboundReturnError {
+pub enum InsertCustomerReturnError {
     InvoiceAlreadyExists,
     // Original invoice/shipment validation
     OutboundShipmentDoesNotExist,
@@ -52,17 +52,17 @@ pub enum InsertInboundReturnError {
     },
 }
 
-type OutError = InsertInboundReturnError;
+type OutError = InsertCustomerReturnError;
 
-pub fn insert_inbound_return(
+pub fn insert_customer_return(
     ctx: &ServiceContext,
-    input: InsertInboundReturn,
+    input: InsertCustomerReturn,
 ) -> Result<Invoice, OutError> {
-    let inbound_return: Invoice = ctx
+    let customer_return: Invoice = ctx
         .connection
         .transaction_sync(|connection| {
             let other_party = validate(connection, &ctx.store_id, &input)?;
-            let (inbound_return, insert_stock_in_lines, update_line_return_reasons) = generate(
+            let (customer_return, insert_stock_in_lines, update_line_return_reasons) = generate(
                 connection,
                 &ctx.store_id,
                 &ctx.user_id,
@@ -70,7 +70,7 @@ pub fn insert_inbound_return(
                 other_party,
             )?;
 
-            InvoiceRowRepository::new(connection).upsert_one(&inbound_return)?;
+            InvoiceRowRepository::new(connection).upsert_one(&customer_return)?;
 
             for line in insert_stock_in_lines {
                 insert_stock_in_line(ctx, line.clone()).map_err(|error| {
@@ -93,18 +93,18 @@ pub fn insert_inbound_return(
             activity_log_entry(
                 ctx,
                 ActivityLogType::InvoiceCreated,
-                Some(inbound_return.id.to_owned()),
+                Some(customer_return.id.to_owned()),
                 None,
                 None,
             )?;
 
-            get_invoice(ctx, None, &inbound_return.id)
+            get_invoice(ctx, None, &customer_return.id)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
-    Ok(inbound_return)
+    Ok(customer_return)
 }
 
 impl From<RepositoryError> for OutError {
@@ -128,9 +128,9 @@ impl From<TransactionError<OutError>> for OutError {
 mod test {
     use repository::{
         mock::{
-            currency_a, mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
-            mock_item_b, mock_name_customer_a, mock_outbound_return_a, mock_outbound_shipment_a,
-            mock_outbound_shipment_e, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
+            currency_a, mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_item_a,
+            mock_item_b, mock_name_customer_a, mock_outbound_shipment_a, mock_outbound_shipment_e,
+            mock_store_a, mock_supplier_return_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
@@ -139,8 +139,8 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::inbound_return::insert::{
-            InsertInboundReturn, InsertInboundReturnError as ServiceError,
+        invoice::customer_return::insert::{
+            InsertCustomerReturn, InsertCustomerReturnError as ServiceError,
         },
         invoice_line::{
             stock_in_line::InsertStockInLineError,
@@ -149,10 +149,10 @@ mod test {
         service_provider::ServiceProvider,
     };
 
-    use super::InboundReturnLineInput;
+    use super::CustomerReturnLineInput;
 
     #[actix_rt::test]
-    async fn test_insert_inbound_return_errors() {
+    async fn test_insert_customer_return_errors() {
         fn not_visible() -> NameRow {
             NameRow {
                 id: "not_visible".to_string(),
@@ -178,7 +178,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_insert_inbound_return_errors",
+            "test_insert_customer_return_errors",
             MockDataInserts::all(),
             MockData {
                 names: vec![not_visible(), not_a_customer()],
@@ -195,10 +195,10 @@ mod test {
 
         // InvoiceAlreadyExists
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
-                    r.id = mock_inbound_return_a().id;
+                inline_init(|r: &mut InsertCustomerReturn| {
+                    r.id = mock_customer_return_a().id;
                 })
             ),
             Err(ServiceError::InvoiceAlreadyExists)
@@ -206,9 +206,9 @@ mod test {
 
         // OutboundShipmentDoesNotExist
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
+                inline_init(|r: &mut InsertCustomerReturn| {
                     r.id = "new_id".to_string();
                     r.outbound_shipment_id = Some("does_not_exist".to_string());
                 })
@@ -217,9 +217,9 @@ mod test {
         );
 
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
+                inline_init(|r: &mut InsertCustomerReturn| {
                     r.id = "new_id".to_string();
                     r.outbound_shipment_id = Some(mock_outbound_shipment_a().id);
                 })
@@ -229,11 +229,11 @@ mod test {
 
         // OriginalInvoiceNotAnOutboundShipment
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
+                inline_init(|r: &mut InsertCustomerReturn| {
                     r.id = "new_id".to_string();
-                    r.outbound_shipment_id = Some(mock_outbound_return_a().id);
+                    r.outbound_shipment_id = Some(mock_supplier_return_a().id);
                 })
             ),
             Err(ServiceError::OriginalInvoiceNotAnOutboundShipment)
@@ -241,9 +241,9 @@ mod test {
 
         // CannotReturnOutboundShipment
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
+                inline_init(|r: &mut InsertCustomerReturn| {
                     r.id = "new_id".to_string();
                     // in NEW status
                     r.outbound_shipment_id = Some(mock_outbound_shipment_e().id);
@@ -254,9 +254,9 @@ mod test {
 
         // OtherPartyDoesNotExist
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
+                inline_init(|r: &mut InsertCustomerReturn| {
                     r.id = "new_id".to_string();
                     r.other_party_id = "does_not_exist".to_string();
                 })
@@ -266,9 +266,9 @@ mod test {
 
         // OtherPartyNotVisible
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
+                inline_init(|r: &mut InsertCustomerReturn| {
                     r.id = "new_id".to_string();
                     r.other_party_id.clone_from(&not_visible().id);
                 })
@@ -278,9 +278,9 @@ mod test {
 
         // OtherPartyNotACustomer
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
+                inline_init(|r: &mut InsertCustomerReturn| {
                     r.id = "new_id".to_string();
                     r.other_party_id.clone_from(&not_a_customer().id);
                 })
@@ -290,13 +290,13 @@ mod test {
 
         // LineInsertError
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                InsertInboundReturn {
+                InsertCustomerReturn {
                     id: "new_id".to_string(),
                     other_party_id: mock_name_customer_a().id,
-                    inbound_return_lines: vec![InboundReturnLineInput {
-                        id: mock_inbound_return_a_invoice_line_a().id,
+                    customer_return_lines: vec![CustomerReturnLineInput {
+                        id: mock_customer_return_a_invoice_line_a().id,
                         number_of_packs: 1.0,
                         ..Default::default()
                     }],
@@ -304,19 +304,19 @@ mod test {
                 },
             ),
             Err(ServiceError::LineInsertError {
-                line_id: mock_inbound_return_a_invoice_line_a().id,
+                line_id: mock_customer_return_a_invoice_line_a().id,
                 error: InsertStockInLineError::LineAlreadyExists,
             }),
         );
 
         // LineReturnReasonUpdateError
         assert_eq!(
-            service_provider.invoice_service.insert_inbound_return(
+            service_provider.invoice_service.insert_customer_return(
                 &context,
-                InsertInboundReturn {
+                InsertCustomerReturn {
                     id: "some_new_id".to_string(),
                     other_party_id: mock_name_customer_a().id,
-                    inbound_return_lines: vec![InboundReturnLineInput {
+                    customer_return_lines: vec![CustomerReturnLineInput {
                         id: "new_line_id".to_string(),
                         item_id: mock_item_a().id,
                         number_of_packs: 1.0,
@@ -335,7 +335,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_insert_inbound_return_success() {
+    async fn test_insert_customer_return_success() {
         fn return_reason() -> ReturnReasonRow {
             inline_init(|r: &mut ReturnReasonRow| {
                 r.id = "return_reason".to_string();
@@ -355,7 +355,7 @@ mod test {
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "test_insert_inbound_return_success",
+            "test_insert_customer_return_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![returnable_outbound_shipment()];
@@ -371,23 +371,23 @@ mod test {
 
         service_provider
             .invoice_service
-            .insert_inbound_return(
+            .insert_customer_return(
                 &context,
-                inline_init(|r: &mut InsertInboundReturn| {
-                    r.id = "new_inbound_return_id".to_string();
+                inline_init(|r: &mut InsertCustomerReturn| {
+                    r.id = "new_customer_return_id".to_string();
                     r.other_party_id = mock_name_customer_a().id;
                     r.outbound_shipment_id = Some(returnable_outbound_shipment().id);
-                    r.inbound_return_lines = vec![
-                        InboundReturnLineInput {
-                            id: "new_inbound_return_line_id".to_string(),
+                    r.customer_return_lines = vec![
+                        CustomerReturnLineInput {
+                            id: "new_customer_return_line_id".to_string(),
                             reason_id: Some(return_reason().id),
                             number_of_packs: 1.0,
                             item_id: mock_item_a().id,
                             pack_size: 1.0,
                             ..Default::default()
                         },
-                        InboundReturnLineInput {
-                            id: "new_inbound_return_line_id_2".to_string(),
+                        CustomerReturnLineInput {
+                            id: "new_customer_return_line_id_2".to_string(),
                             reason_id: Some(return_reason().id),
                             number_of_packs: 0.0,
                             item_id: mock_item_b().id,
@@ -400,11 +400,11 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("new_inbound_return_id")
+            .find_one_by_id("new_customer_return_id")
             .unwrap()
             .unwrap();
 
-        assert_eq!(invoice.id, "new_inbound_return_id");
+        assert_eq!(invoice.id, "new_customer_return_id");
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
@@ -416,7 +416,7 @@ mod test {
         );
 
         let lines = InvoiceLineRowRepository::new(&connection)
-            .find_many_by_invoice_id("new_inbound_return_id")
+            .find_many_by_invoice_id("new_customer_return_id")
             .unwrap();
 
         // line with number_of_packs == 0.0 should not be inserted
@@ -424,8 +424,8 @@ mod test {
         assert_eq!(
             lines[0],
             inline_edit(&lines[0], |mut u| {
-                u.invoice_id = "new_inbound_return_id".to_string();
-                u.id = "new_inbound_return_line_id".to_string();
+                u.invoice_id = "new_customer_return_id".to_string();
+                u.id = "new_customer_return_line_id".to_string();
                 u.item_link_id = mock_item_a().id;
                 u.number_of_packs = 1.0;
                 u

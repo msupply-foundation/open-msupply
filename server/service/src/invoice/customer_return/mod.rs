@@ -12,7 +12,7 @@ pub use self::update::*;
 pub use self::update_lines::*;
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct InboundReturnLineInput {
+pub struct CustomerReturnLineInput {
     pub id: String,
     pub item_id: String,
     pub expiry_date: Option<NaiveDate>,

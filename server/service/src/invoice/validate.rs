@@ -29,13 +29,13 @@ pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceSt
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     let status = invoice.status.clone();
     let is_editable = match &invoice.r#type {
-        InvoiceType::OutboundShipment | InvoiceType::OutboundReturn => {
+        InvoiceType::OutboundShipment | InvoiceType::SupplierReturn => {
             matches!(
                 status,
                 InvoiceStatus::New | InvoiceStatus::Allocated | InvoiceStatus::Picked
             )
         }
-        InvoiceType::InboundShipment | InvoiceType::InboundReturn => {
+        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
             matches!(
                 status,
                 InvoiceStatus::New | InvoiceStatus::Shipped | InvoiceStatus::Delivered

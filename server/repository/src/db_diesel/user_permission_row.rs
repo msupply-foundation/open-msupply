@@ -56,12 +56,12 @@ pub enum PermissionType {
     // inbound shipment
     InboundShipmentQuery,
     InboundShipmentMutate,
-    // outbound return
-    OutboundReturnQuery,
-    OutboundReturnMutate,
-    // inbound return
-    InboundReturnQuery,
-    InboundReturnMutate,
+    // supplier return
+    SupplierReturnQuery,
+    SupplierReturnMutate,
+    // customer return
+    CustomerReturnQuery,
+    CustomerReturnMutate,
     // Prescription
     PrescriptionQuery,
     PrescriptionMutate,

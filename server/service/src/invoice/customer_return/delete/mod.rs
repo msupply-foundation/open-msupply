@@ -14,10 +14,10 @@ use crate::{
     service_provider::ServiceContext,
 };
 
-pub fn delete_inbound_return(
+pub fn delete_customer_return(
     ctx: &ServiceContext,
     id: String,
-) -> Result<String, DeleteInboundReturnError> {
+) -> Result<String, DeleteCustomerReturnError> {
     ctx.connection
         .transaction_sync(|connection| {
             validate(&id, &ctx.store_id, connection)?;
@@ -28,10 +28,10 @@ pub fn delete_inbound_return(
                     ctx,
                     DeleteStockInLine {
                         id: line.invoice_line_row.id.clone(),
-                        r#type: StockInType::InboundReturn,
+                        r#type: StockInType::CustomerReturn,
                     },
                 )
-                .map_err(|error| DeleteInboundReturnError::LineDeleteError {
+                .map_err(|error| DeleteCustomerReturnError::LineDeleteError {
                     line_id: line.invoice_line_row.id,
                     error,
                 })?;
@@ -39,7 +39,7 @@ pub fn delete_inbound_return(
 
             InvoiceRowRepository::new(connection)
                 .delete(&id)
-                .map_err(DeleteInboundReturnError::DatabaseError)?;
+                .map_err(DeleteCustomerReturnError::DatabaseError)?;
 
             activity_log_entry(
                 ctx,
@@ -56,7 +56,7 @@ pub fn delete_inbound_return(
 
 #[derive(Debug, PartialEq, Clone)]
 
-pub enum DeleteInboundReturnError {
+pub enum DeleteCustomerReturnError {
     InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
@@ -65,12 +65,12 @@ pub enum DeleteInboundReturnError {
         line_id: String,
         error: DeleteStockInLineError,
     },
-    NotAnInboundReturn,
+    NotAnCustomerReturn,
 }
 
-impl From<RepositoryError> for DeleteInboundReturnError {
+impl From<RepositoryError> for DeleteCustomerReturnError {
     fn from(error: RepositoryError) -> Self {
-        DeleteInboundReturnError::DatabaseError(error)
+        DeleteCustomerReturnError::DatabaseError(error)
     }
 }
 
@@ -87,17 +87,17 @@ mod test {
     };
 
     use crate::{
-        invoice::inbound_return::delete::DeleteInboundReturnError as ServiceError,
+        invoice::customer_return::delete::DeleteCustomerReturnError as ServiceError,
         service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn delete_inbound_return_errors() {
+    async fn delete_customer_return_errors() {
         fn wrong_store() -> InvoiceRow {
             InvoiceRow {
                 id: "wrong_store".to_string(),
                 store_id: mock_store_a().id,
-                r#type: InvoiceType::InboundReturn,
+                r#type: InvoiceType::CustomerReturn,
                 name_link_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 ..Default::default()
@@ -107,7 +107,7 @@ mod test {
             InvoiceRow {
                 id: "verified".to_string(),
                 store_id: mock_store_b().id,
-                r#type: InvoiceType::InboundReturn,
+                r#type: InvoiceType::CustomerReturn,
                 name_link_id: mock_name_store_b().id,
                 status: InvoiceStatus::Verified,
                 currency_id: Some(currency_a().id),
@@ -116,7 +116,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "delete_inbound_return_errors",
+            "delete_customer_return_errors",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![wrong_store(), verified()],
@@ -133,38 +133,38 @@ mod test {
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.delete_inbound_return(&context, "invalid".to_string()),
+            service.delete_customer_return(&context, "invalid".to_string()),
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        //NotAnInboundReturn
+        //NotAnCustomerReturn
         assert_eq!(
-            service.delete_inbound_return(&context, mock_outbound_shipment_a().id),
-            Err(ServiceError::NotAnInboundReturn)
+            service.delete_customer_return(&context, mock_outbound_shipment_a().id),
+            Err(ServiceError::NotAnCustomerReturn)
         );
 
         //NotThisStoreInvoice
         assert_eq!(
-            service.delete_inbound_return(&context, wrong_store().id),
+            service.delete_customer_return(&context, wrong_store().id),
             Err(ServiceError::NotThisStoreInvoice)
         );
 
         //CannotEditFinalised
         assert_eq!(
-            service.delete_inbound_return(&context, verified().id),
+            service.delete_customer_return(&context, verified().id),
             Err(ServiceError::CannotEditFinalised)
         );
     }
 
     #[actix_rt::test]
-    async fn delete_inbound_return_success() {
+    async fn delete_customer_return_success() {
         fn return_to_delete() -> InvoiceRow {
             InvoiceRow {
                 id: "return_to_delete".to_string(),
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceType::InboundReturn,
+                r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::New,
                 ..Default::default()
             }
@@ -190,7 +190,7 @@ mod test {
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "delete_inbound_return_success",
+            "delete_customer_return_success",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![return_to_delete()],
@@ -213,7 +213,7 @@ mod test {
         assert!(stock_line_row_repo.find_one_by_id(&stock_line().id).is_ok());
 
         service
-            .delete_inbound_return(&context, return_to_delete().id)
+            .delete_customer_return(&context, return_to_delete().id)
             .unwrap();
 
         // test entry has been deleted
