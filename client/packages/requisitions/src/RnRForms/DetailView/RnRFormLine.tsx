@@ -274,6 +274,7 @@ const RnRNumberCell = ({
         }}
         max={max}
         allowNegative={allowNegative}
+        defaultValue={0}
       />
     </td>
   );
