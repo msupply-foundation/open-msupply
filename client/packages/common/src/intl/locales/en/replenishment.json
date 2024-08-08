@@ -168,6 +168,7 @@
   "messages.not-configured": "Not configured",
   "messages.off-hold-confirmation": "This will re-enable status changes",
   "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
+  "messages.only-closed-periods-visible": "Note: only closed periods are shown",
   "messages.period-not-available": "No available periods",
   "messages.requested-to-suggested": "This will set all lines requested quantity to the suggested quantity.",
   "messages.return-saved": "Return saved 🥳",
