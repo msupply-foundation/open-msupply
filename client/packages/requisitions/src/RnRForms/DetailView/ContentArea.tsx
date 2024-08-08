@@ -134,6 +134,10 @@ export const ContentArea = ({
             />
             <HeaderCell label="label.comment" />
             <HeaderCell label="label.confirmed" />
+            <HeaderCell
+              label="label.approved-quantity"
+              tooltip="description.rnr-approved-quantity"
+            />
           </tr>
         </thead>
 

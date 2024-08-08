@@ -241,6 +241,13 @@ export const RnRFormLine = ({
           disabled={disabled}
         />
       </td>
+      {/* Readonly - populated from Response Requisition */}
+      <RnRNumberCell
+        readOnly
+        value={draft.approvedQuantity ?? 0}
+        textColor={textColor}
+        onChange={() => {}}
+      />
     </tr>
   );
 };
