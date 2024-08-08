@@ -1,7 +1,7 @@
 use anyhow::Result;
 use service::report::definition::{
-    DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
-    ReportOutputType, SQLQuery, TeraTemplate,
+    DefaultQuery, GraphQlQuery, Manifest, ReportDefinition, ReportDefinitionEntry,
+    ReportDefinitionIndex, ReportOutputType, SQLQuery, TeraTemplate,
 };
 use std::{
     collections::HashMap,
@@ -213,12 +213,19 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             let name = name.strip_suffix(".ref.json").unwrap();
             (name.to_string(), ReportDefinitionEntry::Ref(data))
         } else if name.ends_with(".json") {
-            // add data as json
-            let data = serde_json::from_str(&data).map_err(|err| {
-                anyhow::Error::msg(format!("Failed to parse json resource {}: {}", name, err))
-            })?;
             let name = name.strip_suffix(".json").unwrap();
-            (name.to_string(), ReportDefinitionEntry::Resource(data))
+            if name == "manifest" {
+                let manifest: Manifest = serde_json::from_str(&data).map_err(|err| {
+                    anyhow::Error::msg(format!("Failed to parse manifest.json: {}", err))
+                })?;
+                (name.to_string(), ReportDefinitionEntry::Manifest(manifest))
+            } else {
+                // add data as json
+                let data = serde_json::from_str(&data).map_err(|err| {
+                    anyhow::Error::msg(format!("Failed to parse json resource {}: {}", name, err))
+                })?;
+                (name.to_string(), ReportDefinitionEntry::Resource(data))
+            }
         } else {
             (
                 name,

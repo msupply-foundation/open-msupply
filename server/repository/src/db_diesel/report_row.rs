@@ -6,8 +6,9 @@ use crate::repository_error::RepositoryError;
 use crate::{Delete, Upsert};
 use clap::ValueEnum;
 use diesel::prelude::*;
-
 use diesel_derive_enum::DbEnum;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -15,8 +16,9 @@ pub enum ReportType {
     OmSupply,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, ValueEnum)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ValueEnum)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ContextType {
     Asset,
     InboundShipment,

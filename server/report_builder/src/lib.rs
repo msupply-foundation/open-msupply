@@ -67,7 +67,9 @@ pub struct PrintArgs {
     #[clap(short, long)]
     pub report: String,
     #[clap(long)]
-    pub store_id: String,
+    pub store_id: Option<String>,
+    #[clap(long)]
+    pub store_name: Option<String>,
     /// The data to be printed
     #[clap(long)]
     pub data_id: Option<String>,
