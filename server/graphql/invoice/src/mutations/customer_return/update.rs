@@ -6,20 +6,20 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::InvoiceNode;
-use service::invoice::inbound_return::update::{
-    UpdateInboundReturn as ServiceInput, UpdateInboundReturnError as ServiceError,
+use service::invoice::customer_return::update::{
+    UpdateCustomerReturn as ServiceInput, UpdateCustomerReturnError as ServiceError,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    invoice::inbound_return::update::UpdateInboundReturnStatus,
+    invoice::customer_return::update::UpdateCustomerReturnStatus,
 };
 
 #[derive(InputObject)]
-#[graphql(name = "UpdateInboundReturnInput")]
+#[graphql(name = "UpdateCustomerReturnInput")]
 pub struct UpdateInput {
     pub id: String,
     other_party_id: Option<String>,
-    status: Option<UpdateInboundReturnStatusInput>,
+    status: Option<UpdateCustomerReturnStatusInput>,
     on_hold: Option<bool>,
     comment: Option<String>,
     colour: Option<String>,
@@ -27,19 +27,19 @@ pub struct UpdateInput {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum UpdateInboundReturnStatusInput {
+pub enum UpdateCustomerReturnStatusInput {
     Delivered,
     Verified,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "UpdateInboundReturnError")]
+#[graphql(name = "UpdateCustomerReturnError")]
 pub struct UpdateError {
     pub error: UpdateErrorInterface,
 }
 
 #[derive(Interface)]
-#[graphql(name = "UpdateInboundReturnErrorInterface")]
+#[graphql(name = "UpdateCustomerReturnErrorInterface")]
 #[graphql(field(name = "description", ty = "&str"))]
 pub enum UpdateErrorInterface {
     OtherPartyNotACustomer(OtherPartyNotACustomer),
@@ -47,7 +47,7 @@ pub enum UpdateErrorInterface {
 }
 
 #[derive(Union)]
-#[graphql(name = "UpdateInboundReturnResponse")]
+#[graphql(name = "UpdateCustomerReturnResponse")]
 pub enum UpdateResponse {
     Response(InvoiceNode),
     Error(UpdateError),
@@ -57,7 +57,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundReturn,
+            resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -67,10 +67,10 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
     let result = service_provider
         .invoice_service
-        .update_inbound_return(&service_context, input.to_domain());
+        .update_customer_return(&service_context, input.to_domain());
 
     let result = match result {
-        Ok(inbound_return) => UpdateResponse::Response(InvoiceNode::from_domain(inbound_return)),
+        Ok(customer_return) => UpdateResponse::Response(InvoiceNode::from_domain(customer_return)),
         Err(err) => UpdateResponse::Error(UpdateError {
             error: map_error(err)?,
         }),
@@ -96,7 +96,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
-        | ServiceError::NotAnInboundReturn
+        | ServiceError::NotAnCustomerReturn
         | ServiceError::NotThisStoreInvoice
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::ReturnIsNotEditable
@@ -135,12 +135,12 @@ impl UpdateInput {
     }
 }
 
-impl UpdateInboundReturnStatusInput {
-    pub fn to_domain(&self) -> UpdateInboundReturnStatus {
-        use UpdateInboundReturnStatus::*;
+impl UpdateCustomerReturnStatusInput {
+    pub fn to_domain(&self) -> UpdateCustomerReturnStatus {
+        use UpdateCustomerReturnStatus::*;
         match self {
-            UpdateInboundReturnStatusInput::Delivered => Delivered,
-            UpdateInboundReturnStatusInput::Verified => Verified,
+            UpdateCustomerReturnStatusInput::Delivered => Delivered,
+            UpdateCustomerReturnStatusInput::Verified => Verified,
         }
     }
 }

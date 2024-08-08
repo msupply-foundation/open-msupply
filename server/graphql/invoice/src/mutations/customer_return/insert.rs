@@ -1,44 +1,47 @@
 use async_graphql::*;
 
+use chrono::NaiveDate;
 use graphql_core::{
-    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible},
+    simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::supplier_return::insert::{
-    InsertOutboundReturn as ServiceInput, InsertOutboundReturnError as ServiceError,
+use service::invoice::customer_return::insert::{
+    InsertCustomerReturn as ServiceInput, InsertCustomerReturnError as ServiceError,
 };
-
-use service::invoice::supplier_return::OutboundReturnLineInput as OutboundReturnLineServiceInput;
+use service::invoice::customer_return::CustomerReturnLineInput as CustomerReturnLineServiceInput;
 
 #[derive(InputObject)]
-#[graphql(name = "OutboundReturnInput")]
+#[graphql(name = "CustomerReturnInput")]
 pub struct InsertInput {
     pub id: String,
-    pub supplier_id: String,
-    pub inbound_shipment_id: Option<String>,
-    pub outbound_return_lines: Vec<OutboundReturnLineInput>,
+    pub customer_id: String,
+    pub outbound_shipment_id: Option<String>,
+    pub customer_return_lines: Vec<CustomerReturnLineInput>,
 }
 
 #[derive(InputObject)]
-pub struct OutboundReturnLineInput {
+pub struct CustomerReturnLineInput {
     pub id: String,
-    pub stock_line_id: String,
-    pub number_of_packs_to_return: f64,
+    pub number_of_packs_returned: f64,
+    pub item_id: String,
     pub reason_id: Option<String>,
     pub note: Option<String>,
+    pub pack_size: f64,
+    pub batch: Option<String>,
+    pub expiry_date: Option<NaiveDate>,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "InsertOutboundReturnError")]
+#[graphql(name = "InsertCustomerReturnError")]
 pub struct InsertError {
     pub error: InsertErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "InsertOutboundReturnResponse")]
+#[graphql(name = "InsertCustomerReturnResponse")]
 pub enum InsertResponse {
     Error(InsertError),
     Response(InvoiceNode),
@@ -48,7 +51,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundReturn,
+            resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -58,10 +61,10 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 
     let result = service_provider
         .invoice_service
-        .insert_outbound_return(&service_context, input.to_domain());
+        .insert_customer_return(&service_context, input.to_domain());
 
     let result = match result {
-        Ok(outbound_return) => InsertResponse::Response(InvoiceNode::from_domain(outbound_return)),
+        Ok(customer_return) => InsertResponse::Response(InvoiceNode::from_domain(customer_return)),
         Err(err) => InsertResponse::Error(InsertError {
             error: map_error(err)?,
         }),
@@ -71,11 +74,11 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 }
 
 #[derive(Interface)]
-#[graphql(name = "InsertOutboundReturnErrorInterface")]
+#[graphql(name = "InsertCustomerReturnErrorInterface")]
 #[graphql(field(name = "description", ty = "&str"))]
 pub enum InsertErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
-    OtherPartyNotASupplier(OtherPartyNotASupplier),
+    OtherPartyNotACustomer(OtherPartyNotACustomer),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
@@ -88,19 +91,20 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 OtherPartyNotVisible,
             ))
         }
-        ServiceError::OtherPartyNotASupplier => {
-            return Ok(InsertErrorInterface::OtherPartyNotASupplier(
-                OtherPartyNotASupplier,
+        ServiceError::OtherPartyNotACustomer => {
+            return Ok(InsertErrorInterface::OtherPartyNotACustomer(
+                OtherPartyNotACustomer,
             ))
         }
 
         // Standard Graphql Errors
-        ServiceError::InboundShipmentDoesNotExist
-        | ServiceError::InboundShipmentDoesNotBelongToCurrentStore
-        | ServiceError::OriginalInvoiceNotAnInboundShipment
-        | ServiceError::CannotReturnInboundShipment
+        ServiceError::OutboundShipmentDoesNotExist
+        | ServiceError::OutboundShipmentDoesNotBelongToCurrentStore
+        | ServiceError::OriginalInvoiceNotAnOutboundShipment
+        | ServiceError::CannotReturnOutboundShipment
         | ServiceError::InvoiceAlreadyExists
         | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::LineInsertError { .. }
         | ServiceError::LineReturnReasonUpdateError { .. }
@@ -114,16 +118,16 @@ impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
-            supplier_id,
-            outbound_return_lines,
-            inbound_shipment_id,
+            customer_id,
+            outbound_shipment_id,
+            customer_return_lines,
         }: InsertInput = self;
 
         ServiceInput {
             id,
-            other_party_id: supplier_id,
-            inbound_shipment_id,
-            outbound_return_lines: outbound_return_lines
+            other_party_id: customer_id,
+            outbound_shipment_id,
+            customer_return_lines: customer_return_lines
                 .into_iter()
                 .map(|line| line.to_domain())
                 .collect(),
@@ -131,22 +135,28 @@ impl InsertInput {
     }
 }
 
-impl OutboundReturnLineInput {
-    pub fn to_domain(self) -> OutboundReturnLineServiceInput {
-        let OutboundReturnLineInput {
+impl CustomerReturnLineInput {
+    pub fn to_domain(self) -> CustomerReturnLineServiceInput {
+        let CustomerReturnLineInput {
             id,
-            stock_line_id,
-            number_of_packs_to_return,
+            number_of_packs_returned,
             reason_id,
             note,
-        }: OutboundReturnLineInput = self;
+            item_id,
+            expiry_date,
+            batch,
+            pack_size,
+        }: CustomerReturnLineInput = self;
 
-        OutboundReturnLineServiceInput {
+        CustomerReturnLineServiceInput {
             id,
-            stock_line_id,
-            number_of_packs: number_of_packs_to_return,
+            number_of_packs: number_of_packs_returned,
             reason_id,
             note,
+            item_id,
+            expiry_date,
+            batch,
+            pack_size,
         }
     }
 }

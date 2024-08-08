@@ -3,14 +3,14 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::OutboundReturnLineConnector;
+use graphql_types::types::SupplierReturnLineConnector;
 use service::auth::{Resource, ResourceAccessRequest};
 
-use service::invoice::outbound_return::generate_outbound_return_lines::GenerateOutboundReturnLinesInput as ServiceInput;
+use service::invoice::supplier_return::generate_supplier_return_lines::GenerateSupplierReturnLinesInput as ServiceInput;
 
 #[derive(InputObject, Clone)]
 /// At least one input is required.
-pub struct GenerateOutboundReturnLinesInput {
+pub struct GenerateSupplierReturnLinesInput {
     /// The stock line ids to generate new return lines for
     pub stock_line_ids: Vec<String>,
     /// Generate new return lines for all the available stock lines of a specific item
@@ -20,19 +20,19 @@ pub struct GenerateOutboundReturnLinesInput {
 }
 
 #[derive(Union)]
-pub enum GenerateOutboundReturnLinesResponse {
-    Response(OutboundReturnLineConnector),
+pub enum GenerateSupplierReturnLinesResponse {
+    Response(SupplierReturnLineConnector),
 }
 
-pub fn generate_outbound_return_lines(
+pub fn generate_supplier_return_lines(
     ctx: &Context<'_>,
     store_id: String,
-    input: GenerateOutboundReturnLinesInput,
-) -> Result<GenerateOutboundReturnLinesResponse> {
+    input: GenerateSupplierReturnLinesInput,
+) -> Result<GenerateSupplierReturnLinesResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundReturn,
+            resource: Resource::MutateSupplierReturn,
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -42,17 +42,17 @@ pub fn generate_outbound_return_lines(
 
     let return_lines = service_provider
         .invoice_service
-        .generate_outbound_return_lines(&service_context, &store_id, input.to_domain())
+        .generate_supplier_return_lines(&service_context, &store_id, input.to_domain())
         .map_err(StandardGraphqlError::from_list_error)?;
 
-    Ok(GenerateOutboundReturnLinesResponse::Response(
-        OutboundReturnLineConnector::from_domain(return_lines),
+    Ok(GenerateSupplierReturnLinesResponse::Response(
+        SupplierReturnLineConnector::from_domain(return_lines),
     ))
 }
 
-impl GenerateOutboundReturnLinesInput {
+impl GenerateSupplierReturnLinesInput {
     fn to_domain(self) -> ServiceInput {
-        let GenerateOutboundReturnLinesInput {
+        let GenerateSupplierReturnLinesInput {
             stock_line_ids,
             item_id,
             return_id,

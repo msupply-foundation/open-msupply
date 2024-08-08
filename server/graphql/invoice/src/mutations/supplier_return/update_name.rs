@@ -8,27 +8,27 @@ use graphql_core::{
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::outbound_return::update_name::{
-    UpdateOutboundReturnName as ServiceInput, UpdateOutboundReturnNameError as ServiceError,
+use service::invoice::supplier_return::update_name::{
+    UpdateSupplierReturnName as ServiceInput, UpdateSupplierReturnNameError as ServiceError,
 };
 
 use crate::mutations::outbound_shipment::error::InvoiceIsNotEditable;
 
 #[derive(InputObject)]
-#[graphql(name = "UpdateOutboundReturnNameInput")]
+#[graphql(name = "UpdateSupplierReturnNameInput")]
 pub struct UpdateNameInput {
     pub id: String,
     other_party_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "UpdateOutboundReturnNameError")]
+#[graphql(name = "UpdateSupplierReturnNameError")]
 pub struct UpdateNameError {
     pub error: UpdateReturnNameErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "UpdateOutboundReturnNameResponse")]
+#[graphql(name = "UpdateSupplierReturnNameResponse")]
 pub enum UpdateNameResponse {
     Error(UpdateNameError),
     Response(InvoiceNode),
@@ -42,7 +42,7 @@ pub fn update_name(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundReturn,
+            resource: Resource::MutateSupplierReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -53,7 +53,7 @@ pub fn update_name(
     map_response(
         service_provider
             .invoice_service
-            .update_outbound_return_name(&service_context, input.to_domain()),
+            .update_supplier_return_name(&service_context, input.to_domain()),
     )
 }
 
@@ -110,7 +110,7 @@ fn map_error(error: ServiceError) -> Result<UpdateReturnNameErrorInterface> {
                 OtherPartyNotVisible,
             ))
         }
-        ServiceError::NotAnOutboundReturn
+        ServiceError::NotAnSupplierReturn
         | ServiceError::NotThisStoreInvoice
         | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::UpdatedInvoiceDoesNotExist => {
@@ -128,15 +128,15 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_name_store_a, mock_outbound_return_a, mock_store_a, MockDataInserts},
+        mock::{mock_name_store_a, mock_store_a, mock_supplier_return_a, MockDataInserts},
         Invoice, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
         invoice::{
-            outbound_return::update_name::{
-                UpdateOutboundReturnName as ServiceInput,
-                UpdateOutboundReturnNameError as ServiceError,
+            supplier_return::update_name::{
+                UpdateSupplierReturnName as ServiceInput,
+                UpdateSupplierReturnNameError as ServiceError,
             },
             InvoiceServiceTrait,
         },
@@ -150,7 +150,7 @@ mod test {
     pub struct TestService(pub Box<InsertMethod>);
 
     impl InvoiceServiceTrait for TestService {
-        fn update_outbound_return_name(
+        fn update_supplier_return_name(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -188,9 +188,9 @@ mod test {
         .await;
 
         let mutation = r#"
-        mutation ($input: UpdateOutboundReturnNameInput!) {
-            updateOutboundReturnName(input: $input, storeId: \"store_a\") {
-                ... on UpdateOutboundReturnNameError {
+        mutation ($input: UpdateSupplierReturnNameInput!) {
+            updateSupplierReturnName(input: $input, storeId: \"store_a\") {
+                ... on UpdateSupplierReturnNameError {
                     error {
                         __typename
                     }
@@ -203,7 +203,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
-            "updateOutboundReturnName": {
+            "updateSupplierReturnName": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -223,7 +223,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
-            "updateOutboundReturnName": {
+            "updateSupplierReturnName": {
               "error": {
                 "__typename": "OtherPartyNotASupplier"
               }
@@ -243,7 +243,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotVisible)));
 
         let expected = json!({
-            "updateOutboundReturnName" : {
+            "updateSupplierReturnName" : {
                 "error": {
                     "__typename": "OtherPartyNotVisible"
                 }
@@ -270,8 +270,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotAnOutboundReturn
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundReturn)));
+        // NotAnSupplierReturn
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnSupplierReturn)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -312,23 +312,23 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_update_outbound_return_name_success() {
+    async fn test_graphql_update_supplier_return_name_success() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_update_outbound_return_name_success",
+            "test_graphql_update_supplier_return_name_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-            mutation ($storeId: String, $input: UpdateOutboundReturnNameInput!) {
-                updateOutboundReturnName(storeId: $storeId, input: $input) {
+            mutation ($storeId: String, $input: UpdateSupplierReturnNameInput!) {
+                updateSupplierReturnName(storeId: $storeId, input: $input) {
                     ... on InvoiceNode {
                         id
                         otherPartyId
                     }
-                    ... on UpdateOutboundReturnNameError {
+                    ... on UpdateSupplierReturnNameError {
                         error {
                           __typename
                         }
@@ -347,7 +347,7 @@ mod test {
                 }
             );
             Ok(Invoice {
-                invoice_row: mock_outbound_return_a(),
+                invoice_row: mock_supplier_return_a(),
                 name_row: mock_name_store_a(),
                 store_row: mock_store_a(),
                 clinician_row: None,
@@ -363,8 +363,8 @@ mod test {
         });
 
         let expected = json!({
-            "updateOutboundReturnName": {
-                "id": mock_outbound_return_a().id,
+            "updateSupplierReturnName": {
+                "id": mock_supplier_return_a().id,
                 "otherPartyId": mock_name_store_a().id,
             }
           }

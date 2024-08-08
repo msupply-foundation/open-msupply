@@ -8,16 +8,16 @@ use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
-use service::invoice::supplier_return::delete::DeleteOutboundReturnError as ServiceError;
+use service::invoice::customer_return::delete::DeleteCustomerReturnError as ServiceError;
 
 #[derive(SimpleObject)]
-#[graphql(name = "DeleteOutboundReturnError")]
+#[graphql(name = "DeleteCustomerReturnError")]
 pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "DeleteOutboundReturnResponse")]
+#[graphql(name = "DeleteCustomerReturnResponse")]
 pub enum DeleteResponse {
     Error(DeleteError),
     Response(GenericDeleteResponse),
@@ -27,7 +27,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundReturn,
+            resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -38,7 +38,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     map_response(
         service_provider
             .invoice_service
-            .delete_outbound_return(&service_context, id),
+            .delete_customer_return(&service_context, id),
     )
 }
 
@@ -54,7 +54,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 }
 
 #[derive(Interface)]
-#[graphql(name = "DeleteOutboundReturnErrorInterface")]
+#[graphql(name = "DeleteCustomerReturnErrorInterface")]
 #[graphql(field(name = "description", ty = "&str"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
@@ -70,7 +70,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
         | ServiceError::CannotEditFinalised
-        | ServiceError::NotAnOutboundReturn
+        | ServiceError::NotAnCustomerReturn
         | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
 
         ServiceError::DatabaseError(_) | ServiceError::LineDeleteError { .. } => {

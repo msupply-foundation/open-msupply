@@ -6,19 +6,18 @@ use graphql_core::{
 };
 use graphql_types::types::InvoiceNode;
 use service::invoice::supplier_return::update::{
-    UpdateOutboundReturn as ServiceInput, UpdateOutboundReturnError as ServiceError,
+    UpdateSupplierReturn as ServiceInput, UpdateSupplierReturnError as ServiceError,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    invoice::supplier_return::update::UpdateOutboundReturnStatus,
+    invoice::supplier_return::update::UpdateSupplierReturnStatus,
 };
 
 #[derive(InputObject)]
-#[graphql(name = "UpdateOutboundReturnInput")]
+#[graphql(name = "UpdateSupplierReturnInput")]
 pub struct UpdateInput {
     pub id: String,
-    // supplier_id: String,
-    status: Option<UpdateOutboundReturnStatusInput>,
+    status: Option<UpdateSupplierReturnStatusInput>,
     comment: Option<String>,
     colour: Option<String>,
     on_hold: Option<bool>,
@@ -27,13 +26,13 @@ pub struct UpdateInput {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum UpdateOutboundReturnStatusInput {
+pub enum UpdateSupplierReturnStatusInput {
     Picked,
     Shipped,
 }
 
 #[derive(Union)]
-#[graphql(name = "UpdateOutboundReturnResponse")]
+#[graphql(name = "UpdateSupplierReturnResponse")]
 pub enum UpdateResponse {
     Response(InvoiceNode),
 }
@@ -42,7 +41,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundReturn,
+            resource: Resource::MutateSupplierReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -52,11 +51,11 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
     let result = service_provider
         .invoice_service
-        .update_outbound_return(&service_context, input.to_domain());
+        .update_supplier_return(&service_context, input.to_domain());
 
     match result {
-        Ok(outbound_return) => Ok(UpdateResponse::Response(InvoiceNode::from_domain(
-            outbound_return,
+        Ok(supplier_return) => Ok(UpdateResponse::Response(InvoiceNode::from_domain(
+            supplier_return,
         ))),
         Err(err) => map_error(err),
     }
@@ -68,7 +67,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        ServiceError::NotAnOutboundReturn
+        ServiceError::NotAnSupplierReturn
         | ServiceError::ReturnDoesNotBelongToCurrentStore
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotReverseInvoiceStatus
@@ -96,7 +95,7 @@ impl UpdateInput {
         }: UpdateInput = self;
 
         ServiceInput {
-            outbound_return_id: id,
+            supplier_return_id: id,
             comment,
             status: status.map(|status| status.to_domain()),
             colour,
@@ -107,12 +106,12 @@ impl UpdateInput {
     }
 }
 
-impl UpdateOutboundReturnStatusInput {
-    pub fn to_domain(&self) -> UpdateOutboundReturnStatus {
-        use UpdateOutboundReturnStatus::*;
+impl UpdateSupplierReturnStatusInput {
+    pub fn to_domain(&self) -> UpdateSupplierReturnStatus {
+        use UpdateSupplierReturnStatus::*;
         match self {
-            UpdateOutboundReturnStatusInput::Picked => Picked,
-            UpdateOutboundReturnStatusInput::Shipped => Shipped,
+            UpdateSupplierReturnStatusInput::Picked => Picked,
+            UpdateSupplierReturnStatusInput::Shipped => Shipped,
         }
     }
 }

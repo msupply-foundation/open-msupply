@@ -2,38 +2,38 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::ItemRow;
-use service::{invoice::customer_return::generate_lines::InboundReturnLine, ListResult};
+use service::{invoice::customer_return::generate_lines::CustomerReturnLine, ListResult};
 
 use super::ItemNode;
 
 #[derive(SimpleObject)]
-pub struct GeneratedInboundReturnLineConnector {
+pub struct GeneratedCustomerReturnLineConnector {
     total_count: u32,
-    nodes: Vec<InboundReturnLineNode>,
+    nodes: Vec<CustomerReturnLineNode>,
 }
 
-impl GeneratedInboundReturnLineConnector {
+impl GeneratedCustomerReturnLineConnector {
     pub fn from_domain(
-        return_lines: ListResult<InboundReturnLine>,
-    ) -> GeneratedInboundReturnLineConnector {
-        GeneratedInboundReturnLineConnector {
+        return_lines: ListResult<CustomerReturnLine>,
+    ) -> GeneratedCustomerReturnLineConnector {
+        GeneratedCustomerReturnLineConnector {
             total_count: return_lines.count,
             nodes: return_lines
                 .rows
                 .into_iter()
-                .map(InboundReturnLineNode::from_domain)
+                .map(CustomerReturnLineNode::from_domain)
                 .collect(),
         }
     }
 }
 
-pub struct InboundReturnLineNode {
-    pub return_line: InboundReturnLine,
+pub struct CustomerReturnLineNode {
+    pub return_line: CustomerReturnLine,
 }
 
-impl InboundReturnLineNode {
-    pub fn from_domain(return_line: InboundReturnLine) -> InboundReturnLineNode {
-        InboundReturnLineNode { return_line }
+impl CustomerReturnLineNode {
+    pub fn from_domain(return_line: CustomerReturnLine) -> CustomerReturnLineNode {
+        CustomerReturnLineNode { return_line }
     }
 
     pub fn item_row(&self) -> &ItemRow {
@@ -42,7 +42,7 @@ impl InboundReturnLineNode {
 }
 
 #[Object]
-impl InboundReturnLineNode {
+impl CustomerReturnLineNode {
     pub async fn id(&self) -> &str {
         &self.return_line.id
     }
