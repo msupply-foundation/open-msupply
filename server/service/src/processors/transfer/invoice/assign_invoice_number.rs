@@ -46,7 +46,7 @@ impl InvoiceTransferProcessor for AssignInvoiceNumberProcessor {
         // 2.
         if !matches!(
             outbound_invoice.invoice_row.r#type,
-            InvoiceType::OutboundShipment | InvoiceType::OutboundReturn
+            InvoiceType::OutboundShipment | InvoiceType::SupplierReturn
         ) {
             return Ok(None);
         }
