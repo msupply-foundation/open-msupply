@@ -430,13 +430,13 @@ pub fn mock_prescription_verified() -> InvoiceRow {
     })
 }
 
-pub fn mock_outbound_return_a() -> InvoiceRow {
+pub fn mock_supplier_return_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = String::from("outbound_return_a");
+        r.id = String::from("supplier_return_a");
         r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_a");
         r.invoice_number = 1;
-        r.r#type = InvoiceType::OutboundReturn;
+        r.r#type = InvoiceType::SupplierReturn;
         r.status = InvoiceStatus::Picked;
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
@@ -447,13 +447,13 @@ pub fn mock_outbound_return_a() -> InvoiceRow {
     })
 }
 
-pub fn mock_outbound_return_b() -> InvoiceRow {
+pub fn mock_supplier_return_b() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = String::from("outbound_return_b");
+        r.id = String::from("supplier_return_b");
         r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_b");
         r.invoice_number = 2;
-        r.r#type = InvoiceType::OutboundReturn;
+        r.r#type = InvoiceType::SupplierReturn;
         r.status = InvoiceStatus::New;
         r.their_reference = Some(String::from(""));
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
@@ -463,13 +463,13 @@ pub fn mock_outbound_return_b() -> InvoiceRow {
     })
 }
 
-pub fn mock_inbound_return_a() -> InvoiceRow {
+pub fn mock_customer_return_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = String::from("inbound_return_a");
+        r.id = String::from("customer_return_a");
         r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_b");
         r.invoice_number = 1;
-        r.r#type = InvoiceType::InboundReturn;
+        r.r#type = InvoiceType::CustomerReturn;
         r.status = InvoiceStatus::Delivered;
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
             .unwrap()
@@ -479,13 +479,13 @@ pub fn mock_inbound_return_a() -> InvoiceRow {
     })
 }
 
-pub fn mock_inbound_return_b() -> InvoiceRow {
+pub fn mock_customer_return_b() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
-        r.id = String::from("inbound_return_b");
+        r.id = String::from("customer_return_b");
         r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_b");
         r.invoice_number = 2;
-        r.r#type = InvoiceType::InboundReturn;
+        r.r#type = InvoiceType::CustomerReturn;
         r.status = InvoiceStatus::New;
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
             .unwrap()
@@ -529,12 +529,12 @@ pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
     ]
 }
 
-pub fn mock_outbound_returns() -> Vec<InvoiceRow> {
-    vec![mock_outbound_return_a(), mock_outbound_return_b()]
+pub fn mock_supplier_returns() -> Vec<InvoiceRow> {
+    vec![mock_supplier_return_a(), mock_supplier_return_b()]
 }
 
-pub fn mock_inbound_returns() -> Vec<InvoiceRow> {
-    vec![mock_inbound_return_a(), mock_inbound_return_b()]
+pub fn mock_customer_returns() -> Vec<InvoiceRow> {
+    vec![mock_customer_return_a(), mock_customer_return_b()]
 }
 
 pub fn mock_invoices() -> Vec<InvoiceRow> {
@@ -542,8 +542,8 @@ pub fn mock_invoices() -> Vec<InvoiceRow> {
 
     mock_invoices.extend(mock_outbound_shipments());
     mock_invoices.extend(mock_inbound_shipments());
-    mock_invoices.extend(mock_outbound_returns());
-    mock_invoices.extend(mock_inbound_returns());
+    mock_invoices.extend(mock_supplier_returns());
+    mock_invoices.extend(mock_customer_returns());
 
     mock_invoices
 }

@@ -6,7 +6,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use super::{UpdateInboundReturn, UpdateInboundReturnError, UpdateInboundReturnStatus};
+use super::{UpdateCustomerReturn, UpdateCustomerReturnError, UpdateCustomerReturnStatus};
 
 pub struct LineAndStockLine {
     pub stock_line: StockLineRow,
@@ -23,8 +23,8 @@ pub(crate) fn generate(
     user_id: &str,
     existing_return: InvoiceRow,
     other_party_option: Option<Name>,
-    patch: UpdateInboundReturn,
-) -> Result<GenerateResult, UpdateInboundReturnError> {
+    patch: UpdateCustomerReturn,
+) -> Result<GenerateResult, UpdateCustomerReturnError> {
     let mut updated_return = existing_return.clone();
 
     updated_return.user_id = Some(user_id.to_string());
@@ -67,9 +67,9 @@ pub(crate) fn generate(
 }
 
 fn changed_status(
-    status: Option<UpdateInboundReturnStatus>,
+    status: Option<UpdateCustomerReturnStatus>,
     existing_status: &InvoiceStatus,
-) -> Option<UpdateInboundReturnStatus> {
+) -> Option<UpdateCustomerReturnStatus> {
     let new_status = match status {
         Some(status) => status,
         None => return None, // Status is not changing
@@ -83,7 +83,10 @@ fn changed_status(
     Some(new_status)
 }
 
-pub fn should_create_batches(existing_status: &InvoiceStatus, patch: &UpdateInboundReturn) -> bool {
+pub fn should_create_batches(
+    existing_status: &InvoiceStatus,
+    patch: &UpdateCustomerReturn,
+) -> bool {
     let new_status = match changed_status(patch.status.to_owned(), existing_status) {
         Some(status) => status,
         None => return false, // There's no status to update
@@ -93,13 +96,13 @@ pub fn should_create_batches(existing_status: &InvoiceStatus, patch: &UpdateInbo
         (
             // From New/Picked/Shipped to Delivered/Verified
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundReturnStatus::Delivered | UpdateInboundReturnStatus::Verified,
+            UpdateCustomerReturnStatus::Delivered | UpdateCustomerReturnStatus::Verified,
         ) => true,
         _ => false,
     }
 }
 
-fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboundReturn) {
+fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateCustomerReturn) {
     let new_status = match changed_status(patch.status.to_owned(), &inbound_return.status) {
         Some(status) => status,
         None => return, // There's no status to update
@@ -111,7 +114,7 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboun
         // From New/Picked/Shipped to Delivered
         (
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundReturnStatus::Delivered,
+            UpdateCustomerReturnStatus::Delivered,
         ) => {
             inbound_return.delivered_datetime = Some(current_datetime);
         }
@@ -119,13 +122,13 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboun
         // From New/Picked/Shipped to Verified
         (
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
-            UpdateInboundReturnStatus::Verified,
+            UpdateCustomerReturnStatus::Verified,
         ) => {
             inbound_return.delivered_datetime = Some(current_datetime);
             inbound_return.verified_datetime = Some(current_datetime);
         }
         // From Delivered to Verified
-        (InvoiceStatus::Delivered, UpdateInboundReturnStatus::Verified) => {
+        (InvoiceStatus::Delivered, UpdateCustomerReturnStatus::Verified) => {
             inbound_return.verified_datetime = Some(current_datetime);
         }
         _ => {}
@@ -137,7 +140,7 @@ pub fn generate_lines_and_stock_lines(
     store_id: &str,
     inbound_return_id: &str,
     supplier_id: &str,
-) -> Result<Vec<LineAndStockLine>, UpdateInboundReturnError> {
+) -> Result<Vec<LineAndStockLine>, UpdateCustomerReturnError> {
     let return_lines =
         InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(inbound_return_id)?;
     let mut result = Vec::new();

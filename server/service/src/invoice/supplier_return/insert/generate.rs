@@ -5,7 +5,7 @@ use repository::{
     InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
 };
 
-use crate::invoice::outbound_return::OutboundReturnLineInput;
+use crate::invoice::supplier_return::OutboundReturnLineInput;
 use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
 use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;

@@ -7,7 +7,7 @@ use repository::{
 use util::uuid::uuid;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct InboundReturnLine {
+pub struct CustomerReturnLine {
     pub id: String,
     pub reason_id: Option<String>,
     pub note: Option<String>,
@@ -25,19 +25,19 @@ pub struct ExistingLinesInput {
     pub return_id: String,
 }
 
-pub struct GenerateInboundReturnLinesInput {
+pub struct GenerateCustomerReturnLinesInput {
     pub outbound_shipment_line_ids: Vec<String>,
     pub existing_lines_input: Option<ExistingLinesInput>,
 }
 
-pub fn generate_inbound_return_lines(
+pub fn generate_customer_return_lines(
     ctx: &ServiceContext,
     _store_id: &str,
-    GenerateInboundReturnLinesInput {
+    GenerateCustomerReturnLinesInput {
         outbound_shipment_line_ids,
         existing_lines_input: include_existing_lines,
-    }: GenerateInboundReturnLinesInput,
-) -> Result<ListResult<InboundReturnLine>, ListError> {
+    }: GenerateCustomerReturnLinesInput,
+) -> Result<ListResult<CustomerReturnLine>, ListError> {
     let existing_return_lines =
         if let Some(ExistingLinesInput { item_id, return_id }) = include_existing_lines {
             get_existing_return_lines(ctx, &item_id, &return_id)?
@@ -48,7 +48,7 @@ pub fn generate_inbound_return_lines(
     let new_return_lines = generate_new_return_lines(ctx, outbound_shipment_line_ids)?;
 
     // return existing first, then new lines
-    let return_lines: Vec<InboundReturnLine> = existing_return_lines
+    let return_lines: Vec<CustomerReturnLine> = existing_return_lines
         .into_iter()
         .chain(new_return_lines)
         .collect();
@@ -63,24 +63,24 @@ fn get_existing_return_lines(
     ctx: &ServiceContext,
     item_id: &str,
     return_id: &str,
-) -> Result<Vec<InboundReturnLine>, ListError> {
+) -> Result<Vec<CustomerReturnLine>, ListError> {
     let invoice_line_repo = InvoiceLineRepository::new(&ctx.connection);
     let existing_invoice_lines = invoice_line_repo.query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(return_id))
-            .invoice_type(InvoiceType::InboundReturn.equal_to())
+            .invoice_type(InvoiceType::CustomerReturn.equal_to())
             .item_id(EqualFilter::equal_to(item_id)),
     )?;
 
     let existing_return_lines = existing_invoice_lines
         .into_iter()
-        .map(InboundReturnLine::from_return_invoice_line)
-        .collect::<Vec<InboundReturnLine>>();
+        .map(CustomerReturnLine::from_return_invoice_line)
+        .collect::<Vec<CustomerReturnLine>>();
 
     Ok(existing_return_lines)
 }
 
-impl InboundReturnLine {
+impl CustomerReturnLine {
     fn extend_from_invoice_line(self, line: InvoiceLine) -> Self {
         let InvoiceLineRow {
             pack_size,
@@ -116,16 +116,16 @@ impl InboundReturnLine {
 fn generate_new_return_lines(
     ctx: &ServiceContext,
     outbound_shipment_line_ids: Vec<String>,
-) -> Result<Vec<InboundReturnLine>, ListError> {
+) -> Result<Vec<CustomerReturnLine>, ListError> {
     let invoice_line_repo = InvoiceLineRepository::new(&ctx.connection);
     let outbound_shipment_lines = invoice_line_repo.query_by_filter(
         InvoiceLineFilter::new().id(EqualFilter::equal_any(outbound_shipment_line_ids)),
     )?;
 
-    let new_return_lines: Vec<InboundReturnLine> = outbound_shipment_lines
+    let new_return_lines: Vec<CustomerReturnLine> = outbound_shipment_lines
         .into_iter()
         .map(|invoice_line| {
-            InboundReturnLine {
+            CustomerReturnLine {
                 id: uuid(),
                 packs_issued: Some(invoice_line.invoice_line_row.number_of_packs),
                 ..Default::default()
@@ -142,18 +142,18 @@ mod test {
     use crate::{invoice::ExistingLinesInput, service_provider::ServiceProvider};
     use repository::{
         mock::{
-            mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
+            mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_item_a,
             mock_outbound_shipment_a_invoice_lines, MockDataInserts,
         },
         test_db::setup_all,
     };
 
-    type ServiceInput = super::GenerateInboundReturnLinesInput;
+    type ServiceInput = super::GenerateCustomerReturnLinesInput;
 
     #[actix_rt::test]
-    async fn generate_inbound_return_lines_nothing_supplied() {
+    async fn generate_customer_return_lines_nothing_supplied() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_inbound_return_lines_nothing_supplied",
+            "generate_customer_return_lines_nothing_supplied",
             MockDataInserts::all(),
         )
         .await;
@@ -165,7 +165,7 @@ mod test {
         let store_id = "store_a";
 
         let result = service
-            .generate_inbound_return_lines(
+            .generate_customer_return_lines(
                 &context,
                 store_id,
                 ServiceInput {
@@ -179,9 +179,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_inbound_return_lines_outbound_shipment_line_ids() {
+    async fn generate_customer_return_lines_outbound_shipment_line_ids() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_inbound_return_lines_outbound_shipment_line_ids",
+            "generate_customer_return_lines_outbound_shipment_line_ids",
             MockDataInserts::all(),
         )
         .await;
@@ -197,7 +197,7 @@ mod test {
             .collect();
 
         let result = service
-            .generate_inbound_return_lines(
+            .generate_customer_return_lines(
                 &context,
                 store_id,
                 ServiceInput {
@@ -218,9 +218,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_inbound_return_lines_existing_item_lines() {
+    async fn generate_customer_return_lines_existing_item_lines() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_inbound_return_lines_existing_item_lines",
+            "generate_customer_return_lines_existing_item_lines",
             MockDataInserts::all(),
         )
         .await;
@@ -233,11 +233,11 @@ mod test {
         let outbound_shipment_line_ids = vec![];
         let existing_lines_input = ExistingLinesInput {
             item_id: mock_item_a().id.clone(),
-            return_id: mock_inbound_return_a().id, // has 2 lines, 1 item_a, 1 item_b
+            return_id: mock_customer_return_a().id, // has 2 lines, 1 item_a, 1 item_b
         };
 
         let result = service
-            .generate_inbound_return_lines(
+            .generate_customer_return_lines(
                 &context,
                 store_id,
                 ServiceInput {
@@ -251,7 +251,7 @@ mod test {
         assert_eq!(result.rows[0].item_row.id, "item_a");
         assert_eq!(
             result.rows[0].note,
-            mock_inbound_return_a_invoice_line_a().note
+            mock_customer_return_a_invoice_line_a().note
         );
     }
 }

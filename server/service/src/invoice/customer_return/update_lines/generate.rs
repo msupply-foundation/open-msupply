@@ -3,14 +3,14 @@ use repository::{
 };
 
 use crate::{
-    invoice::InboundReturnLineInput,
+    invoice::CustomerReturnLineInput,
     invoice_line::{
         stock_in_line::{DeleteStockInLine, InsertStockInLine, StockInType, UpdateStockInLine},
         update_return_reason_id::UpdateLineReturnReason,
     },
 };
 
-use super::UpdateInboundReturnLines;
+use super::UpdateCustomerReturnLines;
 
 pub struct GenerateResult {
     pub lines_to_add: Vec<InsertStockInLine>,
@@ -21,13 +21,13 @@ pub struct GenerateResult {
 
 pub fn generate(
     connection: &StorageConnection,
-    UpdateInboundReturnLines {
-        inbound_return_id,
-        inbound_return_lines,
-    }: UpdateInboundReturnLines,
+    UpdateCustomerReturnLines {
+        customer_return_id,
+        customer_return_lines,
+    }: UpdateCustomerReturnLines,
 ) -> Result<GenerateResult, RepositoryError> {
     let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&inbound_return_id)),
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return_id)),
     )?;
     let check_already_exists = |id: &str| {
         existing_lines
@@ -35,12 +35,12 @@ pub fn generate(
             .any(|line| line.invoice_line_row.id == id)
     };
 
-    let lines_to_add = inbound_return_lines
+    let lines_to_add = customer_return_lines
         .clone()
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0 && !check_already_exists(&line.id))
         .map(
-            |InboundReturnLineInput {
+            |CustomerReturnLineInput {
                  id,
                  item_id,
                  expiry_date,
@@ -51,14 +51,14 @@ pub fn generate(
                  note,
              }| InsertStockInLine {
                 id,
-                invoice_id: inbound_return_id.clone(),
+                invoice_id: customer_return_id.clone(),
                 item_id,
                 number_of_packs,
                 note,
                 pack_size,
                 batch,
                 expiry_date,
-                r#type: StockInType::InboundReturn,
+                r#type: StockInType::CustomerReturn,
                 // Default
                 location: None,
                 cost_price_per_pack: 0.0,
@@ -72,12 +72,12 @@ pub fn generate(
         )
         .collect();
 
-    let lines_to_update = inbound_return_lines
+    let lines_to_update = customer_return_lines
         .clone()
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0 && check_already_exists(&line.id))
         .map(
-            |InboundReturnLineInput {
+            |CustomerReturnLineInput {
                  id,
                  item_id,
                  expiry_date,
@@ -94,7 +94,7 @@ pub fn generate(
                 item_id: Some(item_id),
                 pack_size: Some(pack_size),
                 number_of_packs: Some(number_of_packs),
-                r#type: StockInType::InboundReturn,
+                r#type: StockInType::CustomerReturn,
                 // Default
                 location: None,
                 cost_price_per_pack: None,
@@ -105,17 +105,17 @@ pub fn generate(
         )
         .collect();
 
-    let lines_to_delete = inbound_return_lines
+    let lines_to_delete = customer_return_lines
         .clone()
         .into_iter()
         .filter(|line| line.number_of_packs <= 0.0 && check_already_exists(&line.id))
         .map(|line| DeleteStockInLine {
             id: line.id,
-            r#type: StockInType::InboundReturn,
+            r#type: StockInType::CustomerReturn,
         })
         .collect();
 
-    let update_line_return_reasons = inbound_return_lines
+    let update_line_return_reasons = customer_return_lines
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0)
         .map(|line| UpdateLineReturnReason {

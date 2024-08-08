@@ -7,14 +7,14 @@ use crate::{
 };
 use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
 
-use super::{UpdateInboundReturn, UpdateInboundReturnError};
+use super::{UpdateCustomerReturn, UpdateCustomerReturnError};
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    patch: &UpdateInboundReturn,
-) -> Result<(InvoiceRow, Option<Name>, bool), UpdateInboundReturnError> {
-    use UpdateInboundReturnError::*;
+    patch: &UpdateCustomerReturn,
+) -> Result<(InvoiceRow, Option<Name>, bool), UpdateCustomerReturnError> {
+    use UpdateCustomerReturnError::*;
 
     let return_row = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
 
@@ -24,8 +24,8 @@ pub fn validate(
     if !check_invoice_is_editable(&return_row) {
         return Err(ReturnIsNotEditable);
     }
-    if !check_invoice_type(&return_row, InvoiceType::InboundReturn) {
-        return Err(NotAnInboundReturn);
+    if !check_invoice_type(&return_row, InvoiceType::CustomerReturn) {
+        return Err(NotAnCustomerReturn);
     }
 
     // Status check

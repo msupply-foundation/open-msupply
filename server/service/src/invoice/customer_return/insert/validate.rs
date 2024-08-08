@@ -3,14 +3,14 @@ use repository::{InvoiceRow, InvoiceStatus, InvoiceType, Name, StorageConnection
 use crate::invoice::{check_invoice_exists, check_invoice_type, check_store};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 
-use super::{InsertInboundReturn, InsertInboundReturnError};
+use super::{InsertCustomerReturn, InsertCustomerReturnError};
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &InsertInboundReturn,
-) -> Result<Name, InsertInboundReturnError> {
-    use InsertInboundReturnError::*;
+    input: &InsertCustomerReturn,
+) -> Result<Name, InsertCustomerReturnError> {
+    use InsertCustomerReturnError::*;
     if (check_invoice_exists(&input.id, connection)?).is_some() {
         return Err(InvoiceAlreadyExists);
     }
