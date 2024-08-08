@@ -65,11 +65,7 @@ export const ListView = () => {
     [navigate]
   );
 
-  if (
-    !store?.preferences?.omProgramModule ||
-    !stockAndItemReports?.length ||
-    !expiringReports?.length
-  ) {
+  if (!stockAndItemReports?.length && !expiringReports?.length) {
     return <NothingHere body={t('message.contact-support')} />;
   }
 
