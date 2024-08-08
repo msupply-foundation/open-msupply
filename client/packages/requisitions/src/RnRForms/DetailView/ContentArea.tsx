@@ -128,6 +128,10 @@ export const ContentArea = ({
               label="label.requested-quantity"
               tooltip="description.rnr-requested-quantity"
             />
+            <HeaderCell
+              label="label.low-stock"
+              tooltip="description.rnr-low-stock"
+            />
             <HeaderCell label="label.comment" />
             <HeaderCell label="label.confirmed" />
           </tr>

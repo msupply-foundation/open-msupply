@@ -19,3 +19,16 @@ export const getAmc = (
 
   return averageMonthlyConsumption;
 };
+
+export const getAlarmLevel = (
+  finalBalance: number,
+  maximumQuantity: number
+) => {
+  if (finalBalance < maximumQuantity / 4) {
+    return '!!';
+  }
+
+  if (finalBalance < maximumQuantity / 2) {
+    return '!';
+  }
+};
