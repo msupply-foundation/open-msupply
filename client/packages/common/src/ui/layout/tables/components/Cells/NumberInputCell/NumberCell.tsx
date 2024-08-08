@@ -31,7 +31,7 @@ export const NumberCell = <T extends RecordWithId>({
         padding: '4px 8px',
       }}
     >
-      <Tooltip title={value.toString()}>
+      <Tooltip title={value?.toString()}>
         <Typography
           style={{
             overflow: 'hidden',
