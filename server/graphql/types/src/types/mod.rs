@@ -79,11 +79,11 @@ pub use self::program::*;
 pub mod pack_variant;
 pub use self::pack_variant::*;
 
-pub mod outbound_return_line;
-pub use self::outbound_return_line::*;
+pub mod supplier_return_line;
+pub use self::supplier_return_line::*;
 
-pub mod inbound_return_line;
-pub use self::inbound_return_line::*;
+pub mod customer_return_line;
+pub use self::customer_return_line::*;
 
 pub mod return_reason;
 pub use self::return_reason::*;

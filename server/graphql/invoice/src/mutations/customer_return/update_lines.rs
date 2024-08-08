@@ -7,20 +7,20 @@ use graphql_core::{
 use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::customer_return::update_lines::{
-    UpdateInboundReturnLines as ServiceInput, UpdateInboundReturnLinesError as ServiceError,
+    UpdateCustomerReturnLines as ServiceInput, UpdateCustomerReturnLinesError as ServiceError,
 };
 
-use super::insert::InboundReturnLineInput;
+use super::insert::CustomerReturnLineInput;
 
 #[derive(InputObject)]
-#[graphql(name = "UpdateInboundReturnLinesInput")]
+#[graphql(name = "UpdateCustomerReturnLinesInput")]
 pub struct UpdateInput {
-    pub inbound_return_id: String,
-    inbound_return_lines: Vec<InboundReturnLineInput>,
+    pub customer_return_id: String,
+    customer_return_lines: Vec<CustomerReturnLineInput>,
 }
 
 #[derive(Union)]
-#[graphql(name = "UpdateInboundReturnLinesResponse")]
+#[graphql(name = "UpdateCustomerReturnLinesResponse")]
 pub enum UpdateResponse {
     Response(InvoiceNode),
 }
@@ -33,7 +33,7 @@ pub fn update_lines(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateInboundReturn,
+            resource: Resource::MutateCustomerReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -43,11 +43,11 @@ pub fn update_lines(
 
     let result = service_provider
         .invoice_service
-        .update_inbound_return_lines(&service_context, input.to_domain());
+        .update_customer_return_lines(&service_context, input.to_domain());
 
     match result {
-        Ok(inbound_return) => Ok(UpdateResponse::Response(InvoiceNode::from_domain(
-            inbound_return,
+        Ok(customer_return) => Ok(UpdateResponse::Response(InvoiceNode::from_domain(
+            customer_return,
         ))),
         Err(err) => map_error(err),
     }
@@ -59,7 +59,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        ServiceError::NotAnInboundReturn
+        ServiceError::NotAnCustomerReturn
         | ServiceError::ReturnDoesNotBelongToCurrentStore
         | ServiceError::ReturnIsNotEditable
         | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
@@ -77,13 +77,13 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
 impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
-            inbound_return_id,
-            inbound_return_lines,
+            customer_return_id,
+            customer_return_lines,
         }: UpdateInput = self;
 
         ServiceInput {
-            inbound_return_id,
-            inbound_return_lines: inbound_return_lines
+            customer_return_id,
+            customer_return_lines: customer_return_lines
                 .into_iter()
                 .map(|line| line.to_domain())
                 .collect(),

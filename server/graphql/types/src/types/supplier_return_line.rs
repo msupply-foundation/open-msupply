@@ -3,39 +3,39 @@ use chrono::NaiveDate;
 use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::{ItemRow, StockLineRow};
 use service::{
-    invoice::supplier_return::generate_outbound_return_lines::OutboundReturnLine, ListResult,
+    invoice::supplier_return::generate_supplier_return_lines::SupplierReturnLine, ListResult,
 };
 
 use super::ItemNode;
 
 #[derive(SimpleObject)]
-pub struct OutboundReturnLineConnector {
+pub struct SupplierReturnLineConnector {
     total_count: u32,
-    nodes: Vec<OutboundReturnLineNode>,
+    nodes: Vec<SupplierReturnLineNode>,
 }
 
-impl OutboundReturnLineConnector {
+impl SupplierReturnLineConnector {
     pub fn from_domain(
-        return_lines: ListResult<OutboundReturnLine>,
-    ) -> OutboundReturnLineConnector {
-        OutboundReturnLineConnector {
+        return_lines: ListResult<SupplierReturnLine>,
+    ) -> SupplierReturnLineConnector {
+        SupplierReturnLineConnector {
             total_count: return_lines.count,
             nodes: return_lines
                 .rows
                 .into_iter()
-                .map(OutboundReturnLineNode::from_domain)
+                .map(SupplierReturnLineNode::from_domain)
                 .collect(),
         }
     }
 }
 
-pub struct OutboundReturnLineNode {
-    pub return_line: OutboundReturnLine,
+pub struct SupplierReturnLineNode {
+    pub return_line: SupplierReturnLine,
 }
 
-impl OutboundReturnLineNode {
-    pub fn from_domain(return_line: OutboundReturnLine) -> OutboundReturnLineNode {
-        OutboundReturnLineNode { return_line }
+impl SupplierReturnLineNode {
+    pub fn from_domain(return_line: SupplierReturnLine) -> SupplierReturnLineNode {
+        SupplierReturnLineNode { return_line }
     }
 
     pub fn item_row(&self) -> &ItemRow {
@@ -48,7 +48,7 @@ impl OutboundReturnLineNode {
 }
 
 #[Object]
-impl OutboundReturnLineNode {
+impl SupplierReturnLineNode {
     pub async fn id(&self) -> &str {
         &self.return_line.id
     }
