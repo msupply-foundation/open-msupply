@@ -50,7 +50,7 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
         // 4.
         if !matches!(
             inbound_invoice.invoice_row.r#type,
-            InvoiceType::InboundShipment | InvoiceType::InboundReturn
+            InvoiceType::InboundShipment | InvoiceType::CustomerReturn
         ) {
             return Ok(None);
         }
