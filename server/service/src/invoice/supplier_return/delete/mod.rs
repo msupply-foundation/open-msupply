@@ -14,10 +14,10 @@ use crate::{
     service_provider::ServiceContext,
 };
 
-pub fn delete_outbound_return(
+pub fn delete_supplier_return(
     ctx: &ServiceContext,
     id: String,
-) -> Result<String, DeleteOutboundReturnError> {
+) -> Result<String, DeleteSupplierReturnError> {
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
@@ -29,10 +29,10 @@ pub fn delete_outbound_return(
                     ctx,
                     DeleteStockOutLine {
                         id: line.invoice_line_row.id.clone(),
-                        r#type: Some(StockOutType::OutboundReturn),
+                        r#type: Some(StockOutType::SupplierReturn),
                     },
                 )
-                .map_err(|error| DeleteOutboundReturnError::LineDeleteError {
+                .map_err(|error| DeleteSupplierReturnError::LineDeleteError {
                     line_id: line.invoice_line_row.id,
                     error,
                 })?;
@@ -40,7 +40,7 @@ pub fn delete_outbound_return(
 
             InvoiceRowRepository::new(connection)
                 .delete(&id)
-                .map_err(DeleteOutboundReturnError::DatabaseError)?;
+                .map_err(DeleteSupplierReturnError::DatabaseError)?;
 
             activity_log_entry(
                 ctx,
@@ -52,7 +52,7 @@ pub fn delete_outbound_return(
 
             Ok(id)
         })
-        .map_err(|error: TransactionError<DeleteOutboundReturnError>| error.to_inner_error())?;
+        .map_err(|error: TransactionError<DeleteSupplierReturnError>| error.to_inner_error())?;
 
     ctx.processors_trigger.trigger_invoice_transfer_processors();
 
@@ -61,7 +61,7 @@ pub fn delete_outbound_return(
 
 #[derive(Debug, PartialEq, Clone)]
 
-pub enum DeleteOutboundReturnError {
+pub enum DeleteSupplierReturnError {
     InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
@@ -70,12 +70,12 @@ pub enum DeleteOutboundReturnError {
         line_id: String,
         error: DeleteStockOutLineError,
     },
-    NotAnOutboundReturn,
+    NotAnSupplierReturn,
 }
 
-impl From<RepositoryError> for DeleteOutboundReturnError {
+impl From<RepositoryError> for DeleteSupplierReturnError {
     fn from(error: RepositoryError) -> Self {
-        DeleteOutboundReturnError::DatabaseError(error)
+        DeleteSupplierReturnError::DatabaseError(error)
     }
 }
 
@@ -83,26 +83,26 @@ impl From<RepositoryError> for DeleteOutboundReturnError {
 mod test {
     use repository::{
         mock::{
-            currency_a, mock_name_store_a, mock_name_store_b, mock_outbound_return_a,
-            mock_outbound_return_a_invoice_line_a, mock_outbound_shipment_a, mock_store_a,
-            mock_store_b, MockData, MockDataInserts,
+            currency_a, mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a,
+            mock_store_a, mock_store_b, mock_supplier_return_a,
+            mock_supplier_return_a_invoice_line_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRowRepository,
     };
 
     use crate::{
-        invoice::supplier_return::delete::DeleteOutboundReturnError as ServiceError,
+        invoice::supplier_return::delete::DeleteSupplierReturnError as ServiceError,
         service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn delete_outbound_return_errors() {
+    async fn delete_supplier_return_errors() {
         fn wrong_store() -> InvoiceRow {
             InvoiceRow {
                 id: "wrong_store".to_string(),
                 store_id: mock_store_a().id,
-                r#type: InvoiceType::OutboundReturn,
+                r#type: InvoiceType::SupplierReturn,
                 name_link_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 ..Default::default()
@@ -112,7 +112,7 @@ mod test {
             InvoiceRow {
                 id: "verified".to_string(),
                 store_id: mock_store_b().id,
-                r#type: InvoiceType::OutboundReturn,
+                r#type: InvoiceType::SupplierReturn,
                 name_link_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
                 status: InvoiceStatus::Verified,
@@ -121,7 +121,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "delete_outbound_return_errors",
+            "delete_supplier_return_errors",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![wrong_store(), verified()],
@@ -138,33 +138,33 @@ mod test {
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.delete_outbound_return(&context, "invalid".to_string()),
+            service.delete_supplier_return(&context, "invalid".to_string()),
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        //NotAnOutboundReturn
+        //NotAnSupplierReturn
         assert_eq!(
-            service.delete_outbound_return(&context, mock_outbound_shipment_a().id),
-            Err(ServiceError::NotAnOutboundReturn)
+            service.delete_supplier_return(&context, mock_outbound_shipment_a().id),
+            Err(ServiceError::NotAnSupplierReturn)
         );
 
         //NotThisStoreInvoice
         assert_eq!(
-            service.delete_outbound_return(&context, wrong_store().id),
+            service.delete_supplier_return(&context, wrong_store().id),
             Err(ServiceError::NotThisStoreInvoice)
         );
 
         //CannotEditFinalised
         assert_eq!(
-            service.delete_outbound_return(&context, verified().id),
+            service.delete_supplier_return(&context, verified().id),
             Err(ServiceError::CannotEditFinalised)
         );
     }
 
     #[actix_rt::test]
-    async fn delete_outbound_return_success() {
+    async fn delete_supplier_return_success() {
         let (_, connection, connection_manager, _) =
-            setup_all("delete_outbound_return_success", MockDataInserts::all()).await;
+            setup_all("delete_supplier_return_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -173,7 +173,7 @@ mod test {
         let service = service_provider.invoice_service;
 
         let stock_line_row_repo = StockLineRowRepository::new(&connection);
-        let stock_line_id = mock_outbound_return_a_invoice_line_a()
+        let stock_line_id = mock_supplier_return_a_invoice_line_a()
             .stock_line_id
             .unwrap();
         let original_stock_line = stock_line_row_repo
@@ -182,13 +182,13 @@ mod test {
             .unwrap();
 
         service
-            .delete_outbound_return(&context, mock_outbound_return_a().id)
+            .delete_supplier_return(&context, mock_supplier_return_a().id)
             .unwrap();
 
         // test entry has been deleted
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id(&mock_outbound_return_a().id)
+                .find_one_by_id(&mock_supplier_return_a().id)
                 .unwrap(),
             None
         );
@@ -202,7 +202,7 @@ mod test {
         assert_eq!(
             updated_stock_line.total_number_of_packs,
             original_stock_line.total_number_of_packs
-                + mock_outbound_return_a_invoice_line_a().number_of_packs
+                + mock_supplier_return_a_invoice_line_a().number_of_packs
         );
     }
 }

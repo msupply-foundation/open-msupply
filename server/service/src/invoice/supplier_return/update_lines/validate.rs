@@ -4,14 +4,14 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
 
-use super::UpdateOutboundReturnLinesError;
+use super::UpdateSupplierReturnLinesError;
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     id: &str,
-) -> Result<(), UpdateOutboundReturnLinesError> {
-    use UpdateOutboundReturnLinesError::*;
+) -> Result<(), UpdateSupplierReturnLinesError> {
+    use UpdateSupplierReturnLinesError::*;
 
     let return_row = check_invoice_exists(id, connection)?.ok_or(ReturnDoesNotExist)?;
 
@@ -21,8 +21,8 @@ pub fn validate(
     if !check_invoice_is_editable(&return_row) {
         return Err(ReturnIsNotEditable);
     }
-    if !check_invoice_type(&return_row, InvoiceType::OutboundReturn) {
-        return Err(NotAnOutboundReturn);
+    if !check_invoice_type(&return_row, InvoiceType::SupplierReturn) {
+        return Err(NotAnSupplierReturn);
     }
 
     Ok(())

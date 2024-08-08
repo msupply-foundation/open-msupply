@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::{ItemRow, StockLineRow};
 use service::{
-    invoice::outbound_return::generate_outbound_return_lines::OutboundReturnLine, ListResult,
+    invoice::supplier_return::generate_outbound_return_lines::OutboundReturnLine, ListResult,
 };
 
 use super::ItemNode;

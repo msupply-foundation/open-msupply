@@ -10,16 +10,16 @@ use repository::{
 use validate::validate;
 
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct UpdateOutboundReturnName {
+pub struct UpdateSupplierReturnName {
     pub id: String,
     pub other_party_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
-pub enum UpdateOutboundReturnNameError {
+pub enum UpdateSupplierReturnNameError {
     InvoiceDoesNotExist,
     InvoiceIsNotEditable,
-    NotAnOutboundReturn,
+    NotAnSupplierReturn,
     NotThisStoreInvoice,
     // Name validation
     OtherPartyNotASupplier,
@@ -30,11 +30,11 @@ pub enum UpdateOutboundReturnNameError {
     DatabaseError(RepositoryError),
 }
 
-type OutError = UpdateOutboundReturnNameError;
+type OutError = UpdateSupplierReturnNameError;
 
-pub fn update_outbound_return_name(
+pub fn update_supplier_return_name(
     ctx: &ServiceContext,
-    patch: UpdateOutboundReturnName,
+    patch: UpdateSupplierReturnName,
 ) -> Result<Invoice, OutError> {
     let invoice = ctx
         .connection
@@ -77,9 +77,9 @@ pub fn update_outbound_return_name(
     Ok(invoice)
 }
 
-impl From<RepositoryError> for UpdateOutboundReturnNameError {
+impl From<RepositoryError> for UpdateSupplierReturnNameError {
     fn from(error: RepositoryError) -> Self {
-        UpdateOutboundReturnNameError::DatabaseError(error)
+        UpdateSupplierReturnNameError::DatabaseError(error)
     }
 }
 
@@ -87,8 +87,8 @@ impl From<RepositoryError> for UpdateOutboundReturnNameError {
 mod test {
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_name_a, mock_outbound_return_a, mock_outbound_return_b,
-            mock_store_a, mock_store_b, mock_store_c, MockData, MockDataInserts,
+            mock_inbound_shipment_a, mock_name_a, mock_store_a, mock_store_b, mock_store_c,
+            mock_supplier_return_a, mock_supplier_return_b, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
@@ -97,16 +97,16 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::outbound_return::update_name::UpdateOutboundReturnName,
+        invoice::supplier_return::update_name::UpdateSupplierReturnName,
         service_provider::ServiceProvider,
     };
 
-    use super::UpdateOutboundReturnNameError;
+    use super::UpdateSupplierReturnNameError;
 
-    type ServiceError = UpdateOutboundReturnNameError;
+    type ServiceError = UpdateSupplierReturnNameError;
 
     #[actix_rt::test]
-    async fn update_outbound_return_name_errors() {
+    async fn update_supplier_return_name_errors() {
         fn not_visible() -> NameRow {
             inline_init(|r: &mut NameRow| {
                 r.id = "not_visible".to_string();
@@ -129,14 +129,14 @@ mod test {
         }
 
         fn return_not_editable() -> InvoiceRow {
-            inline_edit(&mock_outbound_return_a(), |mut r| {
+            inline_edit(&mock_supplier_return_a(), |mut r| {
                 r.status = InvoiceStatus::Shipped;
                 r
             })
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "update_outbound_return_name_errors",
+            "update_supplier_return_name_errors",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.names = vec![not_visible(), not_a_supplier()];
@@ -154,39 +154,39 @@ mod test {
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.update_outbound_return_name(
+            service.update_supplier_return_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundReturnName| { r.id = "invalid".to_string() })
+                inline_init(|r: &mut UpdateSupplierReturnName| { r.id = "invalid".to_string() })
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
         // InvoiceIsNotEditable
         assert_eq!(
-            service.update_outbound_return_name(
+            service.update_supplier_return_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundReturnName| {
+                inline_init(|r: &mut UpdateSupplierReturnName| {
                     r.id = return_not_editable().id;
                 })
             ),
             Err(ServiceError::InvoiceIsNotEditable)
         );
-        // NotAnOutboundReturn
+        // NotAnSupplierReturn
         context.store_id = mock_store_a().id;
         assert_eq!(
-            service.update_outbound_return_name(
+            service.update_supplier_return_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundReturnName| {
+                inline_init(|r: &mut UpdateSupplierReturnName| {
                     r.id = mock_inbound_shipment_a().id
                 })
             ),
-            Err(ServiceError::NotAnOutboundReturn)
+            Err(ServiceError::NotAnSupplierReturn)
         );
         // NotThisStoreInvoice
         assert_eq!(
-            service.update_outbound_return_name(
+            service.update_supplier_return_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundReturnName| {
-                    r.id = mock_outbound_return_b().id;
+                inline_init(|r: &mut UpdateSupplierReturnName| {
+                    r.id = mock_supplier_return_b().id;
                 })
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -194,10 +194,10 @@ mod test {
         // OtherPartyDoesNotExist
         context.store_id = mock_store_b().id;
         assert_eq!(
-            service.update_outbound_return_name(
+            service.update_supplier_return_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundReturnName| {
-                    r.id = mock_outbound_return_b().id;
+                inline_init(|r: &mut UpdateSupplierReturnName| {
+                    r.id = mock_supplier_return_b().id;
                     r.other_party_id = Some("invalid".to_string());
                 })
             ),
@@ -205,10 +205,10 @@ mod test {
         );
         // OtherPartyNotVisible
         assert_eq!(
-            service.update_outbound_return_name(
+            service.update_supplier_return_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundReturnName| {
-                    r.id = mock_outbound_return_b().id;
+                inline_init(|r: &mut UpdateSupplierReturnName| {
+                    r.id = mock_supplier_return_b().id;
                     r.other_party_id = Some(not_visible().id);
                 })
             ),
@@ -216,10 +216,10 @@ mod test {
         );
         // OtherPartyNotASupplier
         assert_eq!(
-            service.update_outbound_return_name(
+            service.update_supplier_return_name(
                 &context,
-                inline_init(|r: &mut UpdateOutboundReturnName| {
-                    r.id = mock_outbound_return_b().id;
+                inline_init(|r: &mut UpdateSupplierReturnName| {
+                    r.id = mock_supplier_return_b().id;
                     r.other_party_id = Some(not_a_supplier().id);
                 })
             ),
@@ -228,13 +228,13 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn update_outbound_return_name_success() {
+    async fn update_supplier_return_name_success() {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_return_name_change".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_c().id;
-                r.r#type = InvoiceType::OutboundReturn;
+                r.r#type = InvoiceType::SupplierReturn;
                 r.status = InvoiceStatus::Picked;
             })
         }
@@ -277,7 +277,7 @@ mod test {
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "update_outbound_return_name_success",
+            "update_supplier_return_name_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
@@ -297,9 +297,9 @@ mod test {
         let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
 
         let updated_invoice = service
-            .update_outbound_return_name(
+            .update_supplier_return_name(
                 &context,
-                UpdateOutboundReturnName {
+                UpdateSupplierReturnName {
                     id: invoice().id,
                     other_party_id: Some(supplier().id),
                 },

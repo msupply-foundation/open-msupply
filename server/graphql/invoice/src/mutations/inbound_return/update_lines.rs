@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::inbound_return::update_lines::{
+use service::invoice::customer_return::update_lines::{
     UpdateInboundReturnLines as ServiceInput, UpdateInboundReturnLinesError as ServiceError,
 };
 

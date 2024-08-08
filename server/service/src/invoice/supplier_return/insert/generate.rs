@@ -5,23 +5,23 @@ use repository::{
     InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
 };
 
-use crate::invoice::supplier_return::OutboundReturnLineInput;
+use crate::invoice::supplier_return::SupplierReturnLineInput;
 use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
 use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;
 
-use super::InsertOutboundReturn;
+use super::InsertSupplierReturn;
 
 pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
     user_id: &str,
-    InsertOutboundReturn {
+    InsertSupplierReturn {
         id,
         other_party_id,
         inbound_shipment_id,
-        outbound_return_lines,
-    }: InsertOutboundReturn,
+        supplier_return_lines,
+    }: InsertSupplierReturn,
     other_party: Name,
 ) -> Result<
     (
@@ -37,12 +37,12 @@ pub fn generate(
         .pop()
         .ok_or(RepositoryError::NotFound)?;
 
-    let outbound_return = InvoiceRow {
+    let supplier_return = InvoiceRow {
         id,
         user_id: Some(user_id.to_string()),
         name_link_id: other_party_id,
-        r#type: InvoiceType::OutboundReturn,
-        invoice_number: next_number(connection, &NumberRowType::OutboundReturn, store_id)?,
+        r#type: InvoiceType::SupplierReturn,
+        invoice_number: next_number(connection, &NumberRowType::SupplierReturn, store_id)?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
@@ -67,7 +67,7 @@ pub fn generate(
         clinician_link_id: None,
     };
 
-    let lines_with_packs: Vec<&OutboundReturnLineInput> = outbound_return_lines
+    let lines_with_packs: Vec<&SupplierReturnLineInput> = supplier_return_lines
         .iter()
         .filter(|line| line.number_of_packs > 0.0)
         .collect();
@@ -76,11 +76,11 @@ pub fn generate(
         .iter()
         .map(|line| InsertStockOutLine {
             id: line.id.clone(),
-            invoice_id: outbound_return.id.clone(),
+            invoice_id: supplier_return.id.clone(),
             stock_line_id: line.stock_line_id.clone(),
             number_of_packs: line.number_of_packs,
             note: line.note.clone(),
-            r#type: StockOutType::OutboundReturn,
+            r#type: StockOutType::SupplierReturn,
             // Default
             tax_percentage: None,
             total_before_tax: None,
@@ -101,5 +101,5 @@ pub fn generate(
         })
         .collect();
 
-    Ok((outbound_return, stock_out_lines, update_line_return_reasons))
+    Ok((supplier_return, stock_out_lines, update_line_return_reasons))
 }

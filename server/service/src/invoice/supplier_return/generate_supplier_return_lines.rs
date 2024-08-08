@@ -6,7 +6,7 @@ use repository::{
 use util::uuid::uuid;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct OutboundReturnLine {
+pub struct SupplierReturnLine {
     pub id: String,
     pub reason_id: Option<String>,
     pub note: Option<String>,
@@ -16,21 +16,21 @@ pub struct OutboundReturnLine {
 }
 
 #[derive(Debug, Clone)]
-pub struct GenerateOutboundReturnLinesInput {
+pub struct GenerateSupplierReturnLinesInput {
     pub stock_line_ids: Vec<String>,
     pub item_id: Option<String>,
     pub return_id: Option<String>,
 }
 
-pub fn generate_outbound_return_lines(
+pub fn generate_supplier_return_lines(
     ctx: &ServiceContext,
     store_id: &str,
-    GenerateOutboundReturnLinesInput {
+    GenerateSupplierReturnLinesInput {
         stock_line_ids,
         item_id,
         return_id,
-    }: GenerateOutboundReturnLinesInput,
-) -> Result<ListResult<OutboundReturnLine>, ListError> {
+    }: GenerateSupplierReturnLinesInput,
+) -> Result<ListResult<SupplierReturnLine>, ListError> {
     // If a return_id is provided, get all existing lines for the provided stock_line_ids and item_id
     let existing_return_lines =
         get_existing_return_lines(ctx, return_id, &stock_line_ids, &item_id)?;
@@ -65,8 +65,8 @@ pub fn generate_outbound_return_lines(
         (invoice_line.cloned(), stock_line)
     });
 
-    // Map iterator over (Option<OutboundInvoiceLine>, StockLine) to Vec<OutboundReturnLine>
-    let return_lines: Vec<OutboundReturnLine> = stock_line_and_outbound_line
+    // Map iterator over (Option<OutboundInvoiceLine>, StockLine) to Vec<SupplierReturnLine>
+    let return_lines: Vec<SupplierReturnLine> = stock_line_and_outbound_line
         .map(outbound_line_from_stock_line_and_invoice_line)
         .collect();
 
@@ -155,9 +155,9 @@ fn get_existing_return_lines(
 
 fn outbound_line_from_stock_line_and_invoice_line(
     (invoice_line, stock_line): (Option<InvoiceLine>, StockLine),
-) -> OutboundReturnLine {
+) -> SupplierReturnLine {
     let Some(invoice_line) = invoice_line else {
-        return OutboundReturnLine {
+        return SupplierReturnLine {
             id: uuid(),
             reason_id: None,
             note: None,
@@ -180,7 +180,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
     let number_of_packs_available_to_return =
         stock_line.stock_line_row.available_number_of_packs + number_of_packs;
 
-    OutboundReturnLine {
+    SupplierReturnLine {
         id,
         note,
         number_of_packs,
@@ -194,29 +194,29 @@ mod test {
     use crate::{service_provider::ServiceProvider, ListError};
     use repository::{
         mock::{
-            mock_item_a, mock_outbound_return_a, mock_outbound_return_a_invoice_line_a,
-            mock_outbound_return_b, mock_stock_line_a, mock_stock_line_b, mock_stock_line_ci_c,
-            mock_store_a, MockData, MockDataInserts,
+            mock_item_a, mock_stock_line_a, mock_stock_line_b, mock_stock_line_ci_c, mock_store_a,
+            mock_supplier_return_a, mock_supplier_return_a_invoice_line_a, mock_supplier_return_b,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, ItemRow, ItemType, RepositoryError, StockLineRow,
     };
 
-    type ServiceInput = super::GenerateOutboundReturnLinesInput;
+    type ServiceInput = super::GenerateSupplierReturnLinesInput;
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_errors() {
+    async fn generate_supplier_return_lines_errors() {
         fn no_stock_line() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "no_stock_line".to_string(),
-                invoice_id: mock_outbound_return_a().id,
+                invoice_id: mock_supplier_return_a().id,
                 item_link_id: mock_item_a().id,
                 ..Default::default()
             }
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "generate_outbound_return_lines_errors",
+            "generate_supplier_return_lines_errors",
             MockDataInserts::all(),
             MockData {
                 invoice_lines: vec![no_stock_line()],
@@ -232,11 +232,11 @@ mod test {
         let store_id = mock_store_a().id;
         let stock_line_ids = vec![];
         let item_id = Some(mock_item_a().id);
-        let return_id = Some(mock_outbound_return_a().id);
+        let return_id = Some(mock_supplier_return_a().id);
 
         // Return invoice doesn't have an associated stock_line
         assert_eq!(
-            service.generate_outbound_return_lines(
+            service.generate_supplier_return_lines(
                 &context,
                 &store_id,
                 ServiceInput {
@@ -253,9 +253,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_nothing_supplied() {
+    async fn generate_supplier_return_lines_nothing_supplied() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_outbound_return_lines_nothing_supplied",
+            "generate_supplier_return_lines_nothing_supplied",
             MockDataInserts::all(),
         )
         .await;
@@ -267,10 +267,10 @@ mod test {
         let store_id = "store_a";
         let stock_line_ids = vec![];
         let item_id = None;
-        let return_id = Some(mock_outbound_return_a().id);
+        let return_id = Some(mock_supplier_return_a().id);
 
         let result = service
-            .generate_outbound_return_lines(
+            .generate_supplier_return_lines(
                 &context,
                 store_id,
                 ServiceInput {
@@ -285,9 +285,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_only_return_id() {
+    async fn generate_supplier_return_lines_only_return_id() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_outbound_return_lines_only_return_id",
+            "generate_supplier_return_lines_only_return_id",
             MockDataInserts::all(),
         )
         .await;
@@ -302,7 +302,7 @@ mod test {
         let return_id = None;
 
         let result = service
-            .generate_outbound_return_lines(
+            .generate_supplier_return_lines(
                 &context,
                 store_id,
                 ServiceInput {
@@ -317,9 +317,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_stock_line_ids() {
+    async fn generate_supplier_return_lines_stock_line_ids() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_outbound_return_lines_stock_line_ids",
+            "generate_supplier_return_lines_stock_line_ids",
             MockDataInserts::all(),
         )
         .await;
@@ -334,7 +334,7 @@ mod test {
         let return_id = None;
 
         let result = service
-            .generate_outbound_return_lines(
+            .generate_supplier_return_lines(
                 &context,
                 store_id,
                 ServiceInput {
@@ -359,9 +359,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_item_id() {
+    async fn generate_supplier_return_lines_item_id() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_outbound_return_lines_item_id",
+            "generate_supplier_return_lines_item_id",
             MockDataInserts::all(),
         )
         .await;
@@ -376,7 +376,7 @@ mod test {
         let return_id = None;
 
         let result = service
-            .generate_outbound_return_lines(
+            .generate_supplier_return_lines(
                 &context,
                 store_id,
                 ServiceInput {
@@ -395,7 +395,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_item_id_stock_belongs_to_multiple_stores() {
+    async fn generate_supplier_return_lines_item_id_stock_belongs_to_multiple_stores() {
         fn test_item() -> ItemRow {
             ItemRow {
                 id: "test_item".to_string(),
@@ -445,7 +445,7 @@ mod test {
         let return_id = None;
 
         let result = service
-            .generate_outbound_return_lines(
+            .generate_supplier_return_lines(
                 &context,
                 &store_id,
                 ServiceInput {
@@ -465,7 +465,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_item_id_and_return_id() {
+    async fn generate_supplier_return_lines_item_id_and_return_id() {
         fn unavailable_stock_line() -> StockLineRow {
             StockLineRow {
                 id: "unavailable_stock_line".to_string(),
@@ -475,11 +475,11 @@ mod test {
                 ..Default::default()
             }
         }
-        // add a line to mock_outbound_return_a with a stock line that has no more available packs
+        // add a line to mock_supplier_return_a with a stock line that has no more available packs
         fn item_a_return_line() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "item_a_return_line".to_string(),
-                invoice_id: mock_outbound_return_a().id,
+                invoice_id: mock_supplier_return_a().id,
                 item_link_id: mock_item_a().id,
                 stock_line_id: Some(unavailable_stock_line().id),
                 number_of_packs: 1.0,
@@ -488,7 +488,7 @@ mod test {
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "generate_outbound_return_lines_item_id_and_return_id",
+            "generate_supplier_return_lines_item_id_and_return_id",
             MockDataInserts::all(),
             MockData {
                 stock_lines: vec![unavailable_stock_line()],
@@ -505,10 +505,10 @@ mod test {
         let store_id = mock_store_a().id;
         let stock_line_ids = vec![];
         let item_id = Some(mock_item_a().id);
-        let return_id = Some(mock_outbound_return_a().id);
+        let return_id = Some(mock_supplier_return_a().id);
 
         let result = service
-            .generate_outbound_return_lines(
+            .generate_supplier_return_lines(
                 &context,
                 &store_id,
                 ServiceInput {
@@ -554,9 +554,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_stock_line_ids_and_return_id() {
+    async fn generate_supplier_return_lines_stock_line_ids_and_return_id() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_outbound_return_lines_stock_line_ids_and_return_id",
+            "generate_supplier_return_lines_stock_line_ids_and_return_id",
             MockDataInserts::all(),
         )
         .await;
@@ -568,10 +568,10 @@ mod test {
         let store_id = mock_store_a().id;
         let stock_line_ids = vec![mock_stock_line_a().id, mock_stock_line_ci_c()[0].id.clone()];
         let item_id = None;
-        let return_id = Some(mock_outbound_return_a().id); // has a stock_line_a line
+        let return_id = Some(mock_supplier_return_a().id); // has a stock_line_a line
 
         let result = service
-            .generate_outbound_return_lines(
+            .generate_supplier_return_lines(
                 &context,
                 &store_id,
                 ServiceInput {
@@ -593,7 +593,7 @@ mod test {
         );
         assert_eq!(
             existing_line.number_of_packs,
-            mock_outbound_return_a_invoice_line_a().number_of_packs
+            mock_supplier_return_a_invoice_line_a().number_of_packs
         );
 
         let new_line = &result.rows[1];
@@ -605,9 +605,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_outbound_return_lines_dedupes_existing_lines() {
+    async fn generate_supplier_return_lines_dedupes_existing_lines() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_outbound_return_lines_dedupes_existing_lines",
+            "generate_supplier_return_lines_dedupes_existing_lines",
             MockDataInserts::all(),
         )
         .await;
@@ -620,10 +620,10 @@ mod test {
 
         let stock_line_ids = vec![mock_stock_line_a().id]; // has item_id of item_a
         let item_id = Some(mock_item_a().id);
-        let return_id = Some(mock_outbound_return_b().id); // has stock_line_a
+        let return_id = Some(mock_supplier_return_b().id); // has stock_line_a
 
         let result = service
-            .generate_outbound_return_lines(
+            .generate_supplier_return_lines(
                 &context,
                 &store_id,
                 ServiceInput {

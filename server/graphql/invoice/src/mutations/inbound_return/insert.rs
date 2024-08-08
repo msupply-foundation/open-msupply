@@ -8,10 +8,10 @@ use graphql_core::{
 };
 use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::inbound_return::insert::{
+use service::invoice::customer_return::insert::{
     InsertInboundReturn as ServiceInput, InsertInboundReturnError as ServiceError,
 };
-use service::invoice::inbound_return::InboundReturnLineInput as InboundReturnLineServiceInput;
+use service::invoice::customer_return::InboundReturnLineInput as InboundReturnLineServiceInput;
 
 #[derive(InputObject)]
 #[graphql(name = "InboundReturnInput")]

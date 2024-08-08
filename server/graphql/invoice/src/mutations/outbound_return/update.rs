@@ -5,12 +5,12 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::InvoiceNode;
-use service::invoice::outbound_return::update::{
+use service::invoice::supplier_return::update::{
     UpdateOutboundReturn as ServiceInput, UpdateOutboundReturnError as ServiceError,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    invoice::outbound_return::update::UpdateOutboundReturnStatus,
+    invoice::supplier_return::update::UpdateOutboundReturnStatus,
 };
 
 #[derive(InputObject)]

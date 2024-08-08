@@ -1,6 +1,3 @@
-use outbound_return::update_name::update_outbound_return_name;
-use outbound_return::update_name::UpdateOutboundReturnName;
-use outbound_return::update_name::UpdateOutboundReturnNameError;
 use repository::Invoice;
 use repository::InvoiceFilter;
 use repository::InvoiceLine;
@@ -15,8 +12,8 @@ use crate::ListError;
 use crate::ListResult;
 pub mod query;
 use self::customer_return::insert::insert_customer_return;
-use self::customer_return::insert::InsertInboundReturn;
-use self::customer_return::insert::InsertInboundReturnError;
+use self::customer_return::insert::InsertCustomerReturn;
+use self::customer_return::insert::InsertCustomerReturnError;
 use self::inventory_adjustment::add_new_stock_line::{
     add_new_stock_line, AddNewStockLine, AddNewStockLineError,
 };
@@ -30,10 +27,11 @@ use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
 use self::supplier_return::delete::*;
-use self::supplier_return::generate_outbound_return_lines::*;
+use self::supplier_return::generate_supplier_return_lines::*;
 use self::supplier_return::insert::*;
 use self::supplier_return::update::*;
 use self::supplier_return::update_lines::*;
+use supplier_return::update_name::*;
 
 pub mod supplier_return;
 
@@ -208,85 +206,85 @@ pub trait InvoiceServiceTrait: Sync + Send {
         batch_prescription(ctx, input)
     }
 
-    fn generate_outbound_return_lines(
+    fn generate_supplier_return_lines(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: GenerateOutboundReturnLinesInput,
-    ) -> Result<ListResult<OutboundReturnLine>, ListError> {
-        generate_outbound_return_lines(ctx, store_id, input)
+        input: GenerateSupplierReturnLinesInput,
+    ) -> Result<ListResult<SupplierReturnLine>, ListError> {
+        generate_supplier_return_lines(ctx, store_id, input)
     }
 
-    fn insert_outbound_return(
+    fn insert_supplier_return(
         &self,
         ctx: &ServiceContext,
-        input: InsertOutboundReturn,
-    ) -> Result<Invoice, InsertOutboundReturnError> {
-        insert_outbound_return(ctx, input)
+        input: InsertSupplierReturn,
+    ) -> Result<Invoice, InsertSupplierReturnError> {
+        insert_supplier_return(ctx, input)
     }
 
-    fn update_outbound_return(
+    fn update_supplier_return(
         &self,
         ctx: &ServiceContext,
-        input: UpdateOutboundReturn,
-    ) -> Result<Invoice, UpdateOutboundReturnError> {
-        update_outbound_return(ctx, input)
+        input: UpdateSupplierReturn,
+    ) -> Result<Invoice, UpdateSupplierReturnError> {
+        update_supplier_return(ctx, input)
     }
 
-    fn update_outbound_return_name(
+    fn update_supplier_return_name(
         &self,
         ctx: &ServiceContext,
-        input: UpdateOutboundReturnName,
-    ) -> Result<Invoice, UpdateOutboundReturnNameError> {
-        update_outbound_return_name(ctx, input)
+        input: UpdateSupplierReturnName,
+    ) -> Result<Invoice, UpdateSupplierReturnNameError> {
+        update_supplier_return_name(ctx, input)
     }
 
-    fn update_outbound_return_lines(
+    fn update_supplier_return_lines(
         &self,
         ctx: &ServiceContext,
-        input: UpdateOutboundReturnLines,
-    ) -> Result<Invoice, UpdateOutboundReturnLinesError> {
-        update_outbound_return_lines(ctx, input)
+        input: UpdateSupplierReturnLines,
+    ) -> Result<Invoice, UpdateSupplierReturnLinesError> {
+        update_supplier_return_lines(ctx, input)
     }
 
-    fn delete_outbound_return(
+    fn delete_supplier_return(
         &self,
         ctx: &ServiceContext,
         id: String,
-    ) -> Result<String, DeleteOutboundReturnError> {
-        delete_outbound_return(ctx, id)
+    ) -> Result<String, DeleteSupplierReturnError> {
+        delete_supplier_return(ctx, id)
     }
 
     fn generate_customer_return_lines(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: GenerateInboundReturnLinesInput,
-    ) -> Result<ListResult<InboundReturnLine>, ListError> {
+        input: GenerateCustomerReturnLinesInput,
+    ) -> Result<ListResult<CustomerReturnLine>, ListError> {
         generate_customer_return_lines(ctx, store_id, input)
     }
 
     fn insert_customer_return(
         &self,
         ctx: &ServiceContext,
-        input: InsertInboundReturn,
-    ) -> Result<Invoice, InsertInboundReturnError> {
+        input: InsertCustomerReturn,
+    ) -> Result<Invoice, InsertCustomerReturnError> {
         insert_customer_return(ctx, input)
     }
 
     fn update_customer_return(
         &self,
         ctx: &ServiceContext,
-        input: UpdateInboundReturn,
-    ) -> Result<Invoice, UpdateInboundReturnError> {
+        input: UpdateCustomerReturn,
+    ) -> Result<Invoice, UpdateCustomerReturnError> {
         update_customer_return(ctx, input)
     }
 
     fn update_customer_return_lines(
         &self,
         ctx: &ServiceContext,
-        input: UpdateInboundReturnLines,
-    ) -> Result<Invoice, UpdateInboundReturnLinesError> {
+        input: UpdateCustomerReturnLines,
+    ) -> Result<Invoice, UpdateCustomerReturnLinesError> {
         update_customer_return_lines(ctx, input)
     }
 
@@ -294,7 +292,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         id: String,
-    ) -> Result<String, DeleteInboundReturnError> {
+    ) -> Result<String, DeleteCustomerReturnError> {
         delete_customer_return(ctx, id)
     }
 

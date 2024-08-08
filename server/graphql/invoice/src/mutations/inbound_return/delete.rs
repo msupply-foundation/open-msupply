@@ -8,7 +8,7 @@ use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
-use service::invoice::inbound_return::delete::DeleteInboundReturnError as ServiceError;
+use service::invoice::customer_return::delete::DeleteInboundReturnError as ServiceError;
 
 #[derive(SimpleObject)]
 #[graphql(name = "DeleteInboundReturnError")]

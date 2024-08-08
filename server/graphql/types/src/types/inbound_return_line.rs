@@ -2,7 +2,7 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
 use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::ItemRow;
-use service::{invoice::inbound_return::generate_lines::InboundReturnLine, ListResult};
+use service::{invoice::customer_return::generate_lines::InboundReturnLine, ListResult};
 
 use super::ItemNode;
 

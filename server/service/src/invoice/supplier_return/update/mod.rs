@@ -16,17 +16,17 @@ use validate::validate;
 use self::generate::GenerateResult;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum UpdateOutboundReturnStatus {
+pub enum UpdateSupplierReturnStatus {
     Picked,
     Shipped,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct UpdateOutboundReturn {
-    pub outbound_return_id: String,
+pub struct UpdateSupplierReturn {
+    pub supplier_return_id: String,
     // pub other_party_id: String,
     pub comment: Option<String>,
-    pub status: Option<UpdateOutboundReturnStatus>,
+    pub status: Option<UpdateSupplierReturnStatus>,
     pub colour: Option<String>,
     pub on_hold: Option<bool>,
     pub their_reference: Option<String>,
@@ -34,11 +34,11 @@ pub struct UpdateOutboundReturn {
 }
 
 #[derive(PartialEq, Debug)]
-pub enum UpdateOutboundReturnError {
+pub enum UpdateSupplierReturnError {
     ReturnDoesNotExist,
     ReturnDoesNotBelongToCurrentStore,
     ReturnIsNotEditable,
-    NotAnOutboundReturn,
+    NotAnSupplierReturn,
     CannotChangeStatusOfInvoiceOnHold,
     CannotReverseInvoiceStatus,
     InvoiceLineHasNoStockLine(String), // holds the id of the invalid invoice line
@@ -46,11 +46,11 @@ pub enum UpdateOutboundReturnError {
     DatabaseError(RepositoryError),
 }
 
-pub fn update_outbound_return(
+pub fn update_supplier_return(
     ctx: &ServiceContext,
-    input: UpdateOutboundReturn,
-) -> Result<Invoice, UpdateOutboundReturnError> {
-    let outbound_return = ctx
+    input: UpdateSupplierReturn,
+) -> Result<Invoice, UpdateSupplierReturnError> {
+    let supplier_return = ctx
         .connection
         .transaction_sync(|connection| {
             let (return_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
@@ -78,39 +78,39 @@ pub fn update_outbound_return(
                 )?;
             }
 
-            get_invoice(ctx, None, &input.outbound_return_id)
-                .map_err(UpdateOutboundReturnError::DatabaseError)?
-                .ok_or(UpdateOutboundReturnError::UpdatedReturnDoesNotExist)
+            get_invoice(ctx, None, &input.supplier_return_id)
+                .map_err(UpdateSupplierReturnError::DatabaseError)?
+                .ok_or(UpdateSupplierReturnError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
     ctx.processors_trigger.trigger_invoice_transfer_processors();
 
-    Ok(outbound_return)
+    Ok(supplier_return)
 }
 
-impl From<RepositoryError> for UpdateOutboundReturnError {
+impl From<RepositoryError> for UpdateSupplierReturnError {
     fn from(error: RepositoryError) -> Self {
-        UpdateOutboundReturnError::DatabaseError(error)
+        UpdateSupplierReturnError::DatabaseError(error)
     }
 }
 
-impl UpdateOutboundReturnStatus {
+impl UpdateSupplierReturnStatus {
     pub fn as_invoice_row_status(&self) -> InvoiceStatus {
         match self {
-            UpdateOutboundReturnStatus::Picked => InvoiceStatus::Picked,
-            UpdateOutboundReturnStatus::Shipped => InvoiceStatus::Shipped,
+            UpdateSupplierReturnStatus::Picked => InvoiceStatus::Picked,
+            UpdateSupplierReturnStatus::Shipped => InvoiceStatus::Shipped,
         }
     }
 
     pub fn full_status_option(
-        status: &Option<UpdateOutboundReturnStatus>,
+        status: &Option<UpdateSupplierReturnStatus>,
     ) -> Option<InvoiceStatus> {
         status.as_ref().map(|status| status.as_invoice_row_status())
     }
 }
 
-impl UpdateOutboundReturn {
+impl UpdateSupplierReturn {
     pub fn full_status(&self) -> Option<InvoiceStatus> {
         self.status
             .as_ref()
@@ -121,19 +121,19 @@ impl UpdateOutboundReturn {
 mod test {
     use crate::{
         invoice::{
-            outbound_return::update::{
-                UpdateOutboundReturn, UpdateOutboundReturnError as ServiceError,
+            supplier_return::update::{
+                UpdateSupplierReturn, UpdateSupplierReturnError as ServiceError,
             },
-            UpdateOutboundReturnStatus,
+            UpdateSupplierReturnStatus,
         },
         service_provider::ServiceProvider,
     };
     use repository::{
         mock::{
-            currency_a, mock_item_a, mock_name_store_b, mock_outbound_return_a,
-            mock_outbound_return_a_invoice_line_a, mock_outbound_return_b,
-            mock_outbound_return_b_invoice_line_a, mock_outbound_shipment_a, mock_store_a,
-            mock_store_b, mock_user_account_a, MockData, MockDataInserts,
+            currency_a, mock_item_a, mock_name_store_b, mock_outbound_shipment_a, mock_store_a,
+            mock_store_b, mock_supplier_return_a, mock_supplier_return_a_invoice_line_a,
+            mock_supplier_return_b, mock_supplier_return_b_invoice_line_a, mock_user_account_a,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
@@ -141,13 +141,13 @@ mod test {
     };
 
     #[actix_rt::test]
-    async fn test_update_outbound_return_errors() {
+    async fn test_update_supplier_return_errors() {
         fn base_test_return() -> InvoiceRow {
             InvoiceRow {
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceType::OutboundReturn,
+                r#type: InvoiceType::SupplierReturn,
                 status: InvoiceStatus::New,
                 ..Default::default()
             }
@@ -187,7 +187,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_update_outbound_return_errors",
+            "test_update_supplier_return_errors",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![wrong_store(), shipped_return(), new_return()],
@@ -204,34 +204,34 @@ mod test {
 
         // ReturnDoesNotExist
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
+            service_provider.invoice_service.update_supplier_return(
                 &context,
-                UpdateOutboundReturn {
-                    outbound_return_id: "non-existent-id".to_string(),
+                UpdateSupplierReturn {
+                    supplier_return_id: "non-existent-id".to_string(),
                     ..Default::default()
                 }
             ),
             Err(ServiceError::ReturnDoesNotExist)
         );
 
-        // NotAnOutboundReturn
+        // NotAnSupplierReturn
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
+            service_provider.invoice_service.update_supplier_return(
                 &context,
-                UpdateOutboundReturn {
-                    outbound_return_id: mock_outbound_shipment_a().id,
+                UpdateSupplierReturn {
+                    supplier_return_id: mock_outbound_shipment_a().id,
                     ..Default::default()
                 }
             ),
-            Err(ServiceError::NotAnOutboundReturn)
+            Err(ServiceError::NotAnSupplierReturn)
         );
 
         // ReturnDoesNotBelongToCurrentStore
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
+            service_provider.invoice_service.update_supplier_return(
                 &context,
-                UpdateOutboundReturn {
-                    outbound_return_id: wrong_store().id,
+                UpdateSupplierReturn {
+                    supplier_return_id: wrong_store().id,
                     ..Default::default()
                 }
             ),
@@ -240,10 +240,10 @@ mod test {
 
         // ReturnIsNotEditable
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
+            service_provider.invoice_service.update_supplier_return(
                 &context,
-                UpdateOutboundReturn {
-                    outbound_return_id: shipped_return().id,
+                UpdateSupplierReturn {
+                    supplier_return_id: shipped_return().id,
                     ..Default::default()
                 }
             ),
@@ -252,11 +252,11 @@ mod test {
 
         // InvoiceLineHasNoStockLine
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
+            service_provider.invoice_service.update_supplier_return(
                 &context,
-                UpdateOutboundReturn {
-                    outbound_return_id: new_return().id,
-                    status: Some(UpdateOutboundReturnStatus::Shipped),
+                UpdateSupplierReturn {
+                    supplier_return_id: new_return().id,
+                    status: Some(UpdateSupplierReturnStatus::Shipped),
                     ..Default::default()
                 }
             ),
@@ -267,9 +267,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_update_outbound_return_success_new_to_shipped() {
+    async fn test_update_supplier_return_success_new_to_shipped() {
         let (_, connection, connection_manager, _) = setup_all(
-            "test_update_outbound_return_success_new_to_shipped",
+            "test_update_supplier_return_success_new_to_shipped",
             MockDataInserts::all(),
         )
         .await;
@@ -280,7 +280,7 @@ mod test {
             .unwrap();
 
         let stock_line_row_repo = StockLineRowRepository::new(&connection);
-        let stock_line_id = mock_outbound_return_b_invoice_line_a()
+        let stock_line_id = mock_supplier_return_b_invoice_line_a()
             .stock_line_id
             .unwrap();
 
@@ -291,11 +291,11 @@ mod test {
 
         let result = service_provider
             .invoice_service
-            .update_outbound_return(
+            .update_supplier_return(
                 &context,
-                UpdateOutboundReturn {
-                    outbound_return_id: mock_outbound_return_b().id, // is NEW status
-                    status: Some(UpdateOutboundReturnStatus::Shipped),
+                UpdateSupplierReturn {
+                    supplier_return_id: mock_supplier_return_b().id, // is NEW status
+                    status: Some(UpdateSupplierReturnStatus::Shipped),
                     ..Default::default()
                 },
             )
@@ -317,9 +317,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_update_outbound_return_success_picked_to_shipped() {
+    async fn test_update_supplier_return_success_picked_to_shipped() {
         let (_, connection, connection_manager, _) = setup_all(
-            "test_update_outbound_return_success_picked_to_shipped",
+            "test_update_supplier_return_success_picked_to_shipped",
             MockDataInserts::all(),
         )
         .await;
@@ -330,7 +330,7 @@ mod test {
             .unwrap();
 
         let stock_line_row_repo = StockLineRowRepository::new(&connection);
-        let stock_line_id = mock_outbound_return_a_invoice_line_a()
+        let stock_line_id = mock_supplier_return_a_invoice_line_a()
             .stock_line_id
             .unwrap();
 
@@ -341,11 +341,11 @@ mod test {
 
         let result = service_provider
             .invoice_service
-            .update_outbound_return(
+            .update_supplier_return(
                 &context,
-                UpdateOutboundReturn {
-                    outbound_return_id: mock_outbound_return_a().id, // is PICKED status
-                    status: Some(UpdateOutboundReturnStatus::Shipped),
+                UpdateSupplierReturn {
+                    supplier_return_id: mock_supplier_return_a().id, // is PICKED status
+                    status: Some(UpdateSupplierReturnStatus::Shipped),
                     ..Default::default()
                 },
             )
