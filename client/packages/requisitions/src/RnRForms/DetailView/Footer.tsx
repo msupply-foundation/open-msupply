@@ -7,15 +7,18 @@ import {
   useTranslation,
   RnRFormNodeStatus,
   useNotification,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { useRnRForm } from '../api';
 
 export const Footer = ({
   rnrFormId,
   linesUnconfirmed,
+  unsavedChanges,
 }: {
   rnrFormId: string;
   linesUnconfirmed: boolean;
+  unsavedChanges: boolean;
 }) => {
   const t = useTranslation('replenishment');
   const { navigateUpOne } = useBreadcrumbs();
@@ -23,20 +26,33 @@ export const Footer = ({
   const {
     query: { data },
     finalise: { finalise, isFinalising },
+    confirmRemainingLines,
   } = useRnRForm({ rnrFormId });
 
+  const showFinaliseConfirmation = useConfirmationModal({
+    onConfirm: async () => {
+      try {
+        if (linesUnconfirmed) {
+          await confirmRemainingLines();
+        }
+        await finalise();
+        success(t('label.finalised'))();
+      } catch (e) {
+        error((e as Error).message)();
+      }
+    },
+    message: linesUnconfirmed
+      ? `${t('messages.rnr-not-all-lines-confirmed')}\n${t('messages.confirm-finalise-rnr')}`
+      : t('messages.confirm-finalise-rnr'),
+    title: t('heading.are-you-sure'),
+  });
+
   const onFinalise = async () => {
-    if (linesUnconfirmed) {
-      // TODO: confirmation dialog/popup here
-      info(t('messages.all-lines-must-be-confirmed'))();
+    if (unsavedChanges) {
+      info(t('messages.all-changes-must-be-confirmed'))();
       return;
     }
-    try {
-      await finalise();
-      success(t('label.finalised'))();
-    } catch (e) {
-      error((e as Error).message)();
-    }
+    showFinaliseConfirmation();
   };
 
   return (
