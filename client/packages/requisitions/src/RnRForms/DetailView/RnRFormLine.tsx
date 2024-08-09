@@ -5,6 +5,7 @@ import {
   Checkbox,
   DatePicker,
   Formatter,
+  LowStockStatus,
   NumericTextInput,
   NumUtils,
   useBufferState,
@@ -13,7 +14,7 @@ import {
   VenCategoryType,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
-import { getAlarmLevel, getAmc } from './helpers';
+import { getLowStockStatus as getLowStockStatus, getAmc } from './helpers';
 
 export const RnRFormLine = ({
   line,
@@ -70,7 +71,7 @@ export const RnRFormLine = ({
 
     const calculatedRequestedQuantity = neededQuantity > 0 ? neededQuantity : 0;
 
-    const alarm = getAlarmLevel(finalBalance, maximumQuantity);
+    const lowStock = getLowStockStatus(finalBalance, maximumQuantity);
 
     setPatch({
       ...newPatch,
@@ -79,7 +80,7 @@ export const RnRFormLine = ({
       averageMonthlyConsumption,
       maximumQuantity,
       calculatedRequestedQuantity,
-      alarm,
+      lowStock,
     });
   };
 
@@ -200,11 +201,14 @@ export const RnRFormLine = ({
         disabled={disabled}
       />
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>
-        {draft.alarm && (
+        {draft.lowStock !== LowStockStatus.Ok && (
           <AlertIcon
-            double={draft.alarm === '!!'}
+            double={draft.lowStock === LowStockStatus.BelowQuarter}
             sx={{
-              color: draft.alarm === '!!' ? 'error.main' : 'primary.light',
+              color:
+                draft.lowStock === LowStockStatus.BelowQuarter
+                  ? 'error.main'
+                  : 'primary.light',
             }}
           />
         )}

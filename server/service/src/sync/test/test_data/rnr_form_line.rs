@@ -1,4 +1,4 @@
-use repository::RnRFormLineRow;
+use repository::{RnRFormLineRow, RnRFormLowStock};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -24,6 +24,7 @@ const RNR_FORM_LINE_1: (&str, &str) = (
         "calculated_requested_quantity": 0.0,
         "comment": null,
         "confirmed": false, 
+        "low_stock": "OK",
         "previous_monthly_consumption_values": ""
     }"#,
 );
@@ -51,6 +52,8 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         comment: None,
         confirmed: false,
         previous_monthly_consumption_values: "".to_string(),
+        low_stock: RnRFormLowStock::Ok,
+        approved_quantity: None,
     }
 }
 

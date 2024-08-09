@@ -1,3 +1,5 @@
+import { LowStockStatus } from '@common/types';
+
 export const getAmc = (
   previousMonthlyConsumptionValues: string,
   adjustedQuantityConsumed: number,
@@ -20,15 +22,17 @@ export const getAmc = (
   return averageMonthlyConsumption;
 };
 
-export const getAlarmLevel = (
+export const getLowStockStatus = (
   finalBalance: number,
   maximumQuantity: number
 ) => {
   if (finalBalance < maximumQuantity / 4) {
-    return '!!';
+    return LowStockStatus.BelowQuarter;
   }
 
   if (finalBalance < maximumQuantity / 2) {
-    return '!';
+    return LowStockStatus.BelowHalf;
   }
+
+  return LowStockStatus.Ok;
 };

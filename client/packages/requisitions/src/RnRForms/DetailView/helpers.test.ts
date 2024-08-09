@@ -1,4 +1,5 @@
-import { getAlarmLevel, getAmc } from './helpers';
+import { LowStockStatus } from '@common/types';
+import { getLowStockStatus, getAmc } from './helpers';
 
 describe('getAmc', () => {
   it('should return the average monthly consumption', () => {
@@ -16,31 +17,31 @@ describe('getAmc', () => {
   });
 });
 
-describe('getAlarmLevel', () => {
+describe('getLowStockStatus', () => {
   it('returns !! when final balance less than a quarter of max quantity', () => {
     const finalBalance = 45;
     const maximumQuantity = 200;
 
-    const result = getAlarmLevel(finalBalance, maximumQuantity);
+    const result = getLowStockStatus(finalBalance, maximumQuantity);
 
-    expect(result).toBe('!!');
+    expect(result).toBe(LowStockStatus.BelowQuarter);
   });
 
   it('returns ! when final balance less than half of max quantity', () => {
     const finalBalance = 99;
     const maximumQuantity = 200;
 
-    const result = getAlarmLevel(finalBalance, maximumQuantity);
+    const result = getLowStockStatus(finalBalance, maximumQuantity);
 
-    expect(result).toBe('!');
+    expect(result).toBe(LowStockStatus.BelowHalf);
   });
 
   it('returns undefined when final balance is more than half of max quantity', () => {
     const finalBalance = 150;
     const maximumQuantity = 200;
 
-    const result = getAlarmLevel(finalBalance, maximumQuantity);
+    const result = getLowStockStatus(finalBalance, maximumQuantity);
 
-    expect(result).toBeUndefined();
+    expect(result).toBe(LowStockStatus.Ok);
   });
 });

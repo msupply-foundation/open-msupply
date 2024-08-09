@@ -6,6 +6,7 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
@@ -29,8 +30,10 @@ table! {
         expiry_date -> Nullable<Date>,
         calculated_requested_quantity -> Double,
         entered_requested_quantity -> Nullable<Double>,
+        low_stock -> crate::db_diesel::rnr_form_line_row::RnRFormLowStockMapping,
         comment -> Nullable<Text>,
         confirmed -> Bool,
+        approved_quantity -> Nullable<Double>,
     }
 }
 
@@ -65,8 +68,20 @@ pub struct RnRFormLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub calculated_requested_quantity: f64,
     pub entered_requested_quantity: Option<f64>,
+    pub low_stock: RnRFormLowStock,
     pub comment: Option<String>,
     pub confirmed: bool,
+    pub approved_quantity: Option<f64>,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RnRFormLowStock {
+    #[default]
+    Ok,
+    BelowHalf,
+    BelowQuarter,
 }
 
 pub struct RnRFormLineRowRepository<'a> {
