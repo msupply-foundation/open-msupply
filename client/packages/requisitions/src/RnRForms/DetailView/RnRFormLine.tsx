@@ -14,7 +14,7 @@ import {
   VenCategoryType,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
-import { getLowStockStatus as getLowStockStatus, getAmc } from './helpers';
+import { getLowStockStatus, getAmc } from './helpers';
 
 export const RnRFormLine = ({
   line,
