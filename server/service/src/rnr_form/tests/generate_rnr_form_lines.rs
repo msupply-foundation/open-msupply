@@ -10,7 +10,7 @@ mod generate_rnr_form_lines {
     use repository::test_db::setup_all_with_data;
     use repository::{
         EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
-        RnRFormFilter, RnRFormLineRow, RnRFormRow, StockLineRow,
+        RnRFormFilter, RnRFormLineRow, RnRFormLowStock, RnRFormRow, StockLineRow,
     };
 
     use crate::rnr_form::generate_rnr_form_lines::{
@@ -100,10 +100,12 @@ mod generate_rnr_form_lines {
                 entered_adjustments: None,
                 maximum_quantity: 7.826086956521738, // 2*AMC
                 calculated_requested_quantity: 4.826086956521738, // max - final balance
+                low_stock: RnRFormLowStock::BelowHalf, // 3 / 7.8
                 entered_requested_quantity: None,
                 expiry_date: None,
                 comment: None,
                 confirmed: false,
+                approved_quantity: None,
             }
         );
     }

@@ -3,7 +3,7 @@ use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use chrono::NaiveDate;
 use repository::{
     ActivityLogType, RepositoryError, RnRForm, RnRFormLineRow, RnRFormLineRowRepository,
-    RnRFormStatus,
+    RnRFormLowStock, RnRFormStatus,
 };
 
 use super::{get_period_length, query::get_rnr_form, validate::check_rnr_form_exists};
@@ -23,6 +23,7 @@ pub struct UpdateRnRFormLine {
     pub maximum_quantity: f64,
     pub calculated_requested_quantity: f64,
     pub entered_requested_quantity: Option<f64>,
+    pub low_stock: RnRFormLowStock,
     pub comment: Option<String>,
     pub confirmed: bool,
 }
@@ -209,6 +210,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     initial_balance,
                     calculated_requested_quantity,
                     entered_requested_quantity,
+                    low_stock,
                 },
                 RnRFormLineRow {
                     id,
@@ -218,6 +220,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     snapshot_quantity_consumed,
                     snapshot_adjustments,
                     previous_monthly_consumption_values,
+                    approved_quantity,
                     initial_balance: _,
                     expiry_date: _,
                     average_monthly_consumption: _,
@@ -232,6 +235,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     entered_requested_quantity: _,
                     comment: _,
                     confirmed: _,
+                    low_stock: _,
                 },
             )| {
                 RnRFormLineRow {
@@ -247,6 +251,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     maximum_quantity,
                     calculated_requested_quantity,
                     entered_requested_quantity,
+                    low_stock,
                     expiry_date,
                     comment,
                     confirmed,
@@ -257,6 +262,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     snapshot_quantity_consumed,
                     snapshot_adjustments,
                     previous_monthly_consumption_values,
+                    approved_quantity,
                 }
             },
         )

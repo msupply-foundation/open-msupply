@@ -5,7 +5,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::rnr_form::RnRFormNode;
+use graphql_types::types::{rnr_form::RnRFormNode, rnr_form_line::LowStockStatus};
 use repository::RnRForm;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -33,6 +33,7 @@ pub struct UpdateRnRFormLineInput {
     pub maximum_quantity: f64,
     pub calculated_requested_quantity: f64,
     pub entered_requested_quantity: Option<f64>,
+    pub low_stock: LowStockStatus,
     pub comment: Option<String>,
     pub confirmed: bool,
 }
@@ -127,6 +128,7 @@ impl UpdateRnRFormLineInput {
             initial_balance,
             calculated_requested_quantity,
             entered_requested_quantity,
+            low_stock,
         }: UpdateRnRFormLineInput,
     ) -> UpdateRnRFormLine {
         UpdateRnRFormLine {
@@ -145,6 +147,7 @@ impl UpdateRnRFormLineInput {
             confirmed,
             expiry_date,
             initial_balance,
+            low_stock: low_stock.to_domain(),
         }
     }
 }
