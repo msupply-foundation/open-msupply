@@ -1852,6 +1852,7 @@ dependencies = [
  "egui_extras",
  "graphql",
  "log",
+ "machine-uid",
  "repository",
  "reqwest",
  "serde",

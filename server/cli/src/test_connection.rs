@@ -1,17 +1,21 @@
+extern crate machine_uid;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use clap::Parser;
 use log::*;
-use repository::migrations::Version;
+use repository::{get_storage_connection_manager, migrations::Version};
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use server::configuration;
 use service::{
     apis::login_v4::{LoginApiV4, LoginInputV4, LoginUserTypeV4},
     app_data::{AppDataService, AppDataServiceTrait},
+    service_provider::ServiceProvider,
+    settings::is_develop,
     sync::{
         api::{SyncApiSettings, SyncApiV5},
         api_v6::SyncApiV6,
+        settings::SyncSettings,
     },
 };
 use tokio::sync::mpsc;
@@ -69,6 +73,7 @@ async fn perform_tests(gui_tx: mpsc::Sender<GuiState>, args: Args) {
     let tests: Vec<Box<dyn Test + Send>> = vec![
         Box::new(ConfigTest),
         Box::new(PingTest),
+        Box::new(DatabaseTest),
         Box::new(LoginTest),
         Box::new(SyncTest),
         Box::new(SyncV6Test),
@@ -78,6 +83,7 @@ async fn perform_tests(gui_tx: mpsc::Sender<GuiState>, args: Args) {
         tests: vec![
             ("Config".to_string(), TestState::Pending),
             ("Ping".to_string(), TestState::Pending),
+            ("Database".to_string(), TestState::Pending),
             ("Login".to_string(), TestState::Pending),
             ("Sync V5".to_string(), TestState::Pending),
             ("Sync V6".to_string(), TestState::Pending),
@@ -132,7 +138,7 @@ impl Test for ConfigTest {
             configuration::get_configuration()
                 .map_err(|err| anyhow!("Failed to load config: {:?}", err))?,
         );
-        Ok("Successfully loaded config from {}".to_string())
+        Ok("Successfully loaded configuration".to_string())
     }
 }
 
@@ -162,6 +168,36 @@ impl Test for PingTest {
     }
 }
 
+struct DatabaseTest;
+
+#[async_trait]
+impl Test for DatabaseTest {
+    async fn run(&self, test_data: &mut TestData) -> Result<String> {
+        let config = test_data
+            .server_config
+            .as_ref()
+            .ok_or(anyhow!("No config loaded".to_string()))?;
+
+        info!(
+            "Testing database {} on server: {}",
+            config.database.database_name.to_string(),
+            config.database.host.to_string()
+        );
+
+        let connection_manager = get_storage_connection_manager(&config.database);
+        let result = connection_manager.execute("select 1");
+
+        if result.is_ok() {
+            Ok("Successfully connected to database".to_string())
+        } else {
+            Err(anyhow!(
+                "Failed to connect to database: {:?}",
+                result.err().unwrap()
+            ))
+        }
+    }
+}
+
 struct LoginTest;
 
 #[async_trait]
@@ -182,14 +218,15 @@ impl Test for LoginTest {
             .password
             .clone()
             .unwrap_or("pass".to_string());
-        let url = get_url(config)?;
+        // let url = get_url(config)?;
+        let sync_settings = get_sync_settings(config)?;
 
-        info!("Testing login at url: {}", url);
+        info!("Testing login at url: {}", sync_settings.url);
         info!("    Username: {}", username);
         info!("    Password: {}", password);
 
         let client = Client::new();
-        let login_api = LoginApiV4::new(client, url);
+        let login_api = LoginApiV4::new(client, Url::parse(&sync_settings.url)?);
 
         let login_input = LoginInputV4 {
             username,
@@ -211,15 +248,12 @@ struct SyncTest;
 #[async_trait]
 impl Test for SyncTest {
     async fn run(&self, test_data: &mut TestData) -> Result<String> {
-        let config = &test_data
+        let config = test_data
             .server_config
             .as_ref()
             .ok_or(anyhow!("No config loaded"))?;
 
-        let v5_settings = config
-            .sync
-            .as_ref()
-            .ok_or(anyhow!("No sync settings in config"))?;
+        let v5_settings = get_sync_settings(config)?;
 
         let server_folder = config
             .server
@@ -283,11 +317,12 @@ impl Test for SyncV6Test {
             .join("/sync/v5/site")
             .map_err(|err| anyhow!("Failed to join URL: {:?}", err))?;
 
-        let v5_settings = test_data
+        let config = test_data
             .server_config
             .as_ref()
-            .and_then(|c| c.sync.as_ref())
-            .ok_or(anyhow!("No sync settings in config"))?;
+            .ok_or(anyhow!("No config loaded"))?;
+
+        let v5_settings = get_sync_settings(config)?;
 
         let response = Client::new()
             .get(url.clone())
@@ -412,7 +447,7 @@ impl TestState {
 
 fn get_url(config: &service::settings::Settings) -> Result<Url> {
     let address = config.server.address();
-    let scheme = match config.server.danger_allow_http {
+    let scheme = match config.server.danger_allow_http | is_develop() {
         true => "http",
         false => "https",
     };
@@ -426,4 +461,39 @@ fn get_url(config: &service::settings::Settings) -> Result<Url> {
     })?;
 
     Ok(url)
+}
+
+fn get_sync_settings(config: &service::settings::Settings) -> Result<SyncSettings> {
+    let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
+    let connection_manager = get_storage_connection_manager(&config.database);
+    let service_provider = ServiceProvider::new(
+        connection_manager.clone(),
+        &config.server.base_dir.clone().unwrap(),
+    );
+
+    service_provider
+        .app_data_service
+        .set_hardware_id(machine_uid.clone())
+        .unwrap();
+    let service_context = service_provider.basic_context().unwrap();
+
+    let yaml_sync_settings = config.sync.clone();
+    let database_sync_settings = service_provider
+        .settings
+        .sync_settings(&service_context)
+        .unwrap();
+
+    let settings = match (yaml_sync_settings, database_sync_settings) {
+        (Some(yaml), Some(database)) => {
+            if database.core_site_details_changed(&yaml) {
+                info!("Sync settings in configurations don't match database");
+            }
+            database
+        }
+        (Some(yaml), None) => yaml,
+        (None, Some(database)) => database,
+        (None, None) => return Err(anyhow!("No sync settings in config")),
+    };
+
+    Ok(settings)
 }
