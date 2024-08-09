@@ -82,7 +82,19 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
           />
         </PanelField>
       </PanelRow>
-
+      {serviceLines
+        ? serviceLines.map((line, index) => (
+            <PanelRow
+              sx={{
+                marginLeft: '10px',
+                paddingBottom: index === serviceLines.length - 1 ? 2 : 0,
+              }}
+            >
+              <PanelLabel>{line.itemName}</PanelLabel>
+              <PanelField>{c(line.totalBeforeTax)}</PanelField>
+            </PanelRow>
+          ))
+        : null}
       <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{t('heading.sub-total')}</PanelLabel>
         <PanelField>{c(serviceTotalBeforeTax)}</PanelField>
