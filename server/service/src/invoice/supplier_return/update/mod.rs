@@ -312,7 +312,7 @@ mod test {
 
         assert_eq!(
             updated_stock_line.total_number_of_packs,
-            original_stock_line.total_number_of_packs - 5.0 // stock has been reduced by the num of packs in the outbound return line
+            original_stock_line.total_number_of_packs - 5.0 // stock has been reduced by the num of packs in the supplier return line
         );
     }
 

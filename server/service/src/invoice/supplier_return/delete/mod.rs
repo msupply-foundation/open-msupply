@@ -198,7 +198,7 @@ mod test {
             .unwrap()
             .unwrap();
 
-        // test stock has been increased by the num of packs in the outbound return line
+        // test stock has been increased by the num of packs in the supplier return line
         assert_eq!(
             updated_stock_line.total_number_of_packs,
             original_stock_line.total_number_of_packs

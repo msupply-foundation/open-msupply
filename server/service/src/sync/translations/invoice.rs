@@ -184,7 +184,7 @@ pub struct LegacyTransactRow {
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
-/// receiving store. Same for Inbound Returns.
+/// receiving store. Same for Customer Returns.
 /// In the current version of mSupply all om_ fields get copied though.
 /// When receiving the transferred invoice on the omSupply store the "si" get translated to
 /// outbound shipments because the om_type will override to legacy type field.

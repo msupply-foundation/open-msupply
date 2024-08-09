@@ -365,8 +365,6 @@
   "error.unable-to-load-server-log": "Aucun journal de serveur n'a été trouvé. Vérifiez votre configuration pour voir si les journaux du serveur sont activés.",
   "filename.asset-categories": "Catégories d'équipement",
   "filename.cold-chain-equipment": "Equipement de la chaine du froid",
-  "filename.inbound-returns": "Retours client",
-  "filename.outbound-returns": "Retours fournisseur",
   "heading.barcode-scanners": "Lecteurs de codes-barres",
   "heading.custom-logo-info": "Remplace le logo par défaut (\"le bonhomme mSupply\"). Le logo doit petre dans le format svg. Exemple: <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>...<svg...>",
   "heading.devices": "Appareils",

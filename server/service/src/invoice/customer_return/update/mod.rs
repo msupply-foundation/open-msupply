@@ -297,7 +297,7 @@ mod test {
         let invoice_id = mock_customer_return_b().id;
 
         /* -------
-         * Setting NEW inbound return to DELIVERED
+         * Setting NEW customer return to DELIVERED
          */
         let return_line_filter = InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
@@ -308,7 +308,7 @@ mod test {
             .query_by_filter(return_line_filter.clone())
             .unwrap();
 
-        // Inbound return currently in NEW status, should have no stock lines
+        // Customer return currently in NEW status, should have no stock lines
         assert!(invoice_lines
             .iter()
             .all(|l| l.invoice_line_row.stock_line_id.is_none()));
@@ -362,7 +362,7 @@ mod test {
         assert!(log.is_some());
 
         /* -------
-         * Setting DELIVERED inbound return to VERIFIED
+         * Setting DELIVERED customer return to VERIFIED
          */
 
         let updated_return = service
@@ -418,7 +418,7 @@ mod test {
         let invoice_id = mock_customer_return_b().id;
 
         /* -------
-         * Setting NEW inbound return to VERIFIED
+         * Setting NEW customer return to VERIFIED
          */
         let return_line_filter = InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&mock_customer_return_b().id));
@@ -429,7 +429,7 @@ mod test {
             .query_by_filter(return_line_filter.clone())
             .unwrap();
 
-        // Inbound return currently in NEW status, should have no stock lines
+        // Customer return currently in NEW status, should have no stock lines
         assert!(invoice_lines
             .iter()
             .all(|l| l.invoice_line_row.stock_line_id.is_none()));

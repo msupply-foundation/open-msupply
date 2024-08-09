@@ -1,9 +1,9 @@
-import { useInboundReturnIsDisabled } from './useInboundReturnIsDisabled';
-import { useOutboundReturnIsDisabled } from './useOutboundReturnIsDisabled';
+import { useCustomerReturnIsDisabled } from './useCustomerReturnIsDisabled';
+import { useSupplierReturnIsDisabled } from './useSupplierReturnIsDisabled';
 import { useReturnsApi } from './useReturnsApi';
 
 export const Utils = {
   useReturnsApi,
-  useInboundReturnIsDisabled,
-  useOutboundReturnIsDisabled,
+  useCustomerReturnIsDisabled,
+  useSupplierReturnIsDisabled,
 };

@@ -111,7 +111,6 @@
   "equipment": "Equipo",
   "error.unable-to-connect-to-printer": "No se puede conectar a la impresora.",
   "error.v6-server-not-configured": "Servidor central V6 no configurado",
-  "inbound-return": "Devoluciones e clientes",
   "label.central-server": "Servidor central",
   "settings.label-printing": "Impresión de etiquetas",
   "settings.printer-address": "Dirección IP",
@@ -120,6 +119,5 @@
   "settings.printer-port": "Número de puerto",
   "settings.scanner-type": "Tipo de escáner",
   "messages.connected-to-printer": "¡Conexión exitosa a la impresora!",
-  "outbound-return": "Devoluciones salientes",
   "returns": "Devoluciones"
 }
