@@ -146,7 +146,6 @@
   "messages.confirm-zero-shipment-lines_many": "Esto establecerá la cantidad de {{count}} línea en 0",
   "label.location": "Ubicación",
   "error.failed-to-create-return": "¡Fallo al crear la devolución!",
-  "error.no-outbound-returns": "No hay Devoluciones de Salidas para mostrar.",
   "messages.confirm-delete-return": "Esto eliminará permanentemente la Devolución #{{number}}",
   "messages.alert-zero-return-quantity": "Por favor agregue cantidades a la devolución antes de proceder con el siguiente paso",
   "messages.zero-line-quantities_many": "La cantidad de {{count}} líneas se ha establecido en 0",

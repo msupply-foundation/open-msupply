@@ -27,7 +27,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
     /// Inbound invoice will be updated when all below conditions are met:
     ///
     /// 1. Source invoice name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source invoice is Outbound shipment or Outbound Return
+    /// 2. Source invoice is Outbound shipment or Supplier Return
     /// 3. Linked invoice exists (the inbound invoice)
     /// 4. Linked inbound invoice is Picked (Inbound invoice can only be updated before it turns to Shipped status)
     /// 5. Source outbound invoice is Shipped

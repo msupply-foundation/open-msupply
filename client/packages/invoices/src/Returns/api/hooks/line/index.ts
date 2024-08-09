@@ -1,19 +1,19 @@
-import { useGenerateInboundReturnLines } from './useGenerateInboundReturnLines';
-import { useDeleteSelectedInboundReturnLines } from './useDeleteSelectedInboundLines';
-import { useDeleteSelectedOutboundReturnLines } from './useDeleteSelectedOutboundLines';
-import { useInboundReturnRows } from './useInboundReturnRows';
-import { useOutboundReturnRows } from './useOutboundReturnRows';
-import { useOutboundReturnLines } from './useOutboundReturnLines';
-import { useUpdateOutboundReturnLines } from './useUpdateOutboundReturnLines';
-import { useUpdateInboundReturnLines } from './useUpdateInboundReturnLines';
+import { useGenerateCustomerReturnLines } from './useGenerateCustomerReturnLines';
+import { useDeleteSelectedCustomerReturnLines } from './useDeleteSelectedCustomerLines';
+import { useDeleteSelectedSupplierReturnLines } from './useDeleteSelectedSupplierLines';
+import { useCustomerReturnRows } from './useCustomerReturnRows';
+import { useSupplierReturnLines } from './useSupplierReturnLines';
+import { useUpdateSupplierReturnLines } from './useUpdateSupplierReturnLines';
+import { useUpdateCustomerReturnLines } from './useUpdateCustomerReturnLines';
+import { useSupplierReturnRows } from './useSupplierReturnRows';
 
 export const Lines = {
-  useOutboundReturnLines,
-  useUpdateOutboundReturnLines,
-  useGenerateInboundReturnLines,
-  useInboundReturnRows,
-  useOutboundReturnRows,
-  useUpdateInboundReturnLines,
-  useDeleteSelectedInboundReturnLines,
-  useDeleteSelectedOutboundReturnLines,
+  useSupplierReturnLines,
+  useUpdateSupplierReturnLines,
+  useGenerateCustomerReturnLines,
+  useCustomerReturnRows,
+  useSupplierReturnRows,
+  useUpdateCustomerReturnLines,
+  useDeleteSelectedCustomerReturnLines,
+  useDeleteSelectedSupplierReturnLines,
 };

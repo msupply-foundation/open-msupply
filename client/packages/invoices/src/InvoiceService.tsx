@@ -3,16 +3,16 @@ import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { DetailView, OutboundShipmentListView } from './OutboundShipment';
 import {
-  OutboundReturnsDetailView,
-  OutboundReturnListView,
-  InboundReturnListView,
+  SupplierReturnsDetailView,
+  SupplierReturnListView,
+  CustomerReturnListView,
 } from './Returns';
 import {
   ListView as InboundShipmentListView,
   DetailView as InboundShipmentDetailView,
 } from './InboundShipment';
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
-import { InboundReturnDetailView } from './Returns/InboundDetailView';
+import { CustomerReturnDetailView } from './Returns/CustomerDetailView';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -37,19 +37,19 @@ const InvoiceService: FC = () => {
     .addPart(':invoiceNumber')
     .build();
 
-  const outboundReturnsRoute = RouteBuilder.create(
-    AppRoute.OutboundReturn
+  const supplierReturnsRoute = RouteBuilder.create(
+    AppRoute.SupplierReturn
   ).build();
 
-  const outboundReturnRoute = RouteBuilder.create(AppRoute.OutboundReturn)
+  const supplierReturnRoute = RouteBuilder.create(AppRoute.SupplierReturn)
     .addPart(':invoiceNumber')
     .build();
 
-  const inboundReturnsRoute = RouteBuilder.create(
-    AppRoute.InboundReturn
+  const customerReturnsRoute = RouteBuilder.create(
+    AppRoute.CustomerReturn
   ).build();
 
-  const inboundReturnRoute = RouteBuilder.create(AppRoute.InboundReturn)
+  const customerReturnRoute = RouteBuilder.create(AppRoute.CustomerReturn)
     .addPart(':invoiceNumber')
     .build();
 
@@ -71,14 +71,17 @@ const InvoiceService: FC = () => {
       <Route path={prescriptionsRoute} element={<PrescriptionListView />} />
       <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
 
-      <Route path={outboundReturnsRoute} element={<OutboundReturnListView />} />
+      <Route path={supplierReturnsRoute} element={<SupplierReturnListView />} />
       <Route
-        path={outboundReturnRoute}
-        element={<OutboundReturnsDetailView />}
+        path={supplierReturnRoute}
+        element={<SupplierReturnsDetailView />}
       />
 
-      <Route path={inboundReturnsRoute} element={<InboundReturnListView />} />
-      <Route path={inboundReturnRoute} element={<InboundReturnDetailView />} />
+      <Route path={customerReturnsRoute} element={<CustomerReturnListView />} />
+      <Route
+        path={customerReturnRoute}
+        element={<CustomerReturnDetailView />}
+      />
     </Routes>
   );
 };

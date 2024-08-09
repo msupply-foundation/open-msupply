@@ -37,7 +37,6 @@
   "error.batch-is-reserved": "Партия уже зарезервирована/выпущена",
   "error.no-inbound-items": "В эту партию не добавлено ни одного товара.",
   "error.no-inbound-shipments": "Нет Входящих Поставок для отображения.",
-  "error.no-outbound-returns": "Нет Исходящих Возвратов для отображения.",
   "error.no-requisition-items": "К этому Внутреннему Заказу не добавлено ни одного товара.",
   "error.inbound-shipment-not-editable": "Входящая поставка не может быть отредактирована.",
   "error.soh-and-suggested-quantity-are-zero": "Отсутствие значений Запасов в Наличии или Рекомендуемых Количеств",

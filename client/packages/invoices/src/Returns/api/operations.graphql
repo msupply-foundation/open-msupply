@@ -1,4 +1,4 @@
-fragment OutboundReturnRow on InvoiceNode {
+fragment SupplierReturnRow on InvoiceNode {
   __typename
   id
   otherPartyId
@@ -16,7 +16,7 @@ fragment OutboundReturnRow on InvoiceNode {
   theirReference
 }
 
-fragment InboundReturnRow on InvoiceNode {
+fragment CustomerReturnRow on InvoiceNode {
   __typename
   id
   otherPartyName
@@ -33,7 +33,7 @@ fragment InboundReturnRow on InvoiceNode {
   }
 }
 
-fragment OutboundReturn on InvoiceNode {
+fragment SupplierReturn on InvoiceNode {
   __typename
   id
   status
@@ -83,7 +83,7 @@ fragment OutboundReturn on InvoiceNode {
   }
 }
 
-fragment InboundReturn on InvoiceNode {
+fragment CustomerReturn on InvoiceNode {
   __typename
   id
   status
@@ -138,7 +138,7 @@ fragment InboundReturn on InvoiceNode {
   }
 }
 
-fragment OutboundReturnLine on InvoiceLineNode {
+fragment SupplierReturnLine on InvoiceLineNode {
   id
   itemCode
   itemName
@@ -158,7 +158,7 @@ fragment OutboundReturnLine on InvoiceLineNode {
   }
 }
 
-fragment InboundReturnLine on InvoiceLineNode {
+fragment CustomerReturnLine on InvoiceLineNode {
   id
   itemId
   itemCode
@@ -177,7 +177,7 @@ fragment InboundReturnLine on InvoiceLineNode {
   }
 }
 
-query outboundReturns(
+query supplierReturns(
   $first: Int
   $offset: Int
   $key: InvoiceSortFieldInput!
@@ -194,13 +194,13 @@ query outboundReturns(
     ... on InvoiceConnector {
       __typename
       nodes {
-        ...OutboundReturnRow
+        ...SupplierReturnRow
       }
       totalCount
     }
   }
 }
-query inboundReturns(
+query customerReturns(
   $first: Int
   $offset: Int
   $key: InvoiceSortFieldInput!
@@ -217,14 +217,14 @@ query inboundReturns(
     ... on InvoiceConnector {
       __typename
       nodes {
-        ...InboundReturnRow
+        ...CustomerReturnRow
       }
       totalCount
     }
   }
 }
 
-fragment GenerateOutboundReturnLine on OutboundReturnLineNode {
+fragment GenerateSupplierReturnLine on SupplierReturnLineNode {
   availableNumberOfPacks
   batch
   expiryDate
@@ -242,20 +242,20 @@ fragment GenerateOutboundReturnLine on OutboundReturnLineNode {
   }
 }
 
-query generateOutboundReturnLines(
-  $input: GenerateOutboundReturnLinesInput!
+query generateSupplierReturnLines(
+  $input: GenerateSupplierReturnLinesInput!
   $storeId: String!
 ) {
-  generateOutboundReturnLines(input: $input, storeId: $storeId) {
-    ... on OutboundReturnLineConnector {
+  generateSupplierReturnLines(input: $input, storeId: $storeId) {
+    ... on SupplierReturnLineConnector {
       nodes {
-        ...GenerateOutboundReturnLine
+        ...GenerateSupplierReturnLine
       }
     }
   }
 }
 
-fragment GenerateInboundReturnLine on InboundReturnLineNode {
+fragment GenerateCustomerReturnLine on CustomerReturnLineNode {
   batch
   expiryDate
   id
@@ -275,48 +275,48 @@ fragment GenerateInboundReturnLine on InboundReturnLineNode {
   }
 }
 
-query generateInboundReturnLines(
-  $input: GenerateInboundReturnLinesInput!
+query generateCustomerReturnLines(
+  $input: GenerateCustomerReturnLinesInput!
   $storeId: String!
 ) {
-  generateInboundReturnLines(input: $input, storeId: $storeId) {
-    ... on GeneratedInboundReturnLineConnector {
+  generateCustomerReturnLines(input: $input, storeId: $storeId) {
+    ... on GeneratedCustomerReturnLineConnector {
       nodes {
-        ...GenerateInboundReturnLine
+        ...GenerateCustomerReturnLine
       }
     }
   }
 }
 
-query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
+query supplierReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
-    type: OUTBOUND_RETURN
+    type: SUPPLIER_RETURN
   ) {
     ... on InvoiceNode {
       __typename
-      ...OutboundReturn
+      ...SupplierReturn
       lines {
         nodes {
-          ...OutboundReturnLine
+          ...SupplierReturnLine
         }
       }
     }
   }
 }
-query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
+query customerReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
-    type: INBOUND_RETURN
+    type: CUSTOMER_RETURN
   ) {
     ... on InvoiceNode {
       __typename
-      ...InboundReturn
+      ...CustomerReturn
       lines {
         nodes {
-          ...InboundReturnLine
+          ...CustomerReturnLine
         }
         totalCount
       }
@@ -324,15 +324,15 @@ query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
-mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
-  insertOutboundReturn(storeId: $storeId, input: $input) {
+mutation insertSupplierReturn($storeId: String!, $input: SupplierReturnInput!) {
+  insertSupplierReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
       invoiceNumber
     }
 
-    ... on InsertOutboundReturnError {
+    ... on InsertSupplierReturnError {
       __typename
       error {
         __typename
@@ -341,11 +341,11 @@ mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
     }
   }
 }
-mutation updateOutboundReturn(
+mutation updateSupplierReturn(
   $storeId: String!
-  $input: UpdateOutboundReturnInput!
+  $input: UpdateSupplierReturnInput!
 ) {
-  updateOutboundReturn(storeId: $storeId, input: $input) {
+  updateSupplierReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -354,11 +354,11 @@ mutation updateOutboundReturn(
   }
 }
 
-mutation updateOutboundReturnLines(
+mutation updateSupplierReturnLines(
   $storeId: String!
-  $input: UpdateOutboundReturnLinesInput!
+  $input: UpdateSupplierReturnLinesInput!
 ) {
-  updateOutboundReturnLines(storeId: $storeId, input: $input) {
+  updateSupplierReturnLines(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -366,15 +366,15 @@ mutation updateOutboundReturnLines(
   }
 }
 
-mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
-  insertInboundReturn(storeId: $storeId, input: $input) {
+mutation insertCustomerReturn($storeId: String!, $input: CustomerReturnInput!) {
+  insertCustomerReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
       invoiceNumber
     }
 
-    ... on InsertInboundReturnError {
+    ... on InsertCustomerReturnError {
       __typename
       error {
         __typename
@@ -384,8 +384,8 @@ mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
   }
 }
 
-mutation deleteOutboundReturn($storeId: String!, $id: String!) {
-  deleteOutboundReturn(storeId: $storeId, id: $id) {
+mutation deleteSupplierReturn($storeId: String!, $id: String!) {
+  deleteSupplierReturn(storeId: $storeId, id: $id) {
     __typename
     ... on DeleteResponse {
       id
@@ -393,11 +393,11 @@ mutation deleteOutboundReturn($storeId: String!, $id: String!) {
   }
 }
 
-mutation updateInboundReturn(
+mutation updateCustomerReturn(
   $storeId: String!
-  $input: UpdateInboundReturnInput!
+  $input: UpdateCustomerReturnInput!
 ) {
-  updateInboundReturn(storeId: $storeId, input: $input) {
+  updateCustomerReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -405,11 +405,11 @@ mutation updateInboundReturn(
   }
 }
 
-mutation updateInboundReturnLines(
+mutation updateCustomerReturnLines(
   $storeId: String!
-  $input: UpdateInboundReturnLinesInput!
+  $input: UpdateCustomerReturnLinesInput!
 ) {
-  updateInboundReturnLines(storeId: $storeId, input: $input) {
+  updateCustomerReturnLines(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -417,8 +417,8 @@ mutation updateInboundReturnLines(
   }
 }
 
-mutation deleteInboundReturn($storeId: String!, $id: String!) {
-  deleteInboundReturn(storeId: $storeId, id: $id) {
+mutation deleteCustomerReturn($storeId: String!, $id: String!) {
+  deleteCustomerReturn(storeId: $storeId, id: $id) {
     __typename
     ... on DeleteResponse {
       id
@@ -426,12 +426,12 @@ mutation deleteInboundReturn($storeId: String!, $id: String!) {
   }
 }
 
-mutation updateOutboundReturnName(
-  $input: UpdateOutboundReturnNameInput!
+mutation updateSupplierReturnName(
+  $input: UpdateSupplierReturnNameInput!
   $storeId: String!
 ) {
-  updateOutboundReturnName(input: $input, storeId: $storeId) {
-    ... on UpdateOutboundReturnNameError {
+  updateSupplierReturnName(input: $input, storeId: $storeId) {
+    ... on UpdateSupplierReturnNameError {
       __typename
       error {
         description

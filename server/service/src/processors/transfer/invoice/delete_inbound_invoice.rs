@@ -26,7 +26,7 @@ impl InvoiceTransferProcessor for DeleteInboundInvoiceProcessor {
     /// 1. Source invoice name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Operation is delete
     /// 3. Linked invoice exists
-    /// 4. Linked invoice is either InboundShipment or Inbound Return
+    /// 4. Linked invoice is either InboundShipment or Customer Return
     /// 5. Linked inbound invoice is Picked (Inbound invoice can only be deleted before it turns to Shipped status)
     ///
     /// Only runs once:
