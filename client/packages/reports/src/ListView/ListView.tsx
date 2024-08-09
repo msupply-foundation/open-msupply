@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import {
   Grid,
+  NothingHere,
   ReportContext,
   RouteBuilder,
   useAuthContext,
@@ -63,6 +64,11 @@ export const ListView = () => {
     },
     [navigate]
   );
+
+  if (!stockAndItemReports?.length && !expiringReports?.length) {
+    return <NothingHere body={t('message.contact-support')} />;
+  }
+
   return (
     <>
       <Grid
