@@ -84,6 +84,7 @@ mod generate_rnr_form_lines {
                 id: line_id,
                 rnr_form_id,
                 item_id: item_query_test1().id,
+                requisition_id: None,
                 initial_balance: 2.0,
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 3.0,
@@ -105,7 +106,6 @@ mod generate_rnr_form_lines {
                 expiry_date: None,
                 comment: None,
                 confirmed: false,
-                approved_quantity: None,
             }
         );
     }
