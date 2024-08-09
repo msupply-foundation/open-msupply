@@ -94,7 +94,8 @@ impl RnRFormLineNode {
     }
 
     pub async fn approved_quantity(&self) -> Option<f64> {
-        self.rnr_form_line_row.approved_quantity
+        // TODO: Join on requisition to get approved quantity
+        None
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {

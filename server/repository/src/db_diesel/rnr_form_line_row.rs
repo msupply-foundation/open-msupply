@@ -14,6 +14,7 @@ table! {
         id -> Text,
         rnr_form_id -> Text,
         item_id -> Text,
+        requisition_id -> Nullable<Text>,
         previous_monthly_consumption_values -> Text,
         average_monthly_consumption -> Double,
         initial_balance -> Double,
@@ -33,7 +34,6 @@ table! {
         low_stock -> crate::db_diesel::rnr_form_line_row::RnRFormLowStockMapping,
         comment -> Nullable<Text>,
         confirmed -> Bool,
-        approved_quantity -> Nullable<Double>,
     }
 }
 
@@ -52,6 +52,7 @@ pub struct RnRFormLineRow {
     pub id: String,
     pub rnr_form_id: String,
     pub item_id: String,
+    pub requisition_id: Option<String>,
     pub previous_monthly_consumption_values: String,
     pub average_monthly_consumption: f64,
     pub initial_balance: f64,
@@ -71,7 +72,6 @@ pub struct RnRFormLineRow {
     pub low_stock: RnRFormLowStock,
     pub comment: Option<String>,
     pub confirmed: bool,
-    pub approved_quantity: Option<f64>,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

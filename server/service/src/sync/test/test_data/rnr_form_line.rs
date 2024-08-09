@@ -34,6 +34,7 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         id: RNR_FORM_LINE_1.0.to_string(),
         rnr_form_id: "cfd578f8-c3d5-4a04-a466-0ac81dde2aab".to_string(),
         item_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+        requisition_id: None,
         average_monthly_consumption: 0.0,
         initial_balance: 0.0,
         snapshot_quantity_received: 0.0,
@@ -53,7 +54,6 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         confirmed: false,
         previous_monthly_consumption_values: "".to_string(),
         low_stock: RnRFormLowStock::Ok,
-        approved_quantity: None,
     }
 }
 

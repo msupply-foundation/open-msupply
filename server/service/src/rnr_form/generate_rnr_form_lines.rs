@@ -123,6 +123,7 @@ pub fn generate_rnr_form_lines(
                 id: uuid(),
                 rnr_form_id: rnr_form_id.to_string(),
                 item_id,
+                requisition_id: None,
                 previous_monthly_consumption_values,
                 average_monthly_consumption,
                 initial_balance,
@@ -144,7 +145,6 @@ pub fn generate_rnr_form_lines(
                 entered_requested_quantity: None,
                 comment: None,
                 confirmed: false,
-                approved_quantity: None,
             })
         })
         .collect::<Result<Vec<RnRFormLineRow>, RepositoryError>>();
