@@ -473,9 +473,6 @@ mod test {
                     id
                     status
                     otherPartyId
-                    otherPartyStore {
-                        id
-                    }
                 }
                 ... on UpdateInboundShipmentError {
                     error {
@@ -551,10 +548,7 @@ mod test {
         let expected = json!({
           "updateInboundShipment": {
             "id": "inbound_shipment_c",
-            "otherPartyId": mock_name_linked_to_store().id,
-            "otherPartyStore": {
-              "id": mock_store_linked_to_name().id
-            },
+            "otherPartyId": mock_name_linked_to_store().id
           },
         });
 
@@ -582,8 +576,7 @@ mod test {
         let expected = json!({
           "updateInboundShipment": {
             "id": "inbound_shipment_c",
-            "otherPartyId": mock_name_not_linked_to_store().id,
-            "otherPartyStore": null,
+            "otherPartyId": mock_name_not_linked_to_store().id
           },
         });
 

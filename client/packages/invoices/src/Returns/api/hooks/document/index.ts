@@ -12,6 +12,7 @@ import { useInboundReturnDelete } from './useInboundDelete';
 import { useUpdateOutboundReturn } from './useUpdateOutboundReturn';
 import { useUpdateInboundReturn } from './useUpdateInboundReturn';
 import { useOutboundReturnDelete } from './useOutboundDelete';
+import { useUpdateOutboundReturnName } from './useUpdateOutboundReturnName';
 
 export const Document = {
   useOutboundReturn,
@@ -25,6 +26,7 @@ export const Document = {
   useInboundDeleteRows,
   useInsertOutboundReturn,
   useUpdateOutboundReturn,
+  useUpdateOutboundReturnName,
   useOutboundReturnDelete,
 
   useInsertInboundReturn,

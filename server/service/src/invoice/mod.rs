@@ -1,3 +1,6 @@
+use outbound_return::update_name::update_outbound_return_name;
+use outbound_return::update_name::UpdateOutboundReturnName;
+use outbound_return::update_name::UpdateOutboundReturnNameError;
 use repository::Invoice;
 use repository::InvoiceFilter;
 use repository::InvoiceLine;
@@ -228,6 +231,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: UpdateOutboundReturn,
     ) -> Result<Invoice, UpdateOutboundReturnError> {
         update_outbound_return(ctx, input)
+    }
+
+    fn update_outbound_return_name(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateOutboundReturnName,
+    ) -> Result<Invoice, UpdateOutboundReturnNameError> {
+        update_outbound_return_name(ctx, input)
     }
 
     fn update_outbound_return_lines(
