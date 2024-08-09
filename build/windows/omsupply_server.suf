@@ -541,8 +541,8 @@
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -642,7 +642,7 @@ sBodyInfoText = sBodyInfoText .. "If you have any other programs running, please
 sBodyInfoText = sBodyInfoText .. "Otherwise, click Next to continue.";
 
 DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoText});
-					</Script>
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -653,7 +653,7 @@ DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoText});
 
 -- go back to the previous screen
 Screen.Back();
-					</Script>
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -820,8 +820,8 @@ Otherwise, click Next to continue.
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -1115,8 +1115,8 @@ end
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -1496,8 +1496,8 @@ end
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -1927,8 +1927,8 @@ end
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -2321,8 +2321,8 @@ end
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -2603,8 +2603,8 @@ Please click Next to proceed with the installation.</IDS_CTRL_STATICTEXT_BODY>
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -2900,8 +2900,8 @@ end
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -3335,8 +3335,8 @@ end
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -3600,8 +3600,8 @@ Otherwise, click Next to continue.
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
@@ -3891,8 +3891,8 @@ end
 <CDISTXT format="hex">aca899</CDISTXT>
 <CPRGRS format="hex">316ac5</CPRGRS>
 <C3DSHDK format="hex">716f64</C3DSHDK>
-<TBIMG>notify_top_banner.png</TBIMG>
-<SBIMG>notify_side_banner.png</SBIMG>
+<TBIMG>open_msupply_top_banner.png</TBIMG>
+<SBIMG>open_msupply_side_banner.png</SBIMG>
 <BDIMG/>
 <BDFILL>0</BDFILL>
 <HDSEP>1</HDSEP>
