@@ -166,8 +166,20 @@ const PeriodSelect = ({
   previousFormExists?: boolean;
   errorMessage?: string;
 }) => {
+  const t = useTranslation('replenishment');
+
   return (
     <Box display="flex" flexDirection="column">
+      <Typography
+        sx={{
+          fontStyle: 'italic',
+          color: 'gray.main',
+          fontSize: '12px',
+          width,
+        }}
+      >
+        {t('messages.only-closed-periods-visible')}
+      </Typography>
       <Autocomplete
         width={width}
         disabled={disabled}

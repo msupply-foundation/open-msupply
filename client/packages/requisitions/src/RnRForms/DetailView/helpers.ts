@@ -1,3 +1,5 @@
+import { LowStockStatus } from '@common/types';
+
 export const getAmc = (
   previousMonthlyConsumptionValues: string,
   adjustedQuantityConsumed: number,
@@ -18,4 +20,19 @@ export const getAmc = (
     totalMonthlyConsumption / (previousConsumptionValues.length + 1);
 
   return averageMonthlyConsumption;
+};
+
+export const getLowStockStatus = (
+  finalBalance: number,
+  maximumQuantity: number
+) => {
+  if (finalBalance < maximumQuantity / 4) {
+    return LowStockStatus.BelowQuarter;
+  }
+
+  if (finalBalance < maximumQuantity / 2) {
+    return LowStockStatus.BelowHalf;
+  }
+
+  return LowStockStatus.Ok;
 };

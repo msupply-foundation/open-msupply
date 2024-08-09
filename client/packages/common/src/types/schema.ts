@@ -3592,6 +3592,12 @@ export type Logout = {
 
 export type LogoutResponse = Logout;
 
+export enum LowStockStatus {
+  BelowHalf = 'BELOW_HALF',
+  BelowQuarter = 'BELOW_QUARTER',
+  Ok = 'OK'
+}
+
 export type MasterListConnector = {
   __typename: 'MasterListConnector';
   nodes: Array<MasterListNode>;
@@ -6372,6 +6378,7 @@ export type RnRFormLineNode = {
   __typename: 'RnRFormLineNode';
   adjustedQuantityConsumed: Scalars['Float']['output'];
   adjustments: Scalars['Float']['output'];
+  approvedQuantity?: Maybe<Scalars['Float']['output']>;
   averageMonthlyConsumption: Scalars['Float']['output'];
   calculatedRequestedQuantity: Scalars['Float']['output'];
   comment?: Maybe<Scalars['String']['output']>;
@@ -6383,6 +6390,7 @@ export type RnRFormLineNode = {
   initialBalance: Scalars['Float']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  lowStock: LowStockStatus;
   maximumQuantity: Scalars['Float']['output'];
   previousMonthlyConsumptionValues: Scalars['String']['output'];
   quantityConsumed: Scalars['Float']['output'];
@@ -7791,6 +7799,7 @@ export type UpdateRnRFormLineInput = {
   finalBalance: Scalars['Float']['input'];
   id: Scalars['String']['input'];
   initialBalance: Scalars['Float']['input'];
+  lowStock: LowStockStatus;
   maximumQuantity: Scalars['Float']['input'];
   quantityConsumed?: InputMaybe<Scalars['Float']['input']>;
   quantityReceived?: InputMaybe<Scalars['Float']['input']>;

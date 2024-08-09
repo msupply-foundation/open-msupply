@@ -68,6 +68,7 @@ const useUpdateLine = (rnrFormId: string) => {
     quantityReceived,
     expiryDate,
     initialBalance,
+    lowStock,
   }: RnRFormLineFragment) => {
     const lineInput: UpdateRnRFormLineInput = {
       id,
@@ -85,6 +86,7 @@ const useUpdateLine = (rnrFormId: string) => {
       expiryDate,
       initialBalance,
       comment,
+      lowStock,
     };
     const apiResult = await api.updateRnRFormLines({
       storeId,
