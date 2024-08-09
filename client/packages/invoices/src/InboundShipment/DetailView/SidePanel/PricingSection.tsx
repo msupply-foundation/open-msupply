@@ -121,6 +121,19 @@ export const PricingSectionComponent = () => {
               onClick={serviceLineModal.toggleOn}
             />
           </PanelField>
+          {serviceLines
+            ? serviceLines.map((line, index) => (
+                <PanelRow
+                  sx={{
+                    marginLeft: '10px',
+                    paddingBottom: index === serviceLines.length - 1 ? 2 : 0,
+                  }}
+                >
+                  <PanelLabel>{line.itemName}</PanelLabel>
+                  <PanelField>{c(line.totalBeforeTax).format()}</PanelField>
+                </PanelRow>
+              ))
+            : null}
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.sub-total')}</PanelLabel>
