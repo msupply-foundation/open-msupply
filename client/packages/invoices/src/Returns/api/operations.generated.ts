@@ -139,13 +139,13 @@ export type DeleteInboundReturnMutationVariables = Types.Exact<{
 
 export type DeleteInboundReturnMutation = { __typename: 'Mutations', deleteInboundReturn: { __typename: 'DeleteInboundReturnError' } | { __typename: 'DeleteResponse', id: string } };
 
-export type UpdateOutboundReturnNameMutationVariables = Types.Exact<{
-  input: Types.UpdateOutboundReturnNameInput;
+export type UpdateOutboundReturnOtherPartyMutationVariables = Types.Exact<{
+  input: Types.UpdateOutboundReturnOtherPartyInput;
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type UpdateOutboundReturnNameMutation = { __typename: 'Mutations', updateOutboundReturnName: { __typename: 'InvoiceNode', id: string } | { __typename: 'UpdateOutboundReturnNameError', error: { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
+export type UpdateOutboundReturnOtherPartyMutation = { __typename: 'Mutations', updateOutboundReturnOtherParty: { __typename: 'InvoiceNode', id: string } | { __typename: 'UpdateOutboundReturnOtherPartyError', error: { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export const OutboundReturnRowFragmentDoc = gql`
     fragment OutboundReturnRow on InvoiceNode {
@@ -556,10 +556,10 @@ export const DeleteInboundReturnDocument = gql`
   }
 }
     `;
-export const UpdateOutboundReturnNameDocument = gql`
-    mutation updateOutboundReturnName($input: UpdateOutboundReturnNameInput!, $storeId: String!) {
-  updateOutboundReturnName(input: $input, storeId: $storeId) {
-    ... on UpdateOutboundReturnNameError {
+export const UpdateOutboundReturnOtherPartyDocument = gql`
+    mutation updateOutboundReturnOtherParty($input: UpdateOutboundReturnOtherPartyInput!, $storeId: String!) {
+  updateOutboundReturnOtherParty(input: $input, storeId: $storeId) {
+    ... on UpdateOutboundReturnOtherPartyError {
       __typename
       error {
         description
@@ -638,8 +638,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteInboundReturn(variables: DeleteInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteInboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundReturnMutation>(DeleteInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundReturn', 'mutation', variables);
     },
-    updateOutboundReturnName(variables: UpdateOutboundReturnNameMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundReturnNameMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnNameMutation>(UpdateOutboundReturnNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturnName', 'mutation', variables);
+    updateOutboundReturnOtherParty(variables: UpdateOutboundReturnOtherPartyMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundReturnOtherPartyMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnOtherPartyMutation>(UpdateOutboundReturnOtherPartyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturnOtherParty', 'mutation', variables);
     }
   };
 }

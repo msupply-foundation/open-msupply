@@ -13,7 +13,7 @@ export const useReturns = {
 
     insertOutboundReturn: Document.useInsertOutboundReturn,
     updateOutboundReturn: Document.useUpdateOutboundReturn,
-    updateName: Document.useUpdateOutboundReturnName,
+    updateOtherParty: Document.useUpdateOutboundReturnOtherParty,
     deleteOutbound: Document.useOutboundReturnDelete,
     deleteOutboundRows: Document.useOutboundDeleteRows,
 
