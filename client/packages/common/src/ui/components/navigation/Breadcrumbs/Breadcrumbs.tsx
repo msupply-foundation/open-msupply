@@ -41,6 +41,11 @@ export const Breadcrumbs = ({
       ? t('breadcrumb.item', { id: part.value })
       : t(part.key);
 
+  // Removes the first element if it is a top level path to get correct breadcrumbs
+  if (topLevelPaths.includes(urlParts[0]?.value ?? '') && urlParts.length > 1) {
+    urlParts.shift();
+  }
+
   const crumbs = urlParts.map((part, index) => {
     const customCrumb = customBreadcrumbs[index];
 
