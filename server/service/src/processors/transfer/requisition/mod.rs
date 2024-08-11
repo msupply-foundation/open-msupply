@@ -1,6 +1,7 @@
 pub(crate) mod assign_requisition_number;
 pub(crate) mod create_response_requisition;
 pub(crate) mod link_request_requisition;
+pub(crate) mod update_request_requisition_approved_quantities;
 pub(crate) mod update_request_requisition_status;
 
 #[cfg(test)]
