@@ -134,7 +134,11 @@ const DetailViewInner = ({
         onArgumentsSelected={generateReport}
       />
 
-      {!fileId ? <BasicSpinner /> : <iframe src={url} width="100%" />}
+      {!fileId ? (
+        <BasicSpinner />
+      ) : (
+        <iframe src={url} width="100%" style={{ borderWidth: 0 }} />
+      )}
     </>
   );
 };
