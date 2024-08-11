@@ -426,12 +426,12 @@ mutation deleteInboundReturn($storeId: String!, $id: String!) {
   }
 }
 
-mutation updateOutboundReturnName(
-  $input: UpdateOutboundReturnNameInput!
+mutation updateOutboundReturnOtherParty(
+  $input: UpdateOutboundReturnOtherPartyInput!
   $storeId: String!
 ) {
-  updateOutboundReturnName(input: $input, storeId: $storeId) {
-    ... on UpdateOutboundReturnNameError {
+  updateOutboundReturnOtherParty(input: $input, storeId: $storeId) {
+    ... on UpdateOutboundReturnOtherPartyError {
       __typename
       error {
         description

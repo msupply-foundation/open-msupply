@@ -13,7 +13,7 @@ import {
   Switch,
 } from '@openmsupply-client/common';
 import { OutboundReturnFragment, useReturns } from '../api';
-import { SupplierSearchInput } from 'packages/system/src';
+import { SupplierSearchInput } from '@openmsupply-client/system';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
@@ -23,7 +23,8 @@ export const Toolbar: FC = () => {
     useReturns.document.outboundReturn();
   const { otherParty, theirReference, id } = bufferedState ?? { id: '' };
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundReturn');
-  const { mutateAsync: updateName } = useReturns.document.updateName();
+  const { mutateAsync: updateOtherParty } =
+    useReturns.document.updateOtherParty();
 
   const onDelete = useReturns.lines.deleteSelectedOutboundLines({
     returnId: id,
@@ -57,7 +58,7 @@ export const Toolbar: FC = () => {
                     disabled={isDisabled}
                     value={otherParty}
                     onChange={async ({ id: otherPartyId }) => {
-                      await updateName({ id, otherPartyId });
+                      await updateOtherParty({ id, otherPartyId });
                     }}
                   />
                 }
