@@ -64,7 +64,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 id TEXT NOT NULL PRIMARY KEY,
                 rnr_form_id TEXT NOT NULL REFERENCES rnr_form(id),
                 item_id TEXT NOT NULL REFERENCES item(id),
-                requisition_id TEXT REFERENCES requisition(id),
+                requisition_line_id TEXT REFERENCES requisition_line(id),
                 average_monthly_consumption {DOUBLE} NOT NULL,
                 previous_monthly_consumption_values TEXT NOT NULL,
 

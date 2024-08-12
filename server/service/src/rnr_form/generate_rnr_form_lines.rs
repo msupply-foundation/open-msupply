@@ -123,7 +123,7 @@ pub fn generate_rnr_form_lines(
                 id: uuid(),
                 rnr_form_id: rnr_form_id.to_string(),
                 item_id,
-                requisition_id: None,
+                requisition_line_id: None,
                 previous_monthly_consumption_values,
                 average_monthly_consumption,
                 initial_balance,
