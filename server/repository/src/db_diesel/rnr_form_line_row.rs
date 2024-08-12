@@ -108,6 +108,19 @@ impl<'a> RnRFormLineRowRepository<'a> {
         self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
     }
 
+    pub fn update_requisition_line_id(
+        &self,
+        rnr_form_line_id: &str,
+        linked_requisition_line_id: &str,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(rnr_form_line)
+            .filter(id.eq(rnr_form_line_id))
+            .set(requisition_line_id.eq(linked_requisition_line_id))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+        // TODO: does this need to insert changelog?
+    }
+
     fn insert_changelog(
         &self,
         record_id: String,
