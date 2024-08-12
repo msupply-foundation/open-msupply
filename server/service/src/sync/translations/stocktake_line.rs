@@ -128,7 +128,10 @@ impl SyncTranslation for StocktakeLineTranslation {
         let result = StocktakeLineRow {
             id: ID,
             stocktake_id: stock_take_ID,
-            stock_line_id: item_line_ID,
+            stock_line_id: match is_stock_line_valid {
+                true => item_line_ID,
+                false => None,
+            },
             location_id,
             comment,
             snapshot_number_of_packs: snapshot_qty,
