@@ -5,8 +5,8 @@ use repository::{
     AdjustmentFilter, AdjustmentRepository, ConsumptionFilter, ConsumptionRepository, DateFilter,
     DatetimeFilter, EqualFilter, MasterListLineFilter, MasterListLineRepository, Pagination,
     PeriodRow, ReplenishmentFilter, ReplenishmentRepository, RepositoryError, RnRForm,
-    RnRFormFilter, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRepository, StockLineFilter,
-    StockLineRepository, StockLineSort, StockLineSortField, StockMovementFilter,
+    RnRFormFilter, RnRFormLineRow, RnRFormLineRowRepository, RnRFormLowStock, RnRFormRepository,
+    StockLineFilter, StockLineRepository, StockLineSort, StockLineSortField, StockMovementFilter,
     StockMovementRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, date_with_offset, uuid::uuid};
@@ -123,6 +123,7 @@ pub fn generate_rnr_form_lines(
                 id: uuid(),
                 rnr_form_id: rnr_form_id.to_string(),
                 item_id,
+                requisition_line_id: None,
                 previous_monthly_consumption_values,
                 average_monthly_consumption,
                 initial_balance,
@@ -140,6 +141,7 @@ pub fn generate_rnr_form_lines(
                 maximum_quantity,
                 expiry_date: earliest_expiry,
                 calculated_requested_quantity,
+                low_stock: get_low_stock_status(final_balance, maximum_quantity),
                 entered_requested_quantity: None,
                 comment: None,
                 confirmed: false,
@@ -436,4 +438,15 @@ pub fn get_earliest_expiry(
         .pop();
 
     Ok(earliest_expiring.and_then(|line| line.stock_line_row.expiry_date))
+}
+
+fn get_low_stock_status(final_balance: f64, maximum_quantity: f64) -> RnRFormLowStock {
+    if final_balance < maximum_quantity / 4.0 {
+        return RnRFormLowStock::BelowQuarter;
+    }
+    if final_balance < maximum_quantity / 2.0 {
+        return RnRFormLowStock::BelowHalf;
+    }
+
+    RnRFormLowStock::Ok
 }

@@ -103,6 +103,7 @@ type Icon = {
 const Template: StoryFn<React.FC<SvgIconProps>> = args => {
   const icons: Icon[] = [
     { icon: <AlertIcon {...args} />, name: 'Alert' },
+    { icon: <AlertIcon double {...args} />, name: 'Alert (double)' },
     { icon: <ArrowLeftIcon {...args} />, name: 'ArrowLeft' },
     { icon: <ArrowRightIcon {...args} />, name: 'ArrowRight' },
     { icon: <BarIcon {...args} />, name: 'Bar' },

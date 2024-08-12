@@ -8,7 +8,7 @@ import {
   Table,
   useTranslation,
 } from '@openmsupply-client/common';
-import { RnRFormLineFragment } from '../../api/operations.generated';
+import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
 
 interface ContentAreaProps {
@@ -24,7 +24,7 @@ interface HeaderCellProps {
 }
 
 const HeaderCell = ({ label, tooltip }: HeaderCellProps) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   return tooltip === undefined ? (
     <th>{t(label)}</th>
@@ -44,7 +44,7 @@ export const ContentArea = ({
   periodLength,
   disabled,
 }: ContentAreaProps) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   // TODO: move to backend, should join on item and sort by name!
   const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));
@@ -128,8 +128,16 @@ export const ContentArea = ({
               label="label.requested-quantity"
               tooltip="description.rnr-requested-quantity"
             />
+            <HeaderCell
+              label="label.low-stock"
+              tooltip="description.rnr-low-stock"
+            />
             <HeaderCell label="label.comment" />
             <HeaderCell label="label.confirmed" />
+            <HeaderCell
+              label="label.approved-quantity"
+              tooltip="description.rnr-approved-quantity"
+            />
           </tr>
         </thead>
 
