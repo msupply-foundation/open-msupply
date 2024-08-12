@@ -106,10 +106,11 @@ mod finalise {
         assert_eq!(requisition.requisition_row.store_id, mock_store_a().id);
 
         // Check the same number of lines in the internal order as the RnR form
-        let rnr_line_count = RnRFormLineRowRepository::new(&context.connection)
+        let rnr_lines = RnRFormLineRowRepository::new(&context.connection)
             .find_many_by_rnr_form_id(&mock_rnr_form_b().id)
-            .unwrap()
-            .len();
+            .unwrap();
+
+        let rnr_line_count = rnr_lines.len();
         let requisition_line_count = RequisitionLineRepository::new(&context.connection)
             .count(Some(RequisitionLineFilter::new().requisition_id(
                 EqualFilter::equal_to(&requisition.requisition_row.id),
@@ -117,5 +118,7 @@ mod finalise {
             .unwrap() as usize;
 
         assert_eq!(rnr_line_count, requisition_line_count);
+
+        assert!(rnr_lines.iter().all(|l| l.requisition_line_id.is_some()));
     }
 }
