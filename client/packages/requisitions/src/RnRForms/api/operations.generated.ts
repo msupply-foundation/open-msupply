@@ -5,7 +5,7 @@ import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type RnRFormFragment = { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, supplierId: string, status: Types.RnRFormNodeStatus };
 
-export type RnRFormLineFragment = { __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, previousMonthlyConsumptionValues: string, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, calculatedRequestedQuantity: number, enteredRequestedQuantity?: number | null, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null, strength?: string | null, venCategory: Types.VenCategoryType } };
+export type RnRFormLineFragment = { __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, previousMonthlyConsumptionValues: string, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, calculatedRequestedQuantity: number, enteredRequestedQuantity?: number | null, lowStock: Types.LowStockStatus, comment?: string | null, confirmed: boolean, approvedQuantity?: number | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null, strength?: string | null, venCategory: Types.VenCategoryType } };
 
 export type PeriodFragment = { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string };
 
@@ -37,7 +37,7 @@ export type RAndRFormDetailQueryVariables = Types.Exact<{
 }>;
 
 
-export type RAndRFormDetailQuery = { __typename: 'Queries', rAndRForm: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, supplierId: string, status: Types.RnRFormNodeStatus, lines: Array<{ __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, previousMonthlyConsumptionValues: string, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, calculatedRequestedQuantity: number, enteredRequestedQuantity?: number | null, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null, strength?: string | null, venCategory: Types.VenCategoryType } }> } };
+export type RAndRFormDetailQuery = { __typename: 'Queries', rAndRForm: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, supplierId: string, status: Types.RnRFormNodeStatus, lines: Array<{ __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, previousMonthlyConsumptionValues: string, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, calculatedRequestedQuantity: number, enteredRequestedQuantity?: number | null, lowStock: Types.LowStockStatus, comment?: string | null, confirmed: boolean, approvedQuantity?: number | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null, strength?: string | null, venCategory: Types.VenCategoryType } }> } };
 
 export type CreateRnRFormMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -93,8 +93,10 @@ export const RnRFormLineFragmentDoc = gql`
   expiryDate
   calculatedRequestedQuantity
   enteredRequestedQuantity
+  lowStock
   comment
   confirmed
+  approvedQuantity
   item {
     code
     name
