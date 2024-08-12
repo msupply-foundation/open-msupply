@@ -42,7 +42,7 @@ const DetailViewInner = ({
   report: ReportRowFragment;
   reportArgs: JsonData;
 }) => {
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
   const { mutateAsync } = useGenerateReport();
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
@@ -54,7 +54,7 @@ const DetailViewInner = ({
   >();
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 0: report.name ?? '' });
+    setCustomBreadcrumbs({ 1: report.name ?? '' });
 
     // Initial report generation
     if (!report.argumentSchema) {
@@ -134,7 +134,11 @@ const DetailViewInner = ({
         onArgumentsSelected={generateReport}
       />
 
-      {!fileId ? <BasicSpinner /> : <iframe src={url} width="100%" />}
+      {!fileId ? (
+        <BasicSpinner />
+      ) : (
+        <iframe src={url} width="100%" style={{ borderWidth: 0 }} />
+      )}
     </>
   );
 };
