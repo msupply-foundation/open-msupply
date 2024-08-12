@@ -6,7 +6,7 @@ use repository::{
 use repository::{InvoiceRow, StorageConnection};
 use util::uuid::uuid;
 
-use super::{UpdateSupplierReturnName, UpdateSupplierReturnNameError};
+use super::{UpdateSupplierReturnOtherParty, UpdateSupplierReturnOtherPartyError};
 
 pub struct GenerateResult {
     pub(crate) old_invoice: InvoiceRow,
@@ -20,11 +20,11 @@ pub fn generate(
     connection: &StorageConnection,
     existing_invoice: InvoiceRow,
     other_party_option: Option<Name>,
-    UpdateSupplierReturnName {
+    UpdateSupplierReturnOtherParty {
         id: _,
         other_party_id: input_other_party_id,
-    }: UpdateSupplierReturnName,
-) -> Result<GenerateResult, UpdateSupplierReturnNameError> {
+    }: UpdateSupplierReturnOtherParty,
+) -> Result<GenerateResult, UpdateSupplierReturnOtherPartyError> {
     let old_invoice = existing_invoice.clone();
     let old_invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&existing_invoice.id)),
