@@ -278,13 +278,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not update supplier return');
   },
-  updateName: async (
+  updateOtherParty: async (
     patch:
       | RecordPatch<SupplierReturnRowFragment>
       | RecordPatch<SupplierReturnFragment>
   ) => {
     const result =
-      (await sdk.updateSupplierReturnName({
+      (await sdk.updateSupplierReturnOtherParty({
         storeId,
         input: {
           id: patch.id,
@@ -292,10 +292,10 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         },
       })) || {};
 
-    const { updateSupplierReturnName } = result;
+    const { updateSupplierReturnOtherParty } = result;
 
-    if (updateSupplierReturnName?.__typename === 'InvoiceNode') {
-      return updateSupplierReturnName.id;
+    if (updateSupplierReturnOtherParty?.__typename === 'InvoiceNode') {
+      return updateSupplierReturnOtherParty.id;
     }
 
     throw new Error('Could not update supplier name');

@@ -218,7 +218,7 @@ export const AppDrawer: React.FC = () => {
             text={t('reports')}
           />
           <DistributionNav />
-          <ReplenishmentNav />
+          <ReplenishmentNav store={store} />
           <CatalogueNav />
           <InventoryNav />
           <DispensaryNav store={store} />

@@ -426,12 +426,12 @@ mutation deleteCustomerReturn($storeId: String!, $id: String!) {
   }
 }
 
-mutation updateSupplierReturnName(
-  $input: UpdateSupplierReturnNameInput!
+mutation updateSupplierReturnOtherParty(
+  $input: UpdateSupplierReturnOtherPartyInput!
   $storeId: String!
 ) {
-  updateSupplierReturnName(input: $input, storeId: $storeId) {
-    ... on UpdateSupplierReturnNameError {
+  updateSupplierReturnOtherParty(input: $input, storeId: $storeId) {
+    ... on UpdateSupplierReturnOtherPartyError {
       __typename
       error {
         description

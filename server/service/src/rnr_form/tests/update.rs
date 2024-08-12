@@ -7,7 +7,7 @@ mod update {
         mock_store_a, mock_store_b,
     };
     use repository::test_db::setup_all;
-    use repository::{RnRFormLineRow, RnRFormLineRowRepository};
+    use repository::{RnRFormLineRow, RnRFormLineRowRepository, RnRFormLowStock};
 
     use crate::rnr_form::update::{
         UpdateRnRForm, UpdateRnRFormError, UpdateRnRFormLine, UpdateRnRFormLineError,
@@ -184,7 +184,8 @@ mod update {
                         id: mock_rnr_form_b_line_a().id,
                         initial_balance: 10.0,
                         final_balance: 7.0,
-                        requested_quantity: -10.0,
+                        calculated_requested_quantity: 0.0,
+                        entered_requested_quantity: Some(-10.0),
                         ..Default::default()
                     }]
                 }
@@ -221,7 +222,8 @@ mod update {
                         confirmed: true,
                         initial_balance: 10.0,
                         final_balance: 5.0,
-                        requested_quantity: 13.0,
+                        calculated_requested_quantity: 13.0,
+                        entered_requested_quantity: Some(14.0),
                         expiry_date: NaiveDate::from_ymd_opt(2021, 1, 1),
                         ..Default::default()
                     }],
@@ -240,6 +242,7 @@ mod update {
                 id: mock_rnr_form_b_line_a().id,
                 rnr_form_id: mock_rnr_form_b().id,
                 item_id: mock_rnr_form_b_line_a().item_id,
+                requisition_line_id: None,
                 initial_balance: 10.0,
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 7.0,
@@ -247,7 +250,7 @@ mod update {
                 final_balance: 5.0,
                 entered_quantity_received: Some(4.0),
                 entered_quantity_consumed: Some(8.0),
-                requested_quantity: 13.0,
+                calculated_requested_quantity: 13.0,
                 comment: Some("hello".to_string()),
                 confirmed: true,
                 expiry_date: NaiveDate::from_ymd_opt(2021, 1, 1),
@@ -256,7 +259,9 @@ mod update {
                 adjusted_quantity_consumed: 0.0,
                 stock_out_duration: 0,
                 maximum_quantity: 0.0,
-                previous_average_monthly_consumption: 0.0,
+                previous_monthly_consumption_values: "".to_string(),
+                entered_requested_quantity: Some(14.0),
+                low_stock: RnRFormLowStock::default(),
             }
         );
     }

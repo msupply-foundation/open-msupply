@@ -192,13 +192,13 @@ impl InvoiceMutations {
         supplier_return::update::update(ctx, &store_id, input)
     }
 
-    async fn update_supplier_return_name(
+    async fn update_supplier_return_other_party(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: supplier_return::update_name::UpdateNameInput,
-    ) -> Result<supplier_return::update_name::UpdateNameResponse> {
-        supplier_return::update_name::update_name(ctx, &store_id, input)
+        input: supplier_return::update_other_party::UpdateNameInput,
+    ) -> Result<supplier_return::update_other_party::UpdateNameResponse> {
+        supplier_return::update_other_party::update_other_party(ctx, &store_id, input)
     }
 
     async fn update_supplier_return_lines(

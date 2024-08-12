@@ -31,7 +31,7 @@ use self::supplier_return::generate_supplier_return_lines::*;
 use self::supplier_return::insert::*;
 use self::supplier_return::update::*;
 use self::supplier_return::update_lines::*;
-use supplier_return::update_name::*;
+use supplier_return::update_other_party::*;
 
 pub mod supplier_return;
 
@@ -231,12 +231,12 @@ pub trait InvoiceServiceTrait: Sync + Send {
         update_supplier_return(ctx, input)
     }
 
-    fn update_supplier_return_name(
+    fn update_supplier_return_other_party(
         &self,
         ctx: &ServiceContext,
-        input: UpdateSupplierReturnName,
-    ) -> Result<Invoice, UpdateSupplierReturnNameError> {
-        update_supplier_return_name(ctx, input)
+        input: UpdateSupplierReturnOtherParty,
+    ) -> Result<Invoice, UpdateSupplierReturnOtherPartyError> {
+        update_supplier_return_other_party(ctx, input)
     }
 
     fn update_supplier_return_lines(

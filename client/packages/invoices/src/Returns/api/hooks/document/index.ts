@@ -12,7 +12,7 @@ import { useCustomerReturnDelete } from './useCustomerDelete';
 import { useUpdateCustomerReturn } from './useUpdateCustomerReturn';
 import { useSupplierReturnDelete } from './useSupplierDelete';
 import { useUpdateSupplierReturn } from './useUpdateSupplierReturn';
-import { useUpdateSupplierReturnName } from './useUpdateSupplierReturnName';
+import { useUpdateSupplierReturnOtherParty } from './useUpdateSupplierReturnOtherParty';
 
 export const Document = {
   useSupplierReturn,
@@ -26,7 +26,7 @@ export const Document = {
   useCustomerDeleteRows,
   useInsertSupplierReturn,
   useUpdateSupplierReturn,
-  useUpdateSupplierReturnName,
+  useUpdateSupplierReturnOtherParty,
   useSupplierReturnDelete,
 
   useInsertCustomerReturn,

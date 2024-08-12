@@ -15,7 +15,7 @@ import {
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { CustomerReturnFragment, useReturns } from '../api';
-import { CustomerSearchInput } from 'packages/system/src';
+import { CustomerSearchInput } from '@openmsupply-client/system';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('distribution');
@@ -57,7 +57,7 @@ export const Toolbar: FC = () => {
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherParty && (
               <InputWithLabelRow
-                label={t('label.supplier-name')}
+                label={t('label.customer-name')}
                 Input={
                   <CustomerSearchInput
                     disabled={isDisabled || !!linkedShipment}

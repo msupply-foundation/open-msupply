@@ -39,6 +39,24 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#
     )?;
 
+    #[cfg(feature = "postgres")]
+    sql!(
+        connection,
+        r#"
+          CREATE TYPE rn_r_form_low_stock AS ENUM (
+            'OK',
+            'BELOW_HALF',
+            'BELOW_QUARTER'
+          );
+        "#
+    )?;
+
+    const RNR_LOW_STOCK_ENUM_TYPE: &str = if cfg!(feature = "postgres") {
+        "rn_r_form_low_stock"
+    } else {
+        "TEXT"
+    };
+
     sql!(
         connection,
         r#"
@@ -46,8 +64,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 id TEXT NOT NULL PRIMARY KEY,
                 rnr_form_id TEXT NOT NULL REFERENCES rnr_form(id),
                 item_id TEXT NOT NULL REFERENCES item(id),
+                requisition_line_id TEXT REFERENCES requisition_line(id),
                 average_monthly_consumption {DOUBLE} NOT NULL,
-                previous_average_monthly_consumption {DOUBLE} NOT NULL,
+                previous_monthly_consumption_values TEXT NOT NULL,
 
                 initial_balance {DOUBLE} NOT NULL,
                 snapshot_quantity_received {DOUBLE} NOT NULL,
@@ -61,7 +80,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 final_balance {DOUBLE} NOT NULL,
                 maximum_quantity {DOUBLE} NOT NULL,
                 expiry_date {DATE},
-                requested_quantity {DOUBLE} NOT NULL,
+                calculated_requested_quantity {DOUBLE} NOT NULL,
+                entered_requested_quantity {DOUBLE},
+                low_stock {RNR_LOW_STOCK_ENUM_TYPE} NOT NULL,
 
                 comment TEXT,
                 confirmed BOOLEAN NOT NULL DEFAULT FALSE
