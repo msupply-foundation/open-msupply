@@ -48,7 +48,7 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
     let lines = query.data.lines
       .filter(line => !line.confirmed)
       .map(line => ({ ...line, confirmed: true }));
-    updateLines(lines);
+    await updateLines(lines);
   };
 
   return {
