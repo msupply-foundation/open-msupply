@@ -167,9 +167,6 @@ mod graphql {
                 ... on InvoiceNode {
                     id
                     otherPartyId
-                    otherPartyStore {
-                      id
-                    }
                     invoiceNumber
                     type
                     comment
@@ -299,9 +296,6 @@ mod graphql {
         let expected = json!({
             "insertOutboundShipment": {
               "id": id,
-              "otherPartyStore": {
-                "id": mock_store_linked_to_name().id
-              }
             }
           }
         );
@@ -328,8 +322,7 @@ mod graphql {
         }));
         let expected = json!({
             "insertOutboundShipment": {
-              "id": id,
-              "otherPartyStore": null
+              "id": id
             }
           }
         );

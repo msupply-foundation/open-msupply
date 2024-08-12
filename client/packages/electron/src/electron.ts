@@ -65,25 +65,19 @@ class Scanner {
   }
 
   scanDevices(window: BrowserWindow) {
+    const devices: BarcodeScanner[] = [];
     // if a scanner is already connected, we'll need to close it in order to open it
     if (this.device) {
       this.device?.close();
     }
 
-    this.scanDevicesAsync(window);
-  }
-
-  async scanDevicesAsync(window: BrowserWindow) {
-    // note that HID.devicesAsync (and HID.devices) are costly, as they enumerate all USB and (potentially bluetooth) devices
-    // see https://github.com/node-hid/node-hid?tab=readme-ov-file#cost-of-hiddevices-hiddevicesasync-new-hidhid-and-hidasyncopen-for-detecting-device-plugunplug
-    const devices = await HID.devicesAsync();
-
-    devices.forEach(device => {
+    HID.devices().forEach(device => {
+      devices.push({ ...device, connected: false });
       if (device.path) {
         try {
           const hid = new HID.HID(device.vendorId, device.productId);
 
-          // close the device after a delay
+          // close the devices after a delay
           const timeout = setTimeout(() => {
             try {
               hid.close();

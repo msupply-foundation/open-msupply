@@ -5,7 +5,7 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { RnRFormFragment, RnRFormLineFragment } from '../operations.generated';
-import { useProgramsGraphQL } from '../useProgramsGraphQL';
+import { useRnRGraphQL } from '..';
 import { RNR_FORM } from './keys';
 
 export interface RnRForm extends RnRFormFragment {
@@ -13,7 +13,7 @@ export interface RnRForm extends RnRFormFragment {
 }
 
 export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
-  const { api, storeId } = useProgramsGraphQL();
+  const { api, storeId } = useRnRGraphQL();
   const queryKey = [RNR_FORM, rnrFormId];
 
   const {
@@ -50,7 +50,7 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
 // MUTATIONS
 
 const useUpdateLine = (rnrFormId: string) => {
-  const { api, storeId, queryClient } = useProgramsGraphQL();
+  const { api, storeId, queryClient } = useRnRGraphQL();
 
   const mutationFn = async ({
     adjustedQuantityConsumed,
@@ -68,6 +68,7 @@ const useUpdateLine = (rnrFormId: string) => {
     quantityReceived,
     expiryDate,
     initialBalance,
+    lowStock,
   }: RnRFormLineFragment) => {
     const lineInput: UpdateRnRFormLineInput = {
       id,
@@ -85,6 +86,7 @@ const useUpdateLine = (rnrFormId: string) => {
       expiryDate,
       initialBalance,
       comment,
+      lowStock,
     };
     const apiResult = await api.updateRnRFormLines({
       storeId,
@@ -114,7 +116,7 @@ const useUpdateLine = (rnrFormId: string) => {
   });
 };
 const useFinalise = (id: string) => {
-  const { api, storeId, queryClient } = useProgramsGraphQL();
+  const { api, storeId, queryClient } = useRnRGraphQL();
 
   const mutationFn = async () => {
     const apiResult = await api.finaliseRnRForm({

@@ -28,7 +28,7 @@ pub struct UpdateInboundReturn {
     pub comment: Option<String>,
     pub colour: Option<String>,
     pub their_reference: Option<String>,
-    // pub other_party_id: Option<String>,
+    pub other_party_id: Option<String>,
 }
 
 type OutError = UpdateInboundReturnError;
@@ -40,11 +40,18 @@ pub fn update_inbound_return(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing_return, status_changed) = validate(connection, &ctx.store_id, &patch)?;
+            let (existing_return, other_party, status_changed) =
+                validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 updated_return,
-            } = generate(connection, &ctx.user_id, existing_return, patch.clone())?;
+            } = generate(
+                connection,
+                &ctx.user_id,
+                existing_return,
+                other_party,
+                patch.clone(),
+            )?;
 
             InvoiceRowRepository::new(connection).upsert_one(&updated_return)?;
             let invoice_line_repository = InvoiceLineRowRepository::new(connection);
@@ -87,6 +94,10 @@ pub enum UpdateInboundReturnError {
     CannotReverseInvoiceStatus,
     ReturnIsNotEditable,
     CannotChangeStatusOfInvoiceOnHold,
+    // Name validation
+    OtherPartyDoesNotExist,
+    OtherPartyNotVisible,
+    OtherPartyNotACustomer,
     // Internal
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,

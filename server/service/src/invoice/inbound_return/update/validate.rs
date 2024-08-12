@@ -1,8 +1,11 @@
-use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, InvoiceRowStatusError,
+use crate::{
+    invoice::{
+        check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
+        check_status_change, check_store, InvoiceRowStatusError,
+    },
+    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
-use repository::{InvoiceRow, InvoiceType, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
 
 use super::{UpdateInboundReturn, UpdateInboundReturnError};
 
@@ -10,7 +13,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     patch: &UpdateInboundReturn,
-) -> Result<(InvoiceRow, bool), UpdateInboundReturnError> {
+) -> Result<(InvoiceRow, Option<Name>, bool), UpdateInboundReturnError> {
     use UpdateInboundReturnError::*;
 
     let return_row = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
@@ -40,6 +43,24 @@ pub fn validate(
             InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         })?;
     }
+    // Other party check
+    let other_party_id = match &patch.other_party_id {
+        None => return Ok((return_row, None, status_changed)),
+        Some(other_party_id) => other_party_id,
+    };
 
-    Ok((return_row, status_changed))
+    let other_party = check_other_party(
+        connection,
+        store_id,
+        other_party_id,
+        CheckOtherPartyType::Customer,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
+        OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
+        OtherPartyErrors::TypeMismatched => OtherPartyNotACustomer,
+        OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+    })?;
+
+    Ok((return_row, Some(other_party), status_changed))
 }

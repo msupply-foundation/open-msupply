@@ -326,9 +326,7 @@ mod test {
                     ... on InvoiceNode {
                         id
                         otherPartyId
-                        otherPartyStore {
-                            id
-                        }
+    
                     }
                     ... on UpdateOutboundShipmentNameError {
                         error {
@@ -367,8 +365,7 @@ mod test {
         let expected = json!({
             "updateOutboundShipmentName": {
                 "id": mock_outbound_shipment_a().id,
-                "otherPartyId": mock_name_store_a().id,
-                "otherPartyStore": null
+                "otherPartyId": mock_name_store_a().id
             }
           }
         );
