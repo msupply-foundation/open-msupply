@@ -1,7 +1,6 @@
 use super::patient::PatientNode;
 use super::{
-    ClinicianNode, CurrencyNode, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode,
-    UserNode,
+    ClinicianNode, CurrencyNode, InvoiceLineConnector, NameNode, RequisitionNode, UserNode,
 };
 use async_graphql::*;
 use chrono::{DateTime, Utc};
@@ -12,7 +11,7 @@ use graphql_core::loader::{
     NameByIdLoaderInput, PatientLoader, UserLoader,
 };
 use graphql_core::{
-    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreByIdLoader},
+    loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -93,19 +92,6 @@ impl InvoiceNode {
 
     pub async fn other_party_id(&self) -> &str {
         self.invoice.other_party_id()
-    }
-
-    pub async fn other_party_store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
-        let other_party_store_id = match self.invoice.other_party_store_id() {
-            Some(other_party_store_id) => other_party_store_id,
-            None => return Ok(None),
-        };
-
-        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
-        Ok(loader
-            .load_one(other_party_store_id.clone())
-            .await?
-            .map(StoreNode::from_domain))
     }
 
     /// User that last edited invoice, if user is not found in system default unknown user is returned
