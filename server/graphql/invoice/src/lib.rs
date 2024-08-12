@@ -196,8 +196,8 @@ impl InvoiceMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: supplier_return::update_other_party::UpdateNameInput,
-    ) -> Result<supplier_return::update_other_party::UpdateNameResponse> {
+        input: supplier_return::update_other_party::UpdateOtherPartyInput,
+    ) -> Result<supplier_return::update_other_party::UpdateOtherPartyResponse> {
         supplier_return::update_other_party::update_other_party(ctx, &store_id, input)
     }
 

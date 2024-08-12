@@ -8,37 +8,38 @@ use graphql_core::{
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::supplier_return::update_name::{
-    UpdateSupplierReturnName as ServiceInput, UpdateSupplierReturnNameError as ServiceError,
+use service::invoice::supplier_return::update_other_party::{
+    UpdateSupplierReturnOtherParty as ServiceInput,
+    UpdateSupplierReturnOtherPartyError as ServiceError,
 };
 
 use crate::mutations::outbound_shipment::error::InvoiceIsNotEditable;
 
 #[derive(InputObject)]
-#[graphql(name = "UpdateSupplierReturnNameInput")]
-pub struct UpdateNameInput {
+#[graphql(name = "UpdateSupplierReturnOtherPartyInput")]
+pub struct UpdateOtherPartyInput {
     pub id: String,
     other_party_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "UpdateSupplierReturnNameError")]
-pub struct UpdateNameError {
-    pub error: UpdateReturnNameErrorInterface,
+#[graphql(name = "UpdateSupplierReturnOtherPartyError")]
+pub struct UpdateOtherPartyError {
+    pub error: UpdateReturnOtherPartyErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "UpdateSupplierReturnNameResponse")]
-pub enum UpdateNameResponse {
-    Error(UpdateNameError),
+#[graphql(name = "UpdateSupplierReturnOtherPartyResponse")]
+pub enum UpdateOtherPartyResponse {
+    Error(UpdateOtherPartyError),
     Response(InvoiceNode),
 }
 
-pub fn update_name(
+pub fn update_other_party(
     ctx: &Context<'_>,
     store_id: &str,
-    input: UpdateNameInput,
-) -> Result<UpdateNameResponse> {
+    input: UpdateOtherPartyInput,
+) -> Result<UpdateOtherPartyResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -53,31 +54,33 @@ pub fn update_name(
     map_response(
         service_provider
             .invoice_service
-            .update_supplier_return_name(&service_context, input.to_domain()),
+            .update_supplier_return_other_party(&service_context, input.to_domain()),
     )
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", ty = "String"))]
-pub enum UpdateReturnNameErrorInterface {
+pub enum UpdateReturnOtherPartyErrorInterface {
     InvoiceDoesNotExist(RecordNotFound),
     InvoiceIsNotEditable(InvoiceIsNotEditable),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
     OtherPartyNotVisible(OtherPartyNotVisible),
 }
 
-impl UpdateNameInput {
+impl UpdateOtherPartyInput {
     pub fn to_domain(self) -> ServiceInput {
-        let UpdateNameInput { id, other_party_id } = self;
+        let UpdateOtherPartyInput { id, other_party_id } = self;
 
         ServiceInput { id, other_party_id }
     }
 }
 
-pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateNameResponse> {
+pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateOtherPartyResponse> {
     let result = match from {
-        Ok(invoice_line) => UpdateNameResponse::Response(InvoiceNode::from_domain(invoice_line)),
-        Err(error) => UpdateNameResponse::Error(UpdateNameError {
+        Ok(invoice_line) => {
+            UpdateOtherPartyResponse::Response(InvoiceNode::from_domain(invoice_line))
+        }
+        Err(error) => UpdateOtherPartyResponse::Error(UpdateOtherPartyError {
             error: map_error(error)?,
         }),
     };
@@ -85,28 +88,30 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateNameRes
     Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateReturnNameErrorInterface> {
+fn map_error(error: ServiceError) -> Result<UpdateReturnOtherPartyErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(UpdateReturnNameErrorInterface::InvoiceDoesNotExist(
+            return Ok(UpdateReturnOtherPartyErrorInterface::InvoiceDoesNotExist(
                 RecordNotFound {},
             ))
         }
         ServiceError::InvoiceIsNotEditable => {
-            return Ok(UpdateReturnNameErrorInterface::InvoiceIsNotEditable(
+            return Ok(UpdateReturnOtherPartyErrorInterface::InvoiceIsNotEditable(
                 InvoiceIsNotEditable,
             ))
         }
         ServiceError::OtherPartyNotASupplier => {
-            return Ok(UpdateReturnNameErrorInterface::OtherPartyNotASupplier(
-                OtherPartyNotASupplier,
-            ))
+            return Ok(
+                UpdateReturnOtherPartyErrorInterface::OtherPartyNotASupplier(
+                    OtherPartyNotASupplier,
+                ),
+            )
         }
         ServiceError::OtherPartyNotVisible => {
-            return Ok(UpdateReturnNameErrorInterface::OtherPartyNotVisible(
+            return Ok(UpdateReturnOtherPartyErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
             ))
         }
@@ -134,9 +139,9 @@ mod test {
     use serde_json::json;
     use service::{
         invoice::{
-            supplier_return::update_name::{
-                UpdateSupplierReturnName as ServiceInput,
-                UpdateSupplierReturnNameError as ServiceError,
+            supplier_return::update_other_party::{
+                UpdateSupplierReturnOtherParty as ServiceInput,
+                UpdateSupplierReturnOtherPartyError as ServiceError,
             },
             InvoiceServiceTrait,
         },
@@ -150,7 +155,7 @@ mod test {
     pub struct TestService(pub Box<InsertMethod>);
 
     impl InvoiceServiceTrait for TestService {
-        fn update_supplier_return_name(
+        fn update_supplier_return_other_party(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -178,19 +183,19 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_update_outbound_name_errors() {
+    async fn test_graphql_update_supplier_name_errors() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_update_outbound_name_errors",
+            "test_graphql_update_supplier_name_errors",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: UpdateSupplierReturnNameInput!) {
-            updateSupplierReturnName(input: $input, storeId: \"store_a\") {
-                ... on UpdateSupplierReturnNameError {
+        mutation ($input: UpdateSupplierReturnOtherPartyInput!) {
+            updateSupplierReturnOtherParty(input: $input, storeId: \"store_a\") {
+                ... on UpdateSupplierReturnOtherPartyError {
                     error {
                         __typename
                     }
@@ -203,7 +208,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
-            "updateSupplierReturnName": {
+            "updateSupplierReturnOtherParty": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -223,7 +228,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotASupplier)));
 
         let expected = json!({
-            "updateSupplierReturnName": {
+            "updateSupplierReturnOtherParty": {
               "error": {
                 "__typename": "OtherPartyNotASupplier"
               }
@@ -243,7 +248,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotVisible)));
 
         let expected = json!({
-            "updateSupplierReturnName" : {
+            "updateSupplierReturnOtherParty" : {
                 "error": {
                     "__typename": "OtherPartyNotVisible"
                 }
@@ -312,23 +317,23 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_update_supplier_return_name_success() {
+    async fn test_graphql_update_supplier_return_other_party_success() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_update_supplier_return_name_success",
+            "test_graphql_update_supplier_return_other_party_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-            mutation ($storeId: String, $input: UpdateSupplierReturnNameInput!) {
-                updateSupplierReturnName(storeId: $storeId, input: $input) {
+            mutation ($storeId: String, $input: UpdateSupplierReturnOtherPartyInput!) {
+                updateSupplierReturnOtherParty(storeId: $storeId, input: $input) {
                     ... on InvoiceNode {
                         id
                         otherPartyId
                     }
-                    ... on UpdateSupplierReturnNameError {
+                    ... on UpdateSupplierReturnOtherPartyError {
                         error {
                           __typename
                         }
@@ -363,7 +368,7 @@ mod test {
         });
 
         let expected = json!({
-            "updateSupplierReturnName": {
+            "updateSupplierReturnOtherParty": {
                 "id": mock_supplier_return_a().id,
                 "otherPartyId": mock_name_store_a().id,
             }

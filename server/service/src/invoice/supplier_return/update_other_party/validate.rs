@@ -4,14 +4,14 @@ use crate::invoice::{
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
 
-use super::{UpdateSupplierReturnName, UpdateSupplierReturnNameError};
+use super::{UpdateSupplierReturnOtherParty, UpdateSupplierReturnOtherPartyError};
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    patch: &UpdateSupplierReturnName,
-) -> Result<(InvoiceRow, Option<Name>), UpdateSupplierReturnNameError> {
-    use UpdateSupplierReturnNameError::*;
+    patch: &UpdateSupplierReturnOtherParty,
+) -> Result<(InvoiceRow, Option<Name>), UpdateSupplierReturnOtherPartyError> {
+    use UpdateSupplierReturnOtherPartyError::*;
 
     let return_row = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
     if !check_store(&return_row, store_id) {
