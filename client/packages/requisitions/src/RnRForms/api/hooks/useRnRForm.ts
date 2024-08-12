@@ -82,6 +82,7 @@ const useUpdateLine = (rnrFormId: string) => {
         quantityReceived,
         expiryDate,
         initialBalance,
+        lowStock,
       }) => ({
         id,
         quantityConsumed,
@@ -98,6 +99,7 @@ const useUpdateLine = (rnrFormId: string) => {
         expiryDate,
         initialBalance,
         comment,
+        lowStock,
       })
     );
     const apiResult = await api.updateRnRFormLines({
