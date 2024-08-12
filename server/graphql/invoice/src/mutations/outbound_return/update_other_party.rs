@@ -1,54 +1,49 @@
 use async_graphql::*;
-use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
-use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
 
+use graphql_core::{
+    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible, RecordNotFound},
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::prescription::{
-    UpdatePrescription as ServiceInput, UpdatePrescriptionError as ServiceError,
-    UpdatePrescriptionStatus,
+use service::invoice::outbound_return::update_other_party::{
+    UpdateOutboundReturnOtherParty as ServiceInput,
+    UpdateOutboundReturnOtherPartyError as ServiceError,
 };
 
 use crate::mutations::outbound_shipment::error::InvoiceIsNotEditable;
 
 #[derive(InputObject)]
-#[graphql(name = "UpdatePrescriptionInput")]
-pub struct UpdateInput {
+#[graphql(name = "UpdateOutboundReturnOtherPartyInput")]
+pub struct UpdateOtherPartyInput {
     pub id: String,
-    pub status: Option<UpdatePrescriptionStatusInput>,
-    pub patient_id: Option<String>,
-    pub clinician_id: Option<String>,
-    pub comment: Option<String>,
-    pub colour: Option<String>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum UpdatePrescriptionStatusInput {
-    Picked,
-    Verified,
+    other_party_id: Option<String>,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "UpdatePrescriptionError")]
-pub struct UpdateError {
-    pub error: UpdatePrescriptionErrorInterface,
+#[graphql(name = "UpdateOutboundReturnOtherPartyError")]
+pub struct UpdateOtherPartyError {
+    pub error: UpdateReturnOtherPartyErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "UpdatePrescriptionResponse")]
-pub enum UpdateResponse {
-    Error(UpdateError),
-    NodeError(NodeError),
+#[graphql(name = "UpdateOutboundReturnOtherPartyResponse")]
+pub enum UpdateOtherPartyResponse {
+    Error(UpdateOtherPartyError),
     Response(InvoiceNode),
 }
 
-pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
+pub fn update_other_party(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: UpdateOtherPartyInput,
+) -> Result<UpdateOtherPartyResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePrescription,
+            resource: Resource::MutateOutboundReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -59,14 +54,33 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(
         service_provider
             .invoice_service
-            .update_prescription(&service_context, input.to_domain()),
+            .update_outbound_return_other_party(&service_context, input.to_domain()),
     )
 }
 
-pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateResponse> {
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum UpdateReturnOtherPartyErrorInterface {
+    InvoiceDoesNotExist(RecordNotFound),
+    InvoiceIsNotEditable(InvoiceIsNotEditable),
+    OtherPartyNotASupplier(OtherPartyNotASupplier),
+    OtherPartyNotVisible(OtherPartyNotVisible),
+}
+
+impl UpdateOtherPartyInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let UpdateOtherPartyInput { id, other_party_id } = self;
+
+        ServiceInput { id, other_party_id }
+    }
+}
+
+pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateOtherPartyResponse> {
     let result = match from {
-        Ok(invoice) => UpdateResponse::Response(InvoiceNode::from_domain(invoice)),
-        Err(error) => UpdateResponse::Error(UpdateError {
+        Ok(invoice_line) => {
+            UpdateOtherPartyResponse::Response(InvoiceNode::from_domain(invoice_line))
+        }
+        Err(error) => UpdateOtherPartyResponse::Error(UpdateOtherPartyError {
             error: map_error(error)?,
         }),
     };
@@ -74,88 +88,42 @@ pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateRespons
     Ok(result)
 }
 
-#[derive(Interface)]
-#[graphql(field(name = "description", ty = "String"))]
-pub enum UpdatePrescriptionErrorInterface {
-    InvoiceDoesNotExist(RecordNotFound),
-    CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
-    InvoiceIsNotEditable(InvoiceIsNotEditable),
-    CanOnlyChangeToPickedWhenNoUnallocatedLines(CanOnlyChangeToPickedWhenNoUnallocatedLines),
-}
-
-impl UpdateInput {
-    pub fn to_domain(self) -> ServiceInput {
-        let UpdateInput {
-            id,
-            status,
-            patient_id,
-            clinician_id,
-            comment,
-            colour,
-        } = self;
-
-        ServiceInput {
-            id,
-            status: status.map(|status| status.to_domain()),
-            patient_id,
-            clinician_id,
-            comment,
-            colour,
-        }
-    }
-}
-
-fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
+fn map_error(error: ServiceError) -> Result<UpdateReturnOtherPartyErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        // Structured Errors
         ServiceError::InvoiceDoesNotExist => {
-            return Ok(UpdatePrescriptionErrorInterface::InvoiceDoesNotExist(
+            return Ok(UpdateReturnOtherPartyErrorInterface::InvoiceDoesNotExist(
                 RecordNotFound {},
             ))
         }
-
         ServiceError::InvoiceIsNotEditable => {
-            return Ok(UpdatePrescriptionErrorInterface::InvoiceIsNotEditable(
+            return Ok(UpdateReturnOtherPartyErrorInterface::InvoiceIsNotEditable(
                 InvoiceIsNotEditable,
             ))
         }
-
-        // Standard Graphql Errors
-        ServiceError::NotAPrescriptionInvoice
-        | ServiceError::ClinicianDoesNotExist
+        ServiceError::OtherPartyNotASupplier => {
+            return Ok(
+                UpdateReturnOtherPartyErrorInterface::OtherPartyNotASupplier(
+                    OtherPartyNotASupplier,
+                ),
+            )
+        }
+        ServiceError::OtherPartyNotVisible => {
+            return Ok(UpdateReturnOtherPartyErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
+            ))
+        }
+        ServiceError::NotAnOutboundReturn
         | ServiceError::NotThisStoreInvoice
-        | ServiceError::PatientDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_)
-        | ServiceError::InvoiceLineHasNoStockLine(_)
-        | ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
+        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::UpdatedInvoiceDoesNotExist => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
-}
-pub struct CanOnlyChangeToPickedWhenNoUnallocatedLines(pub InvoiceLineConnector);
-
-#[Object]
-impl CanOnlyChangeToPickedWhenNoUnallocatedLines {
-    pub async fn description(&self) -> &'static str {
-        "Cannot change to picked status when unallocated lines are present"
-    }
-
-    pub async fn invoice_lines(&self) -> &InvoiceLineConnector {
-        &self.0
-    }
-}
-
-impl UpdatePrescriptionStatusInput {
-    pub fn to_domain(&self) -> UpdatePrescriptionStatus {
-        use UpdatePrescriptionStatus::*;
-        match self {
-            UpdatePrescriptionStatusInput::Picked => Picked,
-            UpdatePrescriptionStatusInput::Verified => Verified,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -165,15 +133,15 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_patient, mock_prescription_a, mock_store_a, MockDataInserts},
+        mock::{mock_name_store_a, mock_outbound_return_a, mock_store_a, MockDataInserts},
         Invoice, RepositoryError, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
         invoice::{
-            prescription::{
-                UpdatePrescription as ServiceInput, UpdatePrescriptionError as ServiceError,
-                UpdatePrescriptionStatus,
+            outbound_return::update_other_party::{
+                UpdateOutboundReturnOtherParty as ServiceInput,
+                UpdateOutboundReturnOtherPartyError as ServiceError,
             },
             InvoiceServiceTrait,
         },
@@ -187,7 +155,7 @@ mod test {
     pub struct TestService(pub Box<InsertMethod>);
 
     impl InvoiceServiceTrait for TestService {
-        fn update_prescription(
+        fn update_outbound_return_other_party(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -209,28 +177,25 @@ mod test {
         json!({
           "input": {
             "id": "n/a",
-            "patientId": "n/a",
-            "clinicianId": "n/a",
-            "comment": "n/a",
-            "colour": "n/a"
+            "otherPartyId": "n/a",
           }
         })
     }
 
     #[actix_rt::test]
-    async fn test_graphql_update_prescription_errors() {
+    async fn test_graphql_update_outbound_name_errors() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_prescription_errors",
+            "test_graphql_update_outbound_name_errors",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: UpdatePrescriptionInput!) {
-            updatePrescription(input: $input, storeId: \"store_a\") {
-                ... on UpdatePrescriptionError {
+        mutation ($input: UpdateOutboundReturnOtherPartyInput!) {
+            updateOutboundReturnOtherParty(input: $input, storeId: \"store_a\") {
+                ... on UpdateOutboundReturnOtherPartyError {
                     error {
                         __typename
                     }
@@ -243,7 +208,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
-            "updatePrescription": {
+            "updateOutboundReturnOtherParty": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -259,7 +224,46 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotThisStoreInvoice
+        // OtherPartyNotASupplier
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotASupplier)));
+
+        let expected = json!({
+            "updateOutboundReturnOtherParty": {
+              "error": {
+                "__typename": "OtherPartyNotASupplier"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // OtherPartyNotVisible
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotVisible)));
+
+        let expected = json!({
+            "updateOutboundReturnOtherParty" : {
+                "error": {
+                    "__typename": "OtherPartyNotVisible"
+                }
+            }
+        });
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // NotThisStoreInvoice
         let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
@@ -271,8 +275,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotAPrescriptionInvoice
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAPrescriptionInvoice)));
+        // NotAnOutboundReturn
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundReturn)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -283,8 +287,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //PatientDoesNotExist
-        let test_service = TestService(Box::new(|_| Err(ServiceError::PatientDoesNotExist)));
+        // OtherPartyDoesNotExist
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -313,47 +317,43 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_update_prescription_success() {
+    async fn test_graphql_update_outbound_return_other_party_success() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
-            "test_graphql_update_prescription_success",
+            "test_graphql_update_outbound_return_other_party_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($storeId: String, $input: UpdatePrescriptionInput!) {
-            updatePrescription(storeId: $storeId, input: $input) {
-                ... on InvoiceNode {
-                    id
-                    status
-                    otherPartyId
-                }
-                ... on UpdatePrescriptionError {
-                    error {
-                      __typename
+            mutation ($storeId: String, $input: UpdateOutboundReturnOtherPartyInput!) {
+                updateOutboundReturnOtherParty(storeId: $storeId, input: $input) {
+                    ... on InvoiceNode {
+                        id
+                        otherPartyId
                     }
-                  }
-            }
-          }
-        "#;
+                    ... on UpdateOutboundReturnOtherPartyError {
+                        error {
+                          __typename
+                        }
+                      }
+                }
+              }
+            "#;
 
+        // Success
         let test_service = TestService(Box::new(|input| {
             assert_eq!(
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
-                    patient_id: Some("patient_a".to_string()),
-                    clinician_id: Some("some_clinician".to_string()),
-                    status: Some(UpdatePrescriptionStatus::Picked),
-                    comment: Some("comment input".to_string()),
-                    colour: Some("colour input".to_string()),
+                    other_party_id: Some("other party input".to_string()),
                 }
             );
             Ok(Invoice {
-                invoice_row: mock_prescription_a(),
-                name_row: mock_patient(),
+                invoice_row: mock_outbound_return_a(),
+                name_row: mock_name_store_a(),
                 store_row: mock_store_a(),
                 clinician_row: None,
             })
@@ -362,18 +362,15 @@ mod test {
         let variables = json!({
           "input": {
             "id": "id input",
-            "patientId": "patient_a",
-            "clinicianId": "some_clinician",
-            "status": "PICKED",
-            "comment": "comment input",
-            "colour": "colour input"
+            "otherPartyId": "other party input",
           },
-          "storeId": "store_a"
+          "storeId": "store_b"
         });
 
         let expected = json!({
-            "updatePrescription": {
-                "id": mock_prescription_a().id,
+            "updateOutboundReturnOtherParty": {
+                "id": mock_outbound_return_a().id,
+                "otherPartyId": mock_name_store_a().id,
             }
           }
         );

@@ -1,3 +1,6 @@
+use outbound_return::update_other_party::update_outbound_return_other_party;
+use outbound_return::update_other_party::UpdateOutboundReturnOtherParty;
+use outbound_return::update_other_party::UpdateOutboundReturnOtherPartyError;
 use repository::Invoice;
 use repository::InvoiceFilter;
 use repository::InvoiceLine;
@@ -228,6 +231,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: UpdateOutboundReturn,
     ) -> Result<Invoice, UpdateOutboundReturnError> {
         update_outbound_return(ctx, input)
+    }
+
+    fn update_outbound_return_other_party(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateOutboundReturnOtherParty,
+    ) -> Result<Invoice, UpdateOutboundReturnOtherPartyError> {
+        update_outbound_return_other_party(ctx, input)
     }
 
     fn update_outbound_return_lines(
