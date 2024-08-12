@@ -13,7 +13,7 @@ export const useReturns = {
 
     insertSupplierReturn: Document.useInsertSupplierReturn,
     updateSupplierReturn: Document.useUpdateSupplierReturn,
-    updateName: Document.useUpdateSupplierReturnName,
+    updateOtherParty: Document.useUpdateSupplierReturnOtherParty,
     deleteSupplier: Document.useSupplierReturnDelete,
     deleteSupplierRows: Document.useSupplierDeleteRows,
 

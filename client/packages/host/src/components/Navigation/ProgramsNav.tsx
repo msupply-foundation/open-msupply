@@ -19,13 +19,13 @@ export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   );
   const t = useTranslation('app');
   const isCentralServer = useIsCentralServerApi();
-  const immunisationsVisible = isCentralServer && store?.preferences.vaccineModule;
-  const rnrVisible = store?.preferences.omProgramModule;
+  const immunisationsVisible =
+    isCentralServer && store?.preferences.vaccineModule;
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Programs}>
       <AppNavLink
-        visible={immunisationsVisible || rnrVisible}
+        visible={immunisationsVisible}
         end={false}
         to={AppRoute.Programs}
         icon={<InvoiceIcon color="primary" fontSize="small" />}
@@ -41,14 +41,6 @@ export const ProgramsNav = ({ store }: { store?: UserStoreNodeFragment }) => {
               .addPart(AppRoute.ImmunisationPrograms)
               .build()}
             text={t('label.programs-immunisations')}
-          />
-          <AppNavLink
-            visible={rnrVisible}
-            end
-            to={RouteBuilder.create(AppRoute.Programs)
-              .addPart(AppRoute.RnRForms)
-              .build()}
-            text={t('r-and-r-forms')}
           />
         </List>
       </Collapse>
