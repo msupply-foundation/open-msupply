@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import {
+  AlertIcon,
   BasicTextInput,
   Checkbox,
   CircleIcon,
   DatePicker,
   Formatter,
+  LowStockStatus,
   NumericTextInput,
   NumUtils,
   useBufferState,
@@ -13,7 +15,7 @@ import {
   VenCategoryType,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
-import { getAmc } from './getAmc';
+import { getLowStockStatus, getAmc } from './helpers';
 
 export const RnRFormLine = ({
   line,
@@ -72,6 +74,8 @@ export const RnRFormLine = ({
 
     const calculatedRequestedQuantity = neededQuantity > 0 ? neededQuantity : 0;
 
+    const lowStock = getLowStockStatus(finalBalance, maximumQuantity);
+
     setPatch({
       ...newPatch,
       finalBalance,
@@ -79,6 +83,7 @@ export const RnRFormLine = ({
       averageMonthlyConsumption,
       maximumQuantity,
       calculatedRequestedQuantity,
+      lowStock,
     });
     markDirty(draft.id);
   };
@@ -199,6 +204,19 @@ export const RnRFormLine = ({
         textColor={textColor}
         disabled={disabled}
       />
+      <td style={{ ...readOnlyColumn, textAlign: 'center' }}>
+        {draft.lowStock !== LowStockStatus.Ok && (
+          <AlertIcon
+            double={draft.lowStock === LowStockStatus.BelowQuarter}
+            sx={{
+              color:
+                draft.lowStock === LowStockStatus.BelowQuarter
+                  ? 'error.main'
+                  : 'primary.light',
+            }}
+          />
+        )}
+      </td>
       <td>
         <BasicTextInput
           multiline
@@ -239,6 +257,13 @@ export const RnRFormLine = ({
           }}
         />
       </td>
+      {/* Readonly - populated from Response Requisition */}
+      <RnRNumberCell
+        readOnly
+        value={draft.approvedQuantity ?? 0}
+        textColor={textColor}
+        onChange={() => {}}
+      />
     </tr>
   );
 };
@@ -286,6 +311,7 @@ const RnRNumberCell = ({
         }}
         max={max}
         allowNegative={allowNegative}
+        defaultValue={0}
       />
     </td>
   );

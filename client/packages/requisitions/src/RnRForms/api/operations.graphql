@@ -26,8 +26,10 @@ fragment RnRFormLine on RnRFormLineNode {
   expiryDate
   calculatedRequestedQuantity
   enteredRequestedQuantity
+  lowStock
   comment
   confirmed
+  approvedQuantity
   item {
     code
     name
