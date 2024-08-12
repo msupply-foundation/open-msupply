@@ -1,6 +1,7 @@
 fragment OutboundReturnRow on InvoiceNode {
   __typename
   id
+  otherPartyId
   otherPartyName
   status
   invoiceNumber
@@ -49,8 +50,19 @@ fragment OutboundReturn on InvoiceNode {
 
   otherPartyName
   otherPartyId
-  otherPartyStore {
+
+  otherParty(storeId: $storeId) {
+    __typename
+    id
+    name
     code
+    isCustomer
+    isSupplier
+    isOnHold
+    store {
+      id
+      code
+    }
   }
 
   user {
@@ -88,9 +100,6 @@ fragment InboundReturn on InvoiceNode {
 
   otherPartyId
   otherPartyName
-  otherPartyStore {
-    code
-  }
 
   user {
     __typename
@@ -111,6 +120,20 @@ fragment InboundReturn on InvoiceNode {
     createdDatetime
     user {
       username
+    }
+  }
+
+  otherParty(storeId: $storeId) {
+    __typename
+    id
+    name
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    store {
+      id
+      code
     }
   }
 }
@@ -398,6 +421,40 @@ mutation deleteInboundReturn($storeId: String!, $id: String!) {
   deleteInboundReturn(storeId: $storeId, id: $id) {
     __typename
     ... on DeleteResponse {
+      id
+    }
+  }
+}
+
+mutation updateOutboundReturnOtherParty(
+  $input: UpdateOutboundReturnOtherPartyInput!
+  $storeId: String!
+) {
+  updateOutboundReturnOtherParty(input: $input, storeId: $storeId) {
+    ... on UpdateOutboundReturnOtherPartyError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on InvoiceIsNotEditable {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
       id
     }
   }

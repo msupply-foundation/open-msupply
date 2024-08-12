@@ -235,9 +235,6 @@ mod graphql {
                 ... on InvoiceNode {
                   id
                   comment
-                  otherPartyStore {
-                    id
-                  }
                 }
             }
         }"#;

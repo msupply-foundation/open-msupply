@@ -3,13 +3,13 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient, RequestOptions } from 'graphql-request';
 import gql from 'graphql-tag';
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
-export type OutboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, comment?: string | null, theirReference?: string | null };
+export type OutboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, comment?: string | null, theirReference?: string | null };
 
 export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null, comment?: string | null, theirReference?: string | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null };
 
-export type OutboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null };
+export type OutboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null };
 
-export type InboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null };
+export type InboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null } };
 
 export type OutboundReturnLineFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } };
 
@@ -25,7 +25,7 @@ export type OutboundReturnsQueryVariables = Types.Exact<{
 }>;
 
 
-export type OutboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, comment?: string | null, theirReference?: string | null }> } };
+export type OutboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, comment?: string | null, theirReference?: string | null }> } };
 
 export type InboundReturnsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -65,7 +65,7 @@ export type OutboundReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type OutboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null } | { __typename: 'NodeError' } };
+export type OutboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyId: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null } | { __typename: 'NodeError' } };
 
 export type InboundReturnByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -73,7 +73,7 @@ export type InboundReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null } | { __typename: 'NodeError' } };
+export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number } }> }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null } } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -121,7 +121,7 @@ export type UpdateInboundReturnMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateInboundReturnMutation = { __typename: 'Mutations', updateInboundReturn: { __typename: 'InvoiceNode', id: string } };
+export type UpdateInboundReturnMutation = { __typename: 'Mutations', updateInboundReturn: { __typename: 'InvoiceNode', id: string } | { __typename: 'UpdateInboundReturnError' } };
 
 export type UpdateInboundReturnLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -139,10 +139,19 @@ export type DeleteInboundReturnMutationVariables = Types.Exact<{
 
 export type DeleteInboundReturnMutation = { __typename: 'Mutations', deleteInboundReturn: { __typename: 'DeleteInboundReturnError' } | { __typename: 'DeleteResponse', id: string } };
 
+export type UpdateOutboundReturnOtherPartyMutationVariables = Types.Exact<{
+  input: Types.UpdateOutboundReturnOtherPartyInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type UpdateOutboundReturnOtherPartyMutation = { __typename: 'Mutations', updateOutboundReturnOtherParty: { __typename: 'InvoiceNode', id: string } | { __typename: 'UpdateOutboundReturnOtherPartyError', error: { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
+
 export const OutboundReturnRowFragmentDoc = gql`
     fragment OutboundReturnRow on InvoiceNode {
   __typename
   id
+  otherPartyId
   otherPartyName
   status
   invoiceNumber
@@ -191,8 +200,18 @@ export const OutboundReturnFragmentDoc = gql`
   verifiedDatetime
   otherPartyName
   otherPartyId
-  otherPartyStore {
+  otherParty(storeId: $storeId) {
+    __typename
+    id
+    name
     code
+    isCustomer
+    isSupplier
+    isOnHold
+    store {
+      id
+      code
+    }
   }
   user {
     __typename
@@ -226,9 +245,6 @@ export const InboundReturnFragmentDoc = gql`
   verifiedDatetime
   otherPartyId
   otherPartyName
-  otherPartyStore {
-    code
-  }
   user {
     __typename
     username
@@ -246,6 +262,19 @@ export const InboundReturnFragmentDoc = gql`
     createdDatetime
     user {
       username
+    }
+  }
+  otherParty(storeId: $storeId) {
+    __typename
+    id
+    name
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    store {
+      id
+      code
     }
   }
 }
@@ -527,6 +556,38 @@ export const DeleteInboundReturnDocument = gql`
   }
 }
     `;
+export const UpdateOutboundReturnOtherPartyDocument = gql`
+    mutation updateOutboundReturnOtherParty($input: UpdateOutboundReturnOtherPartyInput!, $storeId: String!) {
+  updateOutboundReturnOtherParty(input: $input, storeId: $storeId) {
+    ... on UpdateOutboundReturnOtherPartyError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on InvoiceIsNotEditable {
+          __typename
+          description
+        }
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -576,6 +637,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteInboundReturn(variables: DeleteInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteInboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundReturnMutation>(DeleteInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundReturn', 'mutation', variables);
+    },
+    updateOutboundReturnOtherParty(variables: UpdateOutboundReturnOtherPartyMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundReturnOtherPartyMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnOtherPartyMutation>(UpdateOutboundReturnOtherPartyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturnOtherParty', 'mutation', variables);
     }
   };
 }
