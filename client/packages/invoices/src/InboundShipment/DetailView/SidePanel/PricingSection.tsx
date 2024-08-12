@@ -17,6 +17,7 @@ import {
   useAuthContext,
   UNDEFINED_STRING_VALUE,
   TaxEdit,
+  Divider,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { InboundServiceLineEdit } from '../modals';
@@ -134,6 +135,7 @@ export const PricingSectionComponent = () => {
                 </PanelRow>
               ))
             : null}
+          {serviceLines?.length !== 0 ? <Divider margin={2} /> : null}
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.sub-total')}</PanelLabel>

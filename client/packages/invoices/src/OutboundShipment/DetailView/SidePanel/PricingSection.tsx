@@ -19,6 +19,7 @@ import {
   Currencies,
   UNDEFINED_STRING_VALUE,
   TaxEdit,
+  Divider,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
@@ -95,6 +96,8 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
             </PanelRow>
           ))
         : null}
+      {serviceLines?.length !== 0 ? <Divider margin={2} /> : null}
+
       <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{t('heading.sub-total')}</PanelLabel>
         <PanelField>{c(serviceTotalBeforeTax)}</PanelField>
