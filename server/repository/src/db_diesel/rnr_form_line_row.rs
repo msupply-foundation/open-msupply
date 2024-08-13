@@ -41,8 +41,6 @@ table! {
 }
 
 joinable!(rnr_form_line -> rnr_form (rnr_form_id));
-joinable!(rnr_form_line -> item (item_id));
-// TODO: item_link!!
 joinable!(rnr_form_line -> item_link (item_id));
 joinable!(rnr_form_line -> requisition_line (requisition_line_id));
 

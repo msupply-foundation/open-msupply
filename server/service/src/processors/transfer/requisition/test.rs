@@ -112,7 +112,7 @@ async fn requisition_transfer() {
             ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_was_linked(&ctx.connection);
             tester.update_response_requisition_to_approved(&service_provider);
-            // Response requisition approval is usually done by mSupply translation
+            // Response requisition approval is usually done by mSupply
             // Processor would be triggered after sync
             // We've approved manually for testing, so need to manually trigger the processor as well
             ctx.processors_trigger
