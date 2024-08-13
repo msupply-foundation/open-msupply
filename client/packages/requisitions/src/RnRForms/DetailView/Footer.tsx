@@ -8,7 +8,6 @@ import {
   RnRFormNodeStatus,
   useNotification,
   useConfirmationModal,
-  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { useRnRForm } from '../api';
 
@@ -27,8 +26,6 @@ export const Footer = ({
     finalise: { finalise, isFinalising },
     confirmRemainingLines,
   } = useRnRForm({ rnrFormId });
-
-  useConfirmOnLeaving(linesUnconfirmed);
 
   const showFinaliseConfirmation = useConfirmationModal({
     onConfirm: async () => {
