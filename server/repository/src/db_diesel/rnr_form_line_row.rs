@@ -1,4 +1,7 @@
-use super::{item_row::item, rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form};
+use super::{
+    item_link_row::item_link, item_row::item, requisition_line_row::requisition_line,
+    rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
+};
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
@@ -39,9 +42,14 @@ table! {
 
 joinable!(rnr_form_line -> rnr_form (rnr_form_id));
 joinable!(rnr_form_line -> item (item_id));
+// TODO: item_link!!
+joinable!(rnr_form_line -> item_link (item_id));
+joinable!(rnr_form_line -> requisition_line (requisition_line_id));
 
 allow_tables_to_appear_in_same_query!(rnr_form_line, rnr_form);
 allow_tables_to_appear_in_same_query!(rnr_form_line, item);
+allow_tables_to_appear_in_same_query!(rnr_form_line, item_link);
+allow_tables_to_appear_in_same_query!(rnr_form_line, requisition_line);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
