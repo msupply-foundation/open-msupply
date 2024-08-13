@@ -50,7 +50,7 @@ const UIComponent = (props: ControlProps) => {
     },
     disabled: !props.enabled,
     error: error,
-    helperText: errors,
+    helperText: errors || zErrors,
     value: localData,
   };
 
