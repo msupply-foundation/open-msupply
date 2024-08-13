@@ -1,8 +1,9 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
 
 mod add_asset_internal_location_changelog;
+mod add_low_stock_and_requisition_line_id;
 mod consumption_and_replenishment_views;
 mod create_missing_master_list_and_program;
 mod create_system_user;
@@ -36,6 +37,10 @@ impl Migration for V2_02_00 {
         stock_on_hand_add_total_stock::migrate(connection)?;
         requisitions_in_period::migrate(connection)?;
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![Box::new(add_low_stock_and_requisition_line_id::Migrate)]
     }
 }
 
