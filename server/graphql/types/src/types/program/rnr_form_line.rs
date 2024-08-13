@@ -2,13 +2,14 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
-use repository::{RnRFormLineRow, RnRFormLowStock};
+use repository::{RequisitionLineRow, RnRFormLine, RnRFormLineRow, RnRFormLowStock};
 use serde::Serialize;
 
 use crate::types::ItemNode;
 
 pub struct RnRFormLineNode {
     pub rnr_form_line_row: RnRFormLineRow,
+    pub requisition_line_row: Option<RequisitionLineRow>,
 }
 
 #[Object]
@@ -94,8 +95,9 @@ impl RnRFormLineNode {
     }
 
     pub async fn approved_quantity(&self) -> Option<f64> {
-        // TODO: Join on requisition to get approved quantity
-        None
+        self.requisition_line_row
+            .as_ref()
+            .map(|r| r.approved_quantity)
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
@@ -117,8 +119,17 @@ impl RnRFormLineNode {
 }
 
 impl RnRFormLineNode {
-    pub fn from_domain(rnr_form_line_row: RnRFormLineRow) -> RnRFormLineNode {
-        RnRFormLineNode { rnr_form_line_row }
+    pub fn from_domain(
+        RnRFormLine {
+            rnr_form_line_row,
+            requisition_line_row,
+            ..
+        }: RnRFormLine,
+    ) -> RnRFormLineNode {
+        RnRFormLineNode {
+            rnr_form_line_row,
+            requisition_line_row,
+        }
     }
 }
 
