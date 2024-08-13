@@ -76,8 +76,11 @@ impl<'a> RequisitionLineRowRepository<'a> {
         approved_quantity: f64,
     ) -> Result<(), RepositoryError> {
         diesel::update(requisition_line_dsl::requisition_line)
-            .filter(requisition_line_dsl::requisition_id.eq(requisition_id))
-            .filter(requisition_line_dsl::item_link_id.eq(item_id))
+            .filter(
+                requisition_line_dsl::requisition_id
+                    .eq(requisition_id)
+                    .and(requisition_line_dsl::item_link_id.eq(item_id)),
+            )
             .set(requisition_line_dsl::approved_quantity.eq(approved_quantity))
             .execute(self.connection.lock().connection())?;
         Ok(())
