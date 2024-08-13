@@ -13,6 +13,7 @@ import {
   Switch,
 } from '@openmsupply-client/common';
 import { OutboundReturnFragment, useReturns } from '../api';
+import { SupplierSearchInput } from '@openmsupply-client/system';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
@@ -20,8 +21,10 @@ export const Toolbar: FC = () => {
 
   const { bufferedState, setBufferedState } =
     useReturns.document.outboundReturn();
-  const { otherPartyName, theirReference, id } = bufferedState ?? { id: '' };
+  const { otherParty, theirReference, id } = bufferedState ?? { id: '' };
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundReturn');
+  const { mutateAsync: updateOtherParty } =
+    useReturns.document.updateOtherParty();
 
   const onDelete = useReturns.lines.deleteSelectedOutboundLines({
     returnId: id,
@@ -46,10 +49,19 @@ export const Toolbar: FC = () => {
       >
         <Grid item display="flex" flex={1}>
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
-            {otherPartyName && (
+            {otherParty && (
               <InputWithLabelRow
                 label={t('label.supplier-name')}
-                Input={<BasicTextInput value={otherPartyName} disabled />}
+                sx={{ minWidth: 100 }}
+                Input={
+                  <SupplierSearchInput
+                    disabled={isDisabled}
+                    value={otherParty}
+                    onChange={async ({ id: otherPartyId }) => {
+                      await updateOtherParty({ id, otherPartyId });
+                    }}
+                  />
+                }
               />
             )}
             <InputWithLabelRow

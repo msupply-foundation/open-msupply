@@ -1,4 +1,4 @@
-use repository::RnRFormLineRow;
+use repository::{RnRFormLineRow, RnRFormLowStock};
 use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
@@ -21,10 +21,11 @@ const RNR_FORM_LINE_1: (&str, &str) = (
         "final_balance": 0.0,
         "maximum_quantity": 0.0,
         "expiry_date": null,
-        "requested_quantity": 0.0,
+        "calculated_requested_quantity": 0.0,
         "comment": null,
         "confirmed": false, 
-        "previous_average_monthly_consumption": 0.0
+        "low_stock": "OK",
+        "previous_monthly_consumption_values": ""
     }"#,
 );
 
@@ -33,6 +34,7 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         id: RNR_FORM_LINE_1.0.to_string(),
         rnr_form_id: "cfd578f8-c3d5-4a04-a466-0ac81dde2aab".to_string(),
         item_id: "8F252B5884B74888AAB73A0D42C09E7A".to_string(),
+        requisition_line_id: None,
         average_monthly_consumption: 0.0,
         initial_balance: 0.0,
         snapshot_quantity_received: 0.0,
@@ -46,10 +48,12 @@ fn rnr_form_line_1() -> RnRFormLineRow {
         final_balance: 0.0,
         maximum_quantity: 0.0,
         expiry_date: None,
-        requested_quantity: 0.0,
+        calculated_requested_quantity: 0.0,
+        entered_requested_quantity: None,
         comment: None,
         confirmed: false,
-        previous_average_monthly_consumption: 0.0,
+        previous_monthly_consumption_values: "".to_string(),
+        low_stock: RnRFormLowStock::Ok,
     }
 }
 
