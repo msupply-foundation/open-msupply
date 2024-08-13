@@ -46,10 +46,7 @@ export const ContentArea = ({
 }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
 
-  // TODO: move to backend, should join on item and sort by name!
-  const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));
-
-  return lines.length === 0 ? (
+  return data.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
   ) : (
     <Box flex={1} padding={2}>
@@ -142,7 +139,7 @@ export const ContentArea = ({
         </thead>
 
         <tbody>
-          {lines.map(line => (
+          {data.map(line => (
             <RnRFormLine
               key={line.id}
               line={line}
