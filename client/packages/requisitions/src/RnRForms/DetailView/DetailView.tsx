@@ -11,7 +11,6 @@ import {
   TableProvider,
   createTableStore,
   RnRFormNodeStatus,
-  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -63,8 +62,6 @@ const RnRFormDetailViewComponent = ({
 
   const [dirtyLines, setDirtyLines] = useState<string[]>([]);
 
-  useConfirmOnLeaving(dirtyLines.length > 0);
-
   const saveLine = useCallback(
     async (line: RnRFormLineFragment) => {
       setDirtyLines(lines => lines.filter(id => id !== line.id));
@@ -74,7 +71,7 @@ const RnRFormDetailViewComponent = ({
   );
 
   const markDirty = useCallback(
-    () => (id: string) => setDirtyLines(lines => [...lines, id]),
+    (id: string) => setDirtyLines(lines => [...lines, id]),
     [setDirtyLines]
   );
 
