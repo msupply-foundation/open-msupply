@@ -248,12 +248,12 @@ impl Upsert for RequisitionRow {
 
 impl ApprovalStatusType {
     pub fn is_approved(&self) -> bool {
-        match self {
+        matches!(
+            self,
             ApprovalStatusType::ApprovedByAnother
-            | ApprovalStatusType::AutoApproved
-            | ApprovalStatusType::Approved => true,
-            _ => false,
-        }
+                | ApprovalStatusType::AutoApproved
+                | ApprovalStatusType::Approved
+        )
     }
 }
 
