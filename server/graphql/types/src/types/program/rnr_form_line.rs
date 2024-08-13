@@ -123,7 +123,7 @@ impl RnRFormLineNode {
         RnRFormLine {
             rnr_form_line_row,
             requisition_line_row,
-            ..
+            item_row: _,
         }: RnRFormLine,
     ) -> RnRFormLineNode {
         RnRFormLineNode {
