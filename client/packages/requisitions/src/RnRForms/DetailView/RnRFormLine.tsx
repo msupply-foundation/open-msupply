@@ -11,6 +11,7 @@ import {
   NumericTextInput,
   NumUtils,
   useBufferState,
+  useConfirmOnLeaving,
   useNotification,
   useTheme,
   VenCategoryType,
@@ -31,10 +32,11 @@ export const RnRFormLine = ({
 }) => {
   const theme = useTheme();
   const { error } = useNotification();
-
   const [patch, setPatch] = useState<Partial<RnRFormLineFragment> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const draft = { ...line, ...patch };
+
+  useConfirmOnLeaving(patch !== null);
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
