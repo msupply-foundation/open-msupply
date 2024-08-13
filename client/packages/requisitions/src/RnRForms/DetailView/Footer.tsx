@@ -15,22 +15,20 @@ import { useRnRForm } from '../api';
 export const Footer = ({
   rnrFormId,
   linesUnconfirmed,
-  unsavedChanges,
 }: {
   rnrFormId: string;
   linesUnconfirmed: boolean;
-  unsavedChanges: boolean;
 }) => {
   const t = useTranslation('replenishment');
   const { navigateUpOne } = useBreadcrumbs();
-  const { error, info, success } = useNotification();
+  const { error, success } = useNotification();
   const {
     query: { data },
     finalise: { finalise, isFinalising },
     confirmRemainingLines,
   } = useRnRForm({ rnrFormId });
 
-  useConfirmOnLeaving(unsavedChanges);
+  useConfirmOnLeaving(linesUnconfirmed);
 
   const showFinaliseConfirmation = useConfirmationModal({
     onConfirm: async () => {
@@ -50,14 +48,6 @@ export const Footer = ({
     title: t('heading.are-you-sure'),
   });
 
-  const onFinalise = async () => {
-    if (unsavedChanges) {
-      info(t('messages.all-changes-must-be-confirmed'))();
-      return;
-    }
-    showFinaliseConfirmation();
-  };
-
   return (
     <AppFooterPortal
       Content={
@@ -75,7 +65,7 @@ export const Footer = ({
                 disabled={
                   isFinalising || data.status === RnRFormNodeStatus.Finalised
                 }
-                onClick={onFinalise}
+                onClick={() => showFinaliseConfirmation()}
                 variant={'ok'}
                 customLabel={
                   data.status === RnRFormNodeStatus.Finalised
