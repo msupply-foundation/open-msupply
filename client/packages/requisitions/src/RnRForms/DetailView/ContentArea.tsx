@@ -14,7 +14,6 @@ import { RnRFormLine } from './RnRFormLine';
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
-  markDirty: (id: string) => void;
   periodLength: number;
   disabled: boolean;
 }
@@ -42,7 +41,6 @@ const HeaderCell = ({ label, tooltip }: HeaderCellProps) => {
 export const ContentArea = ({
   data,
   saveLine,
-  markDirty,
   periodLength,
   disabled,
 }: ContentAreaProps) => {
@@ -150,7 +148,6 @@ export const ContentArea = ({
               line={line}
               periodLength={periodLength}
               saveLine={saveLine}
-              markDirty={markDirty}
               disabled={disabled}
             />
           ))}

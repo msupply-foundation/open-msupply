@@ -20,14 +20,12 @@ import { getLowStockStatus, getAmc } from './helpers';
 export const RnRFormLine = ({
   line,
   saveLine,
-  markDirty,
   periodLength,
   disabled,
 }: {
   line: RnRFormLineFragment;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
-  markDirty: (id: string) => void;
   disabled: boolean;
 }) => {
   const theme = useTheme();
@@ -85,7 +83,6 @@ export const RnRFormLine = ({
       calculatedRequestedQuantity,
       lowStock,
     });
-    markDirty(draft.id);
   };
 
   const venCategory =

@@ -105,7 +105,6 @@
   "label.supplier-name": "Supplier Name",
   "label.supplier-ref": "Reference",
   "messages.alert-zero-return-quantity": "Please add some quantities to return before proceeding to the next step",
-  "messages.all-changes-must-be-confirmed": "You have some lines with unsaved changes. Mark these lines as confirmed to finalise.",
   "messages.by-user": "by {{username}}",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "messages.cant-return-shipment": "Cannot return lines until the status is 'Delivered'",
