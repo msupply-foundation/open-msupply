@@ -70,10 +70,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
       }
     >
       <>
-        <Typography
-          variant="body1"
-          sx={{ mb: 2, maxWidth: 500, padding: '0 5px' }}
-        >
+        <Typography sx={{ mb: 2, maxWidth: 500 }}>
           {t('message.arguments')}
         </Typography>
         <JsonForm
