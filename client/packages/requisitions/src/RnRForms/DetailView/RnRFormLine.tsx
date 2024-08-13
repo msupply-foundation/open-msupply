@@ -4,6 +4,7 @@ import {
   BasicTextInput,
   Checkbox,
   CircleIcon,
+  CircularProgress,
   DatePicker,
   Formatter,
   LowStockStatus,
@@ -32,6 +33,7 @@ export const RnRFormLine = ({
   const { error } = useNotification();
 
   const [patch, setPatch] = useState<Partial<RnRFormLineFragment> | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const draft = { ...line, ...patch };
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
@@ -232,27 +234,35 @@ export const RnRFormLine = ({
 
       {/* Confirm the line */}
       <td style={{ textAlign: 'center' }}>
-        <Checkbox
-          checked={!!draft.confirmed}
-          size="medium"
-          onClick={async () => {
-            try {
-              await saveLine({ ...draft, confirmed: !draft.confirmed });
-              setPatch(null);
-            } catch (e) {
-              error((e as Error).message)();
-            }
-          }}
-          disabled={disabled}
-          sx={{ marginLeft: '10px' }}
-        />
-        <CircleIcon
-          sx={{
-            width: '10px',
-            visibility: patch === null ? 'hidden' : 'visible',
-            color: 'secondary.main',
-          }}
-        />
+        {isLoading ? (
+          <CircularProgress size={20} />
+        ) : (
+          <>
+            <Checkbox
+              checked={!!draft.confirmed}
+              size="medium"
+              onClick={async () => {
+                try {
+                  setIsLoading(true);
+                  await saveLine({ ...draft, confirmed: !draft.confirmed });
+                  setPatch(null);
+                  setIsLoading(false);
+                } catch (e) {
+                  error((e as Error).message)();
+                }
+              }}
+              disabled={disabled}
+              sx={{ marginLeft: '10px' }}
+            />
+            <CircleIcon
+              sx={{
+                width: '10px',
+                visibility: patch === null ? 'hidden' : 'visible',
+                color: 'secondary.main',
+              }}
+            />
+          </>
+        )}
       </td>
       {/* Readonly - populated from Response Requisition */}
       <RnRNumberCell
