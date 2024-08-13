@@ -246,6 +246,17 @@ impl Upsert for RequisitionRow {
     }
 }
 
+impl ApprovalStatusType {
+    pub fn is_approved(&self) -> bool {
+        match self {
+            ApprovalStatusType::ApprovedByAnother
+            | ApprovalStatusType::AutoApproved
+            | ApprovalStatusType::Approved => true,
+            _ => false,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{
@@ -279,5 +290,13 @@ mod test {
                 .unwrap();
             assert_eq!(result.approval_status, row.approval_status);
         }
+
+        assert_eq!(ApprovalStatusType::Approved.is_approved(), true);
+        assert_eq!(ApprovalStatusType::ApprovedByAnother.is_approved(), true);
+        assert_eq!(ApprovalStatusType::AutoApproved.is_approved(), true);
+        assert_eq!(ApprovalStatusType::Denied.is_approved(), false);
+        assert_eq!(ApprovalStatusType::DeniedByAnother.is_approved(), false);
+        assert_eq!(ApprovalStatusType::Pending.is_approved(), false);
+        assert_eq!(ApprovalStatusType::None.is_approved(), false);
     }
 }

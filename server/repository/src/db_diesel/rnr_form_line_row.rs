@@ -118,7 +118,6 @@ impl<'a> RnRFormLineRowRepository<'a> {
             .set(requisition_line_id.eq(linked_requisition_line_id))
             .execute(self.connection.lock().connection())?;
         Ok(())
-        // TODO: does this need to insert changelog?
     }
 
     fn insert_changelog(

@@ -1,11 +1,8 @@
 use repository::{
-    requisition_row::{RequisitionStatus, RequisitionType},
-    ActivityLogType, ApprovalStatusType, EqualFilter, RepositoryError, RequisitionLineFilter,
+    requisition_row::RequisitionType, EqualFilter, RepositoryError, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, StorageConnection,
 };
-
-use crate::activity_log::system_activity_log_entry;
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 
@@ -23,11 +20,11 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
     /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source requisition is Response requisition
     /// 3. Linked requisition exists (the request requisition)
-    /// 4. Linked request requisition is not Finalised
-    /// 5. Source response requisition is Finalised
+    /// 4. Linked request requisition is not approved
+    /// 5. Source response requisition is approved
     ///
     /// Only runs once:
-    /// 6. Because linked request requisition status is set to Finalised and `4.` will never be true again
+    /// 6. Because linked request requisition status is set to approved and `4.` will never be true again
     fn try_process_record(
         &self,
         connection: &StorageConnection,
@@ -49,42 +46,46 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             None => return Ok(None),
         };
         // 4.
-        // check... approval status on request?? by line?? how do i not run this many times...
-        if request_requisition.requisition_row.status == RequisitionStatus::Finalised {
-            return Ok(None);
-        }
+        if let Some(approval_status) = request_requisition.requisition_row.approval_status.clone() {
+            if approval_status.is_approved() {
+                return Ok(None);
+            }
+        };
         // 5.
         let approval_status = match response_requisition.requisition_row.approval_status.clone() {
             Some(approval_status) => approval_status,
             None => return Ok(None),
         };
-        if approval_status != ApprovalStatusType::Approved {
+        if !approval_status.is_approved() {
             return Ok(None);
         }
 
-        // Get lines
-        let response_lines = RequisitionLineRepository::new(connection).query_by_filter(
+        let requisition_line_repository = RequisitionLineRepository::new(connection);
+        let requisition_line_row_repository = RequisitionLineRowRepository::new(connection);
+
+        // Get response requisition lines
+        let response_lines = requisition_line_repository.query_by_filter(
             RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(
-                response_requisition.requisition_row.id,
+                &response_requisition.requisition_row.id,
             )),
-        );
+        )?;
+
+        // Update approved quantities on request requisition lines
+        for line in response_lines.iter() {
+            requisition_line_row_repository.update_approved_quantity_by_item_id(
+                &line.requisition_line_row.item_link_id,
+                line.requisition_line_row.approved_quantity,
+            )?;
+        }
 
         // Execute
         let updated_request_requisition = RequisitionRow {
             // 6.
-            status: RequisitionStatus::Finalised,
-            finalised_datetime: response_requisition.requisition_row.finalised_datetime,
+            approval_status: response_requisition.requisition_row.approval_status.clone(),
             ..request_requisition.requisition_row.clone()
         };
 
         RequisitionRowRepository::new(connection).upsert_one(&updated_request_requisition)?;
-
-        system_activity_log_entry(
-            connection,
-            ActivityLogType::RequisitionStatusFinalised,
-            &updated_request_requisition.store_id,
-            &updated_request_requisition.id,
-        )?;
 
         let result = format!(
             "requisition ({}) source requisition ({})",
