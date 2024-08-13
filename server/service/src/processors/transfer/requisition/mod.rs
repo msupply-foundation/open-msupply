@@ -22,6 +22,7 @@ use crate::{
             assign_requisition_number::AssignRequisitionNumberProcessor,
             create_response_requisition::CreateResponseRequisitionProcessor,
             link_request_requisition::LinkRequestRequisitionProcessor,
+            update_request_requisition_approved_quantities::UpdateRequestRequisitionApprovedQuantitiesProcessor,
             update_request_requisition_status::UpdateRequestRequisitionStatusProcessor,
         },
     },
@@ -65,6 +66,7 @@ pub(crate) fn process_requisition_transfers(
     let processors: Vec<Box<dyn RequisitionTransferProcessor>> = vec![
         Box::new(CreateResponseRequisitionProcessor),
         Box::new(LinkRequestRequisitionProcessor),
+        Box::new(UpdateRequestRequisitionApprovedQuantitiesProcessor),
         Box::new(UpdateRequestRequisitionStatusProcessor),
         Box::new(AssignRequisitionNumberProcessor),
     ];
