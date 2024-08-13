@@ -3,6 +3,7 @@ import {
   AlertIcon,
   BasicTextInput,
   Checkbox,
+  CircleIcon,
   DatePicker,
   Formatter,
   LowStockStatus,
@@ -19,18 +20,20 @@ import { getLowStockStatus, getAmc } from './helpers';
 export const RnRFormLine = ({
   line,
   saveLine,
+  markDirty,
   periodLength,
   disabled,
 }: {
   line: RnRFormLineFragment;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  markDirty: (id: string) => void;
   disabled: boolean;
 }) => {
   const theme = useTheme();
   const { error } = useNotification();
 
-  const [patch, setPatch] = useState<Partial<RnRFormLineFragment>>({});
+  const [patch, setPatch] = useState<Partial<RnRFormLineFragment> | null>(null);
   const draft = { ...line, ...patch };
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
@@ -82,6 +85,7 @@ export const RnRFormLine = ({
       calculatedRequestedQuantity,
       lowStock,
     });
+    markDirty(draft.id);
   };
 
   const venCategory =
@@ -237,12 +241,20 @@ export const RnRFormLine = ({
           onClick={async () => {
             try {
               await saveLine({ ...draft, confirmed: !draft.confirmed });
-              setPatch({});
+              setPatch(null);
             } catch (e) {
               error((e as Error).message)();
             }
           }}
           disabled={disabled}
+          sx={{ marginLeft: '10px' }}
+        />
+        <CircleIcon
+          sx={{
+            width: '10px',
+            visibility: patch === null ? 'hidden' : 'visible',
+            color: 'secondary.main',
+          }}
         />
       </td>
       {/* Readonly - populated from Response Requisition */}

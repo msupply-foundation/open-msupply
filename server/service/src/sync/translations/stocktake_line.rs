@@ -7,8 +7,9 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, StocktakeLine, StocktakeLineFilter,
-    StocktakeLineRepository, StocktakeLineRow, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, StockLineRowRepository, StocktakeLine,
+    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -106,11 +107,31 @@ impl SyncTranslation for StocktakeLineTranslation {
             None
         };
 
+        // omSupply should be generating the stocktake line with valid stock lines.
+        // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
+        let is_stock_line_valid = match item_line_ID {
+            Some(ref stock_line_id) => StockLineRowRepository::new(connection)
+                .find_one_by_id(stock_line_id)?
+                .is_some(),
+            None => true,
+        };
+
+        if !is_stock_line_valid {
+            log::warn!(
+                "Stock line is not valid, stocktake_line_id: {}, stock_line_id: {:?}",
+                ID,
+                item_line_ID
+            );
+        }
+
         let location_id = clear_invalid_location_id(connection, location_id)?;
         let result = StocktakeLineRow {
             id: ID,
             stocktake_id: stock_take_ID,
-            stock_line_id: item_line_ID,
+            stock_line_id: match is_stock_line_valid {
+                true => item_line_ID,
+                false => None,
+            },
             location_id,
             comment,
             snapshot_number_of_packs: snapshot_qty,
