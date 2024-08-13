@@ -35,12 +35,15 @@ impl Migration for V2_02_00 {
         consumption_and_replenishment_views::migrate(connection)?;
         sync::migrate(connection)?;
         stock_on_hand_add_total_stock::migrate(connection)?;
-        requisitions_in_period::migrate(connection)?;
+
         Ok(())
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_low_stock_and_requisition_line_id::Migrate)]
+        vec![
+            Box::new(add_low_stock_and_requisition_line_id::Migrate),
+            Box::new(requisitions_in_period::Migrate),
+        ]
     }
 }
 
