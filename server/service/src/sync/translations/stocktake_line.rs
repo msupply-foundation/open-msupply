@@ -244,8 +244,17 @@ mod tests {
         use crate::sync::test::test_data::stocktake_line as test_data;
         let translator = StocktakeLineTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_stock_take_line_translation", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all(
+            "test_stock_take_line_translation",
+            MockDataInserts::none()
+                .stock_lines()
+                .units()
+                .items()
+                .names()
+                .locations()
+                .stores(),
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
