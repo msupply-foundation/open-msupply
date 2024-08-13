@@ -9,6 +9,7 @@ mod create_system_user;
 mod item_ven;
 mod remove_changelog_triggers;
 mod report_add_report_context;
+mod requisitions_in_period;
 mod rnr_form;
 mod stock_on_hand_add_total_stock;
 mod store_preferences_for_reports;
@@ -33,6 +34,7 @@ impl Migration for V2_02_00 {
         consumption_and_replenishment_views::migrate(connection)?;
         sync::migrate(connection)?;
         stock_on_hand_add_total_stock::migrate(connection)?;
+        requisitions_in_period::migrate(connection)?;
         Ok(())
     }
 }
