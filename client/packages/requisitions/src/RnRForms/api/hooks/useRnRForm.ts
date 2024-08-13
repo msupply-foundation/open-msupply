@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import {
   isEmpty,
   UpdateRnRFormLineInput,
@@ -40,7 +41,10 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
 
   const query = useQuery({ queryKey, queryFn });
 
-  const updateLine = async (line: RnRFormLineFragment) => updateLines([line]);
+  const updateLine = useCallback(
+    async (line: RnRFormLineFragment) => updateLines([line]),
+    []
+  );
 
   const confirmRemainingLines = async () => {
     if (!query.data) return;
