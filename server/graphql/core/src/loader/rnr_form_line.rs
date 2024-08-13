@@ -23,9 +23,10 @@ impl Loader<String> for RnRFormLinesByRnRFormIdLoader {
         let repository = RnRFormLineRepository::new(&connection);
 
         let rnr_form_lines = repository
-            .query_by_filter(RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_any(
-                rnr_form_ids.iter().map(String::clone).collect(),
-            )))
+            .query_by_filter(
+                RnRFormLineFilter::new()
+                    .rnr_form_id(EqualFilter::equal_any(rnr_form_ids.to_owned())),
+            )
             .map_err(StandardGraphqlError::from_repository_error)?;
 
         let mut result: HashMap<String, Self::Value> = HashMap::new();

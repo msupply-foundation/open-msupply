@@ -89,7 +89,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
         RequisitionRowRepository::new(connection).upsert_one(&updated_request_requisition)?;
 
         let result = format!(
-            "requisition ({}) source requisition ({})",
+            "Internal order ({}) linked to requisition ({})",
             updated_request_requisition.id, response_requisition.requisition_row.id
         );
 
