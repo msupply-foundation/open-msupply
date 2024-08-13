@@ -5,7 +5,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::rnr_form::RnRFormNode;
+use graphql_types::types::{rnr_form::RnRFormNode, rnr_form_line::LowStockStatus};
 use repository::RnRForm;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -31,7 +31,9 @@ pub struct UpdateRnRFormLineInput {
     pub initial_balance: f64,
     pub final_balance: f64,
     pub maximum_quantity: f64,
-    pub requested_quantity: f64,
+    pub calculated_requested_quantity: f64,
+    pub entered_requested_quantity: Option<f64>,
+    pub low_stock: LowStockStatus,
     pub comment: Option<String>,
     pub confirmed: bool,
 }
@@ -120,11 +122,13 @@ impl UpdateRnRFormLineInput {
             average_monthly_consumption,
             final_balance,
             maximum_quantity,
-            requested_quantity,
             comment,
             confirmed,
             expiry_date,
             initial_balance,
+            calculated_requested_quantity,
+            entered_requested_quantity,
+            low_stock,
         }: UpdateRnRFormLineInput,
     ) -> UpdateRnRFormLine {
         UpdateRnRFormLine {
@@ -137,11 +141,13 @@ impl UpdateRnRFormLineInput {
             average_monthly_consumption,
             final_balance,
             maximum_quantity,
-            requested_quantity,
+            calculated_requested_quantity,
+            entered_requested_quantity,
             comment,
             confirmed,
             expiry_date,
             initial_balance,
+            low_stock: low_stock.to_domain(),
         }
     }
 }

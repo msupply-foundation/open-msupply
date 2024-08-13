@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   DetailViewSkeleton,
   useNavigate,
@@ -11,14 +11,15 @@ import {
   TableProvider,
   createTableStore,
   RnRFormNodeStatus,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { ContentArea } from './ContentArea';
-import { RnRForm, useRnRForm } from '../../api';
-import { RnRFormLineFragment } from '../../api/operations.generated';
+import { RnRForm, useRnRForm } from '../api';
+import { RnRFormLineFragment } from '../api/operations.generated';
 
 export const RnRFormDetailView = () => {
   const { id = '' } = useParams();
@@ -28,18 +29,18 @@ export const RnRFormDetailView = () => {
     updateLine: { updateLine },
   } = useRnRForm({ rnrFormId: id });
   const navigate = useNavigate();
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <RnRFormDetailViewComponent data={data} saveLine={updateLine} />
+    <RnRFormDetailViewComponent data={data} updateLine={updateLine} />
   ) : (
     <AlertModal
       open={true}
       onOk={() =>
         navigate(
-          RouteBuilder.create(AppRoute.Programs)
+          RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.RnRForms)
             .build()
         )
@@ -52,13 +53,26 @@ export const RnRFormDetailView = () => {
 
 const RnRFormDetailViewComponent = ({
   data,
-  saveLine,
+  updateLine,
 }: {
   data: RnRForm;
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  updateLine: (line: RnRFormLineFragment) => Promise<void>;
 }) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+
+  const [dirtyLines, setDirtyLines] = useState<string[]>([]);
+
+  useConfirmOnLeaving(dirtyLines.length > 0);
+
+  const saveLine = async (line: RnRFormLineFragment) => {
+    setDirtyLines(lines => lines.filter(id => id !== line.id));
+    updateLine(line);
+  };
+
+  const markDirty = (id: string) => {
+    if (!dirtyLines.includes(id)) setDirtyLines(lines => [...lines, id]);
+  };
 
   const tabs = [
     {
@@ -68,6 +82,7 @@ const RnRFormDetailViewComponent = ({
           data={data.lines}
           saveLine={saveLine}
           disabled={data.status === RnRFormNodeStatus.Finalised}
+          markDirty={markDirty}
         />
       ),
       value: t('label.details'),
@@ -91,7 +106,11 @@ const RnRFormDetailViewComponent = ({
         <DetailTabs tabs={tabs} />
       </TableProvider>
 
-      <Footer rnrFormId={data.id} linesUnconfirmed={linesUnconfirmed} />
+      <Footer
+        rnrFormId={data.id}
+        unsavedChanges={dirtyLines.length > 0}
+        linesUnconfirmed={linesUnconfirmed}
+      />
     </>
   );
 };

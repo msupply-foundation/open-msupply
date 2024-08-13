@@ -5,6 +5,7 @@ import {
   InvoiceNodeType,
   InvoiceSortFieldInput,
   OutboundReturnInput,
+  RecordPatch,
   UpdateInboundReturnInput,
   UpdateInboundReturnLinesInput,
   UpdateInboundReturnStatusInput,
@@ -14,6 +15,7 @@ import {
 } from '@common/types';
 import {
   InboundReturnRowFragment,
+  OutboundReturnFragment,
   OutboundReturnRowFragment,
   Sdk,
 } from './operations.generated';
@@ -275,6 +277,28 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not update outbound return');
+  },
+  updateOtherParty: async (
+    patch:
+      | RecordPatch<OutboundReturnRowFragment>
+      | RecordPatch<OutboundReturnFragment>
+  ) => {
+    const result =
+      (await sdk.updateOutboundReturnOtherParty({
+        storeId,
+        input: {
+          id: patch.id,
+          otherPartyId: patch.otherPartyId,
+        },
+      })) || {};
+
+    const { updateOutboundReturnOtherParty } = result;
+
+    if (updateOutboundReturnOtherParty?.__typename === 'InvoiceNode') {
+      return updateOutboundReturnOtherParty.id;
+    }
+
+    throw new Error('Could not update supplier name');
   },
   updateOutboundReturnLines: async (input: UpdateOutboundReturnLinesInput) => {
     const result = await sdk.updateOutboundReturnLines({
