@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   DetailViewSkeleton,
   useNavigate,
@@ -65,14 +65,18 @@ const RnRFormDetailViewComponent = ({
 
   useConfirmOnLeaving(dirtyLines.length > 0);
 
-  const saveLine = async (line: RnRFormLineFragment) => {
-    setDirtyLines(lines => lines.filter(id => id !== line.id));
-    updateLine(line);
-  };
+  const saveLine = useCallback(
+    async (line: RnRFormLineFragment) => {
+      setDirtyLines(lines => lines.filter(id => id !== line.id));
+      updateLine(line);
+    },
+    [updateLine]
+  );
 
-  const markDirty = (id: string) => {
-    if (!dirtyLines.includes(id)) setDirtyLines(lines => [...lines, id]);
-  };
+  const markDirty = useCallback(
+    () => (id: string) => setDirtyLines(lines => [...lines, id]),
+    [setDirtyLines]
+  );
 
   const tabs = [
     {
