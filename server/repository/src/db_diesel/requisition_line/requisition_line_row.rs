@@ -66,7 +66,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(&row.id, RowActionType::Upsert)
+        self.insert_changelog(row, RowActionType::Upsert)
     }
 
     pub fn update_approved_quantity_by_item_id(
@@ -84,16 +84,16 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .set(requisition_line_dsl::approved_quantity.eq(approved_quantity))
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(requisition_id, RowActionType::Upsert)?;
         Ok(())
     }
 
     fn insert_changelog(
         &self,
-        row_id: &str,
+        row: &RequisitionLineRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
-        let requisition = RequisitionRowRepository::new(self.connection).find_one_by_id(row_id)?;
+        let requisition =
+            RequisitionRowRepository::new(self.connection).find_one_by_id(&row.requisition_id)?;
         let requisition = match requisition {
             Some(requisition) => requisition,
             None => return Err(RepositoryError::NotFound),
@@ -101,10 +101,10 @@ impl<'a> RequisitionLineRowRepository<'a> {
 
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::RequisitionLine,
-            record_id: row_id.to_owned(),
+            record_id: row.id.clone(),
             row_action: action,
-            store_id: Some(requisition.store_id),
-            name_link_id: Some(requisition.name_link_id),
+            store_id: Some(requisition.store_id.clone()),
+            name_link_id: Some(requisition.name_link_id.clone()),
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
@@ -114,7 +114,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
         let requisition_line = self.find_one_by_id(requisition_line_id)?;
         let change_log_id = match requisition_line {
             Some(requisition_line) => {
-                self.insert_changelog(&requisition_line.id, RowActionType::Delete)?
+                self.insert_changelog(&requisition_line, RowActionType::Delete)?
             }
             None => {
                 return Ok(None);
