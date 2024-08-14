@@ -1,8 +1,10 @@
 use repository::{
-    requisition_row::RequisitionType, EqualFilter, RepositoryError, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRow,
+    requisition_row::RequisitionType, ActivityLogType, EqualFilter, RepositoryError,
+    RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRow,
     RequisitionRowRepository, StorageConnection,
 };
+
+use crate::activity_log::system_activity_log_entry;
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 
@@ -92,6 +94,13 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             "Internal order ({}) updated to approved, per requisition ({})",
             updated_request_requisition.id, response_requisition.requisition_row.id
         );
+
+        system_activity_log_entry(
+            connection,
+            ActivityLogType::RequisitionApproved,
+            &updated_request_requisition.store_id,
+            &updated_request_requisition.id,
+        )?;
 
         Ok(Some(result))
     }
