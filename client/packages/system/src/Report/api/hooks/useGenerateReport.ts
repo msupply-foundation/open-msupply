@@ -42,7 +42,7 @@ export const useGenerateReport = (
           setErrorMessage(t('error.failed-to-generate-report'));
         }
       } else {
-        noOtherVariants;
+        noOtherVariants(err.__typename);
       }
     }
 
