@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  BasicSpinner,
   FileUtils,
+  LocaleKey,
   NothingHere,
   PrintFormat,
+  TypedTFunction,
   useBreadcrumbs,
   useParams,
   useTranslation,
@@ -23,6 +24,8 @@ import { JsonData } from '@openmsupply-client/programs';
 export const DetailView = () => {
   const { id } = useParams();
   const { data: report } = useReport(id ?? '');
+  const t = useTranslation('reports');
+
   const {
     urlQuery: { reportArgs: reportArgsJson },
   } = useUrlQuery({ skipParse: ['reportArgs'] });
@@ -31,22 +34,23 @@ export const DetailView = () => {
     (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
 
   return !report?.id ? (
-    <BasicSpinner />
+    <NothingHere body={t('error.report-does-not-exist')} />
   ) : (
-    <DetailViewInner report={report} reportArgs={reportArgs} />
+    <DetailViewInner report={report} reportArgs={reportArgs} t={t} />
   );
 };
 
 const DetailViewInner = ({
   report,
   reportArgs,
+  t,
 }: {
   report: ReportRowFragment;
   reportArgs: JsonData;
+  t: TypedTFunction<LocaleKey>;
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
   const [errorMessage, setErrorMessage] = useState('');
-  const t = useTranslation('reports');
   const { mutateAsync } = useGenerateReport(setErrorMessage, t);
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
