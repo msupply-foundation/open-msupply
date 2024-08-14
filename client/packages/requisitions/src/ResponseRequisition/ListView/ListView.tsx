@@ -62,6 +62,10 @@ export const ResponseRequisitionListView: FC = () => {
   const { data, isError, isLoading } = useResponse.document.list(queryParams);
   const { authoriseResponseRequisitions } = useResponse.utils.preferences();
   useDisableResponseRows(data?.nodes);
+  const program =
+    data?.nodes.some(row => row.programName) ||
+    data?.nodes.some(row => row.orderType) ||
+    data?.nodes.some(row => row.period);
 
   const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
     [
@@ -88,27 +92,31 @@ export const ResponseRequisitionListView: FC = () => {
       description: 'description.number-of-shipments',
       accessor: ({ rowData }) => rowData?.shipments?.totalCount ?? 0,
     },
-    {
-      key: 'programName',
-      accessor: ({ rowData }) => rowData.programName,
-      label: 'label.program',
-      description: 'description.program',
-      sortable: true,
-    },
-    {
-      key: 'orderType',
-      accessor: ({ rowData }) => rowData.orderType,
-      label: 'label.order-type',
-      sortable: true,
-    },
-
-    {
-      key: 'period',
-      accessor: ({ rowData }) => rowData.period?.name ?? '',
-      label: 'label.period',
-      sortable: true,
-    },
   ];
+
+  if (program) {
+    columnDefinitions.push(
+      {
+        key: 'programName',
+        accessor: ({ rowData }) => rowData.programName,
+        label: 'label.program',
+        description: 'description.program',
+        sortable: true,
+      },
+      {
+        key: 'orderType',
+        accessor: ({ rowData }) => rowData.orderType,
+        label: 'label.order-type',
+        sortable: true,
+      },
+      {
+        key: 'period',
+        accessor: ({ rowData }) => rowData.period?.name ?? '',
+        label: 'label.period',
+        sortable: true,
+      }
+    );
+  }
 
   if (authoriseResponseRequisitions) {
     columnDefinitions.push({

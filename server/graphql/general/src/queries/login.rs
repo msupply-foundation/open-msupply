@@ -160,8 +160,9 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
 /// - HttpOnly cookie (not readable from js).
 /// - Secure (https only)
 /// - SameSite (only attached to request originating from the same site)
+///
 /// Also see:
-/// https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/
+///     https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/
 pub fn set_refresh_token_cookie(
     ctx: &Context<'_>,
     refresh_token: &str,

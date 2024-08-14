@@ -70,7 +70,7 @@
   "messages.allocated-lines_many": "Распределено {{count}} строк",
   "messages.allocated-lines_other": "Распределено {{count}} строк",
   "label.edited-by": "Отредактировано",
-  "label.issue": "Проблема",
+  "label.issue": "Выпустить",
   "label.group-by-item": "Группировать по Товарам",
   "label.customer-ref": "Номер Клиента",
   "label.no-unallocated-rows-selected": "Все выбранные строки уже распределены",
@@ -97,5 +97,12 @@
   "messages.allocated-lines-partial_many": "Частично распределены {{count}} строк",
   "messages.allocated-lines-partial_other": "Частично распределены {{count}} строк",
   "messages.edit-service-charges": "Редактировать платы за обслуживание",
-  "label.shipment-created": "Поставка создана"
+  "label.shipment-created": "Поставка создана",
+  "messages.requisition-no-stock": "На данный момент товара нет в наличии",
+  "messages.confirm-status-as": "Подтвердить статус как $t({{status}})?",
+  "messages.could-not-save": "Не удалось Сохранить",
+  "messages.no-related-documents": "Нет сопутствующих документов.",
+  "messages.outbound-shipment-created-on": "Исходящая поставка создана {{date}}",
+  "messages.deleted-returns_one": "Удален 1 возврат",
+  "messages.deleted-returns_other": "Удалено {{count}} возвратов"
 }

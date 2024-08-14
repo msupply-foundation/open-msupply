@@ -1,20 +1,15 @@
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { ChevronDownIcon, SvgIconProps } from '@common/icons';
-import {
-  ReportRowFragment,
-  ReportArgumentsModal,
-} from '@openmsupply-client/system';
+import { ReportRowFragment } from '@openmsupply-client/system';
 import {
   BasicSpinner,
   Link,
   RouteBuilder,
-  useNavigate,
   Card,
   Grid,
   Typography,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { JsonData } from '@openmsupply-client/programs';
 
 interface ReportWidgetProps {
   height?: number | string;
@@ -23,8 +18,6 @@ interface ReportWidgetProps {
   Icon: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
   reports: ReportRowFragment[] | undefined;
   onReportClick: (report: ReportRowFragment) => void;
-  reportWithArgs?: ReportRowFragment;
-  setReportWithArgs: (value: ReportRowFragment | undefined) => void;
   hasReports: boolean;
 }
 
@@ -35,24 +28,8 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
   Icon,
   reports,
   onReportClick,
-  reportWithArgs,
-  setReportWithArgs,
   hasReports = false,
 }) => {
-  const navigate = useNavigate();
-
-  const reportArgs = useCallback(
-    (report: ReportRowFragment, args: JsonData | undefined) => {
-      const stringifyArgs = JSON.stringify(args);
-      navigate(
-        RouteBuilder.create(AppRoute.Reports)
-          .addPart(`${report.id}?reportArgs=${stringifyArgs}`)
-          .build()
-      );
-    },
-    [navigate]
-  );
-
   return (
     <>
       {hasReports ? (
@@ -142,11 +119,6 @@ export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
                         />
                       </Grid>
                     </Link>
-                    <ReportArgumentsModal
-                      report={reportWithArgs}
-                      onReset={() => setReportWithArgs(undefined)}
-                      onArgumentsSelected={reportArgs}
-                    />
                   </React.Fragment>
                 ))}
               </Grid>

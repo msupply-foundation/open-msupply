@@ -6,6 +6,7 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
@@ -13,7 +14,8 @@ table! {
         id -> Text,
         rnr_form_id -> Text,
         item_id -> Text,
-        previous_average_monthly_consumption -> Double,
+        requisition_line_id -> Nullable<Text>,
+        previous_monthly_consumption_values -> Text,
         average_monthly_consumption -> Double,
         initial_balance -> Double,
         snapshot_quantity_received -> Double,
@@ -27,7 +29,9 @@ table! {
         final_balance -> Double,
         maximum_quantity -> Double,
         expiry_date -> Nullable<Date>,
-        requested_quantity -> Double,
+        calculated_requested_quantity -> Double,
+        entered_requested_quantity -> Nullable<Double>,
+        low_stock -> crate::db_diesel::rnr_form_line_row::RnRFormLowStockMapping,
         comment -> Nullable<Text>,
         confirmed -> Bool,
     }
@@ -48,7 +52,8 @@ pub struct RnRFormLineRow {
     pub id: String,
     pub rnr_form_id: String,
     pub item_id: String,
-    pub previous_average_monthly_consumption: f64,
+    pub requisition_line_id: Option<String>,
+    pub previous_monthly_consumption_values: String,
     pub average_monthly_consumption: f64,
     pub initial_balance: f64,
     pub snapshot_quantity_received: f64,
@@ -62,9 +67,21 @@ pub struct RnRFormLineRow {
     pub final_balance: f64,
     pub maximum_quantity: f64,
     pub expiry_date: Option<NaiveDate>,
-    pub requested_quantity: f64,
+    pub calculated_requested_quantity: f64,
+    pub entered_requested_quantity: Option<f64>,
+    pub low_stock: RnRFormLowStock,
     pub comment: Option<String>,
     pub confirmed: bool,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RnRFormLowStock {
+    #[default]
+    Ok,
+    BelowHalf,
+    BelowQuarter,
 }
 
 pub struct RnRFormLineRowRepository<'a> {

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-  GenderInput,
+  GenderType,
   PatientSearchInput,
   RegexUtils,
 } from '@openmsupply-client/common';
@@ -65,8 +65,8 @@ export const SearchWithUserSource = (
       return;
     }
     const newData = Object.fromEntries(
-      Object.entries(patient).filter(
-        ([key]) => (options.saveFields as string[])?.includes(key)
+      Object.entries(patient).filter(([key]) =>
+        (options.saveFields as string[])?.includes(key)
       )
     );
     handleChange(path, newData);
@@ -168,7 +168,7 @@ const createSearchFilter = (
       ? data['firstName']
       : undefined,
     gender: searchFields.includes('gender')
-      ? (data['gender'] as GenderInput)
+      ? (data['gender'] as GenderType)
       : undefined,
     lastName: searchFields.includes('lastName') ? data['lastName'] : undefined,
     identifier: searchFields.includes('identifier')

@@ -3,7 +3,7 @@ use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use chrono::NaiveDate;
 use repository::{
     ActivityLogType, RepositoryError, RnRForm, RnRFormLineRow, RnRFormLineRowRepository,
-    RnRFormStatus,
+    RnRFormLowStock, RnRFormStatus,
 };
 
 use super::{get_period_length, query::get_rnr_form, validate::check_rnr_form_exists};
@@ -21,7 +21,9 @@ pub struct UpdateRnRFormLine {
     pub initial_balance: f64,
     pub final_balance: f64,
     pub maximum_quantity: f64,
-    pub requested_quantity: f64,
+    pub calculated_requested_quantity: f64,
+    pub entered_requested_quantity: Option<f64>,
+    pub low_stock: RnRFormLowStock,
     pub comment: Option<String>,
     pub confirmed: bool,
 }
@@ -135,7 +137,8 @@ fn validate(
                 quantity_consumed,
                 adjustments,
                 final_balance,
-                requested_quantity,
+                calculated_requested_quantity,
+                entered_requested_quantity,
                 initial_balance,
                 stock_out_duration,
                 ..
@@ -170,7 +173,9 @@ fn validate(
                 });
             }
 
-            if requested_quantity < 0.0 {
+            if calculated_requested_quantity < 0.0
+                || entered_requested_quantity.unwrap_or(0.0) < 0.0
+            {
                 return Err(UpdateRnRFormError::LineError {
                     line_id: line.id.clone(),
                     error: UpdateRnRFormLineError::CannotRequestNegativeQuantity,
@@ -199,20 +204,23 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     average_monthly_consumption,
                     final_balance,
                     maximum_quantity,
-                    requested_quantity,
                     comment,
                     confirmed,
                     expiry_date,
                     initial_balance,
+                    calculated_requested_quantity,
+                    entered_requested_quantity,
+                    low_stock,
                 },
                 RnRFormLineRow {
                     id,
                     rnr_form_id,
                     item_id,
+                    requisition_line_id: requisition_id,
                     snapshot_quantity_received,
                     snapshot_quantity_consumed,
                     snapshot_adjustments,
-                    previous_average_monthly_consumption,
+                    previous_monthly_consumption_values,
                     initial_balance: _,
                     expiry_date: _,
                     average_monthly_consumption: _,
@@ -223,9 +231,11 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     stock_out_duration: _,
                     final_balance: _,
                     maximum_quantity: _,
-                    requested_quantity: _,
+                    calculated_requested_quantity: _,
+                    entered_requested_quantity: _,
                     comment: _,
                     confirmed: _,
+                    low_stock: _,
                 },
             )| {
                 RnRFormLineRow {
@@ -239,17 +249,20 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     initial_balance, // TODO; snapshot and entered?
                     final_balance,
                     maximum_quantity,
-                    requested_quantity,
+                    calculated_requested_quantity,
+                    entered_requested_quantity,
+                    low_stock,
                     expiry_date,
                     comment,
                     confirmed,
                     // From the original row
                     rnr_form_id,
                     item_id,
+                    requisition_line_id: requisition_id,
                     snapshot_quantity_received,
                     snapshot_quantity_consumed,
                     snapshot_adjustments,
-                    previous_average_monthly_consumption,
+                    previous_monthly_consumption_values,
                 }
             },
         )

@@ -25,6 +25,7 @@ pub struct ProgramEnrolmentLoader {
 /// matching program enrolments, i.e. there are:
 /// - a few types of programs
 /// - many patients
+///
 /// Thus the loader groups requests by program and does a DB query for each program.
 impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
     type Value = ProgramEnrolment;

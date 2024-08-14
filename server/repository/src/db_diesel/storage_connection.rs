@@ -123,7 +123,7 @@ impl StorageConnection {
 
     /// # Arguments
     /// * `reuse_tx` - if true and the connection is currently in a transaction no new nested
-    /// transaction is started.
+    ///     transaction is started.
     pub fn transaction_sync_etc<T, E, F>(
         &self,
         f: F,

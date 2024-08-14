@@ -7,6 +7,20 @@ export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id:
 
 export type DocumentFragment = { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, timestamp: string, type: string, data: any, user?: { __typename: 'UserNode', userId: string, username: string, email?: string | null } | null, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, category: Types.DocumentRegistryCategoryNode, documentType: string, contextId: string, name?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null };
 
+export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
+
+export type ProgramsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.ProgramSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
+}>;
+
+
+export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
+
 export type DocumentByNameQueryVariables = Types.Exact<{
   name: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
@@ -302,80 +316,12 @@ export type DeleteVaccineCourseMutationVariables = Types.Exact<{
 
 export type DeleteVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', deleteVaccineCourse: { __typename: 'DeleteResponse', id: string } | { __typename: 'DeleteVaccineCourseError' } } } };
 
-export type RnRFormFragment = { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus };
-
-export type RnRFormLineFragment = { __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, previousAverageMonthlyConsumption: number, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, requestedQuantity: number, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null, strength?: string | null, venCategory: Types.VenCategoryType } };
-
-export type RnrFormsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  key: Types.RnRFormSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.RnRFormFilterInput>;
-}>;
-
-
-export type RnrFormsQuery = { __typename: 'Queries', rAndRForms: { __typename: 'RnRFormConnector', totalCount: number, nodes: Array<{ __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus }> } };
-
-export type CreateRnRFormMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.InsertRnRFormInput;
-}>;
-
-
-export type CreateRnRFormMutation = { __typename: 'Mutations', insertRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus } };
-
-export type ProgramFragment = { __typename: 'ProgramNode', id: string, name: string };
-
-export type ProgramsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  key: Types.ProgramSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  filter?: Types.InputMaybe<Types.ProgramFilterInput>;
-}>;
-
-
-export type ProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string }> } };
-
-export type PeriodFragment = { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string };
-
-export type PeriodScheduleFragment = { __typename: 'PeriodScheduleNode', id: string, name: string, periods: Array<{ __typename: 'SchedulePeriodNode', id: string, inUse: boolean, period: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } }> };
-
-export type SchedulesAndPeriodsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  programId: Types.Scalars['String']['input'];
-}>;
-
-
-export type SchedulesAndPeriodsQuery = { __typename: 'Queries', schedulesWithPeriodsByProgram: { __typename: 'PeriodSchedulesConnector', nodes: Array<{ __typename: 'PeriodScheduleNode', id: string, name: string, periods: Array<{ __typename: 'SchedulePeriodNode', id: string, inUse: boolean, period: { __typename: 'PeriodNode', id: string, name: string, startDate: string, endDate: string } }> }> } };
-
-export type RAndRFormDetailQueryVariables = Types.Exact<{
-  rnrFormId: Types.Scalars['String']['input'];
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-
-export type RAndRFormDetailQuery = { __typename: 'Queries', rAndRForm: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus, lines: Array<{ __typename: 'RnRFormLineNode', id: string, averageMonthlyConsumption: number, previousAverageMonthlyConsumption: number, initialBalance: number, quantityReceived: number, quantityConsumed: number, adjustedQuantityConsumed: number, adjustments: number, stockOutDuration: number, finalBalance: number, maximumQuantity: number, expiryDate?: string | null, requestedQuantity: number, comment?: string | null, confirmed: boolean, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null, strength?: string | null, venCategory: Types.VenCategoryType } }> } };
-
-export type UpdateRnRFormLinesMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.UpdateRnRFormInput;
-}>;
-
-
-export type UpdateRnRFormLinesMutation = { __typename: 'Mutations', updateRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus } };
-
-export type FinaliseRnRFormMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.FinaliseRnRFormInput;
-}>;
-
-
-export type FinaliseRnRFormMutation = { __typename: 'Mutations', finaliseRnrForm: { __typename: 'RnRFormNode', id: string, createdDatetime: string, periodId: string, periodName: string, periodLength: number, programId: string, programName: string, supplierName: string, status: Types.RnRFormNodeStatus } };
-
+export const ProgramFragmentDoc = gql`
+    fragment Program on ProgramNode {
+  id
+  name
+}
+    `;
 export const EncounterFieldsFragmentDoc = gql`
     fragment EncounterFields on EncounterFieldsNode {
   fields
@@ -652,72 +598,25 @@ export const VaccineCourseFragmentDoc = gql`
 }
     ${VaccineCourseItemFragmentDoc}
 ${VaccineCourseScheduleFragmentDoc}`;
-export const RnRFormFragmentDoc = gql`
-    fragment RnRForm on RnRFormNode {
-  id
-  createdDatetime
-  periodId
-  periodName
-  periodLength
-  programId
-  programName
-  supplierName
-  status
-}
-    `;
-export const RnRFormLineFragmentDoc = gql`
-    fragment RnRFormLine on RnRFormLineNode {
-  id
-  averageMonthlyConsumption
-  previousAverageMonthlyConsumption
-  initialBalance
-  quantityReceived
-  quantityConsumed
-  adjustedQuantityConsumed
-  adjustments
-  stockOutDuration
-  finalBalance
-  maximumQuantity
-  expiryDate
-  requestedQuantity
-  comment
-  confirmed
-  item {
-    code
-    name
-    unitName
-    strength
-    venCategory
-  }
-}
-    `;
-export const ProgramFragmentDoc = gql`
-    fragment Program on ProgramNode {
-  id
-  name
-}
-    `;
-export const PeriodFragmentDoc = gql`
-    fragment Period on PeriodNode {
-  id
-  name
-  startDate
-  endDate
-}
-    `;
-export const PeriodScheduleFragmentDoc = gql`
-    fragment PeriodSchedule on PeriodScheduleNode {
-  id
-  name
-  periods {
-    id
-    inUse
-    period {
-      ...Period
+export const ProgramsDocument = gql`
+    query programs($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
+  programs(
+    storeId: $storeId
+    page: {first: $first, offset: $offset}
+    sort: {key: $key, desc: $desc}
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
+      }
+      totalCount
     }
   }
 }
-    ${PeriodFragmentDoc}`;
+    ${ProgramFragmentDoc}`;
 export const DocumentByNameDocument = gql`
     query documentByName($name: String!, $storeId: String!) {
   document(name: $name, storeId: $storeId) {
@@ -1173,110 +1072,6 @@ export const DeleteVaccineCourseDocument = gql`
   }
 }
     `;
-export const RnrFormsDocument = gql`
-    query rnrForms($storeId: String!, $first: Int, $offset: Int, $key: RnRFormSortFieldInput!, $desc: Boolean, $filter: RnRFormFilterInput) {
-  rAndRForms(
-    storeId: $storeId
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on RnRFormConnector {
-      __typename
-      nodes {
-        __typename
-        ...RnRForm
-      }
-      totalCount
-    }
-  }
-}
-    ${RnRFormFragmentDoc}`;
-export const CreateRnRFormDocument = gql`
-    mutation createRnRForm($storeId: String!, $input: InsertRnRFormInput!) {
-  insertRnrForm(storeId: $storeId, input: $input) {
-    __typename
-    ... on RnRFormNode {
-      __typename
-      ...RnRForm
-    }
-  }
-}
-    ${RnRFormFragmentDoc}`;
-export const ProgramsDocument = gql`
-    query programs($storeId: String!, $first: Int, $offset: Int, $key: ProgramSortFieldInput!, $desc: Boolean, $filter: ProgramFilterInput) {
-  programs(
-    storeId: $storeId
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
-    ... on ProgramConnector {
-      __typename
-      nodes {
-        __typename
-        ...Program
-      }
-      totalCount
-    }
-  }
-}
-    ${ProgramFragmentDoc}`;
-export const SchedulesAndPeriodsDocument = gql`
-    query schedulesAndPeriods($storeId: String!, $programId: String!) {
-  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
-    __typename
-    ... on PeriodSchedulesConnector {
-      nodes {
-        ...PeriodSchedule
-      }
-    }
-  }
-}
-    ${PeriodScheduleFragmentDoc}`;
-export const RAndRFormDetailDocument = gql`
-    query rAndRFormDetail($rnrFormId: String!, $storeId: String!) {
-  rAndRForm(rnrFormId: $rnrFormId, storeId: $storeId) {
-    __typename
-    ... on NodeError {
-      __typename
-      error {
-        description
-      }
-    }
-    ... on RnRFormNode {
-      __typename
-      ...RnRForm
-      lines {
-        ...RnRFormLine
-      }
-    }
-  }
-}
-    ${RnRFormFragmentDoc}
-${RnRFormLineFragmentDoc}`;
-export const UpdateRnRFormLinesDocument = gql`
-    mutation updateRnRFormLines($storeId: String!, $input: UpdateRnRFormInput!) {
-  updateRnrForm(storeId: $storeId, input: $input) {
-    __typename
-    ... on RnRFormNode {
-      __typename
-      ...RnRForm
-    }
-  }
-}
-    ${RnRFormFragmentDoc}`;
-export const FinaliseRnRFormDocument = gql`
-    mutation finaliseRnRForm($storeId: String!, $input: FinaliseRnRFormInput!) {
-  finaliseRnrForm(storeId: $storeId, input: $input) {
-    __typename
-    ... on RnRFormNode {
-      __typename
-      ...RnRForm
-    }
-  }
-}
-    ${RnRFormFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -1285,6 +1080,9 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
+    },
     documentByName(variables: DocumentByNameQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DocumentByNameQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentByNameQuery>(DocumentByNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentByName', 'query', variables);
     },
@@ -1374,27 +1172,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteVaccineCourse(variables: DeleteVaccineCourseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteVaccineCourseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteVaccineCourseMutation>(DeleteVaccineCourseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteVaccineCourse', 'mutation', variables);
-    },
-    rnrForms(variables: RnrFormsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RnrFormsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RnrFormsQuery>(RnrFormsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rnrForms', 'query', variables);
-    },
-    createRnRForm(variables: CreateRnRFormMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CreateRnRFormMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<CreateRnRFormMutation>(CreateRnRFormDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createRnRForm', 'mutation', variables);
-    },
-    programs(variables: ProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ProgramsQuery>(ProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programs', 'query', variables);
-    },
-    schedulesAndPeriods(variables: SchedulesAndPeriodsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SchedulesAndPeriodsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<SchedulesAndPeriodsQuery>(SchedulesAndPeriodsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'schedulesAndPeriods', 'query', variables);
-    },
-    rAndRFormDetail(variables: RAndRFormDetailQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RAndRFormDetailQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RAndRFormDetailQuery>(RAndRFormDetailDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'rAndRFormDetail', 'query', variables);
-    },
-    updateRnRFormLines(variables: UpdateRnRFormLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateRnRFormLinesMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateRnRFormLinesMutation>(UpdateRnRFormLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRnRFormLines', 'mutation', variables);
-    },
-    finaliseRnRForm(variables: FinaliseRnRFormMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FinaliseRnRFormMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<FinaliseRnRFormMutation>(FinaliseRnRFormDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'finaliseRnRForm', 'mutation', variables);
     }
   };
 }
