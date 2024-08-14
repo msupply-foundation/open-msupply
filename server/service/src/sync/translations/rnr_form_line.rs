@@ -3,7 +3,10 @@ use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::translations::{item::ItemTranslation, rnr_form::RnRFormTranslation};
+use crate::sync::translations::{
+    item::ItemTranslation, requisition_line::RequisitionLineTranslation,
+    rnr_form::RnRFormTranslation,
+};
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -26,6 +29,7 @@ impl SyncTranslation for RnRFormLineTranslation {
         vec![
             RnRFormTranslation.table_name(),
             ItemTranslation.table_name(),
+            RequisitionLineTranslation.table_name(),
         ]
     }
 
