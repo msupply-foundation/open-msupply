@@ -106,7 +106,7 @@ fn fetch_store_id(url: Url, token: &str, store_name: &str) -> anyhow::Result<Str
         .bearer_auth(token)
         .json(&body)
         .send()?;
-    let status = response.status();
+    let _status = response.status();
     let gql_result: GraphQlResponse = response.json()?;
     let store_id: &Option<&str> = &gql_result
         .data
