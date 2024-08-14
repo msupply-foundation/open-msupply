@@ -11,6 +11,7 @@ fn main() -> anyhow::Result<()> {
             generate_report(
                 args.config,
                 args.store_id,
+                args.store_name,
                 args.output,
                 args.report,
                 args.data_id,
