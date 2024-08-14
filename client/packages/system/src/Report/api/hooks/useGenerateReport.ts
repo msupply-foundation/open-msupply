@@ -1,9 +1,18 @@
+import { Dispatch, SetStateAction } from 'react';
 import { PrintFormat } from '@common/types';
 import { useReportGraphQL } from '../useReportGraphQL';
 import { GenerateReportParams } from './usePrintReport';
-import { useMutation } from '@openmsupply-client/common';
+import {
+  LocaleKey,
+  noOtherVariants,
+  TypedTFunction,
+  useMutation,
+} from '@openmsupply-client/common';
 
-export const useGenerateReport = () => {
+export const useGenerateReport = (
+  setErrorMessage: Dispatch<SetStateAction<string>>,
+  t: TypedTFunction<LocaleKey>
+) => {
   const { reportApi, storeId } = useReportGraphQL();
 
   const mutationFn = async (params: GenerateReportParams) => {
@@ -21,14 +30,27 @@ export const useGenerateReport = () => {
       return result.generateReport.fileId;
     }
 
-    throw new Error('Unable to generate report');
+    if (result?.generateReport?.__typename === 'PrintReportError') {
+      const err = result?.generateReport.error;
+
+      if (err.__typename === 'FailedToFetchReportData') {
+        const errors = err.errors;
+
+        if (errors[0].extensions?.details?.includes('permission')) {
+          setErrorMessage(t('error.no-permission-report'));
+        } else {
+          setErrorMessage(t('error.failed-to-generate-report'));
+        }
+      } else {
+        noOtherVariants;
+      }
+    }
+
+    throw new Error(t('error.failed-to-generate-report'));
   };
 
   const { mutateAsync, isLoading } = useMutation({
     mutationFn,
-    onSuccess: fileId => {
-      if (!fileId) throw new Error('Error generating report');
-    },
   });
 
   return { mutateAsync, isLoading };
