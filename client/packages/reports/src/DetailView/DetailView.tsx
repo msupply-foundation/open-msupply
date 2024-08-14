@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   BasicSpinner,
   FileUtils,
+  NothingHere,
   PrintFormat,
   useBreadcrumbs,
   useParams,
+  useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import {
@@ -43,7 +45,9 @@ const DetailViewInner = ({
   reportArgs: JsonData;
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
-  const { mutateAsync } = useGenerateReport();
+  const [errorMessage, setErrorMessage] = useState('');
+  const t = useTranslation('reports');
+  const { mutateAsync } = useGenerateReport(setErrorMessage, t);
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
   const { updateQuery } = useUrlQuery();
@@ -81,12 +85,16 @@ const DetailViewInner = ({
         updateQuery({ reportArgs: JSON.stringify(args) });
       }
       setFileId(undefined);
-      const fileId = await mutateAsync({
-        reportId: report.id,
-        args,
-        dataId: '',
-      });
-      setFileId(fileId);
+      try {
+        const fileId = await mutateAsync({
+          reportId: report.id,
+          args,
+          dataId: '',
+        });
+        setFileId(fileId);
+      } catch (error) {
+        console.error(error);
+      }
     },
     []
   );
@@ -104,14 +112,17 @@ const DetailViewInner = ({
   }, [reportArgs]);
 
   const exportExcelReport = useCallback(async () => {
-    const fileId = await mutateAsync({
-      reportId: report.id,
-      args: reportArgs,
-      dataId: '',
-      format: PrintFormat.Excel,
-    });
-
-    if (!fileId) throw new Error('Error generating Excel report');
+    try {
+      const fileId = await mutateAsync({
+        reportId: report.id,
+        args: reportArgs,
+        dataId: '',
+        format: PrintFormat.Excel,
+      });
+      setFileId(fileId);
+    } catch (error) {
+      console.error(error);
+    }
     const url = `${Environment.FILE_URL}${fileId}`;
     FileUtils.downloadFile(url);
   }, [reportArgs]);
@@ -135,7 +146,7 @@ const DetailViewInner = ({
       />
 
       {!fileId ? (
-        <BasicSpinner />
+        <NothingHere body={errorMessage} />
       ) : (
         <iframe src={url} width="100%" style={{ borderWidth: 0 }} />
       )}
