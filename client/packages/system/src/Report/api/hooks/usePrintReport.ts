@@ -1,5 +1,6 @@
 import {
   EnvUtils,
+  FileUtils,
   Platform,
   PrintFormat,
   PrintReportSortInput,
@@ -16,6 +17,7 @@ export type GenerateReportParams = {
   dataId?: string;
   args?: JsonData;
   sort?: PrintReportSortInput;
+  format?: PrintFormat;
 };
 
 const setClose = (frame: HTMLIFrameElement) => () => {
@@ -64,13 +66,19 @@ export const usePrintReport = () => {
   const { error } = useNotification();
 
   const mutationFn = async (params: GenerateReportParams) => {
-    const { dataId, reportId, args, sort } = params;
+    const {
+      dataId,
+      reportId,
+      args,
+      sort,
+      format = EnvUtils.printFormat,
+    } = params;
 
     const result = await reportApi.generateReport({
       dataId,
       reportId,
       storeId,
-      format: EnvUtils.printFormat,
+      format,
       arguments: args,
       sort,
     });
@@ -83,14 +91,13 @@ export const usePrintReport = () => {
 
   const { mutate, isLoading } = useMutation({
     mutationFn,
-    onSuccess: fileId => {
+    onSuccess: (fileId, { format = EnvUtils.printFormat }) => {
       if (!fileId) throw new Error('Error printing report');
       const url = `${Environment.FILE_URL}${fileId}`;
-      if (EnvUtils.printFormat === PrintFormat.Html) {
+      if (format === PrintFormat.Html) {
         printPage(url);
       } else {
-        const win = window.open(url, '_blank');
-        win?.focus();
+        FileUtils.downloadFile(url);
       }
     },
     onError: (e: Error) => {

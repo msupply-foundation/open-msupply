@@ -5,7 +5,7 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{GenderType, NameRow, NameStoreJoinRow, NameType, StoreMode, StoreRow};
+use repository::{GenderType, NameRow, NameStoreJoinRow, NameRowType, StoreMode, StoreRow};
 
 use serde_json::json;
 use util::{
@@ -21,7 +21,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         // STEP 1 - insert
         let facility_name_row = inline_init(|r: &mut NameRow| {
             r.id = uuid();
-            r.r#type = NameType::Facility;
+            r.r#type = NameRowType::Facility;
             r.name = "facility".to_string();
             r.is_customer = true;
             r.is_supplier = true;
@@ -55,7 +55,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
 
         let patient_name_row = inline_init(|r: &mut NameRow| {
             r.id = uuid();
-            r.r#type = NameType::Patient;
+            r.r#type = NameRowType::Patient;
             r.first_name = Some("Random".to_string());
             r.is_customer = true;
             r.is_supplier = false;

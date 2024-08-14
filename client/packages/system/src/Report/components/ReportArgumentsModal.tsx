@@ -2,7 +2,7 @@ import React, { FC, useState } from 'react';
 
 import { JsonData, JsonForm } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
-import { useDialog } from '@common/hooks';
+import { useDialog, useUrlQuery } from '@common/hooks';
 import { DialogButton } from '@common/components';
 import { useAuthContext } from '@openmsupply-client/common';
 
@@ -19,6 +19,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   onArgumentsSelected,
 }) => {
   const { store } = useAuthContext();
+  const { urlQuery } = useUrlQuery();
 
   const {
     monthlyConsumptionLookBackPeriod,
@@ -32,12 +33,12 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     monthsOverstock,
     monthsUnderstock,
     monthsItemsExpire,
+    ...JSON.parse((urlQuery?.['reportArgs'] ?? '{}') as string),
   });
   const [error, setError] = useState<string | false>(false);
 
   // clean up when modal is closed
   const cleanUp = () => {
-    setData({});
     onReset();
   };
 
@@ -55,6 +56,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
       title="Report arguments"
       cancelButton={<DialogButton variant="cancel" onClick={cleanUp} />}
       slideAnimation={false}
+      width={500}
       okButton={
         <DialogButton
           variant="ok"

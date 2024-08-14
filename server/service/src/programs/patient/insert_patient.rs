@@ -1,6 +1,6 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    EqualFilter, GenderType, NameRow, NameRowRepository, NameType, Patient, PatientFilter,
+    EqualFilter, GenderType, NameRow, NameRowRepository, NameRowType, Patient, PatientFilter,
     RepositoryError, StorageConnection, TransactionError,
 };
 
@@ -21,7 +21,7 @@ pub struct InsertPatient {
     pub phone: Option<String>,
     pub is_deceased: Option<bool>,
     pub date_of_death: Option<NaiveDate>,
-    pub r#type: NameType,
+    pub r#type: NameRowType,
 }
 
 #[derive(PartialEq, Debug)]
@@ -41,7 +41,7 @@ fn validate_patient_does_not_exist(
 }
 
 fn validate(con: &StorageConnection, input: &InsertPatient) -> Result<(), InsertPatientError> {
-    if input.r#type != NameType::Patient {
+    if input.r#type != NameRowType::Patient {
         return Err(InsertPatientError::NotAPatient);
     }
 

@@ -1,6 +1,6 @@
 use util::inline_init;
 
-use crate::{NameRow, NameStoreJoinRow, NameType, StoreRow};
+use crate::{NameRow, NameRowType, NameStoreJoinRow, StoreRow};
 
 use super::MockData;
 
@@ -135,7 +135,7 @@ pub fn mock_patient_linked_to_store() -> NameRow {
         r.code = "mock_patient_linked_to_store_code".to_string();
         r.is_customer = true;
         r.is_supplier = true;
-        r.r#type = NameType::Patient;
+        r.r#type = NameRowType::Patient;
     })
 }
 

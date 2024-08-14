@@ -4,7 +4,7 @@ import {
   Box,
   DataTable,
   DownloadIcon,
-  GenderInput,
+  GenderType,
   HomeIcon,
   InfoTooltipIcon,
   LoadingButton,
@@ -21,20 +21,20 @@ import { usePatient } from '../api';
 import { Gender, usePatientStore } from '@openmsupply-client/programs';
 import { CentralPatientSearchResponse } from '../api/api';
 
-const genderToGenderInput = (gender: Gender): GenderInput => {
+const genderToGenderType = (gender: Gender): GenderType => {
   switch (gender) {
     case Gender.MALE:
-      return GenderInput.Male;
+      return GenderType.Male;
     case Gender.FEMALE:
-      return GenderInput.Female;
+      return GenderType.Female;
     case Gender.TRANSGENDER_MALE:
-      return GenderInput.TransgenderMale;
+      return GenderType.TransgenderMale;
     case Gender.TRANSGENDER_FEMALE:
-      return GenderInput.TransgenderFemale;
+      return GenderType.TransgenderFemale;
     case Gender.UNKNOWN:
-      return GenderInput.Unknown;
+      return GenderType.Unknown;
     case Gender.NON_BINARY:
-      return GenderInput.NonBinary;
+      return GenderType.NonBinary;
     default:
       return noOtherVariants(gender);
   }
@@ -105,9 +105,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
       firstName: patient?.firstName,
       lastName: patient?.lastName,
       dateOfBirth: patient?.dateOfBirth,
-      gender: patient?.gender
-        ? genderToGenderInput(patient?.gender)
-        : undefined,
+      gender: patient?.gender ? genderToGenderType(patient?.gender) : undefined,
     }),
     [patient]
   );

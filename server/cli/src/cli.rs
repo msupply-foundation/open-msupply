@@ -403,9 +403,8 @@ async fn main() -> anyhow::Result<()> {
             let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
             let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
 
-            let argument_schema_id = existing_report
-                .map(|r| r.argument_schema.as_ref().map(|r| r.id.clone()))
-                .flatten();
+            let argument_schema_id =
+                existing_report.and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
 
             let form_schema_json = match (arguments_path, arguments_ui_path) {
                 (Some(_), None) | (None, Some(_)) => {

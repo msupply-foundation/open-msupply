@@ -27,7 +27,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
     /// 4. Linked outbound invoice status is not Verified (this is the last status possible)
     /// 5. Linked outbound invoice status is not source inbound invoice status
     /// 6. Source invoice is from mSupply thus the status will be `New`. Shouldn't happen for OMS since
-    ///  OMS will follow OMS status sequence
+    ///     OMS will follow OMS status sequence
     ///
     /// Can only run two times (one for Delivered and one for Verified status):
     /// 7. Because linked outbound invoice status will be updated to source inbound invoice status and `5.` will never be true again

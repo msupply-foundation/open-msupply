@@ -14,7 +14,7 @@ interface ImmunisationsAppBarButtonsProps {
 export const AppBarButtons = ({
   onCreate,
 }: ImmunisationsAppBarButtonsProps) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   return (
     <AppBarButtonsPortal>

@@ -32,7 +32,7 @@ pub struct NameSortInput {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterNameTypeInput {
+pub struct EqualFilterNameRowTypeInput {
     pub equal_to: Option<NameNodeType>,
     pub equal_any: Option<Vec<NameNodeType>>,
     pub not_equal_to: Option<NameNodeType>,

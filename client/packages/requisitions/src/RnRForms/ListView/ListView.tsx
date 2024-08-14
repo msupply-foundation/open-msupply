@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -10,22 +10,30 @@ import {
   createTableStore,
   createQueryParamsStore,
   useEditModal,
+  useTableStore,
+  RnRFormNodeStatus,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { useRnRFormList } from '../../api';
-import { RnRFormFragment } from '../../api/operations.generated';
+import { useRnRFormList } from '../api';
+import { RnRFormFragment } from '../api/operations.generated';
 import { RnRFormCreateModal } from './RnRFormCreateModal';
+import { getStatusTranslator, isRnRFormDisabled } from '../utils';
 
 const RnRFormListComponent = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset, filterBy },
-  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
+  } = useUrlQueryParams({
+    filters: [{ key: 'name' }],
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+  });
+  const { setDisabledRows } = useTableStore();
+
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   const queryParams = {
     filterBy,
@@ -41,7 +49,6 @@ const RnRFormListComponent = () => {
     [
       {
         key: 'periodName',
-        width: 350,
         label: 'label.period',
       },
       [
@@ -56,6 +63,14 @@ const RnRFormListComponent = () => {
         key: 'supplierName',
         label: 'label.supplier',
       },
+      [
+        'status',
+        {
+          label: 'label.status',
+          formatter: status =>
+            getStatusTranslator(t)(status as RnRFormNodeStatus),
+        },
+      ],
     ],
     {
       onChangeSortBy: updateSortQuery,
@@ -63,6 +78,13 @@ const RnRFormListComponent = () => {
     },
     [updateSortQuery, sortBy]
   );
+
+  useEffect(() => {
+    const disabledRows = data?.nodes
+      .filter(isRnRFormDisabled)
+      .map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [data?.nodes, setDisabledRows]);
 
   return (
     <>

@@ -47,7 +47,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 rnr_form_id TEXT NOT NULL REFERENCES rnr_form(id),
                 item_id TEXT NOT NULL REFERENCES item(id),
                 average_monthly_consumption {DOUBLE} NOT NULL,
-                previous_average_monthly_consumption {DOUBLE} NOT NULL,
+                previous_monthly_consumption_values TEXT NOT NULL,
 
                 initial_balance {DOUBLE} NOT NULL,
                 snapshot_quantity_received {DOUBLE} NOT NULL,
@@ -61,7 +61,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 final_balance {DOUBLE} NOT NULL,
                 maximum_quantity {DOUBLE} NOT NULL,
                 expiry_date {DATE},
-                requested_quantity {DOUBLE} NOT NULL,
+                calculated_requested_quantity {DOUBLE} NOT NULL,
+                entered_requested_quantity {DOUBLE},
 
                 comment TEXT,
                 confirmed BOOLEAN NOT NULL DEFAULT FALSE

@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   BasicSpinner,
+  FileUtils,
+  PrintFormat,
   useBreadcrumbs,
   useParams,
   useUrlQuery,
@@ -40,7 +42,7 @@ const DetailViewInner = ({
   report: ReportRowFragment;
   reportArgs: JsonData;
 }) => {
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
   const { mutateAsync } = useGenerateReport();
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
@@ -52,7 +54,7 @@ const DetailViewInner = ({
   >();
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 0: report.name ?? '' });
+    setCustomBreadcrumbs({ 1: report.name ?? '' });
 
     // Initial report generation
     if (!report.argumentSchema) {
@@ -101,6 +103,19 @@ const DetailViewInner = ({
     });
   }, [reportArgs]);
 
+  const exportExcelReport = useCallback(async () => {
+    const fileId = await mutateAsync({
+      reportId: report.id,
+      args: reportArgs,
+      dataId: '',
+      format: PrintFormat.Excel,
+    });
+
+    if (!fileId) throw new Error('Error generating Excel report');
+    const url = `${Environment.FILE_URL}${fileId}`;
+    FileUtils.downloadFile(url);
+  }, [reportArgs]);
+
   const url = `${Environment.FILE_URL}${fileId}`;
 
   return (
@@ -109,15 +124,21 @@ const DetailViewInner = ({
         isFilterDisabled={!report?.argumentSchema}
         onFilterOpen={openReportArgumentsModal}
         printReport={printReport}
+        exportReport={exportExcelReport}
         isPrinting={isPrinting}
       />
       <ReportArgumentsModal
+        key={report.id}
         report={reportWithArgs}
         onReset={() => setReportWithArgs(undefined)}
         onArgumentsSelected={generateReport}
       />
 
-      {!fileId ? <BasicSpinner /> : <iframe src={url} width="100%" />}
+      {!fileId ? (
+        <BasicSpinner />
+      ) : (
+        <iframe src={url} width="100%" style={{ borderWidth: 0 }} />
+      )}
     </>
   );
 };

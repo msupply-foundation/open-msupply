@@ -1,18 +1,18 @@
 import {
-  FilterByWithBoolean,
   SortBy,
   useQuery,
   RnRFormSortFieldInput,
+  RnRFormFilterInput,
 } from '@openmsupply-client/common';
 import { RnRFormFragment } from '../operations.generated';
-import { useProgramsGraphQL } from '../useProgramsGraphQL';
+import { useRnRGraphQL } from '../useRnRGraphQL';
 import { LIST, RNR_FORM } from './keys';
 
 type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<RnRFormFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: RnRFormFilterInput | null;
 };
 
 export const useRnRFormList = ({
@@ -24,20 +24,19 @@ export const useRnRFormList = ({
   offset,
   filterBy,
 }: ListParams) => {
-  const { api, storeId } = useProgramsGraphQL();
+  const { api, storeId } = useRnRGraphQL();
 
   const queryKey = [RNR_FORM, LIST, sortBy, first, offset, filterBy];
   const queryFn = async (): Promise<{
     nodes: RnRFormFragment[];
     totalCount: number;
   }> => {
-
     const query = await api.rnrForms({
       storeId,
       first: first,
       offset: offset,
       key: toSortField(sortBy),
-      desc: sortBy.isDesc,
+      desc: sortBy.direction === 'desc',
       filter: filterBy,
     });
     const { nodes, totalCount } = query?.rAndRForms ?? {
@@ -51,7 +50,9 @@ export const useRnRFormList = ({
   return query;
 };
 
-const toSortField = (sortBy: SortBy<RnRFormFragment>): RnRFormSortFieldInput => {
+const toSortField = (
+  sortBy: SortBy<RnRFormFragment>
+): RnRFormSortFieldInput => {
   switch (sortBy.key) {
     case 'periodName':
       return RnRFormSortFieldInput.Period;

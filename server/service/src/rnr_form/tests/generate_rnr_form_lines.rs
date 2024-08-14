@@ -10,7 +10,7 @@ mod generate_rnr_form_lines {
     use repository::test_db::setup_all_with_data;
     use repository::{
         EqualFilter, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
-        RnRFormFilter, RnRFormLineRow, RnRFormRow, StockLineRow,
+        RnRFormFilter, RnRFormLineRow, RnRFormLowStock, RnRFormRow, StockLineRow,
     };
 
     use crate::rnr_form::generate_rnr_form_lines::{
@@ -49,7 +49,7 @@ mod generate_rnr_form_lines {
                     item_link_id: item_query_test1().id,
                     store_id: mock_store_a().id,
                     pack_size: 1.0,
-                    available_number_of_packs: 3.0,
+                    total_number_of_packs: 3.0,
                     ..Default::default()
                 }],
                 ..MockData::default()
@@ -84,6 +84,7 @@ mod generate_rnr_form_lines {
                 id: line_id,
                 rnr_form_id,
                 item_id: item_query_test1().id,
+                requisition_line_id: None,
                 initial_balance: 2.0,
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 3.0,
@@ -93,13 +94,15 @@ mod generate_rnr_form_lines {
                 // AMC calculated used const NUMBER_OF_DAYS_IN_A_MONTH rather than actual # days in given month...
                 // would ideally be same as adjusted_quantity_consumed here...
                 average_monthly_consumption: 3.913043478260869,
-                previous_average_monthly_consumption: 0.0,
+                previous_monthly_consumption_values: "".to_string(),
                 final_balance: 3.0,
                 entered_quantity_received: None,
                 entered_quantity_consumed: None,
                 entered_adjustments: None,
-                maximum_quantity: 7.826086956521738,   // 2*AMC
-                requested_quantity: 4.826086956521738, // max - final balance
+                maximum_quantity: 7.826086956521738, // 2*AMC
+                calculated_requested_quantity: 4.826086956521738, // max - final balance
+                low_stock: RnRFormLowStock::BelowHalf, // 3 / 7.8
+                entered_requested_quantity: None,
                 expiry_date: None,
                 comment: None,
                 confirmed: false,
@@ -167,7 +170,7 @@ mod generate_rnr_form_lines {
                     item_link_id: item_query_test1().id,
                     store_id: mock_store_a().id,
                     pack_size: 1.0,
-                    available_number_of_packs: 10.0,
+                    total_number_of_packs: 10.0,
                     ..Default::default()
                 }],
                 ..MockData::default()
@@ -230,6 +233,19 @@ mod generate_rnr_form_lines {
         .unwrap();
 
         assert_eq!(result, 8);
+
+        // If no transactions, stock out duration is 0
+        let result = get_stock_out_duration(
+            &connection,
+            &mock_store_a().id,
+            &mock_item_a().id, // different item, which we have no transactions for
+            NaiveDate::from_ymd_opt(2024, 1, 31).unwrap(),
+            31,
+            0.0, // closing balance
+        )
+        .unwrap();
+
+        assert_eq!(result, 0);
     }
 
     #[actix_rt::test]
@@ -427,10 +443,7 @@ mod generate_rnr_form_lines {
                 20.0,    // 20 consumed in period
                 &vec![]  // no previous AMCs
             ),
-            (
-                0.0,  // No previous AMC
-                10.0  // AMC should be 10 packs per month
-            )
+            10.0 // AMC should be 10 packs per month
         );
 
         // if there is a previous AMC average, average that with the current period
@@ -440,10 +453,7 @@ mod generate_rnr_form_lines {
                 20.0,              // 20 consumed in period
                 &vec![15.0, 11.0]  // AMC across previous periods
             ),
-            (
-                13.0, // 15 and 11 average for last two months
-                12.0  // 10 per month this period, averaged with 15 and 11
-            )
+            12.0 // 10 per month this period, averaged with 15 and 11
         );
     }
 

@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
-use fast_scraper::{ElementRef, Html, Selector};
 use repository::{
     EqualFilter, PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository,
     ReportSort, ReportType, RepositoryError,
 };
+use scraper::{ElementRef, Html, Selector};
 use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
@@ -713,8 +713,9 @@ mod report_service_test {
 
 #[cfg(test)]
 mod report_to_excel_test {
+    use scraper::Html;
+
     use super::*;
-    use fast_scraper::Html;
 
     #[test]
     fn test_selectors() {
