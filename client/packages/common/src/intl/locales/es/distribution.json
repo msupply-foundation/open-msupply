@@ -149,5 +149,7 @@
   "messages.error-saving-return": "Error al guardar la devolución 🥺",
   "messages.confirm-not-fully-supplied_one": "Si finalizas, no podrás suministrar más artículos al cliente desde esta requisición\n\n{{count}} línea en esta requisición no ha sido suministrada completamente al cliente.\n¿Aún deseas continuar?",
   "messages.confirm-not-fully-supplied_few": "Si finalizas, no podrás suministrar más artículos al cliente desde esta requisición\n\n{{count}} líneas en esta requisición no han sido suministradas completamente al cliente.\n¿Aún deseas continuar?",
-  "messages.confirm-not-fully-supplied_other": "Si finalizas, no podrás suministrar más artículos al cliente desde esta requisición\n\n{{count}} líneas en esta requisición no han sido suministradas completamente al cliente.\n¿Aún deseas continuar?"
+  "messages.confirm-not-fully-supplied_other": "Si finalizas, no podrás suministrar más artículos al cliente desde esta requisición\n\n{{count}} líneas en esta requisición no han sido suministradas completamente al cliente.\n¿Aún deseas continuar?",
+  "label.shipment-created": "Envío creado",
+  "messages.requisition-no-stock": "No hay inventario disponible actualmente"
 }
