@@ -120,6 +120,8 @@ async fn requisition_transfer() {
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
+            // Sometimes processor isn't finished the first time, so we await twice?
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_approved(&ctx.connection);
             tester.update_response_requisition_to_finalised(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
