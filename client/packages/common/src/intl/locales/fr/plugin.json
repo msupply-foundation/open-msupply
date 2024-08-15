@@ -1,1 +1,4 @@
-{}
+{
+    "error.plugin": "Une erreur est survenue en chargeant le plugin {{name}}",
+    "error.plugin-unavailable": "Plugin non disponible"
+}
