@@ -1,4 +1,5 @@
 import { AppSxProp } from '@common/styles';
+import { ViewportList } from 'react-viewport-list';
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ export {
   TableContainer,
   TableHead,
   TableRow,
+  ViewportList,
 };
 export * from './hooks';
 export * from './DataTable';
