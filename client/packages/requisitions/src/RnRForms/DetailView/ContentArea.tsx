@@ -58,7 +58,6 @@ export const ContentArea = ({
   ) : (
     <Box
       flex={1}
-      padding={2}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -70,21 +69,27 @@ export const ContentArea = ({
     >
       <GlobalStyles
         styles={{
+          thead: {
+            position: 'sticky',
+            top: 0,
+            backgroundColor: '#fff',
+            zIndex: 999,
+          },
           '.sticky-column': {
             backgroundColor: '#fff',
             position: 'sticky',
             zIndex: 99,
           },
           '.first-column': {
+            left: 0,
             position: '-webkit-sticky',
-            left: 16,
             width: 80,
           },
           '.second-column': {
-            position: '-webkit-sticky',
-            left: 88,
-            minWidth: '300px',
             borderRight: '1px solid blue',
+            left: 72,
+            minWidth: '300px',
+            position: '-webkit-sticky',
           },
         }}
       />
@@ -156,6 +161,17 @@ export const ContentArea = ({
               tooltip="description.rnr-approved-quantity"
             />
           </tr>
+          <tr>
+            <td colSpan={20} style={{ borderWidth: 0, padding: 0 }}>
+              <Box
+                sx={{
+                  backgroundColor: 'gray.light',
+                  height: '1px',
+                  width: '100%',
+                }}
+              ></Box>
+            </td>
+          </tr>
         </thead>
 
         <tbody>
@@ -163,7 +179,6 @@ export const ContentArea = ({
             viewportRef={ref}
             items={lines}
             axis="y"
-            // itemSize={40}
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
           >
