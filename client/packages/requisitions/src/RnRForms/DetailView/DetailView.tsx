@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   DetailViewSkeleton,
   useNavigate,
@@ -11,6 +11,7 @@ import {
   TableProvider,
   createTableStore,
   RnRFormNodeStatus,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
@@ -59,6 +60,22 @@ const RnRFormDetailViewComponent = ({
 }) => {
   const t = useTranslation('replenishment');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const [dirtyLines, setDirtyLines] = useState<string[]>([]);
+
+  useConfirmOnLeaving(dirtyLines.length > 0);
+
+  const saveLine = useCallback(
+    async (line: RnRFormLineFragment) => {
+      setDirtyLines(lines => lines.filter(id => id !== line.id));
+      updateLine(line);
+    },
+    [updateLine]
+  );
+
+  const markDirty = useCallback(
+    (id: string) => setDirtyLines(lines => [...lines, id]),
+    [setDirtyLines]
+  );
 
   const tabs = [
     {
@@ -66,8 +83,9 @@ const RnRFormDetailViewComponent = ({
         <ContentArea
           periodLength={data.periodLength}
           data={data.lines}
-          saveLine={updateLine}
+          saveLine={saveLine}
           disabled={data.status === RnRFormNodeStatus.Finalised}
+          markDirty={markDirty}
         />
       ),
       value: t('label.details'),
@@ -91,7 +109,11 @@ const RnRFormDetailViewComponent = ({
         <DetailTabs tabs={tabs} />
       </TableProvider>
 
-      <Footer rnrFormId={data.id} linesUnconfirmed={linesUnconfirmed} />
+      <Footer
+        rnrFormId={data.id}
+        unsavedChanges={dirtyLines.length > 0}
+        linesUnconfirmed={linesUnconfirmed}
+      />
     </>
   );
 };
