@@ -257,6 +257,7 @@ export const RnRFormLine = ({
                   setIsLoading(false);
                 } catch (e) {
                   error((e as Error).message)();
+                  setIsLoading(false);
                 }
               }}
               disabled={disabled}
