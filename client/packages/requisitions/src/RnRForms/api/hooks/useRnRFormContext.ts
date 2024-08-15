@@ -12,7 +12,6 @@ export interface RnRForm {
 
 export interface RnRFormLine extends RnRFormLineFragment {
   isDirty?: boolean;
-  error?: string;
 }
 
 interface RnRFormContext {
@@ -23,7 +22,6 @@ interface RnRFormContext {
   setIsLoading: (isLoading: boolean) => void;
   setLine: (line: RnRFormLine) => void;
   setLines: (lines: RnRFormLineFragment[]) => void;
-  setError: (lineId: string, error: string) => void;
 }
 
 export const useRnRFormContext = create<RnRFormContext>(set => ({
@@ -40,16 +38,4 @@ export const useRnRFormContext = create<RnRFormContext>(set => ({
     })),
   setLines: (lines: RnRFormLineFragment[]) =>
     set(state => ({ ...state, lines: ArrayUtils.toObject(lines) })),
-  setError: (lineId: string, error: string) =>
-    set(state => {
-      const line = state.lines[lineId];
-      if (line === undefined) return state;
-      return {
-        ...state,
-        lines: {
-          ...state.lines,
-          [lineId]: { ...line, error },
-        },
-      };
-    }),
 }));
