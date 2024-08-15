@@ -15,7 +15,6 @@ import { RnRFormLine } from './RnRFormLine';
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
-  markDirty: (id: string) => void;
   periodLength: number;
   disabled: boolean;
 }
@@ -43,7 +42,6 @@ const HeaderCell = ({ label, tooltip }: HeaderCellProps) => {
 export const ContentArea = ({
   data,
   saveLine,
-  markDirty,
   periodLength,
   disabled,
 }: ContentAreaProps) => {
@@ -87,7 +85,7 @@ export const ContentArea = ({
           },
           '.second-column': {
             borderRight: '1px solid blue',
-            left: 72,
+            left: 79,
             minWidth: '300px',
             position: '-webkit-sticky',
           },
@@ -96,6 +94,7 @@ export const ContentArea = ({
       <Table
         sx={{
           height: '500px',
+          borderCollapse: 'separate',
           overflowY: 'scroll',
           '& th': {
             textAlign: 'left',
@@ -161,17 +160,6 @@ export const ContentArea = ({
               tooltip="description.rnr-approved-quantity"
             />
           </tr>
-          <tr>
-            <td colSpan={20} style={{ borderWidth: 0, padding: 0 }}>
-              <Box
-                sx={{
-                  backgroundColor: 'gray.light',
-                  height: '1px',
-                  width: '100%',
-                }}
-              ></Box>
-            </td>
-          </tr>
         </thead>
 
         <tbody>
@@ -185,10 +173,9 @@ export const ContentArea = ({
             {line => (
               <RnRFormLine
                 key={line.id}
-                line={line}
+                id={line.id}
                 periodLength={periodLength}
                 saveLine={saveLine}
-                markDirty={markDirty}
                 disabled={disabled}
               />
             )}
