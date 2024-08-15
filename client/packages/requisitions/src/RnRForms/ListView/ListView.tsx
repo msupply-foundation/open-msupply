@@ -49,7 +49,6 @@ const RnRFormListComponent = () => {
     [
       {
         key: 'periodName',
-        width: 350,
         label: 'label.period',
       },
       [

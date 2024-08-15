@@ -54,7 +54,7 @@ walkdir = "2.5.0"
 x509-parser = { version = "0.16", features = ["verify"] }
 telnet = "0.2.1"
 tempfile = "3.10.1"
-fast_scraper = "0.14.5"
+scraper = "0.20.0"
 umya-spreadsheet = "2.0.0"
 
 
