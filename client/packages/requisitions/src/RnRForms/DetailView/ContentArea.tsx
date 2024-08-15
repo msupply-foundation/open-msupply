@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Box,
   GlobalStyles,
@@ -7,6 +7,7 @@ import {
   NothingHere,
   Table,
   useTranslation,
+  ViewportList,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
@@ -14,6 +15,7 @@ import { RnRFormLine } from './RnRFormLine';
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  markDirty: (id: string) => void;
   periodLength: number;
   disabled: boolean;
 }
@@ -41,10 +43,12 @@ const HeaderCell = ({ label, tooltip }: HeaderCellProps) => {
 export const ContentArea = ({
   data,
   saveLine,
+  markDirty,
   periodLength,
   disabled,
 }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
+  const ref = useRef<HTMLDivElement>(null);
 
   // TODO: move to backend, should join on item and sort by name!
   const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));
@@ -52,7 +56,18 @@ export const ContentArea = ({
   return lines.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
   ) : (
-    <Box flex={1} padding={2}>
+    <Box
+      flex={1}
+      padding={2}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflowX: 'unset',
+        overflowY: 'auto',
+        width: '100%',
+      }}
+      ref={ref}
+    >
       <GlobalStyles
         styles={{
           '.sticky-column': {
@@ -75,6 +90,8 @@ export const ContentArea = ({
       />
       <Table
         sx={{
+          height: '500px',
+          overflowY: 'scroll',
           '& th': {
             textAlign: 'left',
             padding: 1,
@@ -142,15 +159,25 @@ export const ContentArea = ({
         </thead>
 
         <tbody>
-          {lines.map(line => (
-            <RnRFormLine
-              key={line.id}
-              line={line}
-              periodLength={periodLength}
-              saveLine={saveLine}
-              disabled={disabled}
-            />
-          ))}
+          <ViewportList
+            viewportRef={ref}
+            items={lines}
+            axis="y"
+            // itemSize={40}
+            renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
+            initialDelay={1}
+          >
+            {line => (
+              <RnRFormLine
+                key={line.id}
+                line={line}
+                periodLength={periodLength}
+                saveLine={saveLine}
+                markDirty={markDirty}
+                disabled={disabled}
+              />
+            )}
+          </ViewportList>
         </tbody>
       </Table>
     </Box>

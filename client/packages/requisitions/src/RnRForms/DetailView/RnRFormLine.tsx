@@ -11,7 +11,6 @@ import {
   NumericTextInput,
   NumUtils,
   useBufferState,
-  useConfirmOnLeaving,
   useNotification,
   useTheme,
   VenCategoryType,
@@ -21,11 +20,13 @@ import { getLowStockStatus, getAmc } from './helpers';
 
 export const RnRFormLine = ({
   line,
+  markDirty,
   saveLine,
   periodLength,
   disabled,
 }: {
   line: RnRFormLineFragment;
+  markDirty: (id: string) => void;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
   disabled: boolean;
@@ -35,8 +36,6 @@ export const RnRFormLine = ({
   const [patch, setPatch] = useState<Partial<RnRFormLineFragment> | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const draft = { ...line, ...patch };
-
-  useConfirmOnLeaving(patch !== null);
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
@@ -87,6 +86,7 @@ export const RnRFormLine = ({
       calculatedRequestedQuantity,
       lowStock,
     });
+    markDirty(draft.id);
   };
 
   const venCategory =
