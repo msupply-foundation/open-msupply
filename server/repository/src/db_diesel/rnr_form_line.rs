@@ -1,4 +1,5 @@
 use super::{
+    item_link_row::{item_link, item_link::dsl as item_link_dsl},
     item_row::{item, item::dsl as item_dsl},
     requisition_line_row::{requisition_line, requisition_line::dsl as requisition_line_dsl},
     rnr_form_line_row::{rnr_form_line, rnr_form_line::dsl as rnr_form_line_dsl},
@@ -7,7 +8,7 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    EqualFilter, ItemRow, Pagination, RequisitionLineRow, RnRFormLineRow, Sort,
+    EqualFilter, ItemLinkRow, ItemRow, Pagination, RequisitionLineRow, RnRFormLineRow, Sort,
 };
 
 use diesel::{
@@ -38,8 +39,7 @@ pub struct RnRFormLineRepository<'a> {
 
 type RnRFormLineJoin = (
     RnRFormLineRow,
-    ItemRow,
-    // (ItemLinkRow, ItemRow),
+    (ItemLinkRow, ItemRow),
     Option<RequisitionLineRow>,
 );
 
@@ -98,12 +98,7 @@ impl<'a> RnRFormLineRepository<'a> {
 }
 
 fn to_domain(
-    (
-        rnr_form_line_row,
-        item_row,
-        //  (_, item_row),
-        requisition_line_row,
-    ): RnRFormLineJoin,
+    (rnr_form_line_row, (_, item_row), requisition_line_row): RnRFormLineJoin,
 ) -> RnRFormLine {
     RnRFormLine {
         rnr_form_line_row,
@@ -114,10 +109,7 @@ fn to_domain(
 type BoxedRnRFormLineQuery = IntoBoxed<
     'static,
     LeftJoin<
-        InnerJoin<
-            rnr_form_line::table,
-            item::table, // InnerJoin<item_link::table, item::table>
-        >,
+        InnerJoin<rnr_form_line::table, InnerJoin<item_link::table, item::table>>,
         requisition_line::table,
     >,
     DBType,
@@ -125,9 +117,7 @@ type BoxedRnRFormLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<RnRFormLineFilter>) -> BoxedRnRFormLineQuery {
     let mut query = rnr_form_line_dsl::rnr_form_line
-        // TODO: ideally should be inner join with item_link!!
-        // .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
-        .inner_join(item_dsl::item)
+        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .left_join(requisition_line_dsl::requisition_line)
         .into_boxed();
 

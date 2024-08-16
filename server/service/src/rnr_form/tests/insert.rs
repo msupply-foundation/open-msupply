@@ -294,7 +294,7 @@ mod insert {
 
         // one line created, from master list
         assert_eq!(form_lines.len(), 1);
-        assert_eq!(form_lines[0].item_id, "item_query_test1");
+        assert_eq!(form_lines[0].item_link_id, "item_query_test1");
         // Uses final balance from prev R&R for initial balance of new one
         assert_eq!(
             form_lines[0].initial_balance,
