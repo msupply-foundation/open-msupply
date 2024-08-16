@@ -1,5 +1,9 @@
 {
     "description.notification-preferences": "By default, the system will tell you if you have more than 3 or 6 months of stock on the homepage dashboard.",
+    "error.failed-to-generate-report": "Failed to generate report",
+    "error.no-permission-report": "You do not have permission to view this report",
+    "error.report-does-not-exist": "Report does not exist",
+    "error.failed-to-generate-excel": "Failed to generate Excel",
     "heading.expiring": "Expiring",
     "heading.notification-preferences": "Notification Preferences",
     "heading.stock-and-items": "Stock & Items",
