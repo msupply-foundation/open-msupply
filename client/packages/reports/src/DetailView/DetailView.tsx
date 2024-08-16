@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   FileUtils,
   LocaleKey,
+  noOtherVariants,
   NothingHere,
   PrintFormat,
   TypedTFunction,
@@ -51,7 +52,7 @@ const DetailViewInner = ({
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
   const [errorMessage, setErrorMessage] = useState('');
-  const { mutateAsync } = useGenerateReport(setErrorMessage, t);
+  const { mutateAsync } = useGenerateReport();
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
   const { updateQuery } = useUrlQuery();
@@ -90,12 +91,30 @@ const DetailViewInner = ({
       }
       setFileId(undefined);
       try {
-        const fileId = await mutateAsync({
+        const result = await mutateAsync({
           reportId: report.id,
           args,
           dataId: '',
         });
-        setFileId(fileId);
+        if (result?.__typename === 'PrintReportNode') {
+          setFileId(result.fileId);
+        }
+
+        if (result?.__typename === 'PrintReportError') {
+          const err = result.error;
+
+          if (err.__typename === 'FailedToFetchReportData') {
+            const errors = err.errors;
+
+            if (errors[0].extensions?.details?.includes('permission')) {
+              setErrorMessage(t('error.no-permission-report'));
+            } else {
+              setErrorMessage(t('error.failed-to-generate-report'));
+            }
+          } else {
+            noOtherVariants(err.__typename);
+          }
+        }
       } catch (error) {
         console.error(error);
       }
@@ -117,13 +136,31 @@ const DetailViewInner = ({
 
   const exportExcelReport = useCallback(async () => {
     try {
-      const fileId = await mutateAsync({
+      const result = await mutateAsync({
         reportId: report.id,
         args: reportArgs,
         dataId: '',
         format: PrintFormat.Excel,
       });
-      setFileId(fileId);
+      if (result?.__typename === 'PrintReportNode') {
+        setFileId(result.fileId);
+      }
+
+      if (result?.__typename === 'PrintReportError') {
+        const err = result.error;
+
+        if (err.__typename === 'FailedToFetchReportData') {
+          const errors = err.errors;
+
+          if (errors[0].extensions?.details?.includes('permission')) {
+            setErrorMessage(t('error.no-permission-report'));
+          } else {
+            setErrorMessage(t('error.failed-to-generate-report'));
+          }
+        } else {
+          noOtherVariants(err.__typename);
+        }
+      }
     } catch (error) {
       console.error(error);
     }
