@@ -69,7 +69,7 @@
   "messages.no-items-with-stock": "No hay artículos disponibles en stock",
   "label.packs-available": "Paquetes disponibles",
   "messages.no-repacks": "Esta línea de stock no ha sido reempacada. Haz clic en \"Nuevo\" para crear un nuevo reempaque.",
-  "messages.all-packs-repacked": "Guardado. La ventana anterior se ha cerrado ya que todo en la línea de stock ha sido reempacado.",
+  "messages.all-packs-repacked": "Todo el stock ha sido reempacado y esta línea de stock ya no aparecerá en la lista. Haz clic en OK para ir a la nueva línea de stock.",
   "button.repack": "Reempacar",
   "error.repack-has-stock-reduced-below-zero": "No se puede reempacar la línea de stock. El nuevo número de paquetes excede el número de paquetes de la línea de stock.",
   "error.repack-cannot-be-fractional": "No se puede reempacar en un paquete fraccionario",
@@ -114,5 +114,10 @@
   "button.change-location": "Cambiar la ubicación de las líneas",
   "label.current-num-of-packs": "Número actual de paquetes",
   "messages.changed-location_other": "Ubicación cambiada para {{ count }} líneas",
-  "messages.confirm-reduce-lines-to-zero": "Esto reducirá la cantidad de todas las líneas seleccionadas del inventario a 0"
+  "messages.confirm-reduce-lines-to-zero": "Esto reducirá la cantidad de todas las líneas seleccionadas del inventario a 0",
+  "error.stock-line-stock-reduced-below-zero": "Esta línea de inventario no se puede ajustar porque parte del inventario se utilizó en salidas anteriores.",
+  "title.adjustment-details": "Detalles de ajuste",
+  "title.repack-complete": "Reempaque completado",
+  "messages.no-ledger": "Esta línea de stock no tiene movimientos de inventario para mostrar",
+  "button.adjust": "Ajustar"
 }
