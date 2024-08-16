@@ -17,18 +17,11 @@ export const useGenerateReport = () => {
       arguments: args,
       sort,
     });
-    if (result?.generateReport?.__typename === 'PrintReportNode') {
-      return result.generateReport.fileId;
-    }
-
-    throw new Error('Unable to generate report');
+    return result?.generateReport;
   };
 
   const { mutateAsync, isLoading } = useMutation({
     mutationFn,
-    onSuccess: fileId => {
-      if (!fileId) throw new Error('Error generating report');
-    },
   });
 
   return { mutateAsync, isLoading };
