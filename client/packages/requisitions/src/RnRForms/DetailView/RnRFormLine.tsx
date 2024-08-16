@@ -33,11 +33,12 @@ export const RnRFormLine = ({
   const theme = useTheme();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
-  const line = useRnRFormContext(state => state.lines[id]);
+  const { line, setLine } = useRnRFormContext(state => ({
+    line: state.lines[id],
+    setLine: state.setLine,
+  }));
 
   if (!line) return null;
-
-  const setLine = useRnRFormContext(state => state.setLine);
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
