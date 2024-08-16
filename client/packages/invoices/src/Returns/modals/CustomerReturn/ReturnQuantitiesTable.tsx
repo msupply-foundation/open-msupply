@@ -102,7 +102,7 @@ export const QuantityReturnedTableComponent = ({
 
   return (
     <DataTable
-      id="inbound-return-line-quantity"
+      id="customer-return-line-quantity"
       columns={columns}
       data={lines}
       dense
