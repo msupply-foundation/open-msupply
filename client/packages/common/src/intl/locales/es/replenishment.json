@@ -154,5 +154,11 @@
   "button.add-form": "Agregar Formulario",
   "description.rnr-amc": "El consumo mensual promedio se calcula utilizando el valor del consumo Ajustado, usando este formulario de R&R y los dos anteriores, si están disponibles",
   "description.rnr-approved-quantity": "La cantidad aprobada para ser ordenada. Es completada después de que el formulario de R&R esté finalizado y autorizado.",
-  "description.rnr-consumed": "La cantidad de este artículo distribuida durante este período (a través de salidas o prescripciones)"
+  "description.rnr-consumed": "La cantidad de este artículo distribuida durante este período (a través de salidas o prescripciones)",
+  "description.rnr-consumed-adjusted": "Muestra el consumo ajustado para tener en cuenta los días sin stock. = (Consumo x 30) / (30 - Duración sin stock)",
+  "description.expiry": "La fecha de vencimiento mas cercana del stock disponible actualmente",
+  "description.rnr-final-balance": "Nivel de inventario al final del periodo. =Saldo inicial + Recibido - Consumido ± Ajustes",
+  "description.rnr-initial-balance": "Stock disponible al inicio del período. Se toma del formulario R&R anterior, si está disponible, o se calcula con el stock disponible en la fecha de inicio del período.",
+  "description.rnr-low-stock": "¡ = El saldo final es menos de la mitad del máximo, !! = menos de un cuarto",
+  "description.rnr-maximum-quantity": "Cantidad objetivo de stock a mantener disponible. = AMC x 2"
 }
