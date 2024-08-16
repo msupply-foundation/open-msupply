@@ -81,10 +81,6 @@ impl Version {
             pre_release: extra.map(String::from),
         }
     }
-
-    pub(crate) fn is_pre_release(&self) -> bool {
-        self.pre_release.is_some()
-    }
 }
 
 impl PartialOrd for Version {

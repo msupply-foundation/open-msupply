@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import {
+  AlertIcon,
   BasicTextInput,
   Checkbox,
+  CircleIcon,
   DatePicker,
   Formatter,
+  LowStockStatus,
   NumericTextInput,
   NumUtils,
   useBufferState,
@@ -11,24 +14,26 @@ import {
   useTheme,
   VenCategoryType,
 } from '@openmsupply-client/common';
-import { RnRFormLineFragment } from '../../api/operations.generated';
-import { getAmc } from './getAmc';
+import { RnRFormLineFragment } from '../api/operations.generated';
+import { getLowStockStatus, getAmc } from './helpers';
 
 export const RnRFormLine = ({
   line,
   saveLine,
+  markDirty,
   periodLength,
   disabled,
 }: {
   line: RnRFormLineFragment;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  markDirty: (id: string) => void;
   disabled: boolean;
 }) => {
   const theme = useTheme();
   const { error } = useNotification();
 
-  const [patch, setPatch] = useState<Partial<RnRFormLineFragment>>({});
+  const [patch, setPatch] = useState<Partial<RnRFormLineFragment> | null>(null);
   const draft = { ...line, ...patch };
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
@@ -69,6 +74,8 @@ export const RnRFormLine = ({
 
     const calculatedRequestedQuantity = neededQuantity > 0 ? neededQuantity : 0;
 
+    const lowStock = getLowStockStatus(finalBalance, maximumQuantity);
+
     setPatch({
       ...newPatch,
       finalBalance,
@@ -76,7 +83,9 @@ export const RnRFormLine = ({
       averageMonthlyConsumption,
       maximumQuantity,
       calculatedRequestedQuantity,
+      lowStock,
     });
+    markDirty(draft.id);
   };
 
   const venCategory =
@@ -195,6 +204,19 @@ export const RnRFormLine = ({
         textColor={textColor}
         disabled={disabled}
       />
+      <td style={{ ...readOnlyColumn, textAlign: 'center' }}>
+        {draft.lowStock !== LowStockStatus.Ok && (
+          <AlertIcon
+            double={draft.lowStock === LowStockStatus.BelowQuarter}
+            sx={{
+              color:
+                draft.lowStock === LowStockStatus.BelowQuarter
+                  ? 'error.main'
+                  : 'primary.light',
+            }}
+          />
+        )}
+      </td>
       <td>
         <BasicTextInput
           multiline
@@ -219,14 +241,29 @@ export const RnRFormLine = ({
           onClick={async () => {
             try {
               await saveLine({ ...draft, confirmed: !draft.confirmed });
-              setPatch({});
+              setPatch(null);
             } catch (e) {
               error((e as Error).message)();
             }
           }}
           disabled={disabled}
+          sx={{ marginLeft: '10px' }}
+        />
+        <CircleIcon
+          sx={{
+            width: '10px',
+            visibility: patch === null ? 'hidden' : 'visible',
+            color: 'secondary.main',
+          }}
         />
       </td>
+      {/* Readonly - populated from Response Requisition */}
+      <RnRNumberCell
+        readOnly
+        value={draft.approvedQuantity ?? 0}
+        textColor={textColor}
+        onChange={() => {}}
+      />
     </tr>
   );
 };
@@ -274,6 +311,7 @@ const RnRNumberCell = ({
         }}
         max={max}
         allowNegative={allowNegative}
+        defaultValue={0}
       />
     </td>
   );

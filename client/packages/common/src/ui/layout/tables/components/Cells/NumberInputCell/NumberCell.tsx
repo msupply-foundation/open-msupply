@@ -15,9 +15,9 @@ export const NumberCell = <T extends RecordWithId>({
 }: CellProps<T> & {
   defaultValue?: string | number;
 }) => {
-  const value = column.accessor({ rowData }) as number;
-  const hasMoreThanTwoDp = (value * 100) % 1 !== 0;
-  const formattedValue = useFormatNumber().round(value, 2);
+  const value = column.accessor({ rowData }) as number | undefined | null;
+  const hasMoreThanTwoDp = (value ?? 0 * 100) % 1 !== 0;
+  const formattedValue = useFormatNumber().round(value ?? 0, 2);
 
   const displayValue =
     value === undefined || value === null ? defaultValue : formattedValue;
@@ -31,7 +31,7 @@ export const NumberCell = <T extends RecordWithId>({
         padding: '4px 8px',
       }}
     >
-      <Tooltip title={value.toString()}>
+      <Tooltip title={value?.toString()}>
         <Typography
           style={{
             overflow: 'hidden',

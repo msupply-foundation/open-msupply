@@ -19,7 +19,4 @@ export const mainConfig: Configuration = {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
     plugins: [new TsconfigPathsPlugin()], // creates alias entries for the paths in tsconfig.json
   },
-  externals: {
-    "node-hid" : 'commonjs node-hid'
-  }
 };

@@ -107,6 +107,13 @@ const Actions = () => {
       perform: () => drawer.toggle(),
     },
     {
+      id: 'navigation-drawer:report',
+      name: `${t('cmdk.goto-reports')} (g+r)`,
+      shortcut: ['g', 'r'],
+      keywords: 'report',
+      perform: () => navigate(RouteBuilder.create(AppRoute.Reports).build()),
+    },
+    {
       id: 'navigation:outbound-shipment',
       name: `${t('cmdk.goto-outbound')} (o)`,
       shortcut: ['o'],
