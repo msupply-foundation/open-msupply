@@ -21,7 +21,9 @@ mod v1_07_00;
 mod v2_00_00;
 mod v2_01_00;
 mod v2_02_00;
+mod v2_03_00;
 mod version;
+mod views;
 
 pub(crate) use self::types::*;
 use self::v1_00_04::V1_00_04;
@@ -69,6 +71,8 @@ pub enum MigrationError {
     DatabaseVersionIsPreRelease(Version),
     #[error("Migration version ({0}) is higher then app version ({1}), consider increasing app version in root package.json")]
     MigrationAboveAppVersion(Version, Version),
+    #[error("Problem dropping or re-creating views")]
+    DatabaseViewsError(anyhow::Error),
     #[error("Error during one time migration ({version})")]
     MigrationError {
         source: anyhow::Error,
@@ -111,6 +115,7 @@ pub fn migrate(
         Box::new(v2_00_00::V2_00_00),
         Box::new(v2_01_00::V2_01_00),
         Box::new(v2_02_00::V2_02_00),
+        Box::new(v2_03_00::V2_03_00),
     ];
 
     // Historic diesel migrations
@@ -119,19 +124,23 @@ pub fn migrate(
     // Rust migrations
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
-    let database_version = get_database_version(connection);
+    let starting_database_version = get_database_version(connection);
 
     // Get migration fragment log repository and create table if it doesn't exist
     create_migration_fragment_table(connection)?;
     let migration_fragment_log_repo = MigrationFragmentLogRepository::new(connection);
 
     // for `>` see PartialOrd implementation of Version
-    if database_version > to_version {
+    if starting_database_version > to_version {
         return Err(MigrationError::DatabaseVersionAboveAppVersion(
-            database_version,
+            starting_database_version,
             to_version,
         ));
     }
+
+    // From v2.3 we drop all views and re-create them
+    let min_version_for_dropping_views = v2_03_00::V2_03_00.version();
+    let mut drop_view_has_run = false;
 
     for migration in migrations {
         let migration_version = migration.version();
@@ -150,6 +159,12 @@ pub fn migrate(
         }
 
         let database_version = get_database_version(connection);
+
+        // Drop view once during migrations, if next migration is 2.3.0 and above
+        if !drop_view_has_run && migration_version >= min_version_for_dropping_views {
+            drop_views(connection).map_err(MigrationError::DatabaseViewsError)?;
+            drop_view_has_run = true;
+        }
 
         // TODO transaction ?
 
@@ -183,6 +198,13 @@ pub fn migrate(
                 migration_fragment_log_repo.insert(&migration, &fragment)?;
             }
         }
+    }
+
+    let final_database_version = get_database_version(connection);
+
+    // Recreate views
+    if final_database_version >= min_version_for_dropping_views {
+        rebuild_views(connection).map_err(MigrationError::DatabaseViewsError)?;
     }
 
     set_database_version(connection, &to_version)?;
@@ -265,3 +287,4 @@ macro_rules! sql {
 }
 
 pub(crate) use sql;
+use views::{drop_views, rebuild_views};
