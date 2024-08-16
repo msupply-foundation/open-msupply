@@ -39,7 +39,6 @@ export const RnRFormLine = ({
   }));
 
   const line = useMemo(() => {
-    console.log('line change');
     return draftLine ?? baseLine;
   }, [draftLine, baseLine]);
 
