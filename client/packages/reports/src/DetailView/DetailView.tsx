@@ -155,7 +155,7 @@ const DetailViewInner = ({
           if (errors[0].extensions?.details?.includes('permission')) {
             setErrorMessage(t('error.no-permission-report'));
           } else {
-            setErrorMessage(t('error.failed-to-generate-report'));
+            setErrorMessage(t('error.failed-to-generate-excel'));
           }
         } else {
           noOtherVariants(err.__typename);
