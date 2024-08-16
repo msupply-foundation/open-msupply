@@ -5,15 +5,17 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { RnRFormFragment, RnRFormLineFragment } from '../operations.generated';
-import { useRnRGraphQL } from '..';
+import { useRnRFormContext, useRnRGraphQL } from '..';
 import { RNR_FORM } from './keys';
 
-export interface RnRForm extends RnRFormFragment {
+export interface RnRFormQuery extends RnRFormFragment {
   lines: RnRFormLineFragment[];
 }
 
 export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
   const { api, storeId } = useRnRGraphQL();
+  const { setForm, setIsLoading, setLines, form, isLoading } =
+    useRnRFormContext();
   const queryKey = [RNR_FORM, rnrFormId];
 
   const {
@@ -28,7 +30,7 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
     error: updateLineError,
   } = useUpdateLine(rnrFormId);
 
-  const queryFn = async (): Promise<RnRForm | null> => {
+  const queryFn = async (): Promise<RnRFormQuery | null> => {
     const query = await api.rAndRFormDetail({
       storeId,
       rnrFormId,
@@ -38,7 +40,20 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
     return result.__typename === 'RnRFormNode' ? result : null;
   };
 
-  const query = useQuery({ queryKey, queryFn });
+  const query = useQuery({ queryKey, queryFn, enabled: !form });
+
+  if (!isLoading && query.isLoading) setIsLoading(true);
+  if (form?.id !== query.data?.id && !!query.data) {
+    const { id, periodLength, periodName, status, lines } = query.data;
+    setForm({
+      id,
+      periodLength,
+      periodName,
+      status,
+      lineIds: lines.map(line => line.id),
+    });
+    setLines(lines);
+  }
 
   const updateLine = async (line: RnRFormLineFragment) => updateLines([line]);
 

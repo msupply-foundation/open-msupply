@@ -36,15 +36,28 @@ pub fn finalise_rnr_form(
     let rnr_form = ctx
         .connection
         .transaction_sync(|connection| {
+            let requisition_repo = RequisitionRowRepository::new(&ctx.connection);
+            let requisition_line_repo = RequisitionLineRowRepository::new(&ctx.connection);
+            let rnr_form_repo = RnRFormRowRepository::new(connection);
+            let rnr_form_line_repo = RnRFormLineRowRepository::new(&ctx.connection);
+
             let rnr_form = validate(ctx, store_id, &input)?;
 
-            // Create an internal order based on the RnR form
-            let requisition_id = create_internal_order(ctx, rnr_form.clone())?;
+            let GenerateResult {
+                requisition_row,
+                finalised_rnr_form,
+                rnr_form_line_and_requisition_lines,
+            } = generate(ctx, rnr_form)?;
 
-            let finalised_form = generate(rnr_form, requisition_id);
-            let rnr_form_repo = RnRFormRowRepository::new(connection);
+            requisition_repo.upsert_one(&requisition_row)?;
+            rnr_form_repo.upsert_one(&finalised_rnr_form)?;
 
-            rnr_form_repo.upsert_one(&finalised_form)?;
+            for (rnr_form_line_id, requisition_line) in rnr_form_line_and_requisition_lines {
+                requisition_line_repo.upsert_one(&requisition_line)?;
+
+                rnr_form_line_repo
+                    .update_requisition_line_id(&rnr_form_line_id, &requisition_line.id)?;
+            }
 
             activity_log_entry(
                 ctx,
@@ -67,47 +80,39 @@ fn validate(
     ctx: &ServiceContext,
     store_id: &str,
     input: &FinaliseRnRForm,
-) -> Result<RnRFormRow, FinaliseRnRFormError> {
+) -> Result<RnRForm, FinaliseRnRFormError> {
     let connection = &ctx.connection;
 
-    let RnRForm {
-        rnr_form_row: rnr_form,
-        ..
-    } = check_rnr_form_exists(connection, &input.id)?
+    let rnr_form = check_rnr_form_exists(connection, &input.id)?
         .ok_or(FinaliseRnRFormError::RnRFormDoesNotExist)?;
 
-    if rnr_form.store_id != store_id {
+    if rnr_form.rnr_form_row.store_id != store_id {
         return Err(FinaliseRnRFormError::RnRFormDoesNotBelongToStore);
     };
 
-    if rnr_form.status == RnRFormStatus::Finalised {
+    if rnr_form.rnr_form_row.status == RnRFormStatus::Finalised {
         return Err(FinaliseRnRFormError::RnRFormAlreadyFinalised);
     };
 
     Ok(rnr_form)
 }
 
-fn generate(existing_row: RnRFormRow, requisition_id: String) -> RnRFormRow {
-    let current_datetime = Utc::now().naive_utc();
-
-    RnRFormRow {
-        finalised_datetime: Some(current_datetime),
-        status: RnRFormStatus::Finalised,
-        linked_requisition_id: Some(requisition_id),
-        ..existing_row
-    }
+struct GenerateResult {
+    requisition_row: RequisitionRow,
+    finalised_rnr_form: RnRFormRow,
+    rnr_form_line_and_requisition_lines: Vec<(String, RequisitionLineRow)>,
 }
 
-impl From<RepositoryError> for FinaliseRnRFormError {
-    fn from(error: RepositoryError) -> Self {
-        FinaliseRnRFormError::DatabaseError(error)
-    }
-}
-
-fn create_internal_order(
+fn generate(
     ctx: &ServiceContext,
-    rnr_form: RnRFormRow,
-) -> Result<String, FinaliseRnRFormError> {
+    rnr_form: RnRForm,
+) -> Result<GenerateResult, FinaliseRnRFormError> {
+    let RnRForm {
+        rnr_form_row,
+        period_row,
+        ..
+    } = rnr_form;
+    // Create an internal order based on the RnR form
     // Internal Orders are known as requisitions in the code base
     let requisition_row = RequisitionRow {
         id: uuid(),
@@ -117,8 +122,8 @@ fn create_internal_order(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_link_id: rnr_form.name_link_id,
-        store_id: rnr_form.store_id,
+        name_link_id: rnr_form_row.name_link_id.clone(),
+        store_id: rnr_form_row.store_id.clone(),
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Sent,
         created_datetime: Utc::now().naive_utc(),
@@ -132,21 +137,28 @@ fn create_internal_order(
         min_months_of_stock: 0.0,
         approval_status: None,
         linked_requisition_id: None,
-        program_id: Some(rnr_form.program_id),
-        period_id: Some(rnr_form.period_id),
+        program_id: Some(rnr_form_row.program_id.clone()),
+        period_id: Some(rnr_form_row.period_id.clone()),
         order_type: None, // Should we capture this in the RnR form?
     };
 
-    let requisition_repo = RequisitionRowRepository::new(&ctx.connection);
-    requisition_repo.upsert_one(&requisition_row)?;
+    let rnr_form_id = rnr_form_row.id.clone();
+
+    let current_datetime = Utc::now().naive_utc();
+    let requisition_id = requisition_row.id.clone();
+
+    let finalised_rnr_form = RnRFormRow {
+        finalised_datetime: Some(current_datetime),
+        status: RnRFormStatus::Finalised,
+        linked_requisition_id: Some(requisition_id),
+        ..rnr_form_row
+    };
 
     // Get R&R Form lines and create requisition lines
-
     let rnr_form_line_repo = RnRFormLineRowRepository::new(&ctx.connection);
-    let requisition_line_repo = RequisitionLineRowRepository::new(&ctx.connection);
     let item_repo = ItemRowRepository::new(&ctx.connection);
 
-    let rnr_form_lines = rnr_form_line_repo.find_many_by_rnr_form_id(&rnr_form.id)?;
+    let rnr_form_lines = rnr_form_line_repo.find_many_by_rnr_form_id(&rnr_form_id)?;
 
     // Find all the item names
     let item_ids = rnr_form_lines
@@ -162,32 +174,47 @@ fn create_internal_order(
         .collect::<std::collections::HashMap<String, _>>();
 
     // Loop through the rnr lines and create requisition lines
+    let rnr_form_closing_datetime = period_row.end_date.and_hms_opt(0, 0, 0);
 
-    for rnr_form_line in rnr_form_lines {
-        let requisition_line = RequisitionLineRow {
-            id: uuid(),
-            requisition_id: requisition_row.id.clone(),
-            item_link_id: rnr_form_line.item_id.clone(),
-            item_name: item_map
-                .get(&rnr_form_line.item_id)
-                .map(|item| item.name.clone())
-                .unwrap_or_default(),
-            requested_quantity: rnr_form_line
-                .entered_requested_quantity
-                .unwrap_or(rnr_form_line.calculated_requested_quantity),
-            suggested_quantity: rnr_form_line.maximum_quantity,
-            supply_quantity: 0.0,
-            available_stock_on_hand: rnr_form_line.final_balance,
-            average_monthly_consumption: rnr_form_line.average_monthly_consumption,
-            snapshot_datetime: rnr_form.finalised_datetime,
-            approved_quantity: 0.0,
-            approval_comment: None,
-            comment: None,
-            // TODO add Cust_pre_stock_balance, Cust_stock_received, Cust_stock_ord, Cust_stock_adj (in mSupply but not in OMS Yet)
-        };
+    let rnr_form_line_and_requisition_lines = rnr_form_lines
+        .into_iter()
+        .map(|rnr_form_line| {
+            let requisition_line = RequisitionLineRow {
+                id: uuid(),
+                requisition_id: requisition_row.id.clone(),
+                item_link_id: rnr_form_line.item_id.clone(),
+                item_name: item_map
+                    .get(&rnr_form_line.item_id)
+                    .map(|item| item.name.clone())
+                    .unwrap_or_default(),
+                requested_quantity: rnr_form_line
+                    .entered_requested_quantity
+                    .unwrap_or(rnr_form_line.calculated_requested_quantity),
+                suggested_quantity: rnr_form_line.maximum_quantity,
+                supply_quantity: 0.0,
+                available_stock_on_hand: rnr_form_line.final_balance,
+                average_monthly_consumption: rnr_form_line.average_monthly_consumption,
+                snapshot_datetime: rnr_form_closing_datetime,
+                approved_quantity: 0.0,
+                approval_comment: None,
+                comment: None,
+                // TODO add Cust_pre_stock_balance, Cust_stock_received, Cust_stock_ord, Cust_stock_adj (in mSupply but not in OMS Yet)
+            };
 
-        requisition_line_repo.upsert_one(&requisition_line)?;
+            // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id
+            (rnr_form_line.id, requisition_line)
+        })
+        .collect();
+
+    Ok(GenerateResult {
+        requisition_row,
+        finalised_rnr_form,
+        rnr_form_line_and_requisition_lines,
+    })
+}
+
+impl From<RepositoryError> for FinaliseRnRFormError {
+    fn from(error: RepositoryError) -> Self {
+        FinaliseRnRFormError::DatabaseError(error)
     }
-
-    Ok(requisition_row.id)
 }

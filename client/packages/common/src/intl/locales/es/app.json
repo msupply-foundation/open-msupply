@@ -88,7 +88,7 @@
   "saving": "Guardando…",
   "searching": "Buscando…",
   "select-store": "Seleccionar Almacén",
-  "error.sync-api-incompatible": "La versión de API de sincronización no es compatible",
+  "error.sync-api-incompatible": "La versión de la API de sincronización no es compatible",
   "discovery.use-server-mode": "Nota: Actualmente estás utilizando el modo cliente. Para cambiar al modo de servidor local, haz clic en el botón de abajo.",
   "contact-trace": "Rastreo de contactos",
   "prescription": "Prescripciones",
@@ -119,5 +119,16 @@
   "settings.printer-port": "Número de puerto",
   "settings.scanner-type": "Tipo de escáner",
   "messages.connected-to-printer": "¡Conexión exitosa a la impresora!",
-  "returns": "Devoluciones"
+  "outbound-return": "Devoluciones salientes",
+  "returns": "Devoluciones",
+  "immunisations": "Inmunizaciones",
+  "facilities": "Instalaciones",
+  "inbound-returns": "Devoluciones recibidas",
+  "error.sync-v6-api-incompatible": "La versión de la API de sincronización V6 no es compatible",
+  "error.sync-v6-api-incompatible-hint": "La versión del Servidor Central de mSupply necesita ser actualizada antes de poder conectarte - por favor, contacta a support@msupply.foundation",
+  "error.connection-error-hint": "Verifica la conexión de tu red",
+  "error.no-site-access": "Tu cuenta no tiene acceso a ningún almacén de este sitio",
+  "error.unable-to-login": "No se puede iniciar sesión",
+  "error.v6-server-not-configured-hint": "Verifica la URL del servidor central",
+  "error.sync-api-incompatible-hint": "La versión del Servidor Central de mSupply necesita ser actualizada antes de poder conectarte - por favor, contacta a support@msupply.foundation"
 }

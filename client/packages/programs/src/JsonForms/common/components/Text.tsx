@@ -22,6 +22,7 @@ const Options = z
      */
     examples: z.array(z.string()).optional(),
     width: z.string().optional(),
+    flexBasis: z.string().optional(),
     /**
      * If true, text input will expand to multiple lines if required (default:
      * true)
@@ -127,6 +128,7 @@ const UIComponent = (props: ControlProps) => {
   const rows = schemaOptions?.rows;
 
   const width = schemaOptions?.width ?? '100%';
+  const flexBasis = schemaOptions?.flexBasis ?? '100%';
   const useDebounce = schemaOptions?.useDebounce ?? true;
 
   return (
@@ -136,7 +138,7 @@ const UIComponent = (props: ControlProps) => {
       inputProps={{
         value: text ?? '',
         sx: { width },
-        style: { flexBasis: '100%' },
+        style: { flexBasis },
         onChange: e =>
           useDebounce
             ? onDebounceChange(e.target.value ?? '')
