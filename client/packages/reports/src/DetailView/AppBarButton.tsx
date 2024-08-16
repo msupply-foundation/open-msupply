@@ -3,8 +3,10 @@ import {
   AppBarButtonsPortal,
   ButtonWithIcon,
   DownloadIcon,
+  EnvUtils,
   FilterIcon,
   Grid,
+  Platform,
   PrinterIcon,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -42,7 +44,7 @@ export const AppBarButtonsComponent = ({
           onClick={() => printReport()}
         />
         <ButtonWithIcon
-          disabled={isPrinting}
+          disabled={isPrinting || EnvUtils.platform === Platform.Android}
           label={t('button.export')}
           Icon={<DownloadIcon />}
           onClick={() => exportReport()}

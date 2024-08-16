@@ -3,8 +3,8 @@ import React, { FC, useState } from 'react';
 import { JsonData, JsonForm } from '@openmsupply-client/programs';
 import { ReportRowFragment } from '../api';
 import { useDialog, useUrlQuery } from '@common/hooks';
-import { DialogButton } from '@common/components';
-import { useAuthContext } from '@openmsupply-client/common';
+import { DialogButton, Typography } from '@common/components';
+import { useAuthContext, useTranslation } from '@openmsupply-client/common';
 
 export type ReportArgumentsModalProps = {
   /** Modal is shown if there is an argument schema present */
@@ -20,6 +20,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
 }) => {
   const { store } = useAuthContext();
   const { urlQuery } = useUrlQuery();
+  const t = useTranslation('reports');
 
   const {
     monthlyConsumptionLookBackPeriod,
@@ -56,7 +57,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
       title="Report arguments"
       cancelButton={<DialogButton variant="cancel" onClick={cleanUp} />}
       slideAnimation={false}
-      width={500}
+      width={560}
       okButton={
         <DialogButton
           variant="ok"
@@ -68,17 +69,22 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
         />
       }
     >
-      <JsonForm
-        data={data}
-        jsonSchema={report.argumentSchema.jsonSchema}
-        uiSchema={report.argumentSchema.uiSchema}
-        isError={false}
-        isLoading={false}
-        setError={err => setError(err)}
-        updateData={(newData: JsonData) => {
-          setData(newData);
-        }}
-      />
+      <>
+        <Typography sx={{ mb: 2, maxWidth: 500 }}>
+          {t('message.arguments')}
+        </Typography>
+        <JsonForm
+          data={data}
+          jsonSchema={report.argumentSchema.jsonSchema}
+          uiSchema={report.argumentSchema.uiSchema}
+          isError={false}
+          isLoading={false}
+          setError={err => setError(err)}
+          updateData={(newData: JsonData) => {
+            setData(newData);
+          }}
+        />
+      </>
     </Modal>
   );
 };
