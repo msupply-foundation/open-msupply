@@ -39,11 +39,18 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       sx={DefaultFormRowSx}
+      inputSx={{
+        '& > .MuiBox-root': {
+          flexBasis: '90%',
+          width: '100%',
+        },
+      }}
       label={label}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
       Input={
         <BaseDatePickerInput
+          sx={{ width: '100%' }}
           // undefined is displayed as "now" and null as unset
           value={formatDateTime.getLocalDate(data)}
           onChange={e => {
