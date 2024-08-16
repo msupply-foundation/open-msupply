@@ -88,7 +88,7 @@ export const ContentArea = ({
           },
           '.second-column': {
             borderRight: '1px solid blue',
-            left: 79,
+            left: 83,
             minWidth: '300px',
             position: '-webkit-sticky',
           },
