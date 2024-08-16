@@ -102,21 +102,21 @@ pub fn should_create_batches(
     }
 }
 
-fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateCustomerReturn) {
-    let new_status = match changed_status(patch.status.to_owned(), &inbound_return.status) {
+fn set_new_status_datetime(customer_return: &mut InvoiceRow, patch: &UpdateCustomerReturn) {
+    let new_status = match changed_status(patch.status.to_owned(), &customer_return.status) {
         Some(status) => status,
         None => return, // There's no status to update
     };
 
     let current_datetime = Utc::now().naive_utc();
 
-    match (&inbound_return.status, new_status) {
+    match (&customer_return.status, new_status) {
         // From New/Picked/Shipped to Delivered
         (
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
             UpdateCustomerReturnStatus::Delivered,
         ) => {
-            inbound_return.delivered_datetime = Some(current_datetime);
+            customer_return.delivered_datetime = Some(current_datetime);
         }
 
         // From New/Picked/Shipped to Verified
@@ -124,12 +124,12 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateCustom
             InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
             UpdateCustomerReturnStatus::Verified,
         ) => {
-            inbound_return.delivered_datetime = Some(current_datetime);
-            inbound_return.verified_datetime = Some(current_datetime);
+            customer_return.delivered_datetime = Some(current_datetime);
+            customer_return.verified_datetime = Some(current_datetime);
         }
         // From Delivered to Verified
         (InvoiceStatus::Delivered, UpdateCustomerReturnStatus::Verified) => {
-            inbound_return.verified_datetime = Some(current_datetime);
+            customer_return.verified_datetime = Some(current_datetime);
         }
         _ => {}
     }
@@ -138,11 +138,11 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateCustom
 pub fn generate_lines_and_stock_lines(
     connection: &StorageConnection,
     store_id: &str,
-    inbound_return_id: &str,
+    customer_return_id: &str,
     supplier_id: &str,
 ) -> Result<Vec<LineAndStockLine>, UpdateCustomerReturnError> {
     let return_lines =
-        InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(inbound_return_id)?;
+        InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(customer_return_id)?;
     let mut result = Vec::new();
 
     for line in return_lines.into_iter() {
