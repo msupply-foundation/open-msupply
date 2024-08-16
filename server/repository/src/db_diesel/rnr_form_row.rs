@@ -88,19 +88,19 @@ impl<'a> RnRFormRowRepository<'a> {
 
     pub fn upsert_one(&self, rnr_form_row: &RnRFormRow) -> Result<i64, RepositoryError> {
         self._upsert_one(rnr_form_row)?;
-        self.insert_changelog(rnr_form_row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(rnr_form_row.to_owned(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
-        record_id: String,
+        row: RnRFormRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::RnrForm,
-            record_id,
+            record_id: row.id,
             row_action: action,
-            store_id: None,
+            store_id: Some(row.store_id),
             name_link_id: None,
         };
 
