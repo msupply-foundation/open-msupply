@@ -172,11 +172,12 @@ export const ContentArea = ({
             axis="y"
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
+            itemSize={60}
           >
             {line => (
               <RnRFormLine
                 key={line.id}
-                id={line.id}
+                line={line}
                 periodLength={periodLength}
                 saveLine={saveLine}
                 disabled={disabled}
