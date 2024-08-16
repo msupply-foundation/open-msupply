@@ -74,6 +74,7 @@ export const BasicTextInput = React.forwardRef<
           variant="standard"
           size="small"
           InputProps={{
+            disableInjectingGlobalStyles: true,
             disableUnderline: error ? true : false,
             ...InputProps,
             sx: {
