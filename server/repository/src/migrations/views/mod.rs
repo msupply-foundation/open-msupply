@@ -380,9 +380,9 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     LEFT JOIN report_document doc ON doc.name = program_enrolment.document_name;
 
 
-  CREATE VIEW requisitions_in_period AS
-    SELECT 'n/a' as id, program_id, period_id, store_id, order_type, type, count(*) as count FROM requisition
-        GROUP BY 1,2,3,4,5,6;
+      CREATE VIEW requisitions_in_period AS
+          SELECT 'n/a' as id, program_id, period_id, store_id, order_type, type, count(*) as count FROM requisition WHERE order_type IS NOT NULL
+            GROUP BY 1,2,3,4,5,6;   
       "#,
     )?;
 
@@ -404,7 +404,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         FROM
 	        invoice_line
         GROUP BY
-	        invoice_line.invoice_id
+	        invoice_line.invoice_id;
 
     CREATE VIEW contact_trace_name_link_view AS
       SELECT 
