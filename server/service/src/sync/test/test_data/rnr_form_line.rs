@@ -10,7 +10,7 @@ const RNR_FORM_LINE_1: (&str, &str) = (
     r#"{
         "id": "8524d61d-3f4d-43fd-9beb-326e6dcca16e",
         "rnr_form_id":  "cfd578f8-c3d5-4a04-a466-0ac81dde2aab",
-        "item_Link_id": "8F252B5884B74888AAB73A0D42C09E7A",
+        "item_link_id": "8F252B5884B74888AAB73A0D42C09E7A",
         "average_monthly_consumption": 0.0,
         "initial_balance": 0.0,
         "snapshot_quantity_received": 0.0,
