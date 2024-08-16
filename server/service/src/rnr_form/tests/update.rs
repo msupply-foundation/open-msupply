@@ -7,7 +7,7 @@ mod update {
         mock_store_a, mock_store_b,
     };
     use repository::test_db::setup_all;
-    use repository::{RnRFormLineRow, RnRFormLineRowRepository};
+    use repository::{RnRFormLineRow, RnRFormLineRowRepository, RnRFormLowStock};
 
     use crate::rnr_form::update::{
         UpdateRnRForm, UpdateRnRFormError, UpdateRnRFormLine, UpdateRnRFormLineError,
@@ -242,6 +242,7 @@ mod update {
                 id: mock_rnr_form_b_line_a().id,
                 rnr_form_id: mock_rnr_form_b().id,
                 item_id: mock_rnr_form_b_line_a().item_id,
+                requisition_line_id: None,
                 initial_balance: 10.0,
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 7.0,
@@ -259,7 +260,8 @@ mod update {
                 stock_out_duration: 0,
                 maximum_quantity: 0.0,
                 previous_monthly_consumption_values: "".to_string(),
-                entered_requested_quantity: Some(14.0)
+                entered_requested_quantity: Some(14.0),
+                low_stock: RnRFormLowStock::default(),
             }
         );
     }
