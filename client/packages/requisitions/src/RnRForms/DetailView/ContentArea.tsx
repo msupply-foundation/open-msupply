@@ -51,10 +51,7 @@ export const ContentArea = ({
   const t = useTranslation('replenishment');
   const ref = useRef<HTMLDivElement>(null);
 
-  // TODO: move to backend, should join on item and sort by name!
-  const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));
-
-  return lines.length === 0 ? (
+  return data.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
   ) : (
     <Box
@@ -168,7 +165,7 @@ export const ContentArea = ({
         <tbody>
           <ViewportList
             viewportRef={ref}
-            items={lines}
+            items={data}
             axis="y"
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
