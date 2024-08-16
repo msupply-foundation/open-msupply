@@ -5,6 +5,7 @@ import {
   useConfirmOnLeaving,
   useDirtyCheck,
   SortUtils,
+  uniqBy,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../../api';
@@ -46,9 +47,22 @@ export const useDraftPrescriptionLines = (
     }
 
     if (!data) return;
+    // Stock lines (data.nodes) are coming from availableStockLines from itemNode
+    // these are filtered by totalNumberOfPacks > 0 but it's possible to issue all of the packs
+    // from the batch in picked status, need to make sure these are not hidden
+    const invoiceLineStockLines = (lines ?? []).flatMap(l =>
+      l.stockLine ? [l.stockLine] : []
+    );
+    const stockLines = uniqBy([...data.nodes, ...invoiceLineStockLines], 'id');
+
+    const noStockLines = stockLines.length == 0;
+
+    if (noStockLines) {
+      return setDraftStockOutLines([]);
+    }
 
     setDraftStockOutLines(() => {
-      const rows = data.nodes
+      const rows = stockLines
         .map(batch => {
           const invoiceLine = lines?.find(
             ({ stockLine }) => stockLine?.id === batch.id
