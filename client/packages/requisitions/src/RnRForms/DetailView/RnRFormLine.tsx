@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   AlertIcon,
   BasicTextInput,
@@ -20,12 +20,12 @@ import { getLowStockStatus, getAmc } from './helpers';
 import { useRnRFormContext } from '../api';
 
 export const RnRFormLine = ({
-  id,
+  line: baseLine,
   saveLine,
   periodLength,
   disabled,
 }: {
-  id: string;
+  line: RnRFormLineFragment;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
   disabled: boolean;
@@ -33,10 +33,15 @@ export const RnRFormLine = ({
   const theme = useTheme();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
-  const { line, setLine } = useRnRFormContext(state => ({
-    line: state.lines[id],
-    setLine: state.setLine,
+  const { draftLine, setLine } = useRnRFormContext(state => ({
+    draftLine: state.dirtyLines[baseLine.id],
+    setLine: state.setDraftLine,
   }));
+
+  const line = useMemo(() => {
+    console.log('line change');
+    return draftLine ?? baseLine;
+  }, [draftLine, baseLine]);
 
   if (!line) return null;
 
@@ -44,7 +49,6 @@ export const RnRFormLine = ({
     const newPatch = {
       ...line,
       confirmed: false,
-      isDirty: true,
       ...update,
     };
 
@@ -250,11 +254,6 @@ export const RnRFormLine = ({
                 try {
                   setIsLoading(true);
                   await saveLine({ ...line, confirmed: !line.confirmed });
-                  setLine({
-                    ...line,
-                    confirmed: !line.confirmed,
-                    isDirty: false,
-                  });
                   setIsLoading(false);
                 } catch (e) {
                   error((e as Error).message)();
@@ -267,7 +266,7 @@ export const RnRFormLine = ({
             <CircleIcon
               sx={{
                 width: '10px',
-                visibility: line.isDirty ? 'visible' : 'hidden',
+                visibility: draftLine ? 'visible' : 'hidden',
                 color: 'secondary.main',
               }}
             />

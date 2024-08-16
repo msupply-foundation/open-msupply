@@ -60,11 +60,17 @@ const RnRFormDetailViewComponent = ({
 }) => {
   const t = useTranslation('replenishment');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const isDirty = useRnRFormContext(state =>
-    Object.values(state.lines).some(line => line.isDirty)
-  );
+
+  const { isDirty, clearPatches } = useRnRFormContext(state => ({
+    isDirty: !!Object.values(state.dirtyLines).length,
+    clearPatches: state.clearAllDirty,
+  }));
 
   useConfirmOnLeaving(isDirty);
+
+  useEffect(() => {
+    return () => clearPatches();
+  }, []);
 
   const tabs = [
     {
