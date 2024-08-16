@@ -6,7 +6,7 @@ import {
   useFormatDateTime,
   BaseDatePickerInput,
 } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH } from '../styleConstants';
+import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
@@ -38,17 +38,19 @@ const UIComponent = (props: ControlProps) => {
 
   return (
     <DetailInputWithLabelRow
-      sx={{
-        marginTop: 0.5,
-        gap: 2,
-        minWidth: '300px',
-        justifyContent: 'space-around',
+      sx={DefaultFormRowSx}
+      inputSx={{
+        '& > .MuiBox-root': {
+          flexBasis: '90%',
+          width: '100%',
+        },
       }}
       label={label}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
       Input={
         <BaseDatePickerInput
+          sx={{ width: '100%' }}
           // undefined is displayed as "now" and null as unset
           value={formatDateTime.getLocalDate(data)}
           onChange={e => {
