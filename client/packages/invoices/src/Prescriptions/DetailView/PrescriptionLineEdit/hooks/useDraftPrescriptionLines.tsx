@@ -11,7 +11,6 @@ import { usePrescription } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
 import {
-  DraftStockOutLineSeeds,
   UseDraftStockOutLinesControl,
   createDraftStockOutLine,
   createDraftStockOutLineFromStockLine,
@@ -23,17 +22,6 @@ export interface UseDraftPrescriptionLinesControl
   extends UseDraftStockOutLinesControl {
   updateNotes: (note: string) => void;
 }
-
-// Not using createDraftStockOutLine here since availableNumberOfPacks is reduced
-// when prescription's status is >= Picked and we do not want to add back the numberOfPacks from
-// invoice line for display in UI
-export const createDraftPrescriptionLine = ({
-  invoiceLine,
-}: DraftStockOutLineSeeds): DraftStockOutLine => ({
-  isCreated: !invoiceLine,
-  isUpdated: false,
-  ...invoiceLine,
-});
 
 export const useDraftPrescriptionLines = (
   item: DraftItem | null
@@ -66,7 +54,7 @@ export const useDraftPrescriptionLines = (
             ({ stockLine }) => stockLine?.id === batch.id
           );
           if (invoiceLine) {
-            return createDraftPrescriptionLine({
+            return createDraftStockOutLine({
               invoiceLine,
               invoiceId,
             });
