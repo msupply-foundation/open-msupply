@@ -215,7 +215,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                 RnRFormLineRow {
                     id,
                     rnr_form_id,
-                    item_id,
+                    item_link_id,
                     requisition_line_id: requisition_id,
                     snapshot_quantity_received,
                     snapshot_quantity_consumed,
@@ -257,7 +257,7 @@ fn generate(line_data: Vec<(UpdateRnRFormLine, RnRFormLineRow)>) -> Vec<RnRFormL
                     confirmed,
                     // From the original row
                     rnr_form_id,
-                    item_id,
+                    item_link_id,
                     requisition_line_id: requisition_id,
                     snapshot_quantity_received,
                     snapshot_quantity_consumed,
