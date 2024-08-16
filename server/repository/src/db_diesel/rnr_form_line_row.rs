@@ -3,8 +3,8 @@ use super::{
     rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
 };
 use crate::{
-    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
-    StorageConnection, Upsert,
+    ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError,
+    RnRFormRowRepository, RowActionType, StorageConnection, Upsert,
 };
 
 use chrono::NaiveDate;
@@ -111,7 +111,11 @@ impl<'a> RnRFormLineRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
-        self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
+        self.insert_changelog(
+            row.id.to_owned(),
+            Some(row.rnr_form_id.to_owned()),
+            RowActionType::Upsert,
+        )
     }
 
     pub fn update_requisition_line_id(
@@ -124,20 +128,33 @@ impl<'a> RnRFormLineRowRepository<'a> {
             .set(requisition_line_id.eq(linked_requisition_line_id))
             .execute(self.connection.lock().connection())?;
 
-        self.insert_changelog(rnr_form_line_id.to_owned(), RowActionType::Upsert)?;
+        let form_id = self
+            .find_one_by_id(rnr_form_line_id)?
+            .map(|r| r.rnr_form_id);
+
+        self.insert_changelog(rnr_form_line_id.to_owned(), form_id, RowActionType::Upsert)?;
         Ok(())
     }
 
     fn insert_changelog(
         &self,
         record_id: String,
+        form_id: Option<String>,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
+        // Get store id via rnr_form
+        let store_id = match form_id {
+            Some(form_id) => RnRFormRowRepository::new(self.connection)
+                .find_one_by_id(&form_id)?
+                .map(|r| r.store_id),
+            None => None,
+        };
+
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::RnrFormLine,
             record_id,
             row_action: action,
-            store_id: None,
+            store_id,
             name_link_id: None,
         };
 
