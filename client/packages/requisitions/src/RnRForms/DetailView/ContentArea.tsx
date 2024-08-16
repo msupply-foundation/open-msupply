@@ -173,6 +173,7 @@ export const ContentArea = ({
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
             itemSize={60}
+            overscan={5} // Gives a buffer for when android keyboard opens
           >
             {line => (
               <RnRFormLine
