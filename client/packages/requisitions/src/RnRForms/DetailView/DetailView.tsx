@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   DetailViewSkeleton,
   useNavigate,
@@ -18,7 +18,7 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { ContentArea } from './ContentArea';
-import { RnRForm, useRnRForm } from '../api';
+import { RnRFormQuery, useRnRForm, useRnRFormContext } from '../api';
 import { RnRFormLineFragment } from '../api/operations.generated';
 
 export const RnRFormDetailView = () => {
@@ -55,24 +55,16 @@ const RnRFormDetailViewComponent = ({
   data,
   updateLine,
 }: {
-  data: RnRForm;
+  data: RnRFormQuery;
   updateLine: (line: RnRFormLineFragment) => Promise<void>;
 }) => {
   const t = useTranslation('replenishment');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDirty = useRnRFormContext(state =>
+    Object.values(state.lines).some(line => line.isDirty)
+  );
 
-  const [dirtyLines, setDirtyLines] = useState<string[]>([]);
-
-  useConfirmOnLeaving(dirtyLines.length > 0);
-
-  const saveLine = async (line: RnRFormLineFragment) => {
-    setDirtyLines(lines => lines.filter(id => id !== line.id));
-    updateLine(line);
-  };
-
-  const markDirty = (id: string) => {
-    if (!dirtyLines.includes(id)) setDirtyLines(lines => [...lines, id]);
-  };
+  useConfirmOnLeaving(isDirty);
 
   const tabs = [
     {
@@ -80,9 +72,8 @@ const RnRFormDetailViewComponent = ({
         <ContentArea
           periodLength={data.periodLength}
           data={data.lines}
-          saveLine={saveLine}
+          saveLine={updateLine}
           disabled={data.status === RnRFormNodeStatus.Finalised}
-          markDirty={markDirty}
         />
       ),
       value: t('label.details'),
@@ -108,7 +99,7 @@ const RnRFormDetailViewComponent = ({
 
       <Footer
         rnrFormId={data.id}
-        unsavedChanges={dirtyLines.length > 0}
+        unsavedChanges={isDirty}
         linesUnconfirmed={linesUnconfirmed}
       />
     </>
