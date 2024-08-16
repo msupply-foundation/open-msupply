@@ -1,13 +1,13 @@
 import {
   useAuthContext,
-  useIsCentralServerApi,
+  useCentralServerCallback,
   useQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssets = () => {
-  const isCentralServer = useIsCentralServerApi();
+  const isCentralServer = useCentralServerCallback();
   const { store } = useAuthContext();
 
   const { queryParams } = useUrlQueryParams({
