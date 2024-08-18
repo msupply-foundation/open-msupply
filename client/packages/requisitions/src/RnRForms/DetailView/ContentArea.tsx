@@ -33,7 +33,7 @@ const HeaderCell = ({ label, tooltip, width }: HeaderCellProps) => {
       {tooltip === undefined ? (
         t(label)
       ) : (
-        <Box display="flex">
+        <Box display="flex" style={{ fontSize: 14 }}>
           {t(label)}
           <InfoTooltipIcon title={t(tooltip)} />
         </Box>
@@ -88,7 +88,7 @@ export const ContentArea = ({
           },
           '.second-column': {
             borderRight: '1px solid blue',
-            left: 83,
+            left: 74,
             minWidth: '300px',
             position: '-webkit-sticky',
           },
@@ -110,6 +110,7 @@ export const ContentArea = ({
             padding: '2px',
             border: '1px solid',
             borderColor: 'gray.light',
+            fontSize: '14px',
           },
         }}
       >
