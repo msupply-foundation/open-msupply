@@ -5,7 +5,8 @@ use repository::{
 
 use crate::sync::translations::{
     master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
-    program_requisition_settings::ProgramRequisitionSettingsTranslation, store::StoreTranslation,
+    program_requisition_settings::ProgramRequisitionSettingsTranslation,
+    requisition::RequisitionTranslation, store::StoreTranslation,
 };
 
 use super::{
@@ -32,6 +33,7 @@ impl SyncTranslation for RnRFormTranslation {
             PeriodTranslation.table_name(),
             StoreTranslation.table_name(),
             NameTranslation.table_name(),
+            RequisitionTranslation.table_name(),
         ]
     }
 
