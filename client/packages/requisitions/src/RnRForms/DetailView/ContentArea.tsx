@@ -95,7 +95,6 @@ export const ContentArea = ({
       />
       <Table
         sx={{
-          height: '500px',
           borderCollapse: 'separate',
           overflowY: 'scroll',
           '& th': {
