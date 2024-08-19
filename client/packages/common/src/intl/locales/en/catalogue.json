@@ -7,6 +7,7 @@
   "error.master-list-not-found": "Master list not found",
   "error.no-items": "No items to display.",
   "error.no-master-lists": "No Master Lists to display.",
+  "error.no-master-list": "This item is not assigned to a master list and therefore cannot be ordered, please contact your administrator if this is an error. Note that an item could be visible if there is stock on hand, even if the item isn't on a master list.",
   "error.no-pack-variants": "This item does not have any pack variants configured.",
   "error.pack-variant-exists": "Pack variant with the same pack size already exists for item",
   "filename.asset-categories": "Asset Categories",
