@@ -309,30 +309,32 @@ const RnRNumberCell = ({
   const backgroundColor = readOnly ? theme.palette.background.drawer : 'white';
 
   const [buffer, setBuffer] = useBufferState<number | undefined>(
-    NumUtils.round(value, 2)
+    NumUtils.round(value)
   );
 
   return (
     <td style={{ backgroundColor }}>
-      <NumericTextInput
-        InputProps={{
-          sx: {
-            backgroundColor,
-            '& .MuiInput-input': {
-              WebkitTextFillColor: textColor,
+      <Tooltip title={value === buffer ? '' : value}>
+        <NumericTextInput
+          InputProps={{
+            sx: {
+              backgroundColor,
+              '& .MuiInput-input': {
+                WebkitTextFillColor: textColor,
+              },
             },
-          },
-        }}
-        value={buffer}
-        disabled={readOnly ?? disabled}
-        onChange={newValue => {
-          setBuffer(newValue);
-          if (newValue !== undefined) onChange(newValue);
-        }}
-        max={max}
-        allowNegative={allowNegative}
-        defaultValue={0}
-      />
+          }}
+          value={buffer}
+          disabled={readOnly ?? disabled}
+          onChange={newValue => {
+            setBuffer(newValue);
+            if (newValue !== undefined) onChange(newValue);
+          }}
+          max={max}
+          allowNegative={allowNegative}
+          defaultValue={0}
+        />
+      </Tooltip>
     </td>
   );
 };
