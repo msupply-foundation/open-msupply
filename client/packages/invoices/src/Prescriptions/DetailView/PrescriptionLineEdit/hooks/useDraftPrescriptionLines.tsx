@@ -5,13 +5,13 @@ import {
   useConfirmOnLeaving,
   useDirtyCheck,
   SortUtils,
+  uniqBy,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
 import {
-  DraftStockOutLineSeeds,
   UseDraftStockOutLinesControl,
   createDraftStockOutLine,
   createDraftStockOutLineFromStockLine,
@@ -23,17 +23,6 @@ export interface UseDraftPrescriptionLinesControl
   extends UseDraftStockOutLinesControl {
   updateNotes: (note: string) => void;
 }
-
-// Not using createDraftStockOutLine here since availableNumberOfPacks is reduced
-// when prescription's status is >= Picked and we do not want to add back the numberOfPacks from
-// invoice line for display in UI
-export const createDraftPrescriptionLine = ({
-  invoiceLine,
-}: DraftStockOutLineSeeds): DraftStockOutLine => ({
-  isCreated: !invoiceLine,
-  isUpdated: false,
-  ...invoiceLine,
-});
 
 export const useDraftPrescriptionLines = (
   item: DraftItem | null
@@ -58,15 +47,28 @@ export const useDraftPrescriptionLines = (
     }
 
     if (!data) return;
+    // Stock lines (data.nodes) are coming from availableStockLines from itemNode
+    // these are filtered by totalNumberOfPacks > 0 but it's possible to issue all of the packs
+    // from the batch in picked status, need to make sure these are not hidden
+    const invoiceLineStockLines = (lines ?? []).flatMap(l =>
+      l.stockLine ? [l.stockLine] : []
+    );
+    const stockLines = uniqBy([...data.nodes, ...invoiceLineStockLines], 'id');
+
+    const noStockLines = stockLines.length == 0;
+
+    if (noStockLines) {
+      return setDraftStockOutLines([]);
+    }
 
     setDraftStockOutLines(() => {
-      const rows = data.nodes
+      const rows = stockLines
         .map(batch => {
           const invoiceLine = lines?.find(
             ({ stockLine }) => stockLine?.id === batch.id
           );
           if (invoiceLine) {
-            return createDraftPrescriptionLine({
+            return createDraftStockOutLine({
               invoiceLine,
               invoiceId,
             });
