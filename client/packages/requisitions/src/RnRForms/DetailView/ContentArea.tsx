@@ -78,10 +78,13 @@ export const ContentArea = ({
           '.first-column': {
             left: 0,
             position: '-webkit-sticky',
-            minWidth: 80,
+            minWidth: 90,
+            maxWidth: 90,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           },
           '.second-column': {
-            left: 80,
+            left: 90,
             minWidth: '300px',
             position: '-webkit-sticky',
           },
