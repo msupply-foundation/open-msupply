@@ -147,7 +147,7 @@ export const DetailView: FC<DetailViewProps> = ({
         ),
       });
     }
-  }, [contactData, setCustomBreadcrumbs, getLocalisedFullName, dateFormat]);
+  }, [contactData, setCustomBreadcrumbs, getLocalisedFullName]);
 
   const documentData =
     (data as ContactTrace) ?? contactData?.documentData ?? {};
