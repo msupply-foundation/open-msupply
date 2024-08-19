@@ -23,21 +23,18 @@ interface HeaderCellProps {
   label: LocaleKey;
   tooltip?: LocaleKey;
   width?: number;
+  className?: string;
 }
 
-const HeaderCell = ({ label, tooltip, width }: HeaderCellProps) => {
+const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
   const t = useTranslation('replenishment');
 
   return (
-    <th style={{ minWidth: width }}>
-      {tooltip === undefined ? (
-        t(label)
-      ) : (
-        <Box display="flex" style={{ fontSize: 14 }}>
-          {t(label)}
-          <InfoTooltipIcon title={t(tooltip)} />
-        </Box>
-      )}
+    <th className={className} style={{ minWidth: width }}>
+      <Box display="flex" style={{ fontSize: 14 }}>
+        {t(label)}
+        {tooltip && <InfoTooltipIcon title={t(tooltip)} />}
+      </Box>
     </th>
   );
 };
@@ -113,8 +110,14 @@ export const ContentArea = ({
       >
         <thead>
           <tr>
-            <th className="sticky-column first-column">{t('label.code')}</th>
-            <th className="sticky-column second-column">{t('label.name')}</th>
+            <HeaderCell
+              className="sticky-column first-column"
+              label="label.code"
+            />
+            <HeaderCell
+              className="sticky-column second-column"
+              label="label.name"
+            />
             <HeaderCell label="label.strength" width={85} />
             <HeaderCell label="label.unit" width={80} />
             <HeaderCell label="label.ven" width={55} />
