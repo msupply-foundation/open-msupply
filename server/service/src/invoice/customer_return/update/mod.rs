@@ -89,7 +89,7 @@ pub fn update_customer_return(
 #[derive(Debug, PartialEq)]
 pub enum UpdateCustomerReturnError {
     InvoiceDoesNotExist,
-    NotAnCustomerReturn,
+    NotACustomerReturn,
     NotThisStoreInvoice,
     CannotReverseInvoiceStatus,
     ReturnIsNotEditable,
@@ -248,7 +248,7 @@ mod test {
             Err(ServiceError::NotThisStoreInvoice)
         );
 
-        //NotAnCustomerReturn
+        //NotACustomerReturn
         assert_eq!(
             service.update_customer_return(
                 &context,
@@ -256,7 +256,7 @@ mod test {
                     r.id = mock_outbound_shipment_e().id;
                 })
             ),
-            Err(ServiceError::NotAnCustomerReturn)
+            Err(ServiceError::NotACustomerReturn)
         );
 
         //ReturnIsNotEditable

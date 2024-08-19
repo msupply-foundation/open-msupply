@@ -59,7 +59,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        ServiceError::NotAnCustomerReturn
+        ServiceError::NotACustomerReturn
         | ServiceError::ReturnDoesNotBelongToCurrentStore
         | ServiceError::ReturnIsNotEditable
         | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),

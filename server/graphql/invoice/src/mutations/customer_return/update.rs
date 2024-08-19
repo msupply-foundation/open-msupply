@@ -96,7 +96,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
-        | ServiceError::NotAnCustomerReturn
+        | ServiceError::NotACustomerReturn
         | ServiceError::NotThisStoreInvoice
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::ReturnIsNotEditable

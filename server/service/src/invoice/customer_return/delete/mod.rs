@@ -65,7 +65,7 @@ pub enum DeleteCustomerReturnError {
         line_id: String,
         error: DeleteStockInLineError,
     },
-    NotAnCustomerReturn,
+    NotACustomerReturn,
 }
 
 impl From<RepositoryError> for DeleteCustomerReturnError {
@@ -137,10 +137,10 @@ mod test {
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        //NotAnCustomerReturn
+        //NotACustomerReturn
         assert_eq!(
             service.delete_customer_return(&context, mock_outbound_shipment_a().id),
-            Err(ServiceError::NotAnCustomerReturn)
+            Err(ServiceError::NotACustomerReturn)
         );
 
         //NotThisStoreInvoice

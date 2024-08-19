@@ -19,7 +19,7 @@ pub fn validate(
         return Err(CannotEditFinalised);
     }
     if !check_invoice_type(&invoice, InvoiceType::CustomerReturn) {
-        return Err(NotAnCustomerReturn);
+        return Err(NotACustomerReturn);
     }
 
     Ok(invoice)
