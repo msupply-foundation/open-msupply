@@ -32,7 +32,7 @@ pub enum UpdateCustomerReturnLinesError {
     ReturnDoesNotExist,
     ReturnDoesNotBelongToCurrentStore,
     ReturnIsNotEditable,
-    NotAnCustomerReturn,
+    NotACustomerReturn,
     UpdatedReturnDoesNotExist,
     // Line Errors
     LineInsertError {
@@ -212,7 +212,7 @@ mod test {
             Err(ServiceError::ReturnDoesNotExist)
         );
 
-        // NotAnCustomerReturn
+        // NotACustomerReturn
         assert_eq!(
             service_provider
                 .invoice_service
@@ -223,7 +223,7 @@ mod test {
                         ..Default::default()
                     }
                 ),
-            Err(ServiceError::NotAnCustomerReturn)
+            Err(ServiceError::NotACustomerReturn)
         );
 
         // ReturnDoesNotBelongToCurrentStore
