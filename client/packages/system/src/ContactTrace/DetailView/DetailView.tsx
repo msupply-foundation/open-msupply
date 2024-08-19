@@ -147,6 +147,8 @@ export const DetailView: FC<DetailViewProps> = ({
         ),
       });
     }
+    // note: not including dateFormat in the dependencies as it shouldn't change
+    // and causes perpetual re-renders!
   }, [contactData, setCustomBreadcrumbs, getLocalisedFullName]);
 
   const documentData =
