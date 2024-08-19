@@ -1,5 +1,5 @@
 {
-  "button.add-from-master-list": "Utiliser une liste",
+  "button.add-from-master-list": "Utiliser une liste maîtresse",
   "button.new-shipment": "Nouvelle livraison",
   "button.requested-to-suggested": "Utiliser Quantités Suggérées",
   "error.amc-is-zero": "Aucune valeur de CMM",
@@ -156,5 +156,11 @@
   "messages.deleted-requisitions_many": "{{count}} commandes supprimées",
   "messages.return-saved": "Retour sauvegardé 🥳",
   "error.batch-is-reserved": "Le lot est déjà réservé/émis",
-  "error.inbound-shipment-not-editable": "L'expédition entrante n'est pas modifiable."
+  "error.inbound-shipment-not-editable": "L'expédition entrante n'est pas modifiable.",
+  "button.add-form": "Ajouter un formulaire",
+  "description.rnr-consumed-adjusted": "Montre la consommation ajustée prenant en compte les jours de rupture =(Consommation x 30)/(30 - Durée cumulée des ruptures)",
+  "description.expiry": "La date de péremption la plus proche du stock disponible",
+  "description.rnr-final-balance": "Niveau de stock à la fin de la période = Solde Initial + Q reçue - Q consommée ± Ajustements",
+  "description.rnr-amc": "La Consommation Mensuelle Moyenne est calculée en utilisant la Valeur de Consommation Ajustée, ce rapport-commande et les deux CMM précédentes, si disponibles",
+  "description.rnr-approved-quantity": "La quantité à commander ayant  été approuvée. Cette donnée est alimentée après finalisation et autorisation du formulaire R&R."
 }

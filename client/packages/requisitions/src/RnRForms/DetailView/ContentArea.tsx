@@ -33,7 +33,7 @@ const HeaderCell = ({ label, tooltip, width }: HeaderCellProps) => {
       {tooltip === undefined ? (
         t(label)
       ) : (
-        <Box display="flex">
+        <Box display="flex" style={{ fontSize: 14 }}>
           {t(label)}
           <InfoTooltipIcon title={t(tooltip)} />
         </Box>
@@ -51,10 +51,7 @@ export const ContentArea = ({
   const t = useTranslation('replenishment');
   const ref = useRef<HTMLDivElement>(null);
 
-  // TODO: move to backend, should join on item and sort by name!
-  const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));
-
-  return lines.length === 0 ? (
+  return data.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
   ) : (
     <Box
@@ -110,6 +107,7 @@ export const ContentArea = ({
             border: '1px solid',
             borderLeft: '0px',
             borderColor: 'gray.light',
+            fontSize: '14px',
           },
         }}
       >
@@ -168,7 +166,7 @@ export const ContentArea = ({
         <tbody>
           <ViewportList
             viewportRef={ref}
-            items={lines}
+            items={data}
             axis="y"
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
