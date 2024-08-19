@@ -21,7 +21,7 @@ export const AppBarButtonsComponent = () => {
   const { OpenButton } = useDetailPanel();
   const { data } = useResponse.document.get();
   const { print, isPrinting } = usePrintReport();
-  const t = useTranslation();
+  const t = useTranslation('reports'); // note: using 'reports' due to issue #4616
 
   const printReport = (
     report: ReportRowFragment,
