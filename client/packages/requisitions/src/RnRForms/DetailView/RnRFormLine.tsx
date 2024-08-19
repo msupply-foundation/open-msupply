@@ -10,6 +10,7 @@ import {
   LowStockStatus,
   NumericTextInput,
   NumUtils,
+  Tooltip,
   useBufferState,
   useNotification,
   useTheme,
@@ -114,9 +115,13 @@ export const RnRFormLine = ({
   return (
     <tr>
       {/* Read only Item data */}
-      <td className="sticky-column first-column" style={readOnlyColumn}>
-        {line.item.code}
-      </td>
+      {/* Add the tooltip here, as we hide overflow in the code column
+          to fix the code column width for side scroll */}
+      <Tooltip title={line.item.code}>
+        <td className="sticky-column first-column" style={readOnlyColumn}>
+          {line.item.code}
+        </td>
+      </Tooltip>
       <td style={readOnlyColumn} className="sticky-column second-column">
         {line.item.name}
       </td>
