@@ -7,6 +7,7 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
+  InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import {
   getNextPrescriptionStatus,
@@ -133,7 +134,9 @@ export const StatusChangeButton = () => {
     useStatusChangeButton();
   const isDisabled = usePrescription.utils.isDisabled();
   const t = useTranslation();
-  const noLines = lines?.totalCount === 0;
+  const noLines =
+    lines?.totalCount === 0 ||
+    lines?.nodes?.every(l => l.type === InvoiceLineNodeType.UnallocatedStock);
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
