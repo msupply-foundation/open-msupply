@@ -2,27 +2,27 @@ import { RnRFormLineFragment } from '../operations.generated';
 import { create } from '@openmsupply-client/common';
 
 interface RnRFormContext {
-  dirtyLines: Record<string, RnRFormLineFragment>;
+  draftLines: Record<string, RnRFormLineFragment>;
   setDraftLine: (line: RnRFormLineFragment) => void;
-  clearDirtyLine: (id: string) => void;
-  clearAllDirty: () => void;
+  clearDraftLine: (id: string) => void;
+  clearAllDraftLines: () => void;
 }
 
 export const useRnRFormContext = create<RnRFormContext>(set => ({
-  dirtyLines: {},
+  draftLines: {},
 
   setDraftLine: (line: RnRFormLineFragment) =>
     set(state => ({
       ...state,
-      dirtyLines: { ...state.dirtyLines, [line.id]: line },
+      draftLines: { ...state.draftLines, [line.id]: line },
     })),
-  clearDirtyLine: id =>
+  clearDraftLine: id =>
     set(state => {
-      const { [id]: _, ...dirtyLines } = state.dirtyLines;
+      const { [id]: _, ...draftLines } = state.draftLines;
       return {
         ...state,
-        dirtyLines,
+        draftLines,
       };
     }),
-  clearAllDirty: () => set(state => ({ ...state, dirtyLines: {} })),
+  clearAllDraftLines: () => set(state => ({ ...state, draftLines: {} })),
 }));
