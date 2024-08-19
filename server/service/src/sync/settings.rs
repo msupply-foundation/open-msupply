@@ -2,7 +2,7 @@ use serde::Deserialize;
 
 // See README.md for description of when this API version needs to be updated
 pub(crate) static SYNC_V5_VERSION: u32 = 5;
-pub(crate) static SYNC_V6_VERSION: u32 = 1;
+pub(crate) static SYNC_V6_VERSION: u32 = 2;
 
 #[derive(Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct SyncSettings {
