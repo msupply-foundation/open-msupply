@@ -34,7 +34,7 @@ export const RnRFormLine = ({
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const { draftLine, setLine } = useRnRFormContext(state => ({
-    draftLine: state.dirtyLines[baseLine.id],
+    draftLine: state.draftLines[baseLine.id],
     setLine: state.setDraftLine,
   }));
 

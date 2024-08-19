@@ -14,7 +14,7 @@ export interface RnRFormQuery extends RnRFormFragment {
 
 export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
   const { api, storeId } = useRnRGraphQL();
-  const { clearDirtyLine } = useRnRFormContext();
+  const { clearDraftLine } = useRnRFormContext();
   const queryKey = [RNR_FORM, rnrFormId];
 
   const {
@@ -43,7 +43,7 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
 
   const updateLine = async (line: RnRFormLineFragment) => {
     await updateLines([line]);
-    clearDirtyLine(line.id);
+    clearDraftLine(line.id);
   };
 
   const confirmRemainingLines = async () => {
