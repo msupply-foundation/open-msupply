@@ -122,7 +122,7 @@ pub fn generate_rnr_form_lines(
             Ok(RnRFormLineRow {
                 id: uuid(),
                 rnr_form_id: rnr_form_id.to_string(),
-                item_id,
+                item_link_id: item_id,
                 requisition_line_id: None,
                 previous_monthly_consumption_values,
                 average_monthly_consumption,
@@ -178,7 +178,7 @@ fn get_rnr_form_lines_map(
             .find_many_by_rnr_form_id(&previous_form_id)?;
 
         for row in rows.into_iter() {
-            form_lines_by_item_id.insert(row.item_id.clone(), row);
+            form_lines_by_item_id.insert(row.item_link_id.clone(), row);
         }
     }
 
@@ -237,7 +237,7 @@ pub fn get_previous_monthly_consumption(
 
         for line in lines.into_iter() {
             let amc_values = monthly_consumption_by_item_id
-                .entry(line.item_id.clone())
+                .entry(line.item_link_id.clone())
                 .or_insert(vec![]);
 
             let monthly_consumption_this_period = line.adjusted_quantity_consumed / period_months;

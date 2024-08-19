@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Keyboard } from '@capacitor/keyboard';
+import { Capacitor } from '@capacitor/core';
 import {
   Box,
   AppFooterPortal,
@@ -20,6 +22,7 @@ export const Footer = ({
   linesUnconfirmed: boolean;
   unsavedChanges: boolean;
 }) => {
+  const [showFooter, setShowFooter] = useState(true);
   const t = useTranslation('replenishment');
   const { navigateUpOne } = useBreadcrumbs();
   const { error, info, success } = useNotification();
@@ -55,9 +58,26 @@ export const Footer = ({
     showFinaliseConfirmation();
   };
 
+  // Hide while keyboard is open fora bit more screen real estate
+  useEffect(() => {
+    if (!Capacitor.isPluginAvailable('Keyboard')) return;
+
+    Keyboard.addListener('keyboardDidShow', () => {
+      setShowFooter(false);
+    });
+    Keyboard.addListener('keyboardDidHide', () => {
+      setShowFooter(true);
+    });
+
+    return () => {
+      Keyboard.removeAllListeners();
+    };
+  }, []);
+
   return (
     <AppFooterPortal
       Content={
+        showFooter &&
         data && (
           <Box
             gap={2}

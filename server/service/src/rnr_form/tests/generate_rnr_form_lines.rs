@@ -83,7 +83,7 @@ mod generate_rnr_form_lines {
             RnRFormLineRow {
                 id: line_id,
                 rnr_form_id,
-                item_id: item_query_test1().id,
+                item_link_id: item_query_test1().id,
                 requisition_line_id: None,
                 initial_balance: 2.0,
                 snapshot_quantity_received: 5.0,
@@ -370,21 +370,21 @@ mod generate_rnr_form_lines {
                     RnRFormLineRow {
                         id: "rnr_form_1_line_a".to_string(),
                         rnr_form_id: "rnr_form_1".to_string(),
-                        item_id: item_query_test1().id,
+                        item_link_id: item_query_test1().id,
                         adjusted_quantity_consumed: 1.0,
                         ..Default::default()
                     },
                     RnRFormLineRow {
                         id: "rnr_form_2_line_a".to_string(),
                         rnr_form_id: "rnr_form_2".to_string(),
-                        item_id: item_query_test1().id,
+                        item_link_id: item_query_test1().id,
                         adjusted_quantity_consumed: 2.0,
                         ..Default::default()
                     },
                     RnRFormLineRow {
                         id: "rnr_form_3_line_a".to_string(),
                         rnr_form_id: "rnr_form_3".to_string(),
-                        item_id: item_query_test1().id,
+                        item_link_id: item_query_test1().id,
                         adjusted_quantity_consumed: 3.0,
                         ..Default::default()
                     },
