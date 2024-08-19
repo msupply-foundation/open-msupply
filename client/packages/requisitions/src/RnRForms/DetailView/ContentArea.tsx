@@ -23,21 +23,18 @@ interface HeaderCellProps {
   label: LocaleKey;
   tooltip?: LocaleKey;
   width?: number;
+  className?: string;
 }
 
-const HeaderCell = ({ label, tooltip, width }: HeaderCellProps) => {
+const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
   const t = useTranslation('replenishment');
 
   return (
-    <th style={{ minWidth: width }}>
-      {tooltip === undefined ? (
-        t(label)
-      ) : (
-        <Box display="flex" style={{ fontSize: 14 }}>
-          {t(label)}
-          <InfoTooltipIcon title={t(tooltip)} />
-        </Box>
-      )}
+    <th className={className} style={{ minWidth: width }}>
+      <Box display="flex" style={{ fontSize: 14 }}>
+        {t(label)}
+        {tooltip && <InfoTooltipIcon title={t(tooltip)} />}
+      </Box>
     </th>
   );
 };
@@ -81,11 +78,13 @@ export const ContentArea = ({
           '.first-column': {
             left: 0,
             position: '-webkit-sticky',
-            width: 80,
+            minWidth: 90,
+            maxWidth: 90,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           },
           '.second-column': {
-            borderRight: '1px solid blue',
-            left: 74,
+            left: 90,
             minWidth: '300px',
             position: '-webkit-sticky',
           },
@@ -93,7 +92,6 @@ export const ContentArea = ({
       />
       <Table
         sx={{
-          height: '500px',
           borderCollapse: 'separate',
           overflowY: 'scroll',
           '& th': {
@@ -101,11 +99,13 @@ export const ContentArea = ({
             padding: 1,
             fontWeight: 'bold',
             border: '1px solid',
+            borderLeft: '0px',
             borderColor: 'gray.light',
           },
           '& td': {
             padding: '2px',
             border: '1px solid',
+            borderLeft: '0px',
             borderColor: 'gray.light',
             fontSize: '14px',
           },
@@ -113,8 +113,14 @@ export const ContentArea = ({
       >
         <thead>
           <tr>
-            <th className="sticky-column first-column">{t('label.code')}</th>
-            <th className="sticky-column second-column">{t('label.name')}</th>
+            <HeaderCell
+              className="sticky-column first-column"
+              label="label.code"
+            />
+            <HeaderCell
+              className="sticky-column second-column"
+              label="label.name"
+            />
             <HeaderCell label="label.strength" width={85} />
             <HeaderCell label="label.unit" width={80} />
             <HeaderCell label="label.ven" width={55} />
@@ -170,11 +176,13 @@ export const ContentArea = ({
             axis="y"
             renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
             initialDelay={1}
+            itemSize={60}
+            overscan={5} // Gives a buffer for when android keyboard opens
           >
             {line => (
               <RnRFormLine
                 key={line.id}
-                id={line.id}
+                line={line}
                 periodLength={periodLength}
                 saveLine={saveLine}
                 disabled={disabled}

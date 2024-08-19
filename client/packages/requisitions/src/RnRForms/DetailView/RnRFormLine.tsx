@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   AlertIcon,
   BasicTextInput,
@@ -10,6 +10,7 @@ import {
   LowStockStatus,
   NumericTextInput,
   NumUtils,
+  Tooltip,
   useBufferState,
   useNotification,
   useTheme,
@@ -20,12 +21,12 @@ import { getLowStockStatus, getAmc } from './helpers';
 import { useRnRFormContext } from '../api';
 
 export const RnRFormLine = ({
-  id,
+  line: baseLine,
   saveLine,
   periodLength,
   disabled,
 }: {
-  id: string;
+  line: RnRFormLineFragment;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
   disabled: boolean;
@@ -33,17 +34,21 @@ export const RnRFormLine = ({
   const theme = useTheme();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
-  const line = useRnRFormContext(state => state.lines[id]);
+  const { draftLine, setLine } = useRnRFormContext(state => ({
+    draftLine: state.draftLines[baseLine.id],
+    setLine: state.setDraftLine,
+  }));
+
+  const line = useMemo(() => {
+    return draftLine ?? baseLine;
+  }, [draftLine, baseLine]);
 
   if (!line) return null;
-
-  const setLine = useRnRFormContext(state => state.setLine);
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
       ...line,
       confirmed: false,
-      isDirty: true,
       ...update,
     };
 
@@ -110,9 +115,13 @@ export const RnRFormLine = ({
   return (
     <tr>
       {/* Read only Item data */}
-      <td className="sticky-column first-column" style={readOnlyColumn}>
-        {line.item.code}
-      </td>
+      {/* Add the tooltip here, as we hide overflow in the code column
+          to fix the code column width for side scroll */}
+      <Tooltip title={line.item.code}>
+        <td className="sticky-column first-column" style={readOnlyColumn}>
+          {line.item.code}
+        </td>
+      </Tooltip>
       <td style={readOnlyColumn} className="sticky-column second-column">
         {line.item.name}
       </td>
@@ -249,11 +258,6 @@ export const RnRFormLine = ({
                 try {
                   setIsLoading(true);
                   await saveLine({ ...line, confirmed: !line.confirmed });
-                  setLine({
-                    ...line,
-                    confirmed: !line.confirmed,
-                    isDirty: false,
-                  });
                   setIsLoading(false);
                 } catch (e) {
                   error((e as Error).message)();
@@ -266,7 +270,7 @@ export const RnRFormLine = ({
             <CircleIcon
               sx={{
                 width: '10px',
-                visibility: line.isDirty ? 'visible' : 'hidden',
+                visibility: draftLine ? 'visible' : 'hidden',
                 color: 'secondary.main',
               }}
             />
