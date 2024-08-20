@@ -8,6 +8,7 @@ import {
   SplitButtonOption,
   useConfirmationModal,
   InvoiceLineNodeType,
+  useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import {
   getNextPrescriptionStatus,
@@ -141,7 +142,15 @@ export const StatusChangeButton = () => {
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
+  const noLinesNotification = useDisabledNotificationToast(
+    t('messages.no-lines')
+  );
+
+  if (!selectedOption) return null;
+  if (isDisabled) return null;
+
   const onStatusClick = () => {
+    if (noLines) return noLinesNotification();
     return getConfirmation();
   };
 
