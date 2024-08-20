@@ -68,7 +68,9 @@ pub enum InvoiceType {
     InventoryAddition,
     InventoryReduction,
     Repack,
+    #[serde(alias = "OUTBOUND_RETURN")]
     SupplierReturn,
+    #[serde(alias = "INBOUND_RETURN")]
     CustomerReturn,
 }
 
