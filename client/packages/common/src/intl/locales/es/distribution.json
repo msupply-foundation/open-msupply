@@ -42,7 +42,7 @@
   "label.add-batch": "Agregar lote",
   "label.any": "Alguno",
   "label.customer-name": "Nombre del cliente",
-  "label.customer-ref": "Referencia del cliente",
+  "label.customer-ref": "Referencia de cliente",
   "label.group-by-item": "Agrupar por artículo",
   "label.no-unallocated-rows-selected": "Todas las filas seleccionadas ya están asignadas",
   "label.placeholder": "Marcador de posición",
@@ -139,7 +139,7 @@
   "messages.select-rows-to-return": "Selecciona filas para devolverlas",
   "messages.return-saved": "Devolución guardada 🥳",
   "messages.confirm-not-fully-supplied_many": "Si finalizas, no podrás suministrar más artículos al cliente desde esta requisición\n\n{{count}} líneas en esta requisición no han sido suministradas completamente al cliente.\n¿Aún deseas continuar?",
-  "info.automatic-return": "Esta devolución fue creada automáticamente como resultado de una devolución saliente en otro almacén.",
+  "info.automatic-return": "Esta devolución se creó automáticamente como resultado de una Devolución de Proveedor en otro almacén.",
   "messages.cant-return-shipment": "No se puede procesar la devolución de líneas hasta que el estado sea 'Enviado'",
   "messages.deleted-returns_one": "1 Devolución eliminada",
   "messages.error-saving-return": "Error al guardar la devolución 🥺",
@@ -147,5 +147,9 @@
   "messages.confirm-not-fully-supplied_few": "Si finalizas, no podrás suministrar más artículos al cliente desde esta requisición\n\n{{count}} líneas en esta requisición no han sido suministradas completamente al cliente.\n¿Aún deseas continuar?",
   "messages.confirm-not-fully-supplied_other": "Si finalizas, no podrás suministrar más artículos al cliente desde esta requisición\n\n{{count}} líneas en esta requisición no han sido suministradas completamente al cliente.\n¿Aún deseas continuar?",
   "label.shipment-created": "Envío creado",
-  "messages.requisition-no-stock": "No hay inventario disponible actualmente"
+  "messages.requisition-no-stock": "No hay inventario disponible actualmente",
+  "error.no-customer-returns": "No hay Devoluciones de Cliente para mostrar.",
+  "messages.confirm-delete-customer-return": "Esto eliminará permanentemente la Devolución de Cliente #{{number}}",
+  "error.no-customer-return-items": "No se han agregado artículos a esta devolución.",
+  "messages.click-to-return-to-customer-returns": "No se encontró una devolución con ese ID. Haz clic en Aceptar para regresar a la lista de Devoluciones de Clientes"
 }
