@@ -64,5 +64,7 @@
   "label.reason": "Razón",
   "label.new-pack-variant": "Nueva variante de paquete",
   "messages.confirm-delete-pack-variant": "Esto eliminará {{packVariantName}} de la lista de variantes de paquete.",
-  "messages.deleted-reasons_other": "Se eliminó {{count}} razones"
+  "messages.deleted-reasons_other": "Se eliminó {{count}} razones",
+  "label.percentage": "Porcentaje",
+  "heading.schedule": "Calendario"
 }
