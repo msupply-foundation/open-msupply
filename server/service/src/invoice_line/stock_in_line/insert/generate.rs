@@ -2,8 +2,7 @@ use crate::{
     barcode::{self, BarcodeInput},
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
     invoice_line::stock_in_line::{
-        convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack, generate_batch,
-        StockInType, StockLineInput,
+        convert_invoice_line_to_single_pack, generate_batch, StockInType, StockLineInput,
     },
     store_preference::get_store_preferences,
 };
