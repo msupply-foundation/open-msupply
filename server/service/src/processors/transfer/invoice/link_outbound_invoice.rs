@@ -16,7 +16,7 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
     /// Outbound invoice will be linked to inbound invoice when all below conditions are met:
     ///
     /// 1. Source invoice name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source invoice is either Inbound shipment or Inbound Return
+    /// 2. Source invoice is either Inbound shipment or Customer Return
     /// 3. Linked invoice exists (the outbound invoice)
     /// 4. Linked outbound invoice is not linked to source inbound invoice
     ///
@@ -39,7 +39,7 @@ impl InvoiceTransferProcessor for LinkOutboundInvoiceProcessor {
         // 2.
         if !matches!(
             inbound_invoice.invoice_row.r#type,
-            InvoiceType::InboundShipment | InvoiceType::InboundReturn
+            InvoiceType::InboundShipment | InvoiceType::CustomerReturn
         ) {
             return Ok(None);
         }

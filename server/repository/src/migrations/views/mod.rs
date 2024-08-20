@@ -129,11 +129,11 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         item_link_id AS item_id,
         store_id,
         CASE WHEN invoice.type IN (
-            'OUTBOUND_SHIPMENT', 'OUTBOUND_RETURN',
+            'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN',
             'PRESCRIPTION'
         ) THEN picked_datetime
                     WHEN invoice.type IN (
-            'INBOUND_SHIPMENT', 'INBOUND_RETURN'
+            'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
         ) THEN delivered_datetime
                     WHEN invoice.type IN (
             'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
@@ -181,8 +181,8 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     LEFT OUTER JOIN stock_movement
         ON stock_movement.item_id = items_and_stores.item_id
             AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='INBOUND_RETURN'
-      OR invoice_type='OUTBOUND_RETURN'
+    WHERE invoice_type='CUSTOMER_RETURN'
+      OR invoice_type='SUPPLIER_RETURN'
       OR invoice_type='INVENTORY_ADDITION'
       OR invoice_type='INVENTORY_REDUCTION';
 

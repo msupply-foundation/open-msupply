@@ -104,7 +104,6 @@
   "button.new-return": "Nouveau retour",
   "button.return-lines": "Créer un retour pour les lignes sélectionnées",
   "error.failed-to-create-return": "Impossible de créer un retour !",
-  "error.no-outbound-returns": "Il n'y a pas de retours fournisseur à afficher.",
   "error.return-not-found": "Retour non trouvé",
   "label.cant-zero-quantity-disabled": "Les quantités des lignes ne peuvent être mises à 0 que lorsque le statut est \"Nouveau\"",
   "label.inbound-shipment": "Livraison entrante",

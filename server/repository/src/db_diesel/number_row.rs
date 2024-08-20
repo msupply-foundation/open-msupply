@@ -37,8 +37,8 @@ pub enum NumberRowType {
     Stocktake,
     Repack,
     Prescription,
-    InboundReturn,
-    OutboundReturn,
+    SupplierReturn,
+    CustomerReturn,
     Program(String),
 }
 
@@ -54,8 +54,8 @@ impl fmt::Display for NumberRowType {
             NumberRowType::Stocktake => write!(f, "STOCKTAKE"),
             NumberRowType::Repack => write!(f, "REPACK"),
             NumberRowType::Prescription => write!(f, "PRESCRIPTION"),
-            NumberRowType::InboundReturn => write!(f, "INBOUND_RETURN"),
-            NumberRowType::OutboundReturn => write!(f, "OUTBOUND_RETURN"),
+            NumberRowType::SupplierReturn => write!(f, "SUPPLIER_RETURN"),
+            NumberRowType::CustomerReturn => write!(f, "CUSTOMER_RETURN"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
         }
     }
@@ -74,8 +74,8 @@ impl TryFrom<String> for NumberRowType {
             "RESPONSE_REQUISITION" => Ok(NumberRowType::ResponseRequisition),
             "STOCKTAKE" => Ok(NumberRowType::Stocktake),
             "REPACK" => Ok(NumberRowType::Repack),
-            "INBOUND_RETURN" => Ok(NumberRowType::InboundReturn),
-            "OUTBOUND_RETURN" => Ok(NumberRowType::OutboundReturn),
+            "SUPPLIER_RETURN" => Ok(NumberRowType::SupplierReturn),
+            "CUSTOMER_RETURN" => Ok(NumberRowType::CustomerReturn),
             _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => {
                     if prefix == "PROGRAM" {
@@ -244,8 +244,8 @@ mod number_row_mapping_test {
 
         for number_row_type in [
             NumberRowType::Program("EXAMPLE_TEST".to_string()),
-            NumberRowType::OutboundReturn,
-            NumberRowType::InboundReturn,
+            NumberRowType::SupplierReturn,
+            NumberRowType::CustomerReturn,
         ] {
             match number_row_type {
                 NumberRowType::InboundShipment => {
@@ -315,13 +315,13 @@ mod number_row_mapping_test {
                             == NumberRowType::Repack
                     )
                 }
-                NumberRowType::InboundReturn => assert!(
-                    NumberRowType::try_from(NumberRowType::InboundReturn.to_string()).unwrap()
-                        == NumberRowType::InboundReturn
+                NumberRowType::SupplierReturn => assert!(
+                    NumberRowType::try_from(NumberRowType::SupplierReturn.to_string()).unwrap()
+                        == NumberRowType::SupplierReturn
                 ),
-                NumberRowType::OutboundReturn => assert!(
-                    NumberRowType::try_from(NumberRowType::OutboundReturn.to_string()).unwrap()
-                        == NumberRowType::OutboundReturn
+                NumberRowType::CustomerReturn => assert!(
+                    NumberRowType::try_from(NumberRowType::CustomerReturn.to_string()).unwrap()
+                        == NumberRowType::CustomerReturn
                 ),
             }
         }

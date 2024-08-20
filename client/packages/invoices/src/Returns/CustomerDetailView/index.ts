@@ -1,0 +1,1 @@
+export { CustomerReturnDetailView } from './DetailView';

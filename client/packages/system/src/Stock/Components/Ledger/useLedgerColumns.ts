@@ -86,10 +86,10 @@ const getLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
       return 'inbound-shipment';
     case InvoiceNodeType.OutboundShipment:
       return 'outbound-shipment';
-    case InvoiceNodeType.InboundReturn:
-      return 'inbound-return';
-    case InvoiceNodeType.OutboundReturn:
-      return 'outbound-return';
+    case InvoiceNodeType.CustomerReturn:
+      return 'customer-return';
+    case InvoiceNodeType.SupplierReturn:
+      return 'supplier-return';
     case InvoiceNodeType.Prescription:
       return 'prescription';
     case InvoiceNodeType.InventoryAddition:

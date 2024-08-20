@@ -78,10 +78,10 @@ pub enum Resource {
     MutateOutboundShipment,
     // inbound shipment
     MutateInboundShipment,
-    // outbound return
-    MutateOutboundReturn,
-    // inbound return
-    MutateInboundReturn,
+    // supplier return
+    MutateSupplierReturn,
+    // customer return
+    MutateCustomerReturn,
     // prescription
     MutatePrescription,
     // reporting
@@ -355,8 +355,8 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
             PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
             PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
-            PermissionDSL::HasPermission(PermissionType::OutboundReturnQuery),
-            PermissionDSL::HasPermission(PermissionType::InboundReturnQuery),
+            PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
+            PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
         ]),
     );
     map.insert(
@@ -383,20 +383,20 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(PermissionType::InboundShipmentMutate),
         ]),
     );
-    // outbound return
+    // Supplier return
     map.insert(
-        Resource::MutateOutboundReturn,
+        Resource::MutateSupplierReturn,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::OutboundReturnMutate),
+            PermissionDSL::HasPermission(PermissionType::SupplierReturnMutate),
         ]),
     );
-    // inbound return
+    // Customer return
     map.insert(
-        Resource::MutateInboundReturn,
+        Resource::MutateCustomerReturn,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(PermissionType::InboundReturnMutate),
+            PermissionDSL::HasPermission(PermissionType::CustomerReturnMutate),
         ]),
     );
     // prescription
