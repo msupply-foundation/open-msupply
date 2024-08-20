@@ -186,5 +186,6 @@
   "label.rnr-received": "Recibido",
   "label.rnr-stock-out-duration": "Tiempo de desabastecimiento",
   "label.schedule": "Calendario",
-  "messages.click-to-return-to-rnr-list": "Haz clic aquí para volver a la lista de formularios R&R"
+  "messages.click-to-return-to-rnr-list": "Haz clic aquí para volver a la lista de formularios R&R",
+  "error.no-supplier-returns": "No hay devoluciones de proveedor para mostrar."
 }
