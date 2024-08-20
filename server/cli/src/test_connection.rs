@@ -2,6 +2,7 @@ extern crate machine_uid;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use clap::Parser;
+use egui::Color32;
 use log::*;
 use repository::{get_storage_connection_manager, migrations::Version};
 use reqwest::{Client, Url};
@@ -20,16 +21,15 @@ use service::{
 };
 use tokio::sync::mpsc;
 
+const GUI_WIDTH: f32 = 600.0;
+const GUI_HEIGHT: f32 = 400.0;
+
 #[derive(Parser, Debug)]
 struct Args {
-    #[arg(short, long)]
-    gui: bool,
     #[arg(short, long)]
     username: Option<String>,
     #[arg(short, long)]
     password: Option<String>,
-    #[arg(short, long)]
-    server_uuid: Option<String>,
 }
 
 #[tokio::main]
@@ -37,14 +37,13 @@ async fn main() {
     simple_logger::init_with_level(Level::Info).unwrap();
 
     let args = Args::parse();
-    let gui = args.gui;
+    let gui = args.username.is_none();
 
     let (gui_tx, gui_rc) = mpsc::channel(10);
-    let test_task = tokio::spawn(perform_tests(gui_tx, args));
 
     if gui {
         let options = eframe::NativeOptions {
-            viewport: egui::ViewportBuilder::default().with_inner_size([320.0, 240.0]),
+            viewport: egui::ViewportBuilder::default().with_inner_size([GUI_WIDTH, GUI_HEIGHT]),
             ..Default::default()
         };
 
@@ -57,13 +56,21 @@ async fn main() {
             }),
         )
         .unwrap();
-    }
 
-    test_task.await.unwrap();
+        let gui_state = GuiState::new(
+            args.username.unwrap_or("".to_string()),
+            args.password.unwrap_or("".to_string()),
+        );
+
+        gui_tx.send(gui_state.clone()).await.unwrap();
+        return;
+    } else {
+        let test_task: tokio::task::JoinHandle<()> = tokio::spawn(perform_tests(gui_tx, args, gui));
+        test_task.await.unwrap();
+    }
 }
 
-async fn perform_tests(gui_tx: mpsc::Sender<GuiState>, args: Args) {
-    let gui = args.gui;
+async fn perform_tests(gui_tx: mpsc::Sender<GuiState>, args: Args, gui: bool) {
     let mut test_data = TestData {
         server_config: None,
         sync_api_v5: None,
@@ -79,16 +86,10 @@ async fn perform_tests(gui_tx: mpsc::Sender<GuiState>, args: Args) {
         Box::new(SyncV6Test),
     ];
 
-    let mut gui_state = GuiState {
-        tests: vec![
-            ("Config".to_string(), TestState::Pending),
-            ("Ping".to_string(), TestState::Pending),
-            ("Database".to_string(), TestState::Pending),
-            ("Login".to_string(), TestState::Pending),
-            ("Sync V5".to_string(), TestState::Pending),
-            ("Sync V6".to_string(), TestState::Pending),
-        ],
-    };
+    let mut gui_state = GuiState::new(
+        test_data.args.username.clone().unwrap_or("".to_string()),
+        test_data.args.password.clone().unwrap_or("".to_string()),
+    );
 
     for i in 0..tests.len() {
         if gui {
@@ -158,7 +159,7 @@ impl Test for PingTest {
 
         let response = reqwest::get(url)
             .await
-            .map_err(|err| anyhow!("Failed to get response: {:?}", err))?;
+            .map_err(|err| anyhow!("Ping test: Failed to get response: {:?}", err))?;
 
         if response.status().is_success() {
             Ok("Successfully pinged server".to_string())
@@ -208,17 +209,8 @@ impl Test for LoginTest {
             .as_ref()
             .ok_or(anyhow!("No config loaded".to_string()))?;
 
-        let username = test_data
-            .args
-            .username
-            .clone()
-            .unwrap_or("admin".to_string());
-        let password = test_data
-            .args
-            .password
-            .clone()
-            .unwrap_or("pass".to_string());
-        // let url = get_url(config)?;
+        let username = test_data.args.username.clone().unwrap_or("".to_string());
+        let password = test_data.args.password.clone().unwrap_or("".to_string());
         let sync_settings = get_sync_settings(config)?;
 
         info!("Testing login at url: {}", sync_settings.url);
@@ -261,13 +253,9 @@ impl Test for SyncTest {
             .clone()
             .ok_or(anyhow!("No server base dir in config"))?;
 
-        let hardware_id = test_data.args.server_uuid.clone().unwrap_or(
-            AppDataService::new(server_folder.as_str())
-                .get_hardware_id()
-                .map_err(|err| {
-                    anyhow!("Failed to get hardware ID from app data service: {:?}", err)
-                })?,
-        );
+        let hardware_id = AppDataService::new(server_folder.as_str())
+            .get_hardware_id()
+            .map_err(|err| anyhow!("Failed to get hardware ID from app data service: {:?}", err))?;
 
         info!("Testing sync at url: {}", v5_settings.url);
         info!("    Username: {}", v5_settings.username);
@@ -358,6 +346,25 @@ impl Test for SyncV6Test {
 #[derive(Clone, Default)]
 struct GuiState {
     tests: Vec<(String, TestState)>,
+    username: String,
+    password: String,
+}
+
+impl GuiState {
+    fn new(username: String, password: String) -> Self {
+        Self {
+            tests: vec![
+                ("Config".to_string(), TestState::Pending),
+                ("Ping".to_string(), TestState::Pending),
+                ("Database".to_string(), TestState::Pending),
+                ("Login".to_string(), TestState::Pending),
+                ("Sync V5".to_string(), TestState::Pending),
+                ("Sync V6".to_string(), TestState::Pending),
+            ],
+            username,
+            password,
+        }
+    }
 }
 
 struct Gui {
@@ -378,14 +385,47 @@ impl eframe::App for Gui {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Open mSupply environment check");
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.label("Username");
+                let _username_response =
+                    ui.add(egui::TextEdit::singleline(&mut self.state.username));
+            });
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.label("Password");
+                let _response = ui.add(egui::TextEdit::singleline(&mut self.state.password));
+            });
+            let start_button = egui::Button::new("Start").fill(Color32::LIGHT_GREEN);
+            ui.with_layout(egui::Layout::top_down(egui::Align::Center), {
+                |ui| {
+                    if ui.add(start_button).clicked() {
+                        let (gui_tx, gui_rc) = mpsc::channel(10);
+                        self.gui_rc = gui_rc;
+                        let _ = tokio::spawn(perform_tests(
+                            gui_tx,
+                            Args {
+                                username: Some(self.state.username.clone()),
+                                password: Some(self.state.password.clone()),
+                            },
+                            true,
+                        ));
+                    }
+                }
+            });
+
             ui.separator();
 
-            for (test_name, test_state) in &self.state.tests {
-                test_state.display(ui, test_name);
-            }
+            egui::ScrollArea::vertical()
+                .max_height(GUI_HEIGHT - 90.0)
+                .show(ui, |ui| {
+                    for (test_name, test_state) in &self.state.tests {
+                        test_state.display(ui, test_name);
+                    }
+                });
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Center), |ui| {
-                if ui.button("Done").clicked() {
+                let close_button = egui::Button::new("Close").fill(Color32::LIGHT_RED);
+
+                if ui.add(close_button).clicked() {
                     std::process::exit(0);
                 }
             });
