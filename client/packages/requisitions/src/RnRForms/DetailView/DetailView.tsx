@@ -11,14 +11,15 @@ import {
   TableProvider,
   createTableStore,
   RnRFormNodeStatus,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { ContentArea } from './ContentArea';
-import { RnRForm, useRnRForm } from '../../api';
-import { RnRFormLineFragment } from '../../api/operations.generated';
+import { RnRFormQuery, useRnRForm, useRnRFormContext } from '../api';
+import { RnRFormLineFragment } from '../api/operations.generated';
 
 export const RnRFormDetailView = () => {
   const { id = '' } = useParams();
@@ -28,18 +29,18 @@ export const RnRFormDetailView = () => {
     updateLine: { updateLine },
   } = useRnRForm({ rnrFormId: id });
   const navigate = useNavigate();
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
 
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <RnRFormDetailViewComponent data={data} saveLine={updateLine} />
+    <RnRFormDetailViewComponent data={data} updateLine={updateLine} />
   ) : (
     <AlertModal
       open={true}
       onOk={() =>
         navigate(
-          RouteBuilder.create(AppRoute.Programs)
+          RouteBuilder.create(AppRoute.Replenishment)
             .addPart(AppRoute.RnRForms)
             .build()
         )
@@ -52,13 +53,18 @@ export const RnRFormDetailView = () => {
 
 const RnRFormDetailViewComponent = ({
   data,
-  saveLine,
+  updateLine,
 }: {
-  data: RnRForm;
-  saveLine: (line: RnRFormLineFragment) => Promise<void>;
+  data: RnRFormQuery;
+  updateLine: (line: RnRFormLineFragment) => Promise<void>;
 }) => {
-  const t = useTranslation('programs');
+  const t = useTranslation('replenishment');
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isDirty = useRnRFormContext(state =>
+    Object.values(state.lines).some(line => line.isDirty)
+  );
+
+  useConfirmOnLeaving(isDirty);
 
   const tabs = [
     {
@@ -66,7 +72,7 @@ const RnRFormDetailViewComponent = ({
         <ContentArea
           periodLength={data.periodLength}
           data={data.lines}
-          saveLine={saveLine}
+          saveLine={updateLine}
           disabled={data.status === RnRFormNodeStatus.Finalised}
         />
       ),
@@ -91,7 +97,11 @@ const RnRFormDetailViewComponent = ({
         <DetailTabs tabs={tabs} />
       </TableProvider>
 
-      <Footer rnrFormId={data.id} linesUnconfirmed={linesUnconfirmed} />
+      <Footer
+        rnrFormId={data.id}
+        unsavedChanges={isDirty}
+        linesUnconfirmed={linesUnconfirmed}
+      />
     </>
   );
 };

@@ -22,6 +22,7 @@ const Options = z
      */
     examples: z.array(z.string()).optional(),
     width: z.string().optional(),
+    flexBasis: z.string().optional(),
     /**
      * If true, text input will expand to multiple lines if required (default:
      * true)
@@ -32,6 +33,10 @@ const Options = z
      * if `multiline === false`)
      */
     rows: z.number().optional(),
+    /**
+     * Should component debounce it's input, optional default = true
+     */
+    useDebounce: z.boolean().optional(),
   })
   .strict()
   .optional();
@@ -96,11 +101,13 @@ const UIComponent = (props: ControlProps) => {
   } = useOptions(props.uischema.options);
   const customErrors = usePatternValidation(path, pattern, data);
   const error = !!errors || !!zErrors || !!customErrors;
-  const { text, onChange } = useDebouncedTextInput(
+  const onChange = (value: string | undefined) =>
+    handleChange(path, !!value ? value : undefined);
+  const { text, onChange: onDebounceChange } = useDebouncedTextInput(
     data,
-    (value: string | undefined) =>
-      handleChange(path, !!value ? value : undefined)
+    onChange
   );
+
   const t = useTranslation();
 
   const examples =
@@ -111,7 +118,7 @@ const UIComponent = (props: ControlProps) => {
       ? t('error.json-bad-format-with-examples', {
           examples: examples.join('", "'),
         })
-      : zErrors ?? errors ?? customErrors;
+      : (zErrors ?? errors ?? customErrors);
 
   if (!props.visible) {
     return null;
@@ -121,6 +128,8 @@ const UIComponent = (props: ControlProps) => {
   const rows = schemaOptions?.rows;
 
   const width = schemaOptions?.width ?? '100%';
+  const flexBasis = schemaOptions?.flexBasis ?? '100%';
+  const useDebounce = schemaOptions?.useDebounce ?? true;
 
   return (
     <DetailInputWithLabelRow
@@ -129,8 +138,11 @@ const UIComponent = (props: ControlProps) => {
       inputProps={{
         value: text ?? '',
         sx: { width },
-        style: { flexBasis: '100%' },
-        onChange: e => onChange(e.target.value ?? ''),
+        style: { flexBasis },
+        onChange: e =>
+          useDebounce
+            ? onDebounceChange(e.target.value ?? '')
+            : onChange(e.target.value ?? ''),
         disabled: !props.enabled,
         error,
         helperText,

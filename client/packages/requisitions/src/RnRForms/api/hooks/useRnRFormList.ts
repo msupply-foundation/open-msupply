@@ -5,7 +5,7 @@ import {
   RnRFormFilterInput,
 } from '@openmsupply-client/common';
 import { RnRFormFragment } from '../operations.generated';
-import { useProgramsGraphQL } from '../useProgramsGraphQL';
+import { useRnRGraphQL } from '../useRnRGraphQL';
 import { LIST, RNR_FORM } from './keys';
 
 type ListParams = {
@@ -24,7 +24,7 @@ export const useRnRFormList = ({
   offset,
   filterBy,
 }: ListParams) => {
-  const { api, storeId } = useProgramsGraphQL();
+  const { api, storeId } = useRnRGraphQL();
 
   const queryKey = [RNR_FORM, LIST, sortBy, first, offset, filterBy];
   const queryFn = async (): Promise<{

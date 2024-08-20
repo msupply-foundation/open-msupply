@@ -33,6 +33,7 @@ const STOCKTAKE_LINE_1: (&str, &str) = (
       "vaccine_vial_monitor_status_ID": ""
     }"#,
 );
+
 fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,

@@ -41,6 +41,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     sql!(
         connection,
+        // [Laché 14/08/24] NOTE: item_id should be item_link_id (oops)
+        // We'll resolve this either by migrating rnr_forms to be requisitions, or migrating item_id to item_link_id
+        // once a decision is made on the way forward for R&R forms
         r#"
            CREATE TABLE rnr_form_line (
                 id TEXT NOT NULL PRIMARY KEY,

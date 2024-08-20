@@ -1,6 +1,7 @@
 use async_graphql::*;
 
 use graphql_core::{
+    simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -17,7 +18,7 @@ use service::{
 #[graphql(name = "UpdateInboundReturnInput")]
 pub struct UpdateInput {
     pub id: String,
-    // supplier_id: String,
+    other_party_id: Option<String>,
     status: Option<UpdateInboundReturnStatusInput>,
     on_hold: Option<bool>,
     comment: Option<String>,
@@ -31,10 +32,25 @@ pub enum UpdateInboundReturnStatusInput {
     Verified,
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateInboundReturnError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
+#[derive(Interface)]
+#[graphql(name = "UpdateInboundReturnErrorInterface")]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum UpdateErrorInterface {
+    OtherPartyNotACustomer(OtherPartyNotACustomer),
+    OtherPartyNotVisible(OtherPartyNotVisible),
+}
+
 #[derive(Union)]
 #[graphql(name = "UpdateInboundReturnResponse")]
 pub enum UpdateResponse {
     Response(InvoiceNode),
+    Error(UpdateError),
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -53,26 +69,39 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         .invoice_service
         .update_inbound_return(&service_context, input.to_domain());
 
-    match result {
-        Ok(inbound_return) => Ok(UpdateResponse::Response(InvoiceNode::from_domain(
-            inbound_return,
-        ))),
-        Err(err) => map_error(err),
-    }
+    let result = match result {
+        Ok(inbound_return) => UpdateResponse::Response(InvoiceNode::from_domain(inbound_return)),
+        Err(err) => UpdateResponse::Error(UpdateError {
+            error: map_error(err)?,
+        }),
+    };
+
+    Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateResponse> {
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        ServiceError::OtherPartyNotACustomer => {
+            return Ok(UpdateErrorInterface::OtherPartyNotACustomer(
+                OtherPartyNotACustomer,
+            ))
+        }
+        ServiceError::OtherPartyNotVisible => {
+            return Ok(UpdateErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
+            ))
+        }
         // Standard Graphql Errors
         ServiceError::InvoiceDoesNotExist
         | ServiceError::NotAnInboundReturn
         | ServiceError::NotThisStoreInvoice
         | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::ReturnIsNotEditable
-        | ServiceError::CannotChangeStatusOfInvoiceOnHold => BadUserInput(formatted_error),
+        | ServiceError::CannotChangeStatusOfInvoiceOnHold
+        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::UpdatedInvoiceDoesNotExist | ServiceError::DatabaseError(_) => {
             InternalError(formatted_error)
@@ -91,6 +120,7 @@ impl UpdateInput {
             on_hold,
             colour,
             their_reference,
+            other_party_id,
         }: UpdateInput = self;
 
         ServiceInput {
@@ -100,6 +130,7 @@ impl UpdateInput {
             on_hold,
             colour,
             their_reference,
+            other_party_id,
         }
     }
 }

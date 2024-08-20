@@ -10,6 +10,7 @@ import {
 } from './ResponseRequisition';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
+import { RnRFormDetailView, RnRFormListView } from './RnRForms';
 
 const customerRequisitionsRoute = RouteBuilder.create(
   AppRoute.CustomerRequisition
@@ -23,6 +24,12 @@ const customerRequisitionRoute = RouteBuilder.create(
 const internalOrdersRoute = RouteBuilder.create(AppRoute.InternalOrder).build();
 const internalOrderRoute = RouteBuilder.create(AppRoute.InternalOrder)
   .addPart(':requisitionNumber')
+  .build();
+
+const rnrFormsRoute = RouteBuilder.create(AppRoute.RnRForms).build();
+
+const rnrFormRoute = RouteBuilder.create(AppRoute.RnRForms)
+  .addPart(':id')
   .build();
 
 export const RequisitionService: FC = () => {
@@ -44,6 +51,8 @@ export const RequisitionService: FC = () => {
         path={internalOrderRoute}
         element={<RequestRequisitionDetailView />}
       />
+      <Route path={rnrFormsRoute} element={<RnRFormListView />} />
+      <Route path={rnrFormRoute} element={<RnRFormDetailView />} />
     </Routes>
   );
 };

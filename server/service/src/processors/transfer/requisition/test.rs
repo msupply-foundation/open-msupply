@@ -3,10 +3,10 @@ use std::time::Duration;
 use chrono::NaiveDate;
 use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
-    EqualFilter, ItemRow, KeyType, KeyValueStoreRow, NameRow, RequisitionFilter,
-    RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow, RequisitionRepository,
-    RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType,
-    StorageConnection, StoreRow,
+    ApprovalStatusType, EqualFilter, ItemRow, KeyType, KeyValueStoreRow, NameRow,
+    RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRepository, RequisitionRow, RequisitionRowRepository,
+    RequisitionStatus, RequisitionType, StorageConnection, StoreRow,
 };
 use util::{inline_edit, inline_init, uuid::uuid};
 
@@ -111,6 +111,18 @@ async fn requisition_transfer() {
             tester.check_response_requisition_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_was_linked(&ctx.connection);
+            tester.update_response_requisition_to_approved(&service_provider);
+            // Response requisition approval is usually done by mSupply
+            // Processor would be triggered after sync
+            // We've approved manually for testing, so need to manually trigger the processor as well
+            ctx.processors_trigger
+                .requisition_transfer
+                .try_send(())
+                .unwrap();
+            ctx.processors_trigger.await_events_processed().await;
+            // Sometimes processor isn't finished the first time, so we await twice?
+            ctx.processors_trigger.await_events_processed().await;
+            tester.check_request_requisition_approved(&ctx.connection);
             tester.update_response_requisition_to_finalised(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_status_updated(&ctx.connection);
@@ -384,6 +396,86 @@ impl RequisitionTransferTester {
         );
     }
 
+    pub(crate) fn update_response_requisition_to_approved(
+        &mut self,
+        service_provider: &ServiceProvider,
+    ) {
+        let ctx = service_provider
+            .context(self.response_store.id.clone(), "".to_string())
+            .unwrap();
+
+        let requisition_repo = RequisitionRowRepository::new(&ctx.connection);
+
+        let response_req = self.response_requisition.clone().unwrap();
+
+        let approved_response_requisition = RequisitionRow {
+            approval_status: Some(ApprovalStatusType::Approved),
+            ..response_req
+        };
+
+        requisition_repo
+            .upsert_one(&approved_response_requisition)
+            .unwrap();
+
+        let response_lines = RequisitionLineRepository::new(&ctx.connection)
+            .query_by_filter(
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(&approved_response_requisition.id)),
+            )
+            .unwrap();
+
+        for line in response_lines {
+            let mut line = line.requisition_line_row;
+            line.approved_quantity = 42.0;
+            RequisitionLineRowRepository::new(&ctx.connection)
+                .upsert_one(&line)
+                .unwrap();
+        }
+
+        self.response_requisition = Some(approved_response_requisition);
+    }
+
+    pub(crate) fn check_request_requisition_approved(&mut self, connection: &StorageConnection) {
+        let request_requisition = RequisitionRowRepository::new(connection)
+            .find_one_by_id(&self.request_requisition.id)
+            .unwrap();
+
+        assert!(request_requisition.is_some());
+        let request_requisition = request_requisition.unwrap();
+
+        assert_eq!(
+            request_requisition,
+            inline_edit(&request_requisition, |mut r| {
+                r.approval_status = Some(ApprovalStatusType::Approved);
+                r
+            })
+        );
+
+        let request_requisition_line1 = RequisitionLineRowRepository::new(connection)
+            .find_one_by_id(&self.request_requisition_line1.id)
+            .unwrap();
+        assert!(request_requisition_line1.is_some());
+        self.request_requisition_line1 = request_requisition_line1.unwrap();
+
+        let request_requisition_line2 = RequisitionLineRowRepository::new(connection)
+            .find_one_by_id(&self.request_requisition_line2.id)
+            .unwrap();
+        assert!(request_requisition_line2.is_some());
+        self.request_requisition_line2 = request_requisition_line2.unwrap();
+
+        let response_requisition = self.response_requisition.as_ref().unwrap();
+        check_line(
+            connection,
+            &response_requisition.id,
+            &self.request_requisition_line1,
+        );
+        check_line(
+            connection,
+            &response_requisition.id,
+            &self.request_requisition_line2,
+        );
+    }
+
     pub(crate) fn update_response_requisition_to_finalised(
         &mut self,
         service_provider: &ServiceProvider,
@@ -452,6 +544,10 @@ fn check_line(
     assert_eq!(
         response_line.suggested_quantity,
         request_line.suggested_quantity
+    );
+    assert_eq!(
+        response_line.approved_quantity,
+        request_line.approved_quantity
     );
     assert_eq!(
         response_line.available_stock_on_hand,

@@ -11,7 +11,7 @@
   "label.months": "Mois",
   "label.name": "Nom",
   "label.outer-pack-size": "Conditionnement externe",
-  "label.strength": "Dosage",
+  "label.strength": "Force",
   "label.universal-code": "Code universel",
   "label.universal-name": "Nom universel",
   "label.volume-per-outer-pack": "Volume par emballage externe",
@@ -65,5 +65,6 @@
   "messages.error-deleting-reasons_many": "{{count}} raisons n'ont pas pu être supprimées",
   "messages.error-deleting-reasons_other": "{{count}} raisons n'ont pas pu être supprimées",
   "messages.confirm-delete-reasons_many": "Cela supprimera définitivement {{count}} raisons",
-  "heading.schedule": "Calendrier"
+  "heading.schedule": "Calendrier",
+  "label.percentage": "Pourcentage"
 }

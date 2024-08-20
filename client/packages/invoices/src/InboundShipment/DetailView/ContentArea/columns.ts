@@ -279,7 +279,12 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
   return useColumns<InboundLineFragment>([
     'batch',
     'expiryDate',
-    'location',
+    [
+      'location',
+      {
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
     ...(isPackVariantsEnabled
       ? [
           {

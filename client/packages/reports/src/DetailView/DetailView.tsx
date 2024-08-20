@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  BasicSpinner,
   FileUtils,
+  LocaleKey,
+  noOtherVariants,
+  NothingHere,
   PrintFormat,
+  TypedTFunction,
   useBreadcrumbs,
   useParams,
+  useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import {
@@ -21,6 +25,8 @@ import { JsonData } from '@openmsupply-client/programs';
 export const DetailView = () => {
   const { id } = useParams();
   const { data: report } = useReport(id ?? '');
+  const t = useTranslation('reports');
+
   const {
     urlQuery: { reportArgs: reportArgsJson },
   } = useUrlQuery({ skipParse: ['reportArgs'] });
@@ -29,20 +35,23 @@ export const DetailView = () => {
     (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
 
   return !report?.id ? (
-    <BasicSpinner />
+    <NothingHere body={t('error.report-does-not-exist')} />
   ) : (
-    <DetailViewInner report={report} reportArgs={reportArgs} />
+    <DetailViewInner report={report} reportArgs={reportArgs} t={t} />
   );
 };
 
 const DetailViewInner = ({
   report,
   reportArgs,
+  t,
 }: {
   report: ReportRowFragment;
   reportArgs: JsonData;
+  t: TypedTFunction<LocaleKey>;
 }) => {
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
+  const [errorMessage, setErrorMessage] = useState('');
   const { mutateAsync } = useGenerateReport();
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
@@ -54,7 +63,7 @@ const DetailViewInner = ({
   >();
 
   useEffect(() => {
-    setCustomBreadcrumbs({ 0: report.name ?? '' });
+    setCustomBreadcrumbs({ 1: report.name ?? '' });
 
     // Initial report generation
     if (!report.argumentSchema) {
@@ -81,12 +90,34 @@ const DetailViewInner = ({
         updateQuery({ reportArgs: JSON.stringify(args) });
       }
       setFileId(undefined);
-      const fileId = await mutateAsync({
-        reportId: report.id,
-        args,
-        dataId: '',
-      });
-      setFileId(fileId);
+      try {
+        const result = await mutateAsync({
+          reportId: report.id,
+          args,
+          dataId: '',
+        });
+        if (result?.__typename === 'PrintReportNode') {
+          setFileId(result.fileId);
+        }
+
+        if (result?.__typename === 'PrintReportError') {
+          const err = result.error;
+
+          if (err.__typename === 'FailedToFetchReportData') {
+            const errors = err.errors;
+
+            if (errors[0].extensions?.details?.includes('permission')) {
+              setErrorMessage(t('error.no-permission-report'));
+            } else {
+              setErrorMessage(t('error.failed-to-generate-report'));
+            }
+          } else {
+            noOtherVariants(err.__typename);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
     },
     []
   );
@@ -104,14 +135,35 @@ const DetailViewInner = ({
   }, [reportArgs]);
 
   const exportExcelReport = useCallback(async () => {
-    const fileId = await mutateAsync({
-      reportId: report.id,
-      args: reportArgs,
-      dataId: '',
-      format: PrintFormat.Excel,
-    });
+    try {
+      const result = await mutateAsync({
+        reportId: report.id,
+        args: reportArgs,
+        dataId: '',
+        format: PrintFormat.Excel,
+      });
+      if (result?.__typename === 'PrintReportNode') {
+        setFileId(result.fileId);
+      }
 
-    if (!fileId) throw new Error('Error generating Excel report');
+      if (result?.__typename === 'PrintReportError') {
+        const err = result.error;
+
+        if (err.__typename === 'FailedToFetchReportData') {
+          const errors = err.errors;
+
+          if (errors[0].extensions?.details?.includes('permission')) {
+            setErrorMessage(t('error.no-permission-report'));
+          } else {
+            setErrorMessage(t('error.failed-to-generate-excel'));
+          }
+        } else {
+          noOtherVariants(err.__typename);
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
     const url = `${Environment.FILE_URL}${fileId}`;
     FileUtils.downloadFile(url);
   }, [reportArgs]);
@@ -134,7 +186,11 @@ const DetailViewInner = ({
         onArgumentsSelected={generateReport}
       />
 
-      {!fileId ? <BasicSpinner /> : <iframe src={url} width="100%" />}
+      {!fileId ? (
+        <NothingHere body={errorMessage} />
+      ) : (
+        <iframe src={url} width="100%" style={{ borderWidth: 0 }} />
+      )}
     </>
   );
 };

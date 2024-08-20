@@ -90,7 +90,7 @@
   "error.unable-to-connect": "Impossible de se connecter au serveur {{server}}",
   "label.site": "Site :",
   "messages.change-server": "Changer de serveur",
-  "error.sync-api-incompatible": "La version de l'API Sync n'est pas compatible",
+  "error.sync-api-incompatible": "La version de l'API de Synchronisation n'est pas compatible",
   "assets": "Équipements",
   "equipment": "Equipement",
   "error.unable-to-connect-to-printer": "Impossible de se connecter à l'imprimante.",
@@ -133,5 +133,16 @@
   "contact-trace": "Recherche des contacts",
   "prescriptions": "Ordonnances",
   "monitoring": "Contrôle",
-  "encounter": "Visites"
+  "encounter": "Visites",
+  "indicators-demographics": "Données démographiques",
+  "immunisations": "Vaccinations",
+  "label.edit-store-properties": "Modifier les propriétés des dépôts",
+  "facilities": "Sites",
+  "manage": "Gestion",
+  "settings": "Configurations",
+  "error.sync-v6-api-incompatible": "La version V6 de l'API de synchronisation n'est pas compatible",
+  "error.sync-v6-api-incompatible-hint": "La version du serveur central de Open mSupply doit être mis a jour avec une nouvelle version avant de pouvoir vous connecter - contactez support@msupply.foundation",
+  "r-and-r-forms": "Formulaire R&R",
+  "label.initialise-store-properties": "Initialiser les propriétés des dépôts pour GAPS",
+  "label.initialised": "Initialisé"
 }

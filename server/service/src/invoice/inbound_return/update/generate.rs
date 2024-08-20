@@ -1,7 +1,7 @@
 use chrono::Utc;
 
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, Name, StockLineRow,
     StorageConnection,
 };
 use util::uuid::uuid;
@@ -22,6 +22,7 @@ pub(crate) fn generate(
     connection: &StorageConnection,
     user_id: &str,
     existing_return: InvoiceRow,
+    other_party_option: Option<Name>,
     patch: UpdateInboundReturn,
 ) -> Result<GenerateResult, UpdateInboundReturnError> {
     let mut updated_return = existing_return.clone();
@@ -36,6 +37,11 @@ pub(crate) fn generate(
         .or(updated_return.their_reference);
 
     set_new_status_datetime(&mut updated_return, &patch);
+
+    if let Some(other_party) = other_party_option {
+        updated_return.name_store_id = other_party.store_id().map(|id| id.to_string());
+        updated_return.name_link_id = other_party.name_row.id;
+    }
 
     if let Some(status) = patch.status.clone() {
         updated_return.status = status.as_invoice_row_status()

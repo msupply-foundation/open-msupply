@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Autocomplete } from '@openmsupply-client/common';
-import { ProgramFragment } from '../../api/operations.generated';
-import { useProgramList } from '../../api';
+import { ProgramFragment } from '../api/operations.generated';
+import { useProgramList } from '../api';
 
 type ProgramSearchInputProps = {
   value: ProgramFragment | null;
