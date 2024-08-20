@@ -112,7 +112,7 @@ export const DateTimePickerInput: FC<
         },
         textField: {
           error: !isInitialEntry && (!!error || !!internalError),
-          helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
+          helperText: !isInitialEntry ? (error ?? internalError ?? '') : '',
           onBlur: e => {
             handleDateInput(
               DateUtils.getDateOrNull(e.target.value, format, dateParseOptions)
@@ -132,7 +132,7 @@ export const DateTimePickerInput: FC<
       }}
       views={
         showTime
-          ? ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+          ? ['year', 'month', 'day', 'hours', 'minutes']
           : ['year', 'month', 'day']
       }
       minDate={minDate}
