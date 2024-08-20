@@ -6,6 +6,8 @@ import {
   useTranslation,
   TableCell,
   styled,
+  useFormatNumber,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { DraftItem } from '../../..';
@@ -60,19 +62,23 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
 
 const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
   const t = useTranslation('dispensary');
+  const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
+  const hasMoreThanTwoDp = ((allocatedQuantity ?? 0) * 100) % 1 !== 0;
 
   return (
     <tr>
       <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
       <TotalCell colSpan={5}></TotalCell>
-      <TotalCell
-        style={{
-          textAlign: 'right',
-          paddingRight: 12,
-        }}
-      >
-        {allocatedQuantity}
-      </TotalCell>
+      <Tooltip title={allocatedQuantity.toString()}>
+        <TotalCell
+          style={{
+            textAlign: 'right',
+            paddingRight: 12,
+          }}
+        >
+          {!!hasMoreThanTwoDp ? `${formattedValue}...` : formattedValue}
+        </TotalCell>
+      </Tooltip>
     </tr>
   );
 };
