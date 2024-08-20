@@ -28,8 +28,8 @@ export type LinesParams = {
 
 const masterListParser = {
   toSort: (sortBy: SortBy<MasterListRowFragment>): MasterListSortFieldInput => {
-    if (sortBy.key === 'name') return MasterListSortFieldInput.Name;
-    if (sortBy.key === 'code') return MasterListSortFieldInput.Code;
+    if (sortBy.key === 'itemName') return MasterListSortFieldInput.Name;
+    if (sortBy.key === 'itemCode') return MasterListSortFieldInput.Code;
     return MasterListSortFieldInput.Description;
   },
 };
@@ -38,7 +38,7 @@ const masterListLineParser = {
   toSort: (
     sortBy: SortBy<MasterListLineFragment>
   ): MasterListLineSortFieldInput => {
-    if (sortBy.key === 'code') return MasterListLineSortFieldInput.Code;
+    if (sortBy.key === 'itemCode') return MasterListLineSortFieldInput.Code;
     return MasterListLineSortFieldInput.Name;
   },
 };
