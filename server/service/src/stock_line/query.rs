@@ -6,7 +6,7 @@ use repository::{
     EqualFilter, PaginationOption, StockLine, StockLineFilter, StockLineRepository, StockLineSort,
 };
 
-pub const MAX_LIMIT: u32 = 1000;
+pub const MAX_LIMIT: u32 = 5000;
 pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_stock_line(ctx: &ServiceContext, id: String) -> Result<StockLine, SingleRecordError> {
