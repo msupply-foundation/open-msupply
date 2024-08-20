@@ -31,7 +31,7 @@ export const useLedgerColumns = (
         key: ColumnKey.DateTime,
         label: 'label.date',
         format: ColumnFormat.Date,
-        sortable: true,
+        sortable: false,
       },
       {
         key: ColumnKey.Time,
@@ -42,18 +42,18 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Name,
         label: 'label.name',
-        sortable: true,
+        sortable: false,
       },
       {
         key: ColumnKey.Quantity,
         label: 'label.quantity',
-        sortable: true,
+        sortable: false,
       },
       {
         key: ColumnKey.Type,
         label: 'label.type',
         accessor: ({ rowData }) => t(getLocalisationKey(rowData.invoiceType)),
-        sortable: true,
+        sortable: false,
       },
       {
         key: ColumnKey.Reason,
