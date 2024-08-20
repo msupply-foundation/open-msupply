@@ -369,6 +369,152 @@
 <CRC>0</CRC>
 <StoreOnly>0</StoreOnly>
 </FileData>
+<FileData>
+<FldRef>0</FldRef>
+<FullName>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\Server\test-connection-postgres.exe</FullName>
+<FileName>test-connection-postgres.exe</FileName>
+<Source>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\Server</Source>
+<Ext>exe</Ext>
+<RTSource>Archive</RTSource>
+<Desc/>
+<Recurse>1</Recurse>
+<MatchMode>0</MatchMode>
+<Dest>%AppFolder%</Dest>
+<Overwrite>1</Overwrite>
+<Backup>0</Backup>
+<Protect>0</Protect>
+<InstallOrder>1000</InstallOrder>
+<SCStartRoot>0</SCStartRoot>
+<SCStartProgs>0</SCStartProgs>
+<SCAppFld>1</SCAppFld>
+<SCStartup>0</SCStartup>
+<SCDesk>0</SCDesk>
+<SCQLaunch>0</SCQLaunch>
+<SCStartPinOption>0</SCStartPinOption>
+<SCCust>0</SCCust>
+<CustSCPath/>
+<SCDesc>server</SCDesc>
+<SCComment/>
+<SCArgs/>
+<SCWork/>
+<UseExtIco>0</UseExtIco>
+<IcoFN/>
+<IcoIdx>0</IcoIdx>
+<IcoShowMd>0</IcoShowMd>
+<IcoHK>0</IcoHK>
+<RegTTF>0</RegTTF>
+<TTFName/>
+<RegOCX>0</RegOCX>
+<RegTLB>0</RegTLB>
+<SupInUse>0</SupInUse>
+<Compress>1</Compress>
+<UseOrigAttr>1</UseOrigAttr>
+<Attr>0</Attr>
+<NoCRC>0</NoCRC>
+<NoRemove>0</NoRemove>
+<Shared>0</Shared>
+<OSCond>
+<OS>32768</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+</OSCond>
+<RTCond/>
+<BuildConfigs>
+<Cfg>All</Cfg>
+</BuildConfigs>
+<Package>None</Package>
+<Packages/>
+<Notes/>
+<CompSize>0</CompSize>
+<CRC>0</CRC>
+<StoreOnly>0</StoreOnly>
+</FileData>
+<FileData>
+<FldRef>0</FldRef>
+<FullName>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\Server\test-connection-sqlite.exe</FullName>
+<FileName>test-connection-sqlite.exe</FileName>
+<Source>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\Server</Source>
+<Ext>exe</Ext>
+<RTSource>Archive</RTSource>
+<Desc/>
+<Recurse>1</Recurse>
+<MatchMode>0</MatchMode>
+<Dest>%AppFolder%</Dest>
+<Overwrite>1</Overwrite>
+<Backup>0</Backup>
+<Protect>0</Protect>
+<InstallOrder>1000</InstallOrder>
+<SCStartRoot>0</SCStartRoot>
+<SCStartProgs>0</SCStartProgs>
+<SCAppFld>1</SCAppFld>
+<SCStartup>0</SCStartup>
+<SCDesk>0</SCDesk>
+<SCQLaunch>0</SCQLaunch>
+<SCStartPinOption>0</SCStartPinOption>
+<SCCust>0</SCCust>
+<CustSCPath/>
+<SCDesc>server</SCDesc>
+<SCComment/>
+<SCArgs/>
+<SCWork/>
+<UseExtIco>0</UseExtIco>
+<IcoFN/>
+<IcoIdx>0</IcoIdx>
+<IcoShowMd>0</IcoShowMd>
+<IcoHK>0</IcoHK>
+<RegTTF>0</RegTTF>
+<TTFName/>
+<RegOCX>0</RegOCX>
+<RegTLB>0</RegTLB>
+<SupInUse>0</SupInUse>
+<Compress>1</Compress>
+<UseOrigAttr>1</UseOrigAttr>
+<Attr>0</Attr>
+<NoCRC>0</NoCRC>
+<NoRemove>0</NoRemove>
+<Shared>0</Shared>
+<OSCond>
+<OS>32768</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+<OS>65535</OS>
+</OSCond>
+<RTCond/>
+<BuildConfigs>
+<Cfg>All</Cfg>
+</BuildConfigs>
+<Package>None</Package>
+<Packages/>
+<Notes/>
+<CompSize>0</CompSize>
+<CRC>0</CRC>
+<StoreOnly>0</StoreOnly>
+</FileData>
 </ArchiveFiles>
 <ExternalFiles/>
 <BeforeInstallingScreens>
@@ -523,7 +669,7 @@ end
 
 -- advance to the next screen
 Screen.Jump(sNextScreenName);
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -537,7 +683,7 @@ Screen.Jump(sNextScreenName);
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -545,7 +691,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -553,7 +699,7 @@ end
 <Name>On Ctrl Message</Name>
 <Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
 <Script>-- These actions are triggered by the controls on the screen.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -645,7 +791,7 @@ It is strongly recommended that you exit all Windows programs before continuing 
 If you have any other programs running, please click Cancel, close the programs, and run this setup again.
 
 Otherwise, click Next to continue.
-</IDS_CTRL_STATICTEXT_BODY>
+						</IDS_CTRL_STATICTEXT_BODY>
 <IDS_CTRL_HEADINGTEXT_BODY>Welcome</IDS_CTRL_HEADINGTEXT_BODY>
 </Messages>
 </SUF70Messages>
@@ -769,7 +915,7 @@ Otherwise, click Next to continue.
 -- from _SUF70_Global_Functions.lua:
 -- disable the Next button unless 'I agree' is selected
 g_LicenseAgreementScreen_UpdateNextButton();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -780,7 +926,7 @@ g_LicenseAgreementScreen_UpdateNextButton();
 
 -- go back to the previous screen
 Screen.Back();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -793,7 +939,7 @@ Screen.Back();
 
 -- advance to the next screen
 Screen.Next();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -807,7 +953,7 @@ Screen.Next();
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -815,7 +961,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -833,7 +979,7 @@ if (e_CtrlID == CTRL_RADIOBTN_AGREE or e_CtrlID == CTRL_RADIOBTN_DISAGREE) then
 		g_LicenseAgreementScreen_UpdateNextButton();
 	end
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1076,7 +1222,7 @@ else
 	DlgRadioButton.SetProperties(CTRL_RADIO_BUTTON_02, {Checked=true});
 	SessionVar.Set("%omsupply_selected_db%", "postgres");
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1092,7 +1238,7 @@ else
 end
 -- go back to the previous screen
 Screen.Back();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1112,7 +1258,7 @@ end
 
 -- advance to the next screen
 Screen.Jump(sNextScreenName);
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1126,7 +1272,7 @@ Screen.Jump(sNextScreenName);
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1134,7 +1280,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1161,7 +1307,7 @@ if (e_MsgID == MSGID_CLICKED) then
 	end
 
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1315,14 +1461,14 @@ end
 <IDS_CTRL_STATICTEXT_LABEL_01>Open mSupply server port number:</IDS_CTRL_STATICTEXT_LABEL_01>
 <IDS_CTRL_EDIT_01>8000</IDS_CTRL_EDIT_01>
 <IDS_CTRL_EDIT_MASK_01/>
-<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01>
+<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01/>
 <IDS_CTRL_STATICTEXT_LABEL_02>Setup Open mSupply server with:</IDS_CTRL_STATICTEXT_LABEL_02>
 <IDS_CTRL_RADIO_BUTTON_01>Sqlite</IDS_CTRL_RADIO_BUTTON_01>
 <IDS_CTRL_RADIO_BUTTON_02>PostgresSQL</IDS_CTRL_RADIO_BUTTON_02>
 <IDS_CTRL_STATICTEXT_LABEL_03>Open mSupply database:</IDS_CTRL_STATICTEXT_LABEL_03>
 <IDS_CTRL_EDIT_04>open-msupply-database</IDS_CTRL_EDIT_04>
 <IDS_CTRL_EDIT_MASK_04/>
-<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04>
+<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04/>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -1453,7 +1599,7 @@ end
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
 DlgEditField.SetProperties(CTRL_EDIT_04, {Text=SessionVar.Get("%omsupply_db_name%")});
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1464,7 +1610,7 @@ DlgEditField.SetProperties(CTRL_EDIT_04, {Text=SessionVar.Get("%omsupply_db_name
 
 -- go back to the previous screen
 Screen.Back();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1496,7 +1642,7 @@ if bAllOK then
 	-- advance to the next screen
 	Screen.Next();
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1510,7 +1656,7 @@ end
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1518,7 +1664,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1545,7 +1691,7 @@ if (e_MsgID == MSGID_CLICKED) then
 	end
 
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1740,19 +1886,19 @@ end
 <IDS_CTRL_GROUP_BOX_01>PostgresSQL Server Details</IDS_CTRL_GROUP_BOX_01>
 <IDS_CTRL_EDIT_01>5432</IDS_CTRL_EDIT_01>
 <IDS_CTRL_EDIT_MASK_01/>
-<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01>
+<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01/>
 <IDS_CTRL_STATICTEXT_LABEL_01>Port:</IDS_CTRL_STATICTEXT_LABEL_01>
 <IDS_CTRL_STATICTEXT_LABEL_02>User:</IDS_CTRL_STATICTEXT_LABEL_02>
 <IDS_CTRL_STATICTEXT_LABEL_03>Password:</IDS_CTRL_STATICTEXT_LABEL_03>
 <IDS_CTRL_EDIT_02>postgres</IDS_CTRL_EDIT_02>
 <IDS_CTRL_EDIT_MASK_02/>
-<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_02> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_02>
+<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_02/>
 <IDS_CTRL_EDIT_03/>
 <IDS_CTRL_EDIT_MASK_03/>
-<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_03> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_03>
+<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_03/>
 <IDS_CTRL_EDIT_04/>
 <IDS_CTRL_EDIT_MASK_04/>
-<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04>
+<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04/>
 <IDS_CTRL_STATICTEXT_LABEL_04>Database:</IDS_CTRL_STATICTEXT_LABEL_04>
 </Messages>
 </SUF70Messages>
@@ -1885,7 +2031,7 @@ SessionVar.Set("%SpaceRequired%", strSpaceRequired);
 -- from _SUF70_Global_Functions.lua:
 -- update the 'Space required:' message (expands any session variables in it)
 g_UpdateStaticTextCtrl(CTRL_STATICTEXT_SPACEREQUIRED, "IDS_CTRL_STATICTEXT_SPACEREQUIRED");
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1896,7 +2042,7 @@ g_UpdateStaticTextCtrl(CTRL_STATICTEXT_SPACEREQUIRED, "IDS_CTRL_STATICTEXT_SPACE
 
 -- go back to the previous screen
 Screen.Back();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1944,7 +2090,7 @@ else
 	-- tell the user to smarten up :)
 	Dialog.Message(strTitle, strPrompt, MB_OK, MB_ICONEXCLAMATION);
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1958,7 +2104,7 @@ end
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -1966,7 +2112,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2015,7 +2161,7 @@ if(e_CtrlID == CTRL_EDIT_FOLDER) then
 		g_UpdateStaticTextCtrl(CTRL_STATICTEXT_SPACEAVAILABLE, "IDS_CTRL_STATICTEXT_SPACEAVAILABLE");
 	end
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2277,7 +2423,7 @@ sBodyInfoSubText = sBodyInfoSubText .. SessionVar.Expand("  Version       :    %
 sBodyInfoSubText = sBodyInfoSubText .. "Please click Next to proceed with the installation.";
 
 DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoSubText});
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2288,7 +2434,7 @@ DlgStaticText.SetProperties(CTRL_STATICTEXT_BODY, {Text = sBodyInfoSubText});
 
 -- go back to the previous screen
 Screen.Back();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2299,7 +2445,7 @@ Screen.Back();
 
 -- advance to the next screen
 Screen.Next();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2313,7 +2459,7 @@ Screen.Next();
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2321,7 +2467,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2329,7 +2475,7 @@ end
 <Name>On Ctrl Message</Name>
 <Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
 <Script>-- These actions are triggered by the controls on the screen.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2548,7 +2694,7 @@ Please click Next to proceed with the installation.</IDS_CTRL_STATICTEXT_BODY>
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2599,7 +2745,7 @@ DlgStaticText.SetProperties(CTRL_STATICTEXT_LABEL_02, {Text=strAbbreviatedItemTe
 
 -- update the progress bar
 DlgProgressBar.SetPos(CTRL_PROGRESS_BAR_01, e_StagePct);
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2613,7 +2759,7 @@ DlgProgressBar.SetPos(CTRL_PROGRESS_BAR_01, e_StagePct);
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2854,7 +3000,7 @@ end
 if hasOmsupplyInstalled then
 	DlgCheckBox.SetProperties(CTRL_CHECK_BOX_01, {Visible = false});
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2865,7 +3011,7 @@ end
 
 -- go back to the previous screen
 Screen.Back();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2879,7 +3025,7 @@ if (not hasOmsupplyInstalled and cbStartOmSupply) then
 end
 -- advance to the next screen
 Screen.Next();
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2893,7 +3039,7 @@ Screen.Next();
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2901,7 +3047,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -2928,7 +3074,7 @@ if (e_MsgID == MSGID_CLICKED) then
 	end
 
 end
-</Script>
+					</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3279,7 +3425,7 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3290,7 +3436,7 @@ end
 
 -- go back to the previous screen
 Screen.Back();
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3301,7 +3447,7 @@ Screen.Back();
 
 -- advance to the next screen
 Screen.Next();
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3315,7 +3461,7 @@ Screen.Next();
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3323,7 +3469,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3331,7 +3477,7 @@ end
 <Name>On Ctrl Message</Name>
 <Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
 <Script>-- These actions are triggered by the controls on the screen.
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3421,7 +3567,7 @@ end
 If %ProductName% is currently running, please close it before proceeding with the uninstallation.
 
 Otherwise, click Next to continue.
-</IDS_CTRL_STATICTEXT_BODY>
+							</IDS_CTRL_STATICTEXT_BODY>
 <IDS_CTRL_HEADINGTEXT_BODY>Uninstall %ProductName%</IDS_CTRL_HEADINGTEXT_BODY>
 </Messages>
 </SUF70Messages>
@@ -3545,7 +3691,7 @@ Otherwise, click Next to continue.
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
-</Script>
+							</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3590,7 +3736,7 @@ DlgStaticText.SetProperties(CTRL_STATICTEXT_LABEL_02, {Text=strAbbreviatedItemTe
 
 -- update the progress bar
 DlgProgressBar.SetPos(CTRL_PROGRESS_BAR_01, e_StagePct);
-</Script>
+							</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3604,7 +3750,7 @@ DlgProgressBar.SetPos(CTRL_PROGRESS_BAR_01, e_StagePct);
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+							</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3709,8 +3855,8 @@ end
 <IDS_SUBHEADER_TEXT>Please wait...</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
 <IDS_CTRL_STATICTEXT_TOPINSTRUCTIONS/>
-<IDS_CTRL_STATICTEXT_LABEL_01> </IDS_CTRL_STATICTEXT_LABEL_01>
-<IDS_CTRL_STATICTEXT_LABEL_02> </IDS_CTRL_STATICTEXT_LABEL_02>
+<IDS_CTRL_STATICTEXT_LABEL_01/>
+<IDS_CTRL_STATICTEXT_LABEL_02/>
 <IDS_CTRL_PROGRESS_BAR_01/>
 <IDS_CTRL_STATICTEXT_LABEL_03>Progress Two</IDS_CTRL_STATICTEXT_LABEL_03>
 <IDS_CTRL_STATICTEXT_LABEL_04>Performing Actions...</IDS_CTRL_STATICTEXT_LABEL_04>
@@ -3835,7 +3981,7 @@ end
 <Name>On Preload</Name>
 <Args/>
 <Script>-- These actions are performed before the screen is shown.
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3846,7 +3992,7 @@ end
 
 -- go back to the previous screen
 Screen.Back();
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3857,7 +4003,7 @@ Screen.Back();
 
 -- advance to the next screen
 Screen.Next();
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3871,7 +4017,7 @@ Screen.Next();
 if g_ConfirmSetupAbort() then
 	Application.Exit(EXIT_REASON_USER_ABORTED);
 end
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3879,7 +4025,7 @@ end
 <Name>On Help</Name>
 <Args/>
 <Script>-- These actions are performed when the Help button is clicked.
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3887,7 +4033,7 @@ end
 <Name>On Ctrl Message</Name>
 <Args>number e_CtrlID, number e_MsgID, table e_Details</Args>
 <Script>-- These actions are triggered by the controls on the screen.
-</Script>
+						</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3975,7 +4121,7 @@ end
 <IDS_CTRL_STATICTEXT_BODY>%ProductName% %ProductVer% has been uninstalled.
 
 Please click Finish to exit.
-</IDS_CTRL_STATICTEXT_BODY>
+							</IDS_CTRL_STATICTEXT_BODY>
 <IDS_CTRL_HEADINGTEXT_BODY>Uninstallation Successful</IDS_CTRL_HEADINGTEXT_BODY>
 </Messages>
 </SUF70Messages>
@@ -4021,7 +4167,7 @@ end</Script>
 <Name>On Uninstall Error</Name>
 <Args>number e_ErrorCode, string e_ErrorMsgID</Args>
 <Script>-- These actions are performed is an error occurs while the setup is uninstalling files.
-</Script>
+				</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4044,7 +4190,7 @@ end</Script>
 -- Defined in _SUF70_Global_Functions.lua
 -- Do not edit this script unless you know what your are doing
 g_HandleSystemReboot();
-</Script>
+				</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4232,7 +4378,7 @@ if hasOmsupplyInstalled then
 end
 
 SessionVar.Set("%window_title%", sWindowTitle);
-</Script>
+				</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4303,7 +4449,7 @@ end
 if (bServiceExists) then
 	Service.Delete("Open mSupply Server", "omsupply-server");
 end
-</Script>
+				</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4311,7 +4457,7 @@ end
 <Name>On Install Error</Name>
 <Args>number e_ErrorCode, string e_ErrorMsgID</Args>
 <Script>-- These actions are performed is an error occurs while the setup is installing files.
-</Script>
+				</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4425,11 +4571,15 @@ if (omSupplyServerDatabase == "sqlite") then
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
 	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"));
 	File.Rename(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"), SessionVar.Expand("%AppFolder%\\omSupply-cli.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"));
+	File.Rename(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"), SessionVar.Expand("%AppFolder%\\test-connectioncli.exe"));
 else
 	Service.Create(SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 	sFileToBeDeletePath = SessionVar.Expand("%AppFolder%\\omSupply-sqlite.exe");
 	File.Delete(SessionVar.Expand("%AppFolder%\\omSupply-cli-sqlite.exe"));
 	File.Rename(SessionVar.Expand("%AppFolder%\\omSupply-cli-postgres.exe"), SessionVar.Expand("%AppFolder%\\omSupply-cli.exe"));
+	File.Delete(SessionVar.Expand("%AppFolder%\\test-connection-sqlite.exe"));
+	File.Rename(SessionVar.Expand("%AppFolder%\\test-connection-postgres.exe"), SessionVar.Expand("%AppFolder%\\test-connection.exe"));
 end
 
 File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
@@ -4450,7 +4600,7 @@ if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
 end
 
 Service.Start("Open mSupply Server", "omsupply-server", nil);
-</Script>
+				</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4463,7 +4613,7 @@ Service.Start("Open mSupply Server", "omsupply-server", nil);
 -- Defined in _SUF70_Global_Functions.lua
 -- Do not edit this script unless you know what your are doing
 g_HandleSystemReboot();
-</Script>
+				</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>

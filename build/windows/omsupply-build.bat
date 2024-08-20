@@ -29,6 +29,11 @@ cargo build --release --bin remote_server_cli && copy "target\release\remote_ser
 cargo build --release --bin remote_server_cli --features postgres && copy "target\release\remote_server_cli.exe" "..\omSupply\Server\omSupply-cli-postgres.exe"
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
+@ECHO ##### Building omSupply cli #####
+cargo build --release --bin test_connection && copy "target\release\test_connection.exe" "..\omSupply\Server\test-connection-sqlite.exe"
+cargo build --release --bin test_connection --features postgres && copy "target\release\test_connection.exe" "..\omSupply\Server\test-connection-postgres.exe"
+@if %errorlevel% neq 0 exit /b %errorlevel%
+
 @ECHO ##### Building omSupply for the desktop #####
 cd "..\client" && yarn electron:build && xcopy "packages\electron\out\open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i
 @if %errorlevel% neq 0 exit /b %errorlevel%

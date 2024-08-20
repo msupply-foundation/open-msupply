@@ -5,7 +5,7 @@ use url::ParseError;
 use super::*;
 
 #[derive(Debug, Clone)]
-pub(crate) struct SyncApiV6 {
+pub struct SyncApiV6 {
     pub(crate) url: Url,
     pub(crate) sync_v5_settings: SyncApiSettings,
     pub(crate) sync_v6_version: u32,
