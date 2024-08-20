@@ -48,7 +48,7 @@ export const useOutboundLineEditColumns = ({
       'expiryDate',
       {
         Cell: ExpiryDateCell,
-        width: 80,
+        width: 100,
       },
     ],
     [
