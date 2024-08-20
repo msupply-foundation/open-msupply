@@ -3,6 +3,7 @@ import React from 'react';
 import { Box, Skeleton, Stack } from '@mui/material';
 import { AppBarContentPortal, AppFooterPortal } from '../../components/portals';
 import { ButtonSkeleton } from './ButtonSkeleton';
+import { BasicSpinner } from '@common/components';
 
 const AppBarContent = () => (
   <Box display="flex" flexDirection="column" gap={1} width="100%">
@@ -86,6 +87,18 @@ export const DetailFormSkeleton = () => {
         <AppBarContent />
       </AppBarContentPortal>
       <DetailForm />
+      <AppFooterPortal Content={footerContent} />
+    </>
+  );
+};
+
+export const DetailLoadingSkeleton = () => {
+  return (
+    <>
+      <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
+        <AppBarContent />
+      </AppBarContentPortal>
+      <BasicSpinner />
       <AppFooterPortal Content={footerContent} />
     </>
   );
