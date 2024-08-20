@@ -139,5 +139,9 @@
   "r-and-r-forms": "Formularios R&R",
   "prescriptions": "Prescripciones",
   "label.initialise-store-properties": "Inicializar propiedades del almacén para GAPS",
-  "label.initialised": "Inicializado"
+  "label.initialised": "Inicializado",
+  "customer-returns": "Devoluciones de cliente",
+  "supplier-return": "Devolución de proveedor",
+  "supplier-returns": "Devoluciones de proveedor",
+  "customer-return": "Devolución de cliente"
 }
