@@ -68,8 +68,10 @@ pub enum InvoiceType {
     InventoryAddition,
     InventoryReduction,
     Repack,
-    InboundReturn,
-    OutboundReturn,
+    #[serde(alias = "OUTBOUND_RETURN")]
+    SupplierReturn,
+    #[serde(alias = "INBOUND_RETURN")]
+    CustomerReturn,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

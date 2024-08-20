@@ -55,10 +55,10 @@ pub mod currency;
 pub mod label_printer_settings;
 pub use self::label_printer_settings::*;
 
-pub mod generate_inbound_return_lines;
-pub use self::generate_inbound_return_lines::*;
-pub mod generate_outbound_return_lines;
-pub use self::generate_outbound_return_lines::*;
+pub mod generate_customer_return_lines;
+pub use self::generate_customer_return_lines::*;
+pub mod generate_supplier_return_lines;
+pub use self::generate_supplier_return_lines::*;
 pub mod return_reason;
 pub use self::return_reason::*;
 

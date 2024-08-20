@@ -65,7 +65,7 @@ impl From<TransactionError<UpdateLineReturnReasonError>> for UpdateLineReturnRea
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_outbound_return_a_invoice_line_a, mock_store_b, MockData, MockDataInserts},
+        mock::{mock_store_b, mock_supplier_return_a_invoice_line_a, MockData, MockDataInserts},
         test_db::setup_all_with_data,
         ReturnReasonRow,
     };
@@ -121,7 +121,7 @@ mod test {
                 .update_return_reason_id(
                     &context,
                     UpdateLineReturnReason {
-                        line_id: mock_outbound_return_a_invoice_line_a().id,
+                        line_id: mock_supplier_return_a_invoice_line_a().id,
                         reason_id: Some("reason_does_not_exist".to_string())
                     }
                 )
@@ -135,7 +135,7 @@ mod test {
                 .update_return_reason_id(
                     &context,
                     UpdateLineReturnReason {
-                        line_id: mock_outbound_return_a_invoice_line_a().id,
+                        line_id: mock_supplier_return_a_invoice_line_a().id,
                         reason_id: Some(non_active_return_reason().id.clone())
                     }
                 )
@@ -174,7 +174,7 @@ mod test {
             .update_return_reason_id(
                 &context,
                 UpdateLineReturnReason {
-                    line_id: mock_outbound_return_a_invoice_line_a().id,
+                    line_id: mock_supplier_return_a_invoice_line_a().id,
                     reason_id: Some(return_reason().id),
                 },
             )

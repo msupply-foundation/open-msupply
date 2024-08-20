@@ -118,11 +118,16 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
-        barcode::{BarcodeFilter, BarcodeRepository}, mock::{
-            mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
+        barcode::{BarcodeFilter, BarcodeRepository},
+        mock::{
+            mock_customer_return_a, mock_customer_return_a_invoice_line_a, mock_item_a,
             mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
             mock_user_account_a, MockData, MockDataInserts,
-        }, test_db::{setup_all, setup_all_with_data}, EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow, StorePreferenceRowRepository
+        },
+        test_db::{setup_all, setup_all_with_data},
+        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
+        InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, StorePreferenceRow,
+        StorePreferenceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -138,13 +143,13 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_stock_in_line_errors() {
-        fn verified_inbound_return() -> InvoiceRow {
+        fn verified_customer_return() -> InvoiceRow {
             InvoiceRow {
-                id: "verified_inbound_return".to_string(),
+                id: "verified_customer_return".to_string(),
                 status: InvoiceStatus::Verified,
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_b().id,
-                r#type: InvoiceType::InboundReturn,
+                r#type: InvoiceType::CustomerReturn,
                 ..Default::default()
             }
         }
@@ -152,7 +157,7 @@ mod test {
             "insert_stock_in_line_errors",
             MockDataInserts::all(),
             MockData {
-                invoices: vec![verified_inbound_return()],
+                invoices: vec![verified_customer_return()],
                 ..Default::default()
             },
         )
@@ -168,7 +173,7 @@ mod test {
             insert_stock_in_line(
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
-                    r.id = mock_inbound_return_a_invoice_line_a().id;
+                    r.id = mock_customer_return_a_invoice_line_a().id;
                 }),
             ),
             Err(ServiceError::LineAlreadyExists)
@@ -269,7 +274,7 @@ mod test {
                     r.item_id.clone_from(&mock_item_a().id);
                     r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
-                    r.invoice_id = verified_inbound_return().id; // VERIFIED
+                    r.invoice_id = verified_customer_return().id; // VERIFIED
                 }),
             ),
             Err(ServiceError::CannotEditFinalised)
@@ -284,7 +289,7 @@ mod test {
                     r.pack_size = 1.0;
                     r.number_of_packs = 1.0;
                     r.item_id = mock_item_a().id;
-                    r.invoice_id = mock_inbound_return_a().id; // Store B
+                    r.invoice_id = mock_customer_return_a().id; // Store B
                 }),
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -307,7 +312,7 @@ mod test {
             &context,
             inline_init(|r: &mut InsertStockInLine| {
                 r.id = "new_invoice_line_id".to_string();
-                r.invoice_id = mock_inbound_return_a().id;
+                r.invoice_id = mock_customer_return_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1.0;
                 r.number_of_packs = 1.0;
@@ -362,7 +367,7 @@ mod test {
             &context,
             inline_init(|r: &mut InsertStockInLine| {
                 r.id = "new_invoice_line_pack_to_one".to_string();
-                r.invoice_id = mock_inbound_return_a().id;
+                r.invoice_id = mock_customer_return_a().id;
                 r.item_id = mock_item_a().id;
                 r.pack_size = 10.0;
                 r.number_of_packs = 20.0;

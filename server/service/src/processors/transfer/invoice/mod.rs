@@ -56,9 +56,9 @@ enum Operation {
         /// OR
         /// `shipment.requisition_id -> requisition.id -> linked_requisition.linked_requisition_id`
         linked_shipment_requisition: Option<Requisition>,
-        /// Original shipment for linked return, required for linking inbound return to outbound shipment
+        /// Original shipment for linked return, required for linking customer return to outbound shipment
         /// Could be Some() even if linked_shipment (which is actually linked_return in this case...) is None
-        /// because in/outbound return may not be linked to another return, but can be linked/connected to its
+        /// because in/supplier return may not be linked to another return, but can be linked/connected to its
         /// original in/outbound shipment
         ///
         /// Deduced through:

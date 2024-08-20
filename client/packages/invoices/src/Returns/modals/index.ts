@@ -1,2 +1,2 @@
-export * from './OutboundReturn';
-export * from './InboundReturn';
+export * from './SupplierReturn';
+export * from './CustomerReturn';

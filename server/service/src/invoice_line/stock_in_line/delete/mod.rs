@@ -80,10 +80,10 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_inbound_return_a, mock_inbound_return_a_invoice_line_a,
-            mock_inbound_return_a_invoice_line_b, mock_item_a, mock_name_store_b,
-            mock_outbound_return_b_invoice_line_a, mock_store_a, mock_store_b, mock_user_account_a,
-            MockData, MockDataInserts,
+            mock_customer_return_a, mock_customer_return_a_invoice_line_a,
+            mock_customer_return_a_invoice_line_b, mock_item_a, mock_name_store_b, mock_store_a,
+            mock_store_b, mock_supplier_return_b_invoice_line_a, mock_user_account_a, MockData,
+            MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
@@ -105,7 +105,7 @@ mod test {
                 id: "verified_return".to_string(),
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
-                r#type: InvoiceType::InboundReturn,
+                r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::Verified,
                 ..Default::default()
             }
@@ -142,7 +142,7 @@ mod test {
                 &context,
                 DeleteStockInLine {
                     id: "invalid".to_owned(),
-                    r#type: StockInType::InboundReturn,
+                    r#type: StockInType::CustomerReturn,
                 },
             ),
             Err(ServiceError::LineDoesNotExist)
@@ -153,8 +153,8 @@ mod test {
             delete_stock_in_line(
                 &context,
                 DeleteStockInLine {
-                    id: mock_outbound_return_b_invoice_line_a().id,
-                    r#type: StockInType::InboundReturn,
+                    id: mock_supplier_return_b_invoice_line_a().id,
+                    r#type: StockInType::CustomerReturn,
                 },
             ),
             Err(ServiceError::NotAStockIn)
@@ -166,7 +166,7 @@ mod test {
                 &context,
                 DeleteStockInLine {
                     id: verified_return_line().id,
-                    r#type: StockInType::InboundReturn,
+                    r#type: StockInType::CustomerReturn,
                 },
             ),
             Err(ServiceError::CannotEditFinalised)
@@ -177,8 +177,8 @@ mod test {
             delete_stock_in_line(
                 &context,
                 DeleteStockInLine {
-                    id: mock_inbound_return_a_invoice_line_b().id, // line number_of_packs and stock_line available_number_of_packs are different
-                    r#type: StockInType::InboundReturn,
+                    id: mock_customer_return_a_invoice_line_b().id, // line number_of_packs and stock_line available_number_of_packs are different
+                    r#type: StockInType::CustomerReturn,
                 },
             ),
             Err(ServiceError::BatchIsReserved)
@@ -190,8 +190,8 @@ mod test {
             delete_stock_in_line(
                 &context,
                 DeleteStockInLine {
-                    id: mock_inbound_return_a_invoice_line_a().id,
-                    r#type: StockInType::InboundReturn,
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    r#type: StockInType::CustomerReturn,
                 },
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -211,7 +211,7 @@ mod test {
         fn return_line() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "return_line".to_string(),
-                invoice_id: mock_inbound_return_a().id,
+                invoice_id: mock_customer_return_a().id,
                 stock_line_id: Some(stock_line().id),
                 item_link_id: mock_item_a().id,
                 r#type: InvoiceLineType::StockIn,
@@ -238,7 +238,7 @@ mod test {
             &context,
             DeleteStockInLine {
                 id: return_line().id,
-                r#type: StockInType::InboundReturn,
+                r#type: StockInType::CustomerReturn,
             },
         )
         .unwrap();

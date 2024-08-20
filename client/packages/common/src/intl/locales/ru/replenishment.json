@@ -12,7 +12,6 @@
   "error.no-inbound-items": "В эту партию не добавлено ни одного товара.",
   "error.no-inbound-shipments": "Нет Входящих Поставок для отображения.",
   "error.no-internal-orders": "Нет внутренних заказов для отображения.",
-  "error.no-outbound-returns": "Нет Исходящих Возвратов для отображения.",
   "error.no-requisition-items": "К этому Внутреннему Заказу не добавлено ни одного товара.",
   "error.no-rnr-forms": "О&З Формы не найдены",
   "error.requisition-not-found": "Внутренний Заказ не найден",

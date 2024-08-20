@@ -1,6 +1,3 @@
-use outbound_return::update_other_party::update_outbound_return_other_party;
-use outbound_return::update_other_party::UpdateOutboundReturnOtherParty;
-use outbound_return::update_other_party::UpdateOutboundReturnOtherPartyError;
 use repository::Invoice;
 use repository::InvoiceFilter;
 use repository::InvoiceLine;
@@ -14,31 +11,32 @@ use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
 pub mod query;
-use self::inbound_return::insert::insert_inbound_return;
-use self::inbound_return::insert::InsertInboundReturn;
-use self::inbound_return::insert::InsertInboundReturnError;
+use self::customer_return::insert::insert_customer_return;
+use self::customer_return::insert::InsertCustomerReturn;
+use self::customer_return::insert::InsertCustomerReturnError;
 use self::inventory_adjustment::add_new_stock_line::{
     add_new_stock_line, AddNewStockLine, AddNewStockLineError,
 };
 use self::inventory_adjustment::insert_inventory_adjustment;
 use self::inventory_adjustment::InsertInventoryAdjustment;
 use self::inventory_adjustment::InsertInventoryAdjustmentError;
-use self::outbound_return::delete::*;
-use self::outbound_return::generate_outbound_return_lines::*;
-use self::outbound_return::insert::*;
-use self::outbound_return::update::*;
-use self::outbound_return::update_lines::*;
 use self::outbound_shipment::batch_outbound_shipment;
 use self::outbound_shipment::BatchOutboundShipment;
 use self::outbound_shipment::BatchOutboundShipmentResult;
 use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
+use self::supplier_return::delete::*;
+use self::supplier_return::generate_supplier_return_lines::*;
+use self::supplier_return::insert::*;
+use self::supplier_return::update::*;
+use self::supplier_return::update_lines::*;
+use supplier_return::update_other_party::*;
 
-pub mod outbound_return;
+pub mod supplier_return;
 
-pub mod inbound_return;
-use self::inbound_return::*;
+pub mod customer_return;
+use self::customer_return::*;
 
 pub mod outbound_shipment;
 use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
@@ -208,94 +206,94 @@ pub trait InvoiceServiceTrait: Sync + Send {
         batch_prescription(ctx, input)
     }
 
-    fn generate_outbound_return_lines(
+    fn generate_supplier_return_lines(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: GenerateOutboundReturnLinesInput,
-    ) -> Result<ListResult<OutboundReturnLine>, ListError> {
-        generate_outbound_return_lines(ctx, store_id, input)
+        input: GenerateSupplierReturnLinesInput,
+    ) -> Result<ListResult<SupplierReturnLine>, ListError> {
+        generate_supplier_return_lines(ctx, store_id, input)
     }
 
-    fn insert_outbound_return(
+    fn insert_supplier_return(
         &self,
         ctx: &ServiceContext,
-        input: InsertOutboundReturn,
-    ) -> Result<Invoice, InsertOutboundReturnError> {
-        insert_outbound_return(ctx, input)
+        input: InsertSupplierReturn,
+    ) -> Result<Invoice, InsertSupplierReturnError> {
+        insert_supplier_return(ctx, input)
     }
 
-    fn update_outbound_return(
+    fn update_supplier_return(
         &self,
         ctx: &ServiceContext,
-        input: UpdateOutboundReturn,
-    ) -> Result<Invoice, UpdateOutboundReturnError> {
-        update_outbound_return(ctx, input)
+        input: UpdateSupplierReturn,
+    ) -> Result<Invoice, UpdateSupplierReturnError> {
+        update_supplier_return(ctx, input)
     }
 
-    fn update_outbound_return_other_party(
+    fn update_supplier_return_other_party(
         &self,
         ctx: &ServiceContext,
-        input: UpdateOutboundReturnOtherParty,
-    ) -> Result<Invoice, UpdateOutboundReturnOtherPartyError> {
-        update_outbound_return_other_party(ctx, input)
+        input: UpdateSupplierReturnOtherParty,
+    ) -> Result<Invoice, UpdateSupplierReturnOtherPartyError> {
+        update_supplier_return_other_party(ctx, input)
     }
 
-    fn update_outbound_return_lines(
+    fn update_supplier_return_lines(
         &self,
         ctx: &ServiceContext,
-        input: UpdateOutboundReturnLines,
-    ) -> Result<Invoice, UpdateOutboundReturnLinesError> {
-        update_outbound_return_lines(ctx, input)
+        input: UpdateSupplierReturnLines,
+    ) -> Result<Invoice, UpdateSupplierReturnLinesError> {
+        update_supplier_return_lines(ctx, input)
     }
 
-    fn delete_outbound_return(
+    fn delete_supplier_return(
         &self,
         ctx: &ServiceContext,
         id: String,
-    ) -> Result<String, DeleteOutboundReturnError> {
-        delete_outbound_return(ctx, id)
+    ) -> Result<String, DeleteSupplierReturnError> {
+        delete_supplier_return(ctx, id)
     }
 
-    fn generate_inbound_return_lines(
+    fn generate_customer_return_lines(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-        input: GenerateInboundReturnLinesInput,
-    ) -> Result<ListResult<InboundReturnLine>, ListError> {
-        generate_inbound_return_lines(ctx, store_id, input)
+        input: GenerateCustomerReturnLinesInput,
+    ) -> Result<ListResult<CustomerReturnLine>, ListError> {
+        generate_customer_return_lines(ctx, store_id, input)
     }
 
-    fn insert_inbound_return(
+    fn insert_customer_return(
         &self,
         ctx: &ServiceContext,
-        input: InsertInboundReturn,
-    ) -> Result<Invoice, InsertInboundReturnError> {
-        insert_inbound_return(ctx, input)
+        input: InsertCustomerReturn,
+    ) -> Result<Invoice, InsertCustomerReturnError> {
+        insert_customer_return(ctx, input)
     }
 
-    fn update_inbound_return(
+    fn update_customer_return(
         &self,
         ctx: &ServiceContext,
-        input: UpdateInboundReturn,
-    ) -> Result<Invoice, UpdateInboundReturnError> {
-        update_inbound_return(ctx, input)
+        input: UpdateCustomerReturn,
+    ) -> Result<Invoice, UpdateCustomerReturnError> {
+        update_customer_return(ctx, input)
     }
 
-    fn update_inbound_return_lines(
+    fn update_customer_return_lines(
         &self,
         ctx: &ServiceContext,
-        input: UpdateInboundReturnLines,
-    ) -> Result<Invoice, UpdateInboundReturnLinesError> {
-        update_inbound_return_lines(ctx, input)
+        input: UpdateCustomerReturnLines,
+    ) -> Result<Invoice, UpdateCustomerReturnLinesError> {
+        update_customer_return_lines(ctx, input)
     }
 
-    fn delete_inbound_return(
+    fn delete_customer_return(
         &self,
         ctx: &ServiceContext,
         id: String,
-    ) -> Result<String, DeleteInboundReturnError> {
-        delete_inbound_return(ctx, id)
+    ) -> Result<String, DeleteCustomerReturnError> {
+        delete_customer_return(ctx, id)
     }
 
     fn insert_inventory_adjustment(

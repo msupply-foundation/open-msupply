@@ -22,7 +22,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
     /// Outbound invoice status will be updated when all below conditions are met:
     ///
     /// 1. Source invoice name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source invoice is Inbound shipment or Inbound Return
+    /// 2. Source invoice is Inbound shipment or Vustomer Return
     /// 3. Linked invoice exists (the outbound invoice)
     /// 4. Linked outbound invoice status is not Verified (this is the last status possible)
     /// 5. Linked outbound invoice status is not source inbound invoice status
@@ -50,7 +50,7 @@ impl InvoiceTransferProcessor for UpdateOutboundInvoiceStatusProcessor {
         // 2.
         if !matches!(
             inbound_invoice.invoice_row.r#type,
-            InvoiceType::InboundShipment | InvoiceType::InboundReturn
+            InvoiceType::InboundShipment | InvoiceType::CustomerReturn
         ) {
             return Ok(None);
         }
