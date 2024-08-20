@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
-use fast_scraper::{ElementRef, Html, Selector};
 use repository::{
     EqualFilter, PaginationOption, Report, ReportFilter, ReportRepository, ReportRowRepository,
     ReportSort, ReportType, RepositoryError,
 };
+use scraper::{ElementRef, Html, Selector};
 use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
@@ -513,7 +513,18 @@ fn resources_from_resolved_template(
         .iter()
         .filter_map(|(name, entry)| match entry {
             ReportDefinitionEntry::Resource(ref resource) => Some((name.clone(), resource.clone())),
-            _ => None,
+            ReportDefinitionEntry::Manifest(ref manifest) => {
+                let Ok(value) = serde_json::to_value(manifest) else {
+                    // should not happen
+                    return None;
+                };
+                Some((name.clone(), value))
+            }
+            ReportDefinitionEntry::DefaultQuery(_)
+            | ReportDefinitionEntry::GraphGLQuery(_)
+            | ReportDefinitionEntry::Ref(_)
+            | ReportDefinitionEntry::SQLQuery(_)
+            | ReportDefinitionEntry::TeraTemplate(_) => None,
         })
         .collect()
 }
@@ -702,8 +713,9 @@ mod report_service_test {
 
 #[cfg(test)]
 mod report_to_excel_test {
+    use scraper::Html;
+
     use super::*;
-    use fast_scraper::Html;
 
     #[test]
     fn test_selectors() {

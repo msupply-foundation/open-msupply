@@ -329,9 +329,6 @@ mod test {
                     id
                     status
                     otherPartyId
-                    otherPartyStore {
-                        id
-                    }
                 }
                 ... on UpdatePrescriptionError {
                     error {

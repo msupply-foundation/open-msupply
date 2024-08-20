@@ -1,4 +1,7 @@
-use super::{item_row::item, rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form};
+use super::{
+    item_row::item, requisition_line_row::requisition_line,
+    rnr_form_line_row::rnr_form_line::dsl::*, rnr_form_row::rnr_form,
+};
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
     StorageConnection, Upsert,
@@ -6,6 +9,7 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 table! {
@@ -13,6 +17,7 @@ table! {
         id -> Text,
         rnr_form_id -> Text,
         item_id -> Text,
+        requisition_line_id -> Nullable<Text>,
         previous_monthly_consumption_values -> Text,
         average_monthly_consumption -> Double,
         initial_balance -> Double,
@@ -29,6 +34,7 @@ table! {
         expiry_date -> Nullable<Date>,
         calculated_requested_quantity -> Double,
         entered_requested_quantity -> Nullable<Double>,
+        low_stock -> crate::db_diesel::rnr_form_line_row::RnRFormLowStockMapping,
         comment -> Nullable<Text>,
         confirmed -> Bool,
     }
@@ -36,9 +42,11 @@ table! {
 
 joinable!(rnr_form_line -> rnr_form (rnr_form_id));
 joinable!(rnr_form_line -> item (item_id));
+joinable!(rnr_form_line -> requisition_line (requisition_line_id));
 
 allow_tables_to_appear_in_same_query!(rnr_form_line, rnr_form);
 allow_tables_to_appear_in_same_query!(rnr_form_line, item);
+allow_tables_to_appear_in_same_query!(rnr_form_line, requisition_line);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize, Default,
@@ -48,7 +56,9 @@ allow_tables_to_appear_in_same_query!(rnr_form_line, item);
 pub struct RnRFormLineRow {
     pub id: String,
     pub rnr_form_id: String,
+    // TODO: item_link_id
     pub item_id: String,
+    pub requisition_line_id: Option<String>,
     pub previous_monthly_consumption_values: String,
     pub average_monthly_consumption: f64,
     pub initial_balance: f64,
@@ -65,8 +75,19 @@ pub struct RnRFormLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub calculated_requested_quantity: f64,
     pub entered_requested_quantity: Option<f64>,
+    pub low_stock: RnRFormLowStock,
     pub comment: Option<String>,
     pub confirmed: bool,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RnRFormLowStock {
+    #[default]
+    Ok,
+    BelowHalf,
+    BelowQuarter,
 }
 
 pub struct RnRFormLineRowRepository<'a> {
@@ -91,6 +112,20 @@ impl<'a> RnRFormLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &RnRFormLineRow) -> Result<i64, RepositoryError> {
         self._upsert_one(row)?;
         self.insert_changelog(row.id.to_owned(), RowActionType::Upsert)
+    }
+
+    pub fn update_requisition_line_id(
+        &self,
+        rnr_form_line_id: &str,
+        linked_requisition_line_id: &str,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(rnr_form_line)
+            .filter(id.eq(rnr_form_line_id))
+            .set(requisition_line_id.eq(linked_requisition_line_id))
+            .execute(self.connection.lock().connection())?;
+
+        self.insert_changelog(rnr_form_line_id.to_owned(), RowActionType::Upsert)?;
+        Ok(())
     }
 
     fn insert_changelog(

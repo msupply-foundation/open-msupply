@@ -2,12 +2,14 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
-use repository::RnRFormLineRow;
+use repository::{RequisitionLineRow, RnRFormLine, RnRFormLineRow, RnRFormLowStock};
+use serde::Serialize;
 
 use crate::types::ItemNode;
 
 pub struct RnRFormLineNode {
     pub rnr_form_line_row: RnRFormLineRow,
+    pub requisition_line_row: Option<RequisitionLineRow>,
 }
 
 #[Object]
@@ -76,6 +78,10 @@ impl RnRFormLineNode {
         self.rnr_form_line_row.calculated_requested_quantity
     }
 
+    pub async fn low_stock(&self) -> LowStockStatus {
+        LowStockStatus::from_domain(&self.rnr_form_line_row.low_stock)
+    }
+
     pub async fn entered_requested_quantity(&self) -> Option<f64> {
         self.rnr_form_line_row.entered_requested_quantity
     }
@@ -86,6 +92,12 @@ impl RnRFormLineNode {
 
     pub async fn confirmed(&self) -> bool {
         self.rnr_form_line_row.confirmed
+    }
+
+    pub async fn approved_quantity(&self) -> Option<f64> {
+        self.requisition_line_row
+            .as_ref()
+            .map(|r| r.approved_quantity)
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
@@ -107,7 +119,41 @@ impl RnRFormLineNode {
 }
 
 impl RnRFormLineNode {
-    pub fn from_domain(rnr_form_line_row: RnRFormLineRow) -> RnRFormLineNode {
-        RnRFormLineNode { rnr_form_line_row }
+    pub fn from_domain(
+        RnRFormLine {
+            rnr_form_line_row,
+            requisition_line_row,
+            item_row: _,
+        }: RnRFormLine,
+    ) -> RnRFormLineNode {
+        RnRFormLineNode {
+            rnr_form_line_row,
+            requisition_line_row,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum LowStockStatus {
+    BelowQuarter,
+    BelowHalf,
+    Ok,
+}
+impl LowStockStatus {
+    pub fn from_domain(low_stock: &RnRFormLowStock) -> Self {
+        match low_stock {
+            RnRFormLowStock::BelowQuarter => LowStockStatus::BelowQuarter,
+            RnRFormLowStock::BelowHalf => LowStockStatus::BelowHalf,
+            RnRFormLowStock::Ok => LowStockStatus::Ok,
+        }
+    }
+
+    pub fn to_domain(self) -> RnRFormLowStock {
+        match self {
+            LowStockStatus::BelowQuarter => RnRFormLowStock::BelowQuarter,
+            LowStockStatus::BelowHalf => RnRFormLowStock::BelowHalf,
+            LowStockStatus::Ok => RnRFormLowStock::Ok,
+        }
     }
 }
