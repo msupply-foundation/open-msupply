@@ -103,10 +103,18 @@ export const Toolbar: FC<{
             />
           </Box>
           <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+            <DropdownMenuItem
+              IconComponent={DeleteIcon}
+              onClick={onDelete}
+              disabled={isDisabled}
+            >
               {t('button.delete-lines')}
             </DropdownMenuItem>
-            <DropdownMenuItem IconComponent={ZapIcon} onClick={onAllocate}>
+            <DropdownMenuItem
+              IconComponent={ZapIcon}
+              onClick={onAllocate}
+              disabled={isDisabled}
+            >
               {t('button.allocate-lines')}
             </DropdownMenuItem>
 
