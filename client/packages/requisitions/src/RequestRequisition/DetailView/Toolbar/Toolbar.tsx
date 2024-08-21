@@ -121,7 +121,7 @@ export const Toolbar: FC = () => {
           display="flex"
           gap={2}
         >
-          <ToolbarActions />
+          <ToolbarActions isDisabled={isDisabled} />
         </Grid>
       </Grid>
       <Grid
@@ -140,7 +140,7 @@ export const Toolbar: FC = () => {
           }}
           debounceTime={0}
         />
-        <ToolbarDropDown />
+        <ToolbarDropDown isDisabled={isDisabled} />
       </Grid>
     </AppBarContentPortal>
   );

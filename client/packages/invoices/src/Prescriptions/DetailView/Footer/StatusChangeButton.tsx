@@ -139,20 +139,16 @@ export const StatusChangeButton = () => {
     lines?.totalCount === 0 ||
     lines?.nodes?.every(l => l.type === InvoiceLineNodeType.UnallocatedStock);
 
-  if (!selectedOption) return null;
-  if (isDisabled) return null;
-
   const noLinesNotification = useDisabledNotificationToast(
     t('messages.no-lines')
   );
-
-  if (!selectedOption) return null;
-  if (isDisabled) return null;
 
   const onStatusClick = () => {
     if (noLines) return noLinesNotification();
     return getConfirmation();
   };
+  if (!selectedOption) return null;
+  if (isDisabled) return null;
 
   return (
     <SplitButton
