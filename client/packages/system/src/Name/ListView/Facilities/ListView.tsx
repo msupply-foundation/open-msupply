@@ -99,8 +99,6 @@ const FacilitiesListComponent = () => {
           nameId={selectedId}
           onClose={onClose}
           setNextFacility={setSelectedId}
-          properties={properties}
-          propertiesLoading={propertiesLoading}
         />
       )}
       <DataTable
