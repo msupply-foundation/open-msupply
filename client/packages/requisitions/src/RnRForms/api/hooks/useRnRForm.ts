@@ -5,15 +5,16 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { RnRFormFragment, RnRFormLineFragment } from '../operations.generated';
-import { useRnRGraphQL } from '..';
+import { useRnRFormContext, useRnRGraphQL } from '..';
 import { RNR_FORM } from './keys';
 
-export interface RnRForm extends RnRFormFragment {
+export interface RnRFormQuery extends RnRFormFragment {
   lines: RnRFormLineFragment[];
 }
 
 export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
   const { api, storeId } = useRnRGraphQL();
+  const { clearDraftLine } = useRnRFormContext();
   const queryKey = [RNR_FORM, rnrFormId];
 
   const {
@@ -28,7 +29,7 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
     error: updateLineError,
   } = useUpdateLine(rnrFormId);
 
-  const queryFn = async (): Promise<RnRForm | null> => {
+  const queryFn = async (): Promise<RnRFormQuery | null> => {
     const query = await api.rAndRFormDetail({
       storeId,
       rnrFormId,
@@ -40,7 +41,10 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
 
   const query = useQuery({ queryKey, queryFn });
 
-  const updateLine = async (line: RnRFormLineFragment) => updateLines([line]);
+  const updateLine = async (line: RnRFormLineFragment) => {
+    await updateLines([line]);
+    clearDraftLine(line.id);
+  };
 
   const confirmRemainingLines = async () => {
     if (!query.data) return;

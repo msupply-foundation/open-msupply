@@ -42,6 +42,19 @@ Note: don't upload sensitive data to online encoders.
   Json files can contain some other information that can be accessed in the Tera template (through the `res` object, see example dir).
   For example, instead of hard coding the timezone, as done in the example, the timeszone string could also stored in a json data file.
 
+- **`manifest.json`**
+  Manifest file to specify various report metadata.
+  The manifest file is added to the `res` object as a normal resource and thus can be accessed from within the Tera template.
+  The manifest file must have the following structure:
+
+```ts
+// manifest.json
+{
+  // Report context type
+  "context": "PATIENT" | "DISPENSARY" | ...
+}
+```
+
 ## Usage
 
 To build the report builder from the Rust source code run the following command in the `report_builder` directory:
@@ -106,11 +119,18 @@ password: "password"
 ```
 
 The report builder will use this config file to authenticate with the remote-server and print/download the report to the local file system.
-The remote-server needs a store id and a data id to print the report.
+The remote-server needs a store id (or store name) and a data id to print the report.
 For example, to print a report for a stocktake with id "d734fd45-064e-4ddd-9886-ea71a2797640" from store "80004C94067A4CE5A34FC343EB1B4306":
 
 ```bash
 > report_builder print --report generated/output.json --config config.yaml --store-id 80004C94067A4CE5A34FC343EB1B4306 --data-id d734fd45-064e-4ddd-9886-ea71a2797640 --output report_pdf_name.pdf
+```
+
+If the store name instead of the store id is provided, the matching store id is automatically fetched from the central server.
+For example, the following works as well:
+
+```bash
+> report_builder print --report generated/output.json --config config.yaml --store-name "Gryffindor District Store" --data-id d734fd45-064e-4ddd-9886-ea71a2797640 --output report_pdf_name.pdf
 ```
 
 ### Report templates with arguments

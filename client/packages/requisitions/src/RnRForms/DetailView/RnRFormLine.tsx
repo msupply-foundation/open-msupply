@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   AlertIcon,
   BasicTextInput,
   Checkbox,
   CircleIcon,
+  CircularProgress,
   DatePicker,
   Formatter,
   LowStockStatus,
   NumericTextInput,
   NumUtils,
+  Tooltip,
   useBufferState,
   useNotification,
   useTheme,
@@ -16,29 +18,36 @@ import {
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { getLowStockStatus, getAmc } from './helpers';
+import { useRnRFormContext } from '../api';
 
 export const RnRFormLine = ({
-  line,
+  line: baseLine,
   saveLine,
-  markDirty,
   periodLength,
   disabled,
 }: {
   line: RnRFormLineFragment;
   periodLength: number;
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
-  markDirty: (id: string) => void;
   disabled: boolean;
 }) => {
   const theme = useTheme();
   const { error } = useNotification();
+  const [isLoading, setIsLoading] = useState(false);
+  const { draftLine, setLine } = useRnRFormContext(state => ({
+    draftLine: state.draftLines[baseLine.id],
+    setLine: state.setDraftLine,
+  }));
 
-  const [patch, setPatch] = useState<Partial<RnRFormLineFragment> | null>(null);
-  const draft = { ...line, ...patch };
+  const line = useMemo(() => {
+    return draftLine ?? baseLine;
+  }, [draftLine, baseLine]);
+
+  if (!line) return null;
 
   const updateDraft = (update: Partial<RnRFormLineFragment>) => {
     const newPatch = {
-      ...patch,
+      ...line,
       confirmed: false,
       ...update,
     };
@@ -50,7 +59,7 @@ export const RnRFormLine = ({
       adjustments,
       stockOutDuration,
       previousMonthlyConsumptionValues,
-    } = { ...draft, ...newPatch };
+    } = { ...newPatch };
 
     const finalBalance =
       initialBalance + quantityReceived - quantityConsumed + adjustments;
@@ -76,7 +85,7 @@ export const RnRFormLine = ({
 
     const lowStock = getLowStockStatus(finalBalance, maximumQuantity);
 
-    setPatch({
+    setLine({
       ...newPatch,
       finalBalance,
       adjustedQuantityConsumed,
@@ -85,16 +94,15 @@ export const RnRFormLine = ({
       calculatedRequestedQuantity,
       lowStock,
     });
-    markDirty(draft.id);
   };
 
   const venCategory =
-    draft.item.venCategory === VenCategoryType.NotAssigned
+    line.item.venCategory === VenCategoryType.NotAssigned
       ? ''
-      : draft.item.venCategory;
+      : line.item.venCategory;
 
   const textColor =
-    disabled || draft.confirmed
+    disabled || line.confirmed
       ? theme.palette.text.disabled
       : theme.palette.text.primary;
 
@@ -107,31 +115,35 @@ export const RnRFormLine = ({
   return (
     <tr>
       {/* Read only Item data */}
-      <td className="sticky-column first-column" style={readOnlyColumn}>
-        {draft.item.code}
-      </td>
+      {/* Add the tooltip here, as we hide overflow in the code column
+          to fix the code column width for side scroll */}
+      <Tooltip title={line.item.code}>
+        <td className="sticky-column first-column" style={readOnlyColumn}>
+          {line.item.code}
+        </td>
+      </Tooltip>
       <td style={readOnlyColumn} className="sticky-column second-column">
-        {draft.item.name}
+        {line.item.name}
       </td>
-      <td style={readOnlyColumn}>{draft.item.strength}</td>
-      <td style={readOnlyColumn}>{draft.item.unitName}</td>
+      <td style={readOnlyColumn}>{line.item.strength}</td>
+      <td style={readOnlyColumn}>{line.item.unitName}</td>
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>{venCategory}</td>
 
       {/* Enterable consumption data */}
       <RnRNumberCell
-        value={draft.initialBalance}
+        value={line.initialBalance}
         onChange={val => updateDraft({ initialBalance: val })}
         textColor={textColor}
         disabled={disabled}
       />
       <RnRNumberCell
-        value={draft.quantityReceived}
+        value={line.quantityReceived}
         onChange={val => updateDraft({ quantityReceived: val })}
         textColor={textColor}
         disabled={disabled}
       />
       <RnRNumberCell
-        value={draft.quantityConsumed}
+        value={line.quantityConsumed}
         onChange={val => updateDraft({ quantityConsumed: val })}
         textColor={textColor}
         disabled={disabled}
@@ -141,20 +153,20 @@ export const RnRFormLine = ({
       <RnRNumberCell
         readOnly
         textColor={textColor}
-        value={draft.adjustedQuantityConsumed}
+        value={line.adjustedQuantityConsumed}
         onChange={() => {}}
       />
 
       {/* Losses/adjustments and stock out */}
       <RnRNumberCell
-        value={draft.adjustments}
+        value={line.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
         textColor={textColor}
         allowNegative
         disabled={disabled}
       />
       <RnRNumberCell
-        value={draft.stockOutDuration}
+        value={line.stockOutDuration}
         textColor={textColor}
         onChange={val => updateDraft({ stockOutDuration: val })}
         max={periodLength}
@@ -164,19 +176,19 @@ export const RnRFormLine = ({
       {/* Readonly calculated values */}
       <RnRNumberCell
         readOnly
-        value={draft.finalBalance}
+        value={line.finalBalance}
         textColor={textColor}
         onChange={() => {}}
       />
       <RnRNumberCell
         readOnly
-        value={draft.averageMonthlyConsumption}
+        value={line.averageMonthlyConsumption}
         onChange={() => {}}
         textColor={textColor}
       />
       <RnRNumberCell
         readOnly
-        value={draft.maximumQuantity}
+        value={line.maximumQuantity}
         onChange={() => {}}
         textColor={textColor}
       />
@@ -189,7 +201,7 @@ export const RnRFormLine = ({
             '& fieldset': { border: 'none' },
             '& input': { color: textColor },
           }}
-          value={draft.expiryDate ? new Date(draft.expiryDate) : null}
+          value={line.expiryDate ? new Date(line.expiryDate) : null}
           onChange={date =>
             updateDraft({ expiryDate: Formatter.naiveDate(date) })
           }
@@ -198,19 +210,19 @@ export const RnRFormLine = ({
       </td>
       <RnRNumberCell
         value={
-          draft.enteredRequestedQuantity ?? draft.calculatedRequestedQuantity
+          line.enteredRequestedQuantity ?? line.calculatedRequestedQuantity
         }
         onChange={val => updateDraft({ enteredRequestedQuantity: val })}
         textColor={textColor}
         disabled={disabled}
       />
       <td style={{ ...readOnlyColumn, textAlign: 'center' }}>
-        {draft.lowStock !== LowStockStatus.Ok && (
+        {line.lowStock !== LowStockStatus.Ok && (
           <AlertIcon
-            double={draft.lowStock === LowStockStatus.BelowQuarter}
+            double={line.lowStock === LowStockStatus.BelowQuarter}
             sx={{
               color:
-                draft.lowStock === LowStockStatus.BelowQuarter
+                line.lowStock === LowStockStatus.BelowQuarter
                   ? 'error.main'
                   : 'primary.light',
             }}
@@ -227,7 +239,7 @@ export const RnRFormLine = ({
               '& .MuiInput-input': { color: textColor },
             },
           }}
-          value={draft.comment ?? ''}
+          value={line.comment ?? ''}
           onChange={e => updateDraft({ comment: e.target.value })}
           disabled={disabled}
         />
@@ -235,32 +247,40 @@ export const RnRFormLine = ({
 
       {/* Confirm the line */}
       <td style={{ textAlign: 'center' }}>
-        <Checkbox
-          checked={!!draft.confirmed}
-          size="medium"
-          onClick={async () => {
-            try {
-              await saveLine({ ...draft, confirmed: !draft.confirmed });
-              setPatch(null);
-            } catch (e) {
-              error((e as Error).message)();
-            }
-          }}
-          disabled={disabled}
-          sx={{ marginLeft: '10px' }}
-        />
-        <CircleIcon
-          sx={{
-            width: '10px',
-            visibility: patch === null ? 'hidden' : 'visible',
-            color: 'secondary.main',
-          }}
-        />
+        {isLoading ? (
+          <CircularProgress size={20} />
+        ) : (
+          <>
+            <Checkbox
+              checked={!!line.confirmed}
+              size="medium"
+              onClick={async () => {
+                try {
+                  setIsLoading(true);
+                  await saveLine({ ...line, confirmed: !line.confirmed });
+                  setIsLoading(false);
+                } catch (e) {
+                  error((e as Error).message)();
+                  setIsLoading(false);
+                }
+              }}
+              disabled={disabled}
+              sx={{ marginLeft: '10px' }}
+            />
+            <CircleIcon
+              sx={{
+                width: '10px',
+                visibility: draftLine ? 'visible' : 'hidden',
+                color: 'secondary.main',
+              }}
+            />
+          </>
+        )}
       </td>
       {/* Readonly - populated from Response Requisition */}
       <RnRNumberCell
         readOnly
-        value={draft.approvedQuantity ?? 0}
+        value={line.approvedQuantity ?? 0}
         textColor={textColor}
         onChange={() => {}}
       />
@@ -289,30 +309,32 @@ const RnRNumberCell = ({
   const backgroundColor = readOnly ? theme.palette.background.drawer : 'white';
 
   const [buffer, setBuffer] = useBufferState<number | undefined>(
-    NumUtils.round(value, 2)
+    NumUtils.round(value)
   );
 
   return (
     <td style={{ backgroundColor }}>
-      <NumericTextInput
-        InputProps={{
-          sx: {
-            backgroundColor,
-            '& .MuiInput-input': {
-              WebkitTextFillColor: textColor,
+      <Tooltip title={value === buffer ? '' : value}>
+        <NumericTextInput
+          InputProps={{
+            sx: {
+              backgroundColor,
+              '& .MuiInput-input': {
+                WebkitTextFillColor: textColor,
+              },
             },
-          },
-        }}
-        value={buffer}
-        disabled={readOnly ?? disabled}
-        onChange={newValue => {
-          setBuffer(newValue);
-          if (newValue !== undefined) onChange(newValue);
-        }}
-        max={max}
-        allowNegative={allowNegative}
-        defaultValue={0}
-      />
+          }}
+          value={buffer}
+          disabled={readOnly ?? disabled}
+          onChange={newValue => {
+            setBuffer(newValue);
+            if (newValue !== undefined) onChange(newValue);
+          }}
+          max={max}
+          allowNegative={allowNegative}
+          defaultValue={0}
+        />
+      </Tooltip>
     </td>
   );
 };

@@ -115,7 +115,9 @@ pub fn to_domain(asset_catalogue_item_row: AssetCatalogueItemRow) -> AssetCatalo
 }
 
 fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAssetCatalogueItemQuery {
-    let mut query = asset_catalogue_item_dsl::asset_catalogue_item.into_boxed();
+    let mut query = asset_catalogue_item_dsl::asset_catalogue_item
+        .filter(asset_catalogue_item_dsl::deleted_datetime.is_null())
+        .into_boxed();
 
     if let Some(f) = filter {
         let AssetCatalogueItemFilter {

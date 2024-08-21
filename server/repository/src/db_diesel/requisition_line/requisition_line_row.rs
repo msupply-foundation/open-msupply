@@ -69,6 +69,32 @@ impl<'a> RequisitionLineRowRepository<'a> {
         self.insert_changelog(row, RowActionType::Upsert)
     }
 
+    pub fn update_approved_quantity_by_item_id(
+        &self,
+        requisition_id: &str,
+        item_id: &str,
+        approved_quantity: f64,
+    ) -> Result<(), RepositoryError> {
+        let filter = requisition_line_dsl::requisition_id
+            .eq(requisition_id)
+            .and(requisition_line_dsl::item_link_id.eq(item_id));
+
+        diesel::update(requisition_line_dsl::requisition_line)
+            .filter(filter)
+            .set(requisition_line_dsl::approved_quantity.eq(approved_quantity))
+            .execute(self.connection.lock().connection())?;
+
+        let rows: Vec<RequisitionLineRow> = requisition_line_dsl::requisition_line
+            .filter(filter)
+            .load(self.connection.lock().connection())?;
+
+        for row in rows {
+            self.insert_changelog(&row, RowActionType::Upsert)?;
+        }
+
+        Ok(())
+    }
+
     fn insert_changelog(
         &self,
         row: &RequisitionLineRow,
