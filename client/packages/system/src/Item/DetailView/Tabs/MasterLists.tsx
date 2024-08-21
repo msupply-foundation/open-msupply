@@ -3,7 +3,7 @@ import {
   MasterListRowFragment,
   useMasterList,
 } from '@openmsupply-client/system';
-import { BasicSpinner } from '@common/components';
+import { BasicSpinner, NothingHere } from '@common/components';
 import {
   DataTable,
   TableProvider,
@@ -12,10 +12,12 @@ import {
   Box,
   createQueryParamsStore,
   TooltipTextCell,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 const MasterListsTable: FC<{ itemId?: string }> = ({ itemId }) => {
   const { data, isLoading } = useMasterList.document.listByItemId(itemId ?? '');
+  const t = useTranslation('catalogue');
   const columns = useColumns<MasterListRowFragment>([
     ['code', { Cell: TooltipTextCell }],
     ['name', { width: 200, Cell: TooltipTextCell }],
@@ -25,7 +27,12 @@ const MasterListsTable: FC<{ itemId?: string }> = ({ itemId }) => {
   if (isLoading) return <BasicSpinner />;
 
   return (
-    <DataTable id="master-list-detail" data={data?.nodes} columns={columns} />
+    <DataTable
+      id="master-list-detail"
+      data={data?.nodes}
+      columns={columns}
+      noDataElement={<NothingHere body={t('error.no-master-list')} />}
+    />
   );
 };
 
