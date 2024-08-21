@@ -9,14 +9,16 @@ use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
-    stocktake_line::{query::get_stocktake_line, validate::check_stocktake_line_exist},
+    stocktake_line::{
+        query::get_stocktake_line,
+        validate::{
+            check_active_adjustment_reasons, check_reason_is_valid,
+            check_snapshot_matches_current_count, check_stock_line_reduced_below_zero,
+            check_stocktake_line_exist, stocktake_reduction_amount,
+        },
+    },
     validate::check_store_id_matches,
     NullableUpdate,
-};
-
-use super::validate::{
-    check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
-    stocktake_reduction_amount,
 };
 
 #[derive(Default, Debug, Clone)]
@@ -47,6 +49,7 @@ pub enum UpdateStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    SnapshotCountCurrentCountMismatchLine(StocktakeLine),
     StockLineReducedBelowZero(StockLine),
 }
 
@@ -118,6 +121,13 @@ fn validate(
         if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
         {
             return Err(StockLineReducedBelowZero(stock_line.clone()));
+        }
+
+        if !check_snapshot_matches_current_count(
+            &stock_line.stock_line_row,
+            stocktake_line_row.snapshot_number_of_packs,
+        ) {
+            return Err(SnapshotCountCurrentCountMismatchLine(stocktake_line));
         }
     }
 
