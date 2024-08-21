@@ -110,6 +110,24 @@ impl<'a> UserAccountRowRepository<'a> {
         }
     }
 
+    pub fn find_one_active_by_username(
+        &self,
+        username: &str,
+    ) -> Result<Option<UserAccountRow>, RepositoryError> {
+        let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
+            .filter(lower(user_account_dsl::username).eq(lower(username)))
+            .filter(user_account_dsl::hashed_password.ne(""))
+            .first(self.connection.lock().connection());
+
+        match result {
+            Ok(row) => Ok(Some(row)),
+            Err(err) => match err {
+                diesel::result::Error::NotFound => Ok(None),
+                _ => Err(RepositoryError::from(err)),
+            },
+        }
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
         let result = user_account_dsl::user_account
             .filter(user_account_dsl::id.eq_any(ids))

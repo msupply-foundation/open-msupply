@@ -166,11 +166,23 @@ impl<'a> UserAccountService<'a> {
             .unwrap(); //TODO relocate to service
 
         let repo = UserRepository::new(self.connection);
-        repo.query_one(
+        let result = repo.query_one(
             UserFilter::new()
                 .id(EqualFilter::equal_to(user_id))
+                .hashed_password(EqualFilter::not_equal_to(""))
                 .site_id(EqualFilter::equal_to_i32(site_id)),
-        )
+        );
+        println!(
+            "password: {:?}",
+            result
+                .clone()
+                .unwrap()
+                .clone()
+                .unwrap()
+                .user_row
+                .hashed_password
+        );
+        result
     }
 
     /// Finds a user account and verifies that the password is ok
@@ -181,17 +193,15 @@ impl<'a> UserAccountService<'a> {
     ) -> Result<UserAccount, VerifyPasswordError> {
         let repo = UserAccountRowRepository::new(self.connection);
         let user = match repo
-            .find_one_by_user_name(username)
+            .find_one_active_by_username(username)
             .map_err(VerifyPasswordError::DatabaseError)?
         {
             Some(user) => user,
             None => return Err(VerifyPasswordError::UsernameDoesNotExist),
         };
         // verify password
-        let valid = verify(password, &user.hashed_password).map_err(|err| {
-            error!("verify_password: {}", err);
-            VerifyPasswordError::InvalidCredentialsBackend(err)
-        })?;
+        let valid = verify(password, &user.hashed_password)
+            .map_err(|err| VerifyPasswordError::InvalidCredentialsBackend(err))?;
         if !valid {
             return Err(VerifyPasswordError::InvalidCredentials);
         }
