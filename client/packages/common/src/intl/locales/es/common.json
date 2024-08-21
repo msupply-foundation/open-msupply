@@ -440,7 +440,7 @@
   "messages.deleted-lines_many": "{{count}} líneas eliminadas",
   "message.confirm-delete-encounter": "¿Estás seguro?",
   "messages.logout-confirm": "Esto te desconectará.",
-  "messages.no-lines": "No se puede cambiar el estado porque no hay líneas",
+  "messages.no-lines": "El estado no se puede cambiar porque no hay líneas o porque solo hay líneas con marcador de posición",
   "placeholder.search-by-location-code": "Buscar por código de ubicación",
   "success.data-deleted": "Eliminado exitosamente",
   "sync-info.syncing": "Sincronizando...",
@@ -589,5 +589,6 @@
   "label.store": "Almacén",
   "label.review": "Revisión",
   "label.warranty-start-date": "Inicio de garantía",
-  "messages.no": "No"
+  "messages.no": "No",
+  "messages.on-hold": "No se puede cambiar el estado porque la factura está en espera"
 }
