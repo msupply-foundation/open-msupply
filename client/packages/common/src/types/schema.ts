@@ -6509,7 +6509,13 @@ export type SensorsResponse = SensorConnector;
 export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & {
   __typename: 'SnapshotCountCurrentCountMismatch';
   description: Scalars['String']['output'];
-  lines: StocktakeLineConnector;
+  lines: Array<SnapshotCountCurrentCountMismatchLine>;
+};
+
+export type SnapshotCountCurrentCountMismatchLine = UpdateStocktakeLineErrorInterface & {
+  __typename: 'SnapshotCountCurrentCountMismatchLine';
+  description: Scalars['String']['output'];
+  stocktakeLine: StocktakeLineNode;
 };
 
 export enum StatusType {
