@@ -20,7 +20,7 @@ const DESCRIPTION: &str = "Create inbound invoice from outbound invoice";
 
 pub(crate) struct CreateInboundInvoiceProcessor;
 pub enum InboundInvoiceType {
-    InboundReturn,
+    CustomerReturn,
     InboundShipment,
 }
 
@@ -32,7 +32,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
     /// Inbound invoice will be created when all below conditions are met:
     ///
     /// 1. Source invoice name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source invoice is either Outbound shipment or Outbound Return
+    /// 2. Source invoice is either Outbound shipment or Supplier Return
     /// 3. Source outbound invoice is either Shipped or Picked
     ///    (outbounds can also be New or Allocated, but we only want to generate transfer when it's Shipped or Picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
@@ -66,7 +66,7 @@ impl InvoiceTransferProcessor for CreateInboundInvoiceProcessor {
         // Also get type for new invoice
         let new_invoice_type = match outbound_invoice.invoice_row.r#type {
             InvoiceType::OutboundShipment => InboundInvoiceType::InboundShipment,
-            InvoiceType::OutboundReturn => InboundInvoiceType::InboundReturn,
+            InvoiceType::SupplierReturn => InboundInvoiceType::CustomerReturn,
             _ => return Ok(None),
         };
 
@@ -192,7 +192,7 @@ fn generate_inbound_invoice(
             Some(comment) => format!("Stock transfer ({})", comment),
             None => "Stock transfer".to_string(),
         },
-        InboundInvoiceType::InboundReturn => match &outbound_invoice_row.comment {
+        InboundInvoiceType::CustomerReturn => match &outbound_invoice_row.comment {
             Some(comment) => format!("Stock return ({})", comment),
             None => "Stock return".to_string(),
         },
@@ -204,12 +204,12 @@ fn generate_inbound_invoice(
             connection,
             &match r#type {
                 InboundInvoiceType::InboundShipment => NumberRowType::InboundShipment,
-                InboundInvoiceType::InboundReturn => NumberRowType::InboundReturn,
+                InboundInvoiceType::CustomerReturn => NumberRowType::CustomerReturn,
             },
             &store_id,
         )?,
         r#type: match r#type {
-            InboundInvoiceType::InboundReturn => InvoiceType::InboundReturn,
+            InboundInvoiceType::CustomerReturn => InvoiceType::CustomerReturn,
             InboundInvoiceType::InboundShipment => InvoiceType::InboundShipment,
         },
         name_link_id: name_id,

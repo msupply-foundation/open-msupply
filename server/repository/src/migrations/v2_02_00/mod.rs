@@ -40,7 +40,6 @@ impl Migration for V2_02_00 {
 
         Ok(())
     }
-
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(add_low_stock_and_requisition_line_id::Migrate),

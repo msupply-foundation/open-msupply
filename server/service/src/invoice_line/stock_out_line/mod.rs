@@ -16,7 +16,7 @@ pub use self::validate::*;
 pub enum StockOutType {
     #[default]
     OutboundShipment,
-    OutboundReturn,
+    SupplierReturn,
     Prescription,
     InventoryReduction,
 }
@@ -26,7 +26,7 @@ impl StockOutType {
         match self {
             StockOutType::OutboundShipment => InvoiceType::OutboundShipment,
             StockOutType::Prescription => InvoiceType::Prescription,
-            StockOutType::OutboundReturn => InvoiceType::OutboundReturn,
+            StockOutType::SupplierReturn => InvoiceType::SupplierReturn,
             StockOutType::InventoryReduction => InvoiceType::InventoryReduction,
         }
     }

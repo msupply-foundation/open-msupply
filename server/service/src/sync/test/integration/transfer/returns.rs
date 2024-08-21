@@ -71,91 +71,91 @@ async fn integration_sync_return_transfers_normal() {
 
         // RETURN
         log::info!(
-            "Inserting outbound return on site {:?}",
+            "Inserting supplier return on site {:?}",
             returning_site.config
         );
-        tester.insert_outbound_return(&returning_site.connection);
+        tester.insert_supplier_return(&returning_site.connection);
 
         sync_and_delay(&returning_site, &site_receiving_return).await;
 
         log::info!(
-            "Checking inbound return is not created on site {:?}",
+            "Checking customer return is not created on site {:?}",
             site_receiving_return.config
         );
-        tester.check_inbound_return_not_created(&site_receiving_return.connection);
+        tester.check_customer_return_not_created(&site_receiving_return.connection);
 
         log::info!(
-            "Updating outbound return to picked on site {:?}",
+            "Updating supplier return to picked on site {:?}",
             returning_site.config
         );
-        tester.update_outbound_return_to_picked(&returning_site.service_provider);
+        tester.update_supplier_return_to_picked(&returning_site.service_provider);
 
         sync_and_delay(&returning_site, &site_receiving_return).await;
 
         log::info!(
-            "Checking inbound return is created on site {:?}",
+            "Checking customer return is created on site {:?}",
             site_receiving_return.config
         );
-        tester.check_inbound_return_created(&site_receiving_return.connection);
+        tester.check_customer_return_created(&site_receiving_return.connection);
 
         sync_and_delay(&site_receiving_return, &returning_site).await;
 
         log::info!(
-            "Checking outbound return was linked on site {:?}",
+            "Checking supplier return was linked on site {:?}",
             returning_site.config
         );
 
-        tester.check_outbound_return_was_linked(&returning_site.connection);
+        tester.check_supplier_return_was_linked(&returning_site.connection);
 
         log::info!(
-            "Update outbound return line on site {:?}",
+            "Update supplier return line on site {:?}",
             returning_site.config
         );
 
-        tester.update_outbound_return_line(&returning_site.service_provider);
+        tester.update_supplier_return_line(&returning_site.service_provider);
 
         log::info!(
-            "Update outbound return to shipped on site {:?}",
+            "Update supplier return to shipped on site {:?}",
             returning_site.config
         );
 
-        tester.update_outbound_return_to_shipped(&returning_site.service_provider);
+        tester.update_supplier_return_to_shipped(&returning_site.service_provider);
 
         sync_and_delay(&returning_site, &site_receiving_return).await;
 
         log::info!(
-            "Checking inbound return was updated on site {:?}",
+            "Checking customer return was updated on site {:?}",
             site_receiving_return.config
         );
-        tester.check_inbound_return_was_updated(&site_receiving_return.connection);
+        tester.check_customer_return_was_updated(&site_receiving_return.connection);
 
         log::info!(
-            "Update inbound return to delivered on site {:?}",
+            "Update customer return to delivered on site {:?}",
             site_receiving_return.config
         );
-        tester.update_inbound_return_to_delivered(&site_receiving_return.service_provider);
+        tester.update_customer_return_to_delivered(&site_receiving_return.service_provider);
 
         sync_and_delay(&site_receiving_return, &returning_site).await;
 
         log::info!(
-            "Check outbound return status was update on site {:?}",
+            "Check supplier return status was update on site {:?}",
             returning_site.config
         );
-        tester.check_outbound_return_status_matches_inbound_return(&returning_site.connection);
+        tester.check_supplier_return_status_matches_customer_return(&returning_site.connection);
 
         log::info!(
-            "Update inbound return to verified on site {:?}",
+            "Update customer return to verified on site {:?}",
             site_receiving_return.config
         );
-        tester.update_inbound_return_to_verified(&site_receiving_return.service_provider);
+        tester.update_customer_return_to_verified(&site_receiving_return.service_provider);
 
         sync_and_delay(&site_receiving_return, &returning_site).await;
 
         log::info!(
-            "Check outbound return status was update on site {:?}",
+            "Check supplier return status was update on site {:?}",
             returning_site.config
         );
-        tester.check_outbound_return_status_matches_inbound_return(&returning_site.connection);
+        tester.check_supplier_return_status_matches_customer_return(&returning_site.connection);
     };
 
     tokio::select! {
@@ -231,37 +231,37 @@ async fn integration_sync_return_transfers_delete() {
 
         // RETURN
         log::info!(
-            "Inserting outbound return on site {:?}",
+            "Inserting supplier return on site {:?}",
             returning_site.config
         );
-        tester.insert_outbound_return(&returning_site.connection);
+        tester.insert_supplier_return(&returning_site.connection);
 
         log::info!(
-            "Updating outbound return to picked on site {:?}",
+            "Updating supplier return to picked on site {:?}",
             returning_site.config
         );
-        tester.update_outbound_return_to_picked(&returning_site.service_provider);
+        tester.update_supplier_return_to_picked(&returning_site.service_provider);
 
         sync_and_delay(&returning_site, &site_receiving_return).await;
 
         log::info!(
-            "Checking inbound return is created on site {:?}",
+            "Checking customer return is created on site {:?}",
             site_receiving_return.config
         );
-        tester.check_inbound_return_created(&site_receiving_return.connection);
+        tester.check_customer_return_created(&site_receiving_return.connection);
 
-        log::info!("Delete outbound return on site {:?}", returning_site.config);
+        log::info!("Delete supplier return on site {:?}", returning_site.config);
 
-        tester.delete_outbound_return(&returning_site.service_provider);
+        tester.delete_supplier_return(&returning_site.service_provider);
 
         sync_and_delay(&returning_site, &site_receiving_return).await;
 
         log::info!(
-            "Check inbound return delete {:?}",
+            "Check customer return delete {:?}",
             site_receiving_return.config
         );
 
-        tester.check_inbound_return_deleted(&site_receiving_return.connection);
+        tester.check_customer_return_deleted(&site_receiving_return.connection);
     };
 
     tokio::select! {
@@ -338,16 +338,16 @@ async fn integration_sync_return_transfers_initialise() {
 
         // RETURN
         log::info!(
-            "Inserting outbound return on site {:?}",
+            "Inserting supplier return on site {:?}",
             returning_site.config
         );
-        tester.insert_outbound_return(&returning_site.connection);
+        tester.insert_supplier_return(&returning_site.connection);
 
         log::info!(
-            "Updating outbound return to picked on site {:?}",
+            "Updating supplier return to picked on site {:?}",
             returning_site.config
         );
-        tester.update_outbound_return_to_picked(&returning_site.service_provider);
+        tester.update_supplier_return_to_picked(&returning_site.service_provider);
 
         sync_and_delay(&returning_site, &site_receiving_return).await;
 
@@ -368,10 +368,10 @@ async fn integration_sync_return_transfers_initialise() {
         // Site 1 should be re-initialised here
         sync_and_delay(&site_receiving_return, &site_receiving_return).await;
         log::info!(
-            "Checking inbound return is created on site {:?}",
+            "Checking customer return is created on site {:?}",
             site_receiving_return.config
         );
-        tester.check_inbound_return_created(&site_receiving_return.connection);
+        tester.check_customer_return_created(&site_receiving_return.connection);
     };
 
     tokio::select! {

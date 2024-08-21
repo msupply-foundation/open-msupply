@@ -9,6 +9,7 @@ import {
   useConfirmationModal,
   useAlertModal,
   InvoiceLineNodeType,
+  useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
 import { useOutbound } from '../../api';
@@ -187,20 +188,29 @@ export const StatusChangeButton = () => {
   const { hasPlaceholder, alert } = useStatusChangePlaceholderCheck();
   const isDisabled = useOutbound.utils.isDisabled();
   const t = useTranslation();
-  const noLines = lines?.totalCount === 0;
+  const noLines =
+    lines?.totalCount === 0 ||
+    lines?.nodes?.every(l => l.type === InvoiceLineNodeType.UnallocatedStock);
+
+  const noLinesNotification = useDisabledNotificationToast(
+    t('messages.no-lines')
+  );
+
+  const onHoldNotication = useDisabledNotificationToast(t('messages.on-hold'));
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
   const onStatusClick = () => {
     if (hasPlaceholder) return alert();
+    if (noLines) return noLinesNotification();
+    if (onHold) return onHoldNotication();
     return getConfirmation();
   };
 
   return (
     <SplitButton
       label={noLines ? t('messages.no-lines') : ''}
-      isDisabled={noLines || onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}

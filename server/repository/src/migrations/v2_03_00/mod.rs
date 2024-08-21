@@ -1,6 +1,7 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
+mod return_types_rename;
 
 pub(crate) struct V2_03_00;
 
@@ -10,6 +11,7 @@ impl Migration for V2_03_00 {
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        return_types_rename::migrate(_connection)?;
         Ok(())
     }
 }
