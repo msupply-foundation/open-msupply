@@ -7,6 +7,7 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
+  useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { getStatusTranslation, getNextInboundStatus } from '../../../utils';
 import { useInbound } from '../../api';
@@ -194,21 +195,35 @@ export const StatusChangeButton = () => {
     lines,
   } = useStatusChangeButton();
   const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
-  const noLines = lines?.totalCount === 0;
+  const noLines =
+    lines?.totalCount === 0 || lines?.nodes?.every(l => l.numberOfPacks === 0);
   const t = useTranslation();
 
   if (!selectedOption) return null;
   if (isStatusChangeDisabled) return null;
 
+  const noLinesNotification = useDisabledNotificationToast(
+    t('messages.no-lines')
+  );
+
+  const onHoldNotification = useDisabledNotificationToast(
+    t('messages.on-hold')
+  );
+
+  const onStatusClick = () => {
+    if (noLines) return noLinesNotification();
+    if (onHold) return onHoldNotification();
+    return getConfirmation();
+  };
+
   return (
     <SplitButton
       label={noLines ? t('messages.no-lines') : ''}
-      isDisabled={noLines || onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={() => getConfirmation()}
+      onClick={onStatusClick}
     />
   );
 };
