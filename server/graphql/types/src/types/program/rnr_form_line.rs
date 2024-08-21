@@ -2,13 +2,15 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
-use repository::{RnRFormLineRow, RnRFormLowStock};
+use repository::{ItemRow, RequisitionLineRow, RnRFormLine, RnRFormLineRow, RnRFormLowStock};
 use serde::Serialize;
 
 use crate::types::ItemNode;
 
 pub struct RnRFormLineNode {
     pub rnr_form_line_row: RnRFormLineRow,
+    pub item_row: ItemRow,
+    pub requisition_line_row: Option<RequisitionLineRow>,
 }
 
 #[Object]
@@ -22,7 +24,7 @@ impl RnRFormLineNode {
     }
 
     pub async fn item_id(&self) -> &str {
-        &self.rnr_form_line_row.item_id
+        &self.item_row.id
     }
 
     pub async fn previous_monthly_consumption_values(&self) -> &str {
@@ -94,20 +96,19 @@ impl RnRFormLineNode {
     }
 
     pub async fn approved_quantity(&self) -> Option<f64> {
-        // TODO: Join on requisition to get approved quantity
-        None
+        self.requisition_line_row
+            .as_ref()
+            .map(|r| r.approved_quantity)
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader
-            .load_one(self.rnr_form_line_row.item_id.clone())
-            .await?;
+        let item_option = loader.load_one(self.item_row.id.clone()).await?;
 
         let item = item_option.ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item {} for RnR form line {}",
-                self.rnr_form_line_row.item_id, self.rnr_form_line_row.id
+                self.item_row.id, self.rnr_form_line_row.id
             ))
             .extend(),
         )?;
@@ -117,8 +118,18 @@ impl RnRFormLineNode {
 }
 
 impl RnRFormLineNode {
-    pub fn from_domain(rnr_form_line_row: RnRFormLineRow) -> RnRFormLineNode {
-        RnRFormLineNode { rnr_form_line_row }
+    pub fn from_domain(
+        RnRFormLine {
+            rnr_form_line_row,
+            requisition_line_row,
+            item_row,
+        }: RnRFormLine,
+    ) -> RnRFormLineNode {
+        RnRFormLineNode {
+            rnr_form_line_row,
+            requisition_line_row,
+            item_row,
+        }
     }
 }
 

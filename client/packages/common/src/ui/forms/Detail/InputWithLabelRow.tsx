@@ -17,6 +17,7 @@ interface InputWithLabelRowProps {
   labelWidthPercentage?: number;
   labelProps?: FormLabelProps;
   inputProps?: StandardTextFieldProps;
+  inputSx?: SxProps<Theme>;
   /** flex-{$inputAlignment} alignment of the input field  */
   inputAlignment?: 'start' | 'end';
 }
@@ -30,6 +31,7 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   Input = <BasicTextInput fullWidth {...inputProps} />,
   DisabledInput = <BasicTextInput fullWidth {...inputProps} />,
   labelProps,
+  inputSx,
 }) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
   const isDisabled = inputProps?.disabled;
@@ -51,7 +53,12 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
           {labelWithPunctuation(label)}
         </FormLabel>
       </Box>
-      <Box flexBasis={inputFlexBasis} justifyContent={justify} display="flex">
+      <Box
+        flexBasis={inputFlexBasis}
+        justifyContent={justify}
+        display="flex"
+        sx={{ ...inputSx }}
+      >
         {!isDisabled ? Input : DisabledInput}
       </Box>
     </Box>

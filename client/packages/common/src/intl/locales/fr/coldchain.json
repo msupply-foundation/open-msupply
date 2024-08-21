@@ -49,7 +49,7 @@
     "messages.created-new-vaccine-course": "Calendrier de vaccination créé avec succès",
     "messages.confirm-delete-document": "Cela supprimera ce document.",
     "messages.fridge-tag-import-successful": "Succès ! {{numberOfLogs}} journaux et {{numberOfBreaches}} anomalies importés.",
-    "messages.import-generic": "Importation réussie",
+    "messages.import-generic": "Import réussi",
     "messages.temperature": "{{temperature}} °C",
     "messages.template-download-text": "Vous ne savez pas par où commencer ? ",
     "messages.success-printing-qr": "Code QR imprimé avec succès",

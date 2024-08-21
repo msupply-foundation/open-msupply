@@ -1,6 +1,7 @@
 pub(crate) mod assign_requisition_number;
 pub(crate) mod create_response_requisition;
 pub(crate) mod link_request_requisition;
+pub(crate) mod update_request_requisition_approved_quantities;
 pub(crate) mod update_request_requisition_status;
 
 #[cfg(test)]
@@ -21,6 +22,7 @@ use crate::{
             assign_requisition_number::AssignRequisitionNumberProcessor,
             create_response_requisition::CreateResponseRequisitionProcessor,
             link_request_requisition::LinkRequestRequisitionProcessor,
+            update_request_requisition_approved_quantities::UpdateRequestRequisitionApprovedQuantitiesProcessor,
             update_request_requisition_status::UpdateRequestRequisitionStatusProcessor,
         },
     },
@@ -64,6 +66,7 @@ pub(crate) fn process_requisition_transfers(
     let processors: Vec<Box<dyn RequisitionTransferProcessor>> = vec![
         Box::new(CreateResponseRequisitionProcessor),
         Box::new(LinkRequestRequisitionProcessor),
+        Box::new(UpdateRequestRequisitionApprovedQuantitiesProcessor),
         Box::new(UpdateRequestRequisitionStatusProcessor),
         Box::new(AssignRequisitionNumberProcessor),
     ];

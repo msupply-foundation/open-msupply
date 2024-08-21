@@ -4,9 +4,11 @@ use crate::StorageConnection;
 
 mod add_asset_internal_location_changelog;
 mod add_low_stock_and_requisition_line_id;
+mod add_requisition_approved_activity_type;
 mod consumption_and_replenishment_views;
 mod create_missing_master_list_and_program;
 mod create_system_user;
+mod fix_rnr_form_line_columns;
 mod item_ven;
 mod remove_changelog_triggers;
 mod report_add_report_context;
@@ -43,6 +45,8 @@ impl Migration for V2_02_00 {
         vec![
             Box::new(add_low_stock_and_requisition_line_id::Migrate),
             Box::new(requisitions_in_period::Migrate),
+            Box::new(add_requisition_approved_activity_type::Migrate),
+            Box::new(fix_rnr_form_line_columns::Migrate),
         ]
     }
 }

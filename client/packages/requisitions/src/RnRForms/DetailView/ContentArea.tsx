@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Box,
   GlobalStyles,
@@ -7,6 +7,7 @@ import {
   NothingHere,
   Table,
   useTranslation,
+  ViewportList,
 } from '@openmsupply-client/common';
 import { RnRFormLineFragment } from '../api/operations.generated';
 import { RnRFormLine } from './RnRFormLine';
@@ -14,7 +15,6 @@ import { RnRFormLine } from './RnRFormLine';
 interface ContentAreaProps {
   data: RnRFormLineFragment[];
   saveLine: (line: RnRFormLineFragment) => Promise<void>;
-  markDirty: (id: string) => void;
   periodLength: number;
   disabled: boolean;
 }
@@ -22,18 +22,18 @@ interface ContentAreaProps {
 interface HeaderCellProps {
   label: LocaleKey;
   tooltip?: LocaleKey;
+  width?: number;
+  className?: string;
 }
 
-const HeaderCell = ({ label, tooltip }: HeaderCellProps) => {
+const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
   const t = useTranslation('replenishment');
 
-  return tooltip === undefined ? (
-    <th>{t(label)}</th>
-  ) : (
-    <th>
-      <Box display="flex">
+  return (
+    <th className={className} style={{ minWidth: width }}>
+      <Box display="flex" style={{ fontSize: 14 }}>
         {t(label)}
-        <InfoTooltipIcon title={t(tooltip)} />
+        {tooltip && <InfoTooltipIcon title={t(tooltip)} />}
       </Box>
     </th>
   );
@@ -42,62 +42,88 @@ const HeaderCell = ({ label, tooltip }: HeaderCellProps) => {
 export const ContentArea = ({
   data,
   saveLine,
-  markDirty,
   periodLength,
   disabled,
 }: ContentAreaProps) => {
   const t = useTranslation('replenishment');
+  const ref = useRef<HTMLDivElement>(null);
 
-  // TODO: move to backend, should join on item and sort by name!
-  const lines = data.sort((a, b) => (a.item.name > b.item.name ? 1 : -1));
-
-  return lines.length === 0 ? (
+  return data.length === 0 ? (
     <NothingHere body={t('error.no-items')} />
   ) : (
-    <Box flex={1} padding={2}>
+    <Box
+      flex={1}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflowX: 'unset',
+        overflowY: 'auto',
+        width: '100%',
+      }}
+      ref={ref}
+    >
       <GlobalStyles
         styles={{
+          thead: {
+            position: 'sticky',
+            top: 0,
+            backgroundColor: '#fff',
+            zIndex: 999,
+          },
           '.sticky-column': {
             backgroundColor: '#fff',
             position: 'sticky',
             zIndex: 99,
           },
           '.first-column': {
+            left: 0,
             position: '-webkit-sticky',
-            left: 16,
-            width: 80,
+            minWidth: 90,
+            maxWidth: 90,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           },
           '.second-column': {
-            position: '-webkit-sticky',
-            left: 88,
+            left: 90,
             minWidth: '300px',
-            borderRight: '1px solid blue',
+            position: '-webkit-sticky',
           },
         }}
       />
       <Table
         sx={{
+          borderCollapse: 'separate',
+          overflowY: 'scroll',
           '& th': {
             textAlign: 'left',
             padding: 1,
             fontWeight: 'bold',
             border: '1px solid',
+            borderLeft: '0px',
             borderColor: 'gray.light',
           },
           '& td': {
             padding: '2px',
             border: '1px solid',
+            borderLeft: '0px',
             borderColor: 'gray.light',
+            fontSize: '14px',
           },
         }}
       >
         <thead>
           <tr>
-            <th className="sticky-column first-column">{t('label.code')}</th>
-            <th className="sticky-column second-column">{t('label.name')}</th>
-            <HeaderCell label="label.strength" />
-            <HeaderCell label="label.unit" />
-            <HeaderCell label="label.ven" />
+            <HeaderCell
+              className="sticky-column first-column"
+              label="label.code"
+            />
+            <HeaderCell
+              className="sticky-column second-column"
+              label="label.name"
+            />
+            <HeaderCell label="label.strength" width={85} />
+            <HeaderCell label="label.unit" width={80} />
+            <HeaderCell label="label.ven" width={55} />
             <HeaderCell
               label="label.rnr-initial-balance"
               tooltip="description.rnr-initial-balance"
@@ -144,16 +170,25 @@ export const ContentArea = ({
         </thead>
 
         <tbody>
-          {lines.map(line => (
-            <RnRFormLine
-              key={line.id}
-              line={line}
-              periodLength={periodLength}
-              saveLine={saveLine}
-              markDirty={markDirty}
-              disabled={disabled}
-            />
-          ))}
+          <ViewportList
+            viewportRef={ref}
+            items={data}
+            axis="y"
+            renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
+            initialDelay={1}
+            itemSize={60}
+            overscan={5} // Gives a buffer for when android keyboard opens
+          >
+            {line => (
+              <RnRFormLine
+                key={line.id}
+                line={line}
+                periodLength={periodLength}
+                saveLine={saveLine}
+                disabled={disabled}
+              />
+            )}
+          </ViewportList>
         </tbody>
       </Table>
     </Box>

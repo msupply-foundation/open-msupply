@@ -2,8 +2,7 @@ use crate::{
     barcode::{self, BarcodeInput},
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
     invoice_line::stock_in_line::{
-        convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack, generate_batch,
-        StockInType, StockLineInput,
+        convert_invoice_line_to_single_pack, generate_batch, StockInType, StockLineInput,
     },
     store_preference::get_store_preferences,
 };
@@ -30,12 +29,11 @@ pub fn generate(
 ) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
-    let new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone());
+    let mut new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone());
 
-    let mut new_line = match store_preferences.pack_to_one {
-        true => convert_invoice_line_to_single_pack(new_line),
-        false => new_line,
-    };
+    if StockInType::InventoryAddition != input.r#type && store_preferences.pack_to_one {
+        new_line = convert_invoice_line_to_single_pack(new_line);
+    }
 
     let barcode_option = generate_barcode(&input, connection)?;
 
@@ -59,12 +57,7 @@ pub fn generate(
         // If a new stock line has been created, update the stock_line_id on the invoice line
         new_line.stock_line_id = Some(batch.id.clone());
 
-        let new_batch = match store_preferences.pack_to_one {
-            true => convert_stock_line_to_single_pack(batch),
-            false => batch,
-        };
-
-        Some(new_batch)
+        Some(batch)
     } else {
         None
     };
