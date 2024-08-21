@@ -471,7 +471,6 @@ mod stocktake_line_test {
                     r.comment = Some("test comment".to_string());
                     r.cost_price_per_pack = Some(20.0);
                     r.sell_price_per_pack = Some(25.0);
-                    r.snapshot_number_of_packs = Some(10.0);
                     r.counted_number_of_packs = Some(14.0);
                 }),
             )
@@ -487,7 +486,7 @@ mod stocktake_line_test {
                 comment: Some("test comment".to_string()),
                 cost_price_per_pack: Some(20.0),
                 sell_price_per_pack: Some(25.0),
-                snapshot_number_of_packs: 10.0,
+                snapshot_number_of_packs: 40.0,
                 counted_number_of_packs: Some(14.0),
                 item_link_id: stocktake_line_a.item_link_id,
                 item_name: stocktake_line_a.item_name,
