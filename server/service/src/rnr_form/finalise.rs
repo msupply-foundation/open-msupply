@@ -127,7 +127,7 @@ fn generate(
         r#type: RequisitionType::Request,
         status: RequisitionStatus::Sent,
         created_datetime: Utc::now().naive_utc(),
-        sent_datetime: None,
+        sent_datetime: Some(Utc::now().naive_utc()),
         finalised_datetime: None,
         expected_delivery_date: None,
         colour: None,
