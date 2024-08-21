@@ -186,7 +186,8 @@ export const useStocktakeColumns = ({
       Cell: NumberCell,
       getIsError: row =>
         getLinesFromRow(row).some(
-          r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
+          r =>
+            getError(r)?.__typename === 'SnapshotCountCurrentCountMismatchLine'
         ),
       sortable: false,
       accessor: ({ rowData }) => {
@@ -318,7 +319,8 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
       getIsError: rowData =>
-        getError(rowData)?.__typename === 'SnapshotCountCurrentCountMismatch',
+        getError(rowData)?.__typename ===
+        'SnapshotCountCurrentCountMismatchLine',
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
     },
     {
