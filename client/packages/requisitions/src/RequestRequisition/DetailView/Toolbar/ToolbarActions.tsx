@@ -9,12 +9,15 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest, useHideOverStocked } from '../../api';
 
+interface ToolbarActionsProps {
+  isDisabled: boolean;
+}
+
 const months = [1, 2, 3, 4, 5, 6];
 
-export const ToolbarActions = () => {
+export const ToolbarActions = ({ isDisabled }: ToolbarActionsProps) => {
   const { on, toggle } = useHideOverStocked();
   const t = useTranslation('replenishment');
-  const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
   const { minMonthsOfStock, maxMonthsOfStock, update } =
     useRequest.document.fields(['minMonthsOfStock', 'maxMonthsOfStock']);
