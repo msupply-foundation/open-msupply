@@ -41,6 +41,8 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
+  const formattedValue = useFormatNumber().round(placeholderBuffer, 2);
+  const hasMoreThanTwoDp = ((placeholderBuffer ?? 0) * 100) % 1 !== 0;
 
   useEffect(() => {
     setPlaceholderBuffer(line?.numberOfPacks ?? 0);
@@ -53,9 +55,11 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
       </PlaceholderCell>
       <PlaceholderCell style={{ textAlign: 'right' }}>1</PlaceholderCell>
       <PlaceholderCell colSpan={4}></PlaceholderCell>
-      <PlaceholderCell style={{ textAlign: 'right' }}>
-        {placeholderBuffer}
-      </PlaceholderCell>
+      <Tooltip title={line?.numberOfPacks.toString()}>
+        <PlaceholderCell style={{ textAlign: 'right' }}>
+          {!!hasMoreThanTwoDp ? `${formattedValue}...` : formattedValue}
+        </PlaceholderCell>
+      </Tooltip>
     </tr>
   );
 };
