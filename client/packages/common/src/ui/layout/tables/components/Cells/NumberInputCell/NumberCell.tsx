@@ -10,7 +10,6 @@ import { CellProps } from '../../../columns/types';
 export const NumberCell = <T extends RecordWithId>({
   column,
   rowData,
-  isError,
   defaultValue = '',
 }: CellProps<T> & {
   defaultValue?: string | number;
@@ -25,9 +24,6 @@ export const NumberCell = <T extends RecordWithId>({
   return (
     <Box
       sx={{
-        border: theme =>
-          isError ? `2px solid ${theme.palette.error.main}` : 'none',
-        borderRadius: '8px',
         padding: '4px 8px',
       }}
     >
