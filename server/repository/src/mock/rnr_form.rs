@@ -40,7 +40,7 @@ pub fn mock_rnr_form_a_line_a() -> RnRFormLineRow {
     RnRFormLineRow {
         id: "rnr_form_a_line_a".to_string(),
         rnr_form_id: mock_rnr_form_a().id,
-        item_id: item_query_test1().id,
+        item_link_id: item_query_test1().id,
         final_balance: 5.0,
         average_monthly_consumption: 5.0,
         adjusted_quantity_consumed: 5.0,
@@ -52,7 +52,7 @@ pub fn mock_rnr_form_b_line_a() -> RnRFormLineRow {
     RnRFormLineRow {
         id: "rnr_form_b_line_a".to_string(),
         rnr_form_id: mock_rnr_form_b().id,
-        item_id: item_query_test1().id,
+        item_link_id: item_query_test1().id,
         initial_balance: 10.0,
         snapshot_quantity_received: 5.0,
         snapshot_quantity_consumed: 7.0,

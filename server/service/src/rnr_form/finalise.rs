@@ -4,10 +4,10 @@ use crate::{
 
 use chrono::Utc;
 use repository::{
-    ActivityLogType, ItemRowRepository, NumberRowType, RepositoryError, RequisitionLineRow,
+    ActivityLogType, EqualFilter, NumberRowType, RepositoryError, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionStatus,
-    RequisitionType, RnRForm, RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository,
-    RnRFormStatus,
+    RequisitionType, RnRForm, RnRFormLine, RnRFormLineFilter, RnRFormLineRepository,
+    RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, RnRFormStatus,
 };
 use util::uuid::uuid;
 
@@ -155,55 +155,44 @@ fn generate(
     };
 
     // Get R&R Form lines and create requisition lines
-    let rnr_form_line_repo = RnRFormLineRowRepository::new(&ctx.connection);
-    let item_repo = ItemRowRepository::new(&ctx.connection);
-
-    let rnr_form_lines = rnr_form_line_repo.find_many_by_rnr_form_id(&rnr_form_id)?;
-
-    // Find all the item names
-    let item_ids = rnr_form_lines
-        .iter()
-        .map(|rnr_form_line| rnr_form_line.item_id.clone())
-        .collect();
-
-    let items = item_repo.find_many_by_id(&item_ids)?;
-
-    let item_map = items
-        .into_iter()
-        .map(|item| (item.id.clone(), item))
-        .collect::<std::collections::HashMap<String, _>>();
+    let rnr_form_lines = RnRFormLineRepository::new(&ctx.connection).query_by_filter(
+        RnRFormLineFilter::new().rnr_form_id(EqualFilter::equal_to(&rnr_form_id)),
+    )?;
 
     // Loop through the rnr lines and create requisition lines
     let rnr_form_closing_datetime = period_row.end_date.and_hms_opt(0, 0, 0);
 
     let rnr_form_line_and_requisition_lines = rnr_form_lines
         .into_iter()
-        .map(|rnr_form_line| {
-            let requisition_line = RequisitionLineRow {
-                id: uuid(),
-                requisition_id: requisition_row.id.clone(),
-                item_link_id: rnr_form_line.item_id.clone(),
-                item_name: item_map
-                    .get(&rnr_form_line.item_id)
-                    .map(|item| item.name.clone())
-                    .unwrap_or_default(),
-                requested_quantity: rnr_form_line
-                    .entered_requested_quantity
-                    .unwrap_or(rnr_form_line.calculated_requested_quantity),
-                suggested_quantity: rnr_form_line.maximum_quantity,
-                supply_quantity: 0.0,
-                available_stock_on_hand: rnr_form_line.final_balance,
-                average_monthly_consumption: rnr_form_line.average_monthly_consumption,
-                snapshot_datetime: rnr_form_closing_datetime,
-                approved_quantity: 0.0,
-                approval_comment: None,
-                comment: None,
-                // TODO add Cust_pre_stock_balance, Cust_stock_received, Cust_stock_ord, Cust_stock_adj (in mSupply but not in OMS Yet)
-            };
+        .map(
+            |RnRFormLine {
+                 rnr_form_line_row,
+                 item_row,
+                 requisition_line_row: _,
+             }| {
+                let requisition_line = RequisitionLineRow {
+                    id: uuid(),
+                    requisition_id: requisition_row.id.clone(),
+                    item_link_id: rnr_form_line_row.item_link_id.clone(),
+                    item_name: item_row.name,
+                    requested_quantity: rnr_form_line_row
+                        .entered_requested_quantity
+                        .unwrap_or(rnr_form_line_row.calculated_requested_quantity),
+                    suggested_quantity: rnr_form_line_row.maximum_quantity,
+                    supply_quantity: 0.0,
+                    available_stock_on_hand: rnr_form_line_row.final_balance,
+                    average_monthly_consumption: rnr_form_line_row.average_monthly_consumption,
+                    snapshot_datetime: rnr_form_closing_datetime,
+                    approved_quantity: 0.0,
+                    approval_comment: None,
+                    comment: None,
+                    // TODO add Cust_pre_stock_balance, Cust_stock_received, Cust_stock_ord, Cust_stock_adj (in mSupply but not in OMS Yet)
+                };
 
-            // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id
-            (rnr_form_line.id, requisition_line)
-        })
+                // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id
+                (rnr_form_line_row.id, requisition_line)
+            },
+        )
         .collect();
 
     Ok(GenerateResult {

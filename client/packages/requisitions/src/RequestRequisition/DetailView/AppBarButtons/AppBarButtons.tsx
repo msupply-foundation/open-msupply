@@ -31,7 +31,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation('distribution');
+  const t = useTranslation('reports'); // note: using 'reports' due to issue #4616
   const { data } = useRequest.document.get();
   const { print, isPrinting } = usePrintReport();
 
