@@ -6,7 +6,6 @@
   "error.stocktake-not-found": "Inventário não encontrado",
   "error.not-editable": "Inventário não pode ser editado.",
   "error.is-locked": "Inventário bloqueado.",
-  "error.snapshot-total-mismatch": "A quantidade prevista não coincide com a quantidade total.",
   "error.provide-valid-reason": "O motivo de ajuste não coincide com a direção de ajuste",
   "error.reduced-below-zero": "A linha de estoque existe em novas saídas. A quantidade não pode ser reduzida abaixo de zero.",
   "error.unable-to-scan": "Não foi possível escanear o código de barras: {{error}}",

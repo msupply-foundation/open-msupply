@@ -13,7 +13,6 @@
   "error.not-editable": "Toma de inventario no editable.",
   "label.add-batch": "Agregar lote",
   "error.is-locked": "Toma de inventario bloqueada.",
-  "error.snapshot-total-mismatch": "Error: Una o más líneas tienen una discrepancia entre el nivel de inventario actual y el recuento instantáneo.",
   "error.provide-valid-reason": "La razón del ajuste no coincide con la dirección del ajuste",
   "error.reduced-below-zero": "Inventario reservado para nuevas salidas. La cantidad no puede reducirse por debajo de cero.",
   "label.add-new-line": "Agregar línea nueva",
