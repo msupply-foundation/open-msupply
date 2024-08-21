@@ -92,3 +92,10 @@ pub fn check_stock_line_reduced_below_zero(
         && (stock_line.total_number_of_packs - adjustment < 0.0
             || stock_line.available_number_of_packs - adjustment < 0.0)
 }
+
+pub fn check_snapshot_matches_current_count(
+    stock_line: &StockLineRow,
+    snapshot_packs: f64,
+) -> bool {
+    stock_line.total_number_of_packs == snapshot_packs
+}
