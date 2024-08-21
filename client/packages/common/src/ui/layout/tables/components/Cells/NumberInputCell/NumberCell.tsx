@@ -11,6 +11,7 @@ export const NumberCell = <T extends RecordWithId>({
   column,
   rowData,
   defaultValue = '',
+  isError,
 }: CellProps<T> & {
   defaultValue?: string | number;
 }) => {
@@ -25,6 +26,9 @@ export const NumberCell = <T extends RecordWithId>({
     <Box
       sx={{
         padding: '4px 8px',
+        border: theme =>
+          isError ? `2px solid ${theme.palette.error.main}` : 'none',
+        borderRadius: '8px',
       }}
     >
       <Tooltip title={value?.toString()}>

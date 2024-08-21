@@ -122,10 +122,14 @@ const DataRowComponent = <T extends RecordWithId>({
                     fontSize: dense ? '12px' : '14px',
                     backgroundColor: column.backgroundColor,
                     fontWeight: 'normal',
-                    border: theme =>
-                      isError
-                        ? `2px solid ${theme.palette.error.main}`
-                        : 'none',
+                    ...(isError
+                      ? {
+                          borderWidth: '2px',
+                          borderStyle: 'solid',
+                          borderColor: 'error.main',
+                          borderRadius: '8px',
+                        }
+                      : {}),
                   }}
                 >
                   {
