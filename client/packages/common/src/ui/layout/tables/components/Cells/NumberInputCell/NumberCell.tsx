@@ -16,7 +16,7 @@ export const NumberCell = <T extends RecordWithId>({
   defaultValue?: string | number;
 }) => {
   const value = column.accessor({ rowData }) as number | undefined | null;
-  const hasMoreThanTwoDp = (value ?? 0 * 100) % 1 !== 0;
+  const hasMoreThanTwoDp = ((value ?? 0) * 100) % 1 !== 0;
   const formattedValue = useFormatNumber().round(value ?? 0, 2);
 
   const displayValue =
