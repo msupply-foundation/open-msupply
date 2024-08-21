@@ -12,7 +12,7 @@ export enum AppRoute {
   Encounter = 'encounter',
   ContactTrace = 'contact-trace',
   Prescription = 'prescription',
-  InboundReturn = 'inbound-return',
+  CustomerReturn = 'customer-return',
 
   Coldchain = 'cold-chain',
   Sensors = 'sensors',
@@ -27,7 +27,7 @@ export enum AppRoute {
   InboundShipment = 'inbound-shipment',
   InternalOrder = 'internal-order',
   Suppliers = 'suppliers',
-  OutboundReturn = 'outbound-return',
+  SupplierReturn = 'supplier-return',
 
   Inventory = 'inventory',
   Stock = 'stock',

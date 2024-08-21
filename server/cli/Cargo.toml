@@ -11,6 +11,10 @@ doctest = false
 path = "src/cli.rs"
 name = "remote_server_cli"
 
+[[bin]]
+path = "src/test_connection.rs"
+name = "test_connection"
+
 [dependencies]
 
 repository = { path = "../repository" }
@@ -28,7 +32,15 @@ log = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 simple-log = { workspace = true }
-tokio = { version = "1.38.0", features = ["macros", "time", "rt-multi-thread"] }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+
+simple_logger = { version = "5.0", features = ["colors"] }
+egui = { version = "0.27" }
+eframe = { version = "0.27", features = ["default", "__screenshot"] }
+egui_extras = { version = "0.27", features = ["default", "image"] }
+async-trait = "0.1.8"
+machine-uid = { version = "0.5.1" }
 
 [dev-dependencies]
 actix-rt = { workspace = true }

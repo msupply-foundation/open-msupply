@@ -1,22 +1,22 @@
 import {
-  GenerateInboundReturnLinesInput,
-  InboundReturnInput,
+  GenerateCustomerReturnLinesInput,
+  CustomerReturnInput,
   InvoiceNodeStatus,
   InvoiceNodeType,
   InvoiceSortFieldInput,
-  OutboundReturnInput,
+  SupplierReturnInput,
   RecordPatch,
-  UpdateInboundReturnInput,
-  UpdateInboundReturnLinesInput,
-  UpdateInboundReturnStatusInput,
-  UpdateOutboundReturnInput,
-  UpdateOutboundReturnLinesInput,
-  UpdateOutboundReturnStatusInput,
+  UpdateCustomerReturnInput,
+  UpdateCustomerReturnLinesInput,
+  UpdateCustomerReturnStatusInput,
+  UpdateSupplierReturnInput,
+  UpdateSupplierReturnLinesInput,
+  UpdateSupplierReturnStatusInput,
 } from '@common/types';
 import {
-  InboundReturnRowFragment,
-  OutboundReturnFragment,
-  OutboundReturnRowFragment,
+  CustomerReturnRowFragment,
+  SupplierReturnFragment,
+  SupplierReturnRowFragment,
   Sdk,
 } from './operations.generated';
 import { FilterByWithBoolean, SortBy } from '@common/hooks';
@@ -28,12 +28,12 @@ type ListParams<T> = {
   filterBy: FilterByWithBoolean | null;
 };
 
-export type OutboundListParams = ListParams<OutboundReturnRowFragment>;
-export type InboundListParams = ListParams<InboundReturnRowFragment>;
+export type SupplierListParams = ListParams<SupplierReturnRowFragment>;
+export type CustomerListParams = ListParams<CustomerReturnRowFragment>;
 
-const outboundParsers = {
+const supplierParsers = {
   toSortField: (
-    sortBy: SortBy<OutboundReturnRowFragment>
+    sortBy: SortBy<SupplierReturnRowFragment>
   ): InvoiceSortFieldInput => {
     switch (sortBy.key) {
       case 'createdDatetime': {
@@ -54,23 +54,23 @@ const outboundParsers = {
 
   toUpdateStatusInput: (
     status: InvoiceNodeStatus | undefined
-  ): UpdateOutboundReturnStatusInput | undefined => {
+  ): UpdateSupplierReturnStatusInput | undefined => {
     switch (status) {
       case undefined:
         return;
       case InvoiceNodeStatus.Picked:
-        return UpdateOutboundReturnStatusInput.Picked;
+        return UpdateSupplierReturnStatusInput.Picked;
       case InvoiceNodeStatus.Shipped:
-        return UpdateOutboundReturnStatusInput.Shipped;
+        return UpdateSupplierReturnStatusInput.Shipped;
       default:
         throw new Error('Invalid status');
     }
   },
 };
 
-const inboundParsers = {
+const customerParsers = {
   toSortField: (
-    sortBy: SortBy<InboundReturnRowFragment>
+    sortBy: SortBy<CustomerReturnRowFragment>
   ): InvoiceSortFieldInput => {
     switch (sortBy.key) {
       case 'createdDatetime': {
@@ -94,14 +94,14 @@ const inboundParsers = {
 
   toUpdateStatusInput: (
     status: InvoiceNodeStatus | undefined
-  ): UpdateInboundReturnStatusInput | undefined => {
+  ): UpdateCustomerReturnStatusInput | undefined => {
     switch (status) {
       case undefined:
         return;
       case InvoiceNodeStatus.Delivered:
-        return UpdateInboundReturnStatusInput.Delivered;
+        return UpdateCustomerReturnStatusInput.Delivered;
       case InvoiceNodeStatus.Verified:
-        return UpdateInboundReturnStatusInput.Verified;
+        return UpdateCustomerReturnStatusInput.Verified;
       default:
         throw new Error('Invalid status');
     }
@@ -110,92 +110,92 @@ const inboundParsers = {
 
 export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    listOutbound: async ({
+    listSupplier: async ({
       first,
       offset,
       sortBy,
       filterBy,
-    }: OutboundListParams): Promise<{
-      nodes: OutboundReturnRowFragment[];
+    }: SupplierListParams): Promise<{
+      nodes: SupplierReturnRowFragment[];
       totalCount: number;
     }> => {
       const filter = {
         ...filterBy,
-        type: { equalTo: InvoiceNodeType.OutboundReturn },
+        type: { equalTo: InvoiceNodeType.SupplierReturn },
       };
-      const result = await sdk.outboundReturns({
+      const result = await sdk.supplierReturns({
         first,
         offset,
-        key: outboundParsers.toSortField(sortBy),
+        key: supplierParsers.toSortField(sortBy),
         desc: !!sortBy.isDesc,
         filter,
         storeId,
       });
       return result?.invoices;
     },
-    listAllOutbound: async (
-      sortBy: SortBy<OutboundReturnRowFragment>
+    listAllSupplier: async (
+      sortBy: SortBy<SupplierReturnRowFragment>
     ): Promise<{
-      nodes: OutboundReturnRowFragment[];
+      nodes: SupplierReturnRowFragment[];
       totalCount: number;
     }> => {
       const filter = {
-        type: { equalTo: InvoiceNodeType.OutboundReturn },
+        type: { equalTo: InvoiceNodeType.SupplierReturn },
       };
-      const result = await sdk.outboundReturns({
-        key: outboundParsers.toSortField(sortBy),
+      const result = await sdk.supplierReturns({
+        key: supplierParsers.toSortField(sortBy),
         desc: !!sortBy.isDesc,
         filter,
         storeId,
       });
       return result?.invoices;
     },
-    listInbound: async ({
+    listCustomer: async ({
       first,
       offset,
       sortBy,
       filterBy,
-    }: InboundListParams): Promise<{
-      nodes: InboundReturnRowFragment[];
+    }: CustomerListParams): Promise<{
+      nodes: CustomerReturnRowFragment[];
       totalCount: number;
     }> => {
       const filter = {
         ...filterBy,
-        type: { equalTo: InvoiceNodeType.InboundReturn },
+        type: { equalTo: InvoiceNodeType.CustomerReturn },
       };
-      const result = await sdk.inboundReturns({
+      const result = await sdk.customerReturns({
         first,
         offset,
-        key: inboundParsers.toSortField(sortBy),
+        key: customerParsers.toSortField(sortBy),
         desc: !!sortBy.isDesc,
         filter,
         storeId,
       });
       return result?.invoices;
     },
-    listAllInbound: async (
-      sortBy: SortBy<InboundReturnRowFragment>
+    listAllCustomer: async (
+      sortBy: SortBy<CustomerReturnRowFragment>
     ): Promise<{
-      nodes: InboundReturnRowFragment[];
+      nodes: CustomerReturnRowFragment[];
       totalCount: number;
     }> => {
       const filter = {
-        type: { equalTo: InvoiceNodeType.InboundReturn },
+        type: { equalTo: InvoiceNodeType.CustomerReturn },
       };
-      const result = await sdk.outboundReturns({
-        key: inboundParsers.toSortField(sortBy),
+      const result = await sdk.customerReturns({
+        key: customerParsers.toSortField(sortBy),
         desc: !!sortBy.isDesc,
         filter,
         storeId,
       });
       return result?.invoices;
     },
-    outboundReturnLines: async (
+    supplierReturnLines: async (
       stockLineIds: string[],
       itemId?: string,
       returnId?: string
     ) => {
-      const result = await sdk.generateOutboundReturnLines({
+      const result = await sdk.generateSupplierReturnLines({
         storeId,
         input: {
           stockLineIds,
@@ -204,20 +204,20 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         },
       });
 
-      return result?.generateOutboundReturnLines;
+      return result?.generateSupplierReturnLines;
     },
-    generateInboundReturnLines: async (
-      input: GenerateInboundReturnLinesInput
+    generateCustomerReturnLines: async (
+      input: GenerateCustomerReturnLinesInput
     ) => {
-      const result = await sdk.generateInboundReturnLines({
+      const result = await sdk.generateCustomerReturnLines({
         input,
         storeId,
       });
 
-      return result?.generateInboundReturnLines;
+      return result?.generateCustomerReturnLines;
     },
-    outboundReturnByNumber: async (invoiceNumber: number) => {
-      const result = await sdk.outboundReturnByNumber({
+    supplierReturnByNumber: async (invoiceNumber: number) => {
+      const result = await sdk.supplierReturnByNumber({
         invoiceNumber,
         storeId,
       });
@@ -228,8 +228,8 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         return invoice;
       }
     },
-    inboundReturnByNumber: async (invoiceNumber: number) => {
-      const result = await sdk.inboundReturnByNumber({
+    customerReturnByNumber: async (invoiceNumber: number) => {
+      const result = await sdk.customerReturnByNumber({
         invoiceNumber,
         storeId,
       });
@@ -240,51 +240,51 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         return invoice;
       }
 
-      throw new Error('Could not get inbound return');
+      throw new Error('Could not get customer return');
     },
   },
-  insertOutboundReturn: async (input: OutboundReturnInput) => {
-    const result = await sdk.insertOutboundReturn({
+  insertSupplierReturn: async (input: SupplierReturnInput) => {
+    const result = await sdk.insertSupplierReturn({
       input,
       storeId,
     });
 
-    const { insertOutboundReturn } = result;
+    const { insertSupplierReturn } = result;
 
-    if (insertOutboundReturn.__typename === 'InvoiceNode') {
-      return insertOutboundReturn.invoiceNumber;
+    if (insertSupplierReturn.__typename === 'InvoiceNode') {
+      return insertSupplierReturn.invoiceNumber;
     }
 
-    throw new Error('Could not insert outbound return');
+    throw new Error('Could not insert supplier return');
   },
-  updateOutboundReturn: async (
-    input: Omit<UpdateOutboundReturnInput, 'status'> & {
+  updateSupplierReturn: async (
+    input: Omit<UpdateSupplierReturnInput, 'status'> & {
       status?: InvoiceNodeStatus;
     }
   ) => {
-    const result = await sdk.updateOutboundReturn({
+    const result = await sdk.updateSupplierReturn({
       input: {
         ...input,
-        status: outboundParsers.toUpdateStatusInput(input.status),
+        status: supplierParsers.toUpdateStatusInput(input.status),
       },
       storeId,
     });
 
-    const { updateOutboundReturn } = result;
+    const { updateSupplierReturn } = result;
 
-    if (updateOutboundReturn.__typename === 'InvoiceNode') {
-      return updateOutboundReturn;
+    if (updateSupplierReturn.__typename === 'InvoiceNode') {
+      return updateSupplierReturn;
     }
 
-    throw new Error('Could not update outbound return');
+    throw new Error('Could not update supplier return');
   },
   updateOtherParty: async (
     patch:
-      | RecordPatch<OutboundReturnRowFragment>
-      | RecordPatch<OutboundReturnFragment>
+      | RecordPatch<SupplierReturnRowFragment>
+      | RecordPatch<SupplierReturnFragment>
   ) => {
     const result =
-      (await sdk.updateOutboundReturnOtherParty({
+      (await sdk.updateSupplierReturnOtherParty({
         storeId,
         input: {
           id: patch.id,
@@ -292,110 +292,110 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         },
       })) || {};
 
-    const { updateOutboundReturnOtherParty } = result;
+    const { updateSupplierReturnOtherParty } = result;
 
-    if (updateOutboundReturnOtherParty?.__typename === 'InvoiceNode') {
-      return updateOutboundReturnOtherParty.id;
+    if (updateSupplierReturnOtherParty?.__typename === 'InvoiceNode') {
+      return updateSupplierReturnOtherParty.id;
     }
 
     throw new Error('Could not update supplier name');
   },
-  updateOutboundReturnLines: async (input: UpdateOutboundReturnLinesInput) => {
-    const result = await sdk.updateOutboundReturnLines({
+  updateSupplierReturnLines: async (input: UpdateSupplierReturnLinesInput) => {
+    const result = await sdk.updateSupplierReturnLines({
       input,
       storeId,
     });
 
-    const { updateOutboundReturnLines } = result;
+    const { updateSupplierReturnLines } = result;
 
-    if (updateOutboundReturnLines.__typename === 'InvoiceNode') {
-      return updateOutboundReturnLines;
+    if (updateSupplierReturnLines.__typename === 'InvoiceNode') {
+      return updateSupplierReturnLines;
     }
 
-    throw new Error('Could not update outbound return');
+    throw new Error('Could not update supplier return');
   },
 
-  deleteOutbound: async (id: string): Promise<string> => {
-    const result = await sdk.deleteOutboundReturn({
+  deleteSupplier: async (id: string): Promise<string> => {
+    const result = await sdk.deleteSupplierReturn({
       storeId,
       id,
     });
 
-    const { deleteOutboundReturn } = result;
+    const { deleteSupplierReturn } = result;
 
-    if (deleteOutboundReturn.__typename === 'DeleteResponse') {
-      return deleteOutboundReturn.id;
+    if (deleteSupplierReturn.__typename === 'DeleteResponse') {
+      return deleteSupplierReturn.id;
     }
 
     // TODO: handle error response...
-    throw new Error('Could not delete outbound return');
+    throw new Error('Could not delete supplier return');
   },
 
-  insertInboundReturn: async (input: InboundReturnInput) => {
-    const result = await sdk.insertInboundReturn({
+  insertCustomerReturn: async (input: CustomerReturnInput) => {
+    const result = await sdk.insertCustomerReturn({
       input,
       storeId,
     });
 
-    const { insertInboundReturn } = result;
+    const { insertCustomerReturn } = result;
 
-    if (insertInboundReturn.__typename === 'InvoiceNode') {
-      return insertInboundReturn.invoiceNumber;
+    if (insertCustomerReturn.__typename === 'InvoiceNode') {
+      return insertCustomerReturn.invoiceNumber;
     }
 
-    throw new Error('Could not insert inbound return');
+    throw new Error('Could not insert customer return');
   },
 
-  updateInboundReturn: async (
-    input: Omit<UpdateInboundReturnInput, 'status'> & {
+  updateCustomerReturn: async (
+    input: Omit<UpdateCustomerReturnInput, 'status'> & {
       status?: InvoiceNodeStatus;
     }
   ) => {
-    const result = await sdk.updateInboundReturn({
+    const result = await sdk.updateCustomerReturn({
       input: {
         ...input,
-        status: inboundParsers.toUpdateStatusInput(input.status),
+        status: customerParsers.toUpdateStatusInput(input.status),
       },
       storeId,
     });
 
-    const { updateInboundReturn } = result;
+    const { updateCustomerReturn } = result;
 
-    if (updateInboundReturn.__typename === 'InvoiceNode') {
-      return updateInboundReturn;
+    if (updateCustomerReturn.__typename === 'InvoiceNode') {
+      return updateCustomerReturn;
     }
 
-    throw new Error('Could not update inbound return');
+    throw new Error('Could not update customer return');
   },
 
-  updateInboundReturnLines: async (input: UpdateInboundReturnLinesInput) => {
-    const result = await sdk.updateInboundReturnLines({
+  updateCustomerReturnLines: async (input: UpdateCustomerReturnLinesInput) => {
+    const result = await sdk.updateCustomerReturnLines({
       input,
       storeId,
     });
 
-    const { updateInboundReturnLines } = result;
+    const { updateCustomerReturnLines } = result;
 
-    if (updateInboundReturnLines.__typename === 'InvoiceNode') {
-      return updateInboundReturnLines;
+    if (updateCustomerReturnLines.__typename === 'InvoiceNode') {
+      return updateCustomerReturnLines;
     }
 
-    throw new Error('Could not update inbound return');
+    throw new Error('Could not update customer return');
   },
 
-  deleteInbound: async (id: string): Promise<string> => {
-    const result = await sdk.deleteInboundReturn({
+  deleteCustomer: async (id: string): Promise<string> => {
+    const result = await sdk.deleteCustomerReturn({
       storeId,
       id,
     });
 
-    const { deleteInboundReturn } = result;
+    const { deleteCustomerReturn } = result;
 
-    if (deleteInboundReturn.__typename === 'DeleteResponse') {
-      return deleteInboundReturn.id;
+    if (deleteCustomerReturn.__typename === 'DeleteResponse') {
+      return deleteCustomerReturn.id;
     }
 
     // TODO: handle error response...
-    throw new Error('Could not delete inbound return');
+    throw new Error('Could not delete customer return');
   },
 });

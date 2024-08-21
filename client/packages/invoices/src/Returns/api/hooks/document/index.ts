@@ -1,35 +1,35 @@
-import { useInsertInboundReturn } from './useInsertInboundReturn';
-import { useOutboundDeleteRows } from './useOutboundDeleteRows';
-import { useOutbounds } from './useOutbounds';
-import { useOutboundsAll } from './useOutboundsAll';
-import { useInbounds } from './useInbounds';
-import { useInboundsAll } from './useInboundsAll';
-import { useInboundDeleteRows } from './useInboundDeleteRows';
-import { useOutboundReturn } from './useOutboundReturn';
-import { useInsertOutboundReturn } from './useInsertOutboundReturn';
-import { useInboundReturn } from './useInboundReturn';
-import { useInboundReturnDelete } from './useInboundDelete';
-import { useUpdateOutboundReturn } from './useUpdateOutboundReturn';
-import { useUpdateInboundReturn } from './useUpdateInboundReturn';
-import { useOutboundReturnDelete } from './useOutboundDelete';
-import { useUpdateOutboundReturnOtherParty } from './useUpdateOutboundReturnOtherParty';
+import { useInsertCustomerReturn } from './useInsertCustomerReturn';
+import { useSupplierDeleteRows } from './useSupplierDeleteRows';
+import { useSupplierReturns } from './useSupplierReturns';
+import { useSupplierReturnsAll } from './useSupplierReturnsAll';
+import { useCustomerReturns } from './useCustomerReturns';
+import { useCustomerReturnsAll } from './useCustomerReturnsAll';
+import { useCustomerDeleteRows } from './useCustomerDeleteRows';
+import { useSupplierReturn } from './useSupplierReturn';
+import { useInsertSupplierReturn } from './useInsertSupplierReturn';
+import { useCustomerReturn } from './useCustomerReturn';
+import { useCustomerReturnDelete } from './useCustomerDelete';
+import { useUpdateCustomerReturn } from './useUpdateCustomerReturn';
+import { useSupplierReturnDelete } from './useSupplierDelete';
+import { useUpdateSupplierReturn } from './useUpdateSupplierReturn';
+import { useUpdateSupplierReturnOtherParty } from './useUpdateSupplierReturnOtherParty';
 
 export const Document = {
-  useOutboundReturn,
-  useOutbounds,
-  useOutboundsAll,
-  useInbounds,
-  useInboundReturn,
-  useInboundsAll,
+  useSupplierReturn,
+  useSupplierReturns,
+  useSupplierReturnsAll,
+  useCustomerReturns,
+  useCustomerReturn,
+  useCustomerReturnsAll,
 
-  useOutboundDeleteRows,
-  useInboundDeleteRows,
-  useInsertOutboundReturn,
-  useUpdateOutboundReturn,
-  useUpdateOutboundReturnOtherParty,
-  useOutboundReturnDelete,
+  useSupplierDeleteRows,
+  useCustomerDeleteRows,
+  useInsertSupplierReturn,
+  useUpdateSupplierReturn,
+  useUpdateSupplierReturnOtherParty,
+  useSupplierReturnDelete,
 
-  useInsertInboundReturn,
-  useUpdateInboundReturn,
-  useInboundReturnDelete,
+  useInsertCustomerReturn,
+  useUpdateCustomerReturn,
+  useCustomerReturnDelete,
 };
