@@ -55,6 +55,7 @@
   "error.integration-timeout-reached": "The central server took too long integrating pushed records. Please retry later.",
   "error.invalid-url": "Invalid url",
   "error.login": "Invalid username or password",
+  "error.login-support": "Please contact support at support@msupply.foundation if you are unable to login to your account",
   "error.account-blocked": "Account is blocked until the lockout period has expired",
   "error.no-site-access": "Your account does not have access to any stores on this site",
   "error.server-failed-to-start": "Error! The server failed to start",

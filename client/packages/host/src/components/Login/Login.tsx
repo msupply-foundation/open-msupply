@@ -76,7 +76,7 @@ export const Login = () => {
     }
 
     if (error.message === 'InvalidCredentials') {
-      return { error: t('error.login') };
+      return { error: t('error.login'), hint: t('error.login-support') };
     }
 
     if (error.message === 'NoSiteAccess') {
