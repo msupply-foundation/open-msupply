@@ -1470,6 +1470,7 @@ dependencies = [
  "async-graphql",
  "chrono",
  "clap",
+ "copy_dir",
  "diesel",
  "graphql",
  "log",
@@ -1479,6 +1480,7 @@ dependencies = [
  "server",
  "service",
  "simple-log",
+ "thiserror",
  "tokio",
  "util",
 ]
@@ -1560,6 +1562,15 @@ dependencies = [
  "percent-encoding",
  "time",
  "version_check",
+]
+
+[[package]]
+name = "copy_dir"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "543d1dd138ef086e2ff05e3a48cf9da045da2033d16f8538fd76b86cd49b2ca3"
+dependencies = [
+ "walkdir",
 ]
 
 [[package]]

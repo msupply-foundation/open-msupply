@@ -331,7 +331,12 @@ cargo run --bin remote_server_cli -- initialise-from-export -n 'export_name' -r
 cargo run --bin remote_server_cli -- initialise-from-central -u 'user1:password1'
 # attempt to refresh dates (advance them forward, see --help)
 cargo run --bin remote_server_cli -- refresh-dates
+# See README.md link below
+cargo run --bin remote_server_cli -- backup
+cargo run --bin remote_server_cli -- restore D2024_08_22T05_05_16 -s
 ```
+
+# [Backup and Restore](cli/src/backup/README.md)
 
 # Discovery
 
