@@ -25,7 +25,8 @@ const ItemListComponent: FC = () => {
     initialSort: { key: 'name', dir: 'asc' },
     filters: [{ key: 'codeOrName' }],
   });
-  const { data, isError, isLoading } = useItems();
+  const queryParams = { sortBy, page, first, offset };
+  const { data, isError, isLoading } = useItems(queryParams);
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
