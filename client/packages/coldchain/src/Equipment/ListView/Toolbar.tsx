@@ -105,7 +105,6 @@ export const Toolbar = () => {
       name: t('label.type'),
       urlParameter: 'typeId',
       options: mapIdNameToOptions(types),
-      isDefault: true,
     },
     {
       type: 'text',
@@ -133,6 +132,7 @@ export const Toolbar = () => {
       type: 'text',
       name: t('label.serial'),
       urlParameter: 'serialNumber',
+      isDefault: true,
     },
   ];
 
@@ -141,6 +141,7 @@ export const Toolbar = () => {
       type: 'text',
       name: t('label.store'),
       urlParameter: 'store',
+      isDefault: true,
     });
 
   return (
