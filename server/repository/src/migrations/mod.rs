@@ -41,6 +41,7 @@ use crate::{
     RepositoryError, StorageConnection,
 };
 use diesel::connection::SimpleConnection;
+use log::error;
 use thiserror::Error;
 
 pub(crate) trait Migration {
@@ -88,7 +89,6 @@ pub enum MigrationError {
     DatabaseError(#[from] RepositoryError),
 }
 
-// TODO: logging
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
@@ -132,6 +132,13 @@ pub fn migrate(
 
     // for `>` see PartialOrd implementation of Version
     if starting_database_version > to_version {
+        error!(
+            "{}",
+            MigrationError::DatabaseVersionAboveAppVersion(
+                starting_database_version.clone(),
+                to_version.clone()
+            )
+        );
         return Err(MigrationError::DatabaseVersionAboveAppVersion(
             starting_database_version,
             to_version,
@@ -152,6 +159,13 @@ pub fn migrate(
                 break;
             }
 
+            error!(
+                "{}",
+                MigrationError::MigrationAboveAppVersion(
+                    migration_version.clone(),
+                    to_version.clone()
+                )
+            );
             return Err(MigrationError::MigrationAboveAppVersion(
                 migration_version,
                 to_version,
@@ -162,7 +176,10 @@ pub fn migrate(
 
         // Drop view once during migrations, if next migration is 2.3.0 and above
         if !drop_view_has_run && migration_version >= min_version_for_dropping_views {
-            drop_views(connection).map_err(MigrationError::DatabaseViewsError)?;
+            drop_views(connection).map_err(|e| {
+                error!("Problem dropping or re-creating views");
+                MigrationError::DatabaseViewsError(e)
+            })?;
             drop_view_has_run = true;
         }
 
@@ -171,12 +188,16 @@ pub fn migrate(
         // Run one time migrations
         if migration_version > database_version {
             log::info!("Running one time database migration {}", migration_version);
-            migration
-                .migrate(connection)
-                .map_err(|source| MigrationError::MigrationError {
+            migration.migrate(connection).map_err(|source| {
+                error!(
+                    "Error during one time migration ({})",
+                    migration_version.clone()
+                );
+                MigrationError::MigrationError {
                     source,
                     version: migration_version.clone(),
-                })?;
+                }
+            })?;
             set_database_version(connection, &migration_version)?;
         }
 
@@ -188,6 +209,11 @@ pub fn migrate(
                 }
 
                 fragment.migrate(connection).map_err(|source| {
+                    error!(
+                        "Error during fragment time migration ({}) ({})",
+                        migration_version.clone(),
+                        fragment.identifier(),
+                    );
                     MigrationError::FragmentMigrationError {
                         source,
                         version: migration_version.clone(),
@@ -233,7 +259,10 @@ fn create_migration_fragment_table(connection: &StorageConnection) -> Result<(),
             );
         "#
     )
-    .map_err(|SqlError(_, e)| e)
+    .map_err(|SqlError(_, e)| {
+        log::error!("{}", e);
+        e
+    })
 }
 
 fn set_database_version(
