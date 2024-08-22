@@ -111,6 +111,7 @@ export enum ActivityLogNodeType {
   ProgramUpdated = 'PROGRAM_UPDATED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
+  RequisitionApproved = 'REQUISITION_APPROVED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
@@ -3465,6 +3466,7 @@ export type LedgerNode = {
   __typename: 'LedgerNode';
   datetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
+  invoiceNumber: Scalars['Int']['output'];
   invoiceType: InvoiceNodeType;
   itemId: Scalars['String']['output'];
   name: Scalars['String']['output'];
