@@ -1,9 +1,9 @@
 # Central server back up
 
-- *Date*: 
-- *Deciders*: 
-- *Status*: 
-- *Outcome*: 
+- *Date*: 22/08/2024
+- *Deciders*: Andrei, Mark, Chris, James (although decision 4 was hastly made by Andrei, as interim solution for now)
+- *Status*: Completed but can be revisited
+- *Outcome*: Option 4, pg_dump backup with omSupply CLI
 
 ## Intro
 
@@ -91,7 +91,7 @@ Pg base backup can be done [via low level API (sql statements)]https://www.postg
 
 _Pros:_
 
-- Should be reasonably simple
+- Should be reasonably simple, although still requires manually copying the folder
 - A.3 is handled automatically (using the same mechanism as mSupply)
 - Backup configurations in UI/UX in omSupply
 - Restore should be reasonably fast
@@ -101,12 +101,31 @@ _Cons:_
 
 - A bit of code to implement and test in omSupply
 - Would only be as recent as the last schedule time
+- More space then WAL based backup
+- Database must be on the same instance
 
 Could increase the size of WAL if we backup daily, this way we can still integrate latest backup with current WAL (but current WAL will not be stored remotely)
 
+### Option 4 - pg_dump backup with omSupply Cli
+
+pg_dump command via omSupply cli, added to scheduled backup script in Arq
+
+_Pros:_
+
+- Should be the simplest and fastest way to do it
+- Database could be on a separate instance 
+- Can backup just omSupply database (and restore to any database)
+
+_Cons:_
+
+- Backup is only as recent as latest schedule
+- More space then WAL based backup, but should be less then snapshot
+
 ## Decision
 
-I am leaning towards Option 3 for now, followed by Option 2 in the future. Option 3 require a bit of coding, but I think would be easier for support staff to administer and we can still integrate local WAL
+I am leaning towards Option 3 for now, followed by Option 2 in the future. Option 3 require a bit of coding, but I think would be easier for support staff to administer and we can still integrate local WAL.
+
+Option 4 would be the simplest and the fastest to do for now, and should give us some more time to think about other options. Can revisit this KDD if future requirements, beyond what 4 supports, appear. 
 
 ## Consequences
 
