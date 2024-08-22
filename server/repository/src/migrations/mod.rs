@@ -260,7 +260,7 @@ fn create_migration_fragment_table(connection: &StorageConnection) -> Result<(),
         "#
     )
     .map_err(|SqlError(_, e)| {
-        log::error!("{}", e);
+        error!("{}", e);
         e
     })
 }
