@@ -16,6 +16,7 @@ export enum ColumnKey {
   'Quantity' = 'quantity',
   'Type' = 'type',
   'Reason' = 'reason',
+  'Number' = 'number',
 }
 
 export const useLedgerColumns = (
@@ -47,6 +48,12 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Quantity,
         label: 'label.quantity',
+        sortable: false,
+      },
+      {
+        key: ColumnKey.Number,
+        label: 'label.number',
+        accessor: ({ rowData }) => rowData.invoiceNumber,
         sortable: false,
       },
       {
