@@ -2,6 +2,8 @@
 
 omSupply server can be backed up and restored via cli. 
 
+`NOTE` In production backups should only be done for omSupply central servers, remote sites are backed up via synchronisation
+
 ### Backup
 
 To backup simply run: 
