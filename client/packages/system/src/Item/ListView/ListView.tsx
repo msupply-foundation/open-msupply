@@ -10,10 +10,12 @@ import {
   useUrlQueryParams,
   ColumnAlign,
   TooltipTextCell,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
 import { PackVariantQuantityCell, PackVariantSelectCell } from '../Components';
+import { AppRoute } from '@openmsupply-client/config';
 
 const ItemListComponent: FC = () => {
   const {
@@ -109,7 +111,12 @@ const ItemListComponent: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(`/catalogue/items/${row.id}`);
+          navigate(
+            RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Items)
+              .addPart(row.id)
+              .build()
+          );
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
