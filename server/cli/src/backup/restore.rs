@@ -2,7 +2,7 @@ use super::*;
 use copy_dir::copy_dir;
 use diesel::{Connection, RunQueryDsl};
 use repository::DBBackendConnection;
-use service::settings::{BackupSettings, Settings};
+use service::settings::Settings;
 use simple_log::is_debug;
 use std::{fs, io, path::PathBuf, process::Command, str::FromStr};
 
@@ -13,13 +13,10 @@ pub(crate) fn restore(
         backup_name,
     }: RestoreArguments,
 ) -> Result<(), BackupError> {
-    let Some(BackupSettings {
+    let DirSettings {
         backup_dir,
         pg_bin_dir,
-    }) = settings.backup.clone()
-    else {
-        return Err(BackupError::BackupConfigurationMissing);
-    };
+    } = get_dirs_from_settings(settings)?;
 
     confirmation(skip_confirmation)?;
 
