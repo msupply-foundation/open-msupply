@@ -3,12 +3,15 @@ pub(super) use self::backup::*;
 mod restore;
 pub(super) use self::restore::*;
 
+use std::env::VarError;
 use std::fs;
 use std::str::FromStr;
 use std::{io, path::PathBuf};
 
 use repository::RepositoryError;
+use service::settings::BackupSettings;
 use service::settings::Settings;
+use shellexpand::LookupError;
 use thiserror::Error;
 
 const BACKUP_FILE_DIR: &'static str = "files";
@@ -44,6 +47,8 @@ pub(super) enum BackupError {
     RestoreNotConfirmed,
     #[error("Backup configurations needs to be specified in configuration files")]
     BackupConfigurationMissing,
+    #[error("Error while converting path {0} in {1}")]
+    ErrorWhileConvertingPath(LookupError<VarError>, String),
     #[error("Issue opening backup folder {1}")]
     BackupFolderNotExist(#[source] io::Error, PathBuf),
     #[error(transparent)]
@@ -59,6 +64,38 @@ pub(super) struct RestoreArguments {
     /// In dev can specify this to skip confirmation
     #[clap(short, long)]
     skip_confirmation: bool,
+}
+
+struct DirSettings {
+    backup_dir: String,
+    pg_bin_dir: Option<String>,
+}
+
+fn get_dirs_from_settings(settings: &Settings) -> Result<DirSettings, BackupError> {
+    let Some(BackupSettings {
+        backup_dir,
+        pg_bin_dir,
+    }) = settings.backup.clone()
+    else {
+        return Err(BackupError::BackupConfigurationMissing);
+    };
+
+    // Shell expand is mainly used to replace `~` with full path of home directory
+    let backup_dir = shellexpand::full(&backup_dir)
+        .map_err(|e| BackupError::ErrorWhileConvertingPath(e, backup_dir.clone()))?
+        .to_string();
+    let pg_bin_dir = pg_bin_dir
+        .map(|d| {
+            shellexpand::full(&d)
+                .map_err(|e| BackupError::ErrorWhileConvertingPath(e, d.clone()))
+                .map(|s| s.to_string())
+        })
+        .transpose()?;
+
+    Ok(DirSettings {
+        backup_dir,
+        pg_bin_dir,
+    })
 }
 
 fn get_base_dir(settings: &Settings) -> Result<PathBuf, BackupError> {

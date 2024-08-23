@@ -1,17 +1,14 @@
 use super::*;
 use chrono::Utc;
 use copy_dir::copy_dir;
-use service::settings::{BackupSettings, Settings};
+use service::settings::Settings;
 use std::{fs, io, path::PathBuf, process::Command, str::FromStr};
 
 pub(crate) fn backup(settings: &Settings) -> Result<(), BackupError> {
-    let Some(BackupSettings {
+    let DirSettings {
         backup_dir,
         pg_bin_dir,
-    }) = settings.backup.clone()
-    else {
-        return Err(BackupError::BackupConfigurationMissing);
-    };
+    } = get_dirs_from_settings(settings)?;
 
     let Dirs {
         backup_name,
@@ -45,7 +42,7 @@ fn create_backup_dir(output_dir: String) -> Result<Dirs, BackupError> {
         .to_string();
 
     let base_dir = PathBuf::from_str(&output_dir)
-        .map_err(|_| BackupError::InvalidPath(output_dir.clone()))?
+        .map_err(|_| BackupError::InvalidPath(output_dir.to_string()))?
         .join(&backup_name);
 
     fs::create_dir_all(&base_dir)
