@@ -4,9 +4,11 @@ use chrono::NaiveDate;
 use graphql_core::simple_generic_errors::{CannotEditStocktake, StocktakeIsLocked};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::generic_errors::StockLineReducedBelowZero;
-use graphql_types::types::{StocktakeLineConnector, StocktakeNode};
-use repository::{StockLine, Stocktake};
+use graphql_types::generic_errors::{
+    SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
+};
+use graphql_types::types::StocktakeNode;
+use repository::{StockLine, Stocktake, StocktakeLine};
 use service::stocktake::UpdateStocktakeStatus;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -29,15 +31,19 @@ pub enum UpdateStocktakeStatusInput {
     Finalised,
 }
 
-pub struct SnapshotCountCurrentCountMismatch(StocktakeLineConnector);
+pub struct SnapshotCountCurrentCountMismatch(pub Vec<StocktakeLine>);
 #[Object]
 impl SnapshotCountCurrentCountMismatch {
     pub async fn description(&self) -> &str {
         "Snapshot count doesn't match the current stock count"
     }
 
-    pub async fn lines(&self) -> &StocktakeLineConnector {
-        &self.0
+    pub async fn lines(&self) -> Vec<SnapshotCountCurrentCountMismatchLine> {
+        self.0
+            .clone()
+            .into_iter()
+            .map(SnapshotCountCurrentCountMismatchLine::from_domain)
+            .collect()
     }
 }
 
@@ -117,7 +123,7 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
         // Structured Errors
         ServiceError::SnapshotCountCurrentCountMismatch(lines) => {
             return Ok(UpdateErrorInterface::SnapshotCountCurrentCountMismatch(
-                SnapshotCountCurrentCountMismatch(StocktakeLineConnector::from_domain_vec(lines)),
+                SnapshotCountCurrentCountMismatch(lines),
             ))
         }
         ServiceError::StocktakeIsLocked => {
