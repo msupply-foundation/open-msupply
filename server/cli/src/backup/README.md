@@ -10,7 +10,7 @@ To backup simply run:
 
 **In development mode**
 
-`cargo run --bin remote service_cli -- backup`
+`cargo run --bin remote_server_cli -- backup` or for postgres `cargo run --bin remote_server_cli --features postgres -- backup`
 
 **In production**
 
@@ -26,7 +26,7 @@ To restore run:
 
 **In development mode**
 
-`cargo run --bin remote service_cli -- restore -b D2024_08_22T05_05_16 -s`
+`cargo run --bin remote_server_cli -- restore -b D2024_08_22T05_05_16 -s` or for postgres `cargo run --bin remote_server_cli --features postgres -- restore -b D2024_08_22T05_05_16 -s`
 
 **In production**
 
