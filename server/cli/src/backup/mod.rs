@@ -23,7 +23,7 @@ const BACKUP_DATABASE_DIR: &'static str = "sqlite";
 
 #[derive(Error, Debug)]
 pub(super) enum BackupError {
-    #[error("Cannot find pg_dump or pg_restore executable in PATH, add it to PATH or specify Postgres bin directory via configurations")]
+    #[error("Cannot find pg_dump or pg_restore executable in PATH, add it to PATH or specify Postgres bin directory in the configuration file")]
     PgCommandNotFoundInPath,
     #[error("Cannot find pg_dump or pg_restore executable in Postgres bin directory specified in configurations")]
     PgCommandNotFoundInBinPath,

@@ -16,7 +16,7 @@ To backup simply run:
 
 `omSupply-cli backup`
 
-You will need to specify backup folder in configurations `.yaml` files see example.yaml. Each time backup runs a new folder will be created with this format `D2024_08_22T05_05_16`, a successful backup will print new backup name to console.
+You will need to specify a backup folder in the configuration `.yaml` files - to get started, see the `example.yaml`. Each time backup runs a new folder will be created with this format `D[YYYY]_[mm]_[dd]T[HH]_[MM]_[SS]` e.g. `D2024_08_22T05_05_16`. A successful backup will print new backup name to console.
 
 Backup will contain a folder with all of the app_data (plugins, static files, etc..) and a folder with either sqlite files or postgres database dump. 
 
@@ -36,8 +36,8 @@ For full cli arguments list run `restore --help`
 
 Cli restore command will look for a backup folder specified with `-b` in backup folder specified by configurations `.yaml` files.
 
-App data folder will be cleared and replaced by the content of backup app_data. For postgres existing database will be dropped and replace by the backup database dump, and for sqlite, database files will be copied, after existing database sqlite files are wiped 
+App data folder will be cleared and replaced by the content of backup app_data. For postgres existing database will be dropped and replaced by the backup database dump, and for sqlite, database files will be copied, after existing database sqlite files are wiped 
 
 ### Extra 
 
-Configurations in `.yaml` files will be used in backup and restore, the base app folder, database name etc.. 
+Configurations in `.yaml` files will be used in backup and restore, the base app folder, database name.
