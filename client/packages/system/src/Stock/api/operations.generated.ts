@@ -12,7 +12,7 @@ export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: s
 
 export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemName: string, numberOfPacks: number, itemCode: string, stockLine?: { __typename: 'StockLineNode', id: string } | null }> } };
 
-export type LedgerRowFragment = { __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId?: string | null, storeId: string };
+export type LedgerRowFragment = { __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, invoiceNumber: number, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId?: string | null, storeId: string };
 
 export type StockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -42,7 +42,7 @@ export type LedgerQueryVariables = Types.Exact<{
 }>;
 
 
-export type LedgerQuery = { __typename: 'Queries', ledger: { __typename: 'LedgerConnector', totalCount: number, nodes: Array<{ __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId?: string | null, storeId: string }> } };
+export type LedgerQuery = { __typename: 'Queries', ledger: { __typename: 'LedgerConnector', totalCount: number, nodes: Array<{ __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, invoiceNumber: number, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId?: string | null, storeId: string }> } };
 
 export type UpdateStockLineMutationVariables = Types.Exact<{
   input: Types.UpdateStockLineInput;
@@ -162,6 +162,7 @@ export const LedgerRowFragmentDoc = gql`
   datetime
   id
   invoiceType
+  invoiceNumber
   itemId
   name
   quantity
