@@ -109,15 +109,16 @@ fn get_base_dir(settings: &Settings) -> Result<PathBuf, BackupError> {
 }
 
 fn get_sqlite_files_paths(settings: &Settings) -> Result<Vec<PathBuf>, BackupError> {
+    // omSupply database name can be specified with .sqlite extension, converting path and comparing file_stem()
+    // seems pretty easy way to deal with database_name discrepancy
+    let backup_name = PathBuf::from_str(&settings.database.database_name)
+        .map_err(|_| BackupError::InvalidPath(settings.database.database_name.to_string()))?;
+
     let paths = fs::read_dir("./")?
         .into_iter()
         .filter_map(Result::ok)
         .map(|e| e.path())
-        .filter(|f| {
-            f.is_file()
-                && f.file_stem().map(|s| s.to_str()).flatten()
-                    == Some(settings.database.database_name.as_str())
-        })
+        .filter(|f| f.is_file() && f.file_stem() == backup_name.file_stem())
         .collect();
 
     Ok(paths)

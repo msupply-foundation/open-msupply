@@ -162,7 +162,7 @@ fn copy_sqlite_files(
     settings: &Settings,
     backup_database_dir: &PathBuf,
 ) -> Result<(), BackupError> {
-    // Remove database files
+    // Remove current database files
     let sqlite_files = get_sqlite_files_paths(settings)?;
 
     for sqlite_filename in sqlite_files {
@@ -171,7 +171,13 @@ fn copy_sqlite_files(
 
         fs::remove_file(&sqlite_filename)?;
     }
-    let database_name = &settings.database.database_name;
+
+    // omSupply database name can be specified with .sqlite extension, remove it here
+    let database_name = settings
+        .database
+        .database_name
+        .clone()
+        .replace(".sqlite", "");
 
     // Move backup files
     for sqlite_filename in fs::read_dir(backup_database_dir)
