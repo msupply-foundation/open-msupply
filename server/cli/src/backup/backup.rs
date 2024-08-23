@@ -120,16 +120,7 @@ fn copy_sqlite_files(
     settings: &Settings,
     backup_database_dir: &PathBuf,
 ) -> Result<(), BackupError> {
-    let sqlite_files: Vec<PathBuf> = fs::read_dir("./")?
-        .into_iter()
-        .filter_map(Result::ok)
-        .map(|e| e.path())
-        .filter(|f| {
-            f.is_file()
-                && f.file_stem().map(|s| s.to_str()).flatten()
-                    == Some(settings.database.database_name.as_str())
-        })
-        .collect();
+    let sqlite_files = get_sqlite_files_paths(settings)?;
 
     if sqlite_files.is_empty() {
         return Err(BackupError::CannotFindSqliteBackup(
