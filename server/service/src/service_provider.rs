@@ -164,8 +164,6 @@ impl ServiceProvider {
     // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
 
-        println!("establishing new connection...");
-
         return ServiceProvider::new_with_triggers(
             connection_manager,
             app_data_folder,
@@ -182,7 +180,6 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        println!("establishing trigger connection...");
         if let Some(content) = Localisations::get("locales/en/common.json") {
             println!("{:?}", content.data);
         }
