@@ -63,6 +63,12 @@ use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
+use rust_embed::RustEmbed;
+
+#[derive(RustEmbed)]
+// Relative to server/Cargo.toml
+#[folder = "../../client/packages/host/dist"]
+struct localisations;
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
@@ -141,7 +147,7 @@ pub struct ServiceProvider {
     // Vaccine Course
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
     pub program_service: Box<dyn ProgramServiceTrait>,
-}
+}   
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
@@ -150,12 +156,18 @@ pub struct ServiceContext {
     pub store_id: String,
 }
 
+
+
 impl ServiceProvider {
     // TODO we should really use `new` with processors_trigger, we constructs ServiceProvider manually in tests though
     // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
     // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
-        ServiceProvider::new_with_triggers(
+    if let Some(content) = localisations::get("../../client/packages/host/dist/locales/en/common.json") {
+        println!("{:?}", content.data);
+    }
+
+        return ServiceProvider::new_with_triggers(
             connection_manager,
             app_data_folder,
             ProcessorsTrigger::new_void(),
