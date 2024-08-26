@@ -68,7 +68,7 @@ use rust_embed::RustEmbed;
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
 #[folder = "../../client/packages/host/dist"]
-struct localisations;
+struct Localisations;
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
@@ -163,9 +163,8 @@ impl ServiceProvider {
     // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
     // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
-    if let Some(content) = localisations::get("../../client/packages/host/dist/locales/en/common.json") {
-        println!("{:?}", content.data);
-    }
+
+        println!("establishing new connection...");
 
         return ServiceProvider::new_with_triggers(
             connection_manager,
@@ -183,6 +182,11 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
+        println!("establishing trigger connection...");
+        if let Some(content) = Localisations::get("locales/en/common.json") {
+            println!("{:?}", content.data);
+        }
+
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -256,6 +260,7 @@ impl ServiceProvider {
         store_id: String,
         user_id: String,
     ) -> Result<ServiceContext, RepositoryError> {
+
         Ok(ServiceContext {
             connection: self.connection()?,
             processors_trigger: self.processors_trigger.clone(),
