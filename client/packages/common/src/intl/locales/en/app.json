@@ -32,6 +32,8 @@
   "cmdk.goto-stock": "Go to: Stock",
   "cmdk.goto-stocktakes": "Go to: Stocktakes",
   "cmdk.goto-suppliers": "Go to: Suppliers",
+  "cmdk.more-info-close": "Close the more info panel",
+  "cmdk.more-info-open": "Open the more info panel",
   "cmdk.placeholder": "Type a command or search",
   "customer-requisition": "Requisitions",
   "customers": "Customers",
