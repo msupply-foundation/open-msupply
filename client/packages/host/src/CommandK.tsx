@@ -19,6 +19,7 @@ import {
   StoreModeNodeType,
   useRegisterActions,
   useConfirmationModal,
+  useDetailPanelStore,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -97,12 +98,13 @@ const Actions = () => {
     message: t('messages.logout-confirm'),
     title: t('heading.logout-confirm'),
   });
+  const { close, open } = useDetailPanelStore();
 
   const actions = [
     {
       id: 'navigation-drawer:toggle',
-      name: `${t('cmdk.drawer-toggle')} (m)`,
-      shortcut: ['m'],
+      name: `${t('cmdk.drawer-toggle')} (n)`,
+      shortcut: ['n'],
       keywords: 'drawer, close',
       perform: () => drawer.toggle(),
     },
@@ -303,6 +305,25 @@ const Actions = () => {
             .build()
         ),
     });
+
+    // if (enabled) {
+    actions.push(
+      {
+        id: 'action:more-open',
+        name: `${t('cmdk.more-info-close')} (m+o)`,
+        keywords: 'more open',
+        shortcut: ['m', 'o'],
+        perform: open,
+      },
+      {
+        id: 'action:more-close',
+        name: `${t('cmdk.more-info-close')} (m+c)`,
+        keywords: 'more close',
+        shortcut: ['m', 'c'],
+        perform: close,
+      }
+    );
+    // }
 
     if (store?.preferences.vaccineModule ?? false) {
       actions.push({
