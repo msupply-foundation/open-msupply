@@ -94,7 +94,7 @@ impl Localisations {
 
     // Load translations from embedded files
     pub fn load_translations(&mut self) -> Result<(), std::io::Error> {
-        // Example languages, you might have different logic here
+        // Languages - need to extract these from the files themselves?
         let languages = vec!["en"];
 
         for lang in languages {
@@ -104,11 +104,6 @@ impl Localisations {
                 self.translations.insert(lang.to_string(), translations);
             }
         }
-
-        // for (key, value) in &self.translations {
-        //     println!("{:?}: {:?}", key, value);
-        // }
-
         // later need to think about how to concatonate all translation json files per language
 
         Ok(())
@@ -240,7 +235,6 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        println!("Loading localisations...");
         let mut localisations = Localisations::new();
 
         // test loading localisations...
