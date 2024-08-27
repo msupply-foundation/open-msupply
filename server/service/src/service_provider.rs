@@ -1,126 +1,30 @@
-use std::collections::HashMap;
 
 use crate::{
-    app_data::{AppDataService, AppDataServiceTrait},
-    asset::AssetServiceTrait,
-    auth::{AuthService, AuthServiceTrait},
-    barcode::{BarcodeService, BarcodeServiceTrait},
-    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
-    clinician::{ClinicianService, ClinicianServiceTrait},
-    cold_chain::{ColdChainService, ColdChainServiceTrait},
-    currency::{CurrencyService, CurrencyServiceTrait},
-    dashboard::{
+    app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
-    },
-    demographic::DemographicServiceTrait,
-    display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
-    document::{
+    }, demographic::DemographicServiceTrait, display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait}, document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
-    },
-    invoice::{InvoiceService, InvoiceServiceTrait},
-    invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
-    item_stats::{ItemStatsService, ItemStatsServiceTrait},
-    label_printer_settings_service::LabelPrinterSettingsServiceTrait,
-    location::{LocationService, LocationServiceTrait},
-    log_service::{LogService, LogServiceTrait},
-    master_list::{MasterListService, MasterListServiceTrait},
-    name::{NameService, NameServiceTrait},
-    pack_variant::PackVariantServiceTrait,
-    plugin_data::{PluginDataService, PluginDataServiceTrait},
-    processors::ProcessorsTrigger,
-    program::ProgramServiceTrait,
-    programs::{
-        contact_trace::{contact_trace_schema, ContactTraceService, ContactTraceServiceTrait},
+    }, invoice::{InvoiceService, InvoiceServiceTrait}, invoice_line::{InvoiceLineService, InvoiceLineServiceTrait}, item_stats::{ItemStatsService, ItemStatsServiceTrait}, label_printer_settings_service::LabelPrinterSettingsServiceTrait, localisations::Localisations, location::{LocationService, LocationServiceTrait}, log_service::{LogService, LogServiceTrait}, master_list::{MasterListService, MasterListServiceTrait}, name::{NameService, NameServiceTrait}, pack_variant::PackVariantServiceTrait, plugin_data::{PluginDataService, PluginDataServiceTrait}, processors::ProcessorsTrigger, program::ProgramServiceTrait, programs::{
+        contact_trace::{ ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
-    },
-    repack::{RepackService, RepackServiceTrait},
-    report::report_service::{ReportService, ReportServiceTrait},
-    requisition::{RequisitionService, RequisitionServiceTrait},
-    requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
-    rnr_form::{RnRFormService, RnRFormServiceTrait},
-    sensor::{SensorService, SensorServiceTrait},
-    settings_service::{SettingsService, SettingsServiceTrait},
-    stock_line::{StockLineService, StockLineServiceTrait},
-    stocktake::{StocktakeService, StocktakeServiceTrait},
-    stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
-    store::{get_store, get_stores},
-    sync::{
+    }, repack::{RepackService, RepackServiceTrait}, report::report_service::{ReportService, ReportServiceTrait}, requisition::{RequisitionService, RequisitionServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait}, rnr_form::{RnRFormService, RnRFormServiceTrait}, sensor::{SensorService, SensorServiceTrait}, settings_service::{SettingsService, SettingsServiceTrait}, stock_line::{StockLineService, StockLineServiceTrait}, stocktake::{StocktakeService, StocktakeServiceTrait}, stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait}, store::{get_store, get_stores}, sync::{
         site_info::{SiteInfoService, SiteInfoTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
-    },
-    temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
-    vaccine_course::VaccineCourseServiceTrait,
-    ListError, ListResult,
+    }, temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait}, vaccine_course::VaccineCourseServiceTrait, ListError, ListResult
 };
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
-use rust_embed::RustEmbed;
-use serde_yaml::Value;
-
-#[derive(RustEmbed)]
-// Relative to server/Cargo.toml
-// later this will be client in dev mode, or build in production mode
-#[folder = "../../client/packages/host/dist"]
-pub struct EmbeddedLocalisations;
-
-// struct to manage translations
-pub struct Localisations {
-    pub translations: HashMap<String, HashMap<String, String>>,
-}
-
-pub struct TranslationStrings {
-    pub translations: HashMap<String, Value>,
-}
-
-impl Localisations {
-
-    // Creates a new Localisations struct
-    pub fn new() -> Self {
-        Localisations {
-            translations: HashMap::new(),
-        }
-    }
-
-    // Load translations from embedded files
-    pub fn load_translations(&mut self) -> Result<(), std::io::Error> {
-        // Languages - need to extract these from the files themselves?
-        let languages = vec!["en"];
-
-        for lang in languages {
-            if let Some(content) = EmbeddedLocalisations::get(&format!("locales/{}/common.json", lang)) {
-                let json_data = content.data;
-                let translations: HashMap<String, String> = serde_json::from_slice(&json_data).unwrap();
-                self.translations.insert(lang.to_string(), translations);
-            }
-        }
-        // later need to think about how to concatonate all translation json files per language
-
-        Ok(())
-    }
-
-    // Get a translation for a given key and language
-    pub fn get_translation(&self, key: &str, language: &str) -> String {
-        self.translations
-            .get(language)
-            .and_then(|map| map.get(key))
-            .cloned()
-            .unwrap_or_else(|| "Translation not found".to_string())
-    }
-}
-
-
-
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
@@ -235,12 +139,7 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        let mut localisations = Localisations::new();
-
-        // test loading localisations...
-        let _ = localisations.load_translations();
-        let translated_value = localisations.get_translation("button.import-fridge-tag", "en");
-        println!("translated value: {:?}", translated_value);
+        let mut localisations = Localisations::new().load_translations();
 
         ServiceProvider {
             connection_manager: connection_manager.clone(),
