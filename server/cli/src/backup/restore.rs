@@ -34,6 +34,8 @@ pub(crate) fn restore(
         copy_sqlite_files(settings, &database_dir)?;
     }
 
+    println!("Restore completed");
+
     Ok(())
 }
 
