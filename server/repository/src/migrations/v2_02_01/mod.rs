@@ -113,7 +113,7 @@ fn add_rnr_form_changelogs_no_store_id(connection: &StorageConnection) -> anyhow
         INSERT INTO rnr_form_line
             ("id", "rnr_form_id", "item_link_id", "average_monthly_consumption", "previous_monthly_consumption_values", "initial_balance", "snapshot_quantity_received", "snapshot_quantity_consumed", "snapshot_adjustments", "adjusted_quantity_consumed", "stock_out_duration", "final_balance", "maximum_quantity", "calculated_requested_quantity") 
         VALUES
-            ('TEST_RNR_FORM_LINE_ID', 'TEST_RNR_FORM_ID', 'item1', 0.0, "", 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0);
+            ('TEST_RNR_FORM_LINE_ID', 'TEST_RNR_FORM_ID', 'item1', 0.0, '', 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0.0, 0.0, 0.0);
         "#,
     )?;
 
@@ -124,8 +124,8 @@ fn add_rnr_form_changelogs_no_store_id(connection: &StorageConnection) -> anyhow
         INSERT INTO changelog
             ("table_name", "record_id", "row_action", "store_id")
         VALUES
-            ("rnr_form", "TEST_RNR_FORM_ID", "UPSERT", NULL),
-            ("rnr_form_line", "TEST_RNR_FORM_LINE_ID", "UPSERT", NULL);
+            ('rnr_form', 'TEST_RNR_FORM_ID', 'UPSERT', NULL),
+            ('rnr_form_line', 'TEST_RNR_FORM_LINE_ID', 'UPSERT', NULL);
         "#,
     )?;
 
