@@ -50,7 +50,7 @@
   "heading.total": "Total",
   "info.automatic-shipment": "This shipment was created automatically, as the result of an Outbound Shipment in another store.",
   "info.automatic-shipment-no-edit": "You are unable to edit details until the status is confirmed as Delivered.",
-  "info.cannot-edit-program-requisition": "Cannot edit supplier, minimum MOS, maximum MOS or add items in a program requisition.",
+  "info.cannot-edit-program-requisition": "Cannot edit supplier, reorder threshold MOS, target MOS or add items in a program requisition.",
   "info.manual-shipment": "This shipment was created manually. The delivery status will not be automatically updated.",
   "label.add-batch": "Add batch",
   "label.add-charges": "Add charges",
