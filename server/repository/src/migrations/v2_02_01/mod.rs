@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
+use diesel::prelude::*;
 
 mod add_store_ids_to_existing_rnr_form_changelogs;
 
@@ -51,31 +52,28 @@ async fn migration_2_02_01() {
     assert_eq!(check_changelogs_have_store_id(&connection), true);
 }
 
+// Temp table definition for testing for changelog schema at this point in time
+table! {
+    changelog (cursor) {
+        cursor -> BigInt,
+        record_id -> Text,
+        store_id -> Nullable<Text>,
+    }
+}
+
 #[cfg(test)]
 fn check_changelogs_have_store_id(connection: &StorageConnection) -> bool {
-    use crate::{ChangelogFilter, ChangelogRepository, ChangelogTableName};
+    use changelog::dsl as changelog_dsl;
 
-    let mut changelogs = ChangelogRepository::new(connection)
-        .changelogs(
-            0,
-            1000,
-            Some(ChangelogFilter::new().table_name(ChangelogTableName::RnrForm.equal_to())),
-        )
+    let changelog_store_ids: Vec<Option<String>> = changelog_dsl::changelog
+        .select(changelog::store_id)
+        .filter(changelog::record_id.eq_any(vec!["TEST_RNR_FORM_ID", "TEST_RNR_FORM_LINE_ID"]))
+        .load::<Option<String>>(connection.lock().connection())
         .unwrap();
 
-    let rnr_form_line_changelogs = ChangelogRepository::new(connection)
-        .changelogs(
-            0,
-            1000,
-            Some(ChangelogFilter::new().table_name(ChangelogTableName::RnrFormLine.equal_to())),
-        )
-        .unwrap();
-
-    changelogs.extend(rnr_form_line_changelogs);
-
-    changelogs
+    changelog_store_ids
         .iter()
-        .all(|changelog| changelog.store_id.clone().unwrap_or("".to_string()) == "store1")
+        .all(|store_id| store_id.clone().unwrap_or("".to_string()) == "store1")
 }
 
 #[cfg(test)]
