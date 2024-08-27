@@ -134,7 +134,9 @@ enum Action {
         #[clap(short, long)]
         sub_context: Option<String>,
     },
-    /// Will back up database to a generated folder (the name of which will be returned). Folder will be generated in the backup directory specified by configuration file
+    /// Will back up database to a generated folder (the name of which will be returned).
+    /// Folder will be generated in the backup directory specified by configuration file.
+    /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
 }
