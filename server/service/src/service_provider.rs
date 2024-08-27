@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     asset::AssetServiceTrait,
@@ -33,7 +35,7 @@ use crate::{
     processors::ProcessorsTrigger,
     program::ProgramServiceTrait,
     programs::{
-        contact_trace::{ContactTraceService, ContactTraceServiceTrait},
+        contact_trace::{contact_trace_schema, ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
@@ -64,11 +66,66 @@ use repository::{
     StoreFilter, StoreSort,
 };
 use rust_embed::RustEmbed;
+use serde_yaml::Value;
 
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
+// later this will be client in dev mode, or build in production mode
 #[folder = "../../client/packages/host/dist"]
-struct Localisations;
+pub struct EmbeddedLocalisations;
+
+// struct to manage translations
+pub struct Localisations {
+    pub translations: HashMap<String, HashMap<String, String>>,
+}
+
+pub struct TranslationStrings {
+    pub translations: HashMap<String, Value>,
+}
+
+impl Localisations {
+
+    // Creates a new Localisations struct
+    pub fn new() -> Self {
+        Localisations {
+            translations: HashMap::new(),
+        }
+    }
+
+    // Load translations from embedded files
+    pub fn load_translations(&mut self) -> Result<(), std::io::Error> {
+        // Example languages, you might have different logic here
+        let languages = vec!["en"];
+
+        for lang in languages {
+            if let Some(content) = EmbeddedLocalisations::get(&format!("locales/{}/common.json", lang)) {
+                let json_data = content.data;
+                let translations: HashMap<String, String> = serde_json::from_slice(&json_data).unwrap();
+                self.translations.insert(lang.to_string(), translations);
+            }
+        }
+
+        // for (key, value) in &self.translations {
+        //     println!("{:?}: {:?}", key, value);
+        // }
+
+        // later need to think about how to concatonate all translation json files per language
+
+        Ok(())
+    }
+
+    // Get a translation for a given key and language
+    pub fn get_translation(&self, key: &str, language: &str) -> String {
+        self.translations
+            .get(language)
+            .and_then(|map| map.get(key))
+            .cloned()
+            .unwrap_or_else(|| "Translation not found".to_string())
+    }
+}
+
+
+
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
@@ -147,6 +204,8 @@ pub struct ServiceProvider {
     // Vaccine Course
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
     pub program_service: Box<dyn ProgramServiceTrait>,
+    // Translations
+    pub translations_service: Box<Localisations>,
 }   
 
 pub struct ServiceContext {
@@ -164,7 +223,6 @@ impl ServiceProvider {
     // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
 
-        println!("establishing new connection...");
 
         return ServiceProvider::new_with_triggers(
             connection_manager,
@@ -182,10 +240,13 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        println!("establishing trigger connection...");
-        if let Some(content) = Localisations::get("locales/en/common.json") {
-            println!("{:?}", content.data);
-        }
+        println!("Loading localisations...");
+        let mut localisations = Localisations::new();
+
+        // test loading localisations...
+        let _ = localisations.load_translations();
+        let translated_value = localisations.get_translation("button.import-fridge-tag", "en");
+        println!("translated value: {:?}", translated_value);
 
         ServiceProvider {
             connection_manager: connection_manager.clone(),
@@ -242,6 +303,7 @@ impl ServiceProvider {
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
             rnr_form_service: Box::new(RnRFormService {}),
+            translations_service: Box::new(localisations),        
         }
     }
 
