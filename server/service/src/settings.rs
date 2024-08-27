@@ -10,6 +10,7 @@ pub struct Settings {
     pub database: DatabaseSettings,
     pub sync: Option<SyncSettings>,
     pub logging: Option<LoggingSettings>,
+    pub backup: Option<BackupSettings>,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -38,6 +39,17 @@ impl ServerSettings {
     pub fn discovery_address(&self) -> String {
         format!("0.0.0.0:{}", self.port + 1)
     }
+}
+
+/// See backup cli for more details
+#[derive(serde::Deserialize, Clone)]
+pub struct BackupSettings {
+    // Root folder for backup
+    pub backup_dir: String,
+    // Directory containing postgres binaries (in case pg_dump and pg_restore are not in PATH)
+    pub pg_bin_dir: Option<String>,
+    // Number of backups to keep
+    pub max_number_of_backups: Option<u32>,
 }
 
 pub fn is_develop() -> bool {
