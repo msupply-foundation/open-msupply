@@ -167,10 +167,14 @@ fn cleanup_backups(
 
     paths.sort();
 
-    for path in paths
-        .iter()
-        .take(paths.len() - *max_number_of_backups as usize)
-    {
+    let max_number_of_backups = *max_number_of_backups as usize;
+    let number_of_backups_to_delete = if paths.len() <= max_number_of_backups {
+        0
+    } else {
+        paths.len() - max_number_of_backups
+    };
+
+    for path in paths.iter().take(number_of_backups_to_delete) {
         println!("Deleting old backup: {:?}", path);
         let _ = fs::remove_dir_all(path);
     }
