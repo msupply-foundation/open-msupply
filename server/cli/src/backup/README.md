@@ -30,6 +30,8 @@ You will need to specify a backup folder in the configuration `.yaml` files - to
 
 Backup will contain a folder with all of the app_data (plugins, static files, etc..) and a folder with either sqlite files or postgres database dump. 
 
+`max_number_of_backups` in configuration `.yaml` file can be used to limit number of backups that will be kept in backup folder, this will be checked during each backup and extra backup folder will be deleted
+
 ### Restore
 
 To restore run: 
