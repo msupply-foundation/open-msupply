@@ -75,6 +75,7 @@ fn get_dirs_from_settings(settings: &Settings) -> Result<DirSettings, BackupErro
     let Some(BackupSettings {
         backup_dir,
         pg_bin_dir,
+        ..
     }) = settings.backup.clone()
     else {
         return Err(BackupError::BackupConfigurationMissing);

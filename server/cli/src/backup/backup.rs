@@ -10,10 +10,17 @@ pub(crate) fn backup(settings: &Settings) -> Result<(), BackupError> {
         pg_bin_dir,
     } = get_dirs_from_settings(settings)?;
 
+    let max_number_of_backups = settings
+        .backup
+        .as_ref()
+        .map(|b| b.max_number_of_backups)
+        .flatten();
+
     let Dirs {
         backup_name,
         file_dir,
         database_dir,
+        backups_dir,
     } = create_backup_dir(backup_dir)?;
 
     copy_files(settings, &file_dir)?;
@@ -25,6 +32,8 @@ pub(crate) fn backup(settings: &Settings) -> Result<(), BackupError> {
         copy_sqlite_files(settings, &database_dir)?;
     }
 
+    cleanup_backups(&backups_dir, max_number_of_backups)?;
+
     println!("Backup completed in folder {backup_name}");
     Ok(())
 }
@@ -33,6 +42,7 @@ struct Dirs {
     backup_name: String,
     file_dir: PathBuf,
     database_dir: PathBuf,
+    backups_dir: PathBuf,
 }
 
 fn create_backup_dir(output_dir: String) -> Result<Dirs, BackupError> {
@@ -41,9 +51,10 @@ fn create_backup_dir(output_dir: String) -> Result<Dirs, BackupError> {
         .format("D%Y_%m_%dT%H_%M_%S")
         .to_string();
 
-    let base_dir = PathBuf::from_str(&output_dir)
-        .map_err(|_| BackupError::InvalidPath(output_dir.to_string()))?
-        .join(&backup_name);
+    let backups_dir = PathBuf::from_str(&output_dir)
+        .map_err(|_| BackupError::InvalidPath(output_dir.to_string()))?;
+
+    let base_dir = backups_dir.join(&backup_name);
 
     fs::create_dir_all(&base_dir)
         .map_err(|e| BackupError::CannotCreateBackupFolder(e, base_dir.clone()))?;
@@ -60,6 +71,7 @@ fn create_backup_dir(output_dir: String) -> Result<Dirs, BackupError> {
         backup_name,
         file_dir,
         database_dir,
+        backups_dir,
     })
 }
 
@@ -133,6 +145,34 @@ fn copy_sqlite_files(
         let sqlite_filename = sqlite_filename.file_name().unwrap();
 
         fs::copy(&sqlite_filename, &backup_database_dir.join(sqlite_filename))?;
+    }
+
+    Ok(())
+}
+
+fn cleanup_backups(
+    backups_dir: &PathBuf,
+    max_number_of_backups: Option<u32>,
+) -> Result<(), BackupError> {
+    let Some(max_number_of_backups) = &max_number_of_backups else {
+        return Ok(());
+    };
+
+    let mut paths: Vec<PathBuf> = fs::read_dir(backups_dir)?
+        .into_iter()
+        .filter_map(Result::ok)
+        .map(|e| e.path())
+        .filter(|f| f.is_dir())
+        .collect();
+
+    paths.sort();
+
+    for path in paths
+        .iter()
+        .take(paths.len() - *max_number_of_backups as usize)
+    {
+        println!("Deleting old backup: {:?}", path);
+        let _ = fs::remove_dir_all(path);
     }
 
     Ok(())

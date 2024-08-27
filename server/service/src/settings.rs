@@ -48,6 +48,8 @@ pub struct BackupSettings {
     pub backup_dir: String,
     // Directory containing postgres binaries (in case pg_dump and pg_restore are not in PATH)
     pub pg_bin_dir: Option<String>,
+    // Number of backups to keep
+    pub max_number_of_backups: Option<u32>,
 }
 
 pub fn is_develop() -> bool {
