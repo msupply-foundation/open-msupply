@@ -21,6 +21,7 @@ graphql = { path = "../graphql" }
 
 anyhow = { workspace = true }
 async-graphql = { workspace = true }
+thiserror = { workspace = true }
 clap = { workspace = true }
 chrono = { workspace = true }
 diesel = { version = "2.2.1", default-features = false, features = ["chrono"] }
@@ -29,6 +30,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 simple-log = { workspace = true }
 tokio = { version = "1.38.0", features = ["macros", "time", "rt-multi-thread"] }
+copy_dir = "0.1.3"
+shellexpand = "3.1.0"
 
 [dev-dependencies]
 actix-rt = { workspace = true }
