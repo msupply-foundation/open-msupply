@@ -33,6 +33,9 @@ use std::{
 };
 use util::inline_init;
 
+mod backup;
+use backup::*;
+
 const DATA_EXPORT_FOLDER: &str = "data";
 
 /// omSupply remote server cli
@@ -131,6 +134,9 @@ enum Action {
         #[clap(short, long)]
         sub_context: Option<String>,
     },
+    /// Will back up database to a generated folder (the name of which will be returned). Folder will be generated in the backup directory specified by configuration file
+    Backup,
+    Restore(RestoreArguments),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -439,6 +445,12 @@ async fn main() -> anyhow::Result<()> {
             })?;
 
             info!("Report upserted");
+        }
+        Action::Backup => {
+            backup(&settings)?;
+        }
+        Action::Restore(arguments) => {
+            restore(&settings, arguments)?;
         }
     }
 
