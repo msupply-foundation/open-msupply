@@ -306,7 +306,6 @@ const Actions = () => {
         ),
     });
 
-    // if (enabled) {
     actions.push(
       {
         id: 'action:more-open',
@@ -323,7 +322,6 @@ const Actions = () => {
         perform: close,
       }
     );
-    // }
 
     if (store?.preferences.vaccineModule ?? false) {
       actions.push({
