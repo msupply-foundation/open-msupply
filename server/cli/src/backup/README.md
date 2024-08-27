@@ -4,17 +4,27 @@ omSupply server can be backed up and restored via cli.
 
 `NOTE` In production backups should only be done for omSupply central servers, remote sites are backed up via synchronisation
 
+For full cli arguments list and up to date description please run command with just `--help` argument
+
 ### Backup
 
 To backup simply run: 
 
 **In development mode**
 
-`cargo run --bin remote_server_cli -- backup` or for postgres `cargo run --bin remote_server_cli --features postgres -- backup`
+```
+cargo run --bin remote_server_cli -- backup
+``` 
+or for postgres 
+````
+cargo run --bin remote_server_cli --features postgres -- backup
+````
 
 **In production**
 
-`omSupply-cli backup`
+````
+omSupply-cli backup
+```
 
 You will need to specify a backup folder in the configuration `.yaml` files - to get started, see the `example.yaml`. Each time backup runs a new folder will be created with this format `D[YYYY]_[mm]_[dd]T[HH]_[MM]_[SS]` e.g. `D2024_08_22T05_05_16`. A successful backup will print new backup name to console.
 
@@ -26,13 +36,19 @@ To restore run:
 
 **In development mode**
 
-`cargo run --bin remote_server_cli -- restore -b D2024_08_22T05_05_16 -s` or for postgres `cargo run --bin remote_server_cli --features postgres -- restore -b D2024_08_22T05_05_16 -s`
+```
+cargo run --bin remote_server_cli -- restore -b D2024_08_22T05_05_16 -s
+``` 
+or for postgres 
+```
+cargo run --bin remote_server_cli --features postgres -- restore -b D2024_08_22T05_05_16 -s
+```
 
 **In production**
 
-`omSupply-cli restore -b D2024_08_22T05_05_16`
-
-For full cli arguments list run `restore --help`
+```
+omSupply-cli restore -b D2024_08_22T05_05_16
+```
 
 Cli restore command will look for a backup folder specified with `-b` in backup folder specified by configurations `.yaml` files.
 

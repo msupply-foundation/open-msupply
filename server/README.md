@@ -333,7 +333,7 @@ cargo run --bin remote_server_cli -- initialise-from-central -u 'user1:password1
 cargo run --bin remote_server_cli -- refresh-dates
 # See README.md link below
 cargo run --bin remote_server_cli -- backup
-cargo run --bin remote_server_cli -- restore D2024_08_22T05_05_16 -s
+cargo run --bin remote_server_cli -- restore -b D2024_08_22T05_05_16 -s
 ```
 
 # [Backup and Restore](cli/src/backup/README.md)
