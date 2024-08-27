@@ -25,7 +25,7 @@ pub(crate) fn backup(settings: &Settings) -> Result<(), BackupError> {
         copy_sqlite_files(settings, &database_dir)?;
     }
 
-    println!("{backup_name}");
+    println!("Backup completed in folder {backup_name}");
     Ok(())
 }
 
