@@ -36,6 +36,8 @@
   "heading.charges": "Charges",
   "heading.consumption-history": "Consumption History (monthly)",
   "heading.edit-tax-rate": "Edit tax rate percentage",
+  "heading.order-info": "Order info",
+  "heading.program-info": "Program info",
   "heading.related-documents": "Related documents",
   "heading.requested-to-suggested": "Request Suggested",
   "heading.return-items": "Return Items",
