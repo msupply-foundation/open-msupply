@@ -139,7 +139,8 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        let mut localisations = Localisations::new().load_translations();
+        let mut localisations = Localisations::new();
+        let _ = localisations.load_translations();
 
         ServiceProvider {
             connection_manager: connection_manager.clone(),
