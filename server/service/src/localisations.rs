@@ -6,14 +6,14 @@ use rust_embed::RustEmbed;
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
 // later this will be client in dev mode, or build in production mode
-#[folder = "../../client/packages/host/dist"]
+#[folder = "../../client/packages/host/dist/locales"]
 pub struct EmbeddedLocalisations;
 
 
 
 // struct to manage translations
 pub struct Localisations {
-    pub translations: HashMap<String, HashMap<String, String>>,
+    pub translations: HashMap<String, HashMap<String, HashMap<String, String>>>,
 }
 
 pub struct TranslationStrings {
@@ -31,40 +31,31 @@ impl Localisations {
 
     // Load translations from embedded files
     pub fn load_translations(&mut self) -> Result<(), std::io::Error> {
-        // Languages - need to extract these from the files themselves?
-        let mut languages = Vec::new();
-
-        // read all dirs within locales dir
-        let folder_paths: Vec<String> = fs::read_dir("../client/packages/host/dist/locales")
-            .unwrap()
-            .filter_map(|e| e.ok())
-            .map(|e: fs::DirEntry| e.path().as_os_str().to_string_lossy().to_string().split('/').last().unwrap().to_string())
-            .collect();
-
-        for path in folder_paths {
-            languages.push(path)
-        }
-
-        for lang in languages {
-            if let Some(content) = EmbeddedLocalisations::get(&format!("locales/{}/common.json", &lang)) {
-                let json_data = content.data;
-                let translations: HashMap<String, String> = serde_json::from_slice(&json_data).unwrap();
-                self.translations.insert(lang.to_string(), translations);
-
+        // add read all namespace file names within locales
+        for file in EmbeddedLocalisations::iter() {
+                let file_namespace = file.split('/').nth(1).unwrap_or_default().to_string();
+                let language = file.split('/').nth(0).unwrap_or_default().to_string();
+                if let Some(content) = EmbeddedLocalisations::get(&file) {
+                    let json_data = content.data;
+                    let translations: HashMap<String, String> = serde_json::from_slice(&json_data).unwrap();
+                    self.translations
+                    .entry(language)
+                    .or_insert_with(HashMap::new)
+                    .insert(file_namespace, translations);
             }
         }
-        // later need to think about how to concatonate all translation json files per language
-
         Ok(())
     }
 
     // Get a translation for a given key and language
-    pub fn get_translation(&self, key: &str, language: &str) -> String {
-        self.translations
-            .get(language)
-            .and_then(|map| map.get(key))
-            .cloned()
-            .unwrap_or_else(|| "Translation not found".to_string())
+    // next need to add fallback and namespace to get Translation function
+    pub fn get_translation(&self, key: &str, language: &str ) -> String {
+        // self.translations
+        //     .get(language)
+        //     .and_then(|map| map.get(key))
+        //     .cloned()
+        //     .unwrap_or_else(|| "Translation not found".to_string())
+        "ok".to_string()    
     }
 }
 
