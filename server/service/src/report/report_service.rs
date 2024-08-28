@@ -4,14 +4,12 @@ use repository::{
     ReportSort, ReportType, RepositoryError,
 };
 use scraper::{ElementRef, Html, Selector};
+use tera::Value;
 use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
-    get_default_pagination,
-    service_provider::ServiceContext,
-    static_files::{StaticFileCategory, StaticFileService},
-    ListError,
+    get_default_pagination, localisations::Localisations, service_provider::ServiceContext, static_files::{StaticFileCategory, StaticFileService}, ListError
 };
 
 use super::{
@@ -39,6 +37,7 @@ pub enum ReportError {
     QueryError(String),
     DocGenerationError(String),
     HTMLToPDFError(String),
+    TranslationError,
 }
 
 #[derive(Debug, Clone)]
@@ -407,7 +406,14 @@ fn generate_report(
     if let Some(arguments) = arguments {
         context.insert("arguments", &arguments);
     }
+    println!("generating report!");
     let mut tera = tera::Tera::default();
+    let mut localisations = Localisations::new();
+    localisations.load_translations()?;
+    tera.register_function("translate", move |args: &HashMap<String, serde_json::Value>| {
+        let translation = localisations.get_translation(args);
+        Ok(Value::String(translation))
+    });
     let mut templates: HashMap<String, String> = report
         .templates
         .iter()
@@ -596,6 +602,12 @@ fn resolve_ref(
 impl From<RepositoryError> for ReportError {
     fn from(err: RepositoryError) -> Self {
         ReportError::RepositoryError(err)
+    }
+}
+
+impl From<std::io::Error> for ReportError {
+    fn from(_err: std::io::Error) -> Self {
+        ReportError::TranslationError
     }
 }
 
