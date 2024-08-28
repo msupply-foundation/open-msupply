@@ -22,6 +22,7 @@ pretty_assertions = "1.4.0"
 rcgen = "0.13.1"
 regex = "1.10.5"
 reqwest = { version = "0.12", features = [
+  "gzip",
   "json",
   "rustls-tls",
   "multipart",

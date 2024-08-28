@@ -1,26 +1,31 @@
 import React from 'react';
 import {
-  Switch,
   Grid,
   Autocomplete,
-  InputWithLabelRow,
   useTranslation,
   useConfirmationModal,
+  DetailPanelSection,
+  PanelRow,
+  PanelLabel,
+  PanelField,
 } from '@openmsupply-client/common';
-import { useRequest, useHideOverStocked } from '../../api';
-
-interface ToolbarActionsProps {
-  isDisabled: boolean;
-}
+import { useRequest } from '../api';
+import { getApprovalStatusKey } from '../../utils';
 
 const months = [1, 2, 3, 4, 5, 6];
 
-export const ToolbarActions = ({ isDisabled }: ToolbarActionsProps) => {
-  const { on, toggle } = useHideOverStocked();
+export const OrderInfoSection = () => {
   const t = useTranslation('replenishment');
+  const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
-  const { minMonthsOfStock, maxMonthsOfStock, update } =
-    useRequest.document.fields(['minMonthsOfStock', 'maxMonthsOfStock']);
+  const { minMonthsOfStock, maxMonthsOfStock, linkedRequisition, update } =
+    useRequest.document.fields([
+      'minMonthsOfStock',
+      'maxMonthsOfStock',
+      'programName',
+      'linkedRequisition',
+    ]);
+  const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
 
   const getMinMOSConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
@@ -38,12 +43,19 @@ export const ToolbarActions = ({ isDisabled }: ToolbarActionsProps) => {
   });
 
   return (
-    <Grid container gap={1} direction="column">
-      <Grid item>
-        <InputWithLabelRow
-          labelWidth="150px"
-          label={t('label.min-months-of-stock')}
-          Input={
+    <DetailPanelSection title={t('heading.order-info')}>
+      <Grid container gap={0.5} key="order-info">
+        {usesRemoteAuthorisation && (
+          <PanelRow>
+            <PanelLabel>{t('label.auth-status')}</PanelLabel>
+            <PanelField>
+              {t(getApprovalStatusKey(linkedRequisition?.approvalStatus))}
+            </PanelField>
+          </PanelRow>
+        )}
+        <PanelRow>
+          <PanelLabel>{t('label.min-months-of-stock')}</PanelLabel>
+          <PanelField>
             <Autocomplete
               disabled={isDisabled || isProgram}
               clearIcon={null}
@@ -81,14 +93,11 @@ export const ToolbarActions = ({ isDisabled }: ToolbarActionsProps) => {
               }}
               getOptionDisabled={option => option.value > maxMonthsOfStock}
             />
-          }
-        />
-      </Grid>
-      <Grid item>
-        <InputWithLabelRow
-          labelWidth="150px"
-          label={t('label.max-months-of-stock')}
-          Input={
+          </PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.max-months-of-stock')}</PanelLabel>
+          <PanelField>
             <Autocomplete
               disabled={isDisabled || isProgram}
               clearIcon={null}
@@ -110,23 +119,9 @@ export const ToolbarActions = ({ isDisabled }: ToolbarActionsProps) => {
               }
               getOptionDisabled={option => option.value < minMonthsOfStock}
             />
-          }
-        />
+          </PanelField>
+        </PanelRow>
       </Grid>
-      <Grid item>
-        <InputWithLabelRow
-          labelWidth="225px"
-          label={t('label.hide-stock-over-minimum')}
-          Input={
-            <Switch
-              onChange={toggle}
-              checked={on}
-              color="secondary"
-              size="small"
-            />
-          }
-        />
-      </Grid>
-    </Grid>
+    </DetailPanelSection>
   );
 };

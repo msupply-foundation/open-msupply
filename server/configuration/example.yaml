@@ -37,4 +37,7 @@
 #   filename: remote_server.log
 #   max_file_count: 10
 #   max_file_size: 1
-
+# backup: # see cli backup/restore
+#   backup_dir: "~/Documents/omSupply_backup"
+#   pg_bin_dir: "/Applications/Postgres.app/Contents/Versions/16/bin"  # Optional
+#   max_number_of_backups: 10  # Optional, defaults to unlimited 
