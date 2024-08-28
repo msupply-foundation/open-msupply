@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs };
+use std::{collections::HashMap };
 use serde_yaml::Value;
 
 use rust_embed::RustEmbed;
