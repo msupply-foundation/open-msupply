@@ -142,6 +142,7 @@ impl ServiceProvider {
         let mut localisations = Localisations::new();
         let _ = localisations.load_translations();
 
+
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),

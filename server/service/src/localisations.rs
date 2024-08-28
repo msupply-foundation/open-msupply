@@ -49,13 +49,13 @@ impl Localisations {
 
     // Get a translation for a given key and language
     // next need to add fallback and namespace to get Translation function
-    pub fn get_translation(&self, key: &str, language: &str ) -> String {
-        // self.translations
-        //     .get(language)
-        //     .and_then(|map| map.get(key))
-        //     .cloned()
-        //     .unwrap_or_else(|| "Translation not found".to_string())
-        "ok".to_string()    
+    pub fn get_translation(&self, key: &str, language: &str, namespace: &str, fallback: &str ) -> String {
+        self.translations
+            .get(language)
+            .and_then(|map| map.get(namespace))
+            .and_then(|map| map.get(key))
+            .cloned()
+            .unwrap_or_else(|| fallback.to_string())
     }
 }
 
