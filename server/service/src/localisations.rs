@@ -1,4 +1,4 @@
-use std::{collections::HashMap };
+use std::collections::HashMap ;
 use serde_yaml::Value;
 
 use rust_embed::RustEmbed;
@@ -49,15 +49,21 @@ impl Localisations {
 
     // Get a translation for a given key and language
     // next need to add fallback and namespace to get Translation function
-    pub fn get_translation(&self, key: &str, language: &str, namespace: &str, fallback: &str ) -> String {
+    pub fn get_translation(&self, args: &HashMap<String, serde_json::Value> ) -> String {
+        let key = args.get("key").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
+        let lang = args.get("lang").and_then(serde_json::Value::as_str).unwrap_or("en").to_string();
+        let namespace = args.get("namespace").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
+        let fallback = args.get("fallback").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
+
         self.translations
-            .get(language)
-            .and_then(|map| map.get(namespace))
-            .and_then(|map| map.get(key))
+            .get(&lang)
+            .and_then(|map| map.get(&namespace))
+            .and_then(|map| map.get(&key))
             .cloned()
-            .unwrap_or_else(|| fallback.to_string())
+            .unwrap_or_else(|| fallback)
     }
 }
+
 
 // #[cfg(test)]
 // mod test {
