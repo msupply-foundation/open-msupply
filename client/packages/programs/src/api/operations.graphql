@@ -646,29 +646,6 @@ query immunisationPrograms(
   }
 }
 
-mutation insertImmunisationProgram(
-  $input: InsertImmunisationProgramInput!
-  $storeId: String!
-) {
-  centralServer {
-    program {
-      insertImmunisationProgram(input: $input, storeId: $storeId) {
-        __typename
-        ... on ProgramNode {
-          ...ImmunisationProgram
-        }
-        ... on InsertImmunisationProgramError {
-          __typename
-          error {
-            __typename
-            description
-          }
-        }
-      }
-    }
-  }
-}
-
 mutation updateImmunisationProgram(
   $input: UpdateImmunisationProgramInput!
   $storeId: String!
@@ -777,19 +754,6 @@ mutation updateVaccineCourse(
           error {
             description
           }
-        }
-      }
-    }
-  }
-}
-
-mutation deleteImmunisationProgram($immunisationProgramId: String!) {
-  centralServer {
-    program {
-      deleteImmunisationProgram(immunisationProgramId: $immunisationProgramId) {
-        ... on DeleteResponse {
-          __typename
-          id
         }
       }
     }
