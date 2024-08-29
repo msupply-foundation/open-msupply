@@ -22,7 +22,11 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { VaccineCourseFragment, useVaccineCourseList, useImmunisationProgram } from '../api';
+import {
+  VaccineCourseFragment,
+  useVaccineCourseList,
+  useImmunisationProgram,
+} from '../api';
 import { VaccineCourseEditModal } from '../VaccineCourseEditModal';
 
 export const ProgramComponent: FC = () => {
@@ -37,9 +41,6 @@ export const ProgramComponent: FC = () => {
   const { id } = useParams();
   const {
     query: { data, isLoading },
-    draft,
-    errorMessage,
-    updatePatch,
     isDirty,
     update: { update, isUpdating },
   } = useImmunisationProgram(t, id);
@@ -105,12 +106,7 @@ export const ProgramComponent: FC = () => {
           mode={mode}
         />
       )}
-      <Toolbar
-        draft={draft}
-        onUpdate={updatePatch}
-        error={errorMessage}
-        isError={errorMessage != ''}
-      />
+      <Toolbar />
       <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'Vaccine Course List'}
