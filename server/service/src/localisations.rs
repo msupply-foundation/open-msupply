@@ -1,4 +1,4 @@
-use std::{collections::HashMap };
+use std::collections::HashMap;
 use serde_yaml::Value;
 
 use rust_embed::RustEmbed;
@@ -59,20 +59,20 @@ impl Localisations {
     }
 }
 
-// #[cfg(test)]
-// mod test {
+#[cfg(test)]
+mod test {
 
-// use super::Localisations;
+use super::Localisations;
 
 
-//     #[test]
-//     fn test_translations() {
-//         let mut localisations = Localisations::new();
-//         // test loading localisations...
-//         let _ = localisations.load_translations();
-//         let translated_value = localisations.get_translation("button.close", "fr");      
-//         println!("{:?} translated value", translated_value);
-//         // check translated file:
-//         assert_eq!("Fermer", translated_value);
-//     }
-// }
+    #[test]
+    fn test_translations() {
+        let mut localisations = Localisations::new();
+        // test loading localisations...
+        let _ = localisations.load_translations();
+        let translated_value = localisations.get_translation("button.close", "fr", "common.json", "fallback");      
+        println!("{:?} translated value", translated_value);
+        // check translated file:
+        assert_eq!("Fermer", translated_value);
+    }
+}
