@@ -68,11 +68,20 @@ use super::Localisations;
     #[test]
     fn test_translations() {
         let mut localisations = Localisations::new();
-        // test loading localisations...
+        // test loading localisations
+        // note these translations might change if translations change in the front end. In this case, these will need to be updated.
         let _ = localisations.load_translations();
+        // test correct translation
         let translated_value = localisations.get_translation("button.close", "fr", "common.json", "fallback");      
-        println!("{:?} translated value", translated_value);
-        // check translated file:
         assert_eq!("Fermer", translated_value);
+        // test wrong key fallback
+        let translated_value = localisations.get_translation("button.close-non-existent-key", "fr", "common.json", "fallback wrong key");      
+        assert_eq!("fallback wrong key", translated_value);        
+        // test wrong language dir
+        let translated_value = localisations.get_translation("button.close", "non-existent-lang-dir", "common.json", "fallback wrong lang dir");      
+        assert_eq!("fallback wrong lang dir", translated_value);
+        // test wrong namespace
+        let translated_value = localisations.get_translation("button.close", "fr", "common.json-non-existent", "fallback wrong namespace");      
+        assert_eq!("fallback wrong namespace", translated_value);
     }
 }
