@@ -1,63 +1,24 @@
 use crate::{
-    app_data::{AppDataService, AppDataServiceTrait},
-    asset::AssetServiceTrait,
-    auth::{AuthService, AuthServiceTrait},
-    barcode::{BarcodeService, BarcodeServiceTrait},
-    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
-    clinician::{ClinicianService, ClinicianServiceTrait},
-    cold_chain::{ColdChainService, ColdChainServiceTrait},
-    currency::{CurrencyService, CurrencyServiceTrait},
-    dashboard::{
+    app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
-    },
-    demographic::DemographicServiceTrait,
-    display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
-    document::{
+    }, demographic::DemographicServiceTrait, display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait}, document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
-    },
-    invoice::{InvoiceService, InvoiceServiceTrait},
-    invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
-    item_stats::{ItemStatsService, ItemStatsServiceTrait},
-    label_printer_settings_service::LabelPrinterSettingsServiceTrait,
-    location::{LocationService, LocationServiceTrait},
-    log_service::{LogService, LogServiceTrait},
-    master_list::{MasterListService, MasterListServiceTrait},
-    name::{NameService, NameServiceTrait},
-    pack_variant::PackVariantServiceTrait,
-    plugin_data::{PluginDataService, PluginDataServiceTrait},
-    processors::ProcessorsTrigger,
-    program::ProgramServiceTrait,
-    programs::{
+    }, invoice::{InvoiceService, InvoiceServiceTrait}, invoice_line::{InvoiceLineService, InvoiceLineServiceTrait}, item_stats::{ItemStatsService, ItemStatsServiceTrait}, label_printer_settings_service::LabelPrinterSettingsServiceTrait, location::{LocationService, LocationServiceTrait}, log_service::{LogService, LogServiceTrait}, master_list::{MasterListService, MasterListServiceTrait}, name::{NameService, NameServiceTrait}, pack_variant::PackVariantServiceTrait, plugin_data::{PluginDataService, PluginDataServiceTrait}, processors::ProcessorsTrigger, program::ProgramServiceTrait, programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
-    },
-    repack::{RepackService, RepackServiceTrait},
-    report::report_service::{ReportService, ReportServiceTrait},
-    requisition::{RequisitionService, RequisitionServiceTrait},
-    requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
-    rnr_form::{RnRFormService, RnRFormServiceTrait},
-    sensor::{SensorService, SensorServiceTrait},
-    settings_service::{SettingsService, SettingsServiceTrait},
-    stock_line::{StockLineService, StockLineServiceTrait},
-    stocktake::{StocktakeService, StocktakeServiceTrait},
-    stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
-    store::{get_store, get_stores},
-    sync::{
+    }, repack::{RepackService, RepackServiceTrait}, report::report_service::{ReportService, ReportServiceTrait}, requisition::{RequisitionService, RequisitionServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait}, rnr_form::{RnRFormService, RnRFormServiceTrait}, sensor::{SensorService, SensorServiceTrait}, settings_service::{SettingsService, SettingsServiceTrait}, stock_line::{StockLineService, StockLineServiceTrait}, stocktake::{StocktakeService, StocktakeServiceTrait}, stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait}, store::{get_store, get_stores}, sync::{
         site_info::{SiteInfoService, SiteInfoTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
-    },
-    temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
-    vaccine_course::VaccineCourseServiceTrait,
-    ListError, ListResult,
+    }, temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait}, vaccine_course::VaccineCourseServiceTrait, ListError, ListResult
 };
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
@@ -65,10 +26,18 @@ use repository::{
 };
 use rust_embed::RustEmbed;
 
+// Define a struct for development
+#[cfg(debug_assertions)]
 #[derive(RustEmbed)]
-// Relative to server/Cargo.toml
-#[folder = "../../client/packages/host/dist"]
-struct Localisations;
+#[folder = "../../client/packages/common/src/intl/locales"] // Path for development
+struct DevLocalisations;
+
+
+// Define a struct for production
+#[cfg(not(debug_assertions))]
+#[derive(RustEmbed)]
+#[folder = "../../client/packages/host/dist/locales"] // Path for production
+struct ProdLocalisations;
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
@@ -180,9 +149,19 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        if let Some(content) = Localisations::get("locales/en/common.json") {
-            println!("{:?}", content.data);
-        }
+
+        // println!("new with triggers");
+        // #[cfg(debug_assertions)]
+        // if let Some(content) = DevLocalisations::get("en/common.json") {
+        //     println!("new with triggers + content");
+        //     println!("{:?}", content.data);
+        // }
+
+        // #[cfg(not(debug_assertions))]
+        // if let Some(content) = ProdLocalisations::get("en/common.json") {
+        //     println!("{:?}", content.data);
+        // }
+
 
         ServiceProvider {
             connection_manager: connection_manager.clone(),
