@@ -90,12 +90,7 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   // i.e. choosing a filter option in one filter changes the options in another
   useEffect(() => {
     setActiveFilters(
-      flattenFilterDefinitions(filters).filter(
-        fil =>
-          Object.keys(urlQuery).includes(fil.urlParameter) ||
-          fil.isDefault ||
-          activeFilters.some(f => f.name === fil.name)
-      )
+      updateFilters(filters, activeFilters, Object.keys(urlQuery))
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
@@ -161,15 +156,28 @@ const getFilterOptions = (
     }));
 };
 
-const flattenFilterDefinitions = (
-  filters: (FilterDefinition | GroupFilterDefinition)[]
+// Updates the active filter list based on the URL, but doesn't remove already
+// active filters and preserves the current order
+const updateFilters = (
+  filters: (FilterDefinition | GroupFilterDefinition)[],
+  activeFilters: FilterDefinition[],
+  urlKeys: string[]
 ) => {
   const flattened: FilterDefinition[] = [];
   filters.forEach(fil => {
     if ('urlParameter' in fil) flattened.push(fil);
     else flattened.push(...fil.elements);
   });
-  return flattened;
+
+  const newFilters = [...activeFilters];
+  flattened.forEach(fil => {
+    if (
+      activeFilters.every(active => active.name !== fil.name) &&
+      (fil.isDefault || urlKeys.includes(fil.urlParameter))
+    )
+      newFilters.push(fil);
+  });
+  return newFilters;
 };
 
 const getFilterComponent = (

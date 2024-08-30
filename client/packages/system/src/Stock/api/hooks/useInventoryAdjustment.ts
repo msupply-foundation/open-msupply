@@ -37,7 +37,7 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
     const { error: adjustmentError } = result.createInventoryAdjustment;
 
     if (adjustmentError.__typename === 'StockLineReducedBelowZero') {
-      return 'error.stock-line-stock-reduced-below-zero';
+      return 'error.reduced-below-zero';
     }
   };
 
