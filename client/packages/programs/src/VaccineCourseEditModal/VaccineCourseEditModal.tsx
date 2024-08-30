@@ -16,6 +16,7 @@ import {
   NumericTextInput,
   PlusCircleIcon,
   Table,
+  useBufferState,
   useDialog,
   useKeyboardHeightAdjustment,
   useNotification,
@@ -287,12 +288,14 @@ const VaccineCourseDoseTable = ({
                 onChange={e => updateDose(dose.id, { label: e.target.value })}
               />
             </td>
-            <td>
-              <NumericTextInput value={dose.minAgeMonths} fullWidth />
-            </td>
-            <td>
-              <NumericTextInput value={dose.minIntervalDays} fullWidth />
-            </td>
+            <NumericDoseTableCell
+              value={dose.minAgeMonths}
+              onChange={num => updateDose(dose.id, { minAgeMonths: num })}
+            />
+            <NumericDoseTableCell
+              value={dose.minIntervalDays}
+              onChange={num => updateDose(dose.id, { minIntervalDays: num })}
+            />
             <td style={{ display: 'flex', justifyContent: 'center' }}>
               <IconButton
                 icon={<DeleteIcon />}
@@ -309,4 +312,27 @@ const VaccineCourseDoseTable = ({
 
 const HeaderCell = ({ label, width }: { label: string; width?: string }) => {
   return <th style={{ fontSize: '14px', width, padding: '3px' }}>{label}</th>;
+};
+
+const NumericDoseTableCell = ({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (num: number) => void;
+}) => {
+  const [buffer, setBuffer] = useBufferState<number | undefined>(value);
+
+  return (
+    <td>
+      <NumericTextInput
+        value={buffer}
+        fullWidth
+        onChange={newValue => {
+          setBuffer(newValue);
+          if (newValue !== undefined) onChange(newValue);
+        }}
+      />
+    </td>
+  );
 };
