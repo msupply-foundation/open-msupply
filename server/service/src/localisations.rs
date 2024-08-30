@@ -67,6 +67,8 @@ impl Localisations {
 #[cfg(test)]
 mod test {
 
+use std::collections::HashMap;
+
 use super::Localisations;
 
 
@@ -76,17 +78,37 @@ use super::Localisations;
         // test loading localisations
         // note these translations might change if translations change in the front end. In this case, these will need to be updated.
         let _ = localisations.load_translations();
+
+        let mut args = HashMap::new();
+        args.insert("key".to_string(), serde_json::Value::String("button.close".to_owned()));
+        args.insert("lang".to_string(), serde_json::Value::String("fr".to_owned()));
+        args.insert("namespace".to_string(), serde_json::Value::String("common.json".to_owned()));
+        args.insert("fallback".to_string(), serde_json::Value::String("fallback".to_owned()));
         // test correct translation
-        let translated_value = localisations.get_translation("button.close", "fr", "common.json", "fallback");      
+        let translated_value = localisations.get_translation(&args);      
         assert_eq!("Fermer", translated_value);
         // test wrong key fallback
-        let translated_value = localisations.get_translation("button.close-non-existent-key", "fr", "common.json", "fallback wrong key");      
+        args.insert("key".to_string(),serde_json::Value::String("button.close-non-existent-key".to_owned()));
+        args.insert("fallback".to_string(), serde_json::Value::String("fallback wrong key".to_owned()));
+        let translated_value = localisations.get_translation(&args);      
         assert_eq!("fallback wrong key", translated_value);        
-        // test wrong language dir
-        let translated_value = localisations.get_translation("button.close", "non-existent-lang-dir", "common.json", "fallback wrong lang dir");      
+        // // test wrong language dir
+        args.insert("key".to_string(), serde_json::Value::String("button.close".to_owned()));
+        args.insert("lang".to_string(), serde_json::Value::String("fr-non-existent-lang".to_owned()));
+        args.insert("fallback".to_string(), serde_json::Value::String("fallback wrong lang dir".to_owned()));
+        let translated_value = localisations.get_translation(&args);      
         assert_eq!("fallback wrong lang dir", translated_value);
         // test wrong namespace
-        let translated_value = localisations.get_translation("button.close", "fr", "common.json-non-existent", "fallback wrong namespace");      
+        args.insert("lang".to_string(), serde_json::Value::String("fr".to_owned()));
+        args.insert("namespace".to_string(), serde_json::Value::String("common.json-non-existent-file".to_owned()));
+        args.insert("fallback".to_string(), serde_json::Value::String("fallback wrong namespace".to_owned()));
+        let translated_value = localisations.get_translation(&args);      
         assert_eq!("fallback wrong namespace", translated_value);
+        // test other lang file
+        args.insert("lang".to_string(), serde_json::Value::String("es".to_owned()));
+        args.insert("namespace".to_string(), serde_json::Value::String("common.json".to_owned()));
+        args.insert("fallback".to_string(), serde_json::Value::String("fallback".to_owned()));
+        let translated_value = localisations.get_translation(&args);      
+        assert_eq!("Cerrar", translated_value);
     }
 }
