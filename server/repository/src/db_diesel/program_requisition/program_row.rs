@@ -18,7 +18,6 @@ table! {
         name -> Text,
         context_id -> Text,
         is_immunisation -> Bool,
-        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -35,7 +34,6 @@ pub struct ProgramRow {
     pub name: String,
     pub context_id: String,
     pub is_immunisation: bool,
-    pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
 
 pub struct ProgramRowRepository<'a> {
@@ -63,13 +61,6 @@ impl<'a> ProgramRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
-    }
-
-    pub fn mark_deleted(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::update(program_dsl::program.filter(program_dsl::id.eq(id)))
-            .set(program_dsl::deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
     }
 }
 
