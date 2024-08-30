@@ -1,14 +1,14 @@
 use async_graphql::*;
 
 use graphql_core::{
-    simple_generic_errors::{
-        DatabaseError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
-    },
-    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    simple_generic_errors::{DatabaseError, RecordAlreadyExist, UniqueValueViolation},
+    standard_graphql_error::validate_auth,
     ContextExt,
 };
 use graphql_types::types::program_node::ProgramNode;
 use service::auth::{Resource, ResourceAccessRequest};
+
+// Things commented out in here to appease the compiler - leaving as placeholder assuming we'll need this mutation in some form?
 
 #[derive(InputObject)]
 pub struct UpdateImmunisationProgramInput {
@@ -70,7 +70,7 @@ pub enum UpdateImmunisationProgramResponse {
 pub fn update_immunisation_program(
     ctx: &Context<'_>,
     store_id: String,
-    input: UpdateImmunisationProgramInput,
+    _input: UpdateImmunisationProgramInput,
 ) -> Result<UpdateImmunisationProgramResponse> {
     let user = validate_auth(
         ctx,
@@ -80,7 +80,7 @@ pub fn update_immunisation_program(
         },
     )?;
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let _service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     todo!()
 
