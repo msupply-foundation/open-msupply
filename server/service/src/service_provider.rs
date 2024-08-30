@@ -15,11 +15,12 @@ use crate::{
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
-    }, repack::{RepackService, RepackServiceTrait}, report::report_service::{ReportService, ReportServiceTrait}, requisition::{RequisitionService, RequisitionServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait}, rnr_form::{RnRFormService, RnRFormServiceTrait}, sensor::{SensorService, SensorServiceTrait}, settings_service::{SettingsService, SettingsServiceTrait}, stock_line::{StockLineService, StockLineServiceTrait}, stocktake::{StocktakeService, StocktakeServiceTrait}, stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait}, store::{get_store, get_stores}, sync::{
+    }, repack::{RepackService, RepackServiceTrait}, report::report_service::{ReportService, ReportServiceTrait}, requisition::{RequisitionService, RequisitionServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait}, rnr_form::{RnRFormService, RnRFormServiceTrait}, sensor::{SensorService, SensorServiceTrait}, settings_service::{SettingsService, SettingsServiceTrait}, stock_line::{StockLineService, StockLineServiceTrait}, stocktake::{StocktakeService, StocktakeServiceTrait}, stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait}, store::{get_store, get_stores}, 
+    sync::{
         site_info::{SiteInfoService, SiteInfoTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
-    }, temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait}, vaccine_course::VaccineCourseServiceTrait, ListError, ListResult
+    }, temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait}, vaccine_course::VaccineCourseServiceTrait, ListError, ListResult,
 };
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
