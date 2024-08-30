@@ -181,7 +181,6 @@ fn generate_requisition_program(
         name: master_list.description.clone(),
         context_id: context_row.id.clone(),
         is_immunisation: false,
-        deleted_datetime: None,
     };
 
     let mut program_requisition_settings_rows = Vec::new();
