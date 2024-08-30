@@ -1,6 +1,7 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
+mod drop_program_deleted_datetime;
 mod return_types_rename;
 
 pub(crate) struct V2_03_00;
@@ -13,6 +14,10 @@ impl Migration for V2_03_00 {
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         return_types_rename::migrate(_connection)?;
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![Box::new(drop_program_deleted_datetime::Migrate)]
     }
 }
 
