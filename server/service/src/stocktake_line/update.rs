@@ -9,14 +9,16 @@ use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
-    stocktake_line::{query::get_stocktake_line, validate::check_stocktake_line_exist},
+    stocktake_line::{
+        query::get_stocktake_line,
+        validate::{
+            check_active_adjustment_reasons, check_reason_is_valid,
+            check_snapshot_matches_current_count, check_stock_line_reduced_below_zero,
+            check_stocktake_line_exist, stocktake_reduction_amount,
+        },
+    },
     validate::check_store_id_matches,
     NullableUpdate,
-};
-
-use super::validate::{
-    check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
-    stocktake_reduction_amount,
 };
 
 #[derive(Default, Debug, Clone)]
@@ -47,6 +49,7 @@ pub enum UpdateStocktakeLineError {
     StocktakeIsLocked,
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
+    SnapshotCountCurrentCountMismatchLine(StocktakeLine),
     StockLineReducedBelowZero(StockLine),
 }
 
@@ -118,6 +121,13 @@ fn validate(
         if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
         {
             return Err(StockLineReducedBelowZero(stock_line.clone()));
+        }
+
+        if !check_snapshot_matches_current_count(
+            &stock_line.stock_line_row,
+            stocktake_line_row.snapshot_number_of_packs,
+        ) {
+            return Err(SnapshotCountCurrentCountMismatchLine(stocktake_line));
         }
     }
 
@@ -461,7 +471,6 @@ mod stocktake_line_test {
                     r.comment = Some("test comment".to_string());
                     r.cost_price_per_pack = Some(20.0);
                     r.sell_price_per_pack = Some(25.0);
-                    r.snapshot_number_of_packs = Some(10.0);
                     r.counted_number_of_packs = Some(14.0);
                 }),
             )
@@ -477,7 +486,7 @@ mod stocktake_line_test {
                 comment: Some("test comment".to_string()),
                 cost_price_per_pack: Some(20.0),
                 sell_price_per_pack: Some(25.0),
-                snapshot_number_of_packs: 10.0,
+                snapshot_number_of_packs: 40.0,
                 counted_number_of_packs: Some(14.0),
                 item_link_id: stocktake_line_a.item_link_id,
                 item_name: stocktake_line_a.item_name,

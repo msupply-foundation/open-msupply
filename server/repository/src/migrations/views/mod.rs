@@ -141,6 +141,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
             END AS datetime,
         name,
         invoice.type AS invoice_type,
+        invoice.invoice_number AS invoice_number,
         inventory_adjustment_reason.reason as inventory_adjustment_reason,
         return_reason.reason as return_reason,
         stock_line_id

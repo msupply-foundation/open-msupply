@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { create } from 'zustand';
 import { useTranslation } from '@common/intl';
 import { SidebarIcon, ButtonWithIcon } from '../../ui';
@@ -8,31 +8,43 @@ type DetailPanelController = {
   hasUserSet: boolean;
   isOpen: boolean;
   shouldPersist: boolean;
+  enabled: boolean;
   open: () => void;
   close: () => void;
+  setEnabled: (enabled: boolean) => void;
 };
 
 export const useDetailPanelStore = create<DetailPanelController>(set => {
   const initialValue = LocalStorage.getItem('/detailpanel/open');
 
   return {
+    enabled: false,
     hasUserSet: initialValue !== null,
     isOpen: false,
     shouldPersist: true,
     open: () =>
-      set(state => ({
-        ...state,
-        isOpen: true,
-        hasUserSet: true,
-        shouldPersist: true,
-      })),
+      set(state =>
+        state.enabled
+          ? {
+              ...state,
+              isOpen: true,
+              hasUserSet: true,
+              shouldPersist: true,
+            }
+          : state
+      ),
     close: () =>
-      set(state => ({
-        ...state,
-        isOpen: false,
-        hasUserSet: true,
-        shouldPersist: true,
-      })),
+      set(state =>
+        state.enabled
+          ? {
+              ...state,
+              isOpen: false,
+              hasUserSet: true,
+              shouldPersist: true,
+            }
+          : state
+      ),
+    setEnabled: (enabled: boolean) => set(state => ({ ...state, enabled })),
   };
 });
 
@@ -43,7 +55,7 @@ interface DetailPanel {
 }
 export const useDetailPanel = (): DetailPanel => {
   const t = useTranslation();
-  const { isOpen, open, close } = useDetailPanelStore();
+  const { isOpen, open, close, setEnabled } = useDetailPanelStore();
   const OpenButton = isOpen ? null : (
     <ButtonWithIcon
       Icon={<SidebarIcon />}
@@ -51,6 +63,11 @@ export const useDetailPanel = (): DetailPanel => {
       onClick={open}
     />
   );
+
+  useEffect(() => {
+    setEnabled(true);
+    return () => setEnabled(false);
+  }, []);
 
   return { OpenButton, open, close };
 };

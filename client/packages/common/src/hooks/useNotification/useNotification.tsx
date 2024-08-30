@@ -1,13 +1,13 @@
 import React from 'react';
 import { IconButton } from '@mui/material';
 import { CloseIcon } from '../../ui/icons';
-import { SnackbarKey, useSnackbar } from 'notistack';
+import { OptionsObject, SnackbarKey, useSnackbar } from 'notistack';
 
 interface NotificationHook {
-  error: (message: string) => () => void;
-  info: (message: string) => () => void;
-  success: (message: string) => () => void;
-  warning: (message: string) => () => void;
+  error: (message: string, options?: OptionsObject) => () => void;
+  info: (message: string, options?: OptionsObject) => () => void;
+  success: (message: string, options?: OptionsObject) => () => void;
+  warning: (message: string, options?: OptionsObject) => () => void;
 }
 
 export const useNotification = (): NotificationHook => {
@@ -24,26 +24,30 @@ export const useNotification = (): NotificationHook => {
     </IconButton>
   );
 
-  const error = (message: string) => () =>
+  const error = (message: string, options?: OptionsObject) => () =>
     enqueueSnackbar(message, {
       variant: 'error',
       action,
+      ...options,
     });
-  const info = (message: string) => () =>
+  const info = (message: string, options?: OptionsObject) => () =>
     enqueueSnackbar(message, {
       variant: 'info',
       action,
+      ...options,
     });
-  const success = (message: string) => () =>
+  const success = (message: string, options?: OptionsObject) => () =>
     enqueueSnackbar(message, {
       variant: 'success',
       action,
+      ...options,
     });
 
-  const warning = (message: string) => () =>
+  const warning = (message: string, options?: OptionsObject) => () =>
     enqueueSnackbar(message, {
       variant: 'warning',
       action,
+      ...options,
     });
 
   return { error, info, success, warning };

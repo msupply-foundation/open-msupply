@@ -63,6 +63,7 @@ fragment LedgerRow on LedgerNode {
   datetime
   id
   invoiceType
+  invoiceNumber
   itemId
   name
   quantity
