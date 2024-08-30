@@ -56,6 +56,11 @@ export const useSaveStocktakeLines = () => {
         case 'StockLineReducedBelowZero':
           errorMessagesMap[error.__typename] = t('error.reduced-below-zero');
           break;
+        case 'SnapshotCountCurrentCountMismatchLine':
+          errorMessagesMap[error.__typename] = t(
+            'error.snapshot-total-mismatch'
+          );
+          break;
 
         default:
           noOtherVariants(error);

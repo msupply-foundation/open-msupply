@@ -113,11 +113,17 @@ const useStatusChangeButton = () => {
         return t('error.stocktake-has-stock-reduced-below-zero');
 
       case 'SnapshotCountCurrentCountMismatch':
-        errorsContext.setErrors(
-          mapValues(keyBy(error.lines.nodes, 'id'), () => error)
+        const lineId = mapValues(
+          keyBy(lines.nodes, lines => lines.id),
+          'id'
         );
+        const mappedE = mapKeys(
+          error.lines,
+          line => lineId[line.stocktakeLine.id]
+        );
+        errorsContext.setErrors(mappedE);
 
-        return t('error.snapshot-total-mismatch');
+        return t('error.stocktake-snapshot-total-mismatch');
 
       default:
         noOtherVariants(error);

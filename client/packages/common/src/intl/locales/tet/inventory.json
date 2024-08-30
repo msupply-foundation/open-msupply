@@ -46,7 +46,6 @@
   "messages.error-deleting-locations_other": "Lokalizasaun sira {{count}} la konsege hamos",
   "placeholder.enter-an-item-code-or-name": "Hatama item nia kodigu ka naran",
   "status.new": "Foun",
-  "error.snapshot-total-mismatch": "Snapshot kuantidade la han malu ho total kuantidade.",
   "messages.create-stocktake-1": "Ita bele kria stocktake bazeia ba items ne'ebe atualmente aloka ona ba lokalizasaun ou items ne'ebe aloka ona ba iha master list.",
   "messages.create-stocktake-2": "Atu kria stocktake ne'ebe mamuk, simplesmente klik OK atu kontinua.",
   "messages.finalised-stock-take": "Stocktake ida ne'e finaliza ona no labele tan atu hadia",
