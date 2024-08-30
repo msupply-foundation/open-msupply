@@ -5,21 +5,29 @@ import {
   Box,
   Checkbox,
   Container,
+  DeleteIcon,
   DemographicIndicatorNode,
   DialogButton,
+  FlatButton,
+  FnUtils,
+  IconButton,
   InputWithLabelRow,
   ModalMode,
   NumericTextInput,
+  PlusCircleIcon,
+  Table,
   useDialog,
   useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
+  VaccineCourseScheduleNode,
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
-import { VaccineCourseFragment } from '../api';
+import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
+import { VaccineCourseScheduleFragment } from '../api/operations.generated';
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -90,13 +98,6 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
-
-  const tryUpdateValue = (value: number | undefined) => {
-    if (value === undefined) {
-      return;
-    }
-    updatePatch({ doses: value });
-  };
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -182,14 +183,11 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             onChange={e => updatePatch({ isActive: e.target.checked })}
           ></Checkbox>
         </Row>
-
-        <Row label={t('label.number-of-doses')}>
-          <NumericTextInput
-            value={draft.doses}
-            fullWidth
-            onChange={tryUpdateValue}
-          />
-        </Row>
+        <VaccineCourseDoseTable
+          courseName={draft.name}
+          doses={draft.vaccineCourseSchedules ?? []}
+          updatePatch={updatePatch}
+        />
       </Container>
     </Box>
   );
@@ -216,4 +214,99 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       {modalContent}
     </Modal>
   );
+};
+
+const VaccineCourseDoseTable = ({
+  doses,
+  updatePatch,
+  courseName,
+}: {
+  courseName: string;
+  doses: VaccineCourseScheduleFragment[];
+  updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
+}) => {
+  const t = useTranslation('programs');
+
+  const addDose = () => {
+    updatePatch({
+      vaccineCourseSchedules: [
+        ...doses,
+        {
+          __typename: 'VaccineCourseScheduleNode',
+          id: FnUtils.generateUUID(),
+          // temp - will be overwritten by the backend to assign unique dose number (even if previous doses were deleted)
+          doseNumber: doses.length + 1,
+          label: `${courseName} ${doses.length + 1}`,
+          minAgeMonths: 0,
+          minIntervalDays: 0,
+        },
+      ],
+    });
+  };
+
+  const deleteDose = (id: string) => {
+    updatePatch({
+      vaccineCourseSchedules: doses.filter(dose => dose.id !== id),
+    });
+  };
+
+  const updateDose = (
+    id: string,
+    newData: Partial<VaccineCourseScheduleNode>
+  ) => {
+    updatePatch({
+      vaccineCourseSchedules: doses.map(dose =>
+        dose.id === id ? { ...dose, ...newData } : dose
+      ),
+    });
+  };
+
+  return (
+    <Table sx={{ marginTop: '16px', '& td': { padding: '3px' } }}>
+      <tr style={{ borderBottom: '1px solid lightgray' }}>
+        <HeaderCell label="Dose #" width="80px" />
+        <HeaderCell label={t('label.label')} width="250px" />
+        <HeaderCell label="Age (months)" />
+        <HeaderCell label="Min interval (days)" />
+        <th>
+          <FlatButton
+            startIcon={<PlusCircleIcon />}
+            label={t('label.dose')}
+            onClick={addDose}
+          />
+        </th>
+      </tr>
+      <tbody>
+        {doses.map((dose, index) => (
+          <tr>
+            <td style={{ textAlign: 'center' }}>{index + 1}</td>
+            <td>
+              <BasicTextInput
+                value={dose.label}
+                fullWidth
+                onChange={e => updateDose(dose.id, { label: e.target.value })}
+              />
+            </td>
+            <td>
+              <NumericTextInput value={dose.minAgeMonths} fullWidth />
+            </td>
+            <td>
+              <NumericTextInput value={dose.minIntervalDays} fullWidth />
+            </td>
+            <td style={{ display: 'flex', justifyContent: 'center' }}>
+              <IconButton
+                icon={<DeleteIcon />}
+                label={t('label.delete')}
+                onClick={() => deleteDose(dose.id)}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
+  );
+};
+
+const HeaderCell = ({ label, width }: { label: string; width?: string }) => {
+  return <th style={{ fontSize: '14px', width, padding: '3px' }}>{label}</th>;
 };

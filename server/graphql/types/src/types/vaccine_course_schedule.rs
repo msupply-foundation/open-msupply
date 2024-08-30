@@ -20,6 +20,16 @@ impl VaccineCourseScheduleNode {
     pub async fn label(&self) -> &str {
         &self.row().label
     }
+
+    pub async fn min_age_months(&self) -> &f64 {
+        // TODO
+        &6.0
+    }
+
+    pub async fn min_interval_days(&self) -> &i32 {
+        // TODO
+        &30
+    }
 }
 
 impl VaccineCourseScheduleNode {

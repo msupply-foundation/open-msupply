@@ -13,5 +13,6 @@
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
   "label.diastolic": "Diastolic",
   "label.document-edit-history": "Document Edit History",
+  "label.dose": "Dose",
   "label.systolic": "Systolic"
 }
