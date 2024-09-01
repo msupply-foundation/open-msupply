@@ -340,6 +340,7 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   programEnrolmentId
   patientId
   contextId
+  isImmunisationProgram
   name
   enrolmentDatetime
   status
