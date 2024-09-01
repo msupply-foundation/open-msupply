@@ -39,6 +39,7 @@ import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
 import defaultPatientSchema from './DefaultPatientSchema.json';
 import defaultPatientUISchema from './DefaultPatientUISchema.json';
+import { VaccinationCardsListView } from '../VaccinationCards/ListView';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -257,10 +258,11 @@ const PatientDetailView = ({
 };
 
 export enum PatientTabValue {
-  Details = 'Details',
-  Programs = 'Programs',
-  Encounters = 'Encounters',
-  ContactTracing = 'Contact Tracing',
+  Details = 'details',
+  Programs = 'programs',
+  Encounters = 'encounters',
+  ContactTracing = 'contact-tracing',
+  VaccinationCards = 'vaccination-cards',
 }
 
 /**
@@ -313,6 +315,14 @@ export const PatientView = () => {
       value: PatientTabValue.ContactTracing,
       sort: {
         key: ContactTraceSortFieldInput.Datetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
+    },
+    {
+      Component: <VaccinationCardsListView />,
+      value: PatientTabValue.VaccinationCards,
+      sort: {
+        key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
         dir: 'desc' as 'desc' | 'asc',
       },
     },
