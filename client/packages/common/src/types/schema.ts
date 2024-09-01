@@ -4952,6 +4952,7 @@ export type ProgramEnrolmentNode = {
   /** The program document */
   encounters: EncounterConnector;
   enrolmentDatetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
   isImmunisationProgram: Scalars['Boolean']['output'];
   /** The program document name */
   name: Scalars['String']['output'];

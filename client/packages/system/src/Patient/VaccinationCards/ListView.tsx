@@ -14,7 +14,7 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import {
-  ProgramEnrolmentRowFragmentWithId,
+  ProgramEnrolmentRowFragment,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
@@ -48,7 +48,7 @@ const VaccinationCardListComponent: FC = () => {
   const t = useTranslation('dispensary');
   const navigate = useNavigate();
 
-  const columns = useColumns<ProgramEnrolmentRowFragmentWithId>(
+  const columns = useColumns<ProgramEnrolmentRowFragment>(
     [
       {
         key: 'type',
@@ -89,14 +89,16 @@ const VaccinationCardListComponent: FC = () => {
       data={data?.nodes}
       isLoading={isLoading}
       isError={isError}
-      onRowClick={row => {
+      onRowClick={row =>
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .addPart(patientId)
             .addPart(AppRoute.VaccineCard)
             .addPart(row.id)
             .build()
-        );
-      }}
+        )
+      }
       noDataElement={
         <NothingHere
           body={t('messages.no-programs')}
@@ -110,14 +112,12 @@ const VaccinationCardListComponent: FC = () => {
 export const VaccinationCardsListView = () => (
   <TableProvider
     createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragmentWithId>(
-      {
-        initialSortBy: {
-          key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
-          isDesc: false,
-        },
-      }
-    )}
+    queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragment>({
+      initialSortBy: {
+        key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
+        isDesc: false,
+      },
+    })}
   >
     <VaccinationCardListComponent />
   </TableProvider>
