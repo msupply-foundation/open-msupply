@@ -4932,6 +4932,7 @@ export type ProgramEnrolmentConnector = {
 export type ProgramEnrolmentFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
+  isImmunisationProgram?: InputMaybe<Scalars['Boolean']['input']>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programEnrolmentId?: InputMaybe<StringFilterInput>;
   /** The program id */
@@ -4951,6 +4952,7 @@ export type ProgramEnrolmentNode = {
   /** The program document */
   encounters: EncounterConnector;
   enrolmentDatetime: Scalars['DateTime']['output'];
+  isImmunisationProgram: Scalars['Boolean']['output'];
   /** The program document name */
   name: Scalars['String']['output'];
   patient: PatientNode;
