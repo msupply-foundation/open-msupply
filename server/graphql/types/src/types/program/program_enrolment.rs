@@ -171,6 +171,10 @@ pub enum ProgramEnrolmentResponse {
 
 #[Object]
 impl ProgramEnrolmentNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
     /// The program type
     pub async fn r#type(&self) -> &str {
         &self.row().document_type

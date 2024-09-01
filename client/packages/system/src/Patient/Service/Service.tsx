@@ -6,6 +6,12 @@ import { AppRoute } from '@openmsupply-client/config';
 
 const patientListRoute = RouteBuilder.create(AppRoute.Patients).build();
 
+const vaccinationCardRoute = RouteBuilder.create(AppRoute.Patients)
+  .addPart(':patientId')
+  .addPart(AppRoute.VaccineCard)
+  .addPart(':programEnrolmentId')
+  .build();
+
 const singlePatientRoute = RouteBuilder.create(AppRoute.Patients)
   .addPart(':patientId')
   .build();
@@ -14,6 +20,7 @@ export const Service: FC = () => {
   return (
     <Routes>
       <Route path={patientListRoute} element={<PatientListView />} />
+      <Route path={vaccinationCardRoute} element={<>TODO: Vax Card Here</>} />
       <Route path={singlePatientRoute} element={<PatientView />} />
     </Routes>
   );

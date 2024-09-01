@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   PatientModal,
-  ProgramEnrolmentRowFragmentWithId,
+  ProgramEnrolmentRowFragment,
   getStatusEventData,
   usePatientModalStore,
   useProgramEnrolments,
@@ -24,7 +24,7 @@ import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
 import { ChipTableCell } from '@openmsupply-client/system';
 
 const programAdditionalInfoAccessor: ColumnDataAccessor<
-  ProgramEnrolmentRowFragmentWithId,
+  ProgramEnrolmentRowFragment,
   string[]
 > = ({ rowData }): string[] => {
   const additionalInfo = getStatusEventData(rowData.activeProgramEvents.nodes);
@@ -56,7 +56,7 @@ const ProgramListComponent: FC = () => {
   const { setEditModal: setEditingModal, setModal: selectModal } =
     usePatientModalStore();
 
-  const columns = useColumns<ProgramEnrolmentRowFragmentWithId>(
+  const columns = useColumns<ProgramEnrolmentRowFragment>(
     [
       {
         key: 'type',
@@ -121,14 +121,12 @@ const ProgramListComponent: FC = () => {
 export const ProgramListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragmentWithId>(
-      {
-        initialSortBy: {
-          key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
-          isDesc: false,
-        },
-      }
-    )}
+    queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragment>({
+      initialSortBy: {
+        key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
+        isDesc: false,
+      },
+    })}
   >
     <ProgramListComponent />
   </TableProvider>
