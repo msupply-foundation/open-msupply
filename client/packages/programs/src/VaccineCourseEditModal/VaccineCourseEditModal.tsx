@@ -3,12 +3,12 @@ import {
   BasicSpinner,
   BasicTextInput,
   Box,
+  ButtonWithIcon,
   Checkbox,
   Container,
   DeleteIcon,
   DemographicIndicatorNode,
   DialogButton,
-  FlatButton,
   FnUtils,
   IconButton,
   InputWithLabelRow,
@@ -98,7 +98,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   const { data: demographicData } = useDemographicData.indicator.list();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(600);
+  const height = useKeyboardHeightAdjustment(900);
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -263,50 +263,52 @@ const VaccineCourseDoseTable = ({
   };
 
   return (
-    <Table sx={{ marginTop: '16px', '& td': { padding: '3px' } }}>
-      <tr style={{ borderBottom: '1px solid lightgray' }}>
-        <HeaderCell label="Dose #" width="80px" />
-        <HeaderCell label={t('label.label')} width="250px" />
-        <HeaderCell label="Age (months)" />
-        <HeaderCell label="Min interval (days)" />
-        <th>
-          <FlatButton
-            startIcon={<PlusCircleIcon />}
-            label={t('label.dose')}
-            onClick={addDose}
-          />
-        </th>
-      </tr>
-      <tbody>
-        {doses.map((dose, index) => (
-          <tr>
-            <td style={{ textAlign: 'center' }}>{index + 1}</td>
-            <td>
-              <BasicTextInput
-                value={dose.label}
-                fullWidth
-                onChange={e => updateDose(dose.id, { label: e.target.value })}
+    <>
+      <Box display={'flex'} justifyContent={'flex-end'}>
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('label.dose')}
+          onClick={addDose}
+        />
+      </Box>
+      <Table sx={{ marginTop: '5px', '& td': { padding: '3px' } }}>
+        <tr style={{ borderBottom: '1px solid lightgray' }}>
+          <HeaderCell label="Dose #" width="80px" />
+          <HeaderCell label={t('label.label')} width="250px" />
+          <HeaderCell label="Age (months)" />
+          <HeaderCell label="Min interval (days)" />
+        </tr>
+        <tbody>
+          {doses.map((dose, index) => (
+            <tr>
+              <td style={{ textAlign: 'center' }}>{index + 1}</td>
+              <td>
+                <BasicTextInput
+                  value={dose.label}
+                  fullWidth
+                  onChange={e => updateDose(dose.id, { label: e.target.value })}
+                />
+              </td>
+              <NumericDoseTableCell
+                value={dose.minAgeMonths}
+                onChange={num => updateDose(dose.id, { minAgeMonths: num })}
               />
-            </td>
-            <NumericDoseTableCell
-              value={dose.minAgeMonths}
-              onChange={num => updateDose(dose.id, { minAgeMonths: num })}
-            />
-            <NumericDoseTableCell
-              value={dose.minIntervalDays}
-              onChange={num => updateDose(dose.id, { minIntervalDays: num })}
-            />
-            <td style={{ display: 'flex', justifyContent: 'center' }}>
-              <IconButton
-                icon={<DeleteIcon />}
-                label={t('label.delete')}
-                onClick={() => deleteDose(dose.id)}
+              <NumericDoseTableCell
+                value={dose.minIntervalDays}
+                onChange={num => updateDose(dose.id, { minIntervalDays: num })}
               />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
+              <td style={{ display: 'flex', justifyContent: 'center' }}>
+                <IconButton
+                  icon={<DeleteIcon />}
+                  label={t('label.delete')}
+                  onClick={() => deleteDose(dose.id)}
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </>
   );
 };
 
