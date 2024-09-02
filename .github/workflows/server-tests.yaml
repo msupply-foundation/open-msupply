@@ -28,5 +28,8 @@ jobs:
           workspaces: server
       - uses: actions-rs/cargo@v1
         with:
+          command: clean
+      - uses: actions-rs/cargo@v1
+        with:
           command: test
           args: --features=sqlite --manifest-path server/Cargo.toml
