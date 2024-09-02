@@ -14,8 +14,7 @@ export interface RnRFormQuery extends RnRFormFragment {
 
 export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
   const { api, storeId } = useRnRGraphQL();
-  const { setForm, setIsLoading, setLines, form, isLoading } =
-    useRnRFormContext();
+  const { clearDraftLine } = useRnRFormContext();
   const queryKey = [RNR_FORM, rnrFormId];
 
   const {
@@ -40,22 +39,12 @@ export const useRnRForm = ({ rnrFormId }: { rnrFormId: string }) => {
     return result.__typename === 'RnRFormNode' ? result : null;
   };
 
-  const query = useQuery({ queryKey, queryFn, enabled: !form });
+  const query = useQuery({ queryKey, queryFn });
 
-  if (!isLoading && query.isLoading) setIsLoading(true);
-  if (form?.id !== query.data?.id && !!query.data) {
-    const { id, periodLength, periodName, status, lines } = query.data;
-    setForm({
-      id,
-      periodLength,
-      periodName,
-      status,
-      lineIds: lines.map(line => line.id),
-    });
-    setLines(lines);
-  }
-
-  const updateLine = async (line: RnRFormLineFragment) => updateLines([line]);
+  const updateLine = async (line: RnRFormLineFragment) => {
+    await updateLines([line]);
+    clearDraftLine(line.id);
+  };
 
   const confirmRemainingLines = async () => {
     if (!query.data) return;

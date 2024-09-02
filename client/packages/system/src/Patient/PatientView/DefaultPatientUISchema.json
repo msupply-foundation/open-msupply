@@ -45,12 +45,9 @@
           "label": "Last Name"
         },
         {
-          "type": "Control",
+          "type": "DateOfBirth",
           "label": "Date of Birth",
-          "scope": "#/properties/dateOfBirth",
-          "options": {
-            "disableFuture": true
-          }
+          "scope": "#"
         },
         {
           "type": "Control",

@@ -5,7 +5,9 @@ use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
-use graphql_types::generic_errors::StockLineReducedBelowZero;
+use graphql_types::generic_errors::{
+    SnapshotCountCurrentCountMismatchLine, StockLineReducedBelowZero,
+};
 use graphql_types::types::StocktakeLineNode;
 use repository::StocktakeLine;
 use service::NullableUpdate;
@@ -52,6 +54,7 @@ pub enum UpdateErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
     AdjustmentReasonNotProvided(AdjustmentReasonNotProvided),
     AdjustmentReasonNotValid(AdjustmentReasonNotValid),
+    SnapshotCountCurrentCountMismatchLine(SnapshotCountCurrentCountMismatchLine),
 }
 
 #[derive(SimpleObject)]
@@ -149,6 +152,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::AdjustmentReasonNotValid => {
             return Ok(UpdateErrorInterface::AdjustmentReasonNotValid(
                 AdjustmentReasonNotValid,
+            ))
+        }
+        ServiceError::SnapshotCountCurrentCountMismatchLine(line) => {
+            return Ok(UpdateErrorInterface::SnapshotCountCurrentCountMismatchLine(
+                SnapshotCountCurrentCountMismatchLine::from_domain(line),
             ))
         }
         // Standard Graphql Errors

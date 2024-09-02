@@ -42,7 +42,6 @@ export const ContentArea = () => {
         'itemUnit',
         {
           accessor: ({ rowData }) => rowData.item.unitName,
-          getSortValue: rowData => rowData.item.unitName ?? '',
           sortable: false,
         },
       ],

@@ -222,7 +222,7 @@ const DataTableComponent = <T extends RecordWithId>({
         width,
       }}
     >
-      <MuiTable>
+      <MuiTable style={{ borderCollapse: 'separate' }}>
         <TableHead
           sx={{
             backgroundColor: 'background.white',

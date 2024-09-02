@@ -213,9 +213,13 @@ export const DetailView: FC = () => {
       data as unknown as EncounterSchema,
       updateEncounter
     );
+  const dataStatus = data
+    ? (data as Record<string, JsonData>)['status']
+    : undefined;
   const suggestSaveWithStatusVisited = encounter
     ? new Date(encounter.startDatetime).getTime() < Date.now() &&
-      encounter.status === EncounterNodeStatus.Pending
+      encounter.status === EncounterNodeStatus.Pending &&
+      dataStatus === EncounterNodeStatus.Pending
     : false;
 
   useEffect(() => {
@@ -234,10 +238,9 @@ export const DetailView: FC = () => {
             >
               {getPatientBreadcrumbSuffix(encounter, getLocalisedFullName)}
             </Breadcrumb>
-            <span>{` / ${encounter.document.documentRegistry
-              ?.name} - ${dateFormat.localisedDate(
-              encounter.startDatetime
-            )}`}</span>
+            <span>{` / ${
+              encounter.document.documentRegistry?.name
+            } - ${dateFormat.localisedDate(encounter.startDatetime)}`}</span>
           </>
         ),
       });

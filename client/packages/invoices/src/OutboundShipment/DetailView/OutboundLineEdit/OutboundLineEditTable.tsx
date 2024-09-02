@@ -6,6 +6,8 @@ import {
   useTranslation,
   TableCell,
   styled,
+  useFormatNumber,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { useOutboundLineEditRows } from './hooks';
@@ -46,6 +48,8 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
   useEffect(() => {
     setPlaceholderBuffer(line?.numberOfPacks ?? 0);
   }, [line?.numberOfPacks]);
+  const formattedValue = useFormatNumber().round(placeholderBuffer, 2);
+  const hasMoreThanTwoDp = ((placeholderBuffer ?? 0) * 100) % 1 !== 0;
 
   return !line ? null : (
     <tr>
@@ -54,28 +58,34 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
       </PlaceholderCell>
       <PlaceholderCell style={{ textAlign: 'right' }}>1</PlaceholderCell>
       <PlaceholderCell colSpan={4}></PlaceholderCell>
-      <PlaceholderCell style={{ textAlign: 'right' }}>
-        {placeholderBuffer}
-      </PlaceholderCell>
+      <Tooltip title={line?.numberOfPacks.toString()}>
+        <PlaceholderCell style={{ textAlign: 'right' }}>
+          {!!hasMoreThanTwoDp ? `${formattedValue}...` : formattedValue}
+        </PlaceholderCell>
+      </Tooltip>
     </tr>
   );
 };
 
 const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
   const t = useTranslation('distribution');
+  const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
+  const hasMoreThanTwoDp = ((allocatedQuantity ?? 0) * 100) % 1 !== 0;
 
   return (
     <tr>
       <TotalCell colSpan={3}>{t('label.total-quantity')}</TotalCell>
       <TotalCell colSpan={5}></TotalCell>
-      <TotalCell
-        style={{
-          textAlign: 'right',
-          paddingRight: 12,
-        }}
-      >
-        {allocatedQuantity}
-      </TotalCell>
+      <Tooltip title={allocatedQuantity.toString()}>
+        <TotalCell
+          style={{
+            textAlign: 'right',
+            paddingRight: 12,
+          }}
+        >
+          {!!hasMoreThanTwoDp ? `${formattedValue}...` : formattedValue}
+        </TotalCell>
+      </Tooltip>
     </tr>
   );
 };

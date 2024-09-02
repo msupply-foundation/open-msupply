@@ -50,6 +50,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         database: db_settings,
         sync: None,
         logging: None,
+        backup: None,
     });
     let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
     let (site_is_initialise_trigger, _) = SiteIsInitialisedCallback::init();

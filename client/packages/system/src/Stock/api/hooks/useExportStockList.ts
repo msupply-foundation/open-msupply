@@ -15,6 +15,7 @@ export const useExportStockList = () => {
       key: StockLineSortFieldInput.ItemName,
       desc: false,
       storeId,
+      filter: { hasPacksInStore: true },
     });
     return result?.stockLines;
   };

@@ -10,6 +10,7 @@ import {
   StocktakeNodeStatus,
   noOtherVariants,
   getErrorMessage,
+  useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { getNextStocktakeStatus, getStatusTranslation } from '../../../utils';
 import { useStocktake } from '../../api';
@@ -19,7 +20,7 @@ const getStatusOptions = (
   getButtonLabel: (status: StocktakeNodeStatus) => string
 ): [
   SplitButtonOption<StocktakeNodeStatus>,
-  SplitButtonOption<StocktakeNodeStatus>
+  SplitButtonOption<StocktakeNodeStatus>,
 ] => {
   return [
     {
@@ -112,11 +113,17 @@ const useStatusChangeButton = () => {
         return t('error.stocktake-has-stock-reduced-below-zero');
 
       case 'SnapshotCountCurrentCountMismatch':
-        errorsContext.setErrors(
-          mapValues(keyBy(error.lines.nodes, 'id'), () => error)
+        const lineId = mapValues(
+          keyBy(lines.nodes, lines => lines.id),
+          'id'
         );
+        const mappedE = mapKeys(
+          error.lines,
+          line => lineId[line.stocktakeLine.id]
+        );
+        errorsContext.setErrors(mappedE);
 
-        return t('error.snapshot-total-mismatch');
+        return t('error.stocktake-snapshot-total-mismatch');
 
       default:
         noOtherVariants(error);
@@ -172,18 +179,30 @@ export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, getConfirmation, lines } =
     useStatusChangeButton();
   const isDisabled = useStocktake.utils.isDisabled();
+  const t = useTranslation();
+  const noLines =
+    lines?.totalCount === 0 ||
+    lines?.nodes?.every(l => l.countedNumberOfPacks === null);
+
+  const noLinesNotification = useDisabledNotificationToast(
+    t('messages.no-lines')
+  );
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
+  const onStatusClick = () => {
+    if (noLines) return noLinesNotification();
+    return getConfirmation();
+  };
+
   return (
     <SplitButton
-      isDisabled={lines?.totalCount === 0}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
-      onClick={() => getConfirmation()}
+      onClick={onStatusClick}
     />
   );
 };

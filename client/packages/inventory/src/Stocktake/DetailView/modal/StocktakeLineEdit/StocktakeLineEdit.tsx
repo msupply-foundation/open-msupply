@@ -67,7 +67,9 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     if (isSaving) return;
     const { errorMessages } = await save();
     if (errorMessages) {
-      errorMessages.forEach(errorMessage => error(errorMessage)());
+      errorMessages.forEach(errorMessage =>
+        error(errorMessage, { autoHideDuration: 10000 })()
+      );
       return;
     }
 
