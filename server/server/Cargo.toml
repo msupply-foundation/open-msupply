@@ -32,6 +32,8 @@ config = "0.12.0"
 chrono = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }
+log-panics = { workspace = true }
+
 rustls = { version = "0.23.10", default-features = false, features = ["ring"] }
 rustls-pemfile = "2.1.2"
 serde = { workspace = true }
