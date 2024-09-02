@@ -89,7 +89,6 @@ pub enum MigrationError {
     DatabaseError(#[from] RepositoryError),
 }
 
-// TODO: logging
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
