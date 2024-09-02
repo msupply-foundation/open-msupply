@@ -297,7 +297,7 @@ const VaccineCourseDoseTable = ({
         key: 'delete',
         Cell: ({ rowData }) => (
           <IconButton
-            icon={<DeleteIcon />}
+            icon={<DeleteIcon sx={{ height: '0.9em' }} />}
             label={t('label.delete')}
             onClick={() => deleteDose(rowData.id)}
           />
