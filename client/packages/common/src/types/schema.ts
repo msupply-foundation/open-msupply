@@ -7971,6 +7971,8 @@ export type UpsertVaccineCourseDoseInput = {
   doseNumber: Scalars['Int']['input'];
   id: Scalars['String']['input'];
   label: Scalars['String']['input'];
+  minAge: Scalars['Float']['input'];
+  minIntervalDays: Scalars['Int']['input'];
 };
 
 export type UpsertVaccineCourseItemInput = {
