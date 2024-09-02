@@ -65,6 +65,7 @@ pub enum LoginError {
     UpdateUserError(UpdateUserError),
     InternalError(String),
     DatabaseError(RepositoryError),
+    MSupplyCentralNotReached,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -115,6 +116,7 @@ impl LoginService {
         input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
         let mut username = input.username.clone();
+        let mut connection_failure = false;
         match LoginService::fetch_user_from_central(&input).await {
             Ok(user_info) => {
                 let service_ctx =
@@ -132,7 +134,10 @@ impl LoginService {
                         timeout_remaining,
                     )))
                 }
-                FetchUserError::ConnectionError(_) => info!("{:?}", err),
+                FetchUserError::ConnectionError(_) => {
+                    info!("{:?}", err);
+                    connection_failure = true;
+                },
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
         };
@@ -152,6 +157,13 @@ impl LoginService {
                         LoginError::InternalError("Failed to read credentials".to_string())
                     }
                     VerifyPasswordError::DatabaseError(e) => LoginError::DatabaseError(e),
+                    VerifyPasswordError::EmptyHashedPassword => {
+                        if connection_failure {
+                            LoginError::MSupplyCentralNotReached
+                        } else {
+                            LoginError::InternalError("Unable to login. Please contact support".to_string())
+                        }
+                    }
                 });
             }
         };
