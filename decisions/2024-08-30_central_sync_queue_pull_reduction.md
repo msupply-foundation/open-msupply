@@ -89,6 +89,7 @@ But also would work. We could make master list queued data again and improving q
 _Pros:_
 
 - Should improve sync performance over all, including UX on legacy central servers for users doing admin. (There is merit to fixing the master list queuing filtering on LCS regardless of where this KDD goes!)
+- Fixes the problem for existing sites all versions of OMS and legacy apps.
 
 _Cons:_
 
@@ -119,6 +120,7 @@ _Cons:_
 - If they actually need all of the master list lines, it's more overhead doing filtering for no reason. Can probably optimise this case though.
 - Doing work in LCS when we're trying to focus on OMS
 - Eventually we want OMS only deployments where OMS controls central data, so a solution in LCS land would require us eventually fixing it again in OMCS land.
+- Only fixes for OMS
 
 ### Option 3 - OMCS change_log filtering per log processed
 
@@ -126,13 +128,14 @@ The filtering could be more or less the same as in Option 2, but we do it in OMC
 
 _Pros:_
 
-- Obviously faster cause it's rust 😉
-- Simplify sync indication in OMS, go from 3 steps back to 2 steps (just pull queued from sync v3, pull changelog from sync v6)
+- Stay in changelog land and don't queue loads of records
+- Simplify sync progress in OMS, going from 3 steps back to 2 steps (just pull queued from sync v5, pull changelog from sync v6)
 - Future proof solution for the ages
 
 _Cons:_
 
 - Maybe not all records on sync v6 could come through? I don't see why that wouldn't be possible
+- Only fixes for OMS
 
 ### Option 4 - OMCS change_log filter based on change_log.parent_id
 
@@ -144,8 +147,9 @@ OR we do similar to the previous solutions 2 an 3 but much faster as we don't ne
 
 _Pros:_
 
-- Rust
-- Simplify sync indication
+- Stay in changelog land and don't queue loads of records
+- Obviously faster cause it's rust 😉
+- Simplify sync progress UI
 - Honestly report the remaining to pull? depends on exact approach
 - Less overhead than Opt 3?
 - Future proof
@@ -153,6 +157,7 @@ _Pros:_
 _Cons:_
 
 - If doing query filter potentially expensive to filter the change_log like this on each request?
+- Only fixes for OMS
 
 ## Decision
 
