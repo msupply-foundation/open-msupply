@@ -20,6 +20,12 @@ pub struct TranslationStrings {
     pub translations: HashMap<String, Value>,
 }
 
+impl Default for Localisations {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Localisations {
 
     // Creates a new Localisations struct
@@ -40,7 +46,7 @@ impl Localisations {
                     let translations: HashMap<String, String> = serde_json::from_slice(&json_data).unwrap();
                     self.translations
                     .entry(language)
-                    .or_insert_with(HashMap::new)
+                    .or_default()
                     .insert(file_namespace, translations);
             }
         }
@@ -60,7 +66,7 @@ impl Localisations {
             .and_then(|map| map.get(&namespace))
             .and_then(|map| map.get(&key))
             .cloned()
-            .unwrap_or_else(|| fallback)
+            .unwrap_or(fallback)
     }
 }
 
