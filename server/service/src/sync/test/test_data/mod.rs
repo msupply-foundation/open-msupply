@@ -51,6 +51,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
+pub(crate) mod vaccination;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
@@ -89,6 +90,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut name_property::test_pull_upsert_records());
     test_records.append(&mut rnr_form::test_pull_upsert_records());
     test_records.append(&mut rnr_form_line::test_pull_upsert_records());
+    test_records.append(&mut vaccination::test_pull_upsert_records());
 
     test_records
 }
@@ -184,6 +186,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut name_property::test_v6_central_push_records());
     test_records.append(&mut rnr_form::test_v6_records());
     test_records.append(&mut rnr_form_line::test_v6_records());
+    test_records.append(&mut vaccination::test_v6_records());
 
     test_records
 }
