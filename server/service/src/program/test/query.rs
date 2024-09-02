@@ -2,9 +2,12 @@
 mod query {
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
-    use repository::{ProgramFilter, ProgramSort, ProgramSortField, StringFilter};
+    use repository::{
+        ProgramFilter, ProgramRow, ProgramRowRepository, ProgramSort, ProgramSortField,
+        StringFilter,
+    };
+    use util::constants::IMMUNISATION_CONTEXT_ID;
 
-    use crate::program::insert_immunisation::InsertImmunisationProgram;
     use crate::{service_provider::ServiceProvider, SingleRecordError};
 
     #[actix_rt::test]
@@ -17,13 +20,16 @@ mod query {
         let service = service_provider.program_service;
 
         // Create an immunisation program
-        let program_insert = InsertImmunisationProgram {
+        let program_insert = ProgramRow {
             id: "program_id".to_owned(),
             name: "program_name".to_owned(),
+            master_list_id: None,
+            context_id: IMMUNISATION_CONTEXT_ID.to_string(),
+            is_immunisation: true,
         };
 
-        let _result = service
-            .insert_immunisation_program(&context, program_insert.clone())
+        ProgramRowRepository::new(&context.connection)
+            .upsert_one(&program_insert)
             .unwrap();
 
         assert_eq!(
@@ -48,23 +54,24 @@ mod query {
         let service = service_provider.program_service;
 
         // Create 2 immunisation programs
-        let program_insert_a = InsertImmunisationProgram {
+        let program_insert_a = ProgramRow {
             id: "program_id_a".to_owned(),
             name: "program_name_a".to_owned(),
+            master_list_id: None,
+            context_id: IMMUNISATION_CONTEXT_ID.to_string(),
+            is_immunisation: true,
         };
-
-        let _result = service
-            .insert_immunisation_program(&context, program_insert_a.clone())
-            .unwrap();
-
-        let program_insert_b = InsertImmunisationProgram {
+        let program_insert_b = ProgramRow {
             id: "program_id_b".to_owned(),
             name: "program_name_b".to_owned(),
+            master_list_id: None,
+            context_id: IMMUNISATION_CONTEXT_ID.to_string(),
+            is_immunisation: true,
         };
 
-        let _result = service
-            .insert_immunisation_program(&context, program_insert_b.clone())
-            .unwrap();
+        let repo = ProgramRowRepository::new(&context.connection);
+        repo.upsert_one(&program_insert_a).unwrap();
+        repo.upsert_one(&program_insert_b).unwrap();
 
         let result = service
             .get_programs(

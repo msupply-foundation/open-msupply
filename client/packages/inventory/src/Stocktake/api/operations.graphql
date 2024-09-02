@@ -161,6 +161,14 @@ fragment AdjustmentReasonNotValidError on AdjustmentReasonNotValid {
   description
 }
 
+fragment SnapshotCountCurrentCountMismatchLineError on SnapshotCountCurrentCountMismatchLine {
+  __typename
+  stocktakeLine {
+    id
+  }
+  description
+}
+
 mutation upsertStocktakeLines(
   $storeId: String!
   $deleteStocktakeLines: [DeleteStocktakeLineInput!]
@@ -226,6 +234,7 @@ mutation upsertStocktakeLines(
               ...StockLineReducedBelowZeroError
               ...AdjustmentReasonNotProvidedError
               ...AdjustmentReasonNotValidError
+              ...SnapshotCountCurrentCountMismatchLineError
             }
           }
         }
@@ -255,10 +264,9 @@ fragment StockLinesReducedBelowZeroError on StockLinesReducedBelowZero {
 }
 
 fragment SnapshotCountCurrentCountMismatchError on SnapshotCountCurrentCountMismatch {
+  __typename
   lines {
-    nodes {
-      id
-    }
+    ...SnapshotCountCurrentCountMismatchLineError
   }
 }
 

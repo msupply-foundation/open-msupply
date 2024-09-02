@@ -48,7 +48,6 @@
   "error.provide-reason": "Une raison doit être renseignée pour toutes les lignes où un écart a été constaté.",
   "error.not-editable": "L'inventaire ne peut être modifié.",
   "error.is-locked": "L'inventaire est bloqué.",
-  "error.snapshot-total-mismatch": "Erreur : une ou plusieurs lignes ont un écart entre le niveau de stock actuel et le comptage ponctuel.",
   "error.provide-valid-reason": "La raison de l'ajustement de stock ne correspond pas à la direction de l'ajustement (positif ou négatif)",
   "error.reduced-below-zero": "Une ligne de stock est allouée dans une nouvelle livraison sortante. La quantité ne peut pas être en dessous de zéro.",
   "label.supplier": "Fournisseur",

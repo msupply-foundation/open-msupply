@@ -3,8 +3,9 @@ use crate::{
         calculate_foreign_currency_total, calculate_total_after_tax,
         generate_invoice_user_id_update,
     },
-    invoice_line::stock_in_line::{
-        convert_invoice_line_to_single_pack, generate_batch, StockLineInput,
+    invoice_line::{
+        stock_in_line::{convert_invoice_line_to_single_pack, generate_batch, StockLineInput},
+        StockInType,
     },
     store_preference::get_store_preferences,
 };
@@ -34,19 +35,18 @@ pub fn generate(
 
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
 
-    let update_line = generate_line(
+    let mut update_line = generate_line(
         connection,
-        input,
+        input.clone(),
         current_line.invoice_line_row,
         new_item_option,
         existing_invoice_row.currency_id.clone(),
         &existing_invoice_row.currency_rate,
     )?;
 
-    let mut update_line = match store_preferences.pack_to_one {
-        true => convert_invoice_line_to_single_pack(update_line),
-        false => update_line,
-    };
+    if StockInType::InventoryAddition != input.r#type && store_preferences.pack_to_one {
+        update_line = convert_invoice_line_to_single_pack(update_line);
+    }
 
     let upsert_batch_option = if existing_invoice_row.status != InvoiceStatus::New {
         // There will be a batch_to_delete_id if the item has changed

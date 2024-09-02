@@ -22,14 +22,14 @@ mod query {
             service.get_stock_lines(
                 &context,
                 Some(PaginationOption {
-                    limit: Some(2000),
+                    limit: Some(6000),
                     offset: None
                 }),
                 None,
                 None,
                 None,
             ),
-            Err(ListError::LimitAboveMax(1000))
+            Err(ListError::LimitAboveMax(5000))
         );
 
         assert_eq!(

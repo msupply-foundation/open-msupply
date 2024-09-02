@@ -25,6 +25,8 @@ const exportFile = (data: string, type: string, title?: string) => {
   }
 };
 
+// TODO this causes electron app to navigate to this url (at the same time as opening dialog box)
+// however for temp files, this causes Static file not found error as the temp file is delete after first request
 const downloadFile = async (url: string) => {
   const res = await fetch(url);
   const data = await res.blob();

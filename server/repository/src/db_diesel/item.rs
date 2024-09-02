@@ -174,6 +174,7 @@ impl<'a> ItemRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
+        //
         // println!(
         //    "{}",
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
@@ -251,7 +252,11 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         let item_ids_with_stock_on_hand = item_link_dsl::item_link
             .select(item_link_dsl::item_id)
             .inner_join(stock_on_hand_dsl::stock_on_hand)
-            .filter(stock_on_hand_dsl::available_stock_on_hand.gt(0.0))
+            .filter(
+                stock_on_hand_dsl::available_stock_on_hand
+                    .gt(0.0)
+                    .and(stock_on_hand_dsl::store_id.eq(store_id.clone())),
+            )
             .group_by(item_link_dsl::item_id)
             .into_boxed();
 
@@ -694,6 +699,18 @@ mod tests {
                 .collect::<Vec<String>>(),
             vec!["item1", "item2", "item3"]
         );
+
+        // Make sure stock on hand filter applies to only one store
+        let results = ItemRepository::new(&storage_connection)
+            .query(
+                Pagination::new(),
+                Some(ItemFilter::new().has_stock_on_hand(true)),
+                None,
+                Some("some other store".to_string()),
+            )
+            .unwrap();
+
+        assert_eq!(results.len(), 0);
     }
 
     #[actix_rt::test]

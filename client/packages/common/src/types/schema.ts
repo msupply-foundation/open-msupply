@@ -111,6 +111,7 @@ export enum ActivityLogNodeType {
   ProgramUpdated = 'PROGRAM_UPDATED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
+  RequisitionApproved = 'REQUISITION_APPROVED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
@@ -889,20 +890,7 @@ export type CentralPatientSearchResponse = CentralPatientSearchConnector | Centr
 
 export type CentralProgramsMutations = {
   __typename: 'CentralProgramsMutations';
-  deleteImmunisationProgram: DeleteImmunisationProgramResponse;
-  insertImmunisationProgram: InsertImmunisationProgramResponse;
   updateImmunisationProgram: UpdateImmunisationProgramResponse;
-};
-
-
-export type CentralProgramsMutationsDeleteImmunisationProgramArgs = {
-  immunisationProgramId: Scalars['String']['input'];
-};
-
-
-export type CentralProgramsMutationsInsertImmunisationProgramArgs = {
-  input: InsertImmunisationProgramInput;
-  storeId: Scalars['String']['input'];
 };
 
 
@@ -1191,7 +1179,7 @@ export type CustomerReturnLineNode = {
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteImmunisationProgramErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1266,17 +1254,6 @@ export type DeleteCustomerReturnResponse = DeleteCustomerReturnError | DeleteRes
 export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
-
-export type DeleteImmunisationProgramError = {
-  __typename: 'DeleteImmunisationProgramError';
-  error: DeleteImmunisationProgramErrorInterface;
-};
-
-export type DeleteImmunisationProgramErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type DeleteImmunisationProgramResponse = DeleteImmunisationProgramError | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
@@ -2419,22 +2396,6 @@ export type InsertFormSchemaInput = {
 
 export type InsertFormSchemaResponse = FormSchemaNode;
 
-export type InsertImmunisationProgramError = {
-  __typename: 'InsertImmunisationProgramError';
-  error: InsertImmunisationProgramErrorInterface;
-};
-
-export type InsertImmunisationProgramErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type InsertImmunisationProgramInput = {
-  id: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-};
-
-export type InsertImmunisationProgramResponse = InsertImmunisationProgramError | ProgramNode;
-
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
   error: InsertInboundShipmentErrorInterface;
@@ -3465,6 +3426,7 @@ export type LedgerNode = {
   __typename: 'LedgerNode';
   datetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
+  invoiceNumber: Scalars['Int']['output'];
   invoiceType: InvoiceNodeType;
   itemId: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -5912,7 +5874,7 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -5922,7 +5884,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAsse
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteImmunisationProgramErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -6472,7 +6434,13 @@ export type SensorsResponse = SensorConnector;
 export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & {
   __typename: 'SnapshotCountCurrentCountMismatch';
   description: Scalars['String']['output'];
-  lines: StocktakeLineConnector;
+  lines: Array<SnapshotCountCurrentCountMismatchLine>;
+};
+
+export type SnapshotCountCurrentCountMismatchLine = UpdateStocktakeLineErrorInterface & {
+  __typename: 'SnapshotCountCurrentCountMismatchLine';
+  description: Scalars['String']['output'];
+  stocktakeLine: StocktakeLineNode;
 };
 
 export enum StatusType {

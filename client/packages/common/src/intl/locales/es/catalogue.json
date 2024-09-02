@@ -64,5 +64,8 @@
   "label.reason": "Razón",
   "label.new-pack-variant": "Nueva variante de paquete",
   "messages.confirm-delete-pack-variant": "Esto eliminará {{packVariantName}} de la lista de variantes de paquete.",
-  "messages.deleted-reasons_other": "Se eliminó {{count}} razones"
+  "messages.deleted-reasons_other": "Se eliminó {{count}} razones",
+  "label.percentage": "Porcentaje",
+  "heading.schedule": "Calendario",
+  "error.no-master-list": "Este artículo no está asignado a una lista maestra, por favor, contacta tu administrador si esto es un error. Ten en cuenta que un artículo puede ser visible si hay inventario disponible, incluso si el artículo no está en una lista maestra."
 }

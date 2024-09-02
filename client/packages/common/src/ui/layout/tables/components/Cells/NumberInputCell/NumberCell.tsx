@@ -10,13 +10,12 @@ import { CellProps } from '../../../columns/types';
 export const NumberCell = <T extends RecordWithId>({
   column,
   rowData,
-  isError,
   defaultValue = '',
 }: CellProps<T> & {
   defaultValue?: string | number;
 }) => {
   const value = column.accessor({ rowData }) as number | undefined | null;
-  const hasMoreThanTwoDp = (value ?? 0 * 100) % 1 !== 0;
+  const hasMoreThanTwoDp = ((value ?? 0) * 100) % 1 !== 0;
   const formattedValue = useFormatNumber().round(value ?? 0, 2);
 
   const displayValue =
@@ -25,9 +24,6 @@ export const NumberCell = <T extends RecordWithId>({
   return (
     <Box
       sx={{
-        border: theme =>
-          isError ? `2px solid ${theme.palette.error.main}` : 'none',
-        borderRadius: '8px',
         padding: '4px 8px',
       }}
     >

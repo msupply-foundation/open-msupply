@@ -35,7 +35,7 @@ export const usePrescriptionLineEditColumns = ({
       'expiryDate',
       {
         Cell: ExpiryDateCell,
-        width: 80,
+        width: 100,
       },
     ],
     [

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  FileUtils,
   LocaleKey,
   noOtherVariants,
   NothingHere,
@@ -143,6 +142,7 @@ const DetailViewInner = ({
         format: PrintFormat.Excel,
       });
       if (result?.__typename === 'PrintReportNode') {
+        // Setting iframe url with response != html disposition, causes iframe to 'download' this file
         setFileId(result.fileId);
       }
 
@@ -164,8 +164,6 @@ const DetailViewInner = ({
     } catch (error) {
       console.error(error);
     }
-    const url = `${Environment.FILE_URL}${fileId}`;
-    FileUtils.downloadFile(url);
   }, [reportArgs]);
 
   const url = `${Environment.FILE_URL}${fileId}`;

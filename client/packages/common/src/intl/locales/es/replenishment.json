@@ -4,7 +4,7 @@
   "messages.confirm-status-as": "¿Confirmar estado como $t({{status}})?",
   "messages.saved": "Guardado",
   "heading.are-you-sure": "¿Está seguro?",
-  "label.amc": "AMC",
+  "label.amc": "AMC/AMD",
   "label.draft": "Borrador",
   "label.soh": "Inventario Disponible (SOH)",
   "button.requested-to-suggested": "Utilizar cantidades sugeridas",
@@ -176,9 +176,9 @@
   "error.no-rnr-forms": "No se encontraron formularios R&R",
   "label.low-stock": "Stock bajo",
   "label.new-rnr-form": "Nuevo formulario R&R",
-  "label.rnr-adjustments": "Ajustes",
-  "label.rnr-consumed": "Consumido",
-  "label.rnr-consumed-adjusted": "Consumo ajustado",
+  "label.rnr-adjustments": "Ajustes +/-",
+  "label.rnr-consumed": "Consumido/ distribuido",
+  "label.rnr-consumed-adjusted": "Consumo ajustado/ distribución",
   "label.rnr-final-balance": "Saldo final",
   "label.rnr-initial-balance": "Saldo inicial",
   "label.rnr-maximum-quantity": "Máximo",
@@ -186,5 +186,6 @@
   "label.rnr-received": "Recibido",
   "label.rnr-stock-out-duration": "Tiempo de desabastecimiento",
   "label.schedule": "Calendario",
-  "messages.click-to-return-to-rnr-list": "Haz clic aquí para volver a la lista de formularios R&R"
+  "messages.click-to-return-to-rnr-list": "Haz clic aquí para volver a la lista de formularios R&R",
+  "error.no-supplier-returns": "No hay devoluciones de proveedor para mostrar."
 }

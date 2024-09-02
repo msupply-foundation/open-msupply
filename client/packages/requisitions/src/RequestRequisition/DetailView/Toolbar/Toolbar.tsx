@@ -6,39 +6,22 @@ import {
   Grid,
   useTranslation,
   SearchBar,
-  Typography,
-  Box,
   Alert,
   Tooltip,
+  Switch,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
-import { useRequest } from '../../api';
+import { useHideOverStocked, useRequest } from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
-import { ToolbarActions } from './ToolbarActions';
-import { getApprovalStatusKey } from '../../../utils';
 
 export const Toolbar: FC = () => {
+  const { on, toggle } = useHideOverStocked();
   const t = useTranslation('replenishment');
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
   const { itemFilter, setItemFilter } = useRequest.line.list();
-  const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
-  const {
-    linkedRequisition,
-    theirReference,
-    update,
-    otherParty,
-    orderType,
-    programName,
-    period,
-  } = useRequest.document.fields([
-    'theirReference',
-    'otherParty',
-    'linkedRequisition',
-    'programName',
-    'period',
-    'orderType',
-  ]);
+  const { theirReference, update, otherParty, programName } =
+    useRequest.document.fields(['theirReference', 'otherParty', 'programName']);
 
   return (
     <AppBarContentPortal
@@ -49,7 +32,7 @@ export const Toolbar: FC = () => {
         flexDirection: 'column',
       }}
     >
-      <Grid container>
+      <Grid container gap={2} flexWrap="nowrap">
         <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
           {otherParty && (
             <InputWithLabelRow
@@ -77,51 +60,13 @@ export const Toolbar: FC = () => {
               </Tooltip>
             }
           />
-          {usesRemoteAuthorisation && (
-            <InputWithLabelRow
-              label={t('label.auth-status')}
-              Input={
-                <Typography>
-                  {t(getApprovalStatusKey(linkedRequisition?.approvalStatus))}
-                </Typography>
-              }
-            />
-          )}
-
-          {orderType && (
-            <InputWithLabelRow
-              label={t('label.order-type')}
-              Input={<Typography>{orderType ?? ''}</Typography>}
-            />
-          )}
-          {programName && (
-            <InputWithLabelRow
-              label={t('label.program')}
-              Input={<Typography>{programName ?? ''}</Typography>}
-            />
-          )}
-          {period && (
-            <InputWithLabelRow
-              label={t('label.period')}
-              Input={<Typography>{period?.name ?? ''}</Typography>}
-            />
-          )}
         </Grid>
-        {programName && (
-          <Box padding={2} style={{ maxWidth: 500 }}>
-            <Alert severity="info">
+        <Grid item>
+          {programName && (
+            <Alert severity="info" sx={{ marginTop: 1, maxWidth: '378px' }}>
               {t('info.cannot-edit-program-requisition')}
             </Alert>
-          </Box>
-        )}
-        <Grid
-          item
-          flexDirection="column"
-          alignItems="flex-end"
-          display="flex"
-          gap={2}
-        >
-          <ToolbarActions />
+          )}
         </Grid>
       </Grid>
       <Grid
@@ -130,17 +75,29 @@ export const Toolbar: FC = () => {
         gap={1}
         alignItems="flex-end"
         justifyContent="flex-end"
-        sx={{ marginTop: 2 }}
+        sx={{ marginTop: 1, flexWrap: 'wrap' }}
       >
-        <SearchBar
-          placeholder={t('placeholder.filter-items')}
-          value={itemFilter}
-          onChange={newValue => {
-            setItemFilter(newValue);
-          }}
-          debounceTime={0}
-        />
-        <ToolbarDropDown />
+        <Grid item>
+          <Switch
+            label={t('label.hide-stock-over-minimum')}
+            onChange={toggle}
+            checked={on}
+            color="secondary"
+            size="small"
+            labelSx={{ margin: '5px 0' }}
+          />
+        </Grid>
+        <Grid item display="flex" gap={1} alignItems="flex-end">
+          <SearchBar
+            placeholder={t('placeholder.filter-items')}
+            value={itemFilter}
+            onChange={newValue => {
+              setItemFilter(newValue);
+            }}
+            debounceTime={0}
+          />
+          <ToolbarDropDown isDisabled={isDisabled} />
+        </Grid>
       </Grid>
     </AppBarContentPortal>
   );
