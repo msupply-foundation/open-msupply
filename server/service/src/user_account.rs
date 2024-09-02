@@ -172,16 +172,6 @@ impl<'a> UserAccountService<'a> {
                 .hashed_password(EqualFilter::not_equal_to(""))
                 .site_id(EqualFilter::equal_to_i32(site_id)),
         );
-        println!(
-            "password: {:?}",
-            result
-                .clone()
-                .unwrap()
-                .clone()
-                .unwrap()
-                .user_row
-                .hashed_password
-        );
         result
     }
 
