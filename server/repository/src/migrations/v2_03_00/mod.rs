@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
+mod add_vaccinations_table;
 mod drop_program_deleted_datetime;
 mod return_types_rename;
 
@@ -17,7 +18,10 @@ impl Migration for V2_03_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(drop_program_deleted_datetime::Migrate)]
+        vec![
+            Box::new(drop_program_deleted_datetime::Migrate),
+            Box::new(add_vaccinations_table::Migrate),
+        ]
     }
 }
 
