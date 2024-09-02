@@ -53,6 +53,7 @@ pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
 pub(crate) mod utils;
+pub(crate) mod vaccination;
 
 use repository::*;
 use thiserror::Error;
@@ -129,6 +130,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // RnR Form
         rnr_form::boxed(),
         rnr_form_line::boxed(),
+        // Vaccination
+        vaccination::boxed(),
     ]
 }
 
