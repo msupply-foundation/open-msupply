@@ -5,7 +5,10 @@ import {
   Box,
   ButtonWithIcon,
   Checkbox,
+  ColumnDataSetter,
   Container,
+  createTableStore,
+  DataTable,
   DeleteIcon,
   DemographicIndicatorNode,
   DialogButton,
@@ -13,10 +16,13 @@ import {
   IconButton,
   InputWithLabelRow,
   ModalMode,
+  NumberCell,
+  NumberInputCell,
   NumericTextInput,
   PlusCircleIcon,
-  Table,
-  useBufferState,
+  TableProvider,
+  TextInputCell,
+  useColumns,
   useDialog,
   useKeyboardHeightAdjustment,
   useNotification,
@@ -209,7 +215,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         />
       }
       height={height}
-      width={700}
+      width={750}
       slideAnimation={false}
     >
       {modalContent}
@@ -251,90 +257,76 @@ const VaccineCourseDoseTable = ({
     });
   };
 
-  const updateDose = (
-    id: string,
-    newData: Partial<VaccineCourseScheduleNode>
-  ) => {
+  const updateDose: ColumnDataSetter<VaccineCourseScheduleNode> = newData => {
     updatePatch({
       vaccineCourseSchedules: doses.map(dose =>
-        dose.id === id ? { ...dose, ...newData } : dose
+        dose.id === newData.id ? { ...dose, ...newData } : dose
       ),
     });
   };
 
+  const columns = useColumns<VaccineCourseScheduleNode>(
+    [
+      {
+        key: 'doseNumber',
+        Cell: NumberCell,
+        width: 80,
+        label: 'label.dose-number',
+        accessor: ({ rowData }) => doses.indexOf(rowData) + 1,
+      },
+      {
+        key: 'label',
+        Cell: props => <TextInputCell fullWidth {...props} />,
+        width: 250,
+        label: 'label.label',
+        setter: updateDose,
+      },
+      {
+        key: 'minAgeMonths',
+        Cell: NumberInputCell,
+        label: 'label.age-months',
+        setter: updateDose,
+      },
+      {
+        key: 'minIntervalDays',
+        Cell: NumberInputCell,
+        label: 'label.min-interval',
+        setter: updateDose,
+      },
+      {
+        key: 'delete',
+        Cell: ({ rowData }) => (
+          <IconButton
+            icon={<DeleteIcon />}
+            label={t('label.delete')}
+            onClick={() => deleteDose(rowData.id)}
+          />
+        ),
+      },
+    ],
+    {},
+    [updateDose, doses]
+  );
+
+  console.log('renders');
+
   return (
     <>
-      <Box display={'flex'} justifyContent={'flex-end'}>
+      <Box display="flex" justifyContent="flex-end" marginBottom="8px">
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('label.dose')}
           onClick={addDose}
         />
       </Box>
-      <Table sx={{ marginTop: '5px', '& td': { padding: '3px' } }}>
-        <tr style={{ borderBottom: '1px solid lightgray' }}>
-          <HeaderCell label="Dose #" width="80px" />
-          <HeaderCell label={t('label.label')} width="250px" />
-          <HeaderCell label="Age (months)" />
-          <HeaderCell label="Min interval (days)" />
-        </tr>
-        <tbody>
-          {doses.map((dose, index) => (
-            <tr>
-              <td style={{ textAlign: 'center' }}>{index + 1}</td>
-              <td>
-                <BasicTextInput
-                  value={dose.label}
-                  fullWidth
-                  onChange={e => updateDose(dose.id, { label: e.target.value })}
-                />
-              </td>
-              <NumericDoseTableCell
-                value={dose.minAgeMonths}
-                onChange={num => updateDose(dose.id, { minAgeMonths: num })}
-              />
-              <NumericDoseTableCell
-                value={dose.minIntervalDays}
-                onChange={num => updateDose(dose.id, { minIntervalDays: num })}
-              />
-              <td style={{ display: 'flex', justifyContent: 'center' }}>
-                <IconButton
-                  icon={<DeleteIcon />}
-                  label={t('label.delete')}
-                  onClick={() => deleteDose(dose.id)}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      <TableProvider createStore={createTableStore}>
+        <DataTable
+          id={'doses-list'}
+          columns={columns}
+          data={doses}
+          noDataMessage={t('message.add-a-dose')}
+        />
+      </TableProvider>
     </>
-  );
-};
-
-const HeaderCell = ({ label, width }: { label: string; width?: string }) => {
-  return <th style={{ fontSize: '14px', width, padding: '3px' }}>{label}</th>;
-};
-
-const NumericDoseTableCell = ({
-  value,
-  onChange,
-}: {
-  value: number;
-  onChange: (num: number) => void;
-}) => {
-  const [buffer, setBuffer] = useBufferState<number | undefined>(value);
-
-  return (
-    <td>
-      <NumericTextInput
-        value={buffer}
-        fullWidth
-        onChange={newValue => {
-          setBuffer(newValue);
-          if (newValue !== undefined) onChange(newValue);
-        }}
-      />
-    </td>
   );
 };
