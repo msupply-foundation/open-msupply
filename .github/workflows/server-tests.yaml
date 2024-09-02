@@ -26,10 +26,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: server
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clean
-          args: --manifest-path server/Cargo.toml
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@v1.3.1
       - uses: actions-rs/cargo@v1
         with:
           command: test
