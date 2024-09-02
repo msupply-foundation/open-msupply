@@ -1,6 +1,6 @@
 # Central Sync Queue Pull Reduction
 
-- _Date_: 2024-04-30
+- _Date_: 2024-09-02
 - _Deciders_: @Chris-Petty, @andreievg
 - _Status_: UNDECIDED
 - _Outcome_:
@@ -80,7 +80,7 @@ One feature that (I'm not sure is implemented in OMS), is to help prevent users 
 
 ## Options
 
-### Option 1 - LCS improve queuing filter and move master lists back to queue rather than change log.
+### Option 1 - LCS improve queuing filter and move master lists back to queue rather than change log
 
 This would be contentious, as a key driver for the change log was to prevent spamming the `sync_out` table with updates every time you update a master list, so moving it back to the queue would be coming full circle heh. Some of our bigger users have >1000 sites, so every line touched _could_ require upserting >1000 sync_out records. central_change_log could bring that down to 1 upsert (if all sites were OMR).
 
@@ -100,7 +100,7 @@ _Cons:_
 
 We implement a system that allows sync v5 change log requests to have some filtering on the LCS side.
 
-Suppose a site requests 5000 change_log records from cursor 0, so initialising.
+Suppose a site requests 5000 change_log records from cursor 0:
 
 1. If the change_log record is for a list_master_line,
 2. Get all the list_master.ID values for lists that are visible to the site; that is from list_master_name_join for all stores (this can be done once for the request and reused in the process, or cached between requests to reduce querying overheads)
@@ -109,88 +109,51 @@ Suppose a site requests 5000 change_log records from cursor 0, so initialising.
 
 _Pros:_
 
+- Stay in changelog land and don't queue loads of records
+
 _Cons:_
 
 - Still looks like 90k records to pull, even if large amounts get filtered out.
 - If 5000 records are requested and we filter out some (or all) of them, do we scan ahead to grab some more records till the batch size is fulfilled (and continuing until done)? Probably negligible but none the less a slower.
-- If they actually need all of them, it's more overhead doing filtering for no reason. Can probably optimise this case though.
+- Added overhead to getting records
+- If they actually need all of the master list lines, it's more overhead doing filtering for no reason. Can probably optimise this case though.
+- Doing work in LCS when we're trying to focus on OMS
+- Eventually we want OMS only deployments where OMS controls central data, so a solution in LCS land would require us eventually fixing it again in OMCS land.
 
-### Option 3 -
+### Option 3 - OMCS change_log filtering per log processed
 
-_Pros:_
-
-_Cons:_
-
-### Option 2 - Round pack size up to next whole number and adjust number of packs, monetary fields etc.
-
-We convert decimal pack sizes up to the next whole number.
-
-E.g.
-
-1 pack of 1L is repacked to 40 packs of 0.05L in mSupply desktop. The latter on integration in OMS:
-
-1. pack size: 0.05L/0.05 = 1L
-2. number of packs: 40packs\*0.05 = 1pack
-3. cost/sell price: 0.5/0.05 = $10
-
-The pharmacist feedback I have received on this is that it'd be confusing to users if they had a system telling them they had 1 of when they can see there are 40 smaller vessels on the shelf. For accounting, I have not asked a finance stakeholder yet but I presume this is very very bad form in regards of adjusting the number of what was physically ordered/received and the cost of each item ordered.
-
-A potential solution for this is to use pack variants. After converting back to 1L pack size, we use a variant of "50mL bottle" that converts all the properties back in the UI layer. Pack variants don't appear to quite support this - the assumption is the base unit is a small whole number (integer). In this case we'd need a pack variant of 0.05L, which would do the reverse of the calculations above. There is additionally an issue of when and how these pack variants are generated, as they are centrally controlled data.
-
-Going to the option 1 problem statement, we also have to solve this at integration still so no avoided in anyway:
-
-> There is potential for discrepancies to occur, e.g. store A repacks `1 * 1L` to `3 * 0.33L`. There are 0.01 packs of the original line... do we just zero it? If we issue all 3 to another store, they receive 0.99L. Do we round it up? What's the threshold?
+The filtering could be more or less the same as in Option 2, but we do it in OMCS. Go full hog: We change to OMCS changelog pull and drop pulling LCS changelog.
 
 _Pros:_
 
-- Open mSupply can keep using integer for pack sizes, which feels good in a programming lens. Floats with their inaccuracy are genuinely not ideal!
+- Obviously faster cause it's rust 😉
+- Simplify sync indication in OMS, go from 3 steps back to 2 steps (just pull queued from sync v3, pull changelog from sync v6)
+- Future proof solution for the ages
 
 _Cons:_
 
-- Unintuitive for users, stock levels in system no longer represents physical reality.
-  - Could be assuaged by making pack variants support decimals by being f64 rather than i32. Is this just shifting the problem though? We'd still need to handle when and if rounding happens in UI and calculations no matter what we do.
-  - Also then reporting must take into account pack variants? I think this might already be true, but with items affected by this automation/translation it'd be absolutely mandatory (might need a line.pack_variant_ID FK to make sure a line is presented in the known physical form explicitly).
-- More complex translators updating all fields that are relative to pack size (number of packs, cost price, sell price). All these calculations introduce opportunity for float arithmetic inaccuracies to accumulate.
-- Data reviewed on remote sites will not match the same data viewed on central server.
-- Might need explaining/complex mappings in integrations.
+- Maybe not all records on sync v6 could come through? I don't see why that wouldn't be possible
 
-### Option 3 - Can convert units?
+### Option 4 - OMCS change_log filter based on change_log.parent_id
 
-Specifically for cases like mL and L, it might be handy in repacks to allow 1L -> 1000mL. This could be converted. Then instead of items having units, they have a unit type, i.e. _volume_, _mass_ or _each_. Then when sending a fractional amount, it could automatically repack into a different volume. Monetary values may need to remain relative to a recorded base unit to avoid doing conversions of that as well, or perhaps we convert units too though they may become very small values ($1/L -> $0.001/mL).
+When master list line records are added to the changelog, we include a `parent_id` (could crudely use store_id for non-store records...)
 
-In translation fractional pack sizes could be converted from one unit to another smaller unit that results in a whole number, but only if they're defined centrally. Unfortunately we can't universally predict this - as Per the SAP example a user might user "case" and "each", where there are 6 "each" in one "case". Do we define a separate "each" for each possible ration? 1:6, 1:10, 1:12... we certainly shouldn't generate units to get around it!
+When records are requested, we do some potentially hefty filtering based on `parent_id` being in the master lists of the requesting site. Not sure how to do this without conditional logic in the SQL, which sounds painful.
 
-Pros:
+OR we do similar to the previous solutions 2 an 3 but much faster as we don't need to query for each master list line
 
-- Tidy and intuitive-ish specifically for L and mL. For pharmacy users it means data stays directly mapping with physical stock.
-- Fine for integrations?
+_Pros:_
 
-Cons:
+- Rust
+- Simplify sync indication
+- Honestly report the remaining to pull? depends on exact approach
+- Less overhead than Opt 3?
+- Future proof
 
-- Wide ranging impact and complexity especially in translations.
-- Units are currently controlled in Legacy, so all would have to be preconfigured before integration is attempted on remote site.
-- Doesn't logically work for all units, so feasibility is near 0 IMO.
+_Cons:_
 
-### Option 4 - Switch all f64 amount fields to a monetary safe type
-
-Decimals would be safe then. pgsql has one of these built in, sqlite does not. We'd need a rust implementation to manage these monetary values. One such rust crate is [rusty-money](https://crates.io/crates/rusty-money). It is of note that rust is a young language, and such libraries are relatively immature compared to [Java](https://docs.oracle.com/cd/E13166_01/alcs/docs51/javadoc/com/elasticpath/domain/misc/Money.html), [.NET](https://learn.microsoft.com/en-us/dotnet/fundamentals/runtime-libraries/system-decimal) etc.
-
-(Note .NET's `Decimal` has basically the same problems as f64 still, but the errors are relatively much smaller! Is a fancy 128bit number implementation rather than f64 standard)
-
-This is too big a task. All reports and all database and business logic would have to be rewritten. OMS needed to commit to this early if at all so I think the ship has sailed, won't write anymore about it! Would have incurred a complexity tax on all development anyway, and Legacy would still be sending us f64 to deal with lol.
+- If doing query filter potentially expensive to filter the change_log like this on each request?
 
 ## Decision
 
-**Option 1 - it is the simplest and the consequences are generally known.**
-
-Option 2 is complex and doesn't explicitly solve the problems either. It requires using pack variants in a way that is not supported.
-
-Option 3 is at least as complex if not more, also a bit undercooked ;-).
-
-Option 4 no 🥲.
-
 ## Consequences
-
-1. Pack sizes are changed to f64 across the data schema.
-2. UI is updated to use rounding as configured in system. (largely already required - monetary values and number of packs are f64).
-3. Ledger checks already need to account for float inaccuracy as number of packs already are f64, so not a new requirement.
