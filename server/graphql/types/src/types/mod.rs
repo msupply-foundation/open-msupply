@@ -98,8 +98,8 @@ pub mod vaccine_course;
 pub use self::vaccine_course::*;
 pub mod vaccine_course_item;
 pub use self::vaccine_course_item::*;
-pub mod vaccine_course_schedule;
-pub use self::vaccine_course_schedule::*;
+pub mod vaccine_course_dose;
+pub use self::vaccine_course_dose::*;
 
 pub mod demographic;
 pub use self::demographic::*;

@@ -9,11 +9,11 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::{
         insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
-        update::{VaccineCourseItemInput, VaccineCourseScheduleInput},
+        update::{VaccineCourseDoseInput, VaccineCourseItemInput},
     },
 };
 
-use super::{UpsertVaccineCourseItemInput, UpsertVaccineCourseScheduleInput};
+use super::{UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput};
 
 pub fn insert_vaccine_course(
     ctx: &Context<'_>,
@@ -52,12 +52,11 @@ pub struct InsertVaccineCourseInput {
     pub name: String,
     pub program_id: String,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
-    pub schedules: Vec<UpsertVaccineCourseScheduleInput>,
+    pub doses: Vec<UpsertVaccineCourseDoseInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
-    pub doses: i32,
 }
 
 impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
@@ -67,12 +66,11 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
             name,
             program_id,
             vaccine_items,
-            schedules,
+            doses,
             demographic_indicator_id,
             coverage_rate,
             is_active,
             wastage_rate,
-            doses,
         }: InsertVaccineCourseInput,
     ) -> Self {
         InsertVaccineCourse {
@@ -86,19 +84,18 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
                     item_id: i.item_id,
                 })
                 .collect(),
-            schedules: schedules
+            doses: doses
                 .into_iter()
-                .map(|s| VaccineCourseScheduleInput {
-                    id: s.id,
-                    label: s.label,
-                    dose_number: s.dose_number,
+                .map(|d| VaccineCourseDoseInput {
+                    id: d.id,
+                    label: d.label,
+                    dose_number: d.dose_number,
                 })
                 .collect(),
             demographic_indicator_id,
             coverage_rate,
             is_active,
             wastage_rate,
-            doses,
         }
     }
 }

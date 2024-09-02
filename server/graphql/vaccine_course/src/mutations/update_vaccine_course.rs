@@ -7,8 +7,8 @@ use graphql_core::{
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::update::{
-        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseItemInput,
-        VaccineCourseScheduleInput,
+        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseDoseInput,
+        VaccineCourseItemInput,
     },
 };
 
@@ -46,7 +46,7 @@ pub fn update_vaccine_course(
 }
 
 #[derive(InputObject, Clone)]
-pub struct UpsertVaccineCourseScheduleInput {
+pub struct UpsertVaccineCourseDoseInput {
     pub id: String,
     pub label: String,
     pub dose_number: i32,
@@ -63,12 +63,11 @@ pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
-    pub schedules: Vec<UpsertVaccineCourseScheduleInput>,
+    pub doses: Vec<UpsertVaccineCourseDoseInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
-    pub doses: i32,
 }
 
 impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
@@ -77,12 +76,11 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             id,
             name,
             vaccine_items,
-            schedules,
+            doses,
             demographic_indicator_id,
             coverage_rate,
             is_active,
             wastage_rate,
-            doses,
         }: UpdateVaccineCourseInput,
     ) -> Self {
         UpdateVaccineCourse {
@@ -95,19 +93,18 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     item_id: i.item_id,
                 })
                 .collect(),
-            schedules: schedules
+            doses: doses
                 .into_iter()
-                .map(|s| VaccineCourseScheduleInput {
-                    id: s.id,
-                    label: s.label,
-                    dose_number: s.dose_number,
+                .map(|d| VaccineCourseDoseInput {
+                    id: d.id,
+                    label: d.label,
+                    dose_number: d.dose_number,
                 })
                 .collect(),
             demographic_indicator_id,
             coverage_rate,
             is_active,
             wastage_rate,
-            doses,
         }
     }
 }
