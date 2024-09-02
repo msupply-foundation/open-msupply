@@ -21,14 +21,14 @@ import {
   useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
-  VaccineCourseScheduleNode,
+  VaccineCourseDoseNode,
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
-import { VaccineCourseScheduleFragment } from '../api/operations.generated';
+import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -186,7 +186,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <VaccineCourseDoseTable
           courseName={draft.name}
-          doses={draft.vaccineCourseSchedules ?? []}
+          doses={draft.vaccineCourseDoses ?? []}
           updatePatch={updatePatch}
         />
       </Container>
@@ -223,17 +223,17 @@ const VaccineCourseDoseTable = ({
   courseName,
 }: {
   courseName: string;
-  doses: VaccineCourseScheduleFragment[];
+  doses: VaccineCourseDoseFragment[];
   updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
 }) => {
   const t = useTranslation('programs');
 
   const addDose = () => {
     updatePatch({
-      vaccineCourseSchedules: [
+      vaccineCourseDoses: [
         ...doses,
         {
-          __typename: 'VaccineCourseScheduleNode',
+          __typename: 'VaccineCourseDoseNode',
           id: FnUtils.generateUUID(),
           // temp - will be overwritten by the backend to assign unique dose number (even if previous doses were deleted)
           doseNumber: doses.length + 1,
@@ -247,16 +247,13 @@ const VaccineCourseDoseTable = ({
 
   const deleteDose = (id: string) => {
     updatePatch({
-      vaccineCourseSchedules: doses.filter(dose => dose.id !== id),
+      vaccineCourseDoses: doses.filter(dose => dose.id !== id),
     });
   };
 
-  const updateDose = (
-    id: string,
-    newData: Partial<VaccineCourseScheduleNode>
-  ) => {
+  const updateDose = (id: string, newData: Partial<VaccineCourseDoseNode>) => {
     updatePatch({
-      vaccineCourseSchedules: doses.map(dose =>
+      vaccineCourseDoses: doses.map(dose =>
         dose.id === id ? { ...dose, ...newData } : dose
       ),
     });
