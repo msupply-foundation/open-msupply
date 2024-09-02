@@ -11,15 +11,14 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                CREATE TABLE vaccinations (
+                CREATE TABLE vaccination (
                     id TEXT NOT NULL PRIMARY KEY,
                     encounter_id TEXT NOT NULL,
                     created_datetime TIMESTAMP NOT NULL,
                     user_id TEXT NOT NULL REFERENCES user_account(id),
                     store_id TEXT NOT NULL REFERENCES store(id),
-                    clinician_link_id TEXT REFERENCES clinician_link (id),
-                    item_link_id TEXT REFERENCES item_link(id),
-                    stock_line_id TEXT,
+                    clinician_link_id TEXT,
+                    invoice_line_id TEXT,
                     vaccination_date {DATE} NOT NULL,
                     given BOOLEAN NOT NULL,
                     not_given_reason TEXT,

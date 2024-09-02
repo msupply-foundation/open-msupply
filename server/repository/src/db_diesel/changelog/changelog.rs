@@ -101,6 +101,7 @@ pub enum ChangelogTableName {
     NameOmsFields,
     RnrForm,
     RnrFormLine,
+    Vaccination,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -157,6 +158,7 @@ impl ChangelogTableName {
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
             ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
             ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
         }
     }
 }
