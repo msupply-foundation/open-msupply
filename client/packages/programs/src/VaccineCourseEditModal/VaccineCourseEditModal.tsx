@@ -277,7 +277,7 @@ const VaccineCourseDoseTable = ({
       {
         key: 'label',
         Cell: props => <TextInputCell fullWidth {...props} />,
-        width: 250,
+        width: 280,
         label: 'label.label',
         setter: updateDose,
       },
@@ -308,8 +308,6 @@ const VaccineCourseDoseTable = ({
     [updateDose, doses]
   );
 
-  console.log('renders');
-
   return (
     <>
       <Box display="flex" justifyContent="flex-end" marginBottom="8px">
@@ -325,6 +323,7 @@ const VaccineCourseDoseTable = ({
           columns={columns}
           data={doses}
           noDataMessage={t('message.add-a-dose')}
+          dense
         />
       </TableProvider>
     </>
