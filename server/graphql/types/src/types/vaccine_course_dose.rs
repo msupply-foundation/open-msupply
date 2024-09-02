@@ -22,20 +22,18 @@ impl VaccineCourseDoseNode {
     }
 
     pub async fn min_age_months(&self) -> &f64 {
-        // TODO
-        &6.0
+        &self.row().min_age
     }
 
     pub async fn min_interval_days(&self) -> &i32 {
-        // TODO
-        &30
+        &self.row().min_interval_days
     }
 }
 
 impl VaccineCourseDoseNode {
     pub fn from_domain(vaccine_course_dose: VaccineCourseDoseRow) -> VaccineCourseDoseNode {
         VaccineCourseDoseNode {
-            vaccine_course_dose: vaccine_course_dose,
+            vaccine_course_dose,
         }
     }
 

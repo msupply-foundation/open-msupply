@@ -62,12 +62,14 @@ mod query {
             id: "dose_id1".to_owned(),
             label: "Dose 1".to_owned(),
             dose_number: 1,
+            ..Default::default()
         };
 
         let dose2 = VaccineCourseDoseInput {
             id: "dose_id2".to_owned(),
             label: "Dose 2".to_owned(),
             dose_number: 2,
+            ..Default::default()
         };
 
         // 0 - Update the vaccine course with the items and doses

@@ -11,6 +11,8 @@ table! {
         vaccine_course_id -> Text,
         dose_number -> Integer,
         label -> Text,
+        min_age -> Double,
+        min_interval_days -> Integer,
 
     }
 }
@@ -22,6 +24,8 @@ pub struct VaccineCourseDoseRow {
     pub vaccine_course_id: String,
     pub dose_number: i32,
     pub label: String,
+    pub min_age: f64,
+    pub min_interval_days: i32,
 }
 
 pub struct VaccineCourseDoseRowRepository<'a> {

@@ -44,6 +44,8 @@ pub struct VaccineCourseDoseInput {
     pub id: String,
     pub dose_number: i32,
     pub label: String,
+    pub min_age: f64,
+    pub min_interval_days: i32,
 }
 
 impl VaccineCourseDoseInput {
@@ -53,6 +55,8 @@ impl VaccineCourseDoseInput {
             dose_number: self.dose_number,
             label: self.label,
             vaccine_course_id,
+            min_age: self.min_age,
+            min_interval_days: self.min_interval_days,
         }
     }
 }

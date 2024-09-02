@@ -50,6 +50,8 @@ pub struct UpsertVaccineCourseDoseInput {
     pub id: String,
     pub label: String,
     pub dose_number: i32,
+    pub min_age: f64,
+    pub min_interval_days: i32,
 }
 
 #[derive(InputObject, Clone)]
@@ -99,6 +101,8 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     id: d.id,
                     label: d.label,
                     dose_number: d.dose_number,
+                    min_age: d.min_age,
+                    min_interval_days: d.min_interval_days,
                 })
                 .collect(),
             demographic_indicator_id,
