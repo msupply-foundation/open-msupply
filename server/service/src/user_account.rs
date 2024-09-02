@@ -37,6 +37,7 @@ pub enum VerifyPasswordError {
     /// Invalid account data on the backend
     InvalidCredentialsBackend(bcrypt::BcryptError),
     DatabaseError(RepositoryError),
+    EmptyHashedPassword,
 }
 
 #[derive(Debug)]
@@ -189,9 +190,17 @@ impl<'a> UserAccountService<'a> {
             Some(user) => user,
             None => return Err(VerifyPasswordError::UsernameDoesNotExist),
         };
-        // verify password
-        let valid = verify(password, &user.hashed_password)
-            .map_err(|err| VerifyPasswordError::InvalidCredentialsBackend(err))?;
+
+        // check if hashed password exists in db
+        if &user.hashed_password == "" {
+            return Err(VerifyPasswordError::EmptyHashedPassword);
+        }
+
+        // verify password  
+        let valid = verify(password, &user.hashed_password).map_err(|err| {
+            error!("verify_password: {}", err);
+            VerifyPasswordError::InvalidCredentialsBackend(err)
+        })?;
         if !valid {
             return Err(VerifyPasswordError::InvalidCredentials);
         }
@@ -337,4 +346,5 @@ mod user_account_test {
             .unwrap();
         assert!(!permissions.is_empty());
     }
+
 }
