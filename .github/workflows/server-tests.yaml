@@ -4,7 +4,7 @@ on:
       - main
       - develop
     paths:
-      - "server/**"
+      - 'server/**'
   workflow_dispatch:
 
 name: CI
@@ -13,6 +13,7 @@ jobs:
   build_and_test:
     name: Remote Server Tests (sqlite)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       # --- install build dependencies taken from https://github.com/stbuehler/rust-async-dnssd/blob/master/.github/workflows/rust.yml
       - name: Update package list
