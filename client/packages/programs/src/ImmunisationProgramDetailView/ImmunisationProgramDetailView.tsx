@@ -71,7 +71,11 @@ export const ProgramComponent: FC = () => {
             ? rowData.demographicIndicator.name
             : UNDEFINED_STRING_VALUE,
       },
-      { key: 'doses', label: 'label.doses' },
+      {
+        key: 'doses',
+        label: 'label.doses',
+        accessor: ({ rowData }) => rowData?.vaccineCourseDoses?.length ?? 0,
+      },
       'selection',
     ],
     {
