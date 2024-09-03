@@ -1,4 +1,4 @@
-on: 
+on:
   workflow_dispatch:
     inputs:
       architecture:
@@ -24,6 +24,7 @@ jobs:
   build_and_test:
     name: Build mac demo
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
