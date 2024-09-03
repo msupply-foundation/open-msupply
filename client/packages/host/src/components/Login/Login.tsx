@@ -55,7 +55,11 @@ export const Login = () => {
     }
   }, [error]);
 
+
+
+
   const loginError: { error: string; hint?: string } = useMemo(() => {
+
     if (!error) return { error: '' };
 
     if (error.message === 'ConnectionError') {
@@ -64,6 +68,7 @@ export const Login = () => {
         hint: t('error.connection-error-hint'),
       };
     }
+
 
     if (error.message === 'AccountBlocked') {
       if (timeoutRemaining < 1000) return { error: '' };
@@ -76,7 +81,11 @@ export const Login = () => {
     }
 
     if (error.message === 'InvalidCredentials') {
-      return { error: t('error.login'), hint: t('error.login-support') };
+      return { error: t('error.login') };
+    }
+
+    if (error.message === "CentralSyncRequired") {
+      return {error: t('error.missing-central-sync')}
     }
 
     if (error.message === 'NoSiteAccess') {
@@ -87,7 +96,7 @@ export const Login = () => {
     }
 
     if (error?.stdError === 'Internal error') {
-      return { error: t('error.internal-error') };
+      return { error: t('error.internal-error'), hint: t('error.login-support') };
     }
 
     return {
