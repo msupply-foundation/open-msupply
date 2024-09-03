@@ -505,7 +505,7 @@ mod test {
 
     use httpmock::{Method::POST, MockServer};
     use repository::{
-        mock::{mock_store_a, MockDataInserts},
+        mock::{mock_store_a, mock_user_empty_hashed_password, MockDataInserts},
         test_db::setup_all,
         EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
@@ -526,7 +526,7 @@ mod test {
     #[actix_rt::test]
     async fn central_login_test() {
         let (_, _, connection_manager, _) =
-            setup_all("login_test", MockDataInserts::none().names().stores()).await;
+            setup_all("login_test", MockDataInserts::none().names().stores().user_accounts()).await;
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
             .context("".to_string(), "".to_string())
@@ -639,6 +639,33 @@ mod test {
 
             assert!(result.is_ok());
         }
+        // check login error handling when empty password hash and can't connect to mSupply
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(500);
+            });
+
+            let central_server_url = mock_server.base_url();
+
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: mock_user_empty_hashed_password().username,
+                    password: "password".to_string(),
+                    central_server_url,
+                },
+                0,
+            )
+            .await;
+
+            assert_matches!(
+                result,
+                Err(LoginError::MSupplyCentralNotReached)
+            );
+        }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {
             let mock_server = MockServer::start();
@@ -698,6 +725,7 @@ mod test {
                 Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess))
             );
         }
+
         // If central server is not accessible after trying to login with old password, make sure old password does not work
         // Issue #1101 in remote-server: Extra login protection when user password has changed
         // {
