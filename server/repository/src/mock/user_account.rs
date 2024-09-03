@@ -68,6 +68,15 @@ pub fn mock_user_store_join_b_store_a() -> UserStoreJoinRow {
     }
 }
 
+pub fn mock_user_store_join_empty_hash_password_store_a() -> UserStoreJoinRow {
+    UserStoreJoinRow {
+        id: "user_account_empty_hashed_password".to_string(),
+        user_id: "user_account_b".to_string(),
+        store_id: "store_a".to_string(),
+        is_default: true,
+    }
+}
+
 
 // permissions
 
@@ -121,6 +130,7 @@ pub fn mock_user_store_joins() -> Vec<UserStoreJoinRow> {
         mock_user_store_join_a_store_b(),
         mock_user_store_join_b_store_a(),
         mock_user_store_join_program_master_list(),
+        mock_user_store_join_empty_hash_password_store_a(),
     ]
 }
 
