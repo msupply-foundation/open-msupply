@@ -7,8 +7,8 @@ use graphql_core::{
 use service::{
     auth::{Resource, ResourceAccessRequest},
     vaccine_course::update::{
-        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseItemInput,
-        VaccineCourseScheduleInput,
+        UpdateVaccineCourse, UpdateVaccineCourseError as ServiceError, VaccineCourseDoseInput,
+        VaccineCourseItemInput,
     },
 };
 
@@ -46,10 +46,11 @@ pub fn update_vaccine_course(
 }
 
 #[derive(InputObject, Clone)]
-pub struct UpsertVaccineCourseScheduleInput {
+pub struct UpsertVaccineCourseDoseInput {
     pub id: String,
     pub label: String,
-    pub dose_number: i32,
+    pub min_age: f64,
+    pub min_interval_days: i32,
 }
 
 #[derive(InputObject, Clone)]
@@ -63,12 +64,11 @@ pub struct UpdateVaccineCourseInput {
     pub id: String,
     pub name: Option<String>,
     pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
-    pub schedules: Vec<UpsertVaccineCourseScheduleInput>,
+    pub doses: Vec<UpsertVaccineCourseDoseInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
-    pub doses: i32,
 }
 
 impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
@@ -77,12 +77,11 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
             id,
             name,
             vaccine_items,
-            schedules,
+            doses,
             demographic_indicator_id,
             coverage_rate,
             is_active,
             wastage_rate,
-            doses,
         }: UpdateVaccineCourseInput,
     ) -> Self {
         UpdateVaccineCourse {
@@ -95,19 +94,19 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     item_id: i.item_id,
                 })
                 .collect(),
-            schedules: schedules
+            doses: doses
                 .into_iter()
-                .map(|s| VaccineCourseScheduleInput {
-                    id: s.id,
-                    label: s.label,
-                    dose_number: s.dose_number,
+                .map(|d| VaccineCourseDoseInput {
+                    id: d.id,
+                    label: d.label,
+                    min_age: d.min_age,
+                    min_interval_days: d.min_interval_days,
                 })
                 .collect(),
             demographic_indicator_id,
             coverage_rate,
             is_active,
             wastage_rate,
-            doses,
         }
     }
 }
@@ -144,10 +143,12 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccineCourseErrorInterface> {
             )
         }
         // Standard Graphql Errors
-        ServiceError::VaccineCourseDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::VaccineCourseDoesNotExist
+        | ServiceError::DemographicIndicatorDoesNotExist
+        | ServiceError::DoseMinAgesAreNotInOrder => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
