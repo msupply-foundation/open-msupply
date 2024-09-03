@@ -39,7 +39,6 @@ const vaccineCourseParsers = {
   toDoseInput: (dose: VaccineCourseDoseNode): UpsertVaccineCourseDoseInput => {
     return {
       id: dose.id,
-      doseNumber: dose.doseNumber,
       label: dose.label,
       minAge: dose.minAgeMonths,
       minIntervalDays: dose.minIntervalDays,

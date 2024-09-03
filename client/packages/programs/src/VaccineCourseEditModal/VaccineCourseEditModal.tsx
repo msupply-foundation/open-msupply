@@ -242,7 +242,6 @@ const VaccineCourseDoseTable = ({
           __typename: 'VaccineCourseDoseNode',
           id: FnUtils.generateUUID(),
           // temp - will be overwritten by the backend to assign unique dose number (even if previous doses were deleted)
-          doseNumber: doses.length + 1,
           label: `${courseName} ${doses.length + 1}`,
           minAgeMonths: 0,
           minIntervalDays: 0,

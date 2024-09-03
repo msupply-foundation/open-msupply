@@ -42,7 +42,6 @@ impl VaccineCourseItemInput {
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct VaccineCourseDoseInput {
     pub id: String,
-    pub dose_number: i32,
     pub label: String,
     pub min_age: f64,
     pub min_interval_days: i32,
@@ -52,7 +51,6 @@ impl VaccineCourseDoseInput {
     pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseDoseRow {
         VaccineCourseDoseRow {
             id: self.id,
-            dose_number: self.dose_number,
             label: self.label,
             vaccine_course_id,
             min_age: self.min_age,
