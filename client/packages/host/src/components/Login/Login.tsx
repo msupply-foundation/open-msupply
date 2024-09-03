@@ -55,11 +55,7 @@ export const Login = () => {
     }
   }, [error]);
 
-
-
-
   const loginError: { error: string; hint?: string } = useMemo(() => {
-
     if (!error) return { error: '' };
 
     if (error.message === 'ConnectionError') {
