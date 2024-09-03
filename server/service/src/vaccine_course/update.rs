@@ -1,4 +1,7 @@
-use super::{query::get_vaccine_course, validate::check_vaccine_course_name_exists_for_program};
+use super::{
+    query::get_vaccine_course,
+    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
+};
 use crate::{
     activity_log::activity_log_entry, demographic::validate::check_demographic_indicator_exists,
     service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
@@ -18,6 +21,7 @@ use repository::{
 pub enum UpdateVaccineCourseError {
     VaccineCourseNameExistsForThisProgram,
     VaccineCourseDoesNotExist,
+    DoseMinAgesAreNotInOrder,
     CreatedRecordNotFound,
     DemographicIndicatorDoesNotExist,
     DatabaseError(RepositoryError),
@@ -149,6 +153,10 @@ pub fn validate(
         connection,
     )? {
         return Err(UpdateVaccineCourseError::VaccineCourseNameExistsForThisProgram);
+    }
+
+    if !check_dose_min_ages_are_in_order(&input.doses) {
+        return Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder);
     }
 
     Ok(old_row)

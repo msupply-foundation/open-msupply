@@ -61,14 +61,35 @@ mod query {
         let dose1 = VaccineCourseDoseInput {
             id: "dose_id1".to_owned(),
             label: "Dose 1".to_owned(),
+            min_age: 12.0,
             ..Default::default()
         };
 
         let dose2 = VaccineCourseDoseInput {
             id: "dose_id2".to_owned(),
             label: "Dose 2".to_owned(),
+            min_age: 18.0,
             ..Default::default()
         };
+
+        // 0 - Attempt to update to out-of-order dose ages
+
+        let update = UpdateVaccineCourse {
+            id: vaccine_course_insert_a.id.clone(),
+            doses: vec![
+                dose1.clone(),
+                VaccineCourseDoseInput {
+                    id: "dose_with_lower_min_age".to_owned(),
+                    min_age: 10.0,
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
+        assert_eq!(
+            service.update_vaccine_course(&context, update),
+            Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder)
+        );
 
         // 0 - Update the vaccine course with the items and doses
 
