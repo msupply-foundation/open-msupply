@@ -14,5 +14,6 @@
   "label.diastolic": "Diastolic",
   "label.document-edit-history": "Document Edit History",
   "label.dose": "Dose",
-  "label.systolic": "Systolic"
+  "label.systolic": "Systolic",
+  "message.add-a-dose": "Add a dose"
 }
