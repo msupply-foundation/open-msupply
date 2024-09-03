@@ -3,15 +3,15 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        DemographicIndicatorLoader, VaccineCourseItemByVaccineCourseIdLoader,
-        VaccineCourseScheduleByVaccineCourseIdLoader,
+        DemographicIndicatorLoader, VaccineCourseDoseByVaccineCourseIdLoader,
+        VaccineCourseItemByVaccineCourseIdLoader,
     },
     ContextExt,
 };
 
 use repository::vaccine_course::vaccine_course_row::VaccineCourseRow;
 
-use super::{DemographicIndicatorNode, VaccineCourseItemNode, VaccineCourseScheduleNode};
+use super::{DemographicIndicatorNode, VaccineCourseDoseNode, VaccineCourseItemNode};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccineCourseNode {
@@ -48,10 +48,6 @@ impl VaccineCourseNode {
         self.row().wastage_rate
     }
 
-    pub async fn doses(&self) -> i32 {
-        self.row().doses
-    }
-
     pub async fn demographic_indicator(
         &self,
         ctx: &Context<'_>,
@@ -82,17 +78,17 @@ impl VaccineCourseNode {
         }))
     }
 
-    pub async fn vaccine_course_schedules(
+    pub async fn vaccine_course_doses(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<Option<Vec<VaccineCourseScheduleNode>>> {
-        let loader = ctx.get_loader::<DataLoader<VaccineCourseScheduleByVaccineCourseIdLoader>>();
+    ) -> Result<Option<Vec<VaccineCourseDoseNode>>> {
+        let loader = ctx.get_loader::<DataLoader<VaccineCourseDoseByVaccineCourseIdLoader>>();
         let result = loader.load_one(self.row().id.clone()).await?;
 
-        Ok(result.map(|schedules| {
-            schedules
+        Ok(result.map(|doses| {
+            doses
                 .into_iter()
-                .map(VaccineCourseScheduleNode::from_domain)
+                .map(VaccineCourseDoseNode::from_domain)
                 .collect()
         }))
     }

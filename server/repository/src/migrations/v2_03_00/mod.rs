@@ -1,6 +1,10 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
+mod drop_program_deleted_datetime;
+mod remove_num_doses_from_vaccine_course;
+mod remove_vaccine_course_dose_dose_number;
+mod rename_vaccine_course_schedule_to_dose;
 mod return_types_rename;
 
 pub(crate) struct V2_03_00;
@@ -14,17 +18,26 @@ impl Migration for V2_03_00 {
         return_types_rename::migrate(_connection)?;
         Ok(())
     }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(drop_program_deleted_datetime::Migrate),
+            Box::new(rename_vaccine_course_schedule_to_dose::Migrate),
+            Box::new(remove_num_doses_from_vaccine_course::Migrate),
+            Box::new(remove_vaccine_course_dose_dose_number::Migrate),
+        ]
+    }
 }
 
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_2_03_00() {
-    use v2_02_00::V2_02_00;
+    use v2_02_01::V2_02_01;
 
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let previous_version = V2_02_00.version();
+    let previous_version = V2_02_01.version();
     let version = V2_03_00.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {
