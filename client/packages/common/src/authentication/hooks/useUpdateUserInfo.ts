@@ -65,6 +65,9 @@ export const useUpdateUserInfo = (
             case 'MissingCredentials':
               setError(t('error.invalid-credentials'));
               break;
+            case 'CentralSyncRequired':
+              setError(t('error.missing-central-sync'))
+              break;
             default:
               noOtherVariants(update.error);
           }

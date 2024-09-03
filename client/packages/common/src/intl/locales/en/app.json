@@ -64,6 +64,7 @@
   "error.server-not-found": "We are having a problem finding an Open mSupply server",
   "error.site-auth-timeout": "Site authentication timed out, please try again later",
   "error.site-has-no-store": "Site has no store",
+  "error.missing-central-sync": "Please sync with mSupply central to validate your user credentials",
   "error.site-incorrect-hardware-id": "Incorrect hardware ID",
   "error.site-incorrect-password": "Incorrect password",
   "error.site-mismatch": "Site mismatch",

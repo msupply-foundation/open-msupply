@@ -47,6 +47,15 @@ impl MissingCredentials {
     }
 }
 
+pub struct CentralSyncRequired;
+#[Object]
+impl CentralSyncRequired {
+    pub async fn description(&self) -> &str {
+        "Missing hash sync"
+    }
+}
+
+
 pub struct AccountBlocked {
     pub timeout_remaining: u64,
 }
@@ -68,6 +77,7 @@ pub enum AuthTokenErrorInterface {
     InvalidCredentials(InvalidCredentials),
     AccountBlocked(AccountBlocked),
     NoSiteAccess(NoSiteAccess),
+    CentralSyncRequired(CentralSyncRequired),
 }
 
 #[derive(SimpleObject)]
@@ -118,6 +128,11 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
                         error: AuthTokenErrorInterface::AccountBlocked(AccountBlocked {
                             timeout_remaining,
                         }),
+                    }))
+                }
+                LoginError::MSupplyCentralNotReached => {
+                    return Ok(AuthTokenResponse::Error(AuthTokenError {
+                        error: AuthTokenErrorInterface::CentralSyncRequired(CentralSyncRequired)
                     }))
                 }
                 LoginError::LoginFailure(LoginFailure::NoSiteAccess) => {

@@ -11,7 +11,7 @@ export type AuthTokenQueryVariables = Types.Exact<{
 }>;
 
 
-export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'AccountBlocked', description: string, timeoutRemaining: number } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'NoSiteAccess', description: string } } };
+export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'AccountBlocked', description: string, timeoutRemaining: number } | { __typename: 'CentralSyncRequired', description: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'NoSiteAccess', description: string } } };
 
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -47,7 +47,7 @@ export type UpdateUserFragment = { __typename: 'UpdateUserNode', lastSuccessfulS
 export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'UpdateUserError', error: { __typename: 'ConnectionError', description: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'MissingCredentials', description: string } } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
+export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'UpdateUserError', error: { __typename: 'CentralSyncRequired', description: string } | { __typename: 'ConnectionError', description: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'MissingCredentials', description: string } } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
 
 export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -104,6 +104,10 @@ export const AuthTokenDocument = gql`
           __typename
           description
           timeoutRemaining
+        }
+        ... on CentralSyncRequired {
+          __typename
+          description
         }
         description
       }
@@ -238,7 +242,10 @@ export const UpdateUserDocument = gql`
           __typename
           description
         }
-        description
+        ... on CentralSyncRequired {
+          __typename
+          description
+        }
       }
     }
   }

@@ -42,6 +42,10 @@ query authToken($username: String!, $password: String!) {
           description
           timeoutRemaining
         }
+        ... on CentralSyncRequired {
+          __typename
+          description
+        }
         description
       }
     }
@@ -173,7 +177,10 @@ mutation updateUser {
           __typename
           description
         }
-        description
+        ... on CentralSyncRequired {
+          __typename
+          description
+        }
       }
     }
   }
