@@ -121,6 +121,19 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
 
   const save = async () => {
     setIsDirty(false);
+
+    const agesAreInOrder = (draft.vaccineCourseDoses ?? []).every(
+      (dose, index, doses) => {
+        const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
+        return dose.minAgeMonths > prevDoseAge;
+      }
+    );
+
+    if (!agesAreInOrder) {
+      error(t('error.dose-ages-out-of-order'))();
+      return;
+    }
+
     try {
       const result =
         mode === ModalMode.Update
