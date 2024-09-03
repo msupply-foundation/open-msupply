@@ -98,14 +98,39 @@ mod query {
         let dose1 = VaccineCourseDoseInput {
             id: "dose_id1".to_owned(),
             label: "Dose 1".to_owned(),
+            min_age: 12.0,
             ..Default::default()
         };
 
         let dose2 = VaccineCourseDoseInput {
             id: "dose_id2".to_owned(),
             label: "Dose 2".to_owned(),
+            min_age: 18.0,
             ..Default::default()
         };
+
+        // 2a - dose ages are not in order
+
+        let vaccine_course_insert_wrong_doses = InsertVaccineCourse {
+            id: "vaccine_course_id_wrong_doses".to_owned(),
+            name: "vaccine_course_name_wrong_doses".to_owned(),
+            program_id: mock_immunisation_program_b().id.clone(),
+            doses: vec![
+                dose1.clone(),
+                VaccineCourseDoseInput {
+                    id: "dose_with_lower_min_age".to_owned(),
+                    min_age: 10.0,
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
+        assert_eq!(
+            service.insert_vaccine_course(&context, vaccine_course_insert_wrong_doses),
+            Err(InsertVaccineCourseError::DoseMinAgesAreNotInOrder)
+        );
+
+        // 2b - success
 
         let vaccine_course_insert_d = InsertVaccineCourse {
             id: "vaccine_course_id_d".to_owned(),

@@ -137,10 +137,12 @@ fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
             )
         }
         // Standard Graphql Errors
-        ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::DemographicIndicatorDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::ProgramDoesNotExist
+        | ServiceError::DemographicIndicatorDoesNotExist
+        | ServiceError::DoseMinAgesAreNotInOrder => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

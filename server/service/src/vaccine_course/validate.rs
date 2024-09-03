@@ -7,6 +7,8 @@ use repository::{
     StringFilter,
 };
 
+use super::update::VaccineCourseDoseInput;
+
 pub fn check_vaccine_course_exists(
     id: &str,
     connection: &StorageConnection,
@@ -36,4 +38,15 @@ pub fn check_vaccine_course_name_exists_for_program(
     }
     let result = VaccineCourseRepository::new(connection).query_by_filter(filter)?;
     Ok(result.is_empty())
+}
+
+pub fn check_dose_min_ages_are_in_order(doses: &Vec<VaccineCourseDoseInput>) -> bool {
+    let mut prev_min_age = 0.0;
+    for dose in doses {
+        if dose.min_age <= prev_min_age {
+            return false;
+        }
+        prev_min_age = dose.min_age;
+    }
+    true
 }
