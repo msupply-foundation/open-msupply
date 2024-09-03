@@ -167,7 +167,6 @@ impl<'a> UserAccountService<'a> {
             .unwrap(); //TODO relocate to service
 
         let repo = UserRepository::new(self.connection);
-        
         repo.query_one(
             UserFilter::new()
                 .id(EqualFilter::equal_to(user_id))
