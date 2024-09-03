@@ -3,7 +3,11 @@ use crate::{
     StorageConnection, Upsert,
 };
 
-use super::{store_row::store, vaccination_row::vaccination::dsl::*};
+use super::{
+    clinician_link_row::clinician_link, clinician_row::clinician,
+    vaccination_row::vaccination::dsl::*,
+    vaccine_course::vaccine_course_schedule_row::vaccine_course_schedule,
+};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel_derive_enum::DbEnum;
@@ -15,21 +19,28 @@ table! {
     vaccination (id) {
         id -> Text,
         store_id -> Text,
+        program_id -> Text,
         encounter_id -> Text,
         user_id -> Text,
+        vaccine_course_dose_id -> Text,
         created_datetime -> Timestamp,
-        invoice_line_id -> Nullable<Text>,
+        invoice_id -> Nullable<Text>,
         clinician_link_id -> Nullable<Text>,
         vaccination_date -> Date,
         given -> Bool,
-        not_given_reason -> Nullable<Text>, // TODO: enum or text?
+        not_given_reason -> Nullable<Text>,
         comment -> Nullable<Text>,
     }
 }
 
-joinable!(vaccination -> store (store_id));
+joinable!(vaccination -> clinician_link (clinician_link_id));
+joinable!(vaccination -> vaccine_course_schedule (vaccine_course_dose_id));
 
-allow_tables_to_appear_in_same_query!(vaccination, store);
+allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
+allow_tables_to_appear_in_same_query!(vaccination, clinician);
+allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_schedule);
+allow_tables_to_appear_in_same_query!(vaccine_course_schedule, clinician_link);
+allow_tables_to_appear_in_same_query!(vaccine_course_schedule, clinician);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
@@ -39,10 +50,12 @@ allow_tables_to_appear_in_same_query!(vaccination, store);
 pub struct VaccinationRow {
     pub id: String,
     pub store_id: String,
+    pub program_id: String,
     pub encounter_id: String,
     pub user_id: String,
+    pub vaccine_course_dose_id: String,
     pub created_datetime: NaiveDateTime,
-    pub invoice_line_id: Option<String>,
+    pub invoice_id: Option<String>,
     pub clinician_link_id: Option<String>,
     pub vaccination_date: NaiveDate,
     pub given: bool,
