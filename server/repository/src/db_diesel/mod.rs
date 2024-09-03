@@ -120,6 +120,7 @@ pub mod user_permission;
 mod user_permission_row;
 mod user_row;
 mod user_store_join_row;
+pub mod vaccination;
 pub mod vaccination_row;
 pub mod vaccine_course;
 
@@ -230,6 +231,7 @@ pub use user_permission::*;
 pub use user_permission_row::*;
 pub use user_row::*;
 pub use user_store_join_row::*;
+pub use vaccination::*;
 pub use vaccination_row::*;
 
 use diesel::{
