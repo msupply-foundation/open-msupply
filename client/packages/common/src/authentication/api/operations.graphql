@@ -177,10 +177,6 @@ mutation updateUser {
           __typename
           description
         }
-        ... on CentralSyncRequired {
-          __typename
-          description
-        }
       }
     }
   }
