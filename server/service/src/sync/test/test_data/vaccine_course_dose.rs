@@ -12,7 +12,7 @@ const VACCINE_COURSE_DOSE1: (&str, &str) = (
         "vaccine_course_id": "test_vaccine_course",
         "label": "test dose label",
         "min_age": 12.0,
-        "min_interval": 20
+        "min_interval_days": 20
     }"#,
 );
 

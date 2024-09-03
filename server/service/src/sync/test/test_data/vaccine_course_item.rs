@@ -10,7 +10,7 @@ const VACCINE_COURSE_ITEM1: (&str, &str) = (
     r#"{
         "id":  "test_vaccine_course_item",
         "vaccine_course_id": "test_vaccine_course",
-        "item_id": "item_a"
+        "item_link_id": "item_a"
     }"#,
 );
 

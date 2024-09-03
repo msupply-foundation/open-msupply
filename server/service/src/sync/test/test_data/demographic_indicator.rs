@@ -9,7 +9,7 @@ const DEMOGRAPHIC_INDICATOR1: (&str, &str) = (
     "test_demographic_indicator",
     r#"{
         "id":  "test_demographic_indicator",
-        "name": "test demographic".to_string(),
+        "name": "test demographic",
         "base_year": 0,
         "base_population": 0,
         "population_percentage": 0.0,
