@@ -7968,7 +7968,6 @@ export type UpsertLogLevelResponse = {
 };
 
 export type UpsertVaccineCourseDoseInput = {
-  doseNumber: Scalars['Int']['input'];
   id: Scalars['String']['input'];
   label: Scalars['String']['input'];
   minAge: Scalars['Float']['input'];
@@ -8104,7 +8103,6 @@ export type VaccineCourseConnector = {
 
 export type VaccineCourseDoseNode = {
   __typename: 'VaccineCourseDoseNode';
-  doseNumber: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
   minAgeMonths: Scalars['Float']['output'];

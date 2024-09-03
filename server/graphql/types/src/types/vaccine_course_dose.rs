@@ -13,10 +13,6 @@ impl VaccineCourseDoseNode {
         &self.row().id
     }
 
-    pub async fn dose_number(&self) -> &i32 {
-        &self.row().dose_number
-    }
-
     pub async fn label(&self) -> &str {
         &self.row().label
     }

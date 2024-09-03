@@ -89,7 +89,6 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
                 .map(|d| VaccineCourseDoseInput {
                     id: d.id,
                     label: d.label,
-                    dose_number: d.dose_number,
                     min_age: d.min_age,
                     min_interval_days: d.min_interval_days,
                 })

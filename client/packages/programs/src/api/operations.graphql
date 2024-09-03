@@ -611,7 +611,6 @@ fragment ImmunisationProgram on ProgramNode {
 
 fragment VaccineCourseDose on VaccineCourseDoseNode {
   id
-  doseNumber
   label
   minAgeMonths
   minIntervalDays
