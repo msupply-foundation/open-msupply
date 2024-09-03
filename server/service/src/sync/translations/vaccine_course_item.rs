@@ -54,9 +54,6 @@ impl SyncTranslation for VaccineCourseItemTranslation {
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
-            ToSyncRecordTranslationType::PushToOmSupplyCentral => {
-                self.change_log_type().as_ref() == Some(&row.table_name)
-            }
             _ => false,
         }
     }
