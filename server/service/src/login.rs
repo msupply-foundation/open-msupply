@@ -725,7 +725,6 @@ mod test {
                 Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess))
             );
         }
-
         // If central server is not accessible after trying to login with old password, make sure old password does not work
         // Issue #1101 in remote-server: Extra login protection when user password has changed
         // {
