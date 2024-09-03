@@ -27,17 +27,10 @@ use repository::{
 use rust_embed::RustEmbed;
 
 // Define a struct for development
-#[cfg(debug_assertions)]
 #[derive(RustEmbed)]
 #[folder = "../../client/packages/common/src/intl/locales"] // Path for development
-struct DevLocalisations;
+struct Localisations;
 
-
-// Define a struct for production
-#[cfg(not(debug_assertions))]
-#[derive(RustEmbed)]
-#[folder = "../../client/packages/host/dist/locales"] // Path for production
-struct ProdLocalisations;
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
@@ -149,19 +142,6 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-
-        // println!("new with triggers");
-        // #[cfg(debug_assertions)]
-        // if let Some(content) = DevLocalisations::get("en/common.json") {
-        //     println!("new with triggers + content");
-        //     println!("{:?}", content.data);
-        // }
-
-        // #[cfg(not(debug_assertions))]
-        // if let Some(content) = ProdLocalisations::get("en/common.json") {
-        //     println!("{:?}", content.data);
-        // }
-
 
         ServiceProvider {
             connection_manager: connection_manager.clone(),
