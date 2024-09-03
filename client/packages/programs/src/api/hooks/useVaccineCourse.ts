@@ -25,13 +25,10 @@ enum InsertVaccineCourseError {
   RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
 }
 
-export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
-
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
   id: '',
   name: '',
   programId: '',
-  doses: 1,
   coverageRate: 100,
   wastageRate: 0,
   isActive: true,
@@ -160,7 +157,7 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         coverageRate: input.coverageRate,
         isActive: input.isActive,
         wastageRate: input.wastageRate,
-        doses: input.doses,
+        doses: (input.vaccineCourseSchedules ?? []).length,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>
             vaccineCourseParsers.toItemInput(item)
@@ -221,7 +218,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         coverageRate: input.coverageRate,
         isActive: input.isActive,
         wastageRate: input.wastageRate,
-        doses: input.doses,
+        doses: (input.vaccineCourseSchedules ?? []).length,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>
             vaccineCourseParsers.toItemInput(item)
