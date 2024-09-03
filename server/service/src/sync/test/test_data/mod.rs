@@ -96,10 +96,6 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut vaccine_course_dose::test_pull_upsert_records());
     test_records.append(&mut vaccine_course_item::test_pull_upsert_records());
 
-    // should be below???
-    test_records.append(&mut rnr_form::test_pull_upsert_records());
-    test_records.append(&mut rnr_form_line::test_pull_upsert_records());
-
     test_records
 }
 
@@ -123,6 +119,10 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records.append(&mut currency::test_pull_upsert_records());
+
+    // Open mSupply central
+    test_records.append(&mut rnr_form::test_pull_upsert_records());
+    test_records.append(&mut rnr_form_line::test_pull_upsert_records());
 
     test_records
 }
