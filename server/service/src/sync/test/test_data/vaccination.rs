@@ -6,12 +6,13 @@ use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &str = "vaccination";
 
-// TODO
 const VACCINATION1: (&str, &str) = (
     "vacc1234-c3d5-4a04-a466-0ac81dde2aab",
     r#"{
         "id":  "vacc1234-c3d5-4a04-a466-0ac81dde2aab",
         "encounter_id": "encounter_a",
+        "program_id": "program_test",
+        "vaccine_course_dose_id": "test_vaccine_course_dose",
         "store_id": "store_a",
         "user_id": "user1",
         "created_datetime": "2024-12-17T15:16:00",
@@ -25,13 +26,15 @@ fn vaccination1() -> VaccinationRow {
     VaccinationRow {
         id: VACCINATION1.0.to_string(),
         encounter_id: "encounter_a".to_string(),
+        program_id: "program_test".to_string(),
+        vaccine_course_dose_id: "test_vaccine_course_dose".to_string(),
         store_id: "store_a".to_string(),
         created_datetime: NaiveDate::from_ymd_opt(2024, 12, 17)
             .unwrap()
             .and_hms_opt(15, 16, 0)
             .unwrap(),
         user_id: String::from("user1"),
-        invoice_line_id: None,
+        invoice_id: None,
         clinician_link_id: None,
         vaccination_date: NaiveDate::from_ymd_opt(2024, 12, 17).unwrap(),
         given: false,
