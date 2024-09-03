@@ -51,7 +51,7 @@ pub struct CentralSyncRequired;
 #[Object]
 impl CentralSyncRequired {
     pub async fn description(&self) -> &str {
-        "Missing hash sync"
+        "Could not reach mSupply central server"
     }
 }
 
