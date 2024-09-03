@@ -5,19 +5,19 @@ mod query {
         MockDataInserts,
     };
     use repository::test_db::setup_all;
+    use repository::vaccine_course::vaccine_course_dose::{
+        VaccineCourseDoseFilter, VaccineCourseDoseRepository,
+    };
     use repository::vaccine_course::vaccine_course_item::{
         VaccineCourseItemFilter, VaccineCourseItemRepository,
-    };
-    use repository::vaccine_course::vaccine_course_schedule::{
-        VaccineCourseScheduleFilter, VaccineCourseScheduleRepository,
     };
     use repository::EqualFilter;
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccine_course::insert::InsertVaccineCourse;
     use crate::vaccine_course::update::{
-        UpdateVaccineCourse, UpdateVaccineCourseError, VaccineCourseItemInput,
-        VaccineCourseScheduleInput,
+        UpdateVaccineCourse, UpdateVaccineCourseError, VaccineCourseDoseInput,
+        VaccineCourseItemInput,
     };
 
     #[actix_rt::test]
@@ -35,19 +35,18 @@ mod query {
             name: "vaccine_course_name".to_owned(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
-            schedules: vec![],
+            doses: vec![],
             demographic_indicator_id: None,
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
 
         let _result = service
             .insert_vaccine_course(&context, vaccine_course_insert_a.clone())
             .unwrap();
 
-        // Setup some items and schedules to add to the vaccine course
+        // Setup some items and doses to add to the vaccine course
 
         let item1 = VaccineCourseItemInput {
             id: "item_id".to_owned(),
@@ -59,30 +58,50 @@ mod query {
             item_id: mock_item_b().id,
         };
 
-        let schedule1 = VaccineCourseScheduleInput {
-            id: "schedule_id1".to_owned(),
+        let dose1 = VaccineCourseDoseInput {
+            id: "dose_id1".to_owned(),
             label: "Dose 1".to_owned(),
-            dose_number: 1,
+            min_age: 12.0,
+            ..Default::default()
         };
 
-        let schedule2 = VaccineCourseScheduleInput {
-            id: "schedule_id2".to_owned(),
+        let dose2 = VaccineCourseDoseInput {
+            id: "dose_id2".to_owned(),
             label: "Dose 2".to_owned(),
-            dose_number: 2,
+            min_age: 18.0,
+            ..Default::default()
         };
 
-        // 0 - Update the vaccine course with the items and schedules
+        // 0 - Attempt to update to out-of-order dose ages
+
+        let update = UpdateVaccineCourse {
+            id: vaccine_course_insert_a.id.clone(),
+            doses: vec![
+                dose1.clone(),
+                VaccineCourseDoseInput {
+                    id: "dose_with_lower_min_age".to_owned(),
+                    min_age: 10.0,
+                    ..Default::default()
+                },
+            ],
+            ..Default::default()
+        };
+        assert_eq!(
+            service.update_vaccine_course(&context, update),
+            Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder)
+        );
+
+        // 0 - Update the vaccine course with the items and doses
 
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
             vaccine_items: vec![item1.clone(), item2.clone()],
-            schedules: vec![schedule1.clone(), schedule2.clone()],
+            doses: vec![dose1.clone(), dose2.clone()],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
 
         let result = service.update_vaccine_course(&context, update).unwrap();
@@ -100,26 +119,25 @@ mod query {
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
         assert_eq!(count, 2);
 
-        // Check there are two schedules for the vaccine_course
+        // Check there are two doses for the vaccine_course
 
-        let schedule_repo = VaccineCourseScheduleRepository::new(&context.connection);
-        let schedule_filter = VaccineCourseScheduleFilter::new()
+        let dose_repo = VaccineCourseDoseRepository::new(&context.connection);
+        let dose_filter = VaccineCourseDoseFilter::new()
             .vaccine_course_id(EqualFilter::equal_to(&vaccine_course_insert_a.id));
-        let count = schedule_repo.count(Some(schedule_filter.clone())).unwrap();
+        let count = dose_repo.count(Some(dose_filter.clone())).unwrap();
         assert_eq!(count, 2);
 
-        // 1 - Remove one item and one schedule
+        // 1 - Remove one item and one dose
 
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
             vaccine_items: vec![item2],
-            schedules: vec![schedule2],
+            doses: vec![dose2],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -127,21 +145,20 @@ mod query {
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
         assert_eq!(count, 1);
 
-        // Check there is one schedule for the vaccine_course
-        let count = schedule_repo.count(Some(schedule_filter.clone())).unwrap();
+        // Check there is one dose for the vaccine_course
+        let count = dose_repo.count(Some(dose_filter.clone())).unwrap();
         assert_eq!(count, 1);
 
-        // 2 - Remove item_1 and schedule_1 and add item_2 and schedule_2
+        // 2 - Remove item_1 and dose_1 and add item_2 and dose_2
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
             vaccine_items: vec![item1.clone()],
-            schedules: vec![schedule1.clone()],
+            doses: vec![dose1.clone()],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -150,51 +167,45 @@ mod query {
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].vaccine_course_item.id, item1.id);
 
-        // Check there is one schedule for the vaccine_course, and it's the right one
-        let schedules = schedule_repo
-            .query_by_filter(schedule_filter.clone())
-            .unwrap();
-        assert_eq!(schedules.len(), 1);
-        assert_eq!(schedules[0].id, schedule1.id);
+        // Check there is one dose for the vaccine_course, and it's the right one
+        let doses = dose_repo.query_by_filter(dose_filter.clone()).unwrap();
+        assert_eq!(doses.len(), 1);
+        assert_eq!(doses[0].id, dose1.id);
 
         // 3 - Update the label for a vaccine course
 
-        let schedule1 = VaccineCourseScheduleInput {
+        let dose1 = VaccineCourseDoseInput {
             label: "Dose 1 Updated".to_owned(),
-            ..schedule1
+            ..dose1
         };
 
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
             vaccine_items: vec![item1.clone()],
-            schedules: vec![schedule1.clone()],
+            doses: vec![dose1.clone()],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
-        // Check there is one schedule for the vaccine_course, and it's the right one
-        let schedules = schedule_repo
-            .query_by_filter(schedule_filter.clone())
-            .unwrap();
-        assert_eq!(schedules.len(), 1);
-        assert_eq!(schedules[0].label, schedule1.label);
+        // Check there is one dose for the vaccine_course, and it's the right one
+        let doses = dose_repo.query_by_filter(dose_filter.clone()).unwrap();
+        assert_eq!(doses.len(), 1);
+        assert_eq!(doses[0].label, dose1.label);
 
-        // 4 - Remove all items and schedules
+        // 4 - Remove all items and doses
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
             vaccine_items: vec![],
-            schedules: vec![],
+            doses: vec![],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
         let _result = service.update_vaccine_course(&context, update).unwrap();
 
@@ -202,8 +213,8 @@ mod query {
         let count = item_repo.count(Some(item_filter.clone())).unwrap();
         assert_eq!(count, 0);
 
-        // Check there are no schedules for the vaccine_course
-        let count = schedule_repo.count(Some(schedule_filter.clone())).unwrap();
+        // Check there are no doses for the vaccine_course
+        let count = dose_repo.count(Some(dose_filter.clone())).unwrap();
         assert_eq!(count, 0);
 
         // 5 - Attempt to update a vaccine course to duplicate name for same program_id
@@ -215,12 +226,11 @@ mod query {
             name: "vaccine_course_name".to_owned(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
-            schedules: vec![],
+            doses: vec![],
             demographic_indicator_id: None,
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
 
         let result = service
@@ -235,12 +245,11 @@ mod query {
             id: vaccine_course_insert_b.id.clone(),
             name: Some("new_name".to_owned()),
             vaccine_items: vec![],
-            schedules: vec![],
+            doses: vec![],
             demographic_indicator_id: Some(mock_demographic_indicator_a().id),
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
 
         assert_eq!(

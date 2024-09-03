@@ -4,6 +4,7 @@ import {
   BasicTextInput,
   Box,
   ButtonWithIcon,
+  CellProps,
   Checkbox,
   ColumnDataSetter,
   Container,
@@ -27,14 +28,14 @@ import {
   useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
-  VaccineCourseScheduleNode,
+  VaccineCourseDoseNode,
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
 import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
-import { VaccineCourseScheduleFragment } from '../api/operations.generated';
+import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -120,6 +121,19 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
 
   const save = async () => {
     setIsDirty(false);
+
+    const agesAreInOrder = (draft.vaccineCourseDoses ?? []).every(
+      (dose, index, doses) => {
+        const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
+        return dose.minAgeMonths > prevDoseAge;
+      }
+    );
+
+    if (!agesAreInOrder) {
+      error(t('error.dose-ages-out-of-order'))();
+      return;
+    }
+
     try {
       const result =
         mode === ModalMode.Update
@@ -192,7 +206,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         </Row>
         <VaccineCourseDoseTable
           courseName={draft.name}
-          doses={draft.vaccineCourseSchedules ?? []}
+          doses={draft.vaccineCourseDoses ?? []}
           updatePatch={updatePatch}
         />
       </Container>
@@ -229,23 +243,24 @@ const VaccineCourseDoseTable = ({
   courseName,
 }: {
   courseName: string;
-  doses: VaccineCourseScheduleFragment[];
+  doses: VaccineCourseDoseFragment[];
   updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
 }) => {
   const t = useTranslation('programs');
 
   const addDose = () => {
+    const previousDose = doses[doses.length - 1];
+
     updatePatch({
-      vaccineCourseSchedules: [
+      vaccineCourseDoses: [
         ...doses,
         {
-          __typename: 'VaccineCourseScheduleNode',
+          __typename: 'VaccineCourseDoseNode',
           id: FnUtils.generateUUID(),
           // temp - will be overwritten by the backend to assign unique dose number (even if previous doses were deleted)
-          doseNumber: doses.length + 1,
           label: `${courseName} ${doses.length + 1}`,
-          minAgeMonths: 0,
-          minIntervalDays: 0,
+          minAgeMonths: (previousDose?.minAgeMonths ?? 0) + 1,
+          minIntervalDays: previousDose?.minIntervalDays ?? 30,
         },
       ],
     });
@@ -253,19 +268,19 @@ const VaccineCourseDoseTable = ({
 
   const deleteDose = (id: string) => {
     updatePatch({
-      vaccineCourseSchedules: doses.filter(dose => dose.id !== id),
+      vaccineCourseDoses: doses.filter(dose => dose.id !== id),
     });
   };
 
-  const updateDose: ColumnDataSetter<VaccineCourseScheduleNode> = newData => {
+  const updateDose: ColumnDataSetter<VaccineCourseDoseNode> = newData => {
     updatePatch({
-      vaccineCourseSchedules: doses.map(dose =>
+      vaccineCourseDoses: doses.map(dose =>
         dose.id === newData.id ? { ...dose, ...newData } : dose
       ),
     });
   };
 
-  const columns = useColumns<VaccineCourseScheduleNode>(
+  const columns = useColumns<VaccineCourseDoseNode>(
     [
       {
         key: 'doseNumber',
@@ -283,7 +298,7 @@ const VaccineCourseDoseTable = ({
       },
       {
         key: 'minAgeMonths',
-        Cell: NumberInputCell,
+        Cell: MinAgeCell,
         label: 'label.age-months',
         setter: updateDose,
       },
@@ -329,3 +344,8 @@ const VaccineCourseDoseTable = ({
     </>
   );
 };
+
+// Input cells can't be defined inline, otherwise they lose focus on re-render
+const MinAgeCell = (props: CellProps<VaccineCourseDoseFragment>) => (
+  <NumberInputCell decimalLimit={2} {...props} />
+);
