@@ -26,6 +26,37 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
+import { OrderInfoSection } from './OrderInfoSection';
+
+const ProgramInfoSection: FC = () => {
+  const { orderType, programName, period } = useRequest.document.fields([
+    'orderType',
+    'programName',
+    'period',
+  ]);
+  const t = useTranslation('replenishment');
+
+  return programName ? (
+    <DetailPanelSection title={t('heading.program-info')}>
+      <Grid container gap={0.5} key="program-info">
+        <PanelRow>
+          <PanelLabel>{t('label.order-type')}</PanelLabel>
+          <PanelField>{orderType ?? ''}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.program')}</PanelLabel>
+          <PanelField>{programName ?? ''}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.period')}</PanelLabel>
+          <PanelField>{period?.name ?? ''}</PanelField>
+        </PanelRow>
+      </Grid>
+    </DetailPanelSection>
+  ) : (
+    <></>
+  );
+};
 
 const AdditionalInfoSection: FC = () => {
   const isDisabled = useRequest.utils.isDisabled();
@@ -189,6 +220,8 @@ export const SidePanel: FC = () => {
         </>
       }
     >
+      <OrderInfoSection />
+      <ProgramInfoSection />
       <AdditionalInfoSection />
       <RelatedDocumentsSection />
     </DetailPanelPortal>

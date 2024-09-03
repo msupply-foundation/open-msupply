@@ -10,8 +10,6 @@ import {
   Box,
   ButtonWithIcon,
   CloseIcon,
-  LoadingButton,
-  SaveIcon,
   useTranslation,
   useUrlQueryParams,
   DataTable,
@@ -22,7 +20,11 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { VaccineCourseFragment, useVaccineCourseList, useImmunisationProgram } from '../api';
+import {
+  VaccineCourseFragment,
+  useVaccineCourseList,
+  useImmunisationProgram,
+} from '../api';
 import { VaccineCourseEditModal } from '../VaccineCourseEditModal';
 
 export const ProgramComponent: FC = () => {
@@ -37,11 +39,6 @@ export const ProgramComponent: FC = () => {
   const { id } = useParams();
   const {
     query: { data, isLoading },
-    draft,
-    errorMessage,
-    updatePatch,
-    isDirty,
-    update: { update, isUpdating },
   } = useImmunisationProgram(t, id);
 
   const queryParams = {
@@ -70,7 +67,11 @@ export const ProgramComponent: FC = () => {
             ? rowData.demographicIndicator.name
             : UNDEFINED_STRING_VALUE,
       },
-      { key: 'doses', label: 'label.doses' },
+      {
+        key: 'doses',
+        label: 'label.doses',
+        accessor: ({ rowData }) => rowData?.vaccineCourseDoses?.length ?? 0,
+      },
       'selection',
     ],
     {
@@ -105,12 +106,7 @@ export const ProgramComponent: FC = () => {
           mode={mode}
         />
       )}
-      <Toolbar
-        draft={draft}
-        onUpdate={updatePatch}
-        error={errorMessage}
-        isError={errorMessage != ''}
-      />
+      <Toolbar />
       <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'Vaccine Course List'}
@@ -141,18 +137,6 @@ export const ProgramComponent: FC = () => {
                 sx={{ fontSize: '12px' }}
                 onClick={navigateUpOne}
               />
-
-              <LoadingButton
-                disabled={!isDirty || isUpdating}
-                isLoading={isUpdating}
-                onClick={() => {
-                  update();
-                }}
-                startIcon={<SaveIcon />}
-                sx={{ fontSize: '12px' }}
-              >
-                {t('button.save')}
-              </LoadingButton>
             </Box>
           </Box>
         }
