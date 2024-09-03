@@ -8161,6 +8161,8 @@ export type VaccineCourseScheduleNode = {
   doseNumber: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
+  minAgeMonths: Scalars['Float']['output'];
+  minIntervalDays: Scalars['Int']['output'];
 };
 
 export enum VaccineCourseSortFieldInput {

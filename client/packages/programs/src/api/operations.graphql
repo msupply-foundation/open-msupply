@@ -613,6 +613,8 @@ fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
   id
   doseNumber
   label
+  minAgeMonths
+  minIntervalDays
 }
 
 fragment VaccineCourseItem on VaccineCourseItemNode {
