@@ -4,6 +4,7 @@ import {
   BasicTextInput,
   Box,
   ButtonWithIcon,
+  CellProps,
   Checkbox,
   ColumnDataSetter,
   Container,
@@ -235,6 +236,8 @@ const VaccineCourseDoseTable = ({
   const t = useTranslation('programs');
 
   const addDose = () => {
+    const previousDose = doses[doses.length - 1];
+
     updatePatch({
       vaccineCourseDoses: [
         ...doses,
@@ -243,8 +246,8 @@ const VaccineCourseDoseTable = ({
           id: FnUtils.generateUUID(),
           // temp - will be overwritten by the backend to assign unique dose number (even if previous doses were deleted)
           label: `${courseName} ${doses.length + 1}`,
-          minAgeMonths: 0,
-          minIntervalDays: 0,
+          minAgeMonths: (previousDose?.minAgeMonths ?? 0) + 1,
+          minIntervalDays: previousDose?.minIntervalDays ?? 30,
         },
       ],
     });
@@ -282,7 +285,7 @@ const VaccineCourseDoseTable = ({
       },
       {
         key: 'minAgeMonths',
-        Cell: NumberInputCell,
+        Cell: MinAgeCell,
         label: 'label.age-months',
         setter: updateDose,
       },
@@ -328,3 +331,8 @@ const VaccineCourseDoseTable = ({
     </>
   );
 };
+
+// Input cells can't be defined inline, otherwise they lose focus on re-render
+const MinAgeCell = (props: CellProps<VaccineCourseDoseFragment>) => (
+  <NumberInputCell decimalLimit={2} {...props} />
+);
