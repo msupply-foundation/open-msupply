@@ -358,14 +358,7 @@ mod user_account_test {
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
 
-        let user_repo = UserRepository::new(&context.connection);
         let user_service = UserAccountService::new(&context.connection);
-
-        let user = user_repo
-        .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_empty_hashed_password().id)))
-        .unwrap()
-        .pop()
-        .unwrap();
 
         let result = user_service.verify_password(&mock_user_empty_hashed_password().username, "password");
         assert!(matches!(result, Err(VerifyPasswordError::EmptyHashedPassword)));
