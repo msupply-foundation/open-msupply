@@ -142,7 +142,6 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -216,7 +215,6 @@ impl ServiceProvider {
         store_id: String,
         user_id: String,
     ) -> Result<ServiceContext, RepositoryError> {
-
         Ok(ServiceContext {
             connection: self.connection()?,
             processors_trigger: self.processors_trigger.clone(),
