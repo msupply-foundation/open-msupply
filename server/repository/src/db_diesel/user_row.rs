@@ -116,7 +116,6 @@ impl<'a> UserAccountRowRepository<'a> {
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
             .filter(lower(user_account_dsl::username).eq(lower(username)))
-            .filter(user_account_dsl::hashed_password.ne(""))
             .first(self.connection.lock().connection());
 
         match result {
