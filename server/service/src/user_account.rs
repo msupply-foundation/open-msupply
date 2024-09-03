@@ -167,13 +167,13 @@ impl<'a> UserAccountService<'a> {
             .unwrap(); //TODO relocate to service
 
         let repo = UserRepository::new(self.connection);
-        let result = repo.query_one(
+        
+        repo.query_one(
             UserFilter::new()
                 .id(EqualFilter::equal_to(user_id))
                 .hashed_password(EqualFilter::not_equal_to(""))
                 .site_id(EqualFilter::equal_to_i32(site_id)),
-        );
-        result
+        )
     }
 
     /// Finds a user account and verifies that the password is ok
@@ -192,7 +192,7 @@ impl<'a> UserAccountService<'a> {
         };
 
         // check if hashed password exists in db
-        if &user.hashed_password == "" {
+        if user.hashed_password.is_empty() {
             return Err(VerifyPasswordError::EmptyHashedPassword);
         }
 
