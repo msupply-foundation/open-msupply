@@ -212,7 +212,7 @@ impl<'a> UserAccountService<'a> {
 #[cfg(test)]
 mod user_account_test {
     use repository::{
-        mock::{mock_user_account_a, mock_user_account_b, MockDataInserts},
+        mock::{mock_user_account_a, mock_user_account_b, mock_user_empty_hashed_password, MockDataInserts},
         test_db::{self, setup_all},
         PermissionType,
     };
@@ -345,6 +345,34 @@ mod user_account_test {
             )
             .unwrap();
         assert!(!permissions.is_empty());
+    }
+
+    #[actix_rt::test]
+    async fn test_missing_hashed_password() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_missing_hashed_password",
+            MockDataInserts::none()
+                .user_accounts()
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+
+        let user_repo = UserRepository::new(&context.connection);
+        let user_service = UserAccountService::new(&context.connection);
+
+        let user = user_repo
+        .query_by_filter(UserFilter::new().id(EqualFilter::equal_to(&mock_user_empty_hashed_password().id)))
+        .unwrap()
+        .pop()
+        .unwrap();
+
+        println!("user {:?}", user.user_row);
+        assert!(user.user_row.id == "user_account_empty_hashed_password");
+        assert!(user.user_row.username == "username_empty_hashed_password");
+
+        let result = user_service.verify_password(&mock_user_empty_hashed_password().username, "password");
+        assert!(matches!(result, Err(VerifyPasswordError::EmptyHashedPassword)));
     }
 
 }
