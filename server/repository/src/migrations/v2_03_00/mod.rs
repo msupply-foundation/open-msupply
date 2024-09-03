@@ -3,6 +3,9 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 mod add_vaccinations_table;
 mod drop_program_deleted_datetime;
+mod remove_num_doses_from_vaccine_course;
+mod remove_vaccine_course_dose_dose_number;
+mod rename_vaccine_course_schedule_to_dose;
 mod return_types_rename;
 
 pub(crate) struct V2_03_00;
@@ -20,6 +23,9 @@ impl Migration for V2_03_00 {
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
             Box::new(drop_program_deleted_datetime::Migrate),
+            Box::new(rename_vaccine_course_schedule_to_dose::Migrate),
+            Box::new(remove_num_doses_from_vaccine_course::Migrate),
+            Box::new(remove_vaccine_course_dose_dose_number::Migrate),
             Box::new(add_vaccinations_table::Migrate),
         ]
     }
