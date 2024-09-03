@@ -41,7 +41,8 @@ pub fn check_vaccine_course_name_exists_for_program(
 }
 
 pub fn check_dose_min_ages_are_in_order(doses: &Vec<VaccineCourseDoseInput>) -> bool {
-    let mut prev_min_age = 0.0;
+    // First dose could be at 0.0 months, so we start with -0.01
+    let mut prev_min_age = -0.01;
     for dose in doses {
         if dose.min_age <= prev_min_age {
             return false;
