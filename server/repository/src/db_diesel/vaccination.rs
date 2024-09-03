@@ -7,9 +7,9 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort},
-    vaccine_course::vaccine_course_schedule_row::{
-        vaccine_course_schedule, vaccine_course_schedule::dsl as vaccine_course_schedule_dsl,
-        VaccineCourseScheduleRow,
+    vaccine_course::vaccine_course_dose_row::{
+        vaccine_course_dose, vaccine_course_dose::dsl as vaccine_course_dose_dsl,
+        VaccineCourseDoseRow,
     },
     ClinicianLinkRow, ClinicianRow, EqualFilter, Pagination, Sort,
 };
@@ -22,7 +22,7 @@ use diesel::{
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Vaccination {
     pub vaccination_row: VaccinationRow,
-    pub vaccine_course_dose_row: VaccineCourseScheduleRow,
+    pub vaccine_course_dose_row: VaccineCourseDoseRow,
     pub clinician_row: Option<ClinicianRow>,
 }
 
@@ -47,7 +47,7 @@ pub struct VaccinationRepository<'a> {
 type VaccinationJoin = (
     VaccinationRow,
     Option<(ClinicianLinkRow, ClinicianRow)>,
-    VaccineCourseScheduleRow,
+    VaccineCourseDoseRow,
 );
 
 impl<'a> VaccinationRepository<'a> {
@@ -118,7 +118,7 @@ type BoxedVaccinationQuery = IntoBoxed<
     'static,
     InnerJoin<
         LeftJoin<vaccination::table, InnerJoin<clinician_link::table, clinician::table>>,
-        vaccine_course_schedule::table,
+        vaccine_course_dose::table,
     >,
     DBType,
 >;
@@ -126,7 +126,7 @@ type BoxedVaccinationQuery = IntoBoxed<
 fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQuery {
     let mut query = vaccination_dsl::vaccination
         .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
-        .inner_join(vaccine_course_schedule_dsl::vaccine_course_schedule)
+        .inner_join(vaccine_course_dose_dsl::vaccine_course_dose)
         .into_boxed();
 
     if let Some(f) = filter {

@@ -6,7 +6,7 @@ use crate::{
 use super::{
     clinician_link_row::clinician_link, clinician_row::clinician,
     vaccination_row::vaccination::dsl::*,
-    vaccine_course::vaccine_course_schedule_row::vaccine_course_schedule,
+    vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
 };
 
 use chrono::{NaiveDate, NaiveDateTime};
@@ -34,13 +34,13 @@ table! {
 }
 
 joinable!(vaccination -> clinician_link (clinician_link_id));
-joinable!(vaccination -> vaccine_course_schedule (vaccine_course_dose_id));
+joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
 
 allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
 allow_tables_to_appear_in_same_query!(vaccination, clinician);
-allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_schedule);
-allow_tables_to_appear_in_same_query!(vaccine_course_schedule, clinician_link);
-allow_tables_to_appear_in_same_query!(vaccine_course_schedule, clinician);
+allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_dose);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician_link);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
