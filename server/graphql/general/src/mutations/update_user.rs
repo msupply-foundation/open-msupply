@@ -11,7 +11,7 @@ use service::{
     sync::sync_user::SyncUser,
 };
 
-use crate::{CentralSyncRequired, InvalidCredentials, MissingCredentials};
+use crate::{ InvalidCredentials, MissingCredentials};
 
 pub struct UpdateUserNode {
     pub last_successful_sync: Option<NaiveDateTime>,
@@ -31,7 +31,6 @@ pub enum UpdateUserErrorInterface {
     ConnectionError(ConnectionError),
     InvalidCredentials(InvalidCredentials),
     MissingCredentials(MissingCredentials),
-    CentralSyncRequired(CentralSyncRequired),
 }
 
 #[derive(SimpleObject)]
@@ -77,12 +76,6 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
                         error: UpdateUserErrorInterface::MissingCredentials(MissingCredentials),
                     }));
                 }
-                LoginError::MSupplyCentralNotReached => {
-                    // return new error for missing credentials
-                    return Ok(UpdateResponse::Error(UpdateUserError {
-                        error: UpdateUserErrorInterface::CentralSyncRequired(CentralSyncRequired)
-                    }))
-                }
                 LoginError::FetchUserError(_)
                 | LoginError::UpdateUserError(_)
                 | LoginError::LoginFailure(LoginFailure::AccountBlocked(_))
@@ -90,6 +83,7 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
                 | LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FailedToGenerateToken(_) 
+                | LoginError::MSupplyCentralNotReached
                 => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }

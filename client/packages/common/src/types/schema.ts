@@ -910,7 +910,7 @@ export type CentralServerMutationNode = {
   vaccineCourse: VaccineCourseMutations;
 };
 
-export type CentralSyncRequired = AuthTokenErrorInterface & UpdateUserErrorInterface & {
+export type CentralSyncRequired = AuthTokenErrorInterface & {
   __typename: 'CentralSyncRequired';
   description: Scalars['String']['output'];
 };

@@ -47,7 +47,7 @@ export type UpdateUserFragment = { __typename: 'UpdateUserNode', lastSuccessfulS
 export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'UpdateUserError', error: { __typename: 'CentralSyncRequired', description: string } | { __typename: 'ConnectionError', description: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'MissingCredentials', description: string } } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
+export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'UpdateUserError', error: { __typename: 'ConnectionError', description: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'MissingCredentials', description: string } } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
 
 export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -239,10 +239,6 @@ export const UpdateUserDocument = gql`
           description
         }
         ... on MissingCredentials {
-          __typename
-          description
-        }
-        ... on CentralSyncRequired {
           __typename
           description
         }
