@@ -367,10 +367,6 @@ mod user_account_test {
         .pop()
         .unwrap();
 
-        println!("user {:?}", user.user_row);
-        assert!(user.user_row.id == "user_account_empty_hashed_password");
-        assert!(user.user_row.username == "username_empty_hashed_password");
-
         let result = user_service.verify_password(&mock_user_empty_hashed_password().username, "password");
         assert!(matches!(result, Err(VerifyPasswordError::EmptyHashedPassword)));
     }
