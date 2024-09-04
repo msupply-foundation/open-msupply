@@ -5,6 +5,7 @@ import { useAddFromMasterList } from './useAddFromMasterList';
 import { useBarcode } from './useBarcode';
 import { useBarcodeInsert } from './useBarcodeInsert';
 import { useSelectedIds } from './useSelectedIds';
+export * from './useGetDiscountPrice';
 
 export const Utils = {
   useAddFromMasterList,

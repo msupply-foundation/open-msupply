@@ -61,6 +61,15 @@ impl GeneralQueries {
         login(ctx, &username, &password).await
     }
 
+    pub async fn sell_price_discount(
+        &self,
+        store_id: String,
+        name_id: String,
+        item_id: String,
+    ) -> Result<f64> {
+        Ok(0.1)
+    }
+
     pub async fn logout(&self, ctx: &Context<'_>) -> Result<LogoutResponse> {
         logout(ctx)
     }
