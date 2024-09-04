@@ -14,10 +14,12 @@ table! {
         code -> Text,
         description -> Text,
         is_active -> Bool,
+        is_default_price_list -> Bool,
+        discount -> Nullable<Double>,
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default)]
 #[diesel(table_name = master_list)]
 pub struct MasterListRow {
     pub id: String,
@@ -25,6 +27,8 @@ pub struct MasterListRow {
     pub code: String,
     pub description: String,
     pub is_active: bool,
+    pub is_default_price_list: bool,
+    pub discount: Option<f64>,
 }
 
 allow_tables_to_appear_in_same_query!(master_list, item_link);

@@ -76,6 +76,7 @@ mod repository_test {
                 code: "ML Code 1".to_string(),
                 description: "ML Description 1".to_string(),
                 is_active: true,
+                ..Default::default()
             }
         }
 
@@ -86,6 +87,7 @@ mod repository_test {
                 code: "ML Code 1".to_string(),
                 description: "ML Description 1".to_string(),
                 is_active: true,
+                ..Default::default()
             }
         }
 

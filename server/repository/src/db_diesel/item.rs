@@ -548,6 +548,7 @@ mod tests {
                 code: "".to_string(),
                 description: "".to_string(),
                 is_active: true,
+                ..Default::default()
             },
             MasterListRow {
                 id: "master_list2".to_string(),
@@ -555,6 +556,7 @@ mod tests {
                 code: "".to_string(),
                 description: "".to_string(),
                 is_active: true,
+                ..Default::default()
             },
         ];
 
