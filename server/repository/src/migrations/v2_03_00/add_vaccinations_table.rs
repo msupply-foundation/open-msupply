@@ -23,6 +23,7 @@ impl MigrationFragment for Migrate {
                     store_id TEXT NOT NULL,
                     clinician_link_id TEXT,
                     invoice_id TEXT,
+                    stock_line_id TEXT,
                     vaccination_date {DATE} NOT NULL,
                     given BOOLEAN NOT NULL,
                     not_given_reason TEXT,

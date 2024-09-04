@@ -35,6 +35,7 @@ fn vaccination1() -> VaccinationRow {
             .unwrap(),
         user_id: String::from("user1"),
         invoice_id: None,
+        stock_line_id: None,
         clinician_link_id: None,
         vaccination_date: NaiveDate::from_ymd_opt(2024, 12, 17).unwrap(),
         given: false,
