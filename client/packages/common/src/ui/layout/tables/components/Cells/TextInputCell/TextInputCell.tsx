@@ -12,7 +12,10 @@ export const TextInputCell = <T extends RecordWithId>({
   rowIndex,
   columnIndex,
   autocompleteName,
-}: CellProps<T>): React.ReactElement<CellProps<T>> => {
+  fullWidth,
+}: CellProps<T> & { fullWidth?: boolean }): React.ReactElement<
+  CellProps<T>
+> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
   const updater = useDebounceCallback(column.setter, [column.setter], 500);
   const { maxLength } = column;
@@ -26,6 +29,7 @@ export const TextInputCell = <T extends RecordWithId>({
 
   return (
     <BasicTextInput
+      fullWidth={fullWidth}
       disabled={isDisabled}
       autoFocus={autoFocus}
       InputProps={maxLength ? { inputProps: { maxLength } } : undefined}
