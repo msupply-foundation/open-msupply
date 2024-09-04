@@ -365,7 +365,7 @@ pub async fn get_loaders(
     ));
 
     loaders.insert(DataLoader::new(
-        VaccineCourseScheduleByVaccineCourseIdLoader {
+        VaccineCourseDoseByVaccineCourseIdLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,

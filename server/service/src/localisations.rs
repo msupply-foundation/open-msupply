@@ -5,10 +5,8 @@ use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
-// later this will be client in dev mode, or build in production mode
-#[folder = "../../client/packages/host/dist/locales"]
+#[folder = "../../client/packages/common/src/intl/locales"]
 pub struct EmbeddedLocalisations;
-
 
 
 // struct to manage translations
@@ -30,9 +28,11 @@ impl Localisations {
 
     // Creates a new Localisations struct
     pub fn new() -> Self {
-        Localisations {
+        let mut localisations = Localisations {
             translations: HashMap::new(),
-        }
+        };
+        let _ = localisations.load_translations();
+        localisations
     }
 
     // Load translations from embedded files

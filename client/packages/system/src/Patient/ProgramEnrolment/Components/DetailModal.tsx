@@ -49,7 +49,7 @@ const useUpsertProgramEnrolment = (
 };
 
 export const ProgramDetailModal: FC = () => {
-  const t = useTranslation();
+  const t = useTranslation('programs');
   const patientId = usePatient.utils.id();
 
   const { current, document, reset } = usePatientModalStore();
@@ -85,7 +85,7 @@ export const ProgramDetailModal: FC = () => {
       height={750}
     >
       <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-        Document Edit History
+        {t('label.document-edit-history')}
       </Typography>
       {document?.name ? (
         <DocumentHistory documentName={document?.name} />

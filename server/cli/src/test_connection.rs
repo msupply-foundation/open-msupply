@@ -266,7 +266,7 @@ impl Test for SyncTest {
             username: v5_settings.username.clone(),
             password_sha256: v5_settings.password_sha256.clone(),
             site_uuid: hardware_id,
-            sync_version: "5".to_string(),
+            sync_version: "6".to_string(),
             app_version: Version::from_package_json().to_string(),
             app_name: "Open mSupply Desktop".to_string(),
         })?;

@@ -22,6 +22,7 @@ pretty_assertions = "1.4.0"
 rcgen = "0.13.1"
 regex = "1.10.5"
 reqwest = { version = "0.12", features = [
+  "gzip",
   "json",
   "rustls-tls",
   "multipart",
@@ -42,6 +43,8 @@ async-std = "1.12.0"
 rand = "0.8.5"
 anyhow = "1.0.56"
 actix-files = "0.6.0"
+log-panics = { version = "2.1.0", features = ["with-backtrace"] }
+
 # TODO: Remove. async_graphql is using 1.0 but SET_COOKIE was being imported from wrong version.
 http2 = { package = "http", version = "1.0.0" }
 
