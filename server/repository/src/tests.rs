@@ -96,6 +96,7 @@ mod repository_test {
                 id: "masterlistline1".to_string(),
                 item_link_id: item_1().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
+                ..Default::default()
             }
         }
 
@@ -104,6 +105,7 @@ mod repository_test {
                 id: "masterlistline1".to_string(),
                 item_link_id: item_2().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
+                ..Default::default()
             }
         }
 

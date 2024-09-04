@@ -11,7 +11,7 @@ const MASTER_LIST_LINE_1: (&str, &str) = (
     "item_ID": "item_a",
     "imprest_quan": 0,
     "order_number": 1,
-    "price": 0
+    "price": 3.14
   }"#,
 );
 
@@ -35,6 +35,7 @@ fn master_list_line_a() -> TestSyncIncomingRecord {
             id: "9B02D0770B544BD1AC7DB99BB85FCDD5".to_string(),
             item_link_id: "item_a".to_string(),
             master_list_id: "item_query_test1".to_string(),
+            price: Some(3.14),
         },
     )
 }

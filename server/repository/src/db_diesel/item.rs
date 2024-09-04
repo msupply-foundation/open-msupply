@@ -565,21 +565,25 @@ mod tests {
                 id: "id1".to_string(),
                 item_link_id: "item1".to_string(),
                 master_list_id: "master_list1".to_string(),
+                ..Default::default()
             },
             MasterListLineRow {
                 id: "id2".to_string(),
                 item_link_id: "item2".to_string(),
                 master_list_id: "master_list1".to_string(),
+                ..Default::default()
             },
             MasterListLineRow {
                 id: "id3".to_string(),
                 item_link_id: "item3".to_string(),
                 master_list_id: "master_list2".to_string(),
+                ..Default::default()
             },
             MasterListLineRow {
                 id: "id4".to_string(),
                 item_link_id: "item4".to_string(),
                 master_list_id: "master_list2".to_string(),
+                ..Default::default()
             },
         ];
 

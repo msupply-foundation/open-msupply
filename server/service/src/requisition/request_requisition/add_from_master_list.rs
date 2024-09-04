@@ -269,16 +269,19 @@ mod test {
                         id: line1.clone(),
                         item_link_id: mock_item_a().id,
                         master_list_id: id.clone(),
+                        ..Default::default()
                     },
                     MasterListLineRow {
                         id: line2.clone(),
                         item_link_id: test_item_stats::item().id,
                         master_list_id: id.clone(),
+                        ..Default::default()
                     },
                     MasterListLineRow {
                         id: line3.clone(),
                         item_link_id: test_item_stats::item2().id,
                         master_list_id: id.clone(),
+                        ..Default::default()
                     },
                 ],
             }
