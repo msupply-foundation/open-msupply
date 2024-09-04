@@ -30,6 +30,7 @@
   "error.code-no-match": "{{field}} not found in catalogue",
   "error.could-not-delete-immunisation-program": "Could not delete immunization program",
   "error.could-not-delete-vaccine-course": "Could not delete vaccine course",
+  "error.dose-ages-out-of-order": "Each dose needs a higher minimum age than the previous dose",
   "error.duplicate-asset-number": "duplicate asset number in csv",
   "error.duplicated-field": "{{field}} already exists in the import file",
   "error.fetch-notifications": "Unable to display cold chain notifications",
