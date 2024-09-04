@@ -8,7 +8,7 @@ use super::{
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort},
     vaccine_course::vaccine_course_dose_row::{
-        vaccine_course_dose, vaccine_course_dose::dsl as vaccine_course_dose_dsl,
+        vaccine_course_dose::{self, dsl as vaccine_course_dose_dsl},
         VaccineCourseDoseRow,
     },
     ClinicianLinkRow, ClinicianRow, EqualFilter, Pagination, Sort,
