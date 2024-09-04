@@ -19,7 +19,7 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // Retranslate all master lists on the next, in case they already had the new fields added before upgrade happens here.
+        // Retranslate all master lists on the next sync, in case they already had the new fields added before upgrade happens here.
         sql!(
             connection,
             r#"
