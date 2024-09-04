@@ -111,8 +111,9 @@ pub trait ReportServiceTrait: Sync + Send {
         report_data: serde_json::Value,
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
+        translation_service: Box<Localisations>,
     ) -> Result<String, ReportError> {
-        let document = generate_report(report, report_data, arguments)?;
+        let document = generate_report(report, report_data, arguments, translation_service)?;
 
         match format {
             Some(PrintFormat::Html) => {
@@ -399,6 +400,7 @@ fn generate_report(
     report: &ResolvedReportDefinition,
     report_data: serde_json::Value,
     arguments: Option<serde_json::Value>,
+    translation_service: Box<Localisations>,
 ) -> Result<GeneratedReport, ReportError> {
     let mut context = tera::Context::new();
     context.insert("data", &report_data);
@@ -408,10 +410,8 @@ fn generate_report(
     }
     println!("generating report!");
     let mut tera = tera::Tera::default();
-    let mut localisations = Localisations::new();
-    localisations.load_translations()?;
     tera.register_function("translate", move |args: &HashMap<String, serde_json::Value>| {
-        let translation = localisations.get_translation(args);
+        let translation = translation_service.get_translation(args);
         Ok(Value::String(translation))
     });
     let mut templates: HashMap<String, String> = report
@@ -708,7 +708,8 @@ mod report_service_test {
         let context = service_provider
             .context("store_id".to_string(), "".to_string())
             .unwrap();
-        let service = service_provider.report_service;
+        let service = &service_provider.report_service;
+        let translation_service = service_provider.translations_service;
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
         let doc = generate_report(
@@ -717,6 +718,7 @@ mod report_service_test {
                 "test": "Hello"
             }),
             None,
+            translation_service,
         )
         .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");
