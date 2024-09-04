@@ -26,6 +26,7 @@ import {
   ContactTraceRowFragment,
   DocumentFragment,
   DocumentRegistryFragment,
+  EncounterByIdQuery,
   EncounterFieldsFragment,
   EncounterFragment,
   EncounterRowFragment,
@@ -115,7 +116,9 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
     }
     throw new Error('Error querying document');
   },
-  byId: async (encounterId: string): Promise<EncounterFragment> => {
+  byId: async (
+    encounterId: string
+  ): Promise<EncounterByIdQuery['encounters']['nodes'][number]> => {
     const result = await sdk.encounterById({ encounterId, storeId });
     const encounters = result?.encounters;
 
