@@ -23,7 +23,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'master_list';
+            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'list_master';
         "#,
         )?;
 
