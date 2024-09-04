@@ -675,7 +675,9 @@ mod test {
             mock_server.mock(|when, then| {
                 when.method(POST).path("/api/v4/login".to_string());
                 then.status(200).body(
-                    // Non-parse-able contents, trigger InternalError
+                    // mSupply was reached, but there are non-parse-able contents
+                    // so fetch_central_user results in InternalError
+                    // Therefore password not updated - we'll get the empty password error
                     r#"{"cannot": "parse"}"#,
                 );
             });
