@@ -1,9 +1,9 @@
 # Central Sync Queue Pull Reduction
 
 - _Date_: 2024-09-02
-- _Deciders_: @Chris-Petty, @andreievg
-- _Status_: UNDECIDED
-- _Outcome_:
+- _Deciders_: @Chris-Petty, @andreievg, @jmbrunskill
+- _Status_: PENDING??
+- _Outcome_: Do other optimisations for now
 
 ## Context
 
@@ -161,4 +161,11 @@ _Cons:_
 
 ## Decision
 
+The decision at the moment is to do nothing to reduce the change_log size with any filtering! We've found some key problems (legacy reports) polluting the sync queue with big hard to compress BLOBs, along with increasing batch size we can get vast amounts of records highly efficiently compressed in gzip which alleviates most of the problem.
+
 ## Consequences
+
+- LCS filter out non open msupply reports in sync v5
+- LCS possibly raise request batch size further. Recently raised from 1k to 5k. Perhaps more would help
+- OMS dynamic batch size to utilise the above on both queue and changelog endpoints
+- OMS sync with cursor on queued records endpoint, halving the requests to sync queued records (sorta tangential but related to init speed) 
