@@ -76,10 +76,10 @@ impl Localisations {
             None => {
                 // need to add first falling back to common.json translation if one exists.
                 let common_translation = self.translations
-                    .get(&lang)
-                    .and_then(|map| map.get("common.json"))
-                    .and_then(|map| map.get(&key))
-                    .clone();
+                                        .get(&lang)
+                                        .and_then(|map| map.get("common.json"))
+                                        .and_then(|map| map.get(&key))
+                                        .clone();
                 if let Some(common_translation) = common_translation {
                     common_translation.to_string()
                  } else if let Some(fallback) = fallback {
