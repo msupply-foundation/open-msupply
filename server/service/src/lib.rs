@@ -69,6 +69,7 @@ pub mod token_bucket;
 pub mod user_account;
 pub mod vaccine_course;
 pub mod validate;
+pub mod localisations;
 
 #[cfg(test)]
 mod login_mock_data;

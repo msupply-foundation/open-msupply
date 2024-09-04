@@ -1,3 +1,4 @@
+
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -8,28 +9,23 @@ use crate::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
-    }, invoice::{InvoiceService, InvoiceServiceTrait}, invoice_line::{InvoiceLineService, InvoiceLineServiceTrait}, item_stats::{ItemStatsService, ItemStatsServiceTrait}, label_printer_settings_service::LabelPrinterSettingsServiceTrait, location::{LocationService, LocationServiceTrait}, log_service::{LogService, LogServiceTrait}, master_list::{MasterListService, MasterListServiceTrait}, name::{NameService, NameServiceTrait}, pack_variant::PackVariantServiceTrait, plugin_data::{PluginDataService, PluginDataServiceTrait}, processors::ProcessorsTrigger, program::ProgramServiceTrait, programs::{
-        contact_trace::{ContactTraceService, ContactTraceServiceTrait},
+    }, invoice::{InvoiceService, InvoiceServiceTrait}, invoice_line::{InvoiceLineService, InvoiceLineServiceTrait}, item_stats::{ItemStatsService, ItemStatsServiceTrait}, label_printer_settings_service::LabelPrinterSettingsServiceTrait, localisations::Localisations, location::{LocationService, LocationServiceTrait}, log_service::{LogService, LogServiceTrait}, master_list::{MasterListService, MasterListServiceTrait}, name::{NameService, NameServiceTrait}, pack_variant::PackVariantServiceTrait, plugin_data::{PluginDataService, PluginDataServiceTrait}, processors::ProcessorsTrigger, program::ProgramServiceTrait, programs::{
+        contact_trace::{ ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
-    }, repack::{RepackService, RepackServiceTrait}, report::report_service::{ReportService, ReportServiceTrait}, requisition::{RequisitionService, RequisitionServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait}, rnr_form::{RnRFormService, RnRFormServiceTrait}, sensor::{SensorService, SensorServiceTrait}, settings_service::{SettingsService, SettingsServiceTrait}, stock_line::{StockLineService, StockLineServiceTrait}, stocktake::{StocktakeService, StocktakeServiceTrait}, stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait}, store::{get_store, get_stores}, sync::{
+    }, repack::{RepackService, RepackServiceTrait}, report::report_service::{ReportService, ReportServiceTrait}, requisition::{RequisitionService, RequisitionServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait}, rnr_form::{RnRFormService, RnRFormServiceTrait}, sensor::{SensorService, SensorServiceTrait}, settings_service::{SettingsService, SettingsServiceTrait}, stock_line::{StockLineService, StockLineServiceTrait}, stocktake::{StocktakeService, StocktakeServiceTrait}, stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait}, store::{get_store, get_stores}, 
+    sync::{
         site_info::{SiteInfoService, SiteInfoTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
-    }, temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait}, vaccine_course::VaccineCourseServiceTrait, ListError, ListResult
+    }, temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait}, vaccine_course::VaccineCourseServiceTrait, ListError, ListResult,
 };
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
-use rust_embed::RustEmbed;
-
-// Define a struct for development
-#[derive(RustEmbed)]
-#[folder = "../../client/packages/common/src/intl/locales"] // Path for development
-struct Localisations;
 
 
 pub struct ServiceProvider {
@@ -109,6 +105,8 @@ pub struct ServiceProvider {
     // Vaccine Course
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
     pub program_service: Box<dyn ProgramServiceTrait>,
+    // Translations
+    pub translations_service: Box<Localisations>,
 }   
 
 pub struct ServiceContext {
@@ -142,6 +140,9 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
+        let localisations = Localisations::new();
+
+
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -197,6 +198,7 @@ impl ServiceProvider {
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
             rnr_form_service: Box::new(RnRFormService {}),
+            translations_service: Box::new(localisations),        
         }
     }
 
