@@ -45,7 +45,10 @@ impl Localisations {
                 let language = file.split('/').nth(0).unwrap_or_default().to_string();
                 if let Some(content) = EmbeddedLocalisations::get(&file) {
                     let json_data = content.data;
-                    let translations: HashMap<String, String> = serde_json::from_slice(&json_data).unwrap();
+                    let translations: HashMap<String, String> = serde_json::from_slice(&json_data).unwrap_or_else(|e| {
+                        log::error!("Failed to parse JSON file {:?}: {:?}", file, e);
+                        HashMap::new()
+                    });
                     self.translations
                     .entry(language)
                     .or_default()
