@@ -39,12 +39,11 @@ mod delete {
             name: "vaccine_course_name".to_owned(),
             program_id: mock_immunisation_program_a().id.clone(),
             vaccine_items: vec![],
-            schedules: vec![],
+            doses: vec![],
             demographic_indicator_id: None,
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,
-            doses: 0,
         };
 
         let _result = service

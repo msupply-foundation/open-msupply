@@ -27,6 +27,7 @@ use repository::{
     StoreFilter, StoreSort,
 };
 
+
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
     pub validation_service: Box<dyn AuthServiceTrait>,
@@ -140,8 +141,7 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        let mut localisations = Localisations::new();
-        let _ = localisations.load_translations();
+        let localisations = Localisations::new();
 
 
         ServiceProvider {
@@ -218,7 +218,6 @@ impl ServiceProvider {
         store_id: String,
         user_id: String,
     ) -> Result<ServiceContext, RepositoryError> {
-
         Ok(ServiceContext {
             connection: self.connection()?,
             processors_trigger: self.processors_trigger.clone(),

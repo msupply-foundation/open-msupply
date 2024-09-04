@@ -12,7 +12,7 @@ export type DraftVaccineCourseItem = Omit<
 
 export type DraftVaccineCourse = Omit<
   VaccineCourseFragment,
-  '__typename' | 'vaccineCourseItems'
+  '__typename' | 'vaccineCourseItems' | 'doses'
 > & {
   vaccineCourseItems: DraftVaccineCourseItem[] | null;
 };

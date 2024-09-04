@@ -1,11 +1,9 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import {
-  FnUtils,
   LocaleKey,
   ProgramSortFieldInput,
   TypedTFunction,
   isEqual,
-  noOtherVariants,
   useMutation,
   useQuery,
 } from '@openmsupply-client/common';
@@ -31,12 +29,6 @@ export function useImmunisationProgram(
   const [errorMessage, setErrorMessage] = useState('');
   const { data, isLoading, error } = useGet(id ?? '');
   const {
-    mutateAsync: createMutation,
-    isLoading: isCreating,
-    error: createError,
-  } = useCreate(setErrorMessage, t);
-
-  const {
     mutateAsync: updateMutation,
     isLoading: isUpdating,
     error: updateError,
@@ -60,12 +52,6 @@ export function useImmunisationProgram(
     return;
   };
 
-  const create = async () => {
-    const result = await createMutation(draft);
-    setIsDirty(false);
-    return result;
-  };
-
   const update = async () => {
     updateMutation(patch);
     setIsDirty(false);
@@ -73,7 +59,6 @@ export function useImmunisationProgram(
 
   return {
     query: { data, isLoading, error },
-    create: { create, isCreating, createError },
     update: { update, isUpdating, updateError },
     draft,
     errorMessage,
@@ -107,48 +92,6 @@ const useGet = (id: string) => {
   });
 
   return query;
-};
-
-const useCreate = (
-  setErrorMessage: Dispatch<SetStateAction<string>>,
-  t: TypedTFunction<LocaleKey>
-) => {
-  const { api, storeId, queryClient } = useProgramsGraphQL();
-
-  const mutationFn = async ({ name }: DraftImmunisationProgram) => {
-    const apiResult = await api.insertImmunisationProgram({
-      storeId,
-      input: {
-        id: FnUtils.generateUUID(),
-        name,
-      },
-    });
-
-    // will be empty if there's a generic error, such as permission denied
-    if (!isEmpty(apiResult)) {
-      const result = apiResult.centralServer.program.insertImmunisationProgram;
-
-      if (result.__typename === 'ProgramNode') return result;
-
-      if (result.__typename === 'InsertImmunisationProgramError') {
-        if (result.error.__typename === 'RecordAlreadyExist') {
-          setErrorMessage(t('error.program-already-exists'));
-        } else {
-          noOtherVariants(result.error.__typename);
-        }
-        return;
-      }
-    }
-
-    throw new Error('Unable to create Immunisation Program');
-  };
-
-  return useMutation({
-    mutationFn,
-    onSuccess: () =>
-      // All Programs need to be re-fetched to include the new one
-      queryClient.invalidateQueries([IMMUNISATION_PROGRAM]),
-  });
 };
 
 const useUpdate = (

@@ -17,7 +17,6 @@ table! {
         coverage_rate -> Double,
         is_active -> Bool,
         wastage_rate -> Double,
-        doses -> Integer,
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
@@ -35,7 +34,6 @@ pub struct VaccineCourseRow {
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
-    pub doses: i32,
     pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
 
