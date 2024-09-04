@@ -4,7 +4,7 @@ use repository::{
     ReportSort, ReportType, RepositoryError,
 };
 use scraper::{ElementRef, Html, Selector};
-use tera::{Value, Error as TeraError};
+use tera::Value;
 use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
@@ -411,7 +411,7 @@ fn generate_report(
     println!("generating report!");
     let mut tera = tera::Tera::default();
     tera.register_function("translate", move |args: &HashMap<String, serde_json::Value>| {
-        let translation = translation_service.get_translation(args).map_err(|_| TeraError::msg("Missing translation"))?;
+        let translation = translation_service.get_translation(args);
         Ok(Value::String(translation))
     });
     let mut templates: HashMap<String, String> = report
