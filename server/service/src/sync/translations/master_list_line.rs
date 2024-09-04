@@ -15,6 +15,7 @@ pub struct LegacyListMasterLineRow {
     ID: String,
     item_master_ID: String,
     item_ID: String,
+    price: Option<f64>,
 }
 
 // Needs to be added to all_translators()
@@ -66,6 +67,7 @@ impl SyncTranslation for MasterListLineTranslation {
             id: data.ID,
             item_link_id: data.item_ID,
             master_list_id: data.item_master_ID,
+            price: data.price,
         };
 
         Ok(PullTranslateResult::upsert(result))

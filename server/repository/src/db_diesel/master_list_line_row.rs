@@ -12,6 +12,7 @@ table! {
         id -> Text,
         item_link_id -> Text,
         master_list_id -> Text,
+        price -> Nullable<Double>,
     }
 }
 
@@ -20,12 +21,13 @@ joinable!(master_list_line -> item_link (item_link_id));
 allow_tables_to_appear_in_same_query!(master_list_line, item_link);
 allow_tables_to_appear_in_same_query!(master_list_line, name_link);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, Default, PartialEq, AsChangeset)]
 #[diesel(table_name = master_list_line)]
 pub struct MasterListLineRow {
     pub id: String,
     pub item_link_id: String,
     pub master_list_id: String,
+    pub price: Option<f64>,
 }
 
 pub struct MasterListLineRowRepository<'a> {
