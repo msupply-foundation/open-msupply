@@ -10,8 +10,6 @@ import {
   Box,
   ButtonWithIcon,
   CloseIcon,
-  LoadingButton,
-  SaveIcon,
   useTranslation,
   useUrlQueryParams,
   DataTable,
@@ -41,8 +39,6 @@ export const ProgramComponent: FC = () => {
   const { id } = useParams();
   const {
     query: { data, isLoading },
-    isDirty,
-    update: { update, isUpdating },
   } = useImmunisationProgram(t, id);
 
   const queryParams = {
@@ -71,7 +67,11 @@ export const ProgramComponent: FC = () => {
             ? rowData.demographicIndicator.name
             : UNDEFINED_STRING_VALUE,
       },
-      { key: 'doses', label: 'label.doses' },
+      {
+        key: 'doses',
+        label: 'label.doses',
+        accessor: ({ rowData }) => rowData?.vaccineCourseDoses?.length ?? 0,
+      },
       'selection',
     ],
     {
@@ -137,18 +137,6 @@ export const ProgramComponent: FC = () => {
                 sx={{ fontSize: '12px' }}
                 onClick={navigateUpOne}
               />
-
-              <LoadingButton
-                disabled={!isDirty || isUpdating}
-                isLoading={isUpdating}
-                onClick={() => {
-                  update();
-                }}
-                startIcon={<SaveIcon />}
-                sx={{ fontSize: '12px' }}
-              >
-                {t('button.save')}
-              </LoadingButton>
             </Box>
           </Box>
         }

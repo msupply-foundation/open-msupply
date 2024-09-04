@@ -85,6 +85,7 @@ const MASTER_LIST_WITH_PROGRAM_1: (&str, &str) = (
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
+    "is_immunisation": false,
     "isSupplierHubCatalog": false
 }"#,
 );
@@ -113,6 +114,7 @@ const MASTER_LIST_WITH_PROGRAM_2: (&str, &str) = (
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
+    "is_immunisation": true,
     "isSupplierHubCatalog": false
 }"#,
 );
@@ -215,7 +217,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                     name: "Program Test 02".to_owned(),
                     master_list_id: Some(MASTER_LIST_WITH_PROGRAM_2.0.to_owned()),
                     context_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
-                    is_immunisation: false,
+                    is_immunisation: true,
                 }),
                 IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned() + &mock_name_tag_1().id,

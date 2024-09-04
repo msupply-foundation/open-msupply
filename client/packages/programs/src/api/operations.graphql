@@ -611,10 +611,11 @@ fragment ImmunisationProgram on ProgramNode {
   }
 }
 
-fragment VaccineCourseSchedule on VaccineCourseScheduleNode {
+fragment VaccineCourseDose on VaccineCourseDoseNode {
   id
-  doseNumber
   label
+  minAgeMonths
+  minIntervalDays
 }
 
 fragment VaccineCourseItem on VaccineCourseItemNode {
@@ -678,7 +679,6 @@ fragment VaccineCourse on VaccineCourseNode {
   name
   programId
   demographicIndicatorId
-  doses
   coverageRate
   wastageRate
   isActive
@@ -690,8 +690,8 @@ fragment VaccineCourse on VaccineCourseNode {
   vaccineCourseItems {
     ...VaccineCourseItem
   }
-  vaccineCourseSchedules {
-    ...VaccineCourseSchedule
+  vaccineCourseDoses {
+    ...VaccineCourseDose
   }
 }
 

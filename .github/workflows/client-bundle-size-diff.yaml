@@ -9,6 +9,7 @@ jobs:
   build-base:
     name: Build base
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -42,6 +43,7 @@ jobs:
   build-pr:
     name: Build PR
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -73,6 +75,7 @@ jobs:
   report:
     name: Generate report
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [build-base, build-pr]
 
     steps:
