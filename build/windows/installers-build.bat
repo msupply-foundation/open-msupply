@@ -15,4 +15,5 @@ node "adjustSUFs.js"
 @REM start "" /wait "C:\Program Files (x86)\Setup Factory 9\SUFDesign.exe" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_desktop.suf"
 @REM start "" /wait "C:\Program Files (x86)\Setup Factory 9\SUFDesign.exe" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_demo.suf"
 @REM start "" /wait "C:\Program Files (x86)\Setup Factory 9\SUFDesign.exe" /BUILD /LOG:installers\setup-factory.log "omSupply\omsupply_standalone.suf"
+mkdir installers
 copy omSupply\open-msupply-*.apk installers\Open_mSupply_Android_%versionTag%.apk
