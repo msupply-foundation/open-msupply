@@ -217,6 +217,7 @@ mod test {
                     code: id.clone(),
                     description: id.clone(),
                     is_active: true,
+                    ..Default::default()
                 },
                 joins: vec![MasterListNameJoinRow {
                     id: join1,

@@ -16,6 +16,8 @@ pub struct LegacyListMasterRow {
     code: String,
     note: String,
     inactive: Option<bool>,
+    is_default_price_list: Option<bool>,
+    discount: Option<f64>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -47,6 +49,8 @@ impl SyncTranslation for MasterListTranslation {
             description: data.note,
             // By default if inactive = null, or missing, it should mean is_active = true
             is_active: !data.inactive.unwrap_or(true),
+            is_default_price_list: data.is_default_price_list.unwrap_or(false),
+            discount: data.discount,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -71,6 +75,8 @@ impl SyncTranslation for MasterListTranslation {
                 code: master_list.code,
                 description: master_list.description,
                 is_active: false,
+                is_default_price_list: master_list.is_default_price_list,
+                discount: master_list.discount,
             };
             return Ok(PullTranslateResult::upsert(result));
         }

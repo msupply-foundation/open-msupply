@@ -134,6 +134,7 @@ mod item_count_service_test {
                         code: String::new(),
                         description: String::new(),
                         is_active: true,
+                        ..Default::default()
                     },
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
@@ -215,6 +216,7 @@ mod item_count_service_test {
                         code: String::new(),
                         description: String::new(),
                         is_active: true,
+                        ..Default::default()
                     },
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
@@ -363,6 +365,7 @@ mod item_count_service_test {
                         code: String::new(),
                         description: String::new(),
                         is_active: true,
+                        ..Default::default()
                     },
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
