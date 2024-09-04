@@ -22,9 +22,11 @@ impl Localisations {
 
     // Creates a new Localisations struct
     pub fn new() -> Self {
-        Localisations {
+        let mut localisations = Localisations {
             translations: HashMap::new(),
-        }
+        };
+        let _ = localisations.load_translations();
+        localisations
     }
 
     // Load translations from embedded files

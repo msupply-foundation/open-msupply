@@ -1,12 +1,10 @@
 
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
-    app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
-    }, demographic::DemographicServiceTrait, display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait}, document::{
     }, demographic::DemographicServiceTrait, display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait}, document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
@@ -28,12 +26,6 @@ use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
-use rust_embed::RustEmbed;
-
-// Define a struct for development
-#[derive(RustEmbed)]
-#[folder = "../../client/packages/common/src/intl/locales"] // Path for development
-struct Localisations;
 
 
 pub struct ServiceProvider {
@@ -149,8 +141,7 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        let mut localisations = Localisations::new();
-        let _ = localisations.load_translations();
+        let localisations = Localisations::new();
 
 
         ServiceProvider {
