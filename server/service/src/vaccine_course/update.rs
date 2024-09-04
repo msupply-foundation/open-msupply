@@ -1,4 +1,7 @@
-use super::{query::get_vaccine_course, validate::check_vaccine_course_name_exists_for_program};
+use super::{
+    query::get_vaccine_course,
+    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
+};
 use crate::{
     activity_log::activity_log_entry, demographic::validate::check_demographic_indicator_exists,
     service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
@@ -7,11 +10,9 @@ use crate::{
 
 use repository::{
     vaccine_course::{
+        vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
-        vaccine_course_schedule_row::{
-            VaccineCourseScheduleRow, VaccineCourseScheduleRowRepository,
-        },
     },
     ActivityLogType, RepositoryError, StorageConnection,
 };
@@ -20,6 +21,7 @@ use repository::{
 pub enum UpdateVaccineCourseError {
     VaccineCourseNameExistsForThisProgram,
     VaccineCourseDoesNotExist,
+    DoseMinAgesAreNotInOrder,
     CreatedRecordNotFound,
     DemographicIndicatorDoesNotExist,
     DatabaseError(RepositoryError),
@@ -42,19 +44,21 @@ impl VaccineCourseItemInput {
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
-pub struct VaccineCourseScheduleInput {
+pub struct VaccineCourseDoseInput {
     pub id: String,
-    pub dose_number: i32,
     pub label: String,
+    pub min_age: f64,
+    pub min_interval_days: i32,
 }
 
-impl VaccineCourseScheduleInput {
-    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseScheduleRow {
-        VaccineCourseScheduleRow {
+impl VaccineCourseDoseInput {
+    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseDoseRow {
+        VaccineCourseDoseRow {
             id: self.id,
-            dose_number: self.dose_number,
             label: self.label,
             vaccine_course_id,
+            min_age: self.min_age,
+            min_interval_days: self.min_interval_days,
         }
     }
 }
@@ -64,12 +68,11 @@ pub struct UpdateVaccineCourse {
     pub id: String,
     pub name: Option<String>,
     pub vaccine_items: Vec<VaccineCourseItemInput>,
-    pub schedules: Vec<VaccineCourseScheduleInput>,
+    pub doses: Vec<VaccineCourseDoseInput>,
     pub demographic_indicator_id: Option<String>,
     pub coverage_rate: f64,
     pub is_active: bool,
     pub wastage_rate: f64,
-    pub doses: i32,
 }
 
 pub fn update_vaccine_course(
@@ -94,14 +97,14 @@ pub fn update_vaccine_course(
                 item_repo.upsert_one(&item.to_domain(input.clone().id))?;
             }
 
-            // Update Schedules - Delete and recreate all records.
-            let schedule_repo = VaccineCourseScheduleRowRepository::new(connection);
-            // Delete the existing vaccine course schedules
-            schedule_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
+            // Update Doses - Delete and recreate all records.
+            let dose_repo = VaccineCourseDoseRowRepository::new(connection);
+            // Delete the existing vaccine course doses
+            dose_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
 
-            // Insert the new vaccine course schedules
-            for schedule in input.clone().schedules {
-                schedule_repo.upsert_one(&schedule.to_domain(input.clone().id))?;
+            // Insert the new vaccine course doses
+            for dose in input.clone().doses {
+                dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
             }
 
             activity_log_entry(
@@ -152,6 +155,10 @@ pub fn validate(
         return Err(UpdateVaccineCourseError::VaccineCourseNameExistsForThisProgram);
     }
 
+    if !check_dose_min_ages_are_in_order(&input.doses) {
+        return Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder);
+    }
+
     Ok(old_row)
 }
 
@@ -161,12 +168,11 @@ pub fn generate(
         id,
         name,
         vaccine_items: _, // Updated in main function
-        schedules: _,     // Updated in main function
+        doses: _,         // Updated in main function
         demographic_indicator_id,
         coverage_rate,
         is_active,
         wastage_rate,
-        doses,
     }: UpdateVaccineCourse,
 ) -> VaccineCourseRow {
     VaccineCourseRow {
@@ -177,7 +183,6 @@ pub fn generate(
         coverage_rate,
         is_active,
         wastage_rate,
-        doses,
         deleted_datetime: None,
     }
 }

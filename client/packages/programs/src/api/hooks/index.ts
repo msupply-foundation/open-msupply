@@ -11,7 +11,6 @@ import { useIdFromUrl } from './utils/useIdFromUrl';
 export { EncounterRegistryByProgram };
 
 export * from './types';
-export * from './useDeleteSelectedImmunisationPrograms';
 export * from './useDeleteSelectedVaccineCourses';
 export * from './useImmunisationProgram';
 export * from './useImmunisationProgramList';

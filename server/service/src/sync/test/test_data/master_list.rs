@@ -19,6 +19,7 @@ const MASTER_LIST_1: (&str, &str) = (
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
+    "is_immunisation": false,
     "isSupplierHubCatalog": false,
     "inactive": true
 }"#,
@@ -39,6 +40,7 @@ const MASTER_LIST_2: (&str, &str) = (
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
+    "is_immunisation": false,
     "isSupplierHubCatalog": false,
     "inactive": false
 }"#,

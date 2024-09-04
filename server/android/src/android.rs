@@ -63,6 +63,7 @@ pub mod android {
                 LoggingSettings::new(LogMode::File, service::settings::Level::Info)
                     .with_directory(files_dir.to_string_lossy().to_string()),
             ),
+            backup: None,
         };
 
         logging_init(settings.logging.clone(), None);

@@ -890,20 +890,7 @@ export type CentralPatientSearchResponse = CentralPatientSearchConnector | Centr
 
 export type CentralProgramsMutations = {
   __typename: 'CentralProgramsMutations';
-  deleteImmunisationProgram: DeleteImmunisationProgramResponse;
-  insertImmunisationProgram: InsertImmunisationProgramResponse;
   updateImmunisationProgram: UpdateImmunisationProgramResponse;
-};
-
-
-export type CentralProgramsMutationsDeleteImmunisationProgramArgs = {
-  immunisationProgramId: Scalars['String']['input'];
-};
-
-
-export type CentralProgramsMutationsInsertImmunisationProgramArgs = {
-  input: InsertImmunisationProgramInput;
-  storeId: Scalars['String']['input'];
 };
 
 
@@ -1192,7 +1179,7 @@ export type CustomerReturnLineNode = {
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteImmunisationProgramErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1267,17 +1254,6 @@ export type DeleteCustomerReturnResponse = DeleteCustomerReturnError | DeleteRes
 export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
-
-export type DeleteImmunisationProgramError = {
-  __typename: 'DeleteImmunisationProgramError';
-  error: DeleteImmunisationProgramErrorInterface;
-};
-
-export type DeleteImmunisationProgramErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type DeleteImmunisationProgramResponse = DeleteImmunisationProgramError | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
@@ -2420,22 +2396,6 @@ export type InsertFormSchemaInput = {
 
 export type InsertFormSchemaResponse = FormSchemaNode;
 
-export type InsertImmunisationProgramError = {
-  __typename: 'InsertImmunisationProgramError';
-  error: InsertImmunisationProgramErrorInterface;
-};
-
-export type InsertImmunisationProgramErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type InsertImmunisationProgramInput = {
-  id: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-};
-
-export type InsertImmunisationProgramResponse = InsertImmunisationProgramError | ProgramNode;
-
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
   error: InsertInboundShipmentErrorInterface;
@@ -2947,12 +2907,11 @@ export type InsertVaccineCourseErrorInterface = {
 export type InsertVaccineCourseInput = {
   coverageRate: Scalars['Float']['input'];
   demographicIndicatorId?: InputMaybe<Scalars['String']['input']>;
-  doses: Scalars['Int']['input'];
+  doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
   programId: Scalars['String']['input'];
-  schedules: Array<UpsertVaccineCourseScheduleInput>;
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
 };
@@ -5914,7 +5873,7 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertImmunisationProgramErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -5924,7 +5883,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAsse
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteImmunisationProgramErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteCustomerReturnErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & DeleteSupplierReturnErrorInterface & DeleteVaccineCourseErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateNamePropertiesErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateReturnOtherPartyErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -7989,11 +7948,10 @@ export type UpdateVaccineCourseErrorInterface = {
 export type UpdateVaccineCourseInput = {
   coverageRate: Scalars['Float']['input'];
   demographicIndicatorId?: InputMaybe<Scalars['String']['input']>;
-  doses: Scalars['Int']['input'];
+  doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-  schedules: Array<UpsertVaccineCourseScheduleInput>;
   vaccineItems: Array<UpsertVaccineCourseItemInput>;
   wastageRate: Scalars['Float']['input'];
 };
@@ -8009,15 +7967,16 @@ export type UpsertLogLevelResponse = {
   level: LogLevelEnum;
 };
 
+export type UpsertVaccineCourseDoseInput = {
+  id: Scalars['String']['input'];
+  label: Scalars['String']['input'];
+  minAge: Scalars['Float']['input'];
+  minIntervalDays: Scalars['Int']['input'];
+};
+
 export type UpsertVaccineCourseItemInput = {
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-};
-
-export type UpsertVaccineCourseScheduleInput = {
-  doseNumber: Scalars['Int']['input'];
-  id: Scalars['String']['input'];
-  label: Scalars['String']['input'];
 };
 
 export type UseSuggestedQuantityError = {
@@ -8142,6 +8101,14 @@ export type VaccineCourseConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type VaccineCourseDoseNode = {
+  __typename: 'VaccineCourseDoseNode';
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  minAgeMonths: Scalars['Float']['output'];
+  minIntervalDays: Scalars['Int']['output'];
+};
+
 export type VaccineCourseFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
@@ -8184,24 +8151,16 @@ export type VaccineCourseNode = {
   coverageRate: Scalars['Float']['output'];
   demographicIndicator?: Maybe<DemographicIndicatorNode>;
   demographicIndicatorId?: Maybe<Scalars['String']['output']>;
-  doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   programId: Scalars['String']['output'];
+  vaccineCourseDoses?: Maybe<Array<VaccineCourseDoseNode>>;
   vaccineCourseItems?: Maybe<Array<VaccineCourseItemNode>>;
-  vaccineCourseSchedules?: Maybe<Array<VaccineCourseScheduleNode>>;
   wastageRate: Scalars['Float']['output'];
 };
 
 export type VaccineCourseResponse = NodeError | VaccineCourseNode;
-
-export type VaccineCourseScheduleNode = {
-  __typename: 'VaccineCourseScheduleNode';
-  doseNumber: Scalars['Int']['output'];
-  id: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-};
 
 export enum VaccineCourseSortFieldInput {
   Name = 'name'
