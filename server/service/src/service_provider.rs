@@ -124,8 +124,7 @@ impl ServiceProvider {
     // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
 
-
-        return ServiceProvider::new_with_triggers(
+        ServiceProvider::new_with_triggers(
             connection_manager,
             app_data_folder,
             ProcessorsTrigger::new_void(),
