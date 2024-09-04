@@ -1,29 +1,35 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
 
-pub(crate) struct V2_03_00;
+mod master_list;
 
-impl Migration for V2_03_00 {
+pub(crate) struct V2_02_02;
+
+impl Migration for V2_02_02 {
     fn version(&self) -> Version {
-        Version::from_str("2.3.0")
+        Version::from_str("2.2.2")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
     }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![Box::new(master_list::Migrate)]
+    }
 }
 
 #[cfg(test)]
 #[actix_rt::test]
-async fn migration_2_03_00() {
-    use v2_02_02::V2_02_02;
+async fn migration_2_02_02() {
+    use v2_02_01::V2_02_01;
 
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let previous_version = V2_02_02.version();
-    let version = V2_03_00.version();
+    let previous_version = V2_02_01.version();
+    let version = V2_02_02.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
