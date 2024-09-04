@@ -3,6 +3,7 @@ use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
 mod master_list;
+mod master_list_line;
 
 pub(crate) struct V2_02_02;
 
@@ -16,7 +17,10 @@ impl Migration for V2_02_02 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(master_list::Migrate)]
+        vec![
+            Box::new(master_list::Migrate),
+            Box::new(master_list_line::Migrate),
+        ]
     }
 }
 
