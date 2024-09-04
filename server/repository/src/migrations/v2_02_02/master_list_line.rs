@@ -16,6 +16,14 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
+        // Retranslate all master lists on the next, in case they already had the new fields added before upgrade happens here.
+        sql!(
+            connection,
+            r#"
+            UPDATE sync_buffer SET integration_datetime = NULL WHERE table_name = 'list_master_line';
+        "#,
+        )?;
+
         Ok(())
     }
 }
