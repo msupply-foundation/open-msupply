@@ -22,7 +22,7 @@ cargo build --release --bin omsupply_service && copy "target\release\omsupply_se
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
 @ECHO ##### Building sqlite omsupply server #####
-cd cargo build --release && copy "target\release\remote_server.exe" "..\omSupply\Server\omSupply-server-sqlite.exe"
+cargo build --release && copy "target\release\remote_server.exe" "..\omSupply\Server\omSupply-server-sqlite.exe"
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
 @ECHO ##### Building omsupply for postgres #####
