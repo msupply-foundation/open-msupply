@@ -695,7 +695,7 @@ mod test {
             .await
             .inspect_err(|e| {
                 let err_message = assert_variant!(e, LoginError::InternalError(err) => err);
-                assert_eq!(err_message, "Missing password hash in database")
+                assert_eq!(err_message, "Corrupted credentials")
             });
 
             assert!(result.is_err());
