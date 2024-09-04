@@ -60,36 +60,15 @@ impl Localisations {
     pub fn get_translation(&self, args: &HashMap<String, serde_json::Value> ) -> String {
         let key = args.get("key").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
         let lang = args.get("lang").and_then(serde_json::Value::as_str).unwrap_or("en").to_string();
-        // use common.json namespace if nominated namespace can't be found
-        let namespace = args.get("namespace").and_then(serde_json::Value::as_str).unwrap_or("common.json").to_string();
-        let fallback = args.get("fallback").and_then(serde_json::Value::as_str);
+        let namespace = args.get("namespace").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
+        let fallback = args.get("fallback").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
 
-        // need to fall back to common if namespace can't be found OR doesn't exist?
-        // if lang doesn't
-
-        let translation =  match self.translations
-        .get(&lang)
-        .and_then(|map| map.get(&namespace))
-        .and_then(|map| map.get(&key))
-        .cloned() {
-            Some(translation) => translation,
-            None => {
-                // need to add first falling back to common.json translation if one exists.
-                let common_translation = self.translations
-                                        .get(&lang)
-                                        .and_then(|map| map.get("common.json"))
-                                        .and_then(|map| map.get(&key))
-                                        .clone();
-                if let Some(common_translation) = common_translation {
-                    common_translation.to_string()
-                 } else if let Some(fallback) = fallback {
-                    fallback.to_string()
-                 } else {
-                    panic!("no translation or fallback found")
-                 }
-            }
-        };
-        translation
+        self.translations
+            .get(&lang)
+            .and_then(|map| map.get(&namespace))
+            .and_then(|map| map.get(&key))
+            .cloned()
+            .unwrap_or(fallback)
     }
 }
 
