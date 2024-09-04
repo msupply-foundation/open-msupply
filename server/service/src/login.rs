@@ -137,7 +137,7 @@ impl LoginService {
                 FetchUserError::ConnectionError(_) => {
                     info!("{:?}", err);
                     connection_failure = true;
-                },
+                }
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
         };
@@ -161,7 +161,9 @@ impl LoginService {
                         if connection_failure {
                             LoginError::MSupplyCentralNotReached
                         } else {
-                            LoginError::InternalError("Missing password hash in database".to_string())
+                            LoginError::InternalError(
+                                "Missing password hash in database".to_string(),
+                            )
                         }
                     }
                 });
@@ -510,7 +512,7 @@ mod test {
         EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
-    use util::assert_matches;
+    use util::{assert_matches, assert_variant};
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -525,8 +527,11 @@ mod test {
 
     #[actix_rt::test]
     async fn central_login_test() {
-        let (_, _, connection_manager, _) =
-            setup_all("login_test", MockDataInserts::none().names().stores().user_accounts()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "login_test",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
             .context("".to_string(), "".to_string())
@@ -661,10 +666,39 @@ mod test {
             )
             .await;
 
-            assert_matches!(
-                result,
-                Err(LoginError::MSupplyCentralNotReached)
-            );
+            assert_matches!(result, Err(LoginError::MSupplyCentralNotReached));
+        }
+
+        // check login error handling when empty password hash and can connect to mSupply
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(200).body(
+                    // Non-parse-able contents, trigger InternalError
+                    r#"{"cannot": "parse"}"#,
+                );
+            });
+
+            let central_server_url = mock_server.base_url();
+
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: mock_user_empty_hashed_password().username,
+                    password: "password".to_string(),
+                    central_server_url,
+                },
+                0,
+            )
+            .await
+            .inspect_err(|e| {
+                let err_message = assert_variant!(e, LoginError::InternalError(err) => err);
+                assert_eq!(err_message, "Missing password hash in database")
+            });
+
+            assert!(result.is_err());
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {
