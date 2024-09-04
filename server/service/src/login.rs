@@ -161,9 +161,7 @@ impl LoginService {
                         if connection_failure {
                             LoginError::MSupplyCentralNotReached
                         } else {
-                            LoginError::InternalError(
-                                "Missing password hash in database".to_string(),
-                            )
+                            LoginError::InternalError("Corrupted credentials".to_string())
                         }
                     }
                 });
