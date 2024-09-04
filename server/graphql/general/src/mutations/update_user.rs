@@ -11,7 +11,7 @@ use service::{
     sync::sync_user::SyncUser,
 };
 
-use crate::{InvalidCredentials, MissingCredentials};
+use crate::{ InvalidCredentials, MissingCredentials};
 
 pub struct UpdateUserNode {
     pub last_successful_sync: Option<NaiveDateTime>,
@@ -82,7 +82,9 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
                 | LoginError::LoginFailure(LoginFailure::NoSiteAccess)
                 | LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
-                | LoginError::FailedToGenerateToken(_) => {
+                | LoginError::FailedToGenerateToken(_) 
+                | LoginError::MSupplyCentralNotReached
+                => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };
