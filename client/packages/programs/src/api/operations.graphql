@@ -336,10 +336,12 @@ mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
 
 # program enrolment without document data but with events
 fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
+  id
   type
   programEnrolmentId
   patientId
   contextId
+  isImmunisationProgram
   name
   enrolmentDatetime
   status
