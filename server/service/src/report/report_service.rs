@@ -888,10 +888,17 @@ mod report_generation_test {
         let report_data = json!(null);
 
 
-        let report = generate_report(&report, report_data, None, translation_service, Some("fr".to_string())).unwrap();
+        let generated_report = generate_report(&report, report_data.clone(), None, translation_service.clone(), Some("en".to_string())).unwrap();
 
-        assert!(report.document.contains("some text"));        
-        assert!(report.document.contains("Name"));
+        assert!(generated_report.document.contains("some text"));        
+        assert!(generated_report.document.contains("Name"));
+
+        // test generation in other languages
+
+        let generated_report = generate_report(&report, report_data, None, translation_service, Some("fr".to_string())).unwrap();
+
+        assert!(generated_report.document.contains("some text"));        
+        assert!(generated_report.document.contains("Nom"));
 
     }
 }
