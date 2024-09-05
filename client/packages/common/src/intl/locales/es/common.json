@@ -83,7 +83,7 @@
   "heading.404": "¿Se siente perdido/a?",
   "heading.actions": "Acciones",
   "heading.add-item": "Agregar Artículo",
-  "heading.additional-info": "Información Adicional",
+  "heading.additional-info": "Información adicional",
   "heading.are-you-sure": "¿Está seguro?",
   "heading.barcode-scanners": "Escáneres de código de barras",
   "heading.comment": "Comentarios",
@@ -590,5 +590,9 @@
   "label.review": "Revisión",
   "label.warranty-start-date": "Inicio de garantía",
   "messages.no": "No",
-  "messages.on-hold": "No se puede cambiar el estado porque la factura está en espera"
+  "messages.on-hold": "No se puede cambiar el estado porque la factura está en espera",
+  "label.contact-tracing": "Rastreo de Contactos",
+  "label.vaccination-cards": "Tarjetas de Vacunación",
+  "label.age-months": "Edad (meses)",
+  "label.min-interval": "Intervalo mínimo (días)"
 }
