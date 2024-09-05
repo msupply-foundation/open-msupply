@@ -1,4 +1,5 @@
-use std::collections::HashMap ;
+use std::collections::HashMap;
+use std::error::Error;
 use serde_yaml::Value;
 
 use rust_embed::RustEmbed;
@@ -7,6 +8,17 @@ use rust_embed::RustEmbed;
 // Relative to server/Cargo.toml
 #[folder = "../../client/packages/common/src/intl/locales"]
 pub struct EmbeddedLocalisations;
+
+#[derive(Debug)]
+pub struct TranslationError;
+
+impl std::fmt::Display for TranslationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "No translation")
+    }
+}
+
+impl Error for TranslationError {}
 
 
 // struct to manage translations
@@ -60,18 +72,44 @@ impl Localisations {
 
     // Get a translation for a given key and language
     // next need to add fallback and namespace to get Translation function
-    pub fn get_translation(&self, args: &HashMap<String, serde_json::Value> ) -> String {
-        let key = args.get("key").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
-        let lang = args.get("lang").and_then(serde_json::Value::as_str).unwrap_or("en").to_string();
-        let namespace = args.get("namespace").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
-        let fallback = args.get("fallback").and_then(serde_json::Value::as_str).unwrap_or("").to_string();
+    pub fn get_translation(&self, args: &HashMap<String, serde_json::Value> ) -> Result<String, TranslationError> {
+        let key = args.get("key").and_then(serde_json::Value::as_str).unwrap_or("");
+        let lang = args.get("lang").and_then(serde_json::Value::as_str).unwrap_or("");
+        let namespace = args.get("namespace").and_then(serde_json::Value::as_str).unwrap_or("");
+        let fallback = args.get("fallback").and_then(serde_json::Value::as_str);
 
-        self.translations
-            .get(&lang)
-            .and_then(|map| map.get(&namespace))
-            .and_then(|map| map.get(&key))
+        // make cascading array of fallback options:
+        for (lang, namespace, key, fallback) in [
+            // first look for key in nomionaed namespace
+            (lang, namespace, key, None), 
+            // then look for key in common.json
+            (lang, "common.json", key, None), 
+            // then look for fallback
+            ("", "", "", fallback ),
+            // then look for key in nominated namespace in en
+            ("en", namespace, key, None), 
+            // then look for key in common.json in en
+            ("en", "common.json", key, None),             
+            ] {
+            match self.find_key(lang, namespace, key, fallback) {
+                Some(string) => return Ok(string),
+                None => continue,
+            }
+        };
+        // throw error if no translation found above (and don't render report)
+        Err(TranslationError)
+    }
+
+    fn find_key(&self, lang: &str, namespace: &str, key: &str, fallback: Option<&str>) -> Option<String> {
+        if let Some(fallback) = fallback {
+            return Some(fallback.to_owned())
+        } else {
+            self.translations
+            .get(lang)
+            .and_then(|map| map.get(namespace))
+            .and_then(|map| map.get(key))
             .cloned()
-            .unwrap_or(fallback)
+        }
     }
 }
 
@@ -96,30 +134,42 @@ use super::Localisations;
         args.insert("namespace".to_string(), serde_json::Value::String("common.json".to_owned()));
         args.insert("fallback".to_string(), serde_json::Value::String("fallback".to_owned()));
         // test correct translation
-        let translated_value = localisations.get_translation(&args);      
+        let translated_value = localisations.get_translation(&args).unwrap();      
         assert_eq!("Fermer", translated_value);
         // test wrong key fallback
         args.insert("key".to_string(),serde_json::Value::String("button.close-non-existent-key".to_owned()));
         args.insert("fallback".to_string(), serde_json::Value::String("fallback wrong key".to_owned()));
-        let translated_value = localisations.get_translation(&args);      
+        let translated_value = localisations.get_translation(&args).unwrap();      
         assert_eq!("fallback wrong key", translated_value);        
         // // test wrong language dir
         args.insert("key".to_string(), serde_json::Value::String("button.close".to_owned()));
         args.insert("lang".to_string(), serde_json::Value::String("fr-non-existent-lang".to_owned()));
         args.insert("fallback".to_string(), serde_json::Value::String("fallback wrong lang dir".to_owned()));
-        let translated_value = localisations.get_translation(&args);      
+        let translated_value = localisations.get_translation(&args).unwrap();      
         assert_eq!("fallback wrong lang dir", translated_value);
-        // test wrong namespace
+        // test no language and no fallback falls back to english translation
+        let mut args = HashMap::new();
+        args.insert("key".to_string(), serde_json::Value::String("button.close".to_owned()));
+        args.insert("namespace".to_string(), serde_json::Value::String("common.json".to_owned()));
+        let translated_value = localisations.get_translation(&args).unwrap();      
+        assert_eq!("Close", translated_value);
+        // test no translation in namespace falls back to common.json namespace
         args.insert("lang".to_string(), serde_json::Value::String("fr".to_owned()));
         args.insert("namespace".to_string(), serde_json::Value::String("common.json-non-existent-file".to_owned()));
         args.insert("fallback".to_string(), serde_json::Value::String("fallback wrong namespace".to_owned()));
-        let translated_value = localisations.get_translation(&args);      
-        assert_eq!("fallback wrong namespace", translated_value);
+        let translated_value = localisations.get_translation(&args).unwrap();      
+        assert_eq!("Fermer", translated_value);
         // test other lang file
         args.insert("lang".to_string(), serde_json::Value::String("es".to_owned()));
         args.insert("namespace".to_string(), serde_json::Value::String("common.json".to_owned()));
         args.insert("fallback".to_string(), serde_json::Value::String("fallback".to_owned()));
-        let translated_value = localisations.get_translation(&args);      
+        let translated_value = localisations.get_translation(&args).unwrap();      
         assert_eq!("Cerrar", translated_value);
+        // test no translation and no fallback results in panic
+        let mut args = HashMap::new();
+        args.insert("key".to_string(), serde_json::Value::String("non-existent-key".to_owned()));
+        args.insert("lang".to_string(), serde_json::Value::String("fr".to_owned()));
+        args.insert("namespace".to_string(), serde_json::Value::String("common.json".to_owned()));
+        assert!(localisations.get_translation(&args).is_err())
     }
 }
