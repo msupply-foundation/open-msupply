@@ -123,10 +123,9 @@ use super::Localisations;
 
     #[test]
     fn test_translations() {
-        let mut localisations = Localisations::new();
+        let localisations = Localisations::new();
         // test loading localisations
         // note these translations might change if translations change in the front end. In this case, these will need to be updated.
-        let _ = localisations.load_translations();
 
         let mut args = HashMap::new();
         args.insert("key".to_string(), serde_json::Value::String("button.close".to_owned()));
