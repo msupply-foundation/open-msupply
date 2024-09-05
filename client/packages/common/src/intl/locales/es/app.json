@@ -143,5 +143,9 @@
   "customer-returns": "Devoluciones de cliente",
   "supplier-return": "Devolución de proveedor",
   "supplier-returns": "Devoluciones de proveedor",
-  "customer-return": "Devolución de cliente"
+  "customer-return": "Devolución de cliente",
+  "error.login-support": "Por favor contacta con support@msupply.foundation si no puedes acceder a tu cuenta",
+  "error.missing-central-sync": "No se pudo acceder al servidor central de mSupply",
+  "cmdk.more-info-close": "Cerrar el panel de mas información",
+  "cmdk.more-info-open": "Abrir el panel de más infromación"
 }
