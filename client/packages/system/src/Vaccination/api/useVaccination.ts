@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { useIntlUtils, useQuery } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 
-import { Clinician, ClinicianAutocompleteOption } from '../../Clinician';
+import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION } from './keys';
 
 export interface VaccinationDraft {
-  clinician?: ClinicianAutocompleteOption | null;
+  clinician?: Clinician | null;
+  date: Date | null;
   given?: boolean;
   comment?: string;
-  date?: Date | null;
   itemId?: string;
   stockLineId?: string;
   notGivenReason?: string;
@@ -25,7 +25,6 @@ export function useVaccination({
   defaultClinician?: Clinician;
 }) {
   const { api } = useVaccinationsGraphQL();
-  const { getLocalisedFullName } = useIntlUtils();
 
   const { data, isLoading } = useQuery({
     queryKey: [VACCINATION, vaccineCourseDoseId, vaccinationId],
@@ -40,26 +39,23 @@ export function useVaccination({
 
   const [patch, setPatch] = useState<Partial<VaccinationDraft>>({});
 
-  const defaults: Partial<VaccinationDraft> = {
+  const defaults: VaccinationDraft = {
     date: new Date(),
-    clinician: defaultClinician
-      ? {
-          value: defaultClinician,
-          label: getLocalisedFullName(
-            defaultClinician.firstName,
-            defaultClinician.lastName
-          ),
-        }
-      : undefined,
+    clinician: defaultClinician,
+    stockLineId: 'TODO',
   };
 
-  const draft: VaccinationDraft | undefined = data
-    ? { ...defaults, ...data, ...patch }
-    : undefined;
+  const draft: VaccinationDraft = { ...defaults, ...data, ...patch };
+
+  const isComplete =
+    (draft.given && !!draft.itemId && !!draft.stockLineId) ||
+    (draft.given === false && !!draft.notGivenReason);
 
   return {
     query: { dose: data, isLoading },
     draft,
+    isComplete,
+    isDirty: Object.keys(patch).length > 0,
     updateDraft: (update: Partial<VaccinationDraft>) =>
       setPatch({ ...patch, ...update }),
   };
