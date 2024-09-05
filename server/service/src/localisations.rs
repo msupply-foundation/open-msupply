@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::error::Error;
+use thiserror::Error;
 use serde_yaml::Value;
 
 use rust_embed::RustEmbed;
@@ -9,18 +9,13 @@ use rust_embed::RustEmbed;
 #[folder = "../../client/packages/common/src/intl/locales"]
 pub struct EmbeddedLocalisations;
 
-#[derive(Debug)]
-pub struct TranslationError;
-
-impl std::fmt::Display for TranslationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "No translation")
-    }
+#[derive(Debug, Error)]
+pub enum TranslationError {
+    #[error("Key must be specified")]
+    KeyMustBeSpecified,
+    #[error("No translation found and fallback is missing")]
+    TranslationNotFoundAndNoFallback
 }
-
-impl Error for TranslationError {}
-
-
 // struct to manage translations
 #[derive(Clone)]
 
@@ -73,9 +68,9 @@ impl Localisations {
     // Get a translation for a given key and language
     // next need to add fallback and namespace to get Translation function
     pub fn get_translation(&self, args: &HashMap<String, serde_json::Value>, language: &str ) -> Result<String, TranslationError> {
-        let key = args.get("k").and_then(serde_json::Value::as_str).unwrap_or("");
+        let key = args.get("k").and_then(serde_json::Value::as_str).ok_or(TranslationError::KeyMustBeSpecified)?;
         let namespace = args.get("n").and_then(serde_json::Value::as_str).unwrap_or("");
-        let fallback = args.get("f").and_then(serde_json::Value::as_str);
+        let fallback = args.get("f").and_then(serde_json::Value::as_str).map(|s| s.to_string());
 
         // make cascading array of fallback options:
         for (language, namespace, key) in [
@@ -93,14 +88,7 @@ impl Localisations {
                 None => continue,
             }
         };
-        if let Some(fallback_text) = fallback {
-            // if none of the options above are available, fallback to the english fallback in html
-            return Ok(fallback_text.to_string())
-        } else {
-            // throw error if no translation found above (and don't render report)
-            Err(TranslationError)
-        }
-
+        fallback.ok_or(TranslationError::TranslationNotFoundAndNoFallback)
     }
 
     fn find_key(&self, language: &str, namespace: &str, key: &str) -> Option<String> {
@@ -108,8 +96,8 @@ impl Localisations {
             .get(language)
             .and_then(|map| map.get(namespace))
             .and_then(|map| map.get(key))
-            .cloned()
-    }
+            .map(|s| s.to_string())
+        }
 }
 
 #[cfg(test)]
