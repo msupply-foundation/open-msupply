@@ -20,15 +20,7 @@ query vaccineCourseDose($id: String!) {
       }
     }
     ... on VaccineCourseDoseNode {
-      __typename
-      id
-      label
-      vaccineCourse {
-        id
-        vaccineCourseItems {
-          ...VaccineCourseItem
-        }
-      }
+      ...VaccinationCourseDose
     }
   }
 }
