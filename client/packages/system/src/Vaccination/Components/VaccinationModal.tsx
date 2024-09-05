@@ -1,22 +1,24 @@
 import {
   BasicSpinner,
-  Box,
+  BasicTextInput,
   Container,
+  DatePicker,
   DialogButton,
   Grid,
   InputWithLabelRow,
   Radio,
   RadioGroup,
+  Select,
   useDialog,
   useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import { FormControlLabel } from '@mui/material';
-import React from 'react';
-import { useVaccination } from '../api';
+import React, { useMemo } from 'react';
+import { useVaccination, VaccinationDraft } from '../api';
 import { ClinicianSearchInput } from '../../Clinician';
-import { StockItemSearchInput } from '../../Item';
+import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -38,13 +40,13 @@ export const VaccinationModal = ({
     // update: { update },
     // create: { create },
     updateDraft,
-    query: { isLoading },
+    query: { dose, isLoading },
     // isDirty,
     // setIsDirty,
   } = useVaccination({ vaccineCourseDoseId, vaccinationId });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(700);
+  const height = useKeyboardHeightAdjustment(620);
 
   // TODO
   const save = async () => {
@@ -56,81 +58,24 @@ export const VaccinationModal = ({
       //     ? await update()
       //     : await create(programId ?? '');
       // if (result?.__typename === 'VaccineCourseNode') {
-      //   const message =
-      //     !!vaccinationId
-      //       ? `${t('messages.updated-new-vaccine-course')}: ${result.name}`
-      //       : `${t('messages.created-new-vaccine-course')}: ${result.name}`;
-      success(message)();
+      success(t('messages.vaccination-saved'))();
       onClose();
       // }
     } catch (e) {
-      error(t('error.failed-to-save-vaccine-course'))();
+      error(t('error.failed-to-save-vaccination'))();
       console.error(e);
     }
   };
 
-  const modalContent =
-    !draft || isLoading ? (
-      <BasicSpinner />
-    ) : (
-      <Box display="flex" flex={1}>
-        <Container>
-          <InputWithLabelRow
-            label={t('label.clinician')}
-            Input={
-              <Grid item flex={1}>
-                <ClinicianSearchInput
-                  onChange={clinician => {
-                    updateDraft({
-                      clinician,
-                    });
-                  }}
-                  clinicianLabel={draft.clinician?.label || ''}
-                  clinicianValue={draft.clinician?.value}
-                />
-              </Grid>
-            }
-          />
-
-          <RadioGroup
-            value={draft.given}
-            onChange={event => {
-              updateDraft({ given: event.target.value === 'true' });
-              //
-            }}
-          >
-            <FormControlLabel
-              value={true}
-              control={<Radio />}
-              label={t('label.vaccine-given')}
-            />
-            <FormControlLabel
-              value={false}
-              control={<Radio />}
-              label={t('label.vaccine-not-given')}
-            />
-          </RadioGroup>
-
-          <InputWithLabelRow
-            label={t('label.vaccine-item')}
-            Input={
-              <Grid item flex={1}>
-                {/* PROBS JUST AS EASY TO RENDER THE ITEMS BOO */}
-                <StockItemSearchInput
-                  onChange={x => console.log(x)}
-                  // extraFilter={item => courseItems.find(i => i.id === item.id)}
-                />
-              </Grid>
-            }
-          />
-          <InputWithLabelRow label={t('label.batch')} Input={'TODO'} />
-        </Container>
-      </Box>
-    );
+  const modalContent = isLoading ? (
+    <BasicSpinner />
+  ) : (
+    <VaccinationForm updateDraft={updateDraft} draft={draft} dose={dose} />
+  );
 
   return (
     <Modal
-      title={draft.label}
+      title={dose?.label ?? t('label.vaccination')}
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
@@ -140,10 +85,138 @@ export const VaccinationModal = ({
         />
       }
       height={height}
-      width={750}
+      width={550}
       slideAnimation={false}
     >
       {modalContent}
     </Modal>
+  );
+};
+
+const VaccinationForm = ({
+  draft,
+  dose,
+  updateDraft,
+}: {
+  dose?: VaccinationCourseDoseFragment;
+  draft?: VaccinationDraft;
+  updateDraft: (update: Partial<VaccinationDraft>) => void;
+}) => {
+  const t = useTranslation('dispensary');
+
+  const vaccineItemOptions = useMemo(() => {
+    return (
+      dose?.vaccineCourse.vaccineCourseItems?.map(item => ({
+        label: item.name,
+        value: item.id,
+      })) ?? []
+    );
+  }, [dose?.id]);
+
+  if (!draft || !dose) {
+    return null;
+  }
+
+  return (
+    <Container
+      maxWidth="xs"
+      sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+    >
+      <InputWithLabelRow
+        label={t('label.clinician')}
+        Input={
+          <Grid item flex={1}>
+            <ClinicianSearchInput
+              onChange={clinician => {
+                updateDraft({
+                  clinician,
+                });
+              }}
+              clinicianLabel={draft.clinician?.label || ''}
+              clinicianValue={draft.clinician?.value}
+            />
+          </Grid>
+        }
+      />
+      <InputWithLabelRow
+        label={t('label.date')}
+        Input={
+          <DatePicker
+            value={draft.date}
+            onChange={date => updateDraft({ date })}
+            sx={{ flex: 1 }}
+          />
+        }
+      />
+
+      <RadioGroup
+        sx={{ margin: '5 auto', width: 'fit-content' }}
+        value={draft.given ?? null}
+        onChange={event =>
+          updateDraft({ given: event.target.value === 'true' })
+        }
+      >
+        <FormControlLabel
+          value={true}
+          control={<Radio />}
+          label={t('label.vaccine-given')}
+        />
+        <FormControlLabel
+          value={false}
+          control={<Radio />}
+          label={t('label.vaccine-not-given')}
+        />
+      </RadioGroup>
+
+      {draft.given && (
+        <>
+          <InputWithLabelRow
+            label={t('label.vaccine-item')}
+            Input={
+              <Select
+                options={vaccineItemOptions}
+                value={draft.itemId ?? ''}
+                onChange={e => updateDraft({ itemId: e.target.value })}
+                sx={{ flex: 1 }}
+              />
+            }
+          />
+          <InputWithLabelRow label={t('label.batch')} Input={'TODO'} />
+        </>
+      )}
+
+      {draft.given === false && (
+        <>
+          <InputWithLabelRow
+            label={t('label.reason')}
+            Input={
+              <Select
+                options={[{ label: 'refused', value: 'refused' }]}
+                value={draft.notGivenReason ?? ''}
+                onChange={e => updateDraft({ notGivenReason: e.target.value })}
+                sx={{ flex: 1 }}
+              />
+            }
+          />
+        </>
+      )}
+
+      {/* Is undefined when yet set as given true/false */}
+      {draft.given !== undefined && (
+        <InputWithLabelRow
+          label={t('label.comment')}
+          Input={
+            <BasicTextInput
+              value={draft.comment}
+              onChange={e => updateDraft({ comment: e.target.value })}
+              multiline
+              fullWidth
+              rows={3}
+              style={{ flex: 1 }}
+            />
+          }
+        />
+      )}
+    </Container>
   );
 };
