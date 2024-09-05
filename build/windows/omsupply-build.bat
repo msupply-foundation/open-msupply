@@ -47,6 +47,7 @@ yarn android:build:release
 copy packages\android\app\build\outputs\apk\release\*.apk ..\omSupply
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
+@REM keep electron last, as it exits the batch when complete
 @ECHO ##### Building omSupply for the desktop #####
 yarn electron:build && xcopy "packages\electron\out\open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i
 @if %errorlevel% neq 0 exit /b %errorlevel%
