@@ -80,7 +80,7 @@ impl Localisations {
 
         // make cascading array of fallback options:
         for (language, namespace, key, fallback) in [
-            // first look for key in nomionaed namespace
+            // first look for key in nominated namespace
             (language, namespace, key, None), 
             // then look for key in common.json
             (language, "common.json", key, None), 
