@@ -134,6 +134,7 @@ const VaccinationForm = ({
         label={t('label.date')}
         Input={
           <DatePicker
+            disableFuture
             value={draft.date}
             onChange={date => updateDraft({ date })}
             sx={{ flex: 1 }}
