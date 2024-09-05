@@ -843,7 +843,7 @@ mod report_to_excel_test {
 
 #[cfg(test)]
 mod report_generation_test {
-    use std::{collections::HashMap};
+    use std::collections::HashMap;
 
     use repository::{mock::MockDataInserts, test_db::setup_all};
     use serde_json::json;
@@ -856,8 +856,6 @@ mod report_generation_test {
     async fn test_standard_reprt_generation() {
 
         let template_content = include_str!("templates/test.html").to_string();
-
-        println!("template_content {:?}", template_content);
 
         let tera_template = TeraTemplate {
             template: template_content,
