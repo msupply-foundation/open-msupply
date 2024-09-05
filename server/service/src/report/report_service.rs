@@ -112,8 +112,9 @@ pub trait ReportServiceTrait: Sync + Send {
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
         translation_service: Box<Localisations>,
+        current_language: Option<String>,
     ) -> Result<String, ReportError> {
-        let document = generate_report(report, report_data, arguments, translation_service)?;
+        let document = generate_report(report, report_data, arguments, translation_service, current_language)?;
 
         match format {
             Some(PrintFormat::Html) => {
@@ -401,6 +402,7 @@ fn generate_report(
     report_data: serde_json::Value,
     arguments: Option<serde_json::Value>,
     translation_service: Box<Localisations>,
+    current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let mut context = tera::Context::new();
     context.insert("data", &report_data);
@@ -408,6 +410,11 @@ fn generate_report(
     if let Some(arguments) = arguments {
         context.insert("arguments", &arguments);
     }
+    let lang = match current_language {
+        Some(language) => language,
+        None => "en".to_string(),
+    };
+    context.insert("lang", &lang);
     println!("generating report!");
     let mut tera = tera::Tera::default();
     tera.register_function("translate", move |args: &HashMap<String, serde_json::Value>| {
@@ -719,6 +726,7 @@ mod report_service_test {
             }),
             None,
             translation_service,
+            None,
         )
         .unwrap();
         assert_eq!(doc.document, "Template: Hello Footer");

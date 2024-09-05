@@ -30,6 +30,7 @@ export type GenerateReportQueryVariables = Types.Exact<{
   arguments?: Types.InputMaybe<Types.Scalars['JSON']['input']>;
   format?: Types.InputMaybe<Types.PrintFormat>;
   sort?: Types.InputMaybe<Types.PrintReportSortInput>;
+  currentLanguage?: Types.InputMaybe<Types.Scalars['String']['input']>;
 }>;
 
 
@@ -70,7 +71,7 @@ export const ReportsDocument = gql`
 }
     ${ReportRowFragmentDoc}`;
 export const GenerateReportDocument = gql`
-    query generateReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: PrintFormat, $sort: PrintReportSortInput) {
+    query generateReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: PrintFormat, $sort: PrintReportSortInput, $currentLanguage: String) {
   generateReport(
     dataId: $dataId
     reportId: $reportId
@@ -78,6 +79,7 @@ export const GenerateReportDocument = gql`
     format: $format
     arguments: $arguments
     sort: $sort
+    currentLanguage: $currentLanguage
   ) {
     ... on PrintReportNode {
       __typename
