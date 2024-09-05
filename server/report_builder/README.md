@@ -183,3 +183,39 @@ For example, instead of `icon1` an alternative name can be used by using a refer
 ```
 
 The entry `icon1` from the existing report can then be used under the name `my_icon_name`.
+
+## Translating reports
+
+Reports now have the option to allow for translations using the same localisation suite we use for front end translations.
+
+This can be implemented in the report by adding the following translation function in place of your text:
+
+```
+{{t(k="label.name", l=lang, n="reports.json", f="Name")}}
+```
+
+Where the letters are short hand for the following:
+- t for translate
+  The name of the function
+- k for key 
+  This is the locale key as is used in front end translations. 
+- l for language
+  This is an optional override for language. the default lang will use the language of the front end user.
+  To override the language of a particular key, you can substitute it in like:
+  ```
+    {{t(k="label.name", l={{"en"}}, n="reports.json", f="Name")}}
+  ```
+- n for namespace
+  The file namespace where the translation key is. ie catalogue.json
+- f for fallback
+  This is an optional fallback text if the translation cannot be found.
+
+The translation function has a number of fallback translations which it will search through if the translation cannot be found.
+
+First it will look for the translation key within the nominated namespace and language
+Next it will fallback to the translation in the common.json namespace and nominated language
+Next it will fallback to the fallback text provided in the report
+Next it will fallback to the english translation of the nominated key and nominated namespace
+Next it will fallback to the english translation of the nominated key in the common.json namespace
+
+If none of the above can be found, report will fail to render.
