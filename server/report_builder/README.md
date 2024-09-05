@@ -214,8 +214,8 @@ The translation function has a number of fallback translations which it will sea
 
 First it will look for the translation key within the nominated namespace and language
 Next it will fallback to the translation in the common.json namespace and nominated language
-Next it will fallback to the fallback text provided in the report
 Next it will fallback to the english translation of the nominated key and nominated namespace
 Next it will fallback to the english translation of the nominated key in the common.json namespace
+Next it will fallback to the fallback text provided in the report which by default will be in english
 
 If none of the above can be found, report will fail to render.

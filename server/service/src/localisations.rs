@@ -79,37 +79,37 @@ impl Localisations {
         let fallback = args.get("f").and_then(serde_json::Value::as_str);
 
         // make cascading array of fallback options:
-        for (language, namespace, key, fallback) in [
+        for (language, namespace, key) in [
             // first look for key in nominated namespace
-            (language, namespace, key, None), 
+            (language, namespace, key), 
             // then look for key in common.json
-            (language, "common.json", key, None), 
-            // then look for fallback
-            ("", "", "", fallback ),
+            (language, "common.json", key), 
             // then look for key in nominated namespace in en
-            ("en", namespace, key, None), 
+            ("en", namespace, key), 
             // then look for key in common.json in en
-            ("en", "common.json", key, None),             
+            ("en", "common.json", key),             
             ] {
-            match self.find_key(language, namespace, key, fallback) {
+            match self.find_key(language, namespace, key) {
                 Some(string) => return Ok(string),
                 None => continue,
             }
         };
-        // throw error if no translation found above (and don't render report)
-        Err(TranslationError)
+        if let Some(fallback_text) = fallback {
+            // if none of the options above are available, fallback to the english fallback in html
+            return Ok(fallback_text.to_string())
+        } else {
+            // throw error if no translation found above (and don't render report)
+            Err(TranslationError)
+        }
+
     }
 
-    fn find_key(&self, language: &str, namespace: &str, key: &str, fallback: Option<&str>) -> Option<String> {
-        if let Some(fallback) = fallback {
-            return Some(fallback.to_owned())
-        } else {
+    fn find_key(&self, language: &str, namespace: &str, key: &str) -> Option<String> {
             self.translations
             .get(language)
             .and_then(|map| map.get(namespace))
             .and_then(|map| map.get(key))
             .cloned()
-        }
     }
 }
 
