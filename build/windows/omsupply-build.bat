@@ -16,8 +16,9 @@ copy "version.txt" "omSupply\version.txt"
 start /wait /b build\windows\omsupply-prepare.bat
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
-@ECHO ##### Building omsupply for sqlite #####
 @cd server 
+
+@ECHO ##### Building omsupply for sqlite #####
 cargo build --release --bin omsupply_service && copy "target\release\omsupply_service.exe" "..\omSupply\Server\omSupply-sqlite.exe"
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
@@ -39,16 +40,10 @@ cargo build --release --bin test_connection && copy "target\release\test_connect
 cargo build --release --bin test_connection --features postgres && copy "target\release\test_connection.exe" "..\omSupply\Server\test-connection-postgres.exe"
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
-@ECHO ##### Building omSupply apk #####
-@cd "..\client" 
-@REM copy the keystore and local.properties for apk signing
-copy c:\android\local.properties packages\android\ /y && copy c:\android\release.keystore packages\android\app\ /y
-yarn android:build:release
-copy packages\android\app\build\outputs\apk\release\*.apk ..\omSupply
+@cd..
+
+start /wait /b build\windows\omsupply-android.bat
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
-@REM keep electron last, as it exits the batch when complete
-@ECHO ##### Building omSupply for the desktop #####
-yarn electron:build && xcopy "packages\electron\out\open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i
+start /wait /b build\windows\omsupply-electron.bat
 @if %errorlevel% neq 0 exit /b %errorlevel%
-
