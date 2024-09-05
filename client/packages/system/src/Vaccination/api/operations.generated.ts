@@ -37,19 +37,11 @@ export const VaccineCourseDoseDocument = gql`
       }
     }
     ... on VaccineCourseDoseNode {
-      __typename
-      id
-      label
-      vaccineCourse {
-        id
-        vaccineCourseItems {
-          ...VaccineCourseItem
-        }
-      }
+      ...VaccinationCourseDose
     }
   }
 }
-    ${VaccineCourseItemFragmentDoc}`;
+    ${VaccinationCourseDoseFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
