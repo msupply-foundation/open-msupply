@@ -39,14 +39,15 @@ cargo build --release --bin test_connection && copy "target\release\test_connect
 cargo build --release --bin test_connection --features postgres && copy "target\release\test_connection.exe" "..\omSupply\Server\test-connection-postgres.exe"
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
-@ECHO ##### Building omSupply for the desktop #####
-@cd "..\client" 
-yarn electron:build && xcopy "packages\electron\out\open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i
-@if %errorlevel% neq 0 exit /b %errorlevel%
-
 @ECHO ##### Building omSupply apk #####
+@cd "..\client" 
 @REM copy the keystore and local.properties for apk signing
 copy c:\android\local.properties packages\android\ /y && copy c:\android\release.keystore packages\android\app\ /y
 yarn android:build:release
 copy packages\android\app\build\outputs\apk\release\*.apk ..\omSupply
 @if %errorlevel% neq 0 exit /b %errorlevel%
+
+@ECHO ##### Building omSupply for the desktop #####
+yarn electron:build && xcopy "packages\electron\out\open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i
+@if %errorlevel% neq 0 exit /b %errorlevel%
+
