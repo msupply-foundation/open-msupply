@@ -14,11 +14,11 @@
   "label.add-batch": "Agregar lote",
   "error.is-locked": "Toma de inventario bloqueada.",
   "error.provide-valid-reason": "La razón del ajuste no coincide con la dirección del ajuste",
-  "error.reduced-below-zero": "Inventario reservado para nuevas salidas. La cantidad no puede reducirse por debajo de cero.",
+  "error.reduced-below-zero": "Inventario reservado en nuevas salidas o prescripciones. La cantidad no puede reducirse por debajo de cero.",
   "label.add-new-line": "Agregar línea nueva",
   "label.cost-price": "Costo",
   "label.sell-price": "Precio",
-  "label.counted-num-of-packs": "Número de paquetes contados",
+  "label.counted-num-of-packs": "# Número de paquetes contados",
   "label.create-location": "Crear ubicación",
   "label.edit-location": "Editar ubicación",
   "label.group-by-item": "Agrupar por artículo",
@@ -58,7 +58,7 @@
   "error.cant-save": "Hubo un problema al guardar.",
   "error.no-stocktake-items": "No se han agregado artículos a esta toma de inventario.",
   "error.provide-reason": "Se debe proporcionar un motivo para cualquier fila que tenga una diferencia en el número contado de paquetes.",
-  "error.stocktake-has-stock-reduced-below-zero": "El recuento de existencias no se puede finalizar porque algunas de las existencias se han utilizado en nuevas salidas.",
+  "error.stocktake-has-stock-reduced-below-zero": "El recuento de existencias no se puede finalizar porque algunas de las existencias se han utilizado en nuevas salidas. La cantidad no puede reducirse por debajo de cero.",
   "messages.locked-description": "Esto evitará cambios adicionales en el recuento de existencias hasta que se desbloquee.",
   "messages.click-to-return": "No se pudo encontrar una toma de inventario con ese ID. Haz clic en Aceptar para volver a la lista de tomas de inventario",
   "messages.confirm-delete-locations_one": "Esto eliminará permanentemente 1 ubicación",
@@ -118,5 +118,7 @@
   "title.adjustment-details": "Detalles de ajuste",
   "title.repack-complete": "Reempaque completado",
   "messages.no-ledger": "Esta línea de stock no tiene movimientos de inventario para mostrar",
-  "button.adjust": "Ajustar"
+  "button.adjust": "Ajustar",
+  "error.snapshot-total-mismatch": "EL número de existencias disponibles que hay ahora es diferente a cuando se inició la toma de inventario porque parte de las existencias se han enviado en salidas o prescripciones. Por favor, elimina la línea e intenta de nuevo.",
+  "error.stocktake-snapshot-total-mismatch": "No se puede finalizar la toma de inventario. EL número de existencias disponibles que hay ahora es diferente a cuando se inició la toma de inventario porque parte de las existencias se han enviado en salidas o prescripciones. Por favor, elimina la línea e intenta de nuevo."
 }
