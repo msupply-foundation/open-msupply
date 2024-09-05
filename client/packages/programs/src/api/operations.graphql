@@ -241,6 +241,9 @@ query encounterById($storeId: String!, $encounterId: String!) {
       __typename
       nodes {
         ...Encounter
+        programEnrolment {
+          isImmunisationProgram
+        }
       }
       totalCount
     }
