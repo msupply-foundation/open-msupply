@@ -191,7 +191,12 @@ const VaccinationForm = ({
             label={t('label.reason')}
             Input={
               <Select
-                options={[{ label: 'refused', value: 'refused' }]}
+                options={[
+                  // TODO: not hard coded lmao
+                  { label: t('label.refused'), value: 'REFUSED' },
+                  { label: t('label.out-of-stock'), value: 'OUT_OF_STOCK' },
+                  { label: t('label.no-reason'), value: 'NO_REASON' },
+                ]}
                 value={draft.notGivenReason ?? ''}
                 onChange={e => updateDraft({ notGivenReason: e.target.value })}
                 sx={{ flex: 1 }}
