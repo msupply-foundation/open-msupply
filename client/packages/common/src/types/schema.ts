@@ -5491,6 +5491,7 @@ export type QueriesGenerateCustomerReturnLinesArgs = {
 
 export type QueriesGenerateReportArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
+  currentLanguage?: InputMaybe<Scalars['String']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String']['input'];
@@ -5501,6 +5502,7 @@ export type QueriesGenerateReportArgs = {
 
 export type QueriesGenerateReportDefinitionArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
+  currentLanguage?: InputMaybe<Scalars['String']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<PrintFormat>;
   name?: InputMaybe<Scalars['String']['input']>;
