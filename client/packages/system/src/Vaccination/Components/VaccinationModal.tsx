@@ -134,7 +134,6 @@ const VaccinationForm = ({
                   clinician,
                 });
               }}
-              clinicianLabel={draft.clinician?.label || ''}
               clinicianValue={draft.clinician?.value}
             />
           </Grid>
