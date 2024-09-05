@@ -5,17 +5,17 @@ import {
 import {
   DocumentRegistryFragment,
   useDocumentRegistryApi,
-  ProgramEnrolmentRowFragmentWithId,
+  ProgramEnrolmentRowFragment,
 } from '@openmsupply-client/programs';
 
 export type EncounterRegistryByProgram = {
-  program: ProgramEnrolmentRowFragmentWithId;
+  program: ProgramEnrolmentRowFragment;
   encounter: DocumentRegistryFragment;
 };
 
 // Fetches available encounters for a list of programs (e.g. for the enrolled programs)
 export const useEncounterRegistriesByPrograms = (
-  programs: ProgramEnrolmentRowFragmentWithId[]
+  programs: ProgramEnrolmentRowFragment[]
 ) => {
   const api = useDocumentRegistryApi();
   const programIds = programs

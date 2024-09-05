@@ -1,9 +1,9 @@
 import {
   EncounterFragment,
   EncounterRowFragment,
+  ProgramEnrolmentRowFragment,
 } from '../operations.generated';
 import { Document } from './document';
-import { ProgramEnrolmentRowFragmentWithId } from './document/useProgramEnrolments';
 import { EncounterRegistryByProgram } from './document/useEncounterRegistriesByPrograms';
 import { useDocumentRegistryApi } from './utils/useDocumentRegistryApi';
 import { useIdFromUrl } from './utils/useIdFromUrl';
@@ -19,10 +19,10 @@ export * from './useVaccineCourseList';
 export * from './useProgramList';
 
 export {
-  ProgramEnrolmentRowFragmentWithId,
   useDocumentRegistryApi,
   EncounterFragment,
   EncounterRowFragment,
+  ProgramEnrolmentRowFragment,
 };
 
 export const useDocument = {
