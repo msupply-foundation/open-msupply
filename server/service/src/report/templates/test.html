@@ -1,5 +1,9 @@
 <div>
     some text
     <!-- example implementation of translate function -->
-    {{translate(key="label.name", lang="en", namespace="reports.json", fallback="Name")}}
+    <!-- where t is shorthand for translate, k for key, l for language, n for namespace, f for fallback -->
+    <!-- All values are optional. Translate function will first search for a key in the nominated language and namespace, then fall back 
+     through a number of fall back options (which you can see in localisations service) before throwing an error if none are available.
+     In this case, the report will not render -->
+    {{t(k="label.name", l="en", n="reports.json", f="Name")}}
 </div>

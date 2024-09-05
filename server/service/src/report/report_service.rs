@@ -417,7 +417,7 @@ fn generate_report(
     context.insert("lang", &lang);
     println!("generating report!");
     let mut tera = tera::Tera::default();
-    tera.register_function("translate", move |args: &HashMap<String, serde_json::Value>| {
+    tera.register_function("t", move |args: &HashMap<String, serde_json::Value>| {
         let translation = translation_service.get_translation(args).map_err(|_| TeraError::msg("Missing translation"))?;
         Ok(Value::String(translation))
     });
