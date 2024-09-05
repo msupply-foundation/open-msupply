@@ -92,7 +92,7 @@ const VaccinationForm = ({
   updateDraft,
 }: {
   dose?: VaccinationCourseDoseFragment;
-  draft?: VaccinationDraft;
+  draft: VaccinationDraft;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
 }) => {
   const t = useTranslation('dispensary');
@@ -106,7 +106,7 @@ const VaccinationForm = ({
     );
   }, [dose?.id]);
 
-  if (!draft || !dose) {
+  if (!dose) {
     return null;
   }
 
@@ -199,7 +199,7 @@ const VaccinationForm = ({
         </>
       )}
 
-      {/* Is undefined when yet set as given true/false */}
+      {/* Is undefined when not yet set as given true/false */}
       {draft.given !== undefined && (
         <InputWithLabelRow
           label={t('label.comment')}
