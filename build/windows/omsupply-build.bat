@@ -16,8 +16,8 @@ copy "version.txt" "omSupply\version.txt"
 start /wait /b build\windows\omsupply-prepare.bat
 @if %errorlevel% neq 0 exit /b %errorlevel%
 
-@REM @ECHO ##### Building omsupply for sqlite #####
-@REM @cd server 
+@ECHO ##### Building omsupply for sqlite #####
+@cd server 
 @REM cargo build --release --bin omsupply_service && copy "target\release\omsupply_service.exe" "..\omSupply\Server\omSupply-sqlite.exe"
 @REM @if %errorlevel% neq 0 exit /b %errorlevel%
 
@@ -39,7 +39,7 @@ start /wait /b build\windows\omsupply-prepare.bat
 @REM cargo build --release --bin test_connection --features postgres && copy "target\release\test_connection.exe" "..\omSupply\Server\test-connection-postgres.exe"
 @REM @if %errorlevel% neq 0 exit /b %errorlevel%
 
-@REM @ECHO ##### Building omSupply for the desktop #####
+@ECHO ##### Building omSupply for the desktop #####
 @cd "..\client" 
 @REM yarn electron:build && xcopy "packages\electron\out\open mSupply-win32-x64\**" "..\omSupply\Desktop\" /e /h /c /i
 @REM @if %errorlevel% neq 0 exit /b %errorlevel%
