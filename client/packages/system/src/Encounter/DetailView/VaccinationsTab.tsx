@@ -10,7 +10,7 @@ export const VaccinationsTab = ({ clinician }: { clinician?: Clinician }) => {
     <>
       {isOpen && (
         <VaccinationModal
-          isOpen={true}
+          isOpen
           vaccinationId={undefined}
           vaccineCourseDoseId="0191b035-927d-7a0b-89cd-ae581a033429"
           onClose={onClose}

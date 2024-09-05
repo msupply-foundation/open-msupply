@@ -39,27 +39,18 @@ export const VaccinationModal = ({
   const { success, error } = useNotification();
   const {
     draft,
-    // update: { update },
-    // create: { create },
     updateDraft,
     query: { dose, isLoading },
-    // isDirty,
-    // setIsDirty,
+    isDirty,
+    isComplete,
   } = useVaccination({ vaccineCourseDoseId, vaccinationId, defaultClinician });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(620);
 
-  // TODO
   const save = async () => {
-    // setIsDirty(false);
-
     try {
-      // const result =
-      //   !!vaccinationId
-      //     ? await update()
-      //     : await create(programId ?? '');
-      // if (result?.__typename === 'VaccineCourseNode') {
+      // TODO: actual save :)
       success(t('messages.vaccination-saved'))();
       onClose();
       // }
@@ -81,7 +72,7 @@ export const VaccinationModal = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       okButton={
         <DialogButton
-          // disabled={!isDirty || !programId} // TODO? prog
+          disabled={!isDirty || !isComplete}
           variant="ok"
           onClick={save}
         />
@@ -131,10 +122,10 @@ const VaccinationForm = ({
             <ClinicianSearchInput
               onChange={clinician => {
                 updateDraft({
-                  clinician,
+                  clinician: clinician?.value,
                 });
               }}
-              clinicianValue={draft.clinician?.value}
+              clinicianValue={draft.clinician}
             />
           </Grid>
         }
@@ -193,7 +184,7 @@ const VaccinationForm = ({
             Input={
               <Select
                 options={[
-                  // TODO: not hard coded lmao
+                  // TODO: make the values an enum from backend
                   { label: t('label.refused'), value: 'REFUSED' },
                   { label: t('label.out-of-stock'), value: 'OUT_OF_STOCK' },
                   { label: t('label.no-reason'), value: 'NO_REASON' },
