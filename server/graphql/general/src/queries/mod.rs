@@ -54,6 +54,8 @@ pub use self::plugin::*;
 pub mod currency;
 pub mod label_printer_settings;
 pub use self::label_printer_settings::*;
+pub mod discount;
+pub use self::discount::*;
 
 pub mod generate_inbound_return_lines;
 pub use self::generate_inbound_return_lines::*;

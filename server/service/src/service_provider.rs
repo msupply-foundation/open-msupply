@@ -30,6 +30,7 @@ use crate::{
     name::{NameService, NameServiceTrait},
     pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
+    pricing::{PricingService, PricingServiceTrait},
     processors::ProcessorsTrigger,
     program::ProgramServiceTrait,
     programs::{
@@ -141,6 +142,7 @@ pub struct ServiceProvider {
     // Vaccine Course
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
     pub program_service: Box<dyn ProgramServiceTrait>,
+    pub pricing_service: Box<dyn PricingServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -225,6 +227,7 @@ impl ServiceProvider {
             demographic_service: Box::new(crate::demographic::DemographicService {}),
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
+            pricing_service: Box::new(PricingService {}),
             rnr_form_service: Box::new(RnRFormService {}),
         }
     }
