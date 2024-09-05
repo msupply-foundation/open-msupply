@@ -28,7 +28,6 @@ import {
   useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
-  VaccineCourseDoseNode,
 } from '@openmsupply-client/common';
 import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
@@ -272,7 +271,7 @@ const VaccineCourseDoseTable = ({
     });
   };
 
-  const updateDose: ColumnDataSetter<VaccineCourseDoseNode> = newData => {
+  const updateDose: ColumnDataSetter<VaccineCourseDoseFragment> = newData => {
     updatePatch({
       vaccineCourseDoses: doses.map(dose =>
         dose.id === newData.id ? { ...dose, ...newData } : dose
@@ -280,7 +279,7 @@ const VaccineCourseDoseTable = ({
     });
   };
 
-  const columns = useColumns<VaccineCourseDoseNode>(
+  const columns = useColumns<VaccineCourseDoseFragment>(
     [
       {
         key: 'doseNumber',

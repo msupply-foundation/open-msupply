@@ -1,9 +1,18 @@
 import { useState } from 'react';
-import { ClinicianAutocompleteOption } from '../../Clinician';
+import { useQuery } from '@openmsupply-client/common';
 
-interface VaccinationDraft {
+import { ClinicianAutocompleteOption } from '../../Clinician';
+import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
+import { VACCINATION } from './keys';
+
+export interface VaccinationDraft {
   clinician?: ClinicianAutocompleteOption | null;
   given?: boolean;
+  comment?: string;
+  date?: Date | null;
+  itemId?: string;
+  stockLineId?: string;
+  notGivenReason?: string;
 }
 
 export function useVaccination({
@@ -13,15 +22,31 @@ export function useVaccination({
   vaccineCourseDoseId: string;
   vaccinationId: string | undefined;
 }) {
-  const data: VaccinationDraft | undefined = {};
+  const { api } = useVaccinationsGraphQL();
+
+  const { data, isLoading } = useQuery({
+    queryKey: [VACCINATION, vaccineCourseDoseId, vaccinationId],
+    queryFn: async () => {
+      const result = await api.vaccineCourseDose({ id: vaccineCourseDoseId });
+
+      if (result.vaccineCourseDose.__typename === 'VaccineCourseDoseNode') {
+        return result.vaccineCourseDose;
+      }
+    },
+  });
+
   const [patch, setPatch] = useState<Partial<VaccinationDraft>>({});
 
+  const defaults = {
+    date: new Date(),
+  };
+
   const draft: VaccinationDraft | undefined = data
-    ? { ...data, ...patch }
+    ? { ...defaults, ...data, ...patch }
     : undefined;
 
   return {
-    query: { isLoading: false },
+    query: { dose: data, isLoading },
     draft,
     updateDraft: (update: Partial<VaccinationDraft>) =>
       setPatch({ ...patch, ...update }),
