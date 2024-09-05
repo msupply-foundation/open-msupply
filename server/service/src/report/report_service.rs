@@ -845,28 +845,39 @@ mod report_to_excel_test {
 mod report_generation_test {
     use std::{collections::HashMap};
 
+    use repository::{mock::MockDataInserts, test_db::setup_all};
     use serde_json::json;
 
-    use crate::report::{definition::{ReportOutputType, TeraTemplate}, report_service::{generate_report, ResolvedReportDefinition}};
+    use crate::{report::{definition::{ReportOutputType, TeraTemplate}, report_service::{generate_report, ResolvedReportDefinition}}, service_provider::ServiceProvider};
     // adding tests to generate reports
 
     #[actix_rt::test]
 
     async fn test_standard_reprt_generation() {
 
-        let template_content = include_str!("templates/expiring-items.html").to_string();
+        let template_content = include_str!("templates/test.html").to_string();
+
+        println!("template_content {:?}", template_content);
 
         let tera_template = TeraTemplate {
             template: template_content,
             output: ReportOutputType::Html,
         };
 
+        let (_, _, connection_manager, _) = setup_all(
+            "test_report_translations",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let translation_service = ServiceProvider::new(connection_manager, "app_data").translations_service;
+
         let mut templates = HashMap::new();
-        templates.insert("expiring-items.html".to_string(), tera_template);
+        templates.insert("test.html".to_string(), tera_template);
 
         let report = ResolvedReportDefinition {
-            name: "test_report_generation".to_string(),
-            template: "text".to_string(),
+            name: "test.html".to_string(),
+            template: "test.html".to_string(),
             header: None,
             footer: None,
             queries: Vec::new(),
@@ -877,9 +888,10 @@ mod report_generation_test {
         let report_data = json!(null);
 
 
-        let report = generate_report(&report, report_data, None, Some("fr".to_string())).unwrap();
+        let report = generate_report(&report, report_data, None, translation_service, Some("fr".to_string())).unwrap();
 
-        assert!(report.document.contains("some text"));
+        assert!(report.document.contains("some text"));        
+        assert!(report.document.contains("Name"));
 
     }
 }
