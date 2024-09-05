@@ -831,3 +831,47 @@ mod report_to_excel_test {
         assert_eq!(inner_text(cell), "Out of Stock");
     }
 }
+
+
+#[cfg(test)]
+mod report_generation_test {
+    use std::{collections::HashMap};
+
+    use serde_json::json;
+
+    use crate::report::{definition::{ReportOutputType, TeraTemplate}, report_service::{generate_report, ResolvedReportDefinition}};
+    // adding tests to generate reports
+
+    #[actix_rt::test]
+
+    async fn test_standard_reprt_generation() {
+
+        let template_content = include_str!("templates/expiring-items.html").to_string();
+
+        let tera_template = TeraTemplate {
+            template: template_content,
+            output: ReportOutputType::Html,
+        };
+
+        let mut templates = HashMap::new();
+        templates.insert("expiring-items.html".to_string(), tera_template);
+
+        let report = ResolvedReportDefinition {
+            name: "test_report_generation".to_string(),
+            template: "text".to_string(),
+            header: None,
+            footer: None,
+            queries: Vec::new(),
+            templates,
+            resources: HashMap::new(),
+        };
+
+        let report_data = json!(null);
+
+
+        let report = generate_report(&report, report_data, None, Some("fr".to_string())).unwrap();
+
+        assert!(report.document.contains("some text"));
+
+    }
+}
