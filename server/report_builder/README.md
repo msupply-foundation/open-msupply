@@ -191,7 +191,7 @@ Reports now have the option to allow for translations using the same localisatio
 This can be implemented in the report by adding the following translation function in place of your text:
 
 ```
-{{t(k="label.name", l=lang, n="reports.json", f="Name")}}
+{{t(k="label.name", n="reports.json", f="Name")}}
 ```
 
 Where the letters are short hand for the following:
@@ -199,16 +199,15 @@ Where the letters are short hand for the following:
   The name of the function
 - k for key 
   This is the locale key as is used in front end translations. 
-- l for language
-  This is an optional override for language. the default lang will use the language of the front end user.
-  To override the language of a particular key, you can substitute it in like:
   ```
-    {{t(k="label.name", l={{"en"}}, n="reports.json", f="Name")}}
+    {{t(k="label.name", n="reports.json", f="Name")}}
   ```
 - n for namespace
   The file namespace where the translation key is. ie catalogue.json
 - f for fallback
   This is an optional fallback text if the translation cannot be found.
+
+The language is passed down as the user's current language through graphql when the report is generated.
 
 The translation function has a number of fallback translations which it will search through if the translation cannot be found.
 
