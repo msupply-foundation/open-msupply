@@ -286,7 +286,11 @@ export const DetailView: FC = () => {
             <DetailTabs
               tabs={[
                 {
-                  Component: <VaccinationsTab />,
+                  Component: (
+                    <VaccinationsTab
+                      clinician={encounter.clinician ?? undefined}
+                    />
+                  ),
                   value: t('label.vaccinations'),
                 },
                 { Component: JsonForm, value: t('label.encounter') },

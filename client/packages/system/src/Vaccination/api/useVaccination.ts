@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@openmsupply-client/common';
+import { useIntlUtils, useQuery } from '@openmsupply-client/common';
 
-import { ClinicianAutocompleteOption } from '../../Clinician';
+import { Clinician, ClinicianAutocompleteOption } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION } from './keys';
 
@@ -18,11 +18,14 @@ export interface VaccinationDraft {
 export function useVaccination({
   vaccineCourseDoseId,
   vaccinationId,
+  defaultClinician,
 }: {
   vaccineCourseDoseId: string;
   vaccinationId: string | undefined;
+  defaultClinician?: Clinician;
 }) {
   const { api } = useVaccinationsGraphQL();
+  const { getLocalisedFullName } = useIntlUtils();
 
   const { data, isLoading } = useQuery({
     queryKey: [VACCINATION, vaccineCourseDoseId, vaccinationId],
@@ -37,8 +40,17 @@ export function useVaccination({
 
   const [patch, setPatch] = useState<Partial<VaccinationDraft>>({});
 
-  const defaults = {
+  const defaults: Partial<VaccinationDraft> = {
     date: new Date(),
+    clinician: defaultClinician
+      ? {
+          value: defaultClinician,
+          label: getLocalisedFullName(
+            defaultClinician.firstName,
+            defaultClinician.lastName
+          ),
+        }
+      : undefined,
   };
 
   const draft: VaccinationDraft | undefined = data

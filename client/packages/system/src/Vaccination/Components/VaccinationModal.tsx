@@ -17,7 +17,7 @@ import {
 import { FormControlLabel } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
-import { ClinicianSearchInput } from '../../Clinician';
+import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 
 interface VaccinationModalProps {
@@ -25,6 +25,7 @@ interface VaccinationModalProps {
   vaccineCourseDoseId: string;
   isOpen: boolean;
   onClose: () => void;
+  defaultClinician?: Clinician;
 }
 
 export const VaccinationModal = ({
@@ -32,6 +33,7 @@ export const VaccinationModal = ({
   onClose,
   vaccineCourseDoseId,
   vaccinationId,
+  defaultClinician,
 }: VaccinationModalProps) => {
   const t = useTranslation('dispensary');
   const { success, error } = useNotification();
@@ -43,7 +45,7 @@ export const VaccinationModal = ({
     query: { dose, isLoading },
     // isDirty,
     // setIsDirty,
-  } = useVaccination({ vaccineCourseDoseId, vaccinationId });
+  } = useVaccination({ vaccineCourseDoseId, vaccinationId, defaultClinician });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(620);
