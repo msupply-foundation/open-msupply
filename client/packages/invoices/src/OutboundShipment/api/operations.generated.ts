@@ -114,8 +114,7 @@ export type AddToOutboundShipmentFromMasterListMutation = { __typename: 'Mutatio
 
 export type GetDiscountedPriceQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  nameId: Types.Scalars['String']['input'];
-  itemId: Types.Scalars['String']['input'];
+  input: Types.ItemDiscountInput;
 }>;
 
 
@@ -901,8 +900,8 @@ export const AddToOutboundShipmentFromMasterListDocument = gql`
 }
     `;
 export const GetDiscountedPriceDocument = gql`
-    query getDiscountedPrice($storeId: String!, $nameId: String!, $itemId: String!) {
-  sellPriceDiscount(storeId: $storeId, nameId: $nameId, itemId: $itemId)
+    query getDiscountedPrice($storeId: String!, $input: ItemDiscountInput!) {
+  sellPriceDiscount(storeId: $storeId, input: $input)
 }
     `;
 export const InsertBarcodeDocument = gql`

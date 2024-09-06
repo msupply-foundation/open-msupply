@@ -37,7 +37,7 @@ export const useDraftOutboundLines = (
   >([]);
 
   // This should only return discount if otherPart
-  const { discount, isFetched } = useGetDiscountPrice({
+  const { discount, isFetched: discountFetched } = useGetDiscountPrice({
     nameId: otherPartyId,
     itemId: item?.id || '',
   });
@@ -51,7 +51,7 @@ export const useDraftOutboundLines = (
       return setDraftStockOutLines([]);
     }
 
-    if (!data || !isFetched) return;
+    if (!data || !discountFetched) return;
 
     // Stock lines (data.nodes) are coming from availableStockLines from itemNode
     // these are filtered by totalNumberOfPacks > 0 but it's possible to issue all of the packs
@@ -62,7 +62,7 @@ export const useDraftOutboundLines = (
     const stockLines = uniqBy([...data.nodes, ...invoiceLineStockLines], 'id');
 
     const noStockLines = stockLines.length == 0;
-    console.log(discount);
+
     if (noStockLines) {
       return setDraftStockOutLines([]);
     }

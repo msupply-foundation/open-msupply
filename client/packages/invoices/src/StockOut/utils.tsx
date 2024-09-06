@@ -41,11 +41,11 @@ export interface DraftStockOutLineSeeds {
 export const createDraftStockOutLineFromStockLine = ({
   invoiceId,
   stockLine,
-  discount,
+  discount = 0,
 }: {
   invoiceId: string;
   stockLine: PartialStockLineFragment;
-  discount: number;
+  discount?: number;
 }): DraftStockOutLine => ({
   isCreated: true,
   isUpdated: false,

@@ -3314,6 +3314,11 @@ export type ItemCountsResponse = {
   total: Scalars['Int']['output'];
 };
 
+export type ItemDiscountInput = {
+  itemId: Scalars['String']['input'];
+  nameId: Scalars['String']['input'];
+};
+
 export type ItemFilterInput = {
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
@@ -5849,8 +5854,7 @@ export type QueriesSchedulesWithPeriodsByProgramArgs = {
 
 
 export type QueriesSellPriceDiscountArgs = {
-  itemId: Scalars['String']['input'];
-  nameId: Scalars['String']['input'];
+  input: ItemDiscountInput;
   storeId: Scalars['String']['input'];
 };
 
