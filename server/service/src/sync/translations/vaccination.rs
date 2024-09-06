@@ -91,7 +91,7 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_rnr_form_translation() {
+    async fn test_vaccination_form_translation() {
         use crate::sync::test::test_data::vaccination as test_data;
         let translator = VaccinationTranslation;
 
