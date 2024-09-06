@@ -23,9 +23,22 @@ pub fn mock_vaccine_course_a_dose_a() -> VaccineCourseDoseRow {
     }
 }
 
+pub fn mock_vaccine_course_a_dose_b() -> VaccineCourseDoseRow {
+    VaccineCourseDoseRow {
+        id: "vaccine_course_a_dose_b".to_string(),
+        label: "Vaccine Course A Dose B".to_string(),
+        vaccine_course_id: mock_vaccine_course_a().id,
+        min_age: 0.0,
+        min_interval_days: 30,
+    }
+}
+
 pub fn mock_vaccine_courses() -> Vec<VaccineCourseRow> {
     vec![mock_vaccine_course_a()]
 }
 pub fn mock_vaccine_course_doses() -> Vec<VaccineCourseDoseRow> {
-    vec![mock_vaccine_course_a_dose_a()]
+    vec![
+        mock_vaccine_course_a_dose_a(),
+        mock_vaccine_course_a_dose_b(),
+    ]
 }

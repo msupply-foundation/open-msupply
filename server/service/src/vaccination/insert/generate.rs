@@ -1,35 +1,43 @@
 use chrono::Utc;
-use repository::VaccinationRow;
+use repository::{EncounterRow, VaccinationRow};
 
 use super::InsertVaccination;
 
 pub fn generate(
+    store_id: &str,
+    encounter: EncounterRow,
     InsertVaccination {
         id,
-        name,
-        program_id,
-        demographic_indicator_id,
-        coverage_rate,
-        is_active,
-        wastage_rate,
+        vaccine_course_dose_id,
+        vaccination_date,
+        clinician_id,
+        comment,
+        given,
+        stock_line_id,
+        not_given_reason,
+        encounter_id: _,
     }: InsertVaccination,
 ) -> VaccinationRow {
     let now = Utc::now().naive_utc();
 
     VaccinationRow {
         id,
-        store_id: String::new(),
-        program_id,
-        encounter_id: String::new(),
+        store_id: store_id.to_string(),
+        program_id: encounter.program_id,
+        encounter_id: encounter.id,
+        patient_link_id: encounter.patient_link_id,
+        created_datetime: now,
         user_id: String::new(),
-        vaccine_course_dose_id: String::new(),
-        created_datetime: now.clone(), // remove
+        vaccine_course_dose_id,
+
+        clinician_link_id: clinician_id,
+        vaccination_date,
+        given,
+        stock_line_id,
+        not_given_reason,
+        comment,
+
+        // coming soon
         invoice_id: None,
-        stock_line_id: None,
-        clinician_link_id: None,
-        vaccination_date: now.date(), // TODO
-        given: false,
-        not_given_reason: None,
-        comment: None,
     }
 }

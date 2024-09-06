@@ -9,9 +9,10 @@ pub trait VaccinationServiceTrait: Sync + Send {
     fn insert_vaccination(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         input: insert::InsertVaccination,
     ) -> Result<VaccinationRow, insert::InsertVaccinationError> {
-        insert::insert_vaccination(ctx, input)
+        insert::insert_vaccination(ctx, store_id, input)
     }
 }
 
