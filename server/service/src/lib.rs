@@ -67,6 +67,7 @@ pub mod temperature_excursion;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
+pub mod vaccination;
 pub mod vaccine_course;
 pub mod validate;
 
