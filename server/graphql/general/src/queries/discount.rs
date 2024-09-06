@@ -43,9 +43,6 @@ impl ItemDiscountInput {
     pub fn to_domain(self) -> ItemDiscountLookup {
         let ItemDiscountInput { name_id, item_id } = self;
 
-        ItemDiscountLookup {
-            name_link_id: name_id,
-            item_id,
-        }
+        ItemDiscountLookup { name_id, item_id }
     }
 }

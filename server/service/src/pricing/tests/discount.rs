@@ -64,7 +64,7 @@ mod query {
                 &context,
                 ItemDiscountLookup {
                     item_id: mock_item_a().id.clone(),
-                    name_link_id: mock_name_store_a().id.clone(),
+                    name_id: mock_name_store_a().id.clone(),
                 },
             )
             .unwrap();
@@ -78,7 +78,7 @@ mod query {
                 &context,
                 ItemDiscountLookup {
                     item_id: mock_item_a().id.clone(),
-                    name_link_id: mock_name_store_b().id.clone(),
+                    name_id: mock_name_store_b().id.clone(),
                 },
             )
             .unwrap();
@@ -92,7 +92,7 @@ mod query {
                 &context,
                 ItemDiscountLookup {
                     item_id: mock_item_b().id.clone(),
-                    name_link_id: mock_name_store_a().id.clone(),
+                    name_id: mock_name_store_a().id.clone(),
                 },
             )
             .unwrap();
