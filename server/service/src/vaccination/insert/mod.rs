@@ -3,7 +3,8 @@ use crate::{
 };
 
 use repository::{
-    ActivityLogType, RepositoryError, StorageConnection, VaccinationRow, VaccinationRowRepository,
+    ActivityLogType, RepositoryError, StorageConnection, TransactionError, VaccinationRow,
+    VaccinationRowRepository,
 };
 
 mod generate;
@@ -58,7 +59,7 @@ pub fn insert_vaccination(
             // get_vaccination(&ctx.connection, new_vaccination.id)
             //     .map_err(InsertVaccinationError::from)
         })
-        .map_err(|error| error.to_inner_error())?;
+        .map_err(|error: TransactionError<InsertVaccinationError>| error.to_inner_error())?; // todo
     Ok(vaccination)
 }
 
@@ -68,15 +69,15 @@ impl From<RepositoryError> for InsertVaccinationError {
     }
 }
 
-impl From<SingleRecordError> for InsertVaccinationError {
-    fn from(error: SingleRecordError) -> Self {
-        use InsertVaccinationError::*;
-        match error {
-            SingleRecordError::DatabaseError(error) => DatabaseError(error),
-            SingleRecordError::NotFound(_) => CreatedRecordNotFound,
-        }
-    }
-}
+// impl From<SingleRecordError> for InsertVaccinationError {
+//     fn from(error: SingleRecordError) -> Self {
+//         use InsertVaccinationError::*;
+//         match error {
+//             SingleRecordError::DatabaseError(error) => DatabaseError(error),
+//             SingleRecordError::NotFound(_) => CreatedRecordNotFound,
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod insert {
