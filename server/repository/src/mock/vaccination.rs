@@ -2,7 +2,10 @@ use chrono::NaiveDate;
 
 use crate::VaccinationRow;
 
-use super::{mock_program_a, mock_store_a, mock_user_account_a};
+use super::{
+    mock_encounter_a, mock_program_a, mock_store_a, mock_user_account_a,
+    mock_vaccine_course_a_dose_a,
+};
 
 pub fn mock_vaccination_a() -> VaccinationRow {
     VaccinationRow {
@@ -10,9 +13,8 @@ pub fn mock_vaccination_a() -> VaccinationRow {
         store_id: mock_store_a().id,
         user_id: mock_user_account_a().id,
         program_id: mock_program_a().id,
-        // TODO
-        vaccine_course_dose_id: "vaccine_course_dose_a".to_string(),
-        encounter_id: "encounter_a".to_string(),
+        vaccine_course_dose_id: mock_vaccine_course_a_dose_a().id,
+        encounter_id: mock_encounter_a().id,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)

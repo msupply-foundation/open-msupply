@@ -2,6 +2,7 @@ use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
 
+use chrono::NaiveDate;
 use repository::{
     ActivityLogType, RepositoryError, StorageConnection, TransactionError, VaccinationRow,
     VaccinationRowRepository,
@@ -15,35 +16,42 @@ use validate::validate;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertVaccinationError {
-    VaccinationNameExistsForThisProgram,
     VaccinationAlreadyExists,
+    EncounterDoesNotExist,
+    VaccineCourseDoseDoesNotExist,
+    VaccinationAlreadyExistsForDose,
+    ClinicianDoesNotExist,
+    StockLineNotProvided,
+    ReasonNotProvided,
+    StockLineDoesNotExist,
+    ItemDoesNotBelongToVaccineCourse,
     CreatedRecordNotFound,
-    ProgramDoesNotExist,
-    DoseMinAgesAreNotInOrder,
-    DemographicIndicatorDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertVaccination {
     pub id: String,
-    pub name: String,
-    pub program_id: String,
-    pub demographic_indicator_id: Option<String>,
-    pub coverage_rate: f64,
-    pub is_active: bool,
-    pub wastage_rate: f64,
+    pub encounter_id: String,
+    pub vaccine_course_dose_id: String,
+    pub vaccination_date: NaiveDate,
+    pub clinician_id: Option<String>,
+    pub comment: Option<String>,
+    pub given: bool,
+    pub stock_line_id: Option<String>,
+    pub not_given_reason: Option<String>,
 }
 
 pub fn insert_vaccination(
     ctx: &ServiceContext,
+    store_id: &str,
     input: InsertVaccination,
 ) -> Result<VaccinationRow, InsertVaccinationError> {
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
-            let new_vaccination = generate(input.clone());
+            let encounter = validate(&input, connection)?;
+            let new_vaccination = generate(store_id, encounter, input.clone());
             VaccinationRowRepository::new(connection).upsert_one(&new_vaccination)?;
 
             activity_log_entry(
@@ -81,25 +89,16 @@ impl From<RepositoryError> for InsertVaccinationError {
 
 #[cfg(test)]
 mod insert {
-    use repository::mock::{mock_store_a, MockData, MockDataInserts};
-    use repository::test_db::{setup_all, setup_all_with_data};
+    use repository::mock::{mock_encounter_a, mock_store_a, mock_vaccination_a, MockDataInserts};
+    use repository::test_db::setup_all;
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccination::insert::{InsertVaccination, InsertVaccinationError};
 
     #[actix_rt::test]
     async fn insert_vaccination_errors() {
-        let (_, _, connection_manager, _) = setup_all_with_data(
-            "insert_vaccination_errors",
-            MockDataInserts::none().stores().name_store_joins().items(),
-            MockData {
-                // vaccinations: vec![VaccinationRow {
-                //     ..mock_vaccination_a()
-                // }],
-                ..Default::default()
-            },
-        )
-        .await;
+        let (_, _, connection_manager, _) =
+            setup_all("insert_vaccination_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -112,13 +111,58 @@ mod insert {
         assert_eq!(
             service.insert_vaccination(
                 &context,
+                store_id,
                 InsertVaccination {
-                    id: "todo".to_string(),
-                    // id: mock_vaccination_a).id,
+                    id: mock_vaccination_a().id,
                     ..Default::default()
                 }
             ),
             Err(InsertVaccinationError::VaccinationAlreadyExists)
+        );
+
+        // EncounterDoesNotExist
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: "non_existent_encounter_id".to_string(),
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::EncounterDoesNotExist)
+        );
+
+        // VaccineCourseDoseDoesNotExist
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_encounter_a().id,
+                    vaccine_course_dose_id: "non_existent_vaccine_course_dose_id".to_string(),
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::VaccineCourseDoseDoesNotExist)
+        );
+
+        // ClinicianDoesNotExist
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_encounter_a().id,
+                    vaccine_course_dose_id: "new_vaccine_course_dose_id".to_string(),
+                    clinician_id: Some("non_existent_clinician_id".to_string()),
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::ClinicianDoesNotExist)
         );
     }
 
