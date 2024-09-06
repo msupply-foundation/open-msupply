@@ -26,6 +26,7 @@ mod query {
             id: "discount_list".to_string(),
             name: "discount_list".to_string(),
             discount: Some(discount.clone()),
+            is_active: true,
             ..Default::default()
         };
 
