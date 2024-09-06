@@ -62,7 +62,7 @@ const DEFAULT_PRICE_LIST: (&str, &str) = (
     "isSupplierHubCatalog": false,
     "inactive": false,
     "is_default_price_list": true,
-    "discount": 0.0
+    "discount_percentage": 0.0
 }"#,
 );
 
@@ -84,7 +84,7 @@ const DISCOUNT_LIST: (&str, &str) = (
     "isSupplierHubCatalog": false,
     "inactive": false,
     "is_default_price_list": false,
-    "discount": 0.2
+    "discount_percentage": 20
 }"#,
 );
 
@@ -100,7 +100,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 description: "note 1".to_owned(),
                 is_active: false,
                 is_default_price_list: false,
-                discount: None,
+                discount_percentage: None,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -113,7 +113,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 description: "note 2".to_owned(),
                 is_active: true,
                 is_default_price_list: false,
-                discount: None,
+                discount_percentage: None,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -126,7 +126,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 description: "National Price List".to_owned(),
                 is_active: true,
                 is_default_price_list: true,
-                discount: Some(0.0),
+                discount_percentage: Some(0.0),
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -139,7 +139,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 description: "National Price List Store Discounts".to_owned(),
                 is_active: true,
                 is_default_price_list: false,
-                discount: Some(0.2),
+                discount_percentage: Some(20.0),
             },
         ),
     ]

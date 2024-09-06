@@ -112,13 +112,13 @@ export type AddToOutboundShipmentFromMasterListMutationVariables = Types.Exact<{
 
 export type AddToOutboundShipmentFromMasterListMutation = { __typename: 'Mutations', addToOutboundShipmentFromMasterList: { __typename: 'AddToOutboundShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisName', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
 
-export type GetDiscountedPriceQueryVariables = Types.Exact<{
+export type GetDiscountPercentageQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.ItemDiscountInput;
 }>;
 
 
-export type GetDiscountedPriceQuery = { __typename: 'Queries', sellPriceDiscount: number };
+export type GetDiscountPercentageQuery = { __typename: 'Queries', sellPriceDiscount: number };
 
 export type InsertBarcodeMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -899,8 +899,8 @@ export const AddToOutboundShipmentFromMasterListDocument = gql`
   }
 }
     `;
-export const GetDiscountedPriceDocument = gql`
-    query getDiscountedPrice($storeId: String!, $input: ItemDiscountInput!) {
+export const GetDiscountPercentageDocument = gql`
+    query getDiscountPercentage($storeId: String!, $input: ItemDiscountInput!) {
   sellPriceDiscount(storeId: $storeId, input: $input)
 }
     `;
@@ -957,8 +957,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     addToOutboundShipmentFromMasterList(variables: AddToOutboundShipmentFromMasterListMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddToOutboundShipmentFromMasterListMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddToOutboundShipmentFromMasterListMutation>(AddToOutboundShipmentFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addToOutboundShipmentFromMasterList', 'mutation', variables);
     },
-    getDiscountedPrice(variables: GetDiscountedPriceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetDiscountedPriceQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<GetDiscountedPriceQuery>(GetDiscountedPriceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getDiscountedPrice', 'query', variables);
+    getDiscountPercentage(variables: GetDiscountPercentageQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetDiscountPercentageQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetDiscountPercentageQuery>(GetDiscountPercentageDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getDiscountPercentage', 'query', variables);
     },
     insertBarcode(variables: InsertBarcodeMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertBarcodeMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertBarcodeMutation>(InsertBarcodeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertBarcode', 'mutation', variables);

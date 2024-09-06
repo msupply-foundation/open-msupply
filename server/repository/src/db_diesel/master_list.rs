@@ -120,9 +120,9 @@ impl<'a> MasterListRepository<'a> {
 
             if let Some(is_discount_list) = f.is_discount_list {
                 if is_discount_list {
-                    query = query.filter(master_list_dsl::discount.is_not_null());
+                    query = query.filter(master_list_dsl::discount_percentage.is_not_null());
                 } else {
-                    query = query.filter(master_list_dsl::discount.is_null());
+                    query = query.filter(master_list_dsl::discount_percentage.is_null());
                 }
             }
 

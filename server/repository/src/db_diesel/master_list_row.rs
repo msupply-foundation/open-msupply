@@ -15,7 +15,7 @@ table! {
         description -> Text,
         is_active -> Bool,
         is_default_price_list -> Bool,
-        discount -> Nullable<Double>,
+        discount_percentage -> Nullable<Double>,
     }
 }
 
@@ -28,7 +28,7 @@ pub struct MasterListRow {
     pub description: String,
     pub is_active: bool,
     pub is_default_price_list: bool,
-    pub discount: Option<f64>,
+    pub discount_percentage: Option<f64>,
 }
 
 allow_tables_to_appear_in_same_query!(master_list, item_link);

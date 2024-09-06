@@ -18,7 +18,7 @@ import {
   issueStock,
 } from '../../../../StockOut/utils';
 import uniqBy from 'lodash/uniqBy';
-import { useGetDiscountPrice } from '../../../api/hooks/utils';
+import { useGetDiscountPercentage } from '../../../api/hooks/utils';
 
 export const useDraftOutboundLines = (
   item: DraftItem | null
@@ -37,7 +37,7 @@ export const useDraftOutboundLines = (
   >([]);
 
   // This should only return discount if otherPart
-  const { discount, isFetched: discountFetched } = useGetDiscountPrice({
+  const { discount, isFetched: discountFetched } = useGetDiscountPercentage({
     nameId: otherPartyId,
     itemId: item?.id || '',
   });
@@ -83,7 +83,7 @@ export const useDraftOutboundLines = (
             return createDraftStockOutLineFromStockLine({
               stockLine: batch,
               invoiceId,
-              discount,
+              discountPercentage: discount,
             });
           }
         })

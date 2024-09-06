@@ -792,10 +792,7 @@ mutation addToOutboundShipmentFromMasterList(
   }
 }
 
-query getDiscountedPrice(
-  $storeId: String!
-  $input: ItemDiscountInput!
-) {
+query getDiscountPercentage($storeId: String!, $input: ItemDiscountInput!) {
   sellPriceDiscount(storeId: $storeId, input: $input)
 }
 
