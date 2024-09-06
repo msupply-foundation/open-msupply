@@ -15,7 +15,7 @@ export const useGetDiscountPrice = ({
   const { storeId } = useAuthContext();
 
   const result = useQuery(`discount${storeId}${nameId}${itemId}`, () =>
-    sdk.getDiscountedPrice({ storeId, nameId, itemId })
+    sdk.getDiscountedPrice({ storeId, input: { nameId, itemId } })
   );
 
   return { ...result, discount: result.data?.sellPriceDiscount || 0 };
