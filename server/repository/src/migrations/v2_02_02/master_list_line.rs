@@ -5,14 +5,14 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "master_list_line_price"
+        "master_list_line_price_per_unit"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-            ALTER TABLE master_list_line ADD COLUMN price {DOUBLE};
+            ALTER TABLE master_list_line ADD COLUMN price_per_unit {DOUBLE};
             "#
         )?;
 

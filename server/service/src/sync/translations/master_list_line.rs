@@ -67,7 +67,7 @@ impl SyncTranslation for MasterListLineTranslation {
             id: data.ID,
             item_link_id: data.item_ID,
             master_list_id: data.item_master_ID,
-            price: data.price,
+            price_per_unit: data.price,
         };
 
         Ok(PullTranslateResult::upsert(result))

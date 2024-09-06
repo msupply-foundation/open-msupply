@@ -12,7 +12,7 @@ table! {
         id -> Text,
         item_link_id -> Text,
         master_list_id -> Text,
-        price -> Nullable<Double>,
+        price_per_unit -> Nullable<Double>,
     }
 }
 
@@ -27,7 +27,7 @@ pub struct MasterListLineRow {
     pub id: String,
     pub item_link_id: String,
     pub master_list_id: String,
-    pub price: Option<f64>,
+    pub price_per_unit: Option<f64>,
 }
 
 pub struct MasterListLineRowRepository<'a> {
