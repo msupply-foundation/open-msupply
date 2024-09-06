@@ -101,6 +101,11 @@ pub enum ChangelogTableName {
     NameOmsFields,
     RnrForm,
     RnrFormLine,
+    DemographicIndicator,
+    VaccineCourse,
+    VaccineCourseItem,
+    VaccineCourseDose,
+    Vaccination,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -157,6 +162,11 @@ impl ChangelogTableName {
             ChangelogTableName::NameOmsFields => ChangeLogSyncStyle::Central,
             ChangelogTableName::RnrForm => ChangeLogSyncStyle::Remote,
             ChangelogTableName::RnrFormLine => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::DemographicIndicator => ChangeLogSyncStyle::Central,
+            ChangelogTableName::VaccineCourse => ChangeLogSyncStyle::Central,
+            ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
+            ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
         }
     }
 }
