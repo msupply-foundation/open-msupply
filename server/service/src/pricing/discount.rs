@@ -8,7 +8,7 @@ use crate::service_provider::ServiceContext;
 
 pub struct ItemDiscountLookup {
     pub item_id: String,
-    pub name_link_id: String,
+    pub name_id: String,
 }
 
 pub fn get_discount_for_item_and_name_link_id(
@@ -18,7 +18,7 @@ pub fn get_discount_for_item_and_name_link_id(
     let master_list = MasterListRepository::new(&ctx.connection)
         .query_by_filter(
             MasterListFilter::new()
-                .exists_for_name_id(EqualFilter::equal_to(&input.name_link_id))
+                .exists_for_name_id(EqualFilter::equal_to(&input.name_id))
                 .is_discount_list(true),
         )?
         .pop();
