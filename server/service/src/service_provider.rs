@@ -56,6 +56,7 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
 };
@@ -140,6 +141,9 @@ pub struct ServiceProvider {
     pub demographic_service: Box<dyn DemographicServiceTrait>,
     // Vaccine Course
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
+    // Vaccinations
+    pub vaccination_service: Box<dyn VaccinationServiceTrait>,
+    // Programs
     pub program_service: Box<dyn ProgramServiceTrait>,
 }
 
@@ -226,6 +230,7 @@ impl ServiceProvider {
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
             rnr_form_service: Box::new(RnRFormService {}),
+            vaccination_service: Box::new(VaccinationService {}),
         }
     }
 
