@@ -19,13 +19,13 @@ mod query {
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.pricing_service;
 
-        let discount = 0.1; // 10% discount
+        let discount = 10.0; // 10% discount
 
         // Create a discount list with 10% discount
         let discount_list = MasterListRow {
             id: "discount_list".to_string(),
             name: "discount_list".to_string(),
-            discount: Some(discount.clone()),
+            discount_percentage: Some(discount.clone()),
             is_active: true,
             ..Default::default()
         };

@@ -42,7 +42,7 @@ pub fn get_discount_for_item_and_name_link_id(
         Some(_master_list_item_line) => {
             // We don't care what the line says as we get the discount from the master_list not the line
             // This just needs to check that the item is in the list
-            return Ok(discount_master_list.discount.unwrap_or(0.0));
+            return Ok(discount_master_list.discount_percentage.unwrap_or(0.0));
         }
         None => Ok(0.0),
     }

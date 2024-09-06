@@ -15,7 +15,7 @@ impl MigrationFragment for Migrate {
             ALTER TABLE master_list
             ADD COLUMN is_default_price_list BOOLEAN DEFAULT FALSE;
             ALTER TABLE master_list
-            ADD COLUMN discount {DOUBLE};
+            ADD COLUMN discount_percentage {DOUBLE};
             "#
         )?;
 
