@@ -69,7 +69,7 @@ impl Localisations {
     // next need to add fallback and namespace to get Translation function
     pub fn get_translation(&self, args: &HashMap<String, serde_json::Value>, language: &str ) -> Result<String, TranslationError> {
         let key = args.get("k").and_then(serde_json::Value::as_str).ok_or(TranslationError::KeyMustBeSpecified)?;
-        let namespace = args.get("n").and_then(serde_json::Value::as_str).unwrap_or("");
+        let namespace = args.get("n").and_then(serde_json::Value::as_str).unwrap_or("common");
         let fallback = args.get("f").and_then(serde_json::Value::as_str).map(|s| s.to_string());
 
         // make cascading array of fallback options:
@@ -77,11 +77,11 @@ impl Localisations {
             // first look for key in nominated namespace
             (language, namespace, key), 
             // then look for key in common.json
-            (language, "common.json", key), 
+            (language, "common", key), 
             // then look for key in nominated namespace in en
             ("en", namespace, key), 
             // then look for key in common.json in en
-            ("en", "common.json", key),             
+            ("en", "common", key),             
             ] {
             match self.find_key(&language, namespace, key) {
                 Some(string) => return Ok(string),
@@ -94,7 +94,7 @@ impl Localisations {
     fn find_key(&self, language: &str, namespace: &str, key: &str) -> Option<String> {
             self.translations
             .get(language)
-            .and_then(|map| map.get(namespace))
+            .and_then(|map| map.get(&(namespace.to_string() + ".json")))
             .and_then(|map| map.get(key))
             .map(|s| s.to_string())
         }
@@ -116,7 +116,7 @@ use super::Localisations;
         let lang = "fr";
         let mut args = HashMap::new();
         args.insert("k".to_string(), serde_json::Value::String("button.close".to_owned()));
-        args.insert("n".to_string(), serde_json::Value::String("common.json".to_owned()));
+        args.insert("n".to_string(), serde_json::Value::String("common".to_owned()));
         args.insert("f".to_string(), serde_json::Value::String("fallback".to_owned()));
         // test correct translation
         let translated_value = localisations.get_translation(&args, lang).unwrap();      
@@ -140,7 +140,7 @@ use super::Localisations;
         assert_eq!("Fermer", translated_value);
         // test other lang file
         let lang = "es";
-        args.insert("n".to_string(), serde_json::Value::String("common.json".to_owned()));
+        args.insert("n".to_string(), serde_json::Value::String("common".to_owned()));
         args.insert("f".to_string(), serde_json::Value::String("fallback".to_owned()));
         let translated_value = localisations.get_translation(&args, lang).unwrap();      
         assert_eq!("Cerrar", translated_value);
@@ -148,7 +148,7 @@ use super::Localisations;
         let mut args = HashMap::new();
         let lang = "fr";
         args.insert("k".to_string(), serde_json::Value::String("non-existent-key".to_owned()));
-        args.insert("n".to_string(), serde_json::Value::String("common.json".to_owned()));
+        args.insert("n".to_string(), serde_json::Value::String("common".to_owned()));
         assert!(localisations.get_translation(&args, lang).is_err())
     }
 }
