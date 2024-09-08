@@ -203,7 +203,7 @@ impl<'a> Selectors<'a> {
 fn inner_text(element_ref: ElementRef) -> &str {
     element_ref
         .text()
-        .find(|t| t.trim().len() > 0)
+        .find(|t| !t.trim().is_empty())
         .map(|t| t.trim())
         .unwrap_or_default()
 }
