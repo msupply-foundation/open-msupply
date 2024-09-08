@@ -111,6 +111,7 @@ export enum ActivityLogNodeType {
   ProgramUpdated = 'PROGRAM_UPDATED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
+  RequisitionApproved = 'REQUISITION_APPROVED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
@@ -3313,6 +3314,11 @@ export type ItemCountsResponse = {
   total: Scalars['Int']['output'];
 };
 
+export type ItemDiscountInput = {
+  itemId: Scalars['String']['input'];
+  nameId: Scalars['String']['input'];
+};
+
 export type ItemFilterInput = {
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
@@ -5319,6 +5325,7 @@ export type Queries = {
   responseRequisitionStats: RequisitionLineStatsResponse;
   returnReasons: ReturnReasonResponse;
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
+  sellPriceDiscount: Scalars['Float']['output'];
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
   stockCounts: StockCounts;
@@ -5842,6 +5849,12 @@ export type QueriesReturnReasonsArgs = {
 
 export type QueriesSchedulesWithPeriodsByProgramArgs = {
   programId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesSellPriceDiscountArgs = {
+  input: ItemDiscountInput;
   storeId: Scalars['String']['input'];
 };
 

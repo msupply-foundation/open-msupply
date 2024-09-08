@@ -41,9 +41,11 @@ export interface DraftStockOutLineSeeds {
 export const createDraftStockOutLineFromStockLine = ({
   invoiceId,
   stockLine,
+  discountPercentage: discountPercentage = 0,
 }: {
   invoiceId: string;
   stockLine: PartialStockLineFragment;
+  discountPercentage?: number;
 }): DraftStockOutLine => ({
   isCreated: true,
   isUpdated: false,
@@ -51,7 +53,8 @@ export const createDraftStockOutLineFromStockLine = ({
   numberOfPacks: 0,
   location: stockLine?.location,
   expiryDate: stockLine?.expiryDate,
-  sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
+  sellPricePerPack:
+    (stockLine?.sellPricePerPack ?? 0) * (1 - discountPercentage / 100),
   packSize: stockLine?.packSize ?? 0,
   id: FnUtils.generateUUID(),
   invoiceId,

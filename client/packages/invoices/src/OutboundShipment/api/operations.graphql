@@ -792,6 +792,10 @@ mutation addToOutboundShipmentFromMasterList(
   }
 }
 
+query getDiscountPercentage($storeId: String!, $input: ItemDiscountInput!) {
+  sellPriceDiscount(storeId: $storeId, input: $input)
+}
+
 mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
   insertBarcode(input: $input, storeId: $storeId) {
     ... on BarcodeNode {

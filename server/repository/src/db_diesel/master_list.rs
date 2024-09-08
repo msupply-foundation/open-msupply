@@ -36,6 +36,8 @@ pub struct MasterListFilter {
     pub exists_for_store_id: Option<EqualFilter<String>>,
     pub is_program: Option<bool>,
     pub item_id: Option<EqualFilter<String>>,
+    pub is_discount_list: Option<bool>,
+    pub is_default_price_list: Option<bool>,
 }
 
 pub enum MasterListSortField {
@@ -113,6 +115,22 @@ impl<'a> MasterListRepository<'a> {
                     query = query.filter(master_list_dsl::id.nullable().eq_any(program_join_query));
                 } else {
                     query = query.filter(master_list_dsl::id.nullable().ne_all(program_join_query));
+                }
+            }
+
+            if let Some(is_discount_list) = f.is_discount_list {
+                if is_discount_list {
+                    query = query.filter(master_list_dsl::discount_percentage.is_not_null());
+                } else {
+                    query = query.filter(master_list_dsl::discount_percentage.is_null());
+                }
+            }
+
+            if let Some(is_default_price_list) = f.is_default_price_list {
+                if is_default_price_list {
+                    query = query.filter(master_list_dsl::is_default_price_list.eq(true));
+                } else {
+                    query = query.filter(master_list_dsl::is_default_price_list.eq(false));
                 }
             }
 
@@ -213,6 +231,16 @@ impl MasterListFilter {
 
     pub fn is_program(mut self, filter: bool) -> Self {
         self.is_program = Some(filter);
+        self
+    }
+
+    pub fn is_discount_list(mut self, filter: bool) -> Self {
+        self.is_discount_list = Some(filter);
+        self
+    }
+
+    pub fn is_default_price_list(mut self, filter: bool) -> Self {
+        self.is_default_price_list = Some(filter);
         self
     }
 
