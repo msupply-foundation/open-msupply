@@ -83,7 +83,7 @@ impl Localisations {
             // then look for key in common.json in en
             ("en", "common", key),             
             ] {
-            match self.find_key(&language, namespace, key) {
+            match self.find_key(language, namespace, key) {
                 Some(string) => return Ok(string),
                 None => continue,
             }
