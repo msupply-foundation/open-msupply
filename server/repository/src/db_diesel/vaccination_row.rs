@@ -19,9 +19,8 @@ table! {
     vaccination (id) {
         id -> Text,
         store_id -> Text,
-        program_id -> Text,
+        program_enrolment_id -> Text,
         encounter_id -> Text,
-        patient_link_id -> Text,
         user_id -> Text,
         vaccine_course_dose_id -> Text,
         created_datetime -> Timestamp,
@@ -52,8 +51,7 @@ allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician);
 pub struct VaccinationRow {
     pub id: String,
     pub store_id: String,
-    pub program_id: String,
-    pub patient_link_id: String,
+    pub program_enrolment_id: String,
     pub encounter_id: String,
     pub user_id: String,
     pub vaccine_course_dose_id: String,

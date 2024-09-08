@@ -15,7 +15,7 @@ impl MigrationFragment for Migrate {
             r#"
                 CREATE TABLE vaccination (
                     id TEXT NOT NULL PRIMARY KEY,
-                    program_id TEXT NOT NULL,
+                    program_enrolment_id TEXT NOT NULL,
                     encounter_id TEXT NOT NULL,
                     created_datetime TIMESTAMP NOT NULL,
                     user_id TEXT NOT NULL REFERENCES user_account(id),
