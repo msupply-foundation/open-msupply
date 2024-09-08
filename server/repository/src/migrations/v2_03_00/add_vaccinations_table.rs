@@ -29,10 +29,17 @@ impl MigrationFragment for Migrate {
                     not_given_reason TEXT,
                     comment TEXT
                 );
-
-                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'vaccination';
             "#
         )?;
+
+        if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                    ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'vaccination';
+                "#
+            )?;
+        }
 
         Ok(())
     }
