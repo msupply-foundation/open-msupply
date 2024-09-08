@@ -1,24 +1,14 @@
 use repository::{
-    vaccine_course::{
-        vaccine_course::{VaccineCourseFilter, VaccineCourseRepository},
-        vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
-    },
-    EqualFilter, ProgramRow, ProgramRowRepository, RepositoryError, StorageConnection,
-    StringFilter,
+    vaccine_course::vaccine_course::{VaccineCourseFilter, VaccineCourseRepository},
+    EqualFilter, RepositoryError, StorageConnection, StringFilter, VaccinationRow,
+    VaccinationRowRepository,
 };
 
-pub fn check_vaccine_course_exists(
+pub fn check_vaccination_exists(
     id: &str,
     connection: &StorageConnection,
-) -> Result<Option<VaccineCourseRow>, RepositoryError> {
-    VaccineCourseRowRepository::new(connection).find_one_by_id(id)
-}
-
-pub fn check_program_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<Option<ProgramRow>, RepositoryError> {
-    ProgramRowRepository::new(connection).find_one_by_id(id)
+) -> Result<Option<VaccinationRow>, RepositoryError> {
+    VaccinationRowRepository::new(connection).find_one_by_id(id)
 }
 
 pub fn check_vaccine_course_name_exists_for_program(
