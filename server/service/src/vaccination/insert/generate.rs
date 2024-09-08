@@ -1,13 +1,14 @@
 use chrono::Utc;
-use repository::{EncounterRow, VaccinationRow};
+use repository::VaccinationRow;
 
 use super::InsertVaccination;
 
 pub fn generate(
     store_id: &str,
-    encounter: EncounterRow,
     InsertVaccination {
         id,
+        encounter_id,
+        program_enrolment_id,
         vaccine_course_dose_id,
         vaccination_date,
         clinician_id,
@@ -15,7 +16,6 @@ pub fn generate(
         given,
         stock_line_id,
         not_given_reason,
-        encounter_id: _,
     }: InsertVaccination,
 ) -> VaccinationRow {
     let now = Utc::now().naive_utc();
@@ -23,9 +23,8 @@ pub fn generate(
     VaccinationRow {
         id,
         store_id: store_id.to_string(),
-        program_id: encounter.program_id,
-        encounter_id: encounter.id,
-        patient_link_id: encounter.patient_link_id,
+        program_enrolment_id,
+        encounter_id,
         created_datetime: now,
         user_id: String::new(),
         vaccine_course_dose_id,
