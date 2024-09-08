@@ -5,10 +5,10 @@ use super::InsertVaccination;
 
 pub fn generate(
     store_id: &str,
+    program_enrolment_id: String,
     InsertVaccination {
         id,
         encounter_id,
-        program_enrolment_id,
         vaccine_course_dose_id,
         vaccination_date,
         clinician_id,
