@@ -30,7 +30,6 @@ pub enum InsertVaccinationError {
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InsertVaccination {
     pub id: String,
-    pub program_enrolment_id: String,
     pub encounter_id: String,
     pub vaccine_course_dose_id: String,
     pub vaccination_date: NaiveDate,
@@ -49,8 +48,9 @@ pub fn insert_vaccination(
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
-            let new_vaccination = generate(store_id, input.clone());
+            let program_enrolment_id = validate(&input, connection)?;
+            let new_vaccination = generate(store_id, program_enrolment_id, input.clone());
+
             VaccinationRowRepository::new(connection).upsert_one(&new_vaccination)?;
 
             activity_log_entry(
@@ -89,19 +89,35 @@ impl From<RepositoryError> for InsertVaccinationError {
 #[cfg(test)]
 mod insert {
     use repository::mock::{
-        mock_encounter_a, mock_program_enrolment_a, mock_stock_line_a, mock_store_a,
-        mock_vaccination_a, mock_vaccine_course_a_dose_a, mock_vaccine_course_a_dose_b,
+        mock_encounter_a, mock_patient_b, mock_program_a, mock_stock_line_a, mock_store_a,
+        mock_vaccination_a, mock_vaccine_course_a_dose_a, mock_vaccine_course_a_dose_b, MockData,
         MockDataInserts,
     };
-    use repository::test_db::setup_all;
+    use repository::test_db::{setup_all, setup_all_with_data};
+    use repository::EncounterRow;
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccination::insert::{InsertVaccination, InsertVaccinationError};
 
     #[actix_rt::test]
     async fn insert_vaccination_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_vaccination_errors", MockDataInserts::all()).await;
+        fn encounter_for_unenrolled_patient() -> EncounterRow {
+            EncounterRow {
+                id: "encounter_for_unenrolled_program".to_string(),
+                program_id: mock_program_a().id,
+                patient_link_id: mock_patient_b().id,
+                ..Default::default()
+            }
+        }
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_vaccination_errors",
+            MockDataInserts::all(),
+            MockData {
+                encounters: vec![encounter_for_unenrolled_patient()],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -137,6 +153,7 @@ mod insert {
             Err(InsertVaccinationError::EncounterDoesNotExist)
         );
 
+        // system error - shouldn't happen (if there is an encounter there should be a program enrolment)
         // ProgramEnrolmentDoesNotExist
         assert_eq!(
             service.insert_vaccination(
@@ -144,8 +161,7 @@ mod insert {
                 store_id,
                 InsertVaccination {
                     id: "new_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
-                    program_enrolment_id: "non_existent_enrolment_id".to_string(),
+                    encounter_id: encounter_for_unenrolled_patient().id,
                     ..Default::default()
                 }
             ),
@@ -160,7 +176,6 @@ mod insert {
                 InsertVaccination {
                     id: "new_id".to_string(),
                     encounter_id: mock_encounter_a().id,
-                    program_enrolment_id: mock_program_enrolment_a().id,
                     vaccine_course_dose_id: "non_existent_vaccine_course_dose_id".to_string(),
                     ..Default::default()
                 }
@@ -176,7 +191,6 @@ mod insert {
                 InsertVaccination {
                     id: "new_id".to_string(),
                     encounter_id: mock_encounter_a().id,
-                    program_enrolment_id: mock_program_enrolment_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_a().id,
                     ..Default::default()
                 }
@@ -192,7 +206,6 @@ mod insert {
                 InsertVaccination {
                     id: "new_id".to_string(),
                     encounter_id: mock_encounter_a().id,
-                    program_enrolment_id: mock_program_enrolment_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     clinician_id: Some("non_existent_clinician_id".to_string()),
                     ..Default::default()
@@ -209,7 +222,6 @@ mod insert {
                 InsertVaccination {
                     id: "new_id".to_string(),
                     encounter_id: mock_encounter_a().id,
-                    program_enrolment_id: mock_program_enrolment_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
                     ..Default::default()
@@ -226,7 +238,6 @@ mod insert {
                 InsertVaccination {
                     id: "new_id".to_string(),
                     encounter_id: mock_encounter_a().id,
-                    program_enrolment_id: mock_program_enrolment_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: false,
                     ..Default::default()
@@ -243,7 +254,6 @@ mod insert {
                 InsertVaccination {
                     id: "new_id".to_string(),
                     encounter_id: mock_encounter_a().id,
-                    program_enrolment_id: mock_program_enrolment_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
                     stock_line_id: Some("non_existent_stock_line_id".to_string()),
@@ -261,7 +271,6 @@ mod insert {
                 InsertVaccination {
                     id: "new_id".to_string(),
                     encounter_id: mock_encounter_a().id,
-                    program_enrolment_id: mock_program_enrolment_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
                     stock_line_id: Some(mock_stock_line_a().id), // FOR ITEM A (not linked to vaccine course)
