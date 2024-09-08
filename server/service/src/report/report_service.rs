@@ -203,7 +203,7 @@ impl<'a> Selectors<'a> {
 fn inner_text(element_ref: ElementRef) -> &str {
     element_ref
         .text()
-        .find(|t| t.trim().len() > 0)
+        .find(|t| !t.trim().is_empty())
         .map(|t| t.trim())
         .unwrap_or_default()
 }
@@ -415,7 +415,6 @@ fn generate_report(
         None => "en".to_string(),
     };
     context.insert("lang", &lang);
-    println!("generating report!");
     let mut tera = tera::Tera::default();
     tera.register_function("t", move |args: &HashMap<String, serde_json::Value>| {
         let translation = translation_service.get_translation(args, &lang).map_err(|_| TeraError::msg("Missing translation"))?;

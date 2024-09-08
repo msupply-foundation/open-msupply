@@ -191,23 +191,26 @@ Reports now have the option to allow for translations using the same localisatio
 This can be implemented in the report by adding the following translation function in place of your text:
 
 ```
-{{t(k="label.name", n="common.json", f="Name")}}
+{{t(k="label.name", f="Name")}}
 ```
+
+By default,
 
 Where the letters are short hand for the following:
 - t for translate
   The name of the function
 - k for key 
   This is the locale key as is used in front end translations. 
-  ```
-    {{t(k="label.name", n="common.json", f="Name")}}
-  ```
 - n for namespace
-  The file namespace where the translation key is. ie catalogue.json
+  The file namespace where the translation key is. The .json exention is automattically added ie catalogue (which refers to the catalogue.json namespace).
+  By default, the translation in common.json translations will be used. If a specific namespace needs to be called, you can add this 'n' key into your function.
+  ```
+      {{t(k="label.name", n="catalogue", f="Name")}}
+  ```
 - f for fallback
   This is an optional fallback text if the translation cannot be found.
 
-The language is passed down as the user's current language through graphql when the report is generated.
+The current user language is passed through graphql when a user requests a report to be generated. This is the language used in translations.
 
 The translation function has a number of fallback translations which it will search through if the translation cannot be found.
 
