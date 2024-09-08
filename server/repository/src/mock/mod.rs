@@ -26,6 +26,7 @@ mod number;
 mod pack_variant;
 mod period_and_period_schedule;
 mod program;
+pub mod program_enrolment;
 mod program_order_types;
 mod program_requisition_settings;
 mod property;
@@ -85,6 +86,7 @@ pub use number::*;
 pub use pack_variant::*;
 pub use period_and_period_schedule::*;
 pub use program::*;
+pub use program_enrolment::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
 pub use property::*;
@@ -136,15 +138,15 @@ use crate::{
     MasterListRowRepository, NameLinkRow, NameLinkRowRepository, NameTagJoinRepository,
     NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository,
     PackVariantRow, PackVariantRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, PropertyRow, PropertyRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, ReturnReasonRow,
-    ReturnReasonRowRepository, RnRFormLineRow, RnRFormLineRowRepository, RnRFormRow,
-    RnRFormRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
+    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository, ProgramEnrolmentRow,
+    ProgramEnrolmentRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, PropertyRow,
+    PropertyRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, ReturnReasonRow, ReturnReasonRowRepository, RnRFormLineRow,
+    RnRFormLineRowRepository, RnRFormRow, RnRFormRowRepository, SensorRow, SensorRowRepository,
+    StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow,
+    SyncBufferRowRepository, SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
     TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
     UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
@@ -221,6 +223,7 @@ pub struct MockData {
     pub vaccine_courses: Vec<VaccineCourseRow>,
     pub vaccine_course_doses: Vec<VaccineCourseDoseRow>,
     pub encounters: Vec<EncounterRow>,
+    pub program_enrolments: Vec<ProgramEnrolmentRow>,
 }
 
 impl MockData {
@@ -295,6 +298,7 @@ pub struct MockDataInserts {
     pub vaccine_courses: bool,
     pub vaccine_course_doses: bool,
     pub encounters: bool,
+    pub program_enrolments: bool,
 }
 
 impl MockDataInserts {
@@ -358,6 +362,7 @@ impl MockDataInserts {
             vaccine_courses: true,
             vaccine_course_doses: true,
             encounters: true,
+            program_enrolments: true,
         }
     }
 
@@ -649,8 +654,13 @@ impl MockDataInserts {
         self.vaccine_course_doses = true;
         self
     }
+
     pub fn encounters(mut self) -> Self {
         self.encounters = true;
+        self
+    }
+    pub fn program_enrolments(mut self) -> Self {
+        self.program_enrolments = true;
         self
     }
 }
@@ -737,6 +747,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             vaccine_courses: mock_vaccine_courses(),
             vaccine_course_doses: mock_vaccine_course_doses(),
             encounters: mock_encounters(),
+            program_enrolments: mock_program_enrolments(),
             ..Default::default()
         },
     );
@@ -1211,6 +1222,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.program_enrolments {
+            let repo = ProgramEnrolmentRowRepository::new(connection);
+            for row in &mock_data.program_enrolments {
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1278,6 +1295,7 @@ impl MockData {
             mut vaccine_courses,
             mut vaccine_course_doses,
             mut encounters,
+            mut program_enrolments,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1342,6 +1360,7 @@ impl MockData {
         self.vaccine_courses.append(&mut vaccine_courses);
         self.vaccine_course_doses.append(&mut vaccine_course_doses);
         self.encounters.append(&mut encounters);
+        self.program_enrolments.append(&mut program_enrolments);
         self
     }
 }
