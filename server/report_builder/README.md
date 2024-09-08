@@ -191,7 +191,7 @@ Reports now have the option to allow for translations using the same localisatio
 This can be implemented in the report by adding the following translation function in place of your text:
 
 ```
-{{t(k="label.name", n="reports.json", f="Name")}}
+{{t(k="label.name", n="common.json", f="Name")}}
 ```
 
 Where the letters are short hand for the following:
@@ -200,7 +200,7 @@ Where the letters are short hand for the following:
 - k for key 
   This is the locale key as is used in front end translations. 
   ```
-    {{t(k="label.name", n="reports.json", f="Name")}}
+    {{t(k="label.name", n="common.json", f="Name")}}
   ```
 - n for namespace
   The file namespace where the translation key is. ie catalogue.json
