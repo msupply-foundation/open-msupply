@@ -76,6 +76,18 @@ pub fn mock_item_g() -> ItemRow {
     })
 }
 
+pub fn mock_vaccine_item_a() -> ItemRow {
+    let id = "vaccine_item_a".to_string();
+    inline_init(|r: &mut ItemRow| {
+        r.id.clone_from(&id);
+        r.name.clone_from(&id);
+        r.code.clone_from(&id);
+        r.r#type = ItemType::Stock;
+        r.is_vaccine = true;
+        r.doses = 2;
+    })
+}
+
 pub fn item_query_test1() -> ItemRow {
     inline_init(|r: &mut ItemRow| {
         r.id = String::from("item_query_test1");
@@ -123,6 +135,7 @@ pub fn mock_items() -> Vec<ItemRow> {
         mock_item_e(),
         mock_item_f(),
         mock_item_g(),
+        mock_vaccine_item_a(),
         item_query_test1(),
         item_query_test2(),
         mock_item_service_item(),
