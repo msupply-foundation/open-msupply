@@ -3,6 +3,8 @@ use util::inline_init;
 
 use crate::StockLineRow;
 
+use super::mock_vaccine_item_a;
+
 pub fn mock_stock_line_a() -> StockLineRow {
     inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_a_line_a");
@@ -221,6 +223,23 @@ pub fn mock_stock_line_location_is_on_hold() -> Vec<StockLineRow> {
     vec![mock_stock_line_location_is_on_hold]
 }
 
+pub fn mock_stock_line_vaccine_item_a() -> StockLineRow {
+    inline_init(|r: &mut StockLineRow| {
+        r.id = "vaccine_item_a_line_a".to_string();
+        r.item_link_id = mock_vaccine_item_a().id;
+        r.store_id = "store_a".to_string();
+        r.available_number_of_packs = 5.0;
+        r.pack_size = 5.0;
+        r.total_number_of_packs = 6.0;
+    })
+}
+
+pub fn mock_vaccine_stock_lines() -> Vec<StockLineRow> {
+    let mock_stock_line_vaccine_item_a = mock_stock_line_vaccine_item_a();
+
+    vec![mock_stock_line_vaccine_item_a]
+}
+
 pub fn mock_stock_lines() -> Vec<StockLineRow> {
     let mut mock_stock_lines: Vec<StockLineRow> = Vec::new();
 
@@ -233,5 +252,6 @@ pub fn mock_stock_lines() -> Vec<StockLineRow> {
     mock_stock_lines.extend(mock_item_query_test1());
     mock_stock_lines.extend(mock_stock_line_on_hold());
     mock_stock_lines.extend(mock_stock_line_location_is_on_hold());
+    mock_stock_lines.extend(mock_vaccine_stock_lines());
     mock_stock_lines
 }

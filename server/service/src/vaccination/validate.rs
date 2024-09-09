@@ -1,6 +1,8 @@
 use repository::{
     vaccine_course::{
-        vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        vaccine_course_dose::{
+            VaccineCourseDose, VaccineCourseDoseFilter, VaccineCourseDoseRepository,
+        },
         vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
     },
     ClinicianRowRepository, EncounterRow, EncounterRowRepository, EqualFilter, ProgramEnrolment,
@@ -40,8 +42,9 @@ pub fn check_program_enrolment_exists(
 pub fn check_vaccine_course_dose_exists(
     id: &str,
     connection: &StorageConnection,
-) -> Result<Option<VaccineCourseDoseRow>, RepositoryError> {
-    VaccineCourseDoseRowRepository::new(connection).find_one_by_id(id)
+) -> Result<Option<VaccineCourseDose>, RepositoryError> {
+    VaccineCourseDoseRepository::new(connection)
+        .query_one(VaccineCourseDoseFilter::new().id(EqualFilter::equal_to(id)))
 }
 
 pub fn check_vaccination_does_not_exist_for_dose(
