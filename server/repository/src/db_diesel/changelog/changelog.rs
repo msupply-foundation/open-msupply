@@ -105,6 +105,7 @@ pub enum ChangelogTableName {
     VaccineCourse,
     VaccineCourseItem,
     VaccineCourseDose,
+    Vaccination,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -165,6 +166,7 @@ impl ChangelogTableName {
             ChangelogTableName::VaccineCourse => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
         }
     }
 }
