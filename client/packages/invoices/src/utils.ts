@@ -313,6 +313,8 @@ export const isA = {
 export const get = {
   stockLineSubtotal: (line: DraftStockOutLine) =>
     line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
+  invoiceLineSubtotal: (line: DraftStockOutLine) =>
+    line.sellPricePerPack * line.numberOfPacks,
 };
 
 export const outboundsToCsv = (

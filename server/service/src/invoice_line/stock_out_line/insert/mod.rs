@@ -1,4 +1,9 @@
-use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use crate::{
+    invoice_line::query::get_invoice_line,
+    pricing::item_price::{get_pricing_for_item, ItemPriceLookup},
+    service_provider::ServiceContext,
+    WithDBError,
+};
 use chrono::NaiveDate;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
 
@@ -73,7 +78,17 @@ pub fn insert_stock_out_line(
         .connection
         .transaction_sync(|connection| {
             let (item, invoice, batch) = validate(&input, &ctx.store_id, connection)?;
-            let (new_line, update_batch) = generate(connection, input, item, batch, invoice)?;
+
+            // Check if we need to override the pricing with a default
+            let pricing = get_pricing_for_item(
+                ctx,
+                ItemPriceLookup {
+                    item_id: item.id.clone(),
+                    customer_name_id: Some(invoice.name_link_id.clone()),
+                },
+            )?;
+            let (new_line, update_batch) =
+                generate(connection, input, item, batch, invoice, pricing)?;
             InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(connection).upsert_one(&update_batch)?;
             get_invoice_line(ctx, &new_line.id)

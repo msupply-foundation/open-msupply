@@ -61,13 +61,13 @@ impl GeneralQueries {
         login(ctx, &username, &password).await
     }
 
-    pub async fn sell_price_discount(
+    pub async fn item_price(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: ItemDiscountInput,
-    ) -> Result<f64> {
-        sell_price_discount(ctx, store_id, input).await
+        input: ItemPriceInput,
+    ) -> Result<ItemPriceResponse> {
+        item_price(ctx, store_id, input).await
     }
 
     pub async fn logout(&self, ctx: &Context<'_>) -> Result<LogoutResponse> {

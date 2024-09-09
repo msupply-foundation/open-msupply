@@ -6,6 +6,7 @@ use repository::{
 use crate::{
     invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
     invoice_line::StockOutType,
+    pricing::{calculate_sell_price::calculate_sell_price, item_price::ItemPrice},
 };
 
 use super::{InsertStockOutLine, InsertStockOutLineError};
@@ -16,6 +17,7 @@ pub fn generate(
     item_row: ItemRow,
     batch: StockLine,
     invoice: InvoiceRow,
+    pricing: ItemPrice,
 ) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
     let adjust_total_number_of_packs =
         should_adjust_total_number_of_packs(invoice.status.clone(), &input.r#type);
@@ -25,7 +27,14 @@ pub fn generate(
         batch.stock_line_row.clone(),
         adjust_total_number_of_packs,
     );
-    let new_line = generate_line(connection, input, item_row, update_batch.clone(), invoice)?;
+    let new_line = generate_line(
+        connection,
+        input,
+        item_row,
+        update_batch.clone(),
+        invoice,
+        pricing,
+    )?;
 
     Ok((new_line, update_batch))
 }
@@ -95,8 +104,8 @@ fn generate_line(
         ..
     }: ItemRow,
     StockLineRow {
-        sell_price_per_pack,
-        cost_price_per_pack,
+        sell_price_per_pack: stock_line_sell_price_per_pack,
+        cost_price_per_pack: stock_line_cost_price_per_pack,
         pack_size,
         batch,
         expiry_date,
@@ -110,8 +119,14 @@ fn generate_line(
         currency_rate,
         ..
     }: InvoiceRow,
+    default_pricing: ItemPrice,
 ) -> Result<InvoiceLineRow, RepositoryError> {
-    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
+    let cost_price_per_pack = stock_line_cost_price_per_pack; // For now, we just get the cost price from the stock line
+
+    let sell_price_per_pack =
+        calculate_sell_price(stock_line_sell_price_per_pack, pack_size, default_pricing);
+
+    let total_before_tax = total_before_tax.unwrap_or(sell_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     let foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
