@@ -419,13 +419,11 @@ fn generate_report(
     if let Some(arguments) = arguments {
         context.insert("arguments", &arguments);
     }
-    let lang = match current_language {
-        Some(language) => language,
-        None => "en".to_string(),
-    };
-    context.insert("lang", &lang);
     let mut tera = tera::Tera::default();
-    tera.register_function("t", translation_service.get_translation_function(lang));
+    tera.register_function(
+        "t",
+        translation_service.get_translation_function(current_language),
+    );
 
     let mut templates: HashMap<String, String> = report
         .templates

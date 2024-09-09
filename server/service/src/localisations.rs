@@ -98,9 +98,12 @@ impl Localisations {
         fallback.ok_or(TranslationError)
     }
 
-    pub fn get_translation_function(&self, language: String) -> impl Function {
+    pub fn get_translation_function(&self, current_language: Option<String>) -> impl Function {
         let translation_copy = self.clone();
-
+        let lang = match current_language {
+            Some(language) => language,
+            None => "en".to_string(),
+        };
         Box::new(
             move |args: &HashMap<String, serde_json::Value>| -> Result<serde_json::Value, TeraError> {
                 let key = args
@@ -126,7 +129,7 @@ impl Localisations {
                             fallback,
                             key,
                         },
-                        &language,
+                        &lang,
                     )
                     .map_err(|e| TeraError::call_function("t", e))?;
 
