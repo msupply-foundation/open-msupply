@@ -1,10 +1,11 @@
 use repository::{
-    vaccine_course::vaccine_course_dose_row::{
-        VaccineCourseDoseRow, VaccineCourseDoseRowRepository,
+    vaccine_course::{
+        vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
     },
-    EncounterRow, EncounterRowRepository, EqualFilter, ProgramEnrolment, ProgramEnrolmentFilter,
-    ProgramEnrolmentRepository, RepositoryError, StorageConnection, VaccinationRow,
-    VaccinationRowRepository,
+    ClinicianRowRepository, EncounterRow, EncounterRowRepository, EqualFilter, ProgramEnrolment,
+    ProgramEnrolmentFilter, ProgramEnrolmentRepository, RepositoryError, StorageConnection,
+    VaccinationFilter, VaccinationRepository, VaccinationRow, VaccinationRowRepository,
 };
 
 pub fn check_vaccination_exists(
@@ -41,4 +42,41 @@ pub fn check_vaccine_course_dose_exists(
     connection: &StorageConnection,
 ) -> Result<Option<VaccineCourseDoseRow>, RepositoryError> {
     VaccineCourseDoseRowRepository::new(connection).find_one_by_id(id)
+}
+
+pub fn check_vaccination_does_not_exist_for_dose(
+    program_enrolment_id: &str,
+    vaccine_course_dose_id: &str,
+    connection: &StorageConnection,
+) -> Result<bool, RepositoryError> {
+    let vaccination = VaccinationRepository::new(connection).query_one(
+        VaccinationFilter::new()
+            .program_enrolment_id(EqualFilter::equal_to(program_enrolment_id))
+            .vaccine_course_dose_id(EqualFilter::equal_to(vaccine_course_dose_id)),
+    )?;
+
+    Ok(vaccination.is_none())
+}
+
+pub fn check_item_belongs_to_vaccine_course(
+    item_link_id: &str,
+    vaccine_course_id: &str,
+    connection: &StorageConnection,
+) -> Result<bool, RepositoryError> {
+    let vaccine_course_item = VaccineCourseItemRepository::new(connection).query_one(
+        VaccineCourseItemFilter::new()
+            .vaccine_course_id(EqualFilter::equal_to(vaccine_course_id))
+            .item_link_id(EqualFilter::equal_to(item_link_id)),
+    )?;
+
+    Ok(vaccine_course_item.is_some())
+}
+
+pub fn check_clinician_exists(
+    clinician_id: &str,
+    connection: &StorageConnection,
+) -> Result<bool, RepositoryError> {
+    let result = ClinicianRowRepository::new(connection).find_one_by_id_option(clinician_id)?;
+
+    Ok(result.is_some())
 }

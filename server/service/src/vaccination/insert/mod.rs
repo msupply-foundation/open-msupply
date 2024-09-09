@@ -8,7 +8,7 @@ use repository::{
 mod generate;
 mod validate;
 
-use generate::generate;
+use generate::{generate, GenerateInput};
 use validate::validate;
 
 #[derive(PartialEq, Debug)]
@@ -48,8 +48,13 @@ pub fn insert_vaccination(
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
-            let program_enrolment_id = validate(&input, connection)?;
-            let new_vaccination = generate(store_id, program_enrolment_id, input.clone());
+            let program_enrolment_id = validate(&input, connection, store_id)?;
+            let new_vaccination = generate(GenerateInput {
+                store_id: store_id.to_string(),
+                program_enrolment_id,
+                user_id: ctx.user_id.clone(),
+                insert_input: input.clone(),
+            });
 
             VaccinationRowRepository::new(connection).upsert_one(&new_vaccination)?;
 
@@ -88,10 +93,12 @@ impl From<RepositoryError> for InsertVaccinationError {
 
 #[cfg(test)]
 mod insert {
+    use chrono::NaiveDate;
     use repository::mock::{
-        mock_encounter_a, mock_patient_b, mock_program_a, mock_stock_line_a, mock_store_a,
-        mock_vaccination_a, mock_vaccine_course_a_dose_a, mock_vaccine_course_a_dose_b, MockData,
-        MockDataInserts,
+        mock_encounter_a, mock_item_b_stock_line_a, mock_patient_b, mock_program_a,
+        mock_stock_line_a, mock_store_a, mock_store_b, mock_user_account_a, mock_vaccination_a,
+        mock_vaccine_course_a_dose_a, mock_vaccine_course_a_dose_b, mock_vaccine_course_a_dose_c,
+        MockData, MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::EncounterRow;
@@ -121,7 +128,7 @@ mod insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_a().id, "".to_string())
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.vaccination_service;
 
@@ -288,22 +295,51 @@ mod insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_a().id, "".to_string())
+            .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        // Can create
-        // let _result = service_provider
-        //     .vaccination_service
-        //     .insert_vaccination(
-        //         &context,
-        //         &mock_store_a().id,
-        //         InsertVaccination {
-        //             id: "new_rnr_id".to_string(),
-        //             supplier_id: mock_name_store_c().id,
-        //             program_id: mock_program_b().id,
-        //             period_id: mock_period_2_c().id,
-        //         },
-        //     )
-        //     .unwrap();
+        // Can create - dose given
+        let result = service_provider
+            .vaccination_service
+            .insert_vaccination(
+                &context,
+                &mock_store_b().id,
+                InsertVaccination {
+                    id: "new_vaccination_given_id".to_string(),
+                    encounter_id: mock_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    vaccination_date: NaiveDate::from_ymd_opt(2024, 9, 9).unwrap(),
+                    given: true,
+                    stock_line_id: Some(mock_item_b_stock_line_a().id), // Item B is linked to vaccine course A
+                    clinician_id: None,
+                    comment: None,
+                    not_given_reason: None,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.id, "new_vaccination_given_id");
+
+        // Can create - dose not given
+        let result = service_provider
+            .vaccination_service
+            .insert_vaccination(
+                &context,
+                &mock_store_b().id,
+                InsertVaccination {
+                    id: "new_vaccination_not_given_id".to_string(),
+                    encounter_id: mock_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                    vaccination_date: NaiveDate::from_ymd_opt(2024, 9, 9).unwrap(),
+                    given: false,
+                    not_given_reason: Some("reason".to_string()),
+                    stock_line_id: None,
+                    clinician_id: None,
+                    comment: None,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.id, "new_vaccination_not_given_id");
     }
 }

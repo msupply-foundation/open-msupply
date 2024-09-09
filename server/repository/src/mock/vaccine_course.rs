@@ -1,8 +1,9 @@
 use crate::vaccine_course::{
-    vaccine_course_dose_row::VaccineCourseDoseRow, vaccine_course_row::VaccineCourseRow,
+    vaccine_course_dose_row::VaccineCourseDoseRow, vaccine_course_item_row::VaccineCourseItemRow,
+    vaccine_course_row::VaccineCourseRow,
 };
 
-use super::mock_program_a;
+use super::{mock_item_b, mock_program_a};
 
 pub fn mock_vaccine_course_a() -> VaccineCourseRow {
     VaccineCourseRow {
@@ -28,8 +29,25 @@ pub fn mock_vaccine_course_a_dose_b() -> VaccineCourseDoseRow {
         id: "vaccine_course_a_dose_b".to_string(),
         label: "Vaccine Course A Dose B".to_string(),
         vaccine_course_id: mock_vaccine_course_a().id,
-        min_age: 0.0,
+        min_age: 1.0,
         min_interval_days: 30,
+    }
+}
+pub fn mock_vaccine_course_a_dose_c() -> VaccineCourseDoseRow {
+    VaccineCourseDoseRow {
+        id: "vaccine_course_a_dose_c".to_string(),
+        label: "Vaccine Course A Dose C".to_string(),
+        vaccine_course_id: mock_vaccine_course_a().id,
+        min_age: 2.0,
+        min_interval_days: 30,
+    }
+}
+
+pub fn mock_vaccine_course_item_1() -> VaccineCourseItemRow {
+    VaccineCourseItemRow {
+        id: "vaccine_course_item_1".to_string(),
+        item_link_id: mock_item_b().id,
+        vaccine_course_id: mock_vaccine_course_a().id,
     }
 }
 
@@ -40,5 +58,9 @@ pub fn mock_vaccine_course_doses() -> Vec<VaccineCourseDoseRow> {
     vec![
         mock_vaccine_course_a_dose_a(),
         mock_vaccine_course_a_dose_b(),
+        mock_vaccine_course_a_dose_c(),
     ]
+}
+pub fn mock_vaccine_course_items() -> Vec<VaccineCourseItemRow> {
+    vec![mock_vaccine_course_item_1()]
 }
