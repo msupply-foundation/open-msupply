@@ -288,6 +288,7 @@ export const DetailView: FC = () => {
                 {
                   Component: (
                     <VaccinationsTab
+                      encounterId={encounter.id}
                       clinician={encounter.clinician ?? undefined}
                     />
                   ),

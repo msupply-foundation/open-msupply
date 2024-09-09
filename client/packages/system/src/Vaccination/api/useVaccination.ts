@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { useQuery } from '@openmsupply-client/common';
+import {
+  FnUtils,
+  Formatter,
+  isEmpty,
+  useMutation,
+  useQuery,
+  useTranslation,
+} from '@openmsupply-client/common';
 
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
@@ -18,9 +25,11 @@ export interface VaccinationDraft {
 export function useVaccination({
   vaccineCourseDoseId,
   vaccinationId,
+  encounterId,
   defaultClinician,
 }: {
   vaccineCourseDoseId: string;
+  encounterId: string;
   vaccinationId: string | undefined;
   defaultClinician?: Clinician;
 }) {
@@ -37,12 +46,16 @@ export function useVaccination({
     },
   });
 
+  const { mutateAsync: insert } = useInsert({
+    encounterId,
+    vaccineCourseDoseId,
+  });
+
   const [patch, setPatch] = useState<Partial<VaccinationDraft>>({});
 
   const defaults: VaccinationDraft = {
     date: new Date(),
     clinician: defaultClinician,
-    stockLineId: 'TODO',
   };
 
   const draft: VaccinationDraft = { ...defaults, ...data, ...patch };
@@ -58,5 +71,51 @@ export function useVaccination({
     isDirty: Object.keys(patch).length > 0,
     updateDraft: (update: Partial<VaccinationDraft>) =>
       setPatch({ ...patch, ...update }),
+    create: insert,
   };
 }
+
+const useInsert = ({
+  encounterId,
+  vaccineCourseDoseId,
+}: {
+  encounterId: string;
+  vaccineCourseDoseId: string;
+}) => {
+  const { api, storeId, queryClient } = useVaccinationsGraphQL();
+  const t = useTranslation('dispensary');
+
+  const mutationFn = async (input: VaccinationDraft) => {
+    const apiResult = await api.insertVaccination({
+      storeId,
+      input: {
+        id: FnUtils.generateUUID(),
+        encounterId,
+        vaccineCourseDoseId,
+
+        given: input.given ?? false,
+        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
+        clinicianId: input.clinician?.id,
+        comment: input.comment,
+        notGivenReason: input.notGivenReason,
+        stockLineId: input.stockLineId,
+      },
+    });
+
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result = apiResult.insertVaccination;
+
+      if (result.__typename === 'VaccinationNode') {
+        return result;
+      }
+    }
+
+    throw new Error(t('error.failed-to-save-vaccination'));
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([VACCINATION]),
+  });
+};

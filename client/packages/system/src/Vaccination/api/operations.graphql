@@ -24,3 +24,13 @@ query vaccineCourseDose($id: String!) {
     }
   }
 }
+
+mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
+  insertVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      __typename
+      id
+    }
+  }
+}

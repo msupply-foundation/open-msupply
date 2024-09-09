@@ -42,7 +42,7 @@ pub fn generate(
         encounter_id,
         vaccine_course_dose_id,
         clinician_link_id: clinician_id,
-        vaccination_date,
+        vaccination_date: vaccination_date.unwrap_or(now.date()),
         given,
         stock_line_id,
         not_given_reason,

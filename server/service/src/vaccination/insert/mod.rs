@@ -32,7 +32,7 @@ pub struct InsertVaccination {
     pub id: String,
     pub encounter_id: String,
     pub vaccine_course_dose_id: String,
-    pub vaccination_date: NaiveDate,
+    pub vaccination_date: Option<NaiveDate>,
     pub clinician_id: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
@@ -78,19 +78,8 @@ impl From<RepositoryError> for InsertVaccinationError {
     }
 }
 
-// impl From<SingleRecordError> for InsertVaccinationError {
-//     fn from(error: SingleRecordError) -> Self {
-//         use InsertVaccinationError::*;
-//         match error {
-//             SingleRecordError::DatabaseError(error) => DatabaseError(error),
-//             SingleRecordError::NotFound(_) => CreatedRecordNotFound,
-//         }
-//     }
-// }
-
 #[cfg(test)]
 mod insert {
-    use chrono::NaiveDate;
     use repository::mock::{
         mock_encounter_a, mock_item_b_stock_line_a, mock_patient_b, mock_program_a,
         mock_stock_line_a, mock_store_a, mock_store_b, mock_user_account_a, mock_vaccination_a,
@@ -305,10 +294,10 @@ mod insert {
                     id: "new_vaccination_given_id".to_string(),
                     encounter_id: mock_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
-                    vaccination_date: NaiveDate::from_ymd_opt(2024, 9, 9).unwrap(),
                     given: true,
                     stock_line_id: Some(mock_item_b_stock_line_a().id), // Item B is linked to vaccine course A
                     clinician_id: None,
+                    vaccination_date: None,
                     comment: None,
                     not_given_reason: None,
                 },
@@ -327,9 +316,9 @@ mod insert {
                     id: "new_vaccination_not_given_id".to_string(),
                     encounter_id: mock_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
-                    vaccination_date: NaiveDate::from_ymd_opt(2024, 9, 9).unwrap(),
                     given: false,
                     not_given_reason: Some("reason".to_string()),
+                    vaccination_date: None,
                     stock_line_id: None,
                     clinician_id: None,
                     comment: None,

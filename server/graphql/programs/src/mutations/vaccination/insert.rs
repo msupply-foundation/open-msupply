@@ -16,7 +16,7 @@ pub struct InsertVaccinationInput {
     pub id: String,
     pub encounter_id: String,
     pub vaccine_course_dose_id: String,
-    pub vaccination_date: NaiveDate,
+    pub vaccination_date: Option<NaiveDate>,
     pub clinician_id: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
