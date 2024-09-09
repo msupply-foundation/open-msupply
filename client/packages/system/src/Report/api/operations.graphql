@@ -45,6 +45,7 @@ query generateReport(
   $arguments: JSON
   $format: PrintFormat
   $sort: PrintReportSortInput
+  $currentLanguage: String
 ) {
   generateReport(
     dataId: $dataId
@@ -53,6 +54,7 @@ query generateReport(
     format: $format
     arguments: $arguments
     sort: $sort
+    currentLanguage: $currentLanguage
   ) {
     ... on PrintReportNode {
       __typename

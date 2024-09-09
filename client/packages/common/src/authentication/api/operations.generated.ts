@@ -11,7 +11,7 @@ export type AuthTokenQueryVariables = Types.Exact<{
 }>;
 
 
-export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'AccountBlocked', description: string, timeoutRemaining: number } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'NoSiteAccess', description: string } } };
+export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'AccountBlocked', description: string, timeoutRemaining: number } | { __typename: 'CentralSyncRequired', description: string } | { __typename: 'InvalidCredentials', description: string } | { __typename: 'NoSiteAccess', description: string } } };
 
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -104,6 +104,10 @@ export const AuthTokenDocument = gql`
           __typename
           description
           timeoutRemaining
+        }
+        ... on CentralSyncRequired {
+          __typename
+          description
         }
         description
       }
@@ -238,7 +242,6 @@ export const UpdateUserDocument = gql`
           __typename
           description
         }
-        description
       }
     }
   }
