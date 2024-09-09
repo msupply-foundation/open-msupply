@@ -65,6 +65,7 @@ pub enum LoginError {
     UpdateUserError(UpdateUserError),
     InternalError(String),
     DatabaseError(RepositoryError),
+    MSupplyCentralNotReached,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -115,6 +116,7 @@ impl LoginService {
         input: LoginInput,
     ) -> Result<TokenPair, LoginError> {
         let mut username = input.username.clone();
+        let mut connection_failure = false;
         match LoginService::fetch_user_from_central(&input).await {
             Ok(user_info) => {
                 let service_ctx =
@@ -132,7 +134,10 @@ impl LoginService {
                         timeout_remaining,
                     )))
                 }
-                FetchUserError::ConnectionError(_) => info!("{:?}", err),
+                FetchUserError::ConnectionError(_) => {
+                    info!("{:?}", err);
+                    connection_failure = true;
+                }
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
         };
@@ -152,6 +157,13 @@ impl LoginService {
                         LoginError::InternalError("Failed to read credentials".to_string())
                     }
                     VerifyPasswordError::DatabaseError(e) => LoginError::DatabaseError(e),
+                    VerifyPasswordError::EmptyHashedPassword => {
+                        if connection_failure {
+                            LoginError::MSupplyCentralNotReached
+                        } else {
+                            LoginError::InternalError("Corrupted credentials".to_string())
+                        }
+                    }
                 });
             }
         };
@@ -493,12 +505,12 @@ mod test {
 
     use httpmock::{Method::POST, MockServer};
     use repository::{
-        mock::{mock_store_a, MockDataInserts},
+        mock::{mock_store_a, mock_user_empty_hashed_password, MockDataInserts},
         test_db::setup_all,
         EqualFilter, KeyType, KeyValueStoreRepository, UserFilter, UserPermissionFilter,
         UserPermissionRepository, UserRepository,
     };
-    use util::assert_matches;
+    use util::{assert_matches, assert_variant};
 
     use crate::{
         apis::login_v4::LoginResponseV4,
@@ -513,8 +525,11 @@ mod test {
 
     #[actix_rt::test]
     async fn central_login_test() {
-        let (_, _, connection_manager, _) =
-            setup_all("login_test", MockDataInserts::none().names().stores()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "login_test",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
             .context("".to_string(), "".to_string())
@@ -626,6 +641,64 @@ mod test {
             .await;
 
             assert!(result.is_ok());
+        }
+        // check login error handling when empty password hash and can't connect to mSupply
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(500);
+            });
+
+            let central_server_url = mock_server.base_url();
+
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: mock_user_empty_hashed_password().username,
+                    password: "password".to_string(),
+                    central_server_url,
+                },
+                0,
+            )
+            .await;
+
+            assert_matches!(result, Err(LoginError::MSupplyCentralNotReached));
+        }
+
+        // check login error handling when empty password hash and can connect to mSupply
+        {
+            let mock_server = MockServer::start();
+            mock_server.mock(|when, then| {
+                when.method(POST).path("/api/v4/login".to_string());
+                then.status(200).body(
+                    // mSupply was reached, but there are non-parse-able contents
+                    // so fetch_central_user results in InternalError
+                    // Therefore password not updated - we'll get the empty password error
+                    r#"{"cannot": "parse"}"#,
+                );
+            });
+
+            let central_server_url = mock_server.base_url();
+
+            let result = LoginService::login(
+                &service_provider,
+                &auth_data,
+                LoginInput {
+                    username: mock_user_empty_hashed_password().username,
+                    password: "password".to_string(),
+                    central_server_url,
+                },
+                0,
+            )
+            .await
+            .inspect_err(|e| {
+                let err_message = assert_variant!(e, LoginError::InternalError(err) => err);
+                assert_eq!(err_message, "Corrupted credentials")
+            });
+
+            assert!(result.is_err());
         }
         // If server password has changed, and trying to login with old password, return LoginError::LoginFailure
         {

@@ -24,6 +24,7 @@ use crate::{
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
+    localisations::Localisations,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
@@ -145,6 +146,8 @@ pub struct ServiceProvider {
     pub vaccination_service: Box<dyn VaccinationServiceTrait>,
     // Programs
     pub program_service: Box<dyn ProgramServiceTrait>,
+    // Translations
+    pub translations_service: Box<Localisations>,
 }
 
 pub struct ServiceContext {
@@ -175,6 +178,8 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
+        let localisations = Localisations::new();
+
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -231,6 +236,7 @@ impl ServiceProvider {
             program_service: Box::new(crate::program::ProgramService {}),
             rnr_form_service: Box::new(RnRFormService {}),
             vaccination_service: Box::new(VaccinationService {}),
+            translations_service: Box::new(localisations),
         }
     }
 

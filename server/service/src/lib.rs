@@ -70,6 +70,7 @@ pub mod user_account;
 pub mod vaccination;
 pub mod vaccine_course;
 pub mod validate;
+pub mod localisations;
 
 #[cfg(test)]
 mod login_mock_data;
