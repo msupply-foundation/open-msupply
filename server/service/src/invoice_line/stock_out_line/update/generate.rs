@@ -1,6 +1,9 @@
 use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StockLine, StockLineRow};
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::{
+    invoice::common::calculate_total_after_tax,
+    pricing::{calculate_sell_price::calculate_sell_price, item_price::ItemPrice},
+};
 
 use super::{BatchPair, UpdateStockOutLine, UpdateStockOutLineError};
 
@@ -10,6 +13,7 @@ pub fn generate(
     item_row: ItemRow,
     batch_pair: BatchPair,
     invoice: InvoiceRow,
+    pricing: ItemPrice,
 ) -> Result<(InvoiceLineRow, BatchPair), UpdateStockOutLineError> {
     let adjust_total_number_of_packs = invoice.status == InvoiceStatus::Picked;
 
@@ -32,6 +36,7 @@ pub fn generate(
         existing_line,
         item_row,
         batch_pair.main_batch.stock_line_row.clone(),
+        pricing,
     );
 
     Ok((new_line, batch_pair))
@@ -92,15 +97,21 @@ fn generate_line(
     }: ItemRow,
     StockLineRow {
         id: stock_line_id,
-        sell_price_per_pack,
-        cost_price_per_pack,
+        sell_price_per_pack: line_sell_price_per_pack,
+        cost_price_per_pack: line_cost_price_per_pack,
         pack_size,
         batch,
         expiry_date,
         location_id,
         ..
     }: StockLineRow,
+    default_pricing: ItemPrice,
 ) -> InvoiceLineRow {
+    let cost_price_per_pack = line_cost_price_per_pack; // For now, we just get the cost price from the stock line
+
+    let sell_price_per_pack =
+        calculate_sell_price(line_sell_price_per_pack, pack_size, default_pricing);
+
     let mut update_line = InvoiceLineRow {
         id,
         invoice_id,

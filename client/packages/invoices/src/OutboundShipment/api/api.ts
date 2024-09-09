@@ -109,7 +109,7 @@ const outboundParsers = {
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
-      totalBeforeTax: get.stockLineSubtotal(line),
+      totalBeforeTax: get.invoiceLineSubtotal(line),
     };
   },
   toUpdateLine: (line: DraftStockOutLine): UpdateOutboundShipmentLineInput => {
@@ -117,7 +117,7 @@ const outboundParsers = {
       id: line.id,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
-      totalBeforeTax: get.stockLineSubtotal(line),
+      totalBeforeTax: get.invoiceLineSubtotal(line),
     };
   },
   toDeleteLine: (line: { id: string }): DeleteOutboundShipmentLineInput => ({

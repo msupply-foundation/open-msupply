@@ -5,6 +5,7 @@ use repository::{
 
 use crate::{
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    pricing::item_price::{get_pricing_for_item, ItemPriceLookup},
     service_provider::ServiceContext,
 };
 
@@ -62,8 +63,16 @@ pub fn update_stock_out_line(
         .connection
         .transaction_sync(|connection| {
             let (line, item, batch_pair, invoice) = validate(&input, &ctx.store_id, connection)?;
-
-            let (update_line, batch_pair) = generate(input, line, item, batch_pair, invoice)?;
+            // Check if we need to override the pricing with a default
+            let pricing = get_pricing_for_item(
+                ctx,
+                ItemPriceLookup {
+                    item_id: item.id.clone(),
+                    customer_name_id: Some(invoice.name_link_id.clone()),
+                },
+            )?;
+            let (update_line, batch_pair) =
+                generate(input, line, item, batch_pair, invoice, pricing)?;
             InvoiceLineRowRepository::new(connection).upsert_one(&update_line)?;
 
             let stock_line_repo = StockLineRowRepository::new(connection);
