@@ -10,28 +10,18 @@ import {
   useTranslation,
   ProgramEnrolmentSortFieldInput,
   useUrlQueryParams,
-  ColumnDataAccessor,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import {
-  PatientModal,
   ProgramEnrolmentRowFragment,
-  getStatusEventData,
-  usePatientModalStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
-import { usePatient } from '../../api';
+import { usePatient } from '../api';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
-import { ChipTableCell } from '@openmsupply-client/system';
+import { AppRoute } from '@openmsupply-client/config';
 
-const programAdditionalInfoAccessor: ColumnDataAccessor<
-  ProgramEnrolmentRowFragment,
-  string[]
-> = ({ rowData }): string[] => {
-  const additionalInfo = getStatusEventData(rowData.activeProgramEvents.nodes);
-  return additionalInfo;
-};
-
-const ProgramListComponent: FC = () => {
+const VaccinationCardListComponent: FC = () => {
   const {
     sort: { sortBy, onChangeSortBy },
   } = useQueryParamsStore();
@@ -48,13 +38,15 @@ const ProgramListComponent: FC = () => {
       key: sortBy.key as ProgramEnrolmentSortFieldInput,
       isDesc: sortBy.isDesc,
     },
-    filterBy: { patientId: { equalTo: patientId } },
+    filterBy: {
+      patientId: { equalTo: patientId },
+      isImmunisationProgram: true,
+    },
   });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('dispensary');
-  const { setEditModal: setEditingModal, setModal: selectModal } =
-    usePatientModalStore();
+  const navigate = useNavigate();
 
   const columns = useColumns<ProgramEnrolmentRowFragment>(
     [
@@ -67,14 +59,7 @@ const ProgramListComponent: FC = () => {
         key: 'programEnrolmentId',
         label: 'label.enrolment-patient-id',
       },
-      {
-        label: 'label.additional-info',
-        key: 'events',
-        sortable: false,
-        accessor: programAdditionalInfoAccessor,
-        Cell: ChipTableCell,
-        minWidth: 400,
-      },
+      // TODO - add column for next appointment
       {
         key: 'status',
         label: 'label.program-status',
@@ -97,19 +82,25 @@ const ProgramListComponent: FC = () => {
 
   return (
     <DataTable
-      id="program-enrolment-list"
+      id="vaccination-card-list"
       pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
       onChangePage={updatePaginationQuery}
       columns={columns}
       data={data?.nodes}
       isLoading={isLoading}
       isError={isError}
-      onRowClick={row => {
-        setEditingModal(PatientModal.Program, row.type, row.name);
-      }}
+      onRowClick={row =>
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .addPart(patientId)
+            .addPart(AppRoute.VaccineCard)
+            .addPart(row.id)
+            .build()
+        )
+      }
       noDataElement={
         <NothingHere
-          onCreate={() => selectModal(PatientModal.ProgramSearch)}
           body={t('messages.no-programs')}
           buttonText={t('button.add-program')}
         />
@@ -118,7 +109,7 @@ const ProgramListComponent: FC = () => {
   );
 };
 
-export const ProgramListView: FC = () => (
+export const VaccinationCardsListView = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragment>({
@@ -128,6 +119,6 @@ export const ProgramListView: FC = () => (
       },
     })}
   >
-    <ProgramListComponent />
+    <VaccinationCardListComponent />
   </TableProvider>
 );
