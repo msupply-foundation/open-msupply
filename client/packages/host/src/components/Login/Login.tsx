@@ -65,6 +65,7 @@ export const Login = () => {
       };
     }
 
+
     if (error.message === 'AccountBlocked') {
       if (timeoutRemaining < 1000) return { error: '' };
 
@@ -79,6 +80,10 @@ export const Login = () => {
       return { error: t('error.login') };
     }
 
+    if (error.message === "CentralSyncRequired") {
+      return {error: t('error.missing-central-sync')}
+    }
+
     if (error.message === 'NoSiteAccess') {
       return {
         error: t('error.unable-to-login'),
@@ -87,7 +92,7 @@ export const Login = () => {
     }
 
     if (error?.stdError === 'Internal error') {
-      return { error: t('error.internal-error') };
+      return { error: t('error.internal-error'), hint: t('error.login-support') };
     }
 
     return {

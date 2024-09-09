@@ -74,6 +74,7 @@ pub struct ProgramEnrolmentFilterInput {
     pub program_id: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
     pub program_name: Option<StringFilterInput>,
+    pub is_immunisation_program: Option<bool>,
 }
 impl From<ProgramEnrolmentFilterInput> for ProgramEnrolmentFilter {
     fn from(f: ProgramEnrolmentFilterInput) -> Self {
@@ -87,6 +88,7 @@ impl From<ProgramEnrolmentFilterInput> for ProgramEnrolmentFilter {
             program_id: f.program_id.map(EqualFilter::from),
             program_context_id: None,
             program_name: f.program_name.map(StringFilter::from),
+            is_immunisation_program: f.is_immunisation_program,
         }
     }
 }
@@ -169,6 +171,10 @@ pub enum ProgramEnrolmentResponse {
 
 #[Object]
 impl ProgramEnrolmentNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
     /// The program type
     pub async fn r#type(&self) -> &str {
         &self.row().document_type
@@ -185,6 +191,10 @@ impl ProgramEnrolmentNode {
 
     pub async fn patient_id(&self) -> &str {
         &self.patient_row().id
+    }
+
+    pub async fn is_immunisation_program(&self) -> bool {
+        self.program_row().is_immunisation
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {

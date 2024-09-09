@@ -7158,6 +7158,7 @@ dependencies = [
  "repository",
  "reqwest",
  "rsa",
+ "rust-embed 6.8.1",
  "schemafy",
  "schemafy_core",
  "scraper",
