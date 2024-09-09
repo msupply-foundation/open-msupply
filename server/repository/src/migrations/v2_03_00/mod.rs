@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
+mod add_doses_to_item;
 mod add_vaccination_activity_log_types;
 mod add_vaccinations_table;
 mod add_vaccine_course_changelog_table_names;
@@ -31,6 +32,7 @@ impl Migration for V2_03_00 {
             Box::new(add_vaccine_course_changelog_table_names::Migrate),
             Box::new(add_vaccinations_table::Migrate),
             Box::new(add_vaccination_activity_log_types::Migrate),
+            Box::new(add_doses_to_item::Migrate),
         ]
     }
 }

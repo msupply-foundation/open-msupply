@@ -56,6 +56,18 @@ impl ItemNode {
         VenCategoryType::from_domain(&self.row().ven_category)
     }
 
+    pub async fn is_vaccine(&self) -> &bool {
+        &self.row().is_vaccine
+    }
+
+    pub async fn default_pack_size(&self) -> f64 {
+        self.row().default_pack_size
+    }
+
+    pub async fn doses(&self) -> i32 {
+        self.row().doses
+    }
+
     pub async fn stats(
         &self,
         ctx: &Context<'_>,
@@ -129,18 +141,6 @@ impl ItemNode {
 
     pub async fn msupply_universal_name(&self) -> String {
         self.legacy_string("universalcodes_name")
-    }
-
-    pub async fn doses(&self) -> i64 {
-        self.legacy_i64("doses")
-    }
-
-    pub async fn is_vaccine(&self) -> bool {
-        self.legacy_bool("is_vaccine")
-    }
-
-    pub async fn default_pack_size(&self) -> f64 {
-        self.row().default_pack_size
     }
 
     pub async fn outer_pack_size(&self) -> i64 {
@@ -412,8 +412,6 @@ mod test {
               "__typename": "ItemNode",
               "atcCategory": "",
               "ddd": "0.1",
-              "doses": 11,
-              "isVaccine": true,
               "margin": 0.3,
               "msupplyUniversalCode": "universal code",
               "msupplyUniversalName": "universal name",
@@ -431,8 +429,6 @@ mod test {
                 __typename
                msupplyUniversalCode
                msupplyUniversalName
-               doses
-               isVaccine
                outerPackSize
                volumePerPack
                volumePerOuterPack
