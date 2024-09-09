@@ -8,7 +8,7 @@ const TABLE_NAME: &str = "vaccine_course_dose";
 const VACCINE_COURSE_DOSE1: (&str, &str) = (
     "test_vaccine_course_dose",
     r#"{
-        "id":  "test_vaccine_course_dose",
+        "id": "test_vaccine_course_dose",
         "vaccine_course_id": "test_vaccine_course",
         "label": "test dose label",
         "min_age": 12.0,

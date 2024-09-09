@@ -52,6 +52,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
+pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
@@ -123,6 +124,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingR
     // Open mSupply central
     test_records.append(&mut rnr_form::test_pull_upsert_records());
     test_records.append(&mut rnr_form_line::test_pull_upsert_records());
+    test_records.append(&mut vaccination::test_pull_upsert_records());
 
     test_records
 }
@@ -198,6 +200,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut vaccine_course::test_v6_records());
     test_records.append(&mut vaccine_course_dose::test_v6_records());
     test_records.append(&mut vaccine_course_item::test_v6_records());
+    test_records.append(&mut vaccination::test_v6_records());
 
     test_records
 }

@@ -54,6 +54,7 @@ pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
 pub(crate) mod utils;
+pub(crate) mod vaccination;
 pub(crate) mod vaccine_course;
 pub(crate) mod vaccine_course_dose;
 pub(crate) mod vaccine_course_item;
@@ -138,6 +139,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         vaccine_course_dose::boxed(),
         vaccine_course_item::boxed(),
         demographic_indicator::boxed(),
+        // Vaccination
+        vaccination::boxed(),
     ]
 }
 
