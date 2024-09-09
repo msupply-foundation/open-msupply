@@ -23,6 +23,7 @@ fragment StockLine on StockLineNode {
     name
     code
     unitName
+    doses
   }
   note
   onHold
@@ -211,7 +212,10 @@ query itemsWithStats(
 }
 
 query itemById($storeId: String!, $itemId: String!) {
-  items(storeId: $storeId, filter: { id: { equalTo: $itemId }, isActive: true }) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
     ... on ItemConnector {
       __typename
       nodes {
