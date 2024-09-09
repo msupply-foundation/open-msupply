@@ -1,32 +1,69 @@
-
 use crate::{
-    app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
+    app_data::{AppDataService, AppDataServiceTrait},
+    asset::AssetServiceTrait,
+    auth::{AuthService, AuthServiceTrait},
+    barcode::{BarcodeService, BarcodeServiceTrait},
+    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
+    clinician::{ClinicianService, ClinicianServiceTrait},
+    cold_chain::{ColdChainService, ColdChainServiceTrait},
+    currency::{CurrencyService, CurrencyServiceTrait},
+    dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
-    }, demographic::DemographicServiceTrait, display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait}, document::{
+    },
+    demographic::DemographicServiceTrait,
+    display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
+    document::{
         document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
         document_service::{DocumentService, DocumentServiceTrait},
         form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
-    }, invoice::{InvoiceService, InvoiceServiceTrait}, invoice_line::{InvoiceLineService, InvoiceLineServiceTrait}, item_stats::{ItemStatsService, ItemStatsServiceTrait}, label_printer_settings_service::LabelPrinterSettingsServiceTrait, localisations::Localisations, location::{LocationService, LocationServiceTrait}, log_service::{LogService, LogServiceTrait}, master_list::{MasterListService, MasterListServiceTrait}, name::{NameService, NameServiceTrait}, pack_variant::PackVariantServiceTrait, plugin_data::{PluginDataService, PluginDataServiceTrait}, processors::ProcessorsTrigger, program::ProgramServiceTrait, programs::{
-        contact_trace::{ ContactTraceService, ContactTraceServiceTrait},
+    },
+    invoice::{InvoiceService, InvoiceServiceTrait},
+    invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
+    item_stats::{ItemStatsService, ItemStatsServiceTrait},
+    label_printer_settings_service::LabelPrinterSettingsServiceTrait,
+    localisations::Localisations,
+    location::{LocationService, LocationServiceTrait},
+    log_service::{LogService, LogServiceTrait},
+    master_list::{MasterListService, MasterListServiceTrait},
+    name::{NameService, NameServiceTrait},
+    pack_variant::PackVariantServiceTrait,
+    plugin_data::{PluginDataService, PluginDataServiceTrait},
+    processors::ProcessorsTrigger,
+    program::ProgramServiceTrait,
+    programs::{
+        contact_trace::{ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
-    }, repack::{RepackService, RepackServiceTrait}, report::report_service::{ReportService, ReportServiceTrait}, requisition::{RequisitionService, RequisitionServiceTrait}, requisition_line::{RequisitionLineService, RequisitionLineServiceTrait}, rnr_form::{RnRFormService, RnRFormServiceTrait}, sensor::{SensorService, SensorServiceTrait}, settings_service::{SettingsService, SettingsServiceTrait}, stock_line::{StockLineService, StockLineServiceTrait}, stocktake::{StocktakeService, StocktakeServiceTrait}, stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait}, store::{get_store, get_stores}, 
+    },
+    repack::{RepackService, RepackServiceTrait},
+    report::report_service::{ReportService, ReportServiceTrait},
+    requisition::{RequisitionService, RequisitionServiceTrait},
+    requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    rnr_form::{RnRFormService, RnRFormServiceTrait},
+    sensor::{SensorService, SensorServiceTrait},
+    settings_service::{SettingsService, SettingsServiceTrait},
+    stock_line::{StockLineService, StockLineServiceTrait},
+    stocktake::{StocktakeService, StocktakeServiceTrait},
+    stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
+    store::{get_store, get_stores},
     sync::{
         site_info::{SiteInfoService, SiteInfoTrait},
         sync_status::status::{SyncStatusService, SyncStatusTrait},
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
-    }, temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait}, vaccine_course::VaccineCourseServiceTrait, ListError, ListResult,
+    },
+    temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    vaccine_course::VaccineCourseServiceTrait,
+    ListError, ListResult,
 };
 use repository::{
     PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager, Store,
     StoreFilter, StoreSort,
 };
-
 
 pub struct ServiceProvider {
     pub connection_manager: StorageConnectionManager,
@@ -107,7 +144,7 @@ pub struct ServiceProvider {
     pub program_service: Box<dyn ProgramServiceTrait>,
     // Translations
     pub translations_service: Box<Localisations>,
-}   
+}
 
 pub struct ServiceContext {
     pub connection: StorageConnection,
@@ -116,14 +153,11 @@ pub struct ServiceContext {
     pub store_id: String,
 }
 
-
-
 impl ServiceProvider {
     // TODO we should really use `new` with processors_trigger, we constructs ServiceProvider manually in tests though
     // and it would be a bit of refactor, ideally setup_all and setup_all_with_data will return an instance of ServiceProvider
     // {make an issue}
     pub fn new(connection_manager: StorageConnectionManager, app_data_folder: &str) -> Self {
-
         ServiceProvider::new_with_triggers(
             connection_manager,
             app_data_folder,
@@ -140,9 +174,6 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        let localisations = Localisations::new();
-
-
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -198,7 +229,7 @@ impl ServiceProvider {
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
             rnr_form_service: Box::new(RnRFormService {}),
-            translations_service: Box::new(localisations),        
+            translations_service: Box::new(Localisations::new()),
         }
     }
 
