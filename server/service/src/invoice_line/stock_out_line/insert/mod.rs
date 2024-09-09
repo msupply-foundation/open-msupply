@@ -78,17 +78,7 @@ pub fn insert_stock_out_line(
         .connection
         .transaction_sync(|connection| {
             let (item, invoice, batch) = validate(&input, &ctx.store_id, connection)?;
-
-            // Check if we need to override the pricing with a default
-            let pricing = get_pricing_for_item(
-                ctx,
-                ItemPriceLookup {
-                    item_id: item.id.clone(),
-                    customer_name_id: Some(invoice.name_link_id.clone()),
-                },
-            )?;
-            let (new_line, update_batch) =
-                generate(connection, input, item, batch, invoice, pricing)?;
+            let (new_line, update_batch) = generate(ctx, input, item, batch, invoice)?;
             InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(connection).upsert_one(&update_batch)?;
             get_invoice_line(ctx, &new_line.id)
