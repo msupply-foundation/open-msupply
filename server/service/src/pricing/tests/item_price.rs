@@ -55,10 +55,9 @@ mod query {
                     customer_name_id: Some(mock_name_store_a().id.clone()),
                 },
             )
-            .unwrap()
             .unwrap();
 
-        assert_eq!(pricing.discount, Some(discount));
+        assert_eq!(pricing.discount_percentage, Some(discount));
 
         // Check that the discount is not applied if item is not in the discount list
 
@@ -72,7 +71,9 @@ mod query {
             )
             .unwrap();
 
-        assert_eq!(pricing, None);
+        assert_eq!(pricing.default_price_per_unit, None);
+        assert_eq!(pricing.calculated_price_per_unit, None);
+        assert_eq!(pricing.discount_percentage, None);
     }
 
     #[actix_rt::test]
@@ -121,7 +122,6 @@ mod query {
                     customer_name_id: None,
                 },
             )
-            .unwrap()
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, Some(default_price_per_unit));
@@ -142,7 +142,9 @@ mod query {
             )
             .unwrap();
 
-        assert_eq!(pricing, None);
+        assert_eq!(pricing.default_price_per_unit, None);
+        assert_eq!(pricing.calculated_price_per_unit, None);
+        assert_eq!(pricing.discount_percentage, None);
     }
 
     #[actix_rt::test]
@@ -218,11 +220,10 @@ mod query {
                     customer_name_id: None,
                 },
             )
-            .unwrap()
             .unwrap();
 
         assert_eq!(pricing.default_price_per_unit, Some(default_price_per_unit));
-        assert_eq!(pricing.discount, Some(discount));
+        assert_eq!(pricing.discount_percentage, Some(discount));
         assert_eq!(
             pricing.calculated_price_per_unit,
             Some(default_price_per_unit * (1.0 - discount / 100.0))
@@ -239,6 +240,8 @@ mod query {
             )
             .unwrap();
 
-        assert_eq!(pricing, None);
+        assert_eq!(pricing.default_price_per_unit, None);
+        assert_eq!(pricing.calculated_price_per_unit, None);
+        assert_eq!(pricing.discount_percentage, None);
     }
 }
