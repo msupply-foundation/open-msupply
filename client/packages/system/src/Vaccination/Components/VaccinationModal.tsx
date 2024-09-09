@@ -1,6 +1,7 @@
 import {
   BasicSpinner,
   BasicTextInput,
+  Button,
   Container,
   DatePicker,
   DialogButton,
@@ -9,7 +10,9 @@ import {
   Radio,
   RadioGroup,
   Select,
+  SxProps,
   useDialog,
+  useEditModal,
   useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
@@ -19,6 +22,7 @@ import React, { useMemo } from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
+import { SelectBatchModal } from './SelectBatchModal';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -56,6 +60,12 @@ export const VaccinationModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(620);
 
+  const {
+    isOpen: batchModalOpen,
+    onClose: closeBatchModal,
+    onOpen: openBatchModal,
+  } = useEditModal();
+
   const save = async () => {
     try {
       await create(draft);
@@ -70,7 +80,12 @@ export const VaccinationModal = ({
   const modalContent = isLoading ? (
     <BasicSpinner />
   ) : (
-    <VaccinationForm updateDraft={updateDraft} draft={draft} dose={dose} />
+    <VaccinationForm
+      updateDraft={updateDraft}
+      openBatchModal={openBatchModal}
+      draft={draft}
+      dose={dose}
+    />
   );
 
   return (
@@ -88,7 +103,17 @@ export const VaccinationModal = ({
       width={550}
       slideAnimation={false}
     >
-      {modalContent}
+      <>
+        {batchModalOpen && (
+          <SelectBatchModal
+            isOpen
+            itemId={draft.itemId ?? ''}
+            onClose={closeBatchModal}
+            setStockLine={stockLine => updateDraft({ stockLine })}
+          />
+        )}
+        {modalContent}
+      </>
     </Modal>
   );
 };
@@ -97,10 +122,12 @@ const VaccinationForm = ({
   draft,
   dose,
   updateDraft,
+  openBatchModal,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
+  openBatchModal: (itemId: string) => void;
 }) => {
   const t = useTranslation('dispensary');
 
@@ -108,7 +135,7 @@ const VaccinationForm = ({
     return (
       dose?.vaccineCourse.vaccineCourseItems?.map(item => ({
         label: item.name,
-        value: item.id,
+        value: item.itemId,
       })) ?? []
     );
   }, [dose?.id]);
@@ -181,7 +208,25 @@ const VaccinationForm = ({
               />
             }
           />
-          <InputWithLabelRow label={t('label.batch')} Input={'TODO'} />
+          <InputWithLabelRow
+            label={t('label.batch')}
+            Input={
+              <Button
+                disabled={!draft.itemId}
+                onClick={() => draft.itemId && openBatchModal(draft.itemId)}
+                sx={{
+                  ...baseButtonStyles,
+                  // !draft.itemId === disabled
+                  color: draft.itemId ? 'gray.main' : 'gray.light',
+                  backgroundColor: draft.itemId && 'background.menu',
+                  // stock line is selected
+                  fontStyle: draft.stockLine ? 'none' : 'italic',
+                }}
+              >
+                {draft.stockLine?.batch ?? t('label.select-batch')}
+              </Button>
+            }
+          />
         </>
       )}
 
@@ -224,4 +269,11 @@ const VaccinationForm = ({
       )}
     </Container>
   );
+};
+
+const baseButtonStyles: SxProps = {
+  flex: 1,
+  textTransform: 'none',
+  justifyContent: 'left',
+  border: '1px solid lightgray',
 };
