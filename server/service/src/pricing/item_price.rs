@@ -41,6 +41,7 @@ pub fn get_pricing_for_item(
                         .item_id(EqualFilter::equal_to(&input.item_id)),
                 )?
                 .pop();
+
             match master_list_line {
                 Some(master_list_line) => master_list_line.price_per_unit, // Line might not have a default price, so this returns the Optional<f64> price
                 None => None, // This means the price list doesn't have the item, so no price, shouldn't happen though as query above should return the price list only if it has the item
