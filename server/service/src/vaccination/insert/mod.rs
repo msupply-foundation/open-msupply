@@ -1,15 +1,15 @@
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 
 use chrono::NaiveDate;
-use repository::{
-    ActivityLogType, RepositoryError, TransactionError, VaccinationRow, VaccinationRowRepository,
-};
+use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRepository};
 
 mod generate;
 mod validate;
 
 use generate::{generate, GenerateInput};
 use validate::validate;
+
+use super::query::get_vaccination;
 
 #[derive(PartialEq, Debug)]
 pub enum InsertVaccinationError {
@@ -44,7 +44,7 @@ pub fn insert_vaccination(
     ctx: &ServiceContext,
     store_id: &str,
     input: InsertVaccination,
-) -> Result<VaccinationRow, InsertVaccinationError> {
+) -> Result<Vaccination, InsertVaccinationError> {
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
@@ -66,12 +66,9 @@ pub fn insert_vaccination(
                 None,
             )?;
 
-            Ok(new_vaccination)
-
-            // get_vaccination(&ctx.connection, new_vaccination.id)
-            //     .map_err(InsertVaccinationError::from)
+            get_vaccination(ctx, new_vaccination.id).map_err(InsertVaccinationError::from)
         })
-        .map_err(|error: TransactionError<InsertVaccinationError>| error.to_inner_error())?; // todo
+        .map_err(|error| error.to_inner_error())?;
     Ok(vaccination)
 }
 
@@ -318,7 +315,7 @@ mod insert {
             )
             .unwrap();
 
-        assert_eq!(result.id, "new_vaccination_given_id");
+        assert_eq!(result.vaccination_row.id, "new_vaccination_given_id");
 
         // Can create - dose not given
         let result = service_provider
@@ -340,6 +337,6 @@ mod insert {
             )
             .unwrap();
 
-        assert_eq!(result.id, "new_vaccination_not_given_id");
+        assert_eq!(result.vaccination_row.id, "new_vaccination_not_given_id");
     }
 }
