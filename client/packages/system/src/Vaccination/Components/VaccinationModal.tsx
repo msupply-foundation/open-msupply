@@ -10,6 +10,7 @@ import {
   Radio,
   RadioGroup,
   Select,
+  SxProps,
   useDialog,
   useEditModal,
   useKeyboardHeightAdjustment,
@@ -214,12 +215,11 @@ const VaccinationForm = ({
                 disabled={!draft.itemId}
                 onClick={() => draft.itemId && openBatchModal(draft.itemId)}
                 sx={{
-                  flex: 1,
+                  ...baseButtonStyles,
+                  // !draft.itemId === disabled
                   color: draft.itemId ? 'gray.main' : 'gray.light',
                   backgroundColor: draft.itemId && 'background.menu',
-                  justifyContent: 'left',
-                  border: '1px solid lightgray',
-                  textTransform: 'none',
+                  // stock line is selected
                   fontStyle: draft.stockLine ? 'none' : 'italic',
                 }}
               >
@@ -269,4 +269,11 @@ const VaccinationForm = ({
       )}
     </Container>
   );
+};
+
+const baseButtonStyles: SxProps = {
+  flex: 1,
+  textTransform: 'none',
+  justifyContent: 'left',
+  border: '1px solid lightgray',
 };
