@@ -67,7 +67,10 @@ impl<'a> VaccineCourseDoseRepository<'a> {
         &self,
         filter: Option<VaccineCourseDoseFilter>,
     ) -> Result<Vec<VaccineCourseDoseRow>, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let mut query = create_filtered_query(filter);
+
+        // Sort by min_age to receive the dose - this is the order doses should be delivered in
+        query = query.order(vaccine_course_dose_dsl::min_age.asc());
 
         let result = query.load::<VaccineCourseDoseRow>(self.connection.lock().connection())?;
 
