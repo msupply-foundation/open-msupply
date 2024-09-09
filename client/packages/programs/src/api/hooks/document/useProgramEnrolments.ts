@@ -4,12 +4,7 @@ import {
   useQuery,
 } from '@openmsupply-client/common';
 import { ProgramEnrolmentListParams } from '../../api';
-import { ProgramEnrolmentRowFragment } from '../../operations.generated';
 import { useProgramEnrolmentApi } from '../utils/useProgramEnrolmentApi';
-
-export type ProgramEnrolmentRowFragmentWithId = {
-  id: string;
-} & ProgramEnrolmentRowFragment;
 
 export const useProgramEnrolmentsPromise = () => {
   const api = useProgramEnrolmentApi();
@@ -52,8 +47,7 @@ export const useProgramEnrolments = (input: ProgramEnrolmentListParams) => {
         return {
           ...node,
           events,
-          id: node.name,
-        } as ProgramEnrolmentRowFragmentWithId;
+        };
       }),
       totalCount: programs.totalCount,
     }))
