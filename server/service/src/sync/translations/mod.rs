@@ -11,6 +11,7 @@ pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod currency;
+pub(crate) mod demographic_indicator;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
@@ -53,6 +54,9 @@ pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
 pub(crate) mod utils;
+pub(crate) mod vaccine_course;
+pub(crate) mod vaccine_course_dose;
+pub(crate) mod vaccine_course_item;
 
 use repository::*;
 use thiserror::Error;
@@ -129,6 +133,11 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // RnR Form
         rnr_form::boxed(),
         rnr_form_line::boxed(),
+        // Vaccine course
+        vaccine_course::boxed(),
+        vaccine_course_dose::boxed(),
+        vaccine_course_item::boxed(),
+        demographic_indicator::boxed(),
     ]
 }
 
