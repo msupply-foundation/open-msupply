@@ -61,6 +61,9 @@ use mutations::rnr_form::insert::{insert_rnr_form, InsertRnRFormInput, InsertRnR
 use mutations::rnr_form::update::update_rnr_form;
 use mutations::rnr_form::update::UpdateRnRFormInput;
 use mutations::rnr_form::update::UpdateRnRFormResponse;
+use mutations::vaccination::insert::{
+    insert_vaccination, InsertVaccinationInput, InsertVaccinationResponse,
+};
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
@@ -444,6 +447,15 @@ impl ProgramsMutations {
         input: FinaliseRnRFormInput,
     ) -> Result<FinaliseRnRFormResponse> {
         finalise_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn insert_vaccination(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertVaccinationInput,
+    ) -> Result<InsertVaccinationResponse> {
+        insert_vaccination(ctx, store_id, input)
     }
 }
 
