@@ -132,6 +132,9 @@ export enum ActivityLogNodeType {
   StockOnHold = 'STOCK_ON_HOLD',
   StockSellPriceChange = 'STOCK_SELL_PRICE_CHANGE',
   UserLoggedIn = 'USER_LOGGED_IN',
+  VaccinationCreated = 'VACCINATION_CREATED',
+  VaccinationDeleted = 'VACCINATION_DELETED',
+  VaccinationUpdated = 'VACCINATION_UPDATED',
   VaccineCourseCreated = 'VACCINE_COURSE_CREATED',
   VaccineCourseUpdated = 'VACCINE_COURSE_UPDATED'
 }
@@ -2900,6 +2903,20 @@ export type InsertSupplierReturnErrorInterface = {
 
 export type InsertSupplierReturnResponse = InsertSupplierReturnError | InvoiceNode;
 
+export type InsertVaccinationInput = {
+  clinicianId?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  encounterId: Scalars['String']['input'];
+  given: Scalars['Boolean']['input'];
+  id: Scalars['String']['input'];
+  notGivenReason?: InputMaybe<Scalars['String']['input']>;
+  stockLineId?: InputMaybe<Scalars['String']['input']>;
+  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  vaccineCourseDoseId: Scalars['String']['input'];
+};
+
+export type InsertVaccinationResponse = VaccinationNode;
+
 export type InsertVaccineCourseError = {
   __typename: 'InsertVaccineCourseError';
   error: InsertVaccineCourseErrorInterface;
@@ -3746,6 +3763,7 @@ export type Mutations = {
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
   insertSupplierReturn: InsertSupplierReturnResponse;
+  insertVaccination: InsertVaccinationResponse;
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
@@ -4166,6 +4184,12 @@ export type MutationsInsertStocktakeLineArgs = {
 
 export type MutationsInsertSupplierReturnArgs = {
   input: SupplierReturnInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertVaccinationArgs = {
+  input: InsertVaccinationInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5271,6 +5295,7 @@ export type Queries = {
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
   vaccineCourse: VaccineCourseResponse;
+  vaccineCourseDose: VaccineCourseDoseResponse;
   vaccineCourses: VaccineCoursesResponse;
 };
 
@@ -5873,6 +5898,11 @@ export type QueriesTemperatureNotificationsArgs = {
 
 
 export type QueriesVaccineCourseArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesVaccineCourseDoseArgs = {
   id: Scalars['String']['input'];
 };
 
@@ -8105,6 +8135,11 @@ export type UserStorePermissionNode = {
   storeId: Scalars['String']['output'];
 };
 
+export type VaccinationNode = {
+  __typename: 'VaccinationNode';
+  id: Scalars['String']['output'];
+};
+
 export type VaccineCourseConnector = {
   __typename: 'VaccineCourseConnector';
   nodes: Array<VaccineCourseNode>;
@@ -8117,7 +8152,10 @@ export type VaccineCourseDoseNode = {
   label: Scalars['String']['output'];
   minAgeMonths: Scalars['Float']['output'];
   minIntervalDays: Scalars['Int']['output'];
+  vaccineCourse: VaccineCourseNode;
 };
+
+export type VaccineCourseDoseResponse = NodeError | VaccineCourseDoseNode;
 
 export type VaccineCourseFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;

@@ -36,8 +36,8 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
     vec![mock_item_a_line_a, mock_item_a_line_b]
 }
 
-pub fn mock_item_b_lines() -> Vec<StockLineRow> {
-    let mock_item_b_line_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
+pub fn mock_item_b_stock_line_a() -> StockLineRow {
+    inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_b_line_a");
         r.item_link_id = String::from("item_b");
         r.store_id = String::from("store_b");
@@ -46,7 +46,11 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         r.pack_size = 1.0;
         r.total_number_of_packs = 30.0;
         r.supplier_link_id = Some(String::from("name_store_b"));
-    });
+    })
+}
+
+pub fn mock_item_b_lines() -> Vec<StockLineRow> {
+    let mock_item_b_line_a: StockLineRow = mock_item_b_stock_line_a();
 
     let mock_item_b_line_b: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_b_line_b");

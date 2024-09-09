@@ -7,3 +7,4 @@ pub mod patient;
 pub mod program_enrolment;
 pub mod program_patient;
 pub mod rnr_form;
+pub mod vaccination;

@@ -5,7 +5,6 @@ import {
   InputWithLabelRow,
   Grid,
   useTranslation,
-  useIntlUtils,
   DropdownMenu,
   DropdownMenuItem,
   DeleteIcon,
@@ -21,7 +20,6 @@ export const Toolbar: FC = () => {
     'clinician',
   ]);
   const onDelete = usePrescription.line.deleteSelected();
-  const { getLocalisedFullName } = useIntlUtils();
 
   const isDisabled = usePrescription.utils.isDisabled();
   const t = useTranslation('dispensary');
@@ -61,10 +59,7 @@ export const Toolbar: FC = () => {
                       clinicianId: clinician?.value?.id ?? undefined,
                     });
                   }}
-                  clinicianLabel={getLocalisedFullName(
-                    clinician?.firstName,
-                    clinician?.lastName
-                  )}
+                  clinicianValue={clinician}
                 />
               }
             />

@@ -3,7 +3,6 @@ import {
   FnUtils,
   UpsertVaccineCourseItemInput,
   UpsertVaccineCourseDoseInput,
-  VaccineCourseDoseNode,
   VaccineCourseSortFieldInput,
   isEmpty,
   isEqual,
@@ -14,6 +13,7 @@ import {
 import { VACCINE } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
+import { VaccineCourseDoseFragment } from '../operations.generated';
 
 enum UpdateVaccineCourseError {
   DatabaseError = 'Database Error',
@@ -36,7 +36,9 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
 };
 
 const vaccineCourseParsers = {
-  toDoseInput: (dose: VaccineCourseDoseNode): UpsertVaccineCourseDoseInput => {
+  toDoseInput: (
+    dose: VaccineCourseDoseFragment
+  ): UpsertVaccineCourseDoseInput => {
     return {
       id: dose.id,
       label: dose.label,

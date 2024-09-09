@@ -11,10 +11,11 @@ use chrono::NaiveDateTime;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum EncounterStatus {
+    #[default]
     Pending,
     Visited,
     Cancelled,
@@ -46,7 +47,7 @@ allow_tables_to_appear_in_same_query!(encounter, clinician);
 allow_tables_to_appear_in_same_query!(encounter, name_link);
 allow_tables_to_appear_in_same_query!(encounter, name);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq, Default)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = encounter)]
 pub struct EncounterRow {
