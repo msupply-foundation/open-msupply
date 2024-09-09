@@ -1,5 +1,6 @@
 use serde_yaml::Value;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
+use tera::{from_value, to_value, Error as TeraError, Function};
 use thiserror::Error;
 
 use rust_embed::RustEmbed;
@@ -10,12 +11,8 @@ use rust_embed::RustEmbed;
 pub struct EmbeddedLocalisations;
 
 #[derive(Debug, Error)]
-pub enum TranslationError {
-    #[error("Key must be specified")]
-    KeyMustBeSpecified,
-    #[error("No translation found and fallback is missing")]
-    TranslationNotFoundAndNoFallback,
-}
+#[error("No translation found and fallback is missing")]
+pub struct TranslationError;
 // struct to manage translations
 #[derive(Clone)]
 
@@ -69,39 +66,73 @@ impl Localisations {
     // next need to add fallback and namespace to get Translation function
     pub fn get_translation(
         &self,
-        args: &HashMap<String, serde_json::Value>,
+        GetTranslation {
+            namespace,
+            fallback,
+            key,
+        }: GetTranslation,
         language: &str,
     ) -> Result<String, TranslationError> {
-        let key = args
-            .get("k")
-            .and_then(serde_json::Value::as_str)
-            .ok_or(TranslationError::KeyMustBeSpecified)?;
-        let namespace = args
-            .get("n")
-            .and_then(serde_json::Value::as_str)
-            .unwrap_or("common");
-        let fallback = args
-            .get("f")
-            .and_then(serde_json::Value::as_str)
-            .map(|s| s.to_string());
+        let default_namespace = "common".to_string();
+        let default_language = "en".to_string();
+
+        let language = language.to_string();
+        let namespace = namespace.unwrap_or(default_namespace.clone());
 
         // make cascading array of fallback options:
         for (language, namespace, key) in [
             // first look for key in nominated namespace
-            (language, namespace, key),
+            (&language, &namespace, &key),
             // then look for key in common.json
-            (language, "common", key),
+            (&language, &default_namespace, &key),
             // then look for key in nominated namespace in en
-            ("en", namespace, key),
+            (&default_language, &namespace, &key),
             // then look for key in common.json in en
-            ("en", "common", key),
+            (&default_language, &default_namespace, &key),
         ] {
-            match self.find_key(language, namespace, key) {
+            match self.find_key(language, &namespace, &key) {
                 Some(string) => return Ok(string),
                 None => continue,
             }
         }
-        fallback.ok_or(TranslationError::TranslationNotFoundAndNoFallback)
+        fallback.ok_or(TranslationError)
+    }
+
+    pub fn get_translation_function(&self, language: String) -> impl Function {
+        let translation_copy = self.clone();
+
+        Box::new(
+            move |args: &HashMap<String, serde_json::Value>| -> Result<serde_json::Value, TeraError> {
+                let key = args
+                    .get("k")
+                    .and_then(serde_json::Value::as_str)
+                    .map(|s| s.to_string())
+                    .ok_or(TeraError::msg("Translation key must be specified with 'k'"))?;
+
+                let namespace = args
+                    .get("n")
+                    .and_then(serde_json::Value::as_str)
+                    .map(|s| s.to_string());
+
+                let fallback = args
+                    .get("f")
+                    .and_then(serde_json::Value::as_str)
+                    .map(|s| s.to_string());
+
+                let translation = translation_copy
+                    .get_translation(
+                        GetTranslation {
+                            namespace,
+                            fallback,
+                            key,
+                        },
+                        &language,
+                    )
+                    .map_err(|e| TeraError::call_function("t", e))?;
+
+                Ok(serde_json::Value::String(translation.to_string()))
+            },
+        )
     }
 
     fn find_key(&self, language: &str, namespace: &str, key: &str) -> Option<String> {
@@ -111,6 +142,12 @@ impl Localisations {
             .and_then(|map| map.get(key))
             .map(|s| s.to_string())
     }
+}
+
+pub struct GetTranslation {
+    namespace: Option<String>,
+    fallback: Option<String>,
+    key: String,
 }
 
 #[cfg(test)]
