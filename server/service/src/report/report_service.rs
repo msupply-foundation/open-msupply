@@ -5,7 +5,6 @@ use repository::{
 };
 use scraper::{ElementRef, Html, Selector};
 use std::{collections::HashMap, time::SystemTime};
-use tera::{Error as TeraError, Value};
 use util::uuid::uuid;
 
 use crate::{

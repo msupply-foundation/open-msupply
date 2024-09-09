@@ -1,6 +1,6 @@
 use serde_yaml::Value;
-use std::collections::{BTreeMap, HashMap};
-use tera::{from_value, to_value, Error as TeraError, Function};
+use std::collections::HashMap;
+use tera::{Error as TeraError, Function};
 use thiserror::Error;
 
 use rust_embed::RustEmbed;
