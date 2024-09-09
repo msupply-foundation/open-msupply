@@ -93,7 +93,7 @@
   "messages.not-configured": "No configurado",
   "messages.period-not-available": "No hay periodos disponibles",
   "info.automatic-shipment-no-edit": "No puedes editar los detalles hasta que el estado sea confirmado como Entregado.",
-  "info.cannot-edit-program-requisition": "No se puede editar el proveedor, el Mínimo MOS, el Máximo MOS o agregar artículos en una requisición de programa.",
+  "info.cannot-edit-program-requisition": "No se puede editar el proveedor, el umbral de reorden MOS, el MOS objetivo o agregar artículos en una solicitud de programa.",
   "label.packs": "Paquetes",
   "label.requested-packs": "Paquetes solicitados",
   "template.requisition-sent": "Aprobado por {{name}}{{job}}. Correo electrónico: {{email}} y número de teléfono: {{phone}}.",
@@ -187,5 +187,7 @@
   "label.rnr-stock-out-duration": "Tiempo de desabastecimiento",
   "label.schedule": "Calendario",
   "messages.click-to-return-to-rnr-list": "Haz clic aquí para volver a la lista de formularios R&R",
-  "error.no-supplier-returns": "No hay devoluciones de proveedor para mostrar."
+  "error.no-supplier-returns": "No hay devoluciones de proveedor para mostrar.",
+  "heading.program-info": "Información del Programa",
+  "heading.order-info": "Información del Pedido"
 }

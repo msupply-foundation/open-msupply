@@ -910,6 +910,11 @@ export type CentralServerMutationNode = {
   vaccineCourse: VaccineCourseMutations;
 };
 
+export type CentralSyncRequired = AuthTokenErrorInterface & {
+  __typename: 'CentralSyncRequired';
+  description: Scalars['String']['output'];
+};
+
 export type ClinicianConnector = {
   __typename: 'ClinicianConnector';
   nodes: Array<ClinicianNode>;
@@ -5487,6 +5492,7 @@ export type QueriesGenerateCustomerReturnLinesArgs = {
 
 export type QueriesGenerateReportArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
+  currentLanguage?: InputMaybe<Scalars['String']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String']['input'];
@@ -5497,6 +5503,7 @@ export type QueriesGenerateReportArgs = {
 
 export type QueriesGenerateReportDefinitionArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
+  currentLanguage?: InputMaybe<Scalars['String']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<PrintFormat>;
   name?: InputMaybe<Scalars['String']['input']>;
