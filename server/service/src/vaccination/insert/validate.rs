@@ -29,6 +29,11 @@ pub fn validate(
         check_vaccine_course_dose_exists(&input.vaccine_course_dose_id, connection)?
             .ok_or(InsertVaccinationError::VaccineCourseDoseDoesNotExist)?;
 
+    // Check vaccine course is for the same program as the encounter
+    if program_enrolment.row.program_id != vaccine_course_dose.vaccine_course_row.program_id {
+        return Err(InsertVaccinationError::ProgramEnrolmentDoesNotMatchVaccineCourse);
+    }
+
     if !check_vaccination_does_not_exist_for_dose(
         &program_enrolment.row.id,
         &input.vaccine_course_dose_id,
@@ -43,6 +48,8 @@ pub fn validate(
         }
     }
 
+    // If given, stock line is required
+    // If not given, reason is required
     match input.given {
         false => {
             if input.not_given_reason.is_none() {
@@ -59,7 +66,9 @@ pub fn validate(
 
             if !check_item_belongs_to_vaccine_course(
                 &stock_line.stock_line_row.item_link_id,
-                &vaccine_course_dose.vaccine_course_id,
+                &vaccine_course_dose
+                    .vaccine_course_dose_row
+                    .vaccine_course_id,
                 connection,
             )? {
                 return Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse);

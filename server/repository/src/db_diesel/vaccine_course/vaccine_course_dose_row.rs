@@ -1,4 +1,6 @@
-use super::vaccine_course_dose_row::vaccine_course_dose::dsl::*;
+use super::{
+    vaccine_course_dose_row::vaccine_course_dose::dsl::*, vaccine_course_row::vaccine_course,
+};
 
 use crate::{
     ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RepositoryError, RowActionType,
@@ -18,6 +20,9 @@ table! {
 
     }
 }
+
+joinable!(vaccine_course_dose -> vaccine_course (vaccine_course_id));
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, vaccine_course);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize,

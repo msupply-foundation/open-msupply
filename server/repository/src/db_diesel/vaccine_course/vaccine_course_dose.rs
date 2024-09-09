@@ -1,14 +1,28 @@
-use super::vaccine_course_dose_row::{
-    vaccine_course_dose::{self, dsl as vaccine_course_dose_dsl},
-    VaccineCourseDoseRow,
+use super::{
+    vaccine_course_dose_row::{
+        vaccine_course_dose::{self, dsl as vaccine_course_dose_dsl},
+        VaccineCourseDoseRow,
+    },
+    vaccine_course_row::{vaccine_course, VaccineCourseRow},
 };
 
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{InnerJoin, IntoBoxed},
+    prelude::*,
+};
 
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
     StorageConnection,
 };
+
+type VaccineCourseDoseJoin = (VaccineCourseDoseRow, VaccineCourseRow);
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct VaccineCourseDose {
+    pub vaccine_course_dose_row: VaccineCourseDoseRow,
+    pub vaccine_course_row: VaccineCourseRow,
+}
 
 #[derive(Clone, Default)]
 pub struct VaccineCourseDoseFilter {
@@ -52,36 +66,39 @@ impl<'a> VaccineCourseDoseRepository<'a> {
     pub fn query_one(
         &self,
         filter: VaccineCourseDoseFilter,
-    ) -> Result<Option<VaccineCourseDoseRow>, RepositoryError> {
+    ) -> Result<Option<VaccineCourseDose>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: VaccineCourseDoseFilter,
-    ) -> Result<Vec<VaccineCourseDoseRow>, RepositoryError> {
+    ) -> Result<Vec<VaccineCourseDose>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
         &self,
         filter: Option<VaccineCourseDoseFilter>,
-    ) -> Result<Vec<VaccineCourseDoseRow>, RepositoryError> {
+    ) -> Result<Vec<VaccineCourseDose>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
         // Sort by min_age to receive the dose - this is the order doses should be delivered in
         query = query.order(vaccine_course_dose_dsl::min_age.asc());
 
-        let result = query.load::<VaccineCourseDoseRow>(self.connection.lock().connection())?;
+        let result = query.load::<VaccineCourseDoseJoin>(self.connection.lock().connection())?;
 
-        Ok(result.into_iter().collect())
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedVaccineCourseDoseQuery = IntoBoxed<'static, vaccine_course_dose::table, DBType>;
+type BoxedVaccineCourseDoseQuery =
+    IntoBoxed<'static, InnerJoin<vaccine_course_dose::table, vaccine_course::table>, DBType>;
 
 fn create_filtered_query(filter: Option<VaccineCourseDoseFilter>) -> BoxedVaccineCourseDoseQuery {
-    let mut query = vaccine_course_dose_dsl::vaccine_course_dose.into_boxed();
+    let mut query = vaccine_course_dose_dsl::vaccine_course_dose
+        .inner_join(vaccine_course::dsl::vaccine_course)
+        .into_boxed();
 
     if let Some(f) = filter {
         let VaccineCourseDoseFilter {
@@ -97,4 +114,11 @@ fn create_filtered_query(filter: Option<VaccineCourseDoseFilter>) -> BoxedVaccin
         );
     }
     query
+}
+
+fn to_domain((vaccine_course_dose, vaccine_course): VaccineCourseDoseJoin) -> VaccineCourseDose {
+    VaccineCourseDose {
+        vaccine_course_dose_row: vaccine_course_dose,
+        vaccine_course_row: vaccine_course,
+    }
 }
