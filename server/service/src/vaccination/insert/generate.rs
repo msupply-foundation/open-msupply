@@ -3,10 +3,22 @@ use repository::VaccinationRow;
 
 use super::InsertVaccination;
 
+pub struct GenerateInput {
+    pub store_id: String,
+    pub user_id: String,
+    pub program_enrolment_id: String,
+    pub insert_input: InsertVaccination,
+}
+
 pub fn generate(
-    store_id: &str,
-    program_enrolment_id: String,
-    InsertVaccination {
+    GenerateInput {
+        store_id,
+        user_id,
+        program_enrolment_id,
+        insert_input,
+    }: GenerateInput,
+) -> VaccinationRow {
+    let InsertVaccination {
         id,
         encounter_id,
         vaccine_course_dose_id,
@@ -16,19 +28,19 @@ pub fn generate(
         given,
         stock_line_id,
         not_given_reason,
-    }: InsertVaccination,
-) -> VaccinationRow {
+    } = insert_input;
+
     let now = Utc::now().naive_utc();
 
     VaccinationRow {
         id,
-        store_id: store_id.to_string(),
+        store_id,
         program_enrolment_id,
-        encounter_id,
+        user_id,
         created_datetime: now,
-        user_id: String::new(),
-        vaccine_course_dose_id,
 
+        encounter_id,
+        vaccine_course_dose_id,
         clinician_link_id: clinician_id,
         vaccination_date,
         given,
