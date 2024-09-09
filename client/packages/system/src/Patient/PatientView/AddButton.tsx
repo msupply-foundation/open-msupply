@@ -59,6 +59,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   useEffect(() => {
     switch (currentUrlTab) {
       case PatientTabValue.Programs:
+      case PatientTabValue.VaccinationCards:
         setSelectedOption(programOption);
         break;
       case PatientTabValue.Encounters:
