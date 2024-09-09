@@ -104,8 +104,8 @@ fn generate_line(
         ..
     }: ItemRow,
     StockLineRow {
-        sell_price_per_pack: line_sell_price_per_pack,
-        cost_price_per_pack: line_cost_price_per_pack,
+        sell_price_per_pack: stock_line_sell_price_per_pack,
+        cost_price_per_pack: stock_line_cost_price_per_pack,
         pack_size,
         batch,
         expiry_date,
@@ -121,12 +121,12 @@ fn generate_line(
     }: InvoiceRow,
     default_pricing: ItemPrice,
 ) -> Result<InvoiceLineRow, RepositoryError> {
-    let cost_price_per_pack = line_cost_price_per_pack; // For now, we just get the cost price from the stock line
+    let cost_price_per_pack = stock_line_cost_price_per_pack; // For now, we just get the cost price from the stock line
 
     let sell_price_per_pack =
-        calculate_sell_price(line_sell_price_per_pack, pack_size, default_pricing);
+        calculate_sell_price(stock_line_sell_price_per_pack, pack_size, default_pricing);
 
-    let total_before_tax = total_before_tax.unwrap_or(sell_price_per_pack * number_of_packs); // CHECK ME, was cost_price_per_pack for some reason...
+    let total_before_tax = total_before_tax.unwrap_or(sell_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax_percentage);
     let foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
