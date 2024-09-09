@@ -15,14 +15,14 @@ pub struct ItemPriceLookup {
 pub struct ItemPrice {
     pub item_id: String,
     pub default_price_per_unit: Option<f64>,
-    pub discount: Option<f64>,
+    pub discount_percentage: Option<f64>,
     pub calculated_price_per_unit: Option<f64>, // Only populated if we have a default price, without a default price we can't calculate the price
 }
 
 pub fn get_pricing_for_item(
     ctx: &ServiceContext,
     input: ItemPriceLookup,
-) -> Result<Option<ItemPrice>, RepositoryError> {
+) -> Result<ItemPrice, RepositoryError> {
     // 1. Get the default price list & price per unit for the item
     let default_price_list = MasterListRepository::new(&ctx.connection)
         .query_by_filter(
@@ -74,19 +74,11 @@ pub fn get_pricing_for_item(
         None => None,
     };
 
-    // If we have a calculated price, or discount, or default price, we return the ItemPrice
-    if default_price_per_unit.is_some()
-        || discount_percentage.is_some()
-        || calculated_price.is_some()
-    {
-        return Ok(Some(ItemPrice {
-            item_id: input.item_id,
-            default_price_per_unit,
-            discount: discount_percentage,
-            calculated_price_per_unit: calculated_price,
-        }));
-    }
-
-    // Nothing to return
-    Ok(None)
+    // 4. Return the pricing data
+    Ok(ItemPrice {
+        item_id: input.item_id,
+        default_price_per_unit,
+        discount_percentage,
+        calculated_price_per_unit: calculated_price,
+    })
 }

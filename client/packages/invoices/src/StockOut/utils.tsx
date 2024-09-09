@@ -10,6 +10,7 @@ import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
 import React from 'react';
 import { getPackQuantityCellId } from '../utils';
 import { StockOutAlert } from './Components';
+import { ItemPriceFragment } from '../OutboundShipment/api/operations.generated';
 
 export const createStockOutPlaceholderRow = (
   invoiceId: string,
@@ -41,37 +42,51 @@ export interface DraftStockOutLineSeeds {
 export const createDraftStockOutLineFromStockLine = ({
   invoiceId,
   stockLine,
-  discountPercentage: discountPercentage = 0,
+  defaultPricing,
 }: {
   invoiceId: string;
   stockLine: PartialStockLineFragment;
-  discountPercentage?: number;
-}): DraftStockOutLine => ({
-  isCreated: true,
-  isUpdated: false,
-  type: InvoiceLineNodeType.StockOut,
-  numberOfPacks: 0,
-  location: stockLine?.location,
-  expiryDate: stockLine?.expiryDate,
-  sellPricePerPack:
-    (stockLine?.sellPricePerPack ?? 0) * (1 - discountPercentage / 100),
-  packSize: stockLine?.packSize ?? 0,
-  id: FnUtils.generateUUID(),
-  invoiceId,
-  totalAfterTax: 0,
-  totalBeforeTax: 0,
-  itemName: stockLine?.item?.name ?? '',
-  __typename: 'InvoiceLineNode',
+  defaultPricing?: ItemPriceFragment;
+}): DraftStockOutLine => {
+  let sellPricePerPack = stockLine?.sellPricePerPack ?? 0;
 
-  item: {
-    id: stockLine?.itemId ?? '',
-    name: stockLine?.item?.name,
-    code: stockLine?.item?.code,
-    __typename: 'ItemNode',
-  },
+  // if there's a default price, it overrides the stock line price
+  if (defaultPricing?.defaultPricePerUnit) {
+    sellPricePerPack =
+      defaultPricing?.defaultPricePerUnit * (stockLine?.packSize ?? 1) ?? 0;
+  }
 
-  stockLine,
-});
+  if (defaultPricing?.discountPercentage) {
+    sellPricePerPack =
+      sellPricePerPack * (1 - defaultPricing.discountPercentage / 100);
+  }
+
+  return {
+    isCreated: true,
+    isUpdated: false,
+    type: InvoiceLineNodeType.StockOut,
+    numberOfPacks: 0,
+    location: stockLine?.location,
+    expiryDate: stockLine?.expiryDate,
+    sellPricePerPack,
+    packSize: stockLine?.packSize ?? 0,
+    id: FnUtils.generateUUID(),
+    invoiceId,
+    totalAfterTax: 0,
+    totalBeforeTax: 0,
+    itemName: stockLine?.item?.name ?? '',
+    __typename: 'InvoiceLineNode',
+
+    item: {
+      id: stockLine?.itemId ?? '',
+      name: stockLine?.item?.name,
+      code: stockLine?.item?.code,
+      __typename: 'ItemNode',
+    },
+
+    stockLine,
+  };
+};
 
 export const createDraftStockOutLine = ({
   invoiceLine,

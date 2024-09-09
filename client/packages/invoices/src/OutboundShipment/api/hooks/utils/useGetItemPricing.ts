@@ -3,7 +3,7 @@ import { getSdk } from '../../operations.generated';
 
 // Should only fire when nameId is not null (userQuery has parameter for that)
 // Consumer to also handle error ?
-export const useGetDiscountPercentage = ({
+export const useGetItemPricing = ({
   nameId,
   itemId,
 }: {
@@ -15,8 +15,8 @@ export const useGetDiscountPercentage = ({
   const { storeId } = useAuthContext();
 
   const result = useQuery(`discount${storeId}${nameId}${itemId}`, () =>
-    sdk.getDiscountPercentage({ storeId, input: { nameId, itemId } })
+    sdk.getItemPricing({ storeId, input: { nameId, itemId } })
   );
 
-  return { ...result, discount: result.data?.sellPriceDiscount || 0 };
+  return { ...result, itemPrice: result.data?.itemPrice };
 };

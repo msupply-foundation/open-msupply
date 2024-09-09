@@ -9,7 +9,7 @@ pub trait PricingServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: ItemPriceLookup,
-    ) -> Result<Option<ItemPrice>, RepositoryError> {
+    ) -> Result<ItemPrice, RepositoryError> {
         get_pricing_for_item(ctx, input)
     }
 }
