@@ -6,18 +6,21 @@ use repository::{
 use crate::{
     invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
     invoice_line::StockOutType,
-    pricing::{calculate_sell_price::calculate_sell_price, item_price::ItemPrice},
+    pricing::{
+        calculate_sell_price::calculate_sell_price,
+        item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup},
+    },
+    service_provider::ServiceContext,
 };
 
 use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn generate(
-    connection: &StorageConnection,
+    ctx: &ServiceContext,
     input: InsertStockOutLine,
     item_row: ItemRow,
     batch: StockLine,
     invoice: InvoiceRow,
-    pricing: ItemPrice,
 ) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
     let adjust_total_number_of_packs =
         should_adjust_total_number_of_packs(invoice.status.clone(), &input.r#type);
@@ -27,8 +30,17 @@ pub fn generate(
         batch.stock_line_row.clone(),
         adjust_total_number_of_packs,
     );
+
+    // Check if we need to override the pricing with a default
+    let pricing = get_pricing_for_item(
+        ctx,
+        ItemPriceLookup {
+            item_id: item_row.id.clone(),
+            customer_name_id: Some(invoice.name_link_id.clone()),
+        },
+    )?;
     let new_line = generate_line(
-        connection,
+        &ctx.connection,
         input,
         item_row,
         update_batch.clone(),
