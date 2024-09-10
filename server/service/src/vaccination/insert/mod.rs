@@ -1,4 +1,11 @@
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry,
+    invoice::{
+        insert_prescription, update_prescription, InsertPrescriptionError, UpdatePrescriptionError,
+    },
+    invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
+    service_provider::ServiceContext,
+};
 
 use chrono::NaiveDate;
 use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRepository};
@@ -6,7 +13,7 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, GenerateInput};
+use generate::{generate, CreatePrescription, GenerateInput, GenerateResult};
 use validate::validate;
 
 use super::query::get_vaccination;
@@ -25,6 +32,7 @@ pub enum InsertVaccinationError {
     StockLineDoesNotExist,
     ItemDoesNotBelongToVaccineCourse,
     CreatedRecordNotFound,
+    InternalError(String),
     DatabaseError(RepositoryError),
 }
 
@@ -49,25 +57,44 @@ pub fn insert_vaccination(
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
-            let program_enrolment_id = validate(&input, connection, store_id)?;
-            let new_vaccination = generate(GenerateInput {
+            let (program_enrolment, stock_line) = validate(&input, connection, store_id)?;
+
+            let GenerateResult {
+                vaccination,
+                create_prescription,
+            } = generate(GenerateInput {
                 store_id: store_id.to_string(),
-                program_enrolment_id,
+                program_enrolment,
                 user_id: ctx.user_id.clone(),
                 insert_input: input.clone(),
+                stock_line,
             });
 
-            VaccinationRowRepository::new(connection).upsert_one(&new_vaccination)?;
+            if let Some(CreatePrescription {
+                insert_prescription_input,
+                insert_stock_out_line_input,
+                update_prescription_input,
+            }) = create_prescription
+            {
+                // Create prescription (in NEW status)
+                insert_prescription(ctx, insert_prescription_input)?;
+                // Add the prescription line
+                insert_stock_out_line(ctx, insert_stock_out_line_input)?;
+                // Finalise the prescription - also link clinician
+                update_prescription(ctx, update_prescription_input)?;
+            }
+
+            VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
 
             activity_log_entry(
                 ctx,
                 ActivityLogType::VaccinationCreated,
-                Some(new_vaccination.id.clone()),
+                Some(vaccination.id.clone()),
                 None,
                 None,
             )?;
 
-            get_vaccination(ctx, new_vaccination.id).map_err(InsertVaccinationError::from)
+            get_vaccination(ctx, vaccination.id).map_err(InsertVaccinationError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(vaccination)
@@ -76,6 +103,28 @@ pub fn insert_vaccination(
 impl From<RepositoryError> for InsertVaccinationError {
     fn from(error: RepositoryError) -> Self {
         InsertVaccinationError::DatabaseError(error)
+    }
+}
+
+impl From<InsertPrescriptionError> for InsertVaccinationError {
+    fn from(error: InsertPrescriptionError) -> Self {
+        InsertVaccinationError::InternalError(format!("Could not create prescription: {:?}", error))
+    }
+}
+impl From<InsertStockOutLineError> for InsertVaccinationError {
+    fn from(error: InsertStockOutLineError) -> Self {
+        InsertVaccinationError::InternalError(format!(
+            "Could not create prescription line: {:?}",
+            error
+        ))
+    }
+}
+impl From<UpdatePrescriptionError> for InsertVaccinationError {
+    fn from(error: UpdatePrescriptionError) -> Self {
+        InsertVaccinationError::InternalError(format!(
+            "Could not finalise prescription: {:?}",
+            error
+        ))
     }
 }
 
@@ -88,7 +137,10 @@ mod insert {
         mock_vaccine_course_a_dose_c, MockData, MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
-    use repository::EncounterRow;
+    use repository::{
+        EncounterRow, InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType,
+        StockLineRowRepository,
+    };
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccination::insert::{InsertVaccination, InsertVaccinationError};
@@ -321,6 +373,30 @@ mod insert {
             .unwrap();
 
         assert_eq!(result.vaccination_row.id, "new_vaccination_given_id");
+
+        // Check invoice was created, and linked to vaccination
+        let created_invoice = InvoiceRepository::new(&context.connection)
+            .query_one(InvoiceFilter::new().stock_line_id(mock_stock_line_vaccine_item_a().id))
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            created_invoice.invoice_row.id,
+            result.vaccination_row.invoice_id.unwrap()
+        );
+        assert_eq!(
+            created_invoice.invoice_row.r#type,
+            InvoiceType::Prescription
+        );
+        assert_eq!(created_invoice.invoice_row.status, InvoiceStatus::Verified);
+
+        // Check stock was adjusted
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_stock_line_vaccine_item_a().id)
+            .unwrap()
+            .unwrap();
+        // 5 doses per unit, 2 units per pack. 1 dose given, was 5.0, so 4.9 left
+        assert_eq!(stock_line.available_number_of_packs, 4.9);
 
         // Can create - dose not given
         let result = service_provider

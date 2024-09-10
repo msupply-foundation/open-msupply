@@ -105,6 +105,7 @@ fn map_error(error: ServiceError) -> Result<InsertVaccinationResponse> {
 
         ServiceError::CreatedRecordNotFound
         | ServiceError::ProgramEnrolmentDoesNotExist
+        | ServiceError::InternalError(_)
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
