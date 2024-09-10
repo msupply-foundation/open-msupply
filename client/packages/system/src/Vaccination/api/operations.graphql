@@ -25,7 +25,10 @@ fragment VaccinationDetail on VaccinationNode {
     itemId
     batch
   }
-  invoiceId
+  invoice {
+    id
+    invoiceNumber
+  }
   notGivenReason
   comment
 }

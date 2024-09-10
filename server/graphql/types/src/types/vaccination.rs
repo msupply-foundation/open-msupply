@@ -2,8 +2,13 @@ use async_graphql::*;
 
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use graphql_core::{loader::StockLineByIdLoader, ContextExt};
+use graphql_core::{
+    loader::{InvoiceByIdLoader, StockLineByIdLoader},
+    ContextExt,
+};
 use repository::{Vaccination, VaccinationRow};
+
+use crate::types::InvoiceNode;
 
 use super::{ClinicianNode, StockLineNode};
 
@@ -60,6 +65,19 @@ impl VaccinationNode {
         let result = loader.load_one(stock_line_id.clone()).await?;
 
         Ok(result.map(StockLineNode::from_domain))
+    }
+
+    pub async fn invoice(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+
+        let invoice_id = match &self.row().invoice_id {
+            None => return Ok(None),
+            Some(stock_line_id) => stock_line_id,
+        };
+
+        let result = loader.load_one(invoice_id.clone()).await?;
+
+        Ok(result.map(InvoiceNode::from_domain))
     }
 }
 

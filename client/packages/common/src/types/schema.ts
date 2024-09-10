@@ -8149,6 +8149,7 @@ export type VaccinationNode = {
   comment?: Maybe<Scalars['String']['output']>;
   given: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
+  invoice?: Maybe<InvoiceNode>;
   invoiceId?: Maybe<Scalars['String']['output']>;
   notGivenReason?: Maybe<Scalars['String']['output']>;
   stockLine?: Maybe<StockLineNode>;
