@@ -23,7 +23,6 @@ pub struct InsertInput {
     pub invoice_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
-    pub total_before_tax: Option<f64>,
     pub tax_percentage: Option<f64>,
 }
 
@@ -90,7 +89,6 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax,
             tax_percentage,
         } = self;
 
@@ -100,7 +98,7 @@ impl InsertInput {
             invoice_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax,
+            total_before_tax: None,
             tax_percentage,
             // Default
             note: None,
