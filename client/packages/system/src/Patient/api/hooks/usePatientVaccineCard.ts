@@ -1,10 +1,13 @@
 import { usePatientGraphQL } from '../usePatientGraphQL';
 
-export const usePatientVaccineCard = (patientId: string, programId: string) => {
+export const usePatientVaccineCard = (
+  patientId: string,
+  programEnrolmentId: string
+) => {
   const { patientApi, storeId } = usePatientGraphQL();
 
   // TO-DO: Remove console.log once these variables actually used
-  console.log(patientId, programId, patientApi, storeId);
+  console.log(patientId, programEnrolmentId, patientApi, storeId);
 
   return { query: { data, isLoading: false } };
 };
