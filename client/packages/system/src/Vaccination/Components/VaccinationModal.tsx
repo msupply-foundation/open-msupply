@@ -109,6 +109,7 @@ export const VaccinationModal = ({
             isOpen
             itemId={draft.itemId ?? ''}
             onClose={closeBatchModal}
+            stockLine={draft.stockLine ?? null}
             setStockLine={stockLine => updateDraft({ stockLine })}
           />
         )}
