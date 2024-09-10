@@ -13,6 +13,14 @@ export type VaccineCourseDoseQueryVariables = Types.Exact<{
 
 export type VaccineCourseDoseQuery = { __typename: 'Queries', vaccineCourseDose: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'VaccineCourseDoseNode', id: string, label: string, vaccineCourse: { __typename: 'VaccineCourseNode', id: string, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null } } };
 
+export type InsertVaccinationMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertVaccinationInput;
+}>;
+
+
+export type InsertVaccinationMutation = { __typename: 'Mutations', insertVaccination: { __typename: 'VaccinationNode', id: string } };
+
 export const VaccinationCourseDoseFragmentDoc = gql`
     fragment VaccinationCourseDose on VaccineCourseDoseNode {
   __typename
@@ -42,6 +50,17 @@ export const VaccineCourseDoseDocument = gql`
   }
 }
     ${VaccinationCourseDoseFragmentDoc}`;
+export const InsertVaccinationDocument = gql`
+    mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
+  insertVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -52,6 +71,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     vaccineCourseDose(variables: VaccineCourseDoseQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccineCourseDoseQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<VaccineCourseDoseQuery>(VaccineCourseDoseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccineCourseDose', 'query', variables);
+    },
+    insertVaccination(variables: InsertVaccinationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertVaccinationMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertVaccinationMutation>(InsertVaccinationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertVaccination', 'mutation', variables);
     }
   };
 }

@@ -30,6 +30,7 @@ pub struct VaccineCourseItem {
 pub struct VaccineCourseItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub vaccine_course_id: Option<EqualFilter<String>>,
+    pub item_link_id: Option<EqualFilter<String>>,
 }
 
 impl VaccineCourseItemFilter {
@@ -44,6 +45,11 @@ impl VaccineCourseItemFilter {
 
     pub fn vaccine_course_id(mut self, filter: EqualFilter<String>) -> Self {
         self.vaccine_course_id = Some(filter);
+        self
+    }
+
+    pub fn item_link_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_link_id = Some(filter);
         self
     }
 }
@@ -108,6 +114,7 @@ fn create_filtered_query(
         let VaccineCourseItemFilter {
             id,
             vaccine_course_id,
+            item_link_id,
         } = f;
 
         apply_equal_filter!(query, id, vaccine_course_item_dsl::id);
@@ -116,6 +123,7 @@ fn create_filtered_query(
             vaccine_course_id,
             vaccine_course_item_dsl::vaccine_course_id
         );
+        apply_equal_filter!(query, item_link_id, vaccine_course_item_dsl::item_link_id);
     }
 
     Ok(query)

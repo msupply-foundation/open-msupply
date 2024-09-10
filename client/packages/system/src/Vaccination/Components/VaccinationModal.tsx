@@ -22,6 +22,7 @@ import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
+  encounterId: string;
   vaccineCourseDoseId: string;
   isOpen: boolean;
   onClose: () => void;
@@ -32,6 +33,7 @@ export const VaccinationModal = ({
   isOpen,
   onClose,
   vaccineCourseDoseId,
+  encounterId,
   vaccinationId,
   defaultClinician,
 }: VaccinationModalProps) => {
@@ -43,17 +45,22 @@ export const VaccinationModal = ({
     query: { dose, isLoading },
     isDirty,
     isComplete,
-  } = useVaccination({ vaccineCourseDoseId, vaccinationId, defaultClinician });
+    create,
+  } = useVaccination({
+    encounterId,
+    vaccineCourseDoseId,
+    vaccinationId,
+    defaultClinician,
+  });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(620);
 
   const save = async () => {
     try {
-      // TODO: actual save :)
+      await create(draft);
       success(t('messages.vaccination-saved'))();
       onClose();
-      // }
     } catch (e) {
       error(t('error.failed-to-save-vaccination'))();
       console.error(e);
