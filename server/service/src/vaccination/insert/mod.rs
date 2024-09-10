@@ -70,6 +70,10 @@ pub fn insert_vaccination(
                 stock_line,
             });
 
+            // Create the vaccination
+            VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
+
+            // If it was `Given`, create a prescription
             if let Some(CreatePrescription {
                 insert_prescription_input,
                 insert_stock_out_line_input,
@@ -83,8 +87,6 @@ pub fn insert_vaccination(
                 // Finalise the prescription - also link clinician
                 update_prescription(ctx, update_prescription_input)?;
             }
-
-            VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
 
             activity_log_entry(
                 ctx,
