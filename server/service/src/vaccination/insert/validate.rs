@@ -1,4 +1,4 @@
-use repository::{RepositoryError, StorageConnection};
+use repository::{ProgramEnrolmentRow, RepositoryError, StockLine, StorageConnection};
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
@@ -15,7 +15,7 @@ pub fn validate(
     input: &InsertVaccination,
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<String, InsertVaccinationError> {
+) -> Result<(ProgramEnrolmentRow, Option<StockLine>), InsertVaccinationError> {
     if check_vaccination_exists(&input.id, connection)?.is_some() {
         return Err(InsertVaccinationError::VaccinationAlreadyExists);
     }
@@ -50,11 +50,13 @@ pub fn validate(
 
     // If given, stock line is required
     // If not given, reason is required
-    match input.given {
+    let stock_line = match input.given {
         false => {
             if input.not_given_reason.is_none() {
                 return Err(InsertVaccinationError::ReasonNotProvided);
-            }
+            };
+
+            None
         }
         true => {
             let stock_line_id = input
@@ -72,11 +74,13 @@ pub fn validate(
                 connection,
             )? {
                 return Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse);
-            }
+            };
+
+            Some(stock_line)
         }
     };
 
-    Ok(program_enrolment.row.id)
+    Ok((program_enrolment.row, stock_line))
 }
 
 impl From<CommonStockLineError> for InsertVaccinationError {
