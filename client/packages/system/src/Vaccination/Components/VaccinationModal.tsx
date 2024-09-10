@@ -127,7 +127,7 @@ const VaccinationForm = ({
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
-  openBatchModal: (itemId: string) => void;
+  openBatchModal: () => void;
 }) => {
   const t = useTranslation('dispensary');
 
@@ -213,7 +213,7 @@ const VaccinationForm = ({
             Input={
               <Button
                 disabled={!draft.itemId}
-                onClick={() => draft.itemId && openBatchModal(draft.itemId)}
+                onClick={() => draft.itemId && openBatchModal()}
                 sx={{
                   ...baseButtonStyles,
                   // !draft.itemId === disabled

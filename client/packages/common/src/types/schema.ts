@@ -5294,6 +5294,7 @@ export type Queries = {
   temperatureLogs: TemperatureLogsResponse;
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
+  vaccination?: Maybe<VaccinationNode>;
   vaccineCourse: VaccineCourseResponse;
   vaccineCourseDose: VaccineCourseDoseResponse;
   vaccineCourses: VaccineCoursesResponse;
@@ -5893,6 +5894,12 @@ export type QueriesTemperatureLogsArgs = {
 
 export type QueriesTemperatureNotificationsArgs = {
   page?: InputMaybe<PaginationInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesVaccinationArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -8137,7 +8144,15 @@ export type UserStorePermissionNode = {
 
 export type VaccinationNode = {
   __typename: 'VaccinationNode';
+  clinician?: Maybe<ClinicianNode>;
+  clinicianId?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  given: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
+  invoiceId?: Maybe<Scalars['String']['output']>;
+  notGivenReason?: Maybe<Scalars['String']['output']>;
+  stockLine?: Maybe<StockLineNode>;
+  vaccinationDate: Scalars['NaiveDate']['output'];
 };
 
 export type VaccineCourseConnector = {
