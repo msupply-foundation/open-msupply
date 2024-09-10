@@ -6,7 +6,6 @@ use repository::{
 use crate::{
     invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax},
     invoice_line::StockOutType,
-    item,
     pricing::{
         calculate_sell_price::calculate_sell_price,
         item_price::{get_pricing_for_item, ItemPrice, ItemPriceLookup},
