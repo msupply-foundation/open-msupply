@@ -1,0 +1,26 @@
+fragment VaccinationCourseDose on VaccineCourseDoseNode {
+  __typename
+  id
+  label
+  vaccineCourse {
+    id
+    vaccineCourseItems {
+      ...VaccineCourseItem
+    }
+  }
+}
+
+query vaccineCourseDose($id: String!) {
+  vaccineCourseDose(id: $id) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on VaccineCourseDoseNode {
+      ...VaccinationCourseDose
+    }
+  }
+}

@@ -5271,6 +5271,7 @@ export type Queries = {
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
   vaccineCourse: VaccineCourseResponse;
+  vaccineCourseDose: VaccineCourseDoseResponse;
   vaccineCourses: VaccineCoursesResponse;
 };
 
@@ -5873,6 +5874,11 @@ export type QueriesTemperatureNotificationsArgs = {
 
 
 export type QueriesVaccineCourseArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesVaccineCourseDoseArgs = {
   id: Scalars['String']['input'];
 };
 
@@ -8117,7 +8123,10 @@ export type VaccineCourseDoseNode = {
   label: Scalars['String']['output'];
   minAgeMonths: Scalars['Float']['output'];
   minIntervalDays: Scalars['Int']['output'];
+  vaccineCourse: VaccineCourseNode;
 };
+
+export type VaccineCourseDoseResponse = NodeError | VaccineCourseDoseNode;
 
 export type VaccineCourseFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
