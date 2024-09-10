@@ -19,7 +19,7 @@ import {
   DeleteOutboundShipmentServiceLineInput,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
-import { get, isA } from '../../utils';
+import { isA } from '../../utils';
 import {
   OutboundRowFragment,
   OutboundFragment,
@@ -109,7 +109,6 @@ const outboundParsers = {
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
-      totalBeforeTax: get.invoiceLineSubtotal(line),
     };
   },
   toUpdateLine: (line: DraftStockOutLine): UpdateOutboundShipmentLineInput => {
@@ -117,7 +116,6 @@ const outboundParsers = {
       id: line.id,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
-      totalBeforeTax: get.invoiceLineSubtotal(line),
     };
   },
   toDeleteLine: (line: { id: string }): DeleteOutboundShipmentLineInput => ({
