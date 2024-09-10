@@ -8,7 +8,7 @@ use crate::service_provider::ServiceContext;
 
 pub struct ItemPriceLookup {
     pub item_id: String,
-    pub customer_name_id: Option<String>, // Unused right now, but could be used to get discount for a specific name
+    pub customer_name_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
