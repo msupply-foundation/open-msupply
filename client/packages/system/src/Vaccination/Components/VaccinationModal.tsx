@@ -223,7 +223,9 @@ const VaccinationForm = ({
                   fontStyle: draft.stockLine ? 'none' : 'italic',
                 }}
               >
-                {draft.stockLine?.batch ?? t('label.select-batch')}
+                {draft.stockLine
+                  ? (draft.stockLine.batch ?? t('label.selected'))
+                  : t('label.select-batch')}
               </Button>
             }
           />
