@@ -1,14 +1,14 @@
-use repository::RepositoryError;
 use repository::{
     EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository,
+    MasterListRepository, PatientFilter,
 };
+use repository::{PatientRepository, RepositoryError};
 
 use crate::service_provider::ServiceContext;
 
 pub struct ItemPriceLookup {
     pub item_id: String,
-    pub customer_name_id: Option<String>, // Unused right now, but could be used to get discount for a specific name
+    pub customer_name_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -50,19 +50,36 @@ pub fn get_pricing_for_item(
         None => None, // No default price list found, no price
     };
 
-    // 2. Lookup the discount list
-    // Find the first discount list that has the item (not trying to be clever here, just using the first one found)
-    let discount_master_list = MasterListRepository::new(&ctx.connection)
-        .query_by_filter(
-            MasterListFilter::new()
-                .is_discount_list(true)
-                .item_id(EqualFilter::equal_to(&input.item_id)),
-        )?
-        .pop();
+    // 2. Check if we have a name, and that name is not a patient
+    let is_patient = match &input.customer_name_id {
+        Some(customer_name_id) => {
+            let num_patients = PatientRepository::new(&ctx.connection).count(
+                Some(PatientFilter::new().id(EqualFilter::equal_to(customer_name_id))),
+                None,
+            )?;
 
-    let discount_percentage = match discount_master_list {
-        Some(discount_master_list) => discount_master_list.discount_percentage, // We have a discount list, get the discount, item should be in the list based on query filter above
-        None => None, // No discount list found, no discount
+            num_patients > 0
+        }
+        None => false,
+    };
+
+    let discount_percentage = if is_patient {
+        None // Patients get no discount
+    } else {
+        // 2.A Lookup the discount list
+        // Find the first discount list that has the item (not trying to be clever here, just using the first one found)
+        let discount_master_list = MasterListRepository::new(&ctx.connection)
+            .query_by_filter(
+                MasterListFilter::new()
+                    .is_discount_list(true)
+                    .item_id(EqualFilter::equal_to(&input.item_id)),
+            )?
+            .pop();
+
+        match discount_master_list {
+            Some(discount_master_list) => discount_master_list.discount_percentage, // We have a discount list, get the discount, item should be in the list based on query filter above
+            None => None, // No discount list found, no discount
+        }
     };
 
     // 3. Calculate the price if we are able to
