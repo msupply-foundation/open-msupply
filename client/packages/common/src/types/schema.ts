@@ -2585,7 +2585,6 @@ export type InsertOutboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;
