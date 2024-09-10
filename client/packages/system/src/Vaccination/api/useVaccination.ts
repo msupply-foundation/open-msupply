@@ -11,6 +11,7 @@ import {
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION } from './keys';
+import { StockLineFragment } from '../../Item';
 
 export interface VaccinationDraft {
   clinician?: Clinician | null;
@@ -18,7 +19,7 @@ export interface VaccinationDraft {
   given?: boolean;
   comment?: string;
   itemId?: string;
-  stockLineId?: string;
+  stockLine?: StockLineFragment;
   notGivenReason?: string;
 }
 
@@ -61,7 +62,7 @@ export function useVaccination({
   const draft: VaccinationDraft = { ...defaults, ...data, ...patch };
 
   const isComplete =
-    (draft.given && !!draft.itemId && !!draft.stockLineId) ||
+    (draft.given && !!draft.itemId && !!draft.stockLine) ||
     (draft.given === false && !!draft.notGivenReason);
 
   return {
@@ -98,7 +99,7 @@ const useInsert = ({
         clinicianId: input.clinician?.id,
         comment: input.comment,
         notGivenReason: input.notGivenReason,
-        stockLineId: input.stockLineId,
+        stockLineId: input.stockLine?.id,
       },
     });
 
