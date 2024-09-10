@@ -107,7 +107,7 @@ export const useDraftOutboundLines = (
 
       return rows;
     });
-  }, [data, lines, item, invoiceId, itemPrice]);
+  }, [data, lines, item, invoiceId, itemPrice, priceFetched]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
