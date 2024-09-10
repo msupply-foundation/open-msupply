@@ -5,7 +5,7 @@ use dataloader::DataLoader;
 use graphql_core::{loader::StockLineByIdLoader, ContextExt};
 use repository::{Vaccination, VaccinationRow};
 
-use super::StockLineNode;
+use super::{ClinicianNode, StockLineNode};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccinationNode {
@@ -24,6 +24,13 @@ impl VaccinationNode {
 
     pub async fn clinician_id(&self) -> &Option<String> {
         &self.row().clinician_link_id
+    }
+
+    pub async fn clinician(&self) -> Option<ClinicianNode> {
+        self.vaccination
+            .clinician_row
+            .clone()
+            .map(ClinicianNode::from_domain)
     }
 
     pub async fn given(&self) -> &bool {
