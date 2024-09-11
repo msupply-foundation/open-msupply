@@ -11,6 +11,7 @@ import {
   useColumns,
   NothingHere,
   LocaleKey,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import {
   usePatientVaccineCard,
@@ -21,6 +22,7 @@ export const VaccinationCardComponent: FC = () => {
   const t = useTranslation('dispensary');
   const { patientId = '', programEnrolmentId = '' } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { localisedDate } = useFormatDateTime();
 
   const {
     query: { data, isLoading },
@@ -49,13 +51,13 @@ export const VaccinationCardComponent: FC = () => {
     {
       key: 'suggestedDate',
       label: 'label.suggested-date',
-      accessor: ({ rowData }) => rowData?.suggestedDate,
+      accessor: ({ rowData }) => localisedDate(rowData?.suggestedDate ?? ''),
       // Cell: DateCell, TO-DO
     },
     {
       key: 'dateGiven',
       label: 'label.date-given',
-      accessor: ({ rowData }) => rowData?.dateGiven,
+      accessor: ({ rowData }) => localisedDate(rowData?.dateGiven ?? ''),
       // Cell: DateCell, TO-DO
     },
   ]);
@@ -75,7 +77,7 @@ export const VaccinationCardComponent: FC = () => {
     <>
       <DataTable
         id={'Vaccine Course List'}
-        columns={columns ?? []}
+        columns={columns}
         data={tableData ?? []}
         isLoading={isLoading}
         noDataElement={<NothingHere body={t('error.no-items')} />}
