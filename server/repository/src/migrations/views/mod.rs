@@ -393,6 +393,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       vcd.label, 
       vcd.min_interval_days, 
       vcd.min_age, 
+      vc.id as vaccine_course_id, 
       v.id as vaccination_id, 
       v.vaccination_date, 
       v.given, 
