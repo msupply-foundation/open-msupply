@@ -170,7 +170,7 @@ mod query {
         // Check there is one dose for the vaccine_course, and it's the right one
         let doses = dose_repo.query_by_filter(dose_filter.clone()).unwrap();
         assert_eq!(doses.len(), 1);
-        assert_eq!(doses[0].id, dose1.id);
+        assert_eq!(doses[0].vaccine_course_dose_row.id, dose1.id);
 
         // 3 - Update the label for a vaccine course
 
@@ -194,7 +194,7 @@ mod query {
         // Check there is one dose for the vaccine_course, and it's the right one
         let doses = dose_repo.query_by_filter(dose_filter.clone()).unwrap();
         assert_eq!(doses.len(), 1);
-        assert_eq!(doses[0].label, dose1.label);
+        assert_eq!(doses[0].vaccine_course_dose_row.label, dose1.label);
 
         // 4 - Remove all items and doses
         let update = UpdateVaccineCourse {
