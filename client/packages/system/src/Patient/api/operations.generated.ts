@@ -92,7 +92,7 @@ export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: {
 
 export type VaccinationCardItemFragment = { __typename: 'VaccinationCardItemNode', id: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null };
 
-export type VaccinationCardFragment = { __typename: 'VaccinationCardNode', id: string, patientName: string, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null }> };
+export type VaccinationCardFragment = { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null }> };
 
 export type VaccinationCardQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -100,7 +100,7 @@ export type VaccinationCardQueryVariables = Types.Exact<{
 }>;
 
 
-export type VaccinationCardQuery = { __typename: 'Queries', vaccinationCard: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'VaccinationCardNode', id: string, patientName: string, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null }> } };
+export type VaccinationCardQuery = { __typename: 'Queries', vaccinationCard: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -192,7 +192,8 @@ export const VaccinationCardFragmentDoc = gql`
     fragment VaccinationCard on VaccinationCardNode {
   __typename
   id
-  patientName
+  patientFirstName
+  patientLastName
   programName
   items {
     ... on VaccinationCardItemNode {

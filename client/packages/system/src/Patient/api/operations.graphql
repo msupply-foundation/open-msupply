@@ -246,7 +246,8 @@ fragment VaccinationCardItem on VaccinationCardItemNode {
 fragment VaccinationCard on VaccinationCardNode {
   __typename
   id
-  patientName
+  patientFirstName
+  patientLastName
   programName
   items {
     ... on VaccinationCardItemNode {
