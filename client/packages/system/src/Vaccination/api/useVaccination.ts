@@ -11,16 +11,21 @@ import {
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION } from './keys';
-import { StockLineFragment } from '../../Item';
+
+export interface VaccinationStockLine {
+  id: string;
+  itemId: string;
+  batch?: string | null;
+}
 
 export interface VaccinationDraft {
   clinician?: Clinician | null;
   date: Date | null;
-  given?: boolean;
-  comment?: string;
+  given?: boolean | null;
+  comment?: string | null;
   itemId?: string;
-  stockLine?: StockLineFragment;
-  notGivenReason?: string;
+  stockLine?: VaccinationStockLine | null;
+  notGivenReason?: string | null;
 }
 
 export function useVaccination({
@@ -34,17 +39,33 @@ export function useVaccination({
   vaccinationId: string | undefined;
   defaultClinician?: Clinician;
 }) {
-  const { api } = useVaccinationsGraphQL();
+  const { storeId, api } = useVaccinationsGraphQL();
 
-  const { data, isLoading } = useQuery({
-    queryKey: [VACCINATION, vaccineCourseDoseId, vaccinationId],
+  const { data: dose, isLoading: doseLoading } = useQuery({
+    queryKey: [VACCINATION, vaccineCourseDoseId],
     queryFn: async () => {
-      const result = await api.vaccineCourseDose({ id: vaccineCourseDoseId });
+      const result = await api.vaccineCourseDose({
+        doseId: vaccineCourseDoseId,
+      });
 
       if (result.vaccineCourseDose.__typename === 'VaccineCourseDoseNode') {
         return result.vaccineCourseDose;
       }
     },
+  });
+  const { data: vaccination, isLoading: vaccinationLoading } = useQuery({
+    queryKey: [VACCINATION, vaccinationId],
+    queryFn: async () => {
+      if (!vaccinationId) {
+        return null;
+      }
+      const result = await api.vaccination({ vaccinationId, storeId });
+
+      if (result.vaccination?.__typename === 'VaccinationNode') {
+        return result.vaccination;
+      }
+    },
+    enabled: !!vaccinationId,
   });
 
   const { mutateAsync: insert } = useInsert({
@@ -54,19 +75,37 @@ export function useVaccination({
 
   const [patch, setPatch] = useState<Partial<VaccinationDraft>>({});
 
+  const {
+    clinician,
+    vaccinationDate,
+    comment,
+    given,
+    notGivenReason,
+    stockLine,
+  } = vaccination ?? {};
+
   const defaults: VaccinationDraft = {
-    date: new Date(),
-    clinician: defaultClinician,
+    // Default to today
+    date: vaccinationDate ? new Date(vaccinationDate) : new Date(),
+    // If new vaccination, default to encounter clinician
+    clinician: vaccination ? clinician : defaultClinician,
+
+    // Populate with existing vaccination data
+    comment,
+    stockLine,
+    given,
+    notGivenReason,
+    itemId: stockLine?.itemId,
   };
 
-  const draft: VaccinationDraft = { ...defaults, ...data, ...patch };
+  const draft: VaccinationDraft = { ...defaults, ...patch };
 
   const isComplete =
     (draft.given && !!draft.itemId && !!draft.stockLine) ||
     (draft.given === false && !!draft.notGivenReason);
 
   return {
-    query: { dose: data, isLoading },
+    query: { dose, vaccination, isLoading: doseLoading || vaccinationLoading },
     draft,
     isComplete,
     isDirty: Object.keys(patch).length > 0,
