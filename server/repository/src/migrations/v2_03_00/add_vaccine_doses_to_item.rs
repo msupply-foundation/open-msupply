@@ -4,14 +4,14 @@ pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
     fn identifier(&self) -> &'static str {
-        "add_doses_to_item"
+        "add_vaccine_doses_to_item"
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                ALTER TABLE item ADD COLUMN doses INTEGER NOT NULL DEFAULT 0;
+                ALTER TABLE item ADD COLUMN vaccine_doses INTEGER NOT NULL DEFAULT 0;
             "#
         )?;
 

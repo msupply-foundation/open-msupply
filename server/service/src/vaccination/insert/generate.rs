@@ -61,8 +61,9 @@ pub fn generate(
                 patient_id: program_enrolment.patient_link_id,
             };
 
-            let number_of_packs =
-                1.0 / stock_line.item_row.doses as f64 / stock_line.stock_line_row.pack_size;
+            let number_of_packs = 1.0
+                / stock_line.item_row.vaccine_doses as f64
+                / stock_line.stock_line_row.pack_size;
 
             let insert_stock_out_line = InsertStockOutLine {
                 id: uuid(),

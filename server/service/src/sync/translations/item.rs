@@ -86,7 +86,7 @@ impl SyncTranslation for ItemTranslation {
             is_vaccine: data.is_vaccine,
             strength: data.strength,
             ven_category: to_ven_category(data.VEN_category),
-            doses: data.doses,
+            vaccine_doses: data.doses,
         };
 
         Ok(PullTranslateResult::upsert(result))
