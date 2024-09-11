@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use util::{
     constants::{INVENTORY_ADJUSTMENT_NAME_CODE, REPACK_NAME_CODE},
     inline_init,
@@ -121,6 +122,7 @@ pub fn mock_patient() -> NameRow {
         r.code = String::from("testId");
         r.is_customer = true;
         r.r#type = NameRowType::Patient;
+        r.date_of_birth = NaiveDate::from_ymd_opt(2024, 1, 1);
     })
 }
 

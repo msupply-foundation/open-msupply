@@ -4,7 +4,7 @@ use chrono::NaiveDate;
 
 use dataloader::DataLoader;
 use graphql_core::{loader::StockLineByIdLoader, ContextExt};
-use service::vaccination::query::{VaccinationCard, VaccinationCardItem};
+use service::vaccination::get_vaccination_card::{VaccinationCard, VaccinationCardItem};
 
 use crate::types::StockLineNode;
 
