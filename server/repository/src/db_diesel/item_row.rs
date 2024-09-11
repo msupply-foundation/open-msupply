@@ -22,7 +22,7 @@ table! {
         legacy_record -> Text,
         is_active -> Bool,
         is_vaccine -> Bool,
-        doses -> Integer,
+        vaccine_doses -> Integer,
     }
 }
 
@@ -72,7 +72,7 @@ pub struct ItemRow {
     pub legacy_record: String,
     pub is_active: bool,
     pub is_vaccine: bool,
-    pub doses: i32,
+    pub vaccine_doses: i32,
 }
 
 impl Default for ItemRow {
@@ -89,7 +89,7 @@ impl Default for ItemRow {
             is_vaccine: false,
             strength: Default::default(),
             ven_category: VENCategory::NotAssigned,
-            doses: 0,
+            vaccine_doses: 0,
         }
     }
 }

@@ -65,7 +65,7 @@ impl ItemNode {
     }
 
     pub async fn doses(&self) -> i32 {
-        self.row().doses
+        self.row().vaccine_doses
     }
 
     pub async fn stats(

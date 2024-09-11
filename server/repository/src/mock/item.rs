@@ -84,7 +84,7 @@ pub fn mock_vaccine_item_a() -> ItemRow {
         r.code.clone_from(&id);
         r.r#type = ItemType::Stock;
         r.is_vaccine = true;
-        r.doses = 2;
+        r.vaccine_doses = 2;
     })
 }
 
