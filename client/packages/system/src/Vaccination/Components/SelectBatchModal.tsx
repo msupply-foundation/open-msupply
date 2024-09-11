@@ -11,26 +11,28 @@ import {
 } from '@openmsupply-client/common';
 import React, { useState } from 'react';
 import { StockLineFragment, useStockLines } from '../../Item';
+import { VaccinationStockLine } from '../api';
 
 interface SelectBatchModalProps {
   itemId: string;
+  stockLine: VaccinationStockLine | null;
   isOpen: boolean;
   onClose: () => void;
-  setStockLine: (stockLine: StockLineFragment) => void;
+  setStockLine: (stockLine: VaccinationStockLine) => void;
 }
 
 export const SelectBatchModal = ({
   itemId,
   isOpen,
+  stockLine,
   onClose,
   setStockLine,
 }: SelectBatchModalProps) => {
   const t = useTranslation('dispensary');
   const { data, isLoading } = useStockLines(itemId);
 
-  const [selectedBatch, setSelectedBatch] = useState<StockLineFragment | null>(
-    null
-  );
+  const [selectedBatch, setSelectedBatch] =
+    useState<VaccinationStockLine | null>(stockLine);
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
 
