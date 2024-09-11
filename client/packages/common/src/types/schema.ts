@@ -8167,7 +8167,8 @@ export type VaccinationCardNode = {
   __typename: 'VaccinationCardNode';
   id: Scalars['String']['output'];
   items: Array<VaccinationCardItemNode>;
-  patientName: Scalars['String']['output'];
+  patientFirstName?: Maybe<Scalars['String']['output']>;
+  patientLastName?: Maybe<Scalars['String']['output']>;
   programName: Scalars['String']['output'];
 };
 

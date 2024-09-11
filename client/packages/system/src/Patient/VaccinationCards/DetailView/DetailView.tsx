@@ -10,6 +10,7 @@ import {
   DataTable,
   useColumns,
   NothingHere,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { usePatientVaccineCard } from '../../api/hooks/usePatientVaccineCard';
 import { VaccinationCardItemFragment } from '../../api/operations.generated';
@@ -18,6 +19,7 @@ export const VaccinationCardComponent: FC = () => {
   const t = useTranslation('dispensary');
   const { patientId = '', programEnrolmentId = '' } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { getLocalisedFullName } = useIntlUtils();
 
   const {
     query: { data, isLoading },
@@ -66,7 +68,7 @@ export const VaccinationCardComponent: FC = () => {
   useEffect(() => {
     if (data)
       setCustomBreadcrumbs({
-        1: data?.patientName ?? '',
+        1: getLocalisedFullName(data?.patientFirstName, data?.patientLastName),
         2: t('label.vaccination-card'),
         3: data?.programName,
       });
