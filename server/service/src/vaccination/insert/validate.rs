@@ -42,6 +42,8 @@ pub fn validate(
         return Err(InsertVaccinationError::VaccinationAlreadyExistsForDose);
     }
 
+    // TODO: check is the next dose! (can't give a dose if the previous one hasn't been given)
+
     if let Some(clinician_id) = &input.clinician_id {
         if !check_clinician_exists(clinician_id, connection)? {
             return Err(InsertVaccinationError::ClinicianDoesNotExist);

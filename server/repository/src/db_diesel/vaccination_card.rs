@@ -21,7 +21,7 @@ table! {
 
 use chrono::NaiveDate;
 
-#[derive(Clone, Queryable, Debug, PartialEq)]
+#[derive(Clone, Queryable, Debug, PartialEq, Default)]
 #[diesel(table_name = vaccination_card)]
 pub struct VaccinationCardRow {
     pub id: String,
