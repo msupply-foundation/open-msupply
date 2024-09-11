@@ -108,7 +108,7 @@ export const VaccinationModal = ({
                     .addPart(vaccination.invoice.invoiceNumber.toString())
                     .build()}
                 >
-                  {t('button.view-stock-transaction')}
+                  {t('button.view-prescription')}
                   <ArrowRightIcon />
                 </Link>
               )}
