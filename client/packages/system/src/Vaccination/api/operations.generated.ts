@@ -6,8 +6,18 @@ import { VaccineCourseItemFragmentDoc } from '../../../../programs/src/api/opera
 type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
 export type VaccinationCourseDoseFragment = { __typename: 'VaccineCourseDoseNode', id: string, label: string, vaccineCourse: { __typename: 'VaccineCourseNode', id: string, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null } };
 
+export type VaccinationDetailFragment = { __typename: 'VaccinationNode', id: string, vaccinationDate: string, given: boolean, notGivenReason?: string | null, comment?: string | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null } | null, invoice?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | null };
+
+export type VaccinationQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  vaccinationId: Types.Scalars['String']['input'];
+}>;
+
+
+export type VaccinationQuery = { __typename: 'Queries', vaccination?: { __typename: 'VaccinationNode', id: string, vaccinationDate: string, given: boolean, notGivenReason?: string | null, comment?: string | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null } | null, invoice?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | null } | null };
+
 export type VaccineCourseDoseQueryVariables = Types.Exact<{
-  id: Types.Scalars['String']['input'];
+  doseId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -34,9 +44,43 @@ export const VaccinationCourseDoseFragmentDoc = gql`
   }
 }
     ${VaccineCourseItemFragmentDoc}`;
+export const VaccinationDetailFragmentDoc = gql`
+    fragment VaccinationDetail on VaccinationNode {
+  __typename
+  id
+  vaccinationDate
+  clinician {
+    id
+    firstName
+    lastName
+  }
+  given
+  stockLine {
+    id
+    itemId
+    batch
+  }
+  invoice {
+    id
+    invoiceNumber
+  }
+  notGivenReason
+  comment
+}
+    `;
+export const VaccinationDocument = gql`
+    query vaccination($storeId: String!, $vaccinationId: String!) {
+  vaccination(storeId: $storeId, id: $vaccinationId) {
+    __typename
+    ... on VaccinationNode {
+      ...VaccinationDetail
+    }
+  }
+}
+    ${VaccinationDetailFragmentDoc}`;
 export const VaccineCourseDoseDocument = gql`
-    query vaccineCourseDose($id: String!) {
-  vaccineCourseDose(id: $id) {
+    query vaccineCourseDose($doseId: String!) {
+  vaccineCourseDose(id: $doseId) {
     __typename
     ... on NodeError {
       __typename
@@ -69,6 +113,9 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    vaccination(variables: VaccinationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccinationQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<VaccinationQuery>(VaccinationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccination', 'query', variables);
+    },
     vaccineCourseDose(variables: VaccineCourseDoseQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccineCourseDoseQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<VaccineCourseDoseQuery>(VaccineCourseDoseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccineCourseDose', 'query', variables);
     },
