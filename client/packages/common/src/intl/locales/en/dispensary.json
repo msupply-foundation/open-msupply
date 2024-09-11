@@ -8,7 +8,7 @@
   "button.new-patient": "New Patient",
   "button.new-prescription": "New Prescription",
   "button.unlink-patient": "Unlink Patient",
-  "button.view-stock-transaction": "View stock transaction",
+  "button.view-prescription": "View prescription",
   "error.contact-trace-not-created": "Unable to create contact trace",
   "error.encounter-not-created": "Unable to create encounter",
   "error.encounter-not-found": "Encounter not found.",
