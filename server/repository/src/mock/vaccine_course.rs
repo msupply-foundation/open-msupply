@@ -3,13 +3,13 @@ use crate::vaccine_course::{
     vaccine_course_row::VaccineCourseRow,
 };
 
-use super::{mock_item_b, mock_program_a};
+use super::{mock_immunisation_program_a, mock_vaccine_item_a};
 
 pub fn mock_vaccine_course_a() -> VaccineCourseRow {
     VaccineCourseRow {
         id: "vaccine_course_a".to_string(),
         name: "Vaccine Course A".to_string(),
-        program_id: mock_program_a().id,
+        program_id: mock_immunisation_program_a().id,
         ..Default::default()
     }
 }
@@ -46,7 +46,7 @@ pub fn mock_vaccine_course_a_dose_c() -> VaccineCourseDoseRow {
 pub fn mock_vaccine_course_item_1() -> VaccineCourseItemRow {
     VaccineCourseItemRow {
         id: "vaccine_course_item_1".to_string(),
-        item_link_id: mock_item_b().id,
+        item_link_id: mock_vaccine_item_a().id,
         vaccine_course_id: mock_vaccine_course_a().id,
     }
 }
