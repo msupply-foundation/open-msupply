@@ -18,14 +18,14 @@ import { VaccinationCardItemFragment } from '../../api/operations.generated';
 
 export const VaccinationCardComponent: FC = () => {
   const t = useTranslation('dispensary');
-  const { patientId = '', programEnrolmentId = '' } = useParams();
+  const { programEnrolmentId = '' } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { getLocalisedFullName } = useIntlUtils();
   const { localisedDate } = useFormatDateTime();
 
   const {
     query: { data, isLoading },
-  } = usePatientVaccineCard(patientId, programEnrolmentId);
+  } = usePatientVaccineCard(programEnrolmentId);
 
   const columns = useColumns<VaccinationCardItemFragment>([
     {
