@@ -15,7 +15,7 @@ table! {
         store_id -> Text,
         quantity -> Double,
         datetime -> Timestamp,
-        stock_line_id -> Text,
+        stock_line_id -> Nullable<Text>,
     }
 }
 
@@ -26,7 +26,7 @@ pub struct StockMovementRow {
     pub store_id: String,
     pub quantity: f64,
     pub datetime: NaiveDateTime,
-    pub stock_line_id: String,
+    pub stock_line_id: Option<String>,
 }
 
 impl Default for StockMovementRow {
@@ -293,7 +293,7 @@ mod test {
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
-                    stock_line_id: "NONE".to_string(),
+                    stock_line_id: None,
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
@@ -304,7 +304,7 @@ mod test {
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
-                    stock_line_id: "NONE".to_string(),
+                    stock_line_id: None,
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
@@ -315,7 +315,7 @@ mod test {
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
-                    stock_line_id: "NONE".to_string(),
+                    stock_line_id: None,
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
@@ -326,7 +326,7 @@ mod test {
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
-                    stock_line_id: "NONE".to_string(),
+                    stock_line_id: None,
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
@@ -337,7 +337,7 @@ mod test {
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
-                    stock_line_id: "NONE".to_string(),
+                    stock_line_id: None,
                 },
             ]
         )

@@ -186,12 +186,12 @@ mod query {
             .unwrap();
 
         // Check there's no stock to start with, if there is some mocks might have slipped through?
-        // let result = service_provider
-        //     .stock_line_service
-        //     .get_historical_stock_lines(&ctx, store_id.clone(), item_id.clone(), date_now().into())
-        //     .unwrap();
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(&ctx, store_id.clone(), item_id.clone(), date_now().into())
+            .unwrap();
 
-        // assert!(result.rows.is_empty());
+        assert!(result.rows.is_empty());
 
         // Here's our test scenario
         // 3 stock lines, A, B, &C
@@ -277,12 +277,12 @@ mod query {
         adjust_test_stock(&ctx, stock_movements);
 
         // // Check we can see 2 stock lines now (stock line A is fully consumed)
-        // let result = service_provider
-        //     .stock_line_service
-        //     .get_historical_stock_lines(&ctx, store_id.clone(), item_id.clone(), date_now().into())
-        //     .unwrap();
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(&ctx, store_id.clone(), item_id.clone(), date_now().into())
+            .unwrap();
 
-        // assert_eq!(result.rows.len(), 2);
+        assert_eq!(result.rows.len(), 2);
 
         // +++ 2020-01-01
         let result = service_provider
