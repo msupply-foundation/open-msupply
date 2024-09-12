@@ -1,6 +1,8 @@
 use repository::{
     vaccine_course::{
         vaccine_course::{VaccineCourseFilter, VaccineCourseRepository, VaccineCourseSort},
+        vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
+        vaccine_course_dose_row::VaccineCourseDoseRow,
         vaccine_course_row::VaccineCourseRow,
     },
     EqualFilter, PaginationOption, StorageConnection,
@@ -39,5 +41,19 @@ pub fn get_vaccine_course(
         Ok(record)
     } else {
         Err(SingleRecordError::NotFound(id))
+    }
+}
+pub fn get_vaccine_course_dose(
+    connection: &StorageConnection,
+    id: String,
+) -> Result<VaccineCourseDoseRow, SingleRecordError> {
+    let repository = VaccineCourseDoseRepository::new(connection);
+
+    let result =
+        repository.query_one(VaccineCourseDoseFilter::new().id(EqualFilter::equal_to(&id)))?;
+
+    match result {
+        Some(record) => Ok(record.vaccine_course_dose_row),
+        None => Err(SingleRecordError::NotFound(id)),
     }
 }

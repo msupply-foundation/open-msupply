@@ -32,6 +32,7 @@ import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
+import { VaccinationsTab } from './VaccinationsTab';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -284,7 +285,15 @@ export const DetailView: FC = () => {
             // If the encounter is for an immunisation program, show Vaccination card on first tab
             <DetailTabs
               tabs={[
-                { Component: <>VAX Card</>, value: t('label.vaccinations') },
+                {
+                  Component: (
+                    <VaccinationsTab
+                      encounterId={encounter.id}
+                      clinician={encounter.clinician ?? undefined}
+                    />
+                  ),
+                  value: t('label.vaccinations'),
+                },
                 { Component: JsonForm, value: t('label.encounter') },
               ]}
             />

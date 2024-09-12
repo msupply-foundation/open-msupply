@@ -1,13 +1,5 @@
 use crate::{
-    app_data::{AppDataService, AppDataServiceTrait},
-    asset::AssetServiceTrait,
-    auth::{AuthService, AuthServiceTrait},
-    barcode::{BarcodeService, BarcodeServiceTrait},
-    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
-    clinician::{ClinicianService, ClinicianServiceTrait},
-    cold_chain::{ColdChainService, ColdChainServiceTrait},
-    currency::{CurrencyService, CurrencyServiceTrait},
-    dashboard::{
+    app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
@@ -57,6 +49,7 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
 };
@@ -141,6 +134,9 @@ pub struct ServiceProvider {
     pub demographic_service: Box<dyn DemographicServiceTrait>,
     // Vaccine Course
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
+    // Vaccinations
+    pub vaccination_service: Box<dyn VaccinationServiceTrait>,
+    // Programs
     pub program_service: Box<dyn ProgramServiceTrait>,
     // Translations
     pub translations_service: Box<Localisations>,
@@ -229,6 +225,7 @@ impl ServiceProvider {
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
             rnr_form_service: Box::new(RnRFormService {}),
+            vaccination_service: Box::new(VaccinationService {}),
             translations_service: Box::new(Localisations::new()),
         }
     }
