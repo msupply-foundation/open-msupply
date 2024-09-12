@@ -388,7 +388,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
 
   CREATE VIEW vaccination_card AS
     SELECT 
-      vcd.id || pe.id AS id,
+      vcd.id || '_' || pe.id AS id,
       vcd.id as vaccine_course_dose_id, 
       vcd.label, 
       vcd.min_interval_days, 
@@ -400,7 +400,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       v.stock_line_id, 
       pe.id as program_enrolment_id
     FROM vaccine_course_dose vcd 
-    INNER JOIN vaccine_course vc 
+    JOIN vaccine_course vc 
       ON vcd.vaccine_course_id = vc.id
     LEFT JOIN vaccination v 
       ON v.vaccine_course_dose_id = vcd.id
