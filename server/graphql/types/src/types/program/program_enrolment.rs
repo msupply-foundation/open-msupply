@@ -79,6 +79,7 @@ pub struct ProgramEnrolmentFilterInput {
 impl From<ProgramEnrolmentFilterInput> for ProgramEnrolmentFilter {
     fn from(f: ProgramEnrolmentFilterInput) -> Self {
         ProgramEnrolmentFilter {
+            id: None,
             patient_id: f.patient_id.map(EqualFilter::from),
             enrolment_datetime: f.enrolment_datetime.map(DatetimeFilter::from),
             program_enrolment_id: f.program_enrolment_id.map(StringFilter::from),
