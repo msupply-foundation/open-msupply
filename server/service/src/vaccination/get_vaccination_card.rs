@@ -129,7 +129,7 @@ mod tests {
     use repository::{
         mock::{
             mock_immunisation_program_a, mock_immunisation_program_enrolment_a, mock_patient,
-            mock_vaccination_a, MockDataInserts,
+            mock_vaccine_course_a_dose_a, MockDataInserts,
         },
         NameRow, NameRowRepository, VaccinationCardRow,
     };
@@ -159,18 +159,27 @@ mod tests {
 
         let result = get_vaccination_card(&service_context, program_enrolment_id).unwrap();
 
+        assert_eq!(result.items.len(), 3);
         assert_eq!(
             result.enrolment.program_row.id,
             mock_immunisation_program_a().id
         );
+        // For first row
+        let first_item = &result.items[0];
+        // Check it is dose 1
         assert_eq!(
-            result.items[0].row.vaccination_id,
-            Some(mock_vaccination_a().id)
+            first_item.row.vaccine_course_dose_id,
+            mock_vaccine_course_a_dose_a().id
         );
+        // There is a vaccination, it was NOT given
+        assert_eq!(first_item.row.given, Some(false));
+        // Hence there is still a suggested date based on the DOB
         assert_eq!(
-            result.items[0].suggested_date,
+            first_item.suggested_date,
             NaiveDate::from_ymd_opt(2024, 1, 1)
         );
+        // Second dose therefore has no suggested date
+        assert_eq!(result.items[1].suggested_date, None);
     }
 
     #[actix_rt::test]
