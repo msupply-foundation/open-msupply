@@ -10,54 +10,59 @@ import {
   DataTable,
   useColumns,
   NothingHere,
-  LocaleKey,
+  useIntlUtils,
   useFormatDateTime,
 } from '@openmsupply-client/common';
-import {
-  usePatientVaccineCard,
-  VaxCardData,
-} from '../../api/hooks/usePatientVaccineCard';
+import { usePatientVaccineCard } from '../../api/hooks/usePatientVaccineCard';
+import { VaccinationCardItemFragment } from '../../api/operations.generated';
 
 export const VaccinationCardComponent: FC = () => {
   const t = useTranslation('dispensary');
-  const { patientId = '', programEnrolmentId = '' } = useParams();
+  const { programEnrolmentId = '' } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const { getLocalisedFullName } = useIntlUtils();
   const { localisedDate } = useFormatDateTime();
 
   const {
     query: { data, isLoading },
-  } = usePatientVaccineCard(patientId, programEnrolmentId);
+  } = usePatientVaccineCard(programEnrolmentId);
 
-  const tableData = buildTableData(data);
-
-  const columns = useColumns<DoseRowData>([
+  const columns = useColumns<VaccinationCardItemFragment>([
     {
       key: 'age',
       label: 'label.age',
       sortable: false,
-      accessor: ({ rowData }) => `${rowData.age} months`, // TO-DO: express in years/months
+      accessor: ({ rowData }) => `${rowData.minAgeMonths} months`, // TO-DO: express in years/months
     },
     {
       key: 'label',
       label: 'label.dose',
-      accessor: ({ rowData }) => rowData?.label,
+      accessor: ({ rowData }) => rowData.label,
     },
     {
       key: 'status',
       label: 'label.status',
-      accessor: ({ rowData }) => (rowData?.status ? t(rowData?.status) : ''),
-      // Cell: DotCell,
+      accessor: ({ rowData }) => {
+        switch (rowData.given) {
+          case true:
+            return t('label.status-given');
+          case false:
+            return t('label.status-not-given');
+          default:
+            return '';
+        }
+      },
     },
     {
       key: 'suggestedDate',
       label: 'label.suggested-date',
-      accessor: ({ rowData }) => localisedDate(rowData?.suggestedDate ?? ''),
+      accessor: ({ rowData }) => localisedDate(rowData.suggestedDate ?? ''),
       // Cell: DateCell, TO-DO
     },
     {
       key: 'dateGiven',
       label: 'label.date-given',
-      accessor: ({ rowData }) => localisedDate(rowData?.dateGiven ?? ''),
+      accessor: ({ rowData }) => localisedDate(rowData.vaccinationDate ?? ''),
       // Cell: DateCell, TO-DO
     },
   ]);
@@ -65,11 +70,11 @@ export const VaccinationCardComponent: FC = () => {
   useEffect(() => {
     if (data)
       setCustomBreadcrumbs({
-        1: data?.vaccineCardItems?.patient?.name ?? '',
+        1: getLocalisedFullName(data?.patientFirstName, data?.patientLastName),
         2: t('label.vaccination-card'),
-        3: data?.vaccineCardItems?.programName,
+        3: data?.programName,
       });
-  }, []);
+  }, [data]);
 
   return isLoading ? (
     <InlineSpinner />
@@ -78,7 +83,7 @@ export const VaccinationCardComponent: FC = () => {
       <DataTable
         id={'Vaccine Course List'}
         columns={columns}
-        data={tableData ?? []}
+        data={data?.items ?? []}
         isLoading={isLoading}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
@@ -96,34 +101,3 @@ export const VaccinationCardDetailView: FC = () => (
     <VaccinationCardComponent />
   </TableProvider>
 );
-
-interface DoseRowData {
-  id: string;
-  age: number;
-  label: string;
-  status: LocaleKey | null;
-  suggestedDate?: Date;
-  dateGiven?: Date;
-  // batch: string
-  // facility: string
-}
-const buildTableData = (rawData: VaxCardData): DoseRowData[] => {
-  return rawData.vaccineCardItems.nodes.map(dose => {
-    const { vaccineCourseDose, vaccination } = dose;
-    const row = {
-      id: vaccineCourseDose.id,
-      age: vaccineCourseDose.minAgeMonths,
-      label: vaccineCourseDose.label,
-      status: vaccination
-        ? vaccination.given
-          ? ('label.status-given' as LocaleKey)
-          : ('label.status-not-given' as LocaleKey)
-        : null,
-      suggestedDate: undefined,
-      dateGiven: new Date(vaccination?.vaccinationDate ?? ''),
-      // batch: TO-DO,
-      // facility: TO-DO
-    };
-    return row;
-  });
-};
