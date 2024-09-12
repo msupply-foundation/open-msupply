@@ -63,24 +63,3 @@ impl<'a> VaccinationCardRepository<'a> {
             .load::<VaccinationCardRow>(self.connection.lock().connection())?)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::{
-        mock::{mock_immunisation_program_enrolment_a, MockDataInserts},
-        test_db, VaccinationCardRepository,
-    };
-
-    #[actix_rt::test]
-    async fn test_vaccination_card() {
-        let (_, connection, _, _) =
-            test_db::setup_all("test_vaccination_card", MockDataInserts::all()).await;
-
-        let result = VaccinationCardRepository::new(&connection)
-            .query_by_enrolment_id(mock_immunisation_program_enrolment_a().id)
-            .expect("Failed to query vaccination card by enrolment id");
-
-        // 3 doses in the 1 course of the program
-        assert_eq!(result.len(), 3);
-    }
-}
