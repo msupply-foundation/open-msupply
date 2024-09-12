@@ -90,6 +90,18 @@ export type LatestPatientEncounterQueryVariables = Types.Exact<{
 
 export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, startDatetime: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', startDatetime: string, label?: string | null } | null }> } };
 
+export type VaccinationCardItemFragment = { __typename: 'VaccinationCardItemNode', id: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null };
+
+export type VaccinationCardFragment = { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null }> };
+
+export type VaccinationCardQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  programEnrolmentId: Types.Scalars['String']['input'];
+}>;
+
+
+export type VaccinationCardQuery = { __typename: 'Queries', vaccinationCard: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null }> } };
+
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
   id
@@ -163,6 +175,33 @@ export const ProgramPatientRowFragmentDoc = gql`
   }
 }
     `;
+export const VaccinationCardItemFragmentDoc = gql`
+    fragment VaccinationCardItem on VaccinationCardItemNode {
+  __typename
+  id
+  vaccineCourseDoseId
+  vaccinationId
+  label
+  minAgeMonths
+  vaccinationDate
+  suggestedDate
+  given
+}
+    `;
+export const VaccinationCardFragmentDoc = gql`
+    fragment VaccinationCard on VaccinationCardNode {
+  __typename
+  id
+  patientFirstName
+  patientLastName
+  programName
+  items {
+    ... on VaccinationCardItemNode {
+      ...VaccinationCardItem
+    }
+  }
+}
+    ${VaccinationCardItemFragmentDoc}`;
 export const PatientsDocument = gql`
     query patients($storeId: String!, $page: PaginationInput, $sort: [PatientSortInput!], $filter: PatientFilterInput) {
   patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
@@ -314,6 +353,21 @@ export const LatestPatientEncounterDocument = gql`
   }
 }
     `;
+export const VaccinationCardDocument = gql`
+    query vaccinationCard($storeId: String!, $programEnrolmentId: String!) {
+  vaccinationCard(storeId: $storeId, programEnrolmentId: $programEnrolmentId) {
+    ... on VaccinationCardNode {
+      ...VaccinationCard
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    ${VaccinationCardFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -351,6 +405,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     latestPatientEncounter(variables: LatestPatientEncounterQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LatestPatientEncounterQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LatestPatientEncounterQuery>(LatestPatientEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'latestPatientEncounter', 'query', variables);
+    },
+    vaccinationCard(variables: VaccinationCardQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccinationCardQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<VaccinationCardQuery>(VaccinationCardDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccinationCard', 'query', variables);
     }
   };
 }
