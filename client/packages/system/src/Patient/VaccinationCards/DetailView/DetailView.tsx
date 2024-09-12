@@ -64,11 +64,14 @@ export const VaccinationCardComponent: FC = () => {
 
   useEffect(() => {
     if (data)
-      setCustomBreadcrumbs({
-        1: data?.vaccineCardItems?.patient?.name ?? '',
-        2: t('label.vaccination-card'),
-        3: data?.vaccineCardItems?.programName,
-      });
+      setCustomBreadcrumbs(
+        {
+          1: data?.vaccineCardItems?.patient?.name ?? '',
+          2: t('label.vaccination-card'),
+          3: data?.vaccineCardItems?.programName,
+        },
+        [2]
+      );
   }, []);
 
   return isLoading ? (
