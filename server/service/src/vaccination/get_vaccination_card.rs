@@ -126,11 +126,13 @@ pub fn get_suggested_date(
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
-    use repository::mock::mock_immunisation_program_a;
-    use repository::mock::mock_immunisation_program_enrolment_a;
-    use repository::mock::mock_vaccination_a;
-    use repository::mock::MockDataInserts;
-    use repository::VaccinationCardRow;
+    use repository::{
+        mock::{
+            mock_immunisation_program_a, mock_immunisation_program_enrolment_a, mock_patient,
+            mock_vaccination_a, MockDataInserts,
+        },
+        NameRow, NameRowRepository, VaccinationCardRow,
+    };
 
     use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
 
@@ -139,9 +141,20 @@ mod tests {
     #[actix_rt::test]
     async fn test_get_vaccination_card() {
         let ServiceTestContext {
-            service_context, ..
+            connection,
+            service_context,
+            ..
         } = setup_all_and_service_provider("test_get_vaccination_card", MockDataInserts::all())
             .await;
+
+        // add DOB to the patient in the enrolment
+        NameRowRepository::new(&connection)
+            .upsert_one(&NameRow {
+                date_of_birth: NaiveDate::from_ymd_opt(2024, 1, 1),
+                ..mock_patient()
+            })
+            .unwrap();
+
         let program_enrolment_id = mock_immunisation_program_enrolment_a().id;
 
         let result = get_vaccination_card(&service_context, program_enrolment_id).unwrap();
