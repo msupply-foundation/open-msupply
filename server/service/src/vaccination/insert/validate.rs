@@ -68,14 +68,6 @@ pub fn validate(
 
             let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
 
-            // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
-            // but if it happens, we should catch it - otherwise we'll dispense infinity!
-            if stock_line.item_row.vaccine_doses == 0 {
-                return Err(InsertVaccinationError::InternalError(
-                    "Item has no doses defined".to_string(),
-                ));
-            }
-
             if !check_item_belongs_to_vaccine_course(
                 &stock_line.stock_line_row.item_link_id,
                 &vaccine_course_dose
@@ -85,6 +77,14 @@ pub fn validate(
             )? {
                 return Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse);
             };
+
+            // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
+            // but if it happens, we should catch it - otherwise we'll dispense infinity!
+            if stock_line.item_row.vaccine_doses == 0 {
+                return Err(InsertVaccinationError::InternalError(
+                    "Item has no doses defined".to_string(),
+                ));
+            }
 
             Some(stock_line)
         }
