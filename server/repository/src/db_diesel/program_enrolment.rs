@@ -16,6 +16,7 @@ use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct ProgramEnrolmentFilter {
+    pub id: Option<EqualFilter<String>>,
     pub patient_id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
     pub enrolment_datetime: Option<DatetimeFilter>,
@@ -31,6 +32,11 @@ pub struct ProgramEnrolmentFilter {
 impl ProgramEnrolmentFilter {
     pub fn new() -> ProgramEnrolmentFilter {
         Self::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
     }
 
     pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
@@ -94,7 +100,7 @@ pub enum ProgramEnrolmentSortField {
 
 type ProgramEnrolmentJoin = (ProgramEnrolmentRow, ProgramRow, (NameLinkRow, NameRow));
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ProgramEnrolment {
     pub row: ProgramEnrolmentRow,
     pub program_row: ProgramRow,
@@ -191,6 +197,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             .into_boxed();
 
         if let Some(ProgramEnrolmentFilter {
+            id,
             patient_id,
             program_id,
             enrolment_datetime,
@@ -203,6 +210,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             is_immunisation_program,
         }) = filter
         {
+            apply_equal_filter!(query, id, program_enlrolment_dsl::id);
             apply_equal_filter!(query, patient_id, name_dsl::id);
             apply_equal_filter!(query, program_id, program_enlrolment_dsl::program_id);
             apply_equal_filter!(query, context, program_dsl::context_id);

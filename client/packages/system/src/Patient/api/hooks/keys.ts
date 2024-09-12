@@ -1,1 +1,1 @@
-// TO-DO
+export const VACCINATION_CARD = 'vaccination-card';

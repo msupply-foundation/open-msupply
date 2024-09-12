@@ -1,4 +1,4 @@
-use repository::{RepositoryError, StorageConnection};
+use repository::{ProgramEnrolmentRow, RepositoryError, StockLine, StorageConnection};
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
@@ -15,7 +15,7 @@ pub fn validate(
     input: &InsertVaccination,
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<String, InsertVaccinationError> {
+) -> Result<(ProgramEnrolmentRow, Option<StockLine>), InsertVaccinationError> {
     if check_vaccination_exists(&input.id, connection)?.is_some() {
         return Err(InsertVaccinationError::VaccinationAlreadyExists);
     }
@@ -29,6 +29,11 @@ pub fn validate(
         check_vaccine_course_dose_exists(&input.vaccine_course_dose_id, connection)?
             .ok_or(InsertVaccinationError::VaccineCourseDoseDoesNotExist)?;
 
+    // Check vaccine course is for the same program as the encounter
+    if program_enrolment.row.program_id != vaccine_course_dose.vaccine_course_row.program_id {
+        return Err(InsertVaccinationError::ProgramEnrolmentDoesNotMatchVaccineCourse);
+    }
+
     if !check_vaccination_does_not_exist_for_dose(
         &program_enrolment.row.id,
         &input.vaccine_course_dose_id,
@@ -37,17 +42,23 @@ pub fn validate(
         return Err(InsertVaccinationError::VaccinationAlreadyExistsForDose);
     }
 
+    // TODO: check is the next dose! (can't give a dose if the previous one hasn't been given)
+
     if let Some(clinician_id) = &input.clinician_id {
         if !check_clinician_exists(clinician_id, connection)? {
             return Err(InsertVaccinationError::ClinicianDoesNotExist);
         }
     }
 
-    match input.given {
+    // If given, stock line is required
+    // If not given, reason is required
+    let stock_line = match input.given {
         false => {
             if input.not_given_reason.is_none() {
                 return Err(InsertVaccinationError::ReasonNotProvided);
-            }
+            };
+
+            None
         }
         true => {
             let stock_line_id = input
@@ -59,15 +70,27 @@ pub fn validate(
 
             if !check_item_belongs_to_vaccine_course(
                 &stock_line.stock_line_row.item_link_id,
-                &vaccine_course_dose.vaccine_course_id,
+                &vaccine_course_dose
+                    .vaccine_course_dose_row
+                    .vaccine_course_id,
                 connection,
             )? {
                 return Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse);
+            };
+
+            // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
+            // but if it happens, we should catch it - otherwise we'll dispense infinity!
+            if stock_line.item_row.vaccine_doses == 0 {
+                return Err(InsertVaccinationError::InternalError(
+                    "Item has no doses defined".to_string(),
+                ));
             }
+
+            Some(stock_line)
         }
     };
 
-    Ok(program_enrolment.row.id)
+    Ok((program_enrolment.row, stock_line))
 }
 
 impl From<CommonStockLineError> for InsertVaccinationError {

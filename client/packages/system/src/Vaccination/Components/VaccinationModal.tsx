@@ -1,28 +1,36 @@
 import {
+  Alert,
+  AlertColor,
   BasicSpinner,
   BasicTextInput,
+  Box,
   Button,
   Container,
   DatePicker,
   DialogButton,
   Grid,
   InputWithLabelRow,
+  Link,
   Radio,
   RadioGroup,
+  RouteBuilder,
   Select,
   SxProps,
   useDialog,
   useEditModal,
+  useFormatDateTime,
   useKeyboardHeightAdjustment,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
 import { FormControlLabel } from '@mui/material';
-import React, { useMemo } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { SelectBatchModal } from './SelectBatchModal';
+import { AppRoute } from '@openmsupply-client/config';
+import { ArrowRightIcon } from '@mui/x-date-pickers';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -42,11 +50,12 @@ export const VaccinationModal = ({
   defaultClinician,
 }: VaccinationModalProps) => {
   const t = useTranslation('dispensary');
+  const { localisedDate } = useFormatDateTime();
   const { success, error } = useNotification();
   const {
     draft,
     updateDraft,
-    query: { dose, isLoading },
+    query: { dose, vaccination, isLoading },
     isDirty,
     isComplete,
     create,
@@ -77,15 +86,50 @@ export const VaccinationModal = ({
     }
   };
 
+  const alert: { severity: AlertColor; content: ReactNode } | undefined =
+    vaccination?.given
+      ? {
+          severity: 'success',
+          content: (
+            <Box display="flex" alignItems="center">
+              {t('messages.vaccination-was-given', {
+                date: localisedDate(vaccination?.vaccinationDate ?? ''),
+              })}
+              {vaccination.invoice && (
+                <Link
+                  style={{
+                    marginLeft: 6,
+                    fontWeight: 'bold',
+                    alignItems: 'center',
+                    display: 'flex',
+                  }}
+                  to={RouteBuilder.create(AppRoute.Dispensary)
+                    .addPart(AppRoute.Prescription)
+                    .addPart(vaccination.invoice.invoiceNumber.toString())
+                    .build()}
+                >
+                  {t('button.view-prescription')}
+                  <ArrowRightIcon />
+                </Link>
+              )}
+            </Box>
+          ),
+        }
+      : undefined;
+
   const modalContent = isLoading ? (
     <BasicSpinner />
   ) : (
-    <VaccinationForm
-      updateDraft={updateDraft}
-      openBatchModal={openBatchModal}
-      draft={draft}
-      dose={dose}
-    />
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {alert && <Alert severity={alert.severity}>{alert.content}</Alert>}
+
+      <VaccinationForm
+        updateDraft={updateDraft}
+        openBatchModal={openBatchModal}
+        draft={draft}
+        dose={dose}
+      />
+    </Box>
   );
 
   return (
@@ -102,6 +146,7 @@ export const VaccinationModal = ({
       height={height}
       width={550}
       slideAnimation={false}
+      contentProps={{ sx: { paddingTop: alert ? 0 : undefined } }}
     >
       <>
         {batchModalOpen && (
@@ -109,6 +154,7 @@ export const VaccinationModal = ({
             isOpen
             itemId={draft.itemId ?? ''}
             onClose={closeBatchModal}
+            stockLine={draft.stockLine ?? null}
             setStockLine={stockLine => updateDraft({ stockLine })}
           />
         )}
@@ -127,7 +173,7 @@ const VaccinationForm = ({
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
-  openBatchModal: (itemId: string) => void;
+  openBatchModal: () => void;
 }) => {
   const t = useTranslation('dispensary');
 
@@ -213,7 +259,7 @@ const VaccinationForm = ({
             Input={
               <Button
                 disabled={!draft.itemId}
-                onClick={() => draft.itemId && openBatchModal(draft.itemId)}
+                onClick={() => draft.itemId && openBatchModal()}
                 sx={{
                   ...baseButtonStyles,
                   // !draft.itemId === disabled
@@ -223,7 +269,9 @@ const VaccinationForm = ({
                   fontStyle: draft.stockLine ? 'none' : 'italic',
                 }}
               >
-                {draft.stockLine?.batch ?? t('label.select-batch')}
+                {draft.stockLine
+                  ? (draft.stockLine.batch ?? t('label.selected'))
+                  : t('label.select-batch')}
               </Button>
             }
           />
