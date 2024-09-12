@@ -1,4 +1,11 @@
-use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use crate::{
+    activity_log::activity_log_entry,
+    invoice::{
+        insert_prescription, update_prescription, InsertPrescriptionError, UpdatePrescriptionError,
+    },
+    invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
+    service_provider::ServiceContext,
+};
 
 use chrono::NaiveDate;
 use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRepository};
@@ -6,7 +13,7 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, GenerateInput};
+use generate::{generate, CreatePrescription, GenerateInput, GenerateResult};
 use validate::validate;
 
 use super::query::get_vaccination;
@@ -17,6 +24,7 @@ pub enum InsertVaccinationError {
     EncounterDoesNotExist,
     ProgramEnrolmentDoesNotExist,
     VaccineCourseDoseDoesNotExist,
+    ProgramEnrolmentDoesNotMatchVaccineCourse,
     VaccinationAlreadyExistsForDose,
     ClinicianDoesNotExist,
     ReasonNotProvided,
@@ -24,6 +32,7 @@ pub enum InsertVaccinationError {
     StockLineDoesNotExist,
     ItemDoesNotBelongToVaccineCourse,
     CreatedRecordNotFound,
+    InternalError(String),
     DatabaseError(RepositoryError),
 }
 
@@ -48,25 +57,46 @@ pub fn insert_vaccination(
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
-            let program_enrolment_id = validate(&input, connection, store_id)?;
-            let new_vaccination = generate(GenerateInput {
+            let (program_enrolment, stock_line) = validate(&input, connection, store_id)?;
+
+            let GenerateResult {
+                vaccination,
+                create_prescription,
+            } = generate(GenerateInput {
                 store_id: store_id.to_string(),
-                program_enrolment_id,
+                program_enrolment,
                 user_id: ctx.user_id.clone(),
                 insert_input: input.clone(),
+                stock_line,
             });
 
-            VaccinationRowRepository::new(connection).upsert_one(&new_vaccination)?;
+            // Create the vaccination
+            VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
+
+            // If it was `Given`, create a prescription
+            if let Some(CreatePrescription {
+                insert_prescription_input,
+                insert_stock_out_line_input,
+                update_prescription_input,
+            }) = create_prescription
+            {
+                // Create prescription (in NEW status)
+                insert_prescription(ctx, insert_prescription_input)?;
+                // Add the prescription line
+                insert_stock_out_line(ctx, insert_stock_out_line_input)?;
+                // Finalise the prescription - also link clinician
+                update_prescription(ctx, update_prescription_input)?;
+            }
 
             activity_log_entry(
                 ctx,
                 ActivityLogType::VaccinationCreated,
-                Some(new_vaccination.id.clone()),
+                Some(vaccination.id.clone()),
                 None,
                 None,
             )?;
 
-            get_vaccination(ctx, new_vaccination.id).map_err(InsertVaccinationError::from)
+            get_vaccination(ctx, vaccination.id).map_err(InsertVaccinationError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(vaccination)
@@ -78,16 +108,41 @@ impl From<RepositoryError> for InsertVaccinationError {
     }
 }
 
+impl From<InsertPrescriptionError> for InsertVaccinationError {
+    fn from(error: InsertPrescriptionError) -> Self {
+        InsertVaccinationError::InternalError(format!("Could not create prescription: {:?}", error))
+    }
+}
+impl From<InsertStockOutLineError> for InsertVaccinationError {
+    fn from(error: InsertStockOutLineError) -> Self {
+        InsertVaccinationError::InternalError(format!(
+            "Could not create prescription line: {:?}",
+            error
+        ))
+    }
+}
+impl From<UpdatePrescriptionError> for InsertVaccinationError {
+    fn from(error: UpdatePrescriptionError) -> Self {
+        InsertVaccinationError::InternalError(format!(
+            "Could not finalise prescription: {:?}",
+            error
+        ))
+    }
+}
+
 #[cfg(test)]
 mod insert {
     use repository::mock::{
-        mock_encounter_a, mock_item_b_stock_line_a, mock_patient_b, mock_program_a,
-        mock_stock_line_a, mock_store_a, mock_store_b, mock_user_account_a, mock_vaccination_a,
-        mock_vaccine_course_a_dose_a, mock_vaccine_course_a_dose_b, mock_vaccine_course_a_dose_c,
-        MockData, MockDataInserts,
+        mock_encounter_a, mock_immunisation_encounter_a, mock_patient_b, mock_program_a,
+        mock_stock_line_a, mock_stock_line_vaccine_item_a, mock_store_a, mock_user_account_a,
+        mock_vaccination_a, mock_vaccine_course_a_dose_a, mock_vaccine_course_a_dose_b,
+        mock_vaccine_course_a_dose_c, MockData, MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
-    use repository::EncounterRow;
+    use repository::{
+        EncounterRow, InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType,
+        StockLineRowRepository,
+    };
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccination::insert::{InsertVaccination, InsertVaccinationError};
@@ -168,12 +223,27 @@ mod insert {
                 store_id,
                 InsertVaccination {
                     id: "new_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: "non_existent_vaccine_course_dose_id".to_string(),
                     ..Default::default()
                 }
             ),
             Err(InsertVaccinationError::VaccineCourseDoseDoesNotExist)
+        );
+
+        // ProgramEnrolmentDoesNotMatchVaccineCourse
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_encounter_a().id, // non-immunisation program encounter
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_a().id,
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::ProgramEnrolmentDoesNotMatchVaccineCourse)
         );
 
         // VaccinationAlreadyExistsForDose
@@ -183,7 +253,7 @@ mod insert {
                 store_id,
                 InsertVaccination {
                     id: "new_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_a().id,
                     ..Default::default()
                 }
@@ -198,7 +268,7 @@ mod insert {
                 store_id,
                 InsertVaccination {
                     id: "new_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     clinician_id: Some("non_existent_clinician_id".to_string()),
                     ..Default::default()
@@ -214,7 +284,7 @@ mod insert {
                 store_id,
                 InsertVaccination {
                     id: "new_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
                     ..Default::default()
@@ -230,7 +300,7 @@ mod insert {
                 store_id,
                 InsertVaccination {
                     id: "new_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: false,
                     ..Default::default()
@@ -246,7 +316,7 @@ mod insert {
                 store_id,
                 InsertVaccination {
                     id: "new_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
                     stock_line_id: Some("non_existent_stock_line_id".to_string()),
@@ -263,7 +333,7 @@ mod insert {
                 store_id,
                 InsertVaccination {
                     id: "new_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
                     stock_line_id: Some(mock_stock_line_a().id), // FOR ITEM A (not linked to vaccine course)
@@ -281,7 +351,7 @@ mod insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_b().id, mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
         // Can create - dose given
@@ -289,13 +359,13 @@ mod insert {
             .vaccination_service
             .insert_vaccination(
                 &context,
-                &mock_store_b().id,
+                &mock_store_a().id,
                 InsertVaccination {
                     id: "new_vaccination_given_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
-                    stock_line_id: Some(mock_item_b_stock_line_a().id), // Item B is linked to vaccine course A
+                    stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
                     clinician_id: None,
                     vaccination_date: None,
                     comment: None,
@@ -306,15 +376,39 @@ mod insert {
 
         assert_eq!(result.vaccination_row.id, "new_vaccination_given_id");
 
+        // Check invoice was created, and linked to vaccination
+        let created_invoice = InvoiceRepository::new(&context.connection)
+            .query_one(InvoiceFilter::new().stock_line_id(mock_stock_line_vaccine_item_a().id))
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            created_invoice.invoice_row.id,
+            result.vaccination_row.invoice_id.unwrap()
+        );
+        assert_eq!(
+            created_invoice.invoice_row.r#type,
+            InvoiceType::Prescription
+        );
+        assert_eq!(created_invoice.invoice_row.status, InvoiceStatus::Verified);
+
+        // Check stock was adjusted
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_stock_line_vaccine_item_a().id)
+            .unwrap()
+            .unwrap();
+        // 5 doses per unit, 2 units per pack. 1 dose given, was 5.0, so 4.9 left
+        assert_eq!(stock_line.available_number_of_packs, 4.9);
+
         // Can create - dose not given
         let result = service_provider
             .vaccination_service
             .insert_vaccination(
                 &context,
-                &mock_store_b().id,
+                &mock_store_a().id,
                 InsertVaccination {
                     id: "new_vaccination_not_given_id".to_string(),
-                    encounter_id: mock_encounter_a().id,
+                    encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
                     given: false,
                     not_given_reason: Some("reason".to_string()),

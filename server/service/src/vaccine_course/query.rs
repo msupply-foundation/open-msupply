@@ -53,7 +53,7 @@ pub fn get_vaccine_course_dose(
         repository.query_one(VaccineCourseDoseFilter::new().id(EqualFilter::equal_to(&id)))?;
 
     match result {
-        Some(record) => Ok(record),
+        Some(record) => Ok(record.vaccine_course_dose_row),
         None => Err(SingleRecordError::NotFound(id)),
     }
 }
