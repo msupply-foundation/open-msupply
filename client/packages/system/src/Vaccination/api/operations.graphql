@@ -10,8 +10,40 @@ fragment VaccinationCourseDose on VaccineCourseDoseNode {
   }
 }
 
-query vaccineCourseDose($id: String!) {
-  vaccineCourseDose(id: $id) {
+fragment VaccinationDetail on VaccinationNode {
+  __typename
+  id
+  vaccinationDate
+  clinician {
+    id
+    firstName
+    lastName
+  }
+  given
+  stockLine {
+    id
+    itemId
+    batch
+  }
+  invoice {
+    id
+    invoiceNumber
+  }
+  notGivenReason
+  comment
+}
+
+query vaccination($storeId: String!, $vaccinationId: String!) {
+  vaccination(storeId: $storeId, id: $vaccinationId) {
+    __typename
+    ... on VaccinationNode {
+      ...VaccinationDetail
+    }
+  }
+}
+
+query vaccineCourseDose($doseId: String!) {
+  vaccineCourseDose(id: $doseId) {
     __typename
     ... on NodeError {
       __typename
