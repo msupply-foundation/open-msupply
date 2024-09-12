@@ -45,16 +45,16 @@ pub fn get_historical_stock_lines(
         .datetime(DatetimeFilter::date_range(datetime, date_now().into()));
     let stock_movements = StockMovementRepository::new(&ctx.connection).query(Some(filter))?;
 
-    // Calculate how much each stock line has been adjusted
+    // Calculate how much each stock line has been adjusted (unit quantity)
     let mut stock_line_adjustments: HashMap<String, f64> = HashMap::new();
     for stock_movement in stock_movements {
-        let stock_line_id = stock_movement.stock_line_id.clone();
+        let stock_line_id = stock_movement.stock_line_id.unwrap_or_default(); // Stock line ID shouldn't be null due to the filter applied...
         let quantity = stock_movement.quantity;
         let adjustment = stock_line_adjustments.get(&stock_line_id).unwrap_or(&0.0) + quantity;
         stock_line_adjustments.insert(stock_line_id, adjustment);
     }
 
-    // Create the historical stock lines, adjusted by the stock available then and now
+    // Create the historical stock lines, adjust what can be allocated at that time, based on stock available then and now
     let mut historical_stock_lines: Vec<StockLine> = vec![];
     for stock_line in current_stock_lines.rows {
         let stock_line_id = stock_line.stock_line_row.id.clone();
@@ -63,10 +63,10 @@ pub fn get_historical_stock_lines(
             - adjustment / stock_line.stock_line_row.pack_size;
 
         if historical_available_packs > 0.0 {
-            // There was stock available at this time, so we should create a historical stock line
+            // There was stock available for this stock_line at this time, so we should create a historical stock line
             let mut new_stock_line = stock_line.clone();
             if historical_available_packs < stock_line.stock_line_row.available_number_of_packs {
-                // If we have less stock available now than we did then, we don't want to show it as available back then
+                // We had less stock available at this time than we do now, so we need to adjust the available number of packs
                 new_stock_line.stock_line_row.available_number_of_packs =
                     historical_available_packs;
             }
