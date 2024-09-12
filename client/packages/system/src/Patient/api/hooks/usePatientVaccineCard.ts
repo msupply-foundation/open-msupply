@@ -25,7 +25,7 @@ const data = {
     nodes: [
       {
         vaccineCourseDose: {
-          id: '0191d538-4219-7d8e-af37-5a4f7008c927',
+          id: '0191de94-05c3-7466-bb94-933ab53d849c',
           label: 'General Dosing 1',
           minAgeMonths: 1,
           minIntervalDays: 30,
@@ -42,7 +42,7 @@ const data = {
       },
       {
         vaccineCourseDose: {
-          id: '0191d538-4219-7d8e-af37-5a4f7008c927',
+          id: '0191de94-0835-7abf-87b4-fa9f7358cce8',
           label: 'General Dosing 2',
           minAgeMonths: 2,
           minIntervalDays: 30,
@@ -51,7 +51,7 @@ const data = {
         },
         vaccination: {
           createdDatetime: '2024-10-09 23:43:29.883540',
-          vaccinationDate: '2024-10-10',
+          vaccinationDate: null,
           given: false,
           notGivenReason: 'OUT_OF_STOCK',
           comment: 'Coming back next week',
@@ -59,8 +59,8 @@ const data = {
       },
       {
         vaccineCourseDose: {
-          id: '0191d538-4219-7d8e-af37-5a4f7008c927',
-          label: 'General Dosing 2',
+          id: '0191de94-0796-7299-b7db-8e01feb6996f',
+          label: 'General Dosing 3',
           minAgeMonths: 3,
           minIntervalDays: 30,
           vaccineCourseName: 'General Doses',
