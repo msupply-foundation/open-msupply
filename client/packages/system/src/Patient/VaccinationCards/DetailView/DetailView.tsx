@@ -11,6 +11,7 @@ import {
   useColumns,
   NothingHere,
   useIntlUtils,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { usePatientVaccineCard } from '../../api/hooks/usePatientVaccineCard';
 import { VaccinationCardItemFragment } from '../../api/operations.generated';
@@ -20,6 +21,7 @@ export const VaccinationCardComponent: FC = () => {
   const { patientId = '', programEnrolmentId = '' } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { getLocalisedFullName } = useIntlUtils();
+  const { localisedDate } = useFormatDateTime();
 
   const {
     query: { data, isLoading },
@@ -54,13 +56,13 @@ export const VaccinationCardComponent: FC = () => {
     {
       key: 'suggestedDate',
       label: 'label.suggested-date',
-      accessor: ({ rowData }) => rowData.suggestedDate,
+      accessor: ({ rowData }) => localisedDate(rowData.suggestedDate ?? ''),
       // Cell: DateCell, TO-DO
     },
     {
       key: 'dateGiven',
       label: 'label.date-given',
-      accessor: ({ rowData }) => rowData.vaccinationDate,
+      accessor: ({ rowData }) => localisedDate(rowData.vaccinationDate ?? ''),
       // Cell: DateCell, TO-DO
     },
   ]);
@@ -80,7 +82,7 @@ export const VaccinationCardComponent: FC = () => {
     <>
       <DataTable
         id={'Vaccine Course List'}
-        columns={columns ?? []}
+        columns={columns}
         data={data?.items ?? []}
         isLoading={isLoading}
         noDataElement={<NothingHere body={t('error.no-items')} />}
