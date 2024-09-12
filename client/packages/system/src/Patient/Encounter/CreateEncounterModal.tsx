@@ -17,7 +17,7 @@ import {
   DateTimePickerInput,
   Tooltip,
 } from '@openmsupply-client/common';
-import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
+import { DateUtils, useTranslation } from '@common/intl';
 import {
   EncounterRegistryByProgram,
   PatientModal,
@@ -75,7 +75,6 @@ export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
   const { user, storeId } = useAuthContext();
   const t = useTranslation('dispensary');
-  const { getLocalisedFullName } = useIntlUtils();
   const { current, setModal: selectModal } = usePatientModalStore();
   const [encounterRegistry, setEncounterRegistry] = useState<
     EncounterRegistryByProgram | undefined
@@ -298,10 +297,6 @@ export const CreateEncounterModal: FC = () => {
                   Input={
                     <ClinicianSearchInput
                       onChange={setClinician}
-                      clinicianLabel={getLocalisedFullName(
-                        draft?.clinician?.firstName,
-                        draft?.clinician?.lastName
-                      )}
                       clinicianValue={draft?.clinician}
                       width={250}
                     />

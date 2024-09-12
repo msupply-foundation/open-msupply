@@ -27,6 +27,7 @@ pub struct LegacyItemRow {
     VEN_category: String,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     strength: Option<String>,
+    doses: i32,
 }
 
 fn to_item_type(type_of: LegacyItemType) -> ItemType {
@@ -85,6 +86,7 @@ impl SyncTranslation for ItemTranslation {
             is_vaccine: data.is_vaccine,
             strength: data.strength,
             ven_category: to_ven_category(data.VEN_category),
+            vaccine_doses: data.doses,
         };
 
         Ok(PullTranslateResult::upsert(result))
