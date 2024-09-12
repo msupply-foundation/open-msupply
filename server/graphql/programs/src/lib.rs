@@ -19,6 +19,7 @@ use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
 use graphql_types::types::program_enrolment::ProgramEventFilterInput;
 use graphql_types::types::program_event::ProgramEventResponse;
 use graphql_types::types::program_event::ProgramEventSortInput;
+use graphql_types::types::vaccination::VaccinationNode;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
@@ -288,6 +289,23 @@ impl ProgramsQueries {
         program_id: String,
     ) -> Result<PeriodSchedulesResponse> {
         get_schedules_with_periods_by_program(ctx, store_id, program_id)
+    }
+
+    pub async fn vaccination(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<Option<VaccinationNode>> {
+        vaccination(ctx, store_id, id)
+    }
+    pub async fn vaccination_card(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        program_enrolment_id: String,
+    ) -> Result<VaccinationCardResponse> {
+        vaccination_card(ctx, store_id, program_enrolment_id)
     }
 }
 

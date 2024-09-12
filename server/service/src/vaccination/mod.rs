@@ -1,7 +1,9 @@
+use get_vaccination_card::VaccinationCard;
 use repository::{RepositoryError, Vaccination};
 
 use crate::service_provider::ServiceContext;
 
+pub mod get_vaccination_card;
 pub mod insert;
 pub mod query;
 mod validate;
@@ -13,6 +15,14 @@ pub trait VaccinationServiceTrait: Sync + Send {
         id: String,
     ) -> Result<Vaccination, RepositoryError> {
         query::get_vaccination(ctx, id)
+    }
+
+    fn get_vaccination_card(
+        &self,
+        ctx: &ServiceContext,
+        program_enrolment_id: String,
+    ) -> Result<VaccinationCard, RepositoryError> {
+        get_vaccination_card::get_vaccination_card(ctx, program_enrolment_id)
     }
 
     fn insert_vaccination(
