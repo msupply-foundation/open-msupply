@@ -7623,6 +7623,7 @@ export type UpdatePrescriptionInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
+  prescriptionDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
 };
 

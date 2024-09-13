@@ -75,6 +75,7 @@ const prescriptionParsers = {
     colour: patch.colour,
     comment: patch.comment,
     status: prescriptionParsers.toStatus(patch),
+    prescriptionDate: patch.prescriptionDate,
   }),
   toInsertLine: (line: DraftStockOutLine): InsertPrescriptionLineInput => {
     return {
