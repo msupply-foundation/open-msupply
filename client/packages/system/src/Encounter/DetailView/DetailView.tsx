@@ -15,6 +15,7 @@ import {
   DialogButton,
   ButtonWithIcon,
   SaveIcon,
+  DetailTabs,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -31,6 +32,7 @@ import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
+import { VaccinationsTab } from './VaccinationsTab';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -259,16 +261,7 @@ export const DetailView: FC = () => {
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
       <AppBarButtons logicalStatus={logicalStatus} />
-      {encounter && (
-        <Toolbar
-          onChange={updateEncounter}
-          encounter={encounter}
-          onDelete={onDelete}
-        />
-      )}
-      {encounter ? (
-        JsonForm
-      ) : (
+      {!encounter ? (
         <AlertModal
           open={true}
           onOk={() =>
@@ -281,9 +274,34 @@ export const DetailView: FC = () => {
           title={t('error.encounter-not-found')}
           message={t('messages.click-to-return-to-encounters')}
         />
-      )}
-      {encounter && (
-        <SidePanel encounter={encounter} onChange={updateEncounter} />
+      ) : (
+        <>
+          <Toolbar
+            onChange={updateEncounter}
+            encounter={encounter}
+            onDelete={onDelete}
+          />
+          {encounter.programEnrolment?.isImmunisationProgram ? (
+            // If the encounter is for an immunisation program, show Vaccination card on first tab
+            <DetailTabs
+              tabs={[
+                {
+                  Component: (
+                    <VaccinationsTab
+                      encounterId={encounter.id}
+                      clinician={encounter.clinician ?? undefined}
+                    />
+                  ),
+                  value: t('label.vaccinations'),
+                },
+                { Component: JsonForm, value: t('label.encounter') },
+              ]}
+            />
+          ) : (
+            JsonForm
+          )}
+          <SidePanel encounter={encounter} onChange={updateEncounter} />
+        </>
       )}
       <SaveAsVisitedModal />
       <Footer

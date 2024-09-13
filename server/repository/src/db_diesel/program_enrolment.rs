@@ -25,6 +25,7 @@ pub struct ProgramEnrolmentFilter {
     pub document_name: Option<EqualFilter<String>>,
     pub program_context_id: Option<EqualFilter<String>>,
     pub program_name: Option<StringFilter>,
+    pub is_immunisation_program: Option<bool>,
 }
 
 impl ProgramEnrolmentFilter {
@@ -74,6 +75,11 @@ impl ProgramEnrolmentFilter {
 
     pub fn program_name(mut self, filter: StringFilter) -> Self {
         self.program_name = Some(filter);
+        self
+    }
+
+    pub fn is_immunisation_program(mut self, filter: bool) -> Self {
+        self.is_immunisation_program = Some(filter);
         self
     }
 }
@@ -194,6 +200,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             document_name,
             program_context_id: context,
             program_name,
+            is_immunisation_program,
         }) = filter
         {
             apply_equal_filter!(query, patient_id, name_dsl::id);
@@ -213,6 +220,10 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             apply_equal_filter!(query, document_type, program_enlrolment_dsl::document_type);
             apply_equal_filter!(query, document_name, program_enlrolment_dsl::document_name);
             apply_string_filter!(query, program_name, program_dsl::name);
+
+            if let Some(is_immunisation_program) = is_immunisation_program {
+                query = query.filter(program_dsl::is_immunisation.eq(is_immunisation_program))
+            }
         }
         query
     }
