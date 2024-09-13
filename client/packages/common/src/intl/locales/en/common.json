@@ -163,6 +163,8 @@
   "label.address": "Address",
   "label.age": "Age",
   "label.age-months": "Age (months)",
+  "label.age-months-count_one": "{{count}} month",
+  "label.age-months-count_other": "{{count}} months",
   "label.age-months-and_one": "{{count}} month, ",
   "label.age-months-and_other": "{{count}} months, ",
   "label.age-days_one": "{{count}} day",
