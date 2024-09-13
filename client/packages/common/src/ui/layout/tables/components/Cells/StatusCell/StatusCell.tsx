@@ -22,40 +22,29 @@ export const StatusCell = <T extends RecordWithId>({
   if (!label) return null;
   return (
     <Box
-      sx={{
-        borderRadius: 4,
-        textAlign: 'center',
-        backgroundColor: bgColor,
-      }}
+      sx={{ textAlign: 'center' }}
       paddingY={0.1}
       paddingX={0.5}
       display="flex"
       alignItems="center"
       width="fit-content"
-      minWidth={100}
       position="relative"
     >
-      {!bgColor && (
-        <Box
-          sx={{
-            backgroundColor: color,
-            width: '100%',
-            height: '100%',
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            borderRadius: 4,
-            opacity: 0.2,
-          }}
-        />
-      )}
-      <CircleIcon
+      {/* If bgColor is not specified, we use a faded (low opacity) version of the dot color as the background */}
+      <Box
         sx={{
-          color,
-          transform: 'scale(0.4)',
+          backgroundColor: bgColor ?? color,
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          borderRadius: 4,
+          opacity: bgColor ? 1 : 0.2,
         }}
       />
-      <Typography sx={{ paddingRight: 1 }}>{label}</Typography>
+      <CircleIcon sx={{ color, transform: 'scale(0.4)' }} />
+      <Typography sx={{ paddingRight: 1, zIndex: 1 }}>{label}</Typography>
     </Box>
   );
 };
