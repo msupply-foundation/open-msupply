@@ -670,5 +670,10 @@
   "report.actual": "Actual",
   "message.contact-support": "Please contact support@msupply.foundation about configuring reports",
   "message.arguments": "You can customize what is shown on the report by specifying some of the optional details below. Click OK to view the report.",
-  "report.stock-take-variance-report": "Stock Take Variance Report"
+  "report.stock-take-variance-report": "Stock Take Variance Report",
+  "heading.invoice-lines-report-item": "Invoice lines with items containing",
+  "heading.between-datetimes": "Between the datetimes of",
+  "report.confirm-date": "Confirm date",
+  "report.stat": "Stat",
+  "report.global-total": "Global total"
 }
