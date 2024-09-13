@@ -234,7 +234,6 @@ export const Toolbar: FC<ToolbarProps> = ({
                         clinician: clinician?.value as ClinicianNode,
                       });
                     }}
-                    clinicianLabel={clinician?.label || ''}
                     clinicianValue={clinician?.value}
                   />
                 }

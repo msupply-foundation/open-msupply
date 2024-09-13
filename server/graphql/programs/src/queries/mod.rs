@@ -25,3 +25,5 @@ pub mod program;
 pub mod r_and_r_form;
 pub use self::program::*;
 pub use self::r_and_r_form::*;
+pub mod vaccination;
+pub use self::vaccination::*;

@@ -19,6 +19,7 @@ use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
 use graphql_types::types::program_enrolment::ProgramEventFilterInput;
 use graphql_types::types::program_event::ProgramEventResponse;
 use graphql_types::types::program_event::ProgramEventSortInput;
+use graphql_types::types::VaccinationNode;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
@@ -61,6 +62,9 @@ use mutations::rnr_form::insert::{insert_rnr_form, InsertRnRFormInput, InsertRnR
 use mutations::rnr_form::update::update_rnr_form;
 use mutations::rnr_form::update::UpdateRnRFormInput;
 use mutations::rnr_form::update::UpdateRnRFormResponse;
+use mutations::vaccination::insert::{
+    insert_vaccination, InsertVaccinationInput, InsertVaccinationResponse,
+};
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
@@ -286,6 +290,15 @@ impl ProgramsQueries {
     ) -> Result<PeriodSchedulesResponse> {
         get_schedules_with_periods_by_program(ctx, store_id, program_id)
     }
+
+    pub async fn vaccination(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<Option<VaccinationNode>> {
+        vaccination(ctx, store_id, id)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -444,6 +457,15 @@ impl ProgramsMutations {
         input: FinaliseRnRFormInput,
     ) -> Result<FinaliseRnRFormResponse> {
         finalise_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn insert_vaccination(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertVaccinationInput,
+    ) -> Result<InsertVaccinationResponse> {
+        insert_vaccination(ctx, store_id, input)
     }
 }
 
