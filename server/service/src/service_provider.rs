@@ -1,13 +1,5 @@
 use crate::{
-    app_data::{AppDataService, AppDataServiceTrait},
-    asset::AssetServiceTrait,
-    auth::{AuthService, AuthServiceTrait},
-    barcode::{BarcodeService, BarcodeServiceTrait},
-    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
-    clinician::{ClinicianService, ClinicianServiceTrait},
-    cold_chain::{ColdChainService, ColdChainServiceTrait},
-    currency::{CurrencyService, CurrencyServiceTrait},
-    dashboard::{
+    app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
@@ -178,8 +170,6 @@ impl ServiceProvider {
         sync_trigger: SyncTrigger,
         site_is_initialised_trigger: SiteIsInitialisedTrigger,
     ) -> Self {
-        let localisations = Localisations::new();
-
         ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
@@ -236,7 +226,7 @@ impl ServiceProvider {
             program_service: Box::new(crate::program::ProgramService {}),
             rnr_form_service: Box::new(RnRFormService {}),
             vaccination_service: Box::new(VaccinationService {}),
-            translations_service: Box::new(localisations),
+            translations_service: Box::new(Localisations::new()),
         }
     }
 

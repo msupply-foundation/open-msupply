@@ -4,12 +4,15 @@ use repository::{
     ReportSort, ReportType, RepositoryError,
 };
 use scraper::{ElementRef, Html, Selector};
-use tera::Value;
 use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
-    get_default_pagination, localisations::Localisations, service_provider::ServiceContext, static_files::{StaticFileCategory, StaticFileService}, ListError
+    get_default_pagination,
+    localisations::Localisations,
+    service_provider::ServiceContext,
+    static_files::{StaticFileCategory, StaticFileService},
+    ListError,
 };
 
 use super::{
@@ -114,7 +117,13 @@ pub trait ReportServiceTrait: Sync + Send {
         translation_service: Box<Localisations>,
         current_language: Option<String>,
     ) -> Result<String, ReportError> {
-        let document = generate_report(report, report_data, arguments, translation_service, current_language)?;
+        let document = generate_report(
+            report,
+            report_data,
+            arguments,
+            translation_service,
+            current_language,
+        )?;
 
         match format {
             Some(PrintFormat::Html) => {
@@ -203,7 +212,7 @@ impl<'a> Selectors<'a> {
 fn inner_text(element_ref: ElementRef) -> &str {
     element_ref
         .text()
-        .find(|t| t.trim().len() > 0)
+        .find(|t| !t.trim().is_empty())
         .map(|t| t.trim())
         .unwrap_or_default()
 }
@@ -410,17 +419,12 @@ fn generate_report(
     if let Some(arguments) = arguments {
         context.insert("arguments", &arguments);
     }
-    let lang = match current_language {
-        Some(language) => language,
-        None => "en".to_string(),
-    };
-    context.insert("lang", &lang);
-    println!("generating report!");
     let mut tera = tera::Tera::default();
-    tera.register_function("translate", move |args: &HashMap<String, serde_json::Value>| {
-        let translation = translation_service.get_translation(args);
-        Ok(Value::String(translation))
-    });
+    tera.register_function(
+        "t",
+        translation_service.get_translation_function(current_language),
+    );
+
     let mut templates: HashMap<String, String> = report
         .templates
         .iter()
@@ -837,5 +841,80 @@ mod report_to_excel_test {
         let cell = cells.next().unwrap();
 
         assert_eq!(inner_text(cell), "Out of Stock");
+    }
+}
+
+#[cfg(test)]
+mod report_generation_test {
+    use std::collections::HashMap;
+
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use serde_json::json;
+
+    use crate::{
+        report::{
+            definition::{ReportOutputType, TeraTemplate},
+            report_service::{generate_report, ResolvedReportDefinition},
+        },
+        service_provider::ServiceProvider,
+    };
+    // adding tests to generate reports
+
+    #[actix_rt::test]
+
+    async fn test_standard_reprt_generation() {
+        let template_content = include_str!("templates/test.html").to_string();
+
+        let tera_template = TeraTemplate {
+            template: template_content,
+            output: ReportOutputType::Html,
+        };
+
+        let (_, _, connection_manager, _) =
+            setup_all("test_report_translations", MockDataInserts::none()).await;
+
+        let translation_service =
+            ServiceProvider::new(connection_manager, "app_data").translations_service;
+
+        let mut templates = HashMap::new();
+        templates.insert("test.html".to_string(), tera_template);
+
+        let report = ResolvedReportDefinition {
+            name: "test.html".to_string(),
+            template: "test.html".to_string(),
+            header: None,
+            footer: None,
+            queries: Vec::new(),
+            templates,
+            resources: HashMap::new(),
+        };
+
+        let report_data = json!(null);
+
+        let generated_report = generate_report(
+            &report,
+            report_data.clone(),
+            None,
+            translation_service.clone(),
+            Some("en".to_string()),
+        )
+        .unwrap();
+
+        assert!(generated_report.document.contains("some text"));
+        assert!(generated_report.document.contains("Name"));
+
+        // test generation in other languages
+
+        let generated_report = generate_report(
+            &report,
+            report_data,
+            None,
+            translation_service,
+            Some("fr".to_string()),
+        )
+        .unwrap();
+
+        assert!(generated_report.document.contains("some text"));
+        assert!(generated_report.document.contains("Nom"));
     }
 }
