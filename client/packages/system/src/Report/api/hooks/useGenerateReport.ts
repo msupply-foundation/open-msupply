@@ -6,10 +6,10 @@ import { useIntlUtils } from '@common/intl';
 
 export const useGenerateReport = () => {
   const { reportApi, storeId } = useReportGraphQL();
+  const { currentLanguage } = useIntlUtils();
 
   const mutationFn = async (params: GenerateReportParams) => {
     const { dataId, reportId, args, sort, format = PrintFormat.Html } = params;
-    const {currentLanguage} = useIntlUtils();
 
     const result = await reportApi.generateReport({
       dataId,
