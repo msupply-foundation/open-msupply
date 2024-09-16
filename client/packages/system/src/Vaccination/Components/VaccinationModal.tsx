@@ -258,7 +258,7 @@ const VaccinationForm = ({
                 value={draft.itemId ?? ''}
                 onChange={e => updateDraft({ itemId: e.target.value })}
                 sx={{ flex: 1 }}
-                disabled
+                disabled={disabled}
               />
             }
           />
