@@ -20,7 +20,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
 }) => {
   const { store } = useAuthContext();
   const { urlQuery } = useUrlQuery();
-  const t = useTranslation('reports');
+  const t = useTranslation();
 
   const {
     monthlyConsumptionLookBackPeriod,
@@ -29,11 +29,15 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     monthsItemsExpire,
   } = store?.preferences ?? {};
 
+  // default expiry date as now
+  const expiryDate = Date.now()
+
   const [data, setData] = useState<JsonData>({
     monthlyConsumptionLookBackPeriod,
     monthsOverstock,
     monthsUnderstock,
     monthsItemsExpire,
+    expiryDate,
     ...JSON.parse((urlQuery?.['reportArgs'] ?? '{}') as string),
   });
   const [error, setError] = useState<string | false>(false);
@@ -54,7 +58,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
 
   return (
     <Modal
-      title="Report arguments"
+      title={t("label.report-filters")}
       cancelButton={<DialogButton variant="cancel" onClick={cleanUp} />}
       slideAnimation={false}
       width={560}
