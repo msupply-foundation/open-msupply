@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::NaiveDate;
+use chrono::{DateTime, Utc};
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -21,7 +21,7 @@ pub struct UpdateInput {
     pub status: Option<UpdatePrescriptionStatusInput>,
     pub patient_id: Option<String>,
     pub clinician_id: Option<String>,
-    pub prescription_date: Option<NaiveDate>,
+    pub prescription_date: Option<DateTime<Utc>>,
     pub comment: Option<String>,
     pub colour: Option<String>,
 }
@@ -104,7 +104,7 @@ impl UpdateInput {
             clinician_id,
             comment,
             colour,
-            prescription_datetime: prescription_date.map(|date| date.into()),
+            prescription_datetime: prescription_date.map(|date| date.naive_utc()),
         }
     }
 }
