@@ -1,12 +1,12 @@
 import { useQuery } from '@openmsupply-client/common';
 import { usePatientGraphQL } from '../usePatientGraphQL';
-import { VACCINATION_CARD } from './keys';
+import { VACCINATION } from './keys';
 
 export const usePatientVaccineCard = (programEnrolmentId: string) => {
   const { patientApi, storeId } = usePatientGraphQL();
 
   const { data, isLoading } = useQuery({
-    queryKey: [VACCINATION_CARD, programEnrolmentId],
+    queryKey: [VACCINATION, programEnrolmentId],
     queryFn: async () => {
       const result = await patientApi.vaccinationCard({
         storeId,
