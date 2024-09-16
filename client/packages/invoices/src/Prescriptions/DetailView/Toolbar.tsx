@@ -80,7 +80,7 @@ export const Toolbar: FC = () => {
                   onChange={async prescriptionDate => {
                     await update({
                       id,
-                      prescriptionDate: Formatter.naiveDate(prescriptionDate),
+                      prescriptionDate: Formatter.toIsoString(prescriptionDate),
                     });
                   }}
                   maxDate={new Date()}
