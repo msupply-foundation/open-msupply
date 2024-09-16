@@ -294,7 +294,6 @@ mod query {
                 get_midday(2020, 1, 1), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        println!("RESULT: {:?}", result);
         assert_eq!(result.rows.len(), 1);
         // Expected available stock for 2020-01-01
         // | 2020-01-01 | 0           | 500         | 0           |
