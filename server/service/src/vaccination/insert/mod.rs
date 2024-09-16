@@ -13,10 +13,10 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, CreatePrescription, GenerateInput, GenerateResult};
+use generate::{generate, GenerateInput, GenerateResult};
 use validate::validate;
 
-use super::query::get_vaccination;
+use super::{generate::CreatePrescription, query::get_vaccination};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertVaccinationError {
