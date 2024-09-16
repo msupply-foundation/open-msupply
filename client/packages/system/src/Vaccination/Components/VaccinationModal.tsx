@@ -29,7 +29,7 @@ import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { SelectBatchModal } from './SelectBatchModal';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 import { ArrowRightIcon } from '@mui/x-date-pickers';
 
 interface VaccinationModalProps {
