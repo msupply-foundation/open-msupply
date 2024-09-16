@@ -3,6 +3,7 @@ use repository::{RepositoryError, Vaccination};
 
 use crate::service_provider::ServiceContext;
 
+mod generate;
 pub mod get_vaccination_card;
 pub mod insert;
 pub mod query;
