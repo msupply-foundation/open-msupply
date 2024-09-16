@@ -35,7 +35,7 @@ export function useVaccination({
   defaultClinician,
 }: {
   vaccineCourseDoseId: string;
-  encounterId: string;
+  encounterId?: string;
   vaccinationId: string | undefined;
   defaultClinician?: Clinician;
 }) {
@@ -69,7 +69,7 @@ export function useVaccination({
   });
 
   const { mutateAsync: insert } = useInsert({
-    encounterId,
+    encounterId: encounterId ?? '',
     vaccineCourseDoseId,
   });
 
@@ -111,7 +111,7 @@ export function useVaccination({
     isDirty: Object.keys(patch).length > 0,
     updateDraft: (update: Partial<VaccinationDraft>) =>
       setPatch({ ...patch, ...update }),
-    create: insert,
+    create: encounterId ? insert : () => {},
   };
 }
 
