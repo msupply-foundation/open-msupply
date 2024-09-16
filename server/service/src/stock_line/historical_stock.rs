@@ -7,10 +7,12 @@ use repository::{
 };
 use util::date_now;
 
-use crate::{service_provider::ServiceContext, ListError, ListResult};
+use crate::{print, service_provider::ServiceContext, ListError, ListResult};
 
 use super::query::get_stock_lines;
 
+/// Get historical stock lines for a given store and item at a given datetime.
+/// NOTE: Stock lines are only adjusted based on stock movements, changes to batch, expiry dates etc are not considered.
 pub fn get_historical_stock_lines(
     ctx: &ServiceContext,
     store_id: String,
@@ -43,24 +45,47 @@ pub fn get_historical_stock_lines(
         .item_id(EqualFilter::equal_to(&item_id))
         .stock_line_id(EqualFilter::equal_any(stock_line_ids))
         .datetime(DatetimeFilter::date_range(datetime, date_now().into()));
-    let stock_movements = StockMovementRepository::new(&ctx.connection).query(Some(filter))?;
+    let mut stock_movements = StockMovementRepository::new(&ctx.connection).query(Some(filter))?;
 
-    // Calculate how much each stock line has been adjusted (unit quantity)
-    let mut stock_line_adjustments: HashMap<String, f64> = HashMap::new();
+    // sort stock movements by datetime descending (latest first)
+    stock_movements.sort_by(|a, b| b.datetime.cmp(&a.datetime));
+
+    let mut available_stock_by_line: HashMap<String, f64> = HashMap::new();
+    let mut min_available_stock_by_line: HashMap<String, f64> = HashMap::new();
+    // Calculate available stock for each stock line currently
+    for stock_line in current_stock_lines.rows.iter() {
+        let available_stock_now = stock_line.stock_line_row.available_number_of_packs
+            * stock_line.stock_line_row.pack_size;
+        available_stock_by_line.insert(stock_line.stock_line_row.id.clone(), available_stock_now);
+        min_available_stock_by_line
+            .insert(stock_line.stock_line_row.id.clone(), available_stock_now);
+    }
+
+    // Calculate min available stock for each stock line for each stock movement
     for stock_movement in stock_movements {
-        let stock_line_id = stock_movement.stock_line_id.unwrap_or_default(); // Stock line ID shouldn't be null due to the filter applied...
-        let quantity = stock_movement.quantity;
-        let adjustment = stock_line_adjustments.get(&stock_line_id).unwrap_or(&0.0) + quantity;
-        stock_line_adjustments.insert(stock_line_id, adjustment);
+        let stock_line_id = stock_movement.stock_line_id.unwrap_or_default(); // Stock line ID shouldn't be null due to the repository filter applied...
+        let available_stock =
+            available_stock_by_line.get(&stock_line_id).unwrap_or(&0.0) - stock_movement.quantity;
+
+        if available_stock
+            < *min_available_stock_by_line
+                .get(&stock_line_id)
+                .unwrap_or(&0.0)
+        {
+            min_available_stock_by_line.insert(stock_line_id.clone(), available_stock);
+        }
+        available_stock_by_line.insert(stock_line_id, available_stock);
     }
 
     // Create the historical stock lines, adjust what can be allocated at that time, based on stock available then and now
-    let mut historical_stock_lines: Vec<StockLine> = vec![];
+    let mut adjusted_stock_lines: Vec<StockLine> = vec![];
     for stock_line in current_stock_lines.rows {
         let stock_line_id = stock_line.stock_line_row.id.clone();
-        let adjustment = stock_line_adjustments.get(&stock_line_id).unwrap_or(&0.0);
-        let historical_available_packs = stock_line.stock_line_row.available_number_of_packs
-            - adjustment / stock_line.stock_line_row.pack_size;
+
+        let historical_available_packs = *min_available_stock_by_line
+            .get(&stock_line_id)
+            .unwrap_or(&0.0)
+            / stock_line.stock_line_row.pack_size;
 
         if historical_available_packs > 0.0 {
             // There was stock available for this stock_line at this time, so we should create a historical stock line
@@ -71,12 +96,12 @@ pub fn get_historical_stock_lines(
                     historical_available_packs;
             }
 
-            historical_stock_lines.push(new_stock_line);
+            adjusted_stock_lines.push(new_stock_line);
         }
     }
 
     Ok(ListResult {
-        count: historical_stock_lines.len() as u32,
-        rows: historical_stock_lines,
+        count: adjusted_stock_lines.len() as u32,
+        rows: adjusted_stock_lines,
     })
 }
