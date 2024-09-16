@@ -1,11 +1,13 @@
-use repository::{ProgramEnrolmentRow, RepositoryError, StockLine, StorageConnection};
+use repository::{
+    EqualFilter, RepositoryError, StockLine, StorageConnection, VaccinationFilter,
+    VaccinationRepository, VaccinationRow,
+};
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
     vaccination::validate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
-        check_program_enrolment_exists, check_vaccination_does_not_exist_for_dose,
-        check_vaccination_exists, check_vaccine_course_dose_exists,
+        check_vaccination_exists,
     },
 };
 
@@ -15,82 +17,100 @@ pub fn validate(
     input: &UpdateVaccination,
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<(ProgramEnrolmentRow, Option<StockLine>), UpdateVaccinationError> {
-    if check_vaccination_exists(&input.id, connection)?.is_some() {
-        return Err(UpdateVaccinationError::VaccinationDoesNotExist);
-    }
-    let encounter = check_encounter_exists(&input.encounter_id, connection)?
-        .ok_or(UpdateVaccinationError::EncounterDoesNotExist)?;
+) -> Result<(VaccinationRow, String, Option<StockLine>), UpdateVaccinationError> {
+    let vaccination = check_vaccination_exists(&input.id, connection)?
+        .ok_or(UpdateVaccinationError::VaccinationDoesNotExist)?;
 
-    let program_enrolment = check_program_enrolment_exists(&encounter, connection)?
-        .ok_or(UpdateVaccinationError::ProgramEnrolmentDoesNotExist)?;
+    let encounter = check_encounter_exists(&vaccination.vaccination_row.encounter_id, connection)?
+        .ok_or(
+            // Shouldn't be possible, hence internal error
+            UpdateVaccinationError::InternalError("Encounter does not exist".to_string()),
+        )?;
 
-    let vaccine_course_dose =
-        check_vaccine_course_dose_exists(&input.vaccine_course_dose_id, connection)?
-            .ok_or(UpdateVaccinationError::VaccineCourseDoseDoesNotExist)?;
-
-    // Check vaccine course is for the same program as the encounter
-    if program_enrolment.row.program_id != vaccine_course_dose.vaccine_course_row.program_id {
-        return Err(UpdateVaccinationError::ProgramEnrolmentDoesNotMatchVaccineCourse);
-    }
-
-    if !check_vaccination_does_not_exist_for_dose(
-        &program_enrolment.row.id,
-        &input.vaccine_course_dose_id,
-        connection,
-    )? {
-        return Err(UpdateVaccinationError::VaccinationAlreadyExistsForDose);
-    }
-
-    // TODO: check is the next dose! (can't give a dose if the previous one hasn't been given)
-
-    if let Some(clinician_id) = &input.clinician_id {
-        if !check_clinician_exists(clinician_id, connection)? {
+    if let Some(clinician_id) = input.clinician_id.clone().map(|u| u.value).flatten() {
+        if !check_clinician_exists(&clinician_id, connection)? {
             return Err(UpdateVaccinationError::ClinicianDoesNotExist);
         }
     }
 
-    // If given, stock line is required
-    // If not given, reason is required
-    let stock_line = match input.given {
-        false => {
+    match input.given {
+        None => {}
+        // If not given, reason is required
+        Some(false) => {
             if input.not_given_reason.is_none() {
                 return Err(UpdateVaccinationError::ReasonNotProvided);
             };
-
-            None
         }
-        true => {
-            let stock_line_id = input
-                .stock_line_id
-                .as_ref()
-                .ok_or(UpdateVaccinationError::StockLineNotProvided)?;
-
-            let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
-
-            if !check_item_belongs_to_vaccine_course(
-                &stock_line.stock_line_row.item_link_id,
-                &vaccine_course_dose
-                    .vaccine_course_dose_row
-                    .vaccine_course_id,
-                connection,
-            )? {
-                return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
+        // If given, stock line is required
+        Some(true) => {
+            if input.stock_line_id.is_none() {
+                return Err(UpdateVaccinationError::StockLineNotProvided);
             };
-
-            // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
-            // but if it happens, we should catch it - otherwise we'll dispense infinity!
-            if stock_line.item_row.vaccine_doses == 0 {
-                return Err(UpdateVaccinationError::InternalError(
-                    "Item has no doses defined".to_string(),
-                ));
-            }
-
-            Some(stock_line)
         }
     };
 
-    Ok((program_enrolment.row, stock_line))
+    let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
+        let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
+
+        if !check_item_belongs_to_vaccine_course(
+            &stock_line.stock_line_row.item_link_id,
+            &vaccination.vaccine_course_dose_row.vaccine_course_id,
+            connection,
+        )? {
+            return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
+        };
+
+        // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
+        // but if it happens, we should catch it - otherwise we'll dispense infinity!
+        if stock_line.item_row.vaccine_doses == 0 {
+            return Err(UpdateVaccinationError::InternalError(
+                "Item has no doses defined".to_string(),
+            ));
+        }
+
+        Some(stock_line)
+    } else {
+        None
+    };
+
+    // Sorted by created date
+    let other_vaccinations_for_course = VaccinationRepository::new(connection).query_by_filter(
+        VaccinationFilter::new()
+            .program_enrolment_id(EqualFilter::equal_to(
+                &vaccination.vaccination_row.program_enrolment_id,
+            ))
+            .vaccine_course_id(EqualFilter::equal_to(
+                &vaccination.vaccine_course_dose_row.vaccine_course_id,
+            )),
+    )?;
+
+    let this_vaccination_index = other_vaccinations_for_course
+        .iter()
+        .position(|v| v.vaccination_row.id == vaccination.vaccination_row.id)
+        .unwrap_or(0);
+
+    let previous_vaccination = match this_vaccination_index {
+        // First in course
+        0 => None,
+        index => other_vaccinations_for_course.get(index - 1),
+    };
+
+    if let Some(previous_vaccination) = previous_vaccination {
+        if !previous_vaccination.vaccination_row.given && input.given == Some(true) {
+            return Err(UpdateVaccinationError::NotNextDose);
+        }
+    }
+    if let Some(next_vaccination) = other_vaccinations_for_course.get(this_vaccination_index + 1) {
+        if next_vaccination.vaccination_row.given && input.given == Some(false) {
+            return Err(UpdateVaccinationError::NotMostRecentGivenDose);
+        }
+    }
+
+    Ok((
+        vaccination.vaccination_row,
+        encounter.patient_link_id,
+        stock_line,
+    ))
 }
 
 impl From<CommonStockLineError> for UpdateVaccinationError {

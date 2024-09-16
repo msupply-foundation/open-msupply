@@ -1,133 +1,114 @@
-use chrono::Utc;
-use repository::{ProgramEnrolmentRow, StockLine, VaccinationRow};
-use util::uuid::uuid;
+use repository::{StockLine, VaccinationRow};
 
 use crate::{
-    invoice::{InsertPrescription, UpdatePrescription, UpdatePrescriptionStatus},
-    invoice_line::stock_out_line::{StockOutType, UpdateStockOutLine},
+    invoice::inventory_adjustment::InsertInventoryAdjustment,
+    vaccination::generate::{generate_create_prescription, CreatePrescription},
+    NullableUpdate,
 };
 
 use super::UpdateVaccination;
 
 pub struct GenerateInput {
-    pub store_id: String,
-    pub user_id: String,
-    pub program_enrolment: ProgramEnrolmentRow,
+    pub patient_id: String,
+    pub existing_vaccination: VaccinationRow,
     pub update_input: UpdateVaccination,
     pub stock_line: Option<StockLine>,
 }
 
-pub struct CreatePrescription {
-    pub insert_prescription_input: InsertPrescription,
-    pub update_stock_out_line_input: UpdateStockOutLine,
-    pub update_prescription_input: UpdatePrescription,
-}
-
 pub struct GenerateResult {
     pub vaccination: VaccinationRow,
+    pub create_inventory_adjustment: Option<InsertInventoryAdjustment>,
     pub create_prescription: Option<CreatePrescription>,
 }
 
 pub fn generate(
     GenerateInput {
-        store_id,
-        user_id,
-        program_enrolment,
+        patient_id,
+        existing_vaccination,
         update_input,
         stock_line,
     }: GenerateInput,
 ) -> GenerateResult {
-    let UpdateVaccination {
-        id,
-        encounter_id,
-        vaccine_course_dose_id,
-        vaccination_date,
-        clinician_id,
-        comment,
-        given,
-        stock_line_id,
-        not_given_reason,
-    } = update_input;
-
-    let now = Utc::now().naive_utc();
+    // Update from input, or keep existing
+    let clinician_id = match update_input.clinician_id {
+        Some(NullableUpdate { value }) => value,
+        None => existing_vaccination.clinician_link_id,
+    };
 
     let create_prescription = match stock_line {
         // if stock_line is Some, the vaccination was given, create a prescription
         Some(stock_line) => {
-            let prescription_id = uuid();
+            let create_prescription =
+                generate_create_prescription(stock_line, patient_id, clinician_id.clone());
 
-            let update_prescription = UpdatePrescription {
-                id: prescription_id.clone(),
-                patient_id: program_enrolment.patient_link_id,
-            };
-
-            let number_of_packs = 1.0
-                / stock_line.item_row.vaccine_doses as f64
-                / stock_line.stock_line_row.pack_size;
-
-            let update_stock_out_line = UpdateStockOutLine {
-                id: uuid(),
-                r#type: StockOutType::Prescription,
-                invoice_id: prescription_id.clone(),
-
-                stock_line_id: stock_line.stock_line_row.id,
-                number_of_packs,
-
-                // default
-                total_before_tax: None,
-                tax_percentage: None,
-                note: None,
-                location_id: None,
-                batch: None,
-                pack_size: None,
-                expiry_date: None,
-                cost_price_per_pack: None,
-                sell_price_per_pack: None,
-            };
-
-            let update_prescription = UpdatePrescription {
-                id: prescription_id.clone(),
-                status: Some(UpdatePrescriptionStatus::Verified),
-                // Assign clinician here if one was chosen
-                clinician_id: clinician_id.clone(),
-                comment: Some("Created via vaccination".to_string()),
-                // Default
-                patient_id: None,
-                colour: None,
-            };
-
-            Some(CreatePrescription {
-                update_prescription_input: update_prescription,
-                update_stock_out_line_input: update_stock_out_line,
-                update_prescription_input: update_prescription,
-            })
+            Some(create_prescription)
         }
         None => None,
     };
 
-    let vaccination = VaccinationRow {
+    let VaccinationRow {
         id,
         store_id,
-        program_enrolment_id: program_enrolment.id,
-        user_id,
-        created_datetime: now,
-
+        program_enrolment_id,
         encounter_id,
         vaccine_course_dose_id,
-        clinician_link_id: clinician_id,
-        vaccination_date: vaccination_date.unwrap_or(now.date()),
+        user_id,
+        created_datetime,
+
+        clinician_link_id: _,
+        vaccination_date,
         given,
         stock_line_id,
         not_given_reason,
         comment,
-        // If we create the prescription invoice, link it here
-        invoice_id: create_prescription
-            .as_ref()
-            .map(|p| p.update_prescription_input.id.clone()),
+        invoice_id,
+    } = existing_vaccination;
+
+    let vaccination = VaccinationRow {
+        // always copy from existing
+        id,
+        store_id,
+        program_enrolment_id,
+        user_id,
+        created_datetime,
+        encounter_id,
+        vaccine_course_dose_id,
+
+        // Update, or default to existing
+        clinician_link_id: clinician_id,
+        vaccination_date: update_input.vaccination_date.unwrap_or(vaccination_date),
+        given: update_input.given.unwrap_or(given),
+        comment: update_input.comment.or(comment),
+
+        stock_line_id: match update_input.given {
+            // If we updated to not given, clear the stock line
+            Some(false) => None,
+            // Otherwise update or default to existing
+            _ => update_input.stock_line_id.or(stock_line_id),
+        },
+
+        not_given_reason: match update_input.given {
+            // If we updated to given, clear the reason
+            Some(true) => None,
+            // Otherwise update or default to existing
+            _ => update_input.not_given_reason.or(not_given_reason),
+        },
+
+        invoice_id: match update_input.given {
+            // If we updated to not given, clear the invoice
+            Some(false) => None,
+            // Otherwise update or default to existing
+            _ => create_prescription
+                .as_ref()
+                .map(|p| p.update_prescription_input.id.clone())
+                .or(invoice_id),
+        },
     };
 
     GenerateResult {
         vaccination,
         create_prescription,
+        // TODO
+        create_inventory_adjustment: None,
     }
 }

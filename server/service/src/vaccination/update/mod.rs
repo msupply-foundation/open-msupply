@@ -1,11 +1,13 @@
 use crate::{
     activity_log::activity_log_entry,
     invoice::{
-        insert_prescription, inventory_adjustment::insert_inventory_adjustment,
+        insert_prescription,
+        inventory_adjustment::{insert_inventory_adjustment, InsertInventoryAdjustmentError},
         update_prescription, InsertPrescriptionError, UpdatePrescriptionError,
     },
-    invoice_line::stock_out_line::{update_stock_out_line, UpdateStockOutLineError},
+    invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
     service_provider::ServiceContext,
+    NullableUpdate,
 };
 
 use chrono::NaiveDate;
@@ -14,10 +16,10 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, CreatePrescription, GenerateInput, GenerateResult};
+use generate::{generate, GenerateInput, GenerateResult};
 use validate::validate;
 
-use super::query::get_vaccination;
+use super::{generate::CreatePrescription, query::get_vaccination};
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateVaccinationError {
@@ -28,7 +30,7 @@ pub enum UpdateVaccinationError {
     StockLineDoesNotExist,
     ItemDoesNotBelongToVaccineCourse,
     NotNextDose,
-    NotMostRecentDose,
+    NotMostRecentGivenDose,
     UpdatedRecordNotFound,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -38,9 +40,9 @@ pub enum UpdateVaccinationError {
 pub struct UpdateVaccination {
     pub id: String,
     pub vaccination_date: Option<NaiveDate>,
-    pub clinician_id: Option<String>,
+    pub clinician_id: Option<NullableUpdate<String>>,
     pub comment: Option<String>,
-    pub given: bool,
+    pub given: Option<bool>,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
 }
@@ -53,17 +55,18 @@ pub fn update_vaccination(
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
-            let (program_enrolment, stock_line) = validate(&input, connection, store_id)?;
+            let (existing_vaccination, patient_id, stock_line) =
+                validate(&input, connection, store_id)?;
 
             let GenerateResult {
                 vaccination,
+                create_inventory_adjustment,
                 create_prescription,
             } = generate(GenerateInput {
-                store_id: store_id.to_string(),
-                program_enrolment,
-                user_id: ctx.user_id.clone(),
+                patient_id,
                 update_input: input.clone(),
                 stock_line,
+                existing_vaccination,
             });
 
             // Update the vaccination
@@ -75,7 +78,9 @@ pub fn update_vaccination(
             // change to not given
             // inventory adjustment - remove invoice id?
 
-            insert_inventory_adjustment(ctx, input)?;
+            if let Some(create_inventory_adjustment) = create_inventory_adjustment {
+                insert_inventory_adjustment(ctx, create_inventory_adjustment)?;
+            }
 
             // change to given
 
@@ -85,14 +90,14 @@ pub fn update_vaccination(
             // If it was `Given`, create a prescription
             if let Some(CreatePrescription {
                 insert_prescription_input,
-                update_stock_out_line_input,
+                insert_stock_out_line_input,
                 update_prescription_input,
             }) = create_prescription
             {
                 // Create prescription (in NEW status)
                 insert_prescription(ctx, insert_prescription_input)?;
                 // Add the prescription line
-                update_stock_out_line(ctx, update_stock_out_line_input)?;
+                insert_stock_out_line(ctx, insert_stock_out_line_input)?;
                 // Finalise the prescription - also link clinician
                 update_prescription(ctx, update_prescription_input)?;
             }
@@ -130,8 +135,8 @@ impl From<InsertPrescriptionError> for UpdateVaccinationError {
         UpdateVaccinationError::InternalError(format!("Could not create prescription: {:?}", error))
     }
 }
-impl From<UpdateStockOutLineError> for UpdateVaccinationError {
-    fn from(error: UpdateStockOutLineError) -> Self {
+impl From<InsertStockOutLineError> for UpdateVaccinationError {
+    fn from(error: InsertStockOutLineError) -> Self {
         UpdateVaccinationError::InternalError(format!(
             "Could not create prescription line: {:?}",
             error
@@ -149,27 +154,45 @@ impl From<UpdatePrescriptionError> for UpdateVaccinationError {
 
 #[cfg(test)]
 mod update {
+    use chrono::NaiveDate;
     use repository::mock::{
-        mock_encounter_a, mock_immunisation_encounter_a, mock_patient_b, mock_program_a,
-        mock_stock_line_a, mock_stock_line_vaccine_item_a, mock_store_a, mock_user_account_a,
-        mock_vaccination_a, mock_vaccine_course_a_dose_a, mock_vaccine_course_a_dose_b,
-        mock_vaccine_course_a_dose_c, MockData, MockDataInserts,
+        mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_stock_line_a,
+        mock_stock_line_b_vaccine_item_a, mock_stock_line_vaccine_item_a, mock_store_a,
+        mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_b, MockData,
+        MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{
-        EncounterRow, InvoiceFilter, InvoiceRepository, InvoiceStatus, InvoiceType,
-        StockLineRowRepository,
+        InvoiceFilter, InvoiceRepository, InvoiceType, StockLineRowRepository, VaccinationRow,
+        VaccinationRowRepository,
     };
 
     use crate::service_provider::ServiceProvider;
     use crate::vaccination::update::{UpdateVaccination, UpdateVaccinationError};
+    use crate::NullableUpdate;
 
     #[actix_rt::test]
     async fn update_vaccination_errors() {
+        fn mock_vaccination_b_not_given() -> VaccinationRow {
+            VaccinationRow {
+                id: "mock_vaccination_b_not_given".to_string(),
+                store_id: mock_store_a().id,
+                user_id: mock_user_account_a().id,
+                program_enrolment_id: mock_immunisation_program_enrolment_a().id,
+                vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                encounter_id: mock_immunisation_encounter_a().id,
+                created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap(),
+                ..Default::default()
+            }
+        }
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_vaccination_errors",
             MockDataInserts::all(),
             MockData {
+                vaccinations: vec![mock_vaccination_b_not_given()],
                 ..Default::default()
             },
         )
@@ -202,7 +225,9 @@ mod update {
                 store_id,
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
-                    clinician_id: Some("non_existent_clinician_id".to_string()),
+                    clinician_id: Some(NullableUpdate {
+                        value: Some("non_existent_clinician_id".to_string())
+                    }),
                     ..Default::default()
                 }
             ),
@@ -216,7 +241,7 @@ mod update {
                 store_id,
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
-                    given: true,
+                    given: Some(true),
                     ..Default::default()
                 }
             ),
@@ -230,7 +255,7 @@ mod update {
                 store_id,
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
-                    given: false,
+                    given: Some(false),
                     ..Default::default()
                 }
             ),
@@ -244,7 +269,6 @@ mod update {
                 store_id,
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
-                    given: true,
                     stock_line_id: Some("non_existent_stock_line_id".to_string()),
                     ..Default::default()
                 }
@@ -259,12 +283,58 @@ mod update {
                 store_id,
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
-                    given: true,
                     stock_line_id: Some(mock_stock_line_a().id), // FOR ITEM A (not linked to vaccine course)
                     ..Default::default()
                 }
             ),
             Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse)
+        );
+
+        // NotNextDose
+        assert_eq!(
+            service.update_vaccination(
+                &context,
+                store_id,
+                UpdateVaccination {
+                    id: mock_vaccination_b_not_given().id, // vaccination (dose) A was also not given, cant give B before A
+                    given: Some(true),
+                    stock_line_id: Some(mock_stock_line_vaccine_item_a().id),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateVaccinationError::NotNextDose)
+        );
+
+        // NotMostRecentGivenDose
+
+        // Update both vaccinations to be given (testing purposes)
+        let vaccinations_repo = VaccinationRowRepository::new(&context.connection);
+        vaccinations_repo
+            .upsert_one(&VaccinationRow {
+                given: true,
+                ..mock_vaccination_a()
+            })
+            .unwrap();
+        vaccinations_repo
+            .upsert_one(&VaccinationRow {
+                given: true,
+                ..mock_vaccination_b_not_given()
+            })
+            .unwrap();
+
+        // try to un-give but more recent dose was given
+        assert_eq!(
+            service.update_vaccination(
+                &context,
+                store_id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id, // vaccination (dose) B was also given, cant un-give A before B
+                    given: Some(false),
+                    not_given_reason: Some("reason".to_string()),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateVaccinationError::NotMostRecentGivenDose)
         );
     }
 
@@ -278,17 +348,54 @@ mod update {
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
-        // Can create - dose given
+        // Update: Just details
         let result = service_provider
             .vaccination_service
             .update_vaccination(
                 &context,
                 &mock_store_a().id,
                 UpdateVaccination {
-                    id: "new_vaccination_given_id".to_string(),
-                    encounter_id: mock_immunisation_encounter_a().id,
-                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
-                    given: true,
+                    id: mock_vaccination_a().id,
+                    comment: Some("Updated comment".to_string()),
+                    stock_line_id: None,
+                    given: None,
+                    clinician_id: None,
+                    vaccination_date: None,
+                    not_given_reason: None,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            result.vaccination_row.comment,
+            Some("Updated comment".to_owned())
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_vaccination_success_invoice_adjustments() {
+        let (_, _, connection_manager, _) = setup_all(
+            "update_vaccination_success_invoice_adjustments",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        // ----------------------------
+        // Update: Not given -> given
+        // ----------------------------
+        let result = service_provider
+            .vaccination_service
+            .update_vaccination(
+                &context,
+                &mock_store_a().id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    given: Some(true),
                     stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
                     clinician_id: None,
                     vaccination_date: None,
@@ -298,23 +405,19 @@ mod update {
             )
             .unwrap();
 
-        assert_eq!(result.vaccination_row.id, "new_vaccination_given_id");
+        assert_eq!(result.vaccination_row.given, true);
 
         // Check invoice was created, and linked to vaccination
-        let created_invoice = InvoiceRepository::new(&context.connection)
-            .query_one(InvoiceFilter::new().stock_line_id(mock_stock_line_vaccine_item_a().id))
-            .unwrap()
+        let created_invoices = InvoiceRepository::new(&context.connection)
+            .query_by_filter(
+                InvoiceFilter::new().stock_line_id(mock_stock_line_vaccine_item_a().id),
+            )
             .unwrap();
 
-        assert_eq!(
-            created_invoice.invoice_row.id,
-            result.vaccination_row.invoice_id.unwrap()
-        );
-        assert_eq!(
-            created_invoice.invoice_row.r#type,
-            InvoiceType::Prescription
-        );
-        assert_eq!(created_invoice.invoice_row.status, InvoiceStatus::Verified);
+        assert_eq!(created_invoices.len(), 1);
+        let invoice = &created_invoices[0].invoice_row;
+        assert!(invoice.r#type == InvoiceType::Prescription);
+        assert_eq!(invoice.id, result.vaccination_row.invoice_id.unwrap());
 
         // Check stock was adjusted
         let stock_line = StockLineRowRepository::new(&context.connection)
@@ -324,26 +427,113 @@ mod update {
         // 5 doses per unit, 2 units per pack. 1 dose given, was 5.0, so 4.9 left
         assert_eq!(stock_line.available_number_of_packs, 4.9);
 
-        // Can create - dose not given
+        // ----------------------------
+        // Update: Change stock_line
+        // ----------------------------
         let result = service_provider
             .vaccination_service
             .update_vaccination(
                 &context,
                 &mock_store_a().id,
                 UpdateVaccination {
-                    id: "new_vaccination_not_given_id".to_string(),
-                    encounter_id: mock_immunisation_encounter_a().id,
-                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
-                    given: false,
-                    not_given_reason: Some("reason".to_string()),
+                    id: mock_vaccination_a().id,
+                    stock_line_id: Some(mock_stock_line_b_vaccine_item_a().id),
+                    given: None,
+                    clinician_id: None,
                     vaccination_date: None,
+                    comment: None,
+                    not_given_reason: None,
+                },
+            )
+            .unwrap();
+
+        // Still given
+        assert_eq!(result.vaccination_row.given, true);
+
+        // New invoice has been created, inventory addition to reverse the original prescription
+        let created_invoices = InvoiceRepository::new(&context.connection)
+            .query_by_filter(
+                InvoiceFilter::new().stock_line_id(mock_stock_line_vaccine_item_a().id),
+            )
+            .unwrap();
+
+        assert_eq!(created_invoices.len(), 2);
+        assert!(created_invoices
+            .iter()
+            .any(|inv| inv.invoice_row.r#type == InvoiceType::InventoryAddition));
+
+        // Check stock was adjusted back up
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_stock_line_vaccine_item_a().id)
+            .unwrap()
+            .unwrap();
+        // 1 dose was reversed, was 4.9, so 5.0 now
+        assert_eq!(stock_line.available_number_of_packs, 5.0);
+
+        // Check new prescription was created, and linked to vaccination
+        let created_invoices = InvoiceRepository::new(&context.connection)
+            .query_by_filter(
+                InvoiceFilter::new().stock_line_id(mock_stock_line_b_vaccine_item_a().id),
+            )
+            .unwrap();
+
+        assert_eq!(created_invoices.len(), 1);
+        let invoice = &created_invoices[0].invoice_row;
+        assert!(invoice.r#type == InvoiceType::Prescription);
+        assert_eq!(invoice.id, result.vaccination_row.invoice_id.unwrap());
+
+        // Check stock was adjusted
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_stock_line_b_vaccine_item_a().id)
+            .unwrap()
+            .unwrap();
+        // 2 doses per unit, 20 units per pack. 1 dose given, was 10.0, so 9.975 left
+        assert_eq!(stock_line.available_number_of_packs, 9.975);
+
+        // ----------------------------
+        // Update: Given -> not given
+        // ----------------------------
+        let result = service_provider
+            .vaccination_service
+            .update_vaccination(
+                &context,
+                &mock_store_a().id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    given: Some(false),
+                    not_given_reason: Some("out of stock".to_string()),
                     stock_line_id: None,
                     clinician_id: None,
+                    vaccination_date: None,
                     comment: None,
                 },
             )
             .unwrap();
 
-        assert_eq!(result.vaccination_row.id, "new_vaccination_not_given_id");
+        assert_eq!(result.vaccination_row.given, false);
+        assert_eq!(
+            result.vaccination_row.not_given_reason,
+            Some("out of stock".to_string())
+        );
+
+        // New invoice has been created, inventory addition to reverse the prescription
+        let created_invoices = InvoiceRepository::new(&context.connection)
+            .query_by_filter(
+                InvoiceFilter::new().stock_line_id(mock_stock_line_b_vaccine_item_a().id),
+            )
+            .unwrap();
+
+        assert_eq!(created_invoices.len(), 2);
+        assert!(created_invoices
+            .iter()
+            .any(|inv| inv.invoice_row.r#type == InvoiceType::InventoryAddition));
+
+        // Check stock was adjusted back up
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_stock_line_b_vaccine_item_a().id)
+            .unwrap()
+            .unwrap();
+        // 1 dose was reversed, was 9.975, so now 10
+        assert_eq!(stock_line.available_number_of_packs, 10.0);
     }
 }
