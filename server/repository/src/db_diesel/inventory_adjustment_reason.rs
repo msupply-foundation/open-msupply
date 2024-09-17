@@ -6,7 +6,7 @@ use super::{
     DBType, StorageConnection,
 };
 use diesel::prelude::*;
-use util::inline_init;
+use util::{constants::REVERSE_PRESCRIPTION_REASON_ID, inline_init};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -26,6 +26,7 @@ pub struct InventoryAdjustmentReasonFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InventoryAdjustmentType>>,
     pub is_active: Option<bool>,
+    pub include_system_reasons: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -100,6 +101,18 @@ fn create_filtered_query(
 ) -> BoxedInventoryAdjustmentQuery {
     let mut query = inventory_adjustment_reason::table.into_boxed();
 
+    // Filter out system reasons, unless explicitly requested
+    let include_system_reasons = filter
+        .as_ref()
+        .map(|f| f.include_system_reasons)
+        .flatten()
+        .unwrap_or(false);
+
+    if !include_system_reasons {
+        query =
+            query.filter(inventory_adjustment_reason_dsl::id.ne(REVERSE_PRESCRIPTION_REASON_ID));
+    }
+
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, inventory_adjustment_reason_dsl::id);
         apply_equal_filter!(query, filter.r#type, inventory_adjustment_reason_dsl::type_);
@@ -136,6 +149,11 @@ impl InventoryAdjustmentReasonFilter {
 
     pub fn is_active(mut self, filter: bool) -> Self {
         self.is_active = Some(filter);
+        self
+    }
+
+    pub fn include_system_reasons(mut self, filter: bool) -> Self {
+        self.include_system_reasons = Some(filter);
         self
     }
 }

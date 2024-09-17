@@ -98,6 +98,7 @@ impl InventoryAdjustmentReasonFilterInput {
             id: id.map(EqualFilter::from),
             r#type: r#type.map(|t| map_filter!(t, InventoryAdjustmentReasonNodeType::to_domain)),
             is_active,
+            include_system_reasons: None,
         }
     }
 }
