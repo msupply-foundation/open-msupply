@@ -15,6 +15,7 @@ table! {
         store_id -> Text,
         quantity -> Double,
         datetime -> Timestamp,
+        stock_line_id -> Nullable<Text>,
     }
 }
 
@@ -25,6 +26,7 @@ pub struct StockMovementRow {
     pub store_id: String,
     pub quantity: f64,
     pub datetime: NaiveDateTime,
+    pub stock_line_id: Option<String>,
 }
 
 impl Default for StockMovementRow {
@@ -36,6 +38,7 @@ impl Default for StockMovementRow {
             item_id: Default::default(),
             store_id: Default::default(),
             quantity: Default::default(),
+            stock_line_id: Default::default(),
         }
     }
 }
@@ -45,6 +48,7 @@ pub struct StockMovementFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
+    pub stock_line_id: Option<EqualFilter<String>>,
 }
 
 pub struct StockMovementRepository<'a> {
@@ -75,10 +79,12 @@ impl<'a> StockMovementRepository<'a> {
                 item_id,
                 datetime,
                 store_id,
+                stock_line_id,
             } = f;
 
             apply_equal_filter!(query, item_id, stock_movement_dsl::item_id);
             apply_equal_filter!(query, store_id, stock_movement_dsl::store_id);
+            apply_equal_filter!(query, stock_line_id, stock_movement_dsl::stock_line_id);
             apply_date_time_filter!(query, datetime, stock_movement_dsl::datetime);
         }
 
@@ -109,6 +115,11 @@ impl StockMovementFilter {
 
     pub fn datetime(mut self, filter: DatetimeFilter) -> Self {
         self.datetime = Some(filter);
+        self
+    }
+
+    pub fn stock_line_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.stock_line_id = Some(filter);
         self
     }
 }
@@ -257,6 +268,7 @@ mod test {
                 store_id: Some(EqualFilter::equal_to(&store().id)),
                 item_id: Some(EqualFilter::equal_to(&mock_item_a().id)),
                 datetime: None,
+                stock_line_id: None,
             }))
             .unwrap();
 
@@ -280,7 +292,8 @@ mod test {
                     datetime: NaiveDate::from_ymd_opt(2020, 11, 2)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
-                        .unwrap()
+                        .unwrap(),
+                    stock_line_id: None,
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
@@ -290,7 +303,8 @@ mod test {
                     datetime: NaiveDate::from_ymd_opt(2020, 11, 3)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
-                        .unwrap()
+                        .unwrap(),
+                    stock_line_id: None,
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
@@ -300,7 +314,8 @@ mod test {
                     datetime: NaiveDate::from_ymd_opt(2020, 12, 15)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
-                        .unwrap()
+                        .unwrap(),
+                    stock_line_id: None,
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
@@ -310,7 +325,8 @@ mod test {
                     datetime: NaiveDate::from_ymd_opt(2021, 1, 20)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
-                        .unwrap()
+                        .unwrap(),
+                    stock_line_id: None,
                 },
                 StockMovementRow {
                     id: "n/a".to_string(),
@@ -320,7 +336,8 @@ mod test {
                     datetime: NaiveDate::from_ymd_opt(2021, 2, 1)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
-                        .unwrap()
+                        .unwrap(),
+                    stock_line_id: None,
                 },
             ]
         )

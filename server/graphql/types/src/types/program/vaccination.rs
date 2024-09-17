@@ -8,9 +8,7 @@ use graphql_core::{
 };
 use repository::{Vaccination, VaccinationRow};
 
-use crate::types::InvoiceNode;
-
-use super::{ClinicianNode, StockLineNode};
+use crate::types::{ClinicianNode, InvoiceNode, StockLineNode};
 
 #[derive(PartialEq, Debug)]
 pub struct VaccinationNode {

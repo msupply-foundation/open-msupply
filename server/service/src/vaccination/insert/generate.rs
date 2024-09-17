@@ -94,6 +94,7 @@ pub fn generate(
                 // Default
                 patient_id: None,
                 colour: None,
+                prescription_datetime: None,
             };
 
             Some(CreatePrescription {
