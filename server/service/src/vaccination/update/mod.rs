@@ -17,7 +17,7 @@ mod generate;
 mod validate;
 
 use generate::{generate, GenerateInput, GenerateResult};
-use validate::validate;
+use validate::{validate, ValidateResult};
 
 use super::{generate::CreatePrescription, query::get_vaccination};
 
@@ -55,39 +55,34 @@ pub fn update_vaccination(
     let vaccination = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing_vaccination, patient_id, stock_line) =
-                validate(&input, connection, store_id)?;
+            let ValidateResult {
+                vaccination: existing_vaccination,
+                patient_id,
+                existing_stock_line,
+                new_stock_line,
+            } = validate(&input, connection, store_id)?;
 
             let GenerateResult {
                 vaccination,
                 create_inventory_adjustment,
                 create_prescription,
             } = generate(GenerateInput {
-                patient_id,
                 update_input: input.clone(),
-                stock_line,
                 existing_vaccination,
+                patient_id,
+                existing_stock_line,
+                new_stock_line,
             });
 
             // Update the vaccination
             VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
 
-            // probably match on generate result
-            // just details change: edit vaccination
-
-            // change to not given
-            // inventory adjustment - remove invoice id?
-
+            // Reverse existing prescription if needed
             if let Some(create_inventory_adjustment) = create_inventory_adjustment {
                 insert_inventory_adjustment(ctx, create_inventory_adjustment)?;
             }
 
-            // change to given
-
-            // change item/stock line
-            // adjustment AND create
-
-            // If it was `Given`, create a prescription
+            // Create new prescription if needed
             if let Some(CreatePrescription {
                 insert_prescription_input,
                 insert_stock_out_line_input,
@@ -104,7 +99,7 @@ pub fn update_vaccination(
 
             activity_log_entry(
                 ctx,
-                ActivityLogType::VaccinationCreated,
+                ActivityLogType::VaccinationUpdated,
                 Some(vaccination.id.clone()),
                 None,
                 None,
