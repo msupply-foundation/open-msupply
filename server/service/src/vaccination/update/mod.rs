@@ -264,6 +264,7 @@ mod update {
                 store_id,
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
+                    given: Some(true),
                     stock_line_id: Some("non_existent_stock_line_id".to_string()),
                     ..Default::default()
                 }
@@ -278,6 +279,7 @@ mod update {
                 store_id,
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
+                    given: Some(true),
                     stock_line_id: Some(mock_stock_line_a().id), // FOR ITEM A (not linked to vaccine course)
                     ..Default::default()
                 }
