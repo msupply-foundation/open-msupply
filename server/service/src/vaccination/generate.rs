@@ -6,6 +6,7 @@ use crate::{
     invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
 };
 
+#[derive(Debug)]
 pub struct CreatePrescription {
     pub insert_prescription_input: InsertPrescription,
     pub insert_stock_out_line_input: InsertStockOutLine,
@@ -24,8 +25,7 @@ pub fn generate_create_prescription(
         patient_id,
     };
 
-    let number_of_packs =
-        1.0 / stock_line.item_row.vaccine_doses as f64 / stock_line.stock_line_row.pack_size;
+    let number_of_packs = get_dose_as_number_of_packs(&stock_line);
 
     let insert_stock_out_line = InsertStockOutLine {
         id: uuid(),
@@ -63,4 +63,8 @@ pub fn generate_create_prescription(
         insert_stock_out_line_input: insert_stock_out_line,
         update_prescription_input: update_prescription,
     }
+}
+
+pub fn get_dose_as_number_of_packs(stock_line: &StockLine) -> f64 {
+    1.0 / stock_line.item_row.vaccine_doses as f64 / stock_line.stock_line_row.pack_size
 }

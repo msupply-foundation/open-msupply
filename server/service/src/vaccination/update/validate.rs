@@ -13,11 +13,18 @@ use crate::{
 
 use super::{UpdateVaccination, UpdateVaccinationError};
 
+pub struct ValidateResult {
+    pub vaccination: VaccinationRow,
+    pub patient_id: String,
+    pub existing_stock_line: Option<StockLine>,
+    pub new_stock_line: Option<StockLine>,
+}
+
 pub fn validate(
     input: &UpdateVaccination,
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<(VaccinationRow, String, Option<StockLine>), UpdateVaccinationError> {
+) -> Result<ValidateResult, UpdateVaccinationError> {
     let vaccination = check_vaccination_exists(&input.id, connection)?
         .ok_or(UpdateVaccinationError::VaccinationDoesNotExist)?;
 
@@ -49,7 +56,23 @@ pub fn validate(
         }
     };
 
-    let stock_line = if let Some(stock_line_id) = &input.stock_line_id {
+    let existing_stock_line = match &vaccination.vaccination_row.stock_line_id {
+        Some(stock_line_id) => {
+            let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
+            check_doses_defined(&stock_line)?;
+            Some(stock_line)
+        }
+        None => None,
+    };
+
+    let not_given = !input
+        .given
+        .unwrap_or(vaccination.vaccination_row.given.clone());
+
+    let new_stock_line = if not_given {
+        // If not given, stock line should not get set
+        None
+    } else if let Some(stock_line_id) = &input.stock_line_id {
         let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
 
         if !check_item_belongs_to_vaccine_course(
@@ -60,17 +83,12 @@ pub fn validate(
             return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
         };
 
-        // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
-        // but if it happens, we should catch it - otherwise we'll dispense infinity!
-        if stock_line.item_row.vaccine_doses == 0 {
-            return Err(UpdateVaccinationError::InternalError(
-                "Item has no doses defined".to_string(),
-            ));
-        }
+        check_doses_defined(&stock_line)?;
 
         Some(stock_line)
     } else {
-        None
+        // If no new stock line provided, existing stock line should be used
+        existing_stock_line.clone()
     };
 
     // Sorted by created date
@@ -106,11 +124,24 @@ pub fn validate(
         }
     }
 
-    Ok((
-        vaccination.vaccination_row,
-        encounter.patient_link_id,
-        stock_line,
-    ))
+    Ok(ValidateResult {
+        vaccination: vaccination.vaccination_row,
+        patient_id: encounter.patient_link_id,
+        existing_stock_line,
+        new_stock_line,
+    })
+}
+
+fn check_doses_defined(stock_line: &StockLine) -> Result<(), UpdateVaccinationError> {
+    // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
+    // but if it happens, we should catch it - otherwise we'll dispense infinity!
+    if stock_line.item_row.vaccine_doses == 0 {
+        return Err(UpdateVaccinationError::InternalError(
+            "Item has no doses defined".to_string(),
+        ));
+    }
+
+    Ok(())
 }
 
 impl From<CommonStockLineError> for UpdateVaccinationError {
