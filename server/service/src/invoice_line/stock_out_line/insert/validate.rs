@@ -67,18 +67,17 @@ pub fn validate(
     // If we have an allocated_date older than 24hours, we need to calculate the historical stock line to see if we would have enough stock at that time
     let batch = if let Some(allocated_date) = invoice.allocated_datetime.clone() {
         if allocated_date < chrono::Utc::now().naive_utc() - chrono::Duration::hours(24) {
-            let historical_stock_lines = get_historical_stock_lines(
-                ctx,
-                store_id.to_string(),
-                item.id.clone(),
-                allocated_date,
-            )
-            .map_err(|e| {
-                InsertStockOutLineError::DatabaseError(repository::RepositoryError::DBError {
-                    msg: "Unable to calculate stock levels for this line".to_string(),
-                    extra: format!("{:?}", e),
-                })
-            })?;
+            let historical_stock_lines =
+                get_historical_stock_lines(ctx, &store_id, &item.id, &allocated_date).map_err(
+                    |e| {
+                        InsertStockOutLineError::DatabaseError(
+                            repository::RepositoryError::DBError {
+                                msg: "Unable to calculate stock levels for this line".to_string(),
+                                extra: format!("{:?}", e),
+                            },
+                        )
+                    },
+                )?;
 
             let stockline = historical_stock_lines
                 .rows

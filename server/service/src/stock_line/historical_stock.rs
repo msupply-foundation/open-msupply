@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use chrono::NaiveDateTime;
 use repository::{
-    DatetimeFilter, EqualFilter, StockLine, StockLineFilter, StockMovementFilter,
+    DatetimeFilter, EqualFilter, RepositoryError, StockLine, StockLineFilter, StockMovementFilter,
     StockMovementRepository,
 };
 use util::date_now;
@@ -15,23 +15,27 @@ use super::query::get_stock_lines;
 /// NOTE: Stock lines are only adjusted based on stock movements, changes to batch, expiry dates etc are not considered.
 pub fn get_historical_stock_lines(
     ctx: &ServiceContext,
-    store_id: String,
-    item_id: String,
-    datetime: NaiveDateTime,
-) -> Result<ListResult<StockLine>, ListError> {
+    store_id: &str,
+    item_id: &str,
+    datetime: &NaiveDateTime,
+) -> Result<ListResult<StockLine>, RepositoryError> {
     // First get the current stock lines
     let current_stock_lines = get_stock_lines(
         ctx,
         None,
         Some(
             StockLineFilter::new()
-                .store_id(EqualFilter::equal_to(&store_id))
-                .item_id(EqualFilter::equal_to(&item_id))
+                .store_id(EqualFilter::equal_to(store_id))
+                .item_id(EqualFilter::equal_to(item_id))
                 .is_available(true),
         ),
         None,
-        Some(store_id.clone()),
-    )?;
+        Some(store_id.to_owned()),
+    )
+    .map_err(|e| match e {
+        ListError::DatabaseError(e) => e,
+        _ => RepositoryError::NotFound, // Shouldn't happen happen as we don't have any pagination in our request
+    })?;
 
     let stock_line_ids: Vec<String> = current_stock_lines
         .rows
@@ -44,7 +48,7 @@ pub fn get_historical_stock_lines(
         .store_id(EqualFilter::equal_to(&store_id))
         .item_id(EqualFilter::equal_to(&item_id))
         .stock_line_id(EqualFilter::equal_any(stock_line_ids))
-        .datetime(DatetimeFilter::date_range(datetime, date_now().into()));
+        .datetime(DatetimeFilter::date_range(*datetime, date_now().into()));
     let mut stock_movements = StockMovementRepository::new(&ctx.connection).query(Some(filter))?;
 
     // sort stock movements by datetime descending (latest first)
