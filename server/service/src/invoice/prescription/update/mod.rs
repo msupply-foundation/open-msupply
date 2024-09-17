@@ -47,6 +47,8 @@ pub enum UpdatePrescriptionError {
     DatabaseError(RepositoryError),
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
+    /// Invalid stock for this date
+    StockNotAvailableAtDate(NaiveDateTime),
 }
 
 type OutError = UpdatePrescriptionError;
@@ -58,7 +60,7 @@ pub fn update_prescription(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice, status_changed) = validate(connection, &ctx.store_id, &patch)?;
+            let (invoice, status_changed) = validate(ctx, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
