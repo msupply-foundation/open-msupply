@@ -2,6 +2,7 @@ fragment PrescriptionRow on InvoiceNode {
   __typename
   comment
   createdDatetime
+  prescriptionDate: allocatedDatetime
   pickedDatetime
   verifiedDatetime
   id
