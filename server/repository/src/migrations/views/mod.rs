@@ -27,6 +27,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
       DROP VIEW IF EXISTS report_document;
       DROP VIEW IF EXISTS requisitions_in_period;
       DROP VIEW IF EXISTS store_items;
+      DROP VIEW IF EXISTS vaccination_card;
     "#
     )?;
 
@@ -384,6 +385,27 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       CREATE VIEW requisitions_in_period AS
           SELECT 'n/a' as id, program_id, period_id, store_id, order_type, type, count(*) as count FROM requisition WHERE order_type IS NOT NULL
             GROUP BY 1,2,3,4,5,6;   
+
+  CREATE VIEW vaccination_card AS
+    SELECT 
+      vcd.id || '_' || pe.id AS id,
+      vcd.id as vaccine_course_dose_id, 
+      vcd.label, 
+      vcd.min_interval_days, 
+      vcd.min_age, 
+      vc.id as vaccine_course_id, 
+      v.id as vaccination_id, 
+      v.vaccination_date, 
+      v.given, 
+      v.stock_line_id, 
+      pe.id as program_enrolment_id
+    FROM vaccine_course_dose vcd 
+    JOIN vaccine_course vc 
+      ON vcd.vaccine_course_id = vc.id
+    LEFT JOIN vaccination v 
+      ON v.vaccine_course_dose_id = vcd.id
+    JOIN program_enrolment pe 
+      ON pe.program_id = vc.program_id AND (v.program_enrolment_id = pe.id or v.program_enrolment_id IS NULL);
       "#,
     )?;
 

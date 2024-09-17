@@ -5295,6 +5295,7 @@ export type Queries = {
   /** Query omSupply temperature notification entries */
   temperatureNotifications: TemperatureNotificationsResponse;
   vaccination?: Maybe<VaccinationNode>;
+  vaccinationCard: VaccinationCardResponse;
   vaccineCourse: VaccineCourseResponse;
   vaccineCourseDose: VaccineCourseDoseResponse;
   vaccineCourses: VaccineCoursesResponse;
@@ -5900,6 +5901,12 @@ export type QueriesTemperatureNotificationsArgs = {
 
 export type QueriesVaccinationArgs = {
   id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesVaccinationCardArgs = {
+  programEnrolmentId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -7623,6 +7630,7 @@ export type UpdatePrescriptionInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
+  prescriptionDate?: InputMaybe<Scalars['DateTime']['input']>;
   status?: InputMaybe<UpdatePrescriptionStatusInput>;
 };
 
@@ -8141,6 +8149,31 @@ export type UserStorePermissionNode = {
   permissions: Array<UserPermission>;
   storeId: Scalars['String']['output'];
 };
+
+export type VaccinationCardItemNode = {
+  __typename: 'VaccinationCardItemNode';
+  given?: Maybe<Scalars['Boolean']['output']>;
+  id: Scalars['String']['output'];
+  label: Scalars['String']['output'];
+  minAgeMonths: Scalars['Float']['output'];
+  minIntervalDays: Scalars['Int']['output'];
+  stockLine?: Maybe<StockLineNode>;
+  suggestedDate?: Maybe<Scalars['NaiveDate']['output']>;
+  vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  vaccinationId?: Maybe<Scalars['String']['output']>;
+  vaccineCourseDoseId: Scalars['String']['output'];
+};
+
+export type VaccinationCardNode = {
+  __typename: 'VaccinationCardNode';
+  id: Scalars['String']['output'];
+  items: Array<VaccinationCardItemNode>;
+  patientFirstName?: Maybe<Scalars['String']['output']>;
+  patientLastName?: Maybe<Scalars['String']['output']>;
+  programName: Scalars['String']['output'];
+};
+
+export type VaccinationCardResponse = NodeError | VaccinationCardNode;
 
 export type VaccinationNode = {
   __typename: 'VaccinationNode';
