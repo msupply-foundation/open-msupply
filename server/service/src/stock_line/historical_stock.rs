@@ -7,7 +7,7 @@ use repository::{
 };
 use util::date_now;
 
-use crate::{print, service_provider::ServiceContext, ListError, ListResult};
+use crate::{service_provider::ServiceContext, ListError, ListResult};
 
 use super::query::get_stock_lines;
 
