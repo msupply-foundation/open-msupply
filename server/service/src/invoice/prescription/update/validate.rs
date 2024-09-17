@@ -35,6 +35,14 @@ pub fn validate(
         check_patient_exists(connection, patient_id)?.ok_or(PatientDoesNotExist)?;
     }
 
+    if let Some(prescription_date) = &patch.prescription_datetime {
+        // TODO: Check invoice lines, to check if stock is valid for this new date (hopefully they do this date change before adding stock but still...)
+        println!(
+            "****** TODO: Need to check stocklines are valid for new date: {:?}",
+            prescription_date
+        );
+    }
+
     Ok((invoice, status_changed))
 }
 
