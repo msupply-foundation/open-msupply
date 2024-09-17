@@ -1,4 +1,4 @@
-use repository::{InvoiceRow, InvoiceStatus, ItemRow, StockLine, StorageConnection};
+use repository::{InvoiceRow, InvoiceStatus, ItemRow, StockLine};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -7,27 +7,29 @@ use crate::{
         validate::{check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
+    service_provider::ServiceContext,
+    stock_line::historical_stock::get_historical_stock_lines,
 };
 
 use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn validate(
+    ctx: &ServiceContext,
     input: &InsertStockOutLine,
     store_id: &str,
-    connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow, StockLine), InsertStockOutLineError> {
     use InsertStockOutLineError::*;
 
-    if (check_line_exists(connection, &input.id)?).is_some() {
+    if (check_line_exists(&ctx.connection, &input.id)?).is_some() {
         return Err(LineAlreadyExists);
     }
-    let batch =
-        check_batch_exists(store_id, &input.stock_line_id, connection)?.ok_or(StockLineNotFound)?;
+    let batch = check_batch_exists(store_id, &input.stock_line_id, &ctx.connection)?
+        .ok_or(StockLineNotFound)?;
 
     let item = batch.item_row.clone();
 
     let invoice =
-        check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+        check_invoice_exists(&input.invoice_id, &ctx.connection)?.ok_or(InvoiceDoesNotExist)?;
 
     if invoice.status != InvoiceStatus::New && !check_number_of_packs(Some(input.number_of_packs)) {
         return Err(NumberOfPacksBelowZero);
@@ -40,7 +42,7 @@ pub fn validate(
         &input.id,
         &invoice.id,
         Some(input.stock_line_id.to_string()),
-        connection,
+        &ctx.connection,
     )?;
     if let Some(existing_stock) = existing_stock {
         return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
@@ -61,6 +63,39 @@ pub fn validate(
     check_location_on_hold(&batch).map_err(|e| match e {
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
+
+    // If we have an allocated_date older than 24hours, we need to calculate the historical stock line to see if we would have enough stock at that time
+    let batch = if let Some(allocated_date) = invoice.allocated_datetime.clone() {
+        if allocated_date < chrono::Utc::now().naive_utc() - chrono::Duration::hours(24) {
+            let historical_stock_lines = get_historical_stock_lines(
+                ctx,
+                store_id.to_string(),
+                item.id.clone(),
+                allocated_date,
+            )
+            .map_err(|e| {
+                InsertStockOutLineError::DatabaseError(repository::RepositoryError::DBError {
+                    msg: "Unable to calculate stock levels for this line".to_string(),
+                    extra: format!("{:?}", e),
+                })
+            })?;
+
+            let stockline = historical_stock_lines
+                .rows
+                .iter()
+                .find(|line| line.stock_line_row.id == batch.stock_line_row.id);
+
+            match stockline {
+                Some(stockline) => stockline.to_owned(),
+                None => batch,
+            }
+        } else {
+            batch
+        }
+    } else {
+        batch
+    };
+
     check_reduction_below_zero(input, &batch)?;
 
     Ok((item, invoice, batch))
