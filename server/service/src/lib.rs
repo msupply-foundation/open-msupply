@@ -9,6 +9,7 @@ use std::convert::TryInto;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
+pub mod plugin_provider;
 
 pub mod asset;
 pub mod auth;
@@ -71,6 +72,8 @@ pub mod vaccination;
 pub mod vaccine_course;
 pub mod validate;
 pub mod localisations;
+
+pub use self::plugin_provider::*;
 
 #[cfg(test)]
 mod login_mock_data;

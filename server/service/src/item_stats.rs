@@ -1,18 +1,22 @@
 use std::{collections::HashMap, ops::Neg};
 
-use crate::service_provider::ServiceContext;
+use crate::{
+    plugin, service_provider::ServiceContext, AverageMonthlyConsumption,
+    AverageMonthlyConsumptionByItem, AverageMonthlyConsumptionInput, AverageMonthlyConsumptionItem,
+};
 use chrono::Duration;
 use repository::{
     ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
     RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
     StorageConnection, StorePreferenceRowRepository,
 };
+use serde::{Deserialize, Serialize};
 use util::{
     constants::{DEFAULT_AMC_LOOKBACK_MONTHS, NUMBER_OF_DAYS_IN_A_MONTH},
     date_now_with_offset,
 };
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Deserialize, Serialize, Debug, PartialEq, Default)]
 pub struct ItemStatsFilter {
     pub item_id: Option<EqualFilter<String>>,
 }
@@ -49,7 +53,7 @@ pub fn get_item_stats(
 ) -> Result<Vec<ItemStats>, RepositoryError> {
     let ItemStatsFilter {
         item_id: item_id_filter,
-    } = filter.unwrap_or_default();
+    } = filter.clone().unwrap_or_default();
 
     let default_amc_lookback_months = StorePreferenceRowRepository::new(&ctx.connection)
         .find_one_by_id(store_id)?
@@ -73,10 +77,12 @@ pub fn get_item_stats(
         amc_lookback_months,
     )?;
 
-    Ok(ItemStats::new_vec(
+    Ok(ItemStats::new(
         consumption_rows.clone(),
         get_stock_on_hand_rows(&ctx.connection, store_id, item_id_filter)?,
         amc_lookback_months,
+        store_id,
+        filter,
     ))
 }
 
@@ -112,19 +118,57 @@ pub fn get_stock_on_hand_rows(
     StockOnHandRepository::new(connection).query(Some(filter))
 }
 
+struct AMC<'a>(&'a HashMap<String, f64>);
+impl<'a> AverageMonthlyConsumption for AMC<'a> {
+    fn average_monthly_consumption(
+        &self,
+        AverageMonthlyConsumptionInput {
+            amc_lookback_months,
+            ..
+        }: AverageMonthlyConsumptionInput,
+    ) -> AverageMonthlyConsumptionByItem {
+        self.0
+            .iter()
+            .map(|(item_id, consumption)| {
+                (
+                    item_id.to_string(),
+                    AverageMonthlyConsumptionItem {
+                        average_monthly_consumption: Some(*consumption / amc_lookback_months),
+                    },
+                )
+            })
+            .collect()
+    }
+}
+
 impl ItemStats {
-    fn new_vec(
+    fn new(
         consumption_rows: Vec<ConsumptionRow>,
         stock_on_hand_rows: Vec<StockOnHandRow>,
         amc_lookback_months: f64,
+        store_id: &str,
+        filter: Option<ItemStatsFilter>,
     ) -> Vec<Self> {
         let mut consumption_map = HashMap::new();
-        for consumption_row in consumption_rows.clone().into_iter() {
+        for consumption_row in consumption_rows.into_iter() {
             let item_total_consumption = consumption_map
                 .entry(consumption_row.item_id.clone())
                 .or_insert(0.0);
             *item_total_consumption += consumption_row.quantity;
         }
+
+        let default: Box<dyn AverageMonthlyConsumption> = Box::new(AMC(&consumption_map));
+        let amc_by_item = plugin(|p| {
+            // Technically default does not need to be using the same interface
+            p.average_monthly_consumption
+                .as_ref()
+                .unwrap_or(&default)
+                .average_monthly_consumption(AverageMonthlyConsumptionInput {
+                    store_id: store_id.to_string(),
+                    amc_lookback_months,
+                    filter,
+                })
+        });
 
         stock_on_hand_rows
             .into_iter()
@@ -132,9 +176,10 @@ impl ItemStats {
                 available_stock_on_hand: stock_on_hand.available_stock_on_hand,
                 item_id: stock_on_hand.item_id.clone(),
                 item_name: stock_on_hand.item_name.clone(),
-                average_monthly_consumption: consumption_map
+                average_monthly_consumption: amc_by_item
                     .get(&stock_on_hand.item_id)
-                    .map(|consumption| *consumption / amc_lookback_months)
+                    .map(|r| r.average_monthly_consumption)
+                    .flatten()
                     .unwrap_or_default(),
                 total_consumption: consumption_map
                     .get(&stock_on_hand.item_id)

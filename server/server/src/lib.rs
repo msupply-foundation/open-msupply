@@ -35,6 +35,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use upload_plugin::config_upload_plugin;
 
 mod authentication;
 pub mod certs;
@@ -48,6 +49,7 @@ mod serve_frontend;
 pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
+mod upload_plugin;
 pub use self::logging::*;
 
 pub mod print;
@@ -291,6 +293,7 @@ pub async fn start_server(
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
+            .configure(config_upload_plugin)
             .configure(config_sync_on_central)
             .configure(config_support)
             .configure(config_print)
