@@ -110,6 +110,13 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
     },
   ]);
 
+  const isPreviousDoseGiven = (row: VaccinationCardItemFragment) => {
+    if (!data?.items) return false;
+    const doseIndex = data?.items.findIndex(dose => dose.id === row.id);
+    if (doseIndex === 0) return true;
+    return data.items[doseIndex - 1]?.given;
+  };
+
   return isLoading ? (
     <InlineSpinner />
   ) : (
@@ -119,11 +126,10 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         columns={columns}
         data={data?.items ?? []}
         isLoading={isLoading}
-        onRowClick={row =>
-          (encounterId ?? row.vaccinationId)
-            ? openModal(row.vaccinationId, row.vaccineCourseDoseId)
-            : undefined
-        }
+        onRowClick={row => {
+          if ((encounterId ?? row.vaccinationId) && isPreviousDoseGiven(row))
+            openModal(row.vaccinationId, row.vaccineCourseDoseId);
+        }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
     </>
