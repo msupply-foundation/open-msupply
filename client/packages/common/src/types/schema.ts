@@ -6828,6 +6828,8 @@ export type StringFilterInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']['input']>;
+  /** Search term must begin with (case insensitive) */
+  startsWith?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Success = {
