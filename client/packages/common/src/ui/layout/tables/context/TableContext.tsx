@@ -30,7 +30,11 @@ export interface TableStore {
   setIsGrouped: (grouped: boolean) => void;
   setFocus: (dir: FocusDirection) => void;
   setRowStyle: (id: string, style: AppSxProp) => void;
-  setRowStyles: (ids: string[], style: AppSxProp) => void;
+  setRowStyles: (
+    ids: string[],
+    style: AppSxProp,
+    shouldReset?: boolean
+  ) => void;
 }
 
 export const tableContext = createContext<UseBoundStore<StoreApi<TableStore>>>(
@@ -126,14 +130,15 @@ export const createTableStore = () =>
         },
       }));
     },
-    setRowStyles: (ids: string[], style: AppSxProp) => {
+    setRowStyles: (ids: string[], style: AppSxProp, shouldReset = true) => {
       set(state => {
         const { rowState } = state;
 
         // Reset all styles within the state.
-        Object.keys(rowState).forEach(id => {
-          rowState[id] = getRowState(state, id, { style: {} });
-        });
+        if (shouldReset)
+          Object.keys(rowState).forEach(id => {
+            rowState[id] = getRowState(state, id, { style: {} });
+          });
 
         // Set new styles for the ids passed.
         ids.forEach(id => {

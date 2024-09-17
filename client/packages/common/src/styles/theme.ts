@@ -107,6 +107,7 @@ declare module '@mui/material/styles/createPalette' {
     white: string;
     login: string;
     icon: string;
+    success: string;
   }
 
   interface TypeForm {
@@ -193,6 +194,7 @@ export const themeOptions = {
       menu: '#f2f2f5',
       toolbar: '#fafafc',
       white: '#fff',
+      success: 'rgb(237, 247, 237)',
     },
 
     form: {
