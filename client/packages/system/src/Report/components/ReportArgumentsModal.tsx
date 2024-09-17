@@ -29,8 +29,8 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
     monthsItemsExpire,
   } = store?.preferences ?? {};
 
-  // default expiry date as now
-  const expiryDate = Date.now()
+  // default expiry date as now formatted to datepicker
+  const expiryDate = new Date().toISOString().slice(0, 10);
 
   const [data, setData] = useState<JsonData>({
     monthlyConsumptionLookBackPeriod,
