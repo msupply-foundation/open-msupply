@@ -1,4 +1,6 @@
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection};
+use repository::{
+    invoice_line, InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StorageConnection,
+};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -66,9 +68,15 @@ pub fn validate(
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
 
+    println!("Allocated date: {:?}", invoice.allocated_datetime);
     // If we have an allocated_date older than 24hours, we need to calculate the historical stock line to see if we would have enough stock at that time
     let batch_pair = if let Some(allocated_date) = invoice.allocated_datetime.clone() {
+        println!("Creating batch pair: {}", line_row.id);
         if allocated_date < chrono::Utc::now().naive_utc() - chrono::Duration::hours(24) {
+            println!(
+                "Calculating historical stock levels for line: {}",
+                line_row.id
+            );
             let historical_stock_lines =
                 get_historical_stock_lines(ctx, store_id, &item.id, &allocated_date).map_err(
                     |e| {
@@ -91,7 +99,12 @@ pub fn validate(
                     main_batch: stockline.to_owned(),
                     previous_batch_option: batch_pair.previous_batch_option,
                 },
-                None => batch_pair,
+                None => {
+                    return Err(UpdateStockOutLineError::ReductionBelowZero {
+                        stock_line_id: batch_pair.main_batch.stock_line_row.id.clone(),
+                        line_id: line.invoice_line_row.id.clone(),
+                    })
+                }
             }
         } else {
             batch_pair
