@@ -121,6 +121,9 @@ impl SyncTranslation for ReportTranslation {
             comment,
             sub_context,
             argument_schema_id,
+            is_custom: todo!(),
+            version: todo!(),
+            code: todo!(),
         };
 
         Ok(PullTranslateResult::upsert(result))
