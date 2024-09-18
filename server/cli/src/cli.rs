@@ -89,7 +89,6 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue)]
         enable_sync: bool,
     },
-
     SignPlugin {
         /// Path to the plugin.
         /// The plugin manifest and signature will be placed into the plugin directory
@@ -139,6 +138,12 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
+    // command to upsert standard reports. Will later move this into rust code
+    UpsertStandardReports {
+        /// Report name
+        #[clap(short, long)]
+        name: String,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -396,6 +401,9 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
+        Action::UpsertStandardReports { name } => {
+            println!("report: {:?}", name);
+        }
         Action::UpsertReport {
             id,
             report_path,
@@ -435,6 +443,10 @@ async fn main() -> anyhow::Result<()> {
                 FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
             }
 
+            let is_custom = false;
+            let version = "1.0".to_string();
+            let code = None;
+
             ReportRowRepository::new(&con).upsert_one(&ReportRow {
                 id,
                 name,
@@ -444,9 +456,9 @@ async fn main() -> anyhow::Result<()> {
                 sub_context,
                 argument_schema_id: form_schema_json.map(|r| r.id.clone()),
                 comment: None,
-                is_custom: todo!(),
-                version: todo!(),
-                code: todo!(),
+                is_custom,
+                version,
+                code,
             })?;
 
             info!("Report upserted");
