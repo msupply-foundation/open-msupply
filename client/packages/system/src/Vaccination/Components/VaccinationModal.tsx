@@ -58,7 +58,7 @@ export const VaccinationModal = ({
     query: { dose, vaccination, isLoading },
     isDirty,
     isComplete,
-    create,
+    saveVaccination,
   } = useVaccination({
     encounterId,
     vaccineCourseDoseId,
@@ -77,7 +77,7 @@ export const VaccinationModal = ({
 
   const save = async () => {
     try {
-      await create(draft);
+      await saveVaccination(draft);
       success(t('messages.vaccination-saved'))();
       onClose();
     } catch (e) {

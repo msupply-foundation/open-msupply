@@ -3,6 +3,7 @@ import {
   FnUtils,
   Formatter,
   isEmpty,
+  setNullableInput,
   useMutation,
   useQuery,
   useTranslation,
@@ -73,6 +74,8 @@ export function useVaccination({
     vaccineCourseDoseId,
   });
 
+  const { mutateAsync: update } = useUpdate(vaccinationId);
+
   const [patch, setPatch] = useState<Partial<VaccinationDraft>>({});
 
   const {
@@ -111,7 +114,7 @@ export function useVaccination({
     isDirty: Object.keys(patch).length > 0,
     updateDraft: (update: Partial<VaccinationDraft>) =>
       setPatch({ ...patch, ...update }),
-    create: encounterId ? insert : () => {},
+    saveVaccination: vaccinationId ? update : insert,
   };
 }
 
@@ -145,6 +148,46 @@ const useInsert = ({
     // will be empty if there's a generic error, such as permission denied
     if (!isEmpty(apiResult)) {
       const result = apiResult.insertVaccination;
+
+      if (result.__typename === 'VaccinationNode') {
+        return result;
+      }
+    }
+
+    throw new Error(t('error.failed-to-save-vaccination'));
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => queryClient.invalidateQueries([VACCINATION]),
+  });
+};
+
+const useUpdate = (vaccinationId: string | undefined) => {
+  const { api, storeId, queryClient } = useVaccinationsGraphQL();
+  const t = useTranslation('dispensary');
+
+  const mutationFn = async (input: VaccinationDraft) => {
+    if (!vaccinationId) {
+      throw new Error(t('error.failed-to-save-vaccination'));
+    }
+
+    const apiResult = await api.updateVaccination({
+      storeId,
+      input: {
+        id: vaccinationId,
+        given: input.given ?? false,
+        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
+        clinicianId: setNullableInput('id', input.clinician),
+        comment: input.comment,
+        notGivenReason: input.notGivenReason,
+        stockLineId: input.stockLine?.id,
+      },
+    });
+
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result = apiResult.updateVaccination;
 
       if (result.__typename === 'VaccinationNode') {
         return result;
