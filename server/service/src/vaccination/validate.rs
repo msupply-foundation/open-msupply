@@ -7,14 +7,18 @@ use repository::{
     },
     ClinicianRowRepository, EncounterRow, EncounterRowRepository, EqualFilter, ProgramEnrolment,
     ProgramEnrolmentFilter, ProgramEnrolmentRepository, RepositoryError, StorageConnection,
-    VaccinationFilter, VaccinationRepository, VaccinationRow, VaccinationRowRepository,
+    Vaccination, VaccinationFilter, VaccinationRepository,
 };
 
 pub fn check_vaccination_exists(
     id: &str,
     connection: &StorageConnection,
-) -> Result<Option<VaccinationRow>, RepositoryError> {
-    VaccinationRowRepository::new(connection).find_one_by_id(id)
+) -> Result<Option<Vaccination>, RepositoryError> {
+    let result = VaccinationRepository::new(connection)
+        .query_by_filter(VaccinationFilter::new().id(EqualFilter::equal_to(id)))?
+        .pop();
+
+    Ok(result)
 }
 
 pub fn check_encounter_exists(

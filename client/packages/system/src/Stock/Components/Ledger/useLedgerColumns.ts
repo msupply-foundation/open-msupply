@@ -19,6 +19,8 @@ export enum ColumnKey {
   'Number' = 'number',
 }
 
+const REVERSED_PRESCRIPTION = 'reverse_prescription';
+
 export const useLedgerColumns = (
   sortBy: SortBy<LedgerRowFragment>,
   updateSort: (sort: string, dir: 'asc' | 'desc') => void
@@ -65,6 +67,12 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Reason,
         label: 'label.reason',
+        accessor: ({ rowData }) => {
+          if (rowData.reason === REVERSED_PRESCRIPTION) {
+            return t('label.reversed-prescription');
+          }
+          return rowData.reason;
+        },
         sortable: false,
       },
     ],

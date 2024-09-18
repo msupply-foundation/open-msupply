@@ -12,7 +12,6 @@ import * as programs from './en/programs.json';
 import * as coldchain from './en/coldchain.json';
 import * as plugin from './en/plugin.json';
 import * as manage from './en/manage.json';
-import * as reports from './en/reports.json';
 
 // Normalize single namespace
 type WithOrWithoutPlural<K> = TypeOptions['jsonFormat'] extends 'v4'
@@ -41,5 +40,4 @@ export type LocaleKey =
   | WithOrWithoutPlural<keyof typeof programs>
   | WithOrWithoutPlural<keyof typeof coldchain>
   | WithOrWithoutPlural<keyof typeof plugin>
-  | WithOrWithoutPlural<keyof typeof manage>
-  | WithOrWithoutPlural<keyof typeof reports>;
+  | WithOrWithoutPlural<keyof typeof manage>;
