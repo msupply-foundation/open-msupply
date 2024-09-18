@@ -13,7 +13,13 @@ use extism::{
 use repository::{raw_query, JsonRawRow};
 use serde::{Deserialize, Serialize};
 
-use crate::{item_stats::ItemStatsFilter, service_provider::ServiceProvider};
+use crate::{
+    item_stats::ItemStatsFilter,
+    requisition::request_requisition::{
+        SuggestedQuantity, SuggestedQuantityByItem, SuggestedQuantityInput,
+    },
+    service_provider::ServiceProvider,
+};
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct AverageMonthlyConsumptionInput {
@@ -40,10 +46,12 @@ pub trait AverageMonthlyConsumption: Send + Sync {
 #[derive(Default)]
 pub struct Plugins {
     pub average_monthly_consumption: Option<Box<dyn AverageMonthlyConsumption>>,
+    pub suggested_quantity: Option<Box<dyn SuggestedQuantity>>,
 }
 
 pub static PLUGINS: RwLock<Plugins> = RwLock::new(Plugins {
     average_monthly_consumption: None,
+    suggested_quantity: None,
 });
 
 pub fn plugin<R, F: FnOnce(RwLockReadGuard<'_, Plugins>) -> R>(f: F) -> R {
@@ -88,9 +96,9 @@ fn wasm_sql(
     })
 }
 
-struct AMC(Mutex<Plugin>);
+struct PluginInstance(Mutex<Plugin>);
 
-impl AverageMonthlyConsumption for AMC {
+impl AverageMonthlyConsumption for PluginInstance {
     fn average_monthly_consumption(
         &self,
         input: AverageMonthlyConsumptionInput,
@@ -108,7 +116,43 @@ impl AverageMonthlyConsumption for AMC {
     }
 }
 
-pub fn bind_plugin(service_provider: Data<ServiceProvider>, wasm_location: PathBuf) {
+impl SuggestedQuantity for PluginInstance {
+    fn suggested_quantity(&self, input: SuggestedQuantityInput) -> SuggestedQuantityByItem {
+        let mut plugin = self.0.lock().unwrap();
+        serde_json::from_value(
+            plugin
+                .call::<serde_json::Value, serde_json::Value>(
+                    "suggested_quantity",
+                    serde_json::to_value(&input).unwrap(),
+                )
+                .unwrap(),
+        )
+        .unwrap()
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum PluginType {
+    Amc,
+    SuggestedQuantity,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct PluginConfig {
+    allowed_hosts: Option<Vec<String>>,
+    plugin_config: Option<serde_json::Value>,
+}
+
+pub fn bind_plugin(
+    service_provider: Data<ServiceProvider>,
+    wasm_location: PathBuf,
+    plugin_type: &PluginType,
+    PluginConfig {
+        allowed_hosts,
+        plugin_config,
+    }: PluginConfig,
+) {
     let manifest = Manifest::new([Wasm::Data {
         data: fs::read(wasm_location).unwrap(),
         meta: WasmMetadata {
@@ -116,13 +160,32 @@ pub fn bind_plugin(service_provider: Data<ServiceProvider>, wasm_location: PathB
             hash: None,
         },
     }]);
+
+    let manifest = match allowed_hosts {
+        Some(hosts) => manifest.with_allowed_hosts(hosts.into_iter()),
+        None => manifest,
+    };
+
+    let manifest = match plugin_config {
+        Some(config) => manifest.with_config_key("config", serde_json::to_string(&config).unwrap()),
+        None => manifest,
+    };
+
+    // Todo conditionally allow sql etc
     let plugin = PluginBuilder::new(manifest)
         .with_wasi(true)
         .with_function("sql", [PTR], [PTR], UserData::new(service_provider), sql)
         .build()
         .unwrap();
 
-    let amc = AMC(Mutex::new(plugin));
+    let plugin_instance = PluginInstance(Mutex::new(plugin));
 
-    PLUGINS.write().unwrap().average_monthly_consumption = Some(Box::new(amc));
+    match plugin_type {
+        PluginType::Amc => {
+            PLUGINS.write().unwrap().average_monthly_consumption = Some(Box::new(plugin_instance));
+        }
+        PluginType::SuggestedQuantity => {
+            PLUGINS.write().unwrap().suggested_quantity = Some(Box::new(plugin_instance));
+        }
+    }
 }
