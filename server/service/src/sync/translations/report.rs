@@ -112,10 +112,6 @@ impl SyncTranslation for ReportTranslation {
             }
         };
 
-        let is_custom = false;
-        let version = "1.0".to_string();
-        let code = None;
-
         let result = ReportRow {
             id,
             name: report_name,
@@ -125,9 +121,9 @@ impl SyncTranslation for ReportTranslation {
             comment,
             sub_context,
             argument_schema_id,
-            is_custom,
-            version,
-            code,
+            is_custom: todo!(),
+            version: todo!(),
+            code: todo!(),
         };
 
         Ok(PullTranslateResult::upsert(result))
