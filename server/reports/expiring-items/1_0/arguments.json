@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "StockFilters": {
+      "properties": {
+        "expiryDate": {
+          "description": "Expiry Date",
+          "format": "date",
+          "type": "string"
+        },
+        "itemCodeOrName": {
+          "description": "Item Code or Name",
+          "type": "string"
+        },
+        "monthlyConsumptionLookBackPeriod": {
+          "description": "Average Monthly Consumption Look Back Period",
+          "type": "number",
+          "readOnly": true
+        },
+        "monthsOverstock": {
+          "description": "Months Overstock",
+          "type": "number",
+          "readOnly": true
+        },
+        "monthsUnderstock": {
+          "description": "Months Understock",
+          "type": "number",
+          "readOnly": true
+        },
+        "monthsItemsExpire": {
+          "description": "Expiring item period",
+          "type": "number",
+          "readOnly": true
+        }
+      }
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/StockFilters"
+    }
+  ]
+}
