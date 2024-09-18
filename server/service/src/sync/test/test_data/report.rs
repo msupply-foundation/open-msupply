@@ -30,16 +30,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REPORT_1,
-        ReportRow {
-            id: REPORT_1.0.to_string(),
-            name: "Test".to_string(),
-            r#type: ReportType::OmSupply,
-            template: "template data".to_string(),
-            context: ContextType::Stocktake,
-            comment: Some("Test comment".to_string()),
-            sub_context: None,
-            argument_schema_id: None,
-        },
+        ReportRow {id:REPORT_1.0.to_string(),name:"Test".to_string(),r#type:ReportType::OmSupply,template:"template data".to_string(),context:ContextType::Stocktake,comment:Some("Test comment".to_string()),sub_context:None,argument_schema_id:None, 
+        is_custom: false, version: "1.0".to_string(), code: None},
     )]
 }
 
