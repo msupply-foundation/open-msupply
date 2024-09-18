@@ -31,6 +31,14 @@ export type InsertVaccinationMutationVariables = Types.Exact<{
 
 export type InsertVaccinationMutation = { __typename: 'Mutations', insertVaccination: { __typename: 'VaccinationNode', id: string } };
 
+export type UpdateVaccinationMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateVaccinationInput;
+}>;
+
+
+export type UpdateVaccinationMutation = { __typename: 'Mutations', updateVaccination: { __typename: 'VaccinationNode', id: string } };
+
 export const VaccinationCourseDoseFragmentDoc = gql`
     fragment VaccinationCourseDose on VaccineCourseDoseNode {
   __typename
@@ -105,6 +113,17 @@ export const InsertVaccinationDocument = gql`
   }
 }
     `;
+export const UpdateVaccinationDocument = gql`
+    mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
+  updateVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -121,6 +140,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertVaccination(variables: InsertVaccinationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertVaccinationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertVaccinationMutation>(InsertVaccinationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertVaccination', 'mutation', variables);
+    },
+    updateVaccination(variables: UpdateVaccinationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateVaccinationMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateVaccinationMutation>(UpdateVaccinationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateVaccination', 'mutation', variables);
     }
   };
 }
