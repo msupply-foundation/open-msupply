@@ -69,7 +69,7 @@ export function useVaccination({
   });
 
   const { mutateAsync: insert } = useInsert({
-    encounterId: encounterId ?? '',
+    encounterId,
     vaccineCourseDoseId,
   });
 
@@ -111,7 +111,7 @@ export function useVaccination({
     isDirty: Object.keys(patch).length > 0,
     updateDraft: (update: Partial<VaccinationDraft>) =>
       setPatch({ ...patch, ...update }),
-    create: encounterId ? insert : () => {},
+    create: insert,
   };
 }
 
@@ -119,13 +119,15 @@ const useInsert = ({
   encounterId,
   vaccineCourseDoseId,
 }: {
-  encounterId: string;
+  encounterId?: string;
   vaccineCourseDoseId: string;
 }) => {
   const { api, storeId, queryClient } = useVaccinationsGraphQL();
   const t = useTranslation('dispensary');
 
   const mutationFn = async (input: VaccinationDraft) => {
+    if (!encounterId) return;
+
     const apiResult = await api.insertVaccination({
       storeId,
       input: {
