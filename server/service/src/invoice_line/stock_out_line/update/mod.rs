@@ -125,15 +125,16 @@ impl From<RepositoryError> for UpdateStockOutLineError {
 mod test {
     use repository::{
         mock::{
-            mock_item_b_lines, mock_outbound_shipment_a_invoice_lines,
-            mock_outbound_shipment_b_invoice_lines, mock_outbound_shipment_c,
-            mock_outbound_shipment_c_invoice_lines, mock_outbound_shipment_no_stock_line,
-            mock_prescription_a_invoice_lines, mock_stock_line_b,
-            mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_store_a,
-            mock_store_b, mock_store_c, MockDataInserts,
+            mock_item_a, mock_item_b_lines, mock_name_store_a,
+            mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_b_invoice_lines,
+            mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines,
+            mock_outbound_shipment_no_stock_line, mock_patient, mock_prescription_a_invoice_lines,
+            mock_stock_line_b, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
+            mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository, StockLineRowRepository,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
+        InvoiceType, StockLineRow, StockLineRowRepository, Upsert,
     };
     use util::{inline_edit, inline_init};
 
@@ -141,8 +142,11 @@ mod test {
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
-        invoice_line::stock_out_line::{
-            StockOutType, UpdateStockOutLine, UpdateStockOutLineError as ServiceError,
+        invoice_line::{
+            stock_out_line::{
+                StockOutType, UpdateStockOutLine, UpdateStockOutLineError as ServiceError,
+            },
+            InsertStockOutLine,
         },
         service_provider::ServiceProvider,
     };
@@ -514,5 +518,153 @@ mod test {
             expected_total_number_of_packs,
             stock_line_for_invoice_line(&allocated_outbound_line).total_number_of_packs
         }
+    }
+
+    #[actix_rt::test]
+    async fn update_stock_out_line_back_dated() {
+        let (_, connection, connection_manager, _) =
+            setup_all("update_stock_out_line_back_dated", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_line_service;
+
+        // Create two invoices, one backdated and one current for the same stock line
+
+        // Invoice from 7 days ago
+        let datetime = chrono::Utc::now().naive_utc() - chrono::Duration::days(7);
+        let earlier_invoice_id = "stock_in_invoice_id-7".to_string();
+        let earlier_stock_in_invoice = InvoiceRow {
+            id: earlier_invoice_id.clone(),
+            invoice_number: -7,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::InboundShipment,
+            store_id: context.store_id.clone(),
+            created_datetime: datetime.clone(),
+            picked_datetime: Some(datetime.clone()),
+            delivered_datetime: Some(datetime.clone()),
+            verified_datetime: Some(datetime.clone()),
+            status: InvoiceStatus::Verified,
+            ..Default::default()
+        };
+
+        earlier_stock_in_invoice.upsert(&connection).unwrap();
+
+        // Current invoice (1 minute ago)
+        let datetime = chrono::Utc::now().naive_utc() - chrono::Duration::minutes(1);
+        let current_invoice = InvoiceRow {
+            id: "stock_in_invoice_id-0".to_string(),
+            invoice_number: 0,
+            name_link_id: mock_name_store_a().id,
+            r#type: InvoiceType::InboundShipment,
+            store_id: context.store_id.clone(),
+            created_datetime: datetime.clone(),
+            picked_datetime: Some(datetime.clone()),
+            delivered_datetime: Some(datetime.clone()),
+            verified_datetime: Some(datetime.clone()),
+            status: InvoiceStatus::Verified,
+            ..Default::default()
+        };
+
+        current_invoice.upsert(&context.connection).unwrap();
+
+        // Create a stock line for the item
+        let stock_line_id = "stock_line_id".to_string();
+        let stock_line = StockLineRow {
+            id: stock_line_id.clone(),
+            item_link_id: mock_item_a().id,
+            pack_size: 10.0,
+            available_number_of_packs: 20.0,
+            total_number_of_packs: 20.0,
+            store_id: context.store_id.clone(),
+            batch: Some("batch".to_string()),
+            ..Default::default()
+        };
+
+        stock_line.upsert(&context.connection).unwrap();
+
+        // Add the invoice lines (each invoice introduces 10 packs)
+
+        // Earlier invoice
+        let invoice_line = InvoiceLineRow {
+            id: "invoice_line-7".to_string(),
+            invoice_id: earlier_invoice_id,
+            item_link_id: mock_item_a().id,
+            stock_line_id: Some(stock_line_id.clone()),
+            pack_size: 10.0,
+            number_of_packs: 10.0,
+            batch: Some("batch".to_string()),
+            r#type: InvoiceLineType::StockIn,
+            ..Default::default()
+        };
+
+        invoice_line.upsert(&context.connection).unwrap();
+
+        // Current invoice
+        let invoice_line = InvoiceLineRow {
+            id: "invoice_line-0".to_string(),
+            invoice_id: current_invoice.id,
+            item_link_id: mock_item_a().id,
+            stock_line_id: Some(stock_line_id.clone()),
+            pack_size: 10.0,
+            number_of_packs: 10.0,
+            batch: Some("batch".to_string()),
+            r#type: InvoiceLineType::StockIn,
+            ..Default::default()
+        };
+
+        invoice_line.upsert(&context.connection).unwrap();
+
+        // Create a backdated prescription (2 days ago)
+        let prescription_id = "prescription_id".to_string();
+        let datetime = chrono::Utc::now().naive_utc() - chrono::Duration::days(2);
+        let prescription_invoice = InvoiceRow {
+            id: prescription_id.clone(),
+            invoice_number: 999,
+            name_link_id: mock_patient().id,
+            r#type: InvoiceType::Prescription,
+            store_id: context.store_id.clone(),
+            created_datetime: chrono::Utc::now().naive_utc(), // Created now
+            allocated_datetime: Some(datetime.clone()),       // Backdated to 2 days ago
+            picked_datetime: Some(datetime.clone()),
+            delivered_datetime: None,
+            verified_datetime: None,
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+
+        prescription_invoice.upsert(&context.connection).unwrap();
+
+        // Add a stock out line to the prescription (using all available stock)
+        service
+            .insert_stock_out_line(
+                &context,
+                inline_init(|r: &mut InsertStockOutLine| {
+                    r.id = "prescription_stock_out_line1".to_string();
+                    r.r#type = StockOutType::Prescription;
+                    r.invoice_id = prescription_id.clone();
+                    r.stock_line_id = stock_line_id.clone();
+                    r.number_of_packs = 10.0;
+                }),
+            )
+            .unwrap();
+
+        // Check that we can't update the stock line to use more than the available stock (10 packs)
+        assert_eq!(
+            service.update_stock_out_line(
+                &context,
+                inline_init(|r: &mut UpdateStockOutLine| {
+                    r.id = "prescription_stock_out_line1".to_string();
+                    r.r#type = Some(StockOutType::Prescription);
+                    r.number_of_packs = Some(11.0);
+                })
+            ),
+            Err(ServiceError::ReductionBelowZero {
+                stock_line_id: stock_line_id.clone(),
+                line_id: "prescription_stock_out_line1".to_string()
+            })
+        );
     }
 }

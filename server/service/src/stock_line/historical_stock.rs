@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use repository::{
     DatetimeFilter, EqualFilter, RepositoryError, StockLine, StockLineFilter, StockMovementFilter,
     StockMovementRepository,
 };
-use util::date_now;
 
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 
@@ -48,7 +47,10 @@ pub fn get_historical_stock_lines(
         .store_id(EqualFilter::equal_to(&store_id))
         .item_id(EqualFilter::equal_to(&item_id))
         .stock_line_id(EqualFilter::equal_any(stock_line_ids))
-        .datetime(DatetimeFilter::date_range(*datetime, date_now().into()));
+        .datetime(DatetimeFilter::date_range(
+            *datetime,
+            Utc::now().naive_utc(),
+        ));
     let mut stock_movements = StockMovementRepository::new(&ctx.connection).query(Some(filter))?;
 
     // sort stock movements by datetime descending (latest first)
