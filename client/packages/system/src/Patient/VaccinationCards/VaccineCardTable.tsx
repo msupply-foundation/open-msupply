@@ -111,10 +111,14 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
   ]);
 
   const isPreviousDoseGiven = (row: VaccinationCardItemFragment) => {
+    const vaccineCourseId = row.vaccineCourseId;
     if (!data?.items) return false;
-    const doseIndex = data?.items.findIndex(dose => dose.id === row.id);
+    const itemsForCourse = data.items.filter(
+      item => item.vaccineCourseId === vaccineCourseId
+    );
+    const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
     if (doseIndex === 0) return true;
-    return data.items[doseIndex - 1]?.given;
+    return itemsForCourse[doseIndex - 1]?.given;
   };
 
   return isLoading ? (
