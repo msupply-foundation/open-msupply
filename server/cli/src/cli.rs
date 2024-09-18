@@ -444,6 +444,9 @@ async fn main() -> anyhow::Result<()> {
                 sub_context,
                 argument_schema_id: form_schema_json.map(|r| r.id.clone()),
                 comment: None,
+                is_custom: todo!(),
+                version: todo!(),
+                code: todo!(),
             })?;
 
             info!("Report upserted");
