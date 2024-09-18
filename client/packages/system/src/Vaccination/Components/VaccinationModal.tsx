@@ -122,13 +122,11 @@ export const VaccinationModal = ({
   ) : (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {alert && <Alert severity={alert.severity}>{alert.content}</Alert>}
-
       <VaccinationForm
         updateDraft={updateDraft}
         openBatchModal={openBatchModal}
         draft={draft}
         dose={dose}
-        disabled={!encounterId}
       />
     </Box>
   );
@@ -170,13 +168,11 @@ const VaccinationForm = ({
   dose,
   updateDraft,
   openBatchModal,
-  disabled,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
   openBatchModal: () => void;
-  disabled: boolean;
 }) => {
   const t = useTranslation('dispensary');
 
@@ -209,7 +205,6 @@ const VaccinationForm = ({
                 });
               }}
               clinicianValue={draft.clinician}
-              disabled={disabled}
             />
           </Grid>
         }
@@ -222,7 +217,6 @@ const VaccinationForm = ({
             value={draft.date}
             onChange={date => updateDraft({ date })}
             sx={{ flex: 1 }}
-            disabled={disabled}
           />
         }
       />
@@ -238,16 +232,13 @@ const VaccinationForm = ({
           value={true}
           control={<Radio />}
           label={t('label.vaccine-given')}
-          disabled={disabled}
         />
         <FormControlLabel
           value={false}
           control={<Radio />}
           label={t('label.vaccine-not-given')}
-          disabled={disabled}
         />
       </RadioGroup>
-
       {draft.given && (
         <>
           <InputWithLabelRow
@@ -258,7 +249,6 @@ const VaccinationForm = ({
                 value={draft.itemId ?? ''}
                 onChange={e => updateDraft({ itemId: e.target.value })}
                 sx={{ flex: 1 }}
-                disabled={disabled}
               />
             }
           />
@@ -301,7 +291,6 @@ const VaccinationForm = ({
                 value={draft.notGivenReason ?? ''}
                 onChange={e => updateDraft({ notGivenReason: e.target.value })}
                 sx={{ flex: 1 }}
-                disabled={disabled}
               />
             }
           />
@@ -320,7 +309,6 @@ const VaccinationForm = ({
               fullWidth
               rows={3}
               style={{ flex: 1 }}
-              disabled={disabled}
             />
           }
         />

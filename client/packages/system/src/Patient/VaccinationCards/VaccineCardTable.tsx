@@ -39,6 +39,12 @@ const isPreviousDoseGiven = (
   return itemsForCourse[doseIndex - 1]?.given;
 };
 
+const isRowClickable = (
+  isEncounter: boolean,
+  row: VaccinationCardItemFragment,
+  items: VaccinationCardItemFragment[] | undefined
+) => (isEncounter || row.vaccinationId) && isPreviousDoseGiven(row, items);
+
 const useStyleRowsByStatus = (
   rows: VaccinationCardItemFragment[] | undefined,
   isEncounter: boolean
@@ -52,11 +58,7 @@ const useStyleRowsByStatus = (
     const doneRows = rows.filter(row => row.given).map(row => row.id);
     const notDoneRows = rows.filter(row => !row.given).map(row => row.id);
     const nonClickableRows = rows
-      .filter(
-        row =>
-          (!row.vaccinationId && !isEncounter) ||
-          !isPreviousDoseGiven(row, rows)
-      )
+      .filter(row => !isRowClickable(isEncounter, row, rows))
       .map(row => row.id);
 
     setRowStyles(doneRows, {
@@ -156,10 +158,7 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         data={data?.items ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          if (
-            (isEncounter ?? row.vaccinationId) &&
-            isPreviousDoseGiven(row, data?.items)
-          )
+          if (isRowClickable(isEncounter, row, data?.items))
             openModal(row.vaccinationId, row.vaccineCourseDoseId);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
