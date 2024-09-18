@@ -125,6 +125,9 @@ pub fn generate(
         invoice_id: create_prescription
             .as_ref()
             .map(|p| p.insert_prescription_input.id.clone()),
+
+        facility_name_id: None,
+        facility_free_text: None,
     };
 
     GenerateResult {
