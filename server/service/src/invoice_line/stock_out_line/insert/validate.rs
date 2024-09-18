@@ -64,14 +64,9 @@ pub fn validate(
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
 
-    println!("Allocated date: {:?}", invoice.allocated_datetime);
     // If we have an allocated_date older than 24hours, we need to calculate the historical stock line to see if we would have enough stock at that time
     let batch = if let Some(allocated_date) = invoice.allocated_datetime.clone() {
         if allocated_date < chrono::Utc::now().naive_utc() - chrono::Duration::hours(24) {
-            println!(
-                "Checking historical stock levels for stock line: {}",
-                batch.stock_line_row.id
-            );
             let historical_stock_lines =
                 get_historical_stock_lines(ctx, &store_id, &item.id, &allocated_date).map_err(
                     |e| {
@@ -83,7 +78,6 @@ pub fn validate(
                         )
                     },
                 )?;
-
             let stockline = historical_stock_lines
                 .rows
                 .iter()
