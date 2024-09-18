@@ -19,6 +19,7 @@ export interface VaccinationStockLine {
 }
 
 export interface VaccinationDraft {
+  facility?: string | null;
   clinician?: Clinician | null;
   date: Date | null;
   given?: boolean | null;
@@ -39,7 +40,7 @@ export function useVaccination({
   vaccinationId: string | undefined;
   defaultClinician?: Clinician;
 }) {
-  const { storeId, api } = useVaccinationsGraphQL();
+  const { store, storeId, api } = useVaccinationsGraphQL();
 
   const { data: dose, isLoading: doseLoading } = useQuery({
     queryKey: [VACCINATION, vaccineCourseDoseId],
@@ -82,6 +83,7 @@ export function useVaccination({
     given,
     notGivenReason,
     stockLine,
+    facilityName,
   } = vaccination ?? {};
 
   const defaults: VaccinationDraft = {
@@ -89,6 +91,8 @@ export function useVaccination({
     date: vaccinationDate ? new Date(vaccinationDate) : new Date(),
     // If new vaccination, default to encounter clinician
     clinician: vaccination ? clinician : defaultClinician,
+    // If new vaccination, default to this store name
+    facility: vaccination ? facilityName : store?.name,
 
     // Populate with existing vaccination data
     comment,
@@ -126,6 +130,7 @@ const useInsert = ({
   const t = useTranslation('dispensary');
 
   const mutationFn = async (input: VaccinationDraft) => {
+    console.log(input);
     const apiResult = await api.insertVaccination({
       storeId,
       input: {
