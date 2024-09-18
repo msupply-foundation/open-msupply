@@ -66,6 +66,7 @@ pub fn check_reason_is_valid(
                 InventoryAdjustmentReasonFilter::new()
                     .r#type(InventoryAdjustmentType::Positive.equal_to())
                     .is_active(true)
+                    .include_system_reasons(true)
                     .id(EqualFilter::equal_to(reason_id)),
             )?;
             return Ok(reason.len() == 1);
@@ -75,6 +76,7 @@ pub fn check_reason_is_valid(
             InventoryAdjustmentReasonFilter::new()
                 .r#type(InventoryAdjustmentType::Negative.equal_to())
                 .is_active(true)
+                .include_system_reasons(true)
                 .id(EqualFilter::equal_to(reason_id)),
         )?;
         return Ok(reason.len() == 1);
