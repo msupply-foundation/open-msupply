@@ -196,6 +196,17 @@ const VaccinationForm = ({
       sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
     >
       <InputWithLabelRow
+        label={t('label.facility')}
+        Input={
+          <BasicTextInput
+            value={draft.facility}
+            onChange={e => updateDraft({ facility: e.target.value })}
+            fullWidth
+            style={{ flex: 1 }}
+          />
+        }
+      />
+      <InputWithLabelRow
         label={t('label.clinician')}
         Input={
           <Grid item flex={1}>
