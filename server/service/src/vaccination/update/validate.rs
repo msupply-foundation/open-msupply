@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, RepositoryError, StockLine, StorageConnection, VaccinationFilter,
+    EqualFilter, RepositoryError, StockLine, StorageConnection, Vaccination, VaccinationFilter,
     VaccinationRepository, VaccinationRow,
 };
 
@@ -56,6 +56,7 @@ pub fn validate(
         }
     };
 
+    // Validate existing stock line
     let existing_stock_line = match &vaccination.vaccination_row.stock_line_id {
         Some(stock_line_id) => {
             let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
@@ -65,6 +66,7 @@ pub fn validate(
         None => None,
     };
 
+    // Validate existing stock line
     let not_given = !input
         .given
         .unwrap_or(vaccination.vaccination_row.given.clone());
@@ -91,34 +93,16 @@ pub fn validate(
         existing_stock_line.clone()
     };
 
-    // Sorted by created date
-    let other_vaccinations_for_course = VaccinationRepository::new(connection).query_by_filter(
-        VaccinationFilter::new()
-            .program_enrolment_id(EqualFilter::equal_to(
-                &vaccination.vaccination_row.program_enrolment_id,
-            ))
-            .vaccine_course_id(EqualFilter::equal_to(
-                &vaccination.vaccine_course_dose_row.vaccine_course_id,
-            )),
-    )?;
-
-    let this_vaccination_index = other_vaccinations_for_course
-        .iter()
-        .position(|v| v.vaccination_row.id == vaccination.vaccination_row.id)
-        .unwrap_or(0);
-
-    let previous_vaccination = match this_vaccination_index {
-        // First in course
-        0 => None,
-        index => other_vaccinations_for_course.get(index - 1),
-    };
+    // Check we can give/un-give this dose, based on previous and next doses
+    let (previous_vaccination, next_vaccination) =
+        get_related_vaccinations(connection, &vaccination)?;
 
     if let Some(previous_vaccination) = previous_vaccination {
         if !previous_vaccination.vaccination_row.given && input.given == Some(true) {
             return Err(UpdateVaccinationError::NotNextDose);
         }
     }
-    if let Some(next_vaccination) = other_vaccinations_for_course.get(this_vaccination_index + 1) {
+    if let Some(next_vaccination) = next_vaccination {
         if next_vaccination.vaccination_row.given && input.given == Some(false) {
             return Err(UpdateVaccinationError::NotMostRecentGivenDose);
         }
@@ -142,6 +126,39 @@ fn check_doses_defined(stock_line: &StockLine) -> Result<(), UpdateVaccinationEr
     }
 
     Ok(())
+}
+
+fn get_related_vaccinations(
+    connection: &StorageConnection,
+    vaccination: &Vaccination,
+) -> Result<(Option<Vaccination>, Option<Vaccination>), RepositoryError> {
+    // Sorted by created date
+    let other_vaccinations_for_course = VaccinationRepository::new(connection).query_by_filter(
+        VaccinationFilter::new()
+            .program_enrolment_id(EqualFilter::equal_to(
+                &vaccination.vaccination_row.program_enrolment_id,
+            ))
+            .vaccine_course_id(EqualFilter::equal_to(
+                &vaccination.vaccine_course_dose_row.vaccine_course_id,
+            )),
+    )?;
+
+    let this_vaccination_index = other_vaccinations_for_course
+        .iter()
+        .position(|v| v.vaccination_row.id == vaccination.vaccination_row.id)
+        .unwrap_or(0);
+
+    let previous_vaccination = match this_vaccination_index {
+        // First in course
+        0 => None,
+        index => other_vaccinations_for_course.get(index - 1).cloned(),
+    };
+
+    let next_vaccination = other_vaccinations_for_course
+        .get(this_vaccination_index + 1)
+        .cloned();
+
+    return Ok((previous_vaccination, next_vaccination));
 }
 
 impl From<CommonStockLineError> for UpdateVaccinationError {
