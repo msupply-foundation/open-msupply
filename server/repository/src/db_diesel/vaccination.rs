@@ -1,6 +1,8 @@
 use super::{
     clinician_link_row::{clinician_link, clinician_link::dsl as clinician_link_dsl},
     clinician_row::{clinician, clinician::dsl as clinician_dsl},
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
+    name_row::{name, name::dsl as name_dsl},
     vaccination_row::{vaccination, vaccination::dsl as vaccination_dsl},
     DBType, RepositoryError, StorageConnection, VaccinationRow,
 };
@@ -11,7 +13,7 @@ use crate::{
         vaccine_course_dose::{self, dsl as vaccine_course_dose_dsl},
         VaccineCourseDoseRow,
     },
-    ClinicianLinkRow, ClinicianRow, EqualFilter, Pagination, Sort,
+    ClinicianLinkRow, ClinicianRow, EqualFilter, NameLinkRow, NameRow, Pagination, Sort,
 };
 
 use diesel::{
@@ -24,6 +26,7 @@ pub struct Vaccination {
     pub vaccination_row: VaccinationRow,
     pub vaccine_course_dose_row: VaccineCourseDoseRow,
     pub clinician_row: Option<ClinicianRow>,
+    pub facility_name_row: Option<NameRow>,
 }
 
 #[derive(Clone, Default)]
@@ -48,6 +51,7 @@ type VaccinationJoin = (
     VaccinationRow,
     Option<(ClinicianLinkRow, ClinicianRow)>,
     VaccineCourseDoseRow,
+    Option<(NameLinkRow, NameRow)>,
 );
 
 impl<'a> VaccinationRepository<'a> {
@@ -105,20 +109,24 @@ impl<'a> VaccinationRepository<'a> {
 }
 
 fn to_domain(
-    (vaccination_row, clinician_link_join, vaccine_course_dose_row): VaccinationJoin,
+    (vaccination_row, clinician_link_join, vaccine_course_dose_row, name_link_join): VaccinationJoin,
 ) -> Vaccination {
     Vaccination {
         vaccination_row,
         clinician_row: clinician_link_join.map(|(_, clinician_row)| clinician_row),
         vaccine_course_dose_row,
+        facility_name_row: name_link_join.map(|(_, name_row)| name_row),
     }
 }
 
 type BoxedVaccinationQuery = IntoBoxed<
     'static,
-    InnerJoin<
-        LeftJoin<vaccination::table, InnerJoin<clinician_link::table, clinician::table>>,
-        vaccine_course_dose::table,
+    LeftJoin<
+        InnerJoin<
+            LeftJoin<vaccination::table, InnerJoin<clinician_link::table, clinician::table>>,
+            vaccine_course_dose::table,
+        >,
+        InnerJoin<name_link::table, name::table>,
     >,
     DBType,
 >;
@@ -127,6 +135,7 @@ fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQ
     let mut query = vaccination_dsl::vaccination
         .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
         .inner_join(vaccine_course_dose_dsl::vaccine_course_dose)
+        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .into_boxed();
 
     if let Some(f) = filter {

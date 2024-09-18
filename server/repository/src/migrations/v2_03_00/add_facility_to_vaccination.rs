@@ -11,7 +11,7 @@ impl MigrationFragment for Migrate {
         sql!(
             connection,
             r#"
-                ALTER TABLE vaccination ADD COLUMN facility_name_id TEXT REFERENCES name(id);
+                ALTER TABLE vaccination ADD COLUMN facility_name_link_id TEXT REFERENCES name(id);
                 ALTER TABLE vaccination ADD COLUMN facility_free_text TEXT;
             "#
         )?;
