@@ -523,6 +523,7 @@ mod update {
         assert_eq!(created_invoices.len(), 2);
         assert!(created_invoices.iter().any(|inv| inv.invoice_row.r#type
             == InvoiceType::InventoryAddition
+            // inventory adjustment is linked to the patient
             && inv.name_row.id == mock_patient().id));
 
         // Check stock was adjusted back up
