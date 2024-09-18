@@ -8,17 +8,22 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   DeleteIcon,
+  DateTimePickerInput,
+  Formatter,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
 
 export const Toolbar: FC = () => {
-  const { id, patient, clinician, update } = usePrescription.document.fields([
-    'id',
-    'patient',
-    'clinician',
-  ]);
+  const { id, patient, clinician, prescriptionDate, update } =
+    usePrescription.document.fields([
+      'id',
+      'patient',
+      'clinician',
+      'prescriptionDate',
+    ]);
   const onDelete = usePrescription.line.deleteSelected();
 
   const isDisabled = usePrescription.utils.isDisabled();
@@ -60,6 +65,25 @@ export const Toolbar: FC = () => {
                     });
                   }}
                   clinicianValue={clinician}
+                />
+              }
+            />
+          </Box>
+          <Box display="flex" flex={1}>
+            <InputWithLabelRow
+              label={t('label.date')}
+              Input={
+                <DateTimePickerInput
+                  // label={t('label.date')}
+                  value={DateUtils.getDateOrNull(prescriptionDate)}
+                  format="P"
+                  onChange={async prescriptionDate => {
+                    await update({
+                      id,
+                      prescriptionDate: Formatter.toIsoString(prescriptionDate),
+                    });
+                  }}
+                  maxDate={new Date()}
                 />
               }
             />
