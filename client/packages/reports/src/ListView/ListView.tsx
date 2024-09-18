@@ -21,7 +21,7 @@ import { JsonData } from 'packages/programs/src';
 import { AppRoute } from 'packages/config/src';
 
 export const ListView = () => {
-  const t = useTranslation('reports');
+  const t = useTranslation();
   const { store } = useAuthContext();
   const navigate = useNavigate();
   const { data } = useReportList({

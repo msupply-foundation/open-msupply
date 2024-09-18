@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use repository::{
     Invoice, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
     StockLineRowRepository,
@@ -30,6 +31,7 @@ pub struct UpdatePrescription {
     pub clinician_id: Option<String>,
     pub comment: Option<String>,
     pub colour: Option<String>,
+    pub prescription_datetime: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -318,6 +320,7 @@ mod test {
                 clinician_id: Some(clinician().id),
                 comment: Some("test_comment".to_string()),
                 colour: Some("test_colour".to_string()),
+                prescription_datetime: None,
             }
         }
 
@@ -340,6 +343,7 @@ mod test {
                     clinician_id,
                     comment,
                     colour,
+                    prescription_datetime: _,
                 } = get_update();
                 u.name_link_id = patient_id.unwrap();
                 u.clinician_link_id = clinician_id;
