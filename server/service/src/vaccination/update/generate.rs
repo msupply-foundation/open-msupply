@@ -58,6 +58,7 @@ pub fn generate(
             adjustment: get_dose_as_number_of_packs(&stock_line),
             adjustment_type: AdjustmentType::Addition,
             inventory_adjustment_reason_id: Some(REVERSE_PRESCRIPTION_REASON_ID.to_string()),
+            name_id: Some(patient_id.clone()),
         })
     } else {
         None

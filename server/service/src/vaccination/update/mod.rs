@@ -151,10 +151,10 @@ impl From<UpdatePrescriptionError> for UpdateVaccinationError {
 mod update {
     use chrono::NaiveDate;
     use repository::mock::{
-        mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_stock_line_a,
-        mock_stock_line_b_vaccine_item_a, mock_stock_line_vaccine_item_a, mock_store_a,
-        mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_b, MockData,
-        MockDataInserts,
+        mock_immunisation_encounter_a, mock_immunisation_program_enrolment_a, mock_patient,
+        mock_stock_line_a, mock_stock_line_b_vaccine_item_a, mock_stock_line_vaccine_item_a,
+        mock_store_a, mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_b,
+        MockData, MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{
@@ -521,9 +521,9 @@ mod update {
             .unwrap();
 
         assert_eq!(created_invoices.len(), 2);
-        assert!(created_invoices
-            .iter()
-            .any(|inv| inv.invoice_row.r#type == InvoiceType::InventoryAddition));
+        assert!(created_invoices.iter().any(|inv| inv.invoice_row.r#type
+            == InvoiceType::InventoryAddition
+            && inv.name_row.id == mock_patient().id));
 
         // Check stock was adjusted back up
         let stock_line = StockLineRowRepository::new(&context.connection)
