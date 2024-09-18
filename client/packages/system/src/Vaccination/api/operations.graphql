@@ -66,3 +66,13 @@ mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
     }
   }
 }
+
+mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
+  updateVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      __typename
+      id
+    }
+  }
+}
