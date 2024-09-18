@@ -43,6 +43,8 @@ pub fn generate(
         vaccine_course_dose_id,
         vaccination_date,
         clinician_id,
+        facility_name_id,
+        facility_free_text,
         comment,
         given,
         stock_line_id,
@@ -106,6 +108,13 @@ pub fn generate(
         None => None,
     };
 
+    // If name id is provided, use it. Otherwise, use free text
+    let (facility_name_link_id, facility_free_text) = match (facility_name_id, facility_free_text) {
+        (Some(facility_name_id), _) => (Some(facility_name_id), None),
+        (None, Some(facility_free_text)) => (None, Some(facility_free_text)),
+        _ => (None, None),
+    };
+
     let vaccination = VaccinationRow {
         id,
         store_id,
@@ -126,8 +135,8 @@ pub fn generate(
             .as_ref()
             .map(|p| p.insert_prescription_input.id.clone()),
 
-        facility_name_id: None,
-        facility_free_text: None,
+        facility_name_link_id,
+        facility_free_text,
     };
 
     GenerateResult {

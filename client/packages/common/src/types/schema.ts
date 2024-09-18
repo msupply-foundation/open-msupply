@@ -2907,6 +2907,8 @@ export type InsertVaccinationInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   encounterId: Scalars['String']['input'];
+  facilityFreeText?: InputMaybe<Scalars['String']['input']>;
+  facilityNameId?: InputMaybe<Scalars['String']['input']>;
   given: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
@@ -8180,6 +8182,7 @@ export type VaccinationNode = {
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
+  facilityName?: Maybe<Scalars['String']['output']>;
   given: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   invoice?: Maybe<InvoiceNode>;

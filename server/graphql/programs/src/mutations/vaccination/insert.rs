@@ -18,6 +18,8 @@ pub struct InsertVaccinationInput {
     pub vaccine_course_dose_id: String,
     pub vaccination_date: Option<NaiveDate>,
     pub clinician_id: Option<String>,
+    pub facility_name_id: Option<String>,
+    pub facility_free_text: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
     pub stock_line_id: Option<String>,
@@ -32,6 +34,8 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             vaccine_course_dose_id,
             vaccination_date,
             clinician_id,
+            facility_name_id,
+            facility_free_text,
             comment,
             given,
             stock_line_id,
@@ -44,6 +48,8 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             vaccine_course_dose_id,
             vaccination_date,
             clinician_id,
+            facility_name_id,
+            facility_free_text,
             comment,
             given,
             stock_line_id,
@@ -94,6 +100,7 @@ fn map_error(error: ServiceError) -> Result<InsertVaccinationResponse> {
     let graphql_error = match error {
         ServiceError::VaccinationAlreadyExists
         | ServiceError::ClinicianDoesNotExist
+        | ServiceError::FacilityNameDoesNotExist
         | ServiceError::EncounterDoesNotExist
         | ServiceError::VaccineCourseDoseDoesNotExist
         | ServiceError::ProgramEnrolmentDoesNotMatchVaccineCourse

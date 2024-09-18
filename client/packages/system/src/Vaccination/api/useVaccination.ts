@@ -126,17 +126,23 @@ const useInsert = ({
   encounterId: string;
   vaccineCourseDoseId: string;
 }) => {
-  const { api, storeId, queryClient } = useVaccinationsGraphQL();
+  const { api, storeId, queryClient, store } = useVaccinationsGraphQL();
   const t = useTranslation('dispensary');
 
   const mutationFn = async (input: VaccinationDraft) => {
-    console.log(input);
+    const facilityIsCurrentStore = store?.name === input.facility?.trim();
+
     const apiResult = await api.insertVaccination({
       storeId,
       input: {
         id: FnUtils.generateUUID(),
         encounterId,
         vaccineCourseDoseId,
+
+        // If the facility is the current store, link to that facility
+        facilityNameId: facilityIsCurrentStore ? store?.nameId : undefined,
+        // Otherwise store as free text
+        facilityFreeText: facilityIsCurrentStore ? undefined : input.facility,
 
         given: input.given ?? false,
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
