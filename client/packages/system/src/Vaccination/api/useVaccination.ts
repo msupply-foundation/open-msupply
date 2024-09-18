@@ -11,6 +11,7 @@ import {
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION } from './keys';
+import { VACCINATION_CARD } from '../../Patient/api/hooks/keys';
 
 export interface VaccinationStockLine {
   id: string;
@@ -158,6 +159,6 @@ const useInsert = ({
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINATION]),
+    onSuccess: () => queryClient.invalidateQueries([VACCINATION_CARD]),
   });
 };
