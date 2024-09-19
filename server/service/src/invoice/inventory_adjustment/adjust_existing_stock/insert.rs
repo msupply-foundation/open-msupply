@@ -33,8 +33,6 @@ pub struct InsertInventoryAdjustment {
     pub adjustment: f64,
     pub adjustment_type: AdjustmentType,
     pub inventory_adjustment_reason_id: Option<String>,
-    /// defaults to the system `Inventory adjustments` name
-    pub name_id: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -271,7 +269,6 @@ mod test {
                         crate::invoice::inventory_adjustment::AdjustmentType::Reduction,
                     adjustment: 50.0,
                     inventory_adjustment_reason_id: Some(reduction_reason().id),
-                    ..Default::default()
                 }
             ),
             Err(ServiceError::StockLineReducedBelowZero(stock_line))

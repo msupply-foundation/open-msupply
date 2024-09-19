@@ -82,7 +82,6 @@ impl CreateInventoryAdjustmentInput {
             adjustment,
             adjustment_type: adjustment_type.to_domain(),
             inventory_adjustment_reason_id,
-            name_id: None,
         }
     }
 }

@@ -35,7 +35,6 @@ pub fn generate(
         adjustment,
         adjustment_type,
         inventory_adjustment_reason_id,
-        name_id,
     }: InsertInventoryAdjustment,
     stock_line: StockLine,
 ) -> Result<GenerateResult, RepositoryError> {
@@ -57,7 +56,7 @@ pub fn generate(
     let invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: name_id.unwrap_or(inventory_adjustment_name.id),
+        name_link_id: inventory_adjustment_name.id,
         r#type: match adjustment_type {
             AdjustmentType::Addition => InvoiceType::InventoryAddition,
             AdjustmentType::Reduction => InvoiceType::InventoryReduction,
