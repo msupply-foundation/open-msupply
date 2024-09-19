@@ -56,6 +56,9 @@ telnet = "0.2.1"
 tempfile = "3.10.1"
 scraper = "0.20.0"
 umya-spreadsheet = "2.0.0"
+qrcode = "0.14"
+image = "0.25"
+base64 = "0.22"
 
 
 [dev-dependencies]

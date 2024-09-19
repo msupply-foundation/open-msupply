@@ -20,6 +20,7 @@ use super::{
         GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef, SQLQuery, TeraTemplate,
     },
     html_printing::html_to_pdf,
+    qr_code::qr_code_as_html_img_src,
 };
 
 pub enum PrintFormat {
@@ -408,6 +409,22 @@ fn generate_report(
         context.insert("arguments", &arguments);
     }
     let mut tera = tera::Tera::default();
+
+    tera.register_function(
+        "qr_code",
+        move |args: &HashMap<String, serde_json::Value>| {
+            let data = args
+                .get("data")
+                .ok_or_else(|| tera::Error::msg("qr_code filter expects a `data` argument"))?;
+            let data = data.as_str().ok_or_else(|| {
+                tera::Error::msg("qr_code filter expects a string `data` argument")
+            })?;
+
+            let html_src = qr_code_as_html_img_src(data);
+            Ok(tera::Value::String(html_src))
+        },
+    );
+
     let mut templates: HashMap<String, String> = report
         .templates
         .iter()

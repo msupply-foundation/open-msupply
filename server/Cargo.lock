@@ -4864,6 +4864,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "qrcode"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d68782463e408eb1e668cf6152704bd856c78c5b6417adaee3203d8f4c1fc9ec"
+dependencies = [
+ "image",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5839,17 +5848,20 @@ dependencies = [
  "assert-json-diff",
  "assert_approx_eq",
  "async-trait",
+ "base64 0.22.1",
  "bcrypt",
  "chrono",
  "flate2",
  "headless_chrome",
  "hex",
  "httpmock",
+ "image",
  "jsonschema",
  "jsonwebtoken",
  "log",
  "pem",
  "pretty_assertions",
+ "qrcode",
  "rand",
  "repository",
  "reqwest",
