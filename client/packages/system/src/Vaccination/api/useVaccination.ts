@@ -11,6 +11,7 @@ import {
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION } from './keys';
+import { OTHER_FACILITY } from '../Components/FacilitySearchInput';
 
 export interface VaccinationStockLine {
   id: string;
@@ -19,7 +20,8 @@ export interface VaccinationStockLine {
 }
 
 export interface VaccinationDraft {
-  facility?: string | null;
+  facilityFreeText?: string | null;
+  facilityId: string;
   clinician?: Clinician | null;
   date: Date | null;
   given?: boolean | null;
@@ -83,7 +85,8 @@ export function useVaccination({
     given,
     notGivenReason,
     stockLine,
-    facilityName,
+    facilityNameId,
+    facilityFreeText,
   } = vaccination ?? {};
 
   const defaults: VaccinationDraft = {
@@ -91,8 +94,10 @@ export function useVaccination({
     date: vaccinationDate ? new Date(vaccinationDate) : new Date(),
     // If new vaccination, default to encounter clinician
     clinician: vaccination ? clinician : defaultClinician,
-    // If new vaccination, default to this store name
-    facility: vaccination ? facilityName : store?.name,
+    // If new vaccination, default to this store
+    facilityId:
+      (vaccination ? facilityNameId : store?.nameId) ?? OTHER_FACILITY,
+    facilityFreeText: facilityFreeText ?? '',
 
     // Populate with existing vaccination data
     comment,
@@ -105,14 +110,19 @@ export function useVaccination({
   const draft: VaccinationDraft = { ...defaults, ...patch };
 
   const isComplete =
-    (draft.given && !!draft.itemId && !!draft.stockLine) ||
-    (draft.given === false && !!draft.notGivenReason);
+    // Other facility requires free text
+    (draft.facilityId !== OTHER_FACILITY || !!draft.facilityFreeText) &&
+    // Item/stock line required if given
+    ((draft.given && !!draft.itemId && !!draft.stockLine) ||
+      // reason required if not given
+      (draft.given === false && !!draft.notGivenReason));
 
   return {
     query: { dose, vaccination, isLoading: doseLoading || vaccinationLoading },
     draft,
     isComplete,
     isDirty: Object.keys(patch).length > 0,
+    store,
     updateDraft: (update: Partial<VaccinationDraft>) =>
       setPatch({ ...patch, ...update }),
     create: insert,
@@ -126,12 +136,10 @@ const useInsert = ({
   encounterId: string;
   vaccineCourseDoseId: string;
 }) => {
-  const { api, storeId, queryClient, store } = useVaccinationsGraphQL();
+  const { api, storeId, queryClient } = useVaccinationsGraphQL();
   const t = useTranslation('dispensary');
 
   const mutationFn = async (input: VaccinationDraft) => {
-    const facilityIsCurrentStore = store?.name === input.facility?.trim();
-
     const apiResult = await api.insertVaccination({
       storeId,
       input: {
@@ -139,10 +147,12 @@ const useInsert = ({
         encounterId,
         vaccineCourseDoseId,
 
-        // If the facility is the current store, link to that facility
-        facilityNameId: facilityIsCurrentStore ? store?.nameId : undefined,
-        // Otherwise store as free text
-        facilityFreeText: facilityIsCurrentStore ? undefined : input.facility,
+        facilityNameId:
+          input.facilityId === OTHER_FACILITY ? undefined : input?.facilityId,
+        facilityFreeText:
+          input.facilityId === OTHER_FACILITY
+            ? input.facilityFreeText
+            : undefined,
 
         given: input.given ?? false,
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
