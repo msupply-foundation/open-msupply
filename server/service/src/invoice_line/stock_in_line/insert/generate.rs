@@ -42,7 +42,7 @@ pub fn generate(
             connection,
             new_line.clone(),
             StockLineInput {
-                stock_line_id: input.stock_line_id,
+                stock_line_id: input.stock_line_id.clone(),
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_link_id: existing_invoice_row.name_link_id.clone(),
                 on_hold: input.stock_on_hold,
