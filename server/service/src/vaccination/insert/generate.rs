@@ -69,7 +69,7 @@ pub fn generate(
         // If we create the prescription invoice, link it here
         invoice_id: create_prescription
             .as_ref()
-            .map(|p| p.insert_prescription_input.id.clone()),
+            .map(|p| p.create_prescription.id.clone()),
     };
 
     GenerateResult {

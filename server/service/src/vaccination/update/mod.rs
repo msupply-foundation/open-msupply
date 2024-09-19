@@ -1,9 +1,11 @@
 use crate::{
     activity_log::activity_log_entry,
     invoice::{
-        insert_prescription,
-        inventory_adjustment::{insert_inventory_adjustment, InsertInventoryAdjustmentError},
-        update_prescription, InsertPrescriptionError, UpdatePrescriptionError,
+        customer_return::{
+            insert::{insert_customer_return, InsertCustomerReturnError},
+            update_customer_return, UpdateCustomerReturnError,
+        },
+        insert_prescription, update_prescription, InsertPrescriptionError, UpdatePrescriptionError,
     },
     invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
     service_provider::ServiceContext,
@@ -16,7 +18,7 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, GenerateInput, GenerateResult};
+use generate::{generate, CreateCustomerReturn, GenerateInput, GenerateResult};
 use validate::{validate, ValidateResult};
 
 use super::{generate::CreatePrescription, query::get_vaccination};
@@ -64,7 +66,7 @@ pub fn update_vaccination(
 
             let GenerateResult {
                 vaccination,
-                create_inventory_adjustment,
+                create_customer_return,
                 create_prescription,
             } = generate(GenerateInput {
                 update_input: input.clone(),
@@ -78,23 +80,30 @@ pub fn update_vaccination(
             VaccinationRowRepository::new(connection).upsert_one(&vaccination)?;
 
             // Reverse existing prescription if needed
-            if let Some(create_inventory_adjustment) = create_inventory_adjustment {
-                insert_inventory_adjustment(ctx, create_inventory_adjustment)?;
+            if let Some(CreateCustomerReturn {
+                create_return,
+                finalise_return,
+            }) = create_customer_return
+            {
+                // Create customer return (in NEW status, with line)
+                insert_customer_return(ctx, create_return)?;
+                // Finalise, reintroducing stock, and add comment
+                update_customer_return(ctx, finalise_return)?;
             }
 
             // Create new prescription if needed
             if let Some(CreatePrescription {
-                insert_prescription_input,
+                create_prescription,
                 insert_stock_out_line_input,
-                update_prescription_input,
+                finalise_prescription,
             }) = create_prescription
             {
                 // Create prescription (in NEW status)
-                insert_prescription(ctx, insert_prescription_input)?;
+                insert_prescription(ctx, create_prescription)?;
                 // Add the prescription line
                 insert_stock_out_line(ctx, insert_stock_out_line_input)?;
                 // Finalise the prescription - also link clinician
-                update_prescription(ctx, update_prescription_input)?;
+                update_prescription(ctx, finalise_prescription)?;
             }
 
             activity_log_entry(
@@ -117,10 +126,18 @@ impl From<RepositoryError> for UpdateVaccinationError {
     }
 }
 
-impl From<InsertInventoryAdjustmentError> for UpdateVaccinationError {
-    fn from(error: InsertInventoryAdjustmentError) -> Self {
+impl From<InsertCustomerReturnError> for UpdateVaccinationError {
+    fn from(error: InsertCustomerReturnError) -> Self {
         UpdateVaccinationError::InternalError(format!(
-            "Could not create inventory adjustment: {:?}",
+            "Could not create customer return: {:?}",
+            error
+        ))
+    }
+}
+impl From<UpdateCustomerReturnError> for UpdateVaccinationError {
+    fn from(error: UpdateCustomerReturnError) -> Self {
+        UpdateVaccinationError::InternalError(format!(
+            "Could not finalise customer return: {:?}",
             error
         ))
     }
@@ -457,9 +474,9 @@ mod update {
         assert_eq!(created_invoices.len(), 2);
         assert!(created_invoices
             .iter()
-            .any(|inv| inv.invoice_row.r#type == InvoiceType::InventoryAddition));
+            .any(|inv| inv.invoice_row.r#type == InvoiceType::CustomerReturn));
 
-        // Check stock was adjusted back up
+        // Check new stock was introduced
         let stock_line = StockLineRowRepository::new(&context.connection)
             .find_one_by_id(&mock_stock_line_vaccine_item_a().id)
             .unwrap()
@@ -523,7 +540,7 @@ mod update {
         assert_eq!(created_invoices.len(), 2);
         assert!(created_invoices
             .iter()
-            .any(|inv| inv.invoice_row.r#type == InvoiceType::InventoryAddition));
+            .any(|inv| inv.invoice_row.r#type == InvoiceType::CustomerReturn));
 
         // Check stock was adjusted back up
         let stock_line = StockLineRowRepository::new(&context.connection)
