@@ -47,14 +47,18 @@ pub fn validate(
         connection,
         &vaccine_course_dose.vaccine_course_row.id,
         &input.vaccine_course_dose_id,
-        &program_enrolment.program_row.id,
-    )?;
+        &program_enrolment.row.id,
+    )
+    .map_err(|err| match err {
+        RepositoryError::NotFound => InsertVaccinationError::VaccineIsNotNextDose,
+        _ => InsertVaccinationError::DatabaseError(err),
+    })?;
 
     if let Some(previous_vaccination) = previous_vaccination {
-        if !previous_vaccination.vaccination_row.given == true {
+        if !previous_vaccination.vaccination_row.given {
             return Err(InsertVaccinationError::VaccineIsNotNextDose);
         }
-    };
+    }
 
     if let Some(clinician_id) = &input.clinician_id {
         if !check_clinician_exists(clinician_id, connection)? {

@@ -262,6 +262,22 @@ mod insert {
             Err(InsertVaccinationError::VaccinationAlreadyExistsForDose)
         );
 
+        // VaccineIsNotNextDose
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    // Only dose A has been administered
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::VaccineIsNotNextDose)
+        );
+
         // ClinicianDoesNotExist
         assert_eq!(
             service.insert_vaccination(
@@ -342,6 +358,38 @@ mod insert {
                 }
             ),
             Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse)
+        );
+
+        // Insert dose B as NOT GIVEN
+        service
+            .insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_vaccination_given_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    given: false,
+                    not_given_reason: Some("reason".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // VaccineIsNotNextDose
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    // Dose B was not given, so can't give dose C
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::VaccineIsNotNextDose)
         );
     }
 
