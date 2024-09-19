@@ -121,11 +121,7 @@ export const getNextInboundStatus = (
 export const getNextCustomerReturnStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
-  const currentStatusIdx = customerReturnStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = customerReturnStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
+  return getNextInboundStatus(currentStatus);
 };
 
 export const getNextPrescriptionStatus = (
