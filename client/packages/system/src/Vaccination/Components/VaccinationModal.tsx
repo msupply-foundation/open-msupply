@@ -34,7 +34,7 @@ import { ArrowRightIcon } from '@mui/x-date-pickers';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
-  encounterId: string;
+  encounterId?: string;
   vaccineCourseDoseId: string;
   isOpen: boolean;
   onClose: () => void;
@@ -122,7 +122,6 @@ export const VaccinationModal = ({
   ) : (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {alert && <Alert severity={alert.severity}>{alert.content}</Alert>}
-
       <VaccinationForm
         updateDraft={updateDraft}
         openBatchModal={openBatchModal}
@@ -240,7 +239,6 @@ const VaccinationForm = ({
           label={t('label.vaccine-not-given')}
         />
       </RadioGroup>
-
       {draft.given && (
         <>
           <InputWithLabelRow

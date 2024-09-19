@@ -682,5 +682,6 @@
   "heading.between-datetimes": "Between the datetimes of",
   "report.confirm-date": "Confirm date",
   "report.stat": "Stat",
-  "report.global-total": "Global total"
+  "report.global-total": "Global total",
+  "label.report-filters": "Report Filters"
 }

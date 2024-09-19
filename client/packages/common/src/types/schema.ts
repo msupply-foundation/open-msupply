@@ -8162,6 +8162,7 @@ export type VaccinationCardItemNode = {
   vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
   vaccinationId?: Maybe<Scalars['String']['output']>;
   vaccineCourseDoseId: Scalars['String']['output'];
+  vaccineCourseId: Scalars['String']['output'];
 };
 
 export type VaccinationCardNode = {

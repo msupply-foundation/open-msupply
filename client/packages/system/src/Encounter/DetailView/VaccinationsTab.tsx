@@ -2,36 +2,51 @@ import React from 'react';
 import { VaccinationModal } from '../../Vaccination';
 import { useEditModal } from '@common/hooks';
 import { Clinician } from '../../Clinician';
+import { VaccineCardTable } from '../../Patient/VaccinationCards/VaccineCardTable';
 
 export const VaccinationsTab = ({
   clinician,
+  programEnrolmentId,
   encounterId,
 }: {
-  encounterId: string;
+  programEnrolmentId: string;
+  encounterId?: string;
   clinician?: Clinician;
 }) => {
-  const { isOpen, onClose, onOpen } = useEditModal();
+  const { isOpen, onClose, onOpen, entity } = useEditModal<{
+    vaccinationId?: string | undefined;
+    vaccineCourseDoseId: string;
+  }>();
+
+  const openModal = (
+    vaccinationId: string | null | undefined,
+    vaccineCourseDoseId: string
+  ) => {
+    onOpen({
+      vaccinationId: vaccinationId === null ? undefined : vaccinationId,
+      vaccineCourseDoseId,
+    });
+  };
+
+  const { vaccinationId, vaccineCourseDoseId } = entity ?? {};
 
   return (
     <>
-      {isOpen && (
+      {isOpen && vaccineCourseDoseId && (
         <VaccinationModal
           isOpen
           encounterId={encounterId}
-          vaccinationId="0191d9e3-8af0-74f0-b65d-d384629f868d"
-          vaccineCourseDoseId="0191b035-927d-7a0b-89cd-ae581a033429"
+          vaccinationId={vaccinationId}
+          vaccineCourseDoseId={vaccineCourseDoseId}
           onClose={onClose}
           defaultClinician={clinician}
         />
       )}
-      <div
-        style={{ display: 'flex', flexDirection: 'column', margin: '0 auto' }}
-      >
-        <h1>Vaccination Card</h1>
-        <button onClick={onOpen}>
-          Pretend this is the Diphtheria 1 row in the card
-        </button>
-      </div>
+      <VaccineCardTable
+        programEnrolmentId={programEnrolmentId}
+        openModal={openModal}
+        encounterId={encounterId}
+      />
     </>
   );
 };
