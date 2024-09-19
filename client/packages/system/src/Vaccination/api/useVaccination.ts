@@ -11,6 +11,7 @@ import {
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION } from './keys';
+import { VACCINATION_CARD } from '../../Patient/api/hooks/keys';
 
 export interface VaccinationStockLine {
   id: string;
@@ -35,7 +36,7 @@ export function useVaccination({
   defaultClinician,
 }: {
   vaccineCourseDoseId: string;
-  encounterId: string;
+  encounterId?: string;
   vaccinationId: string | undefined;
   defaultClinician?: Clinician;
 }) {
@@ -119,13 +120,15 @@ const useInsert = ({
   encounterId,
   vaccineCourseDoseId,
 }: {
-  encounterId: string;
+  encounterId?: string;
   vaccineCourseDoseId: string;
 }) => {
   const { api, storeId, queryClient } = useVaccinationsGraphQL();
   const t = useTranslation('dispensary');
 
   const mutationFn = async (input: VaccinationDraft) => {
+    if (!encounterId) return;
+
     const apiResult = await api.insertVaccination({
       storeId,
       input: {
@@ -156,6 +159,6 @@ const useInsert = ({
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINATION]),
+    onSuccess: () => queryClient.invalidateQueries([VACCINATION_CARD]),
   });
 };

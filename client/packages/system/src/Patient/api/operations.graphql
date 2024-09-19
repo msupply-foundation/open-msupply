@@ -234,6 +234,7 @@ query latestPatientEncounter(
 fragment VaccinationCardItem on VaccinationCardItemNode {
   __typename
   id
+  vaccineCourseId
   vaccineCourseDoseId
   vaccinationId
   label
