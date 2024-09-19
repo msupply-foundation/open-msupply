@@ -403,6 +403,53 @@ async fn main() -> anyhow::Result<()> {
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::UpsertStandardReports { name } => {
             println!("report: {:?}", name);
+            // TODO find all of these strings properly
+            let base_reports_dir =
+                "/Users/fergusroache/Documents/GitHub/open-msupply/server/reports";
+            let version = "1_0";
+            let report_dir = format!("{base_reports_dir}/{name}/{version}");
+            let arguments_path = format!("{report_dir}/arguments.json");
+            let arguments_ui_path = format!("{report_dir}/arguments_ui.json");
+            let id = name.clone();
+            let report_path = format!("{report_dir}/template.html");
+            let context = ContextType::Report;
+            let sub_context = "Expiring";
+            let is_custom = false;
+            let code = None;
+
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
+            let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
+
+            let argument_schema_id =
+                existing_report.and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
+
+            let form_schema_json = schema_from_row(FormSchemaRow {
+                id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                r#type: "reportArgument".to_string(),
+                json_schema: fs::read_to_string(arguments_path)?,
+                ui_schema: fs::read_to_string(arguments_ui_path)?,
+            })?;
+
+            FormSchemaRowRepository::new(&con).upsert_one(&form_schema_json)?;
+
+            ReportRowRepository::new(&con).upsert_one(&ReportRow {
+                id,
+                name,
+                r#type: repository::ReportType::OmSupply,
+                template: fs::read_to_string(report_path)?,
+                context,
+                sub_context: Some(sub_context.to_string()),
+                argument_schema_id: Some(form_schema_json.id.clone()),
+                comment: None,
+                is_custom,
+                version: version.to_string(),
+                code,
+            })?;
+
+            info!("Report upserted via standard report command");
         }
         Action::UpsertReport {
             id,
