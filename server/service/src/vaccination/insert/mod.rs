@@ -75,17 +75,17 @@ pub fn insert_vaccination(
 
             // If it was `Given`, create a prescription
             if let Some(CreatePrescription {
-                insert_prescription_input,
+                create_prescription,
                 insert_stock_out_line_input,
-                update_prescription_input,
+                finalise_prescription,
             }) = create_prescription
             {
                 // Create prescription (in NEW status)
-                insert_prescription(ctx, insert_prescription_input)?;
+                insert_prescription(ctx, create_prescription)?;
                 // Add the prescription line
                 insert_stock_out_line(ctx, insert_stock_out_line_input)?;
                 // Finalise the prescription - also link clinician
-                update_prescription(ctx, update_prescription_input)?;
+                update_prescription(ctx, finalise_prescription)?;
             }
 
             activity_log_entry(

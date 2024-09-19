@@ -25,9 +25,6 @@ pub const SYSTEM_USER_ID: &str = "omsupply_system";
 // Missing program
 pub const MISSING_PROGRAM: &str = "missing_program";
 
-// System inventory addition reason for reversing prescriptions
-pub const REVERSE_PRESCRIPTION_REASON_ID: &str = "reverse_prescription";
-
 /// The default document type for a patient
 pub const PATIENT_TYPE: &str = "Patient";
 /// The default context ID for a patient

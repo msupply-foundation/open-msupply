@@ -8,9 +8,9 @@ use crate::{
 
 #[derive(Debug)]
 pub struct CreatePrescription {
-    pub insert_prescription_input: InsertPrescription,
+    pub create_prescription: InsertPrescription,
     pub insert_stock_out_line_input: InsertStockOutLine,
-    pub update_prescription_input: UpdatePrescription,
+    pub finalise_prescription: UpdatePrescription,
 }
 
 pub fn generate_create_prescription(
@@ -20,7 +20,7 @@ pub fn generate_create_prescription(
 ) -> CreatePrescription {
     let prescription_id = uuid();
 
-    let insert_prescription = InsertPrescription {
+    let create_prescription = InsertPrescription {
         id: prescription_id.clone(),
         patient_id,
     };
@@ -47,7 +47,7 @@ pub fn generate_create_prescription(
         sell_price_per_pack: None,
     };
 
-    let update_prescription = UpdatePrescription {
+    let finalise_prescription = UpdatePrescription {
         id: prescription_id.clone(),
         status: Some(UpdatePrescriptionStatus::Verified),
         // Assign clinician here if one was chosen
@@ -60,9 +60,9 @@ pub fn generate_create_prescription(
     };
 
     CreatePrescription {
-        insert_prescription_input: insert_prescription,
+        create_prescription,
         insert_stock_out_line_input: insert_stock_out_line,
-        update_prescription_input: update_prescription,
+        finalise_prescription,
     }
 }
 

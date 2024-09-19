@@ -25,7 +25,30 @@ interface VaccinationCardProps {
   encounterId?: string;
 }
 
-const useStyleRowsByStatus = (rows?: VaccinationCardItemFragment[]) => {
+const isPreviousDoseGiven = (
+  row: VaccinationCardItemFragment,
+  items: VaccinationCardItemFragment[] | undefined
+) => {
+  const vaccineCourseId = row.vaccineCourseId;
+  if (!items) return false;
+  const itemsForCourse = items.filter(
+    item => item.vaccineCourseId === vaccineCourseId
+  );
+  const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
+  if (doseIndex === 0) return true;
+  return itemsForCourse[doseIndex - 1]?.given;
+};
+
+const isRowClickable = (
+  isEncounter: boolean,
+  row: VaccinationCardItemFragment,
+  items: VaccinationCardItemFragment[] | undefined
+) => (isEncounter || row.vaccinationId) && isPreviousDoseGiven(row, items);
+
+const useStyleRowsByStatus = (
+  rows: VaccinationCardItemFragment[] | undefined,
+  isEncounter: boolean
+) => {
   const { setRowStyles } = useRowStyle();
   const theme = useTheme();
 
@@ -34,6 +57,9 @@ const useStyleRowsByStatus = (rows?: VaccinationCardItemFragment[]) => {
 
     const doneRows = rows.filter(row => row.given).map(row => row.id);
     const notDoneRows = rows.filter(row => !row.given).map(row => row.id);
+    const nonClickableRows = rows
+      .filter(row => !isRowClickable(isEncounter, row, rows))
+      .map(row => row.id);
 
     setRowStyles(doneRows, {
       backgroundColor: `${theme.palette.background.success} !important`,
@@ -45,6 +71,16 @@ const useStyleRowsByStatus = (rows?: VaccinationCardItemFragment[]) => {
       },
       // Parameter to prevent the previous setRowStyles from being
       // reset/overwritten
+      false
+    );
+    setRowStyles(
+      nonClickableRows,
+      {
+        '& td': {
+          cursor: 'default',
+        },
+        backgroundColor: 'white !important',
+      },
       false
     );
   }, [rows]);
@@ -63,7 +99,9 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
     query: { data, isLoading },
   } = usePatientVaccineCard(programEnrolmentId);
 
-  useStyleRowsByStatus(data?.items);
+  const isEncounter = !!encounterId;
+
+  useStyleRowsByStatus(data?.items, isEncounter);
 
   const columns = useColumns<VaccinationCardItemFragment>([
     {
@@ -110,13 +148,6 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
     },
   ]);
 
-  const isPreviousDoseGiven = (row: VaccinationCardItemFragment) => {
-    if (!data?.items) return false;
-    const doseIndex = data?.items.findIndex(dose => dose.id === row.id);
-    if (doseIndex === 0) return true;
-    return data.items[doseIndex - 1]?.given;
-  };
-
   return isLoading ? (
     <InlineSpinner />
   ) : (
@@ -127,7 +158,7 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         data={data?.items ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          if ((encounterId ?? row.vaccinationId) && isPreviousDoseGiven(row))
+          if (isRowClickable(isEncounter, row, data?.items))
             openModal(row.vaccinationId, row.vaccineCourseDoseId);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}

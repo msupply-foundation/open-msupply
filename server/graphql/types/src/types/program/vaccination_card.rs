@@ -54,6 +54,9 @@ impl VaccinationCardItemNode {
     pub async fn id(&self) -> &str {
         &self.item.row.id
     }
+    pub async fn vaccine_course_id(&self) -> &str {
+        &self.item.row.vaccine_course_id
+    }
     pub async fn vaccine_course_dose_id(&self) -> &str {
         &self.item.row.vaccine_course_dose_id
     }

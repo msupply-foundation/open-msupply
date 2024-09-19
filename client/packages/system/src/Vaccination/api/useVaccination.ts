@@ -12,6 +12,7 @@ import {
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
 import { VACCINATION } from './keys';
+import { VACCINATION_CARD } from '../../Patient/api/hooks/keys';
 
 export interface VaccinationStockLine {
   id: string;
@@ -70,7 +71,7 @@ export function useVaccination({
   });
 
   const { mutateAsync: insert } = useInsert({
-    encounterId: encounterId ?? '',
+    encounterId,
     vaccineCourseDoseId,
   });
 
@@ -122,13 +123,15 @@ const useInsert = ({
   encounterId,
   vaccineCourseDoseId,
 }: {
-  encounterId: string;
+  encounterId?: string;
   vaccineCourseDoseId: string;
 }) => {
   const { api, storeId, queryClient } = useVaccinationsGraphQL();
   const t = useTranslation('dispensary');
 
   const mutationFn = async (input: VaccinationDraft) => {
+    if (!encounterId) return;
+
     const apiResult = await api.insertVaccination({
       storeId,
       input: {
@@ -159,7 +162,8 @@ const useInsert = ({
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINATION]),
+    onSuccess: () =>
+      queryClient.invalidateQueries([VACCINATION, VACCINATION_CARD]),
   });
 };
 
@@ -199,6 +203,7 @@ const useUpdate = (vaccinationId: string | undefined) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINATION]),
+    onSuccess: () =>
+      queryClient.invalidateQueries([VACCINATION, VACCINATION_CARD]),
   });
 };
