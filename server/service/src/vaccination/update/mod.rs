@@ -168,14 +168,15 @@ mod update {
 
     #[actix_rt::test]
     async fn update_vaccination_errors() {
-        fn mock_vaccination_b_not_given() -> VaccinationRow {
+        fn mock_vaccination_b_given() -> VaccinationRow {
             VaccinationRow {
-                id: "mock_vaccination_b_not_given".to_string(),
+                id: "mock_vaccination_b_given".to_string(),
                 store_id: mock_store_a().id,
                 user_id: mock_user_account_a().id,
                 program_enrolment_id: mock_immunisation_program_enrolment_a().id,
                 vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                 encounter_id: mock_immunisation_encounter_a().id,
+                given: true,
                 created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
@@ -187,7 +188,7 @@ mod update {
             "update_vaccination_errors",
             MockDataInserts::all(),
             MockData {
-                vaccinations: vec![mock_vaccination_b_not_given()],
+                vaccinations: vec![mock_vaccination_b_given()],
                 ..Default::default()
             },
         )
@@ -287,38 +288,7 @@ mod update {
             Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse)
         );
 
-        // NotNextDose
-        assert_eq!(
-            service.update_vaccination(
-                &context,
-                store_id,
-                UpdateVaccination {
-                    id: mock_vaccination_b_not_given().id, // vaccination (dose) A was also not given, cant give B before A
-                    given: Some(true),
-                    stock_line_id: Some(mock_stock_line_vaccine_item_a().id),
-                    ..Default::default()
-                }
-            ),
-            Err(UpdateVaccinationError::NotNextDose)
-        );
-
         // NotMostRecentGivenDose
-
-        // Update both vaccinations to be given (testing purposes)
-        let vaccinations_repo = VaccinationRowRepository::new(&context.connection);
-        vaccinations_repo
-            .upsert_one(&VaccinationRow {
-                given: true,
-                ..mock_vaccination_a()
-            })
-            .unwrap();
-        vaccinations_repo
-            .upsert_one(&VaccinationRow {
-                given: true,
-                ..mock_vaccination_b_not_given()
-            })
-            .unwrap();
-
         // try to un-give but more recent dose was given
         assert_eq!(
             service.update_vaccination(
@@ -332,6 +302,37 @@ mod update {
                 }
             ),
             Err(UpdateVaccinationError::NotMostRecentGivenDose)
+        );
+
+        // NotNextDose
+
+        // Update both vaccinations to be NOT given (testing purposes)
+        let vaccinations_repo = VaccinationRowRepository::new(&context.connection);
+        vaccinations_repo
+            .upsert_one(&VaccinationRow {
+                given: false,
+                ..mock_vaccination_a()
+            })
+            .unwrap();
+        vaccinations_repo
+            .upsert_one(&VaccinationRow {
+                given: false,
+                ..mock_vaccination_b_given()
+            })
+            .unwrap();
+
+        assert_eq!(
+            service.update_vaccination(
+                &context,
+                store_id,
+                UpdateVaccination {
+                    id: mock_vaccination_b_given().id, // vaccination (dose) A was also not given, cant give B before A
+                    given: Some(true),
+                    stock_line_id: Some(mock_stock_line_vaccine_item_a().id),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateVaccinationError::NotNextDose)
         );
     }
 

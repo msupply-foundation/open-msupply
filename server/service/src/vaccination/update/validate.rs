@@ -96,7 +96,12 @@ pub fn validate(
         &vaccination.vaccine_course_dose_row.vaccine_course_id,
         &vaccination.vaccine_course_dose_row.id,
         &vaccination.vaccination_row.program_enrolment_id,
-    )?;
+    )
+    .map_err(|err| match err {
+        // If there was a previous dose, but a vaccination for it wasn't found
+        RepositoryError::NotFound => UpdateVaccinationError::NotNextDose,
+        _ => UpdateVaccinationError::DatabaseError(err),
+    })?;
 
     if let Some(previous_vaccination) = previous_vaccination {
         if !previous_vaccination.vaccination_row.given && input.given == Some(true) {
