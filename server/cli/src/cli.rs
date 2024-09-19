@@ -11,6 +11,7 @@ use repository::{
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use server::configuration;
 use service::{
     apis::login_v4::LoginUserInfoV4,
@@ -402,20 +403,30 @@ async fn main() -> anyhow::Result<()> {
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::UpsertStandardReports { name } => {
-            println!("report: {:?}", name);
-            // TODO find all of these strings properly
+            // TODO find all of these strings via manifest.json
             let base_reports_dir =
                 "/Users/fergusroache/Documents/GitHub/open-msupply/server/reports";
             let version = "1_0";
             let report_dir = format!("{base_reports_dir}/{name}/{version}");
             let arguments_path = format!("{report_dir}/arguments.json");
             let arguments_ui_path = format!("{report_dir}/arguments_ui.json");
+
+            let manifest_file = fs::File::open(format!("{report_dir}/manifest.json"))
+                .expect("file should open read only");
+
+            println!(" path: {:?}", &format!("{report_dir}/manifest.json"));
+
+            let manifest: Manifest =
+                serde_json::from_reader(manifest_file).expect("manifest json not formatted");
+
+            let is_custom = manifest.is_custom;
+
             let id = name.clone();
             let report_path = format!("{report_dir}/template.html");
-            let context = ContextType::Report;
-            let sub_context = "Expiring";
-            let is_custom = false;
-            let code = None;
+            let context = manifest.context;
+
+            let sub_context = manifest.sub_context;
+            let code = manifest.code;
 
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
@@ -441,7 +452,7 @@ async fn main() -> anyhow::Result<()> {
                 r#type: repository::ReportType::OmSupply,
                 template: fs::read_to_string(report_path)?,
                 context,
-                sub_context: Some(sub_context.to_string()),
+                sub_context: sub_context,
                 argument_schema_id: Some(form_schema_json.id.clone()),
                 comment: None,
                 is_custom,
@@ -527,4 +538,12 @@ fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
     let users_file_path = export_folder.join("users.txt");
 
     (export_folder, export_file_path, users_file_path)
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct Manifest {
+    pub context: ContextType,
+    pub is_custom: bool,
+    pub code: Option<String>,
+    pub sub_context: Option<String>,
 }
