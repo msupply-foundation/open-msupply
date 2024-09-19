@@ -10,6 +10,7 @@ use repository::{
     FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
+
 use serde::{Deserialize, Serialize};
 use server::configuration;
 use service::{
@@ -404,59 +405,70 @@ async fn main() -> anyhow::Result<()> {
         Action::UpsertStandardReports { name } => {
             // TODO find all of these strings via manifest.json
             let base_reports_dir = "./reports";
-            let version = "1_0";
-            let report_dir = format!("{base_reports_dir}/{name}/{version}");
-            let arguments_path = format!("{report_dir}/arguments.json");
-            let arguments_ui_path = format!("{report_dir}/arguments_ui.json");
 
-            let manifest_file = fs::File::open(format!("{report_dir}/manifest.json"))
-                .expect("file should open read only");
+            let report_dir = format!("{base_reports_dir}/{name}");
+            let report_versions = fs::read_dir(format!("{report_dir}"))?
+                .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
+                .collect::<Result<Vec<String>, std::io::Error>>()?;
 
-            let manifest: Manifest =
-                serde_json::from_reader(manifest_file).expect("manifest json not formatted");
-
-            let is_custom = manifest.is_custom;
-
-            let id = name.clone();
-            let report_path = format!("{report_dir}/template.html");
-            let context = manifest.context;
-
-            let sub_context = manifest.sub_context;
-            let code = manifest.code;
+            println!("report versions: {:?}", report_versions);
 
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
 
-            let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
-            let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
+            for version_dir in report_versions {
+                println!("report version dir: {:?}", version_dir);
+                let (_, version) = version_dir.rsplit_once('/').unwrap();
 
-            let argument_schema_id =
-                existing_report.and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
+                let arguments_path = format!("{version_dir}/arguments.json");
+                let arguments_ui_path = format!("{version_dir}/arguments_ui.json");
 
-            let form_schema_json = schema_from_row(FormSchemaRow {
-                id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
-                r#type: "reportArgument".to_string(),
-                json_schema: fs::read_to_string(arguments_path)?,
-                ui_schema: fs::read_to_string(arguments_ui_path)?,
-            })?;
+                let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
+                    .expect("file should open read only");
 
-            FormSchemaRowRepository::new(&con).upsert_one(&form_schema_json)?;
+                let manifest: Manifest =
+                    serde_json::from_reader(manifest_file).expect("manifest json not formatted");
 
-            ReportRowRepository::new(&con).upsert_one(&ReportRow {
-                id,
-                name,
-                r#type: repository::ReportType::OmSupply,
-                template: fs::read_to_string(report_path)?,
-                context,
-                sub_context: sub_context,
-                argument_schema_id: Some(form_schema_json.id.clone()),
-                comment: None,
-                is_custom,
-                version: version.to_string(),
-                code,
-            })?;
+                let is_custom = manifest.is_custom;
 
-            info!("Report upserted via standard report command");
+                let id = format!("{name}_{version}");
+                let report_path = format!("{version_dir}/template.html");
+                let context = manifest.context;
+
+                let sub_context = manifest.sub_context;
+                let code = manifest.code;
+
+                let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
+                let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
+
+                let argument_schema_id =
+                    existing_report.and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
+
+                let form_schema_json = schema_from_row(FormSchemaRow {
+                    id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                    r#type: "reportArgument".to_string(),
+                    json_schema: fs::read_to_string(arguments_path)?,
+                    ui_schema: fs::read_to_string(arguments_ui_path)?,
+                })?;
+
+                FormSchemaRowRepository::new(&con).upsert_one(&form_schema_json)?;
+
+                ReportRowRepository::new(&con).upsert_one(&ReportRow {
+                    id,
+                    name: name.clone(),
+                    r#type: repository::ReportType::OmSupply,
+                    template: fs::read_to_string(report_path)?,
+                    context,
+                    sub_context: sub_context,
+                    argument_schema_id: Some(form_schema_json.id.clone()),
+                    comment: None,
+                    is_custom,
+                    version: version.to_string(),
+                    code,
+                })?;
+            }
+
+            info!("Reports upserted via standard report command");
         }
         Action::UpsertReport {
             id,
