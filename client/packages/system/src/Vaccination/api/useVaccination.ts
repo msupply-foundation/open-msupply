@@ -162,8 +162,10 @@ const useInsert = ({
 
   return useMutation({
     mutationFn,
-    onSuccess: () =>
-      queryClient.invalidateQueries([VACCINATION, VACCINATION_CARD]),
+    onSuccess: () => {
+      queryClient.invalidateQueries([VACCINATION]);
+      queryClient.invalidateQueries([VACCINATION_CARD]);
+    },
   });
 };
 
@@ -203,7 +205,9 @@ const useUpdate = (vaccinationId: string | undefined) => {
 
   return useMutation({
     mutationFn,
-    onSuccess: () =>
-      queryClient.invalidateQueries([VACCINATION, VACCINATION_CARD]),
+    onSuccess: () => {
+      queryClient.invalidateQueries([VACCINATION]);
+      queryClient.invalidateQueries([VACCINATION_CARD]);
+    },
   });
 };
