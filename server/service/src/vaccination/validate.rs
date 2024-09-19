@@ -117,7 +117,7 @@ pub fn get_related_vaccinations(
     let previous_vaccination = VaccinationRepository::new(connection).query_one(
         VaccinationFilter::new()
             .vaccine_course_dose_id(EqualFilter::equal_to(
-                &previous_dose.unwrap_or_default().vaccine_course_row.id,
+                &previous_dose.unwrap_or_default().vaccine_course_dose_row.id,
             ))
             .program_enrolment_id(EqualFilter::equal_to(&program_enrolment_id)),
     )?;
@@ -125,7 +125,7 @@ pub fn get_related_vaccinations(
     let next_vaccination = VaccinationRepository::new(connection).query_one(
         VaccinationFilter::new()
             .vaccine_course_dose_id(EqualFilter::equal_to(
-                &next_dose.unwrap_or_default().vaccine_course_row.id,
+                &next_dose.unwrap_or_default().vaccine_course_dose_row.id,
             ))
             .program_enrolment_id(EqualFilter::equal_to(&program_enrolment_id)),
     )?;
