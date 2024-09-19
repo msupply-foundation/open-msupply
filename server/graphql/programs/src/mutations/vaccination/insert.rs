@@ -101,6 +101,7 @@ fn map_error(error: ServiceError) -> Result<InsertVaccinationResponse> {
         | ServiceError::ReasonNotProvided
         | ServiceError::StockLineNotProvided
         | ServiceError::StockLineDoesNotExist
+        | ServiceError::VaccineIsNotNextDose
         | ServiceError::ItemDoesNotBelongToVaccineCourse => BadUserInput(formatted_error),
 
         ServiceError::CreatedRecordNotFound

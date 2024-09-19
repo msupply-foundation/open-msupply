@@ -26,6 +26,7 @@ pub enum InsertVaccinationError {
     VaccineCourseDoseDoesNotExist,
     ProgramEnrolmentDoesNotMatchVaccineCourse,
     VaccinationAlreadyExistsForDose,
+    VaccineIsNotNextDose,
     ClinicianDoesNotExist,
     ReasonNotProvided,
     StockLineNotProvided,
