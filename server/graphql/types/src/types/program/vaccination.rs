@@ -52,6 +52,14 @@ impl VaccinationNode {
         &self.row().comment
     }
 
+    pub async fn facility_free_text(&self) -> &Option<String> {
+        &self.row().facility_free_text
+    }
+
+    pub async fn facility_name_id(&self) -> &Option<String> {
+        &self.row().facility_name_link_id
+    }
+
     pub async fn facility_name(&self) -> Option<String> {
         match &self.vaccination.facility_name_row {
             Some(name_row) => Some(name_row.name.clone()),

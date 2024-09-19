@@ -18,7 +18,7 @@ export const VaccinationsTab = ({
         <VaccinationModal
           isOpen
           encounterId={encounterId}
-          vaccinationId="0191d9e3-8af0-74f0-b65d-d384629f868d"
+          vaccinationId={undefined}
           vaccineCourseDoseId="0191b035-927d-7a0b-89cd-ae581a033429"
           onClose={onClose}
           defaultClinician={clinician}
