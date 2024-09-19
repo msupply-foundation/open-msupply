@@ -11,7 +11,6 @@ use repository::{
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use server::configuration;
 use service::{
     apis::login_v4::LoginUserInfoV4,
@@ -404,8 +403,7 @@ async fn main() -> anyhow::Result<()> {
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
         Action::UpsertStandardReports { name } => {
             // TODO find all of these strings via manifest.json
-            let base_reports_dir =
-                "/Users/fergusroache/Documents/GitHub/open-msupply/server/reports";
+            let base_reports_dir = "./reports";
             let version = "1_0";
             let report_dir = format!("{base_reports_dir}/{name}/{version}");
             let arguments_path = format!("{report_dir}/arguments.json");
@@ -413,8 +411,6 @@ async fn main() -> anyhow::Result<()> {
 
             let manifest_file = fs::File::open(format!("{report_dir}/manifest.json"))
                 .expect("file should open read only");
-
-            println!(" path: {:?}", &format!("{report_dir}/manifest.json"));
 
             let manifest: Manifest =
                 serde_json::from_reader(manifest_file).expect("manifest json not formatted");
