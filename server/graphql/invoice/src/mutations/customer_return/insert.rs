@@ -131,6 +131,7 @@ impl InsertInput {
                 .into_iter()
                 .map(|line| line.to_domain())
                 .collect(),
+            is_patient_return: false,
         }
     }
 }
@@ -157,6 +158,7 @@ impl CustomerReturnLineInput {
             expiry_date,
             batch,
             pack_size,
+            stock_line_id: None,
         }
     }
 }

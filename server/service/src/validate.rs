@@ -24,9 +24,11 @@ pub enum OtherPartyErrors {
     DatabaseError(RepositoryError),
 }
 
+#[derive(PartialEq)]
 pub enum CheckOtherPartyType {
     Customer,
     Supplier,
+    Patient,
 }
 
 pub fn get_other_party(
@@ -56,6 +58,18 @@ pub fn check_other_party(
     other_party_id: &str,
     other_party_type: CheckOtherPartyType,
 ) -> Result<Name, OtherPartyErrors> {
+    if other_party_type == CheckOtherPartyType::Patient {
+        let patient = check_patient_exists(connection, other_party_id)?
+            .ok_or(OtherPartyErrors::OtherPartyDoesNotExist)?;
+
+        return Ok(Name {
+            name_row: patient,
+            name_store_join_row: None,
+            store_row: None,
+            properties: None,
+        });
+    }
+
     let other_party = get_other_party(connection, store_id, other_party_id)?
         .ok_or(OtherPartyErrors::OtherPartyDoesNotExist)?;
 
@@ -75,6 +89,8 @@ pub fn check_other_party(
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }
+        // Already handled above
+        CheckOtherPartyType::Patient => {}
     };
 
     Ok(other_party)
