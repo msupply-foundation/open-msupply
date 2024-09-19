@@ -14,7 +14,6 @@ xcopy "build\windows\demo" "omSupply\demo" /c /y /i
 copy "version.txt" "omSupply\version.txt"
 
 call build\windows\omsupply-prepare.bat
-@if %errorlevel% neq 0 exit /b %errorlevel%
 
 @cd server 
 
@@ -46,4 +45,3 @@ cargo build --release --bin test_connection --features postgres && copy "target\
 @REM @if %errorlevel% neq 0 exit /b %errorlevel%
 
 call build\windows\omsupply-electron.bat
-@if %errorlevel% neq 0 exit /b %errorlevel%
