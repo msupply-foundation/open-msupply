@@ -13,7 +13,8 @@ xcopy "build\windows\*.*" "omSupply" /c
 xcopy "build\windows\demo" "omSupply\demo" /c /y /i
 copy "version.txt" "omSupply\version.txt"
 
-call build\windows\omsupply-prepare.bat
+start /b /wait build\windows\omsupply-prepare.bat
+@if %errorlevel% neq 0 exit /b %errorlevel%
 
 @cd server 
 
@@ -41,7 +42,8 @@ cargo build --release --bin test_connection --features postgres && copy "target\
 
 @cd..
 
-@REM call build\windows\omsupply-android.bat
+@REM start /b /wait build\windows\omsupply-android.bat
 @REM @if %errorlevel% neq 0 exit /b %errorlevel%
 
-call build\windows\omsupply-electron.bat
+start /b /wait build\windows\omsupply-electron.bat
+@if %errorlevel% neq 0 exit /b %errorlevel%
