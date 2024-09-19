@@ -116,7 +116,6 @@ const getNextStatusOption = (
 
   const nextStatus = getNextCustomerReturnStatus(status);
   const nextStatusOption = options.find(o => o.value === nextStatus);
-
   return nextStatusOption || null;
 };
 
@@ -208,8 +207,6 @@ export const StatusChangeButton = () => {
   } = useStatusChangeButton();
   const t = useTranslation();
   const noLines = lineCount === 0;
-
-  console.log(selectedOption);
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
