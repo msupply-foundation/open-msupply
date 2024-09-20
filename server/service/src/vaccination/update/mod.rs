@@ -390,6 +390,9 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
                     comment: Some("Updated comment".to_string()),
+                    facility_free_text: Some(NullableUpdate {
+                        value: Some("Facility".to_string()),
+                    }),
                     ..Default::default()
                 },
             )
