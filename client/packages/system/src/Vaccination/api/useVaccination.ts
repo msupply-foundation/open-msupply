@@ -208,6 +208,17 @@ const useUpdate = (vaccinationId: string | undefined) => {
         comment: input.comment,
         notGivenReason: input.notGivenReason,
         stockLineId: input.stockLine?.id,
+
+        facilityNameId: {
+          value:
+            input.facilityId === OTHER_FACILITY ? undefined : input?.facilityId,
+        },
+        facilityFreeText: {
+          value:
+            input.facilityId === OTHER_FACILITY
+              ? input.facilityFreeText
+              : undefined,
+        },
       },
     });
 
