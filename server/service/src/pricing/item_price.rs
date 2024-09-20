@@ -66,11 +66,6 @@ pub fn get_pricing_for_item(
     let discount_percentage = if is_patient {
         None // Patients get no discount
     } else {
-        log::info!(
-            "Checking discounts: {:?}, {}",
-            input.customer_name_id,
-            input.item_id
-        );
         // 2.A Lookup the discount list
         // Always assign the biggest discount we can find
         let discount_master_list = MasterListRepository::new(&ctx.connection)
