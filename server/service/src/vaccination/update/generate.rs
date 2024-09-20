@@ -125,6 +125,8 @@ pub fn generate(
         not_given_reason,
         comment,
         invoice_id,
+        facility_name_link_id,
+        facility_free_text,
 
         clinician_link_id: _,
         stock_line_id: _,
@@ -145,6 +147,15 @@ pub fn generate(
         vaccination_date: update_input.vaccination_date.unwrap_or(vaccination_date),
         given: update_input.given.unwrap_or(given),
         comment: update_input.comment.or(comment),
+
+        facility_name_link_id: match update_input.facility_name_id {
+            Some(NullableUpdate { value }) => value,
+            None => facility_name_link_id,
+        },
+        facility_free_text: match update_input.facility_free_text {
+            Some(NullableUpdate { value }) => value,
+            None => facility_free_text,
+        },
 
         // new_stock_line already defaults to existing, or will be None if changed to not given
         stock_line_id: new_stock_line_id,

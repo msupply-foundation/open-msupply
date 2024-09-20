@@ -8003,6 +8003,8 @@ export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 export type UpdateVaccinationInput = {
   clinicianId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  facilityFreeText?: InputMaybe<NullableStringUpdate>;
+  facilityNameId?: InputMaybe<NullableStringUpdate>;
   given?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
