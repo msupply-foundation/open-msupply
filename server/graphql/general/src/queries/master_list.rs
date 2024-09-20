@@ -19,6 +19,7 @@ pub enum MasterListSortFieldInput {
     Name,
     Code,
     Description,
+    DiscountPercentage,
 }
 
 #[derive(InputObject)]

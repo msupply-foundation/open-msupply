@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, PatientFilter,
+    MasterListRepository, MasterListSort, MasterListSortField, Pagination, PatientFilter,
 };
 use repository::{PatientRepository, RepositoryError};
 
@@ -66,13 +66,28 @@ pub fn get_pricing_for_item(
     let discount_percentage = if is_patient {
         None // Patients get no discount
     } else {
+        log::info!(
+            "Checking discounts: {:?}, {}",
+            input.customer_name_id,
+            input.item_id
+        );
         // 2.A Lookup the discount list
-        // Find the first discount list that has the item (not trying to be clever here, just using the first one found)
+        // Always assign the biggest discount we can find
         let discount_master_list = MasterListRepository::new(&ctx.connection)
-            .query_by_filter(
-                MasterListFilter::new()
-                    .is_discount_list(true)
-                    .item_id(EqualFilter::equal_to(&input.item_id)),
+            .query(
+                Pagination {
+                    limit: 1,
+                    offset: 0,
+                },
+                Some(
+                    MasterListFilter::new()
+                        .is_discount_list(true)
+                        .item_id(EqualFilter::equal_to(&input.item_id)),
+                ),
+                Some(MasterListSort {
+                    key: MasterListSortField::DiscountPercentage,
+                    desc: Some(true),
+                }),
             )?
             .pop();
 
