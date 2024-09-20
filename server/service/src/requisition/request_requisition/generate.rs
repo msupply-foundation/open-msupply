@@ -5,38 +5,7 @@ use util::uuid::uuid;
 use crate::item_stats::{get_item_stats, ItemStatsFilter};
 use crate::service_provider::ServiceContext;
 
-pub struct GenerateSuggestedQuantity {
-    pub average_monthly_consumption: f64,
-    pub available_stock_on_hand: f64,
-    pub min_months_of_stock: f64,
-    pub max_months_of_stock: f64,
-}
-
-pub fn generate_suggested_quantity(
-    GenerateSuggestedQuantity {
-        average_monthly_consumption,
-        available_stock_on_hand,
-        min_months_of_stock,
-        max_months_of_stock,
-    }: GenerateSuggestedQuantity,
-) -> f64 {
-    if average_monthly_consumption == 0.0 {
-        return 0.0;
-    }
-    let months_of_stock = available_stock_on_hand / average_monthly_consumption;
-
-    let default_min_months_of_stock = if min_months_of_stock == 0.0 {
-        max_months_of_stock
-    } else {
-        min_months_of_stock
-    };
-
-    if max_months_of_stock == 0.0 || (months_of_stock > default_min_months_of_stock) {
-        return 0.0;
-    }
-
-    (max_months_of_stock - months_of_stock) * average_monthly_consumption
-}
+use super::{generate_suggested_quantity, GenerateSuggestedQuantity, SuggestedQuantityInput};
 
 pub fn generate_requisition_lines(
     ctx: &ServiceContext,
@@ -51,24 +20,38 @@ pub fn generate_requisition_lines(
         Some(ItemStatsFilter::new().item_id(EqualFilter::equal_any(item_ids))),
     )?;
 
+    let items = item_stats_rows
+        .iter()
+        .map(|i| {
+            (
+                i.item_id.clone(),
+                GenerateSuggestedQuantity {
+                    average_monthly_consumption: i.average_monthly_consumption,
+                    available_stock_on_hand: i.available_stock_on_hand,
+                },
+            )
+        })
+        .collect();
+    let suggested_quantities = generate_suggested_quantity(SuggestedQuantityInput {
+        requisition: requisition_row.clone(),
+        items,
+    });
+
     let result = item_stats_rows
         .into_iter()
         .map(|item_stats| {
             let average_monthly_consumption = item_stats.average_monthly_consumption;
             let available_stock_on_hand = item_stats.available_stock_on_hand;
-            let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
-                average_monthly_consumption,
-                available_stock_on_hand,
-                min_months_of_stock: requisition_row.min_months_of_stock,
-                max_months_of_stock: requisition_row.max_months_of_stock,
-            });
 
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
+                suggested_quantity: suggested_quantities
+                    .get(&item_stats.item_id)
+                    .map(|q| q.suggested_quantity)
+                    .unwrap_or(0.0),
                 item_link_id: item_stats.item_id,
                 item_name: item_stats.item_name,
-                suggested_quantity,
                 available_stock_on_hand,
                 average_monthly_consumption,
                 snapshot_datetime: Some(Utc::now().naive_utc()),

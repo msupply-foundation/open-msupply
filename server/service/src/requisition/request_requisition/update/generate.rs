@@ -1,13 +1,15 @@
 use super::{UpdateRequestRequisition, UpdateRequestRequisitionStatus};
 use crate::requisition::{
     common::get_lines_for_requisition,
-    request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
+    request_requisition::{
+        generate_suggested_quantity, GenerateSuggestedQuantity, SuggestedQuantityInput,
+    },
 };
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionStatus},
-    EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
-    RequisitionLineRepository, RequisitionLineRow, StorageConnection,
+    EqualFilter, RepositoryError, RequisitionLineFilter, RequisitionLineRepository,
+    RequisitionLineRow, StorageConnection,
 };
 use util::inline_edit;
 
@@ -65,12 +67,7 @@ pub fn generate(
     });
 
     let updated_requisition_lines = if should_recalculate {
-        generate_updated_lines(
-            connection,
-            &updated_requisition_row.id,
-            updated_requisition_row.min_months_of_stock,
-            updated_requisition_row.max_months_of_stock,
-        )?
+        generate_updated_lines(connection, &updated_requisition_row)?
     } else {
         vec![]
     };
@@ -84,30 +81,37 @@ pub fn generate(
 
 pub fn generate_updated_lines(
     connection: &StorageConnection,
-    requisition_id: &str,
-    min_months_of_stock: f64,
-    max_months_of_stock: f64,
+    requisition: &RequisitionRow,
 ) -> Result<Vec<RequisitionLineRow>, RepositoryError> {
-    let lines = get_lines_for_requisition(connection, requisition_id)?;
+    let lines = get_lines_for_requisition(connection, &requisition.id)?;
+
+    let items = lines
+        .iter()
+        .map(|l| {
+            (
+                l.item_row.id.clone(),
+                GenerateSuggestedQuantity {
+                    average_monthly_consumption: l.requisition_line_row.average_monthly_consumption,
+                    available_stock_on_hand: l.requisition_line_row.available_stock_on_hand,
+                },
+            )
+        })
+        .collect();
+
+    let suggested_quantities = generate_suggested_quantity(SuggestedQuantityInput {
+        requisition: requisition.clone(),
+        items,
+    });
 
     let result = lines
         .into_iter()
-        .map(
-            |RequisitionLine {
-                 mut requisition_line_row,
-                 ..
-             }| {
-                requisition_line_row.suggested_quantity =
-                    generate_suggested_quantity(GenerateSuggestedQuantity {
-                        average_monthly_consumption: requisition_line_row
-                            .average_monthly_consumption,
-                        available_stock_on_hand: requisition_line_row.available_stock_on_hand,
-                        min_months_of_stock,
-                        max_months_of_stock,
-                    });
-                requisition_line_row
-            },
-        )
+        .map(|line| RequisitionLineRow {
+            suggested_quantity: suggested_quantities
+                .get(&line.item_row.id)
+                .map(|q| q.suggested_quantity)
+                .unwrap_or(0.0),
+            ..line.requisition_line_row
+        })
         .collect();
 
     Ok(result)

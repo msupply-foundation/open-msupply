@@ -52,7 +52,7 @@ joinable!(requisition -> program (program_id));
 allow_tables_to_appear_in_same_query!(requisition, name_link);
 allow_tables_to_appear_in_same_query!(requisition, item_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionType {
     Request,
@@ -67,7 +67,7 @@ pub enum RequisitionStatus {
     Sent,
     Finalised,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ApprovalStatusType {
@@ -80,7 +80,7 @@ pub enum ApprovalStatusType {
     DeniedByAnother,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Deserialize, Serialize, Debug, PartialEq)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = requisition)]
 pub struct RequisitionRow {
