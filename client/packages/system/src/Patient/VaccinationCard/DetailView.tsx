@@ -6,8 +6,8 @@ import {
   useIntlUtils,
   InlineSpinner,
 } from '@openmsupply-client/common';
-import { usePatientVaccineCard } from '../../api/hooks/usePatientVaccineCard';
-import { VaccinationsTab } from '@openmsupply-client/system/src/Encounter/DetailView/VaccinationsTab';
+import { usePatientVaccineCard } from '../../Vaccination/api/usePatientVaccineCard';
+import { VaccinationCard } from '../../Vaccination';
 
 export const VaccinationCardDetailView: FC = () => {
   const t = useTranslation('dispensary');
@@ -37,6 +37,6 @@ export const VaccinationCardDetailView: FC = () => {
   return isLoading ? (
     <InlineSpinner />
   ) : (
-    <VaccinationsTab programEnrolmentId={programEnrolmentId} />
+    <VaccinationCard programEnrolmentId={programEnrolmentId} />
   );
 };
