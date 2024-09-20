@@ -2,7 +2,7 @@ use qrcode::bits::encode_auto;
 use qrcode::render::svg;
 use qrcode::{EcLevel, QrCode};
 
-pub fn qr_code_as_html_img_src(data: &str) -> String {
+pub fn qr_code_svg(data: &str) -> String {
     let bits = encode_auto(data.as_bytes(), EcLevel::L).unwrap();
     let code = QrCode::with_bits(bits, EcLevel::L).unwrap();
     let image = code
