@@ -140,11 +140,7 @@ enum Action {
     Backup,
     Restore(RestoreArguments),
     // command to upsert standard reports. Will later move this into rust code
-    UpsertStandardReports {
-        /// Report name
-        #[clap(short, long)]
-        name: String,
-    },
+    UpsertStandardReports,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -402,73 +398,76 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::UpsertStandardReports { name } => {
-            // TODO find all of these strings via manifest.json
+        Action::UpsertStandardReports => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
 
-            let report_dir = format!("{base_reports_dir}/{name}");
-            let report_versions = fs::read_dir(format!("{report_dir}"))?
+            let report_names = fs::read_dir(base_reports_dir)?
                 .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
                 .collect::<Result<Vec<String>, std::io::Error>>()?;
 
-            println!("report versions: {:?}", report_versions);
+            for name_dir in report_names {
+                let report_versions = fs::read_dir(format!("{name_dir}"))?
+                    .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
+                    .collect::<Result<Vec<String>, std::io::Error>>()?;
 
-            let connection_manager = get_storage_connection_manager(&settings.database);
-            let con = connection_manager.connection()?;
+                let (_, name) = name_dir.rsplit_once('/').unwrap();
 
-            for version_dir in report_versions {
-                println!("report version dir: {:?}", version_dir);
-                let (_, version) = version_dir.rsplit_once('/').unwrap();
+                for version_dir in report_versions {
+                    let (_, version) = version_dir.rsplit_once('/').unwrap();
 
-                let arguments_path = format!("{version_dir}/arguments.json");
-                let arguments_ui_path = format!("{version_dir}/arguments_ui.json");
+                    let arguments_path = format!("{version_dir}/arguments.json");
+                    let arguments_ui_path = format!("{version_dir}/arguments_ui.json");
 
-                let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
-                    .expect("file should open read only");
+                    let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
+                        .expect("file should open read only");
 
-                let manifest: Manifest =
-                    serde_json::from_reader(manifest_file).expect("manifest json not formatted");
+                    let manifest: Manifest = serde_json::from_reader(manifest_file)
+                        .expect("manifest json not formatted");
 
-                let is_custom = manifest.is_custom;
+                    let is_custom = manifest.is_custom;
 
-                let id = format!("{name}_{version}");
-                let report_path = format!("{version_dir}/template.html");
-                let context = manifest.context;
+                    let id = format!("{name}_{version}");
+                    let report_path = format!("{version_dir}/template.html");
+                    let context = manifest.context;
 
-                let sub_context = manifest.sub_context;
-                let code = manifest.code;
+                    let sub_context = manifest.sub_context;
+                    let code = manifest.code;
 
-                let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
-                let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
+                    let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
+                    let existing_report =
+                        ReportRepository::new(&con).query_by_filter(filter)?.pop();
 
-                let argument_schema_id =
-                    existing_report.and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
+                    let argument_schema_id = existing_report
+                        .and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
 
-                let form_schema_json = schema_from_row(FormSchemaRow {
-                    id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
-                    r#type: "reportArgument".to_string(),
-                    json_schema: fs::read_to_string(arguments_path)?,
-                    ui_schema: fs::read_to_string(arguments_ui_path)?,
-                })?;
+                    let form_schema_json = schema_from_row(FormSchemaRow {
+                        id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                        r#type: "reportArgument".to_string(),
+                        json_schema: fs::read_to_string(arguments_path)?,
+                        ui_schema: fs::read_to_string(arguments_ui_path)?,
+                    })?;
 
-                FormSchemaRowRepository::new(&con).upsert_one(&form_schema_json)?;
+                    FormSchemaRowRepository::new(&con).upsert_one(&form_schema_json)?;
 
-                ReportRowRepository::new(&con).upsert_one(&ReportRow {
-                    id,
-                    name: name.clone(),
-                    r#type: repository::ReportType::OmSupply,
-                    template: fs::read_to_string(report_path)?,
-                    context,
-                    sub_context: sub_context,
-                    argument_schema_id: Some(form_schema_json.id.clone()),
-                    comment: None,
-                    is_custom,
-                    version: version.to_string(),
-                    code,
-                })?;
+                    ReportRowRepository::new(&con).upsert_one(&ReportRow {
+                        id,
+                        name: name.to_string(),
+                        r#type: repository::ReportType::OmSupply,
+                        template: fs::read_to_string(report_path)?,
+                        context,
+                        sub_context: sub_context,
+                        argument_schema_id: Some(form_schema_json.id.clone()),
+                        comment: None,
+                        is_custom,
+                        version: version.to_string(),
+                        code,
+                    })?;
+                }
             }
 
-            info!("Reports upserted via standard report command");
+            info!("All standard reports upserted");
         }
         Action::UpsertReport {
             id,
