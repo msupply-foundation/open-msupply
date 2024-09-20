@@ -11,7 +11,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
 };
 
@@ -44,6 +44,7 @@ pub enum MasterListSortField {
     Name,
     Code,
     Description,
+    DiscountPercentage,
 }
 
 pub type MasterListSort = Sort<MasterListSortField>;
@@ -120,9 +121,13 @@ impl<'a> MasterListRepository<'a> {
 
             if let Some(is_discount_list) = f.is_discount_list {
                 if is_discount_list {
-                    query = query.filter(master_list_dsl::discount_percentage.is_not_null());
+                    query = query.filter(master_list_dsl::discount_percentage.gt(0.0));
                 } else {
-                    query = query.filter(master_list_dsl::discount_percentage.is_null());
+                    query = query.filter(
+                        master_list_dsl::discount_percentage
+                            .is_null()
+                            .or(master_list_dsl::discount_percentage.eq(0.0)),
+                    );
                 }
             }
 
@@ -169,6 +174,9 @@ impl<'a> MasterListRepository<'a> {
                 }
                 MasterListSortField::Description => {
                     apply_sort_no_case!(query, sort, master_list_dsl::description);
+                }
+                MasterListSortField::DiscountPercentage => {
+                    apply_sort!(query, sort, master_list_dsl::discount_percentage);
                 }
             }
         } else {
