@@ -2,7 +2,7 @@ const { sql } = Host.getFunctions();
 
 // Would need to install extism-js: https://github.com/extism/js-pdk?tab=readme-ov-file#linux-macos
 // To build (from this dir): extism-js ./amc.js -i amc.d.ts -o amc.wasm
-// To upload to server (from this dir): curl --form files='@amc.wasm' "config={};type=application/json" 'http://localhost:8000/plugin?plugin-type=AMC'
+// To upload to server (from this dir): curl --form files='@amc.wasm' --form "config={};type=application/json" 'http://localhost:8000/plugin?plugin-type=AMC'
 
 // TODO type sharing
 // TODO build scripts to use typescript (as per extism js)
