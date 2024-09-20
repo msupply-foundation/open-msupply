@@ -34,7 +34,10 @@ pub fn validate(
         connection,
         store_id,
         &input.other_party_id,
-        CheckOtherPartyType::Customer,
+        match input.is_patient_return {
+            true => CheckOtherPartyType::Patient,
+            false => CheckOtherPartyType::Customer,
+        },
     )
     .map_err(|e| match e {
         OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
