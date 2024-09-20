@@ -1,1 +1,0 @@
-export { VaccinationCardDetailView } from './DetailView';

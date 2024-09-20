@@ -13,7 +13,7 @@ import {
   useTheme,
   StatusCell,
 } from '@openmsupply-client/common';
-import { usePatientVaccineCard } from '../api/hooks/usePatientVaccineCard';
+import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
 import { VaccinationCardItemFragment } from '../api/operations.generated';
 
 interface VaccinationCardProps {
