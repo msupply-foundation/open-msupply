@@ -1,10 +1,10 @@
 import React from 'react';
-import { VaccinationModal } from '../../Vaccination';
+import { VaccinationModal } from './VaccinationModal';
 import { useEditModal } from '@common/hooks';
 import { Clinician } from '../../Clinician';
-import { VaccineCardTable } from '../../Patient/VaccinationCards/VaccineCardTable';
+import { VaccineCardTable } from './VaccineCardTable';
 
-export const VaccinationsTab = ({
+export const VaccinationCard = ({
   clinician,
   programEnrolmentId,
   encounterId,

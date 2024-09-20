@@ -32,7 +32,7 @@ import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
-import { VaccinationsTab } from './VaccinationsTab';
+import { VaccinationCard } from '../../Vaccination/Components/VaccinationCard';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -263,7 +263,7 @@ export const DetailView: FC = () => {
   if (encounter && encounter.programEnrolment?.isImmunisationProgram) {
     tabs.push({
       Component: (
-        <VaccinationsTab
+        <VaccinationCard
           encounterId={encounter.id}
           programEnrolmentId={encounter.programEnrolment.id}
           clinician={encounter.clinician ?? undefined}

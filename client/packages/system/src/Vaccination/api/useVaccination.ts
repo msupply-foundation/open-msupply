@@ -11,8 +11,7 @@ import {
 
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
-import { VACCINATION } from './keys';
-import { VACCINATION_CARD } from '../../Patient/api/hooks/keys';
+import { VACCINATION, VACCINATION_CARD } from './keys';
 
 export interface VaccinationStockLine {
   id: string;
