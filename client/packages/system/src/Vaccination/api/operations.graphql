@@ -35,6 +35,46 @@ fragment VaccinationDetail on VaccinationNode {
   comment
 }
 
+fragment VaccinationCardItem on VaccinationCardItemNode {
+  __typename
+  id
+  vaccineCourseId
+  vaccineCourseDoseId
+  vaccinationId
+  label
+  minAgeMonths
+  vaccinationDate
+  suggestedDate
+  given
+}
+
+fragment VaccinationCard on VaccinationCardNode {
+  __typename
+  id
+  patientFirstName
+  patientLastName
+  programName
+  items {
+    ... on VaccinationCardItemNode {
+      ...VaccinationCardItem
+    }
+  }
+}
+
+query vaccinationCard($storeId: String!, $programEnrolmentId: String!) {
+  vaccinationCard(storeId: $storeId, programEnrolmentId: $programEnrolmentId) {
+    ... on VaccinationCardNode {
+      ...VaccinationCard
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
 query vaccination($storeId: String!, $vaccinationId: String!) {
   vaccination(storeId: $storeId, id: $vaccinationId) {
     __typename
@@ -61,6 +101,16 @@ query vaccineCourseDose($doseId: String!) {
 
 mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
   insertVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
+  updateVaccination(storeId: $storeId, input: $input) {
     __typename
     ... on VaccinationNode {
       __typename

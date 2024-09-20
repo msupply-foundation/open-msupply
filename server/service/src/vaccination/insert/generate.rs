@@ -1,11 +1,7 @@
 use chrono::Utc;
 use repository::{ProgramEnrolmentRow, StockLine, VaccinationRow};
-use util::uuid::uuid;
 
-use crate::{
-    invoice::{InsertPrescription, UpdatePrescription, UpdatePrescriptionStatus},
-    invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
-};
+use crate::vaccination::generate::{generate_create_prescription, CreatePrescription};
 
 use super::InsertVaccination;
 
@@ -15,12 +11,6 @@ pub struct GenerateInput {
     pub program_enrolment: ProgramEnrolmentRow,
     pub insert_input: InsertVaccination,
     pub stock_line: Option<StockLine>,
-}
-
-pub struct CreatePrescription {
-    pub insert_prescription_input: InsertPrescription,
-    pub insert_stock_out_line_input: InsertStockOutLine,
-    pub update_prescription_input: UpdatePrescription,
 }
 
 pub struct GenerateResult {
@@ -55,56 +45,11 @@ pub fn generate(
 
     let create_prescription = match stock_line {
         // if stock_line is Some, the vaccination was given, create a prescription
-        Some(stock_line) => {
-            let prescription_id = uuid();
-
-            let insert_prescription = InsertPrescription {
-                id: prescription_id.clone(),
-                patient_id: program_enrolment.patient_link_id,
-            };
-
-            let number_of_packs = 1.0
-                / stock_line.item_row.vaccine_doses as f64
-                / stock_line.stock_line_row.pack_size;
-
-            let insert_stock_out_line = InsertStockOutLine {
-                id: uuid(),
-                r#type: StockOutType::Prescription,
-                invoice_id: prescription_id.clone(),
-
-                stock_line_id: stock_line.stock_line_row.id,
-                number_of_packs,
-
-                // default
-                total_before_tax: None,
-                tax_percentage: None,
-                note: None,
-                location_id: None,
-                batch: None,
-                pack_size: None,
-                expiry_date: None,
-                cost_price_per_pack: None,
-                sell_price_per_pack: None,
-            };
-
-            let update_prescription = UpdatePrescription {
-                id: prescription_id.clone(),
-                status: Some(UpdatePrescriptionStatus::Verified),
-                // Assign clinician here if one was chosen
-                clinician_id: clinician_id.clone(),
-                comment: Some("Created via vaccination".to_string()),
-                // Default
-                patient_id: None,
-                colour: None,
-                prescription_datetime: None,
-            };
-
-            Some(CreatePrescription {
-                insert_prescription_input: insert_prescription,
-                insert_stock_out_line_input: insert_stock_out_line,
-                update_prescription_input: update_prescription,
-            })
-        }
+        Some(stock_line) => Some(generate_create_prescription(
+            stock_line,
+            program_enrolment.patient_link_id,
+            clinician_id.clone(),
+        )),
         None => None,
     };
 
@@ -130,13 +75,12 @@ pub fn generate(
         stock_line_id,
         not_given_reason,
         comment,
+        facility_name_link_id,
+        facility_free_text,
         // If we create the prescription invoice, link it here
         invoice_id: create_prescription
             .as_ref()
-            .map(|p| p.insert_prescription_input.id.clone()),
-
-        facility_name_link_id,
-        facility_free_text,
+            .map(|p| p.create_prescription.id.clone()),
     };
 
     GenerateResult {

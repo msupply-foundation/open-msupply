@@ -35,6 +35,7 @@ pub struct VaccinationFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub program_enrolment_id: Option<EqualFilter<String>>,
     pub vaccine_course_dose_id: Option<EqualFilter<String>>,
+    pub vaccine_course_id: Option<EqualFilter<String>>,
 }
 
 pub enum VaccinationSortField {
@@ -144,6 +145,7 @@ fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQ
             store_id,
             program_enrolment_id,
             vaccine_course_dose_id,
+            vaccine_course_id,
         } = f;
 
         apply_equal_filter!(query, id, vaccination_dsl::id);
@@ -157,6 +159,12 @@ fn create_filtered_query(filter: Option<VaccinationFilter>) -> BoxedVaccinationQ
             query,
             vaccine_course_dose_id,
             vaccination_dsl::vaccine_course_dose_id
+        );
+
+        apply_equal_filter!(
+            query,
+            vaccine_course_id,
+            vaccine_course_dose_dsl::vaccine_course_id
         );
     }
     query
@@ -184,6 +192,11 @@ impl VaccinationFilter {
 
     pub fn vaccine_course_dose_id(mut self, filter: EqualFilter<String>) -> Self {
         self.vaccine_course_dose_id = Some(filter);
+        self
+    }
+
+    pub fn vaccine_course_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.vaccine_course_id = Some(filter);
         self
     }
 }

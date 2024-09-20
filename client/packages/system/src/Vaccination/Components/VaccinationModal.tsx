@@ -35,7 +35,7 @@ import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
-  encounterId: string;
+  encounterId?: string;
   vaccineCourseDoseId: string;
   isOpen: boolean;
   onClose: () => void;
@@ -59,7 +59,7 @@ export const VaccinationModal = ({
     query: { dose, vaccination, isLoading },
     isDirty,
     isComplete,
-    create,
+    saveVaccination,
   } = useVaccination({
     encounterId,
     vaccineCourseDoseId,
@@ -78,7 +78,7 @@ export const VaccinationModal = ({
 
   const save = async () => {
     try {
-      await create(draft);
+      await saveVaccination(draft);
       success(t('messages.vaccination-saved'))();
       onClose();
     } catch (e) {
@@ -123,7 +123,6 @@ export const VaccinationModal = ({
   ) : (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {alert && <Alert severity={alert.severity}>{alert.content}</Alert>}
-
       <VaccinationForm
         updateDraft={updateDraft}
         openBatchModal={openBatchModal}
@@ -268,7 +267,6 @@ const VaccinationForm = ({
           label={t('label.vaccine-not-given')}
         />
       </RadioGroup>
-
       {draft.given && (
         <>
           <InputWithLabelRow
