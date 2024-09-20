@@ -3,6 +3,7 @@ import {
   FnUtils,
   Formatter,
   isEmpty,
+  setNullableInput,
   useMutation,
   useQuery,
   useTranslation,
@@ -10,7 +11,7 @@ import {
 
 import { Clinician } from '../../Clinician';
 import { useVaccinationsGraphQL } from './useVaccinationsGraphQL';
-import { VACCINATION } from './keys';
+import { VACCINATION, VACCINATION_CARD } from './keys';
 import { OTHER_FACILITY } from '../Components/FacilitySearchInput';
 
 export interface VaccinationStockLine {
@@ -38,7 +39,7 @@ export function useVaccination({
   defaultClinician,
 }: {
   vaccineCourseDoseId: string;
-  encounterId: string;
+  encounterId?: string;
   vaccinationId: string | undefined;
   defaultClinician?: Clinician;
 }) {
@@ -75,6 +76,8 @@ export function useVaccination({
     encounterId,
     vaccineCourseDoseId,
   });
+
+  const { mutateAsync: update } = useUpdate(vaccinationId);
 
   const [patch, setPatch] = useState<Partial<VaccinationDraft>>({});
 
@@ -125,7 +128,7 @@ export function useVaccination({
     store,
     updateDraft: (update: Partial<VaccinationDraft>) =>
       setPatch({ ...patch, ...update }),
-    create: insert,
+    saveVaccination: vaccinationId ? update : insert,
   };
 }
 
@@ -133,13 +136,15 @@ const useInsert = ({
   encounterId,
   vaccineCourseDoseId,
 }: {
-  encounterId: string;
+  encounterId?: string;
   vaccineCourseDoseId: string;
 }) => {
   const { api, storeId, queryClient } = useVaccinationsGraphQL();
   const t = useTranslation('dispensary');
 
   const mutationFn = async (input: VaccinationDraft) => {
+    if (!encounterId) return;
+
     const apiResult = await api.insertVaccination({
       storeId,
       input: {
@@ -177,6 +182,52 @@ const useInsert = ({
 
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries([VACCINATION]),
+    onSuccess: () => {
+      queryClient.invalidateQueries([VACCINATION]);
+      queryClient.invalidateQueries([VACCINATION_CARD]);
+    },
+  });
+};
+
+const useUpdate = (vaccinationId: string | undefined) => {
+  const { api, storeId, queryClient } = useVaccinationsGraphQL();
+  const t = useTranslation('dispensary');
+
+  const mutationFn = async (input: VaccinationDraft) => {
+    if (!vaccinationId) {
+      throw new Error(t('error.failed-to-save-vaccination'));
+    }
+
+    const apiResult = await api.updateVaccination({
+      storeId,
+      input: {
+        id: vaccinationId,
+        given: input.given ?? false,
+        vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
+        clinicianId: setNullableInput('id', input.clinician),
+        comment: input.comment,
+        notGivenReason: input.notGivenReason,
+        stockLineId: input.stockLine?.id,
+      },
+    });
+
+    // will be empty if there's a generic error, such as permission denied
+    if (!isEmpty(apiResult)) {
+      const result = apiResult.updateVaccination;
+
+      if (result.__typename === 'VaccinationNode') {
+        return result;
+      }
+    }
+
+    throw new Error(t('error.failed-to-save-vaccination'));
+  };
+
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries([VACCINATION]);
+      queryClient.invalidateQueries([VACCINATION_CARD]);
+    },
   });
 };

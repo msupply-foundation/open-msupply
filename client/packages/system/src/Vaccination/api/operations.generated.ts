@@ -8,6 +8,18 @@ export type VaccinationCourseDoseFragment = { __typename: 'VaccineCourseDoseNode
 
 export type VaccinationDetailFragment = { __typename: 'VaccinationNode', id: string, facilityNameId?: string | null, facilityFreeText?: string | null, vaccinationDate: string, given: boolean, notGivenReason?: string | null, comment?: string | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null } | null, invoice?: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | null };
 
+export type VaccinationCardItemFragment = { __typename: 'VaccinationCardItemNode', id: string, vaccineCourseId: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null };
+
+export type VaccinationCardFragment = { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseId: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null }> };
+
+export type VaccinationCardQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  programEnrolmentId: Types.Scalars['String']['input'];
+}>;
+
+
+export type VaccinationCardQuery = { __typename: 'Queries', vaccinationCard: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'VaccinationCardNode', id: string, patientFirstName?: string | null, patientLastName?: string | null, programName: string, items: Array<{ __typename: 'VaccinationCardItemNode', id: string, vaccineCourseId: string, vaccineCourseDoseId: string, vaccinationId?: string | null, label: string, minAgeMonths: number, vaccinationDate?: string | null, suggestedDate?: string | null, given?: boolean | null }> } };
+
 export type VaccinationQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   vaccinationId: Types.Scalars['String']['input'];
@@ -30,6 +42,14 @@ export type InsertVaccinationMutationVariables = Types.Exact<{
 
 
 export type InsertVaccinationMutation = { __typename: 'Mutations', insertVaccination: { __typename: 'VaccinationNode', id: string } };
+
+export type UpdateVaccinationMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateVaccinationInput;
+}>;
+
+
+export type UpdateVaccinationMutation = { __typename: 'Mutations', updateVaccination: { __typename: 'VaccinationNode', id: string } };
 
 export const VaccinationCourseDoseFragmentDoc = gql`
     fragment VaccinationCourseDose on VaccineCourseDoseNode {
@@ -70,6 +90,49 @@ export const VaccinationDetailFragmentDoc = gql`
   comment
 }
     `;
+export const VaccinationCardItemFragmentDoc = gql`
+    fragment VaccinationCardItem on VaccinationCardItemNode {
+  __typename
+  id
+  vaccineCourseId
+  vaccineCourseDoseId
+  vaccinationId
+  label
+  minAgeMonths
+  vaccinationDate
+  suggestedDate
+  given
+}
+    `;
+export const VaccinationCardFragmentDoc = gql`
+    fragment VaccinationCard on VaccinationCardNode {
+  __typename
+  id
+  patientFirstName
+  patientLastName
+  programName
+  items {
+    ... on VaccinationCardItemNode {
+      ...VaccinationCardItem
+    }
+  }
+}
+    ${VaccinationCardItemFragmentDoc}`;
+export const VaccinationCardDocument = gql`
+    query vaccinationCard($storeId: String!, $programEnrolmentId: String!) {
+  vaccinationCard(storeId: $storeId, programEnrolmentId: $programEnrolmentId) {
+    ... on VaccinationCardNode {
+      ...VaccinationCard
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    ${VaccinationCardFragmentDoc}`;
 export const VaccinationDocument = gql`
     query vaccination($storeId: String!, $vaccinationId: String!) {
   vaccination(storeId: $storeId, id: $vaccinationId) {
@@ -107,6 +170,17 @@ export const InsertVaccinationDocument = gql`
   }
 }
     `;
+export const UpdateVaccinationDocument = gql`
+    mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
+  updateVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -115,6 +189,9 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    vaccinationCard(variables: VaccinationCardQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccinationCardQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<VaccinationCardQuery>(VaccinationCardDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccinationCard', 'query', variables);
+    },
     vaccination(variables: VaccinationQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccinationQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<VaccinationQuery>(VaccinationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccination', 'query', variables);
     },
@@ -123,6 +200,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertVaccination(variables: InsertVaccinationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertVaccinationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertVaccinationMutation>(InsertVaccinationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertVaccination', 'mutation', variables);
+    },
+    updateVaccination(variables: UpdateVaccinationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateVaccinationMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateVaccinationMutation>(UpdateVaccinationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateVaccination', 'mutation', variables);
     }
   };
 }
