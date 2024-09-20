@@ -408,7 +408,7 @@ async fn main() -> anyhow::Result<()> {
                 .collect::<Result<Vec<String>, std::io::Error>>()?;
 
             for name_dir in report_names {
-                let report_versions = fs::read_dir(format!("{name_dir}"))?
+                let report_versions = fs::read_dir(&name_dir)?
                     .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
                     .collect::<Result<Vec<String>, std::io::Error>>()?;
 
@@ -457,7 +457,7 @@ async fn main() -> anyhow::Result<()> {
                         r#type: repository::ReportType::OmSupply,
                         template: fs::read_to_string(report_path)?,
                         context,
-                        sub_context: sub_context,
+                        sub_context,
                         argument_schema_id: Some(form_schema_json.id.clone()),
                         comment: None,
                         is_custom,
