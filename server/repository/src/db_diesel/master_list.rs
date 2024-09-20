@@ -11,7 +11,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
 };
 
@@ -176,7 +176,7 @@ impl<'a> MasterListRepository<'a> {
                     apply_sort_no_case!(query, sort, master_list_dsl::description);
                 }
                 MasterListSortField::DiscountPercentage => {
-                    apply_sort_no_case!(query, sort, master_list_dsl::discount_percentage);
+                    apply_sort!(query, sort, master_list_dsl::discount_percentage);
                 }
             }
         } else {
