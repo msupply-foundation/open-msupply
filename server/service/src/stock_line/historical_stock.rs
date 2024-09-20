@@ -48,7 +48,7 @@ pub fn get_historical_stock_lines(
     let mut stock_movements = StockMovementRepository::new(&ctx.connection).query(Some(filter))?;
 
     // sort stock movements by datetime descending (latest first)
-    stock_movements.sort_by(|a, b| b.datetime.cmp(&a.datetime));
+    stock_movements.sort_by(|a, b| b.datetime.cmp(&a.datetime)); // TODO: Move this to the repository layer if sorting is added there...
 
     let mut available_stock_by_line: HashMap<String, f64> = HashMap::new();
     let mut min_available_stock_by_line: HashMap<String, f64> = HashMap::new();
@@ -87,17 +87,10 @@ pub fn get_historical_stock_lines(
             .unwrap_or(&0.0)
             / stock_line.stock_line_row.pack_size;
 
-        if historical_available_packs > 0.0 {
-            // There was stock available for this stock_line at this time, so we should create a historical stock line
-            let mut new_stock_line = stock_line.clone();
-            if historical_available_packs < stock_line.stock_line_row.available_number_of_packs {
-                // We had less stock available at this time than we do now, so we need to adjust the available number of packs
-                new_stock_line.stock_line_row.available_number_of_packs =
-                    historical_available_packs;
-            }
-
-            adjusted_stock_lines.push(new_stock_line);
-        }
+        // Create a new stock line with the adjusted available stock (lines introduced since the datetime will still show up, but should 0 available stock)
+        let mut new_stock_line = stock_line.clone();
+        new_stock_line.stock_line_row.available_number_of_packs = historical_available_packs;
+        adjusted_stock_lines.push(new_stock_line);
     }
 
     Ok(ListResult {
