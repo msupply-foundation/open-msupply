@@ -20,7 +20,7 @@ use super::{
         GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef, SQLQuery, TeraTemplate,
     },
     html_printing::html_to_pdf,
-    qr_code::qr_code_as_html_img_src,
+    qr_code::qr_code_svg,
 };
 
 pub enum PrintFormat {
@@ -420,7 +420,7 @@ fn generate_report(
                 tera::Error::msg("qr_code filter expects a string `data` argument")
             })?;
 
-            let html_src = qr_code_as_html_img_src(data);
+            let html_src = qr_code_svg(data);
             Ok(tera::Value::String(html_src))
         },
     );
