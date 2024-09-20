@@ -10,7 +10,6 @@ use repository::{
     FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
     ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
-
 use serde::{Deserialize, Serialize};
 use server::configuration;
 use service::{
@@ -90,6 +89,7 @@ enum Action {
         #[clap(short, long, action = ArgAction::SetTrue)]
         enable_sync: bool,
     },
+
     SignPlugin {
         /// Path to the plugin.
         /// The plugin manifest and signature will be placed into the plugin directory
