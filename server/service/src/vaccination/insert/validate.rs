@@ -73,46 +73,14 @@ pub fn validate(
         }
     }
 
-    let stock_line = match (input.given, input.historical) {
-        // If not given, reason is required
-        (false, _) => {
-            if input.not_given_reason.is_none() {
-                return Err(InsertVaccinationError::ReasonNotProvided);
-            };
-
-            None
-        }
-        // If given, stock line is required (unless historical)
-        (true, true) => None,
-        (true, false) => {
-            let stock_line_id = input
-                .stock_line_id
-                .as_ref()
-                .ok_or(InsertVaccinationError::StockLineNotProvided)?;
-
-            let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
-
-            if !check_item_belongs_to_vaccine_course(
-                &stock_line.stock_line_row.item_link_id,
-                &vaccine_course_dose
-                    .vaccine_course_dose_row
-                    .vaccine_course_id,
-                connection,
-            )? {
-                return Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse);
-            };
-
-            // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
-            // but if it happens, we should catch it - otherwise we'll dispense infinity!
-            if stock_line.item_row.vaccine_doses == 0 {
-                return Err(InsertVaccinationError::InternalError(
-                    "Item has no doses defined".to_string(),
-                ));
-            }
-
-            Some(stock_line)
-        }
-    };
+    let stock_line = get_stock_line(
+        connection,
+        store_id,
+        input,
+        &vaccine_course_dose
+            .vaccine_course_dose_row
+            .vaccine_course_id,
+    )?;
 
     Ok((program_enrolment.row, stock_line))
 }
@@ -128,4 +96,56 @@ impl From<CommonStockLineError> for InsertVaccinationError {
             CommonStockLineError::DatabaseError(err) => InsertVaccinationError::DatabaseError(err),
         }
     }
+}
+
+fn get_stock_line(
+    connection: &StorageConnection,
+    store_id: &str,
+    input: &InsertVaccination,
+    vaccine_course_id: &str,
+) -> Result<Option<StockLine>, InsertVaccinationError> {
+    // If not given, reason is required
+    if !input.given {
+        if input.not_given_reason.is_none() {
+            return Err(InsertVaccinationError::ReasonNotProvided);
+        };
+
+        return Ok(None);
+    }
+
+    // If historical, stock line is not required
+    if input.historical {
+        return Ok(None);
+    }
+
+    // If not for this facility, stock line is not required
+    if input.facility_name_id.is_none() {
+        return Ok(None);
+    }
+
+    // If given at this facility (and not historical), stock line is required
+    let stock_line_id = input
+        .stock_line_id
+        .as_ref()
+        .ok_or(InsertVaccinationError::StockLineNotProvided)?;
+
+    let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
+
+    if !check_item_belongs_to_vaccine_course(
+        &stock_line.stock_line_row.item_link_id,
+        vaccine_course_id,
+        connection,
+    )? {
+        return Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse);
+    };
+
+    // This shouldn't be possible (mSupply ensures doses is at least 1 for vaccine items)
+    // but if it happens, we should catch it - otherwise we'll dispense infinity!
+    if stock_line.item_row.vaccine_doses == 0 {
+        return Err(InsertVaccinationError::InternalError(
+            "Item has no doses defined".to_string(),
+        ));
+    }
+
+    Ok(Some(stock_line))
 }
