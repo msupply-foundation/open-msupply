@@ -87,3 +87,58 @@ pub fn check_clinician_exists(
 
     Ok(result.is_some())
 }
+
+pub fn get_related_vaccinations(
+    connection: &StorageConnection,
+    vaccine_course_id: &String,
+    vaccine_course_dose_id: &String,
+    program_enrolment_id: &String,
+) -> Result<(Option<Vaccination>, Option<Vaccination>), RepositoryError> {
+    // Get all doses based on course id
+    let all_course_doses = VaccineCourseDoseRepository::new(connection).query_by_filter(
+        VaccineCourseDoseFilter::new().vaccine_course_id(EqualFilter::equal_to(vaccine_course_id)),
+    )?;
+
+    // Get previous and next dose based on dose_id
+    let this_dose_index = all_course_doses
+        .iter()
+        .position(|v| &v.vaccine_course_dose_row.id == vaccine_course_dose_id)
+        .unwrap_or(0);
+
+    let previous_dose = match this_dose_index {
+        // First in course
+        0 => None,
+        index => all_course_doses.get(index - 1).cloned(),
+    };
+
+    let next_dose = all_course_doses.get(this_dose_index + 1).cloned();
+
+    let previous_vaccination = if let Some(previous_dose) = previous_dose {
+        let prev_vaccination = VaccinationRepository::new(connection).query_one(
+            VaccinationFilter::new()
+                .vaccine_course_dose_id(EqualFilter::equal_to(
+                    &previous_dose.vaccine_course_dose_row.id,
+                ))
+                .program_enrolment_id(EqualFilter::equal_to(&program_enrolment_id)),
+        )?;
+
+        // If there is a previous dose, it should have an associated vaccination
+        if prev_vaccination.is_none() {
+            return Err(RepositoryError::NotFound);
+        }
+
+        prev_vaccination
+    } else {
+        None
+    };
+
+    let next_vaccination = VaccinationRepository::new(connection).query_one(
+        VaccinationFilter::new()
+            .vaccine_course_dose_id(EqualFilter::equal_to(
+                &next_dose.unwrap_or_default().vaccine_course_dose_row.id,
+            ))
+            .program_enrolment_id(EqualFilter::equal_to(&program_enrolment_id)),
+    )?;
+
+    return Ok((previous_vaccination, next_vaccination));
+}
