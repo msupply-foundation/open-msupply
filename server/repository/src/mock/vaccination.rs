@@ -15,6 +15,7 @@ pub fn mock_vaccination_a() -> VaccinationRow {
         program_enrolment_id: mock_immunisation_program_enrolment_a().id,
         vaccine_course_dose_id: mock_vaccine_course_a_dose_a().id,
         encounter_id: mock_immunisation_encounter_a().id,
+        given: true,
         created_datetime: NaiveDate::from_ymd_opt(2024, 2, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
