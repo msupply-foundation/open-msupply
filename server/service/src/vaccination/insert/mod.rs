@@ -138,10 +138,10 @@ impl From<UpdatePrescriptionError> for InsertVaccinationError {
 #[cfg(test)]
 mod insert {
     use repository::mock::{
-        mock_encounter_a, mock_immunisation_encounter_a, mock_patient_b, mock_program_a,
-        mock_stock_line_a, mock_stock_line_vaccine_item_a, mock_store_a, mock_user_account_a,
-        mock_vaccination_a, mock_vaccine_course_a_dose_a, mock_vaccine_course_a_dose_b,
-        mock_vaccine_course_a_dose_c, MockData, MockDataInserts,
+        mock_encounter_a, mock_immunisation_encounter_a, mock_name_1, mock_patient_b,
+        mock_program_a, mock_stock_line_a, mock_stock_line_vaccine_item_a, mock_store_a,
+        mock_user_account_a, mock_vaccination_a, mock_vaccine_course_a_dose_a,
+        mock_vaccine_course_a_dose_b, mock_vaccine_course_a_dose_c, MockData, MockDataInserts,
     };
     use repository::test_db::{setup_all, setup_all_with_data};
     use repository::{
@@ -323,6 +323,7 @@ mod insert {
                     id: "new_id".to_string(),
                     encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    facility_name_id: Some(mock_name_1().id),
                     given: true,
                     historical: false,
                     ..Default::default()
@@ -356,6 +357,7 @@ mod insert {
                     id: "new_id".to_string(),
                     encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    facility_name_id: Some(mock_name_1().id),
                     given: true,
                     stock_line_id: Some("non_existent_stock_line_id".to_string()),
                     ..Default::default()
@@ -373,6 +375,7 @@ mod insert {
                     id: "new_id".to_string(),
                     encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    facility_name_id: Some(mock_name_1().id),
                     given: true,
                     stock_line_id: Some(mock_stock_line_a().id), // FOR ITEM A (not linked to vaccine course)
                     ..Default::default()
@@ -434,6 +437,7 @@ mod insert {
                     id: "new_vaccination_given_id".to_string(),
                     encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    facility_name_id: Some(mock_name_1().id),
                     given: true,
                     stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
                     ..Default::default()
@@ -510,8 +514,9 @@ mod insert {
                     id: "new_vaccination_historical".to_string(),
                     encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
-                    given: false,
-                    not_given_reason: Some("reason".to_string()),
+                    facility_name_id: Some(mock_name_1().id),
+                    given: true,
+                    historical: true,
                     ..Default::default()
                 },
             )
