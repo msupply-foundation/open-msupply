@@ -8174,6 +8174,7 @@ export type VaccinationCardItemNode = {
   given?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
+  maxAgeMonths: Scalars['Float']['output'];
   minAgeMonths: Scalars['Float']['output'];
   minIntervalDays: Scalars['Int']['output'];
   stockLine?: Maybe<StockLineNode>;
