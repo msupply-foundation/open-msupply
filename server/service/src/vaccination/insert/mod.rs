@@ -49,6 +49,7 @@ pub struct InsertVaccination {
     pub facility_free_text: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
+    pub historical: bool,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
 }
@@ -323,6 +324,7 @@ mod insert {
                     encounter_id: mock_immunisation_encounter_a().id,
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
+                    historical: false,
                     ..Default::default()
                 }
             ),
@@ -483,5 +485,38 @@ mod insert {
             .unwrap();
 
         assert_eq!(result.vaccination_row.id, "new_vaccination_not_given_id");
+    }
+
+    #[actix_rt::test]
+    async fn insert_vaccination_success_historical() {
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_vaccination_success_historical",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Can create - historical
+        let result = service_provider
+            .vaccination_service
+            .insert_vaccination(
+                &context,
+                &mock_store_a().id,
+                InsertVaccination {
+                    id: "new_vaccination_historical".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    given: false,
+                    not_given_reason: Some("reason".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.vaccination_row.id, "new_vaccination_historical");
     }
 }

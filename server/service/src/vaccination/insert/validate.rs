@@ -73,17 +73,18 @@ pub fn validate(
         }
     }
 
-    // If given, stock line is required
-    // If not given, reason is required
-    let stock_line = match input.given {
-        false => {
+    let stock_line = match (input.given, input.historical) {
+        // If not given, reason is required
+        (false, _) => {
             if input.not_given_reason.is_none() {
                 return Err(InsertVaccinationError::ReasonNotProvided);
             };
 
             None
         }
-        true => {
+        // If given, stock line is required (unless historical)
+        (true, true) => None,
+        (true, false) => {
             let stock_line_id = input
                 .stock_line_id
                 .as_ref()

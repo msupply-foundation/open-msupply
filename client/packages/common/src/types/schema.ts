@@ -2910,6 +2910,7 @@ export type InsertVaccinationInput = {
   facilityFreeText?: InputMaybe<Scalars['String']['input']>;
   facilityNameId?: InputMaybe<Scalars['String']['input']>;
   given: Scalars['Boolean']['input'];
+  historical: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
