@@ -22,6 +22,7 @@ pub struct InsertVaccinationInput {
     pub facility_free_text: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
+    pub historical: bool,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
 }
@@ -38,6 +39,7 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             facility_free_text,
             comment,
             given,
+            historical,
             stock_line_id,
             not_given_reason,
         }: InsertVaccinationInput,
@@ -52,6 +54,7 @@ impl From<InsertVaccinationInput> for InsertVaccination {
             facility_free_text,
             comment,
             given,
+            historical,
             stock_line_id,
             not_given_reason,
         }
