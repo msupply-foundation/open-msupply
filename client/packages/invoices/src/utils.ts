@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
-import { DraftStockOutLine, InboundItem } from './types';
+import { InboundItem } from './types';
 import { PrescriptionRowFragment } from './Prescriptions/api';
 import {
   InboundReturnFragment,
@@ -308,11 +308,6 @@ export const isA = {
     line.type === InvoiceLineNodeType.Service,
   placeholderLine: (line: { type: InvoiceLineNodeType }) =>
     line.type === InvoiceLineNodeType.UnallocatedStock,
-};
-
-export const get = {
-  stockLineSubtotal: (line: DraftStockOutLine) =>
-    line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
 };
 
 export const outboundsToCsv = (

@@ -44,6 +44,50 @@ const MASTER_LIST_2: (&str, &str) = (
 }"#,
 );
 
+const DEFAULT_PRICE_LIST: (&str, &str) = (
+    "4d9a615e-eebb-42ad-a806-e3854f7733ae",
+    r#"{
+    "ID": "4d9a615e-eebb-42ad-a806-e3854f7733ae",
+    "description": "Default Price List",
+    "date_created": "2017-08-17",
+    "created_by_user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "note": "National Price List",
+    "gets_new_items": false,
+    "tags": null,
+    "isProgram": false,
+    "programSettings": null,
+    "code": "",
+    "isPatientList": false,
+    "is_hiv": false,
+    "isSupplierHubCatalog": false,
+    "inactive": false,
+    "is_default_price_list": true,
+    "discount_percentage": 0.0
+}"#,
+);
+
+const DISCOUNT_LIST: (&str, &str) = (
+    "4d9a615e-eebb-42ad-a806-e3854f7733a1",
+    r#"{
+    "ID": "4d9a615e-eebb-42ad-a806-e3854f7733a1",
+    "description": "Discount List",
+    "date_created": "2017-08-17",
+    "created_by_user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+    "note": "National Price List Store Discounts",
+    "gets_new_items": false,
+    "tags": null,
+    "isProgram": false,
+    "programSettings": null,
+    "code": "",
+    "isPatientList": false,
+    "is_hiv": false,
+    "isSupplierHubCatalog": false,
+    "inactive": false,
+    "is_default_price_list": false,
+    "discount_percentage": 20
+}"#,
+);
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         TestSyncIncomingRecord::new_pull_upsert(
@@ -55,6 +99,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 code: "".to_owned(),
                 description: "note 1".to_owned(),
                 is_active: false,
+                is_default_price_list: false,
+                discount_percentage: None,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -66,6 +112,34 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 code: "".to_owned(),
                 description: "note 2".to_owned(),
                 is_active: true,
+                is_default_price_list: false,
+                discount_percentage: None,
+            },
+        ),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            DEFAULT_PRICE_LIST,
+            MasterListRow {
+                id: DEFAULT_PRICE_LIST.0.to_owned(),
+                name: "Default Price List".to_owned(),
+                code: "".to_owned(),
+                description: "National Price List".to_owned(),
+                is_active: true,
+                is_default_price_list: true,
+                discount_percentage: Some(0.0),
+            },
+        ),
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
+            DISCOUNT_LIST,
+            MasterListRow {
+                id: DISCOUNT_LIST.0.to_owned(),
+                name: "Discount List".to_owned(),
+                code: "".to_owned(),
+                description: "National Price List Store Discounts".to_owned(),
+                is_active: true,
+                is_default_price_list: false,
+                discount_percentage: Some(20.0),
             },
         ),
     ]

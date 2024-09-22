@@ -111,6 +111,7 @@ export enum ActivityLogNodeType {
   ProgramUpdated = 'PROGRAM_UPDATED',
   QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
+  RequisitionApproved = 'REQUISITION_APPROVED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
@@ -2584,7 +2585,6 @@ export type InsertOutboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;
@@ -3387,6 +3387,21 @@ export type ItemPackVariantNode = {
   mostUsedPackVariantId: Scalars['String']['output'];
   packVariants: Array<VariantNode>;
 };
+
+export type ItemPriceInput = {
+  itemId: Scalars['String']['input'];
+  nameId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ItemPriceNode = {
+  __typename: 'ItemPriceNode';
+  calculatedPricePerUnit?: Maybe<Scalars['Float']['output']>;
+  defaultPricePerUnit?: Maybe<Scalars['Float']['output']>;
+  discountPercentage?: Maybe<Scalars['Float']['output']>;
+  itemId: Scalars['String']['output'];
+};
+
+export type ItemPriceResponse = ItemPriceNode;
 
 export enum ItemSortFieldInput {
   Code = 'code',
@@ -5269,6 +5284,7 @@ export type Queries = {
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
+  itemPrice: ItemPriceResponse;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
@@ -5635,6 +5651,12 @@ export type QueriesInvoicesArgs = {
 
 export type QueriesItemCountsArgs = {
   lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesItemPriceArgs = {
+  input: ItemPriceInput;
   storeId: Scalars['String']['input'];
 };
 
