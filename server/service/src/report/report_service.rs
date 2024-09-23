@@ -705,9 +705,9 @@ mod report_service_test {
             comment: None,
             sub_context: None,
             argument_schema_id: None,
-            is_custom,
-            version,
-            code,
+            is_custom: true,
+            version: "1.0".to_string(),
+            code: "report_1".to_string(),
         })
         .unwrap();
         let is_custom = false;
@@ -722,9 +722,9 @@ mod report_service_test {
             comment: None,
             sub_context: None,
             argument_schema_id: None,
-            is_custom,
-            version,
-            code,
+            is_custom: true,
+            version: "1.0".to_string(),
+            code: "report_base_1".to_string(),
         })
         .unwrap();
 
