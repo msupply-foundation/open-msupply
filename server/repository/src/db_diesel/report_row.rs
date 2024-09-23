@@ -48,7 +48,7 @@ table! {
       argument_schema_id -> Nullable<Text>,
       is_custom -> Bool,
       version -> Text,
-      code -> Nullable<Text>,
+      code -> Text,
   }
 }
 
