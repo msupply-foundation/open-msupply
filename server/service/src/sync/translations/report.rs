@@ -122,7 +122,7 @@ impl SyncTranslation for ReportTranslation {
             sub_context,
             argument_schema_id,
             is_custom: true,
-            version: 1.0.to_string(),
+            version: "1.0".to_string(),
             code: id,
         };
 
