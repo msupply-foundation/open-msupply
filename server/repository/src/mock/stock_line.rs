@@ -233,11 +233,25 @@ pub fn mock_stock_line_vaccine_item_a() -> StockLineRow {
         r.total_number_of_packs = 6.0;
     })
 }
+pub fn mock_stock_line_b_vaccine_item_a() -> StockLineRow {
+    inline_init(|r: &mut StockLineRow| {
+        r.id = "vaccine_item_a_line_b".to_string();
+        r.item_link_id = mock_vaccine_item_a().id;
+        r.store_id = "store_a".to_string();
+        r.available_number_of_packs = 10.0;
+        r.pack_size = 20.0;
+        r.total_number_of_packs = 10.0;
+    })
+}
 
 pub fn mock_vaccine_stock_lines() -> Vec<StockLineRow> {
     let mock_stock_line_vaccine_item_a = mock_stock_line_vaccine_item_a();
+    let mock_stock_line_b_vaccine_item_a = mock_stock_line_b_vaccine_item_a();
 
-    vec![mock_stock_line_vaccine_item_a]
+    vec![
+        mock_stock_line_vaccine_item_a,
+        mock_stock_line_b_vaccine_item_a,
+    ]
 }
 
 pub fn mock_stock_lines() -> Vec<StockLineRow> {

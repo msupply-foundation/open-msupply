@@ -39,7 +39,7 @@ import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
 import defaultPatientSchema from './DefaultPatientSchema.json';
 import defaultPatientUISchema from './DefaultPatientUISchema.json';
-import { VaccinationCardsListView } from '../VaccinationCards/ListView';
+import { VaccinationCardsListView } from '../VaccinationCard/ListView';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,

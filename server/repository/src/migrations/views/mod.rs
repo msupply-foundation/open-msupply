@@ -402,11 +402,12 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     FROM vaccine_course_dose vcd 
     JOIN vaccine_course vc 
       ON vcd.vaccine_course_id = vc.id
-    LEFT JOIN vaccination v 
-      ON v.vaccine_course_dose_id = vcd.id
     JOIN program_enrolment pe 
-      ON pe.program_id = vc.program_id AND (v.program_enrolment_id = pe.id or v.program_enrolment_id IS NULL);
-      "#,
+      ON pe.program_id = vc.program_id
+     LEFT JOIN vaccination v 
+      ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id;
+
+    "#,
     )?;
 
     if cfg!(not(feature = "postgres")) {
