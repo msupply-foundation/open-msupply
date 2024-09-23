@@ -17,8 +17,8 @@ pub use self::update::*;
 mod batch;
 pub use self::batch::*;
 
-mod common;
-pub use self::common::*;
+mod validate;
+pub use self::validate::*;
 
 pub trait StocktakeServiceTrait: Sync + Send {
     fn get_stocktakes(
