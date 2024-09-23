@@ -1,10 +1,9 @@
-use repository::StorageConnection;
-
-use crate::{
-    check_location_exists,
-    stocktake::common::{check_master_list_exists, check_stocktake_does_not_exist},
-    validate::check_store_exists,
+use repository::{
+    EqualFilter, MasterListFilter, MasterListRepository, RepositoryError, StocktakeFilter,
+    StocktakeRepository, StorageConnection,
 };
+
+use crate::{check_location_exists, validate::check_store_exists};
 
 use super::{InsertStocktake, InsertStocktakeError};
 
@@ -33,4 +32,26 @@ pub fn validate(
     }
 
     Ok(())
+}
+
+fn check_stocktake_does_not_exist(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<bool, RepositoryError> {
+    let count = StocktakeRepository::new(connection)
+        .count(Some(StocktakeFilter::new().id(EqualFilter::equal_to(id))))?;
+    Ok(count == 0)
+}
+
+fn check_master_list_exists(
+    connection: &StorageConnection,
+    store_id: &str,
+    master_list_id: &str,
+) -> Result<bool, RepositoryError> {
+    let count = MasterListRepository::new(connection).count(Some(
+        MasterListFilter::new()
+            .id(EqualFilter::equal_to(master_list_id))
+            .exists_for_store_id(EqualFilter::equal_to(store_id)),
+    ))?;
+    Ok(count > 0)
 }
