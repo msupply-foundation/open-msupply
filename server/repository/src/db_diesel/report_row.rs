@@ -86,7 +86,7 @@ impl Default for ReportRow {
             comment: Default::default(),
             sub_context: Default::default(),
             argument_schema_id: Default::default(),
-            is_custom: Default::default(),
+            is_custom: true,
             version: Default::default(),
             code: Default::default(),
         }
