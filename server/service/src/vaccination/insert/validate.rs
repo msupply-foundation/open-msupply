@@ -2,10 +2,11 @@ use repository::{ProgramEnrolmentRow, RepositoryError, StockLine, StorageConnect
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
+    name::validate::check_name_exists,
     vaccination::validate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
         check_program_enrolment_exists, check_vaccination_does_not_exist_for_dose,
-        check_vaccination_exists, check_vaccine_course_dose_exists,
+        check_vaccination_exists, check_vaccine_course_dose_exists, get_related_vaccinations,
     },
 };
 
@@ -42,11 +43,33 @@ pub fn validate(
         return Err(InsertVaccinationError::VaccinationAlreadyExistsForDose);
     }
 
-    // TODO: check is the next dose! (can't give a dose if the previous one hasn't been given)
+    // Check that the previous dose has been given
+    let (previous_vaccination, _) = get_related_vaccinations(
+        connection,
+        &vaccine_course_dose.vaccine_course_row.id,
+        &input.vaccine_course_dose_id,
+        &program_enrolment.row.id,
+    )
+    .map_err(|err| match err {
+        RepositoryError::NotFound => InsertVaccinationError::VaccineIsNotNextDose,
+        _ => InsertVaccinationError::DatabaseError(err),
+    })?;
+
+    if let Some(previous_vaccination) = previous_vaccination {
+        if !previous_vaccination.vaccination_row.given {
+            return Err(InsertVaccinationError::VaccineIsNotNextDose);
+        }
+    }
 
     if let Some(clinician_id) = &input.clinician_id {
         if !check_clinician_exists(clinician_id, connection)? {
             return Err(InsertVaccinationError::ClinicianDoesNotExist);
+        }
+    }
+
+    if let Some(facility_name_id) = &input.facility_name_id {
+        if !check_name_exists(connection, facility_name_id)?.is_some() {
+            return Err(InsertVaccinationError::FacilityDoesNotExist);
         }
     }
 

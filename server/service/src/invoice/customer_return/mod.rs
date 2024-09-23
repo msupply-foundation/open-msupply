@@ -15,6 +15,7 @@ pub use self::update_lines::*;
 pub struct CustomerReturnLineInput {
     pub id: String,
     pub item_id: String,
+    pub stock_line_id: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub batch: Option<String>,
     pub pack_size: f64,
