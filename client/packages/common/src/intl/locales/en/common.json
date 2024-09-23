@@ -560,6 +560,7 @@
   "messages.upload-invite": "Drag & drop to upload",
   "messages.upload-or": "or",
   "messages.yes": "Yes",
+  "messages.confirm-add-from-master-list": "Do you want to add all of the items from this master list?",
   "multiple": "[multiple]",
   "placeholder.filter-by-status": "Filter by status",
   "placeholder.filter-items": "Filter items",

@@ -300,6 +300,7 @@ pub fn mock_test_not_store_a_master_list() -> FullMockMasterList {
             code: id.clone(),
             description: id.clone(),
             is_active: true,
+            ..Default::default()
         },
         joins: vec![],
         lines: vec![],

@@ -21,6 +21,7 @@ pub struct MasterListLine {
     pub id: String,
     pub item_id: String,
     pub master_list_id: String,
+    pub price_per_unit: Option<f64>,
 }
 
 type MasterListLineJoin = (MasterListLineRow, (ItemLinkRow, ItemRow));
@@ -135,6 +136,7 @@ fn to_domain((master_list_line_row, (_, item_row)): MasterListLineJoin) -> Maste
         id: master_list_line_row.id,
         master_list_id: master_list_line_row.master_list_id,
         item_id: item_row.id,
+        price_per_unit: master_list_line_row.price_per_unit,
     }
 }
 
