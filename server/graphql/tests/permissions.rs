@@ -775,7 +775,7 @@ mod permission_tests {
             TestData {
                 name: "insertOutboundShipmentLine",
                 query: r#"mutation Mutation {
-                insertOutboundShipmentLine(input: {id: "", invoiceId: "", stockLineId: "", numberOfPacks: 10, totalBeforeTax: 1.5}, storeId: "") {
+                insertOutboundShipmentLine(input: {id: "", invoiceId: "", stockLineId: "", numberOfPacks: 10}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -1198,8 +1198,9 @@ mod permission_tests {
             .into_iter()
             .chain(resource_mapping_query_test_data().into_iter())
         {
+            println!("Testing: {}", data.name);
             let test_service = TestService::new(data.expected);
-            let _ = graphql_core::test_helpers::run_test_gql_query(
+            let result = graphql_core::test_helpers::run_test_gql_query(
                 &settings,
                 // escape query quotes
                 &data.query.replace('\"', "\\\""),
@@ -1207,6 +1208,11 @@ mod permission_tests {
                 Some(service_provider(&test_service, &connection_manager)),
             )
             .await;
+
+            // we expect an error, but other errors need to be investigated separately
+            if !format!("{}", result).contains("Just abort the request") {
+                panic!("Unexpected error in: {} - {}", data.name, result);
+            }
 
             assert_eq!(
                 None,
