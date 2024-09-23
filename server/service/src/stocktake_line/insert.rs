@@ -6,13 +6,10 @@ use repository::{
 };
 
 use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
+use crate::stocktake::{check_stocktake_exist, check_stocktake_not_finalised};
 use crate::validate::check_store_id_matches;
 use crate::{check_location_exists, NullableUpdate};
-use crate::{
-    service_provider::ServiceContext,
-    stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
-    stocktake_line::query::get_stocktake_line,
-};
+use crate::{service_provider::ServiceContext, stocktake_line::query::get_stocktake_line};
 
 use super::validate::{
     check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,

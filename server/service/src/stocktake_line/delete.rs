@@ -4,7 +4,7 @@ use repository::{
 
 use crate::{
     service_provider::ServiceContext,
-    stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
+    stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::validate::check_stocktake_line_exist,
     validate::check_store_id_matches,
 };

@@ -8,7 +8,7 @@ use crate::{
     check_location_exists,
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
-    stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
+    stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::{
         query::get_stocktake_line,
         validate::{
