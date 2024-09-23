@@ -53,7 +53,7 @@ pub fn validate(
 
     if let Some(facility_name_id) = &input.facility_name_id {
         if !check_name_exists(connection, facility_name_id)?.is_some() {
-            return Err(InsertVaccinationError::FacilityNameDoesNotExist);
+            return Err(InsertVaccinationError::FacilityDoesNotExist);
         }
     }
 

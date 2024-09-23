@@ -100,7 +100,7 @@ fn map_error(error: ServiceError) -> Result<InsertVaccinationResponse> {
     let graphql_error = match error {
         ServiceError::VaccinationAlreadyExists
         | ServiceError::ClinicianDoesNotExist
-        | ServiceError::FacilityNameDoesNotExist
+        | ServiceError::FacilityDoesNotExist
         | ServiceError::EncounterDoesNotExist
         | ServiceError::VaccineCourseDoseDoesNotExist
         | ServiceError::ProgramEnrolmentDoesNotMatchVaccineCourse
