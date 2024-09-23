@@ -93,20 +93,18 @@ impl BatchPair {
     /// Calculate reduction amount to apply to main batch
     pub fn get_main_batch_reduction(
         &self,
-        input: &UpdateStockOutLine,
+        input_number_of_packs: Option<f64>,
         existing_line: &InvoiceLineRow,
     ) -> f64 {
         // Previous batch exists, this mean new batch was requested means:
         // - reduction should be number of packs from input (or existing line if number of pack is missing in input)
         if self.previous_batch_option.is_some() {
-            input
-                .number_of_packs
-                .unwrap_or(existing_line.number_of_packs)
+            input_number_of_packs.unwrap_or(existing_line.number_of_packs)
         } else {
             // Previous batch does not exists, this mean updating existing batch, thus:
             // - reduction is the difference between input and existing line number of packs
-            if let Some(number_of_packs) = &input.number_of_packs {
-                *number_of_packs - existing_line.number_of_packs
+            if let Some(number_of_packs) = input_number_of_packs {
+                number_of_packs - existing_line.number_of_packs
             } else {
                 // No changes in input, no reduction
                 0.0
