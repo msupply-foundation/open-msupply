@@ -444,9 +444,9 @@ async fn main() -> anyhow::Result<()> {
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
                     let sub_context = manifest.sub_context;
-                    let header = manifest.header;
                     let arguments_path = manifest
                         .arguments
+                        .clone()
                         .and_then(|a| a.schema)
                         .and_then(|schema| format!("{version_dir}/{schema}").into());
                     let arguments_ui_path = manifest
@@ -461,12 +461,12 @@ async fn main() -> anyhow::Result<()> {
                         header: manifest.header,
                         footer: manifest.footer,
                         query_gql: match &manifest.queries {
-                            Some(queries) => queries.graphql_query,
+                            Some(queries) => queries.graphql_query.clone(),
                             None => None,
                         },
                         query_default: None,
                         query_sql: match &manifest.queries {
-                            Some(queries) => queries.sql_queries,
+                            Some(queries) => queries.sql_queries.clone(),
                             None => None,
                         },
                     };
@@ -513,7 +513,7 @@ async fn main() -> anyhow::Result<()> {
                         template: fs::read_to_string(report_path)?,
                         context,
                         sub_context,
-                        argument_schema_id: Some(form_schema_json.id.clone()),
+                        argument_schema_id: form_schema_json.map(|r| r.id.clone()),
                         comment: None,
                         is_custom,
                         version: version.to_string(),
@@ -568,7 +568,7 @@ async fn main() -> anyhow::Result<()> {
 
             let is_custom = false;
             let version = "1.0".to_string();
-            let code = id;
+            let code = id.clone();
 
             ReportRowRepository::new(&con).upsert_one(&ReportRow {
                 id,
