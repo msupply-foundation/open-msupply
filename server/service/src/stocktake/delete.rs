@@ -8,7 +8,7 @@ use crate::{
     validate::check_store_id_matches,
 };
 
-use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
+use super::common::{check_stocktake_exist, check_stocktake_not_finalised};
 
 #[derive(Debug, PartialEq)]
 pub enum DeleteStocktakeError {

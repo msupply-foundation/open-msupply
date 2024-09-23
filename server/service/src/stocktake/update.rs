@@ -29,7 +29,7 @@ use crate::{
     NullableUpdate,
 };
 
-use super::validate::{check_stocktake_exist, check_stocktake_not_finalised};
+use super::common::{check_stocktake_exist, check_stocktake_not_finalised};
 
 #[derive(Debug, Clone)]
 pub enum UpdateStocktakeStatus {
