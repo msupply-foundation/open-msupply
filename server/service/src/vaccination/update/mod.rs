@@ -393,6 +393,43 @@ mod update {
             result.vaccination_row.facility_free_text,
             Some("Facility".to_owned())
         );
+
+        // ----------------------------
+        // Update: Not given -> given: Don't create transactions
+        // ----------------------------
+        let result = service_provider
+            .vaccination_service
+            .update_vaccination(
+                &context,
+                &mock_store_a().id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    given: Some(true),
+                    stock_line_id: Some(mock_stock_line_vaccine_item_a().id),
+                    update_transactions: Some(false),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.vaccination_row.given, true);
+        assert!(result.vaccination_row.invoice_id.is_none());
+
+        // Check invoice was NOT created
+        let created_invoices = InvoiceRepository::new(&context.connection)
+            .query_by_filter(
+                InvoiceFilter::new().stock_line_id(mock_stock_line_vaccine_item_a().id),
+            )
+            .unwrap();
+        assert_eq!(created_invoices.len(), 0);
+
+        // Check stock was not adjusted
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_stock_line_vaccine_item_a().id)
+            .unwrap()
+            .unwrap();
+        // Should be unchanged, still 5.0
+        assert_eq!(stock_line.available_number_of_packs, 5.0);
     }
 
     #[actix_rt::test]
@@ -407,8 +444,6 @@ mod update {
         let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
-
-        // toDO: no trans when i say
 
         // ----------------------------
         // Update: Not given -> given
