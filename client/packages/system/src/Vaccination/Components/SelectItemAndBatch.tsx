@@ -1,9 +1,8 @@
 import {
-  Box,
   Button,
-  Checkbox,
   InputWithLabelRow,
   Select,
+  Switch,
   SxProps,
   Typography,
   useTranslation,
@@ -16,13 +15,13 @@ import { OTHER_FACILITY } from './FacilitySearchInput';
 export const SelectItemAndBatch = ({
   draft,
   dose,
-  editingExisting,
+  hasExistingSelectedBatch,
   updateDraft,
   openBatchModal,
 }: {
   dose: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
-  editingExisting: boolean;
+  hasExistingSelectedBatch: boolean;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
   openBatchModal: () => void;
 }) => {
@@ -52,24 +51,19 @@ export const SelectItemAndBatch = ({
 
   const isHistorical = draft.date?.toDateString() !== new Date().toDateString();
 
-  const selectBatch = !isHistorical || recordHistoricalBatch || editingExisting;
-
-  // You can edit the batch immediately, but not once its a historical vaccination
-  const disableBatchEdit = editingExisting && isHistorical;
+  const selectBatch =
+    !isHistorical || recordHistoricalBatch || hasExistingSelectedBatch;
 
   return (
     <>
-      {isHistorical && (
-        <Box>
-          <Checkbox
-            id="recordBatch"
-            checked={recordHistoricalBatch}
-            onChange={() => setRecordBatch(!recordHistoricalBatch)}
-          />
-          <Typography component="label" htmlFor="recordBatch">
-            {t('label.record-stock-transaction')}
-          </Typography>
-        </Box>
+      {isHistorical && !hasExistingSelectedBatch && (
+        <Switch
+          label={t('label.record-stock-transaction')}
+          checked={recordHistoricalBatch}
+          onChange={() => setRecordBatch(!recordHistoricalBatch)}
+          labelPlacement="end"
+          size="small"
+        />
       )}
 
       {selectBatch && (
@@ -84,7 +78,6 @@ export const SelectItemAndBatch = ({
                   updateDraft({ itemId: e.target.value, stockLine: null })
                 }
                 sx={{ flex: 1 }}
-                disabled={disableBatchEdit}
               />
             }
           />
@@ -92,7 +85,7 @@ export const SelectItemAndBatch = ({
             label={t('label.batch')}
             Input={
               <Button
-                disabled={!draft.itemId || disableBatchEdit}
+                disabled={!draft.itemId}
                 onClick={() => draft.itemId && openBatchModal()}
                 sx={{
                   ...baseButtonStyles,
