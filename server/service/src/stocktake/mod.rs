@@ -3,6 +3,7 @@ use repository::PaginationOption;
 use repository::{RepositoryError, Stocktake, StocktakeFilter, StocktakeSort};
 
 pub mod query;
+use self::query::{get_stocktake, get_stocktakes};
 
 mod delete;
 pub use self::delete::*;
@@ -11,7 +12,6 @@ mod insert;
 pub use self::insert::*;
 
 mod update;
-use self::query::{get_stocktake, get_stocktakes};
 pub use self::update::*;
 
 mod batch;
