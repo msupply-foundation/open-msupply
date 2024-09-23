@@ -1,14 +1,14 @@
+mod validate;
+pub use validate::validate;
+
 use repository::{
     ActivityLogType, EqualFilter, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
-    StocktakeRowRepository, StorageConnection, TransactionError,
+    StocktakeRowRepository, TransactionError,
 };
 
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, stocktake_line::*,
-    validate::check_store_id_matches,
 };
-
-use super::common::{check_stocktake_exist, check_stocktake_not_finalised};
 
 #[derive(Debug, PartialEq)]
 pub enum DeleteStocktakeError {
@@ -29,34 +29,6 @@ pub struct DeleteStocktake {
     pub id: String,
 }
 
-fn validate(
-    connection: &StorageConnection,
-    store_id: &str,
-    stocktake_id: &str,
-) -> Result<(), DeleteStocktakeError> {
-    let existing = match check_stocktake_exist(connection, stocktake_id)? {
-        Some(existing) => existing,
-        None => return Err(DeleteStocktakeError::StocktakeDoesNotExist),
-    };
-    if !check_store_id_matches(store_id, &existing.store_id) {
-        return Err(DeleteStocktakeError::InvalidStore);
-    }
-
-    if existing.is_locked {
-        return Err(DeleteStocktakeError::StocktakeIsLocked);
-    }
-
-    if !check_stocktake_not_finalised(&existing.status) {
-        return Err(DeleteStocktakeError::CannotEditFinalised);
-    }
-    // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
-    // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
-    // if !check_no_stocktake_lines_exist(connection, stocktake_id)? {
-    //     return Err(DeleteStocktakeError::StocktakeLinesExist);
-    // }
-    Ok(())
-}
-
 /// Returns the id of the deleted stocktake
 pub fn delete_stocktake(
     ctx: &ServiceContext,
@@ -66,8 +38,6 @@ pub fn delete_stocktake(
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &stocktake_id)?;
 
-            // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.
-            // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = StocktakeLineRepository::new(connection).query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake_id)),
                 Some(ctx.store_id.clone()),
@@ -95,12 +65,6 @@ pub fn delete_stocktake(
         .map_err(|error: TransactionError<DeleteStocktakeError>| error.to_inner_error())?;
 
     Ok(stocktake_id.to_string())
-}
-
-impl From<RepositoryError> for DeleteStocktakeError {
-    fn from(error: RepositoryError) -> Self {
-        DeleteStocktakeError::DatabaseError(error)
-    }
 }
 
 #[cfg(test)]
