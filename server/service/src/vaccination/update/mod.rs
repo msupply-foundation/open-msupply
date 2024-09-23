@@ -408,6 +408,8 @@ mod update {
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
+        // toDO: no trans when i say
+
         // ----------------------------
         // Update: Not given -> given
         // ----------------------------
@@ -420,6 +422,7 @@ mod update {
                     id: mock_vaccination_a().id,
                     given: Some(true),
                     stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
+                    update_transactions: Some(true),
                     ..Default::default()
                 },
             )
@@ -458,6 +461,7 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
                     stock_line_id: Some(mock_stock_line_b_vaccine_item_a().id),
+                    update_transactions: Some(true),
                     ..Default::default()
                 },
             )
@@ -518,6 +522,7 @@ mod update {
                     id: mock_vaccination_a().id,
                     given: Some(false),
                     not_given_reason: Some("out of stock".to_string()),
+                    update_transactions: Some(true),
                     ..Default::default()
                 },
             )
