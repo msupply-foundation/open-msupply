@@ -1,7 +1,13 @@
 {
-    "context": "REPORT",
     "is_custom": false,
+    "version": "2.3.0",
     "code": "expiring-items",
+    "context": "REPORT",
     "sub_context": "Expiring",
-    "name": "Expiring Items"
-}
+    "name": "Expiring Items",
+    "queries": {
+        "gql": "query.graphql"
+    },
+    "schema": "argument_schemas/arguments.json",
+    "ui": "argument_schemas/arguments_ui.json"
+}   
