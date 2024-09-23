@@ -27,7 +27,7 @@ pub enum InsertVaccinationError {
     ProgramEnrolmentDoesNotMatchVaccineCourse,
     VaccinationAlreadyExistsForDose,
     ClinicianDoesNotExist,
-    FacilityNameDoesNotExist,
+    FacilityDoesNotExist,
     ReasonNotProvided,
     StockLineNotProvided,
     StockLineDoesNotExist,
@@ -293,7 +293,7 @@ mod insert {
                     ..Default::default()
                 }
             ),
-            Err(InsertVaccinationError::FacilityNameDoesNotExist)
+            Err(InsertVaccinationError::FacilityDoesNotExist)
         );
 
         // StockLineNotProvided
