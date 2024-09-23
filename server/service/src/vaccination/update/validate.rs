@@ -43,21 +43,11 @@ pub fn validate(
             return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
         }
     }
-
-    match input.given {
-        None => {}
-        // If not given, reason is required
-        Some(false) => {
-            if input.not_given_reason.is_none() {
-                return Err(UpdateVaccinationError::ReasonNotProvided);
-            };
-        }
-        // If given, stock line is required
-        Some(true) => {
-            if input.stock_line_id.is_none() {
-                return Err(UpdateVaccinationError::StockLineNotProvided);
-            };
-        }
+    // If not given, reason is required
+    if input.given == Some(false) {
+        if input.not_given_reason.is_none() {
+            return Err(UpdateVaccinationError::ReasonNotProvided);
+        };
     };
 
     // Validate existing stock line

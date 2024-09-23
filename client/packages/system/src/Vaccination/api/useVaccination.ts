@@ -30,6 +30,7 @@ export interface VaccinationDraft {
   itemId?: string;
   stockLine?: VaccinationStockLine | null;
   notGivenReason?: string | null;
+  editExistingTransactions?: boolean;
 }
 
 export function useVaccination({
@@ -88,6 +89,8 @@ export function useVaccination({
     given,
     notGivenReason,
     itemId: stockLine?.itemId,
+
+    editExistingTransactions: false,
   };
 
   const draft: VaccinationDraft = { ...defaults, ...patch };
@@ -227,6 +230,8 @@ const useUpdate = (vaccinationId: string | undefined) => {
               ? input.facilityFreeText
               : undefined,
         },
+
+        updateTransactions: input.editExistingTransactions,
       },
     });
 

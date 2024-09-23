@@ -60,8 +60,10 @@ pub fn generate(
         (None, None) => false,
     };
 
+    let update_transactions = update_input.update_transactions.unwrap_or(false);
+
     // Reverse prescription if it existed, and the stock line is changing
-    let create_customer_return = if stock_line_has_changed {
+    let create_customer_return = if stock_line_has_changed && update_transactions {
         existing_stock_line.map(|stock_line| {
             let amount = get_dose_as_number_of_packs(&stock_line);
             let stock_line_row = stock_line.stock_line_row;
@@ -103,7 +105,7 @@ pub fn generate(
     };
 
     // Create new prescription if stock line is changing to a new Some value
-    let create_prescription = if stock_line_has_changed {
+    let create_prescription = if stock_line_has_changed && update_transactions {
         new_stock_line.map(|stock_line| {
             generate_create_prescription(stock_line, patient_id, clinician_id.clone())
         })
@@ -167,8 +169,8 @@ pub fn generate(
         },
 
         invoice_id: match update_input.given {
-            // If we updated to not given, clear the invoice
-            Some(false) => None,
+            // If we updated to not given, and are reversing prescription with a return, clear the invoice
+            Some(false) if create_customer_return.is_some() => None,
             _ => create_prescription
                 .as_ref()
                 .map(|p| p.create_prescription.id.clone())

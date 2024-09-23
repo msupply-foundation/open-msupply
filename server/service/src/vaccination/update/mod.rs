@@ -29,7 +29,6 @@ pub enum UpdateVaccinationError {
     ClinicianDoesNotExist,
     FacilityNameDoesNotExist,
     ReasonNotProvided,
-    StockLineNotProvided,
     StockLineDoesNotExist,
     ItemDoesNotBelongToVaccineCourse,
     NotNextDose,
@@ -50,6 +49,7 @@ pub struct UpdateVaccination {
     pub not_given_reason: Option<String>,
     pub facility_name_id: Option<NullableUpdate<String>>,
     pub facility_free_text: Option<NullableUpdate<String>>,
+    pub update_transactions: Option<bool>,
 }
 
 pub fn update_vaccination(
@@ -264,20 +264,6 @@ mod update {
                 }
             ),
             Err(UpdateVaccinationError::FacilityNameDoesNotExist)
-        );
-
-        // StockLineNotProvided
-        assert_eq!(
-            service.update_vaccination(
-                &context,
-                store_id,
-                UpdateVaccination {
-                    id: mock_vaccination_a().id,
-                    given: Some(true),
-                    ..Default::default()
-                }
-            ),
-            Err(UpdateVaccinationError::StockLineNotProvided)
         );
 
         // ReasonNotProvided

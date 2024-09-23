@@ -13,6 +13,7 @@ import {
   RadioGroup,
   RouteBuilder,
   Select,
+  Switch,
   useDialog,
   useEditModal,
   useFormatDateTime,
@@ -99,7 +100,7 @@ export const VaccinationModal = ({
         openBatchModal={openBatchModal}
         draft={draft}
         dose={dose}
-        editingExisting={!!vaccination}
+        existingSelectedBatch={vaccination?.stockLine?.id}
       />
     </Box>
   );
@@ -139,13 +140,13 @@ export const VaccinationModal = ({
 const VaccinationForm = ({
   draft,
   dose,
-  editingExisting,
+  existingSelectedBatch,
   updateDraft,
   openBatchModal,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
-  editingExisting: boolean;
+  existingSelectedBatch?: string;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
   openBatchModal: () => void;
 }) => {
@@ -154,6 +155,11 @@ const VaccinationForm = ({
   if (!dose) {
     return null;
   }
+
+  const shouldNotCreateInvoice =
+    draft.facilityId === OTHER_FACILITY || draft.given === false;
+  const stockLineChanged =
+    draft.given && draft.stockLine?.id !== existingSelectedBatch;
 
   return (
     <Container
@@ -238,8 +244,28 @@ const VaccinationForm = ({
         draft={draft}
         openBatchModal={openBatchModal}
         updateDraft={updateDraft}
-        editingExisting={editingExisting}
+        hasExistingSelectedBatch={!!existingSelectedBatch}
       />
+
+      {existingSelectedBatch &&
+        (shouldNotCreateInvoice || stockLineChanged) && (
+          // ask whether to update the transactions
+          <Switch
+            label={
+              shouldNotCreateInvoice
+                ? t('label.revert-existing-transaction')
+                : t('label.update-transactions')
+            }
+            checked={draft.editExistingTransactions}
+            onChange={() =>
+              updateDraft({
+                editExistingTransactions: !draft.editExistingTransactions,
+              })
+            }
+            labelPlacement="end"
+            size="small"
+          />
+        )}
 
       {draft.given === false && (
         <>
@@ -261,6 +287,7 @@ const VaccinationForm = ({
           />
         </>
       )}
+
       {/* Is undefined when not yet set as given true/false */}
       {draft.given !== undefined && (
         <InputWithLabelRow
