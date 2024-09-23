@@ -144,9 +144,9 @@ enum Action {
     Restore(RestoreArguments),
     // command to upsert standard reports. Will later move this into rust code
     UpsertStandardReports {
-        /// Optional report name. If none supplied, all standard reports are uploaded
+        /// Optional report code. If none supplied, all standard reports are uploaded
         #[clap(short, long)]
-        name: Option<String>,
+        code: Option<String>,
     },
 }
 
@@ -405,7 +405,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::UpsertStandardReports { name } => {
+        Action::UpsertStandardReports { code } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
@@ -413,14 +413,6 @@ async fn main() -> anyhow::Result<()> {
             let report_names = fs::read_dir(base_reports_dir)?
                 .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
                 .collect::<Result<Vec<String>, std::io::Error>>()?;
-
-            let report_names = match &name {
-                Some(name) => report_names
-                    .into_iter()
-                    .filter(|report| report == name)
-                    .collect(),
-                None => report_names,
-            };
 
             for name_dir in report_names {
                 let report_versions = fs::read_dir(&name_dir)?
@@ -431,6 +423,28 @@ async fn main() -> anyhow::Result<()> {
 
                 for version_dir in report_versions {
                     let (_, version) = version_dir.rsplit_once('/').unwrap();
+
+                    let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
+                        .expect("file should open read only");
+
+                    let manifest: Manifest = serde_json::from_reader(manifest_file)
+                        .expect("manifest json not formatted");
+                    let report_code = manifest.code;
+
+                    if let Some(passed_code) = code.clone() {
+                        if let Some(report_code) = report_code.clone() {
+                            if report_code == passed_code {
+                                continue;
+                            }
+                        }
+                    }
+
+                    let id = format!("{name}_{version}");
+                    let report_path = format!("{version_dir}/generated/{name}.json");
+                    let context = manifest.context;
+                    let report_name = manifest.name;
+                    let is_custom = manifest.is_custom;
+                    let sub_context = manifest.sub_context;
 
                     let args = BuildArgs {
                         dir: format!("{version_dir}/src"),
@@ -448,21 +462,6 @@ async fn main() -> anyhow::Result<()> {
                     let arguments_path = format!("{version_dir}/argument_schemas/arguments.json");
                     let arguments_ui_path =
                         format!("{version_dir}/argument_schemas/arguments_ui.json");
-
-                    let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
-                        .expect("file should open read only");
-
-                    let manifest: Manifest = serde_json::from_reader(manifest_file)
-                        .expect("manifest json not formatted");
-
-                    let id = format!("{name}_{version}");
-                    let report_path = format!("{version_dir}/generated/{name}.json");
-                    let context = manifest.context;
-                    let report_name = manifest.name;
-                    let is_custom = manifest.is_custom;
-
-                    let sub_context = manifest.sub_context;
-                    let code = manifest.code;
 
                     let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
                     let existing_report =
@@ -491,13 +490,13 @@ async fn main() -> anyhow::Result<()> {
                         comment: None,
                         is_custom,
                         version: version.to_string(),
-                        code,
+                        code: report_code,
                     })?;
                 }
             }
 
-            match name {
-                Some(name) => info!("{}", format!("{name} report upserted")),
+            match code.clone() {
+                Some(code) => info!("{}", format!("{code} report upserted")),
                 None => info!("All standard reports upserted"),
             }
         }
