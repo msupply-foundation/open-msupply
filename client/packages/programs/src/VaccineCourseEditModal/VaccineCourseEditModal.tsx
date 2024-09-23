@@ -228,7 +228,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         />
       }
       height={height}
-      sx={{ maxWidth: 'unset' }}
+      sx={{
+        width: 875,
+        maxWidth: 'unset',
+      }}
       slideAnimation={false}
     >
       {modalContent}
@@ -256,10 +259,9 @@ const VaccineCourseDoseTable = ({
         {
           __typename: 'VaccineCourseDoseNode',
           id: FnUtils.generateUUID(),
-          // temp - will be overwritten by the backend to assign unique dose number (even if previous doses were deleted)
           label: `${courseName} ${doses.length + 1}`,
           minAgeMonths: (previousDose?.minAgeMonths ?? 0) + 1,
-          maxAgeMonths: previousDose?.minAgeMonths ?? 1,
+          maxAgeMonths: (previousDose?.minAgeMonths ?? 0) + 2,
           minIntervalDays: previousDose?.minIntervalDays ?? 30,
         },
       ],
