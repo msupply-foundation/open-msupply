@@ -240,16 +240,25 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
 }
 
 pub fn build(args: BuildArgs) -> anyhow::Result<()> {
+    println!("building...");
     let project_dir = Path::new(&args.dir);
+    println!("dir: {:?}", args.dir);
     let files = find_project_files(project_dir)?;
+    for file in files.clone() {
+        println!("file: {:?}", file.1.as_os_str().to_string_lossy());
+    }
     let definition = make_report(&args, files)?;
 
     let output_path = args.output.unwrap_or("./generated/output.json".to_string());
+
+    println!("output path: {:?}", output_path);
     let output_path = Path::new(&output_path);
     fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
         "Invalid output path: {:?}",
         output_path
     )))?)?;
+
+    println!("created dir");
 
     fs::write(output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
         anyhow::Error::msg(format!(
@@ -257,6 +266,8 @@ pub fn build(args: BuildArgs) -> anyhow::Result<()> {
             output_path
         ))
     })?;
+
+    println!("written");
 
     Ok(())
 }
