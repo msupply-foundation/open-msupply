@@ -8,6 +8,9 @@
     "queries": {
         "gql": "query.graphql"
     },
-    "schema": "argument_schemas/arguments.json",
-    "ui": "argument_schemas/arguments_ui.json"
+    "arguments": {
+        "schema": "argument_schemas/arguments.json",
+        "ui": "argument_schemas/arguments_ui.json"
+    }
+
 }   

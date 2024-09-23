@@ -422,8 +422,7 @@ async fn main() -> anyhow::Result<()> {
                 let (_, name) = name_dir.rsplit_once('/').unwrap();
 
                 for version_dir in report_versions {
-                    let (_, version) = version_dir.rsplit_once('/').unwrap();
-
+                    // read manifest file
                     let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
                         .expect("file should open read only");
 
@@ -431,13 +430,23 @@ async fn main() -> anyhow::Result<()> {
                         .expect("manifest json not formatted correctly");
                     let report_code = manifest.code;
 
+                    // skip report building and upserting if code is specified AND code is not report code
                     if let Some(passed_code) = code.clone() {
-                        if let Some(report_code) = report_code.clone() {
-                            if report_code == passed_code {
-                                continue;
-                            }
+                        if report_code == passed_code {
+                            continue;
                         }
                     }
+
+                    let args = BuildArgs {
+                        dir: format!("{version_dir}/src"),
+                        output: format!("{version_dir}/generated/{name}.json").into(),
+                        template: "template.html".to_string(),
+                        header: manifest.header,
+                        footer: manifest.footer,
+                        query_gql: manifest.query,
+                        query_default: None,
+                        query_sql: None,
+                    };
 
                     let id = format!("{name}_{version}");
                     let report_path = format!("{version_dir}/generated/{name}.json");
@@ -445,18 +454,7 @@ async fn main() -> anyhow::Result<()> {
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
                     let sub_context = manifest.sub_context;
-                    let header = manifest.header
-
-                    let args = BuildArgs {
-                        dir: format!("{version_dir}/src"),
-                        output: format!("{version_dir}/generated/{name}.json").into(),
-                        template: "template.html".to_string(),
-                        header: None,
-                        footer: None,
-                        query_gql: Some("query.graphql".to_string()),
-                        query_default: None,
-                        query_sql: None,
-                    };
+                    let header = manifest.header;
 
                     let _ = build(args);
 
@@ -589,12 +587,22 @@ pub struct Manifest {
     pub name: String,
     pub header: Option<String>,
     pub footer: Option<String>,
-    pub graphql_query: Option<String>,
-    pub sql_query: Option<Vec<String>>,
+    pub queries: Option<ManifestQueries>,
     pub default_query: Option<String>,
-    pub arguments_path: Option<String>,
-    pub arguments_ui_path: Option<String>,
+    pub arguments: Option<Arguments>,
     pub test_arguments: Option<TestReportArguments>,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct ManifestQueries {
+    pub graphql_query: Option<String>,
+    pub sql_queries: Option<Vec<String>>,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct Arguments {
+    pub schema: Option<String>,
+    pub ui: Option<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]
