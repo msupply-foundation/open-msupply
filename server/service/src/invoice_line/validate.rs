@@ -4,6 +4,8 @@ use repository::{
     StockLineFilter, StockLineRepository, StorageConnection,
 };
 
+use super::BatchPair;
+
 pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     if let Some(number_of_packs) = number_of_packs_option {
         // Don't use <= 0.0 or else can't 0 out inbound shipment lines
@@ -58,4 +60,26 @@ pub fn check_line_not_associated_with_stocktake(
         Err(RepositoryError::NotFound) => true,
         Err(_error) => false,
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct ReductionBelowZeroError {
+    pub stock_line_id: String,
+    pub line_id: String,
+}
+
+pub fn is_reduction_below_zero(
+    input_number_of_packs: Option<f64>,
+    line: &InvoiceLineRow,
+    batch_pair: &BatchPair,
+) -> bool {
+    // If previous batch is present, this means we are adjust new batch thus:
+    // - check full number of pack in invoice
+    let reduction = batch_pair.get_main_batch_reduction(input_number_of_packs, line);
+
+    batch_pair
+        .main_batch
+        .stock_line_row
+        .available_number_of_packs
+        < reduction
 }
