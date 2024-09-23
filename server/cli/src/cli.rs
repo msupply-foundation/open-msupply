@@ -5,6 +5,8 @@ use clap::{ArgAction, Parser};
 use cli::RefreshDatesRepository;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
+use report_builder::{build::build, BuildArgs};
+
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
     FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
@@ -31,6 +33,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
+
 use util::inline_init;
 
 mod backup;
@@ -417,6 +420,19 @@ async fn main() -> anyhow::Result<()> {
                 for version_dir in report_versions {
                     let (_, version) = version_dir.rsplit_once('/').unwrap();
 
+                    let args = BuildArgs {
+                        dir: "src".to_string(),
+                        output: format!("{version_dir}/generated/{name}.json").into(),
+                        template: "template.html".to_string(),
+                        header: None,
+                        footer: None,
+                        query_gql: Some("query.graphql".to_string()),
+                        query_default: None,
+                        query_sql: None,
+                    };
+
+                    let _res = build(args);
+
                     let arguments_path = format!("{version_dir}/arguments.json");
                     let arguments_ui_path = format!("{version_dir}/arguments_ui.json");
 
@@ -429,7 +445,7 @@ async fn main() -> anyhow::Result<()> {
                     let is_custom = manifest.is_custom;
 
                     let id = format!("{name}_{version}");
-                    let report_path = format!("{version_dir}/template.html");
+                    let report_path = format!("{version_dir}/src/template.html");
                     let context = manifest.context;
 
                     let sub_context = manifest.sub_context;
