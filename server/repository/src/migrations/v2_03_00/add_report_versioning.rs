@@ -11,9 +11,10 @@ impl MigrationFragment for Migrate {
             sql!(
                 connection,
                 r#"
-                    ALTER TABLE report ADD COLUMN is_custom BOOLEAN NOT NULL DEFAULT false;
+                    ALTER TABLE report ADD COLUMN is_custom BOOLEAN NOT NULL DEFAULT true;
                     ALTER TABLE report ADD COLUMN version TEXT NOT NULL DEFAULT 1.0;
-                    ALTER TABLE report ADD COLUMN code TEXT;
+                    ALTER TABLE report ADD COLUMN code TEXT NOT NULL DEFAULT '';
+                    UPDATE report set code = id WHERE code = '';
                 "#
             )?;
 
