@@ -30,6 +30,8 @@ export interface VaccinationDraft {
   itemId?: string;
   stockLine?: VaccinationStockLine | null;
   notGivenReason?: string | null;
+  historical: boolean;
+  recordBatch: boolean;
 }
 
 export function useVaccination({
@@ -95,6 +97,11 @@ export function useVaccination({
   const defaults: VaccinationDraft = {
     // Default to today
     date: vaccinationDate ? new Date(vaccinationDate) : new Date(),
+    historical: false, // TODO: for update, was it historical?
+
+    // Default to record batch if not historical and this facility is selected
+    recordBatch: !patch.historical && patch.facilityId !== OTHER_FACILITY,
+
     // If new vaccination, default to encounter clinician
     clinician: vaccination ? clinician : defaultClinician,
     // If new vaccination, default to this store
@@ -103,7 +110,7 @@ export function useVaccination({
     facilityFreeText: facilityFreeText ?? '',
 
     // Populate with existing vaccination data
-    comment,
+    comment: comment ?? '',
     stockLine,
     given,
     notGivenReason,
@@ -161,6 +168,7 @@ const useInsert = ({
 
         given: input.given ?? false,
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
+        historical: input.historical,
         clinicianId: input.clinician?.id,
         comment: input.comment,
         notGivenReason: input.notGivenReason,
