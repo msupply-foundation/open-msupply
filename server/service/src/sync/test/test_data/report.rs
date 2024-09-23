@@ -41,7 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             argument_schema_id: None,
             is_custom: false,
             version: "1.0".to_string(),
-            code: None,
+            code: REPORT_1.0.to_string(), // for now any thing sync'd from mSupply has the same id as code
         },
     )]
 }
