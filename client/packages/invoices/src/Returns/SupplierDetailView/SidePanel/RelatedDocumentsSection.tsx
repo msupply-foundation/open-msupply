@@ -21,7 +21,7 @@ export const RelatedDocumentsSectionComponent = () => {
   const { originalShipment } = data ?? {};
 
   const getLabel = (createdDatetime: string, username?: string) => {
-    const label = t('messages.outbound-shipment-created-on', {
+    const label = t('messages.inbound-shipment-created-on', {
       date: d(new Date(createdDatetime)),
     });
 
