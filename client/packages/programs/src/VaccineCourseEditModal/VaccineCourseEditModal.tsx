@@ -259,6 +259,7 @@ const VaccineCourseDoseTable = ({
           // temp - will be overwritten by the backend to assign unique dose number (even if previous doses were deleted)
           label: `${courseName} ${doses.length + 1}`,
           minAgeMonths: (previousDose?.minAgeMonths ?? 0) + 1,
+          maxAgeMonths: previousDose?.minAgeMonths ?? 1,
           minIntervalDays: previousDose?.minIntervalDays ?? 30,
         },
       ],
@@ -297,7 +298,13 @@ const VaccineCourseDoseTable = ({
       },
       {
         key: 'minAgeMonths',
-        Cell: MinAgeCell,
+        Cell: AgeCell,
+        label: 'label.age-months',
+        setter: updateDose,
+      },
+      {
+        key: 'maxAgeMonths',
+        Cell: AgeCell,
         label: 'label.age-months',
         setter: updateDose,
       },
@@ -345,6 +352,6 @@ const VaccineCourseDoseTable = ({
 };
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
-const MinAgeCell = (props: CellProps<VaccineCourseDoseFragment>) => (
+const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => (
   <NumberInputCell decimalLimit={2} {...props} />
 );
