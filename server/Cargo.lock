@@ -1831,6 +1831,7 @@ dependencies = [
  "graphql",
  "log",
  "machine-uid",
+ "report_builder",
  "repository",
  "reqwest",
  "serde",

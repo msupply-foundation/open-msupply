@@ -5,6 +5,8 @@ use clap::{ArgAction, Parser};
 use cli::RefreshDatesRepository;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
+use report_builder::{build::build, BuildArgs};
+
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
     FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
@@ -31,6 +33,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
+
 use util::inline_init;
 
 mod backup;
@@ -139,6 +142,12 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
+    // command to upsert standard reports. Will later move this into rust code
+    UpsertStandardReports {
+        /// Optional report name. If none supplied, all standard reports are uploaded
+        #[clap(short, long)]
+        name: Option<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -396,6 +405,102 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
+        Action::UpsertStandardReports { name } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+            let base_reports_dir = "./reports";
+
+            let report_names = fs::read_dir(base_reports_dir)?
+                .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
+                .collect::<Result<Vec<String>, std::io::Error>>()?;
+
+            let report_names = match &name {
+                Some(name) => report_names
+                    .into_iter()
+                    .filter(|report| report == name)
+                    .collect(),
+                None => report_names,
+            };
+
+            for name_dir in report_names {
+                let report_versions = fs::read_dir(&name_dir)?
+                    .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
+                    .collect::<Result<Vec<String>, std::io::Error>>()?;
+
+                let (_, name) = name_dir.rsplit_once('/').unwrap();
+
+                for version_dir in report_versions {
+                    let (_, version) = version_dir.rsplit_once('/').unwrap();
+
+                    let args = BuildArgs {
+                        dir: format!("{version_dir}/src"),
+                        output: format!("{version_dir}/generated/{name}.json").into(),
+                        template: "template.html".to_string(),
+                        header: None,
+                        footer: None,
+                        query_gql: Some("query.graphql".to_string()),
+                        query_default: None,
+                        query_sql: None,
+                    };
+
+                    let _ = build(args);
+
+                    let arguments_path = format!("{version_dir}/argument_schemas/arguments.json");
+                    let arguments_ui_path =
+                        format!("{version_dir}/argument_schemas/arguments_ui.json");
+
+                    let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
+                        .expect("file should open read only");
+
+                    let manifest: Manifest = serde_json::from_reader(manifest_file)
+                        .expect("manifest json not formatted");
+
+                    let id = format!("{name}_{version}");
+                    let report_path = format!("{version_dir}/generated/{name}.json");
+                    let context = manifest.context;
+                    let report_name = manifest.name;
+                    let is_custom = manifest.is_custom;
+
+                    let sub_context = manifest.sub_context;
+                    let code = manifest.code;
+
+                    let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
+                    let existing_report =
+                        ReportRepository::new(&con).query_by_filter(filter)?.pop();
+
+                    let argument_schema_id = existing_report
+                        .and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
+
+                    let form_schema_json = schema_from_row(FormSchemaRow {
+                        id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                        r#type: "reportArgument".to_string(),
+                        json_schema: fs::read_to_string(arguments_path)?,
+                        ui_schema: fs::read_to_string(arguments_ui_path)?,
+                    })?;
+
+                    FormSchemaRowRepository::new(&con).upsert_one(&form_schema_json)?;
+
+                    ReportRowRepository::new(&con).upsert_one(&ReportRow {
+                        id,
+                        name: report_name,
+                        r#type: repository::ReportType::OmSupply,
+                        template: fs::read_to_string(report_path)?,
+                        context,
+                        sub_context,
+                        argument_schema_id: Some(form_schema_json.id.clone()),
+                        comment: None,
+                        is_custom,
+                        version: version.to_string(),
+                        code,
+                    })?;
+                }
+            }
+
+            match name {
+                Some(name) => info!("{}", format!("{name} report upserted")),
+                None => info!("All standard reports upserted"),
+            }
+        }
         Action::UpsertReport {
             id,
             report_path,
@@ -435,6 +540,10 @@ async fn main() -> anyhow::Result<()> {
                 FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
             }
 
+            let is_custom = false;
+            let version = "1.0".to_string();
+            let code = None;
+
             ReportRowRepository::new(&con).upsert_one(&ReportRow {
                 id,
                 name,
@@ -444,9 +553,9 @@ async fn main() -> anyhow::Result<()> {
                 sub_context,
                 argument_schema_id: form_schema_json.map(|r| r.id.clone()),
                 comment: None,
-                is_custom: todo!(),
-                version: todo!(),
-                code: todo!(),
+                is_custom,
+                version,
+                code,
             })?;
 
             info!("Report upserted");
@@ -468,4 +577,13 @@ fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
     let users_file_path = export_folder.join("users.txt");
 
     (export_folder, export_file_path, users_file_path)
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct Manifest {
+    pub context: ContextType,
+    pub is_custom: bool,
+    pub code: Option<String>,
+    pub sub_context: Option<String>,
+    pub name: String,
 }

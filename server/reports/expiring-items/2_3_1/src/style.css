@@ -1,0 +1,100 @@
+@page {
+  margin: 0;
+  size: A4 landscape;
+}
+
+.paging {
+  width: 100%;
+}
+
+.container {
+  margin: auto;
+  padding: 10px;
+  font-size: 14px;
+  font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+  color: #555;
+}
+
+.container table {
+  width: 100%;
+  font-size: inherit;
+  font-family: inherit;
+  text-align: left;
+  margin-top: 10;
+  margin-bottom: 15;
+}
+
+.container table td {
+  padding: 5px;
+  vertical-align: top;
+}
+
+.container table tr.heading td {
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.container table td.expiry-date span {
+  padding: 2px;
+  border-radius: 10px;
+}
+
+.container table td.expiry-date span.expired::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(245, 5, 1, 0.6);
+  margin-right: 5px;
+}
+
+.container table td.expiry-date span.expired {
+  background-color: rgba(245, 5, 1, 0.3);
+  padding: 3px 10px;
+}
+
+.container table td.expiry-date span.soon::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(248, 154, 1, 0.6);
+  margin-right: 5px;
+}
+
+.container table td.expiry-date span.soon {
+  background-color: rgba(248, 154, 1, 0.3);
+  padding: 3px 10px;
+}
+
+.container table td.expiry-date span.all-good::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(51, 169, 1, 0.6);
+  margin-right: 5px;
+}
+
+.container table td.expiry-date span.all-good {
+  background-color: rgba(51, 169, 1, 0.3);
+  padding: 3px 10px;
+}
+
+.container table span.na::before {
+  content: "";
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(143, 144, 166, 0.6);
+  margin-right: 5px;
+}
+
+.container table td.expiry-date span.na {
+  background-color: rgba(143, 144, 166, 0.3);
+  padding: 3px 10px;
+}
