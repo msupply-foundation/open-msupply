@@ -437,17 +437,7 @@ async fn main() -> anyhow::Result<()> {
                         }
                     }
 
-                    let args = BuildArgs {
-                        dir: format!("{version_dir}/src"),
-                        output: format!("{version_dir}/generated/{name}.json").into(),
-                        template: "template.html".to_string(),
-                        header: manifest.header,
-                        footer: manifest.footer,
-                        query_gql: manifest.query,
-                        query_default: None,
-                        query_sql: None,
-                    };
-
+                    let version = manifest.version;
                     let id = format!("{name}_{version}");
                     let report_path = format!("{version_dir}/generated/{name}.json");
                     let context = manifest.context;
@@ -455,12 +445,38 @@ async fn main() -> anyhow::Result<()> {
                     let is_custom = manifest.is_custom;
                     let sub_context = manifest.sub_context;
                     let header = manifest.header;
+                    let arguments_path = manifest
+                        .arguments
+                        .and_then(|a| a.schema)
+                        .and_then(|schema| format!("{version_dir}/{schema}").into());
+                    let arguments_ui_path = manifest
+                        .arguments
+                        .and_then(|a| a.ui)
+                        .and_then(|ui| format!("{version_dir}/{ui}").into());
 
-                    let _ = build(args);
+                    let args = BuildArgs {
+                        dir: format!("{version_dir}/src"),
+                        output: format!("{version_dir}/generated/{name}.json").into(),
+                        template: "template.html".to_string(),
+                        header: manifest.header,
+                        footer: manifest.footer,
+                        query_gql: match &manifest.queries {
+                            Some(queries) => queries.graphql_query,
+                            None => None,
+                        },
+                        query_default: None,
+                        query_sql: match &manifest.queries {
+                            Some(queries) => queries.sql_queries,
+                            None => None,
+                        },
+                    };
 
-                    let arguments_path = format!("{version_dir}/argument_schemas/arguments.json");
-                    let arguments_ui_path =
-                        format!("{version_dir}/argument_schemas/arguments_ui.json");
+                    let _ = build(args).map_err(|err| {
+                        info!(
+                            "{}",
+                            format!("failed to build report json for {:?} due to {:?}", id, err)
+                        )
+                    });
 
                     let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
                     let existing_report =
@@ -469,14 +485,26 @@ async fn main() -> anyhow::Result<()> {
                     let argument_schema_id = existing_report
                         .and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
 
-                    let form_schema_json = schema_from_row(FormSchemaRow {
-                        id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
-                        r#type: "reportArgument".to_string(),
-                        json_schema: fs::read_to_string(arguments_path)?,
-                        ui_schema: fs::read_to_string(arguments_ui_path)?,
-                    })?;
+                    let form_schema_json = match (arguments_path, arguments_ui_path) {
+                        (Some(_), None) | (None, Some(_)) => {
+                            return Err(anyhow!(
+                                "When arguments path are specified both paths must be present"
+                            ))
+                        }
+                        (Some(arguments_path), Some(arguments_ui_path)) => {
+                            Some(schema_from_row(FormSchemaRow {
+                                id: argument_schema_id.unwrap_or(format!("for_report_{}", id)),
+                                r#type: "reportArgument".to_string(),
+                                json_schema: fs::read_to_string(arguments_path)?,
+                                ui_schema: fs::read_to_string(arguments_ui_path)?,
+                            })?)
+                        }
+                        (None, None) => None,
+                    };
 
-                    FormSchemaRowRepository::new(&con).upsert_one(&form_schema_json)?;
+                    if let Some(form_schema_json) = &form_schema_json {
+                        FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
+                    }
 
                     ReportRowRepository::new(&con).upsert_one(&ReportRow {
                         id,
@@ -540,7 +568,7 @@ async fn main() -> anyhow::Result<()> {
 
             let is_custom = false;
             let version = "1.0".to_string();
-            let code = None;
+            let code = id;
 
             ReportRowRepository::new(&con).upsert_one(&ReportRow {
                 id,
