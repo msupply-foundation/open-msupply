@@ -1198,7 +1198,6 @@ mod permission_tests {
             .into_iter()
             .chain(resource_mapping_query_test_data().into_iter())
         {
-            println!("Testing: {}", data.name);
             let test_service = TestService::new(data.expected);
             let result = graphql_core::test_helpers::run_test_gql_query(
                 &settings,
