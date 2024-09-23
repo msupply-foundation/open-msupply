@@ -39,7 +39,6 @@ pub fn generate(
         given,
         stock_line_id,
         not_given_reason,
-        historical: _,
     } = insert_input;
 
     let now = Utc::now().naive_utc();

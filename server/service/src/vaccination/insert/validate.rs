@@ -113,21 +113,16 @@ fn get_stock_line(
         return Ok(None);
     }
 
-    // If historical, stock line is not required
-    if input.historical {
-        return Ok(None);
-    }
-
     // If not for this facility, stock line is not required
     if input.facility_name_id.is_none() {
         return Ok(None);
     }
 
     // If given at this facility (and not historical), stock line is required
-    let stock_line_id = input
-        .stock_line_id
-        .as_ref()
-        .ok_or(InsertVaccinationError::StockLineNotProvided)?;
+    let stock_line_id = match input.stock_line_id.as_ref() {
+        Some(stock_line_id) => stock_line_id,
+        None => return Ok(None),
+    };
 
     let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
 
