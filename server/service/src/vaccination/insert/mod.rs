@@ -30,7 +30,6 @@ pub enum InsertVaccinationError {
     ClinicianDoesNotExist,
     FacilityNameDoesNotExist,
     ReasonNotProvided,
-    StockLineNotProvided,
     StockLineDoesNotExist,
     ItemDoesNotBelongToVaccineCourse,
     CreatedRecordNotFound,
@@ -49,7 +48,6 @@ pub struct InsertVaccination {
     pub facility_free_text: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
-    pub historical: bool,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
 }
@@ -314,24 +312,6 @@ mod insert {
             Err(InsertVaccinationError::FacilityNameDoesNotExist)
         );
 
-        // StockLineNotProvided
-        assert_eq!(
-            service.insert_vaccination(
-                &context,
-                store_id,
-                InsertVaccination {
-                    id: "new_id".to_string(),
-                    encounter_id: mock_immunisation_encounter_a().id,
-                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
-                    facility_name_id: Some(mock_name_1().id),
-                    given: true,
-                    historical: false,
-                    ..Default::default()
-                }
-            ),
-            Err(InsertVaccinationError::StockLineNotProvided)
-        );
-
         // ReasonNotProvided
         assert_eq!(
             service.insert_vaccination(
@@ -516,7 +496,6 @@ mod insert {
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     facility_name_id: Some(mock_name_1().id),
                     given: true,
-                    historical: true,
                     ..Default::default()
                 },
             )
