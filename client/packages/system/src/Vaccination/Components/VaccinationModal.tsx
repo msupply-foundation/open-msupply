@@ -100,7 +100,7 @@ export const VaccinationModal = ({
         openBatchModal={openBatchModal}
         draft={draft}
         dose={dose}
-        existingSelectedBatch={vaccination?.stockLine?.id}
+        vaccination={vaccination}
       />
     </Box>
   );
@@ -140,13 +140,13 @@ export const VaccinationModal = ({
 const VaccinationForm = ({
   draft,
   dose,
-  existingSelectedBatch,
+  vaccination,
   updateDraft,
   openBatchModal,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
-  existingSelectedBatch?: string;
+  vaccination?: VaccinationDetailFragment | null;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
   openBatchModal: () => void;
 }) => {
@@ -156,10 +156,19 @@ const VaccinationForm = ({
     return null;
   }
 
-  const shouldNotCreateInvoice =
-    draft.facilityId === OTHER_FACILITY || draft.given === false;
+  const shouldRevertInvoice =
+    // invoice already exists
+    !!vaccination?.invoice &&
+    // changing to a state where it should not exist
+    (draft.facilityId === OTHER_FACILITY || draft.given === false);
+
   const stockLineChanged =
-    draft.given && draft.stockLine?.id !== existingSelectedBatch;
+    // vaccination already exists
+    !!vaccination &&
+    // changing to given/selecting new batch
+    draft.facilityId !== OTHER_FACILITY &&
+    draft.given &&
+    draft.stockLine?.id !== vaccination?.stockLine?.id;
 
   return (
     <Container
@@ -244,29 +253,30 @@ const VaccinationForm = ({
         draft={draft}
         openBatchModal={openBatchModal}
         updateDraft={updateDraft}
-        hasExistingSelectedBatch={!!existingSelectedBatch}
+        hasExistingSelectedBatch={!!vaccination?.stockLine?.id}
       />
 
-      {/* TODO: not given to given! no selected */}
-      {existingSelectedBatch &&
-        (shouldNotCreateInvoice || stockLineChanged) && (
-          // ask whether to update the transactions
-          <Switch
-            label={
-              shouldNotCreateInvoice
-                ? t('label.revert-existing-transaction')
-                : t('label.update-transactions')
-            }
-            checked={draft.editExistingTransactions}
-            onChange={() =>
-              updateDraft({
-                editExistingTransactions: !draft.editExistingTransactions,
-              })
-            }
-            labelPlacement="end"
-            size="small"
-          />
-        )}
+      {(shouldRevertInvoice ||
+        (stockLineChanged &&
+          // If we've already said to record the historical transaction, we don't need to ask again
+          !draft.recordHistoricalTransaction)) && (
+        // ask whether to update the transactions
+        <Switch
+          label={
+            shouldRevertInvoice
+              ? t('label.revert-existing-transaction')
+              : t('label.update-transactions')
+          }
+          checked={draft.editExistingTransactions}
+          onChange={() =>
+            updateDraft({
+              editExistingTransactions: !draft.editExistingTransactions,
+            })
+          }
+          labelPlacement="end"
+          size="small"
+        />
+      )}
 
       {draft.given === false && (
         <>

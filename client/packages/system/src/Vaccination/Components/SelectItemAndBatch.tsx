@@ -7,7 +7,7 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { PropsWithChildren, useMemo, useState } from 'react';
+import React, { PropsWithChildren, useMemo } from 'react';
 import { VaccinationDraft } from '../api';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { OTHER_FACILITY } from './FacilitySearchInput';
@@ -26,7 +26,6 @@ export const SelectItemAndBatch = ({
   openBatchModal: () => void;
 }) => {
   const t = useTranslation('dispensary');
-  const [recordHistoricalBatch, setRecordBatch] = useState(false);
 
   const vaccineItemOptions = useMemo(() => {
     return (
@@ -52,15 +51,21 @@ export const SelectItemAndBatch = ({
   const isHistorical = draft.date?.toDateString() !== new Date().toDateString();
 
   const selectBatch =
-    !isHistorical || recordHistoricalBatch || hasExistingSelectedBatch;
+    !isHistorical ||
+    draft.recordHistoricalTransaction ||
+    hasExistingSelectedBatch;
 
   return (
     <>
       {isHistorical && !hasExistingSelectedBatch && (
         <Switch
           label={t('label.record-stock-transaction')}
-          checked={recordHistoricalBatch}
-          onChange={() => setRecordBatch(!recordHistoricalBatch)}
+          checked={draft.recordHistoricalTransaction}
+          onChange={() =>
+            updateDraft({
+              recordHistoricalTransaction: !draft.recordHistoricalTransaction,
+            })
+          }
           labelPlacement="end"
           size="small"
         />
