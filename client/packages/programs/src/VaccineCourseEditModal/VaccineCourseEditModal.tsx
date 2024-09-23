@@ -228,7 +228,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         />
       }
       height={height}
-      width={750}
+      sx={{ maxWidth: 'unset' }}
       slideAnimation={false}
     >
       {modalContent}
@@ -299,13 +299,15 @@ const VaccineCourseDoseTable = ({
       {
         key: 'minAgeMonths',
         Cell: AgeCell,
-        label: 'label.age-months',
+        label: 'label.age-months-from',
+        maxWidth: 120,
         setter: updateDose,
       },
       {
         key: 'maxAgeMonths',
         Cell: AgeCell,
-        label: 'label.age-months',
+        label: 'label.age-months-to',
+        maxWidth: 120,
         setter: updateDose,
       },
       {
