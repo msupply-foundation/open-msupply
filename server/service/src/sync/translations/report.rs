@@ -113,7 +113,7 @@ impl SyncTranslation for ReportTranslation {
         };
 
         let result = ReportRow {
-            id,
+            id: id.clone(),
             name: report_name,
             r#type,
             template,
