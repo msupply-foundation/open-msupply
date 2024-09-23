@@ -143,7 +143,11 @@ enum Action {
     Backup,
     Restore(RestoreArguments),
     // command to upsert standard reports. Will later move this into rust code
-    UpsertStandardReports,
+    UpsertStandardReports {
+        /// Optional report name. If none supplied, all standard reports are uploaded
+        #[clap(short, long)]
+        name: Option<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -401,7 +405,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::UpsertStandardReports => {
+        Action::UpsertStandardReports { name } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
@@ -409,6 +413,14 @@ async fn main() -> anyhow::Result<()> {
             let report_names = fs::read_dir(base_reports_dir)?
                 .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
                 .collect::<Result<Vec<String>, std::io::Error>>()?;
+
+            let report_names = match &name {
+                Some(name) => report_names
+                    .into_iter()
+                    .filter(|report| report == name)
+                    .collect(),
+                None => report_names,
+            };
 
             for name_dir in report_names {
                 let report_versions = fs::read_dir(&name_dir)?
@@ -484,7 +496,10 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            info!("All standard reports upserted");
+            match name {
+                Some(name) => info!("{}", format!("{name} report upserted")),
+                None => info!("All standard reports upserted"),
+            }
         }
         Action::UpsertReport {
             id,
