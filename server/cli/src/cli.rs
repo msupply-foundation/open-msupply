@@ -421,7 +421,7 @@ async fn main() -> anyhow::Result<()> {
                     let (_, version) = version_dir.rsplit_once('/').unwrap();
 
                     let args = BuildArgs {
-                        dir: "src".to_string(),
+                        dir: format!("{version_dir}/src"),
                         output: format!("{version_dir}/generated/{name}.json").into(),
                         template: "template.html".to_string(),
                         header: None,
@@ -431,10 +431,11 @@ async fn main() -> anyhow::Result<()> {
                         query_sql: None,
                     };
 
-                    let _res = build(args);
+                    let _ = build(args);
 
-                    let arguments_path = format!("{version_dir}/arguments.json");
-                    let arguments_ui_path = format!("{version_dir}/arguments_ui.json");
+                    let arguments_path = format!("{version_dir}/argument_schemas/arguments.json");
+                    let arguments_ui_path =
+                        format!("{version_dir}/argument_schemas/arguments_ui.json");
 
                     let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
                         .expect("file should open read only");
@@ -442,11 +443,11 @@ async fn main() -> anyhow::Result<()> {
                     let manifest: Manifest = serde_json::from_reader(manifest_file)
                         .expect("manifest json not formatted");
 
-                    let is_custom = manifest.is_custom;
-
                     let id = format!("{name}_{version}");
-                    let report_path = format!("{version_dir}/src/template.html");
+                    let report_path = format!("{version_dir}/generated/template.html");
                     let context = manifest.context;
+                    let report_name = manifest.name;
+                    let is_custom = manifest.is_custom;
 
                     let sub_context = manifest.sub_context;
                     let code = manifest.code;
@@ -469,7 +470,7 @@ async fn main() -> anyhow::Result<()> {
 
                     ReportRowRepository::new(&con).upsert_one(&ReportRow {
                         id,
-                        name: name.to_string(),
+                        name: report_name,
                         r#type: repository::ReportType::OmSupply,
                         template: fs::read_to_string(report_path)?,
                         context,
@@ -569,4 +570,5 @@ pub struct Manifest {
     pub is_custom: bool,
     pub code: Option<String>,
     pub sub_context: Option<String>,
+    pub name: String,
 }

@@ -2,5 +2,6 @@
     "context": "REPORT",
     "is_custom": false,
     "code": "expiring-items",
-    "sub_context": "Expiring"
+    "sub_context": "Expiring",
+    "name": "Expiring Items"
 }
