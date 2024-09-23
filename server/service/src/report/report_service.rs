@@ -692,6 +692,7 @@ mod report_service_test {
         let (_, connection, connection_manager, _) =
             setup_all("generate_tera_html_document", MockDataInserts::all()).await;
         let repo = ReportRowRepository::new(&connection);
+
         repo.upsert_one(&ReportRow {
             id: "report_1".to_string(),
             name: "Report 1".to_string(),
@@ -701,6 +702,9 @@ mod report_service_test {
             comment: None,
             sub_context: None,
             argument_schema_id: None,
+            is_custom: true,
+            version: "1.0".to_string(),
+            code: "report_1".to_string(),
         })
         .unwrap();
         repo.upsert_one(&ReportRow {
@@ -712,6 +716,9 @@ mod report_service_test {
             comment: None,
             sub_context: None,
             argument_schema_id: None,
+            is_custom: true,
+            version: "1.0".to_string(),
+            code: "report_base_1".to_string(),
         })
         .unwrap();
 
