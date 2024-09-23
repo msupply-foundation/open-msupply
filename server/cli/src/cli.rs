@@ -428,7 +428,7 @@ async fn main() -> anyhow::Result<()> {
                         .expect("file should open read only");
 
                     let manifest: Manifest = serde_json::from_reader(manifest_file)
-                        .expect("manifest json not formatted");
+                        .expect("manifest json not formatted correctly");
                     let report_code = manifest.code;
 
                     if let Some(passed_code) = code.clone() {
@@ -445,6 +445,7 @@ async fn main() -> anyhow::Result<()> {
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
                     let sub_context = manifest.sub_context;
+                    let header = manifest.header
 
                     let args = BuildArgs {
                         dir: format!("{version_dir}/src"),
@@ -580,9 +581,25 @@ fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Manifest {
-    pub context: ContextType,
     pub is_custom: bool,
-    pub code: Option<String>,
+    pub version: String,
+    pub code: String,
+    pub context: ContextType,
     pub sub_context: Option<String>,
     pub name: String,
+    pub header: Option<String>,
+    pub footer: Option<String>,
+    pub graphql_query: Option<String>,
+    pub sql_query: Option<Vec<String>>,
+    pub default_query: Option<String>,
+    pub arguments_path: Option<String>,
+    pub arguments_ui_path: Option<String>,
+    pub test_arguments: Option<TestReportArguments>,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct TestReportArguments {
+    pub arguments: Option<String>,
+    pub reference_data: Option<String>,
+    pub data_id: Option<String>,
 }
