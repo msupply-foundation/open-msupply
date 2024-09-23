@@ -247,6 +247,7 @@ const VaccinationForm = ({
         hasExistingSelectedBatch={!!existingSelectedBatch}
       />
 
+      {/* TODO: not given to given! no selected */}
       {existingSelectedBatch &&
         (shouldNotCreateInvoice || stockLineChanged) && (
           // ask whether to update the transactions
