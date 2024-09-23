@@ -83,6 +83,8 @@ mod graphql {
                     code: "test_code".to_owned(),
                     description: "test_description".to_owned(),
                     is_active: true,
+                    is_default_price_list: false,
+                    discount_percentage: None,
                 }],
                 count: 1,
             })

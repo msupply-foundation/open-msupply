@@ -19,6 +19,7 @@ pub enum MasterListSortFieldInput {
     Name,
     Code,
     Description,
+    DiscountPercentage,
 }
 
 #[derive(InputObject)]
@@ -65,6 +66,8 @@ impl MasterListFilterInput {
             exists_for_store_id: self.exists_for_store_id.map(EqualFilter::from),
             is_program: self.is_program,
             item_id: self.item_id.map(EqualFilter::from),
+            is_discount_list: None,
+            is_default_price_list: None,
         }
     }
 }

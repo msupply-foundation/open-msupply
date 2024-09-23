@@ -18,14 +18,16 @@ import {
   issueStock,
 } from '../../../../StockOut/utils';
 import uniqBy from 'lodash/uniqBy';
+import { useGetItemPricing } from '../../../api/hooks/utils';
 
 export const useDraftOutboundLines = (
   item: DraftItem | null
 ): UseDraftStockOutLinesControl => {
-  const { id: invoiceId, status } = useOutbound.document.fields([
-    'id',
-    'status',
-  ]);
+  const {
+    id: invoiceId,
+    status,
+    otherPartyId,
+  } = useOutbound.document.fields(['id', 'status', 'otherPartyId']);
   const { data: lines, isLoading: outboundLinesLoading } =
     useOutbound.line.stockLines(item?.id ?? '');
   const { data, isLoading } = useStockLines(item?.id);
@@ -33,6 +35,12 @@ export const useDraftOutboundLines = (
   const [draftStockOutLines, setDraftStockOutLines] = useState<
     DraftStockOutLine[]
   >([]);
+
+  // Get default pricing for the item
+  const { itemPrice, isFetched: priceFetched } = useGetItemPricing({
+    nameId: otherPartyId,
+    itemId: item?.id || '',
+  });
 
   useConfirmOnLeaving(isDirty);
 
@@ -43,7 +51,7 @@ export const useDraftOutboundLines = (
       return setDraftStockOutLines([]);
     }
 
-    if (!data) return;
+    if (!data || !priceFetched) return;
 
     // Stock lines (data.nodes) are coming from availableStockLines from itemNode
     // these are filtered by totalNumberOfPacks > 0 but it's possible to issue all of the packs
@@ -75,6 +83,7 @@ export const useDraftOutboundLines = (
             return createDraftStockOutLineFromStockLine({
               stockLine: batch,
               invoiceId,
+              defaultPricing: itemPrice,
             });
           }
         })
@@ -98,7 +107,7 @@ export const useDraftOutboundLines = (
 
       return rows;
     });
-  }, [data, lines, item, invoiceId]);
+  }, [data, lines, item, invoiceId, itemPrice, priceFetched]);
 
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
