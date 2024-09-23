@@ -31,6 +31,7 @@ import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { SelectBatchModal } from './SelectBatchModal';
 import { AppRoute } from '@openmsupply-client/config';
 import { ArrowRightIcon } from '@mui/x-date-pickers';
+import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -194,6 +195,33 @@ const VaccinationForm = ({
       maxWidth="xs"
       sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
     >
+      <InputWithLabelRow
+        label={t('label.facility')}
+        labelProps={{ sx: { alignSelf: 'start', marginTop: '3px' } }}
+        Input={
+          <Grid item flex={1}>
+            <FacilitySearchInput
+              onChange={facilityId =>
+                updateDraft({
+                  facilityId,
+                })
+              }
+              facilityId={draft.facilityId}
+            />
+
+            {draft.facilityId === OTHER_FACILITY && (
+              <BasicTextInput
+                fullWidth
+                value={draft.facilityFreeText}
+                onChange={e =>
+                  updateDraft({ facilityFreeText: e.target.value })
+                }
+                sx={{ flex: 1, marginTop: 0.3 }}
+              />
+            )}
+          </Grid>
+        }
+      />
       <InputWithLabelRow
         label={t('label.clinician')}
         Input={

@@ -28,6 +28,7 @@ pub enum InsertVaccinationError {
     VaccinationAlreadyExistsForDose,
     VaccineIsNotNextDose,
     ClinicianDoesNotExist,
+    FacilityDoesNotExist,
     ReasonNotProvided,
     StockLineNotProvided,
     StockLineDoesNotExist,
@@ -44,6 +45,8 @@ pub struct InsertVaccination {
     pub vaccine_course_dose_id: String,
     pub vaccination_date: Option<NaiveDate>,
     pub clinician_id: Option<String>,
+    pub facility_name_id: Option<String>,
+    pub facility_free_text: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
     pub stock_line_id: Option<String>,
@@ -294,6 +297,22 @@ mod insert {
             Err(InsertVaccinationError::ClinicianDoesNotExist)
         );
 
+        // FacilityNameDoesNotExist
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    facility_name_id: Some("non_existent_facility_name_id".to_string()),
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::FacilityDoesNotExist)
+        );
+
         // StockLineNotProvided
         assert_eq!(
             service.insert_vaccination(
@@ -415,10 +434,7 @@ mod insert {
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
                     stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
-                    clinician_id: None,
-                    vaccination_date: None,
-                    comment: None,
-                    not_given_reason: None,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -461,10 +477,7 @@ mod insert {
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
                     given: false,
                     not_given_reason: Some("reason".to_string()),
-                    vaccination_date: None,
-                    stock_line_id: None,
-                    clinician_id: None,
-                    comment: None,
+                    ..Default::default()
                 },
             )
             .unwrap();

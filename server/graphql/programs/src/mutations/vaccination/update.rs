@@ -17,6 +17,8 @@ use service::{
 pub struct UpdateVaccinationInput {
     pub id: String,
     pub vaccination_date: Option<NaiveDate>,
+    pub facility_name_id: Option<NullableUpdateInput<String>>,
+    pub facility_free_text: Option<NullableUpdateInput<String>>,
     pub clinician_id: Option<NullableUpdateInput<String>>,
     pub comment: Option<String>,
     pub given: Option<bool>,
@@ -34,6 +36,8 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
             given,
             stock_line_id,
             not_given_reason,
+            facility_name_id,
+            facility_free_text,
         }: UpdateVaccinationInput,
     ) -> Self {
         Self {
@@ -46,6 +50,12 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
             given,
             stock_line_id,
             not_given_reason,
+            facility_name_id: facility_name_id.map(|facility_name_id| NullableUpdate {
+                value: facility_name_id.value,
+            }),
+            facility_free_text: facility_free_text.map(|facility_free_text| NullableUpdate {
+                value: facility_free_text.value,
+            }),
         }
     }
 }
@@ -92,6 +102,7 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccinationResponse> {
     let graphql_error = match error {
         ServiceError::VaccinationDoesNotExist
         | ServiceError::ClinicianDoesNotExist
+        | ServiceError::FacilityNameDoesNotExist
         | ServiceError::ReasonNotProvided
         | ServiceError::StockLineNotProvided
         | ServiceError::StockLineDoesNotExist
