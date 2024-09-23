@@ -1,5 +1,6 @@
 pub mod mutations;
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
@@ -128,6 +129,35 @@ impl StockLineQueries {
                     .map(|sort| sort.to_domain()),
                 Some(store_id),
             )
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(StockLinesResponse::Response(
+            StockLineConnector::from_domain(stock_lines),
+        ))
+    }
+
+    /// Query for "historical_stock_line" entries
+    pub async fn historical_stock_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+        datetime: DateTime<Utc>,
+    ) -> Result<StockLinesResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryStockLine,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+        let stock_lines = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(&service_context, store_id, item_id, datetime.naive_utc())
             .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(StockLinesResponse::Response(
