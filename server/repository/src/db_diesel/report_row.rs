@@ -1,3 +1,4 @@
+
 use super::{
     form_schema_row::form_schema, report_row::report::dsl as report_dsl, StorageConnection,
 };
@@ -157,3 +158,37 @@ impl Upsert for ReportRow {
         )
     }
 }
+
+// impl<'de> Deserialize<'de> for ContextType {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: serde::Deserializer<'de>,
+//     {
+//         match Value::deserialize(deserializer).visit_string()? {
+//             "Report" => Ok(ContextType::Report),
+//             _ => Err(serde::de::Error::custom("Expected context type")),
+//         }
+//     }
+// }
+
+// impl Serialize for ContextType {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: serde::Serializer,
+//     {
+//         serializer.serialize_str(match self {
+//             ContextType::Repack => todo!(),
+//             ContextType::Asset => todo!(),
+//             ContextType::InboundShipment => todo!(),
+//             ContextType::OutboundShipment => todo!(),
+//             ContextType::Requisition => todo!(),
+//             ContextType::Stocktake => todo!(),
+//             ContextType::Resource => todo!(),
+//             ContextType::Patient => todo!(),
+//             ContextType::Dispensary => todo!(),
+//             ContextType::OutboundReturn => todo!(),
+//             ContextType::InboundReturn => todo!(),
+//             ContextType::Report => "report",
+//         })
+//     }
+// }
