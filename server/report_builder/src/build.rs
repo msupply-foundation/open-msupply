@@ -242,11 +242,9 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
 pub fn build(args: BuildArgs) -> anyhow::Result<()> {
     let project_dir = Path::new(&args.dir);
     let files = find_project_files(project_dir)?;
-
     let definition = make_report(&args, files)?;
 
     let output_path = args.output.unwrap_or("./generated/output.json".to_string());
-
     let output_path = Path::new(&output_path);
     fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
         "Invalid output path: {:?}",
