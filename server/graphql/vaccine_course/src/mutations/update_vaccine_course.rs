@@ -50,6 +50,7 @@ pub struct UpsertVaccineCourseDoseInput {
     pub id: String,
     pub label: String,
     pub min_age: f64,
+    pub max_age: f64,
     pub min_interval_days: i32,
 }
 
@@ -100,6 +101,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     id: d.id,
                     label: d.label,
                     min_age: d.min_age,
+                    max_age: d.max_age,
                     min_interval_days: d.min_interval_days,
                 })
                 .collect(),

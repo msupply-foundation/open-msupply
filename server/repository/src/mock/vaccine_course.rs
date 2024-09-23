@@ -20,6 +20,7 @@ pub fn mock_vaccine_course_a_dose_a() -> VaccineCourseDoseRow {
         label: "Vaccine Course A Dose A".to_string(),
         vaccine_course_id: mock_vaccine_course_a().id,
         min_age: 0.0,
+        max_age: 1.0,
         min_interval_days: 30,
     }
 }
@@ -30,6 +31,7 @@ pub fn mock_vaccine_course_a_dose_b() -> VaccineCourseDoseRow {
         label: "Vaccine Course A Dose B".to_string(),
         vaccine_course_id: mock_vaccine_course_a().id,
         min_age: 1.0,
+        max_age: 2.0,
         min_interval_days: 30,
     }
 }
@@ -39,6 +41,7 @@ pub fn mock_vaccine_course_a_dose_c() -> VaccineCourseDoseRow {
         label: "Vaccine Course A Dose C".to_string(),
         vaccine_course_id: mock_vaccine_course_a().id,
         min_age: 2.0,
+        max_age: 6.0,
         min_interval_days: 30,
     }
 }

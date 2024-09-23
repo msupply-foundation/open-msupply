@@ -90,6 +90,7 @@ impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
                     id: d.id,
                     label: d.label,
                     min_age: d.min_age,
+                    max_age: d.max_age,
                     min_interval_days: d.min_interval_days,
                 })
                 .collect(),
