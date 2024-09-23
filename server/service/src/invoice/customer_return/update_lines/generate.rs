@@ -49,6 +49,7 @@ pub fn generate(
                  number_of_packs,
                  reason_id: _,
                  note,
+                 stock_line_id: _,
              }| InsertStockInLine {
                 id,
                 invoice_id: customer_return_id.clone(),
@@ -86,6 +87,7 @@ pub fn generate(
                  number_of_packs,
                  reason_id: _,
                  note,
+                 stock_line_id: _,
              }| UpdateStockInLine {
                 id,
                 batch,

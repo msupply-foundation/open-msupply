@@ -15,7 +15,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, PricingRow};
+use repository::{ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameRow, PricingRow};
 
 use repository::Invoice;
 use serde::Serialize;
@@ -247,10 +247,27 @@ impl InvoiceNode {
 
     pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let patient_loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
-        let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.name_row().id))
-            .await?;
+        let response_option = match loader
+            .load_one(NameByIdLoaderInput::new(
+                &store_id,
+                &self.name_row().id.clone(),
+            ))
+            .await?
+        {
+            Some(name) => Some(name),
+            // If name not found as other party, try to find it as patient
+            None => patient_loader
+                .load_one(self.name_row().id.clone())
+                .await?
+                .map(|name_row| Name {
+                    name_row,
+                    name_store_join_row: None,
+                    store_row: None,
+                    properties: None,
+                }),
+        };
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(

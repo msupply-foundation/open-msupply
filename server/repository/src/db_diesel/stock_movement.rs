@@ -15,7 +15,7 @@ table! {
         store_id -> Text,
         quantity -> Double,
         datetime -> Timestamp,
-        stock_line_id -> Nullable<Text>,
+        stock_line_id -> Nullable<Text>, // TODO: Make this non-nullable, null is only used for non-stock lines so don't count as movements
     }
 }
 

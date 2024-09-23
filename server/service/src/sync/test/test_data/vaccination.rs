@@ -18,7 +18,8 @@ const VACCINATION1: (&str, &str) = (
         "created_datetime": "2024-12-17T15:16:00",
         "vaccination_date": "2024-12-17",
         "status": "DRAFT",
-        "given": false
+        "given": false,
+        "facility_free_text": "Other facility"
     }"#,
 );
 
@@ -41,6 +42,8 @@ fn vaccination1() -> VaccinationRow {
         given: false,
         not_given_reason: None,
         comment: None,
+        facility_name_link_id: None,
+        facility_free_text: Some("Other facility".to_string()),
     }
 }
 

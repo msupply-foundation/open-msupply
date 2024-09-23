@@ -3,9 +3,11 @@ use repository::{RepositoryError, Vaccination};
 
 use crate::service_provider::ServiceContext;
 
+mod generate;
 pub mod get_vaccination_card;
 pub mod insert;
 pub mod query;
+pub mod update;
 mod validate;
 
 pub trait VaccinationServiceTrait: Sync + Send {
@@ -32,6 +34,15 @@ pub trait VaccinationServiceTrait: Sync + Send {
         input: insert::InsertVaccination,
     ) -> Result<Vaccination, insert::InsertVaccinationError> {
         insert::insert_vaccination(ctx, store_id, input)
+    }
+
+    fn update_vaccination(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: update::UpdateVaccination,
+    ) -> Result<Vaccination, update::UpdateVaccinationError> {
+        update::update_vaccination(ctx, store_id, input)
     }
 }
 
