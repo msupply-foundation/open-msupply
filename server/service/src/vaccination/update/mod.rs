@@ -27,6 +27,7 @@ use super::{generate::CreatePrescription, query::get_vaccination};
 pub enum UpdateVaccinationError {
     VaccinationDoesNotExist,
     ClinicianDoesNotExist,
+    FacilityNameDoesNotExist,
     ReasonNotProvided,
     StockLineNotProvided,
     StockLineDoesNotExist,
@@ -47,6 +48,8 @@ pub struct UpdateVaccination {
     pub given: Option<bool>,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
+    pub facility_name_id: Option<NullableUpdate<String>>,
+    pub facility_free_text: Option<NullableUpdate<String>>,
 }
 
 pub fn update_vaccination(
@@ -247,6 +250,22 @@ mod update {
             Err(UpdateVaccinationError::ClinicianDoesNotExist)
         );
 
+        // FacilityNameDoesNotExist
+        assert_eq!(
+            service.update_vaccination(
+                &context,
+                store_id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    facility_name_id: Some(NullableUpdate {
+                        value: Some("non_existent_clinician_id".to_string())
+                    }),
+                    ..Default::default()
+                }
+            ),
+            Err(UpdateVaccinationError::FacilityNameDoesNotExist)
+        );
+
         // StockLineNotProvided
         assert_eq!(
             service.update_vaccination(
@@ -372,11 +391,10 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
                     comment: Some("Updated comment".to_string()),
-                    stock_line_id: None,
-                    given: None,
-                    clinician_id: None,
-                    vaccination_date: None,
-                    not_given_reason: None,
+                    facility_free_text: Some(NullableUpdate {
+                        value: Some("Facility".to_string()),
+                    }),
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -384,6 +402,10 @@ mod update {
         assert_eq!(
             result.vaccination_row.comment,
             Some("Updated comment".to_owned())
+        );
+        assert_eq!(
+            result.vaccination_row.facility_free_text,
+            Some("Facility".to_owned())
         );
     }
 
@@ -412,10 +434,7 @@ mod update {
                     id: mock_vaccination_a().id,
                     given: Some(true),
                     stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
-                    clinician_id: None,
-                    vaccination_date: None,
-                    comment: None,
-                    not_given_reason: None,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -453,11 +472,7 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
                     stock_line_id: Some(mock_stock_line_b_vaccine_item_a().id),
-                    given: None,
-                    clinician_id: None,
-                    vaccination_date: None,
-                    comment: None,
-                    not_given_reason: None,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -517,10 +532,7 @@ mod update {
                     id: mock_vaccination_a().id,
                     given: Some(false),
                     not_given_reason: Some("out of stock".to_string()),
-                    stock_line_id: None,
-                    clinician_id: None,
-                    vaccination_date: None,
-                    comment: None,
+                    ..Default::default()
                 },
             )
             .unwrap();

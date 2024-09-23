@@ -7,7 +7,7 @@ use self::query::get_names;
 
 mod query;
 pub mod update;
-mod validate;
+pub mod validate;
 
 pub trait NameServiceTrait: Sync + Send {
     fn get_names(
