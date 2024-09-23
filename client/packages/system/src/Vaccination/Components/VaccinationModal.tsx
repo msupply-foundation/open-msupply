@@ -99,6 +99,7 @@ export const VaccinationModal = ({
         openBatchModal={openBatchModal}
         draft={draft}
         dose={dose}
+        editingExisting={!!vaccination}
       />
     </Box>
   );
@@ -138,11 +139,13 @@ export const VaccinationModal = ({
 const VaccinationForm = ({
   draft,
   dose,
+  editingExisting,
   updateDraft,
   openBatchModal,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
+  editingExisting: boolean;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
   openBatchModal: () => void;
 }) => {
@@ -174,6 +177,7 @@ const VaccinationForm = ({
             {draft.facilityId === OTHER_FACILITY && (
               <BasicTextInput
                 fullWidth
+                autoFocus
                 value={draft.facilityFreeText}
                 onChange={e =>
                   updateDraft({ facilityFreeText: e.target.value })
@@ -205,13 +209,7 @@ const VaccinationForm = ({
           <DatePicker
             disableFuture
             value={draft.date}
-            onChange={date => {
-              const today = new Date().toDateString();
-              updateDraft({
-                date,
-                historical: date?.toDateString() !== today,
-              });
-            }}
+            onChange={date => updateDraft({ date })}
             sx={{ flex: 1 }}
           />
         }
@@ -240,6 +238,7 @@ const VaccinationForm = ({
         draft={draft}
         openBatchModal={openBatchModal}
         updateDraft={updateDraft}
+        editingExisting={editingExisting}
       />
 
       {draft.given === false && (
