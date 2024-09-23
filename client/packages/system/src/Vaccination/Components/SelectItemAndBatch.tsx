@@ -8,7 +8,7 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { PropsWithChildren, useMemo, useState } from 'react';
 import { VaccinationDraft } from '../api';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { OTHER_FACILITY } from './FacilitySearchInput';
@@ -16,15 +16,18 @@ import { OTHER_FACILITY } from './FacilitySearchInput';
 export const SelectItemAndBatch = ({
   draft,
   dose,
+  editingExisting,
   updateDraft,
   openBatchModal,
 }: {
   dose: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
+  editingExisting: boolean;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
   openBatchModal: () => void;
 }) => {
   const t = useTranslation('dispensary');
+  const [recordHistoricalBatch, setRecordBatch] = useState(false);
 
   const vaccineItemOptions = useMemo(() => {
     return (
@@ -47,25 +50,29 @@ export const SelectItemAndBatch = ({
     return <InfoText>{t('messages.no-vaccine-items-configured')}</InfoText>;
   }
 
+  const isHistorical = draft.date?.toDateString() !== new Date().toDateString();
+
+  const selectBatch = !isHistorical || recordHistoricalBatch || editingExisting;
+
+  // You can edit the batch immediately, but not once its a historical vaccination
+  const disableBatchEdit = editingExisting && isHistorical;
+
   return (
     <>
-      {draft.historical && (
+      {isHistorical && (
         <Box>
           <Checkbox
             id="recordBatch"
-            checked={draft.recordBatch}
-            onChange={() =>
-              updateDraft({
-                recordBatch: !draft.recordBatch,
-              })
-            }
+            checked={recordHistoricalBatch}
+            onChange={() => setRecordBatch(!recordHistoricalBatch)}
           />
           <Typography component="label" htmlFor="recordBatch">
             {t('label.record-stock-transaction')}
           </Typography>
         </Box>
       )}
-      {draft.recordBatch && (
+
+      {selectBatch && (
         <>
           <InputWithLabelRow
             label={t('label.vaccine-item')}
@@ -73,8 +80,11 @@ export const SelectItemAndBatch = ({
               <Select
                 options={vaccineItemOptions}
                 value={draft.itemId ?? ''}
-                onChange={e => updateDraft({ itemId: e.target.value })}
+                onChange={e =>
+                  updateDraft({ itemId: e.target.value, stockLine: null })
+                }
                 sx={{ flex: 1 }}
+                disabled={disableBatchEdit}
               />
             }
           />
@@ -82,7 +92,7 @@ export const SelectItemAndBatch = ({
             label={t('label.batch')}
             Input={
               <Button
-                disabled={!draft.itemId}
+                disabled={!draft.itemId || disableBatchEdit}
                 onClick={() => draft.itemId && openBatchModal()}
                 sx={{
                   ...baseButtonStyles,
