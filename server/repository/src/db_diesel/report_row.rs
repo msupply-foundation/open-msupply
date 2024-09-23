@@ -72,7 +72,7 @@ pub struct ReportRow {
     pub argument_schema_id: Option<String>,
     pub is_custom: bool,
     pub version: String,
-    pub code: Option<String>,
+    pub code: String,
 }
 
 impl Default for ReportRow {
