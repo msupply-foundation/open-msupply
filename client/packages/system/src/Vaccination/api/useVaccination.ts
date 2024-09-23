@@ -30,7 +30,8 @@ export interface VaccinationDraft {
   itemId?: string;
   stockLine?: VaccinationStockLine | null;
   notGivenReason?: string | null;
-  editExistingTransactions?: boolean;
+  recordHistoricalTransaction: boolean;
+  editExistingTransactions: boolean;
 }
 
 export function useVaccination({
@@ -90,6 +91,7 @@ export function useVaccination({
     notGivenReason,
     itemId: stockLine?.itemId,
 
+    recordHistoricalTransaction: false,
     editExistingTransactions: false,
   };
 
@@ -217,8 +219,8 @@ const useUpdate = (vaccinationId: string | undefined) => {
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         clinicianId: setNullableInput('id', input.clinician),
         comment: input.comment,
-        notGivenReason: input.notGivenReason,
-        stockLineId: input.stockLine?.id,
+        notGivenReason: !input.given ? input.notGivenReason : null,
+        stockLineId: input.given ? input.stockLine?.id : null,
 
         facilityNameId: {
           value:
@@ -231,7 +233,8 @@ const useUpdate = (vaccinationId: string | undefined) => {
               : undefined,
         },
 
-        updateTransactions: input.editExistingTransactions,
+        updateTransactions:
+          input.editExistingTransactions || input.recordHistoricalTransaction,
       },
     });
 
