@@ -444,7 +444,7 @@ async fn main() -> anyhow::Result<()> {
                         .expect("manifest json not formatted");
 
                     let id = format!("{name}_{version}");
-                    let report_path = format!("{version_dir}/generated/template.html");
+                    let report_path = format!("{version_dir}/generated/{name}.json");
                     let context = manifest.context;
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
