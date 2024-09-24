@@ -149,6 +149,11 @@ enum Action {
         #[clap(short, long)]
         code: Option<String>,
     },
+    UpsertReportsJson {
+        /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
+        #[clap(short, long)]
+        json_path: Option<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -546,6 +551,20 @@ async fn main() -> anyhow::Result<()> {
                 Some(code) => info!("{}", format!("{code} report built")),
                 None => info!("All standard reports built"),
             }
+        }
+        Action::UpsertReportsJson { json_path } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+            let base_reports_dir = "./reports";
+            let generated_dir = format!("{base_reports_dir}/generated");
+
+            let json_file = fs::File::open(json_path.unwrap_or(format!(
+                "{base_reports_dir}/generated/standard_reports.json"
+            )))
+            .expect("json not found");
+            let reports: ReportsData =
+                serde_json::from_reader(json_file).expect("json incorrectly formatted");
+            info!("reports found in correct struct");
         }
         Action::UpsertReport {
             id,
