@@ -260,3 +260,10 @@ pub fn build(args: BuildArgs) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+pub fn build_report_definition(args: BuildArgs) -> anyhow::Result<ReportDefinition> {
+    let project_dir = Path::new(&args.dir);
+    let files = find_project_files(project_dir)?;
+    let definition = make_report(&args, files)?;
+    Ok(definition)
+}
