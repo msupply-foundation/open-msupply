@@ -29,6 +29,7 @@ allow_tables_to_appear_in_same_query!(vaccine_course_dose, vaccine_course);
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, Serialize, Deserialize,
 )]
+#[diesel(treat_none_as_null = true)]
 #[diesel(table_name = vaccine_course_dose)]
 pub struct VaccineCourseDoseRow {
     pub id: String,
