@@ -19,6 +19,7 @@ import {
   ModalMode,
   NumberCell,
   NumberInputCell,
+  MultipleNumberInputCell,
   NumericTextInput,
   PlusCircleIcon,
   TableProvider,
@@ -229,7 +230,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       }
       height={height}
       sx={{
-        width: 875,
+        width: 950,
         maxWidth: 'unset',
       }}
       slideAnimation={false}
@@ -302,14 +303,14 @@ const VaccineCourseDoseTable = ({
         key: 'minAgeMonths',
         Cell: AgeCell,
         label: 'label.age-months-from',
-        maxWidth: 120,
+        // maxWidth: 120,
         setter: updateDose,
       },
       {
         key: 'maxAgeMonths',
         Cell: AgeCell,
         label: 'label.age-months-to',
-        maxWidth: 120,
+        // maxWidth: 120,
         setter: updateDose,
       },
       {
@@ -356,6 +357,17 @@ const VaccineCourseDoseTable = ({
 };
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
-const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => (
-  <NumberInputCell decimalLimit={2} {...props} />
-);
+const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
+  const t = useTranslation();
+  return (
+    <MultipleNumberInputCell
+      decimalLimit={2}
+      width={25}
+      {...props}
+      units={[
+        { key: 'year', ratio: 12, label: t('label.years-abbreviation') },
+        { key: 'month', ratio: 1, label: t('label.months-abbreviation') },
+      ]}
+    />
+  );
+};

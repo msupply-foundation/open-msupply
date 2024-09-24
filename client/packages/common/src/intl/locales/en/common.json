@@ -684,5 +684,7 @@
   "report.confirm-date": "Confirm date",
   "report.stat": "Stat",
   "report.global-total": "Global total",
-  "label.report-filters": "Report Filters"
+  "label.report-filters": "Report Filters",
+  "label.years-abbreviation": "Y",
+  "label.months-abbreviation": "M"
 }
