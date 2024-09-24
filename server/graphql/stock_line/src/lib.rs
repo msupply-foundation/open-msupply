@@ -164,6 +164,7 @@ impl StockLineQueries {
                     Some(StockLineFilter {
                         item_id: Some(EqualFilter::equal_to(&item_id)),
                         store_id: Some(EqualFilter::equal_to(&store_id)),
+                        is_available: Some(true),
                         ..Default::default()
                     }),
                     None,

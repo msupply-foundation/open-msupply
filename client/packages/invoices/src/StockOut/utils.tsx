@@ -36,6 +36,7 @@ export const createStockOutPlaceholderRow = (
 export interface DraftStockOutLineSeeds {
   invoiceId: string;
   invoiceLine: StockOutLineFragment;
+  stockLine?: PartialStockLineFragment;
 }
 
 export const createDraftStockOutLineFromStockLine = ({
@@ -72,6 +73,7 @@ export const createDraftStockOutLineFromStockLine = ({
 
 export const createDraftStockOutLine = ({
   invoiceLine,
+  stockLine,
 }: DraftStockOutLineSeeds): DraftStockOutLine => ({
   isCreated: !invoiceLine,
   isUpdated: false,
@@ -79,13 +81,12 @@ export const createDraftStockOutLine = ({
   // When creating a draft outbound from an existing outbound line, add the available quantity
   // to the number of packs. This is because the available quantity has been adjusted for outbound
   // lines that have been saved.
-  ...(invoiceLine.stockLine
+  ...(stockLine
     ? {
         stockLine: {
-          ...invoiceLine.stockLine,
+          ...stockLine,
           availableNumberOfPacks:
-            invoiceLine.stockLine.availableNumberOfPacks +
-            invoiceLine.numberOfPacks,
+            stockLine.availableNumberOfPacks + invoiceLine.numberOfPacks,
         },
       }
     : {}),
