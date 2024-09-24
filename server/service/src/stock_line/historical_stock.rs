@@ -44,8 +44,9 @@ pub fn get_historical_stock_lines_available_quantity(
     let mut min_available_and_pack_size: HashMap<String, MinAvailableAndPackSize> = stock_lines
         .iter()
         .map(|(stock_line, reserved_available_number_of_packs)| {
-            let available = stock_line.available_number_of_packs
+            let available_packs = stock_line.available_number_of_packs
                 + reserved_available_number_of_packs.unwrap_or_default();
+            let available = available_packs * stock_line.pack_size;
             (
                 stock_line.id.clone(),
                 MinAvailableAndPackSize {
@@ -128,7 +129,6 @@ pub fn get_historical_stock_lines(
 
     Ok(stock_lines)
 }
-
 
 pub fn get_historical_stock_line_available_quantity(
     connection: &StorageConnection,
