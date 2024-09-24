@@ -36,7 +36,7 @@ impl StockOutType {
 
 pub(crate) fn invoice_backdated_date(invoice: &InvoiceRow) -> Option<NaiveDateTime> {
     if let Some(allocated_date) = invoice.allocated_datetime.clone() {
-        if allocated_date < chrono::Utc::now().naive_utc() - chrono::Duration::hours(24) {
+        if allocated_date < invoice.created_datetime {
             return Some(allocated_date);
         }
     }
