@@ -398,5 +398,12 @@
   "label.deceased": "Falecido",
   "label.duration": "Duração",
   "label.encounter": "Encontro",
-  "label.encounter-end": "Finalizar"
+  "label.encounter-end": "Finalizar",
+  "error.database-error": "Erro na base de dados",
+  "description.number-of-shipments": "Número de envios que foram criados. a partir desta requisição",
+  "error.record-already-exists": "Já existe um registro com essa ID",
+  "button.import-properties": "Importar Propriedades",
+  "error.no-properties-to-import": "Não há propriedades configuradas para importar para o seu armazém",
+  "error.facility-not-found": "Armazém não encontrado",
+  "error.field-must-be-specified": "{{field}} deve ser especificado"
 }
