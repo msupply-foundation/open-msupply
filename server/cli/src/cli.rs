@@ -1,19 +1,16 @@
-use anyhow::{anyhow, Error};
+use anyhow::anyhow;
 use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
 use cli::RefreshDatesRepository;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
-use report_builder::{
-    build::{build, build_report_definition},
-    BuildArgs,
-};
+use report_builder::{build::build_report_definition, BuildArgs};
 
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
-    FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
-    ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    FormSchemaJson, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
+    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use server::configuration;
@@ -147,7 +144,7 @@ enum Action {
     Backup,
     Restore(RestoreArguments),
     // command to upsert standard reports. Will later move this into rust code
-    UpsertStandardReports {
+    BuildStandardReports {
         /// Optional report code. If none supplied, all standard reports are uploaded
         #[clap(short, long)]
         code: Option<String>,
@@ -409,7 +406,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::UpsertStandardReports { code } => {
+        Action::BuildStandardReports { code } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
@@ -417,6 +414,13 @@ async fn main() -> anyhow::Result<()> {
             let report_names = fs::read_dir(base_reports_dir)?
                 .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
                 .collect::<Result<Vec<String>, std::io::Error>>()?;
+
+            let report_names = report_names
+                .into_iter()
+                .filter(|name| name != "generated")
+                .collect::<Vec<String>>();
+
+            let mut reports_data = ReportsData { reports: vec![] };
 
             for name_dir in report_names {
                 let report_versions = fs::read_dir(&name_dir)?
@@ -443,7 +447,6 @@ async fn main() -> anyhow::Result<()> {
 
                     let version = manifest.version;
                     let id = format!("{name}_{version}");
-                    let report_path = format!("{version_dir}/generated/{name}.json");
                     let context = manifest.context;
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
@@ -502,29 +505,46 @@ async fn main() -> anyhow::Result<()> {
                         (None, None) => None,
                     };
 
-                    if let Some(form_schema_json) = &form_schema_json {
-                        FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
-                    }
-
-                    ReportRowRepository::new(&con).upsert_one(&ReportRow {
+                    let report_data = ReportData {
                         id,
                         name: report_name,
                         r#type: repository::ReportType::OmSupply,
-                        template: fs::read_to_string(report_path)?,
+                        template: report_definition,
                         context,
                         sub_context,
-                        argument_schema_id: form_schema_json.map(|r| r.id.clone()),
+                        argument_schema_id: form_schema_json.clone().map(|r| r.id.clone()),
                         comment: None,
                         is_custom,
                         version: version.to_string(),
                         code: report_code,
-                    })?;
+                        form_schema: form_schema_json,
+                    };
+
+                    reports_data.reports.push(report_data);
                 }
             }
 
+            let output_path = match code.clone() {
+                Some(code) => format!("{base_reports_dir}/generated/{code}.json"),
+                None => format!("{base_reports_dir}/generated/standard_reports.json"),
+            };
+            let output_path = Path::new(&output_path);
+
+            fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
+                "Invalid output path: {:?}",
+                output_path
+            )))?)?;
+
+            fs::write(output_path, serde_json::to_string_pretty(&reports_data)?).map_err(|_| {
+                anyhow::Error::msg(format!(
+                    "Failed to write to {:?}. Does output dir exist?",
+                    output_path
+                ))
+            })?;
+
             match code.clone() {
-                Some(code) => info!("{}", format!("{code} report upserted")),
-                None => info!("All standard reports upserted"),
+                Some(code) => info!("{}", format!("{code} report built")),
+                None => info!("All standard reports built"),
             }
         }
         Action::UpsertReport {
@@ -653,6 +673,7 @@ pub struct ReportData {
     pub is_custom: bool,
     pub version: String,
     pub code: String,
+    pub form_schema: Option<FormSchemaJson>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
