@@ -7,7 +7,7 @@ import {
   SortUtils,
   uniqBy,
 } from '@openmsupply-client/common';
-import { useStockLines } from '@openmsupply-client/system';
+import { useHistoricalStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
@@ -25,15 +25,21 @@ export interface UseDraftPrescriptionLinesControl
 }
 
 export const useDraftPrescriptionLines = (
-  item: DraftItem | null
+  item: DraftItem | null,
+  date?: Date | null
 ): UseDraftPrescriptionLinesControl => {
   const { id: invoiceId, status } = usePrescription.document.fields([
     'id',
     'status',
   ]);
+
   const { data: lines, isLoading: prescriptionLinesLoading } =
     usePrescription.line.stockLines(item?.id ?? '');
-  const { data, isLoading } = useStockLines(item?.id);
+  const { data, isLoading } = useHistoricalStockLines({
+    itemId: item?.id ?? '',
+    datetime: date ? date.toISOString() : undefined,
+  });
+
   const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftStockOutLines, setDraftStockOutLines] = useState<
     DraftStockOutLine[]
