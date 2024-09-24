@@ -718,7 +718,7 @@ mod permission_tests {
             TestData {
                 name: "insertInboundShipmentLine",
                 query: r#"mutation Mutation {
-                insertInboundShipmentLine(input: {id: "", invoiceId: "", itemId: "", packSize: 10, costPricePerPack: 1.5, sellPricePerPack: 1.5, numberOfPacks: 10}, storeId: "") {
+                insertInboundShipmentLine(input: {id: "", invoiceId: "", itemId: "", packSize: 10, costPricePerPack: 1.5, sellPricePerPack: 1.5, numberOfPacks: 10, totalBeforeTax: 1.5}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -732,7 +732,7 @@ mod permission_tests {
             TestData {
                 name: "insertInboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-                insertInboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+                insertInboundShipmentServiceLine(input: {id: "", invoiceId: "", totalBeforeTax: 1.5}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }
@@ -789,7 +789,7 @@ mod permission_tests {
             TestData {
                 name: "insertOutboundShipmentServiceLine",
                 query: r#"mutation Mutation {
-              insertOutboundShipmentServiceLine(input: {id: "", invoiceId: ""}, storeId: "") {
+              insertOutboundShipmentServiceLine(input: {id: "", invoiceId: "", totalBeforeTax: 1.5}, storeId: "") {
                 ... on InvoiceLineNode {
                   id
                 }
