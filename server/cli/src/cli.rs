@@ -558,13 +558,34 @@ async fn main() -> anyhow::Result<()> {
             let base_reports_dir = "./reports";
             let generated_dir = format!("{base_reports_dir}/generated");
 
-            let json_file = fs::File::open(json_path.unwrap_or(format!(
-                "{base_reports_dir}/generated/standard_reports.json"
-            )))
+            let json_file = fs::File::open(
+                json_path.unwrap_or(format!("{generated_dir}/standard_reports.json")),
+            )
             .expect("json not found");
-            let reports: ReportsData =
+            let reports_data: ReportsData =
                 serde_json::from_reader(json_file).expect("json incorrectly formatted");
-            info!("reports found in correct struct");
+
+            for report in reports_data.reports {
+                if let Some(form_schema_json) = &report.form_schema {
+                    FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
+                }
+
+                ReportRowRepository::new(&con).upsert_one(&ReportRow {
+                    id: report.id.clone(),
+                    name: report.name,
+                    r#type: repository::ReportType::OmSupply,
+                    template: serde_json::to_string_pretty(&report.template)?,
+                    context: report.context,
+                    sub_context: report.sub_context,
+                    argument_schema_id: report.argument_schema_id,
+                    comment: report.comment,
+                    is_custom: report.is_custom,
+                    version: report.version,
+                    code: report.code,
+                })?;
+
+                info!("Report {} upserted", report.id);
+            }
         }
         Action::UpsertReport {
             id,
