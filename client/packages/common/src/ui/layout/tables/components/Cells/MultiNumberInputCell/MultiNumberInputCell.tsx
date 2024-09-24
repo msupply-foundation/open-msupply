@@ -66,8 +66,10 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
   columnIndex,
   isDisabled = false,
   min = 0,
+  // The maximum applies to the *highest* unit (e.g. years, when using
+  // years/months, smaller units are limited by the size of the next unit up)
   max,
-  decimalLimit,
+  decimalLimit = 2,
   step,
   multiplier,
   defaultValue,
@@ -113,7 +115,9 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
           // Limit smaller units to less than the value of the next highest
           // unit, e.g. "Months" would be limited to 11.9999
           max={setMax(units, index, max)}
-          decimalLimit={decimalLimit}
+          // There's no need for anything other than the smallest unit to have
+          // non-integer values
+          decimalLimit={index === units.length - 1 ? decimalLimit : 0}
           step={step}
           multiplier={multiplier}
           allowNegative={allowNegative}
