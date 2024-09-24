@@ -234,7 +234,6 @@ mod test {
             "id": "n/a",
             "stockLineId": "n/a",
             "numberOfPacks": 0,
-            "totalBeforeTax": 0,
             "tax": {
               "percentage": 0
             }
@@ -545,7 +544,7 @@ mod test {
                     r#type: Some(StockOutType::OutboundShipment),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
-                    total_before_tax: Some(1.0),
+                    total_before_tax: None,
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
                     }),
@@ -566,7 +565,6 @@ mod test {
             "id": "id input",
             "stockLineId": "stock_line_id input",
             "numberOfPacks": 1.0,
-            "totalBeforeTax": 1.0,
             "tax": {
               "percentage": 1.0
             }
