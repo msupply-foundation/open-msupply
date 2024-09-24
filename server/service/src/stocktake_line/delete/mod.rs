@@ -1,16 +1,9 @@
 mod validate;
 pub use validate::*;
 
-use repository::{
-    RepositoryError, StocktakeLineRowRepository, StorageConnection, TransactionError,
-};
+use repository::{RepositoryError, StocktakeLineRowRepository, TransactionError};
 
-use crate::{
-    service_provider::ServiceContext,
-    stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
-    stocktake_line::validate::check_stocktake_line_exist,
-    validate::check_store_id_matches,
-};
+use crate::service_provider::ServiceContext;
 
 #[derive(Debug, PartialEq)]
 pub enum DeleteStocktakeLineError {
