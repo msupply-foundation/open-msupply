@@ -480,7 +480,7 @@ async fn main() -> anyhow::Result<()> {
                         query_sql: sql_queries,
                     };
 
-                    let report_definition = build_report_definition(args)
+                    let report_definition = build_report_definition(&args)
                         .map_err(|_| anyhow!("Failed to build report {:?}", id))?;
 
                     let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
