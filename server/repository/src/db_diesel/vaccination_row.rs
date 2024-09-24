@@ -4,8 +4,8 @@ use crate::{
 };
 
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician,
-    vaccination_row::vaccination::dsl::*,
+    clinician_link_row::clinician_link, clinician_row::clinician, name_link_row::name_link,
+    name_row::name, vaccination_row::vaccination::dsl::*,
     vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
 };
 
@@ -24,6 +24,8 @@ table! {
         user_id -> Text,
         vaccine_course_dose_id -> Text,
         created_datetime -> Timestamp,
+        facility_name_link_id -> Nullable<Text>,
+        facility_free_text -> Nullable<Text>,
         invoice_id -> Nullable<Text>,
         stock_line_id -> Nullable<Text>,
         clinician_link_id -> Nullable<Text>,
@@ -35,13 +37,18 @@ table! {
 }
 
 joinable!(vaccination -> clinician_link (clinician_link_id));
+joinable!(vaccination -> name_link (facility_name_link_id));
 joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
 
+allow_tables_to_appear_in_same_query!(vaccination, name_link);
+allow_tables_to_appear_in_same_query!(vaccination, name);
 allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
 allow_tables_to_appear_in_same_query!(vaccination, clinician);
 allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_dose);
 allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician_link);
 allow_tables_to_appear_in_same_query!(vaccine_course_dose, clinician);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, name_link);
+allow_tables_to_appear_in_same_query!(vaccine_course_dose, name);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
@@ -56,6 +63,8 @@ pub struct VaccinationRow {
     pub user_id: String,
     pub vaccine_course_dose_id: String,
     pub created_datetime: NaiveDateTime,
+    pub facility_name_link_id: Option<String>,
+    pub facility_free_text: Option<String>,
     pub invoice_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub clinician_link_id: Option<String>,

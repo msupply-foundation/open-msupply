@@ -32,7 +32,7 @@ import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
-import { VaccinationsTab } from './VaccinationsTab';
+import { VaccinationCard } from '../../Vaccination/Components/VaccinationCard';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -257,6 +257,24 @@ export const DetailView: FC = () => {
 
   if (!isSuccess && !isError) return <DetailViewSkeleton />;
 
+  // For Immunization Programs, we display as two different tabs - Vaccinations
+  // card, and the normal "Encounter" page (if defined)
+  const tabs = [];
+  if (encounter && encounter.programEnrolment?.isImmunisationProgram) {
+    tabs.push({
+      Component: (
+        <VaccinationCard
+          encounterId={encounter.id}
+          programEnrolmentId={encounter.programEnrolment.id}
+          clinician={encounter.clinician ?? undefined}
+        />
+      ),
+      value: t('label.vaccinations'),
+    });
+    if (encounter.document.documentRegistry?.uiSchema.elements.length > 0)
+      tabs.push({ Component: JsonForm, value: t('label.encounter') });
+  }
+
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
@@ -281,25 +299,7 @@ export const DetailView: FC = () => {
             encounter={encounter}
             onDelete={onDelete}
           />
-          {encounter.programEnrolment?.isImmunisationProgram ? (
-            // If the encounter is for an immunisation program, show Vaccination card on first tab
-            <DetailTabs
-              tabs={[
-                {
-                  Component: (
-                    <VaccinationsTab
-                      encounterId={encounter.id}
-                      clinician={encounter.clinician ?? undefined}
-                    />
-                  ),
-                  value: t('label.vaccinations'),
-                },
-                { Component: JsonForm, value: t('label.encounter') },
-              ]}
-            />
-          ) : (
-            JsonForm
-          )}
+          {tabs.length > 0 ? <DetailTabs tabs={tabs} /> : JsonForm}
           <SidePanel encounter={encounter} onChange={updateEncounter} />
         </>
       )}

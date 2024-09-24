@@ -1,1 +1,1 @@
-export * from './VaccinationModal';
+export * from './VaccinationCard';

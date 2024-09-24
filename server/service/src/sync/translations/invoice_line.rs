@@ -9,7 +9,8 @@ use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
     InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
-    ItemRowRepository, StockLineRowRepository, StorageConnection, SyncBufferRow,
+    InvoiceRowRepository, InvoiceType, ItemRowRepository, StockLineRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -155,6 +156,16 @@ impl SyncTranslation for InvoiceLineTranslation {
             }
         };
 
+        let invoice = match InvoiceRowRepository::new(connection).find_one_by_id(&invoice_id)? {
+            Some(invoice) => invoice,
+            None => {
+                return Err(anyhow::Error::msg(format!(
+                    "Failed to get invoice: {}",
+                    invoice_id
+                )))
+            }
+        };
+
         let item_code = item_code.unwrap_or("".to_string());
         let (item_code, tax_percentage, total_before_tax, total_after_tax) = match item_code
             .is_empty()
@@ -181,6 +192,16 @@ impl SyncTranslation for InvoiceLineTranslation {
                 let total_multiplier = match r#type {
                     LegacyTransLineType::StockIn => cost_price_per_pack,
                     LegacyTransLineType::StockOut => sell_price_per_pack,
+                    LegacyTransLineType::Service
+                        if invoice.r#type == InvoiceType::InboundShipment =>
+                    {
+                        cost_price_per_pack
+                    }
+                    LegacyTransLineType::Service
+                        if invoice.r#type == InvoiceType::OutboundShipment =>
+                    {
+                        sell_price_per_pack
+                    }
                     _ => 0.0,
                 };
 
