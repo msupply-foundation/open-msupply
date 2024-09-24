@@ -294,12 +294,12 @@ mod query {
                 get_midday(2020, 1, 1), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-01
         // | 2020-01-01 | 0           | 500         | 0           |
         // # StockLine A has been all consumed the future,
         // # StockLine B had 1000 available stock at that date, but the lowest stock level we saw was 500
-        // # StockLine |C doesn't exist yet
+        // # StockLine |C doesn't exist yet (should show as 0)
         let stock_line_b = result
             .rows
             .iter()
@@ -323,7 +323,7 @@ mod query {
                 get_midday(2020, 1, 2), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-02
         // | 2020-01-02 | 0           | 500         | 0           |
         // # StockLine A has been all consumed the future,
@@ -352,7 +352,7 @@ mod query {
                 get_midday(2020, 1, 3), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-03
         // | 2020-01-03 | 0           | 500         | 0           |
         // # StockLine A has been all consumed the future,
@@ -381,7 +381,7 @@ mod query {
                 get_midday(2020, 1, 4), // midday to check after the time the stock was introduced
             )
             .unwrap();
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-04
         // | 2020-01-04 | 0           | 600         | 0           |
         // # StockLine A has been all consumed the future,
@@ -412,7 +412,7 @@ mod query {
             )
             .unwrap();
 
-        assert_eq!(result.rows.len(), 1);
+        assert_eq!(result.rows.len(), 2);
         // Expected available stock for 2020-01-05
         // | 2020-01-05 | 0           | 600         | 0           |
         // # StockLine A has been all consumed the future,

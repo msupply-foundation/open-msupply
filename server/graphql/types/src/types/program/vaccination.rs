@@ -52,6 +52,21 @@ impl VaccinationNode {
         &self.row().comment
     }
 
+    pub async fn facility_free_text(&self) -> &Option<String> {
+        &self.row().facility_free_text
+    }
+
+    pub async fn facility_name_id(&self) -> &Option<String> {
+        &self.row().facility_name_link_id
+    }
+
+    pub async fn facility_name(&self) -> Option<String> {
+        match &self.vaccination.facility_name_row {
+            Some(name_row) => Some(name_row.name.clone()),
+            None => self.row().facility_free_text.clone(),
+        }
+    }
+
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
 
