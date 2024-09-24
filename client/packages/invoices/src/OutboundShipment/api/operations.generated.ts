@@ -112,6 +112,16 @@ export type AddToOutboundShipmentFromMasterListMutationVariables = Types.Exact<{
 
 export type AddToOutboundShipmentFromMasterListMutation = { __typename: 'Mutations', addToOutboundShipmentFromMasterList: { __typename: 'AddToOutboundShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisName', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
 
+export type ItemPriceFragment = { __typename: 'ItemPriceNode', defaultPricePerUnit?: number | null, discountPercentage?: number | null, calculatedPricePerUnit?: number | null };
+
+export type GetItemPricingQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.ItemPriceInput;
+}>;
+
+
+export type GetItemPricingQuery = { __typename: 'Queries', itemPrice: { __typename: 'ItemPriceNode', defaultPricePerUnit?: number | null, discountPercentage?: number | null, calculatedPricePerUnit?: number | null } };
+
 export type InsertBarcodeMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.InsertBarcodeInput;
@@ -238,6 +248,13 @@ export const BarcodeFragmentDoc = gql`
   itemId
   packSize
   gtin
+}
+    `;
+export const ItemPriceFragmentDoc = gql`
+    fragment itemPrice on ItemPriceNode {
+  defaultPricePerUnit
+  discountPercentage
+  calculatedPricePerUnit
 }
     `;
 export const InvoicesDocument = gql`
@@ -891,6 +908,15 @@ export const AddToOutboundShipmentFromMasterListDocument = gql`
   }
 }
     `;
+export const GetItemPricingDocument = gql`
+    query getItemPricing($storeId: String!, $input: ItemPriceInput!) {
+  itemPrice(storeId: $storeId, input: $input) {
+    ... on ItemPriceNode {
+      ...itemPrice
+    }
+  }
+}
+    ${ItemPriceFragmentDoc}`;
 export const InsertBarcodeDocument = gql`
     mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
   insertBarcode(input: $input, storeId: $storeId) {
@@ -943,6 +969,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     addToOutboundShipmentFromMasterList(variables: AddToOutboundShipmentFromMasterListMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddToOutboundShipmentFromMasterListMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddToOutboundShipmentFromMasterListMutation>(AddToOutboundShipmentFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addToOutboundShipmentFromMasterList', 'mutation', variables);
+    },
+    getItemPricing(variables: GetItemPricingQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetItemPricingQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetItemPricingQuery>(GetItemPricingDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getItemPricing', 'query', variables);
     },
     insertBarcode(variables: InsertBarcodeMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertBarcodeMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertBarcodeMutation>(InsertBarcodeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertBarcode', 'mutation', variables);

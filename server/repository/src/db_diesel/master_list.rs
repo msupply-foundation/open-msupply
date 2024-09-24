@@ -11,7 +11,7 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
 };
 
@@ -36,12 +36,15 @@ pub struct MasterListFilter {
     pub exists_for_store_id: Option<EqualFilter<String>>,
     pub is_program: Option<bool>,
     pub item_id: Option<EqualFilter<String>>,
+    pub is_discount_list: Option<bool>,
+    pub is_default_price_list: Option<bool>,
 }
 
 pub enum MasterListSortField {
     Name,
     Code,
     Description,
+    DiscountPercentage,
 }
 
 pub type MasterListSort = Sort<MasterListSortField>;
@@ -116,6 +119,26 @@ impl<'a> MasterListRepository<'a> {
                 }
             }
 
+            if let Some(is_discount_list) = f.is_discount_list {
+                if is_discount_list {
+                    query = query.filter(master_list_dsl::discount_percentage.gt(0.0));
+                } else {
+                    query = query.filter(
+                        master_list_dsl::discount_percentage
+                            .is_null()
+                            .or(master_list_dsl::discount_percentage.eq(0.0)),
+                    );
+                }
+            }
+
+            if let Some(is_default_price_list) = f.is_default_price_list {
+                if is_default_price_list {
+                    query = query.filter(master_list_dsl::is_default_price_list.eq(true));
+                } else {
+                    query = query.filter(master_list_dsl::is_default_price_list.eq(false));
+                }
+            }
+
             if f.item_id.is_some() {
                 let mut master_list_line_query = master_list_line_dsl::master_list_line
                     .select(master_list_line_dsl::master_list_id)
@@ -151,6 +174,9 @@ impl<'a> MasterListRepository<'a> {
                 }
                 MasterListSortField::Description => {
                     apply_sort_no_case!(query, sort, master_list_dsl::description);
+                }
+                MasterListSortField::DiscountPercentage => {
+                    apply_sort!(query, sort, master_list_dsl::discount_percentage);
                 }
             }
         } else {
@@ -213,6 +239,16 @@ impl MasterListFilter {
 
     pub fn is_program(mut self, filter: bool) -> Self {
         self.is_program = Some(filter);
+        self
+    }
+
+    pub fn is_discount_list(mut self, filter: bool) -> Self {
+        self.is_discount_list = Some(filter);
+        self
+    }
+
+    pub fn is_default_price_list(mut self, filter: bool) -> Self {
+        self.is_default_price_list = Some(filter);
         self
     }
 
