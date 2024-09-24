@@ -422,7 +422,7 @@ async fn main() -> anyhow::Result<()> {
 
             let report_names = report_names
                 .into_iter()
-                .filter(|name| name != "generated")
+                .filter(|name| name != "./reports/generated")
                 .collect::<Vec<String>>();
 
             let mut reports_data = ReportsData { reports: vec![] };
@@ -436,6 +436,7 @@ async fn main() -> anyhow::Result<()> {
 
                 for version_dir in report_versions {
                     // read manifest file
+
                     let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
                         .expect("file should open read only");
 
@@ -465,6 +466,8 @@ async fn main() -> anyhow::Result<()> {
                         .arguments
                         .and_then(|a| a.ui)
                         .and_then(|ui| format!("{version_dir}/{ui}").into());
+                    let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
+                    let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
 
                     let args = BuildArgs {
                         dir: format!("{version_dir}/src"),
@@ -472,15 +475,9 @@ async fn main() -> anyhow::Result<()> {
                         template: "template.html".to_string(),
                         header: manifest.header,
                         footer: manifest.footer,
-                        query_gql: match &manifest.queries {
-                            Some(queries) => queries.graphql_query.clone(),
-                            None => None,
-                        },
+                        query_gql: graphql_query,
                         query_default: None,
-                        query_sql: match &manifest.queries {
-                            Some(queries) => queries.sql_queries.clone(),
-                            None => None,
-                        },
+                        query_sql: sql_queries,
                     };
 
                     let report_definition = build_report_definition(args)
@@ -683,8 +680,8 @@ pub struct Manifest {
 
 #[derive(serde::Deserialize, Clone)]
 pub struct ManifestQueries {
-    pub graphql_query: Option<String>,
-    pub sql_queries: Option<Vec<String>>,
+    pub gql: Option<String>,
+    pub sql: Option<Vec<String>>,
 }
 
 #[derive(serde::Deserialize, Clone)]
