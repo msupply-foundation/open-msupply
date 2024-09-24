@@ -1,3 +1,5 @@
+use chrono::NaiveDateTime;
+use repository::InvoiceRow;
 use repository::InvoiceType;
 
 pub mod insert;
@@ -30,4 +32,13 @@ impl StockOutType {
             StockOutType::InventoryReduction => InvoiceType::InventoryReduction,
         }
     }
+}
+
+pub(crate) fn invoice_backdated_date(invoice: &InvoiceRow) -> Option<NaiveDateTime> {
+    if let Some(allocated_date) = invoice.allocated_datetime.clone() {
+        if allocated_date < chrono::Utc::now().naive_utc() - chrono::Duration::hours(24) {
+            return Some(allocated_date);
+        }
+    }
+    None
 }

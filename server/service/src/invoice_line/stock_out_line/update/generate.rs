@@ -45,7 +45,7 @@ fn generate_batch_update(
 ) -> StockLine {
     let mut update_batch = batch_pair.main_batch.clone();
 
-    let reduction = batch_pair.get_main_batch_reduction(input, existing_line);
+    let reduction = batch_pair.get_main_batch_reduction(input.number_of_packs, existing_line);
 
     update_batch.stock_line_row.available_number_of_packs -= reduction;
     if adjust_total_number_of_packs {
