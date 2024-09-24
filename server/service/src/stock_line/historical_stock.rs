@@ -29,7 +29,7 @@ pub fn get_historical_stock_lines(
                 .is_available(true),
         ),
         None,
-        Some(store_id.to_owned()),
+        Some(store_id.to_string()),
     )
     .map_err(|e| match e {
         ListError::DatabaseError(e) => e,
