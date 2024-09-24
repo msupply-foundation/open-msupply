@@ -1,11 +1,14 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Error};
 use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
 use cli::RefreshDatesRepository;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
-use report_builder::{build::build, BuildArgs};
+use report_builder::{
+    build::{build, build_report_definition},
+    BuildArgs,
+};
 
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
@@ -19,6 +22,7 @@ use service::{
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     plugin::validation::sign_plugin,
+    report::definition::ReportDefinition,
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
     sync::{
@@ -471,12 +475,8 @@ async fn main() -> anyhow::Result<()> {
                         },
                     };
 
-                    let _ = build(args).map_err(|err| {
-                        info!(
-                            "{}",
-                            format!("failed to build report json for {:?} due to {:?}", id, err)
-                        )
-                    });
+                    let report_definition = build_report_definition(args)
+                        .map_err(|_| anyhow!("Failed to build report {:?}", id))?;
 
                     let filter = ReportFilter::new().id(EqualFilter::equal_to(&id));
                     let existing_report =
@@ -638,4 +638,24 @@ pub struct TestReportArguments {
     pub arguments: Option<String>,
     pub reference_data: Option<String>,
     pub data_id: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct ReportData {
+    pub id: String,
+    pub name: String,
+    pub r#type: repository::ReportType,
+    pub template: ReportDefinition,
+    pub context: ContextType,
+    pub sub_context: Option<String>,
+    pub argument_schema_id: Option<String>,
+    pub comment: Option<String>,
+    pub is_custom: bool,
+    pub version: String,
+    pub code: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct ReportsData {
+    pub reports: Vec<ReportData>,
 }
