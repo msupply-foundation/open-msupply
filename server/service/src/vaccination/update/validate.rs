@@ -2,6 +2,7 @@ use repository::{RepositoryError, StockLine, StorageConnection, VaccinationRow};
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
+    name::validate::check_name_exists,
     vaccination::validate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
         check_vaccination_exists, get_related_vaccinations,
@@ -34,6 +35,12 @@ pub fn validate(
     if let Some(clinician_id) = input.clinician_id.clone().map(|u| u.value).flatten() {
         if !check_clinician_exists(&clinician_id, connection)? {
             return Err(UpdateVaccinationError::ClinicianDoesNotExist);
+        }
+    }
+
+    if let Some(facility_name_id) = input.facility_name_id.clone().map(|u| u.value).flatten() {
+        if !check_name_exists(connection, &facility_name_id)?.is_some() {
+            return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
         }
     }
 
