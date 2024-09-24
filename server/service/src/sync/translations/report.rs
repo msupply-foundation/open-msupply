@@ -113,7 +113,7 @@ impl SyncTranslation for ReportTranslation {
         };
 
         let result = ReportRow {
-            id,
+            id: id.clone(),
             name: report_name,
             r#type,
             template,
@@ -121,6 +121,9 @@ impl SyncTranslation for ReportTranslation {
             comment,
             sub_context,
             argument_schema_id,
+            is_custom: true,
+            version: "1.0".to_string(),
+            code: id,
         };
 
         Ok(PullTranslateResult::upsert(result))
