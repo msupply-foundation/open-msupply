@@ -55,23 +55,14 @@ pub fn insert_vaccine_course(
             let new_vaccine_course = generate(input.clone());
             VaccineCourseRowRepository::new(connection).upsert_one(&new_vaccine_course)?;
 
-            // Update ITEMS - Delete and recreate all records.
-            // If nothing has changed, we still need to query and compare each record so this is the simplest way
-            let item_repo = VaccineCourseItemRowRepository::new(connection);
-            // Delete the existing vaccine course items
-            item_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
-
             // Insert the new vaccine course items
+            let item_repo = VaccineCourseItemRowRepository::new(connection);
             for item in input.clone().vaccine_items {
                 item_repo.upsert_one(&item.to_domain(input.clone().id))?;
             }
 
-            // Update doses - Delete and recreate all records.
-            let dose_repo = VaccineCourseDoseRowRepository::new(connection);
-            // Delete the existing vaccine course doses
-            dose_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
-
             // Insert the new vaccine course doses
+            let dose_repo = VaccineCourseDoseRowRepository::new(connection);
             for dose in input.clone().doses {
                 dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
             }
