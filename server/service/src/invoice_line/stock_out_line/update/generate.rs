@@ -82,6 +82,8 @@ fn generate_line(
         tax_percentage,
         r#type,
         foreign_currency_price_before_tax,
+        sell_price_per_pack: invoice_line_sell_price_per_pack,
+        cost_price_per_pack: invoice_line_cost_price_per_pack,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -92,8 +94,8 @@ fn generate_line(
     }: ItemRow,
     StockLineRow {
         id: stock_line_id,
-        sell_price_per_pack,
-        cost_price_per_pack,
+        sell_price_per_pack: _,
+        cost_price_per_pack: _,
         pack_size,
         batch,
         expiry_date,
@@ -101,6 +103,10 @@ fn generate_line(
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
+    // Cost & sell prices shouldn't need adjusting when the invoice line is being updated
+    let cost_price_per_pack = invoice_line_cost_price_per_pack;
+    let sell_price_per_pack = invoice_line_sell_price_per_pack;
+
     let mut update_line = InvoiceLineRow {
         id,
         invoice_id,

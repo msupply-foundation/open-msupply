@@ -76,6 +76,7 @@ mod repository_test {
                 code: "ML Code 1".to_string(),
                 description: "ML Description 1".to_string(),
                 is_active: true,
+                ..Default::default()
             }
         }
 
@@ -86,6 +87,7 @@ mod repository_test {
                 code: "ML Code 1".to_string(),
                 description: "ML Description 1".to_string(),
                 is_active: true,
+                ..Default::default()
             }
         }
 
@@ -94,6 +96,7 @@ mod repository_test {
                 id: "masterlistline1".to_string(),
                 item_link_id: item_1().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
+                ..Default::default()
             }
         }
 
@@ -102,6 +105,7 @@ mod repository_test {
                 id: "masterlistline1".to_string(),
                 item_link_id: item_2().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
+                ..Default::default()
             }
         }
 
