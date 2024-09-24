@@ -8,12 +8,14 @@ interface ClinicianSearchInputProps {
   onChange: (clinician: ClinicianAutocompleteOption | null) => void;
   width?: number;
   clinicianValue: Clinician | null | undefined;
+  disabled?: boolean;
 }
 
 export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
   onChange,
   width = 250,
   clinicianValue,
+  disabled,
 }) => {
   const { data } = useClinicians.document.list({});
   const { getLocalisedFullName } = useIntlUtils();
@@ -50,6 +52,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
         })
       )}
       sx={{ minWidth: width }}
+      disabled={disabled}
     />
   );
 };

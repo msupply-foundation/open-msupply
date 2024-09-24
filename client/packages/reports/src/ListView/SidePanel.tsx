@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 
 export const SidePanelComponent = () => {
-  const t = useTranslation('reports');
+  const t = useTranslation();
   const { store } = useAuthContext();
   const preferences = store?.preferences;
 

@@ -31,6 +31,7 @@ pub mod item;
 pub mod item_stats;
 pub mod label_printer_settings_service;
 pub mod ledger;
+pub mod localisations;
 pub mod location;
 pub mod log_service;
 pub mod login;
@@ -70,7 +71,6 @@ pub mod user_account;
 pub mod vaccination;
 pub mod vaccine_course;
 pub mod validate;
-pub mod localisations;
 
 #[cfg(test)]
 mod login_mock_data;

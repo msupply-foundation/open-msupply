@@ -2,9 +2,10 @@ use chrono::Utc;
 
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, Name, StockLineRow,
-    StorageConnection,
+    StockLineRowRepository, StorageConnection,
 };
-use util::uuid::uuid;
+
+use crate::invoice_line::stock_in_line::{generate_batch, StockLineInput};
 
 use super::{UpdateCustomerReturn, UpdateCustomerReturnError, UpdateCustomerReturnStatus};
 
@@ -148,51 +149,29 @@ pub fn generate_lines_and_stock_lines(
     for line in return_lines.into_iter() {
         let mut return_line = line.clone();
 
-        let stock_line_id = return_line.stock_line_id.unwrap_or(uuid());
-        return_line.stock_line_id = Some(stock_line_id.clone());
-
-        let InvoiceLineRow {
-            id: _,
-            invoice_id: _,
-            item_link_id,
-            item_name: _,
-            item_code: _,
-            stock_line_id: _,
-            location_id,
-            batch,
-            expiry_date,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            total_before_tax: _,
-            total_after_tax: _,
-            tax_percentage: _,
-            r#type: _,
-            number_of_packs,
-            note,
-            inventory_adjustment_reason_id: _,
-            return_reason_id: _,
-            foreign_currency_price_before_tax: _,
-        }: InvoiceLineRow = line;
-
-        if number_of_packs > 0.0 {
-            let stock_line = StockLineRow {
-                id: stock_line_id,
-                item_link_id,
-                store_id: store_id.to_string(),
-                location_id,
-                batch,
-                pack_size,
-                cost_price_per_pack,
-                sell_price_per_pack,
-                available_number_of_packs: number_of_packs,
-                total_number_of_packs: number_of_packs,
-                expiry_date,
-                on_hold: false,
-                note,
-                supplier_link_id: Some(supplier_id.to_string()),
-                barcode_id: None,
+        if line.number_of_packs > 0.0 {
+            let existing_stock_line = if let Some(id) = &return_line.stock_line_id {
+                StockLineRowRepository::new(connection).find_one_by_id(id)?
+            } else {
+                None
             };
+
+            let stock_line = generate_batch(
+                connection,
+                line,
+                StockLineInput {
+                    stock_line_id: return_line.stock_line_id,
+                    store_id: store_id.to_string(),
+                    on_hold: existing_stock_line.map_or(false, |stock_line| stock_line.on_hold),
+                    barcode_id: None,
+                    supplier_link_id: supplier_id.to_string(),
+                    // Update existing stock levels if the stock line already exists
+                    overwrite_stock_levels: false,
+                },
+            )?;
+
+            return_line.stock_line_id = Some(stock_line.id.clone());
+
             result.push(LineAndStockLine {
                 line: return_line,
                 stock_line,

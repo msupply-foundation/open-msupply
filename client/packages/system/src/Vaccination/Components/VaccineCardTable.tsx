@@ -2,24 +2,53 @@ import React, { FC, useEffect } from 'react';
 import {
   TableProvider,
   createTableStore,
-  useBreadcrumbs,
   createQueryParamsStore,
-  useParams,
   InlineSpinner,
   useTranslation,
   DataTable,
   useColumns,
   NothingHere,
-  useIntlUtils,
   useFormatDateTime,
   useRowStyle,
   useTheme,
   StatusCell,
 } from '@openmsupply-client/common';
-import { usePatientVaccineCard } from '../../api/hooks/usePatientVaccineCard';
-import { VaccinationCardItemFragment } from '../../api/operations.generated';
+import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
+import { VaccinationCardItemFragment } from '../api/operations.generated';
 
-const useStyleRowsByStatus = (rows?: VaccinationCardItemFragment[]) => {
+interface VaccinationCardProps {
+  programEnrolmentId: string;
+  openModal: (
+    vaccinationId: string | null | undefined,
+    vaccineCourseDoseId: string
+  ) => void;
+  encounterId?: string;
+}
+
+const isPreviousDoseGiven = (
+  row: VaccinationCardItemFragment,
+  items: VaccinationCardItemFragment[] | undefined
+) => {
+  const vaccineCourseId = row.vaccineCourseId;
+  if (!items) return false;
+  const itemsForCourse = items.filter(
+    item => item.vaccineCourseId === vaccineCourseId
+  );
+  const doseIndex = itemsForCourse.findIndex(dose => dose.id === row.id);
+  if (doseIndex === 0) return true;
+  return itemsForCourse[doseIndex - 1]?.given;
+};
+
+const isRowClickable = (
+  isEncounter: boolean,
+  row: VaccinationCardItemFragment,
+  items: VaccinationCardItemFragment[] | undefined
+) => (isEncounter || row.vaccinationId) && isPreviousDoseGiven(row, items);
+
+const useStyleRowsByStatus = (
+  rows: VaccinationCardItemFragment[] | undefined,
+  isEncounter: boolean
+) => {
   const { setRowStyles } = useRowStyle();
   const theme = useTheme();
 
@@ -28,6 +57,9 @@ const useStyleRowsByStatus = (rows?: VaccinationCardItemFragment[]) => {
 
     const doneRows = rows.filter(row => row.given).map(row => row.id);
     const notDoneRows = rows.filter(row => !row.given).map(row => row.id);
+    const nonClickableRows = rows
+      .filter(row => !isRowClickable(isEncounter, row, rows))
+      .map(row => row.id);
 
     setRowStyles(doneRows, {
       backgroundColor: `${theme.palette.background.success} !important`,
@@ -41,37 +73,35 @@ const useStyleRowsByStatus = (rows?: VaccinationCardItemFragment[]) => {
       // reset/overwritten
       false
     );
+    setRowStyles(
+      nonClickableRows,
+      {
+        '& td': {
+          cursor: 'default',
+        },
+        backgroundColor: 'white !important',
+      },
+      false
+    );
   }, [rows]);
 };
 
-export const VaccinationCardComponent: FC = () => {
+export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
+  programEnrolmentId,
+  openModal,
+  encounterId,
+}) => {
   const t = useTranslation('dispensary');
-  const { programEnrolmentId = '' } = useParams();
-  const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { localisedDate } = useFormatDateTime();
-  const { getLocalisedFullName } = useIntlUtils();
   const theme = useTheme();
 
   const {
     query: { data, isLoading },
   } = usePatientVaccineCard(programEnrolmentId);
 
-  useStyleRowsByStatus(data?.items);
+  const isEncounter = !!encounterId;
 
-  useEffect(() => {
-    if (data)
-      setCustomBreadcrumbs(
-        {
-          1: getLocalisedFullName(
-            data?.patientFirstName,
-            data?.patientLastName
-          ),
-          2: t('label.vaccination-card'),
-          3: data?.programName,
-        },
-        [2]
-      );
-  }, [data]);
+  useStyleRowsByStatus(data?.items, isEncounter);
 
   const columns = useColumns<VaccinationCardItemFragment>([
     {
@@ -127,19 +157,23 @@ export const VaccinationCardComponent: FC = () => {
         columns={columns}
         data={data?.items ?? []}
         isLoading={isLoading}
+        onRowClick={row => {
+          if (isRowClickable(isEncounter, row, data?.items))
+            openModal(row.vaccinationId, row.vaccineCourseDoseId);
+        }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
     </>
   );
 };
 
-export const VaccinationCardDetailView: FC = () => (
+export const VaccineCardTable: FC<VaccinationCardProps> = props => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore({
       initialSortBy: { key: 'name' },
     })}
   >
-    <VaccinationCardComponent />
+    <VaccinationCardComponent {...props} />
   </TableProvider>
 );

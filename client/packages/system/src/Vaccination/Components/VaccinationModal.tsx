@@ -31,10 +31,11 @@ import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { SelectBatchModal } from './SelectBatchModal';
 import { AppRoute } from '@openmsupply-client/config';
 import { ArrowRightIcon } from '@mui/x-date-pickers';
+import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
-  encounterId: string;
+  encounterId?: string;
   vaccineCourseDoseId: string;
   isOpen: boolean;
   onClose: () => void;
@@ -58,7 +59,7 @@ export const VaccinationModal = ({
     query: { dose, vaccination, isLoading },
     isDirty,
     isComplete,
-    create,
+    saveVaccination,
   } = useVaccination({
     encounterId,
     vaccineCourseDoseId,
@@ -77,7 +78,7 @@ export const VaccinationModal = ({
 
   const save = async () => {
     try {
-      await create(draft);
+      await saveVaccination(draft);
       success(t('messages.vaccination-saved'))();
       onClose();
     } catch (e) {
@@ -122,7 +123,6 @@ export const VaccinationModal = ({
   ) : (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {alert && <Alert severity={alert.severity}>{alert.content}</Alert>}
-
       <VaccinationForm
         updateDraft={updateDraft}
         openBatchModal={openBatchModal}
@@ -196,6 +196,33 @@ const VaccinationForm = ({
       sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
     >
       <InputWithLabelRow
+        label={t('label.facility')}
+        labelProps={{ sx: { alignSelf: 'start', marginTop: '3px' } }}
+        Input={
+          <Grid item flex={1}>
+            <FacilitySearchInput
+              onChange={facilityId =>
+                updateDraft({
+                  facilityId,
+                })
+              }
+              facilityId={draft.facilityId}
+            />
+
+            {draft.facilityId === OTHER_FACILITY && (
+              <BasicTextInput
+                fullWidth
+                value={draft.facilityFreeText}
+                onChange={e =>
+                  updateDraft({ facilityFreeText: e.target.value })
+                }
+                sx={{ flex: 1, marginTop: 0.3 }}
+              />
+            )}
+          </Grid>
+        }
+      />
+      <InputWithLabelRow
         label={t('label.clinician')}
         Input={
           <Grid item flex={1}>
@@ -240,7 +267,6 @@ const VaccinationForm = ({
           label={t('label.vaccine-not-given')}
         />
       </RadioGroup>
-
       {draft.given && (
         <>
           <InputWithLabelRow

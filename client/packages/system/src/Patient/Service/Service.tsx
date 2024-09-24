@@ -3,7 +3,7 @@ import { Routes, Route, RouteBuilder } from '@openmsupply-client/common';
 import { PatientListView } from '../ListView';
 import { PatientView } from '../PatientView';
 import { AppRoute } from '@openmsupply-client/config';
-import { VaccinationCardDetailView } from '../VaccinationCards/DetailView';
+import { VaccinationCardDetailView } from '../VaccinationCard/DetailView';
 
 const patientListRoute = RouteBuilder.create(AppRoute.Patients).build();
 

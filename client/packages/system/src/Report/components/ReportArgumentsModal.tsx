@@ -20,7 +20,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
 }) => {
   const { store } = useAuthContext();
   const { urlQuery } = useUrlQuery();
-  const t = useTranslation('reports');
+  const t = useTranslation();
 
   const {
     monthlyConsumptionLookBackPeriod,
@@ -54,7 +54,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
 
   return (
     <Modal
-      title="Report arguments"
+      title={t("label.report-filters")}
       cancelButton={<DialogButton variant="cancel" onClick={cleanUp} />}
       slideAnimation={false}
       width={560}

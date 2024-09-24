@@ -200,6 +200,9 @@ fragment Encounter on EncounterNode {
     firstName
     lastName
   }
+  programEnrolment {
+    id
+  }
   createdDatetime
   startDatetime
   endDatetime
