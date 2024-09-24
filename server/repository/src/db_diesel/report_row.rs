@@ -10,7 +10,7 @@ use diesel_derive_enum::DbEnum;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReportType {
     OmSupply,
