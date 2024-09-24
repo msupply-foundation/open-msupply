@@ -1,5 +1,13 @@
 use crate::{
-    app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
+    app_data::{AppDataService, AppDataServiceTrait},
+    asset::AssetServiceTrait,
+    auth::{AuthService, AuthServiceTrait},
+    barcode::{BarcodeService, BarcodeServiceTrait},
+    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
+    clinician::{ClinicianService, ClinicianServiceTrait},
+    cold_chain::{ColdChainService, ColdChainServiceTrait},
+    currency::{CurrencyService, CurrencyServiceTrait},
+    dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
@@ -23,6 +31,7 @@ use crate::{
     name::{NameService, NameServiceTrait},
     pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
+    pricing::{PricingService, PricingServiceTrait},
     processors::ProcessorsTrigger,
     program::ProgramServiceTrait,
     programs::{
@@ -138,6 +147,7 @@ pub struct ServiceProvider {
     pub vaccination_service: Box<dyn VaccinationServiceTrait>,
     // Programs
     pub program_service: Box<dyn ProgramServiceTrait>,
+    pub pricing_service: Box<dyn PricingServiceTrait>,
     // Translations
     pub translations_service: Box<Localisations>,
 }
@@ -224,6 +234,7 @@ impl ServiceProvider {
             demographic_service: Box::new(crate::demographic::DemographicService {}),
             vaccine_course_service: Box::new(crate::vaccine_course::VaccineCourseService {}),
             program_service: Box::new(crate::program::ProgramService {}),
+            pricing_service: Box::new(PricingService {}),
             rnr_form_service: Box::new(RnRFormService {}),
             vaccination_service: Box::new(VaccinationService {}),
             translations_service: Box::new(Localisations::new()),
