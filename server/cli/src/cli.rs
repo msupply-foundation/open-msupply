@@ -571,7 +571,7 @@ async fn main() -> anyhow::Result<()> {
             let code = id.clone();
 
             ReportRowRepository::new(&con).upsert_one(&ReportRow {
-                id,
+                id: id.clone(),
                 name,
                 r#type: repository::ReportType::OmSupply,
                 template: fs::read_to_string(report_path)?,
@@ -579,9 +579,9 @@ async fn main() -> anyhow::Result<()> {
                 sub_context,
                 argument_schema_id: form_schema_json.map(|r| r.id.clone()),
                 comment: None,
-                is_custom,
-                version,
-                code,
+                is_custom: true,
+                version: "1.0".to_string(),
+                code: Some(id),
             })?;
 
             info!("Report upserted");
