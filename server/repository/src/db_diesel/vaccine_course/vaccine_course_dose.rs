@@ -113,6 +113,10 @@ fn create_filtered_query(filter: Option<VaccineCourseDoseFilter>) -> BoxedVaccin
             vaccine_course_dose_dsl::vaccine_course_id
         );
     }
+
+    // Filter out deleted rows
+    query = query.filter(vaccine_course_dose_dsl::deleted_datetime.is_null());
+
     query
 }
 

@@ -7,6 +7,7 @@ use crate::{
     StorageConnection, Upsert,
 };
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +19,7 @@ table! {
         min_age -> Double,
         max_age -> Double,
         min_interval_days -> Integer,
-
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -36,6 +37,7 @@ pub struct VaccineCourseDoseRow {
     pub min_age: f64,
     pub max_age: f64,
     pub min_interval_days: i32,
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 pub struct VaccineCourseDoseRowRepository<'a> {
@@ -92,18 +94,13 @@ impl<'a> VaccineCourseDoseRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, vaccine_course_dose_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vaccine_course_dose)
-            .filter(id.eq(vaccine_course_dose_id))
+    pub fn mark_deleted(&self, vaccine_course_dose_id: &str) -> Result<i64, RepositoryError> {
+        diesel::update(vaccine_course_dose.filter(id.eq(vaccine_course_dose_id)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
 
-    pub fn delete_by_vaccine_course_id(&self, course_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vaccine_course_dose)
-            .filter(vaccine_course_id.eq(course_id))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        // Upsert row action as this is a soft delete, not actual delete
+        self.insert_changelog(vaccine_course_dose_id.to_owned(), RowActionType::Upsert)
     }
 }
 
