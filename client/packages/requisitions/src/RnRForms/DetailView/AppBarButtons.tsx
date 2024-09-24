@@ -26,7 +26,7 @@ export const AppBarButtonsComponent = () => {
     query: { data },
   } = useRnRForm({ rnrFormId: id });
   const { print, isPrinting } = usePrintReport();
-  const t = useTranslation('reports'); // note: using 'reports' due to issue #4616
+  const t = useTranslation();
 
   const printReport =
     (format: PrintFormat) =>

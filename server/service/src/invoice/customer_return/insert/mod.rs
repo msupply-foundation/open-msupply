@@ -22,6 +22,7 @@ use super::CustomerReturnLineInput;
 pub struct InsertCustomerReturn {
     pub id: String,
     pub other_party_id: String,
+    pub is_patient_return: bool,
     pub outbound_shipment_id: Option<String>,
     pub customer_return_lines: Vec<CustomerReturnLineInput>,
 }

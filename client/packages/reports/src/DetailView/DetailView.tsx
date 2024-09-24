@@ -24,7 +24,7 @@ import { JsonData } from '@openmsupply-client/programs';
 export const DetailView = () => {
   const { id } = useParams();
   const { data: report } = useReport(id ?? '');
-  const t = useTranslation('reports');
+  const t = useTranslation();
 
   const {
     urlQuery: { reportArgs: reportArgsJson },

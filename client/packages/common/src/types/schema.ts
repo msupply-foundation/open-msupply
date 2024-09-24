@@ -2907,6 +2907,8 @@ export type InsertVaccinationInput = {
   clinicianId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
   encounterId: Scalars['String']['input'];
+  facilityFreeText?: InputMaybe<Scalars['String']['input']>;
+  facilityNameId?: InputMaybe<Scalars['String']['input']>;
   given: Scalars['Boolean']['input'];
   id: Scalars['String']['input'];
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
@@ -3814,6 +3816,7 @@ export type Mutations = {
   updateSyncSettings: UpdateSyncSettingsResponse;
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateUser: UpdateUserResponse;
+  updateVaccination: UpdateVaccinationResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -4427,6 +4430,12 @@ export type MutationsUpdateSyncSettingsArgs = {
 
 export type MutationsUpdateTemperatureBreachArgs = {
   input: UpdateTemperatureBreachInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateVaccinationArgs = {
+  input: UpdateVaccinationInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -7991,6 +8000,20 @@ export type UpdateUserNode = {
 
 export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
+export type UpdateVaccinationInput = {
+  clinicianId?: InputMaybe<NullableStringUpdate>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  facilityFreeText?: InputMaybe<NullableStringUpdate>;
+  facilityNameId?: InputMaybe<NullableStringUpdate>;
+  given?: InputMaybe<Scalars['Boolean']['input']>;
+  id: Scalars['String']['input'];
+  notGivenReason?: InputMaybe<Scalars['String']['input']>;
+  stockLineId?: InputMaybe<Scalars['String']['input']>;
+  vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+export type UpdateVaccinationResponse = VaccinationNode;
+
 export type UpdateVaccineCourseError = {
   __typename: 'UpdateVaccineCourseError';
   error: UpdateVaccineCourseErrorInterface;
@@ -8162,6 +8185,7 @@ export type VaccinationCardItemNode = {
   vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
   vaccinationId?: Maybe<Scalars['String']['output']>;
   vaccineCourseDoseId: Scalars['String']['output'];
+  vaccineCourseId: Scalars['String']['output'];
 };
 
 export type VaccinationCardNode = {
@@ -8180,6 +8204,9 @@ export type VaccinationNode = {
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
+  facilityFreeText?: Maybe<Scalars['String']['output']>;
+  facilityName?: Maybe<Scalars['String']['output']>;
+  facilityNameId?: Maybe<Scalars['String']['output']>;
   given: Scalars['Boolean']['output'];
   id: Scalars['String']['output'];
   invoice?: Maybe<InvoiceNode>;
