@@ -303,14 +303,12 @@ const VaccineCourseDoseTable = ({
         key: 'minAgeMonths',
         Cell: AgeCell,
         label: 'label.from-age',
-        // maxWidth: 120,
         setter: updateDose,
       },
       {
         key: 'maxAgeMonths',
         Cell: AgeCell,
         label: 'label.to-age',
-        // maxWidth: 120,
         setter: updateDose,
       },
       {
