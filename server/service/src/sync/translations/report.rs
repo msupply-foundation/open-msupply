@@ -123,7 +123,7 @@ impl SyncTranslation for ReportTranslation {
             argument_schema_id,
             is_custom: true,
             version: "1.0".to_string(),
-            code: Some(id),
+            code: id,
         };
 
         Ok(PullTranslateResult::upsert(result))

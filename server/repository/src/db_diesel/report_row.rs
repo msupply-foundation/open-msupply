@@ -48,7 +48,7 @@ table! {
       argument_schema_id -> Nullable<Text>,
       is_custom -> Bool,
       version -> Text,
-      code -> Nullable<Text>,
+      code -> Text,
   }
 }
 
@@ -72,7 +72,7 @@ pub struct ReportRow {
     pub argument_schema_id: Option<String>,
     pub is_custom: bool,
     pub version: String,
-    pub code: Option<String>,
+    pub code: String,
 }
 
 impl Default for ReportRow {
@@ -86,7 +86,7 @@ impl Default for ReportRow {
             comment: Default::default(),
             sub_context: Default::default(),
             argument_schema_id: Default::default(),
-            is_custom: Default::default(),
+            is_custom: true,
             version: Default::default(),
             code: Default::default(),
         }
