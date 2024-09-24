@@ -13,6 +13,8 @@ fragment VaccinationCourseDose on VaccineCourseDoseNode {
 fragment VaccinationDetail on VaccinationNode {
   __typename
   id
+  facilityNameId
+  facilityFreeText
   vaccinationDate
   clinician {
     id
