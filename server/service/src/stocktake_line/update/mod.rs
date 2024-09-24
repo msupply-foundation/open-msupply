@@ -1,3 +1,8 @@
+mod generate;
+pub use generate::generate;
+mod validate;
+pub use validate::validate;
+
 use chrono::NaiveDate;
 use repository::{
     RepositoryError, StockLine, StocktakeLine, StocktakeLineRow, StocktakeLineRowRepository,
@@ -53,131 +58,6 @@ pub enum UpdateStocktakeLineError {
     StockLineReducedBelowZero(StockLine),
 }
 
-fn validate(
-    connection: &StorageConnection,
-    store_id: &str,
-    input: &UpdateStocktakeLine,
-) -> Result<StocktakeLine, UpdateStocktakeLineError> {
-    use UpdateStocktakeLineError::*;
-
-    let stocktake_line = match check_stocktake_line_exist(connection, &input.id)? {
-        Some(stocktake_line) => stocktake_line,
-        None => return Err(StocktakeLineDoesNotExist),
-    };
-    let stocktake_line_row = &stocktake_line.line;
-    let stocktake = match check_stocktake_exist(connection, &stocktake_line_row.stocktake_id)? {
-        Some(stocktake) => stocktake,
-        None => return Err(InternalError("Orphan stocktake line!".to_string())),
-    };
-    if !check_stocktake_not_finalised(&stocktake.status) {
-        return Err(CannotEditFinalised);
-    }
-
-    if stocktake.is_locked {
-        return Err(StocktakeIsLocked);
-    }
-
-    if !check_store_id_matches(store_id, &stocktake.store_id) {
-        return Err(InvalidStore);
-    }
-
-    if !check_location_exists(connection, store_id, &input.location)? {
-        return Err(LocationDoesNotExist);
-    }
-
-    let stocktake_reduction_amount =
-        stocktake_reduction_amount(&input.counted_number_of_packs, stocktake_line_row);
-    if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
-        && input.inventory_adjustment_reason_id.is_none()
-        && stocktake_reduction_amount != 0.0
-    {
-        return Err(AdjustmentReasonNotProvided);
-    }
-
-    if input.inventory_adjustment_reason_id.is_some()
-        && !check_reason_is_valid(
-            connection,
-            input.inventory_adjustment_reason_id.clone(),
-            stocktake_reduction_amount,
-        )?
-    {
-        return Err(AdjustmentReasonNotValid);
-    }
-
-    if let (Some(counted_number_of_packs), Some(stock_line_id)) = (
-        input.counted_number_of_packs,
-        &stocktake_line_row.stock_line_id,
-    ) {
-        let stock_line = check_stock_line_exists(connection, store_id, stock_line_id).map_err(
-            |err| match err {
-                CommonStockLineError::DatabaseError(RepositoryError::NotFound) => {
-                    StockLineDoesNotExist
-                }
-                CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
-                CommonStockLineError::DatabaseError(error) => DatabaseError(error),
-            },
-        )?;
-
-        if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
-        {
-            return Err(StockLineReducedBelowZero(stock_line.clone()));
-        }
-
-        if !check_snapshot_matches_current_count(
-            &stock_line.stock_line_row,
-            stocktake_line_row.snapshot_number_of_packs,
-        ) {
-            return Err(SnapshotCountCurrentCountMismatchLine(stocktake_line));
-        }
-    }
-
-    Ok(stocktake_line)
-}
-
-fn generate(
-    existing: StocktakeLine,
-    UpdateStocktakeLine {
-        id: _,
-        location,
-        comment,
-        snapshot_number_of_packs,
-        counted_number_of_packs,
-        batch,
-        expiry_date,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        note,
-        inventory_adjustment_reason_id,
-    }: UpdateStocktakeLine,
-) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
-    let existing_line = existing.line;
-    Ok(StocktakeLineRow {
-        id: existing_line.id,
-        stocktake_id: existing_line.stocktake_id,
-        stock_line_id: existing_line.stock_line_id,
-        location_id: location
-            .map(|l| l.value)
-            .unwrap_or(existing_line.location_id),
-        comment: comment.or(existing_line.comment),
-
-        snapshot_number_of_packs: snapshot_number_of_packs
-            .unwrap_or(existing_line.snapshot_number_of_packs),
-        counted_number_of_packs: counted_number_of_packs.or(existing_line.counted_number_of_packs),
-
-        item_link_id: existing.item.id,
-        item_name: existing_line.item_name,
-        expiry_date: expiry_date.or(existing_line.expiry_date),
-        batch: batch.or(existing_line.batch),
-        pack_size: pack_size.or(existing_line.pack_size),
-        cost_price_per_pack: cost_price_per_pack.or(existing_line.cost_price_per_pack),
-        sell_price_per_pack: sell_price_per_pack.or(existing_line.sell_price_per_pack),
-        note: note.or(existing_line.note),
-        inventory_adjustment_reason_id: inventory_adjustment_reason_id
-            .or(existing_line.inventory_adjustment_reason_id),
-    })
-}
-
 pub fn update_stocktake_line(
     ctx: &ServiceContext,
     input: UpdateStocktakeLine,
@@ -196,12 +76,6 @@ pub fn update_stocktake_line(
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(result)
-}
-
-impl From<RepositoryError> for UpdateStocktakeLineError {
-    fn from(error: RepositoryError) -> Self {
-        UpdateStocktakeLineError::DatabaseError(error)
-    }
 }
 
 #[cfg(test)]
