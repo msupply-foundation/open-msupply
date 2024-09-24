@@ -558,7 +558,7 @@ async fn main() -> anyhow::Result<()> {
             let json_file = fs::File::open(
                 json_path.unwrap_or(format!("{generated_dir}/standard_reports.json")),
             )
-            .expect("json not found");
+            .expect("{generated_dir}/standard_reports.json not found");
             let reports_data: ReportsData =
                 serde_json::from_reader(json_file).expect("json incorrectly formatted");
 
