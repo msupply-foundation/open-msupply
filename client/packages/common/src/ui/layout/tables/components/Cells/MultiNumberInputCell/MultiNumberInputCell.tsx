@@ -111,7 +111,7 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
           }}
           min={min}
           // Limit smaller units to less than the value of the next highest
-          // unit, e.g. "Months" would be limited to 11.999
+          // unit, e.g. "Months" would be limited to 11.9999
           max={setMax(units, index, max)}
           decimalLimit={decimalLimit}
           step={step}
@@ -159,7 +159,7 @@ export const setMax = (
   const higherRatio = (units[index - 1] as Unit).ratio;
   // If not the last value, should be limited to the integer below the next
   // highest ratio. But for the last value, we need to be able to accept
-  // fractional input right up to the ratio, so we allow a certain amount of
+  // fractional input right up to the ratio, so we allow this to an arbitrary
   // decimal precision (can't see needing more than 4 d.p for this kind of
   // thing!)
   const limitReduction = index === units.length - 1 ? 0.0001 : 1;
