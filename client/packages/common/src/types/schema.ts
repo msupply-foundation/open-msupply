@@ -2952,6 +2952,11 @@ export type InvalidCredentials = AuthTokenErrorInterface & UpdateUserErrorInterf
   description: Scalars['String']['output'];
 };
 
+export type InvalidStockSelection = UpdatePrescriptionErrorInterface & {
+  __typename: 'InvalidStockSelection';
+  description: Scalars['String']['output'];
+};
+
 export type InvalidToken = RefreshTokenErrorInterface & {
   __typename: 'InvalidToken';
   description: Scalars['String']['output'];
