@@ -1,6 +1,8 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
-use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
+use graphql_core::simple_generic_errors::{
+    CannotReverseInvoiceStatus, InvalidStockSelection, NodeError, RecordNotFound,
+};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
@@ -83,6 +85,7 @@ pub enum UpdatePrescriptionErrorInterface {
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     InvoiceIsNotEditable(InvoiceIsNotEditable),
     CanOnlyChangeToPickedWhenNoUnallocatedLines(CanOnlyChangeToPickedWhenNoUnallocatedLines),
+    StockNotAvailableAtDate(InvalidStockSelection),
 }
 
 impl UpdateInput {
@@ -124,6 +127,12 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
         ServiceError::InvoiceIsNotEditable => {
             return Ok(UpdatePrescriptionErrorInterface::InvoiceIsNotEditable(
                 InvoiceIsNotEditable,
+            ))
+        }
+
+        ServiceError::StockNotAvailableAtDate(_) => {
+            return Ok(UpdatePrescriptionErrorInterface::StockNotAvailableAtDate(
+                InvalidStockSelection,
             ))
         }
 
