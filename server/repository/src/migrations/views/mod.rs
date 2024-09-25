@@ -399,6 +399,9 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       v.vaccination_date, 
       v.given, 
       v.stock_line_id, 
+      n.id AS facility_name_id,
+      v.facility_free_text,
+      s.batch,
       pe.id as program_enrolment_id
     FROM vaccine_course_dose vcd 
     JOIN vaccine_course vc 
@@ -407,6 +410,12 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       ON pe.program_id = vc.program_id
     LEFT JOIN vaccination v 
       ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id
+    LEFT JOIN name_link nl
+      ON v.facility_name_link_id = nl.id
+    LEFT JOIN name n
+      ON nl.name_id = n.id
+    LEFT JOIN stock_line s 
+      ON v.stock_line_id = s.id
     -- Only show doses that haven't been deleted, unless they have a vaccination
     WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
 

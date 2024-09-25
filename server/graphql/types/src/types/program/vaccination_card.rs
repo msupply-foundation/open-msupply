@@ -3,7 +3,10 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use dataloader::DataLoader;
-use graphql_core::{loader::StockLineByIdLoader, ContextExt};
+use graphql_core::{
+    loader::{NameByIdLoader, NameByIdLoaderInput, StockLineByIdLoader},
+    ContextExt,
+};
 use service::vaccination::get_vaccination_card::{VaccinationCard, VaccinationCardItem};
 
 use crate::types::StockLineNode;
@@ -96,6 +99,34 @@ impl VaccinationCardItemNode {
         let result = loader.load_one(stock_line_id.clone()).await?;
 
         Ok(result.map(StockLineNode::from_domain))
+    }
+
+    pub async fn batch(&self) -> &Option<String> {
+        &self.item.row.batch
+    }
+
+    pub async fn facility_name(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<String>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let facility_name_id = match &self.item.row.facility_name_id {
+            Some(facility_name_id) => facility_name_id,
+            None => {
+                return Ok(self.item.row.facility_free_text.clone());
+            }
+        };
+
+        let response_option = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, facility_name_id))
+            .await?;
+
+        Ok(match response_option {
+            Some(response) => Some(response.name_row.name),
+            None => None,
+        })
     }
 }
 

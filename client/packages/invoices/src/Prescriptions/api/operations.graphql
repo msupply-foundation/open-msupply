@@ -360,3 +360,9 @@ mutation deletePrescriptionLines(
     }
   }
 }
+
+fragment historicalStockLine on StockLineNode {
+  id
+  availableNumberOfPacks
+  packSize
+}

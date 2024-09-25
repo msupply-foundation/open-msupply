@@ -209,11 +209,12 @@ const VaccinationForm = ({
               <BasicTextInput
                 fullWidth
                 autoFocus
+                placeholder={t('placeholder.enter-facility-name')}
                 value={draft.facilityFreeText}
                 onChange={e =>
                   updateDraft({ facilityFreeText: e.target.value })
                 }
-                sx={{ flex: 1, marginTop: 0.3 }}
+                sx={{ flex: 1, marginTop: 2 }}
               />
             )}
           </Grid>
