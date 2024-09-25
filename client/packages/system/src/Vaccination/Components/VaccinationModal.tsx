@@ -15,7 +15,6 @@ import {
   Select,
   Switch,
   useDialog,
-  useEditModal,
   useFormatDateTime,
   useKeyboardHeightAdjustment,
   useNotification,
@@ -29,7 +28,6 @@ import {
   VaccinationCourseDoseFragment,
   VaccinationDetailFragment,
 } from '../api/operations.generated';
-import { SelectBatchModal } from './SelectBatchModal';
 import { AppRoute } from '@openmsupply-client/config';
 import { ArrowRightIcon } from '@mui/x-date-pickers';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
@@ -72,12 +70,6 @@ export const VaccinationModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(700);
 
-  const {
-    isOpen: batchModalOpen,
-    onClose: closeBatchModal,
-    onOpen: openBatchModal,
-  } = useEditModal();
-
   const save = async () => {
     try {
       await saveVaccination(draft);
@@ -98,7 +90,6 @@ export const VaccinationModal = ({
       {InfoBox}
       <VaccinationForm
         updateDraft={updateDraft}
-        openBatchModal={openBatchModal}
         draft={draft}
         dose={dose}
         vaccination={vaccination}
@@ -122,18 +113,7 @@ export const VaccinationModal = ({
       slideAnimation={false}
       contentProps={{ sx: { paddingTop: !!InfoBox ? 0 : undefined } }}
     >
-      <>
-        {batchModalOpen && (
-          <SelectBatchModal
-            isOpen
-            itemId={draft.itemId ?? ''}
-            onClose={closeBatchModal}
-            stockLine={draft.stockLine ?? null}
-            setStockLine={stockLine => updateDraft({ stockLine })}
-          />
-        )}
-        {modalContent}
-      </>
+      <>{modalContent}</>
     </Modal>
   );
 };
@@ -143,13 +123,11 @@ const VaccinationForm = ({
   dose,
   vaccination,
   updateDraft,
-  openBatchModal,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   vaccination?: VaccinationDetailFragment | null;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
-  openBatchModal: () => void;
 }) => {
   const t = useTranslation('dispensary');
 
@@ -180,7 +158,6 @@ const VaccinationForm = ({
     <SelectItemAndBatch
       dose={dose}
       draft={draft}
-      openBatchModal={openBatchModal}
       updateDraft={updateDraft}
       hasExistingSelectedBatch={!!vaccination?.stockLine}
     />
