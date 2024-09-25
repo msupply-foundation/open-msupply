@@ -9,8 +9,8 @@ use report_builder::{build::build_report_definition, BuildArgs};
 
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
-    FormSchemaJson, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
+    ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use server::configuration;
@@ -19,9 +19,9 @@ use service::{
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     plugin::validation::sign_plugin,
-    report::definition::ReportDefinition,
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
+    standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
         file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
@@ -143,12 +143,7 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
-    // command to upsert standard reports. Will later move this into rust code
-    BuildStandardReports {
-        /// Optional report code. If none supplied, all standard reports are uploaded
-        #[clap(short, long)]
-        code: Option<String>,
-    },
+    BuildStandardReports,
     UpsertReportsJson {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
@@ -411,7 +406,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::BuildStandardReports { code } => {
+        Action::BuildStandardReports {} => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
@@ -442,17 +437,10 @@ async fn main() -> anyhow::Result<()> {
 
                     let manifest: Manifest = serde_json::from_reader(manifest_file)
                         .expect("manifest json not formatted correctly");
-                    let report_code = manifest.code;
-
-                    // skip report building and upserting if code is specified AND code is not report code
-                    if let Some(passed_code) = code.clone() {
-                        if report_code == passed_code {
-                            continue;
-                        }
-                    }
+                    let code = manifest.code;
 
                     let version = manifest.version;
-                    let id = format!("{name}_{version}");
+                    let id = format!("{code}_{version}");
                     let context = manifest.context;
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
@@ -518,7 +506,7 @@ async fn main() -> anyhow::Result<()> {
                         comment: None,
                         is_custom,
                         version: version.to_string(),
-                        code: report_code,
+                        code,
                         form_schema: form_schema_json,
                     };
 
@@ -526,10 +514,7 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let output_path = match code.clone() {
-                Some(code) => format!("{base_reports_dir}/generated/{code}.json"),
-                None => format!("{base_reports_dir}/generated/standard_reports.json"),
-            };
+            let output_path = format!("{base_reports_dir}/generated/standard_reports.json");
             let output_path = Path::new(&output_path);
 
             fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
@@ -544,14 +529,9 @@ async fn main() -> anyhow::Result<()> {
                 ))
             })?;
 
-            match code.clone() {
-                Some(code) => info!("{}", format!("{code} report built")),
-                None => info!("All standard reports built"),
-            }
+            info!("All standard reports built");
         }
         Action::UpsertReportsJson { json_path } => {
-            let connection_manager = get_storage_connection_manager(&settings.database);
-            let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
             let generated_dir = format!("{base_reports_dir}/generated");
 
@@ -562,27 +542,10 @@ async fn main() -> anyhow::Result<()> {
             let reports_data: ReportsData =
                 serde_json::from_reader(json_file).expect("json incorrectly formatted");
 
-            for report in reports_data.reports {
-                if let Some(form_schema_json) = &report.form_schema {
-                    FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
-                }
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
 
-                ReportRowRepository::new(&con).upsert_one(&ReportRow {
-                    id: report.id.clone(),
-                    name: report.name,
-                    r#type: repository::ReportType::OmSupply,
-                    template: serde_json::to_string_pretty(&report.template)?,
-                    context: report.context,
-                    sub_context: report.sub_context,
-                    argument_schema_id: report.argument_schema_id,
-                    comment: report.comment,
-                    is_custom: report.is_custom,
-                    version: report.version,
-                    code: report.code,
-                })?;
-
-                info!("Report {} upserted", report.id);
-            }
+            let _ = StandardReports::upsert_reports(reports_data, &con);
         }
         Action::UpsertReport {
             id,
@@ -691,25 +654,4 @@ pub struct TestReportArguments {
     pub arguments: Option<String>,
     pub reference_data: Option<String>,
     pub data_id: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub struct ReportData {
-    pub id: String,
-    pub name: String,
-    pub r#type: repository::ReportType,
-    pub template: ReportDefinition,
-    pub context: ContextType,
-    pub sub_context: Option<String>,
-    pub argument_schema_id: Option<String>,
-    pub comment: Option<String>,
-    pub is_custom: bool,
-    pub version: String,
-    pub code: String,
-    pub form_schema: Option<FormSchemaJson>,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub struct ReportsData {
-    pub reports: Vec<ReportData>,
 }

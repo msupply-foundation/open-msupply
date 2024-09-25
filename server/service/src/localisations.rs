@@ -15,7 +15,6 @@ pub struct EmbeddedLocalisations;
 pub struct TranslationError;
 // struct to manage translations
 #[derive(Clone)]
-
 pub struct Localisations {
     pub translations: HashMap<String, HashMap<String, HashMap<String, String>>>,
 }
