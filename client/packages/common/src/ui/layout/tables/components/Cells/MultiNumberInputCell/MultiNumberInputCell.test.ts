@@ -1,4 +1,4 @@
-import { getCellValues, computeTotal, setMax } from './MultiNumberInputCell';
+import { getCellValues, computeTotal } from './MultiNumberInputCell';
 
 const monthYearUnits = [
   { key: 'year', ratio: 12, label: 'Y' },
@@ -106,25 +106,5 @@ describe('3 units - hours/minutes/seconds - recombining', () => {
   });
   it('Middle value exceeding limit with decimals', () => {
     expect(computeTotal([1, 59.99, 1], hourMinuteSecondUnits)).toBe(7200.4);
-  });
-});
-
-describe('Testing "setMax function', () => {
-  it('Limit first value to defined maximum', () => {
-    expect(setMax(monthYearUnits, 0, 5000)).toBe(5000);
-    expect(setMax(hourMinuteSecondUnits, 0, 5000)).toBe(5000);
-  });
-  it('No limit on first value when max not defined', () => {
-    expect(setMax(monthYearUnits, 0, undefined)).toBe(undefined);
-    expect(setMax(hourMinuteSecondUnits, 0, undefined)).toBe(undefined);
-  });
-  it('Last value accept up to 4dp, but less than ratio limit', () => {
-    // Max value does nothing when not the first value
-    expect(setMax(monthYearUnits, 1, -1)).toBe(11.9999);
-    expect(setMax(hourMinuteSecondUnits, 2, -1)).toBe(59.9999);
-  });
-  it('Middle value limited to integer below next ratio', () => {
-    // Max value does nothing when not the first value
-    expect(setMax(hourMinuteSecondUnits, 1, -1)).toBe(59);
   });
 });

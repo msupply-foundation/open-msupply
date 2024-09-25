@@ -44,6 +44,7 @@
 import React from 'react';
 import { CellProps } from '../../../columns';
 import {
+  constrain,
   NumericInputProps,
   NumericTextInput,
   StandardTextFieldProps,
@@ -66,9 +67,7 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
   columnIndex,
   isDisabled = false,
   min = 0,
-  // The maximum applies to the *highest* unit (e.g. years, when using
-  // years/months, smaller units are limited by the size of the next unit up)
-  max,
+  max = Infinity,
   decimalLimit = 2,
   step,
   multiplier,
@@ -82,7 +81,9 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
     id?: string;
     TextInputProps?: StandardTextFieldProps;
   } & { units: Unit[] }): React.ReactElement<CellProps<T>> => {
-  const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
+  const [buffer, setBuffer] = useBufferState(
+    constrain(column.accessor({ rowData }) as number, decimalLimit, min, max)
+  );
   const updater = useDebounceCallback(column.setter, [column.setter], 350);
 
   const autoFocus = rowIndex === 0 && columnIndex === 0;
@@ -103,20 +104,21 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
             ...TextInputProps?.InputProps,
           }}
           onChange={num => {
-            const newValue = num === undefined ? min : num;
+            const newValue = num === undefined ? 0 : num;
             if (cellValues[index] === newValue) return;
-            const newValues = [...cellValues];
+            const newValues = cellValues.map(val =>
+              val === undefined ? 0 : val
+            );
             newValues[index] = newValue;
-            const newTotal = computeTotal(newValues, units);
+            const newTotal = constrain(
+              computeTotal(newValues, units),
+              decimalLimit,
+              min,
+              max
+            );
             setBuffer(newTotal);
             updater({ ...rowData, [column.key]: Number(newTotal) });
           }}
-          min={min}
-          // Limit smaller units to less than the value of the next highest
-          // unit, e.g. "Months" would be limited to 11.9999
-          max={setMax(units, index, max)}
-          // There's no need for anything other than the smallest unit to have
-          // non-integer values
           decimalLimit={index === units.length - 1 ? decimalLimit : 0}
           step={step}
           multiplier={multiplier}
@@ -132,7 +134,7 @@ export const MultipleNumberInputCell = <T extends RecordWithId>({
 };
 
 export const getCellValues = (value: number | undefined, units: Unit[]) => {
-  if (value === undefined) return units.map(_ => 0);
+  if (value === undefined) return units.map(_ => undefined);
 
   let remainder = value;
   return units.map((unit, index) => {
@@ -152,20 +154,3 @@ export const computeTotal = (values: number[], units: Unit[]) =>
     const ratio = units[index]?.ratio ?? 1;
     return sum + ratio * val;
   }, 0);
-
-export const setMax = (
-  units: Unit[],
-  index: number,
-  max: number | undefined
-) => {
-  if (index === 0) return max;
-  const thisRatio = (units[index] as Unit).ratio;
-  const higherRatio = (units[index - 1] as Unit).ratio;
-  // If not the last value, should be limited to the integer below the next
-  // highest ratio. But for the last value, we need to be able to accept
-  // fractional input right up to the ratio, so we allow this to an arbitrary
-  // decimal precision (can't see needing more than 4 d.p for this kind of
-  // thing!)
-  const limitReduction = index === units.length - 1 ? 0.0001 : 1;
-  return higherRatio / thisRatio - limitReduction;
-};
