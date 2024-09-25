@@ -19,6 +19,7 @@ import {
   ModalMode,
   NumberCell,
   NumberInputCell,
+  MultipleNumberInputCell,
   NumericTextInput,
   PlusCircleIcon,
   TableProvider,
@@ -229,7 +230,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       }
       height={height}
       sx={{
-        width: 875,
+        width: 950,
         maxWidth: 'unset',
       }}
       slideAnimation={false}
@@ -301,15 +302,13 @@ const VaccineCourseDoseTable = ({
       {
         key: 'minAgeMonths',
         Cell: AgeCell,
-        label: 'label.age-months-from',
-        maxWidth: 120,
+        label: 'label.from-age',
         setter: updateDose,
       },
       {
         key: 'maxAgeMonths',
         Cell: AgeCell,
-        label: 'label.age-months-to',
-        maxWidth: 120,
+        label: 'label.to-age',
         setter: updateDose,
       },
       {
@@ -356,6 +355,28 @@ const VaccineCourseDoseTable = ({
 };
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
-const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => (
-  <NumberInputCell decimalLimit={2} {...props} />
-);
+const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
+  const t = useTranslation();
+  // Set maximum and minimum to ensure maxAge can't be lower than minAge
+  const minimum =
+    props.column.key === 'maxAgeMonths'
+      ? props.rowData.minAgeMonths
+      : undefined;
+  const maximum =
+    props.column.key === 'minAgeMonths'
+      ? props.rowData.maxAgeMonths
+      : undefined;
+  return (
+    <MultipleNumberInputCell
+      decimalLimit={2}
+      width={25}
+      {...props}
+      min={minimum}
+      max={maximum}
+      units={[
+        { key: 'year', ratio: 12, label: t('label.years-abbreviation') },
+        { key: 'month', ratio: 1, label: t('label.months-abbreviation') },
+      ]}
+    />
+  );
+};
