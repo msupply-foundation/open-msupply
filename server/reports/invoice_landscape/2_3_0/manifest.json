@@ -3,6 +3,7 @@
     "version": "2.3.0",
     "code": "invoice-landscape",
     "context": "REPORT",
+    "sub_context": "StockAndItems",
     "name": "Invoice Landscape",
     "queries": {
         "gql": "inbound.graphql"
