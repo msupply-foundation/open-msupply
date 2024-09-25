@@ -632,9 +632,9 @@ async fn main() -> anyhow::Result<()> {
                 sub_context,
                 argument_schema_id: form_schema_json.map(|r| r.id.clone()),
                 comment: None,
-                is_custom,
-                version,
-                code,
+                is_custom: true,
+                version: "1.0".to_string(),
+                code: id,
             })?;
 
             info!("Report upserted");
