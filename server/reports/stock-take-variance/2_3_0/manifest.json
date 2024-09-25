@@ -1,0 +1,12 @@
+{
+    "is_custom": false,
+    "version": "2.3.0",
+    "code": "stock-take-variance",
+    "context": "REPORT",
+    "name": "Stock Take Variance",
+    "header": "header.html",
+
+    "queries": {
+        "gql": "StockVarianceQuery.graphql"
+    }
+}   

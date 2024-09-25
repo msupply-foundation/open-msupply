@@ -1,0 +1,54 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr class="heading">
+        <td>{{t(k="label.code", f="Code")}}</td>
+        <td>{{t(k="label.name", f="Name")}}</td>
+        <td>{{t(k="label.status", f="Status")}}</td>
+        <td>{{t(k="report.consumption", f="Consumption")}} ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}} months)</td>
+        <td>{{t(k="label.soh", f="SOH")}}</td>
+        <td>{{t(k="label.amc", f="AMC")}} ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}} months)</td>
+        <td>{{t(k="report.mos", f="MOS")}}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in data.items.nodes %}
+      {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(
+      precision=1) %}
+      {% set AMC = item.stats.averageMonthlyConsumption | default(value=0) |
+      round(precision=1) %}
+      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}
+
+      <tr>
+        <td>{{item.code}}</td>
+        <td>{{item.name}}</td>
+        <td class="status"> 
+          {% if SOH == 0 and AMC == 0 %}
+            <span class="out-of-stock">{{t(k="report.out-of-stock", f="Out of Stock")}}</span>
+          {% elif AMC == 0 %}
+            <span class="no-consumption">{{t(k="report.no-consumption, f="No consumption")}}</span>
+          {% elif MOS >= arguments.monthsUnderstock | default(value=0) and MOS
+          <= arguments.monthsOverstock | default(value=0) %}
+            <span class="well-stocked">{{t(k="report.well-stocked", f="Well stocked")}}</span>
+          {% elif MOS < arguments.monthsUnderstock | default(value=0) %}
+            <span class="understocked">{{t(k="report.understocked", f="Understocked")}}</span>
+          {% elif MOS > arguments.monthsOverstock | default(value=0) %}
+            <span class="overstocked">{{t(k="report.overstocked", f="Overstocked")}}</span>
+          {% endif %}
+        </td>
+        <td>{{item.stats.totalConsumption | default(value=0) | round( precision=1)}}</td>
+        <td>{{SOH}}</td>
+        <td>{{AMC}}</td>
+        <td>
+          {{item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1)}}
+        </td>
+        
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

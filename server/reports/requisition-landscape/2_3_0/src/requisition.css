@@ -1,0 +1,56 @@
+body { 
+    font-family: Tahoma; 
+  }
+  table {
+    font-size: 8pt;
+    margin-left: 8px;
+    width: 100%;
+}
+
+.container {
+    width: 98%;
+}
+
+.header_supplied_section {
+    border-bottom: 0.5px solid black;
+    padding-top: 1pt;
+} 
+
+.header_date_section {
+    border-bottom: 0.5px solid black;
+    padding-top: 1pt;
+}
+
+.align_right {
+    text-align: right;
+}
+
+.line_number, .quantity, .pack, .batch, .expiry, .sell_price, .cost_price, .total_quantity, .total_extension {
+    text-align: right;
+}
+
+.item_code, .item_name {
+    text-align: left;
+}
+
+.body_section thead tr th {
+    border-bottom: 0.5px solid black;
+}
+
+.body_section tr td {
+    border-bottom: 0.5px solid black;
+}
+
+hr {
+    margin-left: 8px; 
+    border: 0.1px solid black;
+} 
+
+header {
+    width: 100%;
+    height: 1.5cm;
+}
+footer { display: none; }
+@media print {
+  footer, table.paging tfoot td  { height: 0; }
+}
