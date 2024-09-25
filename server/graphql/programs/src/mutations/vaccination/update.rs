@@ -13,6 +13,8 @@ use service::{
     NullableUpdate,
 };
 
+use super::NotMostRecentGivenDose;
+
 #[derive(InputObject)]
 pub struct UpdateVaccinationInput {
     pub id: String,
@@ -60,9 +62,23 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
     }
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateVaccinationError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 pub enum UpdateVaccinationResponse {
     Response(VaccinationNode),
+    Error(UpdateError),
+}
+
+#[derive(Interface)]
+#[graphql(name = "UpdateVaccinationErrorInterface")]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum UpdateErrorInterface {
+    NotMostRecentGivenDose(NotMostRecentGivenDose),
 }
 
 pub fn update_vaccination(
@@ -89,24 +105,30 @@ pub fn update_vaccination(
         Ok(vaccination) => {
             UpdateVaccinationResponse::Response(VaccinationNode::from_domain(vaccination))
         }
-        Err(error) => map_error(error)?,
+        Err(error) => UpdateVaccinationResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
     };
 
     Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateVaccinationResponse> {
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        ServiceError::NotMostRecentGivenDose => {
+            return Ok(UpdateErrorInterface::NotMostRecentGivenDose(
+                NotMostRecentGivenDose,
+            ))
+        }
         ServiceError::VaccinationDoesNotExist
         | ServiceError::ClinicianDoesNotExist
         | ServiceError::FacilityNameDoesNotExist
         | ServiceError::ReasonNotProvided
         | ServiceError::StockLineNotProvided
         | ServiceError::StockLineDoesNotExist
-        | ServiceError::NotMostRecentGivenDose
         | ServiceError::NotNextDose
         | ServiceError::ItemDoesNotBelongToVaccineCourse => BadUserInput(formatted_error),
 
