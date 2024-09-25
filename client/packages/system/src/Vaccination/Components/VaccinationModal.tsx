@@ -13,6 +13,7 @@ import {
   RadioGroup,
   RouteBuilder,
   Select,
+  Switch,
   useDialog,
   useEditModal,
   useFormatDateTime,
@@ -33,7 +34,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { ArrowRightIcon } from '@mui/x-date-pickers';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
-import { CreateTransactionsSwitch } from './CreateTransactionsSwitch';
+import { getSwitchReason } from './getSwitchReason';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -156,6 +157,35 @@ const VaccinationForm = ({
     return null;
   }
 
+  const transactionSwitchReason = getSwitchReason(
+    draft,
+    !!dose.vaccineCourse.vaccineCourseItems?.length,
+    vaccination
+  );
+  const CreateTransactions = transactionSwitchReason ? (
+    <Switch
+      label={t(transactionSwitchReason)}
+      checked={draft.createTransactions}
+      onChange={() =>
+        updateDraft({
+          createTransactions: !draft.createTransactions,
+        })
+      }
+      labelPlacement="end"
+      size="small"
+    />
+  ) : null;
+
+  const SelectBatch = (
+    <SelectItemAndBatch
+      dose={dose}
+      draft={draft}
+      openBatchModal={openBatchModal}
+      updateDraft={updateDraft}
+      hasExistingSelectedBatch={!!vaccination?.stockLine}
+    />
+  );
+
   return (
     <Container
       maxWidth="xs"
@@ -234,19 +264,18 @@ const VaccinationForm = ({
         />
       </RadioGroup>
 
-      <CreateTransactionsSwitch
-        draft={draft}
-        vaccination={vaccination}
-        updateDraft={updateDraft}
-        hasDosesConfigured={!!dose.vaccineCourse.vaccineCourseItems?.length}
-      />
-      <SelectItemAndBatch
-        dose={dose}
-        draft={draft}
-        openBatchModal={openBatchModal}
-        updateDraft={updateDraft}
-        hasExistingSelectedBatch={!!vaccination?.stockLine}
-      />
+      {/* Switch makes more sense below the batch selection if you're updating the batch */}
+      {transactionSwitchReason === 'label.update-transactions' ? (
+        <>
+          {SelectBatch}
+          {CreateTransactions}
+        </>
+      ) : (
+        <>
+          {CreateTransactions}
+          {SelectBatch}
+        </>
+      )}
 
       {draft.given === false && (
         <>
