@@ -13,7 +13,6 @@ import {
   RadioGroup,
   RouteBuilder,
   Select,
-  Switch,
   useDialog,
   useEditModal,
   useFormatDateTime,
@@ -34,6 +33,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { ArrowRightIcon } from '@mui/x-date-pickers';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
+import { CreateTransactionsSwitch } from './CreateTransactionsSwitch';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -156,20 +156,6 @@ const VaccinationForm = ({
     return null;
   }
 
-  const shouldRevertInvoice =
-    // invoice already exists
-    !!vaccination?.invoice &&
-    // changing to a state where it should not exist
-    (draft.facilityId === OTHER_FACILITY || draft.given === false);
-
-  const stockLineChanged =
-    // vaccination already exists
-    !!vaccination &&
-    // changing to given/selecting new batch
-    draft.facilityId !== OTHER_FACILITY &&
-    draft.given &&
-    draft.stockLine?.id !== vaccination?.stockLine?.id;
-
   return (
     <Container
       maxWidth="xs"
@@ -248,35 +234,19 @@ const VaccinationForm = ({
         />
       </RadioGroup>
 
+      <CreateTransactionsSwitch
+        draft={draft}
+        vaccination={vaccination}
+        updateDraft={updateDraft}
+        hasDosesConfigured={!!dose.vaccineCourse.vaccineCourseItems?.length}
+      />
       <SelectItemAndBatch
         dose={dose}
         draft={draft}
         openBatchModal={openBatchModal}
         updateDraft={updateDraft}
-        hasExistingSelectedBatch={!!vaccination?.stockLine?.id}
+        hasExistingSelectedBatch={!!vaccination?.stockLine}
       />
-
-      {(shouldRevertInvoice ||
-        (stockLineChanged &&
-          // If we've already said to record the historical transaction, we don't need to ask again
-          !draft.recordHistoricalTransaction)) && (
-        // ask whether to update the transactions
-        <Switch
-          label={
-            shouldRevertInvoice
-              ? t('label.revert-existing-transaction')
-              : t('label.update-transactions')
-          }
-          checked={draft.editExistingTransactions}
-          onChange={() =>
-            updateDraft({
-              editExistingTransactions: !draft.editExistingTransactions,
-            })
-          }
-          labelPlacement="end"
-          size="small"
-        />
-      )}
 
       {draft.given === false && (
         <>
