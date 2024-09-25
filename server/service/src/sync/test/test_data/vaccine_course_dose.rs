@@ -25,6 +25,7 @@ fn vaccine_course_dose1() -> VaccineCourseDoseRow {
         min_age: 12.0,
         max_age: 13.0,
         min_interval_days: 20,
+        deleted_datetime: None,
     }
 }
 

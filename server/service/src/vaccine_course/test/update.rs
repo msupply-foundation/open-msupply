@@ -149,7 +149,7 @@ mod query {
         let count = dose_repo.count(Some(dose_filter.clone())).unwrap();
         assert_eq!(count, 1);
 
-        // 2 - Remove item_1 and dose_1 and add item_2 and dose_2
+        // 2 - Remove item_2 and dose_2 and add item_1 and dose_1
         let update = UpdateVaccineCourse {
             id: vaccine_course_insert_a.id.clone(),
             name: Some("new_name".to_owned()),
