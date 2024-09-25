@@ -10,7 +10,7 @@ use diesel_derive_enum::DbEnum;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReportType {
     OmSupply,
@@ -110,6 +110,19 @@ impl<'a> ReportRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_one_by_code_and_version(
+        &self,
+        code: &str,
+        version: &str,
+    ) -> Result<Option<ReportRow>, RepositoryError> {
+        let result = report_dsl::report
+            .filter(report_dsl::code.eq(code))
+            .filter(report_dsl::version.eq(version))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::insert_into(report_dsl::report)
             .values(row)
@@ -157,3 +170,37 @@ impl Upsert for ReportRow {
         )
     }
 }
+
+// impl<'de> Deserialize<'de> for ContextType {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: serde::Deserializer<'de>,
+//     {
+//         match Value::deserialize(deserializer).visit_string()? {
+//             "Report" => Ok(ContextType::Report),
+//             _ => Err(serde::de::Error::custom("Expected context type")),
+//         }
+//     }
+// }
+
+// impl Serialize for ContextType {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: serde::Serializer,
+//     {
+//         serializer.serialize_str(match self {
+//             ContextType::Repack => todo!(),
+//             ContextType::Asset => todo!(),
+//             ContextType::InboundShipment => todo!(),
+//             ContextType::OutboundShipment => todo!(),
+//             ContextType::Requisition => todo!(),
+//             ContextType::Stocktake => todo!(),
+//             ContextType::Resource => todo!(),
+//             ContextType::Patient => todo!(),
+//             ContextType::Dispensary => todo!(),
+//             ContextType::OutboundReturn => todo!(),
+//             ContextType::InboundReturn => todo!(),
+//             ContextType::Report => "report",
+//         })
+//     }
+// }

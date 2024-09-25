@@ -49,8 +49,13 @@ pub fn get_vaccine_course_dose(
 ) -> Result<VaccineCourseDoseRow, SingleRecordError> {
     let repository = VaccineCourseDoseRepository::new(connection);
 
-    let result =
-        repository.query_one(VaccineCourseDoseFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let result = repository.query_one(
+        VaccineCourseDoseFilter::new()
+            .id(EqualFilter::equal_to(&id))
+            // We're getting by id, so we want to include deleted records
+            // Currently this is only used from vaccination modal - if there are other cases we may need to reconsider
+            .include_deleted(true),
+    )?;
 
     match result {
         Some(record) => Ok(record.vaccine_course_dose_row),

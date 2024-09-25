@@ -724,6 +724,7 @@ mod report_service_test {
             code: "report_1".to_string(),
         })
         .unwrap();
+
         repo.upsert_one(&ReportRow {
             id: "report_base_1".to_string(),
             name: "Report base 1".to_string(),
