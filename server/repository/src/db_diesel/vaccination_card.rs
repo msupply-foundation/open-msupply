@@ -17,6 +17,8 @@ table! {
         vaccination_date -> Nullable<Date>,
         given -> Nullable<Bool>,
         stock_line_id -> Nullable<Text>,
+        facility_name_id -> Nullable<Text>,
+        batch -> Nullable<Text>,
     }
 }
 
@@ -37,6 +39,8 @@ pub struct VaccinationCardRow {
     pub vaccination_date: Option<NaiveDate>,
     pub given: Option<bool>,
     pub stock_line_id: Option<String>,
+    pub facility_name_id: Option<String>,
+    pub batch: Option<String>,
 }
 
 pub struct VaccinationCardRepository<'a> {
