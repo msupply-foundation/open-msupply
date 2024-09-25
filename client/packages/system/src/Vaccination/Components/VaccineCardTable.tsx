@@ -153,7 +153,6 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
     {
       key: 'facilityName',
       label: 'label.facility',
-      accessor: ({ rowData }) => rowData.facility?.name,
     },
   ]);
 

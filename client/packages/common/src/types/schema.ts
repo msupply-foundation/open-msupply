@@ -8198,7 +8198,7 @@ export type UserStorePermissionNode = {
 export type VaccinationCardItemNode = {
   __typename: 'VaccinationCardItemNode';
   batch?: Maybe<Scalars['String']['output']>;
-  facility?: Maybe<NameNode>;
+  facilityName?: Maybe<Scalars['String']['output']>;
   given?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
@@ -8214,7 +8214,7 @@ export type VaccinationCardItemNode = {
 };
 
 
-export type VaccinationCardItemNodeFacilityArgs = {
+export type VaccinationCardItemNodeFacilityNameArgs = {
   storeId: Scalars['String']['input'];
 };
 

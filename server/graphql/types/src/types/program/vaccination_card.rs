@@ -9,7 +9,7 @@ use graphql_core::{
 };
 use service::vaccination::get_vaccination_card::{VaccinationCard, VaccinationCardItem};
 
-use crate::types::{NameNode, StockLineNode};
+use crate::types::StockLineNode;
 
 pub struct VaccinationCardNode {
     pub vaccination_card: VaccinationCard,
@@ -105,13 +105,17 @@ impl VaccinationCardItemNode {
         &self.item.row.batch
     }
 
-    pub async fn facility(&self, ctx: &Context<'_>, store_id: String) -> Result<Option<NameNode>> {
+    pub async fn facility_name(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<String>> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let facility_name_id = match &self.item.row.facility_name_id {
             Some(facility_name_id) => facility_name_id,
             None => {
-                return Ok(None);
+                return Ok(self.item.row.facility_free_text.clone());
             }
         };
 
@@ -119,7 +123,10 @@ impl VaccinationCardItemNode {
             .load_one(NameByIdLoaderInput::new(&store_id, facility_name_id))
             .await?;
 
-        Ok(response_option.map(NameNode::from_domain))
+        Ok(match response_option {
+            Some(response) => Some(response.name_row.name),
+            None => None,
+        })
     }
 }
 
