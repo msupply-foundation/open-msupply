@@ -603,6 +603,7 @@
   "error.no-permission-report": "You do not have permission to view this report",
   "error.report-does-not-exist": "Report does not exist",
   "error.failed-to-generate-excel": "Failed to generate Excel",
+  "error.cannot-backdate-prescription": "Stock is not available on specified date",
   "report.expiring": "Expiring",
   "heading.expiring": "Expiring",
   "heading.notification-preferences": "Notification Preferences",
