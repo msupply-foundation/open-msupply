@@ -134,6 +134,7 @@ mod item_count_service_test {
                         code: String::new(),
                         description: String::new(),
                         is_active: true,
+                        ..Default::default()
                     },
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
@@ -145,16 +146,19 @@ mod item_count_service_test {
                             id: "listline1".to_string(),
                             item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
                             item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
                             item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                     ],
                 }],
@@ -215,6 +219,7 @@ mod item_count_service_test {
                         code: String::new(),
                         description: String::new(),
                         is_active: true,
+                        ..Default::default()
                     },
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
@@ -226,16 +231,19 @@ mod item_count_service_test {
                             id: "listline1".to_string(),
                             item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
                             item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
                             item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                     ],
                 }],
@@ -363,6 +371,7 @@ mod item_count_service_test {
                         code: String::new(),
                         description: String::new(),
                         is_active: true,
+                        ..Default::default()
                     },
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
@@ -374,16 +383,19 @@ mod item_count_service_test {
                             id: "listline1".to_string(),
                             item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
                             item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
                             item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
+                            ..Default::default()
                         },
                     ],
                 }],

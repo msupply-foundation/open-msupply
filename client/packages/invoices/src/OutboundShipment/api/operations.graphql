@@ -792,6 +792,20 @@ mutation addToOutboundShipmentFromMasterList(
   }
 }
 
+fragment itemPrice on ItemPriceNode {
+  defaultPricePerUnit
+  discountPercentage
+  calculatedPricePerUnit
+}
+
+query getItemPricing($storeId: String!, $input: ItemPriceInput!) {
+  itemPrice(storeId: $storeId, input: $input) {
+    ... on ItemPriceNode {
+      ...itemPrice
+    }
+  }
+}
+
 mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
   insertBarcode(input: $input, storeId: $storeId) {
     ... on BarcodeNode {
