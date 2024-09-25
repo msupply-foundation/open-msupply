@@ -69,7 +69,7 @@ export const Toolbar: FC = () => {
               }
             />
           </Box>
-          <Box display="flex" flex={1}>
+          <Box display="flex" flexDirection="column" flex={1}>
             <InputWithLabelRow
               label={t('label.date')}
               Input={
