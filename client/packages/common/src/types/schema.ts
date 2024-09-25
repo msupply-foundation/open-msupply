@@ -5238,6 +5238,8 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
+  /** Query for "historical_stock_line" entries */
+  historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -5565,6 +5567,13 @@ export type QueriesGenerateReportDefinitionArgs = {
 
 export type QueriesGenerateSupplierReturnLinesArgs = {
   input: GenerateSupplierReturnLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesHistoricalStockLinesArgs = {
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
+  itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
