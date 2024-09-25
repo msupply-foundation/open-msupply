@@ -2,6 +2,7 @@ export * from './useItem';
 export * from './useItemFields';
 export * from './useItems';
 export * from './useStockLines';
+export * from './useHistoricalStockLines';
 export * from './useItemApi';
 export * from './useStockItemsWithStats';
 export * from './useStockItemsWithStockLines';

@@ -59,6 +59,8 @@ export type DeletePrescriptionLinesMutationVariables = Types.Exact<{
 
 export type DeletePrescriptionLinesMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
+export type HistoricalStockLineFragment = { __typename: 'StockLineNode', id: string, availableNumberOfPacks: number, packSize: number };
+
 export const PrescriptionRowFragmentDoc = gql`
     fragment PrescriptionRow on InvoiceNode {
   __typename
@@ -119,6 +121,13 @@ export const PrescriptionRowFragmentDoc = gql`
   currencyRate
 }
     ${StockOutLineFragmentDoc}`;
+export const HistoricalStockLineFragmentDoc = gql`
+    fragment historicalStockLine on StockLineNode {
+  id
+  availableNumberOfPacks
+  packSize
+}
+    `;
 export const PrescriptionsDocument = gql`
     query prescriptions($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
