@@ -13,15 +13,12 @@ use super::query::get_stock_lines;
 struct MinAvailableAndPackSize {
     pack_size: f64,
     min: f64,
-    available: f64,
+    total: f64,
 }
 
 pub fn get_historical_stock_lines_available_quantity(
     connection: &StorageConnection,
-    stock_lines: Vec<(
-        &StockLineRow,
-        /* reserved available number of packs */ Option<f64>,
-    )>,
+    stock_lines: Vec<(&StockLineRow, Option<f64>)>,
     datetime: &NaiveDateTime,
 ) -> Result<HashMap<String /* Stock Line Id */, f64>, RepositoryError> {
     let filter = StockMovementFilter::new()
@@ -44,6 +41,7 @@ pub fn get_historical_stock_lines_available_quantity(
     let mut min_available_and_pack_size: HashMap<String, MinAvailableAndPackSize> = stock_lines
         .iter()
         .map(|(stock_line, reserved_available_number_of_packs)| {
+            let total = stock_line.total_number_of_packs * stock_line.pack_size;
             let available_packs = stock_line.available_number_of_packs
                 + reserved_available_number_of_packs.unwrap_or_default();
             let available = available_packs * stock_line.pack_size;
@@ -52,7 +50,7 @@ pub fn get_historical_stock_lines_available_quantity(
                 MinAvailableAndPackSize {
                     pack_size: stock_line.pack_size,
                     min: available,
-                    available,
+                    total,
                 },
             )
         })
@@ -65,9 +63,9 @@ pub fn get_historical_stock_lines_available_quantity(
         min_available_and_pack_size
             .entry(stock_line_id)
             .and_modify(|m| {
-                m.available = m.available - quantity;
-                if m.available < m.min {
-                    m.min = m.available
+                m.total = m.total - quantity;
+                if m.total < m.min {
+                    m.min = m.total
                 };
             });
     }
