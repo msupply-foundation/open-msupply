@@ -1,152 +1,61 @@
 {
   "reports": [
     {
-      "id": "expiring-items_1.0",
-      "name": "Expiring Items",
+      "id": "requisition-landscape_2.3.0",
+      "name": "Requisition Landscape",
       "type": "OmSupply",
       "template": {
         "index": {
           "template": "template.html",
-          "header": null,
-          "footer": null,
+          "header": "header.html",
+          "footer": "footer.html",
           "query": [
-            "query.graphql"
+            "requisitionQuery.graphql"
           ]
         },
         "entries": {
+          "requisition.css": {
+            "type": "Resource",
+            "data": "body { \n    font-family: Tahoma; \n  }\n  table {\n    font-size: 8pt;\n    margin-left: 8px;\n    width: 100%;\n}\n\n.container {\n    width: 98%;\n}\n\n.header_supplied_section {\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n} \n\n.header_date_section {\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n}\n\n.align_right {\n    text-align: right;\n}\n\n.line_number, .quantity, .pack, .batch, .expiry, .sell_price, .cost_price, .total_quantity, .total_extension {\n    text-align: right;\n}\n\n.item_code, .item_name {\n    text-align: left;\n}\n\n.body_section thead tr th {\n    border-bottom: 0.5px solid black;\n}\n\n.body_section tr td {\n    border-bottom: 0.5px solid black;\n}\n\nhr {\n    margin-left: 8px; \n    border: 0.1px solid black;\n} \n\nheader {\n    width: 100%;\n    height: 1.5cm;\n}\nfooter { display: none; }\n@media print {\n  footer, table.paging tfoot td  { height: 0; }\n}"
+          },
+          "footer.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 100%\"></div>\n"
+            }
+          },
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"requisition.css\" %}\n</style>\n<div style=\"font-size: 10px; text-align: center; width: 98%\">\n  <table style=\"width: 98%; height: 98%\">\n    <tr>\n      <td style=\"padding-left: 8px\">\n        <img src=\"{{data.store.logo}}\"/>\n      </td>\n      <td>\n        <span style=\"text-align: center; font-size: 9pt; font-weight: bold\">{{data.store.storeName}}</span><br />\n        <span style=\"text-align: center; font-size: 7pt\">{{data.store.name.address1}}</span><br />\n        <span style=\"text-align: center; font-size: 6pt\">{{data.store.name.address2}}</span>\n      </td>\n      <td style=\"padding-left: 8px\">\n        <span style=\"text-align: right; font-weight: bold; font-size: 7pt; float: right; margin-left: 20px;\">Requisition #: {{ data.requisition.requisitionNumber }}</span>\n      </td>\n    </tr>\n  </table>\n</div>\n"
+            }
+          },
+          "requisitionQuery.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "\nquery requisitionQuery($storeId: String!, $dataId: String!) {\n  requisition(storeId: $storeId, id: $dataId) {\n  ... on RequisitionNode {\n      id\n      type\n      status\n      requisitionNumber\n      theirReference\n      createdDatetime\n      comment\n      otherPartyName\n      maxMonthsOfStock\n      otherParty( \n        storeId: $storeId\n    \n      ){\n        name\n        id\n        code\n        comment\n        country\n        address1\n        address2\n        phone\n        email\n      }\n      lines{\n        nodes{\n          supplyQuantity\n          suggestedQuantity\n          requestedQuantity\n          remainingQuantityToSupply\n          comment\n          item{\n            code\n            name\n          }\n          itemStats{\n            availableStockOnHand\n            averageMonthlyConsumption\n          }\n         \n          \n        }\n      }\n        \n      \n    }\n   \n  }\n  store(id: $storeId){\n    ...on StoreNode{\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n      ...on NameNode {\n        address1\n        address2\n        chargeCode\n        code\n        comment\n        country\n        email\n        name\n        phone\n        website\n        }\n      }\n\n  }\n}\n}\n\n",
+              "variables": null
+            }
+          },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
-              "template": "<style>{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>Code</td>\n        <td>Name</td>\n        <td>Expiring in (days)</td>\n        <td>Batch</td>\n        <td>Expiry date</td>\n        <td>Stock on hand</td>\n        <td>Expected usage</td>\n        <td>Stock at risk</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n      {% set now = now() | date(format=\"%s\") | int %}\n\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td class=\"expiry-date\">\n          {% if stockLine.expiryDate %}\n            {% set expiryDate = stockLine.expiryDate | date(format=\"%s\") | int %}\n              {% if expiryDate > now %}\n                {% set diff = (expiryDate - now) / 60 / 60 / 24 | int %}\n                {% if diff <= arguments.monthsItemsExpire * 30 %}\n                  <span class=\"soon\">{{ diff }}</span>\n                {% else %}\n                  <span class=\"all-good\">{{ diff }}</span>\n                {% endif %}\n              {% else %}\n               <span class=\"expired\">Expired</span>\n              {% endif %}\n          {% else %}\n            <span class=\"na\">N/A</span>\n          {% endif %}\n        </td>\n        <td>{{stockLine.batch}}</td>\n        <td>\n          {% if stockLine.expiryDate %}\n            {{ stockLine.expiryDate | date(format=\"%d/%m/%Y\") }}\n          {% else %}\n            \n          {% endif %}\n        </td>\n        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)\n          }}</td>\n        <td>\n          {% if stockLine.item.stats.averageMonthlyConsumption %}\n            {% if stockLine.expiryDate %}\n              {% set expiryDate = stockLine.expiryDate | date(format=\"%s\") | int %}\n              {% if expiryDate > now %}\n                {% set diffMonths = (expiryDate - now) / 60 / 60 / 24 / 30 | int | abs %}\n                {% set expectedUsage = stockLine.item.stats.averageMonthlyConsumption\n                  * diffMonths %}\n                {{ expectedUsage | round( precision=1) }}\n              {% else %}\n                N/A\n              {% endif %}\n            {% else %}\n              N/A\n            {% endif %}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>\n          {% if stockLine.item.stats.averageMonthlyConsumption %}\n            {% if stockLine.expiryDate %}\n              {% set expiryDate = stockLine.expiryDate | date(format=\"%s\") | int %}\n              {% if expiryDate > now %}\n                {% set diffMonths = (expiryDate - now) / 60 / 60 / 24 / 30 | int | abs %}\n                {% set expectedUsage = stockLine.item.stats.averageMonthlyConsumption\n                  * diffMonths %}\n                {{ stockLine.totalNumberOfPacks * stockLine.packSize - expectedUsage | round( precision=1) }}\n              {% else %}\n                {{ stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1) }}\n              {% endif %}\n            {% else %}\n              N/A\n            {% endif %}\n          {% else %}\n            {% if stockLine.expiryDate %}\n              {% set expiryDate = stockLine.expiryDate | date(format=\"%s\") | int %}\n              {% if expiryDate < now %} \n                {{ stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1) }}\n              {% else %}\n                N/A\n              {% endif %}\n            {% else %}\n              N/A\n            {% endif %}\n          {% endif %}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
-            }
-          },
-          "style.css": {
-            "type": "Resource",
-            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n}\n\n.container table td {\n  padding: 5px;\n  vertical-align: top;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n}"
-          },
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n    }\n    sort: { key: itemName, desc: false }\n    page: { first: 5000 }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
+              "template": "<div class=\"container\">\n  <hr />\n  <table class=\"header_supplied_section\">\n    <tr>\n      <td>{{t(k=\"report.requested-from\", f=\"Requested From\")}} :</td>\n      <td class=\"align_right\">{{t(k=\"label.status\", f=\"Status\")}}: {{ data.requisition.status }}</td>\n    </tr>\n\n    <tr>\n      <td><b>{{ data.requisition.otherPartyName }}</b></td>\n      <td class=\"align_right\">{{t(k=\"report.our-ref\", f=\"Our ref\")}}: {{ data.requisition.theirReference }}</td>\n    </tr>\n\n    <tr>\n      <td>{{ data.requisition.otherParty.address1}}<br>{{ data.requisition.otherParty.address2}}<br>{{ data.requisition.otherParty.country}}</td>\n      <td class=\"align_right\">\n        {{t(k=\"report.confirmed-date\", f=\"Confirmed Date\")}}: {{ data.requisition.createdDatetime | date(format=\"%m/%d/%Y\") }}\n      </td>\n    </tr>\n  </table>\n\n  <table class=\"header_date_section\">\n    <tr>\n      <td></td>\n      <td class=\"align_right\">{{t(k=\"report.printed-date\", f=\"Printed date\")}}: {{ now() | date(format=\"%m/%d/%Y\") }}</td>\n    </tr>\n\n    <tr>\n      <td>{{t(k=\"report.requisition-category-message\", f=\"Requisition Category: Category Value\")}}</td>\n      <td id=\"date\" class=\"align_right\">{{t(k=\"report.authorized-by\", f=\"Authorized by\")}}:</td>\n    </tr>\n\n    <tr>\n      <td>{{t(k=\"report.comments\", f=\"Comments\")}}: {{ data.requisition.comment }}</td>\n      <td class=\"align_right\">{{t(k=\"report.collected-by\", f=\"Collected by\")}}:</td>\n    </tr>\n  </table>\n\n  <table class=\"body_section\" cellpadding=\"2\" cellspacing=\"0\">\n    <thead>\n      <tr class=\"body_column_label\">\n        <th class=\"line_number\" style=\"width: 5%\">{{t(k=\"report.line\", f=\"Line\")}}</th>\n        <th class=\"item_code\" style=\"width: 7%\">{{t(k=\"report.item-code\", f=\"Item code\")}}</th>\n        <th class=\"item_name\" style=\"width: 25%\">{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n        <th class=\"quantity\" style=\"width: 7%\">{{t(k=\"report.stock-on-hand\", f=\"Stock on Hand\")}}</th>\n        <th class=\"pack\" style=\"width: 10%\">{{t(k=\"label.amc\", f=\"AMC\")}}</th>\n        <th class=\"batch\" style=\"width: 8%\">{{t(k=\"report.target-qty\", f=\"Target Qty\")}}</th>\n        <th class=\"expiry\" style=\"width: 8%\">{{t(k=\"report.suggested-qty\", f=\"Suggested Qty\")}}</th>\n        <th class=\"sell_price\" style=\"width: 7%\">{{t(k=\"report.requested-qty\", f=\"Requested Qty\")}}</th>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.requisition.lines.nodes -%}\n      <tr class=\"body_value\">\n        <td class=\"line_number\" style=\"width: 5%\">{{ loop.index }}</td>\n        <td class=\"item_code\" style=\"width: 7%\">{{ line.item.code }}</td>\n        <td class=\"item_name\" style=\"width: 25%\">{{ line.item.name }}</td>\n        <td class=\"quantity\" style=\"width: 8%\">{{ line.itemStats.availableStockOnHand }}</td>\n        <td class=\"pack\" style=\"width: 10%\">{{ line.itemStats.averageMonthlyConsumption | round(precision=2) }}</td>\n        <td class=\"batch\" style=\"width: 8%\">\n          {{ data.requisition.maxMonthsOfStock * line.itemStats.averageMonthlyConsumption }}\n        </td>\n        <td class=\"batch\" style=\"width: 8%\">{{ line.suggestedQuantity }}</td>\n        <td class=\"expiry\" style=\"width: 8%\">{{ line.requestedQuantity }}</td>\n      </tr>\n      {%- endfor %}\n    </tbody>\n  </table>\n</div>\n"
             }
           }
         }
       },
       "context": "REPORT",
-      "sub_context": "Expiring",
-      "argument_schema_id": "for_report_expiring-items_1.0",
+      "sub_context": null,
+      "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "1.0",
-      "code": "expiring-items",
-      "form_schema": {
-        "id": "for_report_expiring-items_1.0",
-        "type": "reportArgument",
-        "json_schema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
-          "allOf": [
-            {
-              "$ref": "#/definitions/StockFilters"
-            }
-          ],
-          "definitions": {
-            "StockFilters": {
-              "properties": {
-                "expiryDate": {
-                  "description": "Expiry Date",
-                  "format": "date",
-                  "type": "string"
-                },
-                "itemCodeOrName": {
-                  "description": "Item Code or Name",
-                  "type": "string"
-                },
-                "monthlyConsumptionLookBackPeriod": {
-                  "description": "Average Monthly Consumption Look Back Period",
-                  "readOnly": true,
-                  "type": "number"
-                },
-                "monthsItemsExpire": {
-                  "description": "Expiring item period",
-                  "readOnly": true,
-                  "type": "number"
-                },
-                "monthsOverstock": {
-                  "description": "Months Overstock",
-                  "readOnly": true,
-                  "type": "number"
-                },
-                "monthsUnderstock": {
-                  "description": "Months Understock",
-                  "readOnly": true,
-                  "type": "number"
-                }
-              }
-            }
-          },
-          "type": "object"
-        },
-        "ui_schema": {
-          "elements": [
-            {
-              "label": "Expiry Date",
-              "options": {
-                "dateOnly": true
-              },
-              "scope": "#/properties/expiryDate",
-              "type": "Control"
-            },
-            {
-              "label": "Item Code or Name",
-              "options": {
-                "flexBasis": "90%",
-                "useDebounce": false
-              },
-              "scope": "#/properties/itemCodeOrName",
-              "type": "Control"
-            },
-            {
-              "label": "AMC Lookback Period",
-              "options": {
-                "inputAlignment": "end",
-                "paddingRight": 25
-              },
-              "scope": "#/properties/monthlyConsumptionLookBackPeriod",
-              "type": "Control"
-            },
-            {
-              "label": "Target MOS",
-              "options": {
-                "inputAlignment": "end",
-                "paddingRight": 25
-              },
-              "scope": "#/properties/monthsOverstock",
-              "type": "Control"
-            },
-            {
-              "label": "Reorder threshold MOS",
-              "options": {
-                "inputAlignment": "end",
-                "paddingRight": 25
-              },
-              "scope": "#/properties/monthsUnderstock",
-              "type": "Control"
-            },
-            {
-              "label": "Expiring item period",
-              "options": {
-                "inputAlignment": "end",
-                "paddingRight": 25
-              },
-              "scope": "#/properties/monthsItemsExpire",
-              "type": "Control"
-            }
-          ],
-          "type": "VerticalLayout"
-        }
-      }
+      "version": "2.3.0",
+      "code": "requisition-landscape",
+      "form_schema": null
     },
     {
       "id": "expiring-items_2.3.0",
@@ -166,18 +75,18 @@
             "type": "Resource",
             "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n}\n\n.container table td {\n  padding: 5px;\n  vertical-align: top;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.expiry-date span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.expiry-date span.expired::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.expired {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table td.expiry-date span.soon::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.soon {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table td.expiry-date span.all-good::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.all-good {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table span.na::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.expiry-date span.na {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n}"
           },
-          "query.graphql": {
-            "type": "GraphGLQuery",
-            "data": {
-              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n    }\n    sort: { key: itemName, desc: false }\n    page: { first: 5000 }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
-              "variables": null
-            }
-          },
           "template.html": {
             "type": "TeraTemplate",
             "data": {
               "output": "Html",
               "template": "<style>{% include \"style.css\" %}</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>Code</td>\n        <td>Name</td>\n        <td>Expiring in (days)</td>\n        <td>Batch</td>\n        <td>Expiry date</td>\n        <td>Stock on hand</td>\n        <td>Expected usage</td>\n        <td>Stock at risk</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n      {% set now = now() | date(format=\"%s\") | int %}\n\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td class=\"expiry-date\">\n          {% if stockLine.expiryDate %}\n            {% set expiryDate = stockLine.expiryDate | date(format=\"%s\") | int %}\n              {% if expiryDate > now %}\n                {% set diff = (expiryDate - now) / 60 / 60 / 24 | int %}\n                {% if diff <= arguments.monthsItemsExpire * 30 %}\n                  <span class=\"soon\">{{ diff }}</span>\n                {% else %}\n                  <span class=\"all-good\">{{ diff }}</span>\n                {% endif %}\n              {% else %}\n               <span class=\"expired\">Expired</span>\n              {% endif %}\n          {% else %}\n            <span class=\"na\">N/A</span>\n          {% endif %}\n        </td>\n        <td>{{stockLine.batch}}</td>\n        <td>\n          {% if stockLine.expiryDate %}\n            {{ stockLine.expiryDate | date(format=\"%d/%m/%Y\") }}\n          {% else %}\n            \n          {% endif %}\n        </td>\n        <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)\n          }}</td>\n        <td>\n          {% if stockLine.item.stats.averageMonthlyConsumption %}\n            {% if stockLine.expiryDate %}\n              {% set expiryDate = stockLine.expiryDate | date(format=\"%s\") | int %}\n              {% if expiryDate > now %}\n                {% set diffMonths = (expiryDate - now) / 60 / 60 / 24 / 30 | int | abs %}\n                {% set expectedUsage = stockLine.item.stats.averageMonthlyConsumption\n                  * diffMonths %}\n                {{ expectedUsage | round( precision=1) }}\n              {% else %}\n                N/A\n              {% endif %}\n            {% else %}\n              N/A\n            {% endif %}\n          {% else %}\n            N/A\n          {% endif %}\n        </td>\n        <td>\n          {% if stockLine.item.stats.averageMonthlyConsumption %}\n            {% if stockLine.expiryDate %}\n              {% set expiryDate = stockLine.expiryDate | date(format=\"%s\") | int %}\n              {% if expiryDate > now %}\n                {% set diffMonths = (expiryDate - now) / 60 / 60 / 24 / 30 | int | abs %}\n                {% set expectedUsage = stockLine.item.stats.averageMonthlyConsumption\n                  * diffMonths %}\n                {{ stockLine.totalNumberOfPacks * stockLine.packSize - expectedUsage | round( precision=1) }}\n              {% else %}\n                {{ stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1) }}\n              {% endif %}\n            {% else %}\n              N/A\n            {% endif %}\n          {% else %}\n            {% if stockLine.expiryDate %}\n              {% set expiryDate = stockLine.expiryDate | date(format=\"%s\") | int %}\n              {% if expiryDate < now %} \n                {{ stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1) }}\n              {% else %}\n                N/A\n              {% endif %}\n            {% else %}\n              N/A\n            {% endif %}\n          {% endif %}\n        </td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query ExpiringItems(\n  $storeId: String\n  $itemCodeOrName: String\n  $expiryDate: String\n) {\n  stockLines(\n    storeId: $storeId\n    filter: {\n      itemCodeOrName: { like: $itemCodeOrName }\n      expiryDate: { beforeOrEqualTo: $expiryDate }\n      hasPacksInStore: true\n    }\n    sort: { key: itemName, desc: false }\n    page: { first: 5000 }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n          stats(storeId: $storeId) {\n            averageMonthlyConsumption\n          }\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
             }
           }
         }
@@ -295,6 +204,751 @@
           "type": "VerticalLayout"
         }
       }
+    },
+    {
+      "id": "invoice_landscape_2.3.0",
+      "name": "Invoice Landscape",
+      "type": "OmSupply",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": "footer.html",
+          "query": [
+            "inbound.graphql"
+          ]
+        },
+        "entries": {
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 98%;\">\n    <table class=\"header_image_section\" style=\"width: 98%;height: 98%;\"> \n        <tr> \n            <td>\n                <img style=\"display:block; width:25%;\" src=\"{{data.store.logo}}\"/>\n            </td> \n            <td style=\"width: 350px;\">\n                <span style=\"text-align: center;font-size: 9pt;font-weight: bold;font-family: Tahoma;\">{{ data.store.storeName }}</span><br>\n                <span style=\"text-align: center;font-size: 7pt;font-family: Tahoma;\">{{ data.store.name.address1 }}</span><br>\n                <span style=\"text-align: center;font-size: 6pt;font-family: Tahoma;\">{{ data.store.name.address2 }}</span>\n            </td>\n            <td style=\"padding-left: 8px;\">\n                <span class=\"invoice_number\" \n                    style=\"text-align: right;font-weight: bold;font-size: 7pt;float: right;margin-left: 20px;\">\n                    {{t(k=\"report.invoice\", f=\"Invoice\")}} #: {{ data.invoice.invoiceNumber }}\n                </span>\n            </td>\n        </tr>     \n    </table>\n</div>"
+            }
+          },
+          "footer.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: right; width: 100%;\">\n<span class=\"pageNumber\"></span>\n</div>"
+            }
+          },
+          "inbound.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query InvoiceQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  invoice(storeId: $storeId, id: $dataId) {\n    ... on InvoiceNode {\n      id\n      otherPartyId\n      comment\n      status\n      invoiceNumber\n      theirReference\n      createdDatetime\n      pickedDatetime\n      shippedDatetime\n      deliveredDatetime\n      allocatedDatetime\n      otherPartyName\n      type\n      pricing {\n        serviceTotalAfterTax\n        serviceTotalBeforeTax\n        stockTotalAfterTax\n        stockTotalBeforeTax\n        taxPercentage\n        totalAfterTax\n        totalBeforeTax\n      }\n      otherParty(storeId: $storeId) {\n        name\n        id\n        isSupplier\n        isCustomer\n        code\n        address1\n        address2\n      }\n      user {\n        username\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {\n    ... on InvoiceLineConnector {\n      nodes {\n        id\n        itemId\n        itemCode\n        itemName\n        locationName\n        item {\n          unitName\n        }\n        packSize\n        expiryDate\n        batch\n        numberOfPacks\n        packSize\n        sellPricePerPack\n        costPricePerPack\n        pricing {\n          serviceTotalAfterTax\n          serviceTotalBeforeTax\n          stockTotalAfterTax\n          stockTotalBeforeTax\n          taxPercentage\n          totalAfterTax\n          totalBeforeTax\n        }\n        location {\n          code\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        chargeCode\n        code\n        comment\n        country\n        email\n        name\n        phone\n        website\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"header_supplied_section\">\n    <tr> \n        <td class=\"header_section_field_left\">{{t(k=\"report.received-from\", f=\"Received from\")}}:</td> \n        <td class=\"header_section_field_right\">{{t(k=\"label.status\", f=\"Status\")}}: {{data.invoice.status}}</td>\n    </tr> \n\n    <tr> \n        <td class=\"header_section_field_left\">{{ data.invoice.otherPartyName }}</td> \n        <td class=\"header_section_field_right\">{{t(k=\"report.their-ref\", f=\"Their ref\")}} {{ data.invoice.theirReference }}</td>\n    </tr>\n\n    <tr> \n        <td class=\"header_section_field_left\">{{ data.invoice.otherParty.address1 }}</td> \n        <td class=\"header_section_field_right\">{{t(k=\"report.confirmed-date\", f=\"Confirmed date\")}}:\" {{ data.invoice.createdDatetime | date(format=\"%m/%d/%Y\") }}</td>\n    </tr>\n\n</table>\n\n<table class=\"header_date_section\">\n    <tr>\n        <td class=\"header_section_field_left\"></td>\n        <td class=\"header_section_field_right\">{{t(k=\"report.printed-date\", f=\"Printed date:)}} {{ now() | date(format=\"%m/%d/%Y\") }}</td>\n    </tr> \n\n    <tr> \n        <td class=\"header_section_field_left\">{{t(k=\"label.entered-by\", f=\"Entered by\")}}:\" {{ data.invoice.user.username}}</td>\n        <td id= \"date\" class=\"header_section_field_right\">{{t(k=\"report.invoice-type\", f=\"Invoice type\")}}:\" {{ data.invoice.type }}</td>\n    </tr>\n\n    <tr> \n        <td class=\"header_section_field_left\">{{t(k=\"report.created-date\", f=\"Created date\")}}: {{ data.invoice.createdDatetime | date(format=\"%m/%d/%Y\") }}</td>\n        <td class=\"header_section_field_right\">{{t(k=\"report.shipped-date\", f=\"Shipped date\")}}: {{ data.invoice.createdDatetime | date(format=\"%m/%d/%Y\") }}</td>\n    </tr> \n</table>\n\n<body>\n    <table class=\"body_section\" cellpadding=\"2\" cellspacing=\"0\">\n        <tr class=\"body_column_label\">\n            <th class=\"line_number\" style=\"width: 20px;\">{{t(k=\"report.line\", f=\"Line\")}}</th>\n            <th class=\"location_code\" style=\"width: 80px;\">{{t(k=\"label.location\", f=\"Location\")}}</th>\n            <th class=\"item_name\" style=\"width: 500px;\">{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n            <th class=\"quantity\" style=\"width: 50px;\">{{t(k=\"label.quantity\", f=\"Quantity\")}}</th>\n            <th class=\"pack\" style=\"width: 50px;\">{{t(k=\"label.pack\", f=\"Pack\")}}</th>\n            <th class=\"batch\" style=\"width: 50px;\">{{t(k=\"label.batch\", f=\"Batch\")}}</th>\n            <th class=\"expiry\" style=\"width: 80px;\">{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n            <th class=\"sell_price\" style=\"width: 50px;\">{{t(k=\"report.cost-price\", f=\"Cost Price\")}}</th>\n            <th class=\"cost_price\" style=\"width: 80px;\">{{t(k=\"report.sell-price\", f=\"Sell Price\")}}</th>\n            <th class=\"total_extension\" style=\"width: 50px;\">{{t(k=\"report.extension\", f=\"Extension\")}}</th>\n        </tr>\n        {% for line in data.invoiceLines.nodes -%}\n        <tr class=\"body_value\">\n            <td class=\"line_number\" style=\"width: 20px;\">{{ loop.index }}</td>\n            {% if line.location.code %}\n            <td class=\"location_code\" style=\"width: 80px;\">{{ line.location.code }}</td>\n            {% else %}\n            <td class=\"location_code\" style=\"width: 80px;\"></td>\n            {% endif %}\n            <td class=\"item_name\" style=\"width: 350px;\">{{ line.itemName }}</td>\n            <td class=\"quantity\" style=\"width: 50px;\">{{ line.numberOfPacks }}</td>\n            <td class=\"pack\" style=\"width: 50px;\">{{ line.packSize }}</td>\n            <td class=\"batch\" style=\"width: 50px;\">{{ line.batch }}</td>\n            <td class=\"expiry\" style=\"width: 80px;\">{{ line.expiryDate }}</td>\n            <td class=\"sell_price\" style=\"width: 50px;\">{{ line.costPricePerPack }}</td>\n            <td class=\"cost_price\" style=\"width: 80px;\">{{ line.sellPricePerPack   }}</td>\n            <td class=\"total_extension\" style=\"width: 50px;\">{{ line.numberOfPacks * line.costPricePerPack }}</td>\n        </tr>\n        {%- endfor %}\n    </table>\n</body>\n\n<table class=\"body_total_section\" cellpadding=\"2\" cellspacing=\"0\">\n    <tr class=\"body_total_column_label\">\n        <th class=\"line_number\" style=\"width: 20px;\"></th>\n        <th class=\"location_code\" style=\"width: 80px;\"></th>\n        <th class=\"item_name\" style=\"width: 350px;\"></th>\n        <th class=\"quantity\" style=\"width: 50px;\"></th>\n        <th class=\"pack\" style=\"width: 50px;\"></th>\n        <th class=\"batch\" style=\"width: 50px;\"></th>\n        <th class=\"expiry\" style=\"width: 80px;\"></th>\n        <th class=\"sell_price\" style=\"width: 50px;\"></th>\n        <th class=\"cost_price\" style=\"width: 80px;\">Total:</th>\n        <th class=\"total_extension\" style=\"width: 50px;\">{{ data.invoice.pricing.totalAfterTax }}</th>\n    </tr>\n</table>"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@media print{\n    @page {\n        size: A4 landscape \n    }\n}\n/* @page:left{\n    @bottom-left {\n      content: \"Page \" counter(page) \" of \" counter(pages);\n    }\n  } */\n\n  .header_image_section, .header_supplied_section, .header_date_section, .body_section, .body_total_section {\n    margin-left: 8px;\n    width: 100%;\n}\n\n.header_supplied_section {\n    /* width: 100%; */\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n} \n\n.header_image_section {\n    width: 100%;\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 8pt;\n    font-family: Tahoma;\n} \n\n.header_date_section {\n    width: 100%;\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n}\n\n.header_section_field_right {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.header_section_field_left {\n    text-align: left;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.line_number, .quantity, .pack, .expiry, .sell_price, .cost_price, .total_quantity, .total_extension {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.location_code, .item_name, .batch {\n    text-align: left;\n    font-family: Tahoma;\n    font-size: 8pt\n}\n\n.body_section, .body_total_section {\n    width: 100%;\n    font-family: Tahoma;\n}\n\n.body_section tr.body_column_label th {\n    border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n    border-bottom: 0.5px solid black;\n}\n\nhr {\n    width: 100%; \n    margin-left: 8px; \n    border: 0.1px solid black;\n}\n\n.pageNumber::after {\n    font-family: Tahoma;\n    font-size: 8pt;\n    counter-increment: page;\n    content: \"Page \" counter(page);\n}"
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": null,
+      "argument_schema_id": "for_report_invoice_landscape_2.3.0",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.3.0",
+      "code": "invoice-landscape",
+      "form_schema": {
+        "id": "for_report_invoice_landscape_2.3.0",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
+            {
+              "$ref": "#/definitions/StockFilters"
+            }
+          ],
+          "definitions": {
+            "StockFilters": {
+              "properties": {
+                "itemCode": {
+                  "description": "Item Code",
+                  "type": "string"
+                },
+                "itemName": {
+                  "description": "Item Name",
+                  "type": "string"
+                },
+                "monthlyConsumptionLookBackPeriod": {
+                  "description": "Average Monthly Consumption Look Back Period",
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "Item Code",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemCode",
+              "type": "Control"
+            },
+            {
+              "label": "Item Name",
+              "scope": "#/properties/itemName",
+              "type": "Control"
+            },
+            {
+              "label": "AMC Lookback Period",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthlyConsumptionLookBackPeriod",
+              "type": "Control"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      }
+    },
+    {
+      "id": "repack_2.3.0",
+      "name": "Repack",
+      "type": "OmSupply",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": "footer.html",
+          "query": [
+            "repack.graphql"
+          ]
+        },
+        "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"header_item_details\">\n    <tr>\n        <td class=\"header_section_field_right\">{{t(k=\"report.item-code\", f=\"Item code\")}}: {{ data.repack.from.stockLine.item.code }}</td>\n    </tr>\n\n    <tr>\n        <td class=\"header_section_field_right\">{{t(k=\"report.item-name\", f=\"Item name\")}}: {{ data.repack.from.stockLine.item.name }}</td>\n    </tr>\n</table>\n<hr>\n\n<body>\n    <table class=\"body_section\" cellpadding=\"2\" cellspacing=\"0\">\n        <tr class=\"body_column_header\">\n            <th class=\"body_header\" colspan=\"4\">{{t(k=\"report.original\", f=\"Original\")}}</th>\n            <th class=\"arrow\" rowspan=\"1\">→</th>\n            <th class=\"body_header\" colspan=\"4\">{{t(k=\"label.new\", f=\"New\")}}</th>\n        </tr>\n        <tr class=\"body_column_label\">\n            <th class=\"location\" style=\"width: 80px;\">{{t(k=\"label.location\", f=\"Location)}}</th>\n            <th class=\"pack\" style=\"width: 50px;\">{{t(k=\"label.pack\", f=\"Pack\")}}</th>\n            <th class=\"batch\" style=\"width: 50px;\">{{t(k=\"label.batch\", f=\"Batch\")}}</th>\n            <th class=\"quantity\" style=\"width: 50px;\">{{t(k=\"label.quantity\", f=\"Quantity\")}}</th>\n            <th></th>\n            <th class=\"location\" style=\"width: 80px;\">{{t(k=\"label.location\", f=\"Location\")}}</th>\n            <th class=\"pack\" style=\"width: 50px;\">{{t(k=\"label.pack\", f=\"Pack\")}}</th>\n            <th class=\"batch\" style=\"width: 50px;\">{{t(k=\"label.batch\", f=\"Batch\")}}</th>\n            <th class=\"quantity\" style=\"width: 50px;\">{{t(k=\"label.quantity\", f=\"Quantity\")}}</th>\n        </tr>\n        <tr class=\"body_value\">\n            <td class=\"location\"> \n                {% if data.repack.from.location %}\n                    {{ data.repack.from.location.name }}\n                {% endif %}\n            </td>\n            <td class=\"pack\">{{ data.repack.from.packSize }}</td>\n            <td class=\"batch\">{{ data.repack.batch }}</td>\n            <td class=\"original_quantity\">{{ data.repack.from.numberOfPacks }}</td>\n            <th></th>\n            <td class=\"location\">\n                {% if data.repack.to.location %}\n                {{ data.repack.to.location.name }}\n                {% endif %}\n            </td>\n            <td class=\"pack\">{{ data.repack.to.packSize }}</td>\n            <td class=\"batch\">{{ data.repack.batch }}</td>\n            <td class=\"quantity\">{{ data.repack.to.numberOfPacks }}</td>\n        </tr>\n    </table>\n</body>"
+            }
+          },
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 98%\">\n  <table class=\"header_image_section\" style=\"width: 98%; height: 98%\">\n    <tr>\n      <td>\n        <img style=\"display: block; width: 25%\" src=\"{{data.store.logo}}\" />\n      </td>\n      <td style=\"width: 350px\">\n        <span\n          style=\"\n            text-align: center;\n            font-size: 9pt;\n            font-weight: bold;\n            font-family: Tahoma;\n          \"\n          >{{ data.store.storeName }}</span\n        ><br />\n        <span style=\"text-align: center; font-size: 7pt; font-family: Tahoma\"\n          >{{ data.store.name.address1 }}</span\n        ><br />\n        <span style=\"text-align: center; font-size: 6pt; font-family: Tahoma\"\n          >{{ data.store.name.address2 }}</span\n        >\n      </td>\n      <td style=\"padding-left: 8px\">\n        <span\n          class=\"repack_details\"\n          style=\"\n            text-align: right;\n            font-weight: bold;\n            font-size: 7pt;\n            float: right;\n            margin-left: 20px;\n          \"\n        >\n          <div>{{t(k=\"label.repack\", f=\"Repack\")}} #: {{ data.repack.invoice.invoiceNumber }}</div>\n          <div>{{t(k=\"label.status\", f=\"Status\")}}: {{ data.repack.invoice.status }}</div>\n          <div>\n            {{t(k=\"report.confirmed-date\", f=\"Confirmed Date\")}}: {{ data.repack.datetime | date(format=\"%m/%d/%Y\") }}\n          </div>\n        </span>\n      </td>\n    </tr>\n  </table>\n</div>\n"
+            }
+          },
+          "footer.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: right; width: 100%;\">\n    <span class=\"pageNumber\"></span>\n</div>"
+            }
+          },
+          "repack.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query repack($dataId: String!, $storeId: String!) {\n  repack(invoiceId: $dataId, storeId: $storeId) {\n    ... on RepackNode {\n      id\n      datetime\n      repackId\n      batch\n      invoice {\n        id\n        invoiceNumber\n        status\n      }\n      from {\n        location {\n          id\n          code\n          name\n        }\n        packSize\n        numberOfPacks\n        stockLine {\n          id\n          item {\n            id\n            name\n            code\n          }\n        }\n      }\n      to {\n        location {\n          id\n          code\n          name\n          onHold\n        }\n        packSize\n        numberOfPacks\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        chargeCode\n        code\n        comment\n        country\n        email\n        name\n        phone\n        website\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@media print {\n    @page {\n        size: A4 landscape\n    }\n}\n\n.header_image_section,\n.body_section {\n    margin-left: 8px;\n    width: 100%;\n}\n\n.repack_details {\n    white-space: nowrap;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.header_item_details {\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n    margin-left: 8px;\n    width: 100%;\n}\n\n.header_image_section {\n    width: 100%;\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 8pt;\n    font-family: Tahoma;\n}\n\n.header_section_field_right {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.location\n.pack\n.batch\n.quantity {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.body_section,\n.body_total_section {\n    width: 100%;\n    font-family: Tahoma;\n    font-size: 8pt;\n    text-align: right;\n}\n\n.body_section tr.body_column_header th {\n    border-bottom: 0.5px solid black;\n    text-align: center;\n}\n\n.body_section tr.body_column_label th {\n    border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n    border-bottom: 0.5px solid black;\n}\n\nhr {\n    width: 100%;\n    margin-left: 8px;\n    border: 0.1px solid black;\n}\n\n.pageNumber::after {\n    font-family: Tahoma;\n    font-size: 8pt;\n    counter-increment: page;\n    content: \"Page \" counter(page);\n} "
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.3.0",
+      "code": "repack",
+      "form_schema": null
+    },
+    {
+      "id": "stock-status_2.3.0",
+      "name": "Stock Status",
+      "type": "OmSupply",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "query.graphql"
+          ]
+        },
+        "entries": {
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n}\n\n.container table td {\n  padding: 5px;\n  vertical-align: top;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n\n.container table td.status span.out-of-stock::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(245, 5, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.status span.out-of-stock {\n  background-color: rgba(245, 5, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table td.status span.understocked::before,\n.container table td.status span.overstocked::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(248, 154, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.status span.understocked,\n.container table td.status span.overstocked {\n  background-color: rgba(248, 154, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table td.status span.well-stocked::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(51, 169, 1, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.status span.well-stocked {\n  background-color: rgba(51, 169, 1, 0.3);\n  padding: 3px 10px;\n}\n\n.container table td.status span.no-consumption::before {\n  content: \"\";\n  display: inline-block;\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  background-color: rgba(143, 144, 166, 0.6);\n  margin-right: 5px;\n}\n\n.container table td.status span.no-consumption {\n  background-color: rgba(143, 144, 166, 0.3);\n  padding: 3px 10px;\n}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.status\", f=\"Status\")}}</td>\n        <td>{{t(k=\"report.consumption\", f=\"Consumption\")}} ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}} months)</td>\n        <td>{{t(k=\"label.soh\", f=\"SOH\")}}</td>\n        <td>{{t(k=\"label.amc\", f=\"AMC\")}} ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}} months)</td>\n        <td>{{t(k=\"report.mos\", f=\"MOS\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(\n      precision=1) %}\n      {% set AMC = item.stats.averageMonthlyConsumption | default(value=0) |\n      round(precision=1) %}\n      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1) %}\n\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td class=\"status\"> \n          {% if SOH == 0 and AMC == 0 %}\n            <span class=\"out-of-stock\">{{t(k=\"report.out-of-stock\", f=\"Out of Stock\")}}</span>\n          {% elif AMC == 0 %}\n            <span class=\"no-consumption\">{{t(k=\"report.no-consumption, f=\"No consumption\")}}</span>\n          {% elif MOS >= arguments.monthsUnderstock | default(value=0) and MOS\n          <= arguments.monthsOverstock | default(value=0) %}\n            <span class=\"well-stocked\">{{t(k=\"report.well-stocked\", f=\"Well stocked\")}}</span>\n          {% elif MOS < arguments.monthsUnderstock | default(value=0) %}\n            <span class=\"understocked\">{{t(k=\"report.understocked\", f=\"Understocked\")}}</span>\n          {% elif MOS > arguments.monthsOverstock | default(value=0) %}\n            <span class=\"overstocked\">{{t(k=\"report.overstocked\", f=\"Overstocked\")}}</span>\n          {% endif %}\n        </td>\n        <td>{{item.stats.totalConsumption | default(value=0) | round( precision=1)}}</td>\n        <td>{{SOH}}</td>\n        <td>{{AMC}}</td>\n        <td>\n          {{item.stats.availableMonthsOfStockOnHand | default(value=0) | round( precision=1)}}\n        </td>\n        \n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query StockStatus($storeId: String, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: { code: { like: $itemCode }, name: { like: $itemName } }\n    sort: { key: name, desc: false }\n    page: { first: 5000 }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          availableStockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "StockAndItems",
+      "argument_schema_id": "for_report_stock-status_2.3.0",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.3.0",
+      "code": "stock-status",
+      "form_schema": {
+        "id": "for_report_stock-status_2.3.0",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
+            {
+              "$ref": "#/definitions/StockFilters"
+            }
+          ],
+          "definitions": {
+            "StockFilters": {
+              "properties": {
+                "itemCode": {
+                  "description": "Item Code",
+                  "type": "string"
+                },
+                "itemName": {
+                  "description": "Item Name",
+                  "type": "string"
+                },
+                "monthlyConsumptionLookBackPeriod": {
+                  "description": "Average Monthly Consumption Look Back Period",
+                  "type": "number"
+                },
+                "monthsOverstock": {
+                  "description": "Months Overstock",
+                  "type": "number"
+                },
+                "monthsUnderstock": {
+                  "description": "Months Understock",
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "Item Code",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemCode",
+              "type": "Control"
+            },
+            {
+              "label": "Item Name",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemName",
+              "type": "Control"
+            },
+            {
+              "label": "AMC Lookback Period",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthlyConsumptionLookBackPeriod",
+              "type": "Control"
+            },
+            {
+              "label": "Target MOS",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthsOverstock",
+              "type": "Control"
+            },
+            {
+              "label": "Reorder threshold MOS",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthsUnderstock",
+              "type": "Control"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      }
+    },
+    {
+      "id": "item-usage_2.3.0",
+      "name": "Item Usage",
+      "type": "OmSupply",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "query.graphql",
+            "thisMonthConsumption",
+            "lastMonthConsumption",
+            "twoMonthsAgoConsumption",
+            "expiringInSixMonths",
+            "expiringInTwelveMonths",
+            "stockOnOrder",
+            "AMCTwelve",
+            "AMCTwentyFour"
+          ]
+        },
+        "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.in-stock\", f=\"In stock\")}}</td>\n        <td>{{t(k=\"report.stock-on-order\", f=\"Stock on order\")}}</td>\n        <td>{{t(k=\"report.amc-12-months\", f=\"AMC (12 months)\")}}</td>\n        <td>{{t(k=\"report.amc-24-months\", f=\"AMC (24 months)\")}}</td>\n        <td>{{t(k=\"report.months-cover\", f=\"Months cover\")}}</td>\n        <td>{{t(k=\"report.usage-this-month\", f=\"Monthly usage (this month)\")}}</td>\n        <td>{{t(k=\"report.usage-last-month\", f=\"Monthly usage (last month)\")}}</td>\n        <td>{{t(k=\"report.usage-2-months-prior\", f=\"Monthly usage (2 months ago)\")}}</td>\n        <td>{{t(k=\"report.expiring-6-months\", f=\"Expiring in 6 months\")}}</td>\n        <td>{{t(k=\"report.expiring-12-months\", f=\"Expiring in 12 months\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for item in data.items.nodes %}\n      <!-- monthly consumptions -->\n      {% set monthConsumption = data.thisMonthConsumption |\n      filter(attribute=\"item_id\", value=item.id) | map(attribute=\"quantity\") | first() |\n      default(value=0) %}\n      {% set lastMonthConsumption = data.lastMonthConsumption |\n        filter(attribute=\"item_id\", value=item.id) | map(attribute=\"quantity\") | first() |\n        default(value=0) %}\n      {% set twoMonthsAgoConsumption = data.twoMonthsAgoConsumption |\n        filter(attribute=\"item_id\", value=item.id) | map(attribute=\"quantity\") | first() |\n        default(value=0) %}\n      <!-- expiring -->\n      {% set expiringInSixMonths = data.expiringInSixMonths |\n        filter(attribute=\"item_id\", value=item.id) | map(attribute=\"quantity\") | first() |\n        default(value=0) %}\n      {% set expiringInTwelveMonths = data.expiringInTwelveMonths |\n       filter(attribute=\"item_id\", value=item.id)| map(attribute=\"quantity\") | first() |\n        default(value=0) %}\n      <!-- Stock on Order -->\n      {% set stockOnOrder = data.stockOnOrder |\n        filter(attribute=\"id\", value=item.id) | map(attribute=\"quantity\") | first() |\n        default(value=0) %}\n      <!-- AMC -->\n      {% set AMC12 = data.AMCTwelve |\n        filter(attribute=\"item_id\", value=item.id)| map(attribute=\"quantity\") |\n        first() | default(value=0) %}\n      {% set AMC24 = data.AMCTwentyFour |\n        filter(attribute=\"item_id\", value=item.id)| map(attribute=\"quantity\") |\n        first() | default(value=0) %}\n\n      {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(\n      precision=1) %}\n      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) |\n      round( precision=1) %}\n\n      <tr>\n        <td>{{item.code}}</td>\n        <td>{{item.name}}</td>\n        <td>{{SOH}}</td>\n        <td>{{stockOnOrder}}</td>\n        <td>{{AMC12}}</td>\n        <td>{{AMC24}}</td>\n        <td>{{MOS}}</td>\n        <td>{{monthConsumption}}</td>\n        <td>{{lastMonthConsumption}}</td>\n        <td>{{twoMonthsAgoConsumption}}</td>\n        <td>{{expiringInSixMonths}}</td>\n        <td>{{expiringInTwelveMonths}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>"
+            }
+          },
+          "lastMonthConsumption": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "lastMonthConsumption",
+              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    ),\n    last_month AS (\n        SELECT date('now', 'start of month', '-1 month') AS last_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month, last_month\nWHERE date >= last_month AND date < this_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month, last_month\nWHERE date >= last_month AND date < this_month AND store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "AMCTwentyFour": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "AMCTwentyFour",
+              "query_sqlite": "WITH\n    twenty_four_months_ago AS (\n        SELECT date('now', 'start of month', '-24 month') AS twenty_four_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 24), 1) AS quantity,    \n    item_id\nFROM consumption, twenty_four_months_ago\nWHERE date >= twenty_four_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    twenty_four_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '24 months') AS twenty_four_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 24)::numeric, 1) AS quantity,\n    item_id\nFROM consumption, twenty_four_months_ago\nWHERE date >= twenty_four_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "AMCTwelve": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "AMCTwelve",
+              "query_sqlite": "WITH\n    twelve_months_ago AS (\n        SELECT date('now', 'start of month', '-12 month') AS twelve_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 12), 1) AS quantity,\n    item_id\nFROM consumption, twelve_months_ago\nWHERE date >= twelve_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    twelve_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '12 months') AS twelve_months_ago\n    )\nSELECT\n    ROUND(SUM(quantity / 12)::numeric, 1) AS quantity,\n    item_id\nFROM consumption, twelve_months_ago\nWHERE date >= twelve_months_ago AND consumption.store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n}\n\n.container table td {\n  padding: 5px;\n  vertical-align: top;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}"
+          },
+          "expiringInSixMonths": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "expiringInSixMonths",
+              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    six_months AS (\n        SELECT date('now', '+6 months') AS six_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, six_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date >= this_month AND stock_line.expiry_date < six_months AND stock_line.store_id = $storeId\nGROUP BY i.item_id\n",
+              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    six_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN six_months ON true\nWHERE s.expiry_date >= this_month AND s.expiry_date < six_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id\n"
+            }
+          },
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query ItemUsage($storeId: String, $itemCode: String, $itemName: String) {\n  items(\n    storeId: $storeId\n    filter: { code: { like: $itemCode }, name: { like: $itemName } }\n    sort: { key: name, desc: false }\n    page: { first: 5000 }\n  ) {\n    ... on ItemConnector {\n      nodes {\n        id\n        code\n        name\n        stats(storeId: $storeId) {\n          totalConsumption\n          availableMonthsOfStockOnHand\n          availableStockOnHand\n          averageMonthlyConsumption\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "expiringInTwelveMonths": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "expiringInTwelveMonths",
+              "query_sqlite": "WITH \n    this_month AS (\n        SELECT date('now') AS this_month\n    ),\n    twelve_months AS (\n        SELECT date('now', '+12 months') AS twelve_months\n    )\nSELECT \n    stock_line.id,\n    i.item_id,\n    SUM(stock_line.available_number_of_packs) AS quantity\nFROM stock_line, twelve_months, this_month\nINNER JOIN item_link i ON i.id = stock_line.item_link_id\nWHERE stock_line.expiry_date >= this_month AND stock_line.expiry_date < twelve_months AND stock_line.store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH \n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    ),\n    twelve_months AS (\n        SELECT date_trunc('month', CURRENT_DATE + interval '12 months') AS twelve_months\n    )\nSELECT \n    s.id,\n    i.item_id,\n    SUM(s.available_number_of_packs) AS quantity\nFROM stock_line s\nINNER JOIN item_link i ON i.id = s.item_link_id\nINNER JOIN this_month ON true\nINNER JOIN twelve_months ON true\nWHERE s.expiry_date >= this_month AND s.expiry_date < twelve_months AND s.store_id = $storeId\nGROUP BY s.id, i.item_id"
+            }
+          },
+          "stockOnOrder": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "stockOnOrder",
+              "query_sqlite": "SELECT \n    item.id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY item.id",
+              "query_postgres": "SELECT \n    item.id,\n    SUM(rl.requested_quantity) - COALESCE(SUM(il.pack_size * il.number_of_packs), 0) AS quantity\nFROM item\nINNER JOIN item_link i ON item.id = i.item_id\nLEFT JOIN requisition_line rl ON rl.item_link_id = i.id\nLEFT JOIN requisition r ON r.id = rl.requisition_id\nLEFT JOIN invoice ON invoice.requisition_id = r.id\nLEFT JOIN invoice_line il on invoice.id = il.invoice_id AND il.item_link_id = i.id\nWHERE r.store_id = $storeId AND r.type = 'REQUEST' AND r.status = 'SENT'\nGROUP BY item.id"
+            }
+          },
+          "twoMonthsAgoConsumption": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "twoMonthsAgoConsumption",
+              "query_sqlite": "WITH\n    last_month AS (\n        SELECT date('now', 'start of month', '-1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date('now', 'start of month', '-2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    last_month AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month\n    ),\n    two_months_ago AS (\n        SELECT date_trunc('month', CURRENT_DATE - interval '2 month') AS two_months_ago\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, two_months_ago, last_month\nWHERE date >= two_months_ago AND date < last_month AND store_id = $storeId\nGROUP BY item_id\n"
+            }
+          },
+          "thisMonthConsumption": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "thisMonthConsumption",
+              "query_sqlite": "WITH\n    this_month AS (\n        SELECT date('now', 'start of month') AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n",
+              "query_postgres": "WITH\n    this_month AS (\n        SELECT date_trunc('month', CURRENT_DATE) AS this_month\n    )\nSELECT\n    SUM(quantity) AS quantity,\n    item_id\nFROM consumption, this_month\nWHERE date >= this_month AND store_id = $storeId\nGROUP BY item_id\n"
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "StockAndItems",
+      "argument_schema_id": "for_report_item-usage_2.3.0",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.3.0",
+      "code": "item-usage",
+      "form_schema": {
+        "id": "for_report_item-usage_2.3.0",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
+            {
+              "$ref": "#/definitions/StockFilters"
+            }
+          ],
+          "definitions": {
+            "StockFilters": {
+              "properties": {
+                "itemCode": {
+                  "description": "Item Code",
+                  "type": "string"
+                },
+                "itemName": {
+                  "description": "Item Name",
+                  "type": "string"
+                },
+                "monthlyConsumptionLookBackPeriod": {
+                  "description": "Average Monthly Consumption Look Back Period",
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "Item Code",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemCode",
+              "type": "Control"
+            },
+            {
+              "label": "Item Name",
+              "scope": "#/properties/itemName",
+              "type": "Control"
+            },
+            {
+              "label": "AMC Lookback Period",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthlyConsumptionLookBackPeriod",
+              "type": "Control"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      }
+    },
+    {
+      "id": "stock-take-variance_2.3.0",
+      "name": "Stock Take Variance",
+      "type": "OmSupply",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": null,
+          "query": [
+            "StockVarianceQuery.graphql"
+          ]
+        },
+        "entries": {
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"Report_title\">\n  {{t(k=\"report.stock-take-variance-report\", f=\"Stock Take Variance Report\")}}\n</div>\n"
+            }
+          },
+          "StockVarianceQuery.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "\nquery StocktakeQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  stocktake(storeId: $storeId, id: $dataId) {\n    ... on StocktakeNode {\n      id\n      storeId\n      stocktakeDate\n      stocktakeNumber\n      status\n      createdDatetime\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  stocktakeLines(storeId: $storeId, stocktakeId: $dataId, reportSort: $sort) {\n    ... on StocktakeLineConnector {\n      nodes {\n        id\n        itemId\n        item {\n          ... on ItemNode {\n            code\n            name\n          }\n        }\n        packSize\n        expiryDate\n        countedNumberOfPacks\n        batch\n        snapshotNumberOfPacks\n        costPricePerPack\n        comment\n        inventoryAdjustmentReasonId\n        inventoryAdjustmentReason {\n          ... on InventoryAdjustmentReasonNode {\n            reason\n          }\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      name(storeId: $storeId) {\n        ... on NameNode {\n          address1\n          address2\n          chargeCode\n          code\n          comment\n          country\n          email\n          name\n          phone\n          website\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "body {\n  margin: 10px 5% 10px 5%;\n  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n}\n\nth {\n  border: 1px dotted #181715;\n  border-collapse: collapse;\n}\n\ntable.center {\n  margin-left: auto;\n  margin-right: auto;\n  width: 98%;\n  border-collapse: collapse; \n\n}\n\ntd.borderline {\n  border-bottom: 1px solid black;\n  \n}\n\ntd.borderlineTopBottom {\n  border-bottom: 1px solid black;\n  border-top: 1px solid black;\n  \n}\n\n\n.Report_title {\n  text-align: center;\n  width: 100%;\n  height: 14px;\n  padding-top: 8px;\n  font-weight: bold; \n  font-size: 12pt; \n}\n\n\n.name_centre {\n  text-align: center;\n  font-weight: bold; \n  font-size: 14pt; \n}\n.name_address {\n  text-align: center;\n  font-weight: normal; \n  font-size: 10pt; \n}\n\n.name_right {\n  text-align: right;\n  font-weight: normal; \n  font-size: 10pt; \n}\n\n.table_header {\n  text-align: left;\n  font-weight: bold; \n  font-size: 8pt; \n}\n\n\n\n.table_text {\n  text-align: left;\n  font-weight: normal; \n  font-size: 8pt; \n}\n\n\n\n.table_number {\n  text-align: right;\n  font-weight: normal; \n  font-size: 8pt; \n}\n\n\n@media print{@page {size: landscape}}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "\n<style>\n  {% include \"style.css\" %}\n</style>\n\n<body>\n  {% set_global VvalueIncrease=0 %}\n  {% set_global VvalueDecrease=0 %}\n  {% set_global VnetVarience=0 %}\n  {% set_global Vnumofpackscounted=0 %}\n\n  <table class=\"center\">\n    <tr>\n      <td width=\"200\" class=\"borderline\"><img src=\"{{data.store.logo}}\"/></td>\n      <td class=\"borderline\"><div class=\"name_centre\">{{data.store.storeName}}\n      <br><span class=\"name_address\"> {{data.store.name.address1}}</span>\n      <br><span class=\"name_address\"> {{data.store.name.address2}}</span>\n    </div>\n      </td>\n      <td class=\"borderline\"><div class=\"name_right\"> {{t(k=\"report.stocktake-number\", f=\"Stocktake Number\")}} #: {{data.stocktake.stocktakeNumber}}</div></td>\n    </tr >\n   \n  </table>\n\n<table class=\"center\">\n  <tr>\n    <td width=\"60\" class=\"borderline\"> <span class=\"table_header\">{{t(k=\"report.item-code\", f=\"Item code\")}}</span></td>\n    <td class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.item-name\", f=\"Item name\")}}</span></td>\n    <td class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.batch\", f=\"Batch\")}}</span></td>\n    <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.expiry\", f=\"Expiry\")}}</span></td>\n    <td width=\"50\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.pack-size\", f=\"Pack size\")}}</span></td>\n    <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.cost-price-per-pack\", f=\"Cost price (per pack)\")}}</span></td>\n    <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.snapshot-packs\", f=\"Snapshot Packs\")}}</span></td>\n    <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.counted-packs\", f=\"Counted packs\")}}</span></td>\n    <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.variance-packs\", f=\"Variance (packs)\")}}</span></td>\n    <td width=\"60\" class=\"borderline\"><span class=\"table_header\">{{t(k=\"report.variance-value\", f=\"Variance (Value)\")}}</span></td>\n    <td width=\"100\"class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.reason\", f=\"Reason\")}}</span></td>\n    <td width=\"100\"class=\"borderline\"><span class=\"table_header\">{{t(k=\"label.comment\", f=\"Comment\")}}</span></td>\n  </tr>\n\n  {% for line in data.stocktakeLines.nodes -%}\n  <tr>\n    <td class=\"table_text\">{{line.item.code}}</td>\n    <td class=\"table_text\">{{line.item.name}}</td>\n    <td class=\"table_text\">{{line.batch}}</td>\n    <td class=\"table_number\">{{line.expiryDate}}</td>\n    <td class=\"table_number\">{{line.packSize}}</td>\n    <td class=\"table_number\">{{line.costPricePerPack}}</td>\n    <td class=\"table_number\">{{line.snapshotNumberOfPacks}}</td>\n\n    {% if line.countedNumberOfPacks %}\n    {% set_global Vnumofpackscounted=line.countedNumberOfPacks %}\n    {% else %}\n    {% set_global Vnumofpackscounted=0 %}\n    {% endif %}\n\n    <td class=\"table_number\">{{Vnumofpackscounted}}</td>\n\n    {% set Vvariance=Vnumofpackscounted - line.snapshotNumberOfPacks %}\n    {% set VvarianceValue=Vvariance * line.costPricePerPack %}\n    <td class=\"table_number\">{{Vvariance}}</td>\n    <td class=\"table_number\">{{VvarianceValue}}</td>\n\n    {% if line.inventoryAdjustmentReasonId %}\n    <td  class=\"table_text\">{{line.inventoryAdjustmentReason.reason}}</td>\n    {% else %}\n    <td  class=\"table_text\">N/A</td>\n    {% endif %}\n    <td  class=\"table_text\">{{line.comment}}</td>\n\n    {% if VvarianceValue > 0 %}\n    {% set_global VvalueIncrease=VvalueIncrease + VvarianceValue  %}\n    {% else %}\n    {% set_global VvalueDecrease=VvalueDecrease + VvarianceValue  %}\n    {% endif %}\n\n  </tr>\n  {%- endfor %}\n  {% set_global VnetVarience=VvalueIncrease + VvalueDecrease %}\n\n  <tr>\n    <td colspan=\"12\"  class=\"borderline\" />\n  </tr>\n\n\n\n\n  <tr>\n    <td colspan=\"10\" />\n    <td  class=\"borderline\"><span class=\"table_text\">{{t(k=\"report.net-increase\", f=\"Net Increase\")}}</span></td>\n    <td class=\"borderline\"><span class=\"table_text\">{{VvalueIncrease}}</span></td>\n  </tr>\n\n\n\n  <tr>\n    <td colspan=\"10\" />\n    <td class=\"borderline\"><span class=\"table_text\">{{t(k=\"report.net-decrease\", f=\"Net Decrease\")}}</span></td>\n    <td class=\"borderline\"><span class=\"table_text\">{{VvalueDecrease}}</span></td>\n  </tr>\n\n  <tr>\n    <td colspan=\"10\"  />\n    <td  class=\"borderline\"><span class=\"table_text\">{{t(k=\"report.net-variance\", f=\"Net Variance\")}}</span></td>\n    <td  class=\"borderline\"><span class=\"table_text\">{{VnetVarience}}</span></td>\n  </tr>\n</table>\n\n</body>\n"
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.3.0",
+      "code": "stock-take-variance",
+      "form_schema": null
+    },
+    {
+      "id": "stock-detail_2.3.0",
+      "name": "Stock Detail",
+      "type": "OmSupply",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "query.graphql"
+          ]
+        },
+        "entries": {
+          "query.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query StockDetail($storeId: String, $itemCodeOrName: String) {\n  stockLines(\n    storeId: $storeId\n    page: { first: 5000 }\n    filter: { itemCodeOrName: { like: $itemCodeOrName }, hasPacksInStore: true }\n  ) {\n    ... on StockLineConnector {\n      nodes {\n        batch\n        expiryDate\n        id\n        packSize\n        storeId\n        totalNumberOfPacks\n        supplierName\n        location {\n          code\n        }\n        item {\n          code\n          name\n          unitName\n        }\n      }\n    }\n  }\n}\n",
+              "variables": null
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.paging {\n  width: 100%;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 14px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  width: 100%;\n  font-size: inherit;\n  font-family: inherit;\n  text-align: left;\n  margin-top: 10;\n  margin-bottom: 15;\n}\n\n.container table td {\n  padding: 5px;\n  vertical-align: top;\n}\n\n.container table tr.heading td {\n  font-weight: bold;\n  margin-bottom: 15px;\n}\n\n.container table td.status span {\n  padding: 2px;\n  border-radius: 10px;\n}\n"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr class=\"heading\">\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.location\", f=\"Location\")}}</td>\n        <td>{{t(k=\"label.unit\", f=\"Unit\")}}</td>\n        <td>{{t(k=\"report.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"report.pack-quantity\", f=\"Pack quantity\")}}</td>\n        <td>{{t(k=\"label.soh\", f=\"SOH\")}}</td>\n        <td>{{t(k=\"label.supplier\", f=\"Supplier\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for stockLine in data.stockLines.nodes %}\n\n      <tr>\n        <td>{{stockLine.item.code}}</td>\n        <td>{{stockLine.item.name}}</td>\n        <td>{{stockLine.batch}}</td>\n        <td>\n          {%if stockLine.expiryDate %}\n          {{stockLine.expiryDate | date(format=\"%d/%m/%Y\")}}\n          {% else %}\n          \n          {% endif %}\n        </td>\n        <td>{{stockLine.location.code | default(value='')}}</td>\n        <td>{{stockLine.item.unitName}}</td>\n        <td>{{stockLine.packSize}}</td>\n        <td>{{stockLine.totalNumberOfPacks}}</td>\n        <td>{{\n          stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)  \n        }}</td>\n        <td>{{stockLine.supplierName}}</td>    \n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "StockAndItems",
+      "argument_schema_id": "for_report_stock-detail_2.3.0",
+      "comment": null,
+      "is_custom": false,
+      "version": "2.3.0",
+      "code": "stock-detail",
+      "form_schema": {
+        "id": "for_report_stock-detail_2.3.0",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "allOf": [
+            {
+              "$ref": "#/definitions/StockFilters"
+            }
+          ],
+          "definitions": {
+            "StockFilters": {
+              "properties": {
+                "itemCodeOrName": {
+                  "description": "Item Code or Name",
+                  "type": "string"
+                },
+                "monthlyConsumptionLookBackPeriod": {
+                  "description": "Average Monthly Consumption Look Back Period",
+                  "type": "number"
+                },
+                "monthsOverstock": {
+                  "description": "Months Overstock",
+                  "type": "number"
+                },
+                "monthsUnderstock": {
+                  "description": "Months Understock",
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "type": "object"
+        },
+        "ui_schema": {
+          "elements": [
+            {
+              "label": "Item Code or Name",
+              "options": {
+                "useDebounce": false
+              },
+              "scope": "#/properties/itemCodeOrName",
+              "type": "Control"
+            },
+            {
+              "label": "AMC Lookback Period",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthlyConsumptionLookBackPeriod",
+              "type": "Control"
+            },
+            {
+              "label": "Target MOS",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthsOverstock",
+              "type": "Control"
+            },
+            {
+              "label": "Reorder threshold MOS",
+              "options": {
+                "readonly": true
+              },
+              "scope": "#/properties/monthsUnderstock",
+              "type": "Control"
+            }
+          ],
+          "type": "VerticalLayout"
+        }
+      }
+    },
+    {
+      "id": "outbound-picklist-potrait-with-logo_2.3.0",
+      "name": "Outbound Picklist Portrait",
+      "type": "OmSupply",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": "footer.html",
+          "query": [
+            "picklist.graphql"
+          ]
+        },
+        "entries": {
+          "style.css": {
+            "type": "Resource",
+            "data": "@media print{\n    @page {\n        size: portrait\n    }\n}\n.header_image_section, .header_supplied_section, .header_date_section, .body_section, .body_total_section {\n    margin-left: 8px;\n    width: 100%;\n}\n\n.header_supplied_section {\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n} \n\n.header_image_section {\n    width: 100%;\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 8pt;\n    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;\n} \n\n.header_date_section {\n    width: 100%;\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n}\n\n.header_section_field_right {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.header_section_field_left {\n    text-align: left;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.line_number, .quantity, .pack, .expiry{\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.location_code, .item_name, .batch, .issued {\n    text-align: left;\n    font-family: Tahoma;\n    font-size: 8pt\n}\n\n.body_section, .body_total_section {\n    width: 98%;\n    font-family: Tahoma;\n}\n\n.body_section tr.body_column_label th {\n    border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n    border-bottom: 0.5px solid black;\n}\n\nhr {\n    width: 100%; \n    margin-left: 8px; \n    border: 0.1px solid black;\n}\n\n.pageNumber::after {\n    font-family: Tahoma;\n    font-size: 8pt;\n    counter-increment: page;\n    content: \"Page \" counter(page);\n}"
+          },
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"header_supplied_section\">\n    <tr> \n        <td class=\"header_section_field_left\"></td>\n        <td id= \"date\" class=\"header_section_field_right\"> {{t(k=\"report.printed-date\", f=\"Printed date\")}}: {{ now() | date(format=\"%m/%d/%Y\") }}</td>\n    </tr> \n\n    <tr> \n        <td class=\"header_section_field_left\">{{t(k=\"report.supplied-to\", f=\"Supplied to\")}}:</td> \n        <td class=\"header_section_field_right\">{{t(k=\"label.status\", f=\"Status\")}}: {{ data.invoice.status }}</td>\n    </tr> \n\n    <tr> \n        <td class=\"header_section_field_left\">{{ data.invoice.otherPartyName }}</td> \n        <td class=\"header_section_field_right\">{{t(k=\"report.entered-code\", f=\"Entered date\")}}: {{ data.invoice.createdDatetime | date(format=\"%m/%d/%Y\") }}</td>\n    </tr> \n\n    <tr> \n        <td class=\"header_section_field_left\">{{ data.invoice.otherParty.address1 }}</td> \n        <td class=\"header_section_field_right\">{{t(k=\"report.confirmed-date\", f=\"Confirmed Date\")}}: {{ data.invoice.createdDatetime | date(format=\"%m/%d/%Y\") }}</td>\n    </tr>\n\n</table>\n\n<table class=\"body_section\" cellpadding=\"2\" cellspacing=\"0\">\n    <tr class=\"body_column_label\">\n        <th class=\"line_number\" style=\"width: 5%;\">{{t(k=\"report.line\", f=\"Line\")}}</th>\n        <th class=\"location_code\" style=\"width: 13%;\">{{t(k=\"label.location\", f=\"Location\")}}</th>\n        <th class=\"item_name\" style=\"width: 38%;\">{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n        <th class=\"quantity\" style=\"width: 8%;\">{{t(k=\"label.quantity\", f=\"Quantity\")}}</th>\n        <th class=\"issued\" style=\"width: 5%;\">{{t(k=\"report.issued\", f=\"Issued\")}}</th>\n        <th class=\"pack\" style=\"width: 8%;\">{{t(k=\"label.pack\", f=\"Pack\")}}</th>\n        <th class=\"batch\" style=\"width: 8%;\">{{t(k=\"label.batch\", f=\"Batch\")}}</th>\n        <th class=\"expiry\" style=\"width: 10%;\">{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n    </tr>\n    {% for line in data.invoiceLines.nodes -%}\n    <tr class=\"body_value\">\n        <td class=\"line_number\" style=\"width: 20px;\">{{ loop.index }}</td>\n        {% if line.location.code %}\n        <td class=\"location_code\" style=\"width: 80px;\">{{ line.location.code }}</td>\n        {% else %}\n        <td class=\"location_code\" style=\"width: 80px;\"></td>\n        {% endif %}\n        <td class=\"item_name\" style=\"width: 250px;\">{{ line.itemName }}</td>\n        <td class=\"quantity\" style=\"width: 20px;\">{{ line.numberOfPacks }}</td>\n        <td class=\"issued\" style=\"width: 40px;\">___________</td>\n        <td class=\"pack\" style=\"width: 50px;\">{{ line.packSize }}</td>\n        <td class=\"batch\" style=\"width: 50px;\">{{ line.batch }}</td>\n        <td class=\"expiry\" style=\"width: 50px;\">{{ line.expiryDate }}</td>\n    </tr>\n    {%- endfor %}\n</table>"
+            }
+          },
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 98%;\">\n    <table class=\"header_image_section\" style=\"width: 98%;height: 98%;\"> \n        <tr> \n            <td style=\"padding-left: 8px;\">\n                <img style=\"display:block; width:25%;\" src=\"{{ data.store.logo }}\"/>\n            </td> \n            <td style=\"width: 250px;\">\n                <span style=\"text-align: center;font-size: 7pt;font-weight: bold;font-family: Tahoma;\">{{ data.store.storeName }}</span><br>\n                <span style=\"text-align: center;font-size: 6pt;font-family: Tahoma;\">{{ data.store.name.address1 }}</span><br>\n                <span style=\"text-align: center;font-size: 5pt;font-family: Tahoma;\">{{ data.store.name.address2 }}</span>\n            </td>\n            <td style=\"padding-left: 8px;\">\n                <span class=\"invoice_number\" \n                    style=\"text-align: right;font-weight: bold;font-size: 7pt;float: right;margin-left: 20px;width: 100px;\">\n                    {{t(k=\"report.packing-slip\", f=\"Packing slip\")}} #: {{ data.invoice.invoiceNumber }}\n                </span>\n            </td>\n        </tr>     \n    </table>\n  </div>"
+            }
+          },
+          "picklist.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query InvoiceQuery($storeId: String!, $dataId: String!, $sort: PrintReportSortInput) {\n  invoice(storeId: $storeId, id: $dataId) {\n    ... on InvoiceNode {\n      id\n      otherPartyId\n      comment\n      status\n      invoiceNumber\n      theirReference\n      createdDatetime\n      pickedDatetime\n      shippedDatetime\n      deliveredDatetime\n      allocatedDatetime\n      otherPartyName\n      type\n      pricing {\n        serviceTotalAfterTax\n        serviceTotalBeforeTax\n        stockTotalAfterTax\n        stockTotalBeforeTax\n        taxPercentage\n        totalAfterTax\n        totalBeforeTax\n      }\n      otherParty(storeId: $storeId) {\n        name\n        id\n        isSupplier\n        isCustomer\n        code\n        address1\n        address2\n      }\n      user {\n        username\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {\n    ... on InvoiceLineConnector {\n      nodes {\n        id\n        itemId\n        itemCode\n        itemName\n        locationName\n        item {\n          unitName\n        }\n        packSize\n        expiryDate\n        batch\n        numberOfPacks\n        packSize\n        sellPricePerPack\n        costPricePerPack\n        pricing {\n          serviceTotalAfterTax\n          serviceTotalBeforeTax\n          stockTotalAfterTax\n          stockTotalBeforeTax\n          taxPercentage\n          totalAfterTax\n          totalBeforeTax\n        }\n        location {\n          code\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        chargeCode\n        code\n        comment\n        country\n        email\n        name\n        phone\n        website\n      }\n    }\n  }\n}",
+              "variables": null
+            }
+          },
+          "footer.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: right; width: 100%;\">\n    <span class=\"pageNumber\"></span>\n    </div>"
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.3.0",
+      "code": "outbound-picklist-portrait",
+      "form_schema": null
+    },
+    {
+      "id": "outbound-invoice-landscape-with-logo_2.3.0",
+      "name": "Outbound Invoice Landscape",
+      "type": "OmSupply",
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": "header.html",
+          "footer": "footer.html",
+          "query": [
+            "outbound.graphql"
+          ]
+        },
+        "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n    {% include \"style.css\" %}\n</style>\n\n<table class=\"header_supplied_section\">\n    <tr> \n        <td class=\"header_section_field_left\">{{t(k=\"report.supplied-to\", f=\"Supplied to\")}}:</td> \n        <td class=\"header_section_field_right\">{{t(k=\"label.status\", f=\"Status\")}}: {{ data.invoice.status }}</td>\n    </tr> \n\n    <tr> \n        <td class=\"header_section_field_left\">{{ data.invoice.otherPartyName }}</td> \n        <td class=\"header_section_field_right\">{{t(k=\"report.their-ref\", f=\"Their ref\")}}: {{ data.invoice.theirReference }}</td>\n    </tr>\n\n    <tr> \n        <td class=\"header_section_field_left\">{{ data.invoice.otherParty.address1 }}</td> \n        <td class=\"header_section_field_right\">{{t(k=\"report.confirmed-date\", f=\"Confirmed Date\")}}: {{ data.invoice.createdDatetime | date(format=\"%m/%d/%Y\") }}</td>\n    </tr>\n\n</table>\n\n<table class=\"header_date_section\">\n    <tr>\n        <td class=\"header_section_field_left\"></td>\n        <td class=\"header_section_field_right\">{{t(k=\"report.printed-date\", f=\"Printed date\")}}: {{ now() | date(format=\"%m/%d/%Y\") }}</td>\n    </tr> \n\n    <tr> \n        <td class=\"header_section_field_left\">{{t(k=\"label.entered-by\", f=\"Entered by\")}}: {{ data.invoice.user.username}}</td>\n        <td id= \"date\" class=\"header_section_field_right\">{{t(k=\"report.invoice-type\", f=\"Invoice type\")}}: {{ data.invoice.type }}</td>\n    </tr>\n\n    <tr> \n        <td class=\"header_section_field_left\">{{t(k=\"report.created-date\", f=\"Created date\")}}: {{ data.invoice.createdDatetime | date(format=\"%m/%d/%Y\") }}</td>\n        <td class=\"header_section_field_right\">{{t(k=\"report.shipped-date\", f=\"Shipped date\")}}: {{ data.invoice.createdDatetime | date(format=\"%m/%d/%Y\") }}</td>\n    </tr> \n</table>\n\n<body>\n    <table class=\"body_section\" cellpadding=\"2\" cellspacing=\"0\">\n        <tr class=\"body_column_label\">\n            <th class=\"line_number\" style=\"width: 20px;\">{{t(k=\"report.line\", f=\"Line\")}}</th>\n            <th class=\"item_code\" style=\"width: 80px;\">{{t(k=\"report.item-code\", f=\"Item code\")}}</th>\n            <th class=\"item_name\" style=\"width: 500px;\">{{t(k=\"report.item-name\", f=\"Item name\")}}</th>\n            <th class=\"quantity\" style=\"width: 50px;\">{{t(k=\"label.quantity\", f=\"Quantity\")}}</th>\n            <th class=\"pack\" style=\"width: 50px;\">{{t(k=\"label.pack\", f=\"Pack\")}}</th>\n            <th class=\"batch\" style=\"width: 50px;\">{{t(k=\"label.batch\", f=\"Batch\")}}</th>\n            <th class=\"expiry\" style=\"width: 80px;\">{{t(k=\"label.expiry\", f=\"Expiry\")}}</th>\n            <th class=\"sell_price\" style=\"width: 50px;\">{{t(k=\"report.sell-price\", f=\"Sell Price\")}}</th>\n            <th class=\"cost_price\" style=\"width: 80px;\">{{t(k=\"report.cost-price\", f=\"Cost Price\")}}</th>\n            <th class=\"total_extension\" style=\"width: 50px;\">{{t(k=\"report.extension\", f=\"Extension\")}}</th>\n        </tr>\n        {% for line in data.invoiceLines.nodes -%}\n        <tr class=\"body_value\">\n            <td class=\"line_number\" style=\"width: 20px;\">{{ loop.index }}</td>\n            <td class=\"item_code\" style=\"width: 80px;\">{{ line.itemCode }}</td>\n            <td class=\"item_name\" style=\"width: 350px;\">{{ line.itemName }}</td>\n            <td class=\"quantity\" style=\"width: 50px;\">{{ line.numberOfPacks }}</td>\n            <td class=\"pack\" style=\"width: 50px;\">{{ line.packSize }}</td>\n            <td class=\"batch\" style=\"width: 50px;\">{{ line.batch }}</td>\n            <td class=\"expiry\" style=\"width: 80px;\">{{ line.expiryDate }}</td>\n            <td class=\"sell_price\" style=\"width: 50px;\">{{ line.sellPricePerPack }}</td>\n            <td class=\"cost_price\" style=\"width: 80px;\">{{ line.costPricePerPack   }}</td>\n            <td class=\"total_extension\" style=\"width: 50px;\">{{ line.numberOfPacks * line.sellPricePerPack }}</td>\n        </tr>\n        {%- endfor %}\n    </table>\n</body>\n\n<table class=\"body_total_section\" cellpadding=\"2\" cellspacing=\"0\">\n    <tr class=\"body_total_column_label\">\n        <th class=\"line_number\" style=\"width: 20px;\"></th>\n        <th class=\"item_code\" style=\"width: 80px;\"></th>\n        <th class=\"item_name\" style=\"width: 350px;\"></th>\n        <th class=\"quantity\" style=\"width: 50px;\"></th>\n        <th class=\"pack\" style=\"width: 50px;\"></th>\n        <th class=\"batch\" style=\"width: 50px;\"></th>\n        <th class=\"expiry\" style=\"width: 80px;\"></th>\n        <th class=\"sell_price\" style=\"width: 50px;\"></th>\n        <th class=\"cost_price\" style=\"width: 80px;\">Total:</th>\n        <th class=\"total_extension\" style=\"width: 50px;\">{{ data.invoice.pricing.totalAfterTax }}</th>\n    </tr>\n</table>"
+            }
+          },
+          "outbound.graphql": {
+            "type": "GraphGLQuery",
+            "data": {
+              "query": "query InvoiceQuery(\n  $storeId: String!\n  $dataId: String!\n  $sort: PrintReportSortInput\n) {\n  invoice(storeId: $storeId, id: $dataId) {\n    ... on InvoiceNode {\n      id\n      otherPartyId\n      comment\n      status\n      invoiceNumber\n      theirReference\n      createdDatetime\n      pickedDatetime\n      shippedDatetime\n      deliveredDatetime\n      allocatedDatetime\n      otherPartyName\n      type\n      pricing {\n        serviceTotalAfterTax\n        serviceTotalBeforeTax\n        stockTotalAfterTax\n        stockTotalBeforeTax\n        taxPercentage\n        totalAfterTax\n        totalBeforeTax\n      }\n      otherParty(storeId: $storeId) {\n        name\n        id\n        isSupplier\n        isCustomer\n        code\n        address1\n        address2\n      }\n      user {\n        username\n      }\n    }\n    ... on NodeError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {\n    ... on InvoiceLineConnector {\n      nodes {\n        id\n        itemId\n        itemCode\n        itemName\n        item {\n          unitName\n        }\n        packSize\n        expiryDate\n        batch\n        numberOfPacks\n        packSize\n        sellPricePerPack\n        costPricePerPack\n        pricing {\n          serviceTotalAfterTax\n          serviceTotalBeforeTax\n          stockTotalAfterTax\n          stockTotalBeforeTax\n          taxPercentage\n          totalAfterTax\n          totalBeforeTax\n        }\n      }\n    }\n  }\n  store(id: $storeId) {\n    ... on StoreNode {\n      code\n      storeName\n      logo\n      id\n      name(storeId: $storeId) {\n        address1\n        address2\n        chargeCode\n        code\n        comment\n        country\n        email\n        name\n        phone\n        website\n      }\n    }\n  }\n}",
+              "variables": null
+            }
+          },
+          "footer.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: right; width: 100%;\">\n<span class=\"pageNumber\"></span>\n</div>"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@media print{\n    @page {\n        size: A4 landscape \n    }\n}\n/* @page:left{\n    @bottom-left {\n      content: \"Page \" counter(page) \" of \" counter(pages);\n    }\n  } */\n\n  .header_image_section, .header_supplied_section, .header_date_section, .body_section, .body_total_section {\n    margin-left: 8px;\n    width: 100%;\n}\n\n.header_supplied_section {\n    /* width: 100%; */\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n} \n\n.header_image_section {\n    width: 100%;\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 8pt;\n    font-family: Tahoma;\n} \n\n.header_date_section {\n    width: 100%;\n    font-family: Tahoma;\n    font-size: 8pt;\n    border-bottom: 0.5px solid black;\n    padding-top: 1pt;\n}\n\n.header_section_field_right {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.header_section_field_left {\n    text-align: left;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.line_number, .quantity, .pack, .expiry, .sell_price, .cost_price, .total_quantity, .total_extension {\n    text-align: right;\n    font-family: Tahoma;\n    font-size: 8pt;\n}\n\n.item_code, .item_name, .batch {\n    text-align: left;\n    font-family: Tahoma;\n    font-size: 8pt\n}\n\n.body_section, .body_total_section {\n    width: 100%;\n    font-family: Tahoma;\n}\n\n.body_section tr.body_column_label th {\n    border-bottom: 0.5px solid black;\n}\n\n.body_value td {\n    border-bottom: 0.5px solid black;\n}\n\nhr {\n    width: 100%; \n    margin-left: 8px; \n    border: 0.1px solid black;\n}\n\n.pageNumber::after {\n    font-family: Tahoma;\n    font-size: 8pt;\n    counter-increment: page;\n    content: \"Page \" counter(page);\n}"
+          },
+          "header.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<div style=\"font-size: 10px; padding-top: 8px; text-align: center; width: 98%;\">\n    <table class=\"header_image_section\" style=\"width: 98%;height: 98%;\"> \n        <tr> \n            <td>\n                <img style=\"display:block; width:25%;\" src=\"{{data.store.logo}}\"/>\n            </td> \n            <td style=\"width: 350px;\">\n                <span style=\"text-align: center;font-size: 9pt;font-weight: bold;font-family: Tahoma;\">{{ data.store.storeName }}</span><br>\n                <span style=\"text-align: center;font-size: 7pt;font-family: Tahoma;\">{{ data.store.name.address1 }}</span><br>\n                <span style=\"text-align: center;font-size: 6pt;font-family: Tahoma;\">{{ data.store.name.address2 }}</span>\n            </td>\n            <td style=\"padding-left: 8px;\">\n                <span class=\"invoice_number\" \n                    style=\"text-align: right;font-weight: bold;font-size: 7pt;float: right;margin-left: 20px;\">\n                    {{t(k=\"report.invoice\", f=\"Invoice\")}}\"# : {{ data.invoice.invoiceNumber }}\n                </span>\n            </td>\n        </tr>     \n    </table>\n</div>\n\n"
+            }
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": null,
+      "argument_schema_id": null,
+      "comment": null,
+      "is_custom": false,
+      "version": "2.3.0",
+      "code": "outbound-invoice-landscape",
+      "form_schema": null
     }
   ]
 }
