@@ -89,6 +89,9 @@ pub async fn start_server(
         .unwrap();
     info!("Run DB migrations...done");
 
+    // Upsert standard reports
+    StandardReports::load_reports(&connection_manager.connection().unwrap()).unwrap();
+
     // INITIALISE CONTEXT
     info!("Initialising server context..");
     let (processors_trigger, processors) = Processors::init();
@@ -224,7 +227,7 @@ pub async fn start_server(
 
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
-            connection_manager: Data::new(connection_manager.clone()),
+            connection_manager: Data::new(connection_manager),
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
@@ -327,9 +330,6 @@ pub async fn start_server(
     };
 
     server_handle.stop(true).await;
-
-    // Upsert standard reports
-    let _ = StandardReports::load_reports(connection_manager);
 
     Ok(())
 }
