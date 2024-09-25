@@ -22,13 +22,6 @@ pub struct StandardReportsError;
 #[derive(Clone)]
 pub struct StandardReports;
 
-// impl Default for StandardReports {
-//     fn default() -> StandardReports {
-//         let _ = StandardReports::load_reports();
-//         StandardReports
-//     }
-// }
-
 impl StandardReports {
     // Load embedded reports
     pub fn load_reports(connection_manager: StorageConnectionManager) -> Result<(), anyhow::Error> {
