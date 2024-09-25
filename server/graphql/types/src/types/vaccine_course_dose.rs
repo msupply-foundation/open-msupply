@@ -34,6 +34,10 @@ impl VaccineCourseDoseNode {
         &self.row().min_age
     }
 
+    pub async fn max_age_months(&self) -> &f64 {
+        &self.row().max_age
+    }
+
     pub async fn min_interval_days(&self) -> &i32 {
         &self.row().min_interval_days
     }

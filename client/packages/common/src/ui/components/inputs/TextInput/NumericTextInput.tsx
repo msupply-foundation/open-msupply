@@ -352,5 +352,9 @@ export const NumericTextInput = React.forwardRef<
   }
 );
 
-const constrain = (value: number, decimals: number, min: number, max: number) =>
-  NumUtils.constrain(NumUtils.round(value, decimals), min, max);
+export const constrain = (
+  value: number,
+  decimals: number,
+  min: number,
+  max: number
+) => NumUtils.constrain(NumUtils.round(value, decimals), min, max);

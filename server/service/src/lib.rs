@@ -43,6 +43,7 @@ pub mod pack_variant;
 pub mod permission;
 pub mod plugin;
 pub mod plugin_data;
+pub mod pricing;
 pub mod print;
 pub mod processors;
 pub mod program;

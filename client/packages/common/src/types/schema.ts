@@ -2542,7 +2542,6 @@ export type InsertOutboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;
@@ -3371,6 +3370,21 @@ export type ItemPackVariantNode = {
   mostUsedPackVariantId: Scalars['String']['output'];
   packVariants: Array<VariantNode>;
 };
+
+export type ItemPriceInput = {
+  itemId: Scalars['String']['input'];
+  nameId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ItemPriceNode = {
+  __typename: 'ItemPriceNode';
+  calculatedPricePerUnit?: Maybe<Scalars['Float']['output']>;
+  defaultPricePerUnit?: Maybe<Scalars['Float']['output']>;
+  discountPercentage?: Maybe<Scalars['Float']['output']>;
+  itemId: Scalars['String']['output'];
+};
+
+export type ItemPriceResponse = ItemPriceNode;
 
 export enum ItemSortFieldInput {
   Code = 'code',
@@ -5234,6 +5248,7 @@ export type Queries = {
   invoices: InvoicesResponse;
   isCentralServer: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
+  itemPrice: ItemPriceResponse;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
@@ -5605,6 +5620,12 @@ export type QueriesInvoicesArgs = {
 
 export type QueriesItemCountsArgs = {
   lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesItemPriceArgs = {
+  input: ItemPriceInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -8048,6 +8069,7 @@ export type UpsertLogLevelResponse = {
 export type UpsertVaccineCourseDoseInput = {
   id: Scalars['String']['input'];
   label: Scalars['String']['input'];
+  maxAge: Scalars['Float']['input'];
   minAge: Scalars['Float']['input'];
   minIntervalDays: Scalars['Int']['input'];
 };
@@ -8178,6 +8200,7 @@ export type VaccinationCardItemNode = {
   given?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
+  maxAgeMonths: Scalars['Float']['output'];
   minAgeMonths: Scalars['Float']['output'];
   minIntervalDays: Scalars['Int']['output'];
   stockLine?: Maybe<StockLineNode>;
@@ -8226,6 +8249,7 @@ export type VaccineCourseDoseNode = {
   __typename: 'VaccineCourseDoseNode';
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
+  maxAgeMonths: Scalars['Float']['output'];
   minAgeMonths: Scalars['Float']['output'];
   minIntervalDays: Scalars['Int']['output'];
   vaccineCourse: VaccineCourseNode;
