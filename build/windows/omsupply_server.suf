@@ -371,9 +371,9 @@
 </FileData>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\Server\test-connection-postgres.exe</FullName>
+<FullName>#PROJECTFILEDIR#\Server\test-connection-postgres.exe</FullName>
 <FileName>test-connection-postgres.exe</FileName>
-<Source>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\Server</Source>
+<Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
@@ -444,9 +444,9 @@
 </FileData>
 <FileData>
 <FldRef>0</FldRef>
-<FullName>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\Server\test-connection-sqlite.exe</FullName>
+<FullName>#PROJECTFILEDIR#\Server\test-connection-sqlite.exe</FullName>
 <FileName>test-connection-sqlite.exe</FileName>
-<Source>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\Server</Source>
+<Source>#PROJECTFILEDIR#\Server</Source>
 <Ext>exe</Ext>
 <RTSource>Archive</RTSource>
 <Desc/>
