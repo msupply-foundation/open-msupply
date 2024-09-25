@@ -18,6 +18,7 @@ table! {
         given -> Nullable<Bool>,
         stock_line_id -> Nullable<Text>,
         facility_name_id -> Nullable<Text>,
+        facility_free_text -> Nullable<Text>,
         batch -> Nullable<Text>,
     }
 }
@@ -40,6 +41,7 @@ pub struct VaccinationCardRow {
     pub given: Option<bool>,
     pub stock_line_id: Option<String>,
     pub facility_name_id: Option<String>,
+    pub facility_free_text: Option<String>,
     pub batch: Option<String>,
 }
 
