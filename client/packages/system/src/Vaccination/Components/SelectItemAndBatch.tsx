@@ -2,7 +2,6 @@ import {
   Button,
   InputWithLabelRow,
   Select,
-  Switch,
   SxProps,
   Typography,
   useTranslation,
@@ -51,26 +50,10 @@ export const SelectItemAndBatch = ({
   const isHistorical = draft.date?.toDateString() !== new Date().toDateString();
 
   const selectBatch =
-    !isHistorical ||
-    draft.recordHistoricalTransaction ||
-    hasExistingSelectedBatch;
+    !isHistorical || draft.createTransactions || hasExistingSelectedBatch;
 
   return (
     <>
-      {isHistorical && !hasExistingSelectedBatch && (
-        <Switch
-          label={t('label.record-stock-transaction')}
-          checked={draft.recordHistoricalTransaction}
-          onChange={() =>
-            updateDraft({
-              recordHistoricalTransaction: !draft.recordHistoricalTransaction,
-            })
-          }
-          labelPlacement="end"
-          size="small"
-        />
-      )}
-
       {selectBatch && (
         <>
           <InputWithLabelRow
