@@ -22,6 +22,8 @@ util = { path = "../util" }
 service = { path = "../service" }
 server = { path = "../server" }
 graphql = { path = "../graphql" }
+report_builder = {path = "../report_builder"}
+
 
 anyhow = { workspace = true }
 async-graphql = { workspace = true }

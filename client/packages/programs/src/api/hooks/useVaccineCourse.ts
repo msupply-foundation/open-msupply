@@ -43,6 +43,7 @@ const vaccineCourseParsers = {
       id: dose.id,
       label: dose.label,
       minAge: dose.minAgeMonths,
+      maxAge: dose.maxAgeMonths,
       minIntervalDays: dose.minIntervalDays,
     };
   },
