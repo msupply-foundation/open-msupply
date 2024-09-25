@@ -21,7 +21,7 @@ use service::{
     plugin::validation::sign_plugin,
     report::definition::ReportDefinition,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::Settings,
+    settings::{self, Settings},
     sync::{
         file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
@@ -550,39 +550,12 @@ async fn main() -> anyhow::Result<()> {
             }
         }
         Action::UpsertReportsJson { json_path } => {
-            let connection_manager = get_storage_connection_manager(&settings.database);
-            let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
             let generated_dir = format!("{base_reports_dir}/generated");
 
-            let json_file = fs::File::open(
-                json_path.unwrap_or(format!("{generated_dir}/standard_reports.json")),
-            )
-            .expect("{generated_dir}/standard_reports.json not found");
-            let reports_data: ReportsData =
-                serde_json::from_reader(json_file).expect("json incorrectly formatted");
+            let path = json_path.unwrap_or(format!("{generated_dir}/standard_reports.json"));
 
-            for report in reports_data.reports {
-                if let Some(form_schema_json) = &report.form_schema {
-                    FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
-                }
-
-                ReportRowRepository::new(&con).upsert_one(&ReportRow {
-                    id: report.id.clone(),
-                    name: report.name,
-                    r#type: repository::ReportType::OmSupply,
-                    template: serde_json::to_string_pretty(&report.template)?,
-                    context: report.context,
-                    sub_context: report.sub_context,
-                    argument_schema_id: report.argument_schema_id,
-                    comment: report.comment,
-                    is_custom: report.is_custom,
-                    version: report.version,
-                    code: report.code,
-                })?;
-
-                info!("Report {} upserted", report.id);
-            }
+            let _ = upsert_reports(path, settings);
         }
         Action::UpsertReport {
             id,
@@ -660,6 +633,37 @@ fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
     let users_file_path = export_folder.join("users.txt");
 
     (export_folder, export_file_path, users_file_path)
+}
+
+pub fn upsert_reports(path: String, settings: Settings) -> Result<(), anyhow::Error> {
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let con = connection_manager.connection()?;
+    let json_file = fs::File::open(path).expect("{generated_dir}/standard_reports.json not found");
+    let reports_data: ReportsData =
+        serde_json::from_reader(json_file).expect("json incorrectly formatted");
+
+    for report in reports_data.reports {
+        if let Some(form_schema_json) = &report.form_schema {
+            FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
+        }
+
+        ReportRowRepository::new(&con).upsert_one(&ReportRow {
+            id: report.id.clone(),
+            name: report.name,
+            r#type: repository::ReportType::OmSupply,
+            template: serde_json::to_string_pretty(&report.template)?,
+            context: report.context,
+            sub_context: report.sub_context,
+            argument_schema_id: report.argument_schema_id,
+            comment: report.comment,
+            is_custom: report.is_custom,
+            version: report.version,
+            code: report.code,
+        })?;
+
+        info!("Report {} upserted", report.id);
+    }
+    Ok(())
 }
 
 #[derive(serde::Deserialize, Clone)]
