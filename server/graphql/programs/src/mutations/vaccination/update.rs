@@ -24,6 +24,7 @@ pub struct UpdateVaccinationInput {
     pub given: Option<bool>,
     pub stock_line_id: Option<String>,
     pub not_given_reason: Option<String>,
+    pub update_transactions: Option<bool>,
 }
 
 impl From<UpdateVaccinationInput> for UpdateVaccination {
@@ -38,6 +39,7 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
             not_given_reason,
             facility_name_id,
             facility_free_text,
+            update_transactions,
         }: UpdateVaccinationInput,
     ) -> Self {
         Self {
@@ -56,6 +58,7 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
             facility_free_text: facility_free_text.map(|facility_free_text| NullableUpdate {
                 value: facility_free_text.value,
             }),
+            update_transactions,
         }
     }
 }
@@ -104,7 +107,6 @@ fn map_error(error: ServiceError) -> Result<UpdateVaccinationResponse> {
         | ServiceError::ClinicianDoesNotExist
         | ServiceError::FacilityNameDoesNotExist
         | ServiceError::ReasonNotProvided
-        | ServiceError::StockLineNotProvided
         | ServiceError::StockLineDoesNotExist
         | ServiceError::NotMostRecentGivenDose
         | ServiceError::NotNextDose

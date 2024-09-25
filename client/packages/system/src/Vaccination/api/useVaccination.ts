@@ -30,6 +30,7 @@ export interface VaccinationDraft {
   itemId?: string;
   stockLine?: VaccinationStockLine | null;
   notGivenReason?: string | null;
+  createTransactions: boolean;
 }
 
 export function useVaccination({
@@ -43,34 +44,13 @@ export function useVaccination({
   vaccinationId: string | undefined;
   defaultClinician?: Clinician;
 }) {
-  const { store, storeId, api } = useVaccinationsGraphQL();
+  const { store } = useVaccinationsGraphQL();
 
-  const { data: dose, isLoading: doseLoading } = useQuery({
-    queryKey: [VACCINATION, vaccineCourseDoseId],
-    queryFn: async () => {
-      const result = await api.vaccineCourseDose({
-        doseId: vaccineCourseDoseId,
-      });
+  const { data: dose, isLoading: doseLoading } =
+    useDoseQuery(vaccineCourseDoseId);
 
-      if (result.vaccineCourseDose.__typename === 'VaccineCourseDoseNode') {
-        return result.vaccineCourseDose;
-      }
-    },
-  });
-  const { data: vaccination, isLoading: vaccinationLoading } = useQuery({
-    queryKey: [VACCINATION, vaccinationId],
-    queryFn: async () => {
-      if (!vaccinationId) {
-        return null;
-      }
-      const result = await api.vaccination({ vaccinationId, storeId });
-
-      if (result.vaccination?.__typename === 'VaccinationNode') {
-        return result.vaccination;
-      }
-    },
-    enabled: !!vaccinationId,
-  });
+  const { data: vaccination, isLoading: vaccinationLoading } =
+    useVaccinationQuery(vaccinationId);
 
   const { mutateAsync: insert } = useInsert({
     encounterId,
@@ -95,6 +75,7 @@ export function useVaccination({
   const defaults: VaccinationDraft = {
     // Default to today
     date: vaccinationDate ? new Date(vaccinationDate) : new Date(),
+
     // If new vaccination, default to encounter clinician
     clinician: vaccination ? clinician : defaultClinician,
     // If new vaccination, default to this store
@@ -103,27 +84,21 @@ export function useVaccination({
     facilityFreeText: facilityFreeText ?? '',
 
     // Populate with existing vaccination data
-    comment,
+    comment: comment ?? '',
     stockLine,
     given,
     notGivenReason,
     itemId: stockLine?.itemId,
+
+    createTransactions: false,
   };
 
   const draft: VaccinationDraft = { ...defaults, ...patch };
 
-  const isComplete =
-    // Other facility requires free text
-    (draft.facilityId !== OTHER_FACILITY || !!draft.facilityFreeText) &&
-    // Item/stock line required if given
-    ((draft.given && !!draft.itemId && !!draft.stockLine) ||
-      // reason required if not given
-      (draft.given === false && !!draft.notGivenReason));
-
   return {
     query: { dose, vaccination, isLoading: doseLoading || vaccinationLoading },
     draft,
-    isComplete,
+    isComplete: getIsComplete(draft),
     isDirty: Object.keys(patch).length > 0,
     store,
     updateDraft: (update: Partial<VaccinationDraft>) =>
@@ -131,6 +106,42 @@ export function useVaccination({
     saveVaccination: vaccinationId ? update : insert,
   };
 }
+
+const useDoseQuery = (vaccineCourseDoseId: string) => {
+  const { api } = useVaccinationsGraphQL();
+
+  return useQuery({
+    queryKey: [VACCINATION, vaccineCourseDoseId],
+    queryFn: async () => {
+      const result = await api.vaccineCourseDose({
+        doseId: vaccineCourseDoseId,
+      });
+
+      if (result.vaccineCourseDose.__typename === 'VaccineCourseDoseNode') {
+        return result.vaccineCourseDose;
+      }
+    },
+  });
+};
+
+const useVaccinationQuery = (vaccinationId: string | undefined) => {
+  const { api, storeId } = useVaccinationsGraphQL();
+
+  return useQuery({
+    queryKey: [VACCINATION, vaccinationId],
+    queryFn: async () => {
+      if (!vaccinationId) {
+        return null;
+      }
+      const result = await api.vaccination({ vaccinationId, storeId });
+
+      if (result.vaccination?.__typename === 'VaccinationNode') {
+        return result.vaccination;
+      }
+    },
+    enabled: !!vaccinationId,
+  });
+};
 
 const useInsert = ({
   encounterId,
@@ -206,8 +217,8 @@ const useUpdate = (vaccinationId: string | undefined) => {
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         clinicianId: setNullableInput('id', input.clinician),
         comment: input.comment,
-        notGivenReason: input.notGivenReason,
-        stockLineId: input.stockLine?.id,
+        notGivenReason: !input.given ? input.notGivenReason : null,
+        stockLineId: input.given ? input.stockLine?.id : null,
 
         facilityNameId: {
           value:
@@ -219,6 +230,8 @@ const useUpdate = (vaccinationId: string | undefined) => {
               ? input.facilityFreeText
               : undefined,
         },
+
+        updateTransactions: input.createTransactions,
       },
     });
 
@@ -242,3 +255,26 @@ const useUpdate = (vaccinationId: string | undefined) => {
     },
   });
 };
+
+function getIsComplete(draft: VaccinationDraft) {
+  const isForThisFacility = draft.facilityId !== OTHER_FACILITY;
+
+  // Other facility requires free text
+  if (!isForThisFacility && !draft.facilityFreeText) {
+    return false;
+  }
+
+  if (draft.given === undefined) {
+    return false;
+  }
+
+  // If not given, reason required
+  if (draft.given === false && !draft.notGivenReason) {
+    return false;
+  }
+
+  // If given:
+  // We won't block the workflow if the user doesn't select a batch
+
+  return true;
+}

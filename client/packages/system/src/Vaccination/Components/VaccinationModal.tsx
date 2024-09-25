@@ -1,10 +1,8 @@
 import {
   Alert,
-  AlertColor,
   BasicSpinner,
   BasicTextInput,
   Box,
-  Button,
   Container,
   DatePicker,
   DialogButton,
@@ -15,7 +13,7 @@ import {
   RadioGroup,
   RouteBuilder,
   Select,
-  SxProps,
+  Switch,
   useDialog,
   useEditModal,
   useFormatDateTime,
@@ -24,14 +22,19 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { FormControlLabel } from '@mui/material';
-import React, { ReactNode, useMemo } from 'react';
+import React from 'react';
 import { useVaccination, VaccinationDraft } from '../api';
 import { Clinician, ClinicianSearchInput } from '../../Clinician';
-import { VaccinationCourseDoseFragment } from '../api/operations.generated';
+import {
+  VaccinationCourseDoseFragment,
+  VaccinationDetailFragment,
+} from '../api/operations.generated';
 import { SelectBatchModal } from './SelectBatchModal';
 import { AppRoute } from '@openmsupply-client/config';
 import { ArrowRightIcon } from '@mui/x-date-pickers';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
+import { SelectItemAndBatch } from './SelectItemAndBatch';
+import { getSwitchReason } from './getSwitchReason';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -51,7 +54,6 @@ export const VaccinationModal = ({
   defaultClinician,
 }: VaccinationModalProps) => {
   const t = useTranslation('dispensary');
-  const { localisedDate } = useFormatDateTime();
   const { success, error } = useNotification();
   const {
     draft,
@@ -68,7 +70,7 @@ export const VaccinationModal = ({
   });
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(620);
+  const height = useKeyboardHeightAdjustment(700);
 
   const {
     isOpen: batchModalOpen,
@@ -87,47 +89,19 @@ export const VaccinationModal = ({
     }
   };
 
-  const alert: { severity: AlertColor; content: ReactNode } | undefined =
-    vaccination?.given
-      ? {
-          severity: 'success',
-          content: (
-            <Box display="flex" alignItems="center">
-              {t('messages.vaccination-was-given', {
-                date: localisedDate(vaccination?.vaccinationDate ?? ''),
-              })}
-              {vaccination.invoice && (
-                <Link
-                  style={{
-                    marginLeft: 6,
-                    fontWeight: 'bold',
-                    alignItems: 'center',
-                    display: 'flex',
-                  }}
-                  to={RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Prescription)
-                    .addPart(vaccination.invoice.invoiceNumber.toString())
-                    .build()}
-                >
-                  {t('button.view-prescription')}
-                  <ArrowRightIcon />
-                </Link>
-              )}
-            </Box>
-          ),
-        }
-      : undefined;
+  const InfoBox = <GivenInfoBox vaccination={vaccination} />;
 
   const modalContent = isLoading ? (
     <BasicSpinner />
   ) : (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {alert && <Alert severity={alert.severity}>{alert.content}</Alert>}
+      {InfoBox}
       <VaccinationForm
         updateDraft={updateDraft}
         openBatchModal={openBatchModal}
         draft={draft}
         dose={dose}
+        vaccination={vaccination}
       />
     </Box>
   );
@@ -146,7 +120,7 @@ export const VaccinationModal = ({
       height={height}
       width={550}
       slideAnimation={false}
-      contentProps={{ sx: { paddingTop: alert ? 0 : undefined } }}
+      contentProps={{ sx: { paddingTop: !!InfoBox ? 0 : undefined } }}
     >
       <>
         {batchModalOpen && (
@@ -167,28 +141,50 @@ export const VaccinationModal = ({
 const VaccinationForm = ({
   draft,
   dose,
+  vaccination,
   updateDraft,
   openBatchModal,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
+  vaccination?: VaccinationDetailFragment | null;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
   openBatchModal: () => void;
 }) => {
   const t = useTranslation('dispensary');
 
-  const vaccineItemOptions = useMemo(() => {
-    return (
-      dose?.vaccineCourse.vaccineCourseItems?.map(item => ({
-        label: item.name,
-        value: item.itemId,
-      })) ?? []
-    );
-  }, [dose?.id]);
-
   if (!dose) {
     return null;
   }
+
+  const transactionSwitchReason = getSwitchReason(
+    draft,
+    !!dose.vaccineCourse.vaccineCourseItems?.length,
+    vaccination
+  );
+  const CreateTransactions = transactionSwitchReason ? (
+    <Switch
+      label={t(transactionSwitchReason)}
+      checked={draft.createTransactions}
+      onChange={() =>
+        updateDraft({
+          createTransactions: !draft.createTransactions,
+        })
+      }
+      labelPlacement="end"
+      size="small"
+    />
+  ) : null;
+
+  const SelectBatch = (
+    <SelectItemAndBatch
+      dose={dose}
+      draft={draft}
+      openBatchModal={openBatchModal}
+      updateDraft={updateDraft}
+      hasExistingSelectedBatch={!!vaccination?.stockLine}
+    />
+  );
 
   return (
     <Container
@@ -212,6 +208,7 @@ const VaccinationForm = ({
             {draft.facilityId === OTHER_FACILITY && (
               <BasicTextInput
                 fullWidth
+                autoFocus
                 placeholder={t('placeholder.enter-facility-name')}
                 value={draft.facilityFreeText}
                 onChange={e =>
@@ -249,9 +246,8 @@ const VaccinationForm = ({
           />
         }
       />
-
       <RadioGroup
-        sx={{ margin: '5 auto', width: 'fit-content' }}
+        sx={{ margin: '0 auto' }}
         value={draft.given ?? null}
         onChange={event =>
           updateDraft({ given: event.target.value === 'true' })
@@ -268,40 +264,17 @@ const VaccinationForm = ({
           label={t('label.vaccine-not-given')}
         />
       </RadioGroup>
-      {draft.given && (
+
+      {/* Switch makes more sense below the batch selection if you're updating the batch */}
+      {transactionSwitchReason === 'label.update-transactions' ? (
         <>
-          <InputWithLabelRow
-            label={t('label.vaccine-item')}
-            Input={
-              <Select
-                options={vaccineItemOptions}
-                value={draft.itemId ?? ''}
-                onChange={e => updateDraft({ itemId: e.target.value })}
-                sx={{ flex: 1 }}
-              />
-            }
-          />
-          <InputWithLabelRow
-            label={t('label.batch')}
-            Input={
-              <Button
-                disabled={!draft.itemId}
-                onClick={() => draft.itemId && openBatchModal()}
-                sx={{
-                  ...baseButtonStyles,
-                  // !draft.itemId === disabled
-                  color: draft.itemId ? 'gray.main' : 'gray.light',
-                  backgroundColor: draft.itemId && 'background.menu',
-                  // stock line is selected
-                  fontStyle: draft.stockLine ? 'none' : 'italic',
-                }}
-              >
-                {draft.stockLine
-                  ? (draft.stockLine.batch ?? t('label.selected'))
-                  : t('label.select-batch')}
-              </Button>
-            }
-          />
+          {SelectBatch}
+          {CreateTransactions}
+        </>
+      ) : (
+        <>
+          {CreateTransactions}
+          {SelectBatch}
         </>
       )}
 
@@ -346,9 +319,40 @@ const VaccinationForm = ({
   );
 };
 
-const baseButtonStyles: SxProps = {
-  flex: 1,
-  textTransform: 'none',
-  justifyContent: 'left',
-  border: '1px solid lightgray',
+const GivenInfoBox = ({
+  vaccination,
+}: {
+  vaccination: VaccinationDetailFragment | null | undefined;
+}) => {
+  const t = useTranslation('dispensary');
+  const { localisedDate } = useFormatDateTime();
+
+  if (vaccination?.given) {
+    return (
+      <Alert severity="success">
+        <Box display="flex" alignItems="center">
+          {t('messages.vaccination-was-given', {
+            date: localisedDate(vaccination.vaccinationDate ?? ''),
+          })}
+          {vaccination.invoice && (
+            <Link
+              style={{
+                marginLeft: 6,
+                fontWeight: 'bold',
+                alignItems: 'center',
+                display: 'flex',
+              }}
+              to={RouteBuilder.create(AppRoute.Dispensary)
+                .addPart(AppRoute.Prescription)
+                .addPart(vaccination.invoice.invoiceNumber.toString())
+                .build()}
+            >
+              {t('button.view-prescription')}
+              <ArrowRightIcon />
+            </Link>
+          )}
+        </Box>
+      </Alert>
+    );
+  }
 };
