@@ -19,6 +19,7 @@ import {
   ModalMode,
   NumberCell,
   NumberInputCell,
+  MultipleNumberInputCell,
   NumericTextInput,
   PlusCircleIcon,
   TableProvider,
@@ -228,7 +229,10 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         />
       }
       height={height}
-      width={750}
+      sx={{
+        width: 950,
+        maxWidth: 'unset',
+      }}
       slideAnimation={false}
     >
       {modalContent}
@@ -256,9 +260,9 @@ const VaccineCourseDoseTable = ({
         {
           __typename: 'VaccineCourseDoseNode',
           id: FnUtils.generateUUID(),
-          // temp - will be overwritten by the backend to assign unique dose number (even if previous doses were deleted)
           label: `${courseName} ${doses.length + 1}`,
           minAgeMonths: (previousDose?.minAgeMonths ?? 0) + 1,
+          maxAgeMonths: (previousDose?.minAgeMonths ?? 0) + 2,
           minIntervalDays: previousDose?.minIntervalDays ?? 30,
         },
       ],
@@ -297,8 +301,14 @@ const VaccineCourseDoseTable = ({
       },
       {
         key: 'minAgeMonths',
-        Cell: MinAgeCell,
-        label: 'label.age-months',
+        Cell: AgeCell,
+        label: 'label.from-age',
+        setter: updateDose,
+      },
+      {
+        key: 'maxAgeMonths',
+        Cell: AgeCell,
+        label: 'label.to-age',
         setter: updateDose,
       },
       {
@@ -345,6 +355,28 @@ const VaccineCourseDoseTable = ({
 };
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
-const MinAgeCell = (props: CellProps<VaccineCourseDoseFragment>) => (
-  <NumberInputCell decimalLimit={2} {...props} />
-);
+const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
+  const t = useTranslation();
+  // Set maximum and minimum to ensure maxAge can't be lower than minAge
+  const minimum =
+    props.column.key === 'maxAgeMonths'
+      ? props.rowData.minAgeMonths
+      : undefined;
+  const maximum =
+    props.column.key === 'minAgeMonths'
+      ? props.rowData.maxAgeMonths
+      : undefined;
+  return (
+    <MultipleNumberInputCell
+      decimalLimit={2}
+      width={25}
+      {...props}
+      min={minimum}
+      max={maximum}
+      units={[
+        { key: 'year', ratio: 12, label: t('label.years-abbreviation') },
+        { key: 'month', ratio: 1, label: t('label.months-abbreviation') },
+      ]}
+    />
+  );
+};
