@@ -621,6 +621,7 @@ fragment VaccineCourseDose on VaccineCourseDoseNode {
   id
   label
   minAgeMonths
+  maxAgeMonths
   minIntervalDays
 }
 
