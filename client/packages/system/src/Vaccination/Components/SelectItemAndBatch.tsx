@@ -1,8 +1,6 @@
 import {
-  Button,
   InputWithLabelRow,
   Select,
-  SxProps,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -10,19 +8,18 @@ import React, { PropsWithChildren, useMemo } from 'react';
 import { VaccinationDraft } from '../api';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { OTHER_FACILITY } from './FacilitySearchInput';
+import { SelectBatch } from './SelectBatch';
 
 export const SelectItemAndBatch = ({
   draft,
   dose,
   hasExistingSelectedBatch,
   updateDraft,
-  openBatchModal,
 }: {
   dose: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   hasExistingSelectedBatch: boolean;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
-  openBatchModal: () => void;
 }) => {
   const t = useTranslation('dispensary');
 
@@ -69,27 +66,13 @@ export const SelectItemAndBatch = ({
               />
             }
           />
-          <InputWithLabelRow
-            label={t('label.batch')}
-            Input={
-              <Button
-                disabled={!draft.itemId}
-                onClick={() => draft.itemId && openBatchModal()}
-                sx={{
-                  ...baseButtonStyles,
-                  // !draft.itemId === disabled
-                  color: draft.itemId ? 'gray.main' : 'gray.light',
-                  backgroundColor: draft.itemId && 'background.menu',
-                  // stock line is selected
-                  fontStyle: draft.stockLine ? 'none' : 'italic',
-                }}
-              >
-                {draft.stockLine
-                  ? (draft.stockLine.batch ?? t('label.selected'))
-                  : t('label.select-batch')}
-              </Button>
-            }
-          />
+          {draft.itemId && (
+            <SelectBatch
+              itemId={draft.itemId}
+              stockLine={draft.stockLine ?? null}
+              setStockLine={stockLine => updateDraft({ stockLine })}
+            />
+          )}
         </>
       )}
     </>
@@ -101,10 +84,3 @@ const InfoText = ({ children }: PropsWithChildren<{}>) => (
     {children}
   </Typography>
 );
-
-const baseButtonStyles: SxProps = {
-  flex: 1,
-  textTransform: 'none',
-  justifyContent: 'left',
-  border: '1px solid lightgray',
-};
