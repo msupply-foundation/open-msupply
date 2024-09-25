@@ -1,0 +1,18 @@
+{
+    "is_custom": false,
+    "version": "2.3.0",
+    "code": "item-usage",
+    "context": "REPORT",
+    "sub_context": "StockAndItems",
+    "name": "Item Usage",
+    "queries": {
+        "gql": "query.graphql",
+        "sql": ["thisMonthConsumption.postgres.sql", "thisMonthConsumption.sqlite.sql", "lastMonthConsumption.postgres.sql", "lastMonthConsumption.sqlite.sql", "twoMonthsAgoConsumption.postgres.sql","twoMonthsAgoConsumption.sqlite.sql","expiringInSixMonths.postgres.sql", "expiringInSixMonths.sqlite.sql", "expiringInTwelveMonths.postgres.sql","expiringInTwelveMonths.sqlite.sql", "stockOnOrder.sql", "AMCTwelve.sqlite.sql", "AMCTwentyFourpostgres.sql", "AMCTwentyFoursqlite.sql"]
+    },
+    "arguments": {
+        "schema": "argument_schemas/arguments.json",
+        "ui": "argument_schemas/arguments_ui.json"
+    }
+}   
+
+               

@@ -1,0 +1,12 @@
+{
+    "is_custom": false,
+    "version": "2.3.0",
+    "code": "outbound-picklist-portrait",
+    "context": "REPORT",
+    "name": "Outbound Picklist Portrait",
+    "header": "header.html",
+    "footer": "footer.html",
+    "queries": {
+        "gql": "picklist.graphql"
+    }
+}   
