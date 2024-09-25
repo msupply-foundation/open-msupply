@@ -453,7 +453,7 @@ async fn main() -> anyhow::Result<()> {
                         .expect("Can't open manifest for report {} {}", reportname, version);
 
                     let manifest: Manifest = serde_json::from_reader(manifest_file)
-                        .expect("manifest json not formatted");
+                        .expect("manifest json parsing error, check it's in the right format report{}:version{}", report, version);
 
                     let id = format!("{name}_{version}");
                     let report_path = format!("{version_dir}/generated/{name}.json");
