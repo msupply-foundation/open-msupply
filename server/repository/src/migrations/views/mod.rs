@@ -416,6 +416,9 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       ON nl.name_id = n.id
     LEFT JOIN stock_line s 
       ON v.stock_line_id = s.id;
+    -- Only show doses that haven't been deleted, unless they have a vaccination
+    WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
+
     "#,
     )?;
 

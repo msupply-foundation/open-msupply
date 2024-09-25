@@ -28,6 +28,7 @@ pub struct VaccineCourseDose {
 pub struct VaccineCourseDoseFilter {
     pub id: Option<EqualFilter<String>>,
     pub vaccine_course_id: Option<EqualFilter<String>>,
+    pub include_deleted: Option<bool>,
 }
 
 impl VaccineCourseDoseFilter {
@@ -42,6 +43,11 @@ impl VaccineCourseDoseFilter {
 
     pub fn vaccine_course_id(mut self, filter: EqualFilter<String>) -> Self {
         self.vaccine_course_id = Some(filter);
+        self
+    }
+
+    pub fn include_deleted(mut self, filter: bool) -> Self {
+        self.include_deleted = Some(filter);
         self
     }
 }
@@ -100,10 +106,11 @@ fn create_filtered_query(filter: Option<VaccineCourseDoseFilter>) -> BoxedVaccin
         .inner_join(vaccine_course::dsl::vaccine_course)
         .into_boxed();
 
-    if let Some(f) = filter {
+    if let Some(f) = filter.clone() {
         let VaccineCourseDoseFilter {
             id,
             vaccine_course_id,
+            include_deleted: _,
         } = f;
 
         apply_equal_filter!(query, id, vaccine_course_dose_dsl::id);
@@ -113,6 +120,12 @@ fn create_filtered_query(filter: Option<VaccineCourseDoseFilter>) -> BoxedVaccin
             vaccine_course_dose_dsl::vaccine_course_id
         );
     }
+
+    // Filter out deleted rows, unless include_deleted is set to true
+    if !filter.map(|f| f.include_deleted).flatten().unwrap_or(false) {
+        query = query.filter(vaccine_course_dose_dsl::deleted_datetime.is_null());
+    }
+
     query
 }
 
