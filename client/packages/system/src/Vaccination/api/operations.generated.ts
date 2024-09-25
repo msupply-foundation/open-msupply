@@ -49,7 +49,7 @@ export type UpdateVaccinationMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateVaccinationMutation = { __typename: 'Mutations', updateVaccination: { __typename: 'VaccinationNode', id: string } };
+export type UpdateVaccinationMutation = { __typename: 'Mutations', updateVaccination: { __typename: 'UpdateVaccinationError', error: { __typename: 'NotMostRecentGivenDose', description: string } } | { __typename: 'VaccinationNode', id: string } };
 
 export const VaccinationCourseDoseFragmentDoc = gql`
     fragment VaccinationCourseDose on VaccineCourseDoseNode {
@@ -177,6 +177,16 @@ export const UpdateVaccinationDocument = gql`
     ... on VaccinationNode {
       __typename
       id
+    }
+    ... on UpdateVaccinationError {
+      __typename
+      error {
+        description
+        ... on NotMostRecentGivenDose {
+          __typename
+          description
+        }
+      }
     }
   }
 }
