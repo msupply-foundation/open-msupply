@@ -400,6 +400,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       v.given, 
       v.stock_line_id, 
       n.id AS facility_name_id,
+      v.facility_free_text,
       s.batch,
       pe.id as program_enrolment_id
     FROM vaccine_course_dose vcd 
