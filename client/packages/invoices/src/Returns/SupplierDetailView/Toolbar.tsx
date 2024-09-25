@@ -21,7 +21,8 @@ export const Toolbar: FC = () => {
 
   const { bufferedState, setBufferedState } =
     useReturns.document.supplierReturn();
-  const { otherParty, theirReference, id } = bufferedState ?? { id: '' };
+  const { otherParty, theirReference, id, originalShipment } =
+    bufferedState ?? { id: '' };
   const { isGrouped, toggleIsGrouped } = useIsGrouped('supplierReturn');
   const { mutateAsync: updateOtherParty } =
     useReturns.document.updateOtherParty();
@@ -55,7 +56,7 @@ export const Toolbar: FC = () => {
                 sx={{ minWidth: 100 }}
                 Input={
                   <SupplierSearchInput
-                    disabled={isDisabled}
+                    disabled={isDisabled || !!originalShipment}
                     value={otherParty}
                     onChange={async ({ id: otherPartyId }) => {
                       await updateOtherParty({ id, otherPartyId });

@@ -662,6 +662,7 @@ mod test {
             id: "master_list_line_b".to_string(),
             master_list_id: master_list_id.clone(),
             item_link_id: "item_d".to_string(),
+            ..Default::default()
         });
 
         service

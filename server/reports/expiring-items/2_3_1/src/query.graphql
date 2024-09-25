@@ -1,0 +1,39 @@
+query ExpiringItems(
+  $storeId: String
+  $itemCodeOrName: String
+  $expiryDate: String
+) {
+  stockLines(
+    storeId: $storeId
+    filter: {
+      itemCodeOrName: { like: $itemCodeOrName }
+      expiryDate: { beforeOrEqualTo: $expiryDate }
+      hasPacksInStore: true
+    }
+    sort: { key: itemName, desc: false }
+    page: { first: 5000 }
+  ) {
+    ... on StockLineConnector {
+      nodes {
+        batch
+        expiryDate
+        id
+        packSize
+        storeId
+        totalNumberOfPacks
+        supplierName
+        location {
+          code
+        }
+        item {
+          code
+          name
+          unitName
+          stats(storeId: $storeId) {
+            averageMonthlyConsumption
+          }
+        }
+      }
+    }
+  }
+}

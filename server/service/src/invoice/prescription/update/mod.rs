@@ -47,6 +47,8 @@ pub enum UpdatePrescriptionError {
     DatabaseError(RepositoryError),
     /// Holds the id of the invalid invoice line
     InvoiceLineHasNoStockLine(String),
+    /// Invalid stock for this date
+    StockNotAvailableAtDate(NaiveDateTime),
 }
 
 type OutError = UpdatePrescriptionError;

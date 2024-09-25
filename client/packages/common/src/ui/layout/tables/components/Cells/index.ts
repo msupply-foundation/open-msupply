@@ -1,5 +1,6 @@
 export * from './TextInputCell';
 export * from './NumberInputCell';
+export * from './MultiNumberInputCell';
 export * from './CurrencyInputCell';
 export * from './CheckboxCell';
 export * from './ExpiryDateCell';

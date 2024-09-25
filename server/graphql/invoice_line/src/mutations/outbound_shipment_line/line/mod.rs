@@ -73,7 +73,7 @@ pub struct NotEnoughStockForReduction {
 #[Object]
 impl NotEnoughStockForReduction {
     pub async fn description(&self) -> &str {
-        "Not enought stock for reduction"
+        "Not enough stock for reduction"
     }
 
     pub async fn line(&self, ctx: &Context<'_>) -> Result<Option<InvoiceLineNode>> {
