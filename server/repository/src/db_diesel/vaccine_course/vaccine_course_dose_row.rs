@@ -16,6 +16,7 @@ table! {
         vaccine_course_id -> Text,
         label -> Text,
         min_age -> Double,
+        max_age -> Double,
         min_interval_days -> Integer,
 
     }
@@ -33,6 +34,7 @@ pub struct VaccineCourseDoseRow {
     pub vaccine_course_id: String,
     pub label: String,
     pub min_age: f64,
+    pub max_age: f64,
     pub min_interval_days: i32,
 }
 

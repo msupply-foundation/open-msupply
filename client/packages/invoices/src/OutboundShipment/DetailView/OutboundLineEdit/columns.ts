@@ -202,7 +202,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
     [
       'sellPricePerUnit',
       {
-        accessor: ({ rowData }) => rowData.sellPricePerPack,
+        accessor: ({ rowData }) => rowData.sellPricePerPack / rowData.packSize,
       },
     ]
   );

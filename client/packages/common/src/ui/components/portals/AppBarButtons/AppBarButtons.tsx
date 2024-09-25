@@ -27,7 +27,12 @@ export const AppBarButtonsPortal: FC<BoxProps> = props => {
 
   return (
     <Portal container={appBarButtonsRef.current}>
-      <Box {...props} />
+      <Box
+        sx={{
+          padding: 1.5,
+        }}
+        {...props}
+      />
     </Portal>
   );
 };

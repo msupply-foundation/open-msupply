@@ -100,7 +100,7 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const sharedComponentProps = {
-    value: DateUtils.getDateOrNull(data, inputFormat),
+    value: DateUtils.getDateOrNull(data),
     onChange: (e: Date | null) => onChange(e),
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],

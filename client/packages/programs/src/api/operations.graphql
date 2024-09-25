@@ -200,6 +200,9 @@ fragment Encounter on EncounterNode {
     firstName
     lastName
   }
+  programEnrolment {
+    id
+  }
   createdDatetime
   startDatetime
   endDatetime
@@ -618,6 +621,7 @@ fragment VaccineCourseDose on VaccineCourseDoseNode {
   id
   label
   minAgeMonths
+  maxAgeMonths
   minIntervalDays
 }
 
