@@ -8220,6 +8220,7 @@ export type VaccinationCardItemNode = {
   maxAgeMonths: Scalars['Float']['output'];
   minAgeMonths: Scalars['Float']['output'];
   minIntervalDays: Scalars['Int']['output'];
+  status?: Maybe<VaccinationCardItemNodeStatus>;
   stockLine?: Maybe<StockLineNode>;
   suggestedDate?: Maybe<Scalars['NaiveDate']['output']>;
   vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -8232,6 +8233,13 @@ export type VaccinationCardItemNode = {
 export type VaccinationCardItemNodeFacilityNameArgs = {
   storeId: Scalars['String']['input'];
 };
+
+export enum VaccinationCardItemNodeStatus {
+  Given = 'GIVEN',
+  Late = 'LATE',
+  NotGiven = 'NOT_GIVEN',
+  Pending = 'PENDING'
+}
 
 export type VaccinationCardNode = {
   __typename: 'VaccinationCardNode';

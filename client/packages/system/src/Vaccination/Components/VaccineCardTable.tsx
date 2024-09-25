@@ -12,6 +12,7 @@ import {
   useRowStyle,
   useTheme,
   StatusCell,
+  VaccinationCardItemNodeStatus,
 } from '@openmsupply-client/common';
 import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
 import { VaccinationCardItemFragment } from '../api/operations.generated';
@@ -55,8 +56,12 @@ const useStyleRowsByStatus = (
   useEffect(() => {
     if (!rows) return;
 
-    const doneRows = rows.filter(row => row.given).map(row => row.id);
-    const notDoneRows = rows.filter(row => !row.given).map(row => row.id);
+    const doneRows = rows
+      .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
+      .map(row => row.id);
+    const notDoneRows = rows
+      .filter(row => row.status !== VaccinationCardItemNodeStatus.Given)
+      .map(row => row.id);
     const nonClickableRows = rows
       .filter(row => !isRowClickable(isEncounter, row, rows))
       .map(row => row.id);
@@ -119,18 +124,26 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
     {
       key: 'status',
       label: 'label.status',
-      accessor: ({ rowData }) => rowData.given,
+      accessor: ({ rowData }) => rowData.status,
       Cell: ({ ...props }) => (
         <StatusCell
           {...props}
           statusMap={{
-            true: {
-              color: theme.palette.success.light,
+            [VaccinationCardItemNodeStatus.Given]: {
+              color: theme.palette.vaccinationStatus.given,
               label: t('label.status-given'),
             },
-            false: {
-              color: theme.palette.error.main,
+            [VaccinationCardItemNodeStatus.NotGiven]: {
+              color: theme.palette.vaccinationStatus.notGiven,
               label: t('label.status-not-given'),
+            },
+            [VaccinationCardItemNodeStatus.Pending]: {
+              color: theme.palette.vaccinationStatus.pending,
+              label: t('label.status-pending'),
+            },
+            [VaccinationCardItemNodeStatus.Late]: {
+              color: theme.palette.vaccinationStatus.late,
+              label: t('label.status-late'),
             },
           }}
         />

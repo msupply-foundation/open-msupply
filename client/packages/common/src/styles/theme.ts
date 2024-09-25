@@ -95,6 +95,12 @@ declare module '@mui/material/styles/createPalette' {
       hot: PaletteColor;
       lines: string[];
     };
+    vaccinationStatus: {
+      given: string;
+      notGiven: string;
+      pending: string;
+      late: string;
+    };
     drawerDivider: string;
     gray: PaletteColor & { pale: string };
     outline: Palette['primary'];
@@ -196,7 +202,6 @@ export const themeOptions = {
       white: '#fff',
       success: 'rgb(237, 247, 237)',
     },
-
     form: {
       field: '#555770',
       label: '#28293d',
@@ -214,6 +219,12 @@ export const themeOptions = {
       notFunctioning: '#de0001',
       notInUse: '#b0b0b0',
       text: '#fff',
+    },
+    vaccinationStatus: {
+      given: 'success.light',
+      notGiven: 'error.main',
+      pending: 'cceStatus.notInUse',
+      late: 'cceStatus.functioningButNeedsAttention',
     },
   },
   zIndex: {
