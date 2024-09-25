@@ -450,7 +450,7 @@ async fn main() -> anyhow::Result<()> {
                         format!("{version_dir}/argument_schemas/arguments_ui.json");
 
                     let manifest_file = fs::File::open(format!("{version_dir}/manifest.json"))
-                        .expect("file should open read only");
+                        .expect("Can't open manifest for report {} {}", reportname, version);
 
                     let manifest: Manifest = serde_json::from_reader(manifest_file)
                         .expect("manifest json not formatted");
