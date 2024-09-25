@@ -9,8 +9,8 @@ use report_builder::{build::build_report_definition, BuildArgs};
 
 use repository::{
     get_storage_connection_manager, schema_from_row, test_db, ContextType, EqualFilter,
-    FormSchemaJson, FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository,
-    ReportFilter, ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
+    FormSchemaRow, FormSchemaRowRepository, KeyType, KeyValueStoreRepository, ReportFilter,
+    ReportRepository, ReportRow, ReportRowRepository, SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
 use server::configuration;
@@ -19,9 +19,9 @@ use service::{
     auth_data::AuthData,
     login::{LoginInput, LoginService},
     plugin::validation::sign_plugin,
-    report::definition::ReportDefinition,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::{self, Settings},
+    settings::Settings,
+    standard_reports::{ReportData, ReportsData, StandardReports},
     sync::{
         file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
@@ -553,9 +553,17 @@ async fn main() -> anyhow::Result<()> {
             let base_reports_dir = "./reports";
             let generated_dir = format!("{base_reports_dir}/generated");
 
-            let path = json_path.unwrap_or(format!("{generated_dir}/standard_reports.json"));
+            let json_file = fs::File::open(
+                json_path.unwrap_or(format!("{generated_dir}/standard_reports.json")),
+            )
+            .expect("{generated_dir}/standard_reports.json not found");
+            let reports_data: ReportsData =
+                serde_json::from_reader(json_file).expect("json incorrectly formatted");
 
-            let _ = upsert_reports(path, settings);
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            let _ = StandardReports::upsert_reports(reports_data, &con);
         }
         Action::UpsertReport {
             id,
@@ -635,37 +643,6 @@ fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
     (export_folder, export_file_path, users_file_path)
 }
 
-pub fn upsert_reports(path: String, settings: Settings) -> Result<(), anyhow::Error> {
-    let connection_manager = get_storage_connection_manager(&settings.database);
-    let con = connection_manager.connection()?;
-    let json_file = fs::File::open(path).expect("{generated_dir}/standard_reports.json not found");
-    let reports_data: ReportsData =
-        serde_json::from_reader(json_file).expect("json incorrectly formatted");
-
-    for report in reports_data.reports {
-        if let Some(form_schema_json) = &report.form_schema {
-            FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
-        }
-
-        ReportRowRepository::new(&con).upsert_one(&ReportRow {
-            id: report.id.clone(),
-            name: report.name,
-            r#type: repository::ReportType::OmSupply,
-            template: serde_json::to_string_pretty(&report.template)?,
-            context: report.context,
-            sub_context: report.sub_context,
-            argument_schema_id: report.argument_schema_id,
-            comment: report.comment,
-            is_custom: report.is_custom,
-            version: report.version,
-            code: report.code,
-        })?;
-
-        info!("Report {} upserted", report.id);
-    }
-    Ok(())
-}
-
 #[derive(serde::Deserialize, Clone)]
 pub struct Manifest {
     pub is_custom: bool,
@@ -699,25 +676,4 @@ pub struct TestReportArguments {
     pub arguments: Option<String>,
     pub reference_data: Option<String>,
     pub data_id: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub struct ReportData {
-    pub id: String,
-    pub name: String,
-    pub r#type: repository::ReportType,
-    pub template: ReportDefinition,
-    pub context: ContextType,
-    pub sub_context: Option<String>,
-    pub argument_schema_id: Option<String>,
-    pub comment: Option<String>,
-    pub is_custom: bool,
-    pub version: String,
-    pub code: String,
-    pub form_schema: Option<FormSchemaJson>,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
-pub struct ReportsData {
-    pub reports: Vec<ReportData>,
 }
