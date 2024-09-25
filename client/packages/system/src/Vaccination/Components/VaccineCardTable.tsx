@@ -146,6 +146,15 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
       label: 'label.date-given',
       accessor: ({ rowData }) => localisedDate(rowData.vaccinationDate ?? ''),
     },
+    {
+      key: 'batch',
+      label: 'label.batch',
+    },
+    {
+      key: 'facilityName',
+      label: 'label.facility',
+      accessor: ({ rowData }) => rowData.facility?.name,
+    },
   ]);
 
   return isLoading ? (

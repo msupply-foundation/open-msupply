@@ -46,6 +46,12 @@ fragment VaccinationCardItem on VaccinationCardItemNode {
   vaccinationDate
   suggestedDate
   given
+  batch
+  facility(storeId: $storeId) {
+    __typename
+    id
+    name
+  }
 }
 
 fragment VaccinationCard on VaccinationCardNode {
