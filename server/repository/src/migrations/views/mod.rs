@@ -405,8 +405,10 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       ON vcd.vaccine_course_id = vc.id
     JOIN program_enrolment pe 
       ON pe.program_id = vc.program_id
-     LEFT JOIN vaccination v 
-      ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id;
+    LEFT JOIN vaccination v 
+      ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id
+    -- Only show doses that haven't been deleted, unless they have a vaccination
+    WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
 
     "#,
     )?;

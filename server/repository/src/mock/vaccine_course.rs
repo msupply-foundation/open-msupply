@@ -22,6 +22,7 @@ pub fn mock_vaccine_course_a_dose_a() -> VaccineCourseDoseRow {
         min_age: 0.0,
         max_age: 1.0,
         min_interval_days: 30,
+        ..Default::default()
     }
 }
 
@@ -33,6 +34,7 @@ pub fn mock_vaccine_course_a_dose_b() -> VaccineCourseDoseRow {
         min_age: 1.0,
         max_age: 2.0,
         min_interval_days: 30,
+        ..Default::default()
     }
 }
 pub fn mock_vaccine_course_a_dose_c() -> VaccineCourseDoseRow {
@@ -43,6 +45,7 @@ pub fn mock_vaccine_course_a_dose_c() -> VaccineCourseDoseRow {
         min_age: 2.0,
         max_age: 6.0,
         min_interval_days: 30,
+        ..Default::default()
     }
 }
 
