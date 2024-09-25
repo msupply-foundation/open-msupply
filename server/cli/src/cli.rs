@@ -143,12 +143,7 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
-    // command to upsert standard reports. Will later move this into rust code
-    BuildStandardReports {
-        /// Optional report code. If none supplied, all standard reports are uploaded
-        #[clap(short, long)]
-        code: Option<String>,
-    },
+    BuildStandardReports,
     UpsertReportsJson {
         /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
         #[clap(short, long)]
@@ -411,7 +406,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {:#?}", result);
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::BuildStandardReports { code } => {
+        Action::BuildStandardReports {} => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
@@ -442,17 +437,10 @@ async fn main() -> anyhow::Result<()> {
 
                     let manifest: Manifest = serde_json::from_reader(manifest_file)
                         .expect("manifest json not formatted correctly");
-                    let report_code = manifest.code;
-
-                    // skip report building and upserting if code is specified AND code is not report code
-                    if let Some(passed_code) = code.clone() {
-                        if report_code == passed_code {
-                            continue;
-                        }
-                    }
+                    let code = manifest.code;
 
                     let version = manifest.version;
-                    let id = format!("{name}_{version}");
+                    let id = format!("{code}_{version}");
                     let context = manifest.context;
                     let report_name = manifest.name;
                     let is_custom = manifest.is_custom;
@@ -518,7 +506,7 @@ async fn main() -> anyhow::Result<()> {
                         comment: None,
                         is_custom,
                         version: version.to_string(),
-                        code: report_code,
+                        code,
                         form_schema: form_schema_json,
                     };
 
@@ -526,10 +514,7 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let output_path = match code.clone() {
-                Some(code) => format!("{base_reports_dir}/generated/{code}.json"),
-                None => format!("{base_reports_dir}/generated/standard_reports.json"),
-            };
+            let output_path = format!("{base_reports_dir}/generated/standard_reports.json");
             let output_path = Path::new(&output_path);
 
             fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
@@ -544,10 +529,7 @@ async fn main() -> anyhow::Result<()> {
                 ))
             })?;
 
-            match code.clone() {
-                Some(code) => info!("{}", format!("{code} report built")),
-                None => info!("All standard reports built"),
-            }
+            info!("All standard reports built");
         }
         Action::UpsertReportsJson { json_path } => {
             let base_reports_dir = "./reports";
