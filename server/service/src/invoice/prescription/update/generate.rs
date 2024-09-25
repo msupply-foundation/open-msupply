@@ -122,6 +122,7 @@ fn set_new_status_datetime(
         }
         (InvoiceStatus::Picked, UpdatePrescriptionStatus::Verified) => {
             if prescription_datetime.is_some() {
+                // Set picked date to prescription date if it was backdated
                 invoice.picked_datetime = Some(status_datetime);
             }
             invoice.verified_datetime = Some(status_datetime)
