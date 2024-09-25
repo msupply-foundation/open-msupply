@@ -357,11 +357,22 @@ const VaccineCourseDoseTable = ({
 // Input cells can't be defined inline, otherwise they lose focus on re-render
 const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
   const t = useTranslation();
+  // Set maximum and minimum to ensure maxAge can't be lower than minAge
+  const minimum =
+    props.column.key === 'maxAgeMonths'
+      ? props.rowData.minAgeMonths
+      : undefined;
+  const maximum =
+    props.column.key === 'minAgeMonths'
+      ? props.rowData.maxAgeMonths
+      : undefined;
   return (
     <MultipleNumberInputCell
       decimalLimit={2}
       width={25}
       {...props}
+      min={minimum}
+      max={maximum}
       units={[
         { key: 'year', ratio: 12, label: t('label.years-abbreviation') },
         { key: 'month', ratio: 1, label: t('label.months-abbreviation') },
