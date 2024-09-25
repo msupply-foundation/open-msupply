@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use chrono::{Duration, NaiveDate};
+use chrono::{Duration, Local, NaiveDate};
 use repository::{
     EqualFilter, ProgramEnrolment, ProgramEnrolmentFilter, ProgramEnrolmentRepository,
     RepositoryError, VaccinationCardRepository, VaccinationCardRow,
@@ -18,7 +18,18 @@ pub struct VaccinationCard {
 pub struct VaccinationCardItem {
     pub row: VaccinationCardRow,
     pub suggested_date: Option<NaiveDate>,
+    pub status: Option<VaccinationCardItemStatus>,
 }
+
+#[derive(Clone, Debug)]
+pub enum VaccinationCardItemStatus {
+    Given,
+    NotGiven,
+    Pending,
+    Late,
+}
+
+const MONTHS_PER_YEAR: f64 = 365.25 / 12.0;
 
 pub fn get_vaccination_card(
     ctx: &ServiceContext,
@@ -55,9 +66,12 @@ pub fn get_vaccination_card(
 
             let suggested_date = get_suggested_date(&row, patient_dob, course_rows);
 
+            let status = get_vaccination_status(&row, patient_dob);
+
             VaccinationCardItem {
                 row,
                 suggested_date,
+                status,
             }
         })
         .collect();
@@ -71,7 +85,7 @@ pub fn get_suggested_date(
     course_rows: Vec<VaccinationCardRow>,
 ) -> Option<NaiveDate> {
     let suggested_date_by_age = patient_dob
-        .map(|dob| dob.checked_add_signed(Duration::days((row.min_age * 365.25 / 12.0) as i64)))
+        .map(|dob| dob.checked_add_signed(Duration::days((row.min_age * MONTHS_PER_YEAR) as i64)))
         .flatten();
 
     // If the dose was already given, no need to suggest date
@@ -121,6 +135,36 @@ pub fn get_suggested_date(
         (None, Some(by_interval)) => Some(by_interval),
         (None, None) => None,
     }
+}
+
+pub fn get_vaccination_status(
+    row: &VaccinationCardRow,
+    patient_dob: Option<NaiveDate>,
+) -> Option<VaccinationCardItemStatus> {
+    if row.given == Some(true) {
+        Some(VaccinationCardItemStatus::Given);
+    }
+    if row.given == Some(false) {
+        Some(VaccinationCardItemStatus::NotGiven);
+    }
+
+    if patient_dob == None {
+        return None;
+    }
+
+    let patient_age_in_months =
+        ((Local::now().date_naive() - patient_dob.unwrap()).num_days() as f64) / MONTHS_PER_YEAR;
+
+    if row.given == None {
+        if patient_age_in_months < row.max_age {
+            Some(VaccinationCardItemStatus::Pending);
+        };
+        if patient_age_in_months > row.max_age {
+            Some(VaccinationCardItemStatus::Pending);
+        };
+    }
+
+    None
 }
 
 #[cfg(test)]
