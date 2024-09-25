@@ -74,7 +74,6 @@ export const Toolbar: FC = () => {
               label={t('label.date')}
               Input={
                 <DateTimePickerInput
-                  // label={t('label.date')}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
                   onChange={async prescriptionDate => {

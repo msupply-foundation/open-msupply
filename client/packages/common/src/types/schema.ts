@@ -3672,6 +3672,7 @@ export type MasterListNotFoundForThisStore = AddFromMasterListErrorInterface & A
 export enum MasterListSortFieldInput {
   Code = 'code',
   Description = 'description',
+  DiscountPercentage = 'discountPercentage',
   Name = 'name'
 }
 
@@ -5237,6 +5238,8 @@ export type Queries = {
    * Provides an friendly shape to edit these lines before calling the insert/update mutations.
    */
   generateSupplierReturnLines: GenerateSupplierReturnLinesResponse;
+  /** Query for "historical_stock_line" entries */
+  historicalStockLines: StockLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -5564,6 +5567,13 @@ export type QueriesGenerateReportDefinitionArgs = {
 
 export type QueriesGenerateSupplierReturnLinesArgs = {
   input: GenerateSupplierReturnLinesInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesHistoricalStockLinesArgs = {
+  datetime?: InputMaybe<Scalars['DateTime']['input']>;
+  itemId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -7512,7 +7522,6 @@ export type UpdateOutboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type UpdateOutboundShipmentLineResponse = InvoiceLineNode | UpdateOutboundShipmentLineError;
@@ -8198,6 +8207,8 @@ export type UserStorePermissionNode = {
 
 export type VaccinationCardItemNode = {
   __typename: 'VaccinationCardItemNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  facilityName?: Maybe<Scalars['String']['output']>;
   given?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
@@ -8210,6 +8221,11 @@ export type VaccinationCardItemNode = {
   vaccinationId?: Maybe<Scalars['String']['output']>;
   vaccineCourseDoseId: Scalars['String']['output'];
   vaccineCourseId: Scalars['String']['output'];
+};
+
+
+export type VaccinationCardItemNodeFacilityNameArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type VaccinationCardNode = {

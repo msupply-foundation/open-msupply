@@ -110,6 +110,15 @@ export type DeletePackVariantMutationVariables = Types.Exact<{
 
 export type DeletePackVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', packVariant: { __typename: 'PackVariantMutations', deletePackVariant: { __typename: 'DeleteResponse', id: string } } } };
 
+export type GetHistoricalStockLinesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+  datetime?: Types.InputMaybe<Types.Scalars['DateTime']['input']>;
+}>;
+
+
+export type GetHistoricalStockLinesQuery = { __typename: 'Queries', historicalStockLines: { __typename: 'StockLineConnector', nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null, doses: number } }> } };
+
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
   __typename
@@ -420,6 +429,17 @@ export const DeletePackVariantDocument = gql`
   }
 }
     `;
+export const GetHistoricalStockLinesDocument = gql`
+    query getHistoricalStockLines($storeId: String!, $itemId: String!, $datetime: DateTime) {
+  historicalStockLines(storeId: $storeId, itemId: $itemId, datetime: $datetime) {
+    ... on StockLineConnector {
+      nodes {
+        ...StockLine
+      }
+    }
+  }
+}
+    ${StockLineFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -454,6 +474,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deletePackVariant(variables: DeletePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePackVariantMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeletePackVariantMutation>(DeletePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePackVariant', 'mutation', variables);
+    },
+    getHistoricalStockLines(variables: GetHistoricalStockLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GetHistoricalStockLinesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GetHistoricalStockLinesQuery>(GetHistoricalStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'getHistoricalStockLines', 'query', variables);
     }
   };
 }
