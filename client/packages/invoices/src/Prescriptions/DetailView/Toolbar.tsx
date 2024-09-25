@@ -39,7 +39,13 @@ export const Toolbar: FC = () => {
         alignItems="flex-end"
       >
         <Grid item display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
+          <Box
+            display="flex"
+            flex={1}
+            flexDirection="column"
+            gap={1}
+            maxWidth={'fit-content'}
+          >
             {patient && (
               <InputWithLabelRow
                 label={t('label.patient')}
@@ -69,7 +75,12 @@ export const Toolbar: FC = () => {
               }
             />
           </Box>
-          <Box display="flex" flexDirection="column" flex={1}>
+          <Box
+            display="flex"
+            flexDirection="column"
+            flex={1}
+            marginLeft={'8px'}
+          >
             <InputWithLabelRow
               label={t('label.date')}
               Input={
