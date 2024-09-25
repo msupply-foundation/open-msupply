@@ -5,8 +5,9 @@ use repository::{
     InvoiceStatus, RepositoryError, StockLineRow, StorageConnection,
 };
 
-use crate::invoice::common::{
-    generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
+use crate::{
+    invoice::common::{generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine},
+    invoice_line::stock_out_line::invoice_backdated_date,
 };
 
 use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatus};
@@ -34,9 +35,11 @@ pub(crate) fn generate(
         should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
     let mut update_invoice = existing_invoice.clone();
 
+    // prescription_date is None if the invoice is not backdated, this means we get actual picked/verified date
+    // If we have a backdated invoice, we use the backdated date for picked/verified date
     let prescription_date = match prescription_date {
         Some(prescription_date) => Some(prescription_date),
-        None => existing_invoice.allocated_datetime, // prescription date is stored in allocated_datetime, if not provided in this request
+        None => invoice_backdated_date(&existing_invoice),
     };
 
     set_new_status_datetime(&mut update_invoice, &input_status, prescription_date);
