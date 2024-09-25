@@ -26,6 +26,7 @@ use service::{
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
+    standard_reports::StandardReports,
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
@@ -223,7 +224,7 @@ pub async fn start_server(
 
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
-            connection_manager: Data::new(connection_manager),
+            connection_manager: Data::new(connection_manager.clone()),
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
@@ -326,6 +327,9 @@ pub async fn start_server(
     };
 
     server_handle.stop(true).await;
+
+    // Upsert standard reports
+    let _ = StandardReports::load_reports(connection_manager);
 
     Ok(())
 }

@@ -57,6 +57,7 @@ pub mod sensor;
 pub mod service_provider;
 pub mod settings;
 pub mod settings_service;
+pub mod standard_reports;
 pub mod static_files;
 pub mod stock_line;
 pub mod stocktake;

@@ -1,5 +1,13 @@
 use crate::{
-    app_data::{AppDataService, AppDataServiceTrait}, asset::AssetServiceTrait, auth::{AuthService, AuthServiceTrait}, barcode::{BarcodeService, BarcodeServiceTrait}, catalogue::{AssetCatalogueServiceTrait, CatalogueService}, clinician::{ClinicianService, ClinicianServiceTrait}, cold_chain::{ColdChainService, ColdChainServiceTrait}, currency::{CurrencyService, CurrencyServiceTrait}, dashboard::{
+    app_data::{AppDataService, AppDataServiceTrait},
+    asset::AssetServiceTrait,
+    auth::{AuthService, AuthServiceTrait},
+    barcode::{BarcodeService, BarcodeServiceTrait},
+    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
+    clinician::{ClinicianService, ClinicianServiceTrait},
+    cold_chain::{ColdChainService, ColdChainServiceTrait},
+    currency::{CurrencyService, CurrencyServiceTrait},
+    dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
         requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
@@ -39,6 +47,7 @@ use crate::{
     rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
+    standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
@@ -140,6 +149,8 @@ pub struct ServiceProvider {
     pub program_service: Box<dyn ProgramServiceTrait>,
     // Translations
     pub translations_service: Box<Localisations>,
+    // Standard Reports
+    pub standard_reports: Box<StandardReports>,
 }
 
 pub struct ServiceContext {
@@ -227,6 +238,7 @@ impl ServiceProvider {
             rnr_form_service: Box::new(RnRFormService {}),
             vaccination_service: Box::new(VaccinationService {}),
             translations_service: Box::new(Localisations::new()),
+            standard_reports: Box::new(StandardReports {}),
         }
     }
 
