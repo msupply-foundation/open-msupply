@@ -628,7 +628,7 @@ async fn main() -> anyhow::Result<()> {
             let code = id.clone();
 
             ReportRowRepository::new(&con).upsert_one(&ReportRow {
-                id,
+                id: id.clone(),
                 name,
                 r#type: repository::ReportType::OmSupply,
                 template: fs::read_to_string(report_path)?,
