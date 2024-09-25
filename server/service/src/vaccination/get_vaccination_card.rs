@@ -171,15 +171,17 @@ mod tests {
             first_item.row.vaccine_course_dose_id,
             mock_vaccine_course_a_dose_a().id
         );
-        // There is a vaccination, it was NOT given
-        assert_eq!(first_item.row.given, Some(false));
-        // Hence there is still a suggested date based on the DOB
+        // There is a vaccination, it was given
+        assert_eq!(first_item.row.given, Some(true));
+        // Hence there is no suggested date
+        assert_eq!(first_item.suggested_date, None);
+        // Second dose therefore has a suggested date, based min interval
         assert_eq!(
-            first_item.suggested_date,
-            NaiveDate::from_ymd_opt(2024, 1, 1)
+            result.items[1].suggested_date,
+            NaiveDate::from_ymd_opt(2024, 1, 31)
         );
-        // Second dose therefore has no suggested date
-        assert_eq!(result.items[1].suggested_date, None);
+        // Third dose has no suggested date
+        assert_eq!(result.items[2].suggested_date, None);
     }
 
     #[actix_rt::test]

@@ -21,6 +21,7 @@ pub fn generate(
         other_party_id,
         outbound_shipment_id,
         customer_return_lines,
+        is_patient_return: _,
     }: InsertCustomerReturn,
     other_party: Name,
 ) -> Result<
@@ -85,6 +86,7 @@ pub fn generate(
         .map(
             |CustomerReturnLineInput {
                  id,
+                 stock_line_id,
                  item_id,
                  expiry_date,
                  batch,
@@ -108,7 +110,7 @@ pub fn generate(
                 sell_price_per_pack: 0.0,
                 total_before_tax: None,
                 tax_percentage: None,
-                stock_line_id: None,
+                stock_line_id,
                 barcode: None,
                 stock_on_hold: false,
             },

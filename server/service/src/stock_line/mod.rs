@@ -46,7 +46,9 @@ pub trait StockLineServiceTrait: Sync + Send {
         item_id: String,
         datetime: NaiveDateTime,
     ) -> Result<ListResult<StockLine>, ListError> {
-        get_historical_stock_lines(ctx, store_id, item_id, datetime)
+        Ok(get_historical_stock_lines(
+            ctx, &store_id, &item_id, &datetime,
+        )?)
     }
 }
 

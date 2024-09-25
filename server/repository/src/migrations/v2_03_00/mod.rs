@@ -1,6 +1,9 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
+mod add_facility_to_vaccination;
+mod add_max_age_to_vaccine_dose;
+mod add_report_versioning;
 mod add_vaccination_activity_log_types;
 mod add_vaccinations_table;
 mod add_vaccine_course_changelog_table_names;
@@ -33,6 +36,9 @@ impl Migration for V2_03_00 {
             Box::new(add_vaccinations_table::Migrate),
             Box::new(add_vaccination_activity_log_types::Migrate),
             Box::new(add_vaccine_doses_to_item::Migrate),
+            Box::new(add_max_age_to_vaccine_dose::Migrate),
+            Box::new(add_report_versioning::Migrate),
+            Box::new(add_facility_to_vaccination::Migrate),
         ]
     }
 }
@@ -40,12 +46,12 @@ impl Migration for V2_03_00 {
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_2_03_00() {
-    use v2_02_01::V2_02_01;
+    use v2_02_02::V2_02_02;
 
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let previous_version = V2_02_01.version();
+    let previous_version = V2_02_02.version();
     let version = V2_03_00.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {

@@ -144,6 +144,14 @@ impl RecordNotFound {
     }
 }
 
+pub struct InvalidStockSelection;
+#[Object]
+impl InvalidStockSelection {
+    pub async fn description(&self) -> &str {
+        "Invalid Stock Selection"
+    }
+}
+
 pub struct RecordAlreadyExist;
 #[Object]
 impl RecordAlreadyExist {

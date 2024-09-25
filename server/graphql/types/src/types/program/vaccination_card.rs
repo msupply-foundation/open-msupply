@@ -54,6 +54,9 @@ impl VaccinationCardItemNode {
     pub async fn id(&self) -> &str {
         &self.item.row.id
     }
+    pub async fn vaccine_course_id(&self) -> &str {
+        &self.item.row.vaccine_course_id
+    }
     pub async fn vaccine_course_dose_id(&self) -> &str {
         &self.item.row.vaccine_course_dose_id
     }
@@ -65,6 +68,9 @@ impl VaccinationCardItemNode {
     }
     pub async fn min_age_months(&self) -> &f64 {
         &self.item.row.min_age
+    }
+    pub async fn max_age_months(&self) -> &f64 {
+        &self.item.row.max_age
     }
     pub async fn min_interval_days(&self) -> &i32 {
         &self.item.row.min_interval_days

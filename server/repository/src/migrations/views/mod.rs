@@ -392,7 +392,8 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       vcd.id as vaccine_course_dose_id, 
       vcd.label, 
       vcd.min_interval_days, 
-      vcd.min_age, 
+      vcd.min_age,
+      vcd.max_age,
       vc.id as vaccine_course_id, 
       v.id as vaccination_id, 
       v.vaccination_date, 
@@ -402,11 +403,12 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     FROM vaccine_course_dose vcd 
     JOIN vaccine_course vc 
       ON vcd.vaccine_course_id = vc.id
-    LEFT JOIN vaccination v 
-      ON v.vaccine_course_dose_id = vcd.id
     JOIN program_enrolment pe 
-      ON pe.program_id = vc.program_id AND (v.program_enrolment_id = pe.id or v.program_enrolment_id IS NULL);
-      "#,
+      ON pe.program_id = vc.program_id
+     LEFT JOIN vaccination v 
+      ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id;
+
+    "#,
     )?;
 
     if cfg!(not(feature = "postgres")) {

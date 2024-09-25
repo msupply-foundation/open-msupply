@@ -13,10 +13,10 @@ use repository::{ActivityLogType, RepositoryError, Vaccination, VaccinationRowRe
 mod generate;
 mod validate;
 
-use generate::{generate, CreatePrescription, GenerateInput, GenerateResult};
+use generate::{generate, GenerateInput, GenerateResult};
 use validate::validate;
 
-use super::query::get_vaccination;
+use super::{generate::CreatePrescription, query::get_vaccination};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertVaccinationError {
@@ -26,7 +26,9 @@ pub enum InsertVaccinationError {
     VaccineCourseDoseDoesNotExist,
     ProgramEnrolmentDoesNotMatchVaccineCourse,
     VaccinationAlreadyExistsForDose,
+    VaccineIsNotNextDose,
     ClinicianDoesNotExist,
+    FacilityDoesNotExist,
     ReasonNotProvided,
     StockLineNotProvided,
     StockLineDoesNotExist,
@@ -43,6 +45,8 @@ pub struct InsertVaccination {
     pub vaccine_course_dose_id: String,
     pub vaccination_date: Option<NaiveDate>,
     pub clinician_id: Option<String>,
+    pub facility_name_id: Option<String>,
+    pub facility_free_text: Option<String>,
     pub comment: Option<String>,
     pub given: bool,
     pub stock_line_id: Option<String>,
@@ -75,17 +79,17 @@ pub fn insert_vaccination(
 
             // If it was `Given`, create a prescription
             if let Some(CreatePrescription {
-                insert_prescription_input,
+                create_prescription,
                 insert_stock_out_line_input,
-                update_prescription_input,
+                finalise_prescription,
             }) = create_prescription
             {
                 // Create prescription (in NEW status)
-                insert_prescription(ctx, insert_prescription_input)?;
+                insert_prescription(ctx, create_prescription)?;
                 // Add the prescription line
                 insert_stock_out_line(ctx, insert_stock_out_line_input)?;
                 // Finalise the prescription - also link clinician
-                update_prescription(ctx, update_prescription_input)?;
+                update_prescription(ctx, finalise_prescription)?;
             }
 
             activity_log_entry(
@@ -261,6 +265,22 @@ mod insert {
             Err(InsertVaccinationError::VaccinationAlreadyExistsForDose)
         );
 
+        // VaccineIsNotNextDose
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    // Only dose A has been administered
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::VaccineIsNotNextDose)
+        );
+
         // ClinicianDoesNotExist
         assert_eq!(
             service.insert_vaccination(
@@ -275,6 +295,22 @@ mod insert {
                 }
             ),
             Err(InsertVaccinationError::ClinicianDoesNotExist)
+        );
+
+        // FacilityNameDoesNotExist
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    facility_name_id: Some("non_existent_facility_name_id".to_string()),
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::FacilityDoesNotExist)
         );
 
         // StockLineNotProvided
@@ -342,6 +378,38 @@ mod insert {
             ),
             Err(InsertVaccinationError::ItemDoesNotBelongToVaccineCourse)
         );
+
+        // Insert dose B as NOT GIVEN
+        service
+            .insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_vaccination_given_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
+                    given: false,
+                    not_given_reason: Some("reason".to_string()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // VaccineIsNotNextDose
+        assert_eq!(
+            service.insert_vaccination(
+                &context,
+                store_id,
+                InsertVaccination {
+                    id: "new_id".to_string(),
+                    encounter_id: mock_immunisation_encounter_a().id,
+                    // Dose B was not given, so can't give dose C
+                    vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
+                    ..Default::default()
+                }
+            ),
+            Err(InsertVaccinationError::VaccineIsNotNextDose)
+        );
     }
 
     #[actix_rt::test]
@@ -366,10 +434,7 @@ mod insert {
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_b().id,
                     given: true,
                     stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
-                    clinician_id: None,
-                    vaccination_date: None,
-                    comment: None,
-                    not_given_reason: None,
+                    ..Default::default()
                 },
             )
             .unwrap();
@@ -412,10 +477,7 @@ mod insert {
                     vaccine_course_dose_id: mock_vaccine_course_a_dose_c().id,
                     given: false,
                     not_given_reason: Some("reason".to_string()),
-                    vaccination_date: None,
-                    stock_line_id: None,
-                    clinician_id: None,
-                    comment: None,
+                    ..Default::default()
                 },
             )
             .unwrap();
