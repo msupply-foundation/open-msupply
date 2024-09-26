@@ -17,8 +17,9 @@ jobs:
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: /tmp/target/sqlite
-      PATH: /$home/.cargo/bin/rustup:/opt/homebrew/bin:/bin/:/usr/bin/:$PATH
     steps:
+      -name: Update PATH
+        run: echo "/$HOME/.cargo/bin/:/opt/homebrew/bin" >> $GITHUB_PATH
       - name: Show Environment
         run: env
       - uses: actions/checkout@v4
@@ -35,8 +36,9 @@ jobs:
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: /tmp/target/postgres
-      PATH: /$home/.cargo/bin/rustup:/opt/homebrew/bin:/bin/:/usr/bin/:$PATH
     steps:
+      -name: Update PATH
+        run: echo "/$HOME/.cargo/bin/:/opt/homebrew/bin" >> $GITHUB_PATH
       - name: Show Environment
         run: env
       - uses: actions/checkout@v4
