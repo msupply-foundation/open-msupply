@@ -1,12 +1,14 @@
 use super::{
-    barcode_row::{barcode, barcode::dsl as barcode_dsl},
-    item_link_row::{item_link, item_link::dsl as item_link_dsl},
-    item_row::{item, item::dsl as item_dsl},
-    location_row::{location, location::dsl as location_dsl},
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
-    DBType, LocationRow, StockLineRow, StorageConnection,
+    barcode_row::barcode::{self, dsl as barcode_dsl},
+    item_link_row::item_link::{self, dsl as item_link_dsl},
+    item_row::item::{self, dsl as item_dsl},
+    location_row::location::{self, dsl as location_dsl},
+    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
+    master_list_row::master_list::dsl as master_list_dsl,
+    name_link_row::name_link::{self, dsl as name_link_dsl},
+    name_row::name::{self, dsl as name_dsl},
+    stock_line_row::stock_line::{self, dsl as stock_line_dsl},
+    DBType, LocationRow, MasterListFilter, StockLineRow, StorageConnection,
 };
 
 use crate::{
@@ -17,7 +19,7 @@ use crate::{
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
     BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
-    NameLinkRow, NameRow, Pagination, Sort, StringFilter,
+    MasterListRepository, NameLinkRow, NameRow, Pagination, Sort, StringFilter,
 };
 
 use diesel::{
@@ -56,6 +58,7 @@ pub struct StockLineFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub has_packs_in_store: Option<bool>,
     pub location: Option<LocationFilter>,
+    pub master_list: Option<MasterListFilter>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -81,7 +84,7 @@ impl<'a> StockLineRepository<'a> {
         filter: Option<StockLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
-        let mut query = create_filtered_query(filter.clone());
+        let mut query = create_filtered_query(filter.clone(), store_id.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         Ok(query
@@ -104,7 +107,7 @@ impl<'a> StockLineRepository<'a> {
         sort: Option<StockLineSort>,
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        let mut query = create_filtered_query(filter.clone());
+        let mut query = create_filtered_query(filter.clone(), store_id.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         if let Some(sort) = sort {
@@ -170,7 +173,10 @@ type BoxedStockLineQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
+fn create_filtered_query(
+    filter: Option<StockLineFilter>,
+    store: Option<String>,
+) -> BoxedStockLineQuery {
     let mut query = stock_line_dsl::stock_line
         .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .left_join(location_dsl::location)
@@ -189,6 +195,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             store_id,
             has_packs_in_store,
             location,
+            master_list,
         } = f;
 
         apply_equal_filter!(query, id, stock_line_dsl::id);
@@ -213,6 +220,21 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             let location_ids = LocationRepository::create_filtered_query(location)
                 .select(location_dsl::id.nullable());
             query = query.filter(stock_line_dsl::location_id.eq_any(location_ids));
+        }
+
+        if master_list.is_some() {
+            let mut master_list_filter = master_list.unwrap_or_default();
+            master_list_filter = master_list_filter
+                .exists_for_store_id(EqualFilter::equal_to(store.as_deref().unwrap_or_default()));
+
+            let master_list_ids =
+                MasterListRepository::create_filtered_query(Some(master_list_filter))
+                    .select(master_list_dsl::id);
+            let item_link_ids = master_list_line_dsl::master_list_line
+                .select(master_list_line_dsl::item_link_id)
+                .filter(master_list_line_dsl::master_list_id.eq_any(master_list_ids));
+
+            query = query.filter(stock_line_dsl::item_link_id.eq_any(item_link_ids));
         }
     }
 
