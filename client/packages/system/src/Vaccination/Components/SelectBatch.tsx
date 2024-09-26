@@ -6,6 +6,7 @@ import {
   createTableStore,
   DataTable,
   NumUtils,
+  Switch,
   TableProvider,
   useColumns,
   useRowStyle,
@@ -18,7 +19,7 @@ import { VaccinationStockLine } from '../api';
 interface SelectBatchProps {
   itemId: string;
   stockLine: VaccinationStockLine | null;
-  setStockLine: (stockLine: VaccinationStockLine) => void;
+  setStockLine: (stockLine: VaccinationStockLine | null) => void;
 }
 
 export const SelectBatch = ({
@@ -28,15 +29,18 @@ export const SelectBatch = ({
 }: SelectBatchProps) => {
   const { data, isLoading } = useStockLines(itemId);
 
+  useEffect(() => {
+    if (data?.nodes?.length === 1) {
+      setStockLine(data.nodes[0]!);
+    }
+  }, [data]);
+
   const columns = useColumns<StockLineFragment>(
     [
       {
         key: 'select',
         Cell: ({ rowData }) => (
-          <Checkbox
-            checked={rowData.id === stockLine?.id}
-            onClick={() => setStockLine(rowData)}
-          />
+          <Checkbox checked={rowData.id === stockLine?.id} />
         ),
       },
       'batch',
@@ -87,12 +91,35 @@ const BatchTable = ({
     setRowStyles(
       data.map(r => r.id),
       {
+        height: 'unset',
         '& td': {
           padding: 0,
         },
       }
     );
   }, [data]);
+
+  const AdministerWithoutStockTransaction = () => {
+    // If no stock , switch to continue
+    // Otherwise... switch before item?
+    return (
+      <Switch
+        label={
+          // t('messages.no-stock-available') +
+          'No stock available. Continue without transaction?'
+        }
+        checked={false}
+        onChange={
+          () => {}
+          // updateDraft({
+          //   createTransactions: !draft.createTransactions,
+          // })
+        }
+        labelPlacement="end"
+        size="small"
+      />
+    );
+  };
 
   return (
     <DataTable

@@ -57,6 +57,7 @@ export const SelectItemAndBatch = ({
             label={t('label.vaccine-item')}
             Input={
               <Select
+                clearable
                 options={vaccineItemOptions}
                 value={draft.itemId ?? ''}
                 onChange={e =>
