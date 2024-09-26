@@ -1,10 +1,11 @@
 on:
+  push:
   pull_request:
     branches:
       - main
       - develop
     paths:
-      - 'server/**'
+      - "server/**"
   workflow_dispatch:
 
 name: CI
@@ -12,23 +13,13 @@ name: CI
 jobs:
   build_and_test:
     name: Remote Server Tests (sqlite)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 20
     steps:
-      # --- install build dependencies taken from https://github.com/stbuehler/rust-async-dnssd/blob/master/.github/workflows/rust.yml
-      - name: Update package list
-        run: sudo apt-get -qq update
-      - name: install libavahi-compat-libdnssd-dev
-        run: sudo apt-get install -y libavahi-compat-libdnssd-dev
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: server
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@v1.3.1
       - uses: actions-rs/cargo@v1
         with:
           command: test
