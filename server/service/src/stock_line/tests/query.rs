@@ -151,6 +151,7 @@ mod query {
             item_code_or_name: None,
             has_packs_in_store: None,
             location: None,
+            master_list: None,
         });
 
         // Test ExpiryDate sort with default sort order
@@ -204,6 +205,7 @@ mod query {
             item_code_or_name: None,
             has_packs_in_store: None,
             location: None,
+            master_list: None,
         });
 
         // Test ExpiryDate sort with desc sort order
