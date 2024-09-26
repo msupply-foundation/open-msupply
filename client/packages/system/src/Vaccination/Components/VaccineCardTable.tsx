@@ -108,66 +108,75 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
 
   useStyleRowsByStatus(data?.items, isEncounter);
 
-  const columns = useColumns<VaccinationCardItemFragment>([
-    {
-      key: 'age',
-      label: 'label.age',
-      sortable: false,
-      accessor: ({ rowData }) =>
-        t('label.age-months-count', { count: rowData.minAgeMonths }),
-    },
-    {
-      key: 'label',
-      label: 'label.dose',
-      accessor: ({ rowData }) => rowData.label,
-    },
-    {
-      key: 'status',
-      label: 'label.status',
-      accessor: ({ rowData }) => rowData.status,
-      Cell: ({ ...props }) => (
-        <StatusCell
-          {...props}
-          statusMap={{
-            [VaccinationCardItemNodeStatus.Given]: {
-              color: theme.palette.vaccinationStatus.given,
-              label: t('label.status-given'),
-            },
-            [VaccinationCardItemNodeStatus.NotGiven]: {
-              color: theme.palette.vaccinationStatus.notGiven,
-              label: t('label.status-not-given'),
-            },
-            [VaccinationCardItemNodeStatus.Pending]: {
-              color: theme.palette.vaccinationStatus.pending,
-              label: t('label.status-pending'),
-            },
-            [VaccinationCardItemNodeStatus.Late]: {
-              color: theme.palette.vaccinationStatus.late,
-              label: t('label.status-late'),
-            },
-          }}
-        />
-      ),
-    },
-    {
-      key: 'suggestedDate',
-      label: 'label.suggested-date',
-      accessor: ({ rowData }) => localisedDate(rowData.suggestedDate ?? ''),
-    },
-    {
-      key: 'dateGiven',
-      label: 'label.date-given',
-      accessor: ({ rowData }) => localisedDate(rowData.vaccinationDate ?? ''),
-    },
-    {
-      key: 'batch',
-      label: 'label.batch',
-    },
-    {
-      key: 'facilityName',
-      label: 'label.facility',
-    },
-  ]);
+  const columns = useColumns<VaccinationCardItemFragment>(
+    [
+      {
+        key: 'age',
+        label: 'label.age',
+        sortable: false,
+        accessor: ({ rowData }) =>
+          t('label.age-months-count', { count: rowData.minAgeMonths }),
+      },
+      {
+        key: 'label',
+        label: 'label.dose',
+        accessor: ({ rowData }) => rowData.label,
+      },
+      {
+        key: 'status',
+        label: 'label.status',
+        accessor: ({ rowData }) =>
+          isRowClickable(isEncounter, rowData, data?.items)
+            ? rowData.status
+            : null,
+        Cell: ({ ...props }) => (
+          <StatusCell
+            {...props}
+            statusMap={{
+              [VaccinationCardItemNodeStatus.Given]: {
+                color: theme.palette.vaccinationStatus.given,
+                label: t('label.status-given'),
+              },
+              [VaccinationCardItemNodeStatus.NotGiven]: {
+                color: theme.palette.vaccinationStatus.notGiven,
+                label: t('label.status-not-given'),
+              },
+              [VaccinationCardItemNodeStatus.Pending]: {
+                color: theme.palette.vaccinationStatus.pending,
+                label: t('label.status-pending'),
+              },
+              [VaccinationCardItemNodeStatus.Late]: {
+                color: theme.palette.vaccinationStatus.late,
+                label: t('label.status-late'),
+              },
+            }}
+          />
+        ),
+      },
+      {
+        key: 'suggestedDate',
+        label: 'label.suggested-date',
+        accessor: ({ rowData }) => localisedDate(rowData.suggestedDate ?? ''),
+      },
+      {
+        key: 'dateGiven',
+        label: 'label.date-given',
+        accessor: ({ rowData }) => localisedDate(rowData.vaccinationDate ?? ''),
+      },
+      {
+        key: 'batch',
+        label: 'label.batch',
+      },
+      {
+        key: 'facilityName',
+        label: 'label.facility',
+      },
+    ],
+    {},
+    // Putting items into deps array so that status labels get recalculated on
+    // changes
+    [data]
+  );
 
   return isLoading ? (
     <InlineSpinner />

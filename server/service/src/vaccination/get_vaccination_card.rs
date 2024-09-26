@@ -140,27 +140,23 @@ pub fn get_vaccination_status(
     row: &VaccinationCardRow,
     patient_dob: Option<NaiveDate>,
 ) -> Option<VaccinationCardItemStatus> {
-    if row.given == Some(true) {
-        Some(VaccinationCardItemStatus::Given);
-    }
-    if row.given == Some(false) {
-        Some(VaccinationCardItemStatus::NotGiven);
-    }
-
-    if patient_dob == None {
-        return None;
+    match row.given {
+        Some(true) => return Some(VaccinationCardItemStatus::Given),
+        Some(false) => return Some(VaccinationCardItemStatus::NotGiven),
+        None => {}
     }
 
-    let patient_age_in_months =
-        ((Local::now().date_naive() - patient_dob.unwrap()).num_days() as f64) / DAYS_PER_MONTH;
+    if let Some(dob) = patient_dob {
+        let patient_age_in_months =
+            ((Local::now().date_naive() - dob).num_days() as f64) / DAYS_PER_MONTH;
 
-    if row.given == None {
-        if patient_age_in_months < row.max_age {
-            Some(VaccinationCardItemStatus::Pending);
-        };
         if patient_age_in_months > row.max_age {
-            Some(VaccinationCardItemStatus::Pending);
-        };
+            return Some(VaccinationCardItemStatus::Late);
+        }
+
+        if patient_age_in_months > row.min_age {
+            return Some(VaccinationCardItemStatus::Pending);
+        }
     }
 
     None
