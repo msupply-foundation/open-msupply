@@ -5,6 +5,7 @@ use repository::{
     EqualFilter, ProgramEnrolment, ProgramEnrolmentFilter, ProgramEnrolmentRepository,
     RepositoryError, VaccinationCardRepository, VaccinationCardRow,
 };
+use util::constants::DAYS_PER_MONTH;
 
 use crate::service_provider::ServiceContext;
 
@@ -28,8 +29,6 @@ pub enum VaccinationCardItemStatus {
     Pending,
     Late,
 }
-
-const MONTHS_PER_YEAR: f64 = 365.25 / 12.0;
 
 pub fn get_vaccination_card(
     ctx: &ServiceContext,
@@ -85,7 +84,7 @@ pub fn get_suggested_date(
     course_rows: Vec<VaccinationCardRow>,
 ) -> Option<NaiveDate> {
     let suggested_date_by_age = patient_dob
-        .map(|dob| dob.checked_add_signed(Duration::days((row.min_age * MONTHS_PER_YEAR) as i64)))
+        .map(|dob| dob.checked_add_signed(Duration::days((row.min_age * DAYS_PER_MONTH) as i64)))
         .flatten();
 
     // If the dose was already given, no need to suggest date
@@ -153,7 +152,7 @@ pub fn get_vaccination_status(
     }
 
     let patient_age_in_months =
-        ((Local::now().date_naive() - patient_dob.unwrap()).num_days() as f64) / MONTHS_PER_YEAR;
+        ((Local::now().date_naive() - patient_dob.unwrap()).num_days() as f64) / DAYS_PER_MONTH;
 
     if row.given == None {
         if patient_age_in_months < row.max_age {
