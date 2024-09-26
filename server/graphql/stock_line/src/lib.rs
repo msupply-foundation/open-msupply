@@ -9,8 +9,8 @@ use graphql_core::{
 };
 use graphql_types::types::*;
 use repository::{
-    location::LocationFilter, DateFilter, EqualFilter, MasterListFilter, PaginationOption,
-    StockLineFilter, StockLineSort, StockLineSortField,
+    location::LocationFilter, DateFilter, EqualFilter, PaginationOption, StockLineFilter,
+    StockLineSort, StockLineSortField,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
