@@ -238,10 +238,7 @@ const useUpdate = (vaccinationId: string | undefined) => {
     // will be empty if there's a generic error, such as permission denied
     if (!isEmpty(apiResult)) {
       const result = apiResult.updateVaccination;
-
-      if (result.__typename === 'VaccinationNode') {
-        return result;
-      }
+      return result;
     }
 
     throw new Error(t('error.failed-to-save-vaccination'));

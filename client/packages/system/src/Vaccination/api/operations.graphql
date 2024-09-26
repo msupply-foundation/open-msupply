@@ -118,5 +118,15 @@ mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
       __typename
       id
     }
+    ... on UpdateVaccinationError {
+      __typename
+      error {
+        description
+        ... on NotMostRecentGivenDose {
+          __typename
+          description
+        }
+      }
+    }
   }
 }

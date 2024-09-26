@@ -2522,7 +2522,7 @@ export type InsertOutboundShipmentInput = {
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  /** The other party must be an customer of the current store */
+  /** The other party must be a customer of the current store */
   otherPartyId: Scalars['String']['input'];
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -4629,6 +4629,11 @@ export type NotEnoughStockForReduction = InsertOutboundShipmentLineErrorInterfac
   batch: StockLineResponse;
   description: Scalars['String']['output'];
   line?: Maybe<InvoiceLineNode>;
+};
+
+export type NotMostRecentGivenDose = UpdateVaccinationErrorInterface & {
+  __typename: 'NotMostRecentGivenDose';
+  description: Scalars['String']['output'];
 };
 
 export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface & {
@@ -8035,6 +8040,15 @@ export type UpdateUserNode = {
 
 export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
+export type UpdateVaccinationError = {
+  __typename: 'UpdateVaccinationError';
+  error: UpdateVaccinationErrorInterface;
+};
+
+export type UpdateVaccinationErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type UpdateVaccinationInput = {
   clinicianId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -8048,7 +8062,7 @@ export type UpdateVaccinationInput = {
   vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
-export type UpdateVaccinationResponse = VaccinationNode;
+export type UpdateVaccinationResponse = UpdateVaccinationError | VaccinationNode;
 
 export type UpdateVaccineCourseError = {
   __typename: 'UpdateVaccineCourseError';
