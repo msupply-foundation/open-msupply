@@ -20,6 +20,7 @@ jobs:
       PATH: /$home/.cargo/bin/rustup:$PATH
     steps:
       - uses: actions/checkout@v4
+        clean: false
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -36,6 +37,7 @@ jobs:
       PATH: /$home/.cargo/bin/rustup:$PATH
     steps:
       - uses: actions/checkout@v4
+        clean: false
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
