@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: target/sqlite
-      PATH: /$home/.cargo/bin/rustup:/opt/homebrew/bin:/usr/bin/:$PATH
+      PATH: /$home/.cargo/bin/rustup:/opt/homebrew/bin:/bin/:/usr/bin/:$PATH
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,7 +35,7 @@ jobs:
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: target/postgres
-      PATH: /$home/.cargo/bin/rustup:/opt/homebrew/bin:/usr/bin/:$PATH
+      PATH: /$home/.cargo/bin/rustup:/opt/homebrew/bin:/bin/:/usr/bin/:$PATH
     steps:
       - uses: actions/checkout@v4
         with:
