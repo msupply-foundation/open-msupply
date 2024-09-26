@@ -1,12 +1,11 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::MasterListNode;
-use repository::{EqualFilter, PaginationOption, StringFilter};
+use graphql_types::types::{MasterListFilterInput, MasterListNode};
+use repository::PaginationOption;
 use repository::{MasterList, MasterListFilter, MasterListSort};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -37,37 +36,6 @@ impl MasterListSortInput {
             // From trait is auto implemented by graphql(remote) in MasterListSortFieldInput
             key: self.key.into(),
             desc: self.desc,
-        }
-    }
-}
-
-#[derive(InputObject, Clone)]
-pub struct MasterListFilterInput {
-    pub id: Option<EqualFilterStringInput>,
-    pub name: Option<StringFilterInput>,
-    pub code: Option<StringFilterInput>,
-    pub description: Option<StringFilterInput>,
-    pub exists_for_name: Option<StringFilterInput>,
-    pub exists_for_name_id: Option<EqualFilterStringInput>,
-    pub exists_for_store_id: Option<EqualFilterStringInput>,
-    pub is_program: Option<bool>,
-    pub item_id: Option<EqualFilterStringInput>,
-}
-
-impl MasterListFilterInput {
-    pub fn to_domain(self) -> MasterListFilter {
-        MasterListFilter {
-            id: self.id.map(EqualFilter::from),
-            name: self.name.map(StringFilter::from),
-            code: self.code.map(StringFilter::from),
-            description: self.description.map(StringFilter::from),
-            exists_for_name: self.exists_for_name.map(StringFilter::from),
-            exists_for_name_id: self.exists_for_name_id.map(EqualFilter::from),
-            exists_for_store_id: self.exists_for_store_id.map(EqualFilter::from),
-            is_program: self.is_program,
-            item_id: self.item_id.map(EqualFilter::from),
-            is_discount_list: None,
-            is_default_price_list: None,
         }
     }
 }
@@ -114,17 +82,12 @@ pub fn master_lists(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id, user.user_id)?;
 
-    let mut query_filter = MasterListFilter::new();
-    if let Some(filter_input) = filter {
-        query_filter = filter_input.to_domain()
-    }
-
     let master_lists = service_provider
         .master_list_service
         .get_master_lists(
             &service_context,
             page.map(PaginationOption::from),
-            Some(query_filter),
+            filter.map(|filter| filter.to_domain()),
             // Currently only one sort option is supported, use the first from the list.
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
