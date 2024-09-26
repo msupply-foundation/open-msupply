@@ -75,12 +75,7 @@ export const Toolbar: FC = () => {
               }
             />
           </Box>
-          <Box
-            display="flex"
-            flexDirection="column"
-            flex={1}
-            marginLeft={'8px'}
-          >
+          <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
             <InputWithLabelRow
               label={t('label.date')}
               Input={
