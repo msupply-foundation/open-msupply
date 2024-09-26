@@ -6,7 +6,7 @@ use graphql_core::{
 };
 use graphql_types::types::{MasterListFilterInput, MasterListNode};
 use repository::PaginationOption;
-use repository::{MasterList, MasterListFilter, MasterListSort};
+use repository::{MasterList, MasterListSort};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     ListResult,
