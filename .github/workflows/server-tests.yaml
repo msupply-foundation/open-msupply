@@ -14,7 +14,7 @@ jobs:
   build_and_test:
     name: Remote Server Tests (sqlite)
     runs-on: self-hosted
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
