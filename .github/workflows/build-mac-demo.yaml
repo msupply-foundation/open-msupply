@@ -30,10 +30,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: server
-          prefix-key: ${{ inputs.architecture }}
       - name: Build
         run: ./build/mac/build.sh ${{ inputs.architecture }} ${{ inputs.includeDemoData }}
       # Upload artifact would remove +x (execute) permission and attributes from files when zipping
