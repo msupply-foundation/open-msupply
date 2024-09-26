@@ -1,5 +1,4 @@
 on:
-  push:
   pull_request:
     branches:
       - main
@@ -17,7 +16,7 @@ jobs:
     timeout-minutes: 25
     env:
       CARGO_TARGET_DIR: target/sqlite
-      PATH: /$home/.cargo/bin/rustup:$PATH
+      PATH: /$home/.cargo/bin/rustup:/usr/bin/:$PATH
     steps:
       - uses: actions/checkout@v4
         with:
