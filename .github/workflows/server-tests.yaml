@@ -24,3 +24,16 @@ jobs:
         with:
           command: test
           args: --features=sqlite --manifest-path server/Cargo.toml
+  build_and_test_pg:
+    name: Remote Server Tests (postgres)
+    runs-on: self-hosted
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=postgres --manifest-path server/Cargo.toml
