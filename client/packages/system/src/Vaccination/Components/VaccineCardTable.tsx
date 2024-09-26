@@ -126,6 +126,7 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         key: 'status',
         label: 'label.status',
         accessor: ({ rowData }) =>
+          // Only show label for the next editable row
           isRowClickable(isEncounter, rowData, data?.items)
             ? rowData.status
             : null,
@@ -173,8 +174,8 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
       },
     ],
     {},
-    // Putting items into deps array so that status labels get recalculated on
-    // changes
+    // Putting data/items into deps array so that status labels get recalculated
+    // on changes
     [data]
   );
 

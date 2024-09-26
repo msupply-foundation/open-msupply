@@ -99,12 +99,11 @@ impl VaccinationCardItemNode {
     pub async fn suggested_date(&self) -> &Option<NaiveDate> {
         &self.item.suggested_date
     }
-    pub async fn status(&self) -> &Option<VaccinationCardItemNodeStatus> {
-        &Some(VaccinationCardItemNodeStatus::Given)
-        // &self
-        //     .item
-        //     .status
-        //     .map(|status| VaccinationCardItemNodeStatus::from_domain(&status))
+    pub async fn status(&self) -> Option<VaccinationCardItemNodeStatus> {
+        self.item
+            .status
+            .as_ref()
+            .map(|status| VaccinationCardItemNodeStatus::from_domain(status))
     }
 
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
