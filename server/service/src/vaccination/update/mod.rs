@@ -45,7 +45,7 @@ pub struct UpdateVaccination {
     pub clinician_id: Option<NullableUpdate<String>>,
     pub comment: Option<String>,
     pub given: Option<bool>,
-    pub stock_line_id: Option<String>,
+    pub stock_line_id: Option<NullableUpdate<String>>,
     pub not_given_reason: Option<String>,
     pub facility_name_id: Option<NullableUpdate<String>>,
     pub facility_free_text: Option<NullableUpdate<String>>,
@@ -288,7 +288,9 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
                     given: Some(true),
-                    stock_line_id: Some("non_existent_stock_line_id".to_string()),
+                    stock_line_id: Some(NullableUpdate {
+                        value: Some("non_existent_stock_line_id".to_string())
+                    }),
                     ..Default::default()
                 }
             ),
@@ -303,7 +305,9 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
                     given: Some(true),
-                    stock_line_id: Some(mock_stock_line_a().id), // FOR ITEM A (not linked to vaccine course)
+                    stock_line_id: Some(NullableUpdate {
+                        value: Some(mock_stock_line_a().id)
+                    }),
                     ..Default::default()
                 }
             ),
@@ -350,7 +354,9 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_b_given().id, // vaccination (dose) A was also not given, cant give B before A
                     given: Some(true),
-                    stock_line_id: Some(mock_stock_line_vaccine_item_a().id),
+                    stock_line_id: Some(NullableUpdate {
+                        value: Some(mock_stock_line_vaccine_item_a().id)
+                    }),
                     ..Default::default()
                 }
             ),
@@ -405,7 +411,9 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
                     given: Some(true),
-                    stock_line_id: Some(mock_stock_line_vaccine_item_a().id),
+                    stock_line_id: Some(NullableUpdate {
+                        value: Some(mock_stock_line_vaccine_item_a().id),
+                    }),
                     update_transactions: Some(false),
                     ..Default::default()
                 },
@@ -456,7 +464,9 @@ mod update {
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
                     given: Some(true),
-                    stock_line_id: Some(mock_stock_line_vaccine_item_a().id), // Vaccine item A is linked to vaccine course A
+                    stock_line_id: Some(NullableUpdate {
+                        value: Some(mock_stock_line_vaccine_item_a().id),
+                    }),
                     update_transactions: Some(true),
                     ..Default::default()
                 },
@@ -495,7 +505,9 @@ mod update {
                 &mock_store_a().id,
                 UpdateVaccination {
                     id: mock_vaccination_a().id,
-                    stock_line_id: Some(mock_stock_line_b_vaccine_item_a().id),
+                    stock_line_id: Some(NullableUpdate {
+                        value: Some(mock_stock_line_b_vaccine_item_a().id),
+                    }),
                     update_transactions: Some(true),
                     ..Default::default()
                 },

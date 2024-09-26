@@ -8043,7 +8043,7 @@ export type UpdateVaccinationInput = {
   given?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
-  stockLineId?: InputMaybe<Scalars['String']['input']>;
+  stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
   vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };

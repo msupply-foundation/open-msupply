@@ -209,6 +209,8 @@ const useUpdate = (vaccinationId: string | undefined) => {
       throw new Error(t('error.failed-to-save-vaccination'));
     }
 
+    const isOtherFacility = input.facilityId === OTHER_FACILITY;
+
     const apiResult = await api.updateVaccination({
       storeId,
       input: {
@@ -218,17 +220,15 @@ const useUpdate = (vaccinationId: string | undefined) => {
         clinicianId: setNullableInput('id', input.clinician),
         comment: input.comment,
         notGivenReason: !input.given ? input.notGivenReason : null,
-        stockLineId: input.given ? input.stockLine?.id : null,
+        stockLineId: {
+          value: input.given && !isOtherFacility ? input.stockLine?.id : null,
+        },
 
         facilityNameId: {
-          value:
-            input.facilityId === OTHER_FACILITY ? undefined : input?.facilityId,
+          value: isOtherFacility ? undefined : input?.facilityId,
         },
         facilityFreeText: {
-          value:
-            input.facilityId === OTHER_FACILITY
-              ? input.facilityFreeText
-              : undefined,
+          value: isOtherFacility ? input.facilityFreeText : undefined,
         },
 
         updateTransactions: input.createTransactions,
