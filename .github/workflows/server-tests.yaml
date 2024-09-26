@@ -18,7 +18,7 @@ jobs:
     env:
       CARGO_TARGET_DIR: /tmp/target/sqlite
     steps:
-      -name: Update PATH
+      - name: Update PATH
         run: |
         echo "/$HOME/.cargo/bin/:/opt/homebrew/bin" >> $GITHUB_PATH
       - name: Show Environment
@@ -38,7 +38,7 @@ jobs:
     env:
       CARGO_TARGET_DIR: /tmp/target/postgres
     steps:
-      -name: Update PATH
+      - name: Update PATH
         run: |
         echo "/$HOME/.cargo/bin/:/opt/homebrew/bin" >> $GITHUB_PATH
       - name: Show Environment
