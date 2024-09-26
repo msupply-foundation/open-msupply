@@ -7,6 +7,7 @@ use crate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
         check_vaccination_exists, get_related_vaccinations,
     },
+    NullableUpdate,
 };
 
 use super::{UpdateVaccination, UpdateVaccinationError};
@@ -68,23 +69,31 @@ pub fn validate(
     let new_stock_line = if not_given {
         // If not given, stock line should not get set
         None
-    } else if let Some(stock_line_id) = &input.stock_line_id {
-        let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
-
-        if !check_item_belongs_to_vaccine_course(
-            &stock_line.stock_line_row.item_link_id,
-            &vaccination.vaccine_course_dose_row.vaccine_course_id,
-            connection,
-        )? {
-            return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
-        };
-
-        check_doses_defined(&stock_line)?;
-
-        Some(stock_line)
     } else {
-        // If no new stock line provided, existing stock line should be used
-        existing_stock_line.clone()
+        match &input.stock_line_id {
+            // If no new stock line provided, existing stock line should be used
+            None => existing_stock_line.clone(),
+            // Setting to None
+            Some(NullableUpdate { value: None }) => None,
+            // Setting to new stock line, validate it
+            Some(NullableUpdate {
+                value: Some(stock_line_id),
+            }) => {
+                let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
+
+                if !check_item_belongs_to_vaccine_course(
+                    &stock_line.stock_line_row.item_link_id,
+                    &vaccination.vaccine_course_dose_row.vaccine_course_id,
+                    connection,
+                )? {
+                    return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
+                };
+
+                check_doses_defined(&stock_line)?;
+
+                Some(stock_line)
+            }
+        }
     };
 
     // Check we can give/un-give this dose, based on previous and next doses
