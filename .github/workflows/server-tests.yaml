@@ -11,6 +11,12 @@ on:
 name: CI
 
 jobs:
+  show_env:
+    name: Show Environment
+    runs-on: self-hosted
+    steps:
+      - name: Show Environment
+        run: env
   build_and_test:
     name: Remote Server Tests (sqlite)
     runs-on: self-hosted
