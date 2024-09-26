@@ -11,12 +11,6 @@ on:
 name: CI
 
 jobs:
-  show_env:
-    name: Show Environment
-    runs-on: self-hosted
-    steps:
-      - name: Show Environment
-        run: env
   build_and_test:
     name: Remote Server Tests (sqlite)
     runs-on: self-hosted
@@ -25,6 +19,8 @@ jobs:
       CARGO_TARGET_DIR: target/sqlite
       PATH: /$home/.cargo/bin/rustup:/opt/homebrew/bin:/bin/:/usr/bin/:$PATH
     steps:
+      - name: Show Environment
+        run: env
       - uses: actions/checkout@v4
         with:
           clean: false
@@ -43,6 +39,8 @@ jobs:
       CARGO_TARGET_DIR: target/postgres
       PATH: /$home/.cargo/bin/rustup:/opt/homebrew/bin:/bin/:/usr/bin/:$PATH
     steps:
+      - name: Show Environment
+        run: env
       - uses: actions/checkout@v4
         with:
           clean: false
