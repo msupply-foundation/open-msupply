@@ -10,7 +10,7 @@ on:
 jobs:
   build-base:
     name: Build base
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -44,7 +44,7 @@ jobs:
 
   build-pr:
     name: Build PR
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -76,7 +76,7 @@ jobs:
 
   report:
     name: Generate report
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: [build-base, build-pr]
 
