@@ -34,6 +34,7 @@ const defaultDraftStockLine: DraftStockLine = {
     name: '',
   },
   inventoryAdjustmentReason: null,
+  masterList: [],
 };
 
 export function useStockLine(id?: string) {

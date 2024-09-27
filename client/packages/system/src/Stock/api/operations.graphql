@@ -13,6 +13,9 @@ fragment StockLineRow on StockLineNode {
   storeId
   totalNumberOfPacks
   supplierName
+  masterList(storeId: $storeId) {
+    name
+  }
   location {
     ...LocationRow
   }
