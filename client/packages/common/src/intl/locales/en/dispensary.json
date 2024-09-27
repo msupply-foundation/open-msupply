@@ -59,7 +59,7 @@
   "label.status-given": "Given",
   "label.status-not-given": "Not given",
   "label.status-pending": "Pending",
-  "label.status-late": "Late",
+  "label.status-late": "Overdue",
   "label.update-transactions": "Update stock transactions",
   "label.vaccination": "Vaccination",
   "label.vaccinations": "Vaccinations",

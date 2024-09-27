@@ -223,8 +223,8 @@ export const themeOptions = {
     vaccinationStatus: {
       given: 'success.light',
       notGiven: 'error.main',
-      pending: 'cceStatus.notInUse',
-      late: 'cceStatus.functioningButNeedsAttention',
+      pending: 'info.light',
+      late: 'error.main',
     },
   },
   zIndex: {
