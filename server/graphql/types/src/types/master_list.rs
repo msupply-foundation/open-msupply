@@ -77,7 +77,7 @@ impl MasterListNode {
         MasterListNode { master_list }
     }
 
-    pub fn from_vec(master_lists: Vec<MasterListRow>) -> Vec<Self> {
+    pub fn from_vec(master_lists: Vec<MasterList>) -> Vec<Self> {
         master_lists.into_iter().map(Self::from_domain).collect()
     }
 }
