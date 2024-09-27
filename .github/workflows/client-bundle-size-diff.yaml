@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
 
@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Read .nvmrc
         run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
@@ -66,7 +66,7 @@ jobs:
         run: cd ./client && yarn build-stats
 
       - name: Upload base stats.json
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: pr
           path: ./client/packages/host/dist/stats.json
@@ -80,7 +80,7 @@ jobs:
 
     steps:
       - name: Checkout PR
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Download base stats
         uses: actions/download-artifact@v4
