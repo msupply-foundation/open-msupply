@@ -40,7 +40,7 @@ pub fn generate(
         comment: None,
         their_reference: None,
         transport_reference: None,
-        allocated_datetime: None,
+        allocated_datetime: Some(current_datetime),
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
