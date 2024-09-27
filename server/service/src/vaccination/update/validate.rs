@@ -1,4 +1,7 @@
-use repository::{RepositoryError, StockLine, StorageConnection, VaccinationRow};
+use repository::{
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StockLine,
+    StorageConnection, VaccinationRow,
+};
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
@@ -17,6 +20,7 @@ pub struct ValidateResult {
     pub patient_id: String,
     pub existing_stock_line: Option<StockLine>,
     pub new_stock_line: Option<StockLine>,
+    pub existing_prescription_line: Option<InvoiceLine>,
 }
 
 pub fn validate(
@@ -96,6 +100,19 @@ pub fn validate(
         }
     };
 
+    // Get prescription line
+    let existing_prescription_line = match &vaccination.vaccination_row.invoice_id {
+        Some(invoice_id) => {
+            let line = InvoiceLineRepository::new(connection)
+                // Vaccination prescription should only ever have 1 line
+                .query_one(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?
+                .ok_or(RepositoryError::NotFound)?;
+
+            Some(line)
+        }
+        None => None,
+    };
+
     // Check we can give/un-give this dose, based on previous and next doses
     let (previous_vaccination, next_vaccination) = get_related_vaccinations(
         connection,
@@ -125,6 +142,7 @@ pub fn validate(
         patient_id: encounter.patient_link_id,
         existing_stock_line,
         new_stock_line,
+        existing_prescription_line,
     })
 }
 

@@ -65,6 +65,7 @@ pub fn update_vaccination(
                 patient_id,
                 existing_stock_line,
                 new_stock_line,
+                existing_prescription_line,
             } = validate(&input, connection, store_id)?;
 
             let GenerateResult {
@@ -77,6 +78,7 @@ pub fn update_vaccination(
                 patient_id,
                 existing_stock_line,
                 new_stock_line,
+                existing_prescription_line,
             });
 
             // Update the vaccination
@@ -558,6 +560,46 @@ mod update {
         assert_eq!(stock_line.available_number_of_packs, 9.975);
 
         // ----------------------------
+        // Update: Remove stock_line (e.g. changing to `other` facility)
+        // ----------------------------
+        let result = service_provider
+            .vaccination_service
+            .update_vaccination(
+                &context,
+                &mock_store_a().id,
+                UpdateVaccination {
+                    id: mock_vaccination_a().id,
+                    stock_line_id: Some(NullableUpdate { value: None }),
+                    update_transactions: Some(true),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Still given
+        assert_eq!(result.vaccination_row.given, true);
+
+        // New invoice has been created, inventory addition to reverse the original prescription
+        let created_invoices = InvoiceRepository::new(&context.connection)
+            .query_by_filter(
+                InvoiceFilter::new().stock_line_id(mock_stock_line_b_vaccine_item_a().id),
+            )
+            .unwrap();
+
+        assert_eq!(created_invoices.len(), 2);
+        assert!(created_invoices
+            .iter()
+            .any(|inv| inv.invoice_row.r#type == InvoiceType::CustomerReturn));
+
+        // Check stock was re-introduced
+        let stock_line = StockLineRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_stock_line_b_vaccine_item_a().id)
+            .unwrap()
+            .unwrap();
+        // 1 dose was reversed, was 9.975, so 10.0 now
+        assert_eq!(stock_line.available_number_of_packs, 10.0);
+
+        // ----------------------------
         // Update: Given -> not given
         // ----------------------------
         let result = service_provider
@@ -588,17 +630,7 @@ mod update {
             )
             .unwrap();
 
+        // Already had the return, another one was not created
         assert_eq!(created_invoices.len(), 2);
-        assert!(created_invoices
-            .iter()
-            .any(|inv| inv.invoice_row.r#type == InvoiceType::CustomerReturn));
-
-        // Check stock was adjusted back up
-        let stock_line = StockLineRowRepository::new(&context.connection)
-            .find_one_by_id(&mock_stock_line_b_vaccine_item_a().id)
-            .unwrap()
-            .unwrap();
-        // 1 dose was reversed, was 9.975, so now 10
-        assert_eq!(stock_line.available_number_of_packs, 10.0);
     }
 }
