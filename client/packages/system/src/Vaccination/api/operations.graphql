@@ -48,6 +48,7 @@ fragment VaccinationCardItem on VaccinationCardItemNode {
   given
   batch
   facilityName(storeId: $storeId)
+  status
 }
 
 fragment VaccinationCard on VaccinationCardNode {
