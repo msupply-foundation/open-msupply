@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{EqualFilter, MasterList, MasterListFilter, StringFilter};
+use repository::{EqualFilter, MasterList, MasterListFilter, MasterListRow, StringFilter};
 use service::master_list::query_lines::get_master_list_lines_count;
 
 #[derive(PartialEq, Debug)]
@@ -75,5 +75,9 @@ impl MasterListNode {
 impl MasterListNode {
     pub fn from_domain(master_list: MasterList) -> Self {
         MasterListNode { master_list }
+    }
+
+    pub fn from_vec(master_lists: Vec<MasterListRow>) -> Vec<Self> {
+        master_lists.into_iter().map(Self::from_domain).collect()
     }
 }
