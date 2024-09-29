@@ -6,7 +6,6 @@ import {
   createTableStore,
   DataTable,
   NumUtils,
-  Switch,
   TableProvider,
   useColumns,
   useRowStyle,
@@ -29,6 +28,7 @@ export const SelectBatch = ({
 }: SelectBatchProps) => {
   const { data, isLoading } = useStockLines(itemId);
 
+  // Auto-select if there is only one stock line
   useEffect(() => {
     if (data?.nodes?.length === 1) {
       setStockLine(data.nodes[0]!);
@@ -91,6 +91,7 @@ const BatchTable = ({
     setRowStyles(
       data.map(r => r.id),
       {
+        // Make the table a little more compact
         height: 'unset',
         '& td': {
           padding: 0,
@@ -98,28 +99,6 @@ const BatchTable = ({
       }
     );
   }, [data]);
-
-  const AdministerWithoutStockTransaction = () => {
-    // If no stock , switch to continue
-    // Otherwise... switch before item?
-    return (
-      <Switch
-        label={
-          // t('messages.no-stock-available') +
-          'No stock available. Continue without transaction?'
-        }
-        checked={false}
-        onChange={
-          () => {}
-          // updateDraft({
-          //   createTransactions: !draft.createTransactions,
-          // })
-        }
-        labelPlacement="end"
-        size="small"
-      />
-    );
-  };
 
   return (
     <DataTable
