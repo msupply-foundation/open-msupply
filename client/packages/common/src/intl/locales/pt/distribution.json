@@ -110,6 +110,5 @@
   "messages.confirm-delete-shipments_many": "Isto eliminará permanentemente {{count}} envios",
   "messages.confirm-delete-returns_other": "Isto eliminará permanentemente {{count}} devoluções",
   "messages.confirm-delete-returns_one": "Isto eliminará permanentemente 1 devolução",
-  "label.quantity": "Quantidade",
   "messages.confirm-delete-shipments_few": "Isto eliminará permanentemente {{count}} envios"
 }
