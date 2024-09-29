@@ -13,7 +13,7 @@ export enum ColumnKey {
   'DateTime' = 'datetime',
   'Time' = 'time',
   'Name' = 'name',
-  'UnitQuantity' = 'unitQuantity',
+  'Quantity' = 'quantity',
   'Type' = 'type',
   'Reason' = 'reason',
   'Number' = 'number',
@@ -46,7 +46,7 @@ export const useLedgerColumns = (
         sortable: false,
       },
       {
-        key: ColumnKey.UnitQuantity,
+        key: ColumnKey.Quantity,
         label: 'label.unit-quantity',
         sortable: false,
         description: 'description.unit-quantity',
