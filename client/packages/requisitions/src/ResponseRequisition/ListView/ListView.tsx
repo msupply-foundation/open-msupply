@@ -91,6 +91,7 @@ export const ResponseRequisitionListView: FC = () => {
       label: 'label.shipments',
       description: 'description.number-of-shipments',
       accessor: ({ rowData }) => rowData?.shipments?.totalCount ?? 0,
+      sortable: false,
     },
   ];
 
