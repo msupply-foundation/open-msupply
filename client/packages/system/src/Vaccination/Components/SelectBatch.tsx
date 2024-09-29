@@ -38,6 +38,7 @@ export const SelectBatch = ({
   const columns = useColumns<StockLineFragment>(
     [
       {
+        width: '55px',
         key: 'select',
         Cell: ({ rowData }) => (
           <Checkbox checked={rowData.id === stockLine?.id} />
