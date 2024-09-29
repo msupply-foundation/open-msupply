@@ -37,13 +37,13 @@ pub fn validate(
             UpdateVaccinationError::InternalError("Encounter does not exist".to_string()),
         )?;
 
-    if let Some(clinician_id) = input.clinician_id.clone().map(|u| u.value).flatten() {
+    if let Some(clinician_id) = input.clinician_id.clone().and_then(|u| u.value) {
         if !check_clinician_exists(&clinician_id, connection)? {
             return Err(UpdateVaccinationError::ClinicianDoesNotExist);
         }
     }
 
-    if let Some(facility_name_id) = input.facility_name_id.clone().map(|u| u.value).flatten() {
+    if let Some(facility_name_id) = input.facility_name_id.clone().and_then(|u| u.value) {
         if !check_name_exists(connection, &facility_name_id)?.is_some() {
             return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
         }

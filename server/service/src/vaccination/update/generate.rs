@@ -69,48 +69,46 @@ pub fn generate(
     // Reverse prescription if it existed, and the stock line is changing
     let create_customer_return = if (stock_line_has_changed || should_revert) && update_transactions
     {
-        existing_prescription_line
-            .map(|invoice_line| {
-                let stock_line_row = match invoice_line.stock_line_option {
-                    Some(stock_line) => stock_line,
-                    None => return None,
-                };
+        existing_prescription_line.and_then(|invoice_line| {
+            let stock_line_row = match invoice_line.stock_line_option {
+                Some(stock_line) => stock_line,
+                None => return None,
+            };
 
-                let amount = get_dose_as_number_of_packs(&invoice_line.item_row, &stock_line_row);
+            let amount = get_dose_as_number_of_packs(&invoice_line.item_row, &stock_line_row);
 
-                let create_return = InsertCustomerReturn {
+            let create_return = InsertCustomerReturn {
+                id: uuid(),
+                other_party_id: patient_id.clone(),
+                is_patient_return: true,
+                outbound_shipment_id: None,
+                customer_return_lines: vec![CustomerReturnLineInput {
                     id: uuid(),
-                    other_party_id: patient_id.clone(),
-                    is_patient_return: true,
-                    outbound_shipment_id: None,
-                    customer_return_lines: vec![CustomerReturnLineInput {
-                        id: uuid(),
-                        stock_line_id: Some(stock_line_row.id),
-                        item_id: stock_line_row.item_link_id,
-                        expiry_date: stock_line_row.expiry_date,
-                        batch: stock_line_row.batch,
-                        pack_size: stock_line_row.pack_size,
-                        number_of_packs: amount,
-                        reason_id: None,
-                        note: None,
-                    }],
-                };
-                let finalise_return = UpdateCustomerReturn {
-                    id: create_return.id.clone(),
-                    status: Some(UpdateCustomerReturnStatus::Verified),
-                    comment: Some("Reversed vaccination prescription".to_string()),
-                    on_hold: None,
-                    colour: None,
-                    their_reference: None,
-                    other_party_id: None,
-                };
+                    stock_line_id: Some(stock_line_row.id),
+                    item_id: stock_line_row.item_link_id,
+                    expiry_date: stock_line_row.expiry_date,
+                    batch: stock_line_row.batch,
+                    pack_size: stock_line_row.pack_size,
+                    number_of_packs: amount,
+                    reason_id: None,
+                    note: None,
+                }],
+            };
+            let finalise_return = UpdateCustomerReturn {
+                id: create_return.id.clone(),
+                status: Some(UpdateCustomerReturnStatus::Verified),
+                comment: Some("Reversed vaccination prescription".to_string()),
+                on_hold: None,
+                colour: None,
+                their_reference: None,
+                other_party_id: None,
+            };
 
-                Some(CreateCustomerReturn {
-                    create_return,
-                    finalise_return,
-                })
+            Some(CreateCustomerReturn {
+                create_return,
+                finalise_return,
             })
-            .flatten()
+        })
     } else {
         None
     };
