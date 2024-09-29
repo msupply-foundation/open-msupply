@@ -3,9 +3,10 @@ import { StoreRowFragment, useStore } from '../../api';
 import {
   Autocomplete,
   createQueryParamsStore,
-  defaultOptionMapper,
   QueryParamsProvider,
+  RegexUtils,
 } from '@openmsupply-client/common';
+import { getStoreOptionRenderer } from './StoreOptionRenderer';
 
 type StoreSearchInputProps = {
   clearable?: boolean;
@@ -20,6 +21,14 @@ type StoreSearchInputProps = {
   ) => void;
 };
 
+const filterByNameAndCode = (options: StoreRowFragment[], state: any) =>
+  options.filter(option =>
+    RegexUtils.matchObjectProperties(state.inputValue, option, [
+      'storeName',
+      'code',
+    ])
+  );
+
 const StoreSearchComponent = ({
   clearable = false,
   fullWidth = false,
@@ -29,18 +38,22 @@ const StoreSearchComponent = ({
   onChange,
 }: StoreSearchInputProps) => {
   const { data, isLoading } = useStore.document.list();
+  const StoreOptionRender = getStoreOptionRenderer();
 
   return (
     <Autocomplete
       width={fullWidth ? '100%' : undefined}
       sx={fullWidth ? { width: '100%' } : undefined}
       onInputChange={onInputChange}
+      filterOptions={filterByNameAndCode}
       clearable={clearable}
       loading={isLoading}
-      options={defaultOptionMapper(data?.nodes ?? [], 'code')}
+      options={data?.nodes ?? []}
+      getOptionLabel={option => `${option.code} ${option.storeName}`}
+      renderOption={StoreOptionRender}
       disabled={isDisabled}
       onChange={(_, value) => value && onChange(value)}
-      value={value ? { label: value.code, ...value } : null}
+      value={value ? { label: value.storeName, ...value } : null}
       isOptionEqualToValue={(option, value) => option.id === value.id}
     />
   );
