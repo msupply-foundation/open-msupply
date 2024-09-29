@@ -24,7 +24,7 @@ pub struct UpdateVaccinationInput {
     pub clinician_id: Option<NullableUpdateInput<String>>,
     pub comment: Option<String>,
     pub given: Option<bool>,
-    pub stock_line_id: Option<String>,
+    pub stock_line_id: Option<NullableUpdateInput<String>>,
     pub not_given_reason: Option<String>,
     pub update_transactions: Option<bool>,
 }
@@ -52,7 +52,9 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
             }),
             comment,
             given,
-            stock_line_id,
+            stock_line_id: stock_line_id.map(|stock_line_id| NullableUpdate {
+                value: stock_line_id.value,
+            }),
             not_given_reason,
             facility_name_id: facility_name_id.map(|facility_name_id| NullableUpdate {
                 value: facility_name_id.value,
