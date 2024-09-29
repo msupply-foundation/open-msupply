@@ -131,7 +131,6 @@
   "info.automatic-return-no-edit": "No puedes editar los detalles hasta que el estado se confirme como Entregado.",
   "info.manual-return": "Esta devolución fue creada manualmente. El estado de entrega no se actualizará automáticamente.",
   "label.outbound-shipment": "Salida",
-  "label.quantity": "Cantidad",
   "message.placeholder-lines-cannot-be-returned": "No se pueden devolver las líneas de marcador de posición",
   "messages.deleted-returns_other": "{{count}} Devoluciones eliminadas",
   "messages.confirm-delete-returns_other": "Esto eliminará permanentemente {{count}} devoluciones",
