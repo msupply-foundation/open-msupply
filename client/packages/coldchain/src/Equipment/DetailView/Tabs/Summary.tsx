@@ -122,7 +122,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         __typename: 'StoreNode',
         id: store.id,
         code: store.code ?? '',
-        storeName: '',
+        storeName: store.storeName,
       },
     });
   };

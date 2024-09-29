@@ -132,7 +132,7 @@ export const CreateAssetModal = ({
         __typename: 'StoreNode',
         id: store.id,
         code: store.code ?? '',
-        storeName: '',
+        storeName: store.storeName,
       },
     });
   };
