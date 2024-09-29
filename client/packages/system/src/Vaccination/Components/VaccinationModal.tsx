@@ -33,6 +33,7 @@ import { ArrowRightIcon } from '@mui/x-date-pickers';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { getSwitchReason } from './getSwitchReason';
+import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -70,25 +71,29 @@ export const VaccinationModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(700);
 
-  const save = async () => {
-    try {
-      const result = await saveVaccination(draft);
+  const save = useConfirmNoStockLineSelected(
+    draft,
+    !!dose?.vaccineCourse.vaccineCourseItems?.length,
+    async () => {
+      try {
+        const result = await saveVaccination(draft);
 
-      if (result?.__typename === 'VaccinationNode') {
-        success(t('messages.vaccination-saved'))();
-        onClose();
-      }
-
-      if (result?.__typename === 'UpdateVaccinationError') {
-        if (result.error.__typename === 'NotMostRecentGivenDose') {
-          const errorSnack = error(t('error.not-most-recent-given-dose'));
-          errorSnack();
+        if (result?.__typename === 'VaccinationNode') {
+          success(t('messages.vaccination-saved'))();
+          onClose();
         }
+
+        if (result?.__typename === 'UpdateVaccinationError') {
+          if (result.error.__typename === 'NotMostRecentGivenDose') {
+            const errorSnack = error(t('error.not-most-recent-given-dose'));
+            errorSnack();
+          }
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
     }
-  };
+  );
 
   const InfoBox = <GivenInfoBox vaccination={vaccination} />;
 
