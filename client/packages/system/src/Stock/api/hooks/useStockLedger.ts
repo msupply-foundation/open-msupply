@@ -40,7 +40,7 @@ const getSortKey = (sortBy: string): LedgerSortFieldInput => {
   switch (sortBy) {
     case ColumnKey.Name:
       return LedgerSortFieldInput.Name;
-    case ColumnKey.UnitQuantity:
+    case ColumnKey.Quantity:
       return LedgerSortFieldInput.Quantity;
     case ColumnKey.Type:
       return LedgerSortFieldInput.InvoiceType;
