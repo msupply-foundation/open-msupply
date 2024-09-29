@@ -140,5 +140,13 @@
   "error.sync-v6-api-incompatible-hint": "La version du serveur central de Open mSupply doit être mis a jour avec une nouvelle version avant de pouvoir vous connecter - contactez support@msupply.foundation",
   "r-and-r-forms": "Formulaire R&R",
   "label.initialise-store-properties": "Initialiser les propriétés des dépôts pour GAPS",
-  "label.initialised": "Initialisé"
+  "label.initialised": "Initialisé",
+  "error.login-support": "Merci de contacter support@msupply.foundation si vous ne pouvez pas vous connecter à votre compte",
+  "error.missing-central-sync": "Impossible d'accéder au serveur central mSupply",
+  "customer-return": "Retour client",
+  "customer-returns": "Retours client",
+  "supplier-return": "Retour fournisseur",
+  "cmdk.more-info-close": "Fermer le volet d'information supplémentaire",
+  "cmdk.more-info-open": "Ouvrir le volet d'information supplémentaire",
+  "supplier-returns": "Retours fournisseur"
 }
