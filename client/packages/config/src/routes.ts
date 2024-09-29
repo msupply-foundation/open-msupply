@@ -65,5 +65,23 @@ export enum AppRoute {
 }
 
 export enum ExternalURL {
-  PublicDocs = 'https://docs.msupply.foundation/docs',
+  // PublicDocs = 'https://docs.msupply.foundation/docs',
+  PublicDocs,
 }
+
+export interface LocalisedExternalUrlProps {
+  url: ExternalURL;
+  locale: String | undefined;
+}
+
+export const localisedExternalUrl = ({
+  url,
+  locale,
+}: LocalisedExternalUrlProps) => {
+  switch (url) {
+    case ExternalURL.PublicDocs: {
+      const localeUrlInsert = locale == 'en' ? '' : `${locale}/`;
+      return `https://docs.msupply.foundation/${localeUrlInsert}docs`;
+    }
+  }
+};
