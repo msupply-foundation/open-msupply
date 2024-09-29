@@ -61,7 +61,6 @@
   "label.amc": "Среднее Месячное Потребление",
   "label.customer-name": "Имя Клиента",
   "label.delete": "Удалить",
-  "label.quantity": "Количество",
   "label.requisition": "Заявка на закупку",
   "label.requested-quantity": "Запрошенное количество",
   "messages.allocated-lines_few": "Распределено {{count}} строки",

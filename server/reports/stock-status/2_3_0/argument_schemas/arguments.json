@@ -3,34 +3,25 @@
   "definitions": {
     "StockFilters": {
       "properties": {
-        "expiryDate": {
-          "description": "Expiry Date",
-          "format": "date",
+        "itemCode": {
+          "description": "Item Code",
           "type": "string"
         },
-        "itemCodeOrName": {
-          "description": "Item Code or Name",
+        "itemName": {
+          "description": "Item Name",
           "type": "string"
         },
         "monthlyConsumptionLookBackPeriod": {
           "description": "Average Monthly Consumption Look Back Period",
-          "type": "number",
-          "readOnly": true
+          "type": "number"
         },
         "monthsOverstock": {
           "description": "Months Overstock",
-          "type": "number",
-          "readOnly": true
+          "type": "number"
         },
         "monthsUnderstock": {
           "description": "Months Understock",
-          "type": "number",
-          "readOnly": true
-        },
-        "monthsItemsExpire": {
-          "description": "Expiring item period",
-          "type": "number",
-          "readOnly": true
+          "type": "number"
         }
       }
     }

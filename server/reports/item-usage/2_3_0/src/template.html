@@ -1,0 +1,76 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr class="heading">
+        <td>{{t(k="label.code", f="Code")}}</td>
+        <td>{{t(k="label.name", f="Name")}}</td>
+        <td>{{t(k="report.in-stock", f="In stock")}}</td>
+        <td>{{t(k="report.stock-on-order", f="Stock on order")}}</td>
+        <td>{{t(k="report.amc-12-months", f="AMC (12 months)")}}</td>
+        <td>{{t(k="report.amc-24-months", f="AMC (24 months)")}}</td>
+        <td>{{t(k="report.months-cover", f="Months cover")}}</td>
+        <td>{{t(k="report.usage-this-month", f="Monthly usage (this month)")}}</td>
+        <td>{{t(k="report.usage-last-month", f="Monthly usage (last month)")}}</td>
+        <td>{{t(k="report.usage-2-months-prior", f="Monthly usage (2 months ago)")}}</td>
+        <td>{{t(k="report.expiring-6-months", f="Expiring in 6 months")}}</td>
+        <td>{{t(k="report.expiring-12-months", f="Expiring in 12 months")}}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in data.items.nodes %}
+      <!-- monthly consumptions -->
+      {% set monthConsumption = data.thisMonthConsumption |
+      filter(attribute="item_id", value=item.id) | map(attribute="quantity") | first() |
+      default(value=0) %}
+      {% set lastMonthConsumption = data.lastMonthConsumption |
+        filter(attribute="item_id", value=item.id) | map(attribute="quantity") | first() |
+        default(value=0) %}
+      {% set twoMonthsAgoConsumption = data.twoMonthsAgoConsumption |
+        filter(attribute="item_id", value=item.id) | map(attribute="quantity") | first() |
+        default(value=0) %}
+      <!-- expiring -->
+      {% set expiringInSixMonths = data.expiringInSixMonths |
+        filter(attribute="item_id", value=item.id) | map(attribute="quantity") | first() |
+        default(value=0) %}
+      {% set expiringInTwelveMonths = data.expiringInTwelveMonths |
+       filter(attribute="item_id", value=item.id)| map(attribute="quantity") | first() |
+        default(value=0) %}
+      <!-- Stock on Order -->
+      {% set stockOnOrder = data.stockOnOrder |
+        filter(attribute="id", value=item.id) | map(attribute="quantity") | first() |
+        default(value=0) %}
+      <!-- AMC -->
+      {% set AMC12 = data.AMCTwelve |
+        filter(attribute="item_id", value=item.id)| map(attribute="quantity") |
+        first() | default(value=0) %}
+      {% set AMC24 = data.AMCTwentyFour |
+        filter(attribute="item_id", value=item.id)| map(attribute="quantity") |
+        first() | default(value=0) %}
+
+      {% set SOH = item.stats.availableStockOnHand | default(value=0) | round(
+      precision=1) %}
+      {% set MOS = item.stats.availableMonthsOfStockOnHand | default(value=0) |
+      round( precision=1) %}
+
+      <tr>
+        <td>{{item.code}}</td>
+        <td>{{item.name}}</td>
+        <td>{{SOH}}</td>
+        <td>{{stockOnOrder}}</td>
+        <td>{{AMC12}}</td>
+        <td>{{AMC24}}</td>
+        <td>{{MOS}}</td>
+        <td>{{monthConsumption}}</td>
+        <td>{{lastMonthConsumption}}</td>
+        <td>{{twoMonthsAgoConsumption}}</td>
+        <td>{{expiringInSixMonths}}</td>
+        <td>{{expiringInTwelveMonths}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

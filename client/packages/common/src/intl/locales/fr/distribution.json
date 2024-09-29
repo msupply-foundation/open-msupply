@@ -106,7 +106,6 @@
   "button.supply-to-approved": "Fournir Qtés Autorisées",
   "messages.could-not-save": "Sauvegarde impossible",
   "messages.saved": "Sauvegardé",
-  "label.quantity": "Quantité",
   "button.new-return": "Nouveau retour",
   "error.failed-to-create-return": "Impossible de créer un retour !",
   "error.return-not-found": "Retour non trouvé",

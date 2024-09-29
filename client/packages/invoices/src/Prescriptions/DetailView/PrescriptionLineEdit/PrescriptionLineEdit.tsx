@@ -47,7 +47,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   draft,
   mode,
 }) => {
-  const item = !draft ? null : draft.item ?? null;
+  const item = !draft ? null : (draft.item ?? null);
   const t = useTranslation('dispensary');
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
@@ -55,10 +55,11 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
     useState(false);
-  const { status, id: invoiceId } = usePrescription.document.fields([
-    'status',
-    'id',
-  ]);
+  const {
+    status,
+    id: invoiceId,
+    prescriptionDate,
+  } = usePrescription.document.fields(['status', 'id', 'prescriptionDate']);
   const { mutateAsync } = usePrescription.line.save();
   const isDisabled = usePrescription.utils.isDisabled();
   const {
@@ -67,7 +68,10 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     setDraftStockOutLines,
     isLoading,
     updateNotes,
-  } = useDraftPrescriptionLines(currentItem);
+  } = useDraftPrescriptionLines(
+    currentItem,
+    DateUtils.getDateOrNull(prescriptionDate)
+  );
   const packSizeController = usePackSizeController(
     item,
     draftPrescriptionLines

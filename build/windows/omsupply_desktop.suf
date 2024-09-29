@@ -3059,7 +3059,7 @@ g_HandleSystemReboot();
 <ProjFileEmail/>
 <ProjFileCreatedVer>9.5.1.0</ProjFileCreatedVer>
 <ProjFileSavedVer>9.5.3.0</ProjFileSavedVer>
-<BaseFolderArchive>C:\Program Files (x86)\Jenkins\jobs\omSupplyMain - Installers\workspace\omSupply\omSupply Desktop Server</BaseFolderArchive>
+<BaseFolderArchive>#PROJECTFILEDIR#\omSupply\omSupply Desktop Server</BaseFolderArchive>
 <BaseFolderExternal/>
 <UseSkinFile>0</UseSkinFile>
 <SkinFilename/>
