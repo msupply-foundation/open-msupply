@@ -50,6 +50,9 @@ const useHostSync = () => {
     // isLoading is reset on next result of polled api query
     setIsLoading(true);
     await manualSync();
+    if (!syncStatus?.isSyncing) {
+      setIsLoading(false);
+    }
   };
 
   return {
