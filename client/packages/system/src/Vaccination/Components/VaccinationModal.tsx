@@ -186,6 +186,8 @@ const VaccinationForm = ({
     />
   );
 
+  const isOtherFacility = draft.facilityId === OTHER_FACILITY;
+
   return (
     <Container
       maxWidth="xs"
@@ -205,7 +207,7 @@ const VaccinationForm = ({
               facilityId={draft.facilityId}
             />
 
-            {draft.facilityId === OTHER_FACILITY && (
+            {isOtherFacility && (
               <BasicTextInput
                 fullWidth
                 autoFocus
@@ -220,21 +222,23 @@ const VaccinationForm = ({
           </Grid>
         }
       />
-      <InputWithLabelRow
-        label={t('label.clinician')}
-        Input={
-          <Grid item flex={1}>
-            <ClinicianSearchInput
-              onChange={clinician => {
-                updateDraft({
-                  clinician: clinician?.value,
-                });
-              }}
-              clinicianValue={draft.clinician}
-            />
-          </Grid>
-        }
-      />
+      {!isOtherFacility && (
+        <InputWithLabelRow
+          label={t('label.clinician')}
+          Input={
+            <Grid item flex={1}>
+              <ClinicianSearchInput
+                onChange={clinician => {
+                  updateDraft({
+                    clinician: clinician?.value,
+                  });
+                }}
+                clinicianValue={draft.clinician}
+              />
+            </Grid>
+          }
+        />
+      )}
       <InputWithLabelRow
         label={t('label.date')}
         Input={
