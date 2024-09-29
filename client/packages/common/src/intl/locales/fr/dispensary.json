@@ -97,5 +97,6 @@
     "placeholder.search-by-last-name": "Recherche par nom de famille",
     "title.patient-retrieval-modal": "Récupération des données des patients",
     "warning.cannot-create-placeholder-packs": "Il y a un total de {{allocatedQuantity}} conditionnements disponibles. Impossible d'allouer tous les {{requestedQuantity}} conditionnements.",
-    "warning.cannot-create-placeholder-units": "Il y a un total de {{allocatedQuantity}} unités disponibles. Impossible d'allouer toutes les {{requestedQuantity}} unités demandées."
+    "warning.cannot-create-placeholder-units": "Il y a un total de {{allocatedQuantity}} unités disponibles. Impossible d'allouer toutes les {{requestedQuantity}} unités demandées.",
+    "label.status-given": "Donné"
 }
