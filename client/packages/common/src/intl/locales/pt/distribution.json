@@ -102,5 +102,13 @@
   "info.no-shipment": "Ao finalizar essa requisição você não poderá criar um envio para ela.",
   "heading.supply-to-requested": "Estabelecer o fornecimento como requisitado",
   "label.issue": "Assunto",
-  "messages.supply-to-requested": "Você tem certeza de que gostaria de estabelecer a quantidade fornecida como a quantidade solicitada para todas as linhas?"
+  "messages.supply-to-requested": "Você tem certeza de que gostaria de estabelecer a quantidade fornecida como a quantidade solicitada para todas as linhas?",
+  "button.new-return": "Nova Devolução",
+  "error.failed-to-create-return": "Falha ao criar o retorno!",
+  "heading.return-items": "Artigos devolvidos",
+  "error.return-not-found": "Devolução não encontrada",
+  "messages.confirm-delete-shipments_many": "Isto eliminará permanentemente {{count}} envios",
+  "messages.confirm-delete-returns_other": "Isto eliminará permanentemente {{count}} devoluções",
+  "messages.confirm-delete-returns_one": "Isto eliminará permanentemente 1 devolução",
+  "messages.confirm-delete-shipments_few": "Isto eliminará permanentemente {{count}} envios"
 }

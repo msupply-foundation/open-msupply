@@ -316,3 +316,21 @@ mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
     }
   }
 }
+
+query getHistoricalStockLines(
+  $storeId: String!
+  $itemId: String!
+  $datetime: DateTime
+) {
+  historicalStockLines(
+    storeId: $storeId
+    itemId: $itemId
+    datetime: $datetime
+  ) {
+    ... on StockLineConnector {
+      nodes {
+        ...StockLine
+      }
+    }
+  }
+}

@@ -46,6 +46,9 @@ fragment VaccinationCardItem on VaccinationCardItemNode {
   vaccinationDate
   suggestedDate
   given
+  batch
+  facilityName(storeId: $storeId)
+  status
 }
 
 fragment VaccinationCard on VaccinationCardNode {
@@ -115,6 +118,16 @@ mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
     ... on VaccinationNode {
       __typename
       id
+    }
+    ... on UpdateVaccinationError {
+      __typename
+      error {
+        description
+        ... on NotMostRecentGivenDose {
+          __typename
+          description
+        }
+      }
     }
   }
 }

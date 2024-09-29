@@ -271,6 +271,7 @@ mutation upsertPrescription(
         ... on UpdatePrescriptionError {
           __typename
           error {
+            __typename
             description
           }
         }
@@ -359,4 +360,10 @@ mutation deletePrescriptionLines(
       }
     }
   }
+}
+
+fragment historicalStockLine on StockLineNode {
+  id
+  availableNumberOfPacks
+  packSize
 }

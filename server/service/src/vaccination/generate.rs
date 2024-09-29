@@ -1,4 +1,4 @@
-use repository::StockLine;
+use repository::{ItemRow, StockLine, StockLineRow};
 use util::uuid::uuid;
 
 use crate::{
@@ -25,7 +25,8 @@ pub fn generate_create_prescription(
         patient_id,
     };
 
-    let number_of_packs = get_dose_as_number_of_packs(&stock_line);
+    let number_of_packs =
+        get_dose_as_number_of_packs(&stock_line.item_row, &stock_line.stock_line_row);
 
     let insert_stock_out_line = InsertStockOutLine {
         id: uuid(),
@@ -66,6 +67,6 @@ pub fn generate_create_prescription(
     }
 }
 
-pub fn get_dose_as_number_of_packs(stock_line: &StockLine) -> f64 {
-    1.0 / stock_line.item_row.vaccine_doses as f64 / stock_line.stock_line_row.pack_size
+pub fn get_dose_as_number_of_packs(item_row: &ItemRow, stock_line_row: &StockLineRow) -> f64 {
+    1.0 / item_row.vaccine_doses as f64 / stock_line_row.pack_size
 }

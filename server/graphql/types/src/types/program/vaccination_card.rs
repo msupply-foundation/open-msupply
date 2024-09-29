@@ -3,10 +3,25 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 use dataloader::DataLoader;
-use graphql_core::{loader::StockLineByIdLoader, ContextExt};
-use service::vaccination::get_vaccination_card::{VaccinationCard, VaccinationCardItem};
+use graphql_core::{
+    loader::{NameByIdLoader, NameByIdLoaderInput, StockLineByIdLoader},
+    ContextExt,
+};
+use serde::Serialize;
+use service::vaccination::get_vaccination_card::{
+    VaccinationCard, VaccinationCardItem, VaccinationCardItemStatus,
+};
 
 use crate::types::StockLineNode;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum VaccinationCardItemNodeStatus {
+    Given,
+    NotGiven,
+    Pending,
+    Late,
+}
 
 pub struct VaccinationCardNode {
     pub vaccination_card: VaccinationCard,
@@ -84,6 +99,12 @@ impl VaccinationCardItemNode {
     pub async fn suggested_date(&self) -> &Option<NaiveDate> {
         &self.item.suggested_date
     }
+    pub async fn status(&self) -> Option<VaccinationCardItemNodeStatus> {
+        self.item
+            .status
+            .as_ref()
+            .map(|status| VaccinationCardItemNodeStatus::from_domain(status))
+    }
 
     pub async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
         let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
@@ -97,12 +118,62 @@ impl VaccinationCardItemNode {
 
         Ok(result.map(StockLineNode::from_domain))
     }
+
+    pub async fn batch(&self) -> &Option<String> {
+        &self.item.row.batch
+    }
+
+    pub async fn facility_name(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<String>> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let facility_name_id = match &self.item.row.facility_name_id {
+            Some(facility_name_id) => facility_name_id,
+            None => {
+                return Ok(self.item.row.facility_free_text.clone());
+            }
+        };
+
+        let response_option = loader
+            .load_one(NameByIdLoaderInput::new(&store_id, facility_name_id))
+            .await?;
+
+        Ok(match response_option {
+            Some(response) => Some(response.name_row.name),
+            None => None,
+        })
+    }
 }
 
 impl VaccinationCardItemNode {
     pub fn from_domain(vaccination_card_item: VaccinationCardItem) -> VaccinationCardItemNode {
         VaccinationCardItemNode {
             item: vaccination_card_item,
+        }
+    }
+}
+
+impl VaccinationCardItemNodeStatus {
+    pub fn to_domain(self) -> VaccinationCardItemStatus {
+        use VaccinationCardItemNodeStatus::*;
+        match self {
+            Given => VaccinationCardItemStatus::Given,
+            NotGiven => VaccinationCardItemStatus::NotGiven,
+            Pending => VaccinationCardItemStatus::Pending,
+            Late => VaccinationCardItemStatus::Late,
+        }
+    }
+
+    pub fn from_domain(status: &VaccinationCardItemStatus) -> VaccinationCardItemNodeStatus {
+        use VaccinationCardItemStatus::*;
+        match status {
+            Given => VaccinationCardItemNodeStatus::Given,
+            NotGiven => VaccinationCardItemNodeStatus::NotGiven,
+            Pending => VaccinationCardItemNodeStatus::Pending,
+            Late => VaccinationCardItemNodeStatus::Late,
         }
     }
 }

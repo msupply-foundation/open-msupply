@@ -72,11 +72,20 @@ export const VaccinationModal = ({
 
   const save = async () => {
     try {
-      await saveVaccination(draft);
-      success(t('messages.vaccination-saved'))();
-      onClose();
+      const result = await saveVaccination(draft);
+
+      if (result?.__typename === 'VaccinationNode') {
+        success(t('messages.vaccination-saved'))();
+        onClose();
+      }
+
+      if (result?.__typename === 'UpdateVaccinationError') {
+        if (result.error.__typename === 'NotMostRecentGivenDose') {
+          const errorSnack = error(t('error.not-most-recent-given-dose'));
+          errorSnack();
+        }
+      }
     } catch (e) {
-      error(t('error.failed-to-save-vaccination'))();
       console.error(e);
     }
   };
@@ -163,6 +172,8 @@ const VaccinationForm = ({
     />
   );
 
+  const isOtherFacility = draft.facilityId === OTHER_FACILITY;
+
   return (
     <Container
       maxWidth="xs"
@@ -182,35 +193,38 @@ const VaccinationForm = ({
               facilityId={draft.facilityId}
             />
 
-            {draft.facilityId === OTHER_FACILITY && (
+            {isOtherFacility && (
               <BasicTextInput
                 fullWidth
                 autoFocus
+                placeholder={t('placeholder.enter-facility-name')}
                 value={draft.facilityFreeText}
                 onChange={e =>
                   updateDraft({ facilityFreeText: e.target.value })
                 }
-                sx={{ flex: 1, marginTop: 0.3 }}
+                sx={{ flex: 1, marginTop: 2 }}
               />
             )}
           </Grid>
         }
       />
-      <InputWithLabelRow
-        label={t('label.clinician')}
-        Input={
-          <Grid item flex={1}>
-            <ClinicianSearchInput
-              onChange={clinician => {
-                updateDraft({
-                  clinician: clinician?.value,
-                });
-              }}
-              clinicianValue={draft.clinician}
-            />
-          </Grid>
-        }
-      />
+      {!isOtherFacility && (
+        <InputWithLabelRow
+          label={t('label.clinician')}
+          Input={
+            <Grid item flex={1}>
+              <ClinicianSearchInput
+                onChange={clinician => {
+                  updateDraft({
+                    clinician: clinician?.value,
+                  });
+                }}
+                clinicianValue={draft.clinician}
+              />
+            </Grid>
+          }
+        />
+      )}
       <InputWithLabelRow
         label={t('label.date')}
         Input={
