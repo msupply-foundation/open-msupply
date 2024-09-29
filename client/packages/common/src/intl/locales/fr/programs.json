@@ -12,5 +12,6 @@
     "control.search.searching-label": "Recherche...",
     "label.bmi-prev-height-message": "En utilisant la hauteur de {{height}}m de la mesure précédente",
     "label.diastolic": "Diastolique",
-    "label.systolic": "Systolique"
+    "label.systolic": "Systolique",
+    "label.dose": "Dose"
 }
