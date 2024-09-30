@@ -53,26 +53,32 @@ const useStyleRowsByStatus = (
   const { setRowStyles } = useRowStyle();
   const theme = useTheme();
 
+  // This replaces the default "box-shadow", and is not an exact replacement,
+  // but pretty close. Can be refined in future.
+  const BORDER_STYLE = '0.75px solid rgba(143, 144, 166, 0.5)';
+
   useEffect(() => {
     if (!rows) return;
 
+    const allRows = rows.map(({ id }) => id);
     const doneRows = rows
       .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
-      .map(row => row.id);
-    const notDoneRows = rows
-      .filter(row => row.status !== VaccinationCardItemNodeStatus.Given)
       .map(row => row.id);
     const nonClickableRows = rows
       .filter(row => !isRowClickable(isEncounter, row, rows))
       .map(row => row.id);
+    const lastOfEachAgeRange = rows
+      .filter(
+        (row, index) => row.minAgeMonths !== rows[index + 1]?.minAgeMonths
+      )
+      .map(row => row.id);
 
-    setRowStyles(doneRows, {
-      backgroundColor: `${theme.palette.background.success} !important`,
-    });
     setRowStyles(
-      notDoneRows,
+      doneRows,
       {
-        backgroundColor: 'white !important',
+        '& td:not(:first-child)': {
+          backgroundColor: `${theme.palette.background.success} !important`,
+        },
       },
       // Parameter to prevent the previous setRowStyles from being
       // reset/overwritten
@@ -85,6 +91,34 @@ const useStyleRowsByStatus = (
           cursor: 'default',
         },
         backgroundColor: 'white !important',
+      },
+      false
+    );
+    setRowStyles(
+      allRows,
+      {
+        backgroundColor: 'white !important',
+        boxShadow: 'none',
+        '& td': {
+          borderBottom: `${BORDER_STYLE} !important`,
+        },
+        '& td:nth-child(2)': {
+          borderLeft: BORDER_STYLE,
+        },
+        '& td:first-child': {
+          borderBottom: 'none !important',
+          fontWeight: 'bold',
+        },
+      },
+      false
+    );
+    setRowStyles(
+      lastOfEachAgeRange,
+      {
+        '& td:first-child': {
+          borderBottom: BORDER_STYLE,
+          fontWeight: 'bold',
+        },
       },
       false
     );
@@ -114,8 +148,15 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         key: 'age',
         label: 'label.age',
         sortable: false,
-        accessor: ({ rowData }) =>
-          t('label.age-months-count', { count: rowData.minAgeMonths }),
+        accessor: ({ rowData }) => {
+          const index =
+            data?.items.findIndex(item => item.id === rowData.id) ?? 0;
+          const sameAsPrev =
+            rowData.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
+          return sameAsPrev
+            ? null
+            : t('label.age-months-count', { count: rowData.minAgeMonths });
+        },
       },
       {
         key: 'label',
