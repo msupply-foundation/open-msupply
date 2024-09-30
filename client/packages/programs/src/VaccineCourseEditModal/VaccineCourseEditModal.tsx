@@ -294,7 +294,7 @@ const VaccineCourseDoseTable = ({
       },
       {
         key: 'label',
-        Cell: props => <TextInputCell fullWidth {...props} />,
+        Cell: LabelCell,
         width: 280,
         label: 'label.label',
         setter: updateDose,
@@ -355,6 +355,10 @@ const VaccineCourseDoseTable = ({
 };
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
+const LabelCell = (props: CellProps<VaccineCourseDoseFragment>) => (
+  <TextInputCell fullWidth {...props} />
+);
+
 const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
   const t = useTranslation();
   // Set maximum and minimum to ensure maxAge can't be lower than minAge
