@@ -39,9 +39,9 @@ pub fn validate(
         check_patient_exists(connection, patient_id)?.ok_or(PatientDoesNotExist)?;
     }
 
-    if let Some(prescription_date) = &patch.prescription_datetime {
+    if let Some(backdated_datetime) = &patch.backdated_datetime {
         // Check that any lines already assigned won't create a ledger discrepancy
-        check_stock_available_at_date(connection, &invoice.id, prescription_date)?;
+        check_stock_available_at_date(connection, &invoice.id, backdated_datetime)?;
     }
 
     Ok((invoice, status_changed))

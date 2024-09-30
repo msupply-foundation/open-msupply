@@ -27,7 +27,7 @@ pub(crate) fn generate(
         clinician_id: input_clinician_id,
         comment: input_comment,
         colour: input_colour,
-        prescription_datetime: prescription_date,
+        backdated_datetime,
     }: UpdatePrescription,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
@@ -35,20 +35,21 @@ pub(crate) fn generate(
         should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
     let mut update_invoice = existing_invoice.clone();
 
-    // prescription_date is None if the invoice is not backdated, this means we get actual picked/verified date
-    // If we have a backdated invoice, we use the backdated date for picked/verified date
-    let prescription_date = match prescription_date {
-        Some(prescription_date) => Some(prescription_date),
+    let backdated_datetime = match backdated_datetime {
+        Some(backdated_datetime) => {
+            backdate_status_datetimes(&mut update_invoice, backdated_datetime);
+            Some(backdated_datetime)
+        }
         None => invoice_backdated_date(&existing_invoice),
     };
 
-    set_new_status_datetime(&mut update_invoice, &input_status, prescription_date);
+    set_new_status_datetime(&mut update_invoice, &input_status, backdated_datetime);
 
     update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
     update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
     update_invoice.comment = input_comment.or(update_invoice.comment);
     update_invoice.colour = input_colour.or(update_invoice.colour);
-    update_invoice.allocated_datetime = prescription_date.or(update_invoice.allocated_datetime);
+    update_invoice.backdated_datetime = backdated_datetime.or(update_invoice.backdated_datetime);
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
@@ -95,10 +96,30 @@ fn should_update_batches_total_number_of_packs(
     }
 }
 
+fn backdate_status_datetimes(invoice: &mut InvoiceRow, backdated_datetime: NaiveDateTime) {
+    match &invoice.status {
+        InvoiceStatus::New => {} // Created datetime is never backdated
+        InvoiceStatus::Allocated => {
+            invoice.allocated_datetime = Some(backdated_datetime);
+        }
+        InvoiceStatus::Picked => {
+            invoice.allocated_datetime = Some(backdated_datetime);
+            invoice.picked_datetime = Some(backdated_datetime);
+        }
+        InvoiceStatus::Verified => {
+            invoice.allocated_datetime = Some(backdated_datetime);
+            invoice.picked_datetime = Some(backdated_datetime);
+            invoice.verified_datetime = Some(backdated_datetime);
+        }
+        InvoiceStatus::Shipped => {}   // Shipped status is not backdated
+        InvoiceStatus::Delivered => {} // Delivered status is not backdated
+    }
+}
+
 fn set_new_status_datetime(
     invoice: &mut InvoiceRow,
     status: &Option<UpdatePrescriptionStatus>,
-    prescription_datetime: Option<NaiveDateTime>,
+    backdated_datetime: Option<NaiveDateTime>,
 ) {
     let new_status = match status {
         Some(status) => status,
@@ -109,7 +130,7 @@ fn set_new_status_datetime(
         return;
     }
 
-    let status_datetime = prescription_datetime.unwrap_or_else(|| Utc::now().naive_utc());
+    let status_datetime = backdated_datetime.unwrap_or_else(|| Utc::now().naive_utc());
 
     match (&invoice.status, new_status) {
         (InvoiceStatus::Verified, _) => {}
@@ -121,10 +142,6 @@ fn set_new_status_datetime(
             invoice.picked_datetime = Some(status_datetime);
         }
         (InvoiceStatus::Picked, UpdatePrescriptionStatus::Verified) => {
-            if prescription_datetime.is_some() {
-                // Set picked date to prescription date if it was backdated
-                invoice.picked_datetime = Some(status_datetime);
-            }
             invoice.verified_datetime = Some(status_datetime)
         }
         _ => {}

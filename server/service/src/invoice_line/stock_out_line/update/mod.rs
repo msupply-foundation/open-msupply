@@ -625,11 +625,11 @@ mod test {
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
-            allocated_datetime: Some(datetime.clone()),       // Backdated to 2 days ago
             picked_datetime: Some(datetime.clone()),
             delivered_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,
+            backdated_datetime: Some(datetime.clone()), // Backdated to 2 days ago
             ..Default::default()
         };
 
