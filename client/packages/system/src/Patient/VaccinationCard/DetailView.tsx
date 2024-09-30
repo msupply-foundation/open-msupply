@@ -10,7 +10,7 @@ import { usePatientVaccineCard } from '../../Vaccination/api/usePatientVaccineCa
 import { VaccinationCard } from '../../Vaccination';
 
 export const VaccinationCardDetailView: FC = () => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { programEnrolmentId = '' } = useParams();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const { getLocalisedFullName } = useIntlUtils();
