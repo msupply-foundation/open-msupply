@@ -276,10 +276,9 @@ const VaccineCourseDoseTable = ({
   };
 
   const updateDose: ColumnDataSetter<VaccineCourseDoseFragment> = newData => {
-    const validData = constrainInput(newData, doses);
     updatePatch({
       vaccineCourseDoses: doses.map(dose =>
-        dose.id === newData.id ? { ...dose, ...validData } : dose
+        dose.id === newData.id ? { ...dose, ...newData } : dose
       ),
     });
   };
@@ -369,40 +368,4 @@ const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
       ]}
     />
   );
-};
-
-const constrainInput = (
-  rowData: Partial<VaccineCourseDoseFragment>,
-  doses: VaccineCourseDoseFragment[]
-) => {
-  const validRowData = { ...rowData };
-  const rowIndex = doses.findIndex(dose => dose.id === rowData.id);
-  console.log(rowIndex);
-  console.log(doses);
-
-  const prevDose = doses[rowIndex - 1];
-  const nextDose = doses[rowIndex + 1];
-
-  const { minAgeMonths = 0, maxAgeMonths = Infinity } = rowData;
-
-  // console.log('Min', minAgeMonths, 'Max', maxAgeMonths);
-  // console.log('Prev Max', prevDose?.maxAgeMonths);
-  // console.log('Next Min', nextDose?.minAgeMonths);
-
-  if (prevDose && minAgeMonths < prevDose.maxAgeMonths) {
-    console.log('Constraining');
-    validRowData.minAgeMonths = prevDose.maxAgeMonths;
-  }
-
-  if (nextDose && maxAgeMonths > nextDose.minAgeMonths) {
-    validRowData.maxAgeMonths = nextDose.minAgeMonths;
-  }
-
-  if (maxAgeMonths < minAgeMonths) {
-    validRowData.maxAgeMonths = minAgeMonths + 1;
-  }
-
-  console.log('validRowData', validRowData);
-
-  return validRowData;
 };
