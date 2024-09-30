@@ -50,44 +50,60 @@ const useStyleRowsByStatus = (
   rows: VaccinationCardItemFragment[] | undefined,
   isEncounter: boolean
 ) => {
-  const { setRowStyles } = useRowStyle();
+  const { updateRowStyles } = useRowStyle();
   const theme = useTheme();
+
+  // This replaces the default "box-shadow", and is not an exact replacement,
+  // but pretty close. Can be refined in future.
+  const BORDER_STYLE = '0.75px solid rgba(143, 144, 166, 0.3)';
 
   useEffect(() => {
     if (!rows) return;
 
+    const allRows = rows.map(({ id }) => id);
     const doneRows = rows
       .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
-      .map(row => row.id);
-    const notDoneRows = rows
-      .filter(row => row.status !== VaccinationCardItemNodeStatus.Given)
       .map(row => row.id);
     const nonClickableRows = rows
       .filter(row => !isRowClickable(isEncounter, row, rows))
       .map(row => row.id);
+    const lastOfEachAgeRange = rows
+      .filter(
+        (row, index) => row.minAgeMonths !== rows[index + 1]?.minAgeMonths
+      )
+      .map(row => row.id);
 
-    setRowStyles(doneRows, {
-      backgroundColor: `${theme.palette.background.success} !important`,
+    updateRowStyles(doneRows, {
+      '& td:not(:first-of-type)': {
+        backgroundColor: `${theme.palette.background.success} !important`,
+      },
     });
-    setRowStyles(
-      notDoneRows,
-      {
-        backgroundColor: 'white !important',
+    updateRowStyles(nonClickableRows, {
+      '& td': {
+        cursor: 'default',
       },
-      // Parameter to prevent the previous setRowStyles from being
-      // reset/overwritten
-      false
-    );
-    setRowStyles(
-      nonClickableRows,
-      {
-        '& td': {
-          cursor: 'default',
-        },
-        backgroundColor: 'white !important',
+      backgroundColor: 'white !important',
+    });
+    updateRowStyles(allRows, {
+      backgroundColor: 'white !important',
+      boxShadow: 'none',
+      '& td': {
+        borderBottom: `${BORDER_STYLE} !important`,
       },
-      false
-    );
+      '& td:nth-of-type(2)': {
+        borderLeft: BORDER_STYLE,
+      },
+      '& td:first-of-type': {
+        borderBottom: 'none !important',
+        fontWeight: 'bold',
+      },
+    });
+    updateRowStyles(lastOfEachAgeRange, {
+      '& td:first-of-type': {
+        borderBottom: BORDER_STYLE,
+        fontWeight: 'bold',
+      },
+    });
   }, [rows]);
 };
 
@@ -114,8 +130,17 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         key: 'age',
         label: 'label.age',
         sortable: false,
-        accessor: ({ rowData }) =>
-          t('label.age-months-count', { count: rowData.minAgeMonths }),
+        accessor: ({ rowData }) => {
+          // Only show age label for first of each "block", when repeated
+          const index =
+            data?.items.findIndex(item => item.id === rowData.id) ?? 0;
+          const sameAsPrev =
+            rowData.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
+          return sameAsPrev
+            ? null
+            : t('label.age-months-count', { count: rowData.minAgeMonths });
+        },
+        width: 120,
       },
       {
         key: 'label',
