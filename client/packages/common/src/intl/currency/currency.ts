@@ -104,7 +104,8 @@ export type Currencies =
   | 'SSP'
   | 'PGK'
   | 'COP'
-  | 'SBD';
+  | 'SBD'
+  | 'KMF';
 
 export const currencyOptions = (locale: string, code?: Currencies) => {
   switch (code) {
@@ -182,6 +183,16 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         ...getSeparatorAndDecimal(locale),
         ...getPatterns(locale),
         symbol: 'SI$',
+        precision: 2,
+        format,
+      };
+    }
+    case 'KMF': {
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'FC',
         precision: 2,
         format,
       };
