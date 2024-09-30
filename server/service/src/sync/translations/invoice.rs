@@ -307,7 +307,7 @@ impl SyncTranslation for InvoiceTranslation {
         let backdated_datetime = match mapping.created_datetime
             > mapping.allocated_datetime.unwrap_or(Utc::now().naive_utc())
         {
-            true => Some(mapping.created_datetime),
+            true => mapping.allocated_datetime,
             false => None,
         };
 
