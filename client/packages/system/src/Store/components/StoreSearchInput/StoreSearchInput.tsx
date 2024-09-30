@@ -6,7 +6,7 @@ import {
   QueryParamsProvider,
   RegexUtils,
 } from '@openmsupply-client/common';
-import { getStoreOptionRenderer } from './StoreOptionRenderer';
+import { StoreOptionRender } from './StoreOptionRenderer';
 
 type StoreSearchInputProps = {
   clearable?: boolean;
@@ -38,7 +38,6 @@ const StoreSearchComponent = ({
   onChange,
 }: StoreSearchInputProps) => {
   const { data, isLoading } = useStore.document.list();
-  const StoreOptionRender = getStoreOptionRenderer();
 
   return (
     <Autocomplete
