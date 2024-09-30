@@ -142,7 +142,10 @@ export const createTableStore = () =>
 
         // Set new styles for the ids passed.
         ids.forEach(id => {
-          rowState[id] = getRowState(state, id, { style });
+          const currentRowStyle = rowState?.[id]?.style ?? {};
+          rowState[id] = getRowState(state, id, {
+            style: { ...currentRowStyle, ...style } as AppSxProp,
+          });
         });
 
         return { ...state, rowState: { ...rowState } };
