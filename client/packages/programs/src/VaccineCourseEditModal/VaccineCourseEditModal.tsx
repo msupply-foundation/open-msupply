@@ -261,8 +261,8 @@ const VaccineCourseDoseTable = ({
           __typename: 'VaccineCourseDoseNode',
           id: FnUtils.generateUUID(),
           label: `${courseName} ${doses.length + 1}`,
-          minAgeMonths: (previousDose?.minAgeMonths ?? 0) + 1,
-          maxAgeMonths: (previousDose?.minAgeMonths ?? 0) + 2,
+          minAgeMonths: previousDose?.maxAgeMonths ?? 0,
+          maxAgeMonths: (previousDose?.maxAgeMonths ?? 0) + 1,
           minIntervalDays: previousDose?.minIntervalDays ?? 30,
         },
       ],
@@ -276,9 +276,10 @@ const VaccineCourseDoseTable = ({
   };
 
   const updateDose: ColumnDataSetter<VaccineCourseDoseFragment> = newData => {
+    const validData = constrainInput(newData, doses);
     updatePatch({
       vaccineCourseDoses: doses.map(dose =>
-        dose.id === newData.id ? { ...dose, ...newData } : dose
+        dose.id === newData.id ? { ...dose, ...validData } : dose
       ),
     });
   };
@@ -357,26 +358,51 @@ const VaccineCourseDoseTable = ({
 // Input cells can't be defined inline, otherwise they lose focus on re-render
 const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
   const t = useTranslation();
-  // Set maximum and minimum to ensure maxAge can't be lower than minAge
-  const minimum =
-    props.column.key === 'maxAgeMonths'
-      ? props.rowData.minAgeMonths
-      : undefined;
-  const maximum =
-    props.column.key === 'minAgeMonths'
-      ? props.rowData.maxAgeMonths
-      : undefined;
   return (
     <MultipleNumberInputCell
       decimalLimit={2}
       width={25}
       {...props}
-      min={minimum}
-      max={maximum}
       units={[
         { key: 'year', ratio: 12, label: t('label.years-abbreviation') },
         { key: 'month', ratio: 1, label: t('label.months-abbreviation') },
       ]}
     />
   );
+};
+
+const constrainInput = (
+  rowData: Partial<VaccineCourseDoseFragment>,
+  doses: VaccineCourseDoseFragment[]
+) => {
+  const validRowData = { ...rowData };
+  const rowIndex = doses.findIndex(dose => dose.id === rowData.id);
+  console.log(rowIndex);
+  console.log(doses);
+
+  const prevDose = doses[rowIndex - 1];
+  const nextDose = doses[rowIndex + 1];
+
+  const { minAgeMonths = 0, maxAgeMonths = Infinity } = rowData;
+
+  // console.log('Min', minAgeMonths, 'Max', maxAgeMonths);
+  // console.log('Prev Max', prevDose?.maxAgeMonths);
+  // console.log('Next Min', nextDose?.minAgeMonths);
+
+  if (prevDose && minAgeMonths < prevDose.maxAgeMonths) {
+    console.log('Constraining');
+    validRowData.minAgeMonths = prevDose.maxAgeMonths;
+  }
+
+  if (nextDose && maxAgeMonths > nextDose.minAgeMonths) {
+    validRowData.maxAgeMonths = nextDose.minAgeMonths;
+  }
+
+  if (maxAgeMonths < minAgeMonths) {
+    validRowData.maxAgeMonths = minAgeMonths + 1;
+  }
+
+  console.log('validRowData', validRowData);
+
+  return validRowData;
 };
