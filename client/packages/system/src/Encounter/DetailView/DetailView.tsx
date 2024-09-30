@@ -251,6 +251,8 @@ export const DetailView: FC = () => {
         const datetime = new Date(encounter.startDatetime);
         const status = getLogicalStatus(datetime, t);
         setLogicalStatus(status);
+      } else {
+        setLogicalStatus(undefined);
       }
     }
   }, [encounter]);
