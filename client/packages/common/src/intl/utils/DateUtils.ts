@@ -145,6 +145,12 @@ export const DateUtils = {
   },
   startOfDay,
   startOfToday,
+  endOfDayOrNull: (date?: Date | string | number | null): Date | null => {
+    if (!date) return null;
+
+    const d = dateInputHandler(date);
+    return isValid(d) ? endOfDay(d) : null;
+  },
   endOfDay,
   startOfYear,
   previousMonday,
