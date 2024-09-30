@@ -149,6 +149,7 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         label: 'label.age',
         sortable: false,
         accessor: ({ rowData }) => {
+          // Only show age label for first of each "block", when repeated
           const index =
             data?.items.findIndex(item => item.id === rowData.id) ?? 0;
           const sameAsPrev =
