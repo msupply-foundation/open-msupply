@@ -3628,6 +3628,7 @@ export type MasterListLineConnector = {
 export type MasterListLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  masterList?: InputMaybe<MasterListFilterInput>;
   masterListId?: InputMaybe<EqualFilterStringInput>;
 };
 

@@ -1,14 +1,15 @@
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    EqualFilter, ItemLinkRow, ItemRow, ItemType, Pagination, Sort,
+    EqualFilter, ItemLinkRow, ItemRow, ItemType, MasterListRepository, Pagination, Sort,
 };
 
 use super::{
-    item_link_row::{item_link, item_link::dsl as item_link_dsl},
-    item_row::{item, item::dsl as item_dsl},
-    master_list_line_row::{master_list_line, master_list_line::dsl as master_list_line_dsl},
-    DBType, MasterListLineRow, StorageConnection,
+    item_link_row::item_link::{self, dsl as item_link_dsl},
+    item_row::item::{self, dsl as item_dsl},
+    master_list_line_row::master_list_line::{self, dsl as master_list_line_dsl},
+    master_list_row::master_list::dsl as master_list_dsl,
+    DBType, MasterListFilter, MasterListLineRow, StorageConnection,
 };
 
 use diesel::{
@@ -32,6 +33,7 @@ pub struct MasterListLineFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub master_list_id: Option<EqualFilter<String>>,
     pub item_type: Option<EqualFilter<ItemType>>,
+    pub master_list: Option<MasterListFilter>,
 }
 
 pub enum MasterListLineSortField {
@@ -52,7 +54,7 @@ impl<'a> MasterListLineRepository<'a> {
 
     pub fn count(&self, filter: Option<MasterListLineFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let query = create_filtered_query(filter)?;
+        let query = Self::create_filtered_query(filter)?;
 
         Ok(query
             .count()
@@ -64,7 +66,7 @@ impl<'a> MasterListLineRepository<'a> {
         filter: MasterListLineFilter,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = create_filtered_query(Some(filter))?;
+        let mut query = Self::create_filtered_query(Some(filter))?;
 
         query = query.order(master_list_line_dsl::id.asc());
 
@@ -80,7 +82,7 @@ impl<'a> MasterListLineRepository<'a> {
         sort: Option<MasterListLineSort>,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
-        let mut query = create_filtered_query(filter)?;
+        let mut query = Self::create_filtered_query(filter)?;
 
         if let Some(sort) = sort {
             match sort.key {
@@ -102,6 +104,34 @@ impl<'a> MasterListLineRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
+
+    pub fn create_filtered_query(
+        filter: Option<MasterListLineFilter>,
+    ) -> Result<BoxedMasterListLineQuery, RepositoryError> {
+        let mut query = master_list_line_dsl::master_list_line
+            .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
+            .into_boxed();
+
+        if let Some(f) = filter {
+            apply_equal_filter!(query, f.id, master_list_line_dsl::id);
+            apply_equal_filter!(query, f.item_id, item_dsl::id);
+            apply_equal_filter!(
+                query,
+                f.master_list_id,
+                master_list_line_dsl::master_list_id
+            );
+            apply_equal_filter!(query, f.item_type, item_dsl::type_);
+
+            if f.master_list.is_some() {
+                let master_list_ids = MasterListRepository::create_filtered_query(f.master_list)
+                    .select(master_list_dsl::id);
+
+                query = query.filter(master_list_line_dsl::master_list_id.eq_any(master_list_ids));
+            }
+        }
+
+        Ok(query)
+    }
 }
 
 type BoxedMasterListLineQuery = IntoBoxed<
@@ -109,27 +139,6 @@ type BoxedMasterListLineQuery = IntoBoxed<
     InnerJoin<master_list_line::table, InnerJoin<item_link::table, item::table>>,
     DBType,
 >;
-
-fn create_filtered_query(
-    filter: Option<MasterListLineFilter>,
-) -> Result<BoxedMasterListLineQuery, RepositoryError> {
-    let mut query = master_list_line_dsl::master_list_line
-        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
-        .into_boxed();
-
-    if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, master_list_line_dsl::id);
-        apply_equal_filter!(query, f.item_id, item_dsl::id);
-        apply_equal_filter!(
-            query,
-            f.master_list_id,
-            master_list_line_dsl::master_list_id
-        );
-        apply_equal_filter!(query, f.item_type, item_dsl::type_)
-    }
-
-    Ok(query)
-}
 
 fn to_domain((master_list_line_row, (_, item_row)): MasterListLineJoin) -> MasterListLine {
     MasterListLine {
@@ -162,6 +171,11 @@ impl MasterListLineFilter {
 
     pub fn item_type(mut self, filter: EqualFilter<ItemType>) -> Self {
         self.item_type = Some(filter);
+        self
+    }
+
+    pub fn master_list(mut self, filter: MasterListFilter) -> Self {
+        self.master_list = Some(filter);
         self
     }
 }

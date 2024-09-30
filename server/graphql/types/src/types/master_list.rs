@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{EqualFilter, MasterList, MasterListFilter, MasterListRow, StringFilter};
+use repository::{EqualFilter, MasterList, MasterListFilter, StringFilter};
 use service::master_list::query_lines::get_master_list_lines_count;
 
 #[derive(PartialEq, Debug)]
