@@ -2,10 +2,7 @@ use std::collections::HashMap;
 
 use actix_web::web::Data;
 use async_graphql::dataloader::Loader;
-use repository::{
-    EqualFilter, MasterList, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository,
-};
+use repository::{EqualFilter, MasterList, MasterListFilter, MasterListRepository};
 use service::service_provider::ServiceProvider;
 
 use super::IdPair;
@@ -46,19 +43,10 @@ impl Loader<MasterListByItemIdLoaderInput> for MasterListByItemIdLoader {
 
         for (store_id, item_ids) in store_item_map {
             for item_id in item_ids {
-                let master_list_ids: Vec<String> = MasterListLineRepository::new(&connection)
-                    .query_by_filter(
-                        MasterListLineFilter::new()
-                            .item_id(EqualFilter::equal_any(vec![item_id.clone()])),
-                    )?
-                    .into_iter()
-                    .map(|line| line.master_list_id)
-                    .collect();
-
                 let master_list = MasterListRepository::new(&connection).query_by_filter(
                     MasterListFilter::new()
-                        .id(EqualFilter::equal_any(master_list_ids))
-                        .exists_for_store_id(EqualFilter::equal_to(&store_id)),
+                        .exists_for_store_id(EqualFilter::equal_to(&store_id))
+                        .item_id(EqualFilter::equal_to(&item_id)),
                 )?;
 
                 let entry = output.entry(MasterListByItemIdLoaderInput {
