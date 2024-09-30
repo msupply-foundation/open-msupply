@@ -73,16 +73,11 @@ const useStyleRowsByStatus = (
       )
       .map(row => row.id);
 
-    updateRowStyles(
-      doneRows,
-      {
-        '& td:not(:first-child)': {
-          backgroundColor: `${theme.palette.background.success} !important`,
-        },
-      }
-      // Parameter to prevent the previous setRowStyles from being
-      // reset/overwritten
-    );
+    updateRowStyles(doneRows, {
+      '& td:not(:first-of-type)': {
+        backgroundColor: `${theme.palette.background.success} !important`,
+      },
+    });
     updateRowStyles(nonClickableRows, {
       '& td': {
         cursor: 'default',
@@ -95,16 +90,16 @@ const useStyleRowsByStatus = (
       '& td': {
         borderBottom: `${BORDER_STYLE} !important`,
       },
-      '& td:nth-child(2)': {
+      '& td:nth-of-type(2)': {
         borderLeft: BORDER_STYLE,
       },
-      '& td:first-child': {
+      '& td:first-of-type': {
         borderBottom: 'none !important',
         fontWeight: 'bold',
       },
     });
     updateRowStyles(lastOfEachAgeRange, {
-      '& td:first-child': {
+      '& td:first-of-type': {
         borderBottom: BORDER_STYLE,
         fontWeight: 'bold',
       },
