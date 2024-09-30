@@ -15,7 +15,6 @@ import {
   Select,
   Switch,
   useDialog,
-  useEditModal,
   useFormatDateTime,
   useKeyboardHeightAdjustment,
   useNotification,
@@ -29,12 +28,12 @@ import {
   VaccinationCourseDoseFragment,
   VaccinationDetailFragment,
 } from '../api/operations.generated';
-import { SelectBatchModal } from './SelectBatchModal';
 import { AppRoute } from '@openmsupply-client/config';
 import { ArrowRightIcon } from '@mui/x-date-pickers';
 import { FacilitySearchInput, OTHER_FACILITY } from './FacilitySearchInput';
 import { SelectItemAndBatch } from './SelectItemAndBatch';
 import { getSwitchReason } from './getSwitchReason';
+import { useConfirmNoStockLineSelected } from './useConfirmNoStockLineSelected';
 
 interface VaccinationModalProps {
   vaccinationId: string | undefined;
@@ -72,31 +71,29 @@ export const VaccinationModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(700);
 
-  const {
-    isOpen: batchModalOpen,
-    onClose: closeBatchModal,
-    onOpen: openBatchModal,
-  } = useEditModal();
+  const save = useConfirmNoStockLineSelected(
+    draft,
+    !!dose?.vaccineCourse.vaccineCourseItems?.length,
+    async () => {
+      try {
+        const result = await saveVaccination(draft);
 
-  const save = async () => {
-    try {
-      const result = await saveVaccination(draft);
-
-      if (result?.__typename === 'VaccinationNode') {
-        success(t('messages.vaccination-saved'))();
-        onClose();
-      }
-
-      if (result?.__typename === 'UpdateVaccinationError') {
-        if (result.error.__typename === 'NotMostRecentGivenDose') {
-          const errorSnack = error(t('error.not-most-recent-given-dose'));
-          errorSnack();
+        if (result?.__typename === 'VaccinationNode') {
+          success(t('messages.vaccination-saved'))();
+          onClose();
         }
+
+        if (result?.__typename === 'UpdateVaccinationError') {
+          if (result.error.__typename === 'NotMostRecentGivenDose') {
+            const errorSnack = error(t('error.not-most-recent-given-dose'));
+            errorSnack();
+          }
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
     }
-  };
+  );
 
   const InfoBox = <GivenInfoBox vaccination={vaccination} />;
 
@@ -107,7 +104,6 @@ export const VaccinationModal = ({
       {InfoBox}
       <VaccinationForm
         updateDraft={updateDraft}
-        openBatchModal={openBatchModal}
         draft={draft}
         dose={dose}
         vaccination={vaccination}
@@ -131,18 +127,7 @@ export const VaccinationModal = ({
       slideAnimation={false}
       contentProps={{ sx: { paddingTop: !!InfoBox ? 0 : undefined } }}
     >
-      <>
-        {batchModalOpen && (
-          <SelectBatchModal
-            isOpen
-            itemId={draft.itemId ?? ''}
-            onClose={closeBatchModal}
-            stockLine={draft.stockLine ?? null}
-            setStockLine={stockLine => updateDraft({ stockLine })}
-          />
-        )}
-        {modalContent}
-      </>
+      <>{modalContent}</>
     </Modal>
   );
 };
@@ -152,13 +137,11 @@ const VaccinationForm = ({
   dose,
   vaccination,
   updateDraft,
-  openBatchModal,
 }: {
   dose?: VaccinationCourseDoseFragment;
   draft: VaccinationDraft;
   vaccination?: VaccinationDetailFragment | null;
   updateDraft: (update: Partial<VaccinationDraft>) => void;
-  openBatchModal: () => void;
 }) => {
   const t = useTranslation('dispensary');
 
@@ -189,7 +172,6 @@ const VaccinationForm = ({
     <SelectItemAndBatch
       dose={dose}
       draft={draft}
-      openBatchModal={openBatchModal}
       updateDraft={updateDraft}
       hasExistingSelectedBatch={!!vaccination?.stockLine}
     />
