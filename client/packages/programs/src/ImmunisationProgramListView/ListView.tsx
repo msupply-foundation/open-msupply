@@ -57,7 +57,6 @@ const ImmunisationProgramListComponent: FC = () => {
             ? UNDEFINED_STRING_VALUE
             : rowData.vaccineCourses?.map(n => n.name).join(', '),
       },
-      'selection',
     ],
     {
       onChangeSortBy: updateSortQuery,
