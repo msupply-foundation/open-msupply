@@ -8,7 +8,7 @@ use crate::sync::{
         store::StoreTranslation,
     },
 };
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
@@ -181,6 +181,11 @@ pub struct LegacyTransactRow {
     #[serde(rename = "om_original_shipment_id")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub original_shipment_id: Option<String>,
+
+    #[serde(default)]
+    #[serde(rename = "backdated_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub backdated_datetime: Option<NaiveDateTime>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -298,6 +303,14 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
+        // If it was created after allocation, then it must be a backdated invoice
+        let backdated_datetime = match mapping.created_datetime
+            > mapping.allocated_datetime.unwrap_or(Utc::now().naive_utc())
+        {
+            true => Some(mapping.created_datetime),
+            false => None,
+        };
+
         let result = InvoiceRow {
             id: data.ID,
             user_id: data.user_id,
@@ -328,6 +341,7 @@ impl SyncTranslation for InvoiceTranslation {
             linked_invoice_id: data.linked_transaction_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
+            backdated_datetime,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -387,6 +401,7 @@ impl SyncTranslation for InvoiceTranslation {
                     currency_id,
                     currency_rate,
                     original_shipment_id,
+                    backdated_datetime,
                 },
             name_row,
             clinician_row,
@@ -454,6 +469,7 @@ impl SyncTranslation for InvoiceTranslation {
             currency_rate,
             clinician_id: clinician_row.map(|row| row.id),
             original_shipment_id,
+            backdated_datetime,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;

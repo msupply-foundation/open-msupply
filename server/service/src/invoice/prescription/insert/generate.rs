@@ -40,7 +40,7 @@ pub fn generate(
         comment: None,
         their_reference: None,
         transport_reference: None,
-        allocated_datetime: Some(current_datetime),
+        allocated_datetime: None,
         picked_datetime: None,
         shipped_datetime: None,
         delivered_datetime: None,
@@ -49,6 +49,7 @@ pub fn generate(
         requisition_id: None,
         clinician_link_id: None,
         original_shipment_id: None,
+        backdated_datetime: None,
     };
 
     Ok(result)

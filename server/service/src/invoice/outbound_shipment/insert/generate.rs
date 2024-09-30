@@ -50,6 +50,7 @@ pub fn generate(
         requisition_id: None,
         clinician_link_id: None,
         original_shipment_id: None,
+        backdated_datetime: None,
     };
 
     Ok(result)
