@@ -78,6 +78,7 @@ export const useDraftPrescriptionLines = (
               invoiceLine,
               invoiceId,
               stockLine: batch,
+              adjustTotalNumberOfPacks: true,
             });
           } else {
             return createDraftStockOutLineFromStockLine({
