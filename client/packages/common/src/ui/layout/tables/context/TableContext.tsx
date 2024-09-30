@@ -35,6 +35,7 @@ export interface TableStore {
     style: AppSxProp,
     shouldReset?: boolean
   ) => void;
+  updateRowStyles: (ids: string[], style: AppSxProp) => void;
 }
 
 export const tableContext = createContext<UseBoundStore<StoreApi<TableStore>>>(
@@ -141,6 +142,20 @@ export const createTableStore = () =>
           });
 
         // Set new styles for the ids passed.
+        ids.forEach(id => {
+          rowState[id] = getRowState(state, id, { style });
+        });
+
+        return { ...state, rowState: { ...rowState } };
+      });
+    },
+    // Same as setRowStyles above, but merges incoming style with the current
+    // row style, for incremental style updating
+    updateRowStyles: (ids: string[], style: AppSxProp) => {
+      set(state => {
+        const { rowState } = state;
+
+        // Update styles for the ids passed.
         ids.forEach(id => {
           const currentRowStyle = rowState?.[id]?.style ?? {};
           rowState[id] = getRowState(state, id, {

@@ -50,12 +50,12 @@ const useStyleRowsByStatus = (
   rows: VaccinationCardItemFragment[] | undefined,
   isEncounter: boolean
 ) => {
-  const { setRowStyles } = useRowStyle();
+  const { updateRowStyles } = useRowStyle();
   const theme = useTheme();
 
   // This replaces the default "box-shadow", and is not an exact replacement,
   // but pretty close. Can be refined in future.
-  const BORDER_STYLE = '0.75px solid rgba(143, 144, 166, 0.5)';
+  const BORDER_STYLE = '0.75px solid rgba(143, 144, 166, 0.3)';
 
   useEffect(() => {
     if (!rows) return;
@@ -73,55 +73,42 @@ const useStyleRowsByStatus = (
       )
       .map(row => row.id);
 
-    setRowStyles(
+    updateRowStyles(
       doneRows,
       {
         '& td:not(:first-child)': {
           backgroundColor: `${theme.palette.background.success} !important`,
         },
-      },
+      }
       // Parameter to prevent the previous setRowStyles from being
       // reset/overwritten
-      false
     );
-    setRowStyles(
-      nonClickableRows,
-      {
-        '& td': {
-          cursor: 'default',
-        },
-        backgroundColor: 'white !important',
+    updateRowStyles(nonClickableRows, {
+      '& td': {
+        cursor: 'default',
       },
-      false
-    );
-    setRowStyles(
-      allRows,
-      {
-        backgroundColor: 'white !important',
-        boxShadow: 'none',
-        '& td': {
-          borderBottom: `${BORDER_STYLE} !important`,
-        },
-        '& td:nth-child(2)': {
-          borderLeft: BORDER_STYLE,
-        },
-        '& td:first-child': {
-          borderBottom: 'none !important',
-          fontWeight: 'bold',
-        },
+      backgroundColor: 'white !important',
+    });
+    updateRowStyles(allRows, {
+      backgroundColor: 'white !important',
+      boxShadow: 'none',
+      '& td': {
+        borderBottom: `${BORDER_STYLE} !important`,
       },
-      false
-    );
-    setRowStyles(
-      lastOfEachAgeRange,
-      {
-        '& td:first-child': {
-          borderBottom: BORDER_STYLE,
-          fontWeight: 'bold',
-        },
+      '& td:nth-child(2)': {
+        borderLeft: BORDER_STYLE,
       },
-      false
-    );
+      '& td:first-child': {
+        borderBottom: 'none !important',
+        fontWeight: 'bold',
+      },
+    });
+    updateRowStyles(lastOfEachAgeRange, {
+      '& td:first-child': {
+        borderBottom: BORDER_STYLE,
+        fontWeight: 'bold',
+      },
+    });
   }, [rows]);
 };
 
@@ -158,6 +145,7 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
             ? null
             : t('label.age-months-count', { count: rowData.minAgeMonths });
         },
+        width: 120,
       },
       {
         key: 'label',
