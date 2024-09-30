@@ -17,7 +17,6 @@ import {
 import { StockLineRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import {
-  ChipTableCell,
   getPackVariantCell,
   useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
@@ -41,9 +40,6 @@ const StockListComponent: FC = () => {
       {
         key: 'expiryDate',
         condition: 'between',
-      },
-      {
-        key: 'masterList.name',
       },
     ],
   });
@@ -107,14 +103,7 @@ const StockListComponent: FC = () => {
         width: 350,
       },
     ],
-    {
-      key: 'masterListName',
-      label: 'label.master-list',
-      Cell: ChipTableCell,
-      width: 150,
-      sortable: false,
-      accessor: ({ rowData }) => rowData.masterList.map(ml => ml.name),
-    },
+    // TODO:: Add a column for the master list name
     ['batch', { Cell: TooltipTextCell, width: 100 }],
     [
       'expiryDate',
