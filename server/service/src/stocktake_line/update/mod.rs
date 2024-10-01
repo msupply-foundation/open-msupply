@@ -4,26 +4,10 @@ mod validate;
 pub use validate::validate;
 
 use chrono::NaiveDate;
-use repository::{
-    RepositoryError, StockLine, StocktakeLine, StocktakeLineRow, StocktakeLineRowRepository,
-    StorageConnection,
-};
+use repository::{RepositoryError, StockLine, StocktakeLine, StocktakeLineRowRepository};
 
 use crate::{
-    check_location_exists,
-    common_stock::{check_stock_line_exists, CommonStockLineError},
-    service_provider::ServiceContext,
-    stocktake::{check_stocktake_exist, check_stocktake_not_finalised},
-    stocktake_line::{
-        query::get_stocktake_line,
-        validate::{
-            check_active_adjustment_reasons, check_reason_is_valid,
-            check_snapshot_matches_current_count, check_stock_line_reduced_below_zero,
-            check_stocktake_line_exist, stocktake_reduction_amount,
-        },
-    },
-    validate::check_store_id_matches,
-    NullableUpdate,
+    service_provider::ServiceContext, stocktake_line::query::get_stocktake_line, NullableUpdate,
 };
 
 #[derive(Default, Debug, Clone)]
