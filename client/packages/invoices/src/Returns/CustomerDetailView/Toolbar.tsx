@@ -28,12 +28,11 @@ export const Toolbar: FC = () => {
     theirReference,
     id,
     linkedShipment = '',
-  } = bufferedState ?? {};
+  } = bufferedState ?? { id: '' };
 
-  const onDelete = () => {
-    if (!id) return;
-    useReturns.lines.deleteSelectedCustomerLines({ returnId: id });
-  };
+  const onDelete = useReturns.lines.deleteSelectedCustomerLines({
+    returnId: id,
+  });
   const { debouncedMutateAsync } = useReturns.document.updateCustomerReturn();
 
   const { isGrouped, toggleIsGrouped } = useIsGrouped('customerReturn');
