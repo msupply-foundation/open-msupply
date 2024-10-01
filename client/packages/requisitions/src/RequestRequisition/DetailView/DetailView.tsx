@@ -30,7 +30,7 @@ export const DetailView: FC = () => {
     useEditModal<ItemRowWithStatsFragment>();
   const isDisabled = useRequest.utils.isDisabled();
   const navigate = useNavigate();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const onRowClick = React.useCallback(
     (line: RequestLineFragment) => {

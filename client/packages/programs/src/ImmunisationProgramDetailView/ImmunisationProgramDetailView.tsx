@@ -34,7 +34,7 @@ export const ProgramComponent: FC = () => {
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const pagination = { page, first, offset };
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
   const { id } = useParams();
   const {

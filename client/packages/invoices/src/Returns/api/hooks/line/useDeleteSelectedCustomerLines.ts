@@ -14,7 +14,7 @@ export const useDeleteSelectedCustomerReturnLines = ({
 }): (() => void) => {
   const { items, lines } = useCustomerReturnRows();
   const isDisabled = useCustomerReturnIsDisabled();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const { mutateAsync: updateLines } = useReturns.lines.updateCustomerLines();
 

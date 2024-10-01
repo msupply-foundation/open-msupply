@@ -27,7 +27,7 @@ interface HeaderCellProps {
 }
 
 const HeaderCell = ({ className, label, tooltip, width }: HeaderCellProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   return (
     <th className={className} style={{ minWidth: width }}>
@@ -45,7 +45,7 @@ export const ContentArea = ({
   periodLength,
   disabled,
 }: ContentAreaProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
 
   return data.length === 0 ? (

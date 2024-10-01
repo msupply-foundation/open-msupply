@@ -45,7 +45,7 @@ export const DetailView: FC = () => {
     setMode: setReturnMode,
   } = useEditModal<string[]>();
   const navigate = useNavigate();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { info, error } = useNotification();
 
   const onRowClick = React.useCallback(

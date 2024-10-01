@@ -35,7 +35,7 @@ export const usePrescriptionColumn = ({
 }: UsePrescriptionColumnOptions): Column<
   StockOutLineFragment | StockOutItem
 >[] => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const isPackVariantsEnabled = useIsPackVariantsEnabled();

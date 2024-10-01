@@ -115,7 +115,7 @@ export const RequestLineEditForm = ({
   numberOfPacksFromQuantity,
   numberOfPacksToTotalQuantity,
 }: RequestLineEditFormProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
   const { lines } = useRequest.line.list();
   const requestedQuantity = draftLine?.requestedQuantity ?? 0;

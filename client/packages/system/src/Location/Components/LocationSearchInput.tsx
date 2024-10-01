@@ -61,7 +61,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   disabled,
   autoFocus = false,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { fetchAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
     key: 'name',

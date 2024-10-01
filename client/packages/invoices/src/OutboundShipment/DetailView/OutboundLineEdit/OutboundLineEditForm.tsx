@@ -69,7 +69,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   setOkDisabled,
   draftStockOutLines,
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState<number>();
   const { format } = useFormatNumber();

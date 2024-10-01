@@ -88,7 +88,7 @@ export const ResponseLineEditForm = ({
   numberOfPacksFromQuantity,
   numberOfPacksToTotalQuantity,
 }: ResponseLineEditFormProps) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const supplyQuantity = draftLine.supplyQuantity ?? 0;
 
   const { item } = draftLine;

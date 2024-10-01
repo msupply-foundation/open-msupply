@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal

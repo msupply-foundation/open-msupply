@@ -22,7 +22,7 @@ interface AppBarButtonsProps {
 
 export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
   const { success, error } = useNotification();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { isLoading, fetchAsync } = useLocation.document.listAll({
     key: 'name',
     direction: 'asc',

@@ -40,7 +40,7 @@ const Row = ({
 );
 
 export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
     [onChange],

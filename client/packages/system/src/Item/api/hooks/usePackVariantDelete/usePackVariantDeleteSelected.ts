@@ -5,7 +5,7 @@ import { useDeleteConfirmation, useNotification } from '@common/hooks';
 import { useTableStore } from '@openmsupply-client/common';
 
 export const usePackVariantDeleteSelected = (variants: VariantFragment[]) => {
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const { mutateAsync } = usePackVariantDelete();
   const { error } = useNotification();
 

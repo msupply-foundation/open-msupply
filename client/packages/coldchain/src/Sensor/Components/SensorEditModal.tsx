@@ -40,7 +40,7 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { Modal } = useDialog({ isOpen, onClose });
   const { draft, onSave, onUpdate } = useDraftSensor(sensor);
   const getConfirmation = useConfirmationModal({

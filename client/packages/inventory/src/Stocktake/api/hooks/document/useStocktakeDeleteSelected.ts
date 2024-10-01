@@ -9,7 +9,7 @@ import { useStocktakeDelete } from './useStocktakeDelete';
 import { useStocktakes } from './useStocktakes';
 
 export const useStocktakeDeleteSelected = () => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { data: rows } = useStocktakes();
   const { mutateAsync } = useStocktakeDelete();
 

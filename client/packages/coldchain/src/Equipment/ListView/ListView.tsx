@@ -41,7 +41,7 @@ const AssetListComponent: FC = () => {
   const { data, isError, isLoading } = useAssets.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const modalController = useToggle();
   const importModalController = useToggle();
   const isCentralServer = useIsCentralServerApi();

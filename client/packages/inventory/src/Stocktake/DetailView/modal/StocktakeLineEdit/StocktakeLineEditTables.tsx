@@ -160,7 +160,7 @@ const PackUnitEntryCell = PackVariantEntryCell<DraftStocktakeLine>({
 export const BatchTable: FC<
   StocktakeLineEditTableProps & { item: StocktakeLineFragment['item'] | null }
 > = ({ item, batches, update, isDisabled = false }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const theme = useTheme();
   const { packVariantExists } = usePackVariant(item?.id || '', null);
   useDisableStocktakeRows(batches);
@@ -241,7 +241,7 @@ export const PricingTable: FC<StocktakeLineEditTableProps> = ({
   isDisabled,
 }) => {
   const theme = useTheme();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
@@ -281,7 +281,7 @@ export const LocationTable: FC<StocktakeLineEditTableProps> = ({
   isDisabled,
 }) => {
   const theme = useTheme();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),

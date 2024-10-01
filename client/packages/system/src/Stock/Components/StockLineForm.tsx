@@ -44,7 +44,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   packEditable,
   isInModal = false,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { error } = useNotification();
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();

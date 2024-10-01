@@ -7,7 +7,7 @@ import {
 import { useOutbound } from '../../api';
 
 export const OnHoldButtonComponent = memo(() => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { onHold, update } = useOutbound.document.fields('onHold');
   const isDisabled = useOutbound.utils.isDisabled();
   const getConfirmation = useConfirmationModal({

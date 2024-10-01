@@ -146,7 +146,7 @@ const useGet = (id: string) => {
 
 const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
   const { api, storeId, queryClient } = useProgramsGraphQL();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const mutationFn = async (input: DraftVaccineCourse) => {
     const apiResult = await api.insertVaccineCourse({
@@ -208,7 +208,7 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
 
 const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
   const { api, storeId, queryClient } = useProgramsGraphQL();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const mutationFn = async (input: DraftVaccineCourse) => {
     const apiResult = await api.updateVaccineCourse({

@@ -18,7 +18,7 @@ interface GeneralTabProps {
 }
 
 export const GeneralTab: FC<GeneralTabProps> = ({ variantControl }) => {
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const { data, isLoading } = useItem();
   const isDisabled = true;
 

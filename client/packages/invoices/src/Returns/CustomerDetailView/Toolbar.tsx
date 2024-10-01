@@ -18,7 +18,7 @@ import { CustomerReturnFragment, useReturns } from '../api';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const isDisabled = useReturns.utils.customerIsDisabled();
 
   const { bufferedState, setBufferedState } =
@@ -122,7 +122,7 @@ const InfoAlert = ({
 }: {
   customerReturn: CustomerReturnFragment | undefined;
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const loadMessage = (customerReturn: CustomerReturnFragment | undefined) => {
     if (!customerReturn?.linkedShipment?.id) {
       return t('info.manual-return');

@@ -20,7 +20,7 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Coldchain).addWildCard().build()
   );
-  const t = useTranslation('app');
+  const t = useTranslation();
   const visible = store?.preferences.vaccineModule ?? false;
 
   return (

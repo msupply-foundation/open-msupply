@@ -45,7 +45,7 @@ const VaccinationCardListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const navigate = useNavigate();
 
   const columns = useColumns<ProgramEnrolmentRowFragment>(

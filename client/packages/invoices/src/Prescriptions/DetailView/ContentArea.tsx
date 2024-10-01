@@ -34,7 +34,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onAddItem,
   onRowClick,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const {
     updateSortQuery,
     queryParams: { sortBy },

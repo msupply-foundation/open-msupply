@@ -58,7 +58,7 @@ const ListView: FC = () => {
     useAcknowledgeBreachModal();
 
   const pagination = { page, first, offset };
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const formatTemperature = useFormatTemperature();
 
   const columns = useColumns<TemperatureBreachFragment>(
