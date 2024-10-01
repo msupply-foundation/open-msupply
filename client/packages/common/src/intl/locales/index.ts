@@ -1,6 +1,5 @@
 // "import type" ensures en messages aren't bundled by default
 import { TypeOptions } from 'i18next';
-import * as app from './en/app.json';
 import * as common from './en/common.json';
 import * as dashboard from './en/dashboard.json';
 import * as distribution from './en/distribution.json';
@@ -29,7 +28,6 @@ type WithOrWithoutPlural<K> = TypeOptions['jsonFormat'] extends 'v4'
   : K;
 
 export type LocaleKey =
-  | WithOrWithoutPlural<keyof typeof app>
   | WithOrWithoutPlural<keyof typeof dashboard>
   | WithOrWithoutPlural<keyof typeof common>
   | WithOrWithoutPlural<keyof typeof distribution>
