@@ -30,6 +30,13 @@ export const NumUtils = {
     return Math.round(value * multiplier) / multiplier;
   },
   /**
+   * Checks if precision is greater than 2. Some numbers have floating precision
+   * errors e.g. 2.05 * 100 = 204.99999999999997 so using 1000 for a more reliable result...
+   */
+  hasMoreThanTwoDp: (value: number): boolean => {
+    return ((value * 1000) / 10) % 1 !== 0;
+  },
+  /**
    * This constant should be used for values that are potentially send to a backend API that expects
    * an unsigned 32 bit integer and thus would reject Number.MAX_SAFE_INTEGER.
    * For example, JS number max size is `2^53 - 1` while the Rust u32 size is `2^32 - 1`.
