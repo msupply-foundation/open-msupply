@@ -126,7 +126,7 @@ export const Toolbar: FC<{
               IconComponent={ArrowLeftIcon}
               onClick={() => onReturnLines(selectedLines)}
             >
-              {t('button.return-lines')}
+              {t('button.replenishment-return-lines')}
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={isDisabled}

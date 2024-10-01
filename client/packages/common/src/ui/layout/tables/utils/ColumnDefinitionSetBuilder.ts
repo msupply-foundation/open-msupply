@@ -267,7 +267,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     align: ColumnAlign.Right,
   },
   stockOnHand: {
-    label: 'label.stock-on-hand',
+    label: 'label.stock-on-hand-remaining',
     key: 'availableStockOnHand',
     width: 100,
     align: ColumnAlign.Right,

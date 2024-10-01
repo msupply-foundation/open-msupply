@@ -73,7 +73,7 @@ const OutboundServiceLineEditComponent = ({
               color="primary"
               variant="outlined"
               onClick={add}
-              label={`${t('label.add-charges')}`}
+              label={`${t('label.add-charge')}`}
               Icon={<PlusCircleIcon />}
             />
           </Box>
