@@ -1,12 +1,13 @@
 use super::{
-    barcode_row::{barcode, barcode::dsl as barcode_dsl},
-    item_link_row::{item_link, item_link::dsl as item_link_dsl},
-    item_row::{item, item::dsl as item_dsl},
-    location_row::{location, location::dsl as location_dsl},
-    name_link_row::{name_link, name_link::dsl as name_link_dsl},
-    name_row::{name, name::dsl as name_dsl},
-    stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
-    DBType, LocationRow, StockLineRow, StorageConnection,
+    barcode_row::barcode::{self, dsl as barcode_dsl},
+    item_link_row::item_link::{self, dsl as item_link_dsl},
+    item_row::item::{self, dsl as item_dsl},
+    location_row::location::{self, dsl as location_dsl},
+    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
+    name_link_row::name_link::{self, dsl as name_link_dsl},
+    name_row::name::{self, dsl as name_dsl},
+    stock_line_row::stock_line::{self, dsl as stock_line_dsl},
+    DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
 };
 
 use crate::{
@@ -17,7 +18,7 @@ use crate::{
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
     BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
-    NameLinkRow, NameRow, Pagination, Sort, StringFilter,
+    MasterListLineRepository, NameLinkRow, NameRow, Pagination, Sort, StringFilter,
 };
 
 use diesel::{
@@ -56,6 +57,7 @@ pub struct StockLineFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub has_packs_in_store: Option<bool>,
     pub location: Option<LocationFilter>,
+    pub master_list: Option<MasterListFilter>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -189,6 +191,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             store_id,
             has_packs_in_store,
             location,
+            master_list,
         } = f;
 
         apply_equal_filter!(query, id, stock_line_dsl::id);
@@ -213,6 +216,16 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             let location_ids = LocationRepository::create_filtered_query(location)
                 .select(location_dsl::id.nullable());
             query = query.filter(stock_line_dsl::location_id.eq_any(location_ids));
+        }
+
+        if master_list.is_some() {
+            let item_ids = MasterListLineRepository::create_filtered_query(Some(
+                MasterListLineFilter::new().master_list(master_list.unwrap()),
+            ))
+            .unwrap()
+            .select(item_dsl::id);
+
+            query = query.filter(item_dsl::id.eq_any(item_ids));
         }
     }
 
