@@ -13,11 +13,8 @@ import { ConfirmationModalProvider } from '../../ui/components/modals';
 import { renderHook } from '@testing-library/react';
 import i18next from 'i18next';
 import { initReactI18next, I18nextProvider } from 'react-i18next';
-import app from '@common/intl/locales/en/app.json';
 import common from '@common/intl/locales/en/common.json';
-import appFr from '@common/intl/locales/fr/app.json';
 import commonFr from '@common/intl/locales/fr/common.json';
-import appAr from '@common/intl/locales/ar/app.json';
 import commonAr from '@common/intl/locales/ar/common.json';
 
 const queryClient = new QueryClient({
@@ -35,12 +32,10 @@ interface IntlTestProviderProps {
 
 const resources = {
   ar: {
-    app: { ...app, ...appAr },
     common: { ...common, ...commonAr },
   },
-  en: { app, common },
+  en: { common },
   fr: {
-    app: { ...app, ...appFr },
     common: { ...common, ...commonFr },
   },
 };
@@ -58,7 +53,7 @@ const IntlTestProvider: FC<PropsWithChildren<IntlTestProviderProps>> = ({
       debug: false,
       lng: locale,
       fallbackLng: 'en',
-      ns: ['app', 'common'],
+      ns: ['common'],
       defaultNS: 'common',
       fallbackNS: 'common',
       interpolation: {
