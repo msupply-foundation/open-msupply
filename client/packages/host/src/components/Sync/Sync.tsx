@@ -200,7 +200,7 @@ const ShowStatus = ({
   isSyncing: boolean;
   isUpdatingUser: boolean;
 }) => {
-  const t = useTranslation('');
+  const t = useTranslation();
   if (!isSyncing && !isUpdatingUser) return null;
 
   const message = isSyncing ? 'sync-info.syncing' : 'sync-info.updating-user';
