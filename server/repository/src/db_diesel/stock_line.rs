@@ -219,13 +219,13 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         }
 
         if master_list.is_some() {
-            let item_link_ids = MasterListLineRepository::create_filtered_query(Some(
+            let item_ids = MasterListLineRepository::create_filtered_query(Some(
                 MasterListLineFilter::new().master_list(master_list.unwrap()),
             ))
             .unwrap()
-            .select(master_list_line_dsl::item_link_id);
+            .select(item_dsl::id);
 
-            query = query.filter(stock_line_dsl::item_link_id.eq_any(item_link_ids));
+            query = query.filter(item_dsl::id.eq_any(item_ids));
         }
     }
 
