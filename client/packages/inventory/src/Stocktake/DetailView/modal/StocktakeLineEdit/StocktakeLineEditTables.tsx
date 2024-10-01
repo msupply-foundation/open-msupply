@@ -194,7 +194,7 @@ export const BatchTable: FC<
 
     {
       key: 'countedNumberOfPacks',
-      label: 'label.counted-num-of-packs',
+      label: 'description.counted-num-of-packs',
       width: 100,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===

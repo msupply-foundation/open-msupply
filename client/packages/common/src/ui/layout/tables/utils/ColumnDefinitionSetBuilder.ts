@@ -253,14 +253,14 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     format: ColumnFormat.Currency,
   },
   requestedQuantity: {
-    label: 'label.requested-quantity',
+    label: 'label.requested',
     description: 'description.requested-quantity',
     key: 'requestedQuantity',
     width: 100,
     align: ColumnAlign.Right,
   },
   supplyQuantity: {
-    label: 'label.supply-quantity',
+    label: 'label.supply',
     description: 'description.supply-quantity',
     key: 'supplyQuantity',
     width: 100,

@@ -153,7 +153,7 @@ export const ContentArea = ({
             />
             <HeaderCell label="label.expiry" tooltip="description.expiry" />
             <HeaderCell
-              label="label.requested-quantity"
+              label="label.requested"
               tooltip="description.rnr-requested-quantity"
             />
             <HeaderCell
