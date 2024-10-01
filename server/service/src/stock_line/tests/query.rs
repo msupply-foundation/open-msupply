@@ -143,14 +143,7 @@ mod query {
                     .map(|stock_line| stock_line.id)
                     .collect(),
             )),
-            item_id: None,
-            location_id: None,
-            is_available: None,
-            expiry_date: None,
-            store_id: None,
-            item_code_or_name: None,
-            has_packs_in_store: None,
-            location: None,
+            ..Default::default()
         });
 
         // Test ExpiryDate sort with default sort order
@@ -196,14 +189,7 @@ mod query {
                     .map(|stock_line| stock_line.id)
                     .collect(),
             )),
-            item_id: None,
-            location_id: None,
-            is_available: None,
-            expiry_date: None,
-            store_id: None,
-            item_code_or_name: None,
-            has_packs_in_store: None,
-            location: None,
+            ..Default::default()
         });
 
         // Test ExpiryDate sort with desc sort order

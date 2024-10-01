@@ -49,6 +49,7 @@ pub struct StockLineFilterInput {
     pub store_id: Option<EqualFilterStringInput>,
     pub has_packs_in_store: Option<bool>,
     pub location: Option<LocationFilterInput>,
+    pub master_list: Option<MasterListFilterInput>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -63,6 +64,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             store_id: None,
             has_packs_in_store: f.has_packs_in_store,
             location: f.location.map(LocationFilter::from),
+            master_list: f.master_list.map(|f| f.to_domain()),
         }
     }
 }
