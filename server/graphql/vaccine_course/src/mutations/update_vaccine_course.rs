@@ -52,6 +52,7 @@ pub struct UpsertVaccineCourseDoseInput {
     pub min_age: f64,
     pub max_age: f64,
     pub min_interval_days: i32,
+    pub custom_age_label: Option<String>,
 }
 
 #[derive(InputObject, Clone)]
