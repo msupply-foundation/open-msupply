@@ -253,6 +253,9 @@ const VaccineCourseDoseTable = ({
 
   const addDose = () => {
     const previousDose = doses[doses.length - 1];
+    const previousMin = previousDose?.minAgeMonths ?? 0;
+    const previousMax = previousDose?.maxAgeMonths ?? 0;
+    const previousRange = previousMax - previousMin;
 
     updatePatch({
       vaccineCourseDoses: [
@@ -261,8 +264,8 @@ const VaccineCourseDoseTable = ({
           __typename: 'VaccineCourseDoseNode',
           id: FnUtils.generateUUID(),
           label: `${courseName} ${doses.length + 1}`,
-          minAgeMonths: previousDose?.maxAgeMonths ?? 0,
-          maxAgeMonths: (previousDose?.maxAgeMonths ?? 0) + 1,
+          minAgeMonths: previousMax,
+          maxAgeMonths: previousMax + (previousRange || 1),
           minIntervalDays: previousDose?.minIntervalDays ?? 30,
         },
       ],
