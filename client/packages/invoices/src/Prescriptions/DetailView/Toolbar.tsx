@@ -81,12 +81,15 @@ export const Toolbar: FC = () => {
               Input={
                 <DateTimePickerInput
                   disabled={isDisabled}
+                  defaultValue={new Date()}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
                   onChange={async prescriptionDate => {
                     await update({
                       id,
-                      prescriptionDate: Formatter.toIsoString(prescriptionDate),
+                      prescriptionDate: Formatter.toIsoString(
+                        DateUtils.endOfDayOrNull(prescriptionDate)
+                      ),
                     });
                   }}
                   maxDate={new Date()}
