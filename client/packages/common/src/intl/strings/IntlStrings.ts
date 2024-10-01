@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { TOptions } from 'i18next';
+import { Namespace, TOptions } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { LocaleKey } from '../locales';
 import { useIntl } from '../utils';
@@ -18,10 +18,10 @@ export interface TypedTFunction<Keys> {
 //   * Can parse array but only first element is used TODO fix
 //
 // returned function can be used with optional ns, i.e. t('label.create-user', { ns: 'system' })
-export const useTranslation = (): TypedTFunction<LocaleKey> => {
+export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
   const { i18n } = useIntl();
-  // use default common namespace by passing undefined
-  const { t } = useTranslationNext(undefined, { i18n });
+  // leave optional ns call in in case of future client specific namespace calls
+  const { t } = useTranslationNext(ns, { i18n });
 
   return useCallback(
     (key, opts) => {
