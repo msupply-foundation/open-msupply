@@ -22,7 +22,7 @@
   "label.calculated-demand": "Calculated Demand",
   "label.calculate-demand": "Include in GAPS calculations",
   "label.day": "day",
-  "label.target-demographic": "Target demographic",
+  "label.target-demographic": "Target Demographic",
   "error.no-immunisation-programs": "No Immunization programs found",
   "error.asset-not-found": "Asset not found",
   "button.create-log-reason": "Create log reason",

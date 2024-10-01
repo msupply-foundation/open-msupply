@@ -148,7 +148,7 @@ const AssetListComponent: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={row => navigate(equipmentRoute.addPart(row.id).build())}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
         enableColumnSelection
       />
     </>

@@ -196,7 +196,7 @@ export const SidePanel: FC = () => {
       confirmMessage: t('messages.confirm-delete-requisition', {
         number: data?.requisitionNumber,
       }),
-      deleteSuccess: t('messages.deleted-requisitions', {
+      deleteSuccess: t('messages.deleted-orders', {
         count: 1,
       }),
     },

@@ -109,7 +109,7 @@
   "messages.alert-zero-return-quantity": "Please add some quantities to return before proceeding to the next step",
   "messages.by-user": "by {{username}}",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
-  "messages.cant-return-shipment": "Cannot return lines until the status is 'Delivered'",
+  "messages.cant-return-shipment-replenishment": "Cannot return lines until the status is 'Delivered'",
   "messages.cant-send-order": "Cannot send Internal Order because there are no lines or because there are only placeholder lines",
   "messages.changing-max-mos": "This will change the target months of stock.",
   "messages.changing-min-mos": "This will change the reorder threshold months of stock.",

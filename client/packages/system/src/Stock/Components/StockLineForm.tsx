@@ -74,7 +74,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         onUpdate(draft);
       }
     } catch (e) {
-      error(t('error.unable-to-scan', { error: e }))();
+      error(t('error.unable-to-scan-barcode', { error: e }))();
     }
   };
 

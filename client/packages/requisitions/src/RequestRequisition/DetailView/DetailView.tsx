@@ -93,7 +93,7 @@ export const DetailView: FC = () => {
             .build()
         )
       }
-      title={t('error.requisition-not-found')}
+      title={t('error.order-not-found')}
       message={t('messages.click-to-return-to-requisitions')}
     />
   );

@@ -181,7 +181,7 @@ export const RequestLineEditForm = ({
 
           {!!draftLine?.itemStats.averageMonthlyConsumption ? (
             <InfoRow
-              label={t('label.amc')}
+              label={t('label.amc/amd')}
               value={formatNumber.round(
                 numberOfPacksFromQuantity(
                   draftLine?.itemStats.averageMonthlyConsumption

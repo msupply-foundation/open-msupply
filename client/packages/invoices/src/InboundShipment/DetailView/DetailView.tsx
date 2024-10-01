@@ -57,7 +57,9 @@ export const DetailView: FC = () => {
 
   const onReturn = async (selectedLines: InboundLineFragment[]) => {
     if (!data || !canReturnInboundLines(data)) {
-      const cantReturnSnack = info(t('messages.cant-return-shipment'));
+      const cantReturnSnack = info(
+        t('messages.cant-return-shipment-replenishment')
+      );
       cantReturnSnack();
       return;
     }

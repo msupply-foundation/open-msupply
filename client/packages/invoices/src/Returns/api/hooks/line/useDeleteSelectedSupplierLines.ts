@@ -48,7 +48,7 @@ export const useDeleteSelectedSupplierReturnLines = ({
     deleteAction: onDelete,
     canDelete: !isDisabled,
     messages: {
-      confirmMessage: t('messages.confirm-delete-lines', {
+      confirmMessage: t('messages.confirm-delete-invoice-lines', {
         count: selectedRows.length,
       }),
       deleteSuccess: t('messages.deleted-lines', {

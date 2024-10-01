@@ -38,7 +38,7 @@ export const useDeleteSelectedRequisitions = () => {
       confirmMessage: t('messages.confirm-delete-requisitions', {
         count: selectedRows.length,
       }),
-      deleteSuccess: t('messages.deleted-requisitions', {
+      deleteSuccess: t('messages.deleted-orders', {
         count: selectedRows.length,
       }),
       cantDelete: t('messages.cant-delete-requisitions'),
