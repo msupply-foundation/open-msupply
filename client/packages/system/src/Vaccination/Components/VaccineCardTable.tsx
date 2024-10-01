@@ -40,11 +40,11 @@ const isPreviousDoseGiven = (
   return itemsForCourse[doseIndex - 1]?.given;
 };
 
-const isRowClickable = (
-  isEncounter: boolean,
+const includeRow = (
+  includeNextDose: boolean,
   row: VaccinationCardItemFragment,
   items: VaccinationCardItemFragment[] | undefined
-) => (isEncounter || row.vaccinationId) && isPreviousDoseGiven(row, items);
+) => (includeNextDose || row.vaccinationId) && isPreviousDoseGiven(row, items);
 
 const useStyleRowsByStatus = (
   rows: VaccinationCardItemFragment[] | undefined,
@@ -65,7 +65,7 @@ const useStyleRowsByStatus = (
       .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
       .map(row => row.id);
     const nonClickableRows = rows
-      .filter(row => !isRowClickable(isEncounter, row, rows))
+      .filter(row => !includeRow(isEncounter, row, rows))
       .map(row => row.id);
     const lastOfEachAgeRange = rows
       .filter(
@@ -151,10 +151,8 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         key: 'status',
         label: 'label.status',
         accessor: ({ rowData }) =>
-          // Only show label for the next editable row
-          isRowClickable(isEncounter, rowData, data?.items)
-            ? rowData.status
-            : null,
+          // Only show label for existing vaccinations and the next editable row
+          includeRow(true, rowData, data?.items) ? rowData.status : null,
         Cell: ({ ...props }) => (
           <StatusCell
             {...props}
@@ -214,7 +212,7 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         data={data?.items ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          if (isRowClickable(isEncounter, row, data?.items))
+          if (includeRow(isEncounter, row, data?.items))
             openModal(row.vaccinationId, row.vaccineCourseDoseId);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
