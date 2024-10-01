@@ -3,7 +3,6 @@ use super::{
     item_link_row::item_link::{self, dsl as item_link_dsl},
     item_row::item::{self, dsl as item_dsl},
     location_row::location::{self, dsl as location_dsl},
-    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
     name_link_row::name_link::{self, dsl as name_link_dsl},
     name_row::name::{self, dsl as name_dsl},
     stock_line_row::stock_line::{self, dsl as stock_line_dsl},
