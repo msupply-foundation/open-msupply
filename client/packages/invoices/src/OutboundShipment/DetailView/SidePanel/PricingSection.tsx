@@ -41,7 +41,7 @@ type CurrencyPricingProps = {
 
 const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   const serviceLineModal = useToggle(false);
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const c = useFormatCurrency();
   const { data: serviceLines } = useOutbound.line.serviceLines();
   const { serviceTotalBeforeTax, serviceTotalAfterTax } = pricing;
@@ -126,7 +126,7 @@ const ItemPrices = ({
   isDisabled,
   taxPercentage,
 }: PricingGroupProps) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const c = useFormatCurrency();
 
   const { updateInvoiceTax } = useOutbound.document.updateInvoiceTax();
@@ -179,7 +179,7 @@ export const ForeignCurrencyPrices = ({
   currencyRate,
   onChange,
 }: CurrencyPricingProps) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { store } = useAuthContext();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
   const isHomeCurrency = store?.homeCurrencyCode === currency?.code;
@@ -224,7 +224,7 @@ export const ForeignCurrencyPrices = ({
 };
 
 export const Totals = ({ pricing }: PricingGroupProps) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const c = useFormatCurrency();
 
   const { totalAfterTax } = pricing;
@@ -240,7 +240,7 @@ export const Totals = ({ pricing }: PricingGroupProps) => {
 };
 
 export const PricingSectionComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const isDisabled = useOutbound.utils.isDisabled();
 
   const { pricing, taxPercentage, currency, otherParty, update, currencyRate } =

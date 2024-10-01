@@ -104,7 +104,7 @@ const Row = ({
 );
 
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();

@@ -15,7 +15,7 @@ export const useDeleteSelectedRequisitions = () => {
   });
   const { data: rows } = useRequests(queryParams);
   const { mutateAsync } = useDeleteRequests();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)

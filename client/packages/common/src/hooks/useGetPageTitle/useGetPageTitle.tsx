@@ -2,7 +2,7 @@ import { useTranslation } from '@common/intl';
 import { EnvUtils } from '@common/utils';
 
 export const useGetPageTitle = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const getPageTitle = (route: string) => {
     const mappedRoute = EnvUtils.mapRoute(route);
     return mappedRoute.title

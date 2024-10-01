@@ -102,7 +102,7 @@ const useStatusChangeButton = () => {
     'lines',
   ]);
   const { success, error } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data } = useOutbound.document.get();
   const hasLinesToPrune =
     data?.status === InvoiceNodeStatus.New &&
@@ -157,7 +157,7 @@ const useStatusChangeButton = () => {
 };
 
 const useStatusChangePlaceholderCheck = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data: lines } = useOutbound.line.stockLines();
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),

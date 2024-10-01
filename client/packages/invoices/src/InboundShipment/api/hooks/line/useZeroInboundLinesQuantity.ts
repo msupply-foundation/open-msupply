@@ -11,7 +11,7 @@ export const useZeroInboundLinesQuantity = (): (() => void) => {
   const { items, lines } = useInboundRows();
   const { mutateAsync } = useSaveInboundLines();
   const isDisabled = useIsInboundDisabled();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {

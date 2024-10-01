@@ -20,7 +20,7 @@ export const useDeleteRequestLines = () => {
     onSettled: () =>
       queryClient.invalidateQueries(api.keys.detail(requestNumber)),
   });
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)

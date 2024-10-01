@@ -21,7 +21,7 @@ type BloodPressureData = {
 };
 
 export const UIComponent = (props: ControlProps) => {
-  const t = useTranslation('programs');
+  const t = useTranslation();
   const { data, handleChange, label, path, schema } = props;
   const { core } = useJsonForms();
   const [bloodPressure, setBloodPressure] = React.useState<

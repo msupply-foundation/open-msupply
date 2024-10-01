@@ -16,7 +16,7 @@ export const useUpdateUserInfo = (
   cookie?: AuthCookie,
   mostRecentCredentials?: AuthenticationCredentials[]
 ) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const { data: lastSuccessfulSync } = useLastSuccessfulUserSync();
   const { mutateAsync: updateUser, isLoading } = useUpdateUser();

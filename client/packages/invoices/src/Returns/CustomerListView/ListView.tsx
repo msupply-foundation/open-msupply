@@ -21,7 +21,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { CustomerReturnRowFragment, useReturns } from '../api';
 
 const CustomerReturnListViewComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,

@@ -16,7 +16,7 @@ import { TransportSection } from './TransportSection';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data } = useReturns.document.customerReturn();
   const { mutateAsync } = useReturns.document.deleteCustomer();
 

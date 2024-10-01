@@ -70,7 +70,7 @@ const useHostSync = () => {
 };
 
 export const Sync = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const {
     syncStatus,
     latestSyncStart,

@@ -55,7 +55,7 @@ export const usePrescriptionDeleteSelectedLines = (): (() => void) => {
   const { items } = usePrescriptionRows();
   const { mutateAsync } = usePrescriptionDeleteLines();
   const isDisabled = usePrescriptionIsDisabled();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {

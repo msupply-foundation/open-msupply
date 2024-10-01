@@ -26,7 +26,7 @@ export const LoginLayout = ({
   SiteInfo,
   onLogin,
 }: LoginLayoutProps) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {

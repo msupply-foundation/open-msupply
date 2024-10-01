@@ -25,7 +25,7 @@ const TaxPercentageCell = (props: CellProps<DraftInboundLine>) => (
 export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftInboundLine>) => void
 ) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   return useColumns<DraftInboundLine>([
     {
       key: 'serviceItemName',

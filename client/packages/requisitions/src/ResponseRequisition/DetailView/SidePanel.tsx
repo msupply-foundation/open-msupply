@@ -12,7 +12,7 @@ import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 
 export const SidePanel: FC = () => {
   const { success } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data } = useResponse.document.get();
 
   const copyToClipboard = () => {

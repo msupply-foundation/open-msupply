@@ -44,7 +44,7 @@ export const ServerDiscovery = () => {
     discovery: true,
     autoconnect: isAutoconnect(),
   });
-  const t = useTranslation('app');
+  const t = useTranslation();
   const discover = () => {
     stopDiscovery();
     startDiscovery();

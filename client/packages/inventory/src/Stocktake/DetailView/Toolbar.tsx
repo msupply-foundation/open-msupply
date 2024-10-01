@@ -27,7 +27,7 @@ import { ChangeLocationConfirmationModal } from './ChangeLocationModal';
 export const Toolbar = () => {
   const { info } = useNotification();
   const isDisabled = useStocktake.utils.isDisabled();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { isLocked, stocktakeDate, description, update } =
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
   const onDelete = useStocktake.line.deleteSelected();

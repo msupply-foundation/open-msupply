@@ -5,7 +5,7 @@ import { useSelectedRows } from '../utils/useSelectedRows';
 
 export const useZeroStocktakeLines = () => {
   const { saveAndMapStructuredErrors } = useSaveStocktakeLines();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { error, success } = useNotification();
 
   const selectedRows = useSelectedRows();

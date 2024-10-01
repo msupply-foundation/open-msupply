@@ -53,7 +53,7 @@ export const VaccinationModal = ({
   vaccinationId,
   defaultClinician,
 }: VaccinationModalProps) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { success, error } = useNotification();
   const {
     draft,
@@ -151,7 +151,7 @@ const VaccinationForm = ({
   updateDraft: (update: Partial<VaccinationDraft>) => void;
   openBatchModal: () => void;
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   if (!dose) {
     return null;
@@ -324,7 +324,7 @@ const GivenInfoBox = ({
 }: {
   vaccination: VaccinationDetailFragment | null | undefined;
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
 
   if (vaccination?.given) {

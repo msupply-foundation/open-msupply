@@ -19,7 +19,7 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
 };
 
 export const Footer = () => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { data: stocktake } = useStocktake.document.get();
 
   return (

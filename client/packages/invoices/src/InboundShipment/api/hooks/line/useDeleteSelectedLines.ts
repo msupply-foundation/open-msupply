@@ -12,7 +12,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
   const { items, lines } = useInboundRows();
   const { mutateAsync } = useDeleteInboundLines();
   const isDisabled = useIsInboundDisabled();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {

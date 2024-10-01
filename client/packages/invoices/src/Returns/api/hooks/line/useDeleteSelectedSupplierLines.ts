@@ -14,7 +14,7 @@ export const useDeleteSelectedSupplierReturnLines = ({
 }): (() => void) => {
   const { items, lines } = useSupplierReturnRows();
   const isDisabled = useSupplierReturnIsDisabled();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const { mutateAsync: updateLines } = useReturns.lines.updateSupplierLines();
 

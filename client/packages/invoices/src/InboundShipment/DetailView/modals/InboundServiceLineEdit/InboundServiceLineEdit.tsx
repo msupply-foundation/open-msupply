@@ -36,7 +36,7 @@ const InboundServiceLineEditComponent = ({
   const { Modal } = useDialog({ isOpen, onClose });
   const { lines, update, add, save, isLoading } = useDraftServiceLines();
   const columns = useServiceLineColumns(update);
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const hasDefaultServiceItem = useDefaultServiceItem();
 
   return (

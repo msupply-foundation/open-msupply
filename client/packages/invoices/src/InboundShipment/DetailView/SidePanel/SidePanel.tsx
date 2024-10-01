@@ -19,7 +19,7 @@ import { TransportSection } from './TransportSection';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const SidePanel: FC = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
   const { data } = useInbound.document.get();

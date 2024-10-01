@@ -124,7 +124,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   currency,
   isExternalSupplier,
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { error } = useNotification();
   const [currentItem, setCurrentItem] = useState<InboundLineItem | null>(item);
   const { next: nextItem, disabled: nextDisabled } = useInbound.document.next(

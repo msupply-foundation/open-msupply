@@ -12,7 +12,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ filter }) => {
-  const t = useTranslation('manage');
+  const t = useTranslation();
   const filterString =
     ((filter.filterBy?.['codeOrName'] as FilterRule)?.like as string) || '';
 

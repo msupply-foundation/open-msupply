@@ -75,7 +75,7 @@ const useStatusChangeButton = () => {
     'lines',
   ]);
   const { success, error } = useNotification();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { user } = useAuthContext();
   const { getLocalisedFullName } = useIntlUtils();
 
@@ -142,7 +142,7 @@ export const StatusChangeButton = () => {
   const { selectedOption, getConfirmation, lines } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
-  const t = useTranslation(['app', 'replenishment']);
+  const t = useTranslation();
   const cantSend =
     lines?.totalCount === 0 ||
     lines?.nodes.every(line => line.requestedQuantity === 0);

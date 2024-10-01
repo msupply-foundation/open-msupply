@@ -24,7 +24,7 @@ export const MasterListSearchModal: FC<MasterListSearchProps> = ({
     sortBy,
     filterBy
   );
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   useEffect(() => {
     if (open) mutate();

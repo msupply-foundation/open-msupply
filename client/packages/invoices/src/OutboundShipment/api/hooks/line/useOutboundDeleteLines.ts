@@ -54,7 +54,7 @@ export const useOutboundDeleteSelectedLines = (): (() => void) => {
   const { items, lines } = useOutboundRows();
   const { mutateAsync } = useOutboundDeleteLines();
   const isDisabled = useOutboundIsDisabled();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const selectedRows =
     useTableStore(state => {

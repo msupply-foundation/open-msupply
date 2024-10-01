@@ -29,7 +29,7 @@ export const RnRFormDetailView = () => {
     updateLine: { updateLine },
   } = useRnRForm({ rnrFormId: id });
   const navigate = useNavigate();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -58,7 +58,7 @@ const RnRFormDetailViewComponent = ({
   data: RnRFormQuery;
   updateLine: (line: RnRFormLineFragment) => Promise<void>;
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   const { isDirty, clearAllDraftLines } = useRnRFormContext(state => ({

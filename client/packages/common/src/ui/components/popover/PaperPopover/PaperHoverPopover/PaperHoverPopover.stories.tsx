@@ -11,7 +11,7 @@ export default {
 };
 
 const Example: StoryFn = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   return (
     <>

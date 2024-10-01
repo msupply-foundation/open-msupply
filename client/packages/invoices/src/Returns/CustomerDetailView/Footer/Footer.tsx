@@ -49,7 +49,7 @@ const createStatusLog = (invoice: CustomerReturnFragment) => {
 };
 
 export const FooterComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { data } = useReturns.document.customerReturn();
   const { navigateUpOne } = useBreadcrumbs();
 

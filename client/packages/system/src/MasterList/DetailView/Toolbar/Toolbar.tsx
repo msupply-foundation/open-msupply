@@ -9,7 +9,7 @@ import {
 import { useMasterList } from '../../api';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
 
   const { description } = useMasterList.document.fields();
 

@@ -41,7 +41,7 @@ export const UpdateStatusButtonComponent = ({
     onChangeTab(Tabs.Status);
   };
   const { currentTab, onChangeTab } = useTabs(Tabs.Status);
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
   const { error, success } = useNotification();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));

@@ -63,7 +63,7 @@ const useStatusChangeButton = () => {
   ]);
   const { mutateAsync: save } = useStocktake.document.update();
   const { success, error } = useNotification();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   const errorsContext = useStocktakeLineErrorContext();
 

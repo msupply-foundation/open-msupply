@@ -24,7 +24,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   onClose,
   onChange,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { height } = useWindowDimensions();
   const { isLoading, patients, search, totalCount, isSuccess } =

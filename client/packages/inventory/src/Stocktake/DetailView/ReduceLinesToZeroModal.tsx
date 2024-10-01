@@ -23,7 +23,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
   isOpen,
   onCancel,
 }: ReduceLinesToZeroConfirmationModalProps) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   const [reason, setReason] =
     useState<InventoryAdjustmentReasonRowFragment | null>(null);

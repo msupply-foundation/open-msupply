@@ -24,7 +24,7 @@ const returnOrFallback =
 export const useCentralServerCallback = () => {
   const { warning } = useNotification();
   const isCentralServer = useIsCentralServerApi();
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   return {
     executeIfCentralOrShowWarning: returnOrFallback(

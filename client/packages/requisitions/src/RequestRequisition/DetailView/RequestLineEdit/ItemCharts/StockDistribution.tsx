@@ -34,7 +34,7 @@ const MonthlyConsumption = ({
   isTarget,
   isThreshold,
 }: MonthlyConsumptionProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
   const text = ` (${month} ${t('label.months', {
     count: month,
@@ -47,8 +47,8 @@ const MonthlyConsumption = ({
     isTarget && showText
       ? t('label.max-months-of-stock')
       : isThreshold && showText
-      ? t('label.min-months-of-stock')
-      : undefined;
+        ? t('label.min-months-of-stock')
+        : undefined;
 
   return (
     <MonthlyBar
@@ -79,8 +79,8 @@ const MonthlyBar = ({
   const additionalLabelStyle = additionalLabel
     ? { height: 40 }
     : showText
-    ? { height: 20, marginTop: 20 }
-    : {};
+      ? { height: 20, marginTop: 20 }
+      : {};
 
   return (
     <Box
@@ -129,12 +129,12 @@ const CalculationError = ({
   isAmcZero?: boolean;
   isSohAndQtyZero?: boolean;
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const detail = isAmcZero
     ? `: ${t('error.amc-is-zero')}`
     : isSohAndQtyZero
-    ? `: ${t('error.soh-and-suggested-quantity-are-zero')}`
-    : '';
+      ? `: ${t('error.soh-and-suggested-quantity-are-zero')}`
+      : '';
   const message = `${t('error.unable-to-calculate')}${detail}`;
 
   return (
@@ -157,7 +157,7 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
     'minMonthsOfStock',
   ]);
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const targetQuantityWidth =
     availableStockOnHand > targetQuantity

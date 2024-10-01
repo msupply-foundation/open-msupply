@@ -30,7 +30,7 @@ const AssetListComponent: FC = () => {
 
   const { data, isError, isLoading } = useAssetData.log.listReasons();
   const pagination = { page, first, offset };
-  const t = useTranslation(['catalogue', 'coldchain']);
+  const t = useTranslation();
 
   const columns = useColumns<AssetLogReasonFragment>(
     [

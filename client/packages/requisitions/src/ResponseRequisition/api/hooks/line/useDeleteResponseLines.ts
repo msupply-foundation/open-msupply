@@ -21,7 +21,7 @@ export const useDeleteResponseLines = () => {
     onSettled: () =>
       queryClient.invalidateQueries(api.keys.detail(requestNumber)),
   });
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const selectedRows = useTableStore(state =>
     lines.filter(({ id }) => state.rowState[id]?.isSelected)

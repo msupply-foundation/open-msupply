@@ -44,7 +44,7 @@ const NotifyOnLogin = () => {
   const { success } = useNotification();
   const { store, storeId } = useAuthContext();
   const { name } = store || {};
-  const t = useTranslation('app');
+  const t = useTranslation();
   const storeChangedNotification = success(
     t('login.store-changed', { store: name })
   );

@@ -22,7 +22,7 @@ const TaxPercentageCell = (props: CellProps<DraftStockOutLine>) => (
 export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftStockOutLine>) => void
 ) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const formatCurrency = useFormatCurrency();
   return useColumns<DraftStockOutLine>([
     {

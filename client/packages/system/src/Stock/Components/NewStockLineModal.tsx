@@ -31,7 +31,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
 

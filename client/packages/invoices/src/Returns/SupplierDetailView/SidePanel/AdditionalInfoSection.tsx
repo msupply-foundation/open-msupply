@@ -14,7 +14,7 @@ import {
 import { SupplierReturnFragment, useReturns } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { debouncedMutateAsync: debouncedUpdate } =
     useReturns.document.updateSupplierReturn();
 

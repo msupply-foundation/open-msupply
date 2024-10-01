@@ -14,7 +14,7 @@ export const useSaveStocktakeLines = () => {
   const stocktakeNumber = useStocktakeNumber();
   const queryClient = useQueryClient();
   const api = useStocktakeApi();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const errorsContext = useStocktakeLineErrorContext();
 
   const mutation = useMutation(api.updateLines, {

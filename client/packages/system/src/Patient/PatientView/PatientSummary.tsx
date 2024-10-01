@@ -15,7 +15,7 @@ import {
 import { usePatient } from '../api';
 
 const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   return (
     <Box gap={1} display="flex">
       <Box style={{ textAlign: 'start', width: 135 }}>
@@ -34,7 +34,7 @@ export const PatientSummary: FC = () => {
   const { localisedDate } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const formatDateOfBirth = (dateOfBirth: string | null) => {
     const dob = DateUtils.getDateOrNull(dateOfBirth);
 

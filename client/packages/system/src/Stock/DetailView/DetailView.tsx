@@ -42,7 +42,7 @@ export const StockLineDetailView: React.FC = () => {
     urlQuery: { tab },
   } = useUrlQuery();
   const { success, error } = useNotification();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { setCustomBreadcrumbs, navigateUpOne } = useBreadcrumbs();
 
   const repackModalController = useToggle();

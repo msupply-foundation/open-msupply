@@ -14,7 +14,7 @@ interface AppBarButtonsProps {
 export const AppBarButtonsComponent: FC<AppBarButtonsProps> = ({
   onCreate,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   return (
     <AppBarButtonsPortal>

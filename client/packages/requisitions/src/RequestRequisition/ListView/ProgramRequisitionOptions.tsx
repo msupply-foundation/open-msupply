@@ -42,7 +42,7 @@ const useProgramRequisitionOptions = (
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   useEffect(() => {
     setOrderType(null);
@@ -118,8 +118,7 @@ const LabelAndOptions = <T,>({
   optionKey,
   renderOption,
   getOptionDisabled,
-}: Pick<AutocompleteProps<T>, 'optionKey' | 'autoFocus'> &
-  Common<T>) => {
+}: Pick<AutocompleteProps<T>, 'optionKey' | 'autoFocus'> & Common<T>) => {
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;

@@ -101,7 +101,7 @@ export const Android = () => {
     discovery: true,
     autoconnect: true,
   });
-  const t = useTranslation('app');
+  const t = useTranslation();
   const navigate = useNavigate();
   const [mode, setLocalMode] = useState(NativeMode.None);
   const { setMode, setServerMode } = useNativeClient();

@@ -11,7 +11,7 @@ import { TemperatureChart } from './TemperatureChart';
 import { AppBarButtons } from './AppBarButtons';
 
 export const ListView: FC = () => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const tabs = [
     {
