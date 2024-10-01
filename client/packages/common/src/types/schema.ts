@@ -891,17 +891,6 @@ export type CentralPatientSearchInput = {
 
 export type CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError;
 
-export type CentralProgramsMutations = {
-  __typename: 'CentralProgramsMutations';
-  updateImmunisationProgram: UpdateImmunisationProgramResponse;
-};
-
-
-export type CentralProgramsMutationsUpdateImmunisationProgramArgs = {
-  input: UpdateImmunisationProgramInput;
-  storeId: Scalars['String']['input'];
-};
-
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
@@ -909,7 +898,6 @@ export type CentralServerMutationNode = {
   general: CentralGeneralMutations;
   logReason: AssetLogReasonMutations;
   packVariant: PackVariantMutations;
-  program: CentralProgramsMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
@@ -1187,7 +1175,7 @@ export type CustomerReturnLineNode = {
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -5977,7 +5965,7 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -7190,7 +7178,7 @@ export enum UniqueValueKey {
   Serial = 'serial'
 }
 
-export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;
@@ -7340,22 +7328,6 @@ export type UpdateEncounterResponse = EncounterNode;
 export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
-
-export type UpdateImmunisationProgramError = {
-  __typename: 'UpdateImmunisationProgramError';
-  error: UpdateImmunisationProgramErrorInterface;
-};
-
-export type UpdateImmunisationProgramErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdateImmunisationProgramInput = {
-  id: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-};
-
-export type UpdateImmunisationProgramResponse = ProgramNode | UpdateImmunisationProgramError;
 
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';
