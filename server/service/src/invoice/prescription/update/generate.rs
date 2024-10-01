@@ -5,9 +5,8 @@ use repository::{
     InvoiceStatus, RepositoryError, StockLineRow, StorageConnection,
 };
 
-use crate::{
-    invoice::common::{generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine},
-    invoice_line::stock_out_line::invoice_backdated_date,
+use crate::invoice::common::{
+    generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
 };
 
 use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatus};
@@ -38,7 +37,9 @@ pub(crate) fn generate(
     let backdated_datetime = backdated_datetime.or(existing_invoice.backdated_datetime);
 
     set_new_status_datetime(&mut update_invoice, &input_status);
-    backdate_status_datetimes(&mut update_invoice, backdated_datetime);
+    if let Some(backdated_datetime) = backdated_datetime {
+        backdate_status_datetimes(&mut update_invoice, backdated_datetime);
+    }
 
     update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
     update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
@@ -91,10 +92,11 @@ fn should_update_batches_total_number_of_packs(
     }
 }
 
-fn backdate_status_datetimes(invoice: &mut InvoiceRow, backdated_datetime: Option<NaiveDateTime>) {
-    invoice.allocated_datetime = invoice.allocated_datetime.and(backdated_datetime);
-    invoice.picked_datetime = invoice.allocated_datetime.and(backdated_datetime);
-    invoice.verified_datetime = invoice.allocated_datetime.and(backdated_datetime);
+// Replace datestimes that are not null with backdated_datime
+fn backdate_status_datetimes(invoice: &mut InvoiceRow, backdated_datetime: NaiveDateTime) {
+    invoice.allocated_datetime = invoice.allocated_datetime.map(|_| backdated_datetime);
+    invoice.picked_datetime = invoice.picked_datetime.map(|_| backdated_datetime);
+    invoice.verified_datetime = invoice.verified_datetime.map(|_| backdated_datetime);
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePrescriptionStatus>) {
