@@ -3,6 +3,7 @@ import { Box, Tooltip, Typography } from '@mui/material';
 import { useFormatNumber } from '@common/intl';
 import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
+import { NumUtils } from '@common/utils';
 
 // A non-interactive version of NumberInputCell. Basically the same as a plain
 // text display, but it formats the number nicely.
@@ -15,7 +16,6 @@ export const NumberCell = <T extends RecordWithId>({
   defaultValue?: string | number;
 }) => {
   const value = column.accessor({ rowData }) as number | undefined | null;
-  const hasMoreThanTwoDp = ((value ?? 0) * 100) % 1 !== 0;
   const formattedValue = useFormatNumber().round(value ?? 0, 2);
 
   const displayValue =
@@ -36,7 +36,9 @@ export const NumberCell = <T extends RecordWithId>({
             fontSize: 'inherit',
           }}
         >
-          {!!hasMoreThanTwoDp ? `${displayValue}...` : displayValue}
+          {!!NumUtils.hasMoreThanTwoDp(value ?? 0)
+            ? `${displayValue}...`
+            : displayValue}
         </Typography>
       </Tooltip>
     </Box>
