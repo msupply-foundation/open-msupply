@@ -239,8 +239,8 @@ export const useInboundShipmentColumns = () => {
         },
       ],
       {
-        label: 'label.cost',
-        key: 'costPricePerPack',
+        label: 'label.cost-per-unit',
+        key: 'costPricePerUnit',
         align: ColumnAlign.Right,
         width: 120,
         Cell: CurrencyCell,
