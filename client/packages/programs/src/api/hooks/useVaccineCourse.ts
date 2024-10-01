@@ -45,6 +45,7 @@ const vaccineCourseParsers = {
       minAge: dose.minAgeMonths,
       maxAge: dose.maxAgeMonths,
       minIntervalDays: dose.minIntervalDays,
+      customAgeLabel: dose.customAgeLabel,
     };
   },
   toItemInput: (item: DraftVaccineCourseItem): UpsertVaccineCourseItemInput => {

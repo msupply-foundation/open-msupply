@@ -623,6 +623,7 @@ fragment VaccineCourseDose on VaccineCourseDoseNode {
   minAgeMonths
   maxAgeMonths
   minIntervalDays
+  customAgeLabel
 }
 
 fragment VaccineCourseItem on VaccineCourseItemNode {
