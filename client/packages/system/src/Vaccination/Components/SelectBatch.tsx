@@ -28,9 +28,9 @@ export const SelectBatch = ({
 }: SelectBatchProps) => {
   const { data, isLoading } = useStockLines(itemId);
 
-  // Auto-select if there is only one stock line
+  // Auto-select if there is only one stock line (and not already selected)
   useEffect(() => {
-    if (data?.nodes?.length === 1) {
+    if (data?.nodes?.length === 1 && !stockLine) {
       setStockLine(data.nodes[0]!);
     }
   }, [data]);
