@@ -35,21 +35,16 @@ pub(crate) fn generate(
         should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
     let mut update_invoice = existing_invoice.clone();
 
-    let backdated_datetime = match backdated_datetime {
-        Some(backdated_datetime) => {
-            backdate_status_datetimes(&mut update_invoice, backdated_datetime);
-            Some(backdated_datetime)
-        }
-        None => invoice_backdated_date(&existing_invoice),
-    };
+    let backdated_datetime = backdated_datetime.or(existing_invoice.backdated_datetime);
 
-    set_new_status_datetime(&mut update_invoice, &input_status, backdated_datetime);
+    set_new_status_datetime(&mut update_invoice, &input_status);
+    backdate_status_datetimes(&mut update_invoice, backdated_datetime);
 
     update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
     update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
     update_invoice.comment = input_comment.or(update_invoice.comment);
     update_invoice.colour = input_colour.or(update_invoice.colour);
-    update_invoice.backdated_datetime = backdated_datetime.or(update_invoice.backdated_datetime);
+    update_invoice.backdated_datetime = backdated_datetime;
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
@@ -96,31 +91,13 @@ fn should_update_batches_total_number_of_packs(
     }
 }
 
-fn backdate_status_datetimes(invoice: &mut InvoiceRow, backdated_datetime: NaiveDateTime) {
-    match &invoice.status {
-        InvoiceStatus::New => {} // Created datetime is never backdated
-        InvoiceStatus::Allocated => {
-            invoice.allocated_datetime = Some(backdated_datetime);
-        }
-        InvoiceStatus::Picked => {
-            invoice.allocated_datetime = Some(backdated_datetime);
-            invoice.picked_datetime = Some(backdated_datetime);
-        }
-        InvoiceStatus::Verified => {
-            invoice.allocated_datetime = Some(backdated_datetime);
-            invoice.picked_datetime = Some(backdated_datetime);
-            invoice.verified_datetime = Some(backdated_datetime);
-        }
-        InvoiceStatus::Shipped => {}   // Shipped status is not backdated
-        InvoiceStatus::Delivered => {} // Delivered status is not backdated
-    }
+fn backdate_status_datetimes(invoice: &mut InvoiceRow, backdated_datetime: Option<NaiveDateTime>) {
+    invoice.allocated_datetime = invoice.allocated_datetime.and(backdated_datetime);
+    invoice.picked_datetime = invoice.allocated_datetime.and(backdated_datetime);
+    invoice.verified_datetime = invoice.allocated_datetime.and(backdated_datetime);
 }
 
-fn set_new_status_datetime(
-    invoice: &mut InvoiceRow,
-    status: &Option<UpdatePrescriptionStatus>,
-    backdated_datetime: Option<NaiveDateTime>,
-) {
+fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePrescriptionStatus>) {
     let new_status = match status {
         Some(status) => status,
         None => return,
@@ -130,19 +107,19 @@ fn set_new_status_datetime(
         return;
     }
 
-    let status_datetime = backdated_datetime.unwrap_or_else(|| Utc::now().naive_utc());
+    let current_datetime = Utc::now().naive_utc();
 
     match (&invoice.status, new_status) {
         (InvoiceStatus::Verified, _) => {}
         (InvoiceStatus::New, UpdatePrescriptionStatus::Verified) => {
-            invoice.picked_datetime = Some(status_datetime);
-            invoice.verified_datetime = Some(status_datetime)
+            invoice.picked_datetime = Some(current_datetime);
+            invoice.verified_datetime = Some(current_datetime)
         }
         (InvoiceStatus::New, UpdatePrescriptionStatus::Picked) => {
-            invoice.picked_datetime = Some(status_datetime);
+            invoice.picked_datetime = Some(current_datetime);
         }
         (InvoiceStatus::Picked, UpdatePrescriptionStatus::Verified) => {
-            invoice.verified_datetime = Some(status_datetime)
+            invoice.verified_datetime = Some(current_datetime)
         }
         _ => {}
     }
