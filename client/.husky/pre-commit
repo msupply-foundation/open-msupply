@@ -3,6 +3,6 @@
 
 # sort json files
 #!/bin/sh
-sh ./client/.husky/_/sort-json.sh
+sh ./client/.husky/sort-json.sh
 
 cd ./client && yarn pre-commit-lint
