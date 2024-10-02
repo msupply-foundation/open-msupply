@@ -1,4 +1,5 @@
 {
-    "heading.stock-and-items": "Stock et articles",
-    "heading.expiring": "En cours d'expiration"
+  "heading.stock-and-items": "Stock et articles",
+  "heading.expiring": "En cours d'expiration",
+  "message.arguments": "Vous pouvez personnaliser l'affichage du rapport en spécifiant certains des détails facultatifs ci-dessous. Cliquez sur OK pour afficher le rapport."
 }
