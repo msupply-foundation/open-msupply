@@ -61,7 +61,7 @@ const useStyleRowsByStatus = (
     if (!rows) return;
 
     const allRows = rows.map(({ id }) => id);
-    const doneRows = rows
+    const givenRows = rows
       .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
       .map(row => row.id);
     const nonClickableRows = rows
@@ -73,16 +73,10 @@ const useStyleRowsByStatus = (
       )
       .map(row => row.id);
 
-    updateRowStyles(doneRows, {
-      '& td:not(:first-of-type)': {
-        backgroundColor: `${theme.palette.background.success} !important`,
-      },
-    });
     updateRowStyles(nonClickableRows, {
       '& td': {
         cursor: 'default',
       },
-      backgroundColor: 'white !important',
     });
     updateRowStyles(allRows, {
       backgroundColor: 'white !important',
@@ -90,12 +84,21 @@ const useStyleRowsByStatus = (
       '& td': {
         borderBottom: `${BORDER_STYLE} !important`,
       },
+      // Reset all rows to white, then apply green to given rows below
+      '& td:not(:first-of-type)': {
+        backgroundColor: `white !important`,
+      },
       '& td:nth-of-type(2)': {
         borderLeft: BORDER_STYLE,
       },
       '& td:first-of-type': {
         borderBottom: 'none !important',
         fontWeight: 'bold',
+      },
+    });
+    updateRowStyles(givenRows, {
+      '& td:not(:first-of-type)': {
+        backgroundColor: `${theme.palette.background.success} !important`,
       },
     });
     updateRowStyles(lastOfEachAgeRange, {
