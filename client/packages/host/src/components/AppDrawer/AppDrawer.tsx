@@ -23,12 +23,11 @@ import {
   RouteBuilder,
   useConfirmationModal,
   ReportsIcon,
-  useIntlUtils,
 } from '@openmsupply-client/common';
 import {
   AppRoute,
   ExternalURL,
-  localisedExternalUrl,
+  useExternalUrl,
 } from '@openmsupply-client/config';
 import {
   CatalogueNav,
@@ -154,7 +153,6 @@ export const AppDrawer: React.FC = () => {
   const { logout, userHasPermission, store } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentLanguage } = useIntlUtils();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -180,7 +178,8 @@ export const AppDrawer: React.FC = () => {
     drawer.setHoverOpen(true);
   };
 
-  const docsUrl = `${localisedExternalUrl({ url: ExternalURL.PublicDocs, locale: currentLanguage })}${
+  const publicDocsUrl = useExternalUrl(ExternalURL.PublicDocs);
+  const docsUrl = `${publicDocsUrl}${
     EnvUtils.mapRoute(location.pathname).docs
   }`;
 

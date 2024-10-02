@@ -1,3 +1,5 @@
+import { useIntlUtils } from '@openmsupply-client/common';
+
 export enum AppRoute {
   Android = 'android',
 
@@ -69,19 +71,22 @@ export enum ExternalURL {
   PublicDocs,
 }
 
-export interface LocalisedExternalUrlProps {
-  url: ExternalURL;
-  locale: String | undefined;
-}
+export const useExternalUrl = (url: ExternalURL) => {
+  const { currentLanguage } = useIntlUtils();
+  // default to no language extension
+  // only 'fr and 'es' are currently supported in public docs
 
-export const localisedExternalUrl = ({
-  url,
-  locale,
-}: LocalisedExternalUrlProps) => {
+  const baseUrl = 'https://docs.msupply.foundation';
   switch (url) {
-    case ExternalURL.PublicDocs: {
-      const localeUrlInsert = locale == 'en' ? '' : `${locale}/`;
-      return `https://docs.msupply.foundation/${localeUrlInsert}docs`;
-    }
+    case ExternalURL.PublicDocs:
+      switch (currentLanguage) {
+        case 'es':
+          return `${baseUrl}/es/docs`;
+        case 'fr':
+        case 'fr-DJ':
+          return `${baseUrl}/fr/docs`;
+        default:
+          return `${baseUrl}/docs`;
+      }
   }
 };
