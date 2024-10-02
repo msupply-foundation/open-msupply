@@ -10,72 +10,53 @@ import {
 import { Environment } from '@openmsupply-client/config';
 
 import { useGenerateOneOffReport } from '../api/hooks/settings/useGenerateOneOffReport';
-/*pub enum ReportDefinitionEntry {
-    Manifest(Manifest),
-    TeraTemplate(TeraTemplate),
-    /// Custom http query
-    GraphGLQuery(GraphQlQuery),
-    /// Use default predefined query
-    DefaultQuery(DefaultQuery),
-    SQLQuery(SQLQuery),
-    Resource(serde_json::Value),
-    /// Entry reference to another report definition
-    Ref(ReportRef),
-}*/
+import { set, template } from 'lodash';
 
-// type ReportDefinitionEntry = {
-//   Manifest: Manifest;
-//   TeraTemplate: TeraTemplate;
-//   GraphGLQuery: GraphQlQuery;
-//   DefaultQuery: DefaultQuery;
-//   SQLQuery: SQLQuery;
-//   Resource: any;
-//   Ref: ReportRef;
-// };
-
-/*
-pub struct ReportDefinitionIndex {
-    pub template: Option<String>,
-    pub header: Option<String>,
-    pub footer: Option<String>,
-    #[serde(deserialize_with = "string_or_vec")]
-    pub query: Vec<String>,
+enum ReportEntryType {
+  Manifest = 'Manifest',
+  TeraTemplate = 'TeraTemplate',
+  GraphGLQuery = 'GraphQlQuery',
+  DefaultQuery = 'DefaultQuery',
+  SQLQuery = 'SQLQuery',
+  Resource = 'Resource',
+  Ref = 'Ref',
 }
-*/
+
+type ReportEntryData = {
+  [key: string]: string | null;
+};
+
+type ReportDefinitionEntry = {
+  type: ReportEntryType;
+  data: ReportEntryData | string | null;
+};
+
 type ReportDefinitionIndex = {
   template: string;
-  header: string;
-  footer: string;
+  header?: string | null;
+  footer?: string | null;
   query: string[];
 };
 
 type ReportDefinition = {
   index: ReportDefinitionIndex;
-  // entries: Map<string, ReportDefinitionEntry>;
-};
-
-type Report = {
-  template: string;
-  templateData: string;
-  graphql: string;
-  graphql_params: string;
-  sql: string;
+  entries: Record<string, ReportDefinitionEntry>;
 };
 
 export const ReportBuilder: React.FC = () => {
   let { storeId } = useAuthContext();
-  let [report, setReport] = useState<Report>({
-    template: '<html><h1>test</h1></html>',
-    templateData: '{}',
-    graphql: '',
-    graphql_params: '{dataId: "something"}',
-    sql: '',
+  let [report, setReport] = useState<ReportDefinition>({
+    index: {
+      template: 'template.html',
+      query: [],
+    },
+    entries: {},
   });
 
   let [dataId, setDataId] = useState<string>('');
   let [reportString, setReportString] = useState<string>('');
   let [args, setArgs] = useState<string>('{}');
-  let [output, setOutput] = useState<string>('');
+  let [reportUrl, setReportUrl] = useState<string>('');
   let [error, setError] = useState<string>('');
 
   let { mutateAsync: renderReport } = useGenerateOneOffReport();
@@ -86,7 +67,7 @@ export const ReportBuilder: React.FC = () => {
     }
     try {
       renderReport({
-        report: JSON.parse(reportString),
+        report: report,
         arguments: JSON.parse(args),
         dataId: dataId,
         storeId: storeId,
@@ -97,70 +78,69 @@ export const ReportBuilder: React.FC = () => {
           return;
         }
         const url = `${Environment.FILE_URL}${result.fileId}`;
-        setOutput(url);
+        setReportUrl(url);
 
         setError(url);
       });
     } catch (e) {
       setError(`${e}`);
     }
-  }, [reportString, args, dataId]);
-
-  // useEffect(() => {
-  //   try {
-  //     let x = wasm.render_one_off(report.template, report.templateData);
-  //     setOutput(x);
-  //     setError('');
-  //   } catch (e) {
-  //     setError(`${e}`);
-  //   }
-  // }, [report]);
+  }, [report, args, dataId]);
 
   return (
     <Box flex={1} padding={4}>
       <Grid container spacing={1}>
         <Grid item xs={4}>
-          <Typography variant="h4">Report (JSON)</Typography>
+          <Typography variant="h4">template.html</Typography>
           <TextArea
-            value={reportString}
-            onChange={e => setReportString(e.target.value ?? '')}
+            value={
+              (report.entries['template.html']?.data['template'] as string) ??
+              ''
+            }
+            onChange={e => {
+              setReport({
+                ...report,
+                entries: {
+                  ...report.entries,
+                  'template.html': {
+                    type: ReportEntryType.TeraTemplate,
+                    data: {
+                      output: 'Html',
+                      template: e.target.value,
+                    },
+                  },
+                },
+              });
+            }}
           />
-          <Typography variant="h4">Arguments (JSON)</Typography>
+          {/* <Typography variant="h4">Arguments (JSON)</Typography>
           <TextArea
             value={args}
             onChange={e => setArgs(e.target.value ?? '')}
-          />
+          /> */}
           <Typography variant="h4">DataId</Typography>
           <TextArea
             value={dataId}
             onChange={e => setDataId(e.target.value ?? '')}
           />
-          <Typography variant="h4">Template</Typography>
+          <Typography variant="h4">Report (JSON)</Typography>
           <TextArea
-            value={report?.template}
-            onChange={e =>
-              setReport({ ...report, template: e.target.value ?? '' })
-            }
-          />
-          <Typography variant="h4">Graphql</Typography>
-          <TextArea
-            value={report?.graphql}
-            onChange={e =>
-              setReport({ ...report, graphql: e.target.value ?? '' })
-            }
-          />
-          <Typography variant="h4">params</Typography>
-          <TextArea
-            value={report?.graphql_params}
-            onChange={e =>
-              setReport({ ...report, graphql_params: e.target.value ?? '' })
-            }
+            value={reportString}
+            onChange={e => {
+              setReportString(e.target.value ?? '');
+              try {
+                const report = JSON.parse(e.target.value ?? '{}');
+                setReport(report);
+              } catch (e) {
+                setError(`Unable to parse report json ${e}`);
+              }
+            }}
           />
         </Grid>
         <Grid item xs={8}>
           <Typography variant="h4">Report Output</Typography>
           {error && <Typography color="error">{error}</Typography>}
-          <iframe src={output} style={{ width: '100%', height: '100%' }} />
+          <iframe src={reportUrl} style={{ width: '100%', height: '100%' }} />
         </Grid>
       </Grid>
     </Box>
