@@ -39,7 +39,7 @@ export const ProgramComponent: FC = () => {
   const { id } = useParams();
   const {
     query: { data, isLoading },
-  } = useImmunisationProgram(t, id);
+  } = useImmunisationProgram(id);
 
   const queryParams = {
     filterBy: { ...filterBy, programId: { equalTo: id } },

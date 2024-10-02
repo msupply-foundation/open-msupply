@@ -174,7 +174,8 @@ const useInsert = ({
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
         comment: input.comment,
         notGivenReason: input.notGivenReason,
-        stockLineId: input.stockLine?.id,
+        stockLineId:
+          input.given && !isOtherFacility ? input.stockLine?.id : undefined,
       },
     });
 

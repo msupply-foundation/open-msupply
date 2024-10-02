@@ -40,11 +40,11 @@ const isPreviousDoseGiven = (
   return itemsForCourse[doseIndex - 1]?.given;
 };
 
-const isRowClickable = (
-  isEncounter: boolean,
+const includeRow = (
+  includeNextDose: boolean,
   row: VaccinationCardItemFragment,
   items: VaccinationCardItemFragment[] | undefined
-) => (isEncounter || row.vaccinationId) && isPreviousDoseGiven(row, items);
+) => (includeNextDose || row.vaccinationId) && isPreviousDoseGiven(row, items);
 
 const useStyleRowsByStatus = (
   rows: VaccinationCardItemFragment[] | undefined,
@@ -61,11 +61,11 @@ const useStyleRowsByStatus = (
     if (!rows) return;
 
     const allRows = rows.map(({ id }) => id);
-    const doneRows = rows
+    const givenRows = rows
       .filter(row => row.status === VaccinationCardItemNodeStatus.Given)
       .map(row => row.id);
     const nonClickableRows = rows
-      .filter(row => !isRowClickable(isEncounter, row, rows))
+      .filter(row => !includeRow(isEncounter, row, rows))
       .map(row => row.id);
     const lastOfEachAgeRange = rows
       .filter(
@@ -73,16 +73,10 @@ const useStyleRowsByStatus = (
       )
       .map(row => row.id);
 
-    updateRowStyles(doneRows, {
-      '& td:not(:first-of-type)': {
-        backgroundColor: `${theme.palette.background.success} !important`,
-      },
-    });
     updateRowStyles(nonClickableRows, {
       '& td': {
         cursor: 'default',
       },
-      backgroundColor: 'white !important',
     });
     updateRowStyles(allRows, {
       backgroundColor: 'white !important',
@@ -90,12 +84,21 @@ const useStyleRowsByStatus = (
       '& td': {
         borderBottom: `${BORDER_STYLE} !important`,
       },
+      // Reset all rows to white, then apply green to given rows below
+      '& td:not(:first-of-type)': {
+        backgroundColor: `white !important`,
+      },
       '& td:nth-of-type(2)': {
         borderLeft: BORDER_STYLE,
       },
       '& td:first-of-type': {
         borderBottom: 'none !important',
         fontWeight: 'bold',
+      },
+    });
+    updateRowStyles(givenRows, {
+      '& td:not(:first-of-type)': {
+        backgroundColor: `${theme.palette.background.success} !important`,
       },
     });
     updateRowStyles(lastOfEachAgeRange, {
@@ -124,6 +127,23 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
 
   useStyleRowsByStatus(data?.items, isEncounter);
 
+  const getAgeLabel = (row: VaccinationCardItemFragment) => {
+    if (row.customAgeLabel) return row.customAgeLabel;
+
+    const years = Math.floor(row.minAgeMonths / 12);
+    const months = row.minAgeMonths % 12;
+
+    const monthsLabel = t('label.age-months-count', { count: months });
+
+    if (years > 0) {
+      const yearsLabel = t('label.age-years', { count: years });
+
+      return months > 0 ? `${yearsLabel} ${monthsLabel}` : yearsLabel;
+    }
+
+    return monthsLabel;
+  };
+
   const columns = useColumns<VaccinationCardItemFragment>(
     [
       {
@@ -131,16 +151,16 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         label: 'label.age',
         sortable: false,
         accessor: ({ rowData }) => {
-          // Only show age label for first of each "block", when repeated
           const index =
             data?.items.findIndex(item => item.id === rowData.id) ?? 0;
+
           const sameAsPrev =
             rowData.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
-          return sameAsPrev
-            ? null
-            : t('label.age-months-count', { count: rowData.minAgeMonths });
+
+          // Only show age label for first of each "block", when repeated
+          return sameAsPrev ? null : getAgeLabel(rowData);
         },
-        width: 120,
+        width: 140,
       },
       {
         key: 'label',
@@ -151,10 +171,8 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         key: 'status',
         label: 'label.status',
         accessor: ({ rowData }) =>
-          // Only show label for the next editable row
-          isRowClickable(isEncounter, rowData, data?.items)
-            ? rowData.status
-            : null,
+          // Only show label for existing vaccinations and the next editable row
+          includeRow(true, rowData, data?.items) ? rowData.status : null,
         Cell: ({ ...props }) => (
           <StatusCell
             {...props}
@@ -214,7 +232,7 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         data={data?.items ?? []}
         isLoading={isLoading}
         onRowClick={row => {
-          if (isRowClickable(isEncounter, row, data?.items))
+          if (includeRow(isEncounter, row, data?.items))
             openModal(row.vaccinationId, row.vaccineCourseDoseId);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
