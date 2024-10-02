@@ -50,6 +50,7 @@ pub struct VaccineCourseDoseInput {
     pub label: String,
     pub min_age: f64,
     pub max_age: f64,
+    pub custom_age_label: Option<String>,
     pub min_interval_days: i32,
 }
 
@@ -62,6 +63,7 @@ impl VaccineCourseDoseInput {
             min_age: self.min_age,
             max_age: self.max_age,
             min_interval_days: self.min_interval_days,
+            custom_age_label: self.custom_age_label,
             deleted_datetime: None,
         }
     }

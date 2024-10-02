@@ -43,6 +43,7 @@ fragment VaccinationCardItem on VaccinationCardItemNode {
   vaccinationId
   label
   minAgeMonths
+  customAgeLabel
   vaccinationDate
   suggestedDate
   given

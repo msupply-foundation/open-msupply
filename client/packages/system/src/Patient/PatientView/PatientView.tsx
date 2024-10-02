@@ -262,7 +262,7 @@ export enum PatientTabValue {
   Programs = 'programs',
   Encounters = 'encounters',
   ContactTracing = 'contact-tracing',
-  VaccinationCards = 'vaccination-cards',
+  Vaccinations = 'vaccinations',
 }
 
 /**
@@ -320,7 +320,7 @@ export const PatientView = () => {
     },
     {
       Component: <VaccinationCardsListView />,
-      value: PatientTabValue.VaccinationCards,
+      value: PatientTabValue.Vaccinations,
       sort: {
         key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
         dir: 'desc' as 'desc' | 'asc',

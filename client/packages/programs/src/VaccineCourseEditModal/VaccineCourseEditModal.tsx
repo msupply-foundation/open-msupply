@@ -230,7 +230,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       }
       height={height}
       sx={{
-        width: 950,
+        width: 1100,
         maxWidth: 'unset',
       }}
       slideAnimation={false}
@@ -267,6 +267,7 @@ const VaccineCourseDoseTable = ({
           minAgeMonths: previousMax,
           maxAgeMonths: previousMax + (previousRange || 1),
           minIntervalDays: previousDose?.minIntervalDays ?? 30,
+          customAgeLabel: '',
         },
       ],
     });
@@ -297,7 +298,7 @@ const VaccineCourseDoseTable = ({
       },
       {
         key: 'label',
-        Cell: props => <TextInputCell fullWidth {...props} />,
+        Cell: LabelCell,
         width: 280,
         label: 'label.label',
         setter: updateDose,
@@ -315,8 +316,16 @@ const VaccineCourseDoseTable = ({
         setter: updateDose,
       },
       {
+        key: 'customAgeLabel',
+        Cell: LabelCell,
+        label: 'label.custom-age-label',
+        accessor: ({ rowData }) => rowData.customAgeLabel ?? '',
+        setter: updateDose,
+      },
+      {
         key: 'minIntervalDays',
         Cell: NumberInputCell,
+        width: 120,
         label: 'label.min-interval',
         setter: updateDose,
       },
@@ -358,6 +367,10 @@ const VaccineCourseDoseTable = ({
 };
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
+const LabelCell = (props: CellProps<VaccineCourseDoseFragment>) => (
+  <TextInputCell fullWidth {...props} />
+);
+
 const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
   const t = useTranslation();
   return (

@@ -4,7 +4,7 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { PropsWithChildren, useEffect, useMemo } from 'react';
 import { VaccinationDraft } from '../api';
 import { VaccinationCourseDoseFragment } from '../api/operations.generated';
 import { OTHER_FACILITY } from './FacilitySearchInput';
@@ -32,6 +32,18 @@ export const SelectItemAndBatch = ({
     );
   }, [dose.id]);
 
+  const isHistorical = draft.date?.toDateString() !== new Date().toDateString();
+
+  const selectBatch =
+    !isHistorical || draft.createTransactions || hasExistingSelectedBatch;
+
+  // Auto-select if there is only one item (and not already selected)
+  useEffect(() => {
+    if (vaccineItemOptions.length === 1 && !draft.itemId) {
+      updateDraft({ itemId: vaccineItemOptions[0]!.value });
+    }
+  }, [vaccineItemOptions]);
+
   if (!draft.given) {
     return null;
   }
@@ -43,11 +55,6 @@ export const SelectItemAndBatch = ({
   if (!vaccineItemOptions.length) {
     return <InfoText>{t('messages.no-vaccine-items-configured')}</InfoText>;
   }
-
-  const isHistorical = draft.date?.toDateString() !== new Date().toDateString();
-
-  const selectBatch =
-    !isHistorical || draft.createTransactions || hasExistingSelectedBatch;
 
   return (
     <>
