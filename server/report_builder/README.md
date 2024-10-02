@@ -238,18 +238,21 @@ These are built and added from the standard_reports.json file in reports/generat
 
 ## Building standard reports
 
-Standard reports are built from html, css, and query files in the same way as from the reports repo with some differences:
+Standard reports are built from html, css, and query files a similar way as from the reports repo with the following differences:
 
-Standard reports include a manifest.json file which will include details of how the report is constructed:
+Standard reports include a 'manifest.json' file which includes details of how the report is constructed.
+Optional fields in the manifest json are marked as '// optional'
 
 ```json
 {
   // is_custom is specified as false for standard reports and by default true for other reports.
-  // custom reports will override standard reports of the same code.
+  // custom reports will override standard reports of the same report code.
   "is_custom": false,
   // open mSupply needs to know the report version
   "version": "2.3.0",
-  // Each different version of a standard report will have the same code. This is the unique identifier for each standard report.
+  // The code is a new field which is the unique identifier of a report group inclusive of all versions of that report.
+  // Each different version of a standard report will have the same code.
+  // The code is required to identify reports of the same version where they will have different ids
   "code": "item-usage",
   // report context, see server/repository/src/db_diesel/report_row.rs
   "context": "REPORT",
@@ -313,8 +316,9 @@ Add a new version dir within the name of the report you are adding a new version
 
 ## Developing standard reports
 
-Standard reports can be modified and tested within the open-msupply-reports repo.
+The easiest way to make and test new standard reports is through the 'open-msupply-reports' repo.
+Reports can be built and tested directly from the 'open-msupply' repo, but developers won't have access to print.sh or show.sh scripts with dummy data.
 
 Once changes are satisfactory, new reports can be moved directly into the OMS repo under a new version dir.
 
-Note that reports won't show up in OMS unless they are built into the generated json using the build command.
+Note that reports won't show up in OMS unless they are built into the generated json using the `build-standard-reports` command.
