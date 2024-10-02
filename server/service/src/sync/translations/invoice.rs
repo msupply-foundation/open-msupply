@@ -303,13 +303,6 @@ impl SyncTranslation for InvoiceTranslation {
             }
         };
 
-        // If it was created after allocation, then it must be a backdated invoice
-        let backdated_datetime = match mapping.created_datetime
-            > mapping.allocated_datetime.unwrap_or(Utc::now().naive_utc())
-        {
-            true => mapping.allocated_datetime,
-            false => None,
-        };
 
         let result = InvoiceRow {
             id: data.ID,
@@ -341,7 +334,7 @@ impl SyncTranslation for InvoiceTranslation {
             linked_invoice_id: data.linked_transaction_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
-            backdated_datetime,
+            backdated_datetime: mapping.backdated_datetime,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -514,6 +507,21 @@ fn invoice_type(data: &LegacyTransactRow, name: &NameRow) -> Option<InvoiceType>
     }
 }
 
+fn map_backdated_datetime(
+    created_datetime: &NaiveDateTime,
+    picked_datetime: &Option<NaiveDateTime>,
+) -> Option<NaiveDateTime> {
+    match picked_datetime {
+        Some(picked_datetime) => {
+            if picked_datetime < created_datetime {
+                return Some(picked_datetime.to_owned()); // Picked date was before created_datetime assume it must be backdated
+            }
+            None
+        }
+        None => None, // No picked time, means it can't be backdated
+    }
+}
+
 /// Helper struct for new om_* fields mappings
 struct LegacyMapping {
     created_datetime: NaiveDateTime,
@@ -522,6 +530,7 @@ struct LegacyMapping {
     allocated_datetime: Option<NaiveDateTime>,
     shipped_datetime: Option<NaiveDateTime>,
     verified_datetime: Option<NaiveDateTime>,
+    backdated_datetime: Option<NaiveDateTime>,
     colour: Option<String>,
 }
 /// Either make use of om_* fields, if present, or do a best afford mapping
@@ -536,6 +545,10 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
             allocated_datetime: data.allocated_datetime,
             shipped_datetime: data.shipped_datetime,
             verified_datetime: data.verified_datetime,
+            backdated_datetime: data.backdated_datetime.or(map_backdated_datetime(
+                &created_datetime,
+                &data.picked_datetime,
+            )),
             colour: data.om_colour.clone(),
         };
     }
@@ -547,12 +560,19 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         allocated_datetime: None,
         shipped_datetime: None,
         verified_datetime: None,
+        backdated_datetime: None,
         colour: None,
     };
 
     let confirm_datetime = data
         .confirm_date
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
+
+    // Try to figure out if a legacy record was backdated
+    let backdated_datetime = map_backdated_datetime(&mapping.created_datetime, &confirm_datetime);
+    if backdated_datetime.is_some() {
+        mapping.backdated_datetime = backdated_datetime
+    }
 
     match invoice_type {
         InvoiceType::OutboundShipment | InvoiceType::SupplierReturn => match data.status {
