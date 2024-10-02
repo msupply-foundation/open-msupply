@@ -257,14 +257,6 @@ export type ImmunisationProgramsQueryVariables = Types.Exact<{
 
 export type ImmunisationProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null }> } };
 
-export type UpdateImmunisationProgramMutationVariables = Types.Exact<{
-  input: Types.UpdateImmunisationProgramInput;
-  storeId: Types.Scalars['String']['input'];
-}>;
-
-
-export type UpdateImmunisationProgramMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', program: { __typename: 'CentralProgramsMutations', updateImmunisationProgram: { __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null } | { __typename: 'UpdateImmunisationProgramError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', field: Types.UniqueValueKey, description: string } } } } };
-
 export type VaccineCourseFragment = { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null };
 
 export type VaccineCoursesQueryVariables = Types.Exact<{
@@ -936,30 +928,6 @@ export const ImmunisationProgramsDocument = gql`
   }
 }
     ${ImmunisationProgramFragmentDoc}`;
-export const UpdateImmunisationProgramDocument = gql`
-    mutation updateImmunisationProgram($input: UpdateImmunisationProgramInput!, $storeId: String!) {
-  centralServer {
-    program {
-      updateImmunisationProgram(input: $input, storeId: $storeId) {
-        __typename
-        ... on ProgramNode {
-          ...ImmunisationProgram
-        }
-        ... on UpdateImmunisationProgramError {
-          __typename
-          error {
-            ... on UniqueValueViolation {
-              __typename
-              field
-            }
-            description
-          }
-        }
-      }
-    }
-  }
-}
-    ${ImmunisationProgramFragmentDoc}`;
 export const VaccineCoursesDocument = gql`
     query vaccineCourses($first: Int, $offset: Int, $key: VaccineCourseSortFieldInput!, $desc: Boolean, $filter: VaccineCourseFilterInput) {
   vaccineCourses(
@@ -1111,9 +1079,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     immunisationPrograms(variables: ImmunisationProgramsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ImmunisationProgramsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ImmunisationProgramsQuery>(ImmunisationProgramsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'immunisationPrograms', 'query', variables);
-    },
-    updateImmunisationProgram(variables: UpdateImmunisationProgramMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateImmunisationProgramMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<UpdateImmunisationProgramMutation>(UpdateImmunisationProgramDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateImmunisationProgram', 'mutation', variables);
     },
     vaccineCourses(variables: VaccineCoursesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<VaccineCoursesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<VaccineCoursesQuery>(VaccineCoursesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'vaccineCourses', 'query', variables);
