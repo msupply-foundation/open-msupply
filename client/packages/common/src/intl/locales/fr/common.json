@@ -583,5 +583,6 @@
   "label.dose-number": "Dose #",
   "label.label": "Etiquette",
   "error.field-must-be-specified": "{{field}} doit être spécifié",
-  "button.add-new-vaccine-course": "Ajouter un calendrier de vaccination"
+  "button.add-new-vaccine-course": "Ajouter un calendrier de vaccination",
+  "label.report-filters": "Filtres du rapport"
 }

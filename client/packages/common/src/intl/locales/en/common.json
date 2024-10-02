@@ -582,5 +582,6 @@
   "table.select-unselect-all-columns": "Select / unselect all columns",
   "table.show-columns": "Show / hide columns",
   "title.confirm-delete-encounter": "Delete encounter",
-  "warning.caps-lock": "Warning: Caps lock is on"
+  "warning.caps-lock": "Warning: Caps lock is on",
+  "label.report-filters": "Report Filters"
 }
