@@ -6,11 +6,11 @@ import {
   TextArea,
   Typography,
   useAuthContext,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 
 import { useGenerateOneOffReport } from '../api/hooks/settings/useGenerateOneOffReport';
-import { set, template } from 'lodash';
 
 enum ReportEntryType {
   Manifest = 'Manifest',
@@ -61,7 +61,7 @@ export const ReportBuilder: React.FC = () => {
 
   let { mutateAsync: renderReport } = useGenerateOneOffReport();
 
-  useEffect(() => {
+  let renderReportNow = () => {
     if (!reportString) {
       return;
     }
@@ -80,11 +80,21 @@ export const ReportBuilder: React.FC = () => {
         const url = `${Environment.FILE_URL}${result.fileId}`;
         setReportUrl(url);
 
-        setError(url);
+        setError('');
       });
     } catch (e) {
       setError(`${e}`);
     }
+  };
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      renderReportNow();
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [report, args, dataId]);
 
   return (
@@ -93,6 +103,7 @@ export const ReportBuilder: React.FC = () => {
         <Grid item xs={4}>
           <Typography variant="h4">template.html</Typography>
           <TextArea
+            rows={30}
             value={
               (report.entries['template.html']?.data['template'] as string) ??
               ''
@@ -113,16 +124,29 @@ export const ReportBuilder: React.FC = () => {
               });
             }}
           />
+          <Typography variant="h4">style.css</Typography>
+          <TextArea
+            rows={20}
+            value={(report.entries['style.css']?.data as string) ?? ''}
+            onChange={e => {
+              setReport({
+                ...report,
+                entries: {
+                  ...report.entries,
+                  'style.css': {
+                    type: ReportEntryType.Resource,
+                    data: e.target.value,
+                  },
+                },
+              });
+            }}
+          />
           {/* <Typography variant="h4">Arguments (JSON)</Typography>
           <TextArea
             value={args}
             onChange={e => setArgs(e.target.value ?? '')}
           /> */}
-          <Typography variant="h4">DataId</Typography>
-          <TextArea
-            value={dataId}
-            onChange={e => setDataId(e.target.value ?? '')}
-          />
+
           <Typography variant="h4">Report (JSON)</Typography>
           <TextArea
             value={reportString}
@@ -138,6 +162,12 @@ export const ReportBuilder: React.FC = () => {
           />
         </Grid>
         <Grid item xs={8}>
+          <Typography variant="h4">DataId</Typography>
+          <TextArea
+            rows={1}
+            value={dataId}
+            onChange={e => setDataId(e.target.value ?? '')}
+          />
           <Typography variant="h4">Report Output</Typography>
           {error && <Typography color="error">{error}</Typography>}
           <iframe src={reportUrl} style={{ width: '100%', height: '100%' }} />
