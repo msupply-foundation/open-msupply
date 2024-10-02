@@ -1,5 +1,5 @@
 mod validate;
-pub use validate::validate;
+use validate::validate;
 
 use repository::{
     ActivityLogType, EqualFilter, RepositoryError, StocktakeLineFilter, StocktakeLineRepository,
@@ -22,11 +22,6 @@ pub enum DeleteStocktakeError {
         line_id: String,
         error: DeleteStocktakeLineError,
     },
-}
-
-#[derive(Default)]
-pub struct DeleteStocktake {
-    pub id: String,
 }
 
 /// Returns the id of the deleted stocktake

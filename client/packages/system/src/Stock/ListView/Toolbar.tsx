@@ -35,6 +35,12 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               placeholder: t('placeholder.search-by-location-code'),
             },
             {
+              type: 'text',
+              name: t('label.master-list'),
+              urlParameter: 'masterList.name',
+              placeholder: t('placeholder.search-by-master-list-name'),
+            },
+            {
               type: 'group',
               name: t('label.expiry'),
               elements: [

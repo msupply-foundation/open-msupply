@@ -11,7 +11,8 @@ use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, StorePreferenceNode,
+    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, MasterListFilterInput,
+    StorePreferenceNode,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
