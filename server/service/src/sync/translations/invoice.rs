@@ -183,7 +183,7 @@ pub struct LegacyTransactRow {
     pub original_shipment_id: Option<String>,
 
     #[serde(default)]
-    #[serde(rename = "backdated_datetime")]
+    #[serde(rename = "om_backdated_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub backdated_datetime: Option<NaiveDateTime>,
 }
