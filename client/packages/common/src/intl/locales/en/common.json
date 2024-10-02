@@ -316,6 +316,7 @@
   "label.location": "Location",
   "label.log": "Log",
   "label.manufacturer": "Manufacturer",
+  "label.master-list": "Master list",
   "label.max-min-temperature": "Max / Min",
   "label.message": "Message",
   "label.min-interval": "Min interval (days)",

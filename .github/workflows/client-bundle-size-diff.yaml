@@ -3,16 +3,16 @@ name: Bundle size diff
 on:
   pull_request:
     paths:
-      - 'client/**'
+      - "client/**"
 
 jobs:
   build-base:
     name: Build base
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
 
@@ -23,7 +23,7 @@ jobs:
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v1
         with:
-          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+          node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
@@ -34,7 +34,7 @@ jobs:
         run: cd ./client && yarn build-stats
 
       - name: Upload base stats.json
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: base
           path: ./client/packages/host/dist/stats.json
@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Read .nvmrc
         run: echo "##[set-output name=NVMRC;]$(cat ./client/.nvmrc)"
@@ -55,7 +55,7 @@ jobs:
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v1
         with:
-          node-version: '${{ steps.nvm.outputs.NVMRC }}'
+          node-version: "${{ steps.nvm.outputs.NVMRC }}"
 
       - name: Install dependencies
         run: cd ./client && rm -rf node_modules && yarn install --frozen-lockfile
@@ -66,7 +66,7 @@ jobs:
         run: cd ./client && yarn build-stats
 
       - name: Upload base stats.json
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: pr
           path: ./client/packages/host/dist/stats.json
@@ -80,16 +80,16 @@ jobs:
 
     steps:
       - name: Checkout PR
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Download base stats
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: base
           path: base
 
       - name: Download PR stats
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: pr
           path: pr
@@ -98,13 +98,13 @@ jobs:
         id: get-diff
         uses: NejcZdovc/bundle-size-diff@v1
         with:
-          base_path: './base/stats.json'
-          pr_path: './pr/stats.json'
+          base_path: "./base/stats.json"
+          pr_path: "./pr/stats.json"
 
       - name: Comment
         uses: NejcZdovc/comment-pr@v1
         with:
-          file: 'comment.md'
+          file: "comment.md"
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           OLD: ${{steps.get-diff.outputs.base_file_string}}

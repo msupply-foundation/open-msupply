@@ -3628,6 +3628,7 @@ export type MasterListLineConnector = {
 export type MasterListLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  masterList?: InputMaybe<MasterListFilterInput>;
   masterListId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -6604,6 +6605,7 @@ export type StockLineFilterInput = {
   itemId?: InputMaybe<EqualFilterStringInput>;
   location?: InputMaybe<LocationFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
+  masterList?: InputMaybe<MasterListFilterInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -6625,6 +6627,7 @@ export type StockLineNode = {
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
+  masterList: Array<MasterListNode>;
   note?: Maybe<Scalars['String']['output']>;
   onHold: Scalars['Boolean']['output'];
   packSize: Scalars['Float']['output'];
@@ -6632,6 +6635,11 @@ export type StockLineNode = {
   storeId: Scalars['String']['output'];
   supplierName?: Maybe<Scalars['String']['output']>;
   totalNumberOfPacks: Scalars['Float']['output'];
+};
+
+
+export type StockLineNodeMasterListArgs = {
+  storeId: Scalars['String']['input'];
 };
 
 export type StockLineReducedBelowZero = InsertInventoryAdjustmentErrorInterface & InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
