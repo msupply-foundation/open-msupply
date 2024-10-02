@@ -79,6 +79,7 @@
   "heading.custom-theme": "Thème personnalisé",
   "heading.description": "Description",
   "heading.edit-item": "Éditer article",
+  "heading.expiring": "En cours d'expiration",
   "heading.expiring-stock": "Expiration des stocks",
   "heading.grand-total": "Grand total",
   "heading.select-items": "Choisir articles",
@@ -87,6 +88,7 @@
   "heading.settings-android": "Paramètres Android",
   "heading.settings-display": "Paramètres d'affichage",
   "heading.settings-sync": "Synchronisation",
+  "heading.stock-and-items": "Stock et articles",
   "heading.synchronise-status": "Statut Synchronisation",
   "info.server-restarting": "Redémarrage du serveur...",
   "label.actions": "Actions",
@@ -271,6 +273,7 @@
   "log.stocktake-status-finalised": "Inventaire finalisé",
   "log.user-logged-in": "Utilisateur connecté",
   "messages.ago": "il y a {{time}}",
+  "message.arguments": "Vous pouvez personnaliser l'affichage du rapport en spécifiant certains des détails facultatifs ci-dessous. Cliquez sur OK pour afficher le rapport.",
   "messages.cant-delete-generic": "Vous ne pouvez pas supprimer le ou les articles articles sélectionnés",
   "messages.confirm-cancel-generic": "Vous allez perdre les changements réalisés sur ce formulaire",
   "messages.confirm-delete-generic": "Cela supprimera définitivement les données",
@@ -584,5 +587,6 @@
   "label.dose-number": "Dose #",
   "label.label": "Etiquette",
   "error.field-must-be-specified": "{{field}} doit être spécifié",
-  "button.add-new-vaccine-course": "Ajouter un calendrier de vaccination"
+  "button.add-new-vaccine-course": "Ajouter un calendrier de vaccination",
+  "label.report-filters": "Filtres du rapport"
 }
