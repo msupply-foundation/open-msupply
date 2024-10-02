@@ -230,7 +230,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       }
       height={height}
       sx={{
-        width: 950,
+        width: 1100,
         maxWidth: 'unset',
       }}
       slideAnimation={false}
@@ -264,6 +264,7 @@ const VaccineCourseDoseTable = ({
           minAgeMonths: (previousDose?.minAgeMonths ?? 0) + 1,
           maxAgeMonths: (previousDose?.minAgeMonths ?? 0) + 2,
           minIntervalDays: previousDose?.minIntervalDays ?? 30,
+          customAgeLabel: '',
         },
       ],
     });
@@ -312,8 +313,16 @@ const VaccineCourseDoseTable = ({
         setter: updateDose,
       },
       {
+        key: 'customAgeLabel',
+        Cell: LabelCell,
+        label: 'label.custom-age-label',
+        accessor: ({ rowData }) => rowData.customAgeLabel ?? '',
+        setter: updateDose,
+      },
+      {
         key: 'minIntervalDays',
         Cell: NumberInputCell,
+        width: 120,
         label: 'label.min-interval',
         setter: updateDose,
       },

@@ -8068,6 +8068,7 @@ export type UpsertLogLevelResponse = {
 };
 
 export type UpsertVaccineCourseDoseInput = {
+  customAgeLabel?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   label: Scalars['String']['input'];
   maxAge: Scalars['Float']['input'];
@@ -8199,6 +8200,7 @@ export type UserStorePermissionNode = {
 export type VaccinationCardItemNode = {
   __typename: 'VaccinationCardItemNode';
   batch?: Maybe<Scalars['String']['output']>;
+  customAgeLabel?: Maybe<Scalars['String']['output']>;
   facilityName?: Maybe<Scalars['String']['output']>;
   given?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['String']['output'];
@@ -8263,6 +8265,7 @@ export type VaccineCourseConnector = {
 
 export type VaccineCourseDoseNode = {
   __typename: 'VaccineCourseDoseNode';
+  customAgeLabel?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
   maxAgeMonths: Scalars['Float']['output'];

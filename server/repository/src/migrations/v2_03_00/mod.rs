@@ -7,6 +7,7 @@ mod add_report_versioning;
 mod add_vaccination_activity_log_types;
 mod add_vaccinations_table;
 mod add_vaccine_course_changelog_table_names;
+mod add_vaccine_course_dose_custom_age_label;
 mod add_vaccine_course_dose_deleted_datetime;
 mod add_vaccine_doses_to_item;
 mod drop_program_deleted_datetime;
@@ -41,6 +42,7 @@ impl Migration for V2_03_00 {
             Box::new(add_report_versioning::Migrate),
             Box::new(add_facility_to_vaccination::Migrate),
             Box::new(add_vaccine_course_dose_deleted_datetime::Migrate),
+            Box::new(add_vaccine_course_dose_custom_age_label::Migrate),
         ]
     }
 }
