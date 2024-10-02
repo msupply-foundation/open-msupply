@@ -124,6 +124,23 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
 
   useStyleRowsByStatus(data?.items, isEncounter);
 
+  const getAgeLabel = (row: VaccinationCardItemFragment) => {
+    if (row.customAgeLabel) return row.customAgeLabel;
+
+    const years = Math.floor(row.minAgeMonths / 12);
+    const months = row.minAgeMonths % 12;
+
+    const monthsLabel = t('label.age-months-count', { count: months });
+
+    if (years > 0) {
+      const yearsLabel = t('label.age-years', { count: years });
+
+      return months > 0 ? `${yearsLabel} ${monthsLabel}` : yearsLabel;
+    }
+
+    return monthsLabel;
+  };
+
   const columns = useColumns<VaccinationCardItemFragment>(
     [
       {
@@ -131,16 +148,16 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
         label: 'label.age',
         sortable: false,
         accessor: ({ rowData }) => {
-          // Only show age label for first of each "block", when repeated
           const index =
             data?.items.findIndex(item => item.id === rowData.id) ?? 0;
+
           const sameAsPrev =
             rowData.minAgeMonths === data?.items?.[index - 1]?.minAgeMonths;
-          return sameAsPrev
-            ? null
-            : t('label.age-months-count', { count: rowData.minAgeMonths });
+
+          // Only show age label for first of each "block", when repeated
+          return sameAsPrev ? null : getAgeLabel(rowData);
         },
-        width: 120,
+        width: 140,
       },
       {
         key: 'label',
