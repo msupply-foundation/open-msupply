@@ -18,6 +18,7 @@ table! {
         label -> Text,
         min_age -> Double,
         max_age -> Double,
+        custom_age_label -> Nullable<Text>,
         min_interval_days -> Integer,
         deleted_datetime -> Nullable<Timestamp>,
     }
@@ -37,6 +38,7 @@ pub struct VaccineCourseDoseRow {
     pub label: String,
     pub min_age: f64,
     pub max_age: f64,
+    pub custom_age_label: Option<String>,
     pub min_interval_days: i32,
     pub deleted_datetime: Option<NaiveDateTime>,
 }

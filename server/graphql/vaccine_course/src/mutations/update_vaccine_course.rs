@@ -103,6 +103,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     label: d.label,
                     min_age: d.min_age,
                     max_age: d.max_age,
+                    custom_age_label: d.custom_age_label,
                     min_interval_days: d.min_interval_days,
                 })
                 .collect(),
