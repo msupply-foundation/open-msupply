@@ -36,9 +36,6 @@ const notePopoverColumn = getNotePopoverColumn<
 const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
   row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
 
-const getPackSize = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize;
-
 const getNumberOfPacks = (row: StockOutLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
 
@@ -195,24 +192,16 @@ export const useOutboundColumns = ({
       [
         'packSize',
         {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
-              );
-            } else {
-              return getPackSize(row) ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return getPackSize(rowData);
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'], default: '' },
+            ]),
         },
       ]
     );
@@ -225,16 +214,7 @@ export const useOutboundColumns = ({
         getSortValue: row => {
           if ('lines' in row) {
             const { lines } = row;
-            const packSize = ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'packSize',
-              ''
-            );
-            if (packSize) {
-              return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
-            } else {
-              return '';
-            }
+            return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
           } else {
             return getNumberOfPacks(row);
           }
@@ -242,16 +222,7 @@ export const useOutboundColumns = ({
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            const packSize = ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'packSize',
-              ''
-            );
-            if (packSize) {
-              return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
-            } else {
-              return '';
-            }
+            return lines.reduce((acc, value) => acc + value.numberOfPacks, 0);
           } else {
             return getNumberOfPacks(rowData);
           }
@@ -286,11 +257,16 @@ export const useOutboundColumns = ({
       Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
-          return Object.values(rowData.lines).reduce(
-            (sum, batch) =>
-              sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
-            0
-          );
+          // Multiple lines, so we need to calculate the average price per unit
+          let totalSellPrice = 0;
+          let totalUnits = 0;
+
+          for (const line of rowData.lines) {
+            totalSellPrice += line.sellPricePerPack * line.numberOfPacks;
+            totalUnits += line.numberOfPacks * line.packSize;
+          }
+
+          return totalSellPrice / totalUnits;
         } else {
           if (isDefaultPlaceholderRow(rowData)) return undefined;
           return (rowData.sellPricePerPack ?? 0) / rowData.packSize;

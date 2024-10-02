@@ -103,6 +103,7 @@ const StockListComponent: FC = () => {
         width: 350,
       },
     ],
+    // TODO:: Add a column for the master list name
     ['batch', { Cell: TooltipTextCell, width: 100 }],
     [
       'expiryDate',
