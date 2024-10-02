@@ -197,10 +197,11 @@ This can be implemented in the report by adding the following translation functi
 By default,
 
 Where the letters are short hand for the following:
+
 - t for translate
   The name of the function
-- k for key 
-  This is the locale key as is used in front end translations. 
+- k for key
+  This is the locale key as is used in front end translations.
 - n for namespace
   The file namespace where the translation key is. The .json exention is automattically added ie catalogue (which refers to the catalogue.json namespace).
   By default, the translation in common.json translations will be used. If a specific namespace needs to be called, you can add this 'n' key into your function.
@@ -221,3 +222,103 @@ Next it will fallback to the english translation of the nominated key in the com
 Next it will fallback to the fallback text provided in the report which by default will be in english
 
 If none of the above can be found, report will fail to render.
+
+# Standard Reports
+
+Builds 2.3.0 and above will include standard reports embedded in the binary. The 2.3.0 build includes the following reports:
+
+- Invoice Landscape
+- Item Usage
+- Stock Detail
+- Stock Status
+- Expiring Items
+
+Standard reports are upserted into the database on startup.
+These are built and added from the standard_reports.json file in reports/generated. This json file includes all standard reports, and all versions of each report.
+
+## Building standard reports
+
+Standard reports are built from html, css, and query files a similar way as from the reports repo with the following differences:
+
+Standard reports include a 'manifest.json' file which includes details of how the report is constructed.
+Optional fields in the manifest json are marked as '// optional'
+
+```json
+{
+  // is_custom is specified as false for standard reports and by default true for other reports.
+  // custom reports will override standard reports of the same report code.
+  "is_custom": false,
+  // open mSupply needs to know the report version
+  "version": "2.3.0",
+  // The code is a new field which is the unique identifier of a report group inclusive of all versions of that report.
+  // Each different version of a standard report will have the same code.
+  // The code is required to identify reports of the same version where they will have different ids
+  "code": "item-usage",
+  // report context, see server/repository/src/db_diesel/report_row.rs
+  "context": "REPORT",
+  // optional
+  // Sub context for reports, applicable to Dispensary and Report context, see client/packages/reports/src/ListView/ListView.tsx",
+  // Currently only reports of subcontext 'Expiring' and ' StockAndItems' are displayed
+  "sub_context": "StockAndItems",
+  // Display name of report
+  "name": "Item Usage",
+  // optional
+  "queries": {
+    // optional
+    // graphql file query name with extension
+    "gql": "query.graphql",
+    // optional
+    // vec of sql query file names without extension. report_builder will parse both postgres.sql, sqlite.sql, and agnostic .sql file type extensions.
+    "sql": ["thisMonthConsumption", "lastMonthConsumption"]
+  },
+  // optional
+  "arguments": {
+    // optional
+    // location of schema file json relative to the version dir
+    "schema": "argument_schemas/arguments.json",
+    // optional
+    // location of ui schema file json relative to the version dir
+    "ui": "argument_schemas/arguments_ui.json"
+  }
+}
+```
+
+This manifest.json file takes the place of cli param inserts seen in bash scripts such as upsert.sh in the open-mSupply-reports repo.
+
+Standard reports in the reports dir can be built into the generated json by running
+
+```bash
+./target/debug/remote_server_cli build-standard-reports
+```
+
+from the open-msupply/server dir.
+
+## Standard reports versioning
+
+Standard reports include versions for updates of reports. open mSupply central will automatically sync the most recent standard report compatible with the remote site build of open mSupply.
+
+First open mSupply will check for custom reports of the same code which will override any standard report.
+open mSupply central will then sync to the remote site the most recent minor version which matches the major version of the remote site.
+For example:
+
+for report_versions = [2.3.0, 2.3.5, 2.8.2, 2.8.3, 3.0.1, 3.5.1]
+if remote omSupply.version = 2.3 selected report = 2.3.5
+if remote omSupply.version = 2.4 selected report = 2.3.5
+if remote omSupply.version = 2.8 selected report = 2.8.3
+if remote omSupply.version = 3.2 selected report = 3.0.1
+if remote omSupply.version = 4.5 selected report = 3.5.1
+
+### Adding a new standard report version
+
+Add a new version dir within the name of the report you are adding a new version to.
+
+> Note that the dir names are for developer convenience only. The name and version of each report read by omSupply is from the manifest.json file.
+
+## Developing standard reports
+
+The easiest way to make and test new standard reports is through the 'open-msupply-reports' repo.
+Reports can be built and tested directly from the 'open-msupply' repo, but developers won't have access to print.sh or show.sh scripts with dummy data.
+
+Once changes are satisfactory, new reports can be moved directly into the OMS repo under a new version dir.
+
+Note that reports won't show up in OMS unless they are built into the generated json using the `build-standard-reports` command.
