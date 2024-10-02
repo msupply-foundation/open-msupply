@@ -5233,6 +5233,7 @@ export type Queries = {
    * The generated report can be retrieved from the `/files` endpoint using the returned file id.
    */
   generateReport: PrintReportResponse;
+  generateReportData: ReportDataResponse;
   /**
    * Can be used when developing reports, e.g. to generate a report that is not already in the
    * system.
@@ -5556,6 +5557,15 @@ export type QueriesGenerateReportArgs = {
   format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String']['input'];
   sort?: InputMaybe<PrintReportSortInput>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesGenerateReportDataArgs = {
+  arguments?: InputMaybe<Scalars['JSON']['input']>;
+  dataId?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  report: Scalars['JSON']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -6061,6 +6071,14 @@ export enum ReportContext {
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'
 }
+
+export type ReportDataNode = {
+  __typename: 'ReportDataNode';
+  /** Return json data for the report input */
+  data: Scalars['String']['output'];
+};
+
+export type ReportDataResponse = PrintReportError | ReportDataNode;
 
 export type ReportFilterInput = {
   context?: InputMaybe<EqualFilterReportContextInput>;

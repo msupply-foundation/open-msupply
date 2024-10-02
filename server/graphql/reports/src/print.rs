@@ -5,7 +5,7 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use repository::query_json;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::definition::{PrintReportSort, GraphQlQuery, ReportDefinition, SQLQuery};
+use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
 use service::report::report_service::{ReportError, ResolvedReportQuery};
 
 use crate::PrintFormat;
@@ -53,6 +53,24 @@ impl PrintReportNode {
 pub enum PrintReportResponse {
     Error(PrintReportError),
     Response(PrintReportNode),
+}
+
+#[derive(PartialEq, Debug)]
+pub struct ReportDataNode {
+    data: String,
+}
+
+#[Object]
+impl ReportDataNode {
+    /// Return json data for the report input
+    pub async fn data(&self) -> &str {
+        &self.data
+    }
+}
+#[derive(Union)]
+pub enum ReportDataResponse {
+    Error(PrintReportError),
+    Response(ReportDataNode),
 }
 
 pub async fn generate_report(
@@ -129,9 +147,7 @@ pub async fn generate_report(
         }
     };
 
-    Ok(PrintReportResponse::Response(PrintReportNode {
-        file_id,
-    }))
+    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
 }
 
 pub async fn generate_report_definition(
@@ -213,8 +229,69 @@ pub async fn generate_report_definition(
         }
     };
 
-    Ok(PrintReportResponse::Response(PrintReportNode {
-        file_id,
+    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
+}
+
+pub async fn generate_report_data(
+    ctx: &Context<'_>,
+    store_id: String,
+    name: Option<String>,
+    report: serde_json::Value,
+    data_id: Option<String>,
+    arguments: Option<serde_json::Value>,
+) -> Result<ReportDataResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::ReportDev,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service = &service_provider.report_service;
+
+    // get the required report
+    let report_definition: ReportDefinition = serde_json::from_value(report)
+        .map_err(|err| StandardGraphqlError::BadUserInput(format!("{}", err)).extend())?;
+    let resolved_report = match service.resolve_report_definition(
+        &service_context,
+        name.unwrap_or("report".to_string()),
+        report_definition,
+    ) {
+        Ok(resolved_report) => resolved_report,
+        Err(err) => {
+            return Ok(ReportDataResponse::Error(PrintReportError {
+                error: map_error(err)?,
+            }))
+        }
+    };
+
+    // fetch data required for the report
+    let result = fetch_data(
+        ctx,
+        &resolved_report.queries,
+        &store_id,
+        data_id,
+        arguments.clone(),
+        None,
+    )
+    .await
+    .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)).extend())?;
+    let report_data = match result {
+        FetchResult::Data(data) => data,
+        FetchResult::Error(errors) => {
+            return Ok(ReportDataResponse::Error(PrintReportError {
+                error: PrintReportErrorInterface::FailedToFetchReportData(
+                    FailedToFetchReportData { errors },
+                ),
+            }))
+        }
+    };
+
+    Ok(ReportDataResponse::Response(ReportDataNode {
+        data: report_data.to_string(),
     }))
 }
 

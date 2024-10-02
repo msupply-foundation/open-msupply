@@ -5,7 +5,10 @@ import {
   ConfigureNamePropertyInput,
 } from '@openmsupply-client/common';
 
-import { Sdk } from './operations.generated';
+import {
+  GenerateReportDefinitionQueryVariables,
+  Sdk,
+} from './operations.generated';
 
 export const getHostQueries = (sdk: Sdk) => ({
   get: {
@@ -41,9 +44,14 @@ export const getHostQueries = (sdk: Sdk) => ({
     });
     return result?.updateLabelPrinterSettings;
   },
-
   configureNameProperties: async (input: ConfigureNamePropertyInput[]) => {
     const result = await sdk.configureNameProperties({ input });
     return result?.centralServer.general.configureNameProperties;
+  },
+  generateOneOffReport: async (
+    input: GenerateReportDefinitionQueryVariables
+  ) => {
+    const result = await sdk.generateReportDefinition(input);
+    return result?.generateReportDefinition;
   },
 });

@@ -46,6 +46,18 @@ export type ConfigureNamePropertiesMutationVariables = Types.Exact<{
 
 export type ConfigureNamePropertiesMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', general: { __typename: 'CentralGeneralMutations', configureNameProperties: { __typename: 'Success', success: boolean } } } };
 
+export type GenerateReportDefinitionQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  name?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  report: Types.Scalars['JSON']['input'];
+  dataId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  arguments?: Types.InputMaybe<Types.Scalars['JSON']['input']>;
+  format?: Types.InputMaybe<Types.PrintFormat>;
+}>;
+
+
+export type GenerateReportDefinitionQuery = { __typename: 'Queries', generateReportDefinition: { __typename: 'PrintReportError', error: { __typename: 'FailedToFetchReportData', description: string, errors: any } } | { __typename: 'PrintReportNode', fileId: string } };
+
 
 export const DatabaseSettingsDocument = gql`
     query databaseSettings {
@@ -131,6 +143,34 @@ export const ConfigureNamePropertiesDocument = gql`
   }
 }
     `;
+export const GenerateReportDefinitionDocument = gql`
+    query generateReportDefinition($storeId: String!, $name: String, $report: JSON!, $dataId: String, $arguments: JSON, $format: PrintFormat = HTML) {
+  generateReportDefinition(
+    dataId: $dataId
+    name: $name
+    report: $report
+    storeId: $storeId
+    arguments: $arguments
+    format: $format
+  ) {
+    ... on PrintReportNode {
+      __typename
+      fileId
+    }
+    ... on PrintReportError {
+      __typename
+      error {
+        description
+        ... on FailedToFetchReportData {
+          __typename
+          description
+          errors
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -159,6 +199,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     configureNameProperties(variables: ConfigureNamePropertiesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ConfigureNamePropertiesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<ConfigureNamePropertiesMutation>(ConfigureNamePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'configureNameProperties', 'mutation', variables);
+    },
+    generateReportDefinition(variables: GenerateReportDefinitionQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateReportDefinitionQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateReportDefinitionQuery>(GenerateReportDefinitionDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateReportDefinition', 'query', variables);
     }
   };
 }

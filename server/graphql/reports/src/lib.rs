@@ -1,6 +1,9 @@
 use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
-use print::{generate_report, generate_report_definition, PrintReportResponse};
+use print::{
+    generate_report, generate_report_data, generate_report_definition, PrintReportResponse,
+    ReportDataResponse,
+};
 use reports::{
     report, reports, ReportFilterInput, ReportResponse, ReportSortInput, ReportsResponse,
 };
@@ -62,7 +65,17 @@ impl ReportQueries {
         sort: Option<PrintReportSortInput>,
         current_language: Option<String>,
     ) -> Result<PrintReportResponse> {
-        generate_report(ctx, store_id, report_id, data_id, arguments, format, sort, current_language).await
+        generate_report(
+            ctx,
+            store_id,
+            report_id,
+            data_id,
+            arguments,
+            format,
+            sort,
+            current_language,
+        )
+        .await
     }
 
     /// Can be used when developing reports, e.g. to generate a report that is not already in the
@@ -75,10 +88,34 @@ impl ReportQueries {
         #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
-        format: Option<PrintFormat>,        
+        format: Option<PrintFormat>,
         current_language: Option<String>,
     ) -> Result<PrintReportResponse> {
-        generate_report_definition(ctx, store_id, name, report, data_id, arguments, format, current_language).await
+        generate_report_definition(
+            ctx,
+            store_id,
+            name,
+            report,
+            data_id,
+            arguments,
+            format,
+            current_language,
+        )
+        .await
+    }
+
+    // Can be used when developing reports, e.g. to generate a report that is not already in the
+    // system. This returns the data that would go into a report
+    pub async fn generate_report_data(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Name of the report")] name: Option<String>,
+        #[graphql(desc = "The report definition to be generated")] report: serde_json::Value,
+        data_id: Option<String>,
+        arguments: Option<serde_json::Value>,
+    ) -> Result<ReportDataResponse> {
+        generate_report_data(ctx, store_id, name, report, data_id, arguments).await
     }
 }
 

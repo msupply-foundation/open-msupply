@@ -50,6 +50,7 @@ export enum AppRoute {
   Sync = 'sync',
 
   Settings = 'settings',
+  ReportBuilder = 'report-builder',
 
   Logout = 'logout',
 
