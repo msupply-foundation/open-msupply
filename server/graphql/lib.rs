@@ -36,7 +36,7 @@ use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
 use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
-use graphql_programs::{CentralProgramsMutations, ProgramsMutations, ProgramsQueries};
+use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
@@ -81,9 +81,6 @@ impl CentralServerMutationNode {
         VaccineCourseMutations
     }
 
-    async fn program(&self) -> CentralProgramsMutations {
-        CentralProgramsMutations
-    }
     async fn general(&self) -> CentralGeneralMutations {
         CentralGeneralMutations
     }

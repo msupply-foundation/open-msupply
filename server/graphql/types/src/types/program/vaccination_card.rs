@@ -87,6 +87,9 @@ impl VaccinationCardItemNode {
     pub async fn max_age_months(&self) -> &f64 {
         &self.item.row.max_age
     }
+    pub async fn custom_age_label(&self) -> &Option<String> {
+        &self.item.row.custom_age_label
+    }
     pub async fn min_interval_days(&self) -> &i32 {
         &self.item.row.min_interval_days
     }
