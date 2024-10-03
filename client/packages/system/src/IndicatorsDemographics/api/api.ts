@@ -38,11 +38,12 @@ const Parsers = {
   },
 };
 
-export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
+export const getDemographicIndicatorQueries = (sdk: Sdk, storeId: string) => ({
   getIndicators: {
     byId: async (demographicIndicatorId: string) => {
       const result = await sdk.demographicIndicatorById({
         demographicIndicatorId,
+        storeId,
       });
       const { demographicIndicators } = result;
       if (
@@ -66,6 +67,7 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
         key: Parsers.toIndicatorSortField(sortBy),
         desc: sortBy.isDesc,
         filter: filterBy,
+        storeId: storeId,
       });
 
       return result?.demographicIndicators;
@@ -74,6 +76,7 @@ export const getDemographicIndicatorQueries = (sdk: Sdk) => ({
       const result = await sdk.demographicIndicators({
         key: Parsers.toIndicatorSortField(sortBy),
         desc: sortBy.isDesc,
+        storeId: storeId,
       });
 
       const demographicIndicators = result?.demographicIndicators;
