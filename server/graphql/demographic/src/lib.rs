@@ -43,7 +43,7 @@ impl DemographicIndicatorQueries {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
-                resource: Resource::QueryAsset,
+                resource: Resource::QueryDemographic,
                 store_id: None,
             },
         )?;
@@ -77,7 +77,7 @@ impl DemographicIndicatorQueries {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
-                resource: Resource::QueryAsset,
+                resource: Resource::QueryDemographic,
                 store_id: None,
             },
         )?;
@@ -108,7 +108,7 @@ impl DemographicIndicatorQueries {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
-                resource: Resource::QueryAsset,
+                resource: Resource::QueryDemographic,
                 store_id: None,
             },
         )?;
