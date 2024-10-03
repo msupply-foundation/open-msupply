@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import {
   Box,
+  Drawer,
   Grid,
   TextArea,
   Typography,
@@ -70,17 +71,20 @@ export const ReportBuilder: React.FC = () => {
         arguments: JSON.parse(args),
         dataId: dataId,
         storeId: storeId,
-      }).then(result => {
-        console.log(result);
-        if (result.__typename === 'PrintReportError') {
-          setError(result.error.description);
-          return;
-        }
-        const url = `${Environment.FILE_URL}${result.fileId}`;
-        setReportUrl(url);
-
-        setError('');
-      });
+      })
+        .then(result => {
+          console.log(result);
+          if (result.__typename === 'PrintReportError') {
+            setError(result.error.description);
+            return;
+          }
+          const url = `${Environment.FILE_URL}${result.fileId}`;
+          setReportUrl(url);
+          setError('');
+        })
+        .catch(e => {
+          setError(`${e}`);
+        });
     } catch (e) {
       setError(`${e}`);
     }
@@ -100,65 +104,76 @@ export const ReportBuilder: React.FC = () => {
     <Box flex={1} padding={4}>
       <Grid container spacing={1}>
         <Grid item xs={4}>
-          <Typography variant="h4">template.html</Typography>
-          <TextArea
-            rows={30}
-            value={
-              (report.entries['template.html']?.data['template'] as string) ??
-              ''
-            }
-            onChange={e => {
-              setReport({
-                ...report,
-                entries: {
-                  ...report.entries,
-                  'template.html': {
-                    type: ReportEntryType.TeraTemplate,
-                    data: {
-                      output: 'Html',
-                      template: e.target.value,
+          <Drawer
+            open={true}
+            variant="persistent"
+            sx={{
+              '& .MuiDrawer-paper': {
+                boxSizing: 'border-box',
+                width: '500px',
+              },
+            }}
+          >
+            <Typography variant="h4">template.html</Typography>
+            <TextArea
+              rows={30}
+              value={
+                (report.entries['template.html']?.data['template'] as string) ??
+                ''
+              }
+              onChange={e => {
+                setReport({
+                  ...report,
+                  entries: {
+                    ...report.entries,
+                    'template.html': {
+                      type: ReportEntryType.TeraTemplate,
+                      data: {
+                        output: 'Html',
+                        template: e.target.value,
+                      },
                     },
                   },
-                },
-              });
-            }}
-          />
-          <Typography variant="h4">style.css</Typography>
-          <TextArea
-            rows={20}
-            value={(report.entries['style.css']?.data as string) ?? ''}
-            onChange={e => {
-              setReport({
-                ...report,
-                entries: {
-                  ...report.entries,
-                  'style.css': {
-                    type: ReportEntryType.Resource,
-                    data: e.target.value,
+                });
+              }}
+            />
+            <Typography variant="h4">style.css</Typography>
+            <TextArea
+              rows={20}
+              value={(report.entries['style.css']?.data as string) ?? ''}
+              onChange={e => {
+                setReport({
+                  ...report,
+                  entries: {
+                    ...report.entries,
+                    'style.css': {
+                      type: ReportEntryType.Resource,
+                      data: e.target.value,
+                    },
                   },
-                },
-              });
-            }}
-          />
-          {/* <Typography variant="h4">Arguments (JSON)</Typography>
+                });
+              }}
+            />
+            {/* <Typography variant="h4">Arguments (JSON)</Typography>
           <TextArea
             value={args}
             onChange={e => setArgs(e.target.value ?? '')}
           /> */}
 
-          <Typography variant="h4">Report (JSON)</Typography>
-          <TextArea
-            value={reportString}
-            onChange={e => {
-              setReportString(e.target.value ?? '');
-              try {
-                const report = JSON.parse(e.target.value ?? '{}');
-                setReport(report);
-              } catch (e) {
-                setError(`Unable to parse report json ${e}`);
-              }
-            }}
-          />
+            <Typography variant="h4">Report (JSON)</Typography>
+            <TextArea
+              value={reportString}
+              onChange={e => {
+                setReportString(e.target.value ?? '');
+                try {
+                  const report = JSON.parse(e.target.value ?? '{}');
+                  setReport(report);
+                } catch (e) {
+                  setError(`Unable to parse report json ${e}`);
+                }
+              }}
+            />
+          </Drawer>
         </Grid>
         <Grid item xs={8}>
           <Typography variant="h4">DataId</Typography>
