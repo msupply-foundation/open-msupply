@@ -24,7 +24,7 @@ const InboundInfoPanel = ({
 }: {
   shipment: InboundRowFragment | undefined;
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const loadMessage = (shipment: InboundRowFragment | undefined) => {
     if (!shipment?.linkedShipment?.id) {
       return t('info.manual-shipment');
@@ -54,7 +54,7 @@ export const Toolbar: FC<{
     'theirReference',
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const selectedLines = useInbound.utils.selectedLines();
 
@@ -126,7 +126,7 @@ export const Toolbar: FC<{
               IconComponent={ArrowLeftIcon}
               onClick={() => onReturnLines(selectedLines)}
             >
-              {t('button.return-lines')}
+              {t('button.replenishment-return-lines')}
             </DropdownMenuItem>
             <DropdownMenuItem
               disabled={isDisabled}

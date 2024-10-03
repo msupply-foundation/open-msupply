@@ -91,7 +91,7 @@ export const VaccinationCardComponent: FC<VaccinationCardProps> = ({
   openModal,
   encounterId,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const theme = useTheme();
 

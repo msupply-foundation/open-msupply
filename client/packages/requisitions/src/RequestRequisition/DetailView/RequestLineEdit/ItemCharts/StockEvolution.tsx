@@ -25,7 +25,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({
   id,
   numberOfPacksFromQuantity,
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();
   const { data, isLoading } = useRequest.line.chartData(id);

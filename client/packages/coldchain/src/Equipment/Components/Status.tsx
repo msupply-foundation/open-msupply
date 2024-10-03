@@ -41,7 +41,7 @@ export const Status = ({
 }: {
   status: StatusType | null | undefined;
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   if (!status) return null;
 

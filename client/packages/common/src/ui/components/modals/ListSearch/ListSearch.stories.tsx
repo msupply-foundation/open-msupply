@@ -16,7 +16,7 @@ const options = Array.from({ length: 100 }).map((_, i) => ({
 
 const Template: StoryFn = () => {
   const [open, setOpen] = React.useState(false);
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   return (
     <Grid>

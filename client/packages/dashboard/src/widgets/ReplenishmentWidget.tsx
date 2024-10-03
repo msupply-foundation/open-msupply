@@ -30,7 +30,7 @@ import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
-  const t = useTranslation('dashboard');
+  const t = useTranslation();
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
   const formatNumber = useFormatNumber();

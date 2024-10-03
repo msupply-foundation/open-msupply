@@ -65,8 +65,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   draft,
   mode,
 }) => {
-  const item = !draft ? null : draft.item ?? null;
-  const t = useTranslation('distribution');
+  const item = !draft ? null : (draft.item ?? null);
+  const t = useTranslation();
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -123,8 +123,9 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     // it is possible for the user to select multiple batch lines
     // if the scanned barcode does not contain a batch number
     // however the scanned barcode can only relate to a specific pack size and therefore batch
-    const packSize = draftStockOutLines.find(line => line.numberOfPacks > 0)
-      ?.packSize;
+    const packSize = draftStockOutLines.find(
+      line => line.numberOfPacks > 0
+    )?.packSize;
 
     const input = {
       input: {
@@ -302,7 +303,7 @@ const TableWrapper: React.FC<TableProps> = ({
   currency,
   isExternalSupplier,
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   if (!currentItem) return null;
 

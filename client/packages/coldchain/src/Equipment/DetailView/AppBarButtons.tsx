@@ -15,7 +15,7 @@ import { Environment } from '@openmsupply-client/config';
 
 export const AppBarButtonsComponent = () => {
   const { data } = useAssets.document.get();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { error, success } = useNotification();
   const { data: settings } = useAssets.utils.labelPrinterSettings();
   const [isPrinting, setIsPrinting] = React.useState(false);

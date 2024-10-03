@@ -37,7 +37,7 @@ const TotalCell = styled(TableCell)({
 });
 
 const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
@@ -65,7 +65,7 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
 };
 
 const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
   const hasMoreThanTwoDp = ((allocatedQuantity ?? 0) * 100) % 1 !== 0;
 
@@ -90,7 +90,7 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
 export const PrescriptionLineEditTable: React.FC<
   PrescriptionLineEditTableProps
 > = ({ onChange, packSizeController, rows, item, allocatedQuantity }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { orderedRows, placeholderRow } = usePrescriptionLineEditRows(
     rows,
     packSizeController

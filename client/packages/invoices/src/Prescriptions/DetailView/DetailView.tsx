@@ -31,7 +31,7 @@ export const PrescriptionDetailView: FC = () => {
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<Draft>();
   const { data, isLoading } = usePrescription.document.get();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: StockOutLineFragment | StockOutItem) => {

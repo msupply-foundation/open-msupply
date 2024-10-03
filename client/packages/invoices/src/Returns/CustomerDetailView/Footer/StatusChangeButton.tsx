@@ -129,7 +129,7 @@ const getButtonLabel =
 
 const useStatusChangeButton = () => {
   const { success, error } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { mutateAsync } = useReturns.document.updateCustomerReturn();
 
   const { data } = useReturns.document.customerReturn();

@@ -43,7 +43,7 @@ export const EquipmentDetailView = () => {
       filterBy: { assignedToAsset: false, storeId: { equalTo: data?.storeId } },
     });
   const navigate = useNavigate();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
   const [draft, setDraft] = useState<DraftAsset>();
   const [isDirty, setIsDirty] = useState(false);

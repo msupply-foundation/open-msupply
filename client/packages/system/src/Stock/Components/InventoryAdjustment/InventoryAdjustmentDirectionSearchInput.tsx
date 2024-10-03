@@ -13,7 +13,7 @@ interface InventoryAdjustmentDirectionInputProps {
 export const InventoryAdjustmentDirectionInput: FC<
   InventoryAdjustmentDirectionInputProps
 > = ({ value, onChange }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   const options = [
     { label: t('label.increase-qty'), value: AdjustmentTypeInput.Addition },

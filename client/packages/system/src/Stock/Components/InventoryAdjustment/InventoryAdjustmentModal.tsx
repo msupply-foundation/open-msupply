@@ -24,7 +24,7 @@ export const InventoryAdjustmentModal: FC<InventoryAdjustmentModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { success, error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
 

@@ -17,7 +17,7 @@ export const ManageNav = ({ store }: { store?: UserStoreNodeFragment }) => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Manage).addWildCard().build()
   );
-  const t = useTranslation('app');
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
   const vaccineModuleEnabled = store?.preferences.vaccineModule;
 

@@ -9,7 +9,7 @@ import { useConfigureNameProperties } from '../api/hooks/settings/useConfigureNa
 
 export const ConfigurationSettings = () => {
   const { mutateAsync, isLoading } = useConfigureNameProperties();
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   const configure = async () => {
     await mutateAsync();

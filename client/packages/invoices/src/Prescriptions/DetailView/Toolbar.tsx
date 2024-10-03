@@ -27,7 +27,7 @@ export const Toolbar: FC = () => {
   const onDelete = usePrescription.line.deleteSelected();
 
   const isDisabled = usePrescription.utils.isDisabled();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
