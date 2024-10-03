@@ -189,7 +189,12 @@ const PatientDetailView = ({
         isCreating: isCreatingPatient,
         schema: DEFAULT_SCHEMA,
         save: async (data: unknown) => {
-          await handlePatientSave(data);
+          const newData = Object.fromEntries(
+            Object.entries(data ?? {}).filter(
+              ([key]) => key !== 'dateOfBirthIsEstimated'
+            )
+          );
+          await handlePatientSave(newData);
         },
       };
 
