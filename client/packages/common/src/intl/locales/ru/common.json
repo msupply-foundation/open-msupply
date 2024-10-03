@@ -1130,5 +1130,6 @@
   "warning.cannot-create-placeholder-packs": "Всего доступно {{allocatedQuantity}} упаковок. Невозможно выделить все {{requestedQuantity}} упаковки.",
   "warning.cannot-create-placeholder-units": "Всего доступно {{allocatedQuantity}} единиц. Невозможно выделить все {{requestedQuantity}} единицы.",
   "warning.caps-lock": "Внимание: включен Caps Lock",
-  "warning.field-not-parsed": "{{field}} не проанализировано"
+  "warning.field-not-parsed": "{{field}} не проанализировано",
+  "label.dose": "Доза"
 }
