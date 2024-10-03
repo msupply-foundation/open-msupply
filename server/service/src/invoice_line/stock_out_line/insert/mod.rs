@@ -576,6 +576,7 @@ mod test {
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
             allocated_datetime: Some(datetime.clone()),       // Backdated to 2 days ago
             picked_datetime: Some(datetime.clone()),
+            backdated_datetime: Some(datetime.clone()),
             delivered_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,
