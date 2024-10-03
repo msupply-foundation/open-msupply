@@ -3125,6 +3125,7 @@ export type InvoiceLinesResponse = InvoiceLineConnector;
 export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;

@@ -1,6 +1,7 @@
 use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
+mod add_backdated_datetime;
 mod add_facility_to_vaccination;
 mod add_max_age_to_vaccine_dose;
 mod add_report_versioning;
@@ -43,6 +44,7 @@ impl Migration for V2_03_00 {
             Box::new(add_facility_to_vaccination::Migrate),
             Box::new(add_vaccine_course_dose_deleted_datetime::Migrate),
             Box::new(add_vaccine_course_dose_custom_age_label::Migrate),
+            Box::new(add_backdated_datetime::Migrate),
         ]
     }
 }

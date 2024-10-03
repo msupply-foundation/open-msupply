@@ -57,7 +57,7 @@ pub fn generate_create_prescription(
         // Default
         patient_id: None,
         colour: None,
-        prescription_datetime: None,
+        backdated_datetime: None,
     };
 
     CreatePrescription {

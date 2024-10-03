@@ -66,7 +66,7 @@ export const PrescriptionRowFragmentDoc = gql`
   __typename
   comment
   createdDatetime
-  prescriptionDate: allocatedDatetime
+  prescriptionDate: backdatedDatetime
   pickedDatetime
   verifiedDatetime
   id
