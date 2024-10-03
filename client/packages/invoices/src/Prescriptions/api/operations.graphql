@@ -2,7 +2,7 @@ fragment PrescriptionRow on InvoiceNode {
   __typename
   comment
   createdDatetime
-  prescriptionDate: allocatedDatetime
+  prescriptionDate: backdatedDatetime
   pickedDatetime
   verifiedDatetime
   id
@@ -271,6 +271,7 @@ mutation upsertPrescription(
         ... on UpdatePrescriptionError {
           __typename
           error {
+            __typename
             description
           }
         }

@@ -77,7 +77,8 @@ export const format: currency.Format = (
 // even though it looks like a regular space (CharCode 32)), so for consistency
 // this should be the source of truth.
 const getSeparatorAndDecimal = (locale: string) => {
-  const parts = new Intl.NumberFormat(locale).formatToParts(1000.1);
+  // Some locales (at least `es`) don't include a group separator for 4 digits (1000), only for 5 (10000)
+  const parts = new Intl.NumberFormat(locale).formatToParts(10000.1);
   const separator = parts.find(({ type }) => type === 'group')?.value ?? ',';
   const decimal = parts.find(({ type }) => type === 'decimal')?.value ?? '.';
   return { separator, decimal };
@@ -104,7 +105,8 @@ export type Currencies =
   | 'SSP'
   | 'PGK'
   | 'COP'
-  | 'SBD';
+  | 'SBD'
+  | 'KMF';
 
 export const currencyOptions = (locale: string, code?: Currencies) => {
   switch (code) {
@@ -182,6 +184,16 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         ...getSeparatorAndDecimal(locale),
         ...getPatterns(locale),
         symbol: 'SI$',
+        precision: 2,
+        format,
+      };
+    }
+    case 'KMF': {
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'FC',
         precision: 2,
         format,
       };

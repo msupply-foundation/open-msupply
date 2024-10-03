@@ -199,9 +199,6 @@ export const StatusChangeButton = () => {
     lines?.totalCount === 0 || lines?.nodes?.every(l => l.numberOfPacks === 0);
   const t = useTranslation();
 
-  if (!selectedOption) return null;
-  if (isStatusChangeDisabled) return null;
-
   const noLinesNotification = useDisabledNotificationToast(
     t('messages.no-lines')
   );
@@ -209,6 +206,9 @@ export const StatusChangeButton = () => {
   const onHoldNotification = useDisabledNotificationToast(
     t('messages.on-hold')
   );
+
+  if (!selectedOption) return null;
+  if (isStatusChangeDisabled) return null;
 
   const onStatusClick = () => {
     if (noLines) return noLinesNotification();

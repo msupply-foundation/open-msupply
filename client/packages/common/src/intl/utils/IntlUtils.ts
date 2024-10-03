@@ -13,6 +13,7 @@ import { fr } from 'date-fns/locale/fr';
 import { ar } from 'date-fns/locale/ar';
 import { es } from 'date-fns/locale/es';
 import { ru } from 'date-fns/locale/ru';
+import { pt } from 'date-fns/locale/pt';
 
 // Map locale string (from i18n) to locale object (from date-fns)
 const getLocaleObj = { fr, ar, es, ru };
@@ -25,6 +26,8 @@ export const getLocale = (language: SupportedLocales) => {
       return enGB;
     case 'fr-DJ':
       return fr;
+    case 'pt':
+      return pt;
     default:
       return getLocaleObj[language];
   }
@@ -40,6 +43,7 @@ const languageOptions = [
   { label: 'Español', value: 'es' },
   { label: 'Русский', value: 'ru' },
   { label: 'Tetum', value: 'tet' },
+  { label: 'Português', value: 'pt' },
 ];
 
 const locales = [
@@ -50,6 +54,7 @@ const locales = [
   'fr-DJ' as const,
   'ru' as const,
   'tet' as const,
+  'pt' as const,
 ] as const;
 
 const rtlLocales = ['ar'];

@@ -38,6 +38,7 @@ export interface DraftStockOutLineSeeds {
   invoiceId: string;
   invoiceLine: StockOutLineFragment;
   stockLine?: PartialStockLineFragment;
+  adjustTotalNumberOfPacks?: boolean;
 }
 
 export const createDraftStockOutLineFromStockLine = ({
@@ -92,6 +93,7 @@ export const createDraftStockOutLineFromStockLine = ({
 export const createDraftStockOutLine = ({
   invoiceLine,
   stockLine,
+  adjustTotalNumberOfPacks = false,
 }: DraftStockOutLineSeeds): DraftStockOutLine => ({
   isCreated: !invoiceLine,
   isUpdated: false,
@@ -99,12 +101,16 @@ export const createDraftStockOutLine = ({
   // When creating a draft outbound from an existing outbound line, add the available quantity
   // to the number of packs. This is because the available quantity has been adjusted for outbound
   // lines that have been saved.
+  // It's a similar story for totalNumber of packs if the invoice is in a picked state.
   ...(stockLine
     ? {
         stockLine: {
           ...stockLine,
           availableNumberOfPacks:
             stockLine.availableNumberOfPacks + invoiceLine.numberOfPacks,
+          totalNumberOfPacks: adjustTotalNumberOfPacks
+            ? stockLine.totalNumberOfPacks + invoiceLine.numberOfPacks
+            : stockLine.totalNumberOfPacks,
         },
       }
     : {}),

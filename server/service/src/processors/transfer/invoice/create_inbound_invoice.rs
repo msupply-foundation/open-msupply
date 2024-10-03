@@ -237,6 +237,7 @@ fn generate_inbound_invoice(
         delivered_datetime: None,
         verified_datetime: None,
         clinician_link_id: None,
+        backdated_datetime: None,
     };
 
     Ok(result)

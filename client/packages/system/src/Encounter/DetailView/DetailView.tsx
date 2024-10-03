@@ -274,7 +274,7 @@ export const DetailView: FC = () => {
       value: t('label.vaccinations'),
     });
     if (encounter.document.documentRegistry?.uiSchema.elements.length > 0)
-      tabs.push({ Component: JsonForm, value: t('label.encounter') });
+      tabs.push({ Component: JsonForm, value: t('label.details') });
   }
 
   return (
