@@ -12,6 +12,7 @@ export interface UseRowStyleControl {
     rowStyle: AppSxProp,
     shouldReset?: boolean
   ) => void;
+  updateRowStyles: (ids: string[], style: AppSxProp) => void;
 }
 
 export const useRowStyle = (rowId?: string): UseRowStyleControl => {
@@ -27,6 +28,8 @@ export const useRowStyle = (rowId?: string): UseRowStyleControl => {
           style: AppSxProp,
           shouldReset?: boolean
         ) => state.setRowStyles(ids, style, shouldReset),
+        updateRowStyles: (ids: string[], style: AppSxProp) =>
+          state.updateRowStyles(ids, style),
       };
     },
     [rowId]

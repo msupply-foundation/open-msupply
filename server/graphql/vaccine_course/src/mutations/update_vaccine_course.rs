@@ -52,6 +52,7 @@ pub struct UpsertVaccineCourseDoseInput {
     pub min_age: f64,
     pub max_age: f64,
     pub min_interval_days: i32,
+    pub custom_age_label: Option<String>,
 }
 
 #[derive(InputObject, Clone)]
@@ -102,6 +103,7 @@ impl From<UpdateVaccineCourseInput> for UpdateVaccineCourse {
                     label: d.label,
                     min_age: d.min_age,
                     max_age: d.max_age,
+                    custom_age_label: d.custom_age_label,
                     min_interval_days: d.min_interval_days,
                 })
                 .collect(),

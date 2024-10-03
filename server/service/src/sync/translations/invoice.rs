@@ -8,7 +8,7 @@ use crate::sync::{
         store::StoreTranslation,
     },
 };
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
     ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
     InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceStatus, InvoiceType,
@@ -302,7 +302,6 @@ impl SyncTranslation for InvoiceTranslation {
                 Some(currency_id)
             }
         };
-
 
         let result = InvoiceRow {
             id: data.ID,

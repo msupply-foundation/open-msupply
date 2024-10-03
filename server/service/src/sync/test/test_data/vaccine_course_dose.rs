@@ -13,6 +13,7 @@ const VACCINE_COURSE_DOSE1: (&str, &str) = (
         "label": "test dose label",
         "min_age": 12.0,
         "max_age": 13.0,
+        "custom_age_label": "Test label",
         "min_interval_days": 20
     }"#,
 );
@@ -24,6 +25,7 @@ fn vaccine_course_dose1() -> VaccineCourseDoseRow {
         label: "test dose label".to_string(),
         min_age: 12.0,
         max_age: 13.0,
+        custom_age_label: Some("Test label".to_string()),
         min_interval_days: 20,
         deleted_datetime: None,
     }
