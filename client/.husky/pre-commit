@@ -1,8 +1,4 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-# sort json files
-#!/bin/sh
-sh ./client/.husky/sort-json.sh
-
 cd ./client && yarn pre-commit-lint
