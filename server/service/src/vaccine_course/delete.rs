@@ -28,13 +28,13 @@ pub fn delete_vaccine_course(
         .transaction_sync(|connection| {
             let doses = validate(connection, &id)?;
 
-            // Make the vaccine course doses as deleted
+            // Mark the vaccine course doses as deleted
             let dose_row_repo = VaccineCourseDoseRowRepository::new(connection);
             for dose in doses {
                 dose_row_repo.mark_deleted(&dose.vaccine_course_dose_row.id)?;
             }
 
-            // Make the vaccine course deleted
+            // Mark the vaccine course deleted
             let repo = VaccineCourseRowRepository::new(connection);
             repo.mark_deleted(&id)
                 .map(|_| id)
