@@ -6,7 +6,6 @@ import {
   TextArea,
   Typography,
   useAuthContext,
-  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 
