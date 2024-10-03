@@ -16,6 +16,7 @@ export function getSwitchReason(
     isHistorical &&
     noExistingSelectedBatch &&
     draft.given &&
+    draft.facilityId !== OTHER_FACILITY &&
     hasDosesConfigured
   ) {
     return 'label.record-stock-transaction';

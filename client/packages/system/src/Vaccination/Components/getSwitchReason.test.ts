@@ -17,13 +17,26 @@ describe('getSwitchReason', () => {
     });
 
     it('should return null if no doses configured', () => {
-      const draft = { date: new Date('2021-01-01') } as VaccinationDraft;
+      const draft = {
+        date: new Date('2021-01-01'),
+        given: true,
+      } as VaccinationDraft;
       const hasDosesConfigured = false;
       expect(getSwitchReason(draft, hasDosesConfigured)).toBeNull();
     });
 
     it('should return null if the date is not historical', () => {
-      const draft = { date: new Date() } as VaccinationDraft;
+      const draft = { date: new Date(), given: true } as VaccinationDraft;
+      const hasDosesConfigured = true;
+      expect(getSwitchReason(draft, hasDosesConfigured)).toBeNull();
+    });
+
+    it('should return null if the facility is other', () => {
+      const draft = {
+        date: new Date('2021-01-01'),
+        facilityId: OTHER_FACILITY,
+        given: true,
+      } as VaccinationDraft;
       const hasDosesConfigured = true;
       expect(getSwitchReason(draft, hasDosesConfigured)).toBeNull();
     });

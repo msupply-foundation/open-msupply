@@ -3,19 +3,10 @@
   "elements": [
     {
       "type": "Control",
-      "scope": "#/properties/expiryDate",
-      "label": "Expiry Date",
-      "options": {
-        "dateOnly": true
-      }
-    },
-    {
-      "type": "Control",
       "scope": "#/properties/itemCodeOrName",
       "label": "Item Code or Name",
       "options": {
-        "useDebounce": false,
-        "flexBasis": "90%"
+        "useDebounce": false
       }
     },
     {
@@ -23,8 +14,7 @@
       "scope": "#/properties/monthlyConsumptionLookBackPeriod",
       "label": "AMC Lookback Period",
       "options": {
-        "inputAlignment": "end",
-        "paddingRight": 25
+        "readonly": true
       }
     },
     {
@@ -32,8 +22,7 @@
       "scope": "#/properties/monthsOverstock",
       "label": "Target MOS",
       "options": {
-        "inputAlignment": "end",
-        "paddingRight": 25
+        "readonly": true
       }
     },
     {
@@ -41,17 +30,7 @@
       "scope": "#/properties/monthsUnderstock",
       "label": "Reorder threshold MOS",
       "options": {
-        "inputAlignment": "end",
-        "paddingRight": 25
-      }
-    },
-      {
-      "type": "Control",
-      "scope": "#/properties/monthsItemsExpire",
-      "label": "Expiring item period",
-      "options": {
-        "inputAlignment": "end",
-        "paddingRight": 25
+        "readonly": true
       }
     }
   ]

@@ -13,6 +13,8 @@ use service::{
     NullableUpdate,
 };
 
+use super::NotMostRecentGivenDose;
+
 #[derive(InputObject)]
 pub struct UpdateVaccinationInput {
     pub id: String,
@@ -22,7 +24,7 @@ pub struct UpdateVaccinationInput {
     pub clinician_id: Option<NullableUpdateInput<String>>,
     pub comment: Option<String>,
     pub given: Option<bool>,
-    pub stock_line_id: Option<String>,
+    pub stock_line_id: Option<NullableUpdateInput<String>>,
     pub not_given_reason: Option<String>,
     pub update_transactions: Option<bool>,
 }
@@ -50,7 +52,9 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
             }),
             comment,
             given,
-            stock_line_id,
+            stock_line_id: stock_line_id.map(|stock_line_id| NullableUpdate {
+                value: stock_line_id.value,
+            }),
             not_given_reason,
             facility_name_id: facility_name_id.map(|facility_name_id| NullableUpdate {
                 value: facility_name_id.value,
@@ -63,9 +67,23 @@ impl From<UpdateVaccinationInput> for UpdateVaccination {
     }
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdateVaccinationError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
 #[derive(Union)]
 pub enum UpdateVaccinationResponse {
     Response(VaccinationNode),
+    Error(UpdateError),
+}
+
+#[derive(Interface)]
+#[graphql(name = "UpdateVaccinationErrorInterface")]
+#[graphql(field(name = "description", ty = "&str"))]
+pub enum UpdateErrorInterface {
+    NotMostRecentGivenDose(NotMostRecentGivenDose),
 }
 
 pub fn update_vaccination(
@@ -92,23 +110,29 @@ pub fn update_vaccination(
         Ok(vaccination) => {
             UpdateVaccinationResponse::Response(VaccinationNode::from_domain(vaccination))
         }
-        Err(error) => map_error(error)?,
+        Err(error) => UpdateVaccinationResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
     };
 
     Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateVaccinationResponse> {
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        ServiceError::NotMostRecentGivenDose => {
+            return Ok(UpdateErrorInterface::NotMostRecentGivenDose(
+                NotMostRecentGivenDose,
+            ))
+        }
         ServiceError::VaccinationDoesNotExist
         | ServiceError::ClinicianDoesNotExist
         | ServiceError::FacilityNameDoesNotExist
         | ServiceError::ReasonNotProvided
         | ServiceError::StockLineDoesNotExist
-        | ServiceError::NotMostRecentGivenDose
         | ServiceError::NotNextDose
         | ServiceError::ItemDoesNotBelongToVaccineCourse => BadUserInput(formatted_error),
 

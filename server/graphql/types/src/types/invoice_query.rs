@@ -175,6 +175,12 @@ impl InvoiceNode {
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
+    pub async fn backdated_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .backdated_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+
     pub async fn colour(&self) -> &Option<String> {
         &self.row().colour
     }

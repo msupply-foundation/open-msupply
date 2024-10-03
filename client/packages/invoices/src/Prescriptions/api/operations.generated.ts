@@ -66,7 +66,7 @@ export const PrescriptionRowFragmentDoc = gql`
   __typename
   comment
   createdDatetime
-  prescriptionDate: allocatedDatetime
+  prescriptionDate: backdatedDatetime
   pickedDatetime
   verifiedDatetime
   id
@@ -323,6 +323,7 @@ export const UpsertPrescriptionDocument = gql`
         ... on UpdatePrescriptionError {
           __typename
           error {
+            __typename
             description
           }
         }

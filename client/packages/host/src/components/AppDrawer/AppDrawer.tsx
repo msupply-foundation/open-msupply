@@ -24,7 +24,11 @@ import {
   useConfirmationModal,
   ReportsIcon,
 } from '@openmsupply-client/common';
-import { AppRoute, ExternalURL } from '@openmsupply-client/config';
+import {
+  AppRoute,
+  ExternalURL,
+  useExternalUrl,
+} from '@openmsupply-client/config';
 import {
   CatalogueNav,
   DistributionNav,
@@ -174,7 +178,8 @@ export const AppDrawer: React.FC = () => {
     drawer.setHoverOpen(true);
   };
 
-  const docsUrl = `${ExternalURL.PublicDocs}${
+  const publicDocsUrl = useExternalUrl(ExternalURL.PublicDocs);
+  const docsUrl = `${publicDocsUrl}${
     EnvUtils.mapRoute(location.pathname).docs
   }`;
 
