@@ -12,6 +12,7 @@ use repository::{
     vaccine_course::{
         vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
         vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
         vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
         vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
     },
@@ -40,6 +41,7 @@ impl VaccineCourseItemInput {
             id: self.id,
             item_link_id: self.item_id, // Todo item_link_id ? https://github.com/msupply-foundation/open-msupply/issues/4129
             vaccine_course_id,
+            deleted_datetime: None,
         }
     }
 }
@@ -89,15 +91,17 @@ pub fn update_vaccine_course(
         .connection
         .transaction_sync(|connection| {
             let old_row = validate(&input, connection)?;
-            let (new_vaccine_course, doses_to_delete) =
+            let (new_vaccine_course, doses_to_delete, items_to_delete) =
                 generate(connection, old_row, input.clone())?;
             VaccineCourseRowRepository::new(connection).upsert_one(&new_vaccine_course)?;
 
-            // Update ITEMS - Delete and recreate all records.
-            // If nothing has changed, we still need to query and compare each record so this is the simplest way
+            // Update Items
+            // Can't delete and recreate due to foreign key constraints - we'll soft delete the explicitly deleted items, and upsert the rest
             let item_repo = VaccineCourseItemRowRepository::new(connection);
-            // Delete the existing vaccine course items
-            item_repo.delete_by_vaccine_course_id(&new_vaccine_course.id)?;
+            // Delete any existing items that were not in the new list
+            for id in items_to_delete {
+                item_repo.mark_deleted(&id)?;
+            }
 
             // Insert the new vaccine course items
             for item in input.clone().vaccine_items {
@@ -179,14 +183,14 @@ pub fn generate(
     UpdateVaccineCourse {
         id,
         name,
-        vaccine_items: _, // Updated in main function
+        vaccine_items,
         doses,
         demographic_indicator_id,
         coverage_rate,
         is_active,
         wastage_rate,
     }: UpdateVaccineCourse,
-) -> Result<(VaccineCourseRow, Vec<String>), RepositoryError> {
+) -> Result<(VaccineCourseRow, Vec<String>, Vec<String>), RepositoryError> {
     let updated_course = VaccineCourseRow {
         id: id.clone(),
         name: name.unwrap_or(old_row.name),
@@ -212,7 +216,21 @@ pub fn generate(
         .filter(|dose_id| !doses.iter().any(|new_dose| &new_dose.id == dose_id))
         .collect();
 
-    Ok((updated_course, doses_to_delete))
+    let items_for_course = VaccineCourseItemRepository::new(&connection)
+        .query_by_filter(
+            VaccineCourseItemFilter::new().vaccine_course_id(EqualFilter::equal_to(&id)),
+        )?
+        .iter()
+        .map(|item| item.vaccine_course_item.id.clone())
+        .collect::<Vec<String>>();
+
+    // Should remove any items that are not in the new list
+    let vaccine_items_to_delete = items_for_course
+        .into_iter()
+        .filter(|item_id| !vaccine_items.iter().any(|new_item| &new_item.id == item_id))
+        .collect();
+
+    Ok((updated_course, doses_to_delete, vaccine_items_to_delete))
 }
 
 impl From<RepositoryError> for UpdateVaccineCourseError {
