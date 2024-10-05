@@ -25,6 +25,7 @@ fragment VaccinationDetail on VaccinationNode {
   stockLine {
     id
     itemId
+    itemName
     batch
   }
   invoice {
