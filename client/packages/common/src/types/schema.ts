@@ -5465,6 +5465,7 @@ export type QueriesDemographicIndicatorsArgs = {
   filter?: InputMaybe<DemographicIndicatorFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<DemographicIndicatorSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
