@@ -285,10 +285,16 @@ Optional fields in the manifest json are marked as '// optional'
 
 This manifest.json file takes the place of cli param inserts seen in bash scripts such as upsert.sh in the open-mSupply-reports repo.
 
-Standard reports in the reports dir can be built into the generated json by running
+Standard reports in the reports dir can be built into the generated json by running the following cli command:
 
 ```bash
 ./target/debug/remote_server_cli build-standard-reports
+```
+
+Because this command utilises the built cli, you will need to first run
+
+```
+cargo run
 ```
 
 from the open-msupply/server dir.
