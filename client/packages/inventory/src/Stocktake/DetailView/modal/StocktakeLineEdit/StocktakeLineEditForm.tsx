@@ -27,7 +27,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   mode,
   onChangeItem,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const disabled = mode === ModalMode.Update;
 
   return (

@@ -30,7 +30,7 @@ export const InitialiseLayout = ({
   SiteInfo,
   onInitialise,
 }: LoginLayoutProps) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {

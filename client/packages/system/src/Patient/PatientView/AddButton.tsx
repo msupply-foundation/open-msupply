@@ -22,7 +22,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   disabled,
   disableEncounterButton,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { urlQuery } = useUrlQuery();
   const currentUrlTab = urlQuery['tab'];
   const { setModal: selectModal, reset } = usePatientModalStore();

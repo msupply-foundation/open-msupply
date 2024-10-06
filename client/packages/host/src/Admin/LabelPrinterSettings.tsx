@@ -22,7 +22,7 @@ interface LabelPrinterSettings {
   port: number;
 }
 export const LabelPrinterSettings = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { error, success } = useNotification();
   const { mutateAsync: updateSettings } =
     useHost.settings.updateLabelPrinterSettings();

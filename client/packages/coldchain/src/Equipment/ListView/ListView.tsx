@@ -41,7 +41,7 @@ const AssetListComponent: FC = () => {
   const { data, isError, isLoading } = useAssets.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const modalController = useToggle();
   const importModalController = useToggle();
   const isCentralServer = useIsCentralServerApi();
@@ -148,7 +148,7 @@ const AssetListComponent: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={row => navigate(equipmentRoute.addPart(row.id).build())}
-        noDataElement={<NothingHere body={t('error.no-items')} />}
+        noDataElement={<NothingHere body={t('error.no-items-to-display')} />}
         enableColumnSelection
       />
     </>

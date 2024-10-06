@@ -34,7 +34,7 @@ const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
 export const ResponseRequisitionListView: FC = () => {
   const { mutate: onUpdate } = useResponse.document.update();
   const navigate = useNavigate();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const {
     updateSortQuery,
     updatePaginationQuery,

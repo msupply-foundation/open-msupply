@@ -42,7 +42,7 @@ const FilterBar = ({
   filter: Filter;
   onChange: (patch: Partial<Filter>) => void;
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   return (
     <Box display="flex" gap={1}>
@@ -93,7 +93,7 @@ const ModalContent: FC<ModalContentProps> = ({
   linkedPatientId,
   setLinkedPatientId,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { setRowStyles } = useRowStyle();
 

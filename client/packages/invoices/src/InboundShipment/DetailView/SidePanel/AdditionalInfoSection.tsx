@@ -24,7 +24,7 @@ export const AdditionalInfoSectionComponent = () => {
       'createdDatetime',
     ]);
   const isDisabled = useInbound.utils.isDisabled();
-  const t = useTranslation(['common', 'replenishment']);
+  const t = useTranslation();
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
   const { localisedDate } = useFormatDateTime();
 

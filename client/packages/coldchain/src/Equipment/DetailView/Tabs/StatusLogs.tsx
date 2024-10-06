@@ -34,7 +34,7 @@ const Connector = ({ visible }: { visible: boolean }) => (
 );
 
 const User = ({ user }: { user: ColdchainAssetLogFragment['user'] }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { getLocalisedFullName } = useIntlUtils();
   const fullName = getLocalisedFullName(user?.firstName, user?.lastName);
 
@@ -87,7 +87,7 @@ const StatusLog = ({
   log: ColdchainAssetLogFragment;
 }) => {
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   return (
     <Box
@@ -150,7 +150,7 @@ const StatusLog = ({
 };
 
 export const StatusLogs = ({ assetId }: { assetId: string }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   const { data: logs, isLoading } = useAssets.log.list(assetId);
 

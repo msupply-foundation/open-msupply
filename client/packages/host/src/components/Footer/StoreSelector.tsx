@@ -18,7 +18,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const { data, isLoading } = useUserDetails(token);
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   const storeSorter = (a: UserStoreNodeFragment, b: UserStoreNodeFragment) => {
     if (a.name < b.name) return -1;

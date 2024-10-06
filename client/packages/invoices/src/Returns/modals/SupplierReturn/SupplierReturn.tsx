@@ -43,7 +43,7 @@ export const SupplierReturnEditModal = ({
   hasNextItem = false,
   isNewReturn = false,
 }: SupplierReturnEditModalProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined

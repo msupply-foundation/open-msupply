@@ -39,14 +39,14 @@ export const SearchWithDocumentSource = (
     isError,
   } = useEncounter.document.byId(useEncounter.utils.idFromUrl());
 
-  const t = useTranslation('programs');
+  const t = useTranslation();
 
   const documentData =
     options?.['document'] === 'patient'
       ? currentPatient
       : options?.['document'] === 'encounter'
-      ? currentEncounter
-      : undefined;
+        ? currentEncounter
+        : undefined;
 
   const requestedData = extractProperty(documentData, options?.['path'] ?? '');
 

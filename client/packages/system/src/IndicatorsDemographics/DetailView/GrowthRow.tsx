@@ -39,7 +39,7 @@ export const GrowthRow = <T extends RecordWithId>({
   data,
   setData,
 }: GrowthRowProps<T>) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
 
   if (isLoading) {

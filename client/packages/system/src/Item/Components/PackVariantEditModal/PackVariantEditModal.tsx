@@ -50,7 +50,7 @@ const useDraftPackVariant = (
   const [packVariant, setPackVariant] = useState<VariantFragment>(
     () => seed || createNewPackVariant(itemId)
   );
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const { error } = useNotification();
   const { mutateAsync: insert, isLoading: insertIsLoading } =
     usePackVariantInsert();
@@ -101,7 +101,7 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
   packVariant,
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const { mutateAsync } = usePackVariantDelete();
   const { draft, onUpdate, onSave, isLoading } = useDraftPackVariant(
     itemId,

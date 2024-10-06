@@ -61,7 +61,7 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
   onChange,
 }) => {
   const { data, isLoading } = useDocumentRegistry.get.programRegistries();
-  const t = useTranslation('app');
+  const t = useTranslation();
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (

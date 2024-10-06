@@ -115,7 +115,7 @@ export const RequestLineEditForm = ({
   numberOfPacksFromQuantity,
   numberOfPacksToTotalQuantity,
 }: RequestLineEditFormProps) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
   const { lines } = useRequest.line.list();
   const requestedQuantity = draftLine?.requestedQuantity ?? 0;
@@ -181,7 +181,7 @@ export const RequestLineEditForm = ({
 
           {!!draftLine?.itemStats.averageMonthlyConsumption ? (
             <InfoRow
-              label={t('label.amc')}
+              label={t('label.amc/amd')}
               value={formatNumber.round(
                 numberOfPacksFromQuantity(
                   draftLine?.itemStats.averageMonthlyConsumption

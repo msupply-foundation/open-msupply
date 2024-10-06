@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal
@@ -33,6 +33,12 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.location'),
               urlParameter: 'location.code',
               placeholder: t('placeholder.search-by-location-code'),
+            },
+            {
+              type: 'text',
+              name: t('label.master-list'),
+              urlParameter: 'masterList.name',
+              placeholder: t('placeholder.search-by-master-list-name'),
             },
             {
               type: 'group',

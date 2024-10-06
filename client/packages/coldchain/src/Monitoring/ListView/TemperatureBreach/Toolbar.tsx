@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal

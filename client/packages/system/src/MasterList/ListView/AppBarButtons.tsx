@@ -16,7 +16,7 @@ import { masterListsToCsv } from '../../utils';
 
 export const AppBarButtons = () => {
   const { success, error } = useNotification();
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { storeId } = useAuthContext();
   const { isLoading, fetchAsync } = useMasterList.document.listAll(
     {

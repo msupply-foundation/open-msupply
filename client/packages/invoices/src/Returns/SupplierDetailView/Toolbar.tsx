@@ -16,7 +16,7 @@ import { SupplierReturnFragment, useReturns } from '../api';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { debouncedMutateAsync } = useReturns.document.updateSupplierReturn();
 
   const { bufferedState, setBufferedState } =

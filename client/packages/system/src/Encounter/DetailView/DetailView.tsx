@@ -89,7 +89,7 @@ const useSaveWithStatusChangeModal = (
   const { Modal, hideDialog, showDialog } = useDialog({
     disableBackdrop: true,
   });
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const saveWithStatusChange = useSaveWithStatus(
     onSave,
@@ -135,7 +135,7 @@ const useSaveWithStatusChangeModal = (
 };
 
 export const DetailView: FC = () => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const id = useEncounter.utils.idFromUrl();
   const navigate = useNavigate();
   const { setCustomBreadcrumbs } = useBreadcrumbs();

@@ -65,7 +65,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   assetTypes,
   onUploadComplete,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const AssetItemBuffer: AssetItemImportModal.ImportRow[] = [];

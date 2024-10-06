@@ -15,7 +15,7 @@ export const usePrescriptionDeleteRows = () => {
   const { data: rows } = usePrescriptions();
   const api = usePrescriptionApi();
   const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)

@@ -28,7 +28,7 @@ export const Toolbar = () => {
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse: ['classId', 'categoryId', 'typeId'],
   });
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const [categories, setCategories] = useState<ReferenceData[]>([]);
   const [types, setTypes] = useState<ReferenceData[]>([]);
   const onDelete = useAssetData.document.delete();

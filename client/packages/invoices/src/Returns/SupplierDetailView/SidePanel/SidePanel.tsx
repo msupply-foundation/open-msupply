@@ -20,7 +20,7 @@ import { canDeleteInvoice } from '../../../utils';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { data } = useReturns.document.supplierReturn();
   const { mutateAsync } = useReturns.document.deleteSupplier();
   const navigate = useNavigate();

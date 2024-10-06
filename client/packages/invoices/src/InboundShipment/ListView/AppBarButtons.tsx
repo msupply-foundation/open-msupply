@@ -24,7 +24,7 @@ import { inboundsToCsv } from '../../utils';
 export const AppBarButtons: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const { success, error } = useNotification();

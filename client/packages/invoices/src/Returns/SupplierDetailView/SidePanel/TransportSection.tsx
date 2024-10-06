@@ -9,7 +9,7 @@ import {
 import { useReturns } from '../../api';
 
 export const TransportSectionComponent: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const isDisabled = useReturns.utils.supplierIsDisabled();
 
   const { debouncedMutateAsync: debouncedUpdate } =

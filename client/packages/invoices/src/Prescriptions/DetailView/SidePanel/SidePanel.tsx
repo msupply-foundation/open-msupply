@@ -17,7 +17,7 @@ import { PricingSection } from './PricingSection';
 import { canDeleteInvoice } from '../../../utils';
 
 export const SidePanelComponent = () => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
   const { data } = usePrescription.document.get();

@@ -5,7 +5,7 @@ import { getSdk } from '../operations.generated';
 
 export const useAuthApi = () => {
   const { client } = useGql();
-  const t = useTranslation('app');
+  const t = useTranslation();
   const queries = getAuthQueries(getSdk(client), t);
 
   const keys = {

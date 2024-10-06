@@ -163,7 +163,7 @@ const UIComponent = (props: ControlProps) => {
   const [targetPath, setTargetPath] = useState<string | undefined>();
   const [warning, setWarning] = useState<string | undefined>();
   const [adherenceScore, setAdherenceScore] = useState<number | undefined>();
-  const t = useTranslation('programs');
+  const t = useTranslation();
 
   const { errors, options } = useZodOptionsValidation(
     Options,

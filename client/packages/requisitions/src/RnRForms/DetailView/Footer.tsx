@@ -23,7 +23,7 @@ export const Footer = ({
   unsavedChanges: boolean;
 }) => {
   const [showFooter, setShowFooter] = useState(true);
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { navigateUpOne } = useBreadcrumbs();
   const { error, info, success } = useNotification();
   const {

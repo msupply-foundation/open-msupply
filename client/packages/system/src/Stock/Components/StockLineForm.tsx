@@ -44,7 +44,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
   packEditable,
   isInModal = false,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { error } = useNotification();
   const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
@@ -74,7 +74,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         onUpdate(draft);
       }
     } catch (e) {
-      error(t('error.unable-to-scan', { error: e }))();
+      error(t('error.unable-to-scan-barcode', { error: e }))();
     }
   };
 

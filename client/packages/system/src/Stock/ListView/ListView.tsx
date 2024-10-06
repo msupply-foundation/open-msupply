@@ -53,7 +53,7 @@ const StockListComponent: FC = () => {
 
   const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const pagination = { page, first, offset };
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { data, isLoading, isError } = useStockList(queryParams);
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
@@ -103,6 +103,7 @@ const StockListComponent: FC = () => {
         width: 350,
       },
     ],
+    // TODO:: Add a column for the master list name
     ['batch', { Cell: TooltipTextCell, width: 100 }],
     [
       'expiryDate',

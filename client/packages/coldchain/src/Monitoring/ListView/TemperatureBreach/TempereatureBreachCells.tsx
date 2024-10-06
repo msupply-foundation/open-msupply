@@ -16,7 +16,7 @@ import { TemperatureBreachFragment } from '../../api/TemperatureBreach';
 export const DurationCell = ({
   rowData,
 }: CellProps<TemperatureBreachFragment>) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { localisedDistance } = useFormatDateTime();
   const duration = !rowData.endDatetime
     ? t('label.ongoing')
@@ -57,7 +57,7 @@ export const IconCell = ({
   acknowledgeBreach: (breach: TemperatureBreachFragment) => void;
   rowData: TemperatureBreachFragment;
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const theme = useTheme();
 
   if (!!rowData?.unacknowledged)

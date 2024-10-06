@@ -21,7 +21,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Dispensary).addWildCard().build()
   );
-  const t = useTranslation('app');
+  const t = useTranslation();
   const visible = store?.storeMode === StoreModeNodeType.Dispensary;
   const isProgramModule = store?.preferences.omProgramModule;
 

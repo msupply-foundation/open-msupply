@@ -91,7 +91,7 @@ const DetailViewComponent = ({
 export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktake.document.get();
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { isOpen, entity, onOpen, onClose, mode } =
     useEditModal<ItemRowFragment>();

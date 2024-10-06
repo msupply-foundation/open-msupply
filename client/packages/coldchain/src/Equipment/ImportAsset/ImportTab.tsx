@@ -14,7 +14,7 @@ export const EquipmentImportTab: FC<ImportPanel & EquipmentImportTabProps> = ({
   importProgress,
   importErrorCount,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   return (
     <ImportPanel tab={tab}>
       <Grid
@@ -24,7 +24,7 @@ export const EquipmentImportTab: FC<ImportPanel & EquipmentImportTabProps> = ({
         style={{ minHeight: '50vh' }}
       >
         <Typography>
-          {importErrorCount ?? 0 > 0
+          {(importErrorCount ?? 0 > 0)
             ? '(' +
               t('messages.error-generic', { count: importErrorCount }) +
               ')'

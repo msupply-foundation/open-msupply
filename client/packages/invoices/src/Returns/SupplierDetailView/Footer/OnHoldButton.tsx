@@ -7,7 +7,7 @@ import {
 import { useReturns } from '../../api';
 
 export const OnHoldButtonComponent = memo(() => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { mutateAsync } = useReturns.document.updateSupplierReturn();
   const isDisabled = useReturns.utils.supplierIsDisabled();
 

@@ -13,7 +13,7 @@ const STALE_TIME_MS = 1 * MILLISECONDS_PER_MINUTE;
 export const useTemperatureNotifications = (queryParams: ListParams) => {
   const api = useTemperatureNotificationApi();
   const { warning } = useNotification();
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
 
   return useQuery(
     api.keys.paramList(queryParams),

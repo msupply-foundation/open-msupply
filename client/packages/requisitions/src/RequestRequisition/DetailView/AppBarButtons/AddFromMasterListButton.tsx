@@ -10,7 +10,7 @@ import { MasterListSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 
 export const AddFromMasterListButtonComponent = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
   const { addFromMasterList } = useRequest.utils.addFromMasterList();

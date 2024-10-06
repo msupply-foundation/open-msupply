@@ -25,7 +25,7 @@ export const StocktakeLineEditModal: FC<
     isOpen,
     disableBackdrop: true,
   });
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const height = useKeyboardHeightAdjustment(600);
 
   return (

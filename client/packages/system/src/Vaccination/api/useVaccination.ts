@@ -151,7 +151,7 @@ const useInsert = ({
   vaccineCourseDoseId: string;
 }) => {
   const { api, storeId, queryClient } = useVaccinationsGraphQL();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const mutationFn = async (input: VaccinationDraft) => {
     if (!encounterId) return;
@@ -202,7 +202,7 @@ const useInsert = ({
 
 const useUpdate = (vaccinationId: string | undefined) => {
   const { api, storeId, queryClient } = useVaccinationsGraphQL();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   const mutationFn = async (input: VaccinationDraft) => {
     if (!vaccinationId) {

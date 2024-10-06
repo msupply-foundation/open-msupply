@@ -14,7 +14,7 @@ export const AddBatchButton = ({
   addDraftLine: () => void;
   disabled?: boolean;
 }) => {
-  const t = useTranslation(['distribution']);
+  const t = useTranslation();
   const returnIsDisabled = useReturns.utils.customerIsDisabled();
 
   return (

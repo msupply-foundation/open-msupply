@@ -34,7 +34,7 @@ export const SearchWithPatientContactSource = (
   const { errors: formErrors, label, visible, options } = props;
 
   const { currentPatient } = usePatientStore();
-  const t = useTranslation('programs');
+  const t = useTranslation();
 
   const patientData: Patient | undefined = currentPatient?.documentDraft;
 

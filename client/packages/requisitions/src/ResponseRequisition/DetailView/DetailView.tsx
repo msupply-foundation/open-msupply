@@ -27,7 +27,7 @@ export const DetailView: FC = () => {
     useEditModal<ResponseLineFragment>();
   const { data, isLoading } = useResponse.document.get();
   const navigate = useNavigate();
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const onRowClick = useCallback(
     (line: ResponseLineFragment) => {

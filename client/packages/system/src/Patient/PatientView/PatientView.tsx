@@ -91,7 +91,7 @@ const PatientDetailView = ({
 }: {
   onEdit: (isDirty: boolean) => void;
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const {
     documentName,
     setDocumentName,

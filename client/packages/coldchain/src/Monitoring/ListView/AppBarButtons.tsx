@@ -19,7 +19,7 @@ import { useTemperatureLog, useTemperatureBreach } from '../api';
 import { useSensor } from '../../Sensor/api';
 
 export const AppBarButtons = () => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();
   const [isUploadingFridgeTag, setIsUploadingFridgeTag] = useState(false);

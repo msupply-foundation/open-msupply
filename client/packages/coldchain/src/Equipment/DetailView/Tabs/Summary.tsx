@@ -104,7 +104,7 @@ const Row = ({
 );
 
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
   const { storeId } = useAuthContext();
   const isCentralServer = useIsCentralServerApi();
@@ -122,7 +122,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         __typename: 'StoreNode',
         id: store.id,
         code: store.code ?? '',
-        storeName: '',
+        storeName: store.storeName,
       },
     });
   };

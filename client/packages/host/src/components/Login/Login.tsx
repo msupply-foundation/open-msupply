@@ -16,7 +16,7 @@ import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
 
 export const Login = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { setPageTitle } = useHostContext();
   const hashInput = {
     logo: LocalStorage.getItem('/theme/logohash') ?? '',
@@ -65,7 +65,6 @@ export const Login = () => {
       };
     }
 
-
     if (error.message === 'AccountBlocked') {
       if (timeoutRemaining < 1000) return { error: '' };
 
@@ -80,8 +79,8 @@ export const Login = () => {
       return { error: t('error.login') };
     }
 
-    if (error.message === "CentralSyncRequired") {
-      return {error: t('error.missing-central-sync')}
+    if (error.message === 'CentralSyncRequired') {
+      return { error: t('error.missing-central-sync') };
     }
 
     if (error.message === 'NoSiteAccess') {
@@ -92,7 +91,10 @@ export const Login = () => {
     }
 
     if (error?.stdError === 'Internal error') {
-      return { error: t('error.internal-error'), hint: t('error.login-support') };
+      return {
+        error: t('error.internal-error'),
+        hint: t('error.login-support'),
+      };
     }
 
     return {

@@ -12,7 +12,7 @@ export const StockOutAlerts = ({
   showZeroQuantityConfirmation: boolean;
   isAutoAllocated: boolean;
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const alerts: StockOutAlert[] = showZeroQuantityConfirmation
     ? [
         {
@@ -21,8 +21,8 @@ export const StockOutAlerts = ({
         },
       ]
     : isAutoAllocated
-    ? allocationAlerts
-    : [];
+      ? allocationAlerts
+      : [];
 
   if (alerts.length === 0) return null;
 

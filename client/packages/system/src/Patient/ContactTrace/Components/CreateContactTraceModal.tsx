@@ -18,7 +18,7 @@ import { usePatient } from '../../api';
 
 export const CreateContactTraceModal: FC = () => {
   const patientId = usePatient.utils.id();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { current, setModal: selectModal } = usePatientModalStore();
   const [traceRegistry, setTraceRegistry] = useState<
     DocumentRegistryFragment | undefined

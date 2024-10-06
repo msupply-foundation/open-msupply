@@ -44,7 +44,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
 }) => {
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const isMediumScreen = useIsMediumScreen();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   if (draftLines.length === 0)
     return <Box sx={{ height: isMediumScreen ? 400 : 500 }} />;

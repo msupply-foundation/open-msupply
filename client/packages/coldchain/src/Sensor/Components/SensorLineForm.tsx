@@ -17,7 +17,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
   draft,
   onUpdate,
 }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const textSx = { paddingLeft: 2 };
   const labelWrap = { sx: { whiteSpace: 'pre-wrap' } };
   const inputTextAlign = { sx: { textAlign: 'end' } };

@@ -27,7 +27,7 @@ export const SensorListView: FC = () => {
 
   const { data, isError, isLoading } = useSensor.document.list();
   const pagination = { page, first, offset };
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const formatTemperature = useFormatTemperature();
 

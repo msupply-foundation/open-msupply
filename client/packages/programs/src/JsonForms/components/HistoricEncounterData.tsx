@@ -53,7 +53,7 @@ const UIComponent = ({
   );
   const [datetime, setDatetime] = useState<Date | undefined>();
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { data: encounter } = useEncounter.document.byDocName(
     config.documentName
   );

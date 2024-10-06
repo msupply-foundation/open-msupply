@@ -6,7 +6,7 @@ import { BookIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 
 const Template: StoryFn<typeof ButtonWithIcon> = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   return (
     <Box>
       <ButtonWithIcon

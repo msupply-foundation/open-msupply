@@ -25,7 +25,7 @@ import { PackVariantEditModal } from '../../Components/PackVariantEditModal';
 import { usePackVariantDeleteSelected } from '../../api/hooks/usePackVariantDelete';
 
 const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const { variantsControl } = usePackVariant(itemId, null);
   const { isOpen, entity, mode, onClose, onOpen } =
     useEditModal<VariantFragment>();

@@ -17,7 +17,7 @@ import {
 
 const MasterListsTable: FC<{ itemId?: string }> = ({ itemId }) => {
   const { data, isLoading } = useMasterList.document.listByItemId(itemId ?? '');
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const columns = useColumns<MasterListRowFragment>([
     ['code', { Cell: TooltipTextCell }],
     ['name', { width: 200, Cell: TooltipTextCell }],

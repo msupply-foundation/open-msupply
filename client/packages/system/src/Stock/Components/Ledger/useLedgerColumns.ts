@@ -23,7 +23,7 @@ export const useLedgerColumns = (
   sortBy: SortBy<LedgerRowFragment>,
   updateSort: (sort: string, dir: 'asc' | 'desc') => void
 ) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
 
   const columns = useColumns<LedgerRowFragment>(

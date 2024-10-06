@@ -14,7 +14,7 @@ interface AppVersionProps {
 }
 
 export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
 
   return (

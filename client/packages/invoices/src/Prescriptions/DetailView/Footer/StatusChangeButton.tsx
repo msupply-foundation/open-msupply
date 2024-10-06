@@ -79,7 +79,7 @@ const useStatusChangeButton = () => {
     'lines',
   ]);
   const { success, error } = useNotification();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { data } = usePrescription.document.get();
   const hasLinesToPrune =
     data?.status !== InvoiceNodeStatus.Verified &&
