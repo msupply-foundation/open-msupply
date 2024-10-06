@@ -10,6 +10,7 @@ export type DemographicProjectionFragment = { __typename: 'DemographicProjection
 export type DemographicIndicatorsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  storeId: Types.Scalars['String']['input'];
   key: Types.DemographicIndicatorSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.DemographicIndicatorFilterInput>;
@@ -38,6 +39,7 @@ export type DemographicProjectionsByBaseYearQuery = { __typename: 'Queries', dem
 
 export type DemographicIndicatorByIdQueryVariables = Types.Exact<{
   demographicIndicatorId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -97,13 +99,15 @@ export const DemographicProjectionFragmentDoc = gql`
 }
     `;
 export const DemographicIndicatorsDocument = gql`
-    query demographicIndicators($first: Int, $offset: Int, $key: DemographicIndicatorSortFieldInput!, $desc: Boolean, $filter: DemographicIndicatorFilterInput) {
+    query demographicIndicators($first: Int, $offset: Int, $storeId: String!, $key: DemographicIndicatorSortFieldInput!, $desc: Boolean, $filter: DemographicIndicatorFilterInput) {
   demographicIndicators(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
+    storeId: $storeId
   ) {
     ... on DemographicIndicatorConnector {
+      __typename
       nodes {
         ...DemographicIndicator
       }
@@ -145,8 +149,11 @@ export const DemographicProjectionsByBaseYearDocument = gql`
 }
     ${DemographicProjectionFragmentDoc}`;
 export const DemographicIndicatorByIdDocument = gql`
-    query demographicIndicatorById($demographicIndicatorId: String!) {
-  demographicIndicators(filter: {id: {equalTo: $demographicIndicatorId}}) {
+    query demographicIndicatorById($demographicIndicatorId: String!, $storeId: String!) {
+  demographicIndicators(
+    filter: {id: {equalTo: $demographicIndicatorId}}
+    storeId: $storeId
+  ) {
     ... on DemographicIndicatorConnector {
       nodes {
         ...DemographicIndicator
