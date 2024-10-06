@@ -28,7 +28,7 @@ const ItemListComponent: FC = () => {
   const { data, isError, isLoading } = useItems();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
 
   const columns = useColumns<ItemsWithStatsFragment>(
     [

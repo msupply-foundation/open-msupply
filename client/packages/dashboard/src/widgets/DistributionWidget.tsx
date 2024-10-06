@@ -21,7 +21,7 @@ import { useOutbound } from '@openmsupply-client/invoices';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const DistributionWidget: React.FC = () => {
-  const t = useTranslation('dashboard');
+  const t = useTranslation();
   const modalControl = useToggle(false);
   const navigate = useNavigate();
   const { error: errorNotification } = useNotification();

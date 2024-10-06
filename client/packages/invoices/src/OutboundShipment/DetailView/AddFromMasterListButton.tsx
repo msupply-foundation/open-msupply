@@ -10,7 +10,7 @@ import { MasterListSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 
 export const AddFromMasterListButtonComponent = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { status } = useOutbound.document.fields(['status']);
   const isDisabled = status !== InvoiceNodeStatus.New;
   const { addFromMasterList } = useOutbound.utils.addFromMasterList();

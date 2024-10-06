@@ -13,7 +13,7 @@ import { SyncProgress } from '../SyncProgress';
 import { SiteInfo } from '../SiteInfo';
 
 export const Initialise = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
   const { setPageTitle } = useHostContext();
 
   const {

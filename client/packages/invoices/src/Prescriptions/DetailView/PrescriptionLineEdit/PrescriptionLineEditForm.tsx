@@ -71,7 +71,7 @@ export const PrescriptionLineEditForm: React.FC<
   hasOnHold,
   hasExpired,
 }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { format } = useFormatNumber();

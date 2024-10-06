@@ -132,7 +132,7 @@ export const useRequestColumns = () => {
     },
     {
       key: 'requestedQuantity',
-      label: 'label.requested-quantity',
+      label: 'label.requested',
       align: ColumnAlign.Right,
       width: 150,
       Cell: PackVariantQuantityCell({

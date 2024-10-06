@@ -20,7 +20,7 @@ import { PackVariantsTab } from './Tabs/PackVariants';
 export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
   const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const { setCustomBreadcrumbs } = useBreadcrumbs();
 
   React.useEffect(() => {

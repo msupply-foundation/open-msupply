@@ -18,7 +18,7 @@ import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 export const ErrorAlert = () => {
   const navigate = useNavigate();
   const { isOn, toggleOff, toggleOn } = useToggle();
-  const t = useTranslation('app');
+  const t = useTranslation();
   const location = useLocation();
   const [error, , removeError] = useLocalStorage('/error/auth');
 

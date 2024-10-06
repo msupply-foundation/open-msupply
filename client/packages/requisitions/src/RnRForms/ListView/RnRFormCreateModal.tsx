@@ -28,7 +28,7 @@ export const RnRFormCreateModal: FC<RnRFormCreateModalProps> = ({
   onClose,
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const navigate = useNavigate();
 
   const { previousForm, draft, updateDraft, clearDraft, create, isIncomplete } =
@@ -166,7 +166,7 @@ const PeriodSelect = ({
   previousFormExists?: boolean;
   errorMessage?: string;
 }) => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   return (
     <Box display="flex" flexDirection="column">

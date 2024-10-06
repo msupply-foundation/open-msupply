@@ -5,7 +5,7 @@ import { Typography } from '@mui/material';
 import { useTranslation } from '@common/intl';
 
 const Template: StoryFn<typeof Widget> = () => {
-  const t = useTranslation('app');
+  const t = useTranslation();
 
   return (
     <Widget title={t('stock')}>

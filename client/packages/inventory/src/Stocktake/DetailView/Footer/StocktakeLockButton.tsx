@@ -9,7 +9,7 @@ import {
 import { useStocktake } from '../../api';
 
 export const StocktakeLockButton: FC = () => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const isDisabled = useStocktake.utils.isDisabled();
   const { isLocked, status, update } = useStocktake.document.fields([
     'isLocked',

@@ -65,7 +65,7 @@ export const usePackSizeController = (
   item: DraftItem | null,
   lines: DraftStockOutLine[]
 ) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { asPackVariant } = usePackVariant(
     item?.id ?? '',
     item?.unitName || null

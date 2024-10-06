@@ -52,7 +52,7 @@ const ProgramListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { setEditModal: setEditingModal, setModal: selectModal } =
     usePatientModalStore();
 

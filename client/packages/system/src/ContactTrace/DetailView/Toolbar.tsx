@@ -76,7 +76,7 @@ interface ToolbarProps {
 }
 
 export const Toolbar: FC<ToolbarProps> = ({ data, documentData }) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
 
   // mSupply patient linked to the contact
   const { data: contactPatient } = usePatient.document.get(

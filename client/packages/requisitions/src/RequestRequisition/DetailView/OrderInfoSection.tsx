@@ -15,7 +15,7 @@ import { getApprovalStatusKey } from '../../utils';
 const months = [1, 2, 3, 4, 5, 6];
 
 export const OrderInfoSection = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const isDisabled = useRequest.utils.isDisabled();
   const isProgram = useRequest.utils.isProgram();
   const { minMonthsOfStock, maxMonthsOfStock, linkedRequisition, update } =

@@ -56,7 +56,7 @@ export const InboundListView: FC = () => {
   const { data, isError, isLoading } = useInbound.document.list(queryParams);
   useDisableInboundRows(data?.nodes);
 
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   const columns = useColumns<InboundRowFragment>(
     [

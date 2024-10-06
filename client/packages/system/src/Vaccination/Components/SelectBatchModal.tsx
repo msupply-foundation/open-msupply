@@ -28,7 +28,7 @@ export const SelectBatchModal = ({
   onClose,
   setStockLine,
 }: SelectBatchModalProps) => {
-  const t = useTranslation('dispensary');
+  const t = useTranslation();
   const { data, isLoading } = useStockLines(itemId);
 
   const [selectedBatch, setSelectedBatch] =

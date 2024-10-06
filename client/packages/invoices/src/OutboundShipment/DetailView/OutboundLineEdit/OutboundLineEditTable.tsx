@@ -41,7 +41,7 @@ const TotalCell = styled(TableCell)({
 });
 
 const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
@@ -70,7 +70,7 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
 };
 
 const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
 
   return (
@@ -103,7 +103,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   currency,
   isExternalSupplier,
 }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
     rows,
     packSizeController,

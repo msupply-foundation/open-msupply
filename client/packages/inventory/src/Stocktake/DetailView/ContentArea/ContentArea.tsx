@@ -88,7 +88,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
   onAddItem,
   onRowClick,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const {
     updateSortQuery: onChangeSortBy,
     updatePaginationQuery,

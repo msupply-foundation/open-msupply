@@ -44,7 +44,7 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
   const height = windowHeight * 0.8;
 
   // const { data, isLoading } = useName.document.internalSuppliers();
-  const t = useTranslation('app');
+  const t = useTranslation();
   // const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
   const InnerComponent = () => {

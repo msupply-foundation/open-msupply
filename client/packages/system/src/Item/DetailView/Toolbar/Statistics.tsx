@@ -9,7 +9,7 @@ interface Statistics {
 }
 
 export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
-  const t = useTranslation('catalogue');
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
   const { stats } = useItemFields();
 
@@ -54,7 +54,7 @@ export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
         isLoading={false}
         stats={[
           {
-            label: t('label.months'),
+            label: t('text.months'),
             value: formatNumber.round(
               numberOfPacksFromQuantity(
                 stats?.availableMonthsOfStockOnHand ?? 0

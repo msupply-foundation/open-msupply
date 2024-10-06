@@ -67,7 +67,7 @@ export const StockItemSelectModal = ({
   disableBackdrop,
 }: StockItemSelectModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop });
-  const t = useTranslation('inventory');
+  const t = useTranslation();
   const { data, isLoading } = useStockItemsWithStockLines();
   const [saving, setSaving] = useState(false);
   const [selectedItems, setSelectedItems] = useState<ItemWithStockLines[]>([]);
@@ -83,8 +83,8 @@ export const StockItemSelectModal = ({
   };
 
   const options = extraFilter
-    ? data?.nodes?.filter(extraFilter) ?? []
-    : data?.nodes ?? [];
+    ? (data?.nodes?.filter(extraFilter) ?? [])
+    : (data?.nodes ?? []);
 
   return (
     <Modal

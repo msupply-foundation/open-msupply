@@ -34,7 +34,7 @@ const ProgramInfoSection: FC = () => {
     'programName',
     'period',
   ]);
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   return programName ? (
     <DetailPanelSection title={t('heading.program-info')}>
@@ -121,7 +121,7 @@ const RelatedDocumentsRow: FC<{
 );
 
 const RelatedDocumentsSection: FC = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const { localisedDate: d } = useFormatDateTime();
   const { shipments } = useRequest.document.fields('shipments');
 
@@ -166,7 +166,7 @@ const RelatedDocumentsSection: FC = () => {
 };
 
 export const SidePanel: FC = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { success } = useNotification();
   const { mutateAsync } = useRequest.document.delete();
@@ -196,7 +196,7 @@ export const SidePanel: FC = () => {
       confirmMessage: t('messages.confirm-delete-requisition', {
         number: data?.requisitionNumber,
       }),
-      deleteSuccess: t('messages.deleted-requisitions', {
+      deleteSuccess: t('messages.deleted-orders', {
         count: 1,
       }),
     },
