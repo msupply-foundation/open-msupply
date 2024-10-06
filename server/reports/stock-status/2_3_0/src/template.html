@@ -9,9 +9,13 @@
         <td>{{t(k="label.code", f="Code")}}</td>
         <td>{{t(k="label.name", f="Name")}}</td>
         <td>{{t(k="label.status", f="Status")}}</td>
-        <td>{{t(k="report.consumption", f="Consumption")}} ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}} months)</td>
+        <td>{{t(k="report.consumption", f="Consumption")}}
+        ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})
+        {{t(k="label.months", f="months")}}</td>
         <td>{{t(k="label.soh", f="SOH")}}</td>
-        <td>{{t(k="label.amc", f="AMC")}} ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}} months)</td>
+        <td>{{t(k="label.amc", f="AMC")}}
+        ({{arguments.monthlyConsumptionLookBackPeriod | default(value=3)}})
+        {{t(k="label.months", f="months")}}</td>
         <td>{{t(k="report.mos", f="MOS")}}</td>
       </tr>
     </thead>
