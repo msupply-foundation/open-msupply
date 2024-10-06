@@ -323,7 +323,7 @@
   "label.label": "Label",
   "label.last-name": "Last name",
   "label.last-reading": "Last reading",
-  "label.leads-time": "Months leads time",
+  "label.lead-time": "Months lead time",
   "label.ledger": "Ledger",
   "label.level": "Level",
   "label.line": "Line {{line, number}}",
