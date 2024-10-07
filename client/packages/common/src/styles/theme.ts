@@ -172,7 +172,7 @@ export const themeOptions = {
     outline: { main: '#555770' },
     divider: '#eaeaea',
     drawerDivider: '#eaeaea',
-    error: { main: '#e63535' },
+    error: { main: '#e63535', background: '#ffcdce' },
     gray: {
       main: '#8f90a6',
       light: '#c7c9d9',
