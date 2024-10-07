@@ -14,6 +14,9 @@ import {
   StatusCell,
   VaccinationCardItemNodeStatus,
   useAuthContext,
+  Alert,
+  Box,
+  UnhappyMan,
 } from '@openmsupply-client/common';
 import { usePatientVaccineCard } from '../api/usePatientVaccineCard';
 import {
@@ -247,10 +250,25 @@ export const VaccineCardTable: FC<VaccinationCardProps> = props => {
     query: { data, isLoading },
   } = usePatientVaccineCard(props.programEnrolmentId);
 
-  if (data?.enrolmentStoreId !== storeId)
-    return <NothingHere body={t('messages.cannot-view-vaccine-card')} />;
-
   if (isLoading) return <InlineSpinner />;
+
+  if (data?.enrolmentStoreId !== storeId)
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        width="100%"
+        flexDirection="column"
+      >
+        <UnhappyMan />
+        <Alert severity="info">
+          {t('messages.cannot-view-vaccine-card', {
+            programName: data?.programName,
+          })}
+        </Alert>
+      </Box>
+    );
 
   return (
     <TableProvider
