@@ -181,7 +181,7 @@ describe('usePackSizeController', () => {
     );
 
     expect(result.current.options).toEqual([
-      { label: 'label.any', value: -1 },
+      { label: 'Any', value: -1 },
       { label: '1', value: 1 },
       { label: '2', value: 2 },
     ]);
@@ -204,7 +204,7 @@ describe('usePackSizeController', () => {
       usePackSizeController(null, multiplePackSizeLines)
     );
 
-    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
+    expect(result.current.selected).toEqual({ label: 'Any', value: -1 });
   });
 
   it('ignores setting of pack sizes which are invalid', () => {
@@ -216,7 +216,7 @@ describe('usePackSizeController', () => {
       result.current.setPackSize(10);
     });
 
-    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
+    expect(result.current.selected).toEqual({ label: 'Any', value: -1 });
   });
 
   it('sets the pack size to any when selected', async () => {
@@ -238,7 +238,7 @@ describe('usePackSizeController', () => {
     });
 
     expect(result.current.selected).toEqual({
-      label: 'label.any',
+      label: 'Any',
       value: -1,
     });
   });
@@ -286,7 +286,7 @@ describe('usePackSizeController', () => {
       usePackSizeController(null, arr)
     );
 
-    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
+    expect(result.current.selected).toEqual({ label: 'Any', value: -1 });
   });
 
   it('has an initial value of the unique pack size with no assigned packs', async () => {
@@ -313,7 +313,7 @@ describe('usePackSizeController', () => {
       )
     );
 
-    expect(result.current.selected).toEqual({ label: 'label.any', value: -1 });
+    expect(result.current.selected).toEqual({ label: 'Any', value: -1 });
   });
 
   it('expired lines are not added to the pack size options, any is instead.', async () => {
