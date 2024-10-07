@@ -203,7 +203,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     Cell: TooltipTextCell,
   },
   costPricePerPack: {
-    label: 'label.cost',
+    label: 'label.pack-cost-price',
     key: 'costPricePerPack',
     width: 50,
     align: ColumnAlign.Right,
@@ -211,7 +211,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     format: ColumnFormat.Currency,
   },
   sellPricePerPack: {
-    label: 'label.sell',
+    label: 'label.pack-sell-price',
     key: 'sellPricePerPack',
     width: 120,
     align: ColumnAlign.Right,
