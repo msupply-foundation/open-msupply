@@ -5,6 +5,7 @@ use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +14,7 @@ table! {
         id -> Text,
         vaccine_course_id -> Text,
         item_link_id -> Text,
+        deleted_datetime -> Nullable<Timestamp>,
 
     }
 }
@@ -24,11 +26,13 @@ allow_tables_to_appear_in_same_query!(vaccine_course_item, item);
 #[derive(
     Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default, Deserialize, Serialize,
 )]
+#[diesel(treat_none_as_null = true)]
 #[diesel(table_name = vaccine_course_item)]
 pub struct VaccineCourseItemRow {
     pub id: String,
     pub vaccine_course_id: String,
     pub item_link_id: String,
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 pub struct VaccineCourseItemRowRepository<'a> {
@@ -85,18 +89,13 @@ impl<'a> VaccineCourseItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, vaccine_course_item_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vaccine_course_item)
-            .filter(id.eq(vaccine_course_item_id))
+    pub fn mark_deleted(&self, vaccine_course_item_id: &str) -> Result<i64, RepositoryError> {
+        diesel::update(vaccine_course_item.filter(id.eq(vaccine_course_item_id)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        Ok(())
-    }
 
-    pub fn delete_by_vaccine_course_id(&self, course_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(vaccine_course_item)
-            .filter(vaccine_course_id.eq(course_id))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+        // Upsert row action as this is a soft delete, not actual delete
+        self.insert_changelog(vaccine_course_item_id.to_owned(), RowActionType::Upsert)
     }
 }
 
