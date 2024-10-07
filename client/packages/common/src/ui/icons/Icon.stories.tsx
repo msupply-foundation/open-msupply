@@ -3,7 +3,7 @@
 import React, { ChangeEvent, useState } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
-import { ChevronUpIcon, SvgIconProps } from '.';
+import { SvgIconProps } from '.';
 
 import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
@@ -19,6 +19,7 @@ import { CheckboxEmptyIcon } from './CheckboxEmpty';
 import { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
 import { ChevronDownIcon } from './ChevronDown';
 import { ChevronsDownIcon } from './ChevronsDown';
+import { ChevronUpIcon } from './ChevronUp';
 import { CircleAlertIcon } from './CircleAlert';
 import { CircleIcon } from './Circle';
 import { ClockIcon } from './Clock';
