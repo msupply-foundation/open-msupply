@@ -96,9 +96,15 @@ export const useInboundShipmentColumns = () => {
         'batch',
         {
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['batch'] }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'], default: '' },
+            ]),
           getSortValue: row =>
-            getColumnPropertyAsString(row, [{ path: ['batch'], default: '' }]),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'], default: '' },
+            ]),
         },
       ],
       [
@@ -179,12 +185,12 @@ export const useInboundShipmentColumns = () => {
               {
                 accessor: ({ rowData }) =>
                   getColumnProperty(rowData, [
-                    { path: ['lines', 'packSize'], default: '' },
+                    { path: ['lines', 'packSize'] },
                     { path: ['packSize'], default: '' },
                   ]),
                 getSortValue: row =>
                   getColumnPropertyAsString(row, [
-                    { path: ['lines', 'packSize'], default: '' },
+                    { path: ['lines', 'packSize'] },
                     { path: ['packSize'], default: '' },
                   ]),
               },
@@ -233,35 +239,27 @@ export const useInboundShipmentColumns = () => {
         },
       ],
       {
-        label: 'label.sell',
-        key: 'sellPricePerPack',
+        label: 'label.cost-per-unit',
+        key: 'costPricePerUnit',
         align: ColumnAlign.Right,
         width: 120,
         Cell: CurrencyCell,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines.map(line => ({ sell: getSellPrice(line) })),
-              'sell',
-              ''
-            );
+            let totalCostPrice = 0;
+            let totalUnits = 0;
+
+            for (const line of rowData.lines) {
+              totalCostPrice += line.costPricePerPack * line.numberOfPacks;
+              totalUnits += line.numberOfPacks * line.packSize;
+            }
+
+            return totalCostPrice / totalUnits;
           } else {
             return getSellPrice(rowData);
           }
         },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'sellPricePerPack',
-              ''
-            );
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
+        sortable: false,
       },
       getRowExpandColumn(),
       GenericColumnKey.Selection,

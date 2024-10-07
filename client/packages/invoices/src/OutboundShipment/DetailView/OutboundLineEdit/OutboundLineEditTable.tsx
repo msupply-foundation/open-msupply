@@ -8,6 +8,7 @@ import {
   styled,
   useFormatNumber,
   Tooltip,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { useOutboundLineEditRows } from './hooks';
@@ -49,7 +50,6 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
     setPlaceholderBuffer(line?.numberOfPacks ?? 0);
   }, [line?.numberOfPacks]);
   const formattedValue = useFormatNumber().round(placeholderBuffer, 2);
-  const hasMoreThanTwoDp = ((placeholderBuffer ?? 0) * 100) % 1 !== 0;
 
   return !line ? null : (
     <tr>
@@ -60,7 +60,9 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
       <PlaceholderCell colSpan={4}></PlaceholderCell>
       <Tooltip title={line?.numberOfPacks.toString()}>
         <PlaceholderCell style={{ textAlign: 'right' }}>
-          {!!hasMoreThanTwoDp ? `${formattedValue}...` : formattedValue}
+          {!!NumUtils.hasMoreThanTwoDp(placeholderBuffer)
+            ? `${formattedValue}...`
+            : formattedValue}
         </PlaceholderCell>
       </Tooltip>
     </tr>
@@ -70,7 +72,6 @@ const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
 const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
   const t = useTranslation();
   const formattedValue = useFormatNumber().round(allocatedQuantity, 2);
-  const hasMoreThanTwoDp = ((allocatedQuantity ?? 0) * 100) % 1 !== 0;
 
   return (
     <tr>
@@ -83,7 +84,9 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
             paddingRight: 12,
           }}
         >
-          {!!hasMoreThanTwoDp ? `${formattedValue}...` : formattedValue}
+          {!!NumUtils.hasMoreThanTwoDp(allocatedQuantity)
+            ? `${formattedValue}...`
+            : formattedValue}
         </TotalCell>
       </Tooltip>
     </tr>

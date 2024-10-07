@@ -6,6 +6,7 @@ import {
   Tooltip,
   Typography,
   useFormatNumber,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 
@@ -26,14 +27,13 @@ export const PackVariantQuantityCell =
     const formatNumber = useFormatNumber();
     const quantity = getQuantity(rowData);
     const packQuantity = numberOfPacksFromQuantity(quantity);
-    const hasMoreThanTwoDp = (packQuantity * 100) % 1 !== 0;
     const roundedPackQuantity = formatNumber.round(packQuantity, 2);
 
     return (
       <BasicCellLayout isError={isError}>
         <Tooltip title={String(packQuantity)}>
           <Typography>
-            {hasMoreThanTwoDp
+            {!!NumUtils.hasMoreThanTwoDp(packQuantity)
               ? `${roundedPackQuantity}...`
               : roundedPackQuantity}
           </Typography>
