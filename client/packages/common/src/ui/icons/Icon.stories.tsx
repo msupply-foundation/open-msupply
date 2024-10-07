@@ -3,7 +3,7 @@
 import React, { ChangeEvent, useState } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { Box, Grid, Paper, styled, TextField, Typography } from '@mui/material';
-import { SvgIconProps } from '.';
+import { ChevronUpIcon, SvgIconProps } from '.';
 
 import { AlertIcon } from './Alert';
 import { ArrowLeftIcon } from './ArrowLeft';
@@ -121,6 +121,7 @@ const Template: StoryFn<React.FC<SvgIconProps>> = args => {
     },
     { icon: <ChevronDownIcon {...args} />, name: 'ChevronDown' },
     { icon: <ChevronsDownIcon {...args} />, name: 'ChevronsDown' },
+    { icon: <ChevronUpIcon {...args} />, name: 'ChevronUp' },
     { icon: <CircleAlertIcon {...args} />, name: 'CircleAlert' },
     { icon: <CircleIcon {...args} />, name: 'Circle' },
     { icon: <ClockIcon {...args} />, name: 'Clock' },

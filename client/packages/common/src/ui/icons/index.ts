@@ -15,6 +15,7 @@ export { CheckboxEmptyIcon } from './CheckboxEmpty';
 export { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
 export { ChevronDownIcon } from './ChevronDown';
 export { ChevronsDownIcon } from './ChevronsDown';
+export { ChevronUpIcon } from './ChevronUp';
 export { CircleAlertIcon } from './CircleAlert';
 export { CircleIcon } from './Circle';
 export { ClockIcon } from './Clock';
