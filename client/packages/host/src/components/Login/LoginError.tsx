@@ -4,6 +4,8 @@ import {
   AlertIcon,
   Typography,
   useTranslation,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@openmsupply-client/common';
 
 export type LoginErrorProps = {
@@ -49,6 +51,8 @@ export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
           <Box display="flex" flexDirection="column" sx={{ paddingLeft: 4 }}>
             <Typography
               variant="body2"
+              alignItems="center"
+              display="flex"
               sx={{
                 cursor: 'pointer',
                 fontSize: 12,
@@ -57,8 +61,7 @@ export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
               onClick={() => setExpand(!expand)}
             >
               {t('error.more-info')}
-              &nbsp;
-              {expand ? '^' : '>'}
+              {expand ? <ChevronUpIcon /> : <ChevronDownIcon />}
             </Typography>
             {expand && (
               <Box>
