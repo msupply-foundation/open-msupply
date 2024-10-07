@@ -31,6 +31,9 @@ impl StockLineNode {
     pub async fn item_id(&self) -> &str {
         &self.item_row().id
     }
+    pub async fn item_name(&self) -> &str {
+        &self.item_row().name
+    }
     pub async fn store_id(&self) -> &str {
         &self.row().store_id
     }

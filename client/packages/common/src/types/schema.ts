@@ -6612,6 +6612,7 @@ export type StockLineNode = {
   id: Scalars['String']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
