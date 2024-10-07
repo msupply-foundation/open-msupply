@@ -531,7 +531,7 @@
   "message.nothing-to-save": "Nothing to save",
   "messages.ago": "{{time}} ago",
   "messages.cannot-delete-multiple-lines": "One or more lines cannot be deleted",
-  "messages.cannot-view-vaccine-card": "Patient is enrolled in this immunisation program in another store. You cannot view the vaccination card.",
+  "messages.cannot-view-vaccine-card": "This patient was enrolled in the {{ programName }} by another store and cannot be viewed in this store",
   "messages.cant-delete-generic": "You cannot delete one or more of the selected items",
   "messages.click-to-expand": "Click to expand",
   "messages.confirm-add-from-master-list": "Do you want to add all of the items from this master list?",
