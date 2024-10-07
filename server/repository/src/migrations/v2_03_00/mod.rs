@@ -5,6 +5,7 @@ mod add_backdated_datetime;
 mod add_facility_to_vaccination;
 mod add_max_age_to_vaccine_dose;
 mod add_report_versioning;
+mod add_store_id_to_program_enrolment;
 mod add_vaccination_activity_log_types;
 mod add_vaccinations_table;
 mod add_vaccine_course_changelog_table_names;
@@ -47,6 +48,7 @@ impl Migration for V2_03_00 {
             Box::new(add_vaccine_course_dose_custom_age_label::Migrate),
             Box::new(add_backdated_datetime::Migrate),
             Box::new(add_vaccine_course_item_deleted_datetime::Migrate),
+            Box::new(add_store_id_to_program_enrolment::Migrate),
         ]
     }
 }

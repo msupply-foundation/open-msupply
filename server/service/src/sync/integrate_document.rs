@@ -197,6 +197,7 @@ mod integrate_document_test {
                   "enrolmentDatetime": "2023-11-28T18:24:57.184Z",
                   "status": "ACTIVE",
                   "programEnrolmentId": "name1",
+                  "storeId": "store_a"
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
@@ -221,6 +222,7 @@ mod integrate_document_test {
             .unwrap()
             .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
+        assert_eq!(&found.store_id.unwrap(), "store_a");
 
         // adding older document shouldn't update the patient entry
         sync_upsert_document(

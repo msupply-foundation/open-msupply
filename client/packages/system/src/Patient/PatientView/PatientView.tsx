@@ -282,7 +282,7 @@ export const PatientView = () => {
   const { setCurrentPatient, createNewPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
-  const { store } = useAuthContext();
+  const { store, storeId } = useAuthContext();
 
   const requiresConfirmation = (tab: string) => {
     return tab === PatientTabValue.Details && isDirtyPatient;
@@ -349,6 +349,7 @@ export const PatientView = () => {
               data: {
                 enrolmentDatetime: new Date().toISOString(),
                 status: 'ACTIVE',
+                storeId,
               },
               schema: documentRegistry,
               isCreating: true,
