@@ -59,6 +59,7 @@ fragment VaccinationCard on VaccinationCardNode {
   patientFirstName
   patientLastName
   programName
+  enrolmentStoreId
   items {
     ... on VaccinationCardItemNode {
       ...VaccinationCardItem
