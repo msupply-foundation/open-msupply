@@ -51,16 +51,26 @@ mod omsupply_service {
     // parameters. There is no stdout or stderr at this point so make sure to configure the log
     // output to file if needed.
     pub fn omsupply_service_main(_arguments: Vec<OsString>) {
+        eventlog::init("Application", log::Level::Error).unwrap();
+        info!("Starting Open-mSupply Service");
         // the current dir is used by the configuration module to find the config files
         // and also by the logging module for the log file location
         // when run in the service context, the current dir is the windows service directory
-        let executable_path = current_exe().unwrap();
-        let executable_directory = executable_path.parent().unwrap();
-        set_current_dir(&executable_directory).unwrap();
+        let executable_path = current_exe().unwrap_or_else(|e| {
+            error!("Failed to get executable path: {:?}", e);
+            panic!("Failed to get executable path");
+        });
+        let executable_directory = executable_path.parent().unwrap_or_else(|| {
+            error!("Failed to get executable directory");
+            panic!("Failed to get executable directory");
+        });
+        set_current_dir(&executable_directory).unwrap_or_else(|e| {
+            error!("Failed to set current directory: {:?}", e);
+            panic!("Failed to set current directory");
+        });
         let settings: Settings = match configuration::get_configuration() {
             Ok(settings) => settings,
             Err(e) => {
-                eventlog::init("Application", log::Level::Error).unwrap();
                 error!("Failed to parse configuration settings: {:?}", e);
                 return;
             }
