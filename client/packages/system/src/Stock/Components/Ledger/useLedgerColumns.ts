@@ -47,8 +47,9 @@ export const useLedgerColumns = (
       },
       {
         key: ColumnKey.Quantity,
-        label: 'label.quantity',
+        label: 'label.unit-quantity',
         sortable: false,
+        description: 'description.unit-quantity',
       },
       {
         key: ColumnKey.Number,

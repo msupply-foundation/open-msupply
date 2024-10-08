@@ -181,6 +181,11 @@ pub struct LegacyTransactRow {
     #[serde(rename = "om_original_shipment_id")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub original_shipment_id: Option<String>,
+
+    #[serde(default)]
+    #[serde(rename = "om_backdated_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub backdated_datetime: Option<NaiveDateTime>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -328,6 +333,7 @@ impl SyncTranslation for InvoiceTranslation {
             linked_invoice_id: data.linked_transaction_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
+            backdated_datetime: mapping.backdated_datetime,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -387,6 +393,7 @@ impl SyncTranslation for InvoiceTranslation {
                     currency_id,
                     currency_rate,
                     original_shipment_id,
+                    backdated_datetime,
                 },
             name_row,
             clinician_row,
@@ -454,6 +461,7 @@ impl SyncTranslation for InvoiceTranslation {
             currency_rate,
             clinician_id: clinician_row.map(|row| row.id),
             original_shipment_id,
+            backdated_datetime,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -498,6 +506,21 @@ fn invoice_type(data: &LegacyTransactRow, name: &NameRow) -> Option<InvoiceType>
     }
 }
 
+fn map_backdated_datetime(
+    created_datetime: &NaiveDateTime,
+    picked_datetime: &Option<NaiveDateTime>,
+) -> Option<NaiveDateTime> {
+    match picked_datetime {
+        Some(picked_datetime) => {
+            if picked_datetime < created_datetime {
+                return Some(picked_datetime.to_owned()); // Picked date was before created_datetime assume it must be backdated
+            }
+            None
+        }
+        None => None, // No picked time, means it can't be backdated
+    }
+}
+
 /// Helper struct for new om_* fields mappings
 struct LegacyMapping {
     created_datetime: NaiveDateTime,
@@ -506,6 +529,7 @@ struct LegacyMapping {
     allocated_datetime: Option<NaiveDateTime>,
     shipped_datetime: Option<NaiveDateTime>,
     verified_datetime: Option<NaiveDateTime>,
+    backdated_datetime: Option<NaiveDateTime>,
     colour: Option<String>,
 }
 /// Either make use of om_* fields, if present, or do a best afford mapping
@@ -520,6 +544,10 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
             allocated_datetime: data.allocated_datetime,
             shipped_datetime: data.shipped_datetime,
             verified_datetime: data.verified_datetime,
+            backdated_datetime: data.backdated_datetime.or(map_backdated_datetime(
+                &created_datetime,
+                &data.picked_datetime,
+            )),
             colour: data.om_colour.clone(),
         };
     }
@@ -531,12 +559,19 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         allocated_datetime: None,
         shipped_datetime: None,
         verified_datetime: None,
+        backdated_datetime: None,
         colour: None,
     };
 
     let confirm_datetime = data
         .confirm_date
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
+
+    // Try to figure out if a legacy record was backdated
+    let backdated_datetime = map_backdated_datetime(&mapping.created_datetime, &confirm_datetime);
+    if backdated_datetime.is_some() {
+        mapping.backdated_datetime = backdated_datetime
+    }
 
     match invoice_type {
         InvoiceType::OutboundShipment | InvoiceType::SupplierReturn => match data.status {

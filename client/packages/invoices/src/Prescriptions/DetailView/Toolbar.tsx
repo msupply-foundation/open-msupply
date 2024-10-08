@@ -39,7 +39,13 @@ export const Toolbar: FC = () => {
         alignItems="flex-end"
       >
         <Grid item display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
+          <Box
+            display="flex"
+            flex={1}
+            flexDirection="column"
+            gap={1}
+            maxWidth={'fit-content'}
+          >
             {patient && (
               <InputWithLabelRow
                 label={t('label.patient')}
@@ -69,17 +75,21 @@ export const Toolbar: FC = () => {
               }
             />
           </Box>
-          <Box display="flex" flex={1}>
+          <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
             <InputWithLabelRow
               label={t('label.date')}
               Input={
                 <DateTimePickerInput
+                  disabled={isDisabled}
+                  defaultValue={new Date()}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
                   onChange={async prescriptionDate => {
                     await update({
                       id,
-                      prescriptionDate: Formatter.toIsoString(prescriptionDate),
+                      prescriptionDate: Formatter.toIsoString(
+                        DateUtils.endOfDayOrNull(prescriptionDate)
+                      ),
                     });
                   }}
                   maxDate={new Date()}

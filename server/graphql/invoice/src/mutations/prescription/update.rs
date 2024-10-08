@@ -107,7 +107,7 @@ impl UpdateInput {
             clinician_id,
             comment,
             colour,
-            prescription_datetime: prescription_date.map(|date| date.naive_utc()),
+            backdated_datetime: prescription_date.map(|date| date.naive_utc()),
         }
     }
 }
@@ -362,7 +362,7 @@ mod test {
                     status: Some(UpdatePrescriptionStatus::Picked),
                     comment: Some("comment input".to_string()),
                     colour: Some("colour input".to_string()),
-                    prescription_datetime: None,
+                    backdated_datetime: None,
                 }
             );
             Ok(Invoice {

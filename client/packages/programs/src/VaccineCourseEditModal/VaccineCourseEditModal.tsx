@@ -230,7 +230,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
       }
       height={height}
       sx={{
-        width: 950,
+        width: 1100,
         maxWidth: 'unset',
       }}
       slideAnimation={false}
@@ -253,6 +253,9 @@ const VaccineCourseDoseTable = ({
 
   const addDose = () => {
     const previousDose = doses[doses.length - 1];
+    const previousMin = previousDose?.minAgeMonths ?? 0;
+    const previousMax = previousDose?.maxAgeMonths ?? 0;
+    const previousRange = previousMax - previousMin;
 
     updatePatch({
       vaccineCourseDoses: [
@@ -261,9 +264,10 @@ const VaccineCourseDoseTable = ({
           __typename: 'VaccineCourseDoseNode',
           id: FnUtils.generateUUID(),
           label: `${courseName} ${doses.length + 1}`,
-          minAgeMonths: (previousDose?.minAgeMonths ?? 0) + 1,
-          maxAgeMonths: (previousDose?.minAgeMonths ?? 0) + 2,
+          minAgeMonths: previousMax,
+          maxAgeMonths: previousMax + (previousRange || 1),
           minIntervalDays: previousDose?.minIntervalDays ?? 30,
+          customAgeLabel: '',
         },
       ],
     });
@@ -294,7 +298,7 @@ const VaccineCourseDoseTable = ({
       },
       {
         key: 'label',
-        Cell: props => <TextInputCell fullWidth {...props} />,
+        Cell: LabelCell,
         width: 280,
         label: 'label.label',
         setter: updateDose,
@@ -312,8 +316,16 @@ const VaccineCourseDoseTable = ({
         setter: updateDose,
       },
       {
+        key: 'customAgeLabel',
+        Cell: LabelCell,
+        label: 'label.custom-age-label',
+        accessor: ({ rowData }) => rowData.customAgeLabel ?? '',
+        setter: updateDose,
+      },
+      {
         key: 'minIntervalDays',
         Cell: NumberInputCell,
+        width: 120,
         label: 'label.min-interval',
         setter: updateDose,
       },
@@ -355,24 +367,17 @@ const VaccineCourseDoseTable = ({
 };
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
+const LabelCell = (props: CellProps<VaccineCourseDoseFragment>) => (
+  <TextInputCell fullWidth {...props} />
+);
+
 const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
   const t = useTranslation();
-  // Set maximum and minimum to ensure maxAge can't be lower than minAge
-  const minimum =
-    props.column.key === 'maxAgeMonths'
-      ? props.rowData.minAgeMonths
-      : undefined;
-  const maximum =
-    props.column.key === 'minAgeMonths'
-      ? props.rowData.maxAgeMonths
-      : undefined;
   return (
     <MultipleNumberInputCell
       decimalLimit={2}
       width={25}
       {...props}
-      min={minimum}
-      max={maximum}
       units={[
         { key: 'year', ratio: 12, label: t('label.years-abbreviation') },
         { key: 'month', ratio: 1, label: t('label.months-abbreviation') },

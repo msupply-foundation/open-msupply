@@ -276,6 +276,7 @@
   "error.reduced-below-zero": "Запас зарезервирован для новых исходящих поставок. Количество не может быть уменьшено ниже нуля.",
   "error.repack-cannot-be-fractional": "Невозможно переупаковать в дробную упаковку",
   "error.repack-has-stock-reduced-below-zero": "Невозможно переупаковать запас. Новое количество упаковок превышает количество упаковок в запасе.",
+  "error.requisition-not-found": "Заявка на закупку не найдена",
   "error.return-not-found": "Возврат не найден",
   "error.rnr-not-found": "О&З Форма не найдена",
   "error.scanner-not-connected": "Сканер не подключен. Чтобы подключить сканер, перейдите в раздел Администратор > Устройства.",
@@ -566,6 +567,7 @@
   "label.directions": "Направления",
   "label.documents": "Документы",
   "label.donor": "Донор",
+  "label.dose": "Доза",
   "label.dose-number": "Доза #",
   "label.doses": "Дозы",
   "label.download-database": "Скачать Базу Данных",
@@ -824,6 +826,7 @@
   "label.supplier": "Поставщик",
   "label.supplier-name": "Наименование Поставщика",
   "label.supplier-ref": "Номер",
+  "label.supply-quantity": "Количество для поставки",
   "label.systolic": "Систолическое",
   "label.target-demographic": "Целевая Демографическая Группа",
   "label.this-week": "Эта неделя",
@@ -1012,6 +1015,7 @@
   "messages.no-patient-record": "Невозможно получить подробную информацию об этом пациенте.",
   "messages.no-programs": "Этот пациент не зачислен ни в каких программах",
   "messages.no-properties": "Свойства не заданы",
+  "messages.no-related-documents": "Нет сопутствующих документов.",
   "messages.no-repack-detail": "Выберите строку, чтобы просмотреть детали о переупаковке, или нажмите «Новая», чтобы создать новую переупаковку",
   "messages.no-repacks": "Эта линия запасов не была переупакована. Нажмите кнопку Новая, чтобы создать новую упаковку.",
   "messages.no-shipments-yet": "Пока не создано ни одной поставки.",
@@ -1130,6 +1134,5 @@
   "warning.cannot-create-placeholder-packs": "Всего доступно {{allocatedQuantity}} упаковок. Невозможно выделить все {{requestedQuantity}} упаковки.",
   "warning.cannot-create-placeholder-units": "Всего доступно {{allocatedQuantity}} единиц. Невозможно выделить все {{requestedQuantity}} единицы.",
   "warning.caps-lock": "Внимание: включен Caps Lock",
-  "warning.field-not-parsed": "{{field}} не проанализировано",
-  "label.dose": "Доза"
+  "warning.field-not-parsed": "{{field}} не проанализировано"
 }

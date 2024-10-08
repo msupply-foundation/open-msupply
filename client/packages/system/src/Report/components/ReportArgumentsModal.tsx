@@ -54,7 +54,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
 
   return (
     <Modal
-      title={t("label.report-filters")}
+      title={t('label.report-filters')}
       cancelButton={<DialogButton variant="cancel" onClick={cleanUp} />}
       slideAnimation={false}
       width={560}

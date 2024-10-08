@@ -1,10 +1,10 @@
 {
     "is_custom": false,
-    "version": "1.0",
-    "code": "expiring-items",
+    "version": "2.3.0",
+    "code": "stock-status",
     "context": "REPORT",
-    "sub_context": "Expiring",
-    "name": "Expiring Items",
+    "sub_context": "StockAndItems",
+    "name": "Stock Status",
     "queries": {
         "gql": "query.graphql"
     },
@@ -12,5 +12,4 @@
         "schema": "argument_schemas/arguments.json",
         "ui": "argument_schemas/arguments_ui.json"
     }
-
 }   
