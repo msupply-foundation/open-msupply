@@ -66,6 +66,7 @@ mod omsupply_service {
             }
         };
         logging_init(settings.logging.clone(), None);
+        log_panics::init();
 
         panic::set_hook(Box::new(|panic_info| {
             error!("panic occurred {:?}", panic_info);
