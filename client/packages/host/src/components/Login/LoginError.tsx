@@ -17,7 +17,7 @@ export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
   const t = useTranslation();
   const [expand, setExpand] = useState(false);
   const hasMoreInformation = !!(details || hint);
-  const chervonCommonSyles = {
+  const chevronCommonStyles = {
     width: '0.6em',
     marginTop: '0.1em',
     height: '0.6em',
@@ -68,14 +68,14 @@ export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
               {expand ? (
                 <ChevronDownIcon
                   sx={{
-                    ...chervonCommonSyles,
+                    ...chevronCommonStyles,
                   }}
                 />
               ) : (
                 <ChevronDownIcon
                   sx={{
                     transform: 'rotate(-90deg)',
-                    ...chervonCommonSyles,
+                    ...chevronCommonStyles,
                   }}
                 />
               )}
