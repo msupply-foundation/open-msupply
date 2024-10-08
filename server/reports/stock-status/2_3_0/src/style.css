@@ -25,8 +25,26 @@
 }
 
 .container table td {
-  padding: 5px;
+  padding: 10px;
   vertical-align: top;
+}
+
+.container table tr:last-child td {
+  border-bottom: none;
+}
+
+.container>table>thead {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  background-color: #f1f1f1;
+}
+
+.container,
+body,
+.container>table {
+  margin-top: 0px;
+  padding-top: 0px;
 }
 
 .container table tr.heading td {
