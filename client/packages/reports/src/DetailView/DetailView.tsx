@@ -65,12 +65,8 @@ const DetailViewInner = ({
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
-  console.log('re render');
-  // setReportLoading(true);
 
   useEffect(() => {
-    console.log('set to true');
-
     setCustomBreadcrumbs({ 1: report.name ?? '' });
 
     // Initial report generation
