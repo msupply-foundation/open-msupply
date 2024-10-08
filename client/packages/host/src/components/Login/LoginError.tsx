@@ -5,7 +5,6 @@ import {
   Typography,
   useTranslation,
   ChevronDownIcon,
-  ChevronUpIcon,
 } from '@openmsupply-client/common';
 
 export type LoginErrorProps = {
@@ -61,7 +60,11 @@ export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
               onClick={() => setExpand(!expand)}
             >
               {t('error.more-info')}
-              {expand ? <ChevronUpIcon /> : <ChevronDownIcon />}
+              {expand ? (
+                <ChevronDownIcon />
+              ) : (
+                <ChevronDownIcon sx={{ transform: 'rotate(-90deg)' }} />
+              )}
             </Typography>
             {expand && (
               <Box>
