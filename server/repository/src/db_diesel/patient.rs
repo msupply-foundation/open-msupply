@@ -475,6 +475,7 @@ mod tests {
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
                 status: Some("Active".to_string()),
+                store_id: None,
             })
             .unwrap();
 
@@ -583,6 +584,7 @@ mod tests {
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
                 status: Some("Active".to_string()),
+                store_id: None,
             })
             .unwrap();
         let repo = PatientRepository::new(&connection);
