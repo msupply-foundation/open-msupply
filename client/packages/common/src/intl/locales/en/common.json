@@ -252,6 +252,7 @@
   "error.master-list-not-found": "Master list not found",
   "error.missing-central-sync": "Could not reach mSupply central server",
   "error.missing-inputs": "{{count}}",
+  "error.more-info": "More information",
   "error.name-program-duplicate": "Vaccine course name already exists for this program",
   "error.no-asset-create-permission": "You do not have permission to create a new asset.",
   "error.no-customer-return-items": "No items have been added to this return.",

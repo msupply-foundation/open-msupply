@@ -6,7 +6,6 @@ import {
   LoadingButton,
   useHostContext,
   LocalStorage,
-  ErrorWithDetails,
   useFormatDateTime,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
@@ -14,6 +13,7 @@ import { useLoginForm } from './hooks';
 import { LoginLayout } from './LoginLayout';
 import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
+import { LoginError } from './LoginError';
 
 export const Login = () => {
   const t = useTranslation();
@@ -169,7 +169,7 @@ export const Login = () => {
       ErrorMessage={
         error &&
         loginError.error !== '' && (
-          <ErrorWithDetails
+          <LoginError
             details={error.detail || ''}
             error={loginError.error}
             hint={loginError.hint}
