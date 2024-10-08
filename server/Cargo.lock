@@ -5818,6 +5818,7 @@ dependencies = [
  "graphql_core",
  "httpmock",
  "log",
+ "log-panics",
  "machine-uid",
  "mime_guess",
  "rcgen",
