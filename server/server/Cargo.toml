@@ -46,6 +46,7 @@ regex = { workspace = true }
 actix-multipart = { workspace = true }
 futures-util = { workspace = true }
 serde_json = { workspace = true }
+log-panics = { workspace = true }
 
 [dev-dependencies]
 actix-rt = { workspace = true }

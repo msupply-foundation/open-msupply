@@ -8,6 +8,7 @@ async fn main() -> std::io::Result<()> {
         configuration::get_configuration().expect("Failed to parse configuration settings");
 
     logging_init(settings.logging.clone(), None);
+    log_panics::init();
 
     let off_switch = tokio::sync::mpsc::channel(1).1;
     start_server(settings, off_switch).await
