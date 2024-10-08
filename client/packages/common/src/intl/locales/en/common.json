@@ -1598,5 +1598,5 @@
   "warning.caps-lock": "Warning: Caps lock is on",
   "warning.field-not-parsed": "{{field}} not parsed",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "messages.loading-report": "Attempting to load report..."
+  "messages.loading-report": "Loading report..."
 }
