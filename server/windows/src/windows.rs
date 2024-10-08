@@ -51,7 +51,7 @@ mod omsupply_service {
     // parameters. There is no stdout or stderr at this point so make sure to configure the log
     // output to file if needed.
     pub fn omsupply_service_main(_arguments: Vec<OsString>) {
-        eventlog::init("Application", log::Level::Error).unwrap();
+        eventlog::init("Application", log::Level::Info).unwrap();
         info!("Starting Open-mSupply Service");
         // the current dir is used by the configuration module to find the config files
         // and also by the logging module for the log file location
