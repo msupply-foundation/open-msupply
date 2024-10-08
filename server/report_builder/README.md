@@ -207,7 +207,7 @@ Where the letters are short hand for the following:
 - n for namespace
   The file namespace where the translation key is. The .json extention is automatically added ie catalogue (which refers to the catalogue.json namespace).
   By default, the translation in common.json translations will be used.
-  Note translation files have been consolidated to use common.json only. However, functionality is retained in case we are needing customer specific namespaces in future.
+  Note all translation files have been consolidated into the common.json namespace, so the namespace parameter is no longer user. However, functionality is retained in case we are needing customer specific namespaces in future.
   If a specific namespace needs to be called, you can add this 'n' key into your function.
 
 ```
