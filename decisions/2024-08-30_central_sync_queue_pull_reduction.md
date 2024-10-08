@@ -2,8 +2,8 @@
 
 - _Date_: 2024-09-02
 - _Deciders_: @Chris-Petty, @andreievg, @jmbrunskill
-- _Status_: PENDING??
-- _Outcome_: Do other optimisations for now
+- _Status_: DECIDED
+- _Outcome_: Leave it, do other optimisations for now
 
 ## Context
 
@@ -168,4 +168,4 @@ The decision at the moment is to do nothing to reduce the change_log size with a
 - LCS filter out non open msupply reports in sync v5
 - LCS possibly raise request batch size further. Recently raised from 1k to 5k. Perhaps more would help
 - OMS dynamic batch size to utilise the above on both queue and changelog endpoints
-- OMS sync with cursor on queued records endpoint, halving the requests to sync queued records (sorta tangential but related to init speed) 
+- OMS sync with cursor on queued records endpoint, halving the requests to sync queued records (sorta tangential but related to init speed)
