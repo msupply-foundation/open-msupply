@@ -16,6 +16,7 @@ mod remove_num_doses_from_vaccine_course;
 mod remove_vaccine_course_dose_dose_number;
 mod rename_vaccine_course_schedule_to_dose;
 mod return_types_rename;
+mod remove_stops_from_report_ids;
 
 pub(crate) struct V2_03_00;
 
@@ -45,6 +46,7 @@ impl Migration for V2_03_00 {
             Box::new(add_vaccine_course_dose_deleted_datetime::Migrate),
             Box::new(add_vaccine_course_dose_custom_age_label::Migrate),
             Box::new(add_backdated_datetime::Migrate),
+            Box::new(remove_stops_from_report_ids::Migrate)
         ]
     }
 }
