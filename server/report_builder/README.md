@@ -202,14 +202,14 @@ Where the letters are short hand for the following:
   The name of the function
 - k for key
   This is the locale key as is used in front end translations.
-- n for namespace
-  The file namespace where the translation key is. The .json exention is automattically added ie catalogue (which refers to the catalogue.json namespace).
-  By default, the translation in common.json translations will be used. If a specific namespace needs to be called, you can add this 'n' key into your function.
+- f for fallback
+  This is an optional fallback text if the translation cannot be found.
+  - n for namespace
+    The file namespace where the translation key is. The .json exention is automattically added ie catalogue (which refers to the catalogue.json namespace).
+    By default, the translation in common.json translations will be used. If a specific namespace needs to be called, you can add this 'n' key into your function.
   ```
       {{t(k="label.name", n="catalogue", f="Name")}}
   ```
-- f for fallback
-  This is an optional fallback text if the translation cannot be found.
 
 The current user language is passed through graphql when a user requests a report to be generated. This is the language used in translations.
 
