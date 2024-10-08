@@ -122,7 +122,7 @@ const VaccinationCardComponent = ({
   encounterId,
   openModal,
 }: VaccinationCardProps & {
-  data: VaccinationCardFragment;
+  data?: VaccinationCardFragment;
 }) => {
   const t = useTranslation('dispensary');
   const { localisedDate } = useFormatDateTime();
@@ -252,7 +252,7 @@ export const VaccineCardTable: FC<VaccinationCardProps> = props => {
 
   if (isLoading) return <InlineSpinner />;
 
-  if (data?.enrolmentStoreId !== storeId)
+  if (!!data?.enrolmentStoreId && data?.enrolmentStoreId !== storeId)
     return (
       <Box
         display="flex"
