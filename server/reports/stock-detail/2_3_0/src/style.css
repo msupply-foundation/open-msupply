@@ -1,0 +1,40 @@
+@page {
+  margin: 0;
+  size: A4 landscape;
+}
+
+.paging {
+  width: 100%;
+}
+
+.container {
+  margin: auto;
+  padding: 10px;
+  font-size: 14px;
+  font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
+  color: #555;
+}
+
+.container table {
+  width: 100%;
+  font-size: inherit;
+  font-family: inherit;
+  text-align: left;
+  margin-top: 10;
+  margin-bottom: 15;
+}
+
+.container table td {
+  padding: 5px;
+  vertical-align: top;
+}
+
+.container table tr.heading td {
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+.container table td.status span {
+  padding: 2px;
+  border-radius: 10px;
+}

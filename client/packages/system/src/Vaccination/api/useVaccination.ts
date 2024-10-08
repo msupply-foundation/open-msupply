@@ -156,6 +156,8 @@ const useInsert = ({
   const mutationFn = async (input: VaccinationDraft) => {
     if (!encounterId) return;
 
+    const isOtherFacility = input.facilityId === OTHER_FACILITY;
+
     const apiResult = await api.insertVaccination({
       storeId,
       input: {
@@ -163,19 +165,17 @@ const useInsert = ({
         encounterId,
         vaccineCourseDoseId,
 
-        facilityNameId:
-          input.facilityId === OTHER_FACILITY ? undefined : input?.facilityId,
-        facilityFreeText:
-          input.facilityId === OTHER_FACILITY
-            ? input.facilityFreeText
-            : undefined,
+        facilityNameId: isOtherFacility ? undefined : input?.facilityId,
+        facilityFreeText: isOtherFacility ? input.facilityFreeText : undefined,
+
+        clinicianId: isOtherFacility ? undefined : input?.clinician?.id,
 
         given: input.given ?? false,
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
-        clinicianId: input.clinician?.id,
         comment: input.comment,
         notGivenReason: input.notGivenReason,
-        stockLineId: input.stockLine?.id,
+        stockLineId:
+          input.given && !isOtherFacility ? input.stockLine?.id : undefined,
       },
     });
 
@@ -209,27 +209,33 @@ const useUpdate = (vaccinationId: string | undefined) => {
       throw new Error(t('error.failed-to-save-vaccination'));
     }
 
+    const isOtherFacility = input.facilityId === OTHER_FACILITY;
+
     const apiResult = await api.updateVaccination({
       storeId,
       input: {
         id: vaccinationId,
         given: input.given ?? false,
         vaccinationDate: Formatter.naiveDate(input.date ?? new Date()),
-        clinicianId: setNullableInput('id', input.clinician),
         comment: input.comment,
         notGivenReason: !input.given ? input.notGivenReason : null,
-        stockLineId: input.given ? input.stockLine?.id : null,
 
-        facilityNameId: {
-          value:
-            input.facilityId === OTHER_FACILITY ? undefined : input?.facilityId,
-        },
-        facilityFreeText: {
-          value:
-            input.facilityId === OTHER_FACILITY
-              ? input.facilityFreeText
-              : undefined,
-        },
+        clinicianId: setNullableInput(
+          'id',
+          isOtherFacility ? null : input.clinician
+        ),
+        stockLineId: setNullableInput(
+          'id',
+          input.given && !isOtherFacility ? input.stockLine : null
+        ),
+        facilityNameId: setNullableInput(
+          'facilityId',
+          isOtherFacility ? null : input
+        ),
+        facilityFreeText: setNullableInput(
+          'facilityFreeText',
+          isOtherFacility ? input : null
+        ),
 
         updateTransactions: input.createTransactions,
       },
@@ -238,10 +244,7 @@ const useUpdate = (vaccinationId: string | undefined) => {
     // will be empty if there's a generic error, such as permission denied
     if (!isEmpty(apiResult)) {
       const result = apiResult.updateVaccination;
-
-      if (result.__typename === 'VaccinationNode') {
-        return result;
-      }
+      return result;
     }
 
     throw new Error(t('error.failed-to-save-vaccination'));

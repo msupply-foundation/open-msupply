@@ -891,17 +891,6 @@ export type CentralPatientSearchInput = {
 
 export type CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError;
 
-export type CentralProgramsMutations = {
-  __typename: 'CentralProgramsMutations';
-  updateImmunisationProgram: UpdateImmunisationProgramResponse;
-};
-
-
-export type CentralProgramsMutationsUpdateImmunisationProgramArgs = {
-  input: UpdateImmunisationProgramInput;
-  storeId: Scalars['String']['input'];
-};
-
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
@@ -909,7 +898,6 @@ export type CentralServerMutationNode = {
   general: CentralGeneralMutations;
   logReason: AssetLogReasonMutations;
   packVariant: PackVariantMutations;
-  program: CentralProgramsMutations;
   vaccineCourse: VaccineCourseMutations;
 };
 
@@ -1187,7 +1175,7 @@ export type CustomerReturnLineNode = {
   stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & DeleteVaccineCourseErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & UpdateVaccineCourseErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -2522,7 +2510,7 @@ export type InsertOutboundShipmentInput = {
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  /** The other party must be an customer of the current store */
+  /** The other party must be a customer of the current store */
   otherPartyId: Scalars['String']['input'];
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3137,6 +3125,7 @@ export type InvoiceLinesResponse = InvoiceLineConnector;
 export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  backdatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   clinician?: Maybe<ClinicianNode>;
   clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;
@@ -4632,6 +4621,11 @@ export type NotEnoughStockForReduction = InsertOutboundShipmentLineErrorInterfac
   line?: Maybe<InvoiceLineNode>;
 };
 
+export type NotMostRecentGivenDose = UpdateVaccinationErrorInterface & {
+  __typename: 'NotMostRecentGivenDose';
+  description: Scalars['String']['output'];
+};
+
 export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface & {
   __typename: 'NothingRemainingToSupply';
   description: Scalars['String']['output'];
@@ -5973,7 +5967,7 @@ export type QueriesVaccineCoursesArgs = {
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
 };
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -7193,7 +7187,7 @@ export enum UniqueValueKey {
   Serial = 'serial'
 }
 
-export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateImmunisationProgramErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;
@@ -7343,22 +7337,6 @@ export type UpdateEncounterResponse = EncounterNode;
 export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
-
-export type UpdateImmunisationProgramError = {
-  __typename: 'UpdateImmunisationProgramError';
-  error: UpdateImmunisationProgramErrorInterface;
-};
-
-export type UpdateImmunisationProgramErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdateImmunisationProgramInput = {
-  id: Scalars['String']['input'];
-  name: Scalars['String']['input'];
-};
-
-export type UpdateImmunisationProgramResponse = ProgramNode | UpdateImmunisationProgramError;
 
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';
@@ -8043,6 +8021,15 @@ export type UpdateUserNode = {
 
 export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
+export type UpdateVaccinationError = {
+  __typename: 'UpdateVaccinationError';
+  error: UpdateVaccinationErrorInterface;
+};
+
+export type UpdateVaccinationErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type UpdateVaccinationInput = {
   clinicianId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -8051,12 +8038,12 @@ export type UpdateVaccinationInput = {
   given?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['String']['input'];
   notGivenReason?: InputMaybe<Scalars['String']['input']>;
-  stockLineId?: InputMaybe<Scalars['String']['input']>;
+  stockLineId?: InputMaybe<NullableStringUpdate>;
   updateTransactions?: InputMaybe<Scalars['Boolean']['input']>;
   vaccinationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
-export type UpdateVaccinationResponse = VaccinationNode;
+export type UpdateVaccinationResponse = UpdateVaccinationError | VaccinationNode;
 
 export type UpdateVaccineCourseError = {
   __typename: 'UpdateVaccineCourseError';
@@ -8090,6 +8077,7 @@ export type UpsertLogLevelResponse = {
 };
 
 export type UpsertVaccineCourseDoseInput = {
+  customAgeLabel?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   label: Scalars['String']['input'];
   maxAge: Scalars['Float']['input'];
@@ -8221,6 +8209,7 @@ export type UserStorePermissionNode = {
 export type VaccinationCardItemNode = {
   __typename: 'VaccinationCardItemNode';
   batch?: Maybe<Scalars['String']['output']>;
+  customAgeLabel?: Maybe<Scalars['String']['output']>;
   facilityName?: Maybe<Scalars['String']['output']>;
   given?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['String']['output'];
@@ -8228,6 +8217,7 @@ export type VaccinationCardItemNode = {
   maxAgeMonths: Scalars['Float']['output'];
   minAgeMonths: Scalars['Float']['output'];
   minIntervalDays: Scalars['Int']['output'];
+  status?: Maybe<VaccinationCardItemNodeStatus>;
   stockLine?: Maybe<StockLineNode>;
   suggestedDate?: Maybe<Scalars['NaiveDate']['output']>;
   vaccinationDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -8240,6 +8230,13 @@ export type VaccinationCardItemNode = {
 export type VaccinationCardItemNodeFacilityNameArgs = {
   storeId: Scalars['String']['input'];
 };
+
+export enum VaccinationCardItemNodeStatus {
+  Given = 'GIVEN',
+  Late = 'LATE',
+  NotGiven = 'NOT_GIVEN',
+  Pending = 'PENDING'
+}
 
 export type VaccinationCardNode = {
   __typename: 'VaccinationCardNode';
@@ -8277,6 +8274,7 @@ export type VaccineCourseConnector = {
 
 export type VaccineCourseDoseNode = {
   __typename: 'VaccineCourseDoseNode';
+  customAgeLabel?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   label: Scalars['String']['output'];
   maxAgeMonths: Scalars['Float']['output'];

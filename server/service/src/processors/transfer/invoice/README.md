@@ -37,9 +37,9 @@ Where shipments have a related Requisition (referring to the Requisition that th
 This is either:
 
 - the Inbound Shipment that an Supplier Return was created from
-- the Outbound Shipment that an Customer Return is related to
+- the Outbound Shipment that a Customer Return is related to
 
-When an Customer Return is generated from an Supplier Return, we check if that Supplier Return was created from an Inbound Shipment (i.e. does it have an `original_shipment_id`). If that Inbound Shipment has a linked Outbound Shipment, that Outbound Shipment will be set as the original shipment for our generated Customer Return.
+When a Customer Return is generated from an Supplier Return, we check if that Supplier Return was created from an Inbound Shipment (i.e. does it have an `original_shipment_id`). If that Inbound Shipment has a linked Outbound Shipment, that Outbound Shipment will be set as the original shipment for our generated Customer Return.
 
 Manually created returns don't have an original shipment.
 

@@ -1,4 +1,7 @@
-use repository::{RepositoryError, StockLine, StorageConnection, VaccinationRow};
+use repository::{
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StockLine,
+    StorageConnection, VaccinationRow,
+};
 
 use crate::{
     common_stock::{check_stock_line_exists, CommonStockLineError},
@@ -7,6 +10,7 @@ use crate::{
         check_clinician_exists, check_encounter_exists, check_item_belongs_to_vaccine_course,
         check_vaccination_exists, get_related_vaccinations,
     },
+    NullableUpdate,
 };
 
 use super::{UpdateVaccination, UpdateVaccinationError};
@@ -16,6 +20,7 @@ pub struct ValidateResult {
     pub patient_id: String,
     pub existing_stock_line: Option<StockLine>,
     pub new_stock_line: Option<StockLine>,
+    pub existing_prescription_line: Option<InvoiceLine>,
 }
 
 pub fn validate(
@@ -32,13 +37,13 @@ pub fn validate(
             UpdateVaccinationError::InternalError("Encounter does not exist".to_string()),
         )?;
 
-    if let Some(clinician_id) = input.clinician_id.clone().map(|u| u.value).flatten() {
+    if let Some(clinician_id) = input.clinician_id.clone().and_then(|u| u.value) {
         if !check_clinician_exists(&clinician_id, connection)? {
             return Err(UpdateVaccinationError::ClinicianDoesNotExist);
         }
     }
 
-    if let Some(facility_name_id) = input.facility_name_id.clone().map(|u| u.value).flatten() {
+    if let Some(facility_name_id) = input.facility_name_id.clone().and_then(|u| u.value) {
         if !check_name_exists(connection, &facility_name_id)?.is_some() {
             return Err(UpdateVaccinationError::FacilityNameDoesNotExist);
         }
@@ -68,23 +73,44 @@ pub fn validate(
     let new_stock_line = if not_given {
         // If not given, stock line should not get set
         None
-    } else if let Some(stock_line_id) = &input.stock_line_id {
-        let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
-
-        if !check_item_belongs_to_vaccine_course(
-            &stock_line.stock_line_row.item_link_id,
-            &vaccination.vaccine_course_dose_row.vaccine_course_id,
-            connection,
-        )? {
-            return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
-        };
-
-        check_doses_defined(&stock_line)?;
-
-        Some(stock_line)
     } else {
-        // If no new stock line provided, existing stock line should be used
-        existing_stock_line.clone()
+        match &input.stock_line_id {
+            // If no new stock line provided, existing stock line should be used
+            None => existing_stock_line.clone(),
+            // Setting to None
+            Some(NullableUpdate { value: None }) => None,
+            // Setting to new stock line, validate it
+            Some(NullableUpdate {
+                value: Some(stock_line_id),
+            }) => {
+                let stock_line = check_stock_line_exists(connection, store_id, stock_line_id)?;
+
+                if !check_item_belongs_to_vaccine_course(
+                    &stock_line.stock_line_row.item_link_id,
+                    &vaccination.vaccine_course_dose_row.vaccine_course_id,
+                    connection,
+                )? {
+                    return Err(UpdateVaccinationError::ItemDoesNotBelongToVaccineCourse);
+                };
+
+                check_doses_defined(&stock_line)?;
+
+                Some(stock_line)
+            }
+        }
+    };
+
+    // Get prescription line
+    let existing_prescription_line = match &vaccination.vaccination_row.invoice_id {
+        Some(invoice_id) => {
+            let line = InvoiceLineRepository::new(connection)
+                // Vaccination prescription should only ever have 1 line
+                .query_one(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?
+                .ok_or(RepositoryError::NotFound)?;
+
+            Some(line)
+        }
+        None => None,
     };
 
     // Check we can give/un-give this dose, based on previous and next doses
@@ -116,6 +142,7 @@ pub fn validate(
         patient_id: encounter.patient_link_id,
         existing_stock_line,
         new_stock_line,
+        existing_prescription_line,
     })
 }
 

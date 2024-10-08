@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "StockFilters": {
+      "properties": {
+        "itemCode": {
+          "description": "Item Code",
+          "type": "string"
+        },
+        "itemName": {
+          "description": "Item Name",
+          "type": "string"
+        },
+        "monthlyConsumptionLookBackPeriod": {
+          "description": "Average Monthly Consumption Look Back Period",
+          "type": "number"
+        }
+      }
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/StockFilters"
+    }
+  ]
+}
