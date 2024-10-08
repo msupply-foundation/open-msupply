@@ -288,7 +288,13 @@ Optional fields in the manifest json are marked as '// optional'
 
 This manifest.json file takes the place of cli param inserts seen in bash scripts such as upsert.sh in the open-mSupply-reports repo.
 
-Standard reports in the reports dir can be built into the generated json by running the following cli command:
+The command to build reports uses the build cli, so you will first need to run
+
+```bash
+cargo build
+```
+
+Standard reports in the reports dir can then be built into the generated json by running the following cli command:
 
 ```bash
 ./target/debug/remote_server_cli build-standard-reports
@@ -304,22 +310,23 @@ from the open-msupply/server dir.
 
 ## Standard reports versioning
 
-Standard reports include versions for updates of reports. open mSupply central will automatically sync the most recent standard report compatible with the remote site build of open mSupply.
+Standard reports include versions for updates of reports. Open mSupply central will automatically sync all standard reports.
 
-First open mSupply will check for custom reports of the same code which will override any standard report.
-open mSupply central will then sync to the remote site the most recent minor version which matches the major version of the remote site.
-For example:
+2.4 release will include filtering checks to show only the most up to date report compatible with the remote site build of open mSupply.
+
+<!-- For future release - confirm this will occur -->
+<!-- For example:
 
 for report_versions = [2.3.0, 2.3.5, 2.8.2, 2.8.3, 3.0.1, 3.5.1]
 if remote omSupply.version = 2.3 selected report = 2.3.5
 if remote omSupply.version = 2.4 selected report = 2.3.5
 if remote omSupply.version = 2.8 selected report = 2.8.3
 if remote omSupply.version = 3.2 selected report = 3.0.1
-if remote omSupply.version = 4.5 selected report = 3.5.1
+if remote omSupply.version = 4.5 selected report = 3.5.1 -->
 
 ### Adding a new standard report version
 
-Add a new version dir within the name of the report you are adding a new version to.
+Add a new version dir within the directory for the report you are adding a new version to.
 
 > Note that the dir names are for developer convenience only. The name and version of each report read by omSupply is from the manifest.json file.
 
