@@ -49,6 +49,7 @@ pub(crate) fn update_program_enrolment_row(
         enrolment_datetime,
         program_enrolment_id: program.program_enrolment_id,
         status,
+        store_id: program.store_id,
     };
     ProgramEnrolmentRowRepository::new(con).upsert_one(&program_row)?;
 
