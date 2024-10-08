@@ -17,6 +17,11 @@ export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
   const t = useTranslation();
   const [expand, setExpand] = useState(false);
   const hasMoreInformation = !!(details || hint);
+  const chervonCommonSyles = {
+    width: '0.6em',
+    marginTop: '0.1em',
+    height: '0.6em',
+  };
 
   return (
     <Box
@@ -63,18 +68,14 @@ export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
               {expand ? (
                 <ChevronDownIcon
                   sx={{
-                    width: '0.6em',
-                    marginTop: '0.1em',
-                    height: '0.6em',
+                    ...chervonCommonSyles,
                   }}
                 />
               ) : (
                 <ChevronDownIcon
                   sx={{
-                    width: '0.6em',
-                    marginTop: '0.1em',
-                    height: '0.6em',
                     transform: 'rotate(-90deg)',
+                    ...chervonCommonSyles,
                   }}
                 />
               )}
