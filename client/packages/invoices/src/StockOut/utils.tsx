@@ -101,9 +101,7 @@ export const createDraftStockOutLine = ({
   // Other statuses such as Shipped shouldn't show the stock line as available, so we don't need to adjust the available number of packs
   // If the invoice is New, no adjustments are needed, as the stockLines shouldn't be updated yet
 
-  const adjustAvailableNumberOfPacks =
-    invoiceStatus === InvoiceNodeStatus.Picked ||
-    invoiceStatus === InvoiceNodeStatus.Allocated;
+  const adjustAvailableNumberOfPacks = invoiceStatus !== InvoiceNodeStatus.New;
   const adjustTotalNumberOfPacks = invoiceStatus === InvoiceNodeStatus.Picked;
 
   let adjustedStockLine = stockLine ? stockLine : invoiceLine?.stockLine;
