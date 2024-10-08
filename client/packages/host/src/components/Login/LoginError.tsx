@@ -61,9 +61,22 @@ export const LoginError = ({ error, details, hint }: LoginErrorProps) => {
             >
               {t('error.more-info')}
               {expand ? (
-                <ChevronDownIcon />
+                <ChevronDownIcon
+                  sx={{
+                    width: '0.6em',
+                    marginTop: '0.1em',
+                    height: '0.6em',
+                  }}
+                />
               ) : (
-                <ChevronDownIcon sx={{ transform: 'rotate(-90deg)' }} />
+                <ChevronDownIcon
+                  sx={{
+                    width: '0.6em',
+                    marginTop: '0.1em',
+                    height: '0.6em',
+                    transform: 'rotate(-90deg)',
+                  }}
+                />
               )}
             </Typography>
             {expand && (
