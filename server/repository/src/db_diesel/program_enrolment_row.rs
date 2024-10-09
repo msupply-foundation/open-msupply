@@ -16,6 +16,7 @@ table! {
         enrolment_datetime -> Timestamp,
         program_enrolment_id -> Nullable<Text>,
         status -> Nullable<Text>,
+        store_id -> Nullable<Text>,
     }
 }
 
@@ -45,6 +46,8 @@ pub struct ProgramEnrolmentRow {
     /// Program specific patient id
     pub program_enrolment_id: Option<String>,
     pub status: Option<String>,
+    /// Store where patient was originally enrolled
+    pub store_id: Option<String>,
 }
 
 pub struct ProgramEnrolmentRowRepository<'a> {

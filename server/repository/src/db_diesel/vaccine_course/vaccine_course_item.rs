@@ -126,6 +126,8 @@ fn create_filtered_query(
         apply_equal_filter!(query, item_link_id, vaccine_course_item_dsl::item_link_id);
     }
 
+    query = query.filter(vaccine_course_item_dsl::deleted_datetime.is_null());
+
     Ok(query)
 }
 
