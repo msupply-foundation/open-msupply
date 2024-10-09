@@ -5466,6 +5466,7 @@ export type QueriesDemographicIndicatorsArgs = {
   filter?: InputMaybe<DemographicIndicatorFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<DemographicIndicatorSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -6613,6 +6614,7 @@ export type StockLineNode = {
   id: Scalars['String']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   locationId?: Maybe<Scalars['String']['output']>;
   locationName?: Maybe<Scalars['String']['output']>;
@@ -8240,6 +8242,7 @@ export enum VaccinationCardItemNodeStatus {
 
 export type VaccinationCardNode = {
   __typename: 'VaccinationCardNode';
+  enrolmentStoreId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   items: Array<VaccinationCardItemNode>;
   patientFirstName?: Maybe<Scalars['String']['output']>;
