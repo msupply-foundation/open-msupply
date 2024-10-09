@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  BasicSpinner,
   LocaleKey,
   noOtherVariants,
   NothingHere,
@@ -23,7 +24,7 @@ import { JsonData } from '@openmsupply-client/programs';
 
 export const DetailView = () => {
   const { id } = useParams();
-  const { data: report } = useReport(id ?? '');
+  const { data: report, isLoading } = useReport(id ?? '');
   const t = useTranslation();
 
   const {
@@ -32,6 +33,9 @@ export const DetailView = () => {
 
   const reportArgs =
     (reportArgsJson && JSON.parse(reportArgsJson.toString())) || undefined;
+  if (isLoading) {
+    return <BasicSpinner messageKey="loading" />;
+  }
 
   return !report?.id ? (
     <NothingHere body={t('error.report-does-not-exist')} />
@@ -52,6 +56,7 @@ const DetailViewInner = ({
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
   const [errorMessage, setErrorMessage] = useState('');
   const { mutateAsync } = useGenerateReport();
+  const [reportLoading, setReportLoading] = useState<boolean>(true);
   const [fileId, setFileId] = useState<string | undefined>();
   const { print, isPrinting } = usePrintReport();
   const { updateQuery } = useUrlQuery();
@@ -180,14 +185,24 @@ const DetailViewInner = ({
       <ReportArgumentsModal
         key={report.id}
         report={reportWithArgs}
-        onReset={() => setReportWithArgs(undefined)}
+        onReset={() => {
+          setReportWithArgs(undefined);
+          setReportLoading(true);
+        }}
         onArgumentsSelected={generateReport}
       />
-
-      {!fileId ? (
-        <NothingHere body={errorMessage} />
+      {reportLoading && (
+        <BasicSpinner messageKey="messages.loading-report"></BasicSpinner>
+      )}
+      {fileId ? (
+        <iframe
+          src={url}
+          width="100%"
+          style={{ borderWidth: 0 }}
+          onLoad={() => setReportLoading(false)}
+        />
       ) : (
-        <iframe src={url} width="100%" style={{ borderWidth: 0 }} />
+        !reportLoading && <NothingHere body={errorMessage} />
       )}
     </>
   );
