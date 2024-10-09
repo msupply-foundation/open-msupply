@@ -591,7 +591,7 @@
   "label.label": "Etiqueta",
   "label.last-name": "Apellido",
   "label.last-reading": "Última lectura",
-  "label.leads-time": "Tiempo de entrega en meses",
+  "label.lead-time": "Tiempo de entrega en meses",
   "label.ledger": "Libro mayor",
   "label.level": "Nivel",
   "label.line": "Línea {{line, number}}",

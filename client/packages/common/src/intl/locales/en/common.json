@@ -735,7 +735,6 @@
   "label.last-recording-value": "Last temperature recording value",
   "label.last-updated": "Last updated",
   "label.lead-time": "Months lead time",
-  "label.leads-time": "Months leads time",
   "label.ledger": "Ledger",
   "label.level": "Level",
   "label.line": "Line {{line, number}}",
