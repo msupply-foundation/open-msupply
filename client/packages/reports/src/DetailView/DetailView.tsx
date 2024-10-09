@@ -173,10 +173,6 @@ const DetailViewInner = ({
 
   const url = `${Environment.FILE_URL}${fileId}`;
 
-  const loaded = () => {
-    setReportLoading(false);
-  };
-
   return (
     <>
       <AppBarButtons
@@ -203,7 +199,7 @@ const DetailViewInner = ({
           src={url}
           width="100%"
           style={{ borderWidth: 0 }}
-          onLoad={loaded}
+          onLoad={() => setReportLoading(false)}
         />
       ) : (
         !reportLoading && <NothingHere body={errorMessage} />
