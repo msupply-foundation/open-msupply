@@ -15,5 +15,5 @@
   "label.document-edit-history": "Document Edit History",
   "label.dose": "Dose",
   "label.systolic": "Systolic",
-  "message.add-a-dose": "Add a dose"
+  "message.add-a-dose": "No doses configured yet. Click the '+ Dose' button to add a dose."
 }

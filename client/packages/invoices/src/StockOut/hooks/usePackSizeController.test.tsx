@@ -2,6 +2,7 @@ import { usePackSizeController } from './usePackSizeController';
 import { act } from '@testing-library/react';
 import {
   InvoiceLineNodeType,
+  InvoiceNodeStatus,
   renderHookWithProvider,
 } from '@openmsupply-client/common';
 import {
@@ -37,6 +38,7 @@ const testLine = ({
 }: TestLineParams): DraftStockOutLine =>
   createDraftStockOutLine({
     invoiceId: '',
+    invoiceStatus: InvoiceNodeStatus.New,
     invoiceLine: {
       id,
       expiryDate,
