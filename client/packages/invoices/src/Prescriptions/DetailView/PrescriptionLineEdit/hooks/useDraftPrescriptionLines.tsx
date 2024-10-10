@@ -78,7 +78,7 @@ export const useDraftPrescriptionLines = (
               invoiceLine,
               invoiceId,
               stockLine: batch,
-              adjustTotalNumberOfPacks: true,
+              invoiceStatus: status,
             });
           } else {
             return createDraftStockOutLineFromStockLine({
@@ -102,7 +102,11 @@ export const useDraftPrescriptionLines = (
           const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
           if (!!placeholderItem) placeholder.item = placeholderItem;
           rows.push(
-            createDraftStockOutLine({ invoiceId, invoiceLine: placeholder })
+            createDraftStockOutLine({
+              invoiceId,
+              invoiceLine: placeholder,
+              invoiceStatus: status,
+            })
           );
         } else {
           // Commented out for now until placeholders are implemented for prescriptions
