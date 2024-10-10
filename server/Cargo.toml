@@ -47,6 +47,7 @@ log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 
 # TODO: Remove. async_graphql is using 1.0 but SET_COOKIE was being imported from wrong version.
 http2 = { package = "http", version = "1.0.0" }
+log-panics = { version = "2.1.0", features = ["with-backtrace"] }
 
 [workspace.lints.clippy]
 wrong_self_convention = "allow"
