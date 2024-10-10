@@ -9,12 +9,15 @@ impl MigrationFragment for Migrate {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         if cfg!(feature = "postgres") {
-            sql!(
+            let result = sql!(
                 connection,
                 r#"
                     ALTER TABLE temperature_breach_config DROP CONSTRAINT temperature_breach_config_description_key;
                 "#
-            )?;
+            );
+            if (result.is_err()) {
+                log::warn!("Failed to drop unique constraint on description column of temperature_breach_config table, please check name of constraint");
+            }
         } else {
             sql!(
                 connection,
