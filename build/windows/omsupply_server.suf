@@ -1295,14 +1295,14 @@ if (e_MsgID == MSGID_CLICKED) then
 	if (e_CtrlID == CTRL_BUTTON_01) then
 
 		-- Insert your button handling code here
-		
+
 		Dialog.Message("Click","You clicked on Button 01", MB_OK, MB_ICONNONE);
 	end
-	
+
 	if (e_CtrlID == CTRL_BUTTON_02) then
 
 		-- Insert your button handling code here
-		
+
 		Dialog.Message("Click","You clicked on Button 02", MB_OK, MB_ICONNONE);
 	end
 
@@ -1679,14 +1679,14 @@ if (e_MsgID == MSGID_CLICKED) then
 	if (e_CtrlID == CTRL_BUTTON_01) then
 
 		-- Insert your button handling code here
-		
+
 		Dialog.Message("Click","You clicked on Button 01", MB_OK, MB_ICONNONE);
 	end
-	
+
 	if (e_CtrlID == CTRL_BUTTON_02) then
 
 		-- Insert your button handling code here
-		
+
 		Dialog.Message("Click","You clicked on Button 02", MB_OK, MB_ICONNONE);
 	end
 
@@ -2062,7 +2062,7 @@ if(g_IsValidPath(strInstallFolderPath)) then
 		Screen.Next();
 	else
 		-- there isn't enough space on the drive...
-		
+
 		-- from _SUF70_Global_Functions.lua:
 		-- ask the user if they want to continue anyway
 		if g_ConfirmFreeSpaceOverride() then
@@ -2073,7 +2073,7 @@ if(g_IsValidPath(strInstallFolderPath)) then
 	end
 else
 	-- the install folder path isn't valid...
-	
+
 	local strTitle = SetupData.GetLocalizedString("MSG_INVALID_ENTRY");
 	local strPrompt;
 
@@ -2084,7 +2084,7 @@ else
 		strPrompt = SetupData.GetLocalizedString("ERR_INVALID_PATH");
 	else
 		-- the string contains invalid characters
-		strPrompt = SetupData.GetLocalizedString("ERR_INVALID_CHARACTERS") .. "\r\n/ * ? \" &lt; &gt; |";		
+		strPrompt = SetupData.GetLocalizedString("ERR_INVALID_CHARACTERS") .. "\r\n/ * ? \" &lt; &gt; |";
 	end
 
 	-- tell the user to smarten up :)
@@ -2124,7 +2124,7 @@ end
 if(e_CtrlID == CTRL_BUTTON_BROWSE) then
 	-- the control message is from the browse button...
 
-	-- if it's a click message, show the browse dialog 
+	-- if it's a click message, show the browse dialog
 	-- and update the install folder
 	if (e_MsgID == MSGID_CLICKED) then
 
@@ -2132,7 +2132,7 @@ if(e_CtrlID == CTRL_BUTTON_BROWSE) then
 		-- (this will be used as the prompt on the Browse dialog)
 		local strPrompt = Screen.GetLocalizedString("IDS_CTRL_STATICTEXT_LABEL_01");
 		strPrompt = SessionVar.Expand(strPrompt);
-		
+
 		-- from _SUF70_Global_Functions.lua:
 		-- display a folder browse dialog to change the path in the install folder field
 		g_EditFieldFolderBrowse(CTRL_EDIT_FOLDER, strPrompt);
@@ -2148,7 +2148,7 @@ if(e_CtrlID == CTRL_EDIT_FOLDER) then
 	if (e_MsgID == MSGID_ONCHANGED) then
 
 		strInstallFolderPath = e_Details.Text;
-		
+
 		-- from _SUF70_Global_Functions.lua:
 		-- calculate the amount of disk space available on the selected drive
 		_SpaceAvailable = g_GetFreeSpaceInBytes(strInstallFolderPath);
@@ -2704,8 +2704,8 @@ Please click Next to proceed with the installation.</IDS_CTRL_STATICTEXT_BODY>
 <Script>-- These actions are performed whenever progress is made while the setup is installing files.
 
 --[[
-Note: 
-	The file installation process is divided into 4 progress stages: 
+Note:
+	The file installation process is divided into 4 progress stages:
 
 	1. preparing to install
 	2. installing files
@@ -3062,14 +3062,14 @@ if (e_MsgID == MSGID_CLICKED) then
 	if (e_CtrlID == CTRL_BUTTON_01) then
 
 		-- Insert your button handling code here
-		
+
 		Dialog.Message("Click","You clicked on Button 01", MB_OK, MB_ICONNONE);
 	end
-	
+
 	if (e_CtrlID == CTRL_BUTTON_02) then
 
 		-- Insert your button handling code here
-		
+
 		Dialog.Message("Click","You clicked on Button 02", MB_OK, MB_ICONNONE);
 	end
 
@@ -3701,8 +3701,8 @@ Otherwise, click Next to continue.
 <Script>-- These actions are performed whenever progress is made while the setup is uninstalling files.
 
 --[[
-Note: 
-	The uninstallation process is divided into 2 progress stages: 
+Note:
+	The uninstallation process is divided into 2 progress stages:
 
 	1. removing files
 	2. removing shortcuts
@@ -4413,7 +4413,7 @@ if (cbPostgres) then
       local errorText = errorInfo.Message .. "\r\nServer Status: " .. errorInfo.Status;
       Dialog.Message("Error Downloading PostgreSQL installer: " .. errorInfo.Number, errorText, MB_OK, MB_ICONEXCLAMATION);
     else
-  
+
       StatusDlg.Hide();
       StatusDlg.Show(MB_ICONINFORMATION, false);
       StatusDlg.SetMessage("Hold on, installing postgreSQL")
@@ -4423,7 +4423,7 @@ if (cbPostgres) then
       result = File.Run(_TempFolder .. "\\postgresql-14.4-1-windows-x64.exe", args, "", SW_SHOWNORMAL, true);
       StatusDlg.SetMeterPos(1);
       StatusDlg.Hide();
-      
+
       if (result ~= 0) then
         Dialog.Message("PostgreSQL Install Failed", "Something went wrong with the postgreSQL installation.", MB_OK, MB_ICONEXCLAMATION)
       end
@@ -4474,13 +4474,13 @@ if hasOmsupplyInstalled then
 end
 
 if (omSupplyServerDatabase == "postgres") then
-	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe"); 
+	omSupplyServerPath = SessionVar.Expand("%AppFolder%\\omSupply-postgres.exe");
 end
 
 if hasOmsupplyInstalled then
 	local uninstallPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 	local installedApps = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, uninstallPath);
-	if (installedApps ~= nil) then	
+	if (installedApps ~= nil) then
 		-- Remove previous versions of this app from the uninstall list
 		if (Table.Count(installedApps) &gt; 0) then
 			for index, value in pairs(installedApps) do
@@ -4501,7 +4501,7 @@ else
 	config = config .. "  database_name: \"" .. SessionVar.Get("%omsupply_db_name%") .. "\"\r\n";
 	config = config .. "logging:\r\n";
 	config = config .. "  mode: File\r\n";
-	config = config .. "  level: Warn\r\n";
+	config = config .. "  level: Info\r\n";
 	config = config .. "  directory: log\r\n";
 	config = config .. "  filename: omsupply.log\r\n";
 	config = config .. "  max_file_count: 10\r\n";
@@ -4512,7 +4512,7 @@ else
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Server");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", omSupplyServerPath, REG_SZ);
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", omSupplyServerDatabase, REG_SZ);
-	
+
 	-- Create environment variable for postgres libraries required for diesel orm (backend)
 	if (omSupplyServerDatabase == "postgres") then
 		local envKey = "System\\CurrentControlSet\\Control\\Session Manager\\Environment";
@@ -4522,8 +4522,8 @@ else
 		local pgBinPath = "";
 		local pgLibPath = "";
 		local tblPgInstalls = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, "Software\\PostgreSQL\\Installations_");
-		
-		if (tblPgInstalls ~= nil) then	
+
+		if (tblPgInstalls ~= nil) then
 			if (Table.Count(tblPgInstalls) &gt; 0) then
 				local higherPgVersion = "0.0.0";
 				for index, value in pairs(tblPgInstalls) do
@@ -4537,12 +4537,12 @@ else
 				end
 			end
 		end
-		
+
 		-- Postgres bin path has been found, set it to environment variable
 		if (pgBinPath ~= "") then
 			local pgBinTargetIndex = String.Find(path, pgBinPath, 1, false);
 			local pgLibTargetIndex = String.Find(path, pgLibPath, 1, false);
-			
+
 			if (pgBinTargetIndex == -1) then
 				-- postgres bin path not found, add it
 				path = path .. ";" .. pgBinPath;
@@ -4551,11 +4551,11 @@ else
 				-- postgres lib path not found, add it
 				path = path .. ";" .. pgLibPath;
 			end
-			
+
 			-- Update registry
 			Registry.SetValue(HKEY_LOCAL_MACHINE, envKey, "Path", path, REG_EXPAND_SZ);
 			SetupData.WriteToLogFile("Info\tNew Path=" .. path .. "\r\n", true);
-			
+
 			-- Refresh the 'Path' environment variable
 			File.Run(SessionVar.Expand("%TempLaunchFolder%\\RefreshEnvironment.exe"), "", "", SW_MINIMIZE, true);
 			local error = Application.GetLastError();
@@ -4589,7 +4589,7 @@ local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Para
 if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
 
 	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN", "v2.28|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=" .. SessionVar.Get("%omsupply_port%") .. "|Name=".. SessionVar.Get("%ProductName%") .. "|", REG_SZ);
-	
+
 	-- The firewall service requires restarting to detect the new rule
 	local firewallServiceName = "Windows Firewall";
 	queryResult = Service.Query(firewallServiceName, "");
