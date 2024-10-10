@@ -12,7 +12,6 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
                 UPDATE report SET id =  REPLACE(id, '.', '_');
-                UPDATE form_schema SET id = REPLACE(id, '.', '_'); 
             "#
         )?;
 
