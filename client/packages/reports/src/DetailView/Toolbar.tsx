@@ -60,15 +60,11 @@ export const Toolbar = ({ reportName }: ToolbarProps) => {
         </Grid>
         {expand && (
           <Grid sx={{ paddingLeft: 3 }}>
-            <Typography sx={{ textWrap: 'wrap' }} variant="body2">
-              {t(`messages.how-to-read-${reportFormat}` as LocaleKey)
-                .split('\n')
-                .map((line, index) => (
-                  <React.Fragment key={index}>
-                    {line}
-                    <br />
-                  </React.Fragment>
-                ))}
+            <Typography
+              sx={{ textWrap: 'wrap', whiteSpace: 'pre-line' }}
+              variant="body2"
+            >
+              {t(`messages.how-to-read-${reportFormat}` as LocaleKey)}
             </Typography>
           </Grid>
         )}
