@@ -241,45 +241,24 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
 
     // convert_data
     if let Some(convert_data) = &args.convert_data {
-        let manifest_path = &format!("./{}/Cargo.toml", convert_data);
+        let js = &format!("./{}/convert_data.js", convert_data);
 
-        if Path::new(&manifest_path).exists() {
-            let target_dir = format!(
-                "./{}/target/wasm32-unknown-unknown/release/{}.wasm",
-                convert_data, convert_data
-            );
+        let ts = &format!("./{}/convert_data.d.ts", convert_data);
 
-            Command::new("cargo")
-                .args([
-                    "build",
-                    "--release",
-                    "--target",
-                    "wasm32-unknown-unknown",
-                    "--manifest-path",
-                    &manifest_path,
-                ])
-                .output()
-                .unwrap();
+        let wasm = &format!("./{}/convert_data.wasm", convert_data);
 
-            let encoded = BASE64_STANDARD.encode(fs::read(target_dir).unwrap());
+        let dir_path = &format!("./{}/", convert_data);
 
-            index.convert_data = Some(encoded)
-        } else {
-            let js = &format!("./{}/convert_data.js", convert_data);
+        Command::new(&format!("ls {}", dir_path));
 
-            let ts = &format!("./{}/convert_data.d.ts", convert_data);
+        Command::new("extism-js")
+            .args([&js, "-i", &ts, "-o", &wasm])
+            .output()
+            .unwrap();
 
-            let wasm = &format!("./{}/convert_data.wasm", convert_data);
+        let encoded = BASE64_STANDARD.encode(fs::read(wasm).unwrap());
 
-            Command::new("extism-js")
-                .args([&js, "-i", &ts, "-o", &wasm])
-                .output()
-                .unwrap();
-
-            let encoded = BASE64_STANDARD.encode(fs::read(wasm).unwrap());
-
-            index.convert_data = Some(encoded)
-        }
+        index.convert_data = Some(encoded)
     }
 
     Ok(ReportDefinition { index, entries })
