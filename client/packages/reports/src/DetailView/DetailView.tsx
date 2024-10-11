@@ -176,7 +176,7 @@ const DetailViewInner = ({
 
   return (
     <>
-      <Toolbar reportName={report.name} />
+      <Toolbar reportName={report.name} isCustom={report.isCustom} />
       <AppBarButtons
         isFilterDisabled={!report?.argumentSchema}
         onFilterOpen={openReportArgumentsModal}
