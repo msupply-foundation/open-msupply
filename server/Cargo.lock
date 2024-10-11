@@ -5599,6 +5599,7 @@ dependencies = [
  "eventlog",
  "futures",
  "log",
+ "log-panics",
  "server",
  "service",
  "tokio",
