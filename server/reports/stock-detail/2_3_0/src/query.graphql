@@ -3,6 +3,7 @@ query StockDetail($storeId: String, $itemCodeOrName: String) {
     storeId: $storeId
     page: { first: 5000 }
     filter: { itemCodeOrName: { like: $itemCodeOrName }, hasPacksInStore: true }
+    sort: { key: itemName, desc: false }
   ) {
     ... on StockLineConnector {
       nodes {
