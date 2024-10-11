@@ -417,7 +417,11 @@ async fn main() -> anyhow::Result<()> {
 
             let report_names = report_names
                 .into_iter()
-                .filter(|name| name != "./reports/generated")
+                .filter(|name| {
+                    name != "./reports/.gitignore"
+                        && name != "./reports/.DS_Store"
+                        && name != "./reports/generated"
+                })
                 .collect::<Vec<String>>();
 
             let mut reports_data = ReportsData { reports: vec![] };
@@ -456,6 +460,7 @@ async fn main() -> anyhow::Result<()> {
                         .and_then(|ui| format!("{version_dir}/{ui}").into());
                     let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
                     let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
+                    let convert_data = manifest.convert_data.clone();
 
                     let args = BuildArgs {
                         dir: format!("{version_dir}/src"),
@@ -466,6 +471,7 @@ async fn main() -> anyhow::Result<()> {
                         query_gql: graphql_query,
                         query_default: None,
                         query_sql: sql_queries,
+                        convert_data,
                     };
 
                     let report_definition = build_report_definition(&args)
@@ -635,6 +641,7 @@ pub struct Manifest {
     pub default_query: Option<String>,
     pub arguments: Option<Arguments>,
     pub test_arguments: Option<TestReportArguments>,
+    pub convert_data: Option<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]

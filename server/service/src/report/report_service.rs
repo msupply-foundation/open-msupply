@@ -4,7 +4,6 @@ use extism::{
     convert::{encoding, Json},
     host_fn, FromBytes, Manifest, PluginBuilder, UserData, Wasm, WasmMetadata, PTR,
 };
-use headless_chrome::protocol::cdp::Storage;
 use repository::{
     raw_query, EqualFilter, JsonRawRow, PaginationOption, Report, ReportFilter, ReportRepository,
     ReportRowRepository, ReportSort, ReportType, RepositoryError, StorageConnection,
@@ -979,7 +978,7 @@ mod report_generation_test {
             output: ReportOutputType::Html,
         };
 
-        let (_, _, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("test_report_translations", MockDataInserts::none()).await;
 
         let translation_service =
@@ -996,11 +995,13 @@ mod report_generation_test {
             queries: Vec::new(),
             templates,
             resources: HashMap::new(),
+            convert_data: None,
         };
 
         let report_data = json!(null);
 
         let generated_report = generate_report(
+            connection,
             &report,
             report_data.clone(),
             None,
@@ -1012,9 +1013,13 @@ mod report_generation_test {
         assert!(generated_report.document.contains("some text"));
         assert!(generated_report.document.contains("Name"));
 
-        // test generation in other languages
+        let (_, connection, _, _) =
+            setup_all("test_report_translations", MockDataInserts::none()).await;
+
+        // // test generation in other languages
 
         let generated_report = generate_report(
+            connection,
             &report,
             report_data,
             None,
