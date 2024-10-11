@@ -5,7 +5,7 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use repository::query_json;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
+use service::report::definition::{PrintReportSort, GraphQlQuery, ReportDefinition, SQLQuery};
 use service::report::report_service::{ReportError, ResolvedReportQuery};
 
 use crate::PrintFormat;
@@ -118,7 +118,7 @@ pub async fn generate_report(
         report_data,
         arguments,
         format.map(PrintFormat::to_domain),
-        *translation_service,
+        translation_service,
         current_language,
     ) {
         Ok(file_id) => file_id,
@@ -129,7 +129,9 @@ pub async fn generate_report(
         }
     };
 
-    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
+    Ok(PrintReportResponse::Response(PrintReportNode {
+        file_id,
+    }))
 }
 
 pub async fn generate_report_definition(
@@ -200,7 +202,7 @@ pub async fn generate_report_definition(
         report_data,
         arguments,
         format.map(PrintFormat::to_domain),
-        *translation_service,
+        translation_service,
         current_language,
     ) {
         Ok(file_id) => file_id,
@@ -211,7 +213,9 @@ pub async fn generate_report_definition(
         }
     };
 
-    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
+    Ok(PrintReportResponse::Response(PrintReportNode {
+        file_id,
+    }))
 }
 
 enum FetchResult {
