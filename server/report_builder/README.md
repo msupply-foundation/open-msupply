@@ -320,7 +320,7 @@ Report generations includes the ability to use custom wasm functions to further 
 OMS includes building of JS wasm functions by adding a "convert_data" dir in the version dir.
 See [the extism-js docs](https://github.com/extism/js-pdk) for more details on how to build wasm functions with js within OMS.
 
-Alternatively wasm functions can be built externally using any compatible language, and added as a custom wasm function.
+Alternatively wasm functions can be built externally using any compatible language ([see wasm docs for more details](https://webassembly.org/getting-started/developers-guide/)), and added as a custom wasm function.
 The "custom_wasm_function" can point to any externally built wasm function.
 
 ## Standard reports versioning
