@@ -22,17 +22,13 @@
   text-align: left;
   margin-top: 10;
   margin-bottom: 15;
-  border-collapse: collapse;
+  border-collapse: separate;
 }
 
 .container table td {
   padding: 10px;
   vertical-align: top;
-  border-bottom: 1px solid rgb(164, 163, 163);
-}
-
-.container table tr:last-child td {
-  border-bottom: none;
+  border-top: 1px solid rgb(164, 163, 163);
 }
 
 .container > table > thead {
