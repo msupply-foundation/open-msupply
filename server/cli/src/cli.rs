@@ -415,17 +415,9 @@ async fn main() -> anyhow::Result<()> {
                 .filter_map(|r| r.ok())
                 .map(|e| e.path())
                 .filter(|p| p.is_dir())
+                .filter(|name| name != &PathBuf::from("./reports/generated"))
                 .map(|p| p.into_os_string().into_string().unwrap())
                 .collect();
-
-            let report_names = report_names
-                .into_iter()
-                .filter(|name| {
-                    name != "./reports/.gitignore"
-                        && name != "./reports/.DS_Store"
-                        && name != "./reports/generated"
-                })
-                .collect::<Vec<String>>();
 
             let mut reports_data = ReportsData { reports: vec![] };
 
