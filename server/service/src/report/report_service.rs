@@ -748,6 +748,7 @@ mod report_service_test {
                 footer: Some("footer.html".to_string()),
                 query: vec!["query".to_string()],
                 convert_data: None,
+                custom_wasm_function: None,
             },
             entries: HashMap::from([
                 (
@@ -778,6 +779,7 @@ mod report_service_test {
                 footer: Some("footer.html".to_string()),
                 query: vec![],
                 convert_data: None,
+                custom_wasm_function: None,
             },
             entries: HashMap::from([(
                 "footer.html".to_string(),
