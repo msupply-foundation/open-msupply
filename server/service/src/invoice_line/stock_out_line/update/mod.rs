@@ -667,6 +667,37 @@ mod test {
             "available_stock_on_hand should be 150.0 units but was {:?}",
             stats.available_stock_on_hand
         );
+
+        // Update the the stock out line of the prescription (using all available stock)
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                inline_init(|r: &mut UpdateStockOutLine| {
+                    r.id = "prescription_stock_out_line1".to_string();
+                    r.r#type = Some(StockOutType::Prescription);
+                    r.number_of_packs = Some(10.0);
+                }),
+            )
+            .unwrap();
+
+        let stats = item_stats_service
+            .get_item_stats(
+                &context,
+                &context.store_id,
+                None,
+                Some(
+                    ItemStatsFilter::new()
+                        .item_id(EqualFilter::equal_to(mock_item_a().id.as_str())),
+                ),
+            )
+            .unwrap();
+        let stats = stats.first().unwrap();
+        assert_eq!(
+            stats.available_stock_on_hand, 100.0,
+            "available_stock_on_hand should be 100.0 units but was {:?}",
+            stats.available_stock_on_hand
+        );
+
         // Check that we can't update the stock line to use more than the available stock (10 packs)
         assert_eq!(
             invoice_line_service.update_stock_out_line(
