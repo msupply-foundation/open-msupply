@@ -45,7 +45,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   const cleanUp = () => {
     onReset();
     if (isDirty) {
-      onSetLoading;
+      onSetLoading && onSetLoading;
     }
   };
 
