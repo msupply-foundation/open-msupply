@@ -6069,6 +6069,7 @@ export type ReportNode = {
   argumentSchema?: Maybe<FormSchemaNode>;
   context: ReportContext;
   id: Scalars['String']['output'];
+  isCustom: Scalars['Boolean']['output'];
   /** Human readable name of the report */
   name: Scalars['String']['output'];
   subContext?: Maybe<Scalars['String']['output']>;
