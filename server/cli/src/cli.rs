@@ -411,9 +411,12 @@ async fn main() -> anyhow::Result<()> {
             let con = connection_manager.connection()?;
             let base_reports_dir = "./reports";
 
-            let report_names = fs::read_dir(base_reports_dir)?
-                .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
-                .collect::<Result<Vec<String>, std::io::Error>>()?;
+            let report_names: Vec<String> = fs::read_dir(base_reports_dir)?
+                .filter_map(|r| r.ok())
+                .map(|e| e.path())
+                .filter(|p| p.is_dir())
+                .map(|p| p.into_os_string().into_string().unwrap())
+                .collect();
 
             let report_names = report_names
                 .into_iter()
@@ -427,9 +430,12 @@ async fn main() -> anyhow::Result<()> {
             let mut reports_data = ReportsData { reports: vec![] };
 
             for name_dir in report_names {
-                let report_versions = fs::read_dir(&name_dir)?
-                    .map(|res| res.map(|e| e.path().into_os_string().into_string().unwrap()))
-                    .collect::<Result<Vec<String>, std::io::Error>>()?;
+                let report_versions: Vec<String> = fs::read_dir(&name_dir)?
+                    .filter_map(|r| r.ok())
+                    .map(|e| e.path())
+                    .filter(|p| p.is_dir())
+                    .map(|p| p.into_os_string().into_string().unwrap())
+                    .collect();
 
                 let (_, name) = name_dir.rsplit_once('/').unwrap();
 
@@ -461,6 +467,7 @@ async fn main() -> anyhow::Result<()> {
                     let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
                     let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
                     let convert_data = manifest.convert_data.clone();
+                    let custom_wasm_function = manifest.custom_wasm_function;
 
                     let args = BuildArgs {
                         dir: format!("{version_dir}/src"),
@@ -472,6 +479,7 @@ async fn main() -> anyhow::Result<()> {
                         query_default: None,
                         query_sql: sql_queries,
                         convert_data,
+                        custom_wasm_function,
                     };
 
                     let report_definition = build_report_definition(&args)
@@ -642,6 +650,7 @@ pub struct Manifest {
     pub arguments: Option<Arguments>,
     pub test_arguments: Option<TestReportArguments>,
     pub convert_data: Option<String>,
+    pub custom_wasm_function: Option<String>,
 }
 
 #[derive(serde::Deserialize, Clone)]
