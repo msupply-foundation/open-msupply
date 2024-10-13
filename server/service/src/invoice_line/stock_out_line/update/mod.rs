@@ -131,8 +131,8 @@ mod test {
             mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
-        InvoiceType, StockLineRow, StockLineRowRepository, Upsert,
+        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository, Upsert,
     };
     use util::{inline_edit, inline_init};
 
@@ -146,6 +146,7 @@ mod test {
             },
             InsertStockOutLine,
         },
+        item_stats::ItemStatsFilter,
         service_provider::ServiceProvider,
     };
 
@@ -527,8 +528,7 @@ mod test {
         let context = service_provider
             .context(mock_store_b().id, "".to_string())
             .unwrap();
-        let service = service_provider.invoice_line_service;
-
+        let invoice_line_service = service_provider.invoice_line_service;
         // Create two invoices, one backdated and one current for the same stock line
 
         // Invoice from 7 days ago
@@ -636,7 +636,7 @@ mod test {
         prescription_invoice.upsert(&context.connection).unwrap();
 
         // Add a stock out line to the prescription (using all available stock)
-        service
+        invoice_line_service
             .insert_stock_out_line(
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
@@ -644,14 +644,32 @@ mod test {
                     r.r#type = StockOutType::Prescription;
                     r.invoice_id = prescription_id.clone();
                     r.stock_line_id = stock_line_id.clone();
-                    r.number_of_packs = 10.0;
+                    r.number_of_packs = 5.0;
                 }),
             )
             .unwrap();
 
+        let item_stats_service = service_provider.item_stats_service;
+        let stats = item_stats_service
+            .get_item_stats(
+                &context,
+                &context.store_id,
+                None,
+                Some(
+                    ItemStatsFilter::new()
+                        .item_id(EqualFilter::equal_to(mock_item_a().id.as_str())),
+                ),
+            )
+            .unwrap();
+        let stats = stats.first().unwrap();
+        assert_eq!(
+            stats.available_stock_on_hand, 150.0,
+            "available_stock_on_hand should be 150.0 units but was {:?}",
+            stats.available_stock_on_hand
+        );
         // Check that we can't update the stock line to use more than the available stock (10 packs)
         assert_eq!(
-            service.update_stock_out_line(
+            invoice_line_service.update_stock_out_line(
                 &context,
                 inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = "prescription_stock_out_line1".to_string();
