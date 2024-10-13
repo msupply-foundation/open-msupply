@@ -96,7 +96,7 @@ impl UpdateInput {
         } = self;
         ServiceInput {
             id,
-            r#type: Some(StockOutType::OutboundShipment),
+            r#type: StockOutType::OutboundShipment,
             stock_line_id,
             number_of_packs,
             total_before_tax: None,
@@ -164,7 +164,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
-        | NoInvoiceType
         | NumberOfPacksBelowZero
         | ItemNotFound
         | ItemDoesNotMatchStockLine
@@ -541,7 +540,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
-                    r#type: Some(StockOutType::OutboundShipment),
+                    r#type: StockOutType::OutboundShipment,
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
                     total_before_tax: None,

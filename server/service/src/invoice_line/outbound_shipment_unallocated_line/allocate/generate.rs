@@ -37,7 +37,7 @@ pub fn generate(
     let allocated_lines = get_allocated_lines(connection, &unallocated_line)?;
     // Assume pack_size 1 for unallocated line
     let mut remaining_to_allocate = unallocated_line.invoice_line_row.number_of_packs;
-    // If nothing remaing to alloacted just remove the line
+    // If nothing remaining to allocated just remove the line
     if remaining_to_allocate <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.invoice_line_row.id,
@@ -96,7 +96,7 @@ pub fn generate(
         }
     }
 
-    // If nothing remaining to alloacted just remove the line, otherwise update
+    // If nothing remaining to allocated just remove the line, otherwise update
     if remaining_to_allocate <= 0.0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
             id: unallocated_line.invoice_line_row.id,
@@ -180,7 +180,7 @@ fn try_allocate_existing_line(
             let line_row = line.invoice_line_row.clone();
             UpdateStockOutLine {
                 id: line_row.id,
-                r#type: Some(StockOutType::OutboundShipment),
+                r#type: StockOutType::OutboundShipment,
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
                 stock_line_id: None,
                 total_before_tax: None,
