@@ -540,10 +540,10 @@ mod test {
             name_link_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            delivered_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -558,10 +558,10 @@ mod test {
             name_link_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            delivered_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -625,11 +625,11 @@ mod test {
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
-            picked_datetime: Some(datetime.clone()),
+            picked_datetime: Some(datetime),
             delivered_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,
-            backdated_datetime: Some(datetime.clone()), // Backdated to 2 days ago
+            backdated_datetime: Some(datetime), // Backdated to 2 days ago
             ..Default::default()
         };
 
