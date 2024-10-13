@@ -1049,7 +1049,7 @@ mod test {
                 update_line: vec![InputWithResult {
                     input: inline_init(|input: &mut UpdateStockOutLine| {
                         input.id = "id3".to_string();
-                        input.r#type = Some(StockOutType::OutboundShipment)
+                        input.r#type = StockOutType::OutboundShipment
                     }),
                     result: Ok(inline_init(|input: &mut InvoiceLine| {
                         input.invoice_line_row.id = "id3".to_string()

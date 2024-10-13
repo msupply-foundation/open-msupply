@@ -896,7 +896,7 @@ impl InvoiceTransferTester {
                 inline_init(|r: &mut UpdateStockOutLine| {
                     r.id.clone_from(&self.outbound_shipment_line2.id);
                     r.number_of_packs = Some(21.0);
-                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.r#type = StockOutType::OutboundShipment;
                 }),
             )
             .unwrap()
@@ -1179,7 +1179,7 @@ impl InvoiceTransferTester {
                 inline_init(|r: &mut UpdateStockOutLine| {
                     r.id.clone_from(&self.supplier_return_line.id);
                     r.number_of_packs = Some(21.0);
-                    r.r#type = Some(StockOutType::SupplierReturn);
+                    r.r#type = StockOutType::SupplierReturn;
                 }),
             )
             .unwrap()
