@@ -87,6 +87,7 @@ pub struct ReportDefinitionIndex {
     #[serde(deserialize_with = "string_or_vec")]
     pub query: Vec<String>,
     pub convert_data: Option<String>,
+    pub custom_wasm_function: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

@@ -102,6 +102,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         footer: None,
         query: vec![],
         convert_data: None,
+        custom_wasm_function: None,
     };
     let mut entries: HashMap<String, ReportDefinitionEntry> = HashMap::new();
 
@@ -239,7 +240,13 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         entries.insert(name, value);
     }
 
-    // convert_data
+    // first check if there is nominated path to custom wasm function
+    if let Some(custom_wasm_function) = &args.custom_wasm_function {
+        let encoded = BASE64_STANDARD.encode(fs::read(custom_wasm_function).unwrap());
+        index.convert_data = Some(encoded)
+    };
+
+    // Then look for data conversion with js functions
     if let Some(convert_data) = &args.convert_data {
         let js = &format!("./{}/convert_data.js", convert_data);
 
