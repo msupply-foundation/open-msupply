@@ -379,8 +379,18 @@ const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
       width={25}
       {...props}
       units={[
-        { key: 'year', ratio: 12, label: t('label.years-abbreviation') },
-        { key: 'month', ratio: 1, label: t('label.months-abbreviation') },
+        {
+          key: 'year',
+          ratio: 12,
+          label: t('label.years-abbreviation'),
+          max: 150,
+        },
+        {
+          key: 'month',
+          ratio: 1,
+          label: t('label.months-abbreviation'),
+          max: 11,
+        },
       ]}
     />
   );

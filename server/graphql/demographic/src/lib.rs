@@ -36,6 +36,7 @@ impl DemographicIndicatorQueries {
     pub async fn demographic_indicators(
         &self,
         ctx: &Context<'_>,
+        store_id: String,
         page: Option<PaginationInput>,
         filter: Option<DemographicIndicatorFilterInput>,
         sort: Option<Vec<DemographicIndicatorSortInput>>,
@@ -43,12 +44,12 @@ impl DemographicIndicatorQueries {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
-                resource: Resource::QueryAsset,
-                store_id: None,
+                resource: Resource::QueryDemographic,
+                store_id: Some(store_id.clone()),
             },
         )?;
         let service_provider = ctx.service_provider();
-        let service_context = service_provider.context("".to_string(), user.user_id)?;
+        let service_context = service_provider.context(store_id, user.user_id)?;
 
         let demographic_indicators = service_provider
             .demographic_service
@@ -77,7 +78,7 @@ impl DemographicIndicatorQueries {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
-                resource: Resource::QueryAsset,
+                resource: Resource::QueryDemographic,
                 store_id: None,
             },
         )?;
@@ -108,7 +109,7 @@ impl DemographicIndicatorQueries {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
-                resource: Resource::QueryAsset,
+                resource: Resource::QueryDemographic,
                 store_id: None,
             },
         )?;

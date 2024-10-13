@@ -19,6 +19,7 @@ fn vaccine_course_item1() -> VaccineCourseItemRow {
         id: VACCINE_COURSE_ITEM1.0.to_string(),
         vaccine_course_id: "test_vaccine_course".to_string(),
         item_link_id: "item_a".to_string(),
+        deleted_datetime: None,
     }
 }
 

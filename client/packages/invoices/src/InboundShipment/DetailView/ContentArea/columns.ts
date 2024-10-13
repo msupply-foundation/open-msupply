@@ -299,6 +299,13 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
         ]
       : ['packSize' as ColumnDescription<InboundLineFragment>]),
     'numberOfPacks',
-    'costPricePerPack',
+    [
+      'costPricePerPack',
+      {
+        label: 'label.cost',
+        accessor: ({ rowData }) => rowData.costPricePerPack,
+        Cell: CurrencyCell,
+      },
+    ],
   ]);
 };

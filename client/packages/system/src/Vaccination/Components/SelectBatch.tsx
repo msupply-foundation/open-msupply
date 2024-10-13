@@ -5,10 +5,10 @@ import {
   ColumnAlign,
   createTableStore,
   DataTable,
-  NumUtils,
   TableProvider,
   useColumns,
   useRowStyle,
+  useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
 import React, { useEffect } from 'react';
@@ -40,8 +40,11 @@ export const SelectBatch = ({
       {
         width: '55px',
         key: 'select',
-        Cell: ({ rowData }) => (
-          <Checkbox checked={rowData.id === stockLine?.id} />
+        Cell: ({ rowData, isDisabled }) => (
+          <Checkbox
+            disabled={isDisabled}
+            checked={rowData.id === stockLine?.id}
+          />
         ),
       },
       'batch',
@@ -49,12 +52,14 @@ export const SelectBatch = ({
       {
         key: 'doses',
         label: 'label.doses',
-        accessor: ({ rowData }) =>
-          NumUtils.round(
-            rowData.item.doses *
-              rowData.availableNumberOfPacks *
-              rowData.packSize
-          ),
+        accessor: ({ rowData }) => {
+          const remainingDoses = getRemainingDoses(rowData);
+
+          if (remainingDoses < 1) {
+            return '<1';
+          }
+          return Math.floor(remainingDoses);
+        },
       },
     ],
     {},
@@ -87,6 +92,7 @@ const BatchTable = ({
 }) => {
   const t = useTranslation('dispensary');
   const { setRowStyles } = useRowStyle();
+  const { setDisabledRows } = useTableStore();
 
   useEffect(() => {
     setRowStyles(
@@ -99,6 +105,11 @@ const BatchTable = ({
         },
       }
     );
+
+    const rowsToDisable = data
+      ?.filter(row => getRemainingDoses(row) < 1)
+      .map(({ id }) => id);
+    if (rowsToDisable) setDisabledRows(rowsToDisable);
   }, [data]);
 
   return (
@@ -107,8 +118,12 @@ const BatchTable = ({
       columns={columns}
       data={data}
       noDataMessage={t('messages.no-stock-available')}
-      onRowClick={row => setStockLine(row)}
+      onRowClick={row => getRemainingDoses(row) >= 1 && setStockLine(row)}
       dense
     />
   );
+};
+
+const getRemainingDoses = (rowData: StockLineFragment) => {
+  return rowData.item.doses * rowData.availableNumberOfPacks * rowData.packSize;
 };
