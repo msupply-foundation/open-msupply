@@ -323,6 +323,8 @@ See [the extism-js docs](https://github.com/extism/js-pdk) for more details on h
 Alternatively wasm functions can be built externally using any compatible language ([see wasm docs for more details](https://webassembly.org/getting-started/developers-guide/)), and added as a custom wasm function.
 The "custom_wasm_function" can point to any externally built wasm function.
 
+> Note custom wasm data functions will be used if both custom functions and JS wasm function builder files are both specified
+
 ## Standard reports versioning
 
 Standard reports include versions for updates of reports. Open mSupply central will automatically sync all standard reports.
