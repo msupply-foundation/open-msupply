@@ -22,7 +22,7 @@
   text-align: left;
   margin-top: 10;
   margin-bottom: 15;
-  border-collapse: collapse;
+  border-collapse: separate;
 }
 
 .container table td {
