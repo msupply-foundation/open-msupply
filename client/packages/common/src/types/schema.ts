@@ -1560,6 +1560,17 @@ export type DeleteVaccineCourseErrorInterface = {
 
 export type DeleteVaccineCourseResponse = DeleteResponse | DeleteVaccineCourseError;
 
+export type DemographicConnector = {
+  __typename: 'DemographicConnector';
+  nodes: Array<DemographicNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type DemographicFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
 export type DemographicIndicatorConnector = {
   __typename: 'DemographicIndicatorConnector';
   nodes: Array<DemographicIndicatorNode>;
@@ -1626,6 +1637,12 @@ export type DemographicMutationsUpdateDemographicProjectionArgs = {
   input: UpdateDemographicProjectionInput;
 };
 
+export type DemographicNode = {
+  __typename: 'DemographicNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type DemographicProjectionConnector = {
   __typename: 'DemographicProjectionConnector';
   nodes: Array<DemographicProjectionNode>;
@@ -1660,6 +1677,18 @@ export type DemographicProjectionSortInput = {
 };
 
 export type DemographicProjectionsResponse = DemographicProjectionConnector;
+
+export enum DemographicSortFieldInput {
+  Id = 'id',
+  Name = 'name'
+}
+
+export type DemographicSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: DemographicSortFieldInput;
+};
+
+export type DemographicsResponse = DemographicConnector;
 
 export type DisplaySettingNode = {
   __typename: 'DisplaySettingNode';
@@ -2917,7 +2946,7 @@ export type InsertVaccineCourseErrorInterface = {
 
 export type InsertVaccineCourseInput = {
   coverageRate: Scalars['Float']['input'];
-  demographicIndicatorId?: InputMaybe<Scalars['String']['input']>;
+  demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
@@ -5205,6 +5234,7 @@ export type Queries = {
   demographicIndicators: DemographicIndicatorsResponse;
   demographicProjectionByBaseYear: DemographicProjectionResponse;
   demographicProjections: DemographicProjectionsResponse;
+  demographics: DemographicsResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -5479,6 +5509,14 @@ export type QueriesDemographicProjectionsArgs = {
   filter?: InputMaybe<DemographicProjectionFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<DemographicProjectionSortInput>>;
+};
+
+
+export type QueriesDemographicsArgs = {
+  filter?: InputMaybe<DemographicFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<DemographicSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -8058,7 +8096,7 @@ export type UpdateVaccineCourseErrorInterface = {
 
 export type UpdateVaccineCourseInput = {
   coverageRate: Scalars['Float']['input'];
-  demographicIndicatorId?: InputMaybe<Scalars['String']['input']>;
+  demographicId?: InputMaybe<Scalars['String']['input']>;
   doses: Array<UpsertVaccineCourseDoseInput>;
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
@@ -8328,8 +8366,8 @@ export type VaccineCourseMutationsUpdateVaccineCourseArgs = {
 export type VaccineCourseNode = {
   __typename: 'VaccineCourseNode';
   coverageRate: Scalars['Float']['output'];
-  demographicIndicator?: Maybe<DemographicIndicatorNode>;
-  demographicIndicatorId?: Maybe<Scalars['String']['output']>;
+  demographic?: Maybe<DemographicNode>;
+  demographicId?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
