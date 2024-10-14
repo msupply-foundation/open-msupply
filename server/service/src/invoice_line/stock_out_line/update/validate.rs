@@ -66,21 +66,23 @@ pub fn validate(
     })?;
 
     if let Some(new_number_of_packs) = input.number_of_packs {
-        let mut historic_available_packs = batch_pair
+        let mut available_packs = batch_pair
             .main_batch
             .stock_line_row
             .available_number_of_packs;
 
         if let Some(backdated_date) = invoice_backdated_date(&invoice) {
-            historic_available_packs = get_historical_stock_line_available_quantity(
+            available_packs = get_historical_stock_line_available_quantity(
                 connection,
                 &batch_pair.main_batch.stock_line_row,
                 Some(line.invoice_line_row.number_of_packs),
                 &backdated_date,
-            )? + line.invoice_line_row.number_of_packs;
+            )?;
         }
 
-        if historic_available_packs < new_number_of_packs {
+        available_packs += line.invoice_line_row.number_of_packs;
+
+        if available_packs < new_number_of_packs {
             return Err(UpdateStockOutLineError::ReductionBelowZero {
                 stock_line_id: batch_pair.main_batch.stock_line_row.id,
                 line_id: line_row.id.clone(),
