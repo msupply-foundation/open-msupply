@@ -128,7 +128,6 @@ const DetailViewInner = ({
 
   const openReportArgumentsModal = useCallback(() => {
     setReportWithArgs(report);
-    setReportLoading(false);
   }, []);
 
   const printReport = useCallback(() => {
@@ -188,9 +187,9 @@ const DetailViewInner = ({
         report={reportWithArgs}
         onReset={() => {
           setReportWithArgs(undefined);
+          setReportLoading(true);
         }}
         onArgumentsSelected={generateReport}
-        onSetLoading={() => {setReportLoading(true)}}
       />
       {reportLoading && (
         <BasicSpinner messageKey="messages.loading-report"></BasicSpinner>
