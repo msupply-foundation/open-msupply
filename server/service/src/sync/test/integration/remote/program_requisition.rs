@@ -60,6 +60,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             code: uuid(),
             description: uuid(),
             is_active: true,
+            is_default_price_list: false,
+            discount_percentage: None,
         };
         let master_list_json = json!({
         "ID": master_list_row.id,
@@ -128,7 +130,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
             master_list_id: Some(master_list_row.id.clone()),
             context_id: master_list_row.id.clone(),
             is_immunisation: false,
-            deleted_datetime: None,
         };
 
         let program_requisition_settings1 = ProgramRequisitionSettingsRow {
@@ -178,6 +179,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
             code: uuid(),
             description: uuid(),
             is_active: false,
+            is_default_price_list: false,
+            discount_percentage: None,
         };
         let master_list_json2 = json!({
         "ID": master_list_row2.id,
@@ -213,7 +216,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
             master_list_id: Some(master_list_row2.id.clone()),
             context_id: master_list_row2.id.clone(),
             is_immunisation: false,
-            deleted_datetime: None,
         };
 
         let program_requisition_settings3 = ProgramRequisitionSettingsRow {

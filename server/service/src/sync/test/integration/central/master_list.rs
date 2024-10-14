@@ -21,6 +21,8 @@ impl SyncRecordTester for MasterListTester {
             code: uuid(),
             description: "".to_string(),
             is_active: false,
+            is_default_price_list: false,
+            discount_percentage: None,
         };
         let master_list_json1 = json!({
             "ID": master_list_row1.id,
@@ -46,6 +48,8 @@ impl SyncRecordTester for MasterListTester {
             code: uuid(),
             description: uuid(),
             is_active: false,
+            is_default_price_list: false,
+            discount_percentage: None,
         };
         let master_list_json2 = json!({
             "ID": master_list_row2.id,
@@ -71,6 +75,7 @@ impl SyncRecordTester for MasterListTester {
             id: uuid(),
             item_link_id: item_id.clone(),
             master_list_id: master_list_row1.id.clone(),
+            price_per_unit: None,
         };
         let master_list_line_json = json!({
             "ID": master_list_line_row.id,
