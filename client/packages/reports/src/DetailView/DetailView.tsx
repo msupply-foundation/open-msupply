@@ -54,10 +54,13 @@ const DetailViewInner = ({
   t: TypedTFunction<LocaleKey>;
 }) => {
   const { setCustomBreadcrumbs } = useBreadcrumbs(['reports']);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [state, setState] = useState<
+    | { s: 'loading' }
+    | { s: 'error'; errorMessage: string }
+    | { s: 'loaded'; fileId: string }
+  >({ s: 'loading' });
   const { mutateAsync } = useGenerateReport();
-  const [reportLoading, setReportLoading] = useState<boolean>(true);
-  const [fileId, setFileId] = useState<string | undefined>();
+
   const { print, isPrinting } = usePrintReport();
   const { updateQuery } = useUrlQuery();
 
@@ -93,7 +96,7 @@ const DetailViewInner = ({
       if (shouldUpdateQuery) {
         updateQuery({ reportArgs: JSON.stringify(args) });
       }
-      setFileId(undefined);
+      setState({ s: 'loading' });
       try {
         const result = await mutateAsync({
           reportId: report.id,
@@ -101,7 +104,7 @@ const DetailViewInner = ({
           dataId: '',
         });
         if (result?.__typename === 'PrintReportNode') {
-          setFileId(result.fileId);
+          setState({ s: 'loaded', fileId: result.fileId });
         }
 
         if (result?.__typename === 'PrintReportError') {
@@ -111,9 +114,15 @@ const DetailViewInner = ({
             const errors = err.errors;
 
             if (errors[0].extensions?.details?.includes('permission')) {
-              setErrorMessage(t('error.no-permission-report'));
+              setState({
+                s: 'error',
+                errorMessage: t('error.no-permission-report'),
+              });
             } else {
-              setErrorMessage(t('error.failed-to-generate-report'));
+              setState({
+                s: 'error',
+                errorMessage: t('error.failed-to-generate-report'),
+              });
             }
           } else {
             noOtherVariants(err.__typename);
@@ -128,7 +137,6 @@ const DetailViewInner = ({
 
   const openReportArgumentsModal = useCallback(() => {
     setReportWithArgs(report);
-    setReportLoading(false);
   }, []);
 
   const printReport = useCallback(() => {
@@ -149,7 +157,7 @@ const DetailViewInner = ({
       });
       if (result?.__typename === 'PrintReportNode') {
         // Setting iframe url with response != html disposition, causes iframe to 'download' this file
-        setFileId(result.fileId);
+        setState({ s: 'loaded', fileId: result.fileId });
       }
 
       if (result?.__typename === 'PrintReportError') {
@@ -159,9 +167,15 @@ const DetailViewInner = ({
           const errors = err.errors;
 
           if (errors[0].extensions?.details?.includes('permission')) {
-            setErrorMessage(t('error.no-permission-report'));
+            setState({
+              s: 'error',
+              errorMessage: t('error.no-permission-report'),
+            });
           } else {
-            setErrorMessage(t('error.failed-to-generate-excel'));
+            setState({
+              s: 'error',
+              errorMessage: t('error.no-permission-report'),
+            });
           }
         } else {
           noOtherVariants(err.__typename);
@@ -171,8 +185,6 @@ const DetailViewInner = ({
       console.error(error);
     }
   }, [reportArgs]);
-
-  const url = `${Environment.FILE_URL}${fileId}`;
 
   return (
     <>
@@ -190,21 +202,18 @@ const DetailViewInner = ({
           setReportWithArgs(undefined);
         }}
         onArgumentsSelected={generateReport}
-        onSetLoading={() => {setReportLoading(true)}}
       />
-      {reportLoading && (
+      {state.s === 'loading' && (
         <BasicSpinner messageKey="messages.loading-report"></BasicSpinner>
       )}
-      {fileId ? (
+      {state.s === 'loaded' && (
         <iframe
-          src={url}
+          src={`${Environment.FILE_URL}${state.fileId}`}
           width="100%"
           style={{ borderWidth: 0 }}
-          onLoad={() => setReportLoading(false)}
         />
-      ) : (
-        !reportLoading && <NothingHere body={errorMessage} />
       )}
+      {state.s === 'error' && <NothingHere body={state.errorMessage} />}
     </>
   );
 };
