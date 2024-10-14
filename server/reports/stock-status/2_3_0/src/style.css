@@ -22,11 +22,31 @@
   text-align: left;
   margin-top: 10;
   margin-bottom: 15;
+  border-collapse: separate;
 }
 
 .container table td {
-  padding: 5px;
+  padding: 10px;
   vertical-align: top;
+  border-top: 1px solid rgb(164, 163, 163);
+}
+
+.container table tr:last-child td {
+  border-bottom: none;
+}
+
+.container>table>thead {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  background-color: #f1f1f1;
+}
+
+.container,
+body,
+.container>table {
+  margin-top: 0px;
+  padding-top: 0px;
 }
 
 .container table tr.heading td {
