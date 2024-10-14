@@ -64,9 +64,9 @@ pub fn validate(
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
 
-    let mut historical_available_packs = batch.stock_line_row.available_number_of_packs;
+    let mut available_packs = batch.stock_line_row.available_number_of_packs;
     if let Some(backdated_date) = invoice_backdated_date(&invoice) {
-        historical_available_packs = get_historical_stock_line_available_quantity(
+        available_packs = get_historical_stock_line_available_quantity(
             connection,
             &batch.stock_line_row,
             None,
@@ -74,7 +74,7 @@ pub fn validate(
         )?
     }
 
-    if historical_available_packs < input.number_of_packs {
+    if available_packs < input.number_of_packs {
         return Err(InsertStockOutLineError::ReductionBelowZero {
             stock_line_id: batch.stock_line_row.id.clone(),
         });
