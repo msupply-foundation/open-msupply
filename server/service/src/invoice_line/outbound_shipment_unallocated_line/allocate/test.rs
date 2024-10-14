@@ -281,14 +281,14 @@ mod test {
             })
         );
 
-        let updated_uallocated_line = repo
+        let updated_unallocated_line = repo
             .find_one_by_id(&result.updates[0].invoice_line_row.id)
             .unwrap()
             .unwrap();
 
         assert_eq!(
-            updated_uallocated_line,
-            inline_edit(&updated_uallocated_line, |mut u| {
+            updated_unallocated_line,
+            inline_edit(&updated_unallocated_line, |mut u| {
                 u.number_of_packs = 12.0;
                 u
             })
