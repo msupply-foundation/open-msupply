@@ -11,16 +11,19 @@ export type ReportArgumentsModalProps = {
   report: ReportRowFragment | undefined;
   onReset: () => void;
   onArgumentsSelected: (report: ReportRowFragment, args: JsonData) => void;
+  onSetLoading?: (value: React.SetStateAction<boolean>) => void
 };
 
 export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   report,
   onReset,
   onArgumentsSelected,
+  onSetLoading,
 }) => {
   const { store } = useAuthContext();
   const { urlQuery } = useUrlQuery();
   const t = useTranslation();
+  const [isDirty, setIsDirty] = useState(false);
 
   const {
     monthlyConsumptionLookBackPeriod,
@@ -41,6 +44,9 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
   // clean up when modal is closed
   const cleanUp = () => {
     onReset();
+    if (isDirty) {
+      onSetLoading;
+    }
   };
 
   const { Modal } = useDialog({
@@ -81,7 +87,10 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
           isLoading={false}
           setError={err => setError(err)}
           updateData={(newData: JsonData) => {
+            if (newData != data) {
             setData(newData);
+            setIsDirty(true);
+            } 
           }}
         />
       </>
