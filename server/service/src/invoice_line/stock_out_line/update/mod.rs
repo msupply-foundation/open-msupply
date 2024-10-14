@@ -634,7 +634,7 @@ mod test {
 
         prescription_invoice.upsert(&context.connection).unwrap();
 
-        // Add a stock out line to the prescription (using all available stock)
+        // Add a stock out line to the prescription (using half available stock)
         invoice_line_service
             .insert_stock_out_line(
                 &context,
