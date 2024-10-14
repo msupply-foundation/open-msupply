@@ -5,7 +5,7 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use repository::query_json;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::definition::{PrintReportSort, GraphQlQuery, ReportDefinition, SQLQuery};
+use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
 use service::report::report_service::{ReportError, ResolvedReportQuery};
 
 use crate::PrintFormat;
@@ -77,7 +77,7 @@ pub async fn generate_report(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
-    let translation_service = service_provider.translations_service.clone();
+    let translation_service = &service_provider.translations_service;
 
     // get the required report
     let resolved_report = match service.resolve_report(&service_context, &report_id) {
@@ -129,9 +129,7 @@ pub async fn generate_report(
         }
     };
 
-    Ok(PrintReportResponse::Response(PrintReportNode {
-        file_id,
-    }))
+    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
 }
 
 pub async fn generate_report_definition(
@@ -155,7 +153,7 @@ pub async fn generate_report_definition(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
-    let translation_service = service_provider.translations_service.clone();
+    let translation_service = &service_provider.translations_service;
 
     // get the required report
     let report_definition: ReportDefinition = serde_json::from_value(report)
@@ -213,9 +211,7 @@ pub async fn generate_report_definition(
         }
     };
 
-    Ok(PrintReportResponse::Response(PrintReportNode {
-        file_id,
-    }))
+    Ok(PrintReportResponse::Response(PrintReportNode { file_id }))
 }
 
 enum FetchResult {
