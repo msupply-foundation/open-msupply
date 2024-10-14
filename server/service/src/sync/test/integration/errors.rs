@@ -178,7 +178,9 @@ mod tests {
             error,
             SyncError::CentralPullErrorV6(CentralPullErrorV6::SyncApiError(SyncApiErrorV6 {
                 source: SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncVersionMismatch(
-                    0, 1, 10000
+                    0,
+                    // Should match `SYNC_V6_VERSION` in server/service/src/sync/settings.rs
+                    2, 10000
                 )),
                 ..
             }))
