@@ -23,6 +23,9 @@ impl SyncRecordTester for ReportTester {
             comment: Some(uuid()),
             sub_context: None,
             argument_schema_id: None,
+            is_custom: false,
+            version: "1.0".to_string(),
+            code: "test".to_string(),
         };
         let report_json1 = json!({
             "ID": report_row1.id,

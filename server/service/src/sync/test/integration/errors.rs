@@ -2,11 +2,11 @@
 mod tests {
     use repository::{mock::MockDataInserts, StorageConnectionManager, SyncApiErrorCode};
     use reqwest::StatusCode;
-    use std::{io::Error, path::PathBuf, sync::Arc};
+    use std::{io::Error, sync::Arc};
     use util::assert_matches;
 
     use crate::{
-        app_data::{AppData, AppDataServiceTrait},
+        app_data::AppDataServiceTrait,
         service_provider::ServiceProvider,
         sync::{
             api::{ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncErrorCodeV5},
@@ -30,15 +30,6 @@ mod tests {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         struct TestService1(String);
         impl AppDataServiceTrait for TestService1 {
-            fn get_app_data_directory(&self) -> Result<PathBuf, Error> {
-                todo!()
-            }
-            fn get_app_data_file(&self) -> Result<PathBuf, Error> {
-                todo!()
-            }
-            fn load_from_file(&self) -> Result<AppData, Error> {
-                todo!()
-            }
             fn get_hardware_id(&self) -> Result<String, Error> {
                 Ok(self.0.clone())
             }
