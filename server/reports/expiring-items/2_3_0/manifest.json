@@ -11,5 +11,6 @@
     "arguments": {
         "schema": "argument_schemas/arguments.json",
         "ui": "argument_schemas/arguments_ui.json"
-    }
+    },
+    "convert_data": "reports/expiring-items/2_3_0/convert_data_js"
 }   
