@@ -22,13 +22,14 @@ impl SyncRecordTester for MasterListTester {
             description: "".to_string(),
             is_active: false,
             is_default_price_list: false,
-            discount_percentage: None,
+            discount_percentage: Some(1.0),
         };
         let master_list_json1 = json!({
             "ID": master_list_row1.id,
             "description":  master_list_row1.name,
             "code": master_list_row1.code,
             "inactive": true,
+            "discount_percentage": 1.0,
         });
 
         let master_list_name_join_row1 = MasterListNameJoinRow {
@@ -49,7 +50,7 @@ impl SyncRecordTester for MasterListTester {
             description: uuid(),
             is_active: false,
             is_default_price_list: false,
-            discount_percentage: None,
+            discount_percentage: Some(0.0),
         };
         let master_list_json2 = json!({
             "ID": master_list_row2.id,
@@ -75,12 +76,13 @@ impl SyncRecordTester for MasterListTester {
             id: uuid(),
             item_link_id: item_id.clone(),
             master_list_id: master_list_row1.id.clone(),
-            price_per_unit: None,
+            price_per_unit: Some(2.5),
         };
         let master_list_line_json = json!({
             "ID": master_list_line_row.id,
             "item_master_ID": master_list_line_row.master_list_id,
             "item_ID":  master_list_line_row.item_link_id,
+            "price": 2.5,
         });
 
         result.push(TestStepData {
