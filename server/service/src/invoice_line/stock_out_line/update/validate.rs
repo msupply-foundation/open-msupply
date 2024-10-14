@@ -6,10 +6,7 @@ use crate::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
         invoice_backdated_date,
         stock_out_line::BatchPair,
-        validate::{
-            check_line_belongs_to_invoice, check_line_exists, check_number_of_packs,
-            is_reduction_below_zero,
-        },
+        validate::{check_line_belongs_to_invoice, check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
     service_provider::ServiceContext,
@@ -57,7 +54,7 @@ pub fn validate(
         return Err(NumberOfPacksBelowZero);
     }
 
-    let mut batch_pair = check_batch_exists_option(store_id, input, line_row, connection)?;
+    let batch_pair = check_batch_exists_option(store_id, input, line_row, connection)?;
 
     let item = line.item_row.clone();
 
@@ -68,25 +65,27 @@ pub fn validate(
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
 
-    if let Some(backdated_date) = invoice_backdated_date(&invoice) {
-        let new_available_number_of_packs = get_historical_stock_line_available_quantity(
-            connection,
-            &batch_pair.main_batch.stock_line_row,
-            Some(line.invoice_line_row.number_of_packs),
-            &backdated_date,
-        )? - line.invoice_line_row.number_of_packs;
-
-        batch_pair
+    if let Some(new_number_of_packs) = input.number_of_packs {
+        let mut historic_available_packs = batch_pair
             .main_batch
             .stock_line_row
-            .available_number_of_packs = new_available_number_of_packs;
-    }
+            .available_number_of_packs;
 
-    if is_reduction_below_zero(input.number_of_packs, line_row, &batch_pair) {
-        return Err(UpdateStockOutLineError::ReductionBelowZero {
-            stock_line_id: batch_pair.main_batch.stock_line_row.id,
-            line_id: line_row.id.clone(),
-        });
+        if let Some(backdated_date) = invoice_backdated_date(&invoice) {
+            historic_available_packs = get_historical_stock_line_available_quantity(
+                connection,
+                &batch_pair.main_batch.stock_line_row,
+                Some(line.invoice_line_row.number_of_packs),
+                &backdated_date,
+            )? + line.invoice_line_row.number_of_packs;
+        }
+
+        if historic_available_packs < new_number_of_packs {
+            return Err(UpdateStockOutLineError::ReductionBelowZero {
+                stock_line_id: batch_pair.main_batch.stock_line_row.id,
+                line_id: line_row.id.clone(),
+            });
+        }
     }
 
     Ok((line.invoice_line_row, item, batch_pair, invoice))
