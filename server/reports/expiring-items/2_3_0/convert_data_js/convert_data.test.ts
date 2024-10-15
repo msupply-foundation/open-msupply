@@ -49,11 +49,14 @@ describe('test convert data', () => {
     });
     it('returns difference between expiry and now', () => {
       expect(calculateDaysUntilExpired('2024-04-03')).toBe(2);
+      expect(calculateDaysUntilExpired('2024-05-03')).toBe(32);
     });
     afterAll(() => {
       jest.useRealTimers();
     });
   })
+
+  // describe('calculate adding')
 
   // it('tests adding days until expired to line', () => {
   //   let line = inputData.stockLines.nodes[0];
