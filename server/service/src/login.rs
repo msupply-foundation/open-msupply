@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    time::{Duration, SystemTime},
+    time::{Duration, Instant, SystemTime},
 };
 
 use bcrypt::BcryptError;
@@ -117,11 +117,14 @@ impl LoginService {
     ) -> Result<TokenPair, LoginError> {
         let mut username = input.username.clone();
         let mut connection_failure = false;
+        log::info!("Login attempt for user: {}", username);
+        let login_start_time = Instant::now();
         match LoginService::fetch_user_from_central(&input).await {
             Ok(user_info) => {
                 let service_ctx =
                     service_provider.context("".to_string(), user_info.user.id.clone())?;
                 username.clone_from(&user_info.user.name);
+                log::info!("User found in central: {}", username);
                 LoginService::update_user(&service_ctx, &input.password, user_info)
                     .map_err(LoginError::UpdateUserError)?;
             }
@@ -141,8 +144,13 @@ impl LoginService {
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
         };
+        log::info!(
+            "Remote lookup took: {}ms",
+            login_start_time.elapsed().as_millis()
+        );
         let mut service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
+        let verify_password_start = Instant::now();
         let user_account = match user_service.verify_password(&username, &input.password) {
             Ok(user) => user,
             Err(err) => {
@@ -167,13 +175,22 @@ impl LoginService {
                 });
             }
         };
+        log::info!(
+            "Verify password took: {}ms",
+            verify_password_start.elapsed().as_millis()
+        );
 
+        let find_user_active_on_this_site_start = Instant::now();
         // Check that the logged in user has access to at least one store on the site
         match user_service.find_user_active_on_this_site(&user_account.id) {
             Ok(Some(_)) => (),
             Ok(None) => return Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess)),
             Err(err) => return Err(err.into()),
         };
+        log::info!(
+            "Find user active on this site took: {}ms",
+            find_user_active_on_this_site_start.elapsed().as_millis()
+        );
 
         service_ctx.user_id.clone_from(&user_account.id);
 
@@ -202,6 +219,9 @@ impl LoginService {
             Ok(pair) => pair,
             Err(err) => return Err(LoginError::FailedToGenerateToken(err)),
         };
+
+        log::info!("Login Time: {}ms", login_start_time.elapsed().as_millis());
+
         Ok(pair)
     }
 
@@ -282,6 +302,8 @@ impl LoginService {
         password: &str,
         user_info: LoginUserInfoV4,
     ) -> Result<(), UpdateUserError> {
+        let start_time = Instant::now();
+
         // convert user_info to internal format
         let user = UserAccountRow {
             id: user_info.user.id,
@@ -343,6 +365,8 @@ impl LoginService {
         service
             .upsert_user(user.clone(), stores_permissions)
             .map_err(UpdateUserError::DatabaseError)?;
+
+        log::info!("User update took: {}ms", start_time.elapsed().as_millis());
         Ok(())
     }
 }
