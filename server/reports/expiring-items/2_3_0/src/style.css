@@ -68,6 +68,7 @@ body,
 .container table td.expiry-date span.expired {
   background-color: rgba(245, 5, 1, 0.3);
   padding: 3px 10px;
+  white-space: nowrap;
 }
 
 .container table td.expiry-date span.soon::before {
@@ -83,6 +84,7 @@ body,
 .container table td.expiry-date span.soon {
   background-color: rgba(248, 154, 1, 0.3);
   padding: 3px 10px;
+  white-space: nowrap;
 }
 
 .container table td.expiry-date span.all-good::before {
@@ -98,6 +100,7 @@ body,
 .container table td.expiry-date span.all-good {
   background-color: rgba(51, 169, 1, 0.3);
   padding: 3px 10px;
+  white-space: nowrap;
 }
 
 .container table span.na::before {
@@ -113,4 +116,5 @@ body,
 .container table td.expiry-date span.na {
   background-color: rgba(143, 144, 166, 0.3);
   padding: 3px 10px;
+  white-space: nowrap;
 }
