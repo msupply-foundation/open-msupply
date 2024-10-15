@@ -36,6 +36,15 @@ describe('testProcessing', () => {
       expect(Math.round(line2.stockAtRisk)).toBe(233);
       expect(Math.round(line2.expectedUsage)).toBe(17);
     })
+    it('calculate stock at risk when monthly consumption provided but no expiry date', () => {
+      let line = inputData.stockLines.nodes[0];
+      // manually remove expiry date
+      line.expiryDate = undefined;
+      line = addDaysUntilExpired(line);
+      line = calculateStockAtRisk(line);
+      expect(line.expectedUsage).toBe(undefined);
+      expect(line.stockAtRisk).toBe(undefined);
+    })
 
 
 })

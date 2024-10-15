@@ -23,13 +23,16 @@ const addDaysUntilExpired = (line) => {
     return line
 }
 const calculateStockAtRisk = (line) => {
-    if (line.item.stats.averageMonthlyConsumption && line.expiryDate) {
+    if (line.item.stats.averageMonthlyConsumption && !!line.expiryDate) {
         if (line.daysUntilExpired > 0) {
             line.expectedUsage = line.item.stats.averageMonthlyConsumption * (line.daysUntilExpired / 30);
             line.stockAtRisk = line.totalNumberOfPacks * line.packSize - line.expectedUsage;
         } else {
             line.stockAtRisk = line.totalNumberOfPacks * line.packSize;
         }
+    } else {
+        line.expectedUsage = undefined;
+        line.stockAtRisk = undefined;
     };
     return line
 }
