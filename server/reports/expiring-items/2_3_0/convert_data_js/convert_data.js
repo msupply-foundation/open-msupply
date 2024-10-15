@@ -31,7 +31,11 @@ const calculateExpectedUsage = (
   daysUntilExpired,
   averageMonthlyConsumption
 ) => {
-  return undefined;
+  let expectedUsage = undefined;
+  if (!!daysUntilExpired && !!averageMonthlyConsumption) {
+    expectedUsage = daysUntilExpired * averageMonthlyConsumption
+  }
+  return expectedUsage;
 };
 
 const addStockAtRisk = (line) => {

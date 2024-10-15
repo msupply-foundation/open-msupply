@@ -69,10 +69,9 @@ describe("test convert data", () => {
       expect(calculateExpectedUsage(1, undefined)).toBe(undefined);
     });
 
-    // it('returns difference between expiry and now', () => {
-    //   expect(calculateDaysUntilExpired('2024-04-03')).toBe(2);
-    //   expect(calculateDaysUntilExpired('2024-05-03')).toBe(32);
-    // });
+    it("returns expected usage if both defined", () => {
+      expect(calculateExpectedUsage(20, 5)).toBe(100);
+    });
   });
 
   // it('tests adding days until expired to line', () => {
