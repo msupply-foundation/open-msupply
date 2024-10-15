@@ -33,37 +33,34 @@ const calculateExpectedUsage = (
 ) => {
   let expectedUsage = undefined;
   if (!!daysUntilExpired && !!averageMonthlyConsumption) {
-    expectedUsage = daysUntilExpired * averageMonthlyConsumption
+    expectedUsage = daysUntilExpired * averageMonthlyConsumption;
   }
   return expectedUsage;
 };
 
-const addStockAtRisk = (line) => {
-  return undefined;
+const calculateStockAtRisk = (
+  packSize,
+  totalNumberOfPacks,
+  averageMonthlyConsumption,
+  daysUntilExpired
+) => {
+  let stockAtRisk = undefined;
+  if (!!packSize && !!totalNumberOfPacks && !!daysUntilExpired) {
+    const totalStock = packSize * totalNumberOfPacks;
+    if (!!averageMonthlyConsumption) {
+      stockAtRisk = Math.round(
+        totalStock - averageMonthlyConsumption * (daysUntilExpired / 30)
+      );
+    }
+    if (!averageMonthlyConsumption) {
+      if (daysUntilExpired <= 0) {
+        stockAtRisk = Math.round(totalStock);
+      }
+    }
+  }
+  return stockAtRisk;
 };
 
-const calculateStockAtRisk = (line) => {
-  if (line.item.stats.averageMonthlyConsumption && !!line.expiryDate) {
-    if (line.daysUntilExpired > 0) {
-      line.expectedUsage =
-        line.item.stats.averageMonthlyConsumption *
-        (line.daysUntilExpired / 30);
-      line.stockAtRisk =
-        line.totalNumberOfPacks * line.packSize - line.expectedUsage;
-    } else {
-      line.stockAtRisk = line.totalNumberOfPacks * line.packSize;
-    }
-  }
-  return line;
-};
-const calculateStockAtRiskIfNoMonthlyConsumption = (line) => {
-  if (line && line.expiryDate && !line.item.stats.averageMonthlyConsumption) {
-    if (line.daysUntilExpired && line.daysUntilExpired < 0) {
-      line.stockAtRisk = line.totalNumberOfPacks * line.packSize;
-    }
-  }
-  return line;
-};
 const roundDaysToInteger = (daysUntilExpired) => {
   let rounded = undefined;
   if (!!daysUntilExpired) {

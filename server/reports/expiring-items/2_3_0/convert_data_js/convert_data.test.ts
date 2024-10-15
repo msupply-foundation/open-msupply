@@ -74,51 +74,25 @@ describe("test convert data", () => {
     });
   });
 
-  // it('tests adding days until expired to line', () => {
-  //   let line = inputData.stockLines.nodes[0];
-  //   expect(Math.round(addDaysUntilExpired(line).daysUntilExpired)).toBe(25);
-  // })
+  describe("calculate stock at risk ", () => {
+    it("returns undefined if packSize, totalNumberOfPacks, OR expiryDate is undefined", () => {
+      expect(calculateStockAtRisk(undefined, 1, 1, 1)).toBe(undefined);
+      expect(calculateStockAtRisk(1, undefined, 1, 1)).toBe(undefined);
+      expect(calculateStockAtRisk(1, 1, 1, undefined)).toBe(undefined);
+    });
 
-  // it('calculate stock at risk when monthly consumption provided and expiryDate > now', () => {
-  //   let line = inputData.stockLines.nodes[0];
-  //   line = addDaysUntilExpired(line);
-  //   line = calculateStockAtRisk(line);
-  //   expect(Math.round(line.stockAtRisk)).toBe(958);
-  //   expect(Math.round(line.expectedUsage)).toBe(42);
+    it("returns undefined if averageMonthlyConsumption is undefined AND expiryDate is in the future", () => {
+      expect(calculateStockAtRisk(2, 100, undefined, 1)).toBe(undefined);
+    });
 
-  //   let line2 = inputData.stockLines.nodes[1];
-  //   line2 = addDaysUntilExpired(line2);
-  //   line2 = calculateStockAtRisk(line2);
-  //   expect(Math.round(line2.stockAtRisk)).toBe(233);
-  //   expect(Math.round(line2.expectedUsage)).toBe(17);
-  // })
+    it("returns all stock if averageMonthlyConsumption is undefined AND expiryDate is in the past", () => {
+      expect(calculateStockAtRisk(2, 100, undefined, -1)).toBe(200);
+    });
 
-  // it('calculate stock at risk when monthly consumption provided but no expiry date', () => {
-  //   let line = inputData.stockLines.nodes[0];
-  //   // manually remove expiry date
-  //   line.expiryDate = undefined;
-  //   line = addDaysUntilExpired(line);
-  //   line = calculateStockAtRisk(line);
-  //   expect(line.expectedUsage).toBe(undefined);
-  //   expect(line.stockAtRisk).toBe(undefined);
-  // })
-
-  // it('calculate stock at risk if no monthly consumption and expiryDate < now', () => {
-  //   let line = inputData.stockLines.nodes[0];
-  //   line.item.stats.averageMonthlyConsumption = undefined;
-  //   line = addDaysUntilExpired(line);
-  //   expect(line.item.stats.averageMonthlyConsumption).toBe(undefined);
-  //   line = calculateStockAtRiskIfNoMonthlyConsumption(line);
-  //   // expect(Math.round(line.stockAtRisk)).toBe(1000);
-  // });
-
-  // it('calculate stock at risk if no monthly consumption and expiryDate > now', () => {
-  //   let line = inputData.stockLines.nodes[0];
-  //   line.item.stats.averageMonthlyConsumption = undefined;
-  //   line = addDaysUntilExpired(line);
-  //   line = calculateStockAtRiskIfNoMonthlyConsumption(line);
-  //   expect(line.stockAtRisk).toBe(undefined);  // No stock at risk if expiry date > now and no monthly consumption
-  // });
+    it("returns stock at risk as all stock minus what we will consume before expiry date", () => {
+      expect(calculateStockAtRisk(2, 100, 10, 60)).toBe(180);
+    });
+  });
 
   describe("test round days to integer", () => {
     it("returns undefined if undefined", () => {
