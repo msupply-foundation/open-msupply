@@ -1,3 +1,5 @@
+extern crate machine_uid;
+
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -104,8 +106,10 @@ impl ConfigureCentralServer {
         let site_name = env::var("SYNC_SITE_NAME").expect("SYNC_SITE_NAME env variable missing");
         let url = env::var("SYNC_URL").expect("SYNC_URL env variable missing");
 
-        let hardware_id = AppDataService::new("../app_data")
-            .get_hardware_id()
+        let hardware_id = machine_uid::get().expect("Failed to query OS for hardware id");
+
+        AppDataService::new("")
+            .set_hardware_id(hardware_id.clone())
             .unwrap();
 
         ConfigureCentralServer {
