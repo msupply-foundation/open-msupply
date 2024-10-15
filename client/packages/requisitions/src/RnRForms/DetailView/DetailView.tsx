@@ -20,6 +20,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { ContentArea } from './ContentArea';
 import { RnRFormQuery, useRnRForm, useRnRFormContext } from '../api';
 import { RnRFormLineFragment } from '../api/operations.generated';
+import { SidePanel } from './SidePanel';
 
 export const RnRFormDetailView = () => {
   const { id = '' } = useParams();
@@ -103,6 +104,7 @@ const RnRFormDetailViewComponent = ({
         <DetailTabs tabs={tabs} />
       </TableProvider>
 
+      <SidePanel data={data} />
       <Footer
         rnrFormId={data.id}
         unsavedChanges={isDirty}
