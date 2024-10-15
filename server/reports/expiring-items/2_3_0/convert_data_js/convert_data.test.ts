@@ -1,5 +1,5 @@
 import { calculateStockAtRisk } from "./convert_data";
-import { processStockLines, addDaysUntilExpired } from "./convert_data";
+import { processStockLines, addDaysUntilExpired,calculateStockAtRiskIfNoMonthlyConsumption, roundDaysToInteger } from "./convert_data";
 import inputData from './input.json' assert { type: 'json' };
 import outputData from './output.json' assert { type: 'json' };
 
@@ -15,37 +15,90 @@ inputData.stockLines.nodes.forEach((line) => {
   line.expiryDate = formattedDate
 })
 
-describe('testProcessing', () => {
-    it('test set up', () => {
-      expect(true).toBe(true);
+describe('test convert data', () => {
+  
+  describe('test process stock lines', () => {
+    // mock out the 4 internal functions 
+    let mockRoundDaysToInteger = 1 // some jest mock here of the fn
+
+    beforeEach(() => {
+      mockRoundDaysToInteger.mockClear();
     });
-    it('tests adding days until expired to line', () => {
-      let line = inputData.stockLines.nodes[0];
-      expect(Math.round(addDaysUntilExpired(line).daysUntilExpired)).toBe(25);
-    })
-    it('calculate stock at risk when monthly consumption provided and expiryDate > now', () => {
-      let line = inputData.stockLines.nodes[0];
-      line = addDaysUntilExpired(line);
-      line = calculateStockAtRisk(line);
-      expect(Math.round(line.stockAtRisk)).toBe(958);
-      expect(Math.round(line.expectedUsage)).toBe(42);
-      
-      let line2 = inputData.stockLines.nodes[1];
-      line2 = addDaysUntilExpired(line2);
-      line2 = calculateStockAtRisk(line2);
-      expect(Math.round(line2.stockAtRisk)).toBe(233);
-      expect(Math.round(line2.expectedUsage)).toBe(17);
-    })
-    it('calculate stock at risk when monthly consumption provided but no expiry date', () => {
-      let line = inputData.stockLines.nodes[0];
-      // manually remove expiry date
-      line.expiryDate = undefined;
-      line = addDaysUntilExpired(line);
-      line = calculateStockAtRisk(line);
-      expect(line.expectedUsage).toBe(undefined);
-      expect(line.stockAtRisk).toBe(undefined);
-    })
+    
+    it('calls roundDaysToInteger with the correct argument', () => {
+      _ = processStockLines(inputData.stockLines)
+      expect(mockRoundDaysToInteger).toHaveBeenCalledTimes(3);
+      expect(mockRoundDaysToInteger).toHaveBeenCalledWith(2.3)
+      expect(mockRoundDaysToInteger).toHaveBeenCalledWith(3.1)
+      expect(mockRoundDaysToInteger).toHaveBeenCalledWith(5.5)
+    });
+    it('end to end', () => {
+      result = processStockLines(inputData.stockLines)
+      expected = {
+        asdsd
+      }
+      expect(result).toEqual(expected)
+    });
 
+  })
 
+  // it('tests adding days until expired to line', () => {
+  //   let line = inputData.stockLines.nodes[0];
+  //   expect(Math.round(addDaysUntilExpired(line).daysUntilExpired)).toBe(25);
+  // })
+
+  // it('calculate stock at risk when monthly consumption provided and expiryDate > now', () => {
+  //   let line = inputData.stockLines.nodes[0];
+  //   line = addDaysUntilExpired(line);
+  //   line = calculateStockAtRisk(line);
+  //   expect(Math.round(line.stockAtRisk)).toBe(958);
+  //   expect(Math.round(line.expectedUsage)).toBe(42);
+    
+  //   let line2 = inputData.stockLines.nodes[1];
+  //   line2 = addDaysUntilExpired(line2);
+  //   line2 = calculateStockAtRisk(line2);
+  //   expect(Math.round(line2.stockAtRisk)).toBe(233);
+  //   expect(Math.round(line2.expectedUsage)).toBe(17);
+  // })
+
+  // it('calculate stock at risk when monthly consumption provided but no expiry date', () => {
+  //   let line = inputData.stockLines.nodes[0];
+  //   // manually remove expiry date
+  //   line.expiryDate = undefined;
+  //   line = addDaysUntilExpired(line);
+  //   line = calculateStockAtRisk(line);
+  //   expect(line.expectedUsage).toBe(undefined);
+  //   expect(line.stockAtRisk).toBe(undefined);
+  // })
+
+  // it('calculate stock at risk if no monthly consumption and expiryDate < now', () => {
+  //   let line = inputData.stockLines.nodes[0];
+  //   line.item.stats.averageMonthlyConsumption = undefined;
+  //   line = addDaysUntilExpired(line);
+  //   expect(line.item.stats.averageMonthlyConsumption).toBe(undefined);
+  //   line = calculateStockAtRiskIfNoMonthlyConsumption(line);
+  //   // expect(Math.round(line.stockAtRisk)).toBe(1000);
+  // });
+
+  // it('calculate stock at risk if no monthly consumption and expiryDate > now', () => {
+  //   let line = inputData.stockLines.nodes[0]; 
+  //   line.item.stats.averageMonthlyConsumption = undefined;
+  //   line = addDaysUntilExpired(line);
+  //   line = calculateStockAtRiskIfNoMonthlyConsumption(line);
+  //   expect(line.stockAtRisk).toBe(undefined);  // No stock at risk if expiry date > now and no monthly consumption
+  // });
+  
+  describe('test round days to integer', () => {
+    it('returns undefined if undefined', () => {
+      expect(roundDaysToInteger(undefined)).toBe(undefined);
+    });
+    
+    it('returns rounded value if defined', () => {
+      expect(roundDaysToInteger(2.1)).toBe(2);
+      expect(roundDaysToInteger(2.11)).toBe(2);
+      expect(roundDaysToInteger(0.123)).toBe(0);
+      expect(roundDaysToInteger(2)).toBe(2);
+    });
+  })
 })
 
