@@ -159,7 +159,8 @@ mod report_dsl_test {
                     header: None,
                     footer: Some("local_footer.html".to_string()),
                     query: vec!["query".to_string()],
-                    convert_data: None
+                    convert_data: None,
+                    custom_wasm_function: None,
                 },
                 entries: HashMap::from([
                     (

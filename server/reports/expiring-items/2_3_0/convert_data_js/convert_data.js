@@ -1,13 +1,28 @@
-const { sql } = Host.getFunctions();
+// const { sql } = Host.getFunctions();
 function convert_data() {
   const res = JSON.parse(Host.inputString());
-  let now = Date.now();
-  res.stockLines.nodes.forEach((line) => {
-    // add days until expired field
+  resProcessed = processStockLines(res);
+  Host.outputString(JSON.stringify(resProcessed));
+}
+
+const processStockLines = (res) => {
+    res.stockLines.nodes.forEach((line) => {
+        line = addDaysUntilExpired(line);
+        line = calculateStockAtRisk(line);
+        line = calculateStockAtRiskIfNoMonthlyConsumption(line);
+        line = roundDaysToInteger(line)
+    });
+    return res;
+}
+
+const addDaysUntilExpired = (line) => {
     if (line.expiryDate != undefined) {
+        let now = Date.now();
         line.daysUntilExpired = (new Date(line.expiryDate) - now) / 1000 / 60 / 60 / 24;
     };
-    //  calculate stock at risk field
+    return line
+}
+const calculateStockAtRisk = (line) => {
     if (line.item.stats.averageMonthlyConsumption && line.expiryDate) {
         if (line.daysUntilExpired > 0) {
             line.expectedUsage = line.item.stats.averageMonthlyConsumption * (line.daysUntilExpired / 30);
@@ -16,20 +31,22 @@ function convert_data() {
             line.stockAtRisk = line.totalNumberOfPacks * line.packSize;
         }
     };
-    // calculate stock at risk if no monthly consumption provided
+    return line
+}
+const calculateStockAtRiskIfNoMonthlyConsumption = (line) => {        
     if (line.expiryDate && !line.item.stats.averageMonthlyConsumption) {
         if (line.daysUntilExpired < 0) {
             line.stockAtRisk = line.totalNumberOfPacks * line.packSize;
         }
     };
-    // round days to integer
-    if (line.daysUntilExpired) {
-        line.daysUntilExpired = Math.round(line.daysUntilExpired);
-    }
-  })
-
-
-
-  Host.outputString(JSON.stringify(res));
+    return line
 }
-module.exports = { convert_data };
+const roundDaysToInteger = (line) => {       
+    if (line.daysUntilExpired) {
+    line.daysUntilExpired = Math.round(line.daysUntilExpired);
+    };
+    return line
+}
+
+module.exports = { convert_data, processStockLines, addDaysUntilExpired, calculateStockAtRisk, calculateStockAtRiskIfNoMonthlyConsumption, roundDaysToInteger };
+

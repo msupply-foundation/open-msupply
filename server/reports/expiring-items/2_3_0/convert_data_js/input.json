@@ -1,0 +1,46 @@
+{
+    "stockLines": {
+      "nodes": [
+        {
+          "batch": "ABC123",
+          "expiryDate": "2024-12-01",
+          "id": "1",
+          "packSize": 10,
+          "storeId": "STORE001",
+          "totalNumberOfPacks": 100,
+          "supplierName": "SupplierA",
+          "location": {
+            "code": "LOC1"
+          },
+          "item": {
+            "code": "ITEM001",
+            "name": "Paracetamol",
+            "unitName": "box",
+            "stats": {
+              "averageMonthlyConsumption": 50
+            }
+          }
+        },
+        {
+          "batch": "XYZ456",
+          "expiryDate": "2023-10-10",
+          "id": "2",
+          "packSize": 5,
+          "storeId": "STORE002",
+          "totalNumberOfPacks": 50,
+          "supplierName": "SupplierB",
+          "location": {
+            "code": "LOC2"
+          },
+          "item": {
+            "code": "ITEM002",
+            "name": "Ibuprofen",
+            "unitName": "box",
+            "stats": {
+              "averageMonthlyConsumption": 20
+            }
+          }
+        }
+      ]
+    }
+  }
