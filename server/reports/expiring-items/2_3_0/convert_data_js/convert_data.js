@@ -10,16 +10,16 @@ const processStockLines = (res) => {
         line = addDaysUntilExpired(line);
         line = calculateStockAtRisk(line);
         line = calculateStockAtRiskIfNoMonthlyConsumption(line);
-        line = roundDaysToInteger(line)
+        line.daysUntilExpired = roundDaysToInteger(line.daysUntilExpired)
     });
     return res;
 }
 
 const addDaysUntilExpired = (line) => {
-    if (line.expiryDate != undefined) {
+    if (line && line.expiryDate != undefined) {
         let now = Date.now();
         line.daysUntilExpired = (new Date(line.expiryDate) - now) / 1000 / 60 / 60 / 24;
-    };
+    } 
     return line
 }
 const calculateStockAtRisk = (line) => {
@@ -30,25 +30,23 @@ const calculateStockAtRisk = (line) => {
         } else {
             line.stockAtRisk = line.totalNumberOfPacks * line.packSize;
         }
-    } else {
-        line.expectedUsage = undefined;
-        line.stockAtRisk = undefined;
-    };
+    }
     return line
 }
 const calculateStockAtRiskIfNoMonthlyConsumption = (line) => {        
-    if (line.expiryDate && !line.item.stats.averageMonthlyConsumption) {
-        if (line.daysUntilExpired < 0) {
+    if (line && line.expiryDate && !line.item.stats.averageMonthlyConsumption) {
+        if (line.daysUntilExpired && line.daysUntilExpired < 0) {
             line.stockAtRisk = line.totalNumberOfPacks * line.packSize;
         }
-    };
+    } ;
     return line
 }
-const roundDaysToInteger = (line) => {       
-    if (line.daysUntilExpired) {
-    line.daysUntilExpired = Math.round(line.daysUntilExpired);
-    };
-    return line
+const roundDaysToInteger = (daysUntilExpired) => {
+    let rounded = undefined;
+    if (!!daysUntilExpired) {
+        rounded = Math.round(daysUntilExpired);
+    }
+    return rounded
 }
 
 module.exports = { convert_data, processStockLines, addDaysUntilExpired, calculateStockAtRisk, calculateStockAtRiskIfNoMonthlyConsumption, roundDaysToInteger };
