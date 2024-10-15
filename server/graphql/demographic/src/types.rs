@@ -3,14 +3,16 @@ use graphql_core::{
     generic_filters::{EqualFilterNumberInput, EqualFilterStringInput, StringFilterInput},
     simple_generic_errors::NodeError,
 };
-use graphql_types::types::DemographicIndicatorNode;
+use graphql_types::types::{DemographicIndicatorNode, DemographicNode};
 use repository::{
+    demographic::{DemographicFilter, DemographicSort, DemographicSortField},
     demographic_projection::{
         DemographicProjection, DemographicProjectionFilter, DemographicProjectionSort,
         DemographicProjectionSortField,
     },
     DemographicIndicatorFilter, DemographicIndicatorRow, DemographicIndicatorSort,
-    DemographicIndicatorSortField, DemographicProjectionRow, EqualFilter, StringFilter,
+    DemographicIndicatorSortField, DemographicProjectionRow, DemographicRow, EqualFilter,
+    StringFilter,
 };
 use service::{usize_to_u32, ListResult};
 
@@ -24,6 +26,19 @@ pub enum DemographicIndicatorSortFieldInput {
 #[derive(InputObject)]
 pub struct DemographicIndicatorSortInput {
     key: DemographicIndicatorSortFieldInput,
+    desc: Option<bool>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum DemographicSortFieldInput {
+    Id,
+    Name,
+}
+
+#[derive(InputObject)]
+pub struct DemographicSortInput {
+    key: DemographicSortFieldInput,
     desc: Option<bool>,
 }
 
@@ -52,6 +67,21 @@ impl From<DemographicIndicatorFilterInput> for DemographicIndicatorFilter {
             id: f.id.map(EqualFilter::from),
             name: f.name.map(StringFilter::from),
             base_year: f.base_year.map(EqualFilter::from),
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct DemographicFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub name: Option<StringFilterInput>,
+}
+
+impl From<DemographicFilterInput> for DemographicFilter {
+    fn from(f: DemographicFilterInput) -> Self {
+        DemographicFilter {
+            id: f.id.map(EqualFilter::from),
+            name: f.name.map(StringFilter::from),
         }
     }
 }
@@ -86,6 +116,23 @@ pub enum DemographicIndicatorResponse {
 pub struct DemographicIndicatorConnector {
     total_count: u32,
     nodes: Vec<DemographicIndicatorNode>,
+}
+
+#[derive(Union)]
+pub enum DemographicsResponse {
+    Response(DemographicConnector),
+}
+
+#[derive(Union)]
+pub enum DemographicResponse {
+    Error(NodeError),
+    Response(DemographicNode),
+}
+
+#[derive(SimpleObject, Default)]
+pub struct DemographicConnector {
+    total_count: u32,
+    nodes: Vec<DemographicNode>,
 }
 
 #[derive(Union)]
@@ -152,6 +199,29 @@ impl DemographicProjectionNode {
     }
 }
 
+impl DemographicConnector {
+    pub fn from_domain(demographic_indicators: ListResult<DemographicRow>) -> DemographicConnector {
+        DemographicConnector {
+            total_count: demographic_indicators.count,
+            nodes: demographic_indicators
+                .rows
+                .into_iter()
+                .map(DemographicNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(demographic_indicators: Vec<DemographicRow>) -> DemographicConnector {
+        DemographicConnector {
+            total_count: usize_to_u32(demographic_indicators.len()),
+            nodes: demographic_indicators
+                .into_iter()
+                .map(DemographicNode::from_domain)
+                .collect(),
+        }
+    }
+}
+
 impl DemographicIndicatorConnector {
     pub fn from_domain(
         demographic_indicators: ListResult<DemographicIndicatorRow>,
@@ -202,6 +272,22 @@ impl DemographicProjectionConnector {
                 .into_iter()
                 .map(DemographicProjectionNode::from_domain)
                 .collect(),
+        }
+    }
+}
+
+impl DemographicSortInput {
+    pub fn to_domain(&self) -> DemographicSort {
+        use DemographicSortField as to;
+        use DemographicSortFieldInput as from;
+        let key = match self.key {
+            from::Id => to::Id,
+            from::Name => to::Name,
+        };
+
+        DemographicSort {
+            key,
+            desc: self.desc,
         }
     }
 }

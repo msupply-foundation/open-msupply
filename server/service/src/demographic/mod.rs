@@ -16,7 +16,9 @@ use self::update_demographic_projection::{
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 
+use query_demographic_indicator::get_demographics;
 use query_demographic_projection::get_demographic_projection_by_base_year;
+use repository::demographic::{Demographic, DemographicFilter, DemographicSort};
 use repository::demographic_indicator::{
     DemographicIndicator, DemographicIndicatorFilter, DemographicIndicatorSort,
 };
@@ -40,6 +42,16 @@ use repository::demographic_projection::{
 };
 
 pub trait DemographicServiceTrait: Sync + Send {
+    fn get_demographics(
+        &self,
+        connection: &StorageConnection,
+        pagination: Option<PaginationOption>,
+        filter: Option<DemographicFilter>,
+        sort: Option<DemographicSort>,
+    ) -> Result<ListResult<Demographic>, ListError> {
+        get_demographics(connection, pagination, filter, sort)
+    }
+
     fn get_demographic_indicators(
         &self,
         connection: &StorageConnection,

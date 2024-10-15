@@ -344,7 +344,7 @@ pub async fn get_loaders(
     ));
 
     loaders.insert(DataLoader::new(
-        DemographicIndicatorLoader {
+        DemographicLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,
