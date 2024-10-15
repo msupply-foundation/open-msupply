@@ -1,27 +1,37 @@
 // const { sql } = Host.getFunctions();
 function convert_data() {
-  const res = JSON.parse(Host.inputString());
-  resProcessed = processStockLines(res);
+  let res = JSON.parse(Host.inputString());
+  res.stockLines.nodes = processStockLines(res.stockLines.nodes);
   Host.outputString(JSON.stringify(resProcessed));
 }
 
-const processStockLines = (res) => {
-    res.stockLines.nodes.forEach((line) => {
-        line = addDaysUntilExpired(line);
-        line = calculateStockAtRisk(line);
-        line = calculateStockAtRiskIfNoMonthlyConsumption(line);
+const processStockLines = (nodes) => {
+    nodes.forEach((line) => {
+        line.daysUntilExpired = calculateDaysUntilExpired(line.expiryDate);
+        line.expectedUsage = addExpectedUsage(line);
+        line.stockAtRisk = addStockAtRisk(line);
         line.daysUntilExpired = roundDaysToInteger(line.daysUntilExpired)
     });
-    return res;
+    return nodes;
 }
 
-const addDaysUntilExpired = (line) => {
-    if (line && line.expiryDate != undefined) {
+const calculateDaysUntilExpired = (expiryDateString) => {
+    let daysUntilExpired = undefined;
+    if (!!expiryDateString) {
         let now = Date.now();
-        line.daysUntilExpired = (new Date(line.expiryDate) - now) / 1000 / 60 / 60 / 24;
+        daysUntilExpired = (new Date(expiryDateString) - now) / 1000 / 60 / 60 / 24;
     } 
-    return line
+    return daysUntilExpired
 }
+
+const addExpectedUsage = (line) => {
+    return undefined;
+}
+
+const addStockAtRisk = (line) => {
+    return undefined;
+}
+
 const calculateStockAtRisk = (line) => {
     if (line.item.stats.averageMonthlyConsumption && !!line.expiryDate) {
         if (line.daysUntilExpired > 0) {
@@ -49,5 +59,5 @@ const roundDaysToInteger = (daysUntilExpired) => {
     return rounded
 }
 
-module.exports = { convert_data, processStockLines, addDaysUntilExpired, calculateStockAtRisk, calculateStockAtRiskIfNoMonthlyConsumption, roundDaysToInteger };
+module.exports = { convert_data, processStockLines, calculateDaysUntilExpired, calculateStockAtRisk, calculateStockAtRiskIfNoMonthlyConsumption, roundDaysToInteger };
 
