@@ -19,12 +19,14 @@ jobs:
     steps:
       - name: Update PATH
         run: echo "$HOME/.cargo/bin:/opt/homebrew/bin" >> $GITHUB_PATH
-      - name: Show Environment
-        run: env
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clean
+          args: --package repository
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -38,12 +40,14 @@ jobs:
     steps:
       - name: Update PATH
         run: echo "$HOME/.cargo/bin/:/opt/homebrew/bin" >> $GITHUB_PATH
-      - name: Show Environment
-        run: env
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
+      - uses: actions-rs/cargo@v1
+        with:
+          command: clean
+          args: --package repository
       - uses: actions-rs/cargo@v1
         with:
           command: test
