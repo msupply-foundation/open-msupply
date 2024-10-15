@@ -43,25 +43,20 @@ pub fn insert_demographic_indicator(
     let demographic_indicator = ctx
         .connection
         .transaction_sync(|connection| {
-            let demographic = validate(&input, connection)?;
+            let (demographic, demographic_name) = validate(&input, connection)?;
 
             let demographic = match demographic {
                 Some(demographic) => demographic,
-                None => match &input.name {
-                    Some(name) => {
-                        // Create new demographic, if the name doesn't already exist!
-                        let new_demographic = DemographicRow {
-                            id: uuid(),
-                            name: name.clone(),
-                        };
-                        new_demographic.upsert(connection)?;
-                        // TODO add activity log entry
-                        new_demographic
-                    }
-                    None => {
-                        return Err(InsertDemographicIndicatorError::DemographicIndicatorHasNoName);
-                    }
-                },
+                None => {
+                    // Create new demographic, as the name doesn't exist yet!
+                    let new_demographic = DemographicRow {
+                        id: uuid(),
+                        name: demographic_name.clone(),
+                    };
+                    new_demographic.upsert(connection)?;
+                    // TODO add activity log entry
+                    new_demographic
+                }
             };
 
             let new_demographic_indicator = generate(input, demographic.id);
@@ -79,7 +74,7 @@ pub fn insert_demographic_indicator(
 pub fn validate(
     input: &InsertDemographicIndicator,
     connection: &StorageConnection,
-) -> Result<Option<DemographicRow>, InsertDemographicIndicatorError> {
+) -> Result<(Option<DemographicRow>, String), InsertDemographicIndicatorError> {
     let name = match &input.name {
         Some(name) => {
             if !check_year_name_combination_unique(name, input.base_year, None, connection)? {
@@ -100,7 +95,7 @@ pub fn validate(
 
     let demographic = find_demographic_by_name(name, connection)?;
 
-    Ok(demographic)
+    Ok((demographic, name.to_string()))
 }
 
 pub fn generate(
