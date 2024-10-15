@@ -2,48 +2,44 @@ import { calculateStockAtRisk } from "./convert_data";
 import {
   processStockLines,
   calculateDaysUntilExpired,
-  calculateStockAtRiskIfNoMonthlyConsumption,
   roundDaysToInteger,
   calculateExpectedUsage,
 } from "./convert_data";
 import inputData from "./input.json" assert { type: "json" };
 import outputData from "./output.json" assert { type: "json" };
 
-const newExpiry = new Date(Date.now() + 25 * 24 * 60 * 60 * 1000);
 
-// convert expiry date to be 25 days from now
-// TODO mock Date.now() properly
-inputData.stockLines.nodes.forEach((line) => {
-  const year = newExpiry.getFullYear();
-  const month = String(newExpiry.getMonth() + 1).padStart(2, "0");
-  const day = String(newExpiry.getDate()).padStart(2, "0");
 
-  const formattedDate = `${year}-${month}-${day}`;
-  line.expiryDate = formattedDate;
-});
 
 describe("test convert data", () => {
-  // describe('test process stock lines', () => {
-  //   // mock out the 4 internal functions
-  //   // let mockRoundDaysToInteger = 1 // some jest mock here of the fn
+  beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2024-04-01"));
+  });
+  describe('test process stock lines', () => {
+    // mock out the 4 internal functions
+    // let mockRoundDaysToInteger = 1 // some jest mock here of the fn
 
-  //   // beforeEach(() => {
-  //   //   mockRoundDaysToInteger.mockClear();
-  //   // });
+    // beforeEach(() => {
+    //   mockRoundDaysToInteger.mockClear();
+    // });
 
-  //   // it('calls roundDaysToInteger with the correct argument', () => {
-  //   //   _ = processStockLines(inputData.stockLines)
-  //   //   expect(mockRoundDaysToInteger).toHaveBeenCalledTimes(3);
-  //   //   expect(mockRoundDaysToInteger).toHaveBeenCalledWith(2.3)
-  //   //   expect(mockRoundDaysToInteger).toHaveBeenCalledWith(3.1)
-  //   //   expect(mockRoundDaysToInteger).toHaveBeenCalledWith(5.5)
-  //   // });
-  //   it('end to end', () => {
-  //     const result = processStockLines(inputData)
-  //     expect(result).toEqual(outputData)
-  //   });
+    // it('calls roundDaysToInteger with the correct argument', () => {
+    //   _ = processStockLines(inputData.stockLines)
+    //   expect(mockRoundDaysToInteger).toHaveBeenCalledTimes(3);
+    //   expect(mockRoundDaysToInteger).toHaveBeenCalledWith(2.3)
+    //   expect(mockRoundDaysToInteger).toHaveBeenCalledWith(3.1)
+    //   expect(mockRoundDaysToInteger).toHaveBeenCalledWith(5.5)
+    // });
+    it('end to end', () => {
+      const result = processStockLines(inputData.stockLines.nodes)
+      expect(result).toEqual(outputData.stockLines.nodes)
+    });
+    afterAll(() => {
+      jest.useRealTimers();
+    });
 
-  // })
+  })
 
   describe("days until expired is added correctly", () => {
     beforeAll(() => {
@@ -70,7 +66,7 @@ describe("test convert data", () => {
     });
 
     it("returns expected usage if both defined", () => {
-      expect(calculateExpectedUsage(20, 5)).toBe(100);
+      expect(calculateExpectedUsage(20, 500)).toBe(333);
     });
   });
 

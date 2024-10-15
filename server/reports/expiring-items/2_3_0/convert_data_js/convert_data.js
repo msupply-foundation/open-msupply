@@ -7,13 +7,24 @@ function convert_data() {
 
 const processStockLines = (nodes) => {
   nodes.forEach((line) => {
-    line.daysUntilExpired = calculateDaysUntilExpired(line.expiryDate);
-    line.expectedUsage = calculateExpectedUsage(
-      line.daysUntilExpired,
-      line.averageMonthlyConsumption
+    const daysUntilExpiredFloat = calculateDaysUntilExpired(line.expiryDate);
+    const expectedUsage = calculateExpectedUsage(
+      daysUntilExpiredFloat,
+      line.item.stats.averageMonthlyConsumption
     );
-    line.stockAtRisk = addStockAtRisk(line);
-    line.daysUntilExpired = roundDaysToInteger(line.daysUntilExpired);
+    if (!!expectedUsage) {
+      line.expectedUsage = expectedUsage;
+    }
+    const stockAtRisk = calculateStockAtRisk(
+      line.packSize,
+      line.totalNumberOfPacks,
+      line.item.stats.averageMonthlyConsumption,
+      daysUntilExpiredFloat
+    );
+    if (!!stockAtRisk) {
+      line.stockAtRisk = stockAtRisk;
+    }
+    line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
   });
   return nodes;
 };
@@ -33,7 +44,9 @@ const calculateExpectedUsage = (
 ) => {
   let expectedUsage = undefined;
   if (!!daysUntilExpired && !!averageMonthlyConsumption) {
-    expectedUsage = daysUntilExpired * averageMonthlyConsumption;
+    if (daysUntilExpired >= 0) {
+    expectedUsage = Math.round(daysUntilExpired * (averageMonthlyConsumption / 30));
+    }
   }
   return expectedUsage;
 };
@@ -48,9 +61,13 @@ const calculateStockAtRisk = (
   if (!!packSize && !!totalNumberOfPacks && !!daysUntilExpired) {
     const totalStock = packSize * totalNumberOfPacks;
     if (!!averageMonthlyConsumption) {
-      stockAtRisk = Math.round(
-        totalStock - averageMonthlyConsumption * (daysUntilExpired / 30)
-      );
+      if (daysUntilExpired >= 0) {
+        stockAtRisk = Math.round(
+          totalStock - averageMonthlyConsumption * (daysUntilExpired / 30)
+        );
+      } else {
+        stockAtRisk = Math.round(totalStock);
+      }
     }
     if (!averageMonthlyConsumption) {
       if (daysUntilExpired <= 0) {
@@ -75,6 +92,5 @@ module.exports = {
   processStockLines,
   calculateDaysUntilExpired,
   calculateStockAtRisk,
-  calculateStockAtRiskIfNoMonthlyConsumption,
   roundDaysToInteger,
 };
