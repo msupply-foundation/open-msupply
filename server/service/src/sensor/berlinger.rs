@@ -492,7 +492,7 @@ mod test {
     };
     use chrono::{Duration, NaiveDate, NaiveDateTime};
     use repository::{
-        mock::{mock_store_a, MockDataInserts},
+        mock::{mock_store_a, mock_store_b, MockDataInserts},
         Pagination, Sort, TemperatureBreachFilter, TemperatureBreachRepository,
         TemperatureBreachRow, TemperatureBreachType, TemperatureLogRepository,
         TemperatureLogSortField,
@@ -621,6 +621,7 @@ mod test {
             sensor_type: ts::SensorType::Berlinger,
             breaches: Some(
                 breach_data
+                    .clone()
                     .into_iter()
                     .map(
                         |(breach_type, start_timestamp, end_timestamp)| ts::TemperatureBreach {
@@ -633,7 +634,7 @@ mod test {
                     )
                     .collect(),
             ),
-            configs,
+            configs: configs.clone(),
             logs: Some(
                 log_data
                     .iter()
@@ -859,5 +860,29 @@ mod test {
                 ))
                 .collect::<VecShape>(),
         );
+
+        // --- Importing fridge tags with the same breach config - expected behaviour --
+        // Sensor 1 is already imported above, into store_a
+
+        // 1. Importing different sensor with same config into the same store: should pass
+        let new_sensor = ts::Sensor {
+            serial: "NEW_SENSOR".to_string(),
+            ..data.clone()
+        };
+        integrate_sensor_data(&connection, &mock_store_a().id, new_sensor).unwrap();
+
+        // 2. Importing different sensor into a different store: should pass
+        // This was the issue - fails in develop
+        // Resolved by the removal of the description unique constraint
+        let new_sensor_2 = ts::Sensor {
+            serial: "NEW_SENSOR_2".to_string(),
+            ..data.clone()
+        };
+        integrate_sensor_data(&connection, &mock_store_b().id, new_sensor_2).unwrap();
+
+        // 3. Importing same sensor into a different store: should FAIL - but it doesn't!
+        // Also failing in develop!
+        // sensor.store_id is used in some places instead of this store_id
+        assert!(integrate_sensor_data(&connection, &mock_store_b().id, data.clone()).is_err());
     }
 }
