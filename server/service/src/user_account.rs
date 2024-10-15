@@ -72,12 +72,14 @@ impl<'a> UserAccountService<'a> {
                         .user_id(EqualFilter::equal_to(&user.id))
                         .has_context(false),
                 )?;
+                log::info!("Deleting {} permissions", permissions_to_delete.len());
                 for permission in permissions_to_delete {
                     permission_repo.delete(&permission.id)?;
                 }
                 user_store_repo.delete_by_user_id(&user.id)?;
                 user_repo.upsert_one(&user)?;
 
+                log::info!("Inserting {} stores", stores_permissions.len());
                 for store in stores_permissions {
                     // The list may contain stores we don't know about; try to insert the store
                     // in a sub-transaction and ignore the store when there is an error
@@ -85,6 +87,11 @@ impl<'a> UserAccountService<'a> {
                     // the whole tx when encounter an error.
                     let sub_result = con.transaction_sync_etc(
                         |_| {
+                            log::info!(
+                                "Inserting {} permissions for {}",
+                                store.permissions.len(),
+                                store.user_store_join.store_id
+                            );
                             user_store_repo.upsert_one(&store.user_store_join)?;
                             for permission in &store.permissions {
                                 permission_repo.upsert_one(permission)?;
@@ -195,7 +202,7 @@ impl<'a> UserAccountService<'a> {
             return Err(VerifyPasswordError::EmptyHashedPassword);
         }
 
-        // verify password  
+        // verify password
         let valid = verify(password, &user.hashed_password).map_err(|err| {
             error!("verify_password: {}", err);
             VerifyPasswordError::InvalidCredentialsBackend(err)
@@ -211,7 +218,10 @@ impl<'a> UserAccountService<'a> {
 #[cfg(test)]
 mod user_account_test {
     use repository::{
-        mock::{mock_user_account_a, mock_user_account_b, mock_user_empty_hashed_password, MockDataInserts},
+        mock::{
+            mock_user_account_a, mock_user_account_b, mock_user_empty_hashed_password,
+            MockDataInserts,
+        },
         test_db::{self, setup_all},
         PermissionType,
     };
@@ -350,8 +360,7 @@ mod user_account_test {
     async fn test_missing_hashed_password() {
         let (_, _, connection_manager, _) = setup_all(
             "test_missing_hashed_password",
-            MockDataInserts::none()
-                .user_accounts()
+            MockDataInserts::none().user_accounts(),
         )
         .await;
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
@@ -359,8 +368,11 @@ mod user_account_test {
 
         let user_service = UserAccountService::new(&context.connection);
 
-        let result = user_service.verify_password(&mock_user_empty_hashed_password().username, "password");
-        assert!(matches!(result, Err(VerifyPasswordError::EmptyHashedPassword)));
+        let result =
+            user_service.verify_password(&mock_user_empty_hashed_password().username, "password");
+        assert!(matches!(
+            result,
+            Err(VerifyPasswordError::EmptyHashedPassword)
+        ));
     }
-
 }
