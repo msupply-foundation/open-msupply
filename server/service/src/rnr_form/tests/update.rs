@@ -7,7 +7,9 @@ mod update {
         mock_store_a, mock_store_b,
     };
     use repository::test_db::setup_all;
-    use repository::{RnRFormLineRow, RnRFormLineRowRepository, RnRFormLowStock};
+    use repository::{
+        RnRFormLineRow, RnRFormLineRowRepository, RnRFormLowStock, RnRFormRowRepository,
+    };
 
     use crate::rnr_form::update::{
         UpdateRnRForm, UpdateRnRFormError, UpdateRnRFormLine, UpdateRnRFormLineError,
@@ -75,7 +77,8 @@ mod update {
                     lines: vec![UpdateRnRFormLine {
                         id: "invalid".to_string(),
                         ..Default::default()
-                    }]
+                    }],
+                    ..Default::default()
                 }
             ),
             Err(UpdateRnRFormError::LineError {
@@ -94,7 +97,8 @@ mod update {
                     lines: vec![UpdateRnRFormLine {
                         id: mock_rnr_form_a_line_a().id,
                         ..Default::default()
-                    }]
+                    }],
+                    ..Default::default()
                 }
             ),
             Err(UpdateRnRFormError::LineError {
@@ -118,7 +122,8 @@ mod update {
                         initial_balance: 10.0,
                         final_balance: 6.0, // initial is 10, so +1 -1 should equal 10
                         ..Default::default()
-                    }]
+                    }],
+                    ..Default::default()
                 }
             ),
             Err(UpdateRnRFormError::LineError {
@@ -140,7 +145,8 @@ mod update {
                         initial_balance: 10.0,
                         final_balance: 7.0,
                         ..Default::default()
-                    }]
+                    }],
+                    ..Default::default()
                 }
             ),
             Err(UpdateRnRFormError::LineError {
@@ -164,7 +170,8 @@ mod update {
                         adjustments: Some(0.0),
                         final_balance: -7.0,
                         ..Default::default()
-                    }]
+                    }],
+                    ..Default::default()
                 }
             ),
             Err(UpdateRnRFormError::LineError {
@@ -187,7 +194,8 @@ mod update {
                         calculated_requested_quantity: 0.0,
                         entered_requested_quantity: Some(-10.0),
                         ..Default::default()
-                    }]
+                    }],
+                    ..Default::default()
                 }
             ),
             Err(UpdateRnRFormError::LineError {
@@ -227,9 +235,21 @@ mod update {
                         expiry_date: NaiveDate::from_ymd_opt(2021, 1, 1),
                         ..Default::default()
                     }],
+                    their_reference: Some("new reference".to_string()),
+                    ..Default::default()
                 },
             )
             .unwrap();
+
+        let updated_form = RnRFormRowRepository::new(&context.connection)
+            .find_one_by_id(&mock_rnr_form_b().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            updated_form.their_reference,
+            Some("new reference".to_string())
+        );
 
         let updated_line = RnRFormLineRowRepository::new(&context.connection)
             .find_one_by_id(&mock_rnr_form_b_line_a().id)
