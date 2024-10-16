@@ -65,7 +65,7 @@ export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
           </PanelRow>
         </Grid>
 
-        <Grid container gap={0.5} marginTop={2}>
+        <Grid container gap={1} marginTop={2}>
           <PanelRow>
             <PanelLabel flex={0.5}>{t('heading.reference')}</PanelLabel>
             <PanelField>
