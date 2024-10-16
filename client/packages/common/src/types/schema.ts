@@ -6463,6 +6463,7 @@ export type RnRFormLineNode = {
 
 export type RnRFormNode = {
   __typename: 'RnRFormNode';
+  comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   lines: Array<RnRFormLineNode>;
@@ -6474,6 +6475,7 @@ export type RnRFormNode = {
   status: RnRFormNodeStatus;
   supplierId: Scalars['String']['output'];
   supplierName: Scalars['String']['output'];
+  theirReference?: Maybe<Scalars['String']['output']>;
 };
 
 export enum RnRFormNodeStatus {
@@ -7863,8 +7865,10 @@ export type UpdateReturnOtherPartyErrorInterface = {
 };
 
 export type UpdateRnRFormInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   lines: Array<UpdateRnRFormLineInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateRnRFormLineInput = {

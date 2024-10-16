@@ -104,7 +104,7 @@ const RnRFormDetailViewComponent = ({
         <DetailTabs tabs={tabs} />
       </TableProvider>
 
-      <SidePanel data={data} />
+      <SidePanel rnrFormId={data.id} />
       <Footer
         rnrFormId={data.id}
         unsavedChanges={isDirty}
