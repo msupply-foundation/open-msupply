@@ -28,7 +28,6 @@ pub struct ReasonOptionFilter {
 
 #[derive(PartialEq, Debug)]
 pub enum ReasonOptionSortField {
-    Id,
     ReasonOptionType,
     Reason,
 }
@@ -67,9 +66,6 @@ impl<'a> ReasonOptionRepository<'a> {
         let mut query = create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
-                ReasonOptionSortField::Id => {
-                    apply_sort_no_case!(query, sort, reason_option_dsl::id)
-                }
                 ReasonOptionSortField::ReasonOptionType => {
                     apply_sort_no_case!(query, sort, reason_option_dsl::type_)
                 }

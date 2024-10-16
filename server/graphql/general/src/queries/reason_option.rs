@@ -20,7 +20,6 @@ use service::{
 #[graphql(remote = "repository::reason_option::ReasonOptionSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum ReasonOptionSortFieldInput {
-    Id,
     ReasonOptionType,
     Reason,
 }
@@ -104,7 +103,6 @@ impl ReasonOptionSortInput {
         use ReasonOptionSortField as to;
         use ReasonOptionSortFieldInput as from;
         let key = match self.key {
-            from::Id => to::Id,
             from::ReasonOptionType => to::ReasonOptionType,
             from::Reason => to::Reason,
         };
