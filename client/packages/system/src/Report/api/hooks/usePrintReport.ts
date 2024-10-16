@@ -4,6 +4,7 @@ import {
   Platform,
   PrintFormat,
   PrintReportSortInput,
+  useIntlUtils,
   useMutation,
   useNotification,
 } from '@openmsupply-client/common';
@@ -64,6 +65,7 @@ const printPage = (url: string) => {
 export const usePrintReport = () => {
   const { reportApi, storeId } = useReportGraphQL();
   const { error } = useNotification();
+  const { currentLanguage } = useIntlUtils();
 
   const mutationFn = async (params: GenerateReportParams) => {
     const {
@@ -81,6 +83,7 @@ export const usePrintReport = () => {
       format,
       arguments: args,
       sort,
+      currentLanguage,
     });
     if (result?.generateReport?.__typename === 'PrintReportNode') {
       return result.generateReport.fileId;
