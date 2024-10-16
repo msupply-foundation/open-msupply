@@ -1,23 +1,21 @@
 function convert_data() {
   const res = JSON.parse(Host.inputString());
-  let now = Date.now();
-  res.stockLines.nodes.forEach((line) => {
-    // month consumption
-    line.monthConsupmtion = res.thisMonthConsumption.find((consumption) => consumption.item_id == line.id);
-    if (line.monthConsumption == undefined) {
-        line.monthConsumption = "-"
-    }
-  })
-
+  res.items.nodes = processItemLines(res);
   Host.outputString(JSON.stringify(res));
+}
+
+const processItemLines = (res) => {
+  res.items.nodes.forEach((line) => {
+    line.monthConsumption = calculateQuantity(res.monthConsumption, item.id);
+  })
 }
 
 // function adds month consumption to data  (either this or last month)
 const calculateQuantity = (queryResult, id) => {
-  let quantity = undefined;
+  let quantity = 0;
   if (!!queryResult && !!id) {
     const node = queryResult.find((element) => element.item_id == id);
-    quantity = node?.quantity ? node.quantity : undefined;
+    quantity = node?.quantity ? node.quantity : 0;
   }
   return quantity;
 }
