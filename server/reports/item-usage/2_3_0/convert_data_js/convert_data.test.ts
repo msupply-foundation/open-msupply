@@ -49,3 +49,16 @@ describe("Adds lastMonthConsumption correctly from query result", () => {
   });
 });
 
+describe("Adds twoMonthsAgoConsumption correctly from query result", () => {
+  it("returns undefined if either are undefined", () => {
+    expect(calculateMonthConsumption(undefined, "id")).toBe(undefined);
+    expect(calculateMonthConsumption(inputData.twoMonthsAgoConsumption, undefined)).toBe(undefined);
+
+  });
+  it("returns month consumption if available", () => {
+    expect(calculateMonthConsumption(inputData.twoMonthsAgoConsumption, "102")).toBe(421);
+  });
+  it("returns undefined if undefined", () => {
+    expect(calculateMonthConsumption(inputData.twoMonthsAgoConsumption, "non existent id")).toBe(undefined)
+  });
+});
