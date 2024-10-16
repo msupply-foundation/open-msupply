@@ -63,8 +63,11 @@ export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
             <PanelLabel>{t('label.created')}</PanelLabel>
             <PanelField>{localisedDate(data.createdDatetime)}</PanelField>
           </PanelRow>
+        </Grid>
+
+        <Grid container gap={0.5} marginTop={2}>
           <PanelRow>
-            <PanelLabel flex={0.4}>{t('heading.reference')}</PanelLabel>
+            <PanelLabel flex={0.5}>{t('heading.reference')}</PanelLabel>
             <PanelField>
               <BufferedTextInput
                 disabled={data.status === RnRFormNodeStatus.Finalised}
@@ -79,7 +82,7 @@ export const SidePanel = ({ rnrFormId }: { rnrFormId: string }) => {
             </PanelField>
           </PanelRow>
           <PanelRow>
-            <PanelLabel flex={0.4}>{t('heading.comment')}</PanelLabel>
+            <PanelLabel flex={0.5}>{t('heading.comment')}</PanelLabel>
             <PanelField>
               <BufferedTextArea
                 disabled={data.status === RnRFormNodeStatus.Finalised}
