@@ -33,9 +33,6 @@ const STOCKTAKE_1: (&str, &str) = (
     }"#,
 );
 fn stocktake_pull_record() -> TestSyncIncomingRecord {
-    let created_datetime = NaiveDate::from_ymd_opt(2021, 7, 30)
-        .unwrap()
-        .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap());
     TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_1,
@@ -47,8 +44,10 @@ fn stocktake_pull_record() -> TestSyncIncomingRecord {
             comment: None,
             description: Some("Test".to_string()),
             status: StocktakeStatus::Finalised,
-            created_datetime,
-            finalised_datetime: Some(created_datetime),
+            created_datetime: NaiveDate::from_ymd_opt(2021, 7, 30)
+                .unwrap()
+                .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap()),
+            finalised_datetime: None,
             inventory_addition_id: Some("inbound_shipment_a".to_string()),
             inventory_reduction_id: Some("inbound_shipment_b".to_string()),
             is_locked: false,
@@ -57,9 +56,6 @@ fn stocktake_pull_record() -> TestSyncIncomingRecord {
     )
 }
 fn stocktake_push_record() -> TestSyncOutgoingRecord {
-    let created_datetime = NaiveDate::from_ymd_opt(2021, 7, 30)
-        .unwrap()
-        .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap());
     TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: STOCKTAKE_1.0.to_string(),
@@ -77,8 +73,12 @@ fn stocktake_push_record() -> TestSyncOutgoingRecord {
             is_locked: false,
             stocktake_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             stock_take_time: NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap(),
-            created_datetime: Some(created_datetime),
-            finalised_datetime: Some(created_datetime),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_time(NaiveTime::from_num_seconds_from_midnight_opt(47061, 0).unwrap())
+            ),
+            finalised_datetime: None,
         }),
     }
 }
