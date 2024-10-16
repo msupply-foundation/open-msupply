@@ -15,7 +15,8 @@ const Container = styled('div')(() => ({
 }));
 
 export const AppFooter: FC = () => {
-  const { setAppFooterRef, setAppSessionDetailsRef } = useHostContext();
+  const { setAppFooterRef, setAppSessionDetailsRef, fullScreen } =
+    useHostContext();
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
   const isCentralServer = useIsCentralServerApi();
@@ -26,7 +27,7 @@ export const AppFooter: FC = () => {
   }, []);
 
   return (
-    <Box>
+    <Box sx={{ height: fullScreen ? 0 : undefined }}>
       <Container ref={appFooterRef} style={{ flex: 0 }} />
       <Container
         ref={appSessionDetailsRef}
