@@ -62,7 +62,8 @@ pub fn update_prescription(
         .transaction_sync(|connection| {
             // if the backdated_datetime is in the future, we assume we actually mean now
             // This is a fix for where backdated_date is set to the end of the day even though the invoice is created in the morning
-            // TODO: backdated datetime Should be a nullable update, and should be unset if it's in the future
+            // TODO: backdated datetime Should possibly be a nullable update, and should be unset if it's in the future?
+            // https://github.com/msupply-foundation/open-msupply/issues/4979
             let patch = match patch.backdated_datetime {
                 Some(backdated_datetime) => {
                     match backdated_datetime > chrono::Utc::now().naive_utc() {
