@@ -60,6 +60,22 @@ pub fn update_prescription(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
+            // if the backdated_datetime is in the future, we assume we actually mean now
+            // This is a fix for where backdated_date is set to the end of the day even though the invoice is created in the morning
+            // TODO: backdated datetime Should be a nullable update, and should be unset if it's in the future
+            let patch = match patch.backdated_datetime {
+                Some(backdated_datetime) => {
+                    match backdated_datetime > chrono::Utc::now().naive_utc() {
+                        true => UpdatePrescription {
+                            backdated_datetime: Some(chrono::Utc::now().naive_utc()),
+                            ..patch
+                        },
+                        false => patch,
+                    }
+                }
+                None => patch,
+            };
+
             let (invoice, status_changed) = validate(connection, &ctx.store_id, &patch)?;
             let GenerateResult {
                 batches_to_update,
