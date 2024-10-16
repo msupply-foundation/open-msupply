@@ -1,4 +1,3 @@
-const { sql } = Host.getFunctions();
 function convert_data() {
   const res = JSON.parse(Host.inputString());
   let now = Date.now();
@@ -10,8 +9,19 @@ function convert_data() {
     }
   })
 
-
-
   Host.outputString(JSON.stringify(res));
 }
-module.exports = { convert_data };
+
+// function adds month consumption to data  (either this or last month)
+const calculateMonthConsumption = (queryResult, id) => {
+  let thisMonthConsumption = undefined;
+  if (!!queryResult && !!id) {
+    const consumption = queryResult.find((element) => element.item_id == id);
+    thisMonthConsumption = consumption?.quantity ? consumption.quantity : undefined;
+  }
+  return thisMonthConsumption;
+}
+
+
+
+module.exports = { convert_data, calculateMonthConsumption };
