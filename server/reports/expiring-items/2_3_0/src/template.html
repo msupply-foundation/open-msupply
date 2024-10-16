@@ -37,6 +37,7 @@
           {% if stockLine.expiryDate %}
             {{ stockLine.expiryDate | date(format="%d/%m/%Y") }}
           {% else %}
+            N/A
           {% endif %}
         </td>
         <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)
