@@ -74,8 +74,6 @@ impl<'a> ReasonOptionRowRepository<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ReasonOptionRowDelete(pub String);
 impl Upsert for ReasonOptionRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         ReasonOptionRowRepository::new(con).upsert_one(self)?;

@@ -86,7 +86,7 @@ impl ReasonOptionConnector {
             nodes: reason_options
                 .rows
                 .into_iter()
-                .map(|reason_option| ReasonOptionNode::from_domain(reason_option))
+                .map(ReasonOptionNode::from_domain)
                 .collect(),
         }
     }
