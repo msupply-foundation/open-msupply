@@ -21,6 +21,9 @@ type HostContext = {
 
   setPageTitle: (title: string) => void;
   pageTitle: string;
+
+  setFullScreen: (fullScreen: boolean) => void;
+  fullScreen: boolean;
 };
 
 export const useHostContext = create<HostContext>(set => ({
@@ -53,4 +56,8 @@ export const useHostContext = create<HostContext>(set => ({
     document.title = title;
   },
   pageTitle: '',
+
+  setFullScreen: (fullScreen: boolean) =>
+    set(state => ({ ...state, fullScreen })),
+  fullScreen: true,
 }));

@@ -11,6 +11,9 @@ import {
   AppBarTabs,
   useAuthContext,
   Theme,
+  useHostContext,
+  IconButton,
+  CloseIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SectionIcon } from './SectionIcon';
@@ -29,6 +32,7 @@ export const AppBar: React.FC = () => {
   const { ref } = useAppBarRect();
   const isDashboard = useMatch(AppRoute.Dashboard);
   const { store } = useAuthContext();
+  const { fullScreen, setFullScreen } = useHostContext();
   const hasVaccineModule = store?.preferences.vaccineModule ?? false;
   const containerStyle = isDashboard
     ? { borderBottom: 0, minHeight: '10px' }
@@ -36,20 +40,27 @@ export const AppBar: React.FC = () => {
 
   return (
     <>
-      {hasVaccineModule && <ColdchainNotification />}
-      <StyledContainer ref={ref} sx={containerStyle}>
-        {!isDashboard && (
-          <Toolbar disableGutters>
-            <Box style={{ marginInlineEnd: 5 }}>
-              <SectionIcon />
-            </Box>
-            <Breadcrumbs />
-            <AppBarButtons />
-          </Toolbar>
-        )}
-        <AppBarContent />
-        {!isDashboard && <AppBarTabs />}
-      </StyledContainer>
+      <Box display={fullScreen ? 'none' : undefined}>
+        {hasVaccineModule && <ColdchainNotification />}
+        <StyledContainer ref={ref} sx={containerStyle}>
+          {!isDashboard && (
+            <Toolbar disableGutters>
+              <Box style={{ marginInlineEnd: 5 }}>
+                <SectionIcon />
+              </Box>
+              <Breadcrumbs />
+              <AppBarButtons />
+            </Toolbar>
+          )}
+          <AppBarContent />
+          {!isDashboard && <AppBarTabs />}
+        </StyledContainer>
+      </Box>
+      <IconButton
+        icon={<CloseIcon />}
+        label="hi"
+        onClick={() => setFullScreen(!fullScreen)}
+      />
     </>
   );
 };
