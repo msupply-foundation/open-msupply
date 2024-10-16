@@ -1,24 +1,13 @@
-import {  calculateQuantity, calculateStatValue } from "./convert_data";
+import {  calculateQuantity, calculateStatValue, processItemLines } from "./convert_data";
 import inputData from "./input.json" assert { type: "json" };
 import outputData from "./output.json" assert { type: "json" };
 
-// describe("test process stock lines", () => {
-//   beforeAll(() => {
-//     jest.useFakeTimers();
-//     jest.setSystemTime(new Date("2024-04-01"));
-//   });
-//   // mock out the 4 internal functions
-//   // calculateExpectedUsage.mockImplementation(() => 20);
-//   // calculateStockAtRisk.mockImplementation(() => 10);
-//   // roundDaysToInteger.mockImplementation(() => 10);
-//   // it("end to end", () => {
-//   //   const result = processStockLines(inputData.stockLines.nodes);
-//   //   expect(result).toEqual(outputData.stockLines.nodes);
-//   // });
-//   afterAll(() => {
-//     jest.useRealTimers();
-//   });
-// });
+describe("test item lines", () => {
+  it("end to end item-usage", () => {
+    const result = processItemLines(inputData);
+    expect(result).toEqual(outputData.items.nodes);
+  });
+});
 
 describe("Adds monthlyConsumption correctly from query result", () => {
   it("returns 0 if either are undefined", () => {

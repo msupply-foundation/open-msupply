@@ -110,28 +110,6 @@
           "availableStockOnHand": 300.902,
           "averageMonthlyConsumption": 266.7
         }
-      },
-      {
-        "id": "102",
-        "code": "ITEM002",
-        "name": "Item B",
-        "stats": {
-          "totalConsumption": 800,
-          "availableMonthsOfStockOnHand": 3.0,
-          "availableStockOnHand": 240,
-          "averageMonthlyConsumption": 266.7
-        }
-      },
-      {
-        "id": "103",
-        "code": "ITEM003",
-        "name": "Item C",
-        "stats": {
-          "totalConsumption": 1500,
-          "availableMonthsOfStockOnHand": 5.0,
-          "availableStockOnHand": 375,
-          "averageMonthlyConsumption": 300
-        }
       }
     ]
   }
