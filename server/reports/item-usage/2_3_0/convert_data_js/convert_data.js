@@ -6,7 +6,10 @@ function convert_data() {
 
 const processItemLines = (res) => {
   res.items.nodes.forEach((item) => {
-    item.monthConsumption = calculateQuantity(res.thisMonthConsumption, item.id);
+    item.monthConsumption = calculateQuantity(
+      res.thisMonthConsumption,
+      item.id
+    );
     item.lastMonthConsumption = calculateQuantity(
       res.lastMonthConsumption,
       item.id
@@ -24,8 +27,8 @@ const processItemLines = (res) => {
       item.id
     );
     item.stockOnOrder = calculateQuantity(res.stockOnOrder, item.id);
-    item.AMCTwelve = calculateQuantity(res.AMCTwelve, item.id);
-    item.AMCTwentyFour = calculateQuantity(res.AMCTwentyFour, item.id);
+    item.AMC12 = calculateQuantity(res.AMCTwelve, item.id);
+    item.AMC24 = calculateQuantity(res.AMCTwentyFour, item.id);
     item.SOH = calculateStatValue(item.stats.availableStockOnHand);
     item.MOS = calculateStatValue(item.stats.availableMonthsOfStockOnHand);
   });
