@@ -13,15 +13,19 @@ function convert_data() {
 }
 
 // function adds month consumption to data  (either this or last month)
-const calculateMonthConsumption = (queryResult, id) => {
-  let thisMonthConsumption = undefined;
+const calculateQuantity = (queryResult, id) => {
+  let quantity = undefined;
   if (!!queryResult && !!id) {
-    const consumption = queryResult.find((element) => element.item_id == id);
-    thisMonthConsumption = consumption?.quantity ? consumption.quantity : undefined;
+    const node = queryResult.find((element) => element.item_id == id);
+    quantity = node?.quantity ? node.quantity : undefined;
   }
-  return thisMonthConsumption;
+  return quantity;
+}
+
+calculateExpiringInMonths = (queryResult, id) => {
+  let expiringInSix
 }
 
 
 
-module.exports = { convert_data, calculateMonthConsumption };
+module.exports = { convert_data, calculateQuantity };
