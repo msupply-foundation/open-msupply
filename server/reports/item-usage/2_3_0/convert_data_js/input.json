@@ -1,0 +1,122 @@
+{
+    "AMCTwelve": [
+        {
+            "quantity": 150.8,
+            "item_id": "101"
+        },
+        {
+            "quantity": 92.4,
+            "item_id": "102"
+        },
+        {
+            "quantity": 200.5,
+            "item_id": "103"
+        }
+    ],
+    "AMCTwentyFour": [
+        {
+            "quantity": 250.8,
+            "item_id": "101"
+        },
+        {
+            "quantity": 192.4,
+            "item_id": "102"
+        },
+        {
+            "quantity": 300.5,
+            "item_id": "103"
+        }
+    ],
+    "expiringInSixMonths": [
+        {
+            "id": 201,
+            "item_id": "101",
+            "quantity": 150
+        },
+        {
+            "id": 202,
+            "item_id": "102",
+            "quantity": 75
+        }
+    ],
+    "expiringInTwelveMonths": [
+        {
+            "id": 201,
+            "item_id": "101",
+            "quantity": 150
+        },
+        {
+            "id": 202,
+            "item_id": "102",
+            "quantity": 75
+        },
+        {
+            "id": 203,
+            "item_id": "103",
+            "quantity": 300
+        }
+    ],
+    "lastMonthConsumption": [
+        {
+            "quantity": 500,
+            "item_id": "101"
+        },
+        {
+            "quantity": 300,
+            "item_id": "102"
+        },
+        {
+            "quantity": 450,
+            "item_id": "103"
+        }
+    ],
+    "thisMonthConsumption": [
+        {
+            "quantity": 200,
+            "item_id": "101"
+        },
+        {
+            "quantity": 150,
+            "item_id": "102"
+        },
+        {
+            "quantity": 300,
+            "item_id": "103"
+        }
+    ],
+    "itemUsage": [
+        {
+            "id": "101",
+            "code": "ITEM001",
+            "name": "Item A",
+            "stats": {
+                "totalConsumption": 1200,
+                "availableMonthsOfStockOnHand": 4.5,
+                "availableStockOnHand": 300,
+                "averageMonthlyConsumption": 266.7
+            }
+        },
+        {
+            "id": "102",
+            "code": "ITEM002",
+            "name": "Item B",
+            "stats": {
+                "totalConsumption": 800,
+                "availableMonthsOfStockOnHand": 3.0,
+                "availableStockOnHand": 240,
+                "averageMonthlyConsumption": 266.7
+            }
+        },
+        {
+            "id": "103",
+            "code": "ITEM003",
+            "name": "Item C",
+            "stats": {
+                "totalConsumption": 1500,
+                "availableMonthsOfStockOnHand": 5.0,
+                "availableStockOnHand": 375,
+                "averageMonthlyConsumption": 300
+            }
+        }
+    ]
+}
