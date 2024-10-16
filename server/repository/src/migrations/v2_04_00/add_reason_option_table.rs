@@ -13,10 +13,10 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                 CREATE TYPE reason_option_type AS ENUM (
-                'POSITIVE_INVENTORY_ADJUSTMENT,
+                'POSITIVE_INVENTORY_ADJUSTMENT',
                 'NEGATIVE_INVENTORY_ADJUSTMENT',
                 'RETURN_REASON',
-                'REQUISITION_LINE_VARIANCE
+                'REQUISITION_LINE_VARIANCE'
                 );
             "#
             )?;
