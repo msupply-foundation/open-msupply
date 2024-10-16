@@ -1,5 +1,4 @@
-import { calculateStockAtRisk } from "./convert_data";
-import {  calculateQuantity } from "./convert_data";
+import {  calculateQuantity, calculateStatValue } from "./convert_data";
 import inputData from "./input.json" assert { type: "json" };
 import outputData from "./output.json" assert { type: "json" };
 
@@ -114,3 +113,21 @@ describe("Adds AMC24 correctly from query result", () => {
     expect(calculateQuantity(inputData.AMCTwentyFour, "non existent id")).toBe(undefined)
   });
 });
+
+describe('calculate SOH', () => {
+  it('returns default 0 if undefined', () => {
+    expect(calculateStatValue(undefined)).toBe(0);
+  })
+  it('returns rounded value if value exists', () => {
+    expect(calculateStatValue(inputData.items.nodes[0].stats.availableStockOnHand)).toBe(300.9);
+  })
+});
+
+describe('calculate MOS', () => {
+  it('returns default 0 if undefined', () => {
+    expect(calculateStatValue(undefined)).toBe(0);
+  })
+  it('returns rounded value if value exists', () => {
+    expect(calculateStatValue(inputData.items.nodes[0].stats.availableMonthsOfStockOnHand)).toBe(4.5);
+  })
+})

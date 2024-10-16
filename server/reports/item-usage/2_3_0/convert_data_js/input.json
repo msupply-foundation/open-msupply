@@ -98,39 +98,41 @@
       "item_id": "103"
     }
   ],
-  "itemUsage": [
-    {
-      "id": "101",
-      "code": "ITEM001",
-      "name": "Item A",
-      "stats": {
-        "totalConsumption": 1200,
-        "availableMonthsOfStockOnHand": 4.5,
-        "availableStockOnHand": 300,
-        "averageMonthlyConsumption": 266.7
+  "items": {
+    "nodes": [
+      {
+        "id": "101",
+        "code": "ITEM001",
+        "name": "Item A",
+        "stats": {
+          "totalConsumption": 1200,
+          "availableMonthsOfStockOnHand": 4.5,
+          "availableStockOnHand": 300.902,
+          "averageMonthlyConsumption": 266.7
+        }
+      },
+      {
+        "id": "102",
+        "code": "ITEM002",
+        "name": "Item B",
+        "stats": {
+          "totalConsumption": 800,
+          "availableMonthsOfStockOnHand": 3.0,
+          "availableStockOnHand": 240,
+          "averageMonthlyConsumption": 266.7
+        }
+      },
+      {
+        "id": "103",
+        "code": "ITEM003",
+        "name": "Item C",
+        "stats": {
+          "totalConsumption": 1500,
+          "availableMonthsOfStockOnHand": 5.0,
+          "availableStockOnHand": 375,
+          "averageMonthlyConsumption": 300
+        }
       }
-    },
-    {
-      "id": "102",
-      "code": "ITEM002",
-      "name": "Item B",
-      "stats": {
-        "totalConsumption": 800,
-        "availableMonthsOfStockOnHand": 3.0,
-        "availableStockOnHand": 240,
-        "averageMonthlyConsumption": 266.7
-      }
-    },
-    {
-      "id": "103",
-      "code": "ITEM003",
-      "name": "Item C",
-      "stats": {
-        "totalConsumption": 1500,
-        "availableMonthsOfStockOnHand": 5.0,
-        "availableStockOnHand": 375,
-        "averageMonthlyConsumption": 300
-      }
-    }
-  ]
+    ]
+  }
 }

@@ -22,10 +22,15 @@ const calculateQuantity = (queryResult, id) => {
   return quantity;
 }
 
-calculateExpiringInMonths = (queryResult, id) => {
-  let expiringInSix
+calculateStatValue = (value) => {
+  let returnValue = 0;
+  if (!!value) {
+    // round to 1 decimal
+    returnValue = Math.round(value * 10) / 10;
+  }
+  return returnValue;
 }
 
 
 
-module.exports = { convert_data, calculateQuantity };
+module.exports = { convert_data, calculateQuantity, calculateStatValue };
