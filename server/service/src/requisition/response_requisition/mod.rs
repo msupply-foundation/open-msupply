@@ -1,6 +1,9 @@
 mod update;
 pub use self::update::*;
 
+mod insert;
+pub use self::insert::*;
+
 mod supply_requested_quantity;
 pub use supply_requested_quantity::*;
 
