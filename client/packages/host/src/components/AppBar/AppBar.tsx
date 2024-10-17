@@ -12,7 +12,6 @@ import {
   useAuthContext,
   Theme,
   useHostContext,
-  MaximiseIcon,
   MinimiseIcon,
   ButtonWithIcon,
   useTranslation,
@@ -53,12 +52,6 @@ export const AppBar: React.FC = () => {
               </Box>
               <Breadcrumbs />
               <AppBarButtons />
-              <ButtonWithIcon
-                Icon={<MaximiseIcon />}
-                onClick={() => setFullScreen(true)}
-                variant="outlined"
-                label={t('label.full-screen')}
-              />
             </Toolbar>
           )}
           <AppBarContent />
