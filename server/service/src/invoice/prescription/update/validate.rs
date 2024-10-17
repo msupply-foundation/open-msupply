@@ -39,10 +39,10 @@ pub fn validate(
 
     if patch.backdated_datetime.is_some() {
         // Check if we have any lines allocated to this invoice, if so we can't backdate
-        let lines = InvoiceLineRepository::new(connection).query_by_filter(
+        let line_count = InvoiceLineRepository::new(connection).count(Some(
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&patch.id)),
-        )?;
-        if lines.len() > 0 {
+        ))?;
+        if line_count > 0 {
             return Err(CantBackDate(
                 "Can't backdate as invoice has allocated lines".to_string(),
             ));
