@@ -11,10 +11,12 @@ import {
   DateTimePickerInput,
   Formatter,
   DateUtils,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
+import { usePrescriptionRows } from '../api/hooks/line/usePrescriptionRows';
 
 export const Toolbar: FC = () => {
   const { id, patient, clinician, prescriptionDate, update } =
@@ -25,9 +27,42 @@ export const Toolbar: FC = () => {
       'prescriptionDate',
     ]);
   const onDelete = usePrescription.line.deleteSelected();
+  const onDeleteAll = usePrescription.line.deleteAll();
+  const { items } = usePrescriptionRows();
 
   const isDisabled = usePrescription.utils.isDisabled();
   const t = useTranslation('dispensary');
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-delete-all-lines'),
+  });
+
+  const handleDateChange = async (prescriptionDate: Date | null) => {
+    if (!items || items.length === 0) {
+      // If there are no lines, we can just update the prescription date
+      await update({
+        id,
+        prescriptionDate: Formatter.toIsoString(
+          DateUtils.endOfDayOrNull(prescriptionDate)
+        ),
+      });
+      return;
+    }
+
+    // Otherwise, we need to delete all the lines first
+    getConfirmation({
+      onConfirm: async () => {
+        await onDeleteAll();
+        await update({
+          id,
+          prescriptionDate: Formatter.toIsoString(
+            DateUtils.endOfDayOrNull(prescriptionDate)
+          ),
+        });
+      },
+    });
+  };
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -84,14 +119,7 @@ export const Toolbar: FC = () => {
                   defaultValue={new Date()}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
-                  onChange={async prescriptionDate => {
-                    await update({
-                      id,
-                      prescriptionDate: Formatter.toIsoString(
-                        DateUtils.endOfDayOrNull(prescriptionDate)
-                      ),
-                    });
-                  }}
+                  onChange={handleDateChange}
                   maxDate={new Date()}
                 />
               }

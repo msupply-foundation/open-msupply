@@ -79,6 +79,7 @@
   "messages.confirm-delete-lines_many": "This will permanently remove {{count}} lines from this prescription",
   "messages.confirm-delete-lines_one": "This will permanently remove 1 line from this prescription",
   "messages.confirm-delete-lines_other": "This will permanently remove {{count}} lines from this prescription",
+  "messages.confirm-delete-all-lines": "This will permanently remove all lines from this prescription",
   "messages.confirm-delete-prescription": "This will permanently remove Prescription #{{number}}",
   "messages.confirm-delete-prescriptions_few": "This will permanently remove {{count}} prescriptions",
   "messages.confirm-delete-prescriptions_many": "This will permanently remove {{count}} prescriptions",
