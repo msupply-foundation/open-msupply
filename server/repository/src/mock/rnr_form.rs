@@ -32,6 +32,7 @@ pub fn mock_rnr_form_b() -> RnRFormRow {
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         status: RnRFormStatus::Draft,
+        their_reference: Some("form B reference".to_string()),
         ..Default::default()
     }
 }

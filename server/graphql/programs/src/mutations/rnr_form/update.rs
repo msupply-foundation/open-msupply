@@ -16,6 +16,8 @@ use service::{
 pub struct UpdateRnRFormInput {
     pub id: String,
     pub lines: Vec<UpdateRnRFormLineInput>,
+    pub their_reference: Option<String>,
+    pub comment: Option<String>,
 }
 
 #[derive(InputObject)]
@@ -99,13 +101,22 @@ fn map_error(error: ServiceError) -> Result<UpdateRnRFormResponse> {
 }
 
 impl UpdateRnRFormInput {
-    fn to_domain(UpdateRnRFormInput { id, lines }: UpdateRnRFormInput) -> UpdateRnRForm {
+    fn to_domain(
+        UpdateRnRFormInput {
+            id,
+            lines,
+            their_reference,
+            comment,
+        }: UpdateRnRFormInput,
+    ) -> UpdateRnRForm {
         UpdateRnRForm {
             id,
             lines: lines
                 .into_iter()
                 .map(UpdateRnRFormLineInput::to_domain)
                 .collect(),
+            their_reference,
+            comment,
         }
     }
 }

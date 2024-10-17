@@ -101,6 +101,10 @@ mod finalise {
 
         // Check the status of the internal order is 'Sent'
         assert_eq!(requisition.requisition_row.status, RequisitionStatus::Sent);
+        assert_eq!(
+            requisition.requisition_row.their_reference,
+            Some("form B reference".to_string())
+        );
 
         // Check the store of the internal order is the same as the RnR form
         assert_eq!(requisition.requisition_row.store_id, mock_store_a().id);
