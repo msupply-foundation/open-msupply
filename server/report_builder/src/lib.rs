@@ -40,6 +40,12 @@ pub struct BuildArgs {
     #[clap(long)]
     pub query_default: Option<String>,
 
+    #[clap(long)]
+    pub convert_data: Option<String>,
+
+    #[clap(long)]
+    pub custom_wasm_function: Option<String>,
+
     /// SQL query name.
     /// This argument requires that there is either
     /// - a single {query_sql}.sql file (for both Sqlite and Postgres)

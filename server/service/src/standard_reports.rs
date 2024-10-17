@@ -25,7 +25,7 @@ pub struct StandardReports;
 impl StandardReports {
     // Load embedded reports
     pub fn load_reports(con: &StorageConnection) -> Result<(), anyhow::Error> {
-        for file in EmbeddedStandardReports::iter() {
+        for file in EmbeddedStandardReports::iter().filter(|name| name != ".DS_Store") {
             if let Some(content) = EmbeddedStandardReports::get(&file) {
                 let json_data = content.data;
                 let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
