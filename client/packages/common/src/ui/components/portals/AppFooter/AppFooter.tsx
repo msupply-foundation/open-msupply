@@ -27,7 +27,7 @@ export const AppFooter: FC = () => {
   }, []);
 
   return (
-    <Box sx={{ height: fullScreen ? 0 : undefined }}>
+    <Box sx={{ display: fullScreen ? 'none' : undefined }}>
       <Container ref={appFooterRef} style={{ flex: 0 }} />
       <Container
         ref={appSessionDetailsRef}

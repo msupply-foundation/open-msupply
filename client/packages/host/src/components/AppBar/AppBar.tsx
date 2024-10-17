@@ -58,6 +58,8 @@ export const AppBar: React.FC = () => {
           {!isDashboard && <AppBarTabs />}
         </StyledContainer>
       </Box>
+
+      {/* Show the exit button in the top right of the page if full screen mode enabled */}
       {fullScreen && (
         <Box
           sx={{
