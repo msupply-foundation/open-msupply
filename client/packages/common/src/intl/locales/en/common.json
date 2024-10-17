@@ -560,6 +560,7 @@
   "messages.error-generic_other": "{{count}} errors",
   "messages.error-no-file-selected": "No file selected",
   "messages.fetching-report-data": "Fetching report data...",
+  "messages.full-screen-enabled": "Full screen mode enabled, press ESC or click the Exit button in the top right to exit",
   "messages.import-error-on-upload": "Import error on upload. Please fix errors and re upload",
   "messages.import-generic": "import successful",
   "messages.invalid-file": "Invalid file",

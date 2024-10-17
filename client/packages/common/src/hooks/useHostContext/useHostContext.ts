@@ -57,5 +57,7 @@ export const useHostContext = create<HostContext>(set => ({
   },
   pageTitle: '',
 
+  setFullScreen: (fullScreen: boolean) =>
+    set(state => ({ ...state, fullScreen })),
   fullScreen: false,
 }));
