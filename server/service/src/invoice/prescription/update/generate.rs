@@ -1,7 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 
 use repository::{
-    invoice, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceRow,
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceRow,
     InvoiceStatus, RepositoryError, StockLineRow, StorageConnection,
 };
 
