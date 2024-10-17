@@ -183,3 +183,41 @@ For example, instead of `icon1` an alternative name can be used by using a refer
 ```
 
 The entry `icon1` from the existing report can then be used under the name `my_icon_name`.
+
+## Translating reports
+
+Reports now have the option to allow for translations using the same localisation suite we use for front end translations.
+
+This can be implemented in the report by adding the following translation function in place of your text:
+
+```
+{{t(k="label.name", f="Name")}}
+```
+
+By default,
+
+Where the letters are short hand for the following:
+- t for translate
+  The name of the function
+- k for key 
+  This is the locale key as is used in front end translations. 
+- n for namespace
+  The file namespace where the translation key is. The .json exention is automattically added ie catalogue (which refers to the catalogue.json namespace).
+  By default, the translation in common.json translations will be used. If a specific namespace needs to be called, you can add this 'n' key into your function.
+  ```
+      {{t(k="label.name", n="catalogue", f="Name")}}
+  ```
+- f for fallback
+  This is an optional fallback text if the translation cannot be found.
+
+The current user language is passed through graphql when a user requests a report to be generated. This is the language used in translations.
+
+The translation function has a number of fallback translations which it will search through if the translation cannot be found.
+
+First it will look for the translation key within the nominated namespace and language
+Next it will fallback to the translation in the common.json namespace and nominated language
+Next it will fallback to the english translation of the nominated key and nominated namespace
+Next it will fallback to the english translation of the nominated key in the common.json namespace
+Next it will fallback to the fallback text provided in the report which by default will be in english
+
+If none of the above can be found, report will fail to render.

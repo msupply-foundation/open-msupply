@@ -17,9 +17,9 @@ import { InboundLineFragment } from './InboundShipment/api';
 import { InboundItem } from './types';
 import { PrescriptionRowFragment } from './Prescriptions/api';
 import {
-  InboundReturnFragment,
-  InboundReturnRowFragment,
-  OutboundReturnRowFragment,
+  CustomerReturnFragment,
+  CustomerReturnRowFragment,
+  SupplierReturnRowFragment,
 } from './Returns';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
@@ -57,7 +57,7 @@ export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
-export const outboundReturnStatuses: InvoiceNodeStatus[] = [
+export const supplierReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
@@ -65,14 +65,14 @@ export const outboundReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
-export const inboundReturnStatuses: InvoiceNodeStatus[] = [
+export const customerReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Picked,
   InvoiceNodeStatus.Shipped,
   InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Verified,
 ];
-export const manualInboundReturnStatuses: InvoiceNodeStatus[] = [
+export const manualCustomerReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
   InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Verified,
@@ -101,13 +101,13 @@ export const getNextOutboundStatus = (
   return nextStatus ?? null;
 };
 
-export const getNextOutboundReturnStatus = (
+export const getNextSupplierReturnStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
-  const currentStatusIdx = outboundReturnStatuses.findIndex(
+  const currentStatusIdx = supplierReturnStatuses.findIndex(
     status => currentStatus === status
   );
-  const nextStatus = outboundReturnStatuses[currentStatusIdx + 1];
+  const nextStatus = supplierReturnStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
@@ -118,14 +118,10 @@ export const getNextInboundStatus = (
   return nextStatus ?? null;
 };
 
-export const getNextInboundReturnStatus = (
+export const getNextCustomerReturnStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
-  const currentStatusIdx = inboundReturnStatuses.findIndex(
-    status => currentStatus === status
-  );
-  const nextStatus = inboundReturnStatuses[currentStatusIdx + 1];
-  return nextStatus ?? null;
+  return getNextInboundStatus(currentStatus);
 };
 
 export const getNextPrescriptionStatus = (
@@ -168,7 +164,7 @@ export const getStatusTranslator =
   };
 
 export const isOutboundDisabled = (
-  outbound: OutboundRowFragment | OutboundReturnRowFragment
+  outbound: OutboundRowFragment | SupplierReturnRowFragment
 ): boolean => {
   return (
     outbound.status === InvoiceNodeStatus.Shipped ||
@@ -202,15 +198,15 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
 export const isInboundHoldable = (inbound: InboundRowFragment): boolean =>
   inbound.status !== InvoiceNodeStatus.Verified;
 
-export const isInboundReturnDisabled = (
-  inboundReturn: InboundReturnRowFragment
+export const isCustomerReturnDisabled = (
+  customerReturn: CustomerReturnRowFragment
 ): boolean => {
-  const isManuallyCreated = !inboundReturn.linkedShipment?.id;
+  const isManuallyCreated = !customerReturn.linkedShipment?.id;
   return isManuallyCreated
-    ? inboundReturn.status === InvoiceNodeStatus.Verified
-    : inboundReturn.status === InvoiceNodeStatus.Picked ||
-        inboundReturn.status === InvoiceNodeStatus.Shipped ||
-        inboundReturn.status === InvoiceNodeStatus.Verified;
+    ? customerReturn.status === InvoiceNodeStatus.Verified
+    : customerReturn.status === InvoiceNodeStatus.Picked ||
+        customerReturn.status === InvoiceNodeStatus.Shipped ||
+        customerReturn.status === InvoiceNodeStatus.Verified;
 };
 
 export const isPrescriptionDisabled = (
@@ -220,7 +216,7 @@ export const isPrescriptionDisabled = (
 };
 
 export const isInboundListItemDisabled = (
-  inbound: InboundRowFragment | InboundReturnRowFragment
+  inbound: InboundRowFragment | CustomerReturnRowFragment
 ): boolean => {
   const isManuallyCreated = !inbound.linkedShipment?.id;
   return isManuallyCreated
@@ -233,7 +229,7 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
 
 export const isInboundStatusChangeDisabled = (
-  inbound: InboundFragment | InboundReturnFragment
+  inbound: InboundFragment | CustomerReturnFragment
 ): boolean => {
   if (inbound.onHold) return true;
 
@@ -271,18 +267,18 @@ export const inboundLinesToSummaryItems = (
 export const canDeleteInvoice = (
   invoice:
     | OutboundRowFragment
-    | OutboundReturnRowFragment
+    | SupplierReturnRowFragment
     | PrescriptionRowFragment
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated ||
   invoice.status === InvoiceNodeStatus.Picked;
 
-export const canDeleteOutboundReturn = (
-  outboundReturn: OutboundReturnRowFragment
+export const canDeleteSupplierReturn = (
+  SupplierReturn: SupplierReturnRowFragment
 ): boolean =>
-  outboundReturn.status === InvoiceNodeStatus.New ||
-  outboundReturn.status === InvoiceNodeStatus.Picked;
+  SupplierReturn.status === InvoiceNodeStatus.New ||
+  SupplierReturn.status === InvoiceNodeStatus.Picked;
 
 export const canDeletePrescription = (
   invoice: PrescriptionRowFragment
@@ -338,8 +334,8 @@ export const outboundsToCsv = (
   return Formatter.csv({ fields, data });
 };
 
-export const outboundReturnsToCsv = (
-  returns: OutboundReturnRowFragment[],
+export const supplierReturnsToCsv = (
+  returns: SupplierReturnRowFragment[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
@@ -360,8 +356,8 @@ export const outboundReturnsToCsv = (
   return Formatter.csv({ fields, data });
 };
 
-export const inboundReturnsToCsv = (
-  returns: InboundReturnRowFragment[],
+export const customerReturnsToCsv = (
+  returns: CustomerReturnRowFragment[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [

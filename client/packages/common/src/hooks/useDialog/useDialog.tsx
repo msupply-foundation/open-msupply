@@ -227,7 +227,12 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       >
         {title ? <ModalTitle title={title} /> : null}
         <form
-          style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto' }}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            flex: '1 1 auto',
+            overflow: 'auto',
+          }}
           {...formProps}
         >
           <DialogContent

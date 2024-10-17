@@ -24,6 +24,7 @@ use crate::{
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     label_printer_settings_service::LabelPrinterSettingsServiceTrait,
+    localisations::Localisations,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
@@ -47,6 +48,7 @@ use crate::{
     rnr_form::{RnRFormService, RnRFormServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
+    standard_reports::StandardReports,
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
@@ -57,6 +59,7 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    vaccination::{VaccinationService, VaccinationServiceTrait},
     vaccine_course::VaccineCourseServiceTrait,
     ListError, ListResult,
 };
@@ -141,8 +144,15 @@ pub struct ServiceProvider {
     pub demographic_service: Box<dyn DemographicServiceTrait>,
     // Vaccine Course
     pub vaccine_course_service: Box<dyn VaccineCourseServiceTrait>,
+    // Vaccinations
+    pub vaccination_service: Box<dyn VaccinationServiceTrait>,
+    // Programs
     pub program_service: Box<dyn ProgramServiceTrait>,
     pub pricing_service: Box<dyn PricingServiceTrait>,
+    // Translations
+    pub translations_service: Box<Localisations>,
+    // Standard Reports
+    pub standard_reports: Box<StandardReports>,
 }
 
 pub struct ServiceContext {
@@ -229,6 +239,9 @@ impl ServiceProvider {
             program_service: Box::new(crate::program::ProgramService {}),
             pricing_service: Box::new(PricingService {}),
             rnr_form_service: Box::new(RnRFormService {}),
+            vaccination_service: Box::new(VaccinationService {}),
+            translations_service: Box::new(Localisations::new()),
+            standard_reports: Box::new(StandardReports {}),
         }
     }
 

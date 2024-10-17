@@ -90,7 +90,6 @@ pub enum MigrationError {
     DatabaseError(#[from] RepositoryError),
 }
 
-// TODO: logging
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
@@ -119,7 +118,7 @@ pub fn migrate(
         Box::new(v2_02_00::V2_02_00),
         Box::new(v2_02_01::V2_02_01),
         Box::new(v2_02_02::V2_02_02),
-        // Box::new(v2_03_00::V2_03_00),
+        Box::new(v2_03_00::V2_03_00),
     ];
 
     // Historic diesel migrations

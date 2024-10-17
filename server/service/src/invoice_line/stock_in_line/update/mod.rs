@@ -116,9 +116,9 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_inbound_return_a_invoice_line_a, mock_inbound_return_a_invoice_line_b,
-            mock_item_a, mock_item_b, mock_name_store_b, mock_outbound_return_a_invoice_line_a,
-            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
+            mock_customer_return_a_invoice_line_a, mock_customer_return_a_invoice_line_b,
+            mock_item_a, mock_item_b, mock_name_store_b, mock_store_a, mock_store_b,
+            mock_supplier_return_a_invoice_line_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
@@ -141,7 +141,7 @@ mod test {
                 id: "verified_return".to_string(),
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
-                r#type: InvoiceType::InboundReturn,
+                r#type: InvoiceType::CustomerReturn,
                 status: InvoiceStatus::Verified,
                 ..Default::default()
             }
@@ -188,7 +188,7 @@ mod test {
             update_stock_in_line(
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_inbound_return_a_invoice_line_a().id;
+                    r.id = mock_customer_return_a_invoice_line_a().id;
                     r.location = Some(NullableUpdate {
                         value: Some("invalid".to_string()),
                     });
@@ -202,7 +202,7 @@ mod test {
             update_stock_in_line(
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_inbound_return_a_invoice_line_a().id;
+                    r.id = mock_customer_return_a_invoice_line_a().id;
                     r.pack_size = Some(0.0);
                 }),
             ),
@@ -214,7 +214,7 @@ mod test {
             update_stock_in_line(
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_inbound_return_a_invoice_line_a().id;
+                    r.id = mock_customer_return_a_invoice_line_a().id;
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(-1.0);
                 }),
@@ -227,7 +227,7 @@ mod test {
             update_stock_in_line(
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_inbound_return_a_invoice_line_a().id;
+                    r.id = mock_customer_return_a_invoice_line_a().id;
                     r.item_id = Some("invalid".to_string());
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
@@ -241,7 +241,7 @@ mod test {
             update_stock_in_line(
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_outbound_return_a_invoice_line_a().id;
+                    r.id = mock_supplier_return_a_invoice_line_a().id;
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
                 }),
@@ -268,7 +268,7 @@ mod test {
             update_stock_in_line(
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_inbound_return_a_invoice_line_b().id; // line number_of_packs and stock_line available_number_of_packs are different
+                    r.id = mock_customer_return_a_invoice_line_b().id; // line number_of_packs and stock_line available_number_of_packs are different
                     r.item_id = Some(mock_item_b().id);
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
@@ -283,7 +283,7 @@ mod test {
             update_stock_in_line(
                 &context,
                 inline_init(|r: &mut UpdateStockInLine| {
-                    r.id = mock_inbound_return_a_invoice_line_a().id;
+                    r.id = mock_customer_return_a_invoice_line_a().id;
                     r.item_id = Some(mock_item_a().id);
                     r.pack_size = Some(1.0);
                     r.number_of_packs = Some(1.0);
@@ -303,7 +303,7 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        let return_line_id = mock_inbound_return_a_invoice_line_a().id;
+        let return_line_id = mock_customer_return_a_invoice_line_a().id;
 
         update_stock_in_line(
             &context,

@@ -1,7 +1,7 @@
 import { InboundLineFragment } from './InboundShipment/api';
 import {
-  InboundReturnLineFragment,
-  OutboundReturnLineFragment,
+  CustomerReturnLineFragment,
+  SupplierReturnLineFragment,
 } from './Returns';
 import { StockOutLineFragment } from './StockOut/operations.generated';
 
@@ -29,14 +29,14 @@ export type StockOutItem = {
   lines: StockOutLineFragment[];
 };
 
-export type InboundReturnItem = {
+export type CustomerReturnItem = {
   id: string;
   itemId: string;
-  lines: InboundReturnLineFragment[];
+  lines: CustomerReturnLineFragment[];
 };
 
-export type OutboundReturnItem = {
+export type SupplierReturnItem = {
   id: string;
   itemId: string;
-  lines: OutboundReturnLineFragment[];
+  lines: SupplierReturnLineFragment[];
 };

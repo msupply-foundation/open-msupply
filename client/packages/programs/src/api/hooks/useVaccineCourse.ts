@@ -2,8 +2,7 @@ import { Dispatch, SetStateAction, useState } from 'react';
 import {
   FnUtils,
   UpsertVaccineCourseItemInput,
-  UpsertVaccineCourseScheduleInput,
-  VaccineCourseScheduleNode,
+  UpsertVaccineCourseDoseInput,
   VaccineCourseSortFieldInput,
   isEmpty,
   isEqual,
@@ -14,6 +13,7 @@ import {
 import { VACCINE } from './keys';
 import { useProgramsGraphQL } from '../useProgramsGraphQL';
 import { DraftVaccineCourse, DraftVaccineCourseItem } from './types';
+import { VaccineCourseDoseFragment } from '../operations.generated';
 
 enum UpdateVaccineCourseError {
   DatabaseError = 'Database Error',
@@ -25,13 +25,10 @@ enum InsertVaccineCourseError {
   RecordProgramCombinationAlreadyExists = 'Course name already exists on this program',
 }
 
-export interface DraftVaccineCourseSchedule extends VaccineCourseScheduleNode {}
-
 const defaultDraftVaccineCourse: DraftVaccineCourse = {
   id: '',
   name: '',
   programId: '',
-  doses: 1,
   coverageRate: 100,
   wastageRate: 0,
   isActive: true,
@@ -39,13 +36,16 @@ const defaultDraftVaccineCourse: DraftVaccineCourse = {
 };
 
 const vaccineCourseParsers = {
-  toScheduleInput: (
-    schedule: VaccineCourseScheduleNode
-  ): UpsertVaccineCourseScheduleInput => {
+  toDoseInput: (
+    dose: VaccineCourseDoseFragment
+  ): UpsertVaccineCourseDoseInput => {
     return {
-      id: schedule.id,
-      doseNumber: schedule.doseNumber,
-      label: schedule.label,
+      id: dose.id,
+      label: dose.label,
+      minAge: dose.minAgeMonths,
+      maxAge: dose.maxAgeMonths,
+      minIntervalDays: dose.minIntervalDays,
+      customAgeLabel: dose.customAgeLabel,
     };
   },
   toItemInput: (item: DraftVaccineCourseItem): UpsertVaccineCourseItemInput => {
@@ -160,14 +160,13 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         coverageRate: input.coverageRate,
         isActive: input.isActive,
         wastageRate: input.wastageRate,
-        doses: input.doses,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>
             vaccineCourseParsers.toItemInput(item)
           ) ?? [],
-        schedules:
-          input.vaccineCourseSchedules?.map(schedule =>
-            vaccineCourseParsers.toScheduleInput(schedule)
+        doses:
+          input.vaccineCourseDoses?.map(dose =>
+            vaccineCourseParsers.toDoseInput(dose)
           ) ?? [],
       },
     });
@@ -221,14 +220,13 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         coverageRate: input.coverageRate,
         isActive: input.isActive,
         wastageRate: input.wastageRate,
-        doses: input.doses,
         vaccineItems:
           input.vaccineCourseItems?.map(item =>
             vaccineCourseParsers.toItemInput(item)
           ) ?? [],
-        schedules:
-          input.vaccineCourseSchedules?.map(schedule =>
-            vaccineCourseParsers.toScheduleInput(schedule)
+        doses:
+          input.vaccineCourseDoses?.map(dose =>
+            vaccineCourseParsers.toDoseInput(dose)
           ) ?? [],
       },
       storeId,

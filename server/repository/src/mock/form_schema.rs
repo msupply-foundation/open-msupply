@@ -143,6 +143,10 @@ pub fn mock_form_schema_simplified_enrolment() -> FormSchema {
                 "programEnrolmentId": {
                   "description": "Patient's program id",
                   "type": "string"
+                },
+                "storeId": {
+                  "description": "Store ID of facility where patient was originally enrolled",
+                  "type": "string"
                 }
               },
               "required": [

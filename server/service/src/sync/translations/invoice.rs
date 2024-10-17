@@ -181,10 +181,15 @@ pub struct LegacyTransactRow {
     #[serde(rename = "om_original_shipment_id")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub original_shipment_id: Option<String>,
+
+    #[serde(default)]
+    #[serde(rename = "om_backdated_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub backdated_datetime: Option<NaiveDateTime>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
-/// receiving store. Same for Inbound Returns.
+/// receiving store. Same for Customer Returns.
 /// In the current version of mSupply all om_ fields get copied though.
 /// When receiving the transferred invoice on the omSupply store the "si" get translated to
 /// outbound shipments because the om_type will override to legacy type field.
@@ -209,7 +214,7 @@ fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
         };
         obj.retain(|key, _| !key.starts_with("om_"));
     }
-    if legacy_type == LegacyTransactType::Cc && om_type == InvoiceType::OutboundReturn {
+    if legacy_type == LegacyTransactType::Cc && om_type == InvoiceType::SupplierReturn {
         let Some(obj) = data.as_object_mut() else {
             return data;
         };
@@ -328,6 +333,7 @@ impl SyncTranslation for InvoiceTranslation {
             linked_invoice_id: data.linked_transaction_id,
             transport_reference: data.transport_reference,
             original_shipment_id: data.original_shipment_id,
+            backdated_datetime: mapping.backdated_datetime,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -387,6 +393,7 @@ impl SyncTranslation for InvoiceTranslation {
                     currency_id,
                     currency_rate,
                     original_shipment_id,
+                    backdated_datetime,
                 },
             name_row,
             clinician_row,
@@ -454,6 +461,7 @@ impl SyncTranslation for InvoiceTranslation {
             currency_rate,
             clinician_id: clinician_row.map(|row| row.id),
             original_shipment_id,
+            backdated_datetime,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -492,9 +500,24 @@ fn invoice_type(data: &LegacyTransactRow, name: &NameRow) -> Option<InvoiceType>
         LegacyTransactType::Si => Some(InvoiceType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceType::OutboundShipment),
         LegacyTransactType::Sr => Some(InvoiceType::Repack),
-        LegacyTransactType::Cc => Some(InvoiceType::InboundReturn),
-        LegacyTransactType::Sc => Some(InvoiceType::OutboundReturn),
+        LegacyTransactType::Cc => Some(InvoiceType::CustomerReturn),
+        LegacyTransactType::Sc => Some(InvoiceType::SupplierReturn),
         _ => None,
+    }
+}
+
+fn map_backdated_datetime(
+    created_datetime: &NaiveDateTime,
+    picked_datetime: &Option<NaiveDateTime>,
+) -> Option<NaiveDateTime> {
+    match picked_datetime {
+        Some(picked_datetime) => {
+            if picked_datetime < created_datetime {
+                return Some(picked_datetime.to_owned()); // Picked date was before created_datetime assume it must be backdated
+            }
+            None
+        }
+        None => None, // No picked time, means it can't be backdated
     }
 }
 
@@ -506,6 +529,7 @@ struct LegacyMapping {
     allocated_datetime: Option<NaiveDateTime>,
     shipped_datetime: Option<NaiveDateTime>,
     verified_datetime: Option<NaiveDateTime>,
+    backdated_datetime: Option<NaiveDateTime>,
     colour: Option<String>,
 }
 /// Either make use of om_* fields, if present, or do a best afford mapping
@@ -520,6 +544,10 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
             allocated_datetime: data.allocated_datetime,
             shipped_datetime: data.shipped_datetime,
             verified_datetime: data.verified_datetime,
+            backdated_datetime: data.backdated_datetime.or(map_backdated_datetime(
+                &created_datetime,
+                &data.picked_datetime,
+            )),
             colour: data.om_colour.clone(),
         };
     }
@@ -531,6 +559,7 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         allocated_datetime: None,
         shipped_datetime: None,
         verified_datetime: None,
+        backdated_datetime: None,
         colour: None,
     };
 
@@ -538,8 +567,14 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
         .confirm_date
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
+    // Try to figure out if a legacy record was backdated
+    let backdated_datetime = map_backdated_datetime(&mapping.created_datetime, &confirm_datetime);
+    if backdated_datetime.is_some() {
+        mapping.backdated_datetime = backdated_datetime
+    }
+
     match invoice_type {
-        InvoiceType::OutboundShipment | InvoiceType::OutboundReturn => match data.status {
+        InvoiceType::OutboundShipment | InvoiceType::SupplierReturn => match data.status {
             LegacyTransactStatus::Cn => {
                 mapping.allocated_datetime = confirm_datetime;
                 mapping.picked_datetime = confirm_datetime;
@@ -551,7 +586,7 @@ fn map_legacy(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> LegacyMap
             }
             _ => {}
         },
-        InvoiceType::InboundShipment | InvoiceType::InboundReturn => {
+        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => {
             mapping.delivered_datetime = confirm_datetime;
 
             match data.status {
@@ -610,8 +645,8 @@ fn to_legacy_confirm_time(
             verified_datetime
         }
         // TODO confirm
-        InvoiceType::InboundReturn => delivered_datetime,
-        InvoiceType::OutboundReturn => picked_datetime,
+        InvoiceType::CustomerReturn => delivered_datetime,
+        InvoiceType::SupplierReturn => picked_datetime,
     };
 
     let date = datetime.map(|datetime| datetime.date());
@@ -632,7 +667,7 @@ fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Optio
             _ => return None,
         },
         // outbound
-        InvoiceType::OutboundShipment | InvoiceType::OutboundReturn => match data.status {
+        InvoiceType::OutboundShipment | InvoiceType::SupplierReturn => match data.status {
             LegacyTransactStatus::Nw => InvoiceStatus::New,
             LegacyTransactStatus::Sg => InvoiceStatus::New,
             LegacyTransactStatus::Cn => InvoiceStatus::Picked,
@@ -640,7 +675,7 @@ fn invoice_status(invoice_type: &InvoiceType, data: &LegacyTransactRow) -> Optio
             _ => return None,
         },
         // inbound
-        InvoiceType::InboundShipment | InvoiceType::InboundReturn => match data.status {
+        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match data.status {
             LegacyTransactStatus::Sg => InvoiceStatus::New,
             LegacyTransactStatus::Nw => InvoiceStatus::New,
             LegacyTransactStatus::Cn => InvoiceStatus::Delivered,
@@ -673,15 +708,15 @@ fn legacy_invoice_type(_type: &InvoiceType) -> Option<LegacyTransactType> {
         InvoiceType::InventoryAddition => LegacyTransactType::Si,
         InvoiceType::InventoryReduction => LegacyTransactType::Sc,
         InvoiceType::Repack => LegacyTransactType::Sr,
-        InvoiceType::InboundReturn => LegacyTransactType::Cc,
-        InvoiceType::OutboundReturn => LegacyTransactType::Sc,
+        InvoiceType::CustomerReturn => LegacyTransactType::Cc,
+        InvoiceType::SupplierReturn => LegacyTransactType::Sc,
     };
     Some(t)
 }
 
 fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<LegacyTransactStatus> {
     let status = match t {
-        InvoiceType::OutboundShipment | InvoiceType::OutboundReturn => match status {
+        InvoiceType::OutboundShipment | InvoiceType::SupplierReturn => match status {
             InvoiceStatus::New => LegacyTransactStatus::Sg,
             InvoiceStatus::Allocated => LegacyTransactStatus::Sg,
             InvoiceStatus::Picked => LegacyTransactStatus::Cn,
@@ -689,7 +724,7 @@ fn legacy_invoice_status(t: &InvoiceType, status: &InvoiceStatus) -> Option<Lega
             InvoiceStatus::Delivered => LegacyTransactStatus::Fn,
             InvoiceStatus::Verified => LegacyTransactStatus::Fn,
         },
-        InvoiceType::InboundShipment | InvoiceType::InboundReturn => match status {
+        InvoiceType::InboundShipment | InvoiceType::CustomerReturn => match status {
             InvoiceStatus::New => LegacyTransactStatus::Nw,
             InvoiceStatus::Allocated => LegacyTransactStatus::Nw,
             InvoiceStatus::Picked => LegacyTransactStatus::Nw,

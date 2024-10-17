@@ -11,10 +11,10 @@ use util::{inline_edit, inline_init, uuid::uuid};
 
 use crate::{
     invoice::{
-        inbound_return::{UpdateInboundReturn, UpdateInboundReturnStatus},
+        customer_return::{UpdateCustomerReturn, UpdateCustomerReturnStatus},
         inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
-        outbound_return::update::{UpdateOutboundReturn, UpdateOutboundReturnStatus},
         outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
+        supplier_return::update::{UpdateSupplierReturn, UpdateSupplierReturnStatus},
     },
     invoice_line::stock_out_line::{StockOutType, UpdateStockOutLine},
     processors::test_helpers::exec_concurrent,
@@ -161,7 +161,7 @@ async fn invoice_transfers() {
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
 
             // RETURN
-            tester.insert_outbound_return(&ctx.connection);
+            tester.insert_supplier_return(&ctx.connection);
             // manually trigger because inserting the return doesn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
@@ -169,22 +169,22 @@ async fn invoice_transfers() {
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_not_created(&ctx.connection);
-            tester.update_outbound_return_to_picked(&service_provider);
+            tester.check_customer_return_not_created(&ctx.connection);
+            tester.update_supplier_return_to_picked(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_created(&ctx.connection);
+            tester.check_customer_return_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_outbound_return_was_linked(&ctx.connection);
-            tester.update_outbound_return_line(&service_provider);
-            tester.update_outbound_return_to_shipped(&service_provider);
+            tester.check_supplier_return_was_linked(&ctx.connection);
+            tester.update_supplier_return_line(&service_provider);
+            tester.update_supplier_return_to_shipped(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_was_updated(&ctx.connection);
-            tester.update_inbound_return_to_delivered(&service_provider);
+            tester.check_customer_return_was_updated(&ctx.connection);
+            tester.update_customer_return_to_delivered(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_outbound_return_status_matches_inbound_return(&ctx.connection);
-            tester.update_inbound_return_to_verified(&service_provider);
+            tester.check_supplier_return_status_matches_customer_return(&ctx.connection);
+            tester.update_customer_return_to_verified(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_outbound_return_status_matches_inbound_return(&ctx.connection);
+            tester.check_supplier_return_status_matches_customer_return(&ctx.connection);
 
             // With delete -- SHIPMENT
             let mut tester = InvoiceTransferTester::new(
@@ -231,13 +231,13 @@ async fn invoice_transfers() {
             tester.check_inbound_shipment_created(&ctx.connection);
 
             // Create return, check it transfers, delete it, check inbound is deleted
-            tester.insert_outbound_return(&ctx.connection);
-            tester.update_outbound_return_to_picked(&service_provider);
+            tester.insert_supplier_return(&ctx.connection);
+            tester.update_supplier_return_to_picked(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_created(&ctx.connection);
-            tester.delete_outbound_return(&service_provider);
+            tester.check_customer_return_created(&ctx.connection);
+            tester.delete_supplier_return(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_deleted(&ctx.connection);
+            tester.check_customer_return_deleted(&ctx.connection);
         },
     );
 
@@ -395,7 +395,7 @@ async fn invoice_transfers_with_merged_name() {
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
 
             // RETURN
-            tester.insert_outbound_return(&ctx.connection);
+            tester.insert_supplier_return(&ctx.connection);
             // manually trigger because inserting the return doesn't trigger the processor
             // and we want to check that shipment is not created when processors runs
             ctx.processors_trigger
@@ -403,22 +403,22 @@ async fn invoice_transfers_with_merged_name() {
                 .try_send(())
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_not_created(&ctx.connection);
-            tester.update_outbound_return_to_picked(&service_provider);
+            tester.check_customer_return_not_created(&ctx.connection);
+            tester.update_supplier_return_to_picked(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_created(&ctx.connection);
+            tester.check_customer_return_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_outbound_return_was_linked(&ctx.connection);
-            tester.update_outbound_return_line(&service_provider);
-            tester.update_outbound_return_to_shipped(&service_provider);
+            tester.check_supplier_return_was_linked(&ctx.connection);
+            tester.update_supplier_return_line(&service_provider);
+            tester.update_supplier_return_to_shipped(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_was_updated(&ctx.connection);
-            tester.update_inbound_return_to_delivered(&service_provider);
+            tester.check_customer_return_was_updated(&ctx.connection);
+            tester.update_customer_return_to_delivered(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_outbound_return_status_matches_inbound_return(&ctx.connection);
-            tester.update_inbound_return_to_verified(&service_provider);
+            tester.check_supplier_return_status_matches_customer_return(&ctx.connection);
+            tester.update_customer_return_to_verified(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_outbound_return_status_matches_inbound_return(&ctx.connection);
+            tester.check_supplier_return_status_matches_customer_return(&ctx.connection);
 
             // With delete -- SHIPMENT
             let mut tester = InvoiceTransferTester::new(
@@ -466,13 +466,13 @@ async fn invoice_transfers_with_merged_name() {
             tester.check_inbound_shipment_created(&ctx.connection);
 
             // Create return, check it transfers, delete it, check inbound is deleted
-            tester.insert_outbound_return(&ctx.connection);
-            tester.update_outbound_return_to_picked(&service_provider);
+            tester.insert_supplier_return(&ctx.connection);
+            tester.update_supplier_return_to_picked(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_created(&ctx.connection);
-            tester.delete_outbound_return(&service_provider);
+            tester.check_customer_return_created(&ctx.connection);
+            tester.delete_supplier_return(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
-            tester.check_inbound_return_deleted(&ctx.connection);
+            tester.check_customer_return_deleted(&ctx.connection);
         },
     );
 
@@ -491,10 +491,10 @@ pub(crate) struct InvoiceTransferTester {
     outbound_shipment_line2: InvoiceLineRow,
     outbound_shipment_unallocated_line: InvoiceLineRow,
     outbound_shipment_service_line: InvoiceLineRow,
-    outbound_return_line: InvoiceLineRow,
-    outbound_return: InvoiceRow,
+    supplier_return_line: InvoiceLineRow,
+    supplier_return: InvoiceRow,
     outbound_shipment: InvoiceRow,
-    inbound_return: Option<InvoiceRow>,
+    customer_return: Option<InvoiceRow>,
     inbound_shipment: Option<InvoiceRow>,
     response_requisition: Option<RequisitionRow>,
     extra_mock_data: MockData,
@@ -619,13 +619,13 @@ impl InvoiceTransferTester {
             r.item_code.clone_from(&item2.code);
         });
 
-        let outbound_return = inline_init(|r: &mut InvoiceRow| {
+        let supplier_return = inline_init(|r: &mut InvoiceRow| {
             r.id = uuid();
             r.name_link_id =
                 outbound_name.map_or(outbound_store.name_link_id.clone(), |n| n.id.clone());
             r.store_id.clone_from(&inbound_store.id);
             r.invoice_number = 5;
-            r.r#type = InvoiceType::OutboundReturn;
+            r.r#type = InvoiceType::SupplierReturn;
             r.status = InvoiceStatus::New;
             r.their_reference = Some("some return reference".to_string());
             r.comment = Some("some return comment".to_string());
@@ -635,9 +635,9 @@ impl InvoiceTransferTester {
                 .unwrap();
         });
 
-        let outbound_return_line = inline_init(|r: &mut InvoiceLineRow| {
+        let supplier_return_line = inline_init(|r: &mut InvoiceLineRow| {
             r.id = uuid();
-            r.invoice_id.clone_from(&outbound_return.id);
+            r.invoice_id.clone_from(&supplier_return.id);
             r.r#type = InvoiceLineType::StockOut;
             r.pack_size = stock_line1.pack_size;
             r.number_of_packs = 2.0;
@@ -660,10 +660,10 @@ impl InvoiceTransferTester {
             outbound_shipment_line2,
             outbound_shipment_unallocated_line,
             outbound_shipment_service_line,
-            outbound_return_line,
-            outbound_return,
+            supplier_return_line,
+            supplier_return,
             outbound_shipment,
-            inbound_return: None,
+            customer_return: None,
             inbound_shipment: None,
             response_requisition: None,
             extra_mock_data: inline_init(|r: &mut MockData| {
@@ -1026,131 +1026,134 @@ impl InvoiceTransferTester {
         )
     }
 
-    pub(crate) fn insert_outbound_return(&self, connection: &StorageConnection) {
+    pub(crate) fn insert_supplier_return(&self, connection: &StorageConnection) {
         let inbound_shipment_id = self.inbound_shipment.clone().map(|r| r.id);
         insert_extra_mock_data(
             connection,
             inline_init(|r: &mut MockData| {
-                r.invoices = vec![inline_edit(&self.outbound_return, |mut r| {
+                r.invoices = vec![inline_edit(&self.supplier_return, |mut r| {
                     r.original_shipment_id = inbound_shipment_id;
                     r
                 })];
-                r.invoice_lines = vec![self.outbound_return_line.clone()]
+                r.invoice_lines = vec![self.supplier_return_line.clone()]
             })
             .join(self.extra_mock_data.clone()),
         );
     }
 
-    pub(crate) fn check_inbound_return_not_created(&self, connection: &StorageConnection) {
+    pub(crate) fn check_customer_return_not_created(&self, connection: &StorageConnection) {
         assert_eq!(
             InvoiceRepository::new(connection).query_one(
-                InvoiceFilter::new_match_linked_invoice_id(&self.outbound_return.id)
+                InvoiceFilter::new_match_linked_invoice_id(&self.supplier_return.id)
             ),
             Ok(None)
         )
     }
 
-    pub(crate) fn update_outbound_return_to_picked(&mut self, service_provider: &ServiceProvider) {
+    pub(crate) fn update_supplier_return_to_picked(&mut self, service_provider: &ServiceProvider) {
         let ctx = service_provider
             .context(self.inbound_store.id.clone(), "".to_string())
             .unwrap();
-        self.outbound_return = service_provider
+        self.supplier_return = service_provider
             .invoice_service
-            .update_outbound_return(
+            .update_supplier_return(
                 &ctx,
-                inline_init(|r: &mut UpdateOutboundReturn| {
-                    r.outbound_return_id.clone_from(&self.outbound_return.id);
-                    r.status = Some(UpdateOutboundReturnStatus::Picked);
+                inline_init(|r: &mut UpdateSupplierReturn| {
+                    r.supplier_return_id.clone_from(&self.supplier_return.id);
+                    r.status = Some(UpdateSupplierReturnStatus::Picked);
                 }),
             )
             .unwrap()
             .invoice_row;
     }
 
-    pub(crate) fn check_inbound_return_created(&mut self, connection: &StorageConnection) {
-        let inbound_return = InvoiceRepository::new(connection)
+    pub(crate) fn check_customer_return_created(&mut self, connection: &StorageConnection) {
+        let customer_return = InvoiceRepository::new(connection)
             .query_one(InvoiceFilter::new_match_linked_invoice_id(
-                &self.outbound_return.id,
+                &self.supplier_return.id,
             ))
             .unwrap();
 
-        assert!(inbound_return.is_some());
-        let inbound_return = inbound_return.unwrap().invoice_row;
-        self.inbound_return = Some(inbound_return.clone());
+        assert!(customer_return.is_some());
+        let customer_return = customer_return.unwrap().invoice_row;
+        self.customer_return = Some(customer_return.clone());
 
-        assert_eq!(inbound_return.r#type, InvoiceType::InboundReturn);
-        assert_eq!(inbound_return.store_id, self.outbound_store.id);
-        assert_eq!(inbound_return.name_link_id, self.inbound_store.name_link_id);
+        assert_eq!(customer_return.r#type, InvoiceType::CustomerReturn);
+        assert_eq!(customer_return.store_id, self.outbound_store.id);
         assert_eq!(
-            inbound_return.name_store_id,
+            customer_return.name_link_id,
+            self.inbound_store.name_link_id
+        );
+        assert_eq!(
+            customer_return.name_store_id,
             Some(self.inbound_store.id.clone())
         );
         assert_eq!(
-            inbound_return.their_reference,
+            customer_return.their_reference,
             Some("From invoice number: 5 (some return reference)".to_string())
         );
         assert_eq!(
-            inbound_return.transport_reference,
-            self.outbound_return.transport_reference
+            customer_return.transport_reference,
+            self.supplier_return.transport_reference
         );
         assert_eq!(
-            inbound_return.comment,
+            customer_return.comment,
             Some("Stock return (some return comment)".to_string())
         );
-        assert_eq!(inbound_return.colour, None);
-        assert_eq!(inbound_return.user_id, None);
-        assert_eq!(inbound_return.on_hold, false);
-        assert_eq!(inbound_return.allocated_datetime, None);
+        assert_eq!(customer_return.colour, None);
+        assert_eq!(customer_return.user_id, None);
+        assert_eq!(customer_return.on_hold, false);
+        assert_eq!(customer_return.allocated_datetime, None);
 
         assert_eq!(
-            inbound_return.original_shipment_id,
+            customer_return.original_shipment_id,
             Some(self.outbound_shipment.id.clone())
         );
 
-        check_invoice_status(&inbound_return, &self.outbound_return);
+        check_invoice_status(&customer_return, &self.supplier_return);
 
         assert_eq!(
             InvoiceLineRepository::new(connection)
                 .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&inbound_return.id))
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return.id))
                 ))
                 .unwrap(),
             1
         );
 
-        check_line(connection, &inbound_return.id, &self.outbound_return_line);
+        check_line(connection, &customer_return.id, &self.supplier_return_line);
     }
 
-    pub(crate) fn check_outbound_return_was_linked(&self, connection: &StorageConnection) {
-        let outbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id(&self.outbound_return.id)
+    pub(crate) fn check_supplier_return_was_linked(&self, connection: &StorageConnection) {
+        let supplier_return = InvoiceRowRepository::new(connection)
+            .find_one_by_id(&self.supplier_return.id)
             .unwrap();
 
-        assert!(outbound_return.is_some());
-        assert!(self.inbound_return.is_some());
+        assert!(supplier_return.is_some());
+        assert!(self.customer_return.is_some());
 
         assert_eq!(
-            outbound_return.unwrap().linked_invoice_id,
-            self.inbound_return.clone().map(|r| r.id)
+            supplier_return.unwrap().linked_invoice_id,
+            self.customer_return.clone().map(|r| r.id)
         );
     }
 
-    pub(crate) fn delete_outbound_return(&self, service_provider: &ServiceProvider) {
+    pub(crate) fn delete_supplier_return(&self, service_provider: &ServiceProvider) {
         let ctx = service_provider
             .context(self.inbound_store.id.clone(), "".to_string())
             .unwrap();
         service_provider
             .invoice_service
-            .delete_outbound_return(&ctx, self.outbound_return.id.clone())
+            .delete_supplier_return(&ctx, self.supplier_return.id.clone())
             .unwrap();
     }
 
-    pub(crate) fn check_inbound_return_deleted(&mut self, connection: &StorageConnection) {
-        let inbound_return_id = &self.inbound_return.clone().map(|r| r.id).unwrap();
+    pub(crate) fn check_customer_return_deleted(&mut self, connection: &StorageConnection) {
+        let customer_return_id = &self.customer_return.clone().map(|r| r.id).unwrap();
         assert_eq!(
             InvoiceLineRepository::new(connection)
                 .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(inbound_return_id))
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(customer_return_id))
                 ))
                 .unwrap(),
             0
@@ -1158,62 +1161,62 @@ impl InvoiceTransferTester {
 
         assert_eq!(
             InvoiceRowRepository::new(connection)
-                .find_one_by_id(inbound_return_id)
+                .find_one_by_id(customer_return_id)
                 .unwrap(),
             None
         );
     }
 
-    pub(crate) fn update_outbound_return_line(&mut self, service_provider: &ServiceProvider) {
+    pub(crate) fn update_supplier_return_line(&mut self, service_provider: &ServiceProvider) {
         let ctx = service_provider
             .context(self.inbound_store.id.clone(), "".to_string())
             .unwrap();
 
-        self.outbound_return_line = service_provider
+        self.supplier_return_line = service_provider
             .invoice_line_service
             .update_stock_out_line(
                 &ctx,
                 inline_init(|r: &mut UpdateStockOutLine| {
-                    r.id.clone_from(&self.outbound_return_line.id);
+                    r.id.clone_from(&self.supplier_return_line.id);
                     r.number_of_packs = Some(21.0);
-                    r.r#type = Some(StockOutType::OutboundReturn);
+                    r.r#type = Some(StockOutType::SupplierReturn);
                 }),
             )
             .unwrap()
             .invoice_line_row;
     }
 
-    pub(crate) fn update_outbound_return_to_shipped(&mut self, service_provider: &ServiceProvider) {
+    pub(crate) fn update_supplier_return_to_shipped(&mut self, service_provider: &ServiceProvider) {
         let ctx = service_provider
             .context(self.inbound_store.id.clone(), "".to_string())
             .unwrap();
 
-        self.outbound_return = service_provider
+        self.supplier_return = service_provider
             .invoice_service
-            .update_outbound_return(
+            .update_supplier_return(
                 &ctx,
-                inline_init(|r: &mut UpdateOutboundReturn| {
-                    r.outbound_return_id.clone_from(&self.outbound_return.id);
-                    r.status = Some(UpdateOutboundReturnStatus::Shipped);
+                inline_init(|r: &mut UpdateSupplierReturn| {
+                    r.supplier_return_id.clone_from(&self.supplier_return.id);
+                    r.status = Some(UpdateSupplierReturnStatus::Shipped);
                 }),
             )
             .unwrap()
             .invoice_row;
     }
 
-    pub(crate) fn check_inbound_return_was_updated(&mut self, connection: &StorageConnection) {
-        let inbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id(&self.inbound_return.clone().map(|r| r.id).unwrap())
+    pub(crate) fn check_customer_return_was_updated(&mut self, connection: &StorageConnection) {
+        let customer_return = InvoiceRowRepository::new(connection)
+            .find_one_by_id(&self.customer_return.clone().map(|r| r.id).unwrap())
             .unwrap();
 
-        assert!(inbound_return.is_some());
-        let inbound_return = inbound_return.unwrap();
+        assert!(customer_return.is_some());
+        let customer_return = customer_return.unwrap();
 
         assert_eq!(
-            inbound_return,
-            inline_edit(&inbound_return, |mut r| {
+            customer_return,
+            inline_edit(&customer_return, |mut r| {
                 r.status = InvoiceStatus::Shipped;
-                r.shipped_datetime = self.outbound_return.shipped_datetime;
+                r.shipped_datetime = self.supplier_return.shipped_datetime;
                 r
             })
         );
@@ -1221,18 +1224,18 @@ impl InvoiceTransferTester {
         assert_eq!(
             InvoiceLineRepository::new(connection)
                 .count(Some(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&inbound_return.id))
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&customer_return.id))
                 ))
                 .unwrap(),
             1
         );
 
-        check_line(connection, &inbound_return.id, &self.outbound_return_line);
+        check_line(connection, &customer_return.id, &self.supplier_return_line);
 
-        self.inbound_shipment = Some(inbound_return)
+        self.inbound_shipment = Some(customer_return)
     }
 
-    pub(crate) fn update_inbound_return_to_delivered(
+    pub(crate) fn update_customer_return_to_delivered(
         &mut self,
         service_provider: &ServiceProvider,
     ) {
@@ -1240,51 +1243,54 @@ impl InvoiceTransferTester {
             .context(self.outbound_store.id.clone(), "".to_string())
             .unwrap();
 
-        let inbound_return = service_provider
+        let customer_return = service_provider
             .invoice_service
-            .update_inbound_return(
+            .update_customer_return(
                 &ctx,
-                inline_init(|r: &mut UpdateInboundReturn| {
-                    r.id = self.inbound_return.clone().map(|r| r.id).unwrap();
-                    r.status = Some(UpdateInboundReturnStatus::Delivered);
+                inline_init(|r: &mut UpdateCustomerReturn| {
+                    r.id = self.customer_return.clone().map(|r| r.id).unwrap();
+                    r.status = Some(UpdateCustomerReturnStatus::Delivered);
                 }),
             )
             .unwrap();
 
-        self.inbound_return = Some(inbound_return.invoice_row);
+        self.customer_return = Some(customer_return.invoice_row);
     }
 
-    pub(crate) fn update_inbound_return_to_verified(&mut self, service_provider: &ServiceProvider) {
+    pub(crate) fn update_customer_return_to_verified(
+        &mut self,
+        service_provider: &ServiceProvider,
+    ) {
         let ctx = service_provider
             .context(self.outbound_store.id.clone(), "".to_string())
             .unwrap();
 
-        let inbound_return = service_provider
+        let customer_return = service_provider
             .invoice_service
-            .update_inbound_return(
+            .update_customer_return(
                 &ctx,
-                inline_init(|r: &mut UpdateInboundReturn| {
-                    r.id = self.inbound_return.clone().map(|r| r.id).unwrap();
-                    r.status = Some(UpdateInboundReturnStatus::Verified);
+                inline_init(|r: &mut UpdateCustomerReturn| {
+                    r.id = self.customer_return.clone().map(|r| r.id).unwrap();
+                    r.status = Some(UpdateCustomerReturnStatus::Verified);
                 }),
             )
             .unwrap();
 
-        self.inbound_return = Some(inbound_return.invoice_row);
+        self.customer_return = Some(customer_return.invoice_row);
     }
 
-    pub(crate) fn check_outbound_return_status_matches_inbound_return(
+    pub(crate) fn check_supplier_return_status_matches_customer_return(
         &mut self,
         connection: &StorageConnection,
     ) {
-        let outbound_return = InvoiceRowRepository::new(connection)
-            .find_one_by_id(&self.outbound_return.id)
+        let supplier_return = InvoiceRowRepository::new(connection)
+            .find_one_by_id(&self.supplier_return.id)
             .unwrap();
 
-        assert!(outbound_return.is_some());
+        assert!(supplier_return.is_some());
         check_invoice_status(
-            &outbound_return.unwrap(),
-            &self.inbound_return.clone().unwrap(),
+            &supplier_return.unwrap(),
+            &self.customer_return.clone().unwrap(),
         )
     }
 }

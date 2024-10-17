@@ -22,6 +22,16 @@ pub fn mock_user_account_b() -> UserAccountRow {
     }
 }
 
+pub fn mock_user_empty_hashed_password() -> UserAccountRow {
+    UserAccountRow {
+        id: String::from("user_account_empty_hashed_password"),
+        username: String::from("username_empty_hashed_password"),
+        hashed_password: String::from(""),
+        ..UserAccountRow::default()
+    }
+}
+
+// user store joins
 pub fn mock_user_store_join_a_store_a() -> UserStoreJoinRow {
     UserStoreJoinRow {
         id: "user_store_join_a_store_a".to_string(),
@@ -31,7 +41,6 @@ pub fn mock_user_store_join_a_store_a() -> UserStoreJoinRow {
     }
 }
 
-// user store joins
 pub fn mock_user_store_join_program_master_list() -> UserStoreJoinRow {
     UserStoreJoinRow {
         id: "user_store_join_program_master_list".to_string(),
@@ -58,6 +67,16 @@ pub fn mock_user_store_join_b_store_a() -> UserStoreJoinRow {
         is_default: true,
     }
 }
+
+pub fn mock_user_store_join_empty_hash_password_store_a() -> UserStoreJoinRow {
+    UserStoreJoinRow {
+        id: "user_account_empty_hashed_password".to_string(),
+        user_id: "user_account_b".to_string(),
+        store_id: "store_a".to_string(),
+        is_default: true,
+    }
+}
+
 
 // permissions
 
@@ -102,7 +121,7 @@ pub fn mock_user_permission_b1() -> UserPermissionRow {
 }
 
 pub fn mock_user_accounts() -> Vec<UserAccountRow> {
-    vec![mock_user_account_a(), mock_user_account_b()]
+    vec![mock_user_account_a(), mock_user_account_b(), mock_user_empty_hashed_password()]
 }
 
 pub fn mock_user_store_joins() -> Vec<UserStoreJoinRow> {
@@ -111,6 +130,7 @@ pub fn mock_user_store_joins() -> Vec<UserStoreJoinRow> {
         mock_user_store_join_a_store_b(),
         mock_user_store_join_b_store_a(),
         mock_user_store_join_program_master_list(),
+        mock_user_store_join_empty_hash_password_store_a(),
     ]
 }
 

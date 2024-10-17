@@ -72,6 +72,9 @@ pub enum ActivityLogNodeType {
     RnrFormCreated,
     RnrFormUpdated,
     RnrFormFinalised,
+    VaccinationCreated,
+    VaccinationUpdated,
+    VaccinationDeleted,
 }
 
 #[Object]
@@ -199,6 +202,9 @@ impl ActivityLogNodeType {
             from::RnrFormCreated => to::RnrFormCreated,
             from::RnrFormUpdated => to::RnrFormUpdated,
             from::RnrFormFinalised => to::RnrFormFinalised,
+            from::VaccinationCreated => to::VaccinationCreated,
+            from::VaccinationUpdated => to::VaccinationUpdated,
+            from::VaccinationDeleted => to::VaccinationDeleted,
         }
     }
 
@@ -256,6 +262,9 @@ impl ActivityLogNodeType {
             from::RnrFormCreated => to::RnrFormCreated,
             from::RnrFormUpdated => to::RnrFormUpdated,
             from::RnrFormFinalised => to::RnrFormFinalised,
+            from::VaccinationCreated => to::VaccinationCreated,
+            from::VaccinationUpdated => to::VaccinationUpdated,
+            from::VaccinationDeleted => to::VaccinationDeleted,
         }
     }
 }

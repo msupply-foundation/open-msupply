@@ -110,6 +110,7 @@ impl<'a> UserAccountRowRepository<'a> {
         }
     }
 
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
         let result = user_account_dsl::user_account
             .filter(user_account_dsl::id.eq_any(ids))

@@ -38,13 +38,13 @@ pub fn generate(
         status: InvoiceStatus::New,
         created_datetime: Utc::now().naive_utc(),
         requisition_id: Some(requisition_row.id),
+        their_reference: requisition_row.their_reference,
 
         // Default
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         on_hold: false,
         comment: None,
-        their_reference: None,
         transport_reference: None,
         allocated_datetime: None,
         picked_datetime: None,
@@ -56,6 +56,7 @@ pub fn generate(
         tax_percentage: None,
         clinician_link_id: None,
         original_shipment_id: None,
+        backdated_datetime: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;

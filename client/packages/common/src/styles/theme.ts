@@ -95,6 +95,12 @@ declare module '@mui/material/styles/createPalette' {
       hot: PaletteColor;
       lines: string[];
     };
+    vaccinationStatus: {
+      given: string;
+      notGiven: string;
+      pending: string;
+      late: string;
+    };
     drawerDivider: string;
     gray: PaletteColor & { pale: string };
     outline: Palette['primary'];
@@ -107,6 +113,7 @@ declare module '@mui/material/styles/createPalette' {
     white: string;
     login: string;
     icon: string;
+    success: string;
   }
 
   interface TypeForm {
@@ -193,8 +200,8 @@ export const themeOptions = {
       menu: '#f2f2f5',
       toolbar: '#fafafc',
       white: '#fff',
+      success: 'rgb(237, 247, 237)',
     },
-
     form: {
       field: '#555770',
       label: '#28293d',
@@ -212,6 +219,12 @@ export const themeOptions = {
       notFunctioning: '#de0001',
       notInUse: '#b0b0b0',
       text: '#fff',
+    },
+    vaccinationStatus: {
+      given: 'success.light',
+      notGiven: 'error.main',
+      pending: 'info.light',
+      late: 'error.main',
     },
   },
   zIndex: {

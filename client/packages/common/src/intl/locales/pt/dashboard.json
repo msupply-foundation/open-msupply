@@ -23,5 +23,15 @@
   "button.new-outbound-shipment": "Nova remessa de saída",
   "inventory-management": "Administração de Inventários",
   "label.have-not-shipped": "Não foi enviado",
-  "label.low-stock-items_one": "Item com menos de 3 meses de estoque"
+  "label.low-stock-items_one": "Item com menos de 3 meses de estoque",
+  "label.more-than-six-months-stock-items_few": "Artigos com mais de 6 meses de stock",
+  "label.expired_few": "Lotes fora da validade",
+  "label.expired_many": "Lotes fora da validade",
+  "label.items-no-stock_few": "Artigos sem stock",
+  "label.items-no-stock_many": "Artigos sem stock",
+  "label.low-stock-items_few": "Artigos com menos de 3 meses de stock",
+  "label.low-stock-items_many": "Artigos com menos de 3 meses de stock",
+  "label.more-than-six-months-stock-items_many": "Artigos com mais de 6 meses de stock",
+  "label.total-items_few": "Número total de artigos",
+  "label.total-items_many": "Número total de artigos"
 }

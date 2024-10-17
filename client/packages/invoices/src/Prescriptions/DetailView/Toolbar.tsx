@@ -5,26 +5,70 @@ import {
   InputWithLabelRow,
   Grid,
   useTranslation,
-  useIntlUtils,
   DropdownMenu,
   DropdownMenuItem,
   DeleteIcon,
+  DateTimePickerInput,
+  Formatter,
+  DateUtils,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
+import { usePrescriptionRows } from '../api/hooks/line/usePrescriptionRows';
 
 export const Toolbar: FC = () => {
-  const { id, patient, clinician, update } = usePrescription.document.fields([
-    'id',
-    'patient',
-    'clinician',
-  ]);
+  const { id, patient, clinician, prescriptionDate, update } =
+    usePrescription.document.fields([
+      'id',
+      'patient',
+      'clinician',
+      'prescriptionDate',
+    ]);
   const onDelete = usePrescription.line.deleteSelected();
-  const { getLocalisedFullName } = useIntlUtils();
+  const onDeleteAll = usePrescription.line.deleteAll();
+  const { items } = usePrescriptionRows();
 
   const isDisabled = usePrescription.utils.isDisabled();
   const t = useTranslation('dispensary');
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-delete-all-lines'),
+  });
+
+  const handleDateChange = async (newPrescriptionDate: Date | null) => {
+    if (!newPrescriptionDate) return;
+
+    const oldPrescriptionDate = DateUtils.getDateOrNull(prescriptionDate);
+
+    if (newPrescriptionDate === oldPrescriptionDate) return;
+
+    if (!items || items.length === 0) {
+      // If there are no lines, we can just update the prescription date
+      await update({
+        id,
+        prescriptionDate: Formatter.toIsoString(
+          DateUtils.endOfDayOrNull(newPrescriptionDate)
+        ),
+      });
+      return;
+    }
+
+    // Otherwise, we need to delete all the lines first
+    getConfirmation({
+      onConfirm: async () => {
+        await onDeleteAll();
+        await update({
+          id,
+          prescriptionDate: Formatter.toIsoString(
+            DateUtils.endOfDayOrNull(newPrescriptionDate)
+          ),
+        });
+      },
+    });
+  };
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -36,7 +80,13 @@ export const Toolbar: FC = () => {
         alignItems="flex-end"
       >
         <Grid item display="flex" flex={1}>
-          <Box display="flex" flex={1} flexDirection="column" gap={1}>
+          <Box
+            display="flex"
+            flex={1}
+            flexDirection="column"
+            gap={1}
+            maxWidth={'fit-content'}
+          >
             {patient && (
               <InputWithLabelRow
                 label={t('label.patient')}
@@ -61,10 +111,22 @@ export const Toolbar: FC = () => {
                       clinicianId: clinician?.value?.id ?? undefined,
                     });
                   }}
-                  clinicianLabel={getLocalisedFullName(
-                    clinician?.firstName,
-                    clinician?.lastName
-                  )}
+                  clinicianValue={clinician}
+                />
+              }
+            />
+          </Box>
+          <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
+            <InputWithLabelRow
+              label={t('label.date')}
+              Input={
+                <DateTimePickerInput
+                  disabled={isDisabled}
+                  defaultValue={new Date()}
+                  value={DateUtils.getDateOrNull(prescriptionDate)}
+                  format="P"
+                  onChange={handleDateChange}
+                  maxDate={new Date()}
                 />
               }
             />
@@ -78,7 +140,11 @@ export const Toolbar: FC = () => {
           alignItems="center"
         >
           <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+            <DropdownMenuItem
+              IconComponent={DeleteIcon}
+              onClick={onDelete}
+              disabled={isDisabled}
+            >
               {t('button.delete-lines')}
             </DropdownMenuItem>
           </DropdownMenu>

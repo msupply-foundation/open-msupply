@@ -16,7 +16,7 @@ pub use self::validate::*;
 #[derive(Clone, Debug, Default, PartialEq)]
 pub enum StockInType {
     #[default]
-    InboundReturn,
+    CustomerReturn,
     InventoryAddition,
     InboundShipment,
 }
@@ -24,7 +24,7 @@ pub enum StockInType {
 impl StockInType {
     pub fn to_domain(&self) -> InvoiceType {
         match self {
-            StockInType::InboundReturn => InvoiceType::InboundReturn,
+            StockInType::CustomerReturn => InvoiceType::CustomerReturn,
             StockInType::InventoryAddition => InvoiceType::InventoryAddition,
             StockInType::InboundShipment => InvoiceType::InboundShipment,
         }

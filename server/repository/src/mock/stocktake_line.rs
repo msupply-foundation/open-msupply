@@ -9,7 +9,7 @@ pub fn mock_stocktake_line_a() -> StocktakeLineRow {
         stock_line_id: Some("item_a_line_a".to_string()),
         location_id: None,
         comment: None,
-        snapshot_number_of_packs: 10.0,
+        snapshot_number_of_packs: 40.0,
         counted_number_of_packs: Some(8.0),
         item_link_id: "item_a".to_string(),
         item_name: mock_item_a().name,

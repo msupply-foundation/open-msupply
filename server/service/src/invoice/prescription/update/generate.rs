@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{NaiveDateTime, Utc};
 
 use repository::{
     EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceRow,
@@ -26,6 +26,7 @@ pub(crate) fn generate(
         clinician_id: input_clinician_id,
         comment: input_comment,
         colour: input_colour,
+        backdated_datetime,
     }: UpdatePrescription,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
@@ -33,12 +34,18 @@ pub(crate) fn generate(
         should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
     let mut update_invoice = existing_invoice.clone();
 
+    let backdated_datetime = backdated_datetime.or(existing_invoice.backdated_datetime);
+
     set_new_status_datetime(&mut update_invoice, &input_status);
+    if let Some(backdated_datetime) = backdated_datetime {
+        backdate_status_datetimes(&mut update_invoice, backdated_datetime);
+    }
 
     update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
     update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
     update_invoice.comment = input_comment.or(update_invoice.comment);
     update_invoice.colour = input_colour.or(update_invoice.colour);
+    update_invoice.backdated_datetime = backdated_datetime;
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
@@ -83,6 +90,13 @@ fn should_update_batches_total_number_of_packs(
     } else {
         false
     }
+}
+
+// Replace datestimes that are not null with backdated_datime
+fn backdate_status_datetimes(invoice: &mut InvoiceRow, backdated_datetime: NaiveDateTime) {
+    invoice.allocated_datetime = invoice.allocated_datetime.map(|_| backdated_datetime);
+    invoice.picked_datetime = invoice.picked_datetime.map(|_| backdated_datetime);
+    invoice.verified_datetime = invoice.verified_datetime.map(|_| backdated_datetime);
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePrescriptionStatus>) {

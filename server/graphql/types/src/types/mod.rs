@@ -79,11 +79,11 @@ pub use self::program::*;
 pub mod pack_variant;
 pub use self::pack_variant::*;
 
-pub mod outbound_return_line;
-pub use self::outbound_return_line::*;
+pub mod supplier_return_line;
+pub use self::supplier_return_line::*;
 
-pub mod inbound_return_line;
-pub use self::inbound_return_line::*;
+pub mod customer_return_line;
+pub use self::customer_return_line::*;
 
 pub mod return_reason;
 pub use self::return_reason::*;
@@ -98,8 +98,8 @@ pub mod vaccine_course;
 pub use self::vaccine_course::*;
 pub mod vaccine_course_item;
 pub use self::vaccine_course_item::*;
-pub mod vaccine_course_schedule;
-pub use self::vaccine_course_schedule::*;
+pub mod vaccine_course_dose;
+pub use self::vaccine_course_dose::*;
 
 pub mod demographic;
 pub use self::demographic::*;

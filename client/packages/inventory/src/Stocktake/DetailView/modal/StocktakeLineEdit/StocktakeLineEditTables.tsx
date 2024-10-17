@@ -187,7 +187,7 @@ export const BatchTable: FC<
       width: 100,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
-        'SnapshotCountCurrentCountMismatch',
+        'SnapshotCountCurrentCountMismatchLine',
       setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
     },

@@ -7,15 +7,15 @@ import { ClinicianAutocompleteOption, Clinician } from './utils';
 interface ClinicianSearchInputProps {
   onChange: (clinician: ClinicianAutocompleteOption | null) => void;
   width?: number;
-  clinicianLabel: string;
-  clinicianValue?: Clinician;
+  clinicianValue: Clinician | null | undefined;
+  disabled?: boolean;
 }
 
 export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
   onChange,
   width = 250,
-  clinicianLabel,
   clinicianValue,
+  disabled,
 }) => {
   const { data } = useClinicians.document.list({});
   const { getLocalisedFullName } = useIntlUtils();
@@ -23,10 +23,20 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
 
   return (
     <Autocomplete
-      value={{
-        label: clinicianLabel,
-        value: clinicianValue,
-      }}
+      value={
+        clinicianValue
+          ? {
+              label: getLocalisedFullName(
+                clinicianValue.firstName,
+                clinicianValue.lastName
+              ),
+              value: clinicianValue,
+            }
+          : null
+      }
+      isOptionEqualToValue={(option, value) =>
+        option.value.id === value.value?.id
+      }
       width={`${width}px`}
       onChange={(_, option) => {
         onChange(option);
@@ -42,6 +52,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
         })
       )}
       sx={{ minWidth: width }}
+      disabled={disabled}
     />
   );
 };

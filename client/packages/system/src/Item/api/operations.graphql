@@ -23,6 +23,7 @@ fragment StockLine on StockLineNode {
     name
     code
     unitName
+    doses
   }
   note
   onHold
@@ -211,7 +212,10 @@ query itemsWithStats(
 }
 
 query itemById($storeId: String!, $itemId: String!) {
-  items(storeId: $storeId, filter: { id: { equalTo: $itemId }, isActive: true }) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
     ... on ItemConnector {
       __typename
       nodes {
@@ -308,6 +312,24 @@ mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
           __typename
           id
         }
+      }
+    }
+  }
+}
+
+query getHistoricalStockLines(
+  $storeId: String!
+  $itemId: String!
+  $datetime: DateTime
+) {
+  historicalStockLines(
+    storeId: $storeId
+    itemId: $itemId
+    datetime: $datetime
+  ) {
+    ... on StockLineConnector {
+      nodes {
+        ...StockLine
       }
     }
   }

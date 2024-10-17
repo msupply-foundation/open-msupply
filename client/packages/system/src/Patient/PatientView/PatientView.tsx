@@ -39,6 +39,7 @@ import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
 import defaultPatientSchema from './DefaultPatientSchema.json';
 import defaultPatientUISchema from './DefaultPatientUISchema.json';
+import { VaccinationCardsListView } from '../VaccinationCard/ListView';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -188,7 +189,12 @@ const PatientDetailView = ({
         isCreating: isCreatingPatient,
         schema: DEFAULT_SCHEMA,
         save: async (data: unknown) => {
-          await handlePatientSave(data);
+          const newData = Object.fromEntries(
+            Object.entries(data ?? {}).filter(
+              ([key]) => key !== 'dateOfBirthIsEstimated'
+            )
+          );
+          await handlePatientSave(newData);
         },
       };
 
@@ -257,10 +263,11 @@ const PatientDetailView = ({
 };
 
 export enum PatientTabValue {
-  Details = 'Details',
-  Programs = 'Programs',
-  Encounters = 'Encounters',
-  ContactTracing = 'Contact Tracing',
+  Details = 'details',
+  Programs = 'programs',
+  Encounters = 'encounters',
+  ContactTracing = 'contact-tracing',
+  Vaccinations = 'vaccinations',
 }
 
 /**
@@ -275,7 +282,7 @@ export const PatientView = () => {
   const { setCurrentPatient, createNewPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
-  const { store } = useAuthContext();
+  const { store, storeId } = useAuthContext();
 
   const requiresConfirmation = (tab: string) => {
     return tab === PatientTabValue.Details && isDirtyPatient;
@@ -316,6 +323,14 @@ export const PatientView = () => {
         dir: 'desc' as 'desc' | 'asc',
       },
     },
+    {
+      Component: <VaccinationCardsListView />,
+      value: PatientTabValue.Vaccinations,
+      sort: {
+        key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
+    },
   ];
 
   // Note: unmount modals when not used because they have some internal state
@@ -334,6 +349,7 @@ export const PatientView = () => {
               data: {
                 enrolmentDatetime: new Date().toISOString(),
                 status: 'ACTIVE',
+                storeId,
               },
               schema: documentRegistry,
               isCreating: true,

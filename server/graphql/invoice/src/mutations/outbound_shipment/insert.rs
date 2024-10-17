@@ -15,7 +15,7 @@ use service::invoice::outbound_shipment::insert::{
 pub struct InsertInput {
     /// The new invoice id provided by the client
     pub id: String,
-    /// The other party must be an customer of the current store
+    /// The other party must be a customer of the current store
     other_party_id: String,
     on_hold: Option<bool>,
     comment: Option<String>,

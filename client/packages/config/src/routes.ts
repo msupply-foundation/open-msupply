@@ -1,3 +1,5 @@
+import { useIntlUtils } from '@openmsupply-client/common';
+
 export enum AppRoute {
   Android = 'android',
 
@@ -11,8 +13,9 @@ export enum AppRoute {
   Patients = 'patients',
   Encounter = 'encounter',
   ContactTrace = 'contact-trace',
+  VaccineCard = 'vaccine-card',
   Prescription = 'prescription',
-  InboundReturn = 'inbound-return',
+  CustomerReturn = 'customer-return',
 
   Coldchain = 'cold-chain',
   Sensors = 'sensors',
@@ -27,7 +30,7 @@ export enum AppRoute {
   InboundShipment = 'inbound-shipment',
   InternalOrder = 'internal-order',
   Suppliers = 'suppliers',
-  OutboundReturn = 'outbound-return',
+  SupplierReturn = 'supplier-return',
 
   Inventory = 'inventory',
   Stock = 'stock',
@@ -64,5 +67,26 @@ export enum AppRoute {
 }
 
 export enum ExternalURL {
-  PublicDocs = 'https://docs.msupply.foundation/docs',
+  // PublicDocs = 'https://docs.msupply.foundation/docs',
+  PublicDocs,
 }
+
+export const useExternalUrl = (url: ExternalURL) => {
+  const { currentLanguage } = useIntlUtils();
+  // default to no language extension
+  // only 'fr and 'es' are currently supported in public docs
+
+  const baseUrl = 'https://docs.msupply.foundation';
+  switch (url) {
+    case ExternalURL.PublicDocs:
+      switch (currentLanguage) {
+        case 'es':
+          return `${baseUrl}/es/docs`;
+        case 'fr':
+        case 'fr-DJ':
+          return `${baseUrl}/fr/docs`;
+        default:
+          return `${baseUrl}/docs`;
+      }
+  }
+};

@@ -51,7 +51,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         get_invoice_lines(ctx, store_id, invoice_id, pagination, filter, sort)
     }
 
-    // Stock out: Outbound Shipment/Outbound Return/Prescription
+    // Stock out: Outbound Shipment/Supplier Return/Prescription
     fn insert_stock_out_line(
         &self,
         ctx: &ServiceContext,
@@ -76,7 +76,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         delete_stock_out_line(ctx, input)
     }
 
-    // Stock in: Inbound Shipment/Inbound Return
+    // Stock in: Inbound Shipment/Customer Return
     fn insert_stock_in_line(
         &self,
         ctx: &ServiceContext,

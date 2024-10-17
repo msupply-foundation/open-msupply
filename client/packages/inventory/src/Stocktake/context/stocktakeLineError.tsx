@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from 'react';
 import {
   AdjustmentReasonNotProvidedErrorFragment,
   AdjustmentReasonNotValidErrorFragment,
-  SnapshotCountCurrentCountMismatchErrorFragment,
+  SnapshotCountCurrentCountMismatchLineErrorFragment,
   StockLineReducedBelowZeroErrorFragment,
 } from '../api';
 
@@ -11,7 +11,7 @@ export type StocktakeLineError =
   | AdjustmentReasonNotProvidedErrorFragment
   | StockLineReducedBelowZeroErrorFragment
   | AdjustmentReasonNotValidErrorFragment
-  | SnapshotCountCurrentCountMismatchErrorFragment;
+  | SnapshotCountCurrentCountMismatchLineErrorFragment;
 
 const useStocktakeLineErrors = () => {
   const [errors, setErrors] = useState<{

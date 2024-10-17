@@ -1,3 +1,5 @@
+use chrono::NaiveDateTime;
+use repository::InvoiceRow;
 use repository::InvoiceType;
 
 pub mod insert;
@@ -16,7 +18,7 @@ pub use self::validate::*;
 pub enum StockOutType {
     #[default]
     OutboundShipment,
-    OutboundReturn,
+    SupplierReturn,
     Prescription,
     InventoryReduction,
 }
@@ -26,8 +28,17 @@ impl StockOutType {
         match self {
             StockOutType::OutboundShipment => InvoiceType::OutboundShipment,
             StockOutType::Prescription => InvoiceType::Prescription,
-            StockOutType::OutboundReturn => InvoiceType::OutboundReturn,
+            StockOutType::SupplierReturn => InvoiceType::SupplierReturn,
             StockOutType::InventoryReduction => InvoiceType::InventoryReduction,
         }
     }
+}
+
+pub(crate) fn invoice_backdated_date(invoice: &InvoiceRow) -> Option<NaiveDateTime> {
+    if let Some(backdated_datetime) = invoice.backdated_datetime {
+        if backdated_datetime < invoice.created_datetime {
+            return Some(backdated_datetime);
+        }
+    }
+    None
 }

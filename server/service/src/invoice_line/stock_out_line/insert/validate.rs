@@ -4,17 +4,19 @@ use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
+        invoice_backdated_date,
         validate::{check_line_exists, check_number_of_packs},
         LocationIsOnHoldError,
     },
+    stock_line::historical_stock::get_historical_stock_line_available_quantity,
 };
 
 use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn validate(
+    connection: &StorageConnection,
     input: &InsertStockOutLine,
     store_id: &str,
-    connection: &StorageConnection,
 ) -> Result<(ItemRow, InvoiceRow, StockLine), InsertStockOutLineError> {
     use InsertStockOutLineError::*;
 
@@ -61,20 +63,22 @@ pub fn validate(
     check_location_on_hold(&batch).map_err(|e| match e {
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
-    check_reduction_below_zero(input, &batch)?;
+
+    let mut available_packs = batch.stock_line_row.available_number_of_packs;
+    if let Some(backdated_date) = invoice_backdated_date(&invoice) {
+        available_packs = get_historical_stock_line_available_quantity(
+            connection,
+            &batch.stock_line_row,
+            None,
+            &backdated_date,
+        )?
+    }
+
+    if available_packs < input.number_of_packs {
+        return Err(InsertStockOutLineError::ReductionBelowZero {
+            stock_line_id: batch.stock_line_row.id.clone(),
+        });
+    }
 
     Ok((item, invoice, batch))
-}
-
-fn check_reduction_below_zero(
-    input: &InsertStockOutLine,
-    batch: &StockLine,
-) -> Result<(), InsertStockOutLineError> {
-    if batch.stock_line_row.available_number_of_packs < input.number_of_packs {
-        Err(InsertStockOutLineError::ReductionBelowZero {
-            stock_line_id: batch.stock_line_row.id.clone(),
-        })
-    } else {
-        Ok(())
-    }
 }

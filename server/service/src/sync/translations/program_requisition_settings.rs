@@ -26,6 +26,7 @@ pub struct LegacyListMasterRow {
     is_program: bool,
     #[serde(rename = "programSettings")]
     program_settings: Option<LegacyProgramSettings>,
+    is_immunisation: Option<bool>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -180,8 +181,7 @@ fn generate_requisition_program(
         master_list_id: Some(master_list.id.clone()),
         name: master_list.description.clone(),
         context_id: context_row.id.clone(),
-        is_immunisation: false,
-        deleted_datetime: None,
+        is_immunisation: master_list.is_immunisation.unwrap_or(false),
     };
 
     let mut program_requisition_settings_rows = Vec::new();

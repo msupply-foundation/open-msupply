@@ -3,7 +3,9 @@ use crate::invoice::{
     check_store,
 };
 use crate::validate::check_patient_exists;
-use repository::{ClinicianRowRepository, RepositoryError};
+use repository::{
+    ClinicianRowRepository, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, RepositoryError,
+};
 use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 use super::{UpdatePrescription, UpdatePrescriptionError};
@@ -33,6 +35,18 @@ pub fn validate(
 
     if let Some(patient_id) = &patch.patient_id {
         check_patient_exists(connection, patient_id)?.ok_or(PatientDoesNotExist)?;
+    }
+
+    if patch.backdated_datetime.is_some() {
+        // Check if we have any lines allocated to this invoice, if so we can't backdate
+        let line_count = InvoiceLineRepository::new(connection).count(Some(
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&patch.id)),
+        ))?;
+        if line_count > 0 {
+            return Err(CantBackDate(
+                "Can't backdate as invoice has allocated lines".to_string(),
+            ));
+        }
     }
 
     Ok((invoice, status_changed))

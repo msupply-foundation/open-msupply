@@ -3,13 +3,28 @@ import {
   BasicSpinner,
   BasicTextInput,
   Box,
+  ButtonWithIcon,
+  CellProps,
   Checkbox,
+  ColumnDataSetter,
   Container,
+  createTableStore,
+  DataTable,
+  DeleteIcon,
   DemographicIndicatorNode,
   DialogButton,
+  FnUtils,
+  IconButton,
   InputWithLabelRow,
   ModalMode,
+  NumberCell,
+  NumberInputCell,
+  MultipleNumberInputCell,
   NumericTextInput,
+  PlusCircleIcon,
+  TableProvider,
+  TextInputCell,
+  useColumns,
   useDialog,
   useKeyboardHeightAdjustment,
   useNotification,
@@ -19,7 +34,8 @@ import React, { useMemo, FC } from 'react';
 import { useVaccineCourse } from '../api/hooks/useVaccineCourse';
 import { useDemographicData } from '@openmsupply-client/system';
 import { VaccineItemSelect } from './VaccineCourseItemSelect';
-import { VaccineCourseFragment } from '../api';
+import { DraftVaccineCourse, VaccineCourseFragment } from '../api';
+import { VaccineCourseDoseFragment } from '../api/operations.generated';
 
 const getDemographicOptions = (
   demographicIndicators: DemographicIndicatorNode[]
@@ -89,14 +105,7 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
   const { data: demographicData } = useDemographicData.indicator.list();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(600);
-
-  const tryUpdateValue = (value: number | undefined) => {
-    if (value === undefined) {
-      return;
-    }
-    updatePatch({ doses: value });
-  };
+  const height = useKeyboardHeightAdjustment(900);
 
   const options = useMemo(
     () => getDemographicOptions(demographicData?.nodes ?? []),
@@ -112,6 +121,19 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
 
   const save = async () => {
     setIsDirty(false);
+
+    const agesAreInOrder = (draft.vaccineCourseDoses ?? []).every(
+      (dose, index, doses) => {
+        const prevDoseAge = doses[index - 1]?.minAgeMonths ?? -0.01;
+        return dose.minAgeMonths > prevDoseAge;
+      }
+    );
+
+    if (!agesAreInOrder) {
+      error(t('error.dose-ages-out-of-order'))();
+      return;
+    }
+
     try {
       const result =
         mode === ModalMode.Update
@@ -182,14 +204,11 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
             onChange={e => updatePatch({ isActive: e.target.checked })}
           ></Checkbox>
         </Row>
-
-        <Row label={t('label.number-of-doses')}>
-          <NumericTextInput
-            value={draft.doses}
-            fullWidth
-            onChange={tryUpdateValue}
-          />
-        </Row>
+        <VaccineCourseDoseTable
+          courseName={draft.name}
+          doses={draft.vaccineCourseDoses ?? []}
+          updatePatch={updatePatch}
+        />
       </Container>
     </Box>
   );
@@ -210,10 +229,169 @@ export const VaccineCourseEditModal: FC<VaccineCourseEditModalProps> = ({
         />
       }
       height={height}
-      width={700}
+      sx={{
+        width: 1100,
+        maxWidth: 'unset',
+      }}
       slideAnimation={false}
     >
       {modalContent}
     </Modal>
+  );
+};
+
+const VaccineCourseDoseTable = ({
+  doses,
+  updatePatch,
+  courseName,
+}: {
+  courseName: string;
+  doses: VaccineCourseDoseFragment[];
+  updatePatch: (newData: Partial<DraftVaccineCourse>) => void;
+}) => {
+  const t = useTranslation('programs');
+
+  const addDose = () => {
+    const previousDose = doses[doses.length - 1];
+    const previousMin = previousDose?.minAgeMonths ?? 0;
+    const previousMax = previousDose?.maxAgeMonths ?? 0;
+    const previousRange = previousMax - previousMin;
+
+    updatePatch({
+      vaccineCourseDoses: [
+        ...doses,
+        {
+          __typename: 'VaccineCourseDoseNode',
+          id: FnUtils.generateUUID(),
+          label: `${courseName} ${doses.length + 1}`,
+          minAgeMonths: previousMax,
+          maxAgeMonths: previousMax + (previousRange || 1),
+          minIntervalDays: previousDose?.minIntervalDays ?? 30,
+          customAgeLabel: '',
+        },
+      ],
+    });
+  };
+
+  const deleteDose = (id: string) => {
+    updatePatch({
+      vaccineCourseDoses: doses.filter(dose => dose.id !== id),
+    });
+  };
+
+  const updateDose: ColumnDataSetter<VaccineCourseDoseFragment> = newData => {
+    updatePatch({
+      vaccineCourseDoses: doses.map(dose =>
+        dose.id === newData.id ? { ...dose, ...newData } : dose
+      ),
+    });
+  };
+
+  const columns = useColumns<VaccineCourseDoseFragment>(
+    [
+      {
+        key: 'doseNumber',
+        Cell: NumberCell,
+        width: 80,
+        label: 'label.dose-number',
+        accessor: ({ rowData }) => doses.indexOf(rowData) + 1,
+      },
+      {
+        key: 'label',
+        Cell: LabelCell,
+        width: 280,
+        label: 'label.label',
+        setter: updateDose,
+      },
+      {
+        key: 'minAgeMonths',
+        Cell: AgeCell,
+        label: 'label.from-age',
+        setter: updateDose,
+      },
+      {
+        key: 'maxAgeMonths',
+        Cell: AgeCell,
+        label: 'label.to-age',
+        setter: updateDose,
+      },
+      {
+        key: 'customAgeLabel',
+        Cell: LabelCell,
+        label: 'label.custom-age-label',
+        accessor: ({ rowData }) => rowData.customAgeLabel ?? '',
+        setter: updateDose,
+      },
+      {
+        key: 'minIntervalDays',
+        Cell: NumberInputCell,
+        width: 120,
+        label: 'label.min-interval',
+        setter: updateDose,
+      },
+      {
+        key: 'delete',
+        Cell: ({ rowData }) => (
+          <IconButton
+            icon={<DeleteIcon sx={{ height: '0.9em' }} />}
+            label={t('label.delete')}
+            onClick={() => deleteDose(rowData.id)}
+          />
+        ),
+      },
+    ],
+    {},
+    [updateDose, doses]
+  );
+
+  return (
+    <>
+      <Box display="flex" justifyContent="flex-end" marginBottom="8px">
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('label.dose')}
+          onClick={addDose}
+        />
+      </Box>
+      <TableProvider createStore={createTableStore}>
+        <DataTable
+          id={'doses-list'}
+          columns={columns}
+          data={doses}
+          noDataMessage={t('message.add-a-dose')}
+          dense
+        />
+      </TableProvider>
+    </>
+  );
+};
+
+// Input cells can't be defined inline, otherwise they lose focus on re-render
+const LabelCell = (props: CellProps<VaccineCourseDoseFragment>) => (
+  <TextInputCell fullWidth {...props} />
+);
+
+const AgeCell = (props: CellProps<VaccineCourseDoseFragment>) => {
+  const t = useTranslation();
+  return (
+    <MultipleNumberInputCell
+      decimalLimit={2}
+      width={25}
+      {...props}
+      units={[
+        {
+          key: 'year',
+          ratio: 12,
+          label: t('label.years-abbreviation'),
+          max: 150,
+        },
+        {
+          key: 'month',
+          ratio: 1,
+          label: t('label.months-abbreviation'),
+          max: 11,
+        },
+      ]}
+    />
   );
 };

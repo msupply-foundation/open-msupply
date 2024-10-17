@@ -7,7 +7,7 @@ import {
   SortUtils,
   uniqBy,
 } from '@openmsupply-client/common';
-import { useStockLines } from '@openmsupply-client/system';
+import { useHistoricalStockLines } from '@openmsupply-client/system';
 import { usePrescription } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
@@ -25,15 +25,21 @@ export interface UseDraftPrescriptionLinesControl
 }
 
 export const useDraftPrescriptionLines = (
-  item: DraftItem | null
+  item: DraftItem | null,
+  date?: Date | null
 ): UseDraftPrescriptionLinesControl => {
   const { id: invoiceId, status } = usePrescription.document.fields([
     'id',
     'status',
   ]);
+
   const { data: lines, isLoading: prescriptionLinesLoading } =
     usePrescription.line.stockLines(item?.id ?? '');
-  const { data, isLoading } = useStockLines(item?.id);
+  const { data, isLoading } = useHistoricalStockLines({
+    itemId: item?.id ?? '',
+    datetime: date ? date.toISOString() : undefined,
+  });
+
   const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftStockOutLines, setDraftStockOutLines] = useState<
     DraftStockOutLine[]
@@ -71,6 +77,8 @@ export const useDraftPrescriptionLines = (
             return createDraftStockOutLine({
               invoiceLine,
               invoiceId,
+              stockLine: batch,
+              invoiceStatus: status,
             });
           } else {
             return createDraftStockOutLineFromStockLine({
@@ -94,7 +102,11 @@ export const useDraftPrescriptionLines = (
           const placeholderItem = lines?.find(l => l.item.id === item.id)?.item;
           if (!!placeholderItem) placeholder.item = placeholderItem;
           rows.push(
-            createDraftStockOutLine({ invoiceId, invoiceLine: placeholder })
+            createDraftStockOutLine({
+              invoiceId,
+              invoiceLine: placeholder,
+              invoiceStatus: status,
+            })
           );
         } else {
           // Commented out for now until placeholders are implemented for prescriptions

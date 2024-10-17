@@ -36,9 +36,10 @@ mod sync_file_reference;
 mod temperature_breach;
 mod temperature_log;
 mod user;
+mod vaccine_course;
 mod vaccine_course_by_program;
+mod vaccine_course_dose_by_vaccine_course;
 mod vaccine_course_item_by_vaccine_course;
-mod vaccine_course_schedule_by_vaccine_course;
 
 use std::{collections::HashSet, hash::Hasher};
 
@@ -80,9 +81,10 @@ pub use sync_file_reference::*;
 pub use temperature_breach::*;
 pub use temperature_log::*;
 pub use user::*;
+pub use vaccine_course::*;
 pub use vaccine_course_by_program::*;
+pub use vaccine_course_dose_by_vaccine_course::*;
 pub use vaccine_course_item_by_vaccine_course::*;
-pub use vaccine_course_schedule_by_vaccine_course::*;
 
 #[derive(Debug, Clone)]
 /// Sometimes loaders need to take an extra parameter, like store_id or requisition_id

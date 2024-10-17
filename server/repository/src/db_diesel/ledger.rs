@@ -19,6 +19,7 @@ table! {
         quantity -> Double,
         datetime -> Timestamp,
         invoice_type -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
+        invoice_number -> BigInt,
         inventory_adjustment_reason -> Nullable<Text>,
         return_reason ->  Nullable<Text>,
     }
@@ -34,6 +35,7 @@ pub struct LedgerRow {
     pub quantity: f64,
     pub datetime: NaiveDateTime,
     pub invoice_type: InvoiceType,
+    pub invoice_number: i64,
     pub inventory_adjustment_reason: Option<String>,
     pub return_reason: Option<String>,
 }

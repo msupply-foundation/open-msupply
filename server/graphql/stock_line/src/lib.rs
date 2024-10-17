@@ -1,5 +1,6 @@
 pub mod mutations;
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
@@ -129,6 +130,57 @@ impl StockLineQueries {
                 Some(store_id),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(StockLinesResponse::Response(
+            StockLineConnector::from_domain(stock_lines),
+        ))
+    }
+
+    /// Query for "historical_stock_line" entries
+    pub async fn historical_stock_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        item_id: String,
+        datetime: Option<DateTime<Utc>>,
+    ) -> Result<StockLinesResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryStockLine,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+        let stock_lines = match datetime {
+            None => service_provider
+                .stock_line_service
+                .get_stock_lines(
+                    &service_context,
+                    None,
+                    Some(StockLineFilter {
+                        item_id: Some(EqualFilter::equal_to(&item_id)),
+                        store_id: Some(EqualFilter::equal_to(&store_id)),
+                        is_available: Some(true),
+                        ..Default::default()
+                    }),
+                    None,
+                    Some(store_id),
+                )
+                .map_err(StandardGraphqlError::from_list_error)?,
+            Some(datetime) => service_provider
+                .stock_line_service
+                .get_historical_stock_lines(
+                    &service_context,
+                    store_id,
+                    item_id,
+                    datetime.naive_utc(),
+                )
+                .map_err(StandardGraphqlError::from_list_error)?,
+        };
 
         Ok(StockLinesResponse::Response(
             StockLineConnector::from_domain(stock_lines),

@@ -15,6 +15,7 @@ import {
   DialogButton,
   ButtonWithIcon,
   SaveIcon,
+  DetailTabs,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -31,6 +32,7 @@ import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
+import { VaccinationCard } from '../../Vaccination/Components/VaccinationCard';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -213,9 +215,13 @@ export const DetailView: FC = () => {
       data as unknown as EncounterSchema,
       updateEncounter
     );
+  const dataStatus = data
+    ? (data as Record<string, JsonData>)['status']
+    : undefined;
   const suggestSaveWithStatusVisited = encounter
     ? new Date(encounter.startDatetime).getTime() < Date.now() &&
-      encounter.status === EncounterNodeStatus.Pending
+      encounter.status === EncounterNodeStatus.Pending &&
+      dataStatus === EncounterNodeStatus.Pending
     : false;
 
   useEffect(() => {
@@ -234,10 +240,9 @@ export const DetailView: FC = () => {
             >
               {getPatientBreadcrumbSuffix(encounter, getLocalisedFullName)}
             </Breadcrumb>
-            <span>{` / ${encounter.document.documentRegistry
-              ?.name} - ${dateFormat.localisedDate(
-              encounter.startDatetime
-            )}`}</span>
+            <span>{` / ${
+              encounter.document.documentRegistry?.name
+            } - ${dateFormat.localisedDate(encounter.startDatetime)}`}</span>
           </>
         ),
       });
@@ -252,20 +257,29 @@ export const DetailView: FC = () => {
 
   if (!isSuccess && !isError) return <DetailViewSkeleton />;
 
+  // For Immunization Programs, we display as two different tabs - Vaccinations
+  // card, and the normal "Encounter" page (if defined)
+  const tabs = [];
+  if (encounter && encounter.programEnrolment?.isImmunisationProgram) {
+    tabs.push({
+      Component: (
+        <VaccinationCard
+          encounterId={encounter.id}
+          programEnrolmentId={encounter.programEnrolment.id}
+          clinician={encounter.clinician ?? undefined}
+        />
+      ),
+      value: t('label.vaccinations'),
+    });
+    if (encounter.document.documentRegistry?.uiSchema.elements.length > 0)
+      tabs.push({ Component: JsonForm, value: t('label.details') });
+  }
+
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
       <AppBarButtons logicalStatus={logicalStatus} />
-      {encounter && (
-        <Toolbar
-          onChange={updateEncounter}
-          encounter={encounter}
-          onDelete={onDelete}
-        />
-      )}
-      {encounter ? (
-        JsonForm
-      ) : (
+      {!encounter ? (
         <AlertModal
           open={true}
           onOk={() =>
@@ -278,9 +292,16 @@ export const DetailView: FC = () => {
           title={t('error.encounter-not-found')}
           message={t('messages.click-to-return-to-encounters')}
         />
-      )}
-      {encounter && (
-        <SidePanel encounter={encounter} onChange={updateEncounter} />
+      ) : (
+        <>
+          <Toolbar
+            onChange={updateEncounter}
+            encounter={encounter}
+            onDelete={onDelete}
+          />
+          {tabs.length > 0 ? <DetailTabs tabs={tabs} /> : JsonForm}
+          <SidePanel encounter={encounter} onChange={updateEncounter} />
+        </>
       )}
       <SaveAsVisitedModal />
       <Footer

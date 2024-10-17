@@ -5,14 +5,14 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::VaccineCourseNode;
+use graphql_types::types::{VaccineCourseDoseNode, VaccineCourseDoseResponse, VaccineCourseNode};
 use repository::vaccine_course::vaccine_course::{
     VaccineCourseFilter, VaccineCourseSort, VaccineCourseSortField,
 };
 use repository::{EqualFilter, PaginationOption, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    vaccine_course::query::{get_vaccine_course, get_vaccine_courses},
+    vaccine_course::query::{get_vaccine_course, get_vaccine_course_dose, get_vaccine_courses},
 };
 
 use crate::types::vaccine_course::{
@@ -88,6 +88,17 @@ pub fn vaccine_course(ctx: &Context<'_>, id: String) -> Result<VaccineCourseResp
             VaccineCourseNode::from_domain(row),
         )),
         Err(error) => Ok(VaccineCourseResponse::Error(error.into())),
+    }
+}
+
+pub fn vaccine_course_dose(ctx: &Context<'_>, id: String) -> Result<VaccineCourseDoseResponse> {
+    let connection = ctx.get_connection_manager().connection()?;
+
+    match get_vaccine_course_dose(&connection, id) {
+        Ok(row) => Ok(VaccineCourseDoseResponse::Response(
+            VaccineCourseDoseNode::from_domain(row),
+        )),
+        Err(error) => Ok(VaccineCourseDoseResponse::Error(error.into())),
     }
 }
 

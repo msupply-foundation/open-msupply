@@ -23,7 +23,7 @@
   "error.no-inbound-items": "No items have been added to this shipment.",
   "error.no-inbound-shipments": "There are no Inbound Shipments to display.",
   "error.no-internal-orders": "No internal orders to display.",
-  "error.no-outbound-returns": "There are no Outbound Returns to display.",
+  "error.no-supplier-returns": "There are no Supplier Returns to display.",
   "error.no-requisition-items": "No items have been added to this Internal Order.",
   "error.no-rnr-forms": "No R&R Forms found",
   "error.requisition-not-found": "Internal Order not found",

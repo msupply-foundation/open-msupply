@@ -1,0 +1,136 @@
+fragment VaccinationCourseDose on VaccineCourseDoseNode {
+  __typename
+  id
+  label
+  vaccineCourse {
+    id
+    vaccineCourseItems {
+      ...VaccineCourseItem
+    }
+  }
+}
+
+fragment VaccinationDetail on VaccinationNode {
+  __typename
+  id
+  facilityNameId
+  facilityFreeText
+  vaccinationDate
+  clinician {
+    id
+    firstName
+    lastName
+  }
+  given
+  stockLine {
+    id
+    itemId
+    itemName
+    batch
+  }
+  invoice {
+    id
+    invoiceNumber
+  }
+  notGivenReason
+  comment
+}
+
+fragment VaccinationCardItem on VaccinationCardItemNode {
+  __typename
+  id
+  vaccineCourseId
+  vaccineCourseDoseId
+  vaccinationId
+  label
+  minAgeMonths
+  customAgeLabel
+  vaccinationDate
+  suggestedDate
+  given
+  batch
+  facilityName(storeId: $storeId)
+  status
+}
+
+fragment VaccinationCard on VaccinationCardNode {
+  __typename
+  id
+  patientFirstName
+  patientLastName
+  programName
+  enrolmentStoreId
+  items {
+    ... on VaccinationCardItemNode {
+      ...VaccinationCardItem
+    }
+  }
+}
+
+query vaccinationCard($storeId: String!, $programEnrolmentId: String!) {
+  vaccinationCard(storeId: $storeId, programEnrolmentId: $programEnrolmentId) {
+    ... on VaccinationCardNode {
+      ...VaccinationCard
+    }
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+query vaccination($storeId: String!, $vaccinationId: String!) {
+  vaccination(storeId: $storeId, id: $vaccinationId) {
+    __typename
+    ... on VaccinationNode {
+      ...VaccinationDetail
+    }
+  }
+}
+
+query vaccineCourseDose($doseId: String!) {
+  vaccineCourseDose(id: $doseId) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on VaccineCourseDoseNode {
+      ...VaccinationCourseDose
+    }
+  }
+}
+
+mutation insertVaccination($storeId: String!, $input: InsertVaccinationInput!) {
+  insertVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateVaccination($storeId: String!, $input: UpdateVaccinationInput!) {
+  updateVaccination(storeId: $storeId, input: $input) {
+    __typename
+    ... on VaccinationNode {
+      __typename
+      id
+    }
+    ... on UpdateVaccinationError {
+      __typename
+      error {
+        description
+        ... on NotMostRecentGivenDose {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}

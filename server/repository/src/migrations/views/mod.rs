@@ -27,6 +27,7 @@ pub(crate) fn drop_views(connection: &StorageConnection) -> anyhow::Result<()> {
       DROP VIEW IF EXISTS report_document;
       DROP VIEW IF EXISTS requisitions_in_period;
       DROP VIEW IF EXISTS store_items;
+      DROP VIEW IF EXISTS vaccination_card;
     "#
     )?;
 
@@ -129,11 +130,11 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
         item_link_id AS item_id,
         store_id,
         CASE WHEN invoice.type IN (
-            'OUTBOUND_SHIPMENT', 'OUTBOUND_RETURN',
+            'OUTBOUND_SHIPMENT', 'SUPPLIER_RETURN',
             'PRESCRIPTION'
         ) THEN picked_datetime
                     WHEN invoice.type IN (
-            'INBOUND_SHIPMENT', 'INBOUND_RETURN'
+            'INBOUND_SHIPMENT', 'CUSTOMER_RETURN'
         ) THEN delivered_datetime
                     WHEN invoice.type IN (
             'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
@@ -141,6 +142,7 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
             END AS datetime,
         name,
         invoice.type AS invoice_type,
+        invoice.invoice_number AS invoice_number,
         inventory_adjustment_reason.reason as inventory_adjustment_reason,
         return_reason.reason as return_reason,
         stock_line_id
@@ -181,8 +183,8 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     LEFT OUTER JOIN stock_movement
         ON stock_movement.item_id = items_and_stores.item_id
             AND stock_movement.store_id = items_and_stores.store_id
-    WHERE invoice_type='INBOUND_RETURN'
-      OR invoice_type='OUTBOUND_RETURN'
+    WHERE invoice_type='CUSTOMER_RETURN'
+      OR invoice_type='SUPPLIER_RETURN'
       OR invoice_type='INVENTORY_ADDITION'
       OR invoice_type='INVENTORY_REDUCTION';
 
@@ -383,7 +385,42 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
       CREATE VIEW requisitions_in_period AS
           SELECT 'n/a' as id, program_id, period_id, store_id, order_type, type, count(*) as count FROM requisition WHERE order_type IS NOT NULL
             GROUP BY 1,2,3,4,5,6;   
-      "#,
+
+  CREATE VIEW vaccination_card AS
+    SELECT 
+      vcd.id || '_' || pe.id AS id,
+      vcd.id as vaccine_course_dose_id, 
+      vcd.label, 
+      vcd.min_interval_days, 
+      vcd.min_age,
+      vcd.max_age,
+      vcd.custom_age_label, 
+      vc.id as vaccine_course_id, 
+      v.id as vaccination_id, 
+      v.vaccination_date, 
+      v.given, 
+      v.stock_line_id, 
+      n.id AS facility_name_id,
+      v.facility_free_text,
+      s.batch,
+      pe.id as program_enrolment_id
+    FROM vaccine_course_dose vcd 
+    JOIN vaccine_course vc 
+      ON vcd.vaccine_course_id = vc.id
+    JOIN program_enrolment pe 
+      ON pe.program_id = vc.program_id
+    LEFT JOIN vaccination v 
+      ON v.vaccine_course_dose_id = vcd.id AND v.program_enrolment_id = pe.id
+    LEFT JOIN name_link nl
+      ON v.facility_name_link_id = nl.id
+    LEFT JOIN name n
+      ON nl.name_id = n.id
+    LEFT JOIN stock_line s 
+      ON v.stock_line_id = s.id
+    -- Only show doses that haven't been deleted, unless they have a vaccination
+    WHERE vcd.deleted_datetime IS NULL OR v.id IS NOT NULL;
+
+    "#,
     )?;
 
     if cfg!(not(feature = "postgres")) {

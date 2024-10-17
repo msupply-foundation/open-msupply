@@ -13,7 +13,6 @@ import {
   InputWithLabelRow,
   ObjUtils,
   useIsCentralServerApi,
-  NamePropertyNode,
 } from '@openmsupply-client/common';
 import { useName } from '../../api';
 import { NameRenderer } from '../..';
@@ -23,8 +22,6 @@ interface FacilityEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   setNextFacility?: (nameId: string) => void;
-  properties?: NamePropertyNode[] | undefined;
-  propertiesLoading?: boolean;
 }
 
 const useDraftFacilityProperties = (initialProperties?: string | null) => {
@@ -49,11 +46,11 @@ export const FacilityEditModal: FC<FacilityEditModalProps> = ({
   isOpen,
   onClose,
   setNextFacility,
-  properties,
-  propertiesLoading,
 }) => {
   const t = useTranslation();
   const isCentralServer = useIsCentralServerApi();
+  const { data: properties, isLoading: propertiesLoading } =
+    useName.document.properties();
 
   const { data, isLoading } = useName.document.get(nameId);
 

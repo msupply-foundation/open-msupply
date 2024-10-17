@@ -233,7 +233,7 @@ export const useInboundShipmentColumns = () => {
         },
       ],
       {
-        label: 'label.sell',
+        label: 'label.pack-sell-price',
         key: 'sellPricePerPack',
         align: ColumnAlign.Right,
         width: 120,
@@ -301,6 +301,13 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
         ]
       : ['packSize' as ColumnDescription<InboundLineFragment>]),
     'numberOfPacks',
-    'costPricePerPack',
+    [
+      'costPricePerPack',
+      {
+        label: 'label.cost',
+        accessor: ({ rowData }) => rowData.costPricePerPack,
+        Cell: CurrencyCell,
+      },
+    ],
   ]);
 };

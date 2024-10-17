@@ -1,6 +1,24 @@
-use super::{version::Version, Migration};
+use super::{version::Version, Migration, MigrationFragment};
 
 use crate::StorageConnection;
+mod add_backdated_datetime;
+mod add_facility_to_vaccination;
+mod add_max_age_to_vaccine_dose;
+mod add_report_versioning;
+mod add_store_id_to_program_enrolment;
+mod add_vaccination_activity_log_types;
+mod add_vaccinations_table;
+mod add_vaccine_course_changelog_table_names;
+mod add_vaccine_course_dose_custom_age_label;
+mod add_vaccine_course_dose_deleted_datetime;
+mod add_vaccine_course_item_deleted_datetime;
+mod add_vaccine_doses_to_item;
+mod drop_program_deleted_datetime;
+mod remove_num_doses_from_vaccine_course;
+mod remove_stops_from_report_ids;
+mod remove_vaccine_course_dose_dose_number;
+mod rename_vaccine_course_schedule_to_dose;
+mod return_types_rename;
 
 pub(crate) struct V2_03_00;
 
@@ -10,7 +28,30 @@ impl Migration for V2_03_00 {
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        return_types_rename::migrate(_connection)?;
         Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(drop_program_deleted_datetime::Migrate),
+            Box::new(rename_vaccine_course_schedule_to_dose::Migrate),
+            Box::new(remove_num_doses_from_vaccine_course::Migrate),
+            Box::new(remove_vaccine_course_dose_dose_number::Migrate),
+            Box::new(add_vaccine_course_changelog_table_names::Migrate),
+            Box::new(add_vaccinations_table::Migrate),
+            Box::new(add_vaccination_activity_log_types::Migrate),
+            Box::new(add_vaccine_doses_to_item::Migrate),
+            Box::new(add_max_age_to_vaccine_dose::Migrate),
+            Box::new(add_report_versioning::Migrate),
+            Box::new(add_facility_to_vaccination::Migrate),
+            Box::new(add_vaccine_course_dose_deleted_datetime::Migrate),
+            Box::new(add_vaccine_course_dose_custom_age_label::Migrate),
+            Box::new(add_backdated_datetime::Migrate),
+            Box::new(add_vaccine_course_item_deleted_datetime::Migrate),
+            Box::new(add_store_id_to_program_enrolment::Migrate),
+            Box::new(remove_stops_from_report_ids::Migrate),
+        ]
     }
 }
 

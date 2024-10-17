@@ -9,13 +9,8 @@ import {
   useTranslation,
   createTableStore,
   createQueryParamsStore,
-  useEditModal,
-  InsertImmunisationProgramInput,
   UNDEFINED_STRING_VALUE,
 } from '@openmsupply-client/common';
-import { Toolbar } from './Toolbar';
-import { AppBarButtons } from './AppBarButtons';
-import { ImmunisationProgramCreateModal } from './ImmunisationProgramCreateModal';
 import { useImmunisationProgramList } from '../api/hooks/useImmunisationProgramList';
 import { ImmunisationProgramFragment } from '../api';
 
@@ -62,7 +57,6 @@ const ImmunisationProgramListComponent: FC = () => {
             ? UNDEFINED_STRING_VALUE
             : rowData.vaccineCourses?.map(n => n.name).join(', '),
       },
-      'selection',
     ],
     {
       onChangeSortBy: updateSortQuery,
@@ -71,16 +65,8 @@ const ImmunisationProgramListComponent: FC = () => {
     [updateSortQuery, sortBy]
   );
 
-  const { isOpen, onClose, onOpen } =
-    useEditModal<InsertImmunisationProgramInput>();
-
   return (
     <>
-      {isOpen && (
-        <ImmunisationProgramCreateModal isOpen={isOpen} onClose={onClose} />
-      )}
-      <Toolbar />
-      <AppBarButtons onCreate={onOpen} />
       <DataTable
         id={'immunisation-list'}
         pagination={{ ...pagination }}

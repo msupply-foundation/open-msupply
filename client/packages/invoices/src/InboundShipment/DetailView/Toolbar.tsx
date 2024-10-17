@@ -138,6 +138,7 @@ export const Toolbar: FC<{
             <DropdownMenuItem
               IconComponent={RewindIcon}
               onClick={onZeroQuantities}
+              disabled={isDisabled}
             >
               {t('button.zero-line-quantity')}
             </DropdownMenuItem>

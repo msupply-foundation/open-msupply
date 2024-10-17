@@ -74,6 +74,9 @@ impl LedgerNode {
     pub async fn invoice_type(&self) -> InvoiceNodeType {
         InvoiceNodeType::from_domain(&self.ledger.invoice_type)
     }
+    pub async fn invoice_number(&self) -> &i64 {
+        &self.ledger.invoice_number
+    }
     pub async fn reason(&self) -> &Option<String> {
         if self.ledger.return_reason.is_some() {
             return &self.ledger.return_reason;

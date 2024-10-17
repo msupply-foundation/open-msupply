@@ -20,7 +20,7 @@ export const ReportArgumentsModal: FC<ReportArgumentsModalProps> = ({
 }) => {
   const { store } = useAuthContext();
   const { urlQuery } = useUrlQuery();
-  const t = useTranslation('reports');
+  const t = useTranslation();
 
   const {
     monthlyConsumptionLookBackPeriod,

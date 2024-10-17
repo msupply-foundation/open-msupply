@@ -37,6 +37,8 @@ export const createStockOutPlaceholderRow = (
 export interface DraftStockOutLineSeeds {
   invoiceId: string;
   invoiceLine: StockOutLineFragment;
+  invoiceStatus: InvoiceNodeStatus;
+  stockLine?: PartialStockLineFragment; // If this is not provided, the stock line from the invoice line will be used
 }
 
 export const createDraftStockOutLineFromStockLine = ({
@@ -53,7 +55,7 @@ export const createDraftStockOutLineFromStockLine = ({
   // if there's a default price, it overrides the stock line price
   if (defaultPricing?.defaultPricePerUnit) {
     sellPricePerPack =
-      defaultPricing?.defaultPricePerUnit * (stockLine?.packSize ?? 1) ?? 0;
+      defaultPricing?.defaultPricePerUnit ?? 0 * (stockLine?.packSize ?? 1);
   }
 
   if (defaultPricing?.discountPercentage) {
@@ -90,24 +92,40 @@ export const createDraftStockOutLineFromStockLine = ({
 
 export const createDraftStockOutLine = ({
   invoiceLine,
-}: DraftStockOutLineSeeds): DraftStockOutLine => ({
-  isCreated: !invoiceLine,
-  isUpdated: false,
-  ...invoiceLine,
-  // When creating a draft outbound from an existing outbound line, add the available quantity
-  // to the number of packs. This is because the available quantity has been adjusted for outbound
-  // lines that have been saved.
-  ...(invoiceLine.stockLine
-    ? {
-        stockLine: {
-          ...invoiceLine.stockLine,
-          availableNumberOfPacks:
-            invoiceLine.stockLine.availableNumberOfPacks +
-            invoiceLine.numberOfPacks,
-        },
-      }
-    : {}),
-});
+  stockLine,
+  invoiceStatus,
+}: DraftStockOutLineSeeds): DraftStockOutLine => {
+  // When creating a draft stock out line from an invoice line we may need to adjust the available and total number of packs
+  // This is because, once an invoice line is created (even in New Status), the available number of packs is reduced by the number of packs in the invoice line
+  // After it is in picked status, the total number of packs is also reduced by the number of packs in the invoice line
+  // Other statuses such as Shipped shouldn't show the stock line as available, so we don't need to adjust the available number of packs
+  // If the invoice is New, no adjustments are needed, as the stockLines shouldn't be updated yet
+
+  const adjustTotalNumberOfPacks = invoiceStatus === InvoiceNodeStatus.Picked;
+
+  let adjustedStockLine = stockLine ? stockLine : invoiceLine?.stockLine;
+  if (!!adjustedStockLine) {
+    adjustedStockLine.availableNumberOfPacks =
+      adjustedStockLine.availableNumberOfPacks + invoiceLine.numberOfPacks;
+    adjustedStockLine.totalNumberOfPacks = adjustTotalNumberOfPacks
+      ? adjustedStockLine.totalNumberOfPacks + invoiceLine.numberOfPacks
+      : adjustedStockLine.totalNumberOfPacks;
+  }
+
+  const draftStockOutLine = {
+    isCreated: !invoiceLine,
+    isUpdated: false,
+    ...invoiceLine,
+    ...(adjustedStockLine
+      ? {
+          stockLine: {
+            ...adjustedStockLine,
+          },
+        }
+      : {}),
+  };
+  return draftStockOutLine;
+};
 
 export interface UseDraftStockOutLinesControl {
   draftStockOutLines: DraftStockOutLine[];

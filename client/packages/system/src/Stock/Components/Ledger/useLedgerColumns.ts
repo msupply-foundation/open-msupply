@@ -16,6 +16,7 @@ export enum ColumnKey {
   'Quantity' = 'quantity',
   'Type' = 'type',
   'Reason' = 'reason',
+  'Number' = 'number',
 }
 
 export const useLedgerColumns = (
@@ -31,7 +32,7 @@ export const useLedgerColumns = (
         key: ColumnKey.DateTime,
         label: 'label.date',
         format: ColumnFormat.Date,
-        sortable: true,
+        sortable: false,
       },
       {
         key: ColumnKey.Time,
@@ -42,18 +43,25 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Name,
         label: 'label.name',
-        sortable: true,
+        sortable: false,
       },
       {
         key: ColumnKey.Quantity,
-        label: 'label.quantity',
-        sortable: true,
+        label: 'label.unit-quantity',
+        sortable: false,
+        description: 'description.unit-quantity',
+      },
+      {
+        key: ColumnKey.Number,
+        label: 'label.number',
+        accessor: ({ rowData }) => rowData.invoiceNumber,
+        sortable: false,
       },
       {
         key: ColumnKey.Type,
         label: 'label.type',
         accessor: ({ rowData }) => t(getLocalisationKey(rowData.invoiceType)),
-        sortable: true,
+        sortable: false,
       },
       {
         key: ColumnKey.Reason,
@@ -86,10 +94,10 @@ const getLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
       return 'inbound-shipment';
     case InvoiceNodeType.OutboundShipment:
       return 'outbound-shipment';
-    case InvoiceNodeType.InboundReturn:
-      return 'inbound-return';
-    case InvoiceNodeType.OutboundReturn:
-      return 'outbound-return';
+    case InvoiceNodeType.CustomerReturn:
+      return 'customer-return';
+    case InvoiceNodeType.SupplierReturn:
+      return 'supplier-return';
     case InvoiceNodeType.Prescription:
       return 'prescription';
     case InvoiceNodeType.InventoryAddition:

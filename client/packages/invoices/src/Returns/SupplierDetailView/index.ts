@@ -1,0 +1,1 @@
+export { SupplierReturnsDetailView } from './DetailView';

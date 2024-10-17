@@ -15,7 +15,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, PricingRow};
+use repository::{ClinicianRow, InvoiceRow, InvoiceStatus, InvoiceType, Name, NameRow, PricingRow};
 
 use repository::Invoice;
 use serde::Serialize;
@@ -29,8 +29,8 @@ pub enum InvoiceNodeType {
     Prescription,
     InventoryAddition,
     InventoryReduction,
-    OutboundReturn,
-    InboundReturn,
+    SupplierReturn,
+    CustomerReturn,
     Repack,
 }
 
@@ -175,6 +175,12 @@ impl InvoiceNode {
             .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
+    pub async fn backdated_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .backdated_datetime
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+
     pub async fn colour(&self) -> &Option<String> {
         &self.row().colour
     }
@@ -247,10 +253,27 @@ impl InvoiceNode {
 
     pub async fn other_party(&self, ctx: &Context<'_>, store_id: String) -> Result<NameNode> {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let patient_loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
-        let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.name_row().id))
-            .await?;
+        let response_option = match loader
+            .load_one(NameByIdLoaderInput::new(
+                &store_id,
+                &self.name_row().id.clone(),
+            ))
+            .await?
+        {
+            Some(name) => Some(name),
+            // If name not found as other party, try to find it as patient
+            None => patient_loader
+                .load_one(self.name_row().id.clone())
+                .await?
+                .map(|name_row| Name {
+                    name_row,
+                    name_store_join_row: None,
+                    store_row: None,
+                    properties: None,
+                }),
+        };
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
@@ -331,8 +354,8 @@ impl InvoiceNode {
         &self.row().currency_rate
     }
 
-    /// Inbound Shipment that is the origin of this Outbound Return
-    /// OR Outbound Shipment that is the origin of this Inbound Return
+    /// Inbound Shipment that is the origin of this Supplier Return
+    /// OR Outbound Shipment that is the origin of this Customer Return
     pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
         let Some(original_shipment_id) = &self.row().original_shipment_id else {
             return Ok(None);
@@ -439,8 +462,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceType::InventoryAddition,
             InventoryReduction => InvoiceType::InventoryReduction,
             Repack => InvoiceType::Repack,
-            OutboundReturn => InvoiceType::OutboundReturn,
-            InboundReturn => InvoiceType::InboundReturn,
+            SupplierReturn => InvoiceType::SupplierReturn,
+            CustomerReturn => InvoiceType::CustomerReturn,
         }
     }
 
@@ -453,8 +476,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceNodeType::InventoryAddition,
             InventoryReduction => InvoiceNodeType::InventoryReduction,
             Repack => InvoiceNodeType::Repack,
-            InboundReturn => InvoiceNodeType::InboundReturn,
-            OutboundReturn => InvoiceNodeType::OutboundReturn,
+            CustomerReturn => InvoiceNodeType::CustomerReturn,
+            SupplierReturn => InvoiceNodeType::SupplierReturn,
         }
     }
 }

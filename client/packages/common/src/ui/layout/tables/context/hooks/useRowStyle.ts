@@ -7,7 +7,12 @@ export interface UseRowStyleControl {
   rowId?: string;
   rowStyle: AppSxProp;
   setRowStyle: (id: string, rowStyle: AppSxProp) => void;
-  setRowStyles: (ids: string[], rowStyle: AppSxProp) => void;
+  setRowStyles: (
+    ids: string[],
+    rowStyle: AppSxProp,
+    shouldReset?: boolean
+  ) => void;
+  updateRowStyles: (ids: string[], style: AppSxProp) => void;
 }
 
 export const useRowStyle = (rowId?: string): UseRowStyleControl => {
@@ -15,11 +20,16 @@ export const useRowStyle = (rowId?: string): UseRowStyleControl => {
     (state: TableStore) => {
       return {
         rowId,
-        rowStyle: rowId ? state.rowState[rowId]?.style ?? {} : {},
+        rowStyle: rowId ? (state.rowState[rowId]?.style ?? {}) : {},
         setRowStyle: (id: string, style: AppSxProp) =>
           state.setRowStyle(id, style),
-        setRowStyles: (ids: string[], style: AppSxProp) =>
-          state.setRowStyles(ids, style),
+        setRowStyles: (
+          ids: string[],
+          style: AppSxProp,
+          shouldReset?: boolean
+        ) => state.setRowStyles(ids, style, shouldReset),
+        updateRowStyles: (ids: string[], style: AppSxProp) =>
+          state.updateRowStyles(ids, style),
       };
     },
     [rowId]

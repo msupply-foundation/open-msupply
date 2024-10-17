@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
+  BasicSpinner,
   Grid,
   NothingHere,
   ReportContext,
@@ -21,10 +22,10 @@ import { JsonData } from 'packages/programs/src';
 import { AppRoute } from 'packages/config/src';
 
 export const ListView = () => {
-  const t = useTranslation('reports');
+  const t = useTranslation();
   const { store } = useAuthContext();
   const navigate = useNavigate();
-  const { data } = useReportList({
+  const { data, isLoading } = useReportList({
     queryParams: {
       filterBy: {
         context: { equalAny: [ReportContext.Report, ReportContext.Dispensary] },
@@ -64,6 +65,10 @@ export const ListView = () => {
     },
     [navigate]
   );
+
+  if (isLoading) {
+    return <BasicSpinner messageKey="loading" />;
+  }
 
   if (!stockAndItemReports?.length && !expiringReports?.length) {
     return <NothingHere body={t('message.contact-support')} />;

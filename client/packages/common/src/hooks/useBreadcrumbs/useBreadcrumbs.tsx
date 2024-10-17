@@ -12,7 +12,8 @@ export interface UrlPart {
 
 type BreadcrumbState = {
   setCustomBreadcrumbs: (
-    customBreadcrumbs?: Record<number, string | React.ReactElement>
+    customBreadcrumbs?: Record<number, string | React.ReactElement>,
+    disabled?: number[]
   ) => void;
   setUrlParts: (urlParts: UrlPart[]) => void;
   urlParts: UrlPart[];
@@ -20,8 +21,13 @@ type BreadcrumbState = {
 };
 
 const useBreadcrumbState = create<BreadcrumbState>(set => ({
-  setCustomBreadcrumbs: customBreadcrumbs =>
-    set(state => ({ ...state, customBreadcrumbs })),
+  setCustomBreadcrumbs: (customBreadcrumbs, disabled = []) =>
+    set(state => {
+      const urlParts = state.urlParts.map((part, index) =>
+        disabled.includes(index) ? { ...part, disabled: true } : part
+      );
+      return { ...state, urlParts, customBreadcrumbs };
+    }),
   setUrlParts: (urlParts: UrlPart[]) => set(state => ({ ...state, urlParts })),
   urlParts: [],
   customBreadcrumbs: {},

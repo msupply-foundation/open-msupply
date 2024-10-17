@@ -59,3 +59,9 @@ pub fn check_line_not_associated_with_stocktake(
         Err(_error) => false,
     }
 }
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct ReductionBelowZeroError {
+    pub stock_line_id: String,
+    pub line_id: String,
+}

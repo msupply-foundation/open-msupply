@@ -24,8 +24,8 @@ const fullInternalOrderPath = RouteBuilder.create(AppRoute.Replenishment)
   .addWildCard()
   .build();
 
-const fullOutboundReturnsPath = RouteBuilder.create(AppRoute.Replenishment)
-  .addPart(AppRoute.OutboundReturn)
+const fullSupplierReturnsPath = RouteBuilder.create(AppRoute.Replenishment)
+  .addPart(AppRoute.SupplierReturn)
   .addWildCard()
   .build();
 
@@ -44,7 +44,7 @@ export const ReplenishmentRouter: FC = () => {
   const gotoRequisition = useMatch(fullInternalOrderPath);
   const gotoSuppliers = useMatch(fullSuppliersPath);
   const gotoInboundShipment = useMatch(fullInboundShipmentPath);
-  const gotoReturns = useMatch(fullOutboundReturnsPath);
+  const gotoReturns = useMatch(fullSupplierReturnsPath);
 
   if (gotoRequisition || goToRnr) {
     return <RequisitionService />;

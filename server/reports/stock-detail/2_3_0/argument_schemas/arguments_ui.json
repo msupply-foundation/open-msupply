@@ -1,0 +1,37 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/itemCodeOrName",
+      "label": "Item Code or Name",
+      "options": {
+        "useDebounce": false
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/monthlyConsumptionLookBackPeriod",
+      "label": "AMC Lookback Period",
+      "options": {
+        "readonly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/monthsOverstock",
+      "label": "Target MOS",
+      "options": {
+        "readonly": true
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/monthsUnderstock",
+      "label": "Reorder threshold MOS",
+      "options": {
+        "readonly": true
+      }
+    }
+  ]
+}

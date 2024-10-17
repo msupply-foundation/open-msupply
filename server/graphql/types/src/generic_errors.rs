@@ -1,6 +1,6 @@
-use crate::types::{InvoiceLineConnector, StockLineNode};
+use crate::types::{InvoiceLineConnector, StockLineNode, StocktakeLineNode};
 use async_graphql::*;
-use repository::StockLine;
+use repository::{StockLine, StocktakeLine};
 
 pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
@@ -29,6 +29,25 @@ impl StockLineReducedBelowZero {
     }
 
     pub async fn stock_line(&self) -> &StockLineNode {
+        &self.0
+    }
+}
+
+pub struct SnapshotCountCurrentCountMismatchLine(pub StocktakeLineNode);
+
+impl SnapshotCountCurrentCountMismatchLine {
+    pub fn from_domain(line: StocktakeLine) -> Self {
+        SnapshotCountCurrentCountMismatchLine(StocktakeLineNode::from_domain(line))
+    }
+}
+
+#[Object]
+impl SnapshotCountCurrentCountMismatchLine {
+    pub async fn description(&self) -> &str {
+        "Snapshot count does not match current count."
+    }
+
+    pub async fn stocktake_line(&self) -> &StocktakeLineNode {
         &self.0
     }
 }

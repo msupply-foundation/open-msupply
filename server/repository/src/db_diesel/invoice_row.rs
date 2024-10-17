@@ -44,6 +44,7 @@ table! {
         currency_rate -> Double,
         clinician_link_id -> Nullable<Text>,
         original_shipment_id -> Nullable<Text>,
+        backdated_datetime -> Nullable<Timestamp>
     }
 }
 
@@ -68,8 +69,10 @@ pub enum InvoiceType {
     InventoryAddition,
     InventoryReduction,
     Repack,
-    InboundReturn,
-    OutboundReturn,
+    #[serde(alias = "OUTBOUND_RETURN")]
+    SupplierReturn,
+    #[serde(alias = "INBOUND_RETURN")]
+    CustomerReturn,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -115,6 +118,7 @@ pub struct InvoiceRow {
     pub currency_rate: f64,
     pub clinician_link_id: Option<String>,
     pub original_shipment_id: Option<String>,
+    pub backdated_datetime: Option<NaiveDateTime>,
 }
 
 impl Default for InvoiceRow {
@@ -147,6 +151,7 @@ impl Default for InvoiceRow {
             currency_rate: Default::default(),
             clinician_link_id: Default::default(),
             original_shipment_id: Default::default(),
+            backdated_datetime: Default::default(),
         }
     }
 }
