@@ -44,7 +44,7 @@ pub fn validate(
         )?;
         if lines.len() > 0 {
             return Err(CantBackDate(
-                "Can't Invoice has allocated lines".to_string(),
+                "Can't backdate as invoice has allocated lines".to_string(),
             ));
         }
     }
