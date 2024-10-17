@@ -2,9 +2,7 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_status_change,
     check_store,
 };
-use crate::stock_line::historical_stock::get_historical_stock_lines_available_quantity;
 use crate::validate::check_patient_exists;
-use chrono::NaiveDateTime;
 use repository::{
     ClinicianRowRepository, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, RepositoryError,
 };
@@ -39,9 +37,16 @@ pub fn validate(
         check_patient_exists(connection, patient_id)?.ok_or(PatientDoesNotExist)?;
     }
 
-    if let Some(backdated_datetime) = &patch.backdated_datetime {
-        // Check that any lines already assigned won't create a ledger discrepancy
-        check_stock_available_at_date(connection, &invoice.id, backdated_datetime)?;
+    if patch.backdated_datetime.is_some() {
+        // Check if we have any lines allocated to this invoice, if so we can't backdate
+        let line_count = InvoiceLineRepository::new(connection).count(Some(
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&patch.id)),
+        ))?;
+        if line_count > 0 {
+            return Err(CantBackDate(
+                "Can't backdate as invoice has allocated lines".to_string(),
+            ));
+        }
     }
 
     Ok((invoice, status_changed))
@@ -59,45 +64,4 @@ fn check_clinician_exists(
     };
 
     Ok(result)
-}
-
-fn check_stock_available_at_date(
-    connection: &StorageConnection,
-    invoice_id: &str,
-    date: &NaiveDateTime,
-) -> Result<bool, UpdatePrescriptionError> {
-    let repo = InvoiceLineRepository::new(connection);
-    let lines = repo
-        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
-
-    let historic_stock_quantities = get_historical_stock_lines_available_quantity(
-        connection,
-        lines
-            .iter()
-            .filter_map(|r| {
-                r.stock_line_option
-                    .as_ref()
-                    .map(|s| (s, Some(r.invoice_line_row.number_of_packs)))
-            })
-            .collect(),
-        date,
-    )?;
-
-    for line in lines {
-        let Some(stock_line_id) = &line.invoice_line_row.stock_line_id else {
-            continue;
-        };
-
-        let Some(historical_stock) = historic_stock_quantities.get(stock_line_id) else {
-            continue;
-        };
-
-        if *historical_stock < line.invoice_line_row.number_of_packs {
-            return Err(UpdatePrescriptionError::StockNotAvailableAtDate(
-                date.clone(),
-            ));
-        }
-    }
-
-    Ok(true)
 }
