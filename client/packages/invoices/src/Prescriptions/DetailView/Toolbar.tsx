@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -18,7 +18,6 @@ import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
 import { usePrescriptionRows } from '../api/hooks/line/usePrescriptionRows';
-import { usePrescriptionInvalidate } from '../api/hooks/document/usePrescriptionInvalidate';
 
 export const Toolbar: FC = () => {
   const { id, patient, clinician, prescriptionDate, update } =
@@ -30,7 +29,6 @@ export const Toolbar: FC = () => {
     ]);
   const onDelete = usePrescription.line.deleteSelected();
   const onDeleteAll = usePrescription.line.deleteAll();
-  const invalidatePrescriptionQueries = usePrescriptionInvalidate();
   const { items } = usePrescriptionRows();
 
   const isDisabled = usePrescription.utils.isDisabled();
@@ -41,12 +39,19 @@ export const Toolbar: FC = () => {
     message: t('messages.confirm-delete-all-lines'),
   });
 
+  // Date picker state needs to be controlled here, so that it updates & resets correctly if we
+  // cancel the date change
+  const [date, setDate] = useState(DateUtils.getDateOrNull(prescriptionDate));
+
   const handleDateChange = async (newPrescriptionDate: Date | null) => {
     if (!newPrescriptionDate) return;
 
     const oldPrescriptionDate = DateUtils.getDateOrNull(prescriptionDate);
 
     if (newPrescriptionDate === oldPrescriptionDate) return;
+
+    // Date picker change needs to be "accepted" and the value updated
+    setDate(DateUtils.endOfDayOrNull(newPrescriptionDate));
 
     if (!items || items.length === 0) {
       // If there are no lines, we can just update the prescription date
@@ -70,15 +75,8 @@ export const Toolbar: FC = () => {
           ),
         });
       },
-      onCancel: async () => {
-        console.log('Cancelled');
-        // Reset the date picker by re-fetching the prescription
-        invalidatePrescriptionQueries();
-        await update({
-          id,
-          patient,
-        });
-      },
+      // Reset the date picker to the old value if the user cancels
+      onCancel: () => setDate(oldPrescriptionDate),
     });
   };
 
@@ -129,16 +127,14 @@ export const Toolbar: FC = () => {
             />
           </Box>
           <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
-            <Typography>
-              {DateUtils.getDateOrNull(prescriptionDate)?.toISOString()}
-            </Typography>
+            <Typography></Typography>
             <InputWithLabelRow
               label={t('label.date')}
               Input={
                 <DateTimePickerInput
                   disabled={isDisabled}
-                  // defaultValue={new Date()}
-                  value={DateUtils.getDateOrNull(prescriptionDate)}
+                  defaultValue={new Date()}
+                  value={date}
                   format="P"
                   onChange={handleDateChange}
                   maxDate={new Date()}
