@@ -12,8 +12,10 @@ import {
   useAuthContext,
   Theme,
   useHostContext,
-  IconButton,
-  CloseIcon,
+  MaximiseIcon,
+  MinimiseIcon,
+  ButtonWithIcon,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SectionIcon } from './SectionIcon';
@@ -29,6 +31,7 @@ const StyledContainer = styled(Box)(({ theme }) => ({
 }));
 
 export const AppBar: React.FC = () => {
+  const t = useTranslation();
   const { ref } = useAppBarRect();
   const isDashboard = useMatch(AppRoute.Dashboard);
   const { store } = useAuthContext();
@@ -50,17 +53,38 @@ export const AppBar: React.FC = () => {
               </Box>
               <Breadcrumbs />
               <AppBarButtons />
+              <ButtonWithIcon
+                Icon={<MaximiseIcon />}
+                onClick={() => setFullScreen(true)}
+                variant="outlined"
+                label={t('label.full-screen')}
+              />
             </Toolbar>
           )}
           <AppBarContent />
           {!isDashboard && <AppBarTabs />}
         </StyledContainer>
       </Box>
-      <IconButton
-        icon={<CloseIcon />}
-        label="hi"
-        onClick={() => setFullScreen(!fullScreen)}
-      />
+      {fullScreen && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: 10,
+            top: 10,
+            height: '50px',
+            zIndex: 999999,
+          }}
+        >
+          <ButtonWithIcon
+            sx={{ minWidth: '0' }}
+            variant="outlined"
+            Icon={<MinimiseIcon />}
+            onClick={() => setFullScreen(false)}
+            label={t('label.exit')}
+            shrinkThreshold="xl"
+          />
+        </Box>
+      )}
     </>
   );
 };
