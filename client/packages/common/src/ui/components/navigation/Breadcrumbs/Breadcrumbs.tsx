@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { styled } from '@mui/material/styles';
 import { Breadcrumbs as MuiBreadcrumbs } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useRegisterActions, useBreadcrumbs } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { UrlPart } from '@common/hooks';
+import { UrlPart, useHostContext } from '@common/hooks';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const Breadcrumb = styled(Link)({
@@ -20,8 +20,15 @@ export const Breadcrumbs = ({
   topLevelPaths?: string[];
 }) => {
   const t = useTranslation('app');
+  const { fullScreen } = useHostContext();
   const { urlParts, navigateUpOne, customBreadcrumbs } =
     useBreadcrumbs(topLevelPaths);
+
+  // Use ref so `perform` function can access the latest value
+  const fullScreenRef = useRef(fullScreen);
+  useEffect(() => {
+    fullScreenRef.current = fullScreen;
+  }, [fullScreen]);
 
   useRegisterActions(
     [
@@ -30,7 +37,10 @@ export const Breadcrumbs = ({
         name: '', // No name => won't show in Modal menu
         shortcut: ['escape'],
         keywords: 'navigate, back',
-        perform: () => navigateUpOne(),
+        perform: () => {
+          // Escape should be used to exit full screen mode, otherwise navigate
+          !fullScreenRef.current && navigateUpOne();
+        },
       },
     ],
     [urlParts]
