@@ -257,8 +257,6 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
 
             let dir_path = &format!("./{}/", convert_data);
 
-            Command::new(&format!("ls {}", dir_path));
-
             Command::new("extism-js")
                 .args([&js, "-i", &ts, "-o", &wasm])
                 .output()
