@@ -12,11 +12,13 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
+  Typography,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
 import { ClinicianSearchInput } from '../../../../system/src/Clinician';
 import { usePrescriptionRows } from '../api/hooks/line/usePrescriptionRows';
+import { usePrescriptionInvalidate } from '../api/hooks/document/usePrescriptionInvalidate';
 
 export const Toolbar: FC = () => {
   const { id, patient, clinician, prescriptionDate, update } =
@@ -28,6 +30,7 @@ export const Toolbar: FC = () => {
     ]);
   const onDelete = usePrescription.line.deleteSelected();
   const onDeleteAll = usePrescription.line.deleteAll();
+  const invalidatePrescriptionQueries = usePrescriptionInvalidate();
   const { items } = usePrescriptionRows();
 
   const isDisabled = usePrescription.utils.isDisabled();
@@ -38,13 +41,19 @@ export const Toolbar: FC = () => {
     message: t('messages.confirm-delete-all-lines'),
   });
 
-  const handleDateChange = async (prescriptionDate: Date | null) => {
+  const handleDateChange = async (newPrescriptionDate: Date | null) => {
+    if (!newPrescriptionDate) return;
+
+    const oldPrescriptionDate = DateUtils.getDateOrNull(prescriptionDate);
+
+    if (newPrescriptionDate === oldPrescriptionDate) return;
+
     if (!items || items.length === 0) {
       // If there are no lines, we can just update the prescription date
       await update({
         id,
         prescriptionDate: Formatter.toIsoString(
-          DateUtils.endOfDayOrNull(prescriptionDate)
+          DateUtils.endOfDayOrNull(newPrescriptionDate)
         ),
       });
       return;
@@ -57,8 +66,17 @@ export const Toolbar: FC = () => {
         await update({
           id,
           prescriptionDate: Formatter.toIsoString(
-            DateUtils.endOfDayOrNull(prescriptionDate)
+            DateUtils.endOfDayOrNull(newPrescriptionDate)
           ),
+        });
+      },
+      onCancel: async () => {
+        console.log('Cancelled');
+        // Reset the date picker by re-fetching the prescription
+        invalidatePrescriptionQueries();
+        await update({
+          id,
+          patient,
         });
       },
     });
@@ -111,6 +129,9 @@ export const Toolbar: FC = () => {
             />
           </Box>
           <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
+            <Typography>
+              {DateUtils.getDateOrNull(prescriptionDate)?.toISOString()}
+            </Typography>
             <InputWithLabelRow
               label={t('label.date')}
               Input={
