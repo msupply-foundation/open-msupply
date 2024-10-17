@@ -78,6 +78,16 @@ pub fn generate_requisition_lines(
                 requested_quantity: 0.0,
                 approved_quantity: 0.0,
                 approval_comment: None,
+                initial_stock_on_hand_units: 0.0,
+                incoming_units: 0.0,
+                outgoing_units: 0.0,
+                loss_in_units: 0.0,
+                addition_in_units: 0.0,
+                available_units: 0.0,
+                expiring_units: 0.0,
+                days_out_of_stock: 0.0,
+                months_of_stock: 0.0,
+                option_id: None,
             }
         })
         .collect();
