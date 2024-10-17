@@ -1,5 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_manual_requisition_line_fields;
 mod add_reason_option_table;
 
 use crate::StorageConnection;
@@ -16,7 +17,10 @@ impl Migration for V2_04_00 {
     }
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
-        vec![Box::new(add_reason_option_table::Migrate)]
+        vec![
+            Box::new(add_reason_option_table::Migrate),
+            Box::new(add_manual_requisition_line_fields::Migrate),
+        ]
     }
 }
 
