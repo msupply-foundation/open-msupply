@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 #[derive(RustEmbed)]
 // Relative to server/Cargo.toml
 #[folder = "../reports/generated"]
-
+#[exclude = "*.DS_Store"]
 pub struct EmbeddedStandardReports;
 
 #[derive(Debug, Error)]
@@ -25,7 +25,7 @@ pub struct StandardReports;
 impl StandardReports {
     // Load embedded reports
     pub fn load_reports(con: &StorageConnection) -> Result<(), anyhow::Error> {
-        for file in EmbeddedStandardReports::iter().filter(|name| name != ".DS_Store") {
+        for file in EmbeddedStandardReports::iter() {
             if let Some(content) = EmbeddedStandardReports::get(&file) {
                 let json_data = content.data;
                 let reports_data: ReportsData = serde_json::from_slice(&json_data)?;
