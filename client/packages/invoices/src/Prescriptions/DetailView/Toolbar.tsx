@@ -137,7 +137,7 @@ export const Toolbar: FC = () => {
               Input={
                 <DateTimePickerInput
                   disabled={isDisabled}
-                  defaultValue={new Date()}
+                  // defaultValue={new Date()}
                   value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
                   onChange={handleDateChange}
