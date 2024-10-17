@@ -502,7 +502,8 @@ export enum AssetLogStatusInput {
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',
-  NotInUse = 'NOT_IN_USE'
+  NotInUse = 'NOT_IN_USE',
+  Unserviceable = 'UNSERVICEABLE'
 }
 
 export type AssetLogsResponse = AssetLogConnector;
@@ -1987,6 +1988,12 @@ export type EqualFilterNumberInput = {
   equalAnyOrNull?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type EqualFilterReasonOptionTypeInput = {
+  equalAny?: InputMaybe<Array<ReasonOptionNodeType>>;
+  equalTo?: InputMaybe<ReasonOptionNodeType>;
+  notEqualTo?: InputMaybe<ReasonOptionNodeType>;
 };
 
 export type EqualFilterRelatedRecordTypeInput = {
@@ -5284,6 +5291,7 @@ export type Queries = {
   programs: ProgramsResponse;
   rAndRForm: RnRFormResponse;
   rAndRForms: RnRFormsResponse;
+  reasonOptions: ReasonOptionResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -5769,6 +5777,13 @@ export type QueriesRAndRFormsArgs = {
 };
 
 
+export type QueriesReasonOptionsArgs = {
+  filter?: InputMaybe<ReasonOptionFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReasonOptionSortInput>>;
+};
+
+
 export type QueriesRepackArgs = {
   invoiceId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -5966,6 +5981,50 @@ export type QueriesVaccineCoursesArgs = {
   filter?: InputMaybe<VaccineCourseFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<VaccineCourseSortInput>>;
+};
+
+export type ReasonOptionConnector = {
+  __typename: 'ReasonOptionConnector';
+  nodes: Array<ReasonOptionNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ReasonOptionFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  type?: InputMaybe<EqualFilterReasonOptionTypeInput>;
+};
+
+export type ReasonOptionNode = {
+  __typename: 'ReasonOptionNode';
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  reason: Scalars['String']['output'];
+  type: ReasonOptionNodeType;
+};
+
+export enum ReasonOptionNodeType {
+  NegativeInventoryAdjustment = 'NEGATIVE_INVENTORY_ADJUSTMENT',
+  PositiveInventoryAdjustment = 'POSITIVE_INVENTORY_ADJUSTMENT',
+  RequisitionLineVariance = 'REQUISITION_LINE_VARIANCE',
+  ReturnReason = 'RETURN_REASON'
+}
+
+export type ReasonOptionResponse = ReasonOptionConnector;
+
+export enum ReasonOptionSortFieldInput {
+  Reason = 'reason',
+  ReasonOptionType = 'reasonOptionType'
+}
+
+export type ReasonOptionSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ReasonOptionSortFieldInput;
 };
 
 export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & InsertLocationErrorInterface & InsertVaccineCourseErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & {
@@ -6543,7 +6602,8 @@ export enum StatusType {
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',
-  NotInUse = 'NOT_IN_USE'
+  NotInUse = 'NOT_IN_USE',
+  Unserviceable = 'UNSERVICEABLE'
 }
 
 export type StockCounts = {
