@@ -661,14 +661,13 @@ fragment VaccineCourse on VaccineCourseNode {
   id
   name
   programId
-  demographicIndicatorId
+  demographicId
   coverageRate
   wastageRate
   isActive
-  demographicIndicator {
+  demographic {
     name
     id
-    baseYear
   }
   vaccineCourseItems {
     ...VaccineCourseItem
