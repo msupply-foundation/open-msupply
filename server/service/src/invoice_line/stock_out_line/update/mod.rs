@@ -131,8 +131,8 @@ mod test {
             mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
-        InvoiceType, StockLineRow, StockLineRowRepository, Upsert,
+        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository, Upsert,
     };
     use util::{inline_edit, inline_init};
 
@@ -146,6 +146,7 @@ mod test {
             },
             InsertStockOutLine,
         },
+        item_stats::ItemStatsFilter,
         service_provider::ServiceProvider,
     };
 
@@ -527,8 +528,7 @@ mod test {
         let context = service_provider
             .context(mock_store_b().id, "".to_string())
             .unwrap();
-        let service = service_provider.invoice_line_service;
-
+        let invoice_line_service = service_provider.invoice_line_service;
         // Create two invoices, one backdated and one current for the same stock line
 
         // Invoice from 7 days ago
@@ -540,10 +540,10 @@ mod test {
             name_link_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            delivered_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -558,10 +558,10 @@ mod test {
             name_link_id: mock_name_store_a().id,
             r#type: InvoiceType::InboundShipment,
             store_id: context.store_id.clone(),
-            created_datetime: datetime.clone(),
-            picked_datetime: Some(datetime.clone()),
-            delivered_datetime: Some(datetime.clone()),
-            verified_datetime: Some(datetime.clone()),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            delivered_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
             status: InvoiceStatus::Verified,
             ..Default::default()
         };
@@ -625,18 +625,18 @@ mod test {
             r#type: InvoiceType::Prescription,
             store_id: context.store_id.clone(),
             created_datetime: chrono::Utc::now().naive_utc(), // Created now
-            picked_datetime: Some(datetime.clone()),
+            picked_datetime: Some(datetime),
             delivered_datetime: None,
             verified_datetime: None,
             status: InvoiceStatus::Picked,
-            backdated_datetime: Some(datetime.clone()), // Backdated to 2 days ago
+            backdated_datetime: Some(datetime), // Backdated to 2 days ago
             ..Default::default()
         };
 
         prescription_invoice.upsert(&context.connection).unwrap();
 
-        // Add a stock out line to the prescription (using all available stock)
-        service
+        // Add a stock out line to the prescription (using half available stock)
+        invoice_line_service
             .insert_stock_out_line(
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
@@ -644,14 +644,63 @@ mod test {
                     r.r#type = StockOutType::Prescription;
                     r.invoice_id = prescription_id.clone();
                     r.stock_line_id = stock_line_id.clone();
-                    r.number_of_packs = 10.0;
+                    r.number_of_packs = 5.0;
                 }),
             )
             .unwrap();
 
+        let item_stats_service = service_provider.item_stats_service;
+        let stats = item_stats_service
+            .get_item_stats(
+                &context,
+                &context.store_id,
+                None,
+                Some(
+                    ItemStatsFilter::new()
+                        .item_id(EqualFilter::equal_to(mock_item_a().id.as_str())),
+                ),
+            )
+            .unwrap();
+        let stats = stats.first().unwrap();
+        assert_eq!(
+            stats.available_stock_on_hand, 150.0,
+            "available_stock_on_hand should be 150.0 units but was {:?}",
+            stats.available_stock_on_hand
+        );
+
+        // Update the the stock out line of the prescription (using all available stock)
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                inline_init(|r: &mut UpdateStockOutLine| {
+                    r.id = "prescription_stock_out_line1".to_string();
+                    r.r#type = Some(StockOutType::Prescription);
+                    r.number_of_packs = Some(10.0);
+                }),
+            )
+            .unwrap();
+
+        let stats = item_stats_service
+            .get_item_stats(
+                &context,
+                &context.store_id,
+                None,
+                Some(
+                    ItemStatsFilter::new()
+                        .item_id(EqualFilter::equal_to(mock_item_a().id.as_str())),
+                ),
+            )
+            .unwrap();
+        let stats = stats.first().unwrap();
+        assert_eq!(
+            stats.available_stock_on_hand, 100.0,
+            "available_stock_on_hand should be 100.0 units but was {:?}",
+            stats.available_stock_on_hand
+        );
+
         // Check that we can't update the stock line to use more than the available stock (10 packs)
         assert_eq!(
-            service.update_stock_out_line(
+            invoice_line_service.update_stock_out_line(
                 &context,
                 inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = "prescription_stock_out_line1".to_string();

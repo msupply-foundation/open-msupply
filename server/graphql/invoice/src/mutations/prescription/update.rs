@@ -85,7 +85,7 @@ pub enum UpdatePrescriptionErrorInterface {
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     InvoiceIsNotEditable(InvoiceIsNotEditable),
     CanOnlyChangeToPickedWhenNoUnallocatedLines(CanOnlyChangeToPickedWhenNoUnallocatedLines),
-    StockNotAvailableAtDate(InvalidStockSelection),
+    CantBackDate(InvalidStockSelection),
 }
 
 impl UpdateInput {
@@ -130,8 +130,8 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
             ))
         }
 
-        ServiceError::StockNotAvailableAtDate(_) => {
-            return Ok(UpdatePrescriptionErrorInterface::StockNotAvailableAtDate(
+        ServiceError::CantBackDate(_) => {
+            return Ok(UpdatePrescriptionErrorInterface::CantBackDate(
                 InvalidStockSelection,
             ))
         }
