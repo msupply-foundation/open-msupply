@@ -63,8 +63,8 @@ export const ProgramComponent: FC = () => {
 
         sortable: false,
         accessor: ({ rowData }) =>
-          rowData?.demographicIndicator
-            ? rowData.demographicIndicator.name
+          rowData?.demographic
+            ? rowData.demographic.name
             : UNDEFINED_STRING_VALUE,
       },
       {
