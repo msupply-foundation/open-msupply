@@ -458,7 +458,9 @@ async fn main() -> anyhow::Result<()> {
                         .and_then(|ui| format!("{version_dir}/{ui}").into());
                     let graphql_query = manifest.queries.clone().and_then(|q| q.gql);
                     let sql_queries = manifest.queries.clone().and_then(|q| q.sql);
-                    let convert_data = manifest.convert_data.clone();
+                    let convert_data = manifest
+                        .convert_data
+                        .and_then(|cd| format!("{version_dir}/{cd}").into());
                     let custom_wasm_function = manifest.custom_wasm_function;
 
                     let args = BuildArgs {
