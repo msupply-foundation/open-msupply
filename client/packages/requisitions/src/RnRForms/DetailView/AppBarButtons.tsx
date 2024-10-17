@@ -1,14 +1,17 @@
 import React from 'react';
 import {
   AppBarButtonsPortal,
+  ButtonWithIcon,
   DownloadIcon,
   EnvUtils,
   Grid,
   LoadingButton,
+  MaximiseIcon,
   Platform,
   PrinterIcon,
   PrintFormat,
   ReportContext,
+  useHostContext,
   useParams,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -27,6 +30,7 @@ export const AppBarButtonsComponent = () => {
   } = useRnRForm({ rnrFormId: id });
   const { print, isPrinting } = usePrintReport();
   const t = useTranslation();
+  const { setFullScreen } = useHostContext();
 
   const printReport =
     (format: PrintFormat) =>
@@ -71,6 +75,13 @@ export const AppBarButtonsComponent = () => {
             {t('button.export')}
           </LoadingButton>
         </ReportSelector>
+
+        <ButtonWithIcon
+          Icon={<MaximiseIcon />}
+          onClick={() => setFullScreen(true)}
+          variant="outlined"
+          label={t('label.full-screen')}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );
