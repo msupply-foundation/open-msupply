@@ -28,7 +28,6 @@ pub enum InsertResponseRequisitionError {
     OtherPartyNotACustomer,
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
-    OtherPartyIsNotAStore,
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
@@ -73,7 +72,7 @@ fn validate(
         return Err(OutError::RequisitionAlreadyExists);
     }
 
-    let other_party = check_other_party(
+    check_other_party(
         connection,
         store_id,
         &input.other_party_id,
@@ -87,10 +86,6 @@ fn validate(
             OutError::DatabaseError(repository_error)
         }
     })?;
-
-    other_party
-        .store_id()
-        .ok_or(OutError::OtherPartyIsNotAStore)?;
 
     Ok(())
 }
@@ -150,8 +145,8 @@ mod test_insert {
     };
     use repository::{
         mock::{
-            mock_name_customer_a, mock_name_store_b, mock_name_store_c, mock_store_a,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_name_store_b, mock_name_store_c, mock_store_a, mock_user_account_a, MockData,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         NameRow, RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType,
@@ -238,18 +233,6 @@ mod test_insert {
                 }),
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
-        );
-
-        // OtherPartyIsNotAStore
-        assert_eq!(
-            service.insert_response_requisition(
-                &context,
-                inline_init(|r: &mut InsertResponseRequisition| {
-                    r.id = "new_response_requisition".to_string();
-                    r.other_party_id = mock_name_customer_a().id;
-                }),
-            ),
-            Err(ServiceError::OtherPartyIsNotAStore)
         );
     }
 

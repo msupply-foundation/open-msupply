@@ -111,8 +111,6 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         // Standard Graphql Errors
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
-
-        ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
@@ -237,18 +235,6 @@ mod test {
 
         // OtherPartyDoesNotExist
         let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // OtherPartyIsNotAStore
-        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyIsNotAStore)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
