@@ -287,8 +287,8 @@ Optional fields in the manifest json are marked as '// optional'
   // path to custom wasm data conversion function. Having a path to a custom function allows users to generate a function from a language other than JS
   "custom_wasm_function": "path to cusom wasm function",
   // optional
-  // dir with wasm generating functions in JS. OMS includes building of wasm functions from JS only
-  "convert_data": "some path to js and ts files to generate wasm function"
+  // name of dir within the version dir of the report which includes js wasm function constructors.
+  "convert_data": "convert_data_js"
 }
 ```
 

@@ -441,6 +441,7 @@ fn wasm_sql(
         parameters,
     }): Json<WasmSqlQuery>,
 ) -> Json<WasmSqlResult> {
+    let _ = parameters; // Explicitly ignore parameters
     let con_mut = user_data.get().unwrap();
     let con = con_mut.lock().unwrap();
     let results = raw_query(&con, statement);
