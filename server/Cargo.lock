@@ -7351,6 +7351,7 @@ version = "8.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e5347777e9aacb56039b0e1f28785929a8a3b709e87482e7442c72e7c12529d"
 dependencies = [
+ "globset",
  "sha2",
  "walkdir",
 ]
@@ -7821,7 +7822,7 @@ dependencies = [
  "repository",
  "reqwest",
  "rsa",
- "rust-embed 6.8.1",
+ "rust-embed 8.5.0",
  "schemafy",
  "schemafy_core",
  "scraper",
