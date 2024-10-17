@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   AppBarContentPortal,
   Box,
@@ -12,7 +12,6 @@ import {
   Formatter,
   DateUtils,
   useConfirmationModal,
-  Typography,
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
@@ -39,19 +38,12 @@ export const Toolbar: FC = () => {
     message: t('messages.confirm-delete-all-lines'),
   });
 
-  // Date picker state needs to be controlled here, so that it updates & resets correctly if we
-  // cancel the date change
-  const [date, setDate] = useState(DateUtils.getDateOrNull(prescriptionDate));
-
   const handleDateChange = async (newPrescriptionDate: Date | null) => {
     if (!newPrescriptionDate) return;
 
     const oldPrescriptionDate = DateUtils.getDateOrNull(prescriptionDate);
 
     if (newPrescriptionDate === oldPrescriptionDate) return;
-
-    // Date picker change needs to be "accepted" and the value updated
-    setDate(DateUtils.endOfDayOrNull(newPrescriptionDate));
 
     if (!items || items.length === 0) {
       // If there are no lines, we can just update the prescription date
@@ -75,8 +67,6 @@ export const Toolbar: FC = () => {
           ),
         });
       },
-      // Reset the date picker to the old value if the user cancels
-      onCancel: () => setDate(oldPrescriptionDate),
     });
   };
 
@@ -127,14 +117,13 @@ export const Toolbar: FC = () => {
             />
           </Box>
           <Box display="flex" flexDirection="column" flex={1} marginLeft={3}>
-            <Typography></Typography>
             <InputWithLabelRow
               label={t('label.date')}
               Input={
                 <DateTimePickerInput
                   disabled={isDisabled}
                   defaultValue={new Date()}
-                  value={date}
+                  value={DateUtils.getDateOrNull(prescriptionDate)}
                   format="P"
                   onChange={handleDateChange}
                   maxDate={new Date()}
