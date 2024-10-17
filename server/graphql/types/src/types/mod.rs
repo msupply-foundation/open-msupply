@@ -104,6 +104,9 @@ pub use self::vaccine_course_dose::*;
 pub mod demographic;
 pub use self::demographic::*;
 
+pub mod reason_option;
+pub use self::reason_option::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
