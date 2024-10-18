@@ -1551,6 +1551,7 @@
   "status.new": "New",
   "status.not-functioning": "Not Functioning",
   "status.not-in-use": "Not in use",
+  "status.unserviceable": "Unserviceable",
   "stock": "View Stock",
   "stocktake-comment-items-have-stock-template": "Created using items that have stock",
   "stocktake.comment-list-template": "Created using master list '{{list}}'",
