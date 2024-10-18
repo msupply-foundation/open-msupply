@@ -51,7 +51,7 @@ mod delete {
                 min_interval_days: 0,
                 custom_age_label: None,
             }],
-            demographic_indicator_id: None,
+            demographic_id: None,
             coverage_rate: 100.0,
             is_active: true,
             wastage_rate: 0.1,

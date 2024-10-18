@@ -10,11 +10,15 @@ export const useDemographicsApi = () => {
   const { storeId } = useAuthContext();
 
   const keys = {
+    baseDemographic: () => ['demographic'] as const,
     baseIndicator: () => ['demographic indicator'] as const,
     detailIndicator: (id: string) => [...keys.baseIndicator(), id] as const,
     indicatorList: () => [...keys.baseIndicator(), 'list'] as const,
+    demographicList: () => [...keys.baseIndicator(), 'list'] as const,
     paramIndicatorList: (params: ListParams<DemographicIndicatorFragment>) =>
       [...keys.indicatorList(), params] as const,
+    paramDemographicList: (params: ListParams<DemographicIndicatorFragment>) =>
+      [...keys.demographicList(), params] as const,
     sortedIndicatorList: (sortBy: SortBy<DemographicIndicatorFragment>) =>
       [...keys.indicatorList(), sortBy] as const,
     baseProjection: () => ['demographic projection'] as const,
