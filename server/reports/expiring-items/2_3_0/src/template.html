@@ -16,24 +16,18 @@
     </thead>
     <tbody>
       {% for stockLine in data.stockLines.nodes %}
-      {% set now = now() | date(format="%s") | int %}
-
       <tr>
         <td>{{stockLine.item.code}}</td>
         <td>{{stockLine.item.name}}</td>
         <td class="expiry-date">
-          {% if stockLine.expiryDate %}
-            {% set expiryDate = stockLine.expiryDate | date(format="%s") | int %}
-              {% if expiryDate > now %}
-                {% set diff = (expiryDate - now) / 60 / 60 / 24 | int %}
-                {% if diff <= arguments.monthsItemsExpire * 30 %}
-                  <span class="soon">{{ diff }}</span>
-                {% else %}
-                  <span class="all-good">{{ diff }}</span>
-                {% endif %}
-              {% else %}
-               <span class="expired">Expired</span>
-              {% endif %}
+          {% if stockLine.daysUntilExpired %}
+            {% if stockLine.daysUntilExpired <= 0 %}
+              <span class="expired">Expired</span>
+            {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire * 30 %}
+              <span class="soon">{{ stockLine.daysUntilExpired }}</span>
+            {% else %}
+                <span class="all-good">{{ stockLine.daysUntilExpired }}</span>
+            {% endif %}
           {% else %}
             <span class="na">N/A</span>
           {% endif %}
@@ -43,56 +37,23 @@
           {% if stockLine.expiryDate %}
             {{ stockLine.expiryDate | date(format="%d/%m/%Y") }}
           {% else %}
-            
+            N/A
           {% endif %}
         </td>
         <td>{{stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1)
           }}</td>
         <td>
-          {% if stockLine.item.stats.averageMonthlyConsumption %}
-            {% if stockLine.expiryDate %}
-              {% set expiryDate = stockLine.expiryDate | date(format="%s") | int %}
-              {% if expiryDate > now %}
-                {% set diffMonths = (expiryDate - now) / 60 / 60 / 24 / 30 | int | abs %}
-                {% set expectedUsage = stockLine.item.stats.averageMonthlyConsumption
-                  * diffMonths %}
-                {{ expectedUsage | round( precision=1) }}
-              {% else %}
-                N/A
-              {% endif %}
-            {% else %}
-              N/A
-            {% endif %}
+          {% if stockLine.expectedUsage %}
+              {{ stockLine.expectedUsage | round( precision=1) }}
           {% else %}
             N/A
           {% endif %}
         </td>
         <td>
-          {% if stockLine.item.stats.averageMonthlyConsumption %}
-            {% if stockLine.expiryDate %}
-              {% set expiryDate = stockLine.expiryDate | date(format="%s") | int %}
-              {% if expiryDate > now %}
-                {% set diffMonths = (expiryDate - now) / 60 / 60 / 24 / 30 | int | abs %}
-                {% set expectedUsage = stockLine.item.stats.averageMonthlyConsumption
-                  * diffMonths %}
-                {{ stockLine.totalNumberOfPacks * stockLine.packSize - expectedUsage | round( precision=1) }}
-              {% else %}
-                {{ stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1) }}
-              {% endif %}
-            {% else %}
-              N/A
-            {% endif %}
+          {% if stockLine.stockAtRisk %}
+            {{ stockLine.stockAtRisk | round( precision=1) }}
           {% else %}
-            {% if stockLine.expiryDate %}
-              {% set expiryDate = stockLine.expiryDate | date(format="%s") | int %}
-              {% if expiryDate < now %} 
-                {{ stockLine.totalNumberOfPacks * stockLine.packSize | round( precision=1) }}
-              {% else %}
-                N/A
-              {% endif %}
-            {% else %}
-              N/A
-            {% endif %}
+            N/A
           {% endif %}
         </td>
       </tr>
