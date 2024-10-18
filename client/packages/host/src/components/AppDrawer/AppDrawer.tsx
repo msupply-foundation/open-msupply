@@ -23,6 +23,7 @@ import {
   RouteBuilder,
   useConfirmationModal,
   ReportsIcon,
+  useHostContext,
 } from '@openmsupply-client/common';
 import {
   AppRoute,
@@ -151,6 +152,7 @@ export const AppDrawer: React.FC = () => {
   const isMediumScreen = useIsMediumScreen();
   const drawer = useDrawer();
   const { logout, userHasPermission, store } = useAuthContext();
+  const { fullScreen } = useHostContext();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -199,6 +201,7 @@ export const AppDrawer: React.FC = () => {
       data-testid="drawer"
       aria-expanded={drawer.isOpen}
       isOpen={drawer.isOpen}
+      sx={{ display: fullScreen ? 'none' : undefined }}
     >
       <ToolbarIconContainer>
         <IconButton
