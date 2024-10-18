@@ -1,5 +1,6 @@
 use super::{version::Version, Migration, MigrationFragment};
 
+mod add_expected_lifespan_to_assets;
 mod add_reason_option_table;
 mod add_unserviceable_status_to_asset_status_enum;
 
@@ -20,6 +21,7 @@ impl Migration for V2_04_00 {
         vec![
             Box::new(add_reason_option_table::Migrate),
             Box::new(add_unserviceable_status_to_asset_status_enum::Migrate),
+            Box::new(add_expected_lifespan_to_assets::Migrate),
         ]
     }
 }
