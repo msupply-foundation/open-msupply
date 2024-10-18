@@ -57,6 +57,14 @@ impl RnRFormNode {
         get_period_length(&self.period_row)
     }
 
+    pub async fn their_reference(&self) -> &Option<String> {
+        &self.rnr_form_row.their_reference
+    }
+
+    pub async fn comment(&self) -> &Option<String> {
+        &self.rnr_form_row.comment
+    }
+
     pub async fn lines(&self, ctx: &Context<'_>) -> Result<Vec<RnRFormLineNode>> {
         let loader = ctx.get_loader::<DataLoader<RnRFormLinesByRnRFormIdLoader>>();
         let result = match loader.load_one(self.rnr_form_row.id.to_string()).await? {

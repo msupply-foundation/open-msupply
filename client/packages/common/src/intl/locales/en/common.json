@@ -1157,6 +1157,7 @@
   "messages.confirm-delete-pack-variants_one": "This will permanently remove 1 pack variant.",
   "messages.confirm-delete-pack-variants_other": "This will permanently remove {{count}} pack variants.",
   "messages.confirm-delete-prescription": "This will permanently remove Prescription #{{number}}",
+  "messages.confirm-delete-prescription-lines": "This will permanently remove all lines from this prescription",
   "messages.confirm-delete-prescriptions_few": "This will permanently remove {{count}} prescriptions",
   "messages.confirm-delete-prescriptions_many": "This will permanently remove {{count}} prescriptions",
   "messages.confirm-delete-prescriptions_one": "This will permanently remove 1 prescription",
