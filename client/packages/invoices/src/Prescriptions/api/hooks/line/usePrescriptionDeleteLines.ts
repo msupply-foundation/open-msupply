@@ -87,3 +87,24 @@ export const usePrescriptionDeleteSelectedLines = (): (() => void) => {
 
   return confirmAndDelete;
 };
+
+export const usePrescriptionDeleteAllLines = (): (() => Promise<void>) => {
+  const { items } = usePrescriptionRows();
+  const { mutateAsync } = usePrescriptionDeleteLines();
+
+  // Select all rows!
+  const selectedRows =
+    (items ?? []).map(({ lines }) => lines.flat()).flat() ?? [];
+
+  if (selectedRows.length === 0) {
+    return async () => {};
+  }
+
+  const onDelete = async () => {
+    mutateAsync(selectedRows || []).catch(err => {
+      throw err;
+    });
+  };
+
+  return onDelete;
+};

@@ -51,6 +51,7 @@ pub enum AssetLogStatus {
     FunctioningButNeedsAttention,
     NotFunctioning,
     Decommissioned,
+    Unserviceable,
 }
 
 #[derive(

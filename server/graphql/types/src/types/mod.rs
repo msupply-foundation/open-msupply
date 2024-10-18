@@ -101,6 +101,8 @@ pub use self::vaccine_course_item::*;
 pub mod vaccine_course_dose;
 pub use self::vaccine_course_dose::*;
 
+pub mod demographic_indicator;
+pub use self::demographic_indicator::*;
 pub mod demographic;
 pub use self::demographic::*;
 

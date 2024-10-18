@@ -11,7 +11,7 @@ pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
 pub(crate) mod currency;
-pub(crate) mod demographic_indicator;
+pub(crate) mod demographic;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
@@ -138,7 +138,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         vaccine_course::boxed(),
         vaccine_course_dose::boxed(),
         vaccine_course_item::boxed(),
-        demographic_indicator::boxed(),
+        demographic::boxed(),
         // Vaccination
         vaccination::boxed(),
     ]
