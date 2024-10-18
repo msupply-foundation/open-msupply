@@ -90,6 +90,10 @@ export const Toolbar = () => {
           label: t('status.not-in-use', { ns: 'coldchain' }),
           value: AssetLogStatusInput.NotInUse,
         },
+        {
+          label: t('status.unserviceable', { ns: 'coldchain' }),
+          value: AssetLogStatusInput.Unserviceable,
+        },
       ],
       isDefault: true,
     },
