@@ -45,7 +45,7 @@
         "paddingRight": 25
       }
     },
-      {
+    {
       "type": "Control",
       "scope": "#/properties/monthsItemsExpire",
       "label": "Expiring item period",
@@ -53,6 +53,11 @@
         "inputAlignment": "end",
         "paddingRight": 25
       }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sortBy",
+      "label": "Sort report by column"
     }
   ]
 }

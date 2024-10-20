@@ -12,6 +12,11 @@
           "description": "Item Code or Name",
           "type": "string"
         },
+        "sortBy": {
+          "description": "sort by",
+          "type": "string",
+          "enum": ["name", "code", "expiryDate"]
+        },
         "monthlyConsumptionLookBackPeriod": {
           "description": "Average Monthly Consumption Look Back Period",
           "type": "number",
