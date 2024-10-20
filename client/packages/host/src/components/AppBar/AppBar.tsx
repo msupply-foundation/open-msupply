@@ -64,8 +64,8 @@ export const AppBar: React.FC = () => {
         <Box
           sx={{
             position: 'absolute',
-            right: 10,
-            top: 10,
+            right: 15,
+            top: 15,
             height: '50px',
             zIndex: 999999,
           }}
