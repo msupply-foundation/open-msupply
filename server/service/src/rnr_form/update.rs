@@ -251,6 +251,8 @@ fn generate(
                     comment: _,
                     confirmed: _,
                     low_stock: _,
+                    entered_losses: _,
+                    minimum_quantity: _, // TODO
                 },
             )| {
                 RnRFormLineRow {
@@ -278,6 +280,9 @@ fn generate(
                     snapshot_quantity_consumed,
                     snapshot_adjustments,
                     previous_monthly_consumption_values,
+                    // TODO
+                    entered_losses: None,
+                    minimum_quantity: 0.0,
                 }
             },
         )

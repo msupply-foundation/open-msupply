@@ -134,11 +134,13 @@ pub fn generate_rnr_form_lines(
                 entered_quantity_received: None,
                 entered_adjustments: None,
                 entered_quantity_consumed: None,
+                entered_losses: None,
 
                 stock_out_duration,
                 adjusted_quantity_consumed,
                 final_balance,
                 maximum_quantity,
+                minimum_quantity: 0.0, // TODO
                 expiry_date: earliest_expiry,
                 calculated_requested_quantity,
                 low_stock: get_low_stock_status(final_balance, maximum_quantity),
