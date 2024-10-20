@@ -1,5 +1,9 @@
 function convert_data() {
   let res = JSON.parse(Host.inputString());
+  // if (res.sortBy) {
+  //   console.log('found sortBy', res.sortBy);
+  // }
+  // console.log('res', res);
   res.stockLines.nodes = processStockLines(res.stockLines.nodes);
   Host.outputString(JSON.stringify(resProcessed));
 }
