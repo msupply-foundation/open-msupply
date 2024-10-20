@@ -6,18 +6,21 @@ function convert_data() {
 
 const processStockLines = (nodes) => {
   nodes.forEach((line) => {
-    const daysUntilExpiredFloat = calculateDaysUntilExpired(line.expiryDate);
+    if (Object.keys(line).length == 0) {
+      return;
+    }
+    const daysUntilExpiredFloat = calculateDaysUntilExpired(line?.expiryDate);
     const expectedUsage = calculateExpectedUsage(
       daysUntilExpiredFloat,
-      line.item.stats.averageMonthlyConsumption
+      line?.item?.stats?.averageMonthlyConsumption
     );
     if (!!expectedUsage) {
       line.expectedUsage = expectedUsage;
     }
     const stockAtRisk = calculateStockAtRisk(
-      line.packSize,
-      line.totalNumberOfPacks,
-      line.item.stats.averageMonthlyConsumption,
+      line?.packSize,
+      line?.totalNumberOfPacks,
+      line?.item?.stats?.averageMonthlyConsumption,
       daysUntilExpiredFloat
     );
     if (!!stockAtRisk) {
@@ -25,7 +28,8 @@ const processStockLines = (nodes) => {
     }
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
   });
-  return nodes;
+  let cleanNodes = cleanUpNodes(nodes);
+  return cleanNodes;
 };
 
 const calculateDaysUntilExpired = (expiryDateString) => {
@@ -44,7 +48,9 @@ const calculateExpectedUsage = (
   let expectedUsage = undefined;
   if (!!daysUntilExpired && !!averageMonthlyConsumption) {
     if (daysUntilExpired >= 0) {
-    expectedUsage = Math.round(daysUntilExpired * (averageMonthlyConsumption / 30));
+      expectedUsage = Math.round(
+        daysUntilExpired * (averageMonthlyConsumption / 30)
+      );
     }
   }
   return expectedUsage;
@@ -85,6 +91,32 @@ const roundDaysToInteger = (daysUntilExpired) => {
   return rounded;
 };
 
+const cleanUpNodes = (nodes) => {
+  let cleanNodes = [];
+  nodes.forEach((node) => {
+    if (Object.keys(node).length != 0) {
+      cleanNodes.push(cleanUpObject(node));
+    }
+  });
+  return cleanNodes;
+};
+
+const cleanUpObject = (node) => {
+  let newNode = {};
+  // remove empty keys which will fail to parse
+  Object.keys(node).forEach(function (key) {
+    if (node[key] !== "" && node[key] !== undefined && node[key] !== null) {
+      if (typeof node[key] === "object") {
+        // recursively remove empty strings or undefined from graphql query
+        newNode[key] = cleanUpObject(node[key]);
+      } else {
+        newNode[key] = node[key];
+      }
+    }
+  });
+  return newNode;
+};
+
 module.exports = {
   calculateExpectedUsage,
   convert_data,
@@ -92,4 +124,6 @@ module.exports = {
   calculateDaysUntilExpired,
   calculateStockAtRisk,
   roundDaysToInteger,
+  cleanUpObject,
+  cleanUpNodes,
 };

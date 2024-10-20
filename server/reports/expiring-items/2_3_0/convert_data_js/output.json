@@ -45,6 +45,25 @@
         },
         "daysUntilExpired": -91,
         "stockAtRisk": 2500
+      },
+      {
+        "batch": "DEF123",
+        "expiryDate": "2024-01-10",
+        "id": "3",
+        "packSize": 5,
+        "storeId": "STORE002",
+        "totalNumberOfPacks": 100,
+        "location": {
+          "code": "abc"
+        },
+        "item": {
+          "code": "ITEM003",
+          "name": "drug",
+          "unitName": "box",
+          "stats": {}
+        },
+        "daysUntilExpired": -82,
+        "stockAtRisk": 500
       }
     ]
   }
