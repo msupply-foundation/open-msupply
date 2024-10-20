@@ -59,6 +59,7 @@ export const ContentArea = ({
         overflowX: 'unset',
         overflowY: 'auto',
         width: '100%',
+        scrollSnapType: 'x mandatory',
       }}
       ref={ref}
     >
@@ -94,6 +95,8 @@ export const ContentArea = ({
         sx={{
           borderCollapse: 'separate',
           overflowY: 'scroll',
+          marginRight: '100px',
+          scrollSnapAlign: 'end',
           '& th': {
             textAlign: 'left',
             padding: 1,
