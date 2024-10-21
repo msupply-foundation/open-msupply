@@ -8,6 +8,7 @@ use super::translations::{IntegrationOperation, PullTranslateResult};
 use repository::{mock::MockData, *};
 use util::inline_init;
 
+#[derive(Debug)]
 pub(crate) struct TestSyncIncomingRecord {
     /// Expected result for the imported data
     pub(crate) translated_record: PullTranslateResult,
