@@ -140,8 +140,14 @@ export const ContentArea = ({
               label="label.rnr-consumed-adjusted"
               tooltip="description.rnr-consumed-adjusted"
             />
-            <HeaderCell label="label.losses" />
-            <HeaderCell label="label.rnr-adjustments" />
+            <HeaderCell
+              label="label.losses"
+              tooltip="description.rnr-adjustments"
+            />
+            <HeaderCell
+              label="label.rnr-adjustments"
+              tooltip="description.rnr-adjustments"
+            />
             <HeaderCell label="label.rnr-stock-out-duration" />
             <HeaderCell
               label="label.rnr-final-balance"

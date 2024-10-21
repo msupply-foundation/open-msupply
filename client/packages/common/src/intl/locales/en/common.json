@@ -72,6 +72,8 @@
   "description.program": "Programs are used to manage groups of items, and replenishment schedules.",
   "description.remaining-to-supply": "The quantity remaining to be supplied to the customer which will be re-calculated after a shipment has been created. The calculation is 'Supply - Issued'.",
   "description.requested-quantity": "Quantity requested by customer",
+  "description.rnr-adjustments": "Adjustments made for this item during this period (via Stocktakes or Inventory Adjustments)",
+  "description.rnr-losses": "Manually record losses of this item during the period",
   "description.rnr-minimum-quantity": "The minimum quantity of stock to have on hand. =AMC x Store Preference 'Threshold for Understock'",
   "description.snapshot-num-of-packs": "Snapshot # of Packs",
   "description.soh": "Stock on Hand",
