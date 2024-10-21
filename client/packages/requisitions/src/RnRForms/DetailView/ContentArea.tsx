@@ -137,7 +137,7 @@ export const ContentArea = ({
               tooltip="description.rnr-consumed"
             />
             <HeaderCell
-              label="label.rnr-consumed-adjusted"
+              label="label.adjusted"
               tooltip="description.rnr-consumed-adjusted"
             />
             <HeaderCell
