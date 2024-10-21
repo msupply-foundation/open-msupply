@@ -16,8 +16,8 @@ pub(super) struct PrepareProgramSettings {
         Vec<(ProgramCustomer, Vec<RequisitionsInPeriod>)>,
 }
 
-/// Get program_settings, order_types, periods and requisitions_in_periods for a store.
-/// program_requisition_settings are matched to store by name_tag and by visibility of the program master_list.
+/// Map program_settings, order_types, periods and requisitions_in_period to ProgramSettings
+/// based on the customer.
 pub(super) fn prepare_customer_program_settings(
     ctx: &ServiceContext,
     store_id: &str,
