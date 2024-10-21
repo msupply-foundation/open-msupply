@@ -12,7 +12,7 @@ use super::supplier_program_settings::OrderType;
 #[derive(Debug, PartialEq)]
 pub struct CustomerProgramSettings {
     pub program_requisition_settings: ProgramRequisitionSettings,
-    pub customer_and_order_type: Vec<(ProgramCustomer, Vec<OrderType>)>,
+    pub customer_and_order_types: Vec<(ProgramCustomer, Vec<OrderType>)>,
 }
 
 /// Method will get program settings for a store, broken down into two tasks, prepare and map
