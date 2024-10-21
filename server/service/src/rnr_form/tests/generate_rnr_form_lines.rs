@@ -68,6 +68,7 @@ mod generate_rnr_form_lines {
             .upsert_one(&StorePreferenceRow {
                 id: mock_store_a().id,
                 months_understock: 0.5,
+                months_overstock: 2.0,
                 ..Default::default()
             })
             .unwrap();
@@ -109,8 +110,8 @@ mod generate_rnr_form_lines {
                 entered_quantity_consumed: None,
                 entered_adjustments: None,
                 entered_losses: None,
-                minimum_quantity: 1.9565217391304346, // AMC * threshold for understock (0.5 months)
-                maximum_quantity: 7.826086956521738,  // 2*AMC
+                minimum_quantity: 1.9565217391304346, // AMC * months understock (0.5)
+                maximum_quantity: 7.826086956521738,  // AMC * months overstock (2)
                 calculated_requested_quantity: 4.826086956521738, // max - final balance
                 low_stock: RnRFormLowStock::BelowHalf, // 3 / 7.8
                 entered_requested_quantity: None,
