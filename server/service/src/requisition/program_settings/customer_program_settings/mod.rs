@@ -15,7 +15,7 @@ pub struct CustomerProgramSettings {
     pub customer_and_order_type: Vec<(ProgramCustomer, Vec<OrderType>)>,
 }
 
-/// Method will calculate program settings for a store, broken down into two tasks, prepare and map
+/// Method will get program settings for a store, broken down into two tasks, prepare and map
 /// See prepare and map for detailed descriptions
 pub fn get_customer_program_requisition_settings(
     ctx: &ServiceContext,
