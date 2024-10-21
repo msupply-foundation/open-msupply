@@ -1,4 +1,6 @@
 mod common;
+pub mod customer_program_settings;
 pub mod supplier_program_settings;
 
+pub use customer_program_settings::get_customer_program_requisition_settings;
 pub use supplier_program_settings::get_supplier_program_requisition_settings;
