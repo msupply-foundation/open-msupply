@@ -15,11 +15,13 @@ pub struct UpdateRnRFormLine {
     pub quantity_consumed: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub adjustments: Option<f64>,
+    pub losses: Option<f64>,
     pub stock_out_duration: i32,
     pub adjusted_quantity_consumed: f64,
     pub average_monthly_consumption: f64,
     pub initial_balance: f64,
     pub final_balance: f64,
+    pub minimum_quantity: f64,
     pub maximum_quantity: f64,
     pub calculated_requested_quantity: f64,
     pub entered_requested_quantity: Option<f64>,
@@ -141,6 +143,7 @@ fn validate(
                 quantity_received,
                 quantity_consumed,
                 adjustments,
+                losses,
                 final_balance,
                 calculated_requested_quantity,
                 entered_requested_quantity,
@@ -154,8 +157,9 @@ fn validate(
             let quantity_consumed =
                 quantity_consumed.unwrap_or(rnr_form_line.snapshot_quantity_consumed);
             let adjustments = adjustments.unwrap_or(rnr_form_line.snapshot_adjustments);
+            let losses = losses.unwrap_or(0.0);
 
-            if initial_balance + quantity_received - quantity_consumed + adjustments
+            if initial_balance + quantity_received - quantity_consumed + adjustments - losses
                 != final_balance
             {
                 return Err(UpdateRnRFormError::LineError {
@@ -226,6 +230,8 @@ fn generate(
                     calculated_requested_quantity,
                     entered_requested_quantity,
                     low_stock,
+                    losses,
+                    minimum_quantity,
                 },
                 RnRFormLineRow {
                     id,
@@ -252,7 +258,7 @@ fn generate(
                     confirmed: _,
                     low_stock: _,
                     entered_losses: _,
-                    minimum_quantity: _, // TODO
+                    minimum_quantity: _,
                 },
             )| {
                 RnRFormLineRow {
@@ -260,12 +266,14 @@ fn generate(
                     entered_quantity_received: quantity_received,
                     entered_quantity_consumed: quantity_consumed,
                     entered_adjustments: adjustments,
+                    entered_losses: losses,
                     average_monthly_consumption,
                     stock_out_duration,
                     adjusted_quantity_consumed,
                     initial_balance, // TODO; snapshot and entered?
                     final_balance,
                     maximum_quantity,
+                    minimum_quantity,
                     calculated_requested_quantity,
                     entered_requested_quantity,
                     low_stock,
@@ -280,9 +288,6 @@ fn generate(
                     snapshot_quantity_consumed,
                     snapshot_adjustments,
                     previous_monthly_consumption_values,
-                    // TODO
-                    entered_losses: None,
-                    minimum_quantity: 0.0,
                 }
             },
         )

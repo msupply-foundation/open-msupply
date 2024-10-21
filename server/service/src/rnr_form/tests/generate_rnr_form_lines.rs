@@ -99,6 +99,8 @@ mod generate_rnr_form_lines {
                 entered_quantity_received: None,
                 entered_quantity_consumed: None,
                 entered_adjustments: None,
+                entered_losses: None,
+                minimum_quantity: 0.0,
                 maximum_quantity: 7.826086956521738, // 2*AMC
                 calculated_requested_quantity: 4.826086956521738, // max - final balance
                 low_stock: RnRFormLowStock::BelowHalf, // 3 / 7.8
