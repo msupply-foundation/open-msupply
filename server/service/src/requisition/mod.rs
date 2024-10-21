@@ -1,5 +1,4 @@
 use self::{
-    program_settings::{get_program_requisition_settings, ProgramSettings},
     query::{get_requisition, get_requisition_by_number, get_requisitions},
     request_requisition::{
         add_from_master_list, batch_request_requisition, delete_request_requisition,
@@ -21,6 +20,10 @@ use self::{
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
+use program_settings::{
+    customer_program_settings::CustomerProgramSettings, get_customer_program_requisition_settings,
+    get_supplier_program_requisition_settings, supplier_program_settings::SupplierProgramSettings,
+};
 use repository::PaginationOption;
 use repository::{
     requisition_row::RequisitionType, Invoice, RepositoryError, Requisition, RequisitionFilter,
@@ -161,12 +164,20 @@ pub trait RequisitionServiceTrait: Sync + Send {
         batch_request_requisition(ctx, input)
     }
 
-    fn get_program_requisition_settings(
+    fn get_supplier_program_requisition_settings(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
-    ) -> Result<Vec<ProgramSettings>, RepositoryError> {
-        get_program_requisition_settings(ctx, store_id)
+    ) -> Result<Vec<SupplierProgramSettings>, RepositoryError> {
+        get_supplier_program_requisition_settings(ctx, store_id)
+    }
+
+    fn get_customer_program_requisition_settings(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+    ) -> Result<Vec<CustomerProgramSettings>, RepositoryError> {
+        get_customer_program_requisition_settings(ctx, store_id)
     }
 }
 
