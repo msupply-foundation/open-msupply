@@ -459,10 +459,22 @@ fn transform_data(
     connection: StorageConnection,
     data: serde_json::Value,
     convert_data: Option<String>,
+    arguments: Option<serde_json::Value>,
 ) -> serde_json::Value {
     let Some(convert_data) = convert_data else {
         return data;
     };
+
+    // add arguments in to data passed to wasm function if arguments are passed
+    let mut input_data = data;
+    if let Some(arguments) = arguments {
+        let arguments_map: serde_json::Map<String, serde_json::Value> =
+            arguments.as_object().unwrap().clone();
+        let mut input_data_map: serde_json::Map<String, serde_json::Value> =
+            input_data.as_object().unwrap().clone();
+        input_data_map.extend(arguments_map);
+        input_data = serde_json::to_value(&input_data_map).unwrap();
+    }
 
     let manifest = Manifest::new([Wasm::Data {
         data: BASE64_STANDARD.decode(convert_data).unwrap(),
@@ -477,8 +489,10 @@ fn transform_data(
         .build()
         .unwrap();
 
+    // println!("convert data {:?}", data);
+
     plugin
-        .call::<serde_json::Value, serde_json::Value>("convert_data", data)
+        .call::<serde_json::Value, serde_json::Value>("convert_data", input_data)
         .unwrap()
 }
 
@@ -492,14 +506,19 @@ fn generate_report(
 ) -> Result<GeneratedReport, ReportError> {
     let mut context = tera::Context::new();
 
-    let report_data = transform_data(connection, report_data, report.convert_data.clone());
+    if let Some(arguments) = arguments.clone() {
+        context.insert("arguments", &arguments);
+    }
+
+    let report_data = transform_data(
+        connection,
+        report_data,
+        report.convert_data.clone(),
+        arguments,
+    );
 
     context.insert("data", &report_data);
     context.insert("res", &report.resources);
-
-    if let Some(arguments) = arguments {
-        context.insert("arguments", &arguments);
-    }
 
     let mut tera = tera::Tera::default();
 
