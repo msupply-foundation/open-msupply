@@ -67,6 +67,8 @@ actix-rt = { workspace = true }
 assert-json-diff = { workspace = true }
 httpmock = { workspace = true }
 assert_approx_eq = "1.1.0"
+# Used for integration tests
+machine-uid = { version = "0.5.1" }
 
 [features]
 default = ["sqlite"]

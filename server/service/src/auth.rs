@@ -116,7 +116,7 @@ pub enum Resource {
 
     SyncInfo,
     ManualSync,
-    QueryInventoryAdjustmentReasons,
+    QueryReasonOptions,
     QueryStorePreferences,
     ColdChainApi,
     // assets
@@ -538,7 +538,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::ManualSync, PermissionDSL::NoPermissionRequired);
 
     map.insert(
-        Resource::QueryInventoryAdjustmentReasons,
+        Resource::QueryReasonOptions,
         PermissionDSL::NoPermissionRequired,
     );
     map.insert(

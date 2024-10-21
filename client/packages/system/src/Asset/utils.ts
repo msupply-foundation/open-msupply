@@ -53,6 +53,9 @@ export const parseStatus = (
     case StatusType.NotInUse: {
       return t('status.not-in-use', { ns: 'coldchain' });
     }
+    case StatusType.Unserviceable: {
+      return t('status.unserviceable', { ns: 'coldchain' });
+    }
   }
 };
 
@@ -75,6 +78,9 @@ const parseInputStatus = (
     }
     case AssetLogStatusInput.NotInUse: {
       return t('status.not-in-use', { ns: 'coldchain' });
+    }
+    case AssetLogStatusInput.Unserviceable: {
+      return t('status.unserviceable', { ns: 'coldchain' });
     }
   }
 };
