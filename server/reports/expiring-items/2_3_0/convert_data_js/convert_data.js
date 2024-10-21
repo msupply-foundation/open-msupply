@@ -1,11 +1,5 @@
-import { cleanUpNodes } from "../../../utils";
-
 function convert_data() {
   let res = JSON.parse(Host.inputString());
-  // if (res.sortBy) {
-  //   console.log('found sortBy', res.sortBy);
-  // }
-  // console.log('res', res);
   res.stockLines.nodes = processStockLines(res.stockLines.nodes);
   Host.outputString(JSON.stringify(resProcessed));
 }
@@ -34,8 +28,7 @@ const processStockLines = (nodes) => {
     }
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
   });
-  let cleanNodes = cleanUpNodes(nodes);
-  return cleanNodes;
+  return nodes;
 };
 
 const calculateDaysUntilExpired = (expiryDateString) => {
@@ -98,10 +91,5 @@ const roundDaysToInteger = (daysUntilExpired) => {
 };
 
 module.exports = {
-  calculateExpectedUsage,
   convert_data,
-  processStockLines,
-  calculateDaysUntilExpired,
-  calculateStockAtRisk,
-  roundDaysToInteger,
 };
