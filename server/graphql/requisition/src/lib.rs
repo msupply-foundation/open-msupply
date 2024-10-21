@@ -4,7 +4,10 @@ mod requisition_queries;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::RequisitionNodeType;
-use program_settings::{get_program_requisition_settings, ProgramRequisitionSettingNode};
+use program_settings::{
+    get_customer_program_requisition_settings, get_supplier_program_requisition_settings,
+    CustomerProgramRequisitionSettingNode, SupplierProgramRequisitionSettingNode,
+};
 
 use self::mutations::{request_requisition, response_requisition};
 use self::requisition_queries::*;
@@ -43,12 +46,20 @@ impl RequisitionQueries {
         get_requisition_by_number(ctx, &store_id, requisition_number, r#type)
     }
 
-    pub async fn program_requisition_settings(
+    pub async fn supplier_program_requisition_settings(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-    ) -> Result<Vec<ProgramRequisitionSettingNode>> {
-        get_program_requisition_settings(ctx, &store_id)
+    ) -> Result<Vec<SupplierProgramRequisitionSettingNode>> {
+        get_supplier_program_requisition_settings(ctx, &store_id)
+    }
+
+    pub async fn customer_program_requisition_settings(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Vec<CustomerProgramRequisitionSettingNode>> {
+        get_customer_program_requisition_settings(ctx, &store_id)
     }
 }
 
