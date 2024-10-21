@@ -71,6 +71,7 @@ pub(super) fn prepare_supplier_program_settings(
     let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
+    // Suppliers, which are visible in current store and have these program (this is determined by having program master list visible)
     let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(program_ids));
     let program_suppliers =
         ProgramSupplierRepository::new(&ctx.connection).query(store_id, filter)?;
