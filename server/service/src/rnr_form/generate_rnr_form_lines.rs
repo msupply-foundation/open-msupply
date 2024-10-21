@@ -14,6 +14,7 @@ use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, date_with_offset, uui
 use crate::{
     requisition_line::chart::{get_stock_evolution_for_item, StockEvolutionOptions},
     service_provider::ServiceContext,
+    store_preference::get_store_preferences,
 };
 
 use super::get_period_length;
@@ -109,6 +110,10 @@ pub fn generate_rnr_form_lines(
                 .collect::<Vec<String>>()
                 .join(",");
 
+            let store_preferences = get_store_preferences(&ctx.connection, store_id)?;
+
+            let minimum_quantity =
+                average_monthly_consumption * store_preferences.months_understock;
             let maximum_quantity = average_monthly_consumption * TARGET_MOS;
 
             let calculated_requested_quantity = if maximum_quantity - final_balance > 0.0 {
@@ -140,7 +145,7 @@ pub fn generate_rnr_form_lines(
                 adjusted_quantity_consumed,
                 final_balance,
                 maximum_quantity,
-                minimum_quantity: 0.0, // TODO
+                minimum_quantity,
                 expiry_date: earliest_expiry,
                 calculated_requested_quantity,
                 low_stock: get_low_stock_status(final_balance, maximum_quantity),

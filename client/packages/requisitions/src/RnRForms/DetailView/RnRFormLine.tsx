@@ -11,6 +11,7 @@ import {
   NumericTextInput,
   NumUtils,
   Tooltip,
+  useAuthContext,
   useBufferState,
   useNotification,
   useTheme,
@@ -32,6 +33,8 @@ export const RnRFormLine = ({
   disabled: boolean;
 }) => {
   const theme = useTheme();
+  const { store } = useAuthContext();
+
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const { draftLine, setLine } = useRnRFormContext(state => ({
@@ -83,7 +86,8 @@ export const RnRFormLine = ({
     );
 
     const maximumQuantity = averageMonthlyConsumption * 2;
-    const minimumQuantity = averageMonthlyConsumption * 1; // TODO
+    const minimumQuantity =
+      averageMonthlyConsumption * (store?.preferences.monthsUnderstock ?? 0);
 
     const neededQuantity = maximumQuantity - finalBalance;
 
