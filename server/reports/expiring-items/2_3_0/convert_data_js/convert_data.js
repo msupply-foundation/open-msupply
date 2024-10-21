@@ -1,3 +1,5 @@
+import { cleanUpNodes } from "../../../utils";
+
 function convert_data() {
   let res = JSON.parse(Host.inputString());
   // if (res.sortBy) {
@@ -10,18 +12,21 @@ function convert_data() {
 
 const processStockLines = (nodes) => {
   nodes.forEach((line) => {
-    const daysUntilExpiredFloat = calculateDaysUntilExpired(line.expiryDate);
+    if (Object.keys(line).length == 0) {
+      return;
+    }
+    const daysUntilExpiredFloat = calculateDaysUntilExpired(line?.expiryDate);
     const expectedUsage = calculateExpectedUsage(
       daysUntilExpiredFloat,
-      line.item.stats.averageMonthlyConsumption
+      line?.item?.stats?.averageMonthlyConsumption
     );
     if (!!expectedUsage) {
       line.expectedUsage = expectedUsage;
     }
     const stockAtRisk = calculateStockAtRisk(
-      line.packSize,
-      line.totalNumberOfPacks,
-      line.item.stats.averageMonthlyConsumption,
+      line?.packSize,
+      line?.totalNumberOfPacks,
+      line?.item?.stats?.averageMonthlyConsumption,
       daysUntilExpiredFloat
     );
     if (!!stockAtRisk) {
@@ -29,7 +34,8 @@ const processStockLines = (nodes) => {
     }
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
   });
-  return nodes;
+  let cleanNodes = cleanUpNodes(nodes);
+  return cleanNodes;
 };
 
 const calculateDaysUntilExpired = (expiryDateString) => {
@@ -48,7 +54,9 @@ const calculateExpectedUsage = (
   let expectedUsage = undefined;
   if (!!daysUntilExpired && !!averageMonthlyConsumption) {
     if (daysUntilExpired >= 0) {
-    expectedUsage = Math.round(daysUntilExpired * (averageMonthlyConsumption / 30));
+      expectedUsage = Math.round(
+        daysUntilExpired * (averageMonthlyConsumption / 30)
+      );
     }
   }
   return expectedUsage;

@@ -1,3 +1,5 @@
+import { cleanUpNodes } from "../../../utils";
+
 function convert_data() {
   const res = JSON.parse(Host.inputString());
   res.items.nodes = processItemLines(res);
@@ -6,6 +8,10 @@ function convert_data() {
 
 const processItemLines = (res) => {
   res.items.nodes.forEach((item) => {
+    // don't add default values if empty object added
+    if (Object.keys(item).length == 0) {
+      return;
+    }
     item.monthConsumption = calculateQuantity(
       res.thisMonthConsumption,
       item.id
@@ -29,10 +35,11 @@ const processItemLines = (res) => {
     item.stockOnOrder = calculateQuantity(res.stockOnOrder, item.id);
     item.AMC12 = calculateQuantity(res.AMCTwelve, item.id);
     item.AMC24 = calculateQuantity(res.AMCTwentyFour, item.id);
-    item.SOH = calculateStatValue(item.stats.availableStockOnHand);
-    item.MOS = calculateStatValue(item.stats.availableMonthsOfStockOnHand);
+    item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
+    item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
   });
-  return res.items.nodes;
+  let cleanNodes = cleanUpNodes(res.items.nodes);
+  return cleanNodes;
 };
 
 // function adds month consumption to data  (either this or last month)
@@ -59,4 +66,5 @@ module.exports = {
   calculateQuantity,
   calculateStatValue,
   processItemLines,
+  cleanUpNodes,
 };
