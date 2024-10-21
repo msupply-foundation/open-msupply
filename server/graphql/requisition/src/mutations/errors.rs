@@ -7,3 +7,12 @@ impl CannotDeleteRequisitionWithLines {
         "Cannot delete requisitions with existing lines"
     }
 }
+
+pub struct MaxOrdersReachedForPeriod;
+
+#[Object]
+impl MaxOrdersReachedForPeriod {
+    pub async fn description(&self) -> &str {
+        "Maximum orders reached for program, order type and period"
+    }
+}
