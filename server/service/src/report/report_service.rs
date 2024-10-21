@@ -123,7 +123,7 @@ pub trait ReportServiceTrait: Sync + Send {
         report_data: serde_json::Value,
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
-        translation_service: Box<Localisations>,
+        translation_service: &Localisations,
         current_language: Option<String>,
     ) -> Result<String, ReportError> {
         let document = generate_report(
@@ -487,7 +487,7 @@ fn generate_report(
     report: &ResolvedReportDefinition,
     report_data: serde_json::Value,
     arguments: Option<serde_json::Value>,
-    translation_service: Box<Localisations>,
+    translation_service: &Localisations,
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
     let mut context = tera::Context::new();
@@ -830,7 +830,7 @@ mod report_service_test {
             .context("store_id".to_string(), "".to_string())
             .unwrap();
         let service = &service_provider.report_service;
-        let translation_service = service_provider.translations_service;
+        let translation_service = &service_provider.translations_service;
         let resolved_def = service.resolve_report(&context, "report_1").unwrap();
 
         let doc = generate_report(
@@ -1008,7 +1008,7 @@ mod report_generation_test {
             &report,
             report_data.clone(),
             None,
-            translation_service.clone(),
+            &translation_service,
             Some("en".to_string()),
         )
         .unwrap();
@@ -1026,7 +1026,7 @@ mod report_generation_test {
             &report,
             report_data,
             None,
-            translation_service,
+            &translation_service,
             Some("fr".to_string()),
         )
         .unwrap();

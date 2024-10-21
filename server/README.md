@@ -23,7 +23,7 @@ Remote server can use `sqlite` or `postgres`, quick start guide is for `sqlite` 
 
 - Follow the [Rust installation guide](https://www.rust-lang.org/tools/install).
 
-- For M1 Mac:
+- For M1/M2/M3 Mac:
 
 `brew install libpq` and add the following to `~/.cargo/config.toml`
 

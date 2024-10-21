@@ -22,7 +22,7 @@ fn vaccine_course1() -> VaccineCourseRow {
         id: VACCINE_COURSE1.0.to_string(),
         program_id: "program_test".to_string(),
         name: "test_course".to_string(),
-        demographic_indicator_id: None,
+        demographic_id: None,
         coverage_rate: 0.0,
         is_active: false,
         wastage_rate: 1.0,

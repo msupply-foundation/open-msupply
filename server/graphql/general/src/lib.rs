@@ -385,6 +385,17 @@ impl GeneralQueries {
     pub async fn name_properties(&self, ctx: &Context<'_>) -> Result<NamePropertyResponse> {
         name_properties(ctx)
     }
+
+    pub async fn reason_options(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ReasonOptionFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<ReasonOptionSortInput>>,
+    ) -> Result<ReasonOptionResponse> {
+        reason_options(ctx, page, filter, sort)
+    }
 }
 
 #[derive(Default, Clone)]
