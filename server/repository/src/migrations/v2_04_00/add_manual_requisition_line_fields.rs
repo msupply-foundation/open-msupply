@@ -16,10 +16,8 @@ impl MigrationFragment for Migrate {
                 ALTER TABLE requisition_line ADD outgoing_units {DOUBLE} NOT NULL DEFAULT 0;
                 ALTER TABLE requisition_line ADD loss_in_units {DOUBLE} NOT NULL DEFAULT 0;
                 ALTER TABLE requisition_line ADD addition_in_units {DOUBLE} NOT NULL DEFAULT 0;
-                ALTER TABLE requisition_line ADD available_units {DOUBLE} NOT NULL DEFAULT 0;
                 ALTER TABLE requisition_line ADD expiring_units {DOUBLE} NOT NULL DEFAULT 0;
                 ALTER TABLE requisition_line ADD days_out_of_stock {DOUBLE} NOT NULL DEFAULT 0;
-                ALTER TABLE requisition_line ADD months_of_stock {DOUBLE} NOT NULL DEFAULT 0;
                 ALTER TABLE requisition_line ADD option_ID REFERENCES return_reason(id);
                 "#
         )?;
