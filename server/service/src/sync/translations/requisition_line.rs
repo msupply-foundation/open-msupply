@@ -60,16 +60,10 @@ pub struct LegacyRequisitionLineRow {
     #[serde(rename = "stockAdditions")]
     pub stock_additions: f64,
 
-    #[serde(rename = "Available")]
-    pub available: f64,
-
     #[serde(rename = "stockExpiring")]
     pub stock_expiring: f64,
 
     pub days_out_or_new_demand: f64,
-
-    #[serde(rename = "MOS")]
-    pub months_of_stock: f64,
 
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -124,10 +118,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             outgoing_units: data.cust_stock_issued,
             loss_in_units: data.stock_losses,
             addition_in_units: data.stock_additions,
-            available_units: data.available,
             expiring_units: data.stock_expiring,
             days_out_of_stock: data.days_out_or_new_demand,
-            months_of_stock: data.months_of_stock,
             option_id: data.option_id,
         };
 
@@ -169,10 +161,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             outgoing_units,
             loss_in_units,
             addition_in_units,
-            available_units,
             expiring_units,
             days_out_of_stock,
-            months_of_stock,
             option_id,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
@@ -208,10 +198,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             cust_stock_issued: outgoing_units,
             stock_losses: loss_in_units,
             stock_additions: addition_in_units,
-            available: available_units,
             stock_expiring: expiring_units,
             days_out_or_new_demand: days_out_of_stock,
-            months_of_stock,
             option_id,
         };
 
@@ -253,6 +241,7 @@ mod tests {
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+
             let translation_result = translator
                 .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();

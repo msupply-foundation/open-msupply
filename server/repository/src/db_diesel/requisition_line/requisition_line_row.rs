@@ -31,10 +31,8 @@ table! {
         outgoing_units -> Double,
         loss_in_units -> Double,
         addition_in_units -> Double,
-        available_units -> Double,
         expiring_units -> Double,
         days_out_of_stock -> Double,
-        months_of_stock -> Double,
         option_id -> Nullable<Text>
     }
 }
@@ -65,10 +63,8 @@ pub struct RequisitionLineRow {
     pub outgoing_units: f64,
     pub loss_in_units: f64,
     pub addition_in_units: f64,
-    pub available_units: f64,
     pub expiring_units: f64,
     pub days_out_of_stock: f64,
-    pub months_of_stock: f64,
     pub option_id: Option<String>,
 }
 
