@@ -70,12 +70,6 @@ impl<'a> ProgramCustomerRepository<'a> {
 
         apply_equal_filter!(query, program_id_filter, program_dsl::id);
 
-        //  Debug diesel query
-        // println!(
-        //     "{}",
-        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
-        // );
-
         let query = query.select((
             // Same as NameRepository
             name_dsl::name::all_columns(),
