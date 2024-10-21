@@ -57,12 +57,17 @@ export const RnRFormLine = ({
       quantityConsumed,
       quantityReceived,
       adjustments,
+      losses,
       stockOutDuration,
       previousMonthlyConsumptionValues,
     } = { ...newPatch };
 
     const finalBalance =
-      initialBalance + quantityReceived - quantityConsumed + adjustments;
+      initialBalance +
+      quantityReceived -
+      quantityConsumed +
+      adjustments -
+      losses;
 
     const stockAvailableDays = periodLength - stockOutDuration;
 
@@ -78,6 +83,7 @@ export const RnRFormLine = ({
     );
 
     const maximumQuantity = averageMonthlyConsumption * 2;
+    const minimumQuantity = averageMonthlyConsumption * 1; // TODO
 
     const neededQuantity = maximumQuantity - finalBalance;
 
@@ -90,6 +96,7 @@ export const RnRFormLine = ({
       finalBalance,
       adjustedQuantityConsumed,
       averageMonthlyConsumption,
+      minimumQuantity,
       maximumQuantity,
       calculatedRequestedQuantity,
       lowStock,
@@ -159,6 +166,13 @@ export const RnRFormLine = ({
 
       {/* Losses/adjustments and stock out */}
       <RnRNumberCell
+        value={line.losses}
+        onChange={val => updateDraft({ losses: val })}
+        textColor={textColor}
+        allowNegative
+        disabled={disabled}
+      />
+      <RnRNumberCell
         value={line.adjustments}
         onChange={val => updateDraft({ adjustments: val })}
         textColor={textColor}
@@ -183,6 +197,12 @@ export const RnRFormLine = ({
       <RnRNumberCell
         readOnly
         value={line.averageMonthlyConsumption}
+        onChange={() => {}}
+        textColor={textColor}
+      />
+      <RnRNumberCell
+        readOnly
+        value={line.minimumQuantity}
         onChange={() => {}}
         textColor={textColor}
       />
