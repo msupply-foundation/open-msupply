@@ -41,9 +41,7 @@ const REQUISITION_LINE_1: (&str, &str) = (
         "requestedPackSize": 0,
         "approved_quantity": 0,
         "authoriser_comment": "",
-        "om_snapshot_datetime": "",
-        "available": 0,
-        "MOS": 0
+        "om_snapshot_datetime": ""
     }"#,
 );
 fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
@@ -69,10 +67,8 @@ fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
             outgoing_units: 0.0,
             loss_in_units: 0.0,
             addition_in_units: 0.0,
-            available_units: 0.0,
             expiring_units: 0.0,
             days_out_of_stock: 0.0,
-            months_of_stock: 0.0,
             option_id: None,
         },
     )
@@ -100,10 +96,8 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
             cust_stock_issued: 0.0,
             stock_losses: 0.0,
             stock_additions: 0.0,
-            available: 0.0,
             stock_expiring: 0.0,
             days_out_or_new_demand: 0.0,
-            months_of_stock: 0.0,
             option_id: None
         }),
     }
@@ -142,9 +136,7 @@ const REQUISITION_LINE_OM_FIELD: (&str, &str) = (
         "requestedPackSize": 0,
         "approved_quantity": 0,
         "authoriser_comment": "approval comment",
-        "om_snapshot_datetime": "2022-04-04T14:48:11",
-        "available": 0,
-        "MOS": 0
+        "om_snapshot_datetime": "2022-04-04T14:48:11"
     }"#,
 );
 fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
@@ -175,10 +167,8 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             outgoing_units: 0.0,
             loss_in_units: 0.0,
             addition_in_units: 0.0,
-            available_units: 0.0,
             expiring_units: 0.0,
             days_out_of_stock: 0.0,
-            months_of_stock: 0.0,
             option_id: None,
         },
     )
@@ -211,10 +201,8 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             cust_stock_issued: 0.0,
             stock_losses: 0.0,
             stock_additions: 0.0,
-            available: 0.0,
             stock_expiring: 0.0,
             days_out_or_new_demand: 0.0,
-            months_of_stock: 0.0,
             option_id: None
         }),
     }
