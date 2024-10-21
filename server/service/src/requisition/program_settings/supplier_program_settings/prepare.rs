@@ -19,8 +19,8 @@ pub(super) struct PrepareProgramSettings {
 
 /// Get program_settings, order_types, periods and requisitions_in_periods for a store
 /// program_requisition_settings are matched to store by name_tag and by visibility of the program master_list
-/// requisitions_in_periods are also querid so that order type can be
-pub(super) fn prepare(
+/// requisitions_in_periods are also queried so that order type can be filtered by available periods
+pub(super) fn prepare_supplier_program_settings(
     ctx: &ServiceContext,
     store_id: &str,
 ) -> Result<Option<PrepareProgramSettings>, RepositoryError> {
@@ -71,8 +71,6 @@ pub(super) fn prepare(
     let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
-    // Suppliers, which are visible in current store and have these program (this is determined by having program master list visible)
-    // TODO confirm if they are strictly stores, i.e. can't make internal program order (requisition) to a non store supplier
     let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(program_ids));
     let program_suppliers =
         ProgramSupplierRepository::new(&ctx.connection).query(store_id, filter)?;
