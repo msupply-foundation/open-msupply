@@ -12,8 +12,8 @@ impl MigrationFragment for Migrate {
             connection,
             // Note: We don't have a `snapshot_losses` - not required for system to pre-calculate this column at this stage
             r#"
-                ALTER TABLE rnr_form_line ADD COLUMN entered_losses {DOUBLE} DEFAULT 0;
-                ALTER TABLE rnr_form_line ADD COLUMN minimum_quantity {DOUBLE} NOT NULL DEFAULT 0;
+                ALTER TABLE rnr_form_line ADD COLUMN entered_losses {DOUBLE} DEFAULT 0.0;
+                ALTER TABLE rnr_form_line ADD COLUMN minimum_quantity {DOUBLE} NOT NULL DEFAULT 0.0;
             "#
         )?;
 
