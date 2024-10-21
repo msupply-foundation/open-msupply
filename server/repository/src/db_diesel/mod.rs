@@ -45,6 +45,7 @@ mod invoice_row;
 pub mod item;
 mod item_link_row;
 mod item_row;
+pub mod item_variant;
 pub mod key_value_store;
 pub mod ledger;
 pub mod location;

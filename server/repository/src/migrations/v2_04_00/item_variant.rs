@@ -1,4 +1,4 @@
-use crate::migrations::types::DATETIME;
+use crate::migrations::types::{DATETIME, DOUBLE};
 use crate::migrations::*;
 
 pub(crate) struct Migrate;
@@ -16,9 +16,9 @@ impl MigrationFragment for Migrate {
             CREATE TABLE item_variant (
                 id TEXT PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
-                item_link_id TEXT REFERENCES item_link(id),
+                item_link_id TEXT NOT NULL REFERENCES item_link(id),
                 --TODO temperature_range_id TEXT REFERENCES temperature_range(id),
-                doses_per_unit FLOAT,
+                doses_per_unit {DOUBLE},
                 manufacturer_link_id TEXT REFERENCES name_link(id),
                 deleted_datetime {DATETIME}
             );
@@ -32,10 +32,10 @@ impl MigrationFragment for Migrate {
             CREATE TABLE packaging_variant (
                 id TEXT PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
-                item_variant_id TEXT REFERENCES item_variant(id),
-                packaging_level INT,
-                pack_size FLOAT,
-                volume_per_unit FLOAT,
+                item_variant_id TEXT NOT NULL REFERENCES item_variant(id),
+                packaging_level INT NOT NULL,
+                pack_size {DOUBLE},
+                volume_per_unit {DOUBLE},
                 deleted_datetime {DATETIME}
             );
             "#
