@@ -351,7 +351,7 @@ mod test {
                         program_row: program1.clone(),
                         master_list: master_list1.clone()
                     },
-                    customer_and_order_type: vec![(
+                    customer_and_order_types: vec![(
                         ProgramCustomer {
                             // program1 master list only visible in mock_name_store_b customer
                             customer: Name {
@@ -378,7 +378,7 @@ mod test {
                         program_row: program2.clone(),
                         master_list: master_list2.clone()
                     },
-                    customer_and_order_type: vec![(
+                    customer_and_order_types: vec![(
                         ProgramCustomer {
                             // program2 master list only visible in
                             // name c customer so period 3 & 4 are available as requisition2 is created for name b
