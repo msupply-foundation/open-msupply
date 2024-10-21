@@ -4,6 +4,7 @@ mod add_cold_storage_type_table;
 mod add_expected_lifespan_to_assets;
 mod add_reason_option_table;
 mod add_unserviceable_status_to_asset_status_enum;
+mod item_variant;
 
 use crate::StorageConnection;
 
@@ -24,6 +25,7 @@ impl Migration for V2_04_00 {
             Box::new(add_unserviceable_status_to_asset_status_enum::Migrate),
             Box::new(add_expected_lifespan_to_assets::Migrate),
             Box::new(add_cold_storage_type_table::Migrate),
+            Box::new(item_variant::Migrate),
         ]
     }
 }
