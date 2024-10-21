@@ -19,9 +19,6 @@ use crate::{
 
 use super::get_period_length;
 
-// Would be nice if this was an OMS store pref
-const TARGET_MOS: f64 = 2.0;
-
 pub fn generate_rnr_form_lines(
     ctx: &ServiceContext,
     store_id: &str,
@@ -114,7 +111,7 @@ pub fn generate_rnr_form_lines(
 
             let minimum_quantity =
                 average_monthly_consumption * store_preferences.months_understock;
-            let maximum_quantity = average_monthly_consumption * TARGET_MOS;
+            let maximum_quantity = average_monthly_consumption * store_preferences.months_overstock;
 
             let calculated_requested_quantity = if maximum_quantity - final_balance > 0.0 {
                 maximum_quantity - final_balance

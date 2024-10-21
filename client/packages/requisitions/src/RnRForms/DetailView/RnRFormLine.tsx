@@ -85,9 +85,12 @@ export const RnRFormLine = ({
       periodLength
     );
 
-    const maximumQuantity = averageMonthlyConsumption * 2;
+    const storePreferences = store?.preferences;
+
+    const maximumQuantity =
+      averageMonthlyConsumption * (storePreferences?.monthsOverstock ?? 2);
     const minimumQuantity =
-      averageMonthlyConsumption * (store?.preferences.monthsUnderstock ?? 0);
+      averageMonthlyConsumption * (storePreferences?.monthsUnderstock ?? 0);
 
     const neededQuantity = maximumQuantity - finalBalance;
 
