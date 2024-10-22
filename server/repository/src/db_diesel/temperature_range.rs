@@ -7,7 +7,6 @@ use diesel::prelude::*;
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
-    // location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
 };
 
@@ -41,19 +40,19 @@ impl<'a> TemperatureRangeRepository<'a> {
         TemperatureRangeRepository { connection }
     }
 
-    // pub fn count(&self, filter: Option<TemperatureBreachFilter>) -> Result<i64, RepositoryError> {
-    //     let query = Self::create_filtered_query(filter);
-    //     Ok(query
-    //         .count()
-    //         .get_result(self.connection.lock().connection())?)
-    // }
+    pub fn count(&self, filter: Option<TemperatureRangeFilter>) -> Result<i64, RepositoryError> {
+        let query = Self::create_filtered_query(filter);
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
 
-    // pub fn query_by_filter(
-    //     &self,
-    //     filter: TemperatureBreachFilter,
-    // ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
-    //     self.query(Pagination::all(), Some(filter), None)
-    // }
+    pub fn query_by_filter(
+        &self,
+        filter: TemperatureRangeFilter,
+    ) -> Result<Vec<TemperatureRange>, RepositoryError> {
+        self.query(Pagination::all(), Some(filter), None)
+    }
 
     pub fn query(
         &self,
@@ -122,12 +121,3 @@ impl TemperatureRangeFilter {
         self
     }
 }
-
-// impl TemperatureRangeType {
-//     pub fn equal_to(&self) -> EqualFilter<Self> {
-//         EqualFilter {
-//             equal_to: Some(self.clone()),
-//             ..Default::default()
-//         }
-//     }
-// }
