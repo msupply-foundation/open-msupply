@@ -4,7 +4,7 @@ import {
   roundDaysToInteger,
   calculateExpectedUsage,
   calculateStockAtRisk,
-} from "./convert_data";
+} from "./utils";
 import inputData from "../input.json" assert { type: "json" };
 import outputData from "../output.json" assert { type: "json" };
 
