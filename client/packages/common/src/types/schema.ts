@@ -6452,8 +6452,10 @@ export type RnRFormLineNode = {
   initialBalance: Scalars['Float']['output'];
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  losses: Scalars['Float']['output'];
   lowStock: LowStockStatus;
   maximumQuantity: Scalars['Float']['output'];
+  minimumQuantity: Scalars['Float']['output'];
   previousMonthlyConsumptionValues: Scalars['String']['output'];
   quantityConsumed: Scalars['Float']['output'];
   quantityReceived: Scalars['Float']['output'];
@@ -7883,8 +7885,10 @@ export type UpdateRnRFormLineInput = {
   finalBalance: Scalars['Float']['input'];
   id: Scalars['String']['input'];
   initialBalance: Scalars['Float']['input'];
+  losses?: InputMaybe<Scalars['Float']['input']>;
   lowStock: LowStockStatus;
   maximumQuantity: Scalars['Float']['input'];
+  minimumQuantity: Scalars['Float']['input'];
   quantityConsumed?: InputMaybe<Scalars['Float']['input']>;
   quantityReceived?: InputMaybe<Scalars['Float']['input']>;
   stockOutDuration: Scalars['Int']['input'];
