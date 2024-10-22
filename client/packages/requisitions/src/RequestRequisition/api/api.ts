@@ -337,7 +337,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
     return result;
   },
   programSettings: async () => {
-    const result = await sdk.programSettings({ storeId });
-    return result.programRequisitionSettings;
+    const result = await sdk.supplierProgramSettings({ storeId });
+    return result.supplierProgramRequisitionSettings;
   },
 });

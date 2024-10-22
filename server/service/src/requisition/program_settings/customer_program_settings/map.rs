@@ -15,7 +15,7 @@ pub(super) fn map_customer_program_settings(
     settings
         .into_iter()
         .map(|program_setting| {
-            let customer_and_order_types = program_customer_and_requisitions_in_periods
+            let customer_and_order_type = program_customer_and_requisitions_in_periods
                 .iter()
                 .filter(|(customer, _)| customer.program.id == program_setting.program_row.id)
                 .map(|(customer, requisitions_in_periods)| {
@@ -53,7 +53,7 @@ pub(super) fn map_customer_program_settings(
                 .collect();
 
             CustomerProgramSettings {
-                customer_and_order_types,
+                customer_and_order_type,
                 program_requisition_settings: program_setting,
             }
         })
