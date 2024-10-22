@@ -79,17 +79,6 @@ impl<'a> PackagingVariantRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
-
-    pub fn find_one_by_name(
-        &self,
-        packaging_variant_name: &str,
-    ) -> Result<Option<PackagingVariantRow>, RepositoryError> {
-        let result = packaging_variant_dsl::packaging_variant
-            .filter(packaging_variant_dsl::name.eq(packaging_variant_name))
-            .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
-    }
 }
 
 impl Upsert for PackagingVariantRow {
