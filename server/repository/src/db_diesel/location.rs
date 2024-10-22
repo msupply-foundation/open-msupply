@@ -25,6 +25,7 @@ pub struct LocationFilter {
     pub on_hold: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
     pub assigned_to_asset: Option<bool>,
+    // pub temperature_range_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -162,4 +163,9 @@ impl LocationFilter {
         self.store_id = Some(filter);
         self
     }
+
+    // pub fn temperature_range_id(mut self, filter: EqualFilter<String>) -> Self {
+    //     self.temperature_range_id = Some(filter);
+    //     self
+    // }
 }

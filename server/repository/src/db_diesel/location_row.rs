@@ -14,6 +14,7 @@ table! {
         code -> Text,
         on_hold -> Bool,
         store_id -> Text,
+        temperature_range_id -> Nullable<Text>
     }
 }
 
@@ -30,6 +31,7 @@ pub struct LocationRow {
     pub code: String,
     pub on_hold: bool,
     pub store_id: String,
+    pub temperature_range_id: Option<String>,
 }
 
 pub struct LocationRowRepository<'a> {

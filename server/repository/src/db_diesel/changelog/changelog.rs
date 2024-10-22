@@ -81,6 +81,7 @@ pub enum ChangelogTableName {
     TemperatureBreach,
     TemperatureBreachConfig,
     TemperatureLog,
+    TemperatureRange,
     PackVariant,
     Currency,
     AssetClass,
@@ -167,6 +168,7 @@ impl ChangelogTableName {
             ChangelogTableName::VaccineCourseItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::VaccineCourseDose => ChangeLogSyncStyle::Central,
             ChangelogTableName::Vaccination => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::TemperatureRange => ChangeLogSyncStyle::Central,
         }
     }
 }
