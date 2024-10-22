@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/convert_data.js"],
+  "sourcesContent": ["function convert_data() {\n  const res = JSON.parse(Host.inputString());\n  res.items.nodes = processItemLines(res);\n  Host.outputString(JSON.stringify(res));\n}\n\nmodule.exports = {\n  convert_data,\n};\n"],
+  "mappings": ";AAAA,SAAS,eAAe;AACtB,QAAM,MAAM,KAAK,MAAM,KAAK,YAAY,CAAC;AACzC,MAAI,MAAM,QAAQ,iBAAiB,GAAG;AACtC,OAAK,aAAa,KAAK,UAAU,GAAG,CAAC;AACvC;AAEA,OAAO,UAAU;AAAA,EACf;AACF;",
+  "names": []
+}

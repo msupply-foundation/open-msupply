@@ -1,11 +1,7 @@
-function convert_data() {
-  const res = JSON.parse(Host.inputString());
-  res.items.nodes = processItemLines(res.items.nodes);
-  Host.outputString(JSON.stringify(res));
-}
+import { cleanUpNodes } from "../../../../utils";
 
-export const processItemLines = (nodes) => {
-  nodes.forEach((item) => {
+const processItemLines = (res) => {
+  res.items.nodes.forEach((item) => {
     // don't add default values if empty object added
     if (Object.keys(item).length == 0) {
       return;
@@ -36,11 +32,12 @@ export const processItemLines = (nodes) => {
     item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
     item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
   });
-  return nodes;
+  let cleanNodes = cleanUpNodes(res.items.nodes);
+  return cleanNodes;
 };
 
 // function adds month consumption to data  (either this or last month)
-export const calculateQuantity = (queryResult, id) => {
+const calculateQuantity = (queryResult, id) => {
   let quantity = 0;
   if (!!queryResult && !!id) {
     const node = queryResult.find((element) => element.item_id == id);
@@ -49,7 +46,7 @@ export const calculateQuantity = (queryResult, id) => {
   return quantity;
 };
 
-export const calculateStatValue = (value) => {
+const calculateStatValue = (value) => {
   let returnValue = 0;
   if (!!value) {
     // round to 1 decimal
@@ -59,5 +56,8 @@ export const calculateStatValue = (value) => {
 };
 
 module.exports = {
-  convert_data,
+  calculateQuantity,
+  calculateStatValue,
+  processItemLines,
+  cleanUpNodes,
 };

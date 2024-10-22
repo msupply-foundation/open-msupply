@@ -4,9 +4,9 @@ import {
   roundDaysToInteger,
   calculateExpectedUsage,
   calculateStockAtRisk,
-} from "./convert_data";
-import inputData from "./input.json" assert { type: "json" };
-import outputData from "./output.json" assert { type: "json" };
+} from "./utils";
+import inputData from "../input.json" assert { type: "json" };
+import outputData from "../output.json" assert { type: "json" };
 
 describe("test process stock lines", () => {
   beforeAll(() => {

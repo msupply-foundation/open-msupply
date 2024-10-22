@@ -2,9 +2,9 @@ import {
   calculateQuantity,
   calculateStatValue,
   processItemLines,
-} from "./convert_data";
-import inputData from "./input.json" assert { type: "json" };
-import outputData from "./output.json" assert { type: "json" };
+} from "./utils";
+import inputData from "../input.json" assert { type: "json" };
+import outputData from "../output.json" assert { type: "json" };
 
 describe("test item lines", () => {
   it("end to end item-usage", () => {
