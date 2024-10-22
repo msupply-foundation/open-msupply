@@ -1,10 +1,4 @@
-import { cleanUpNodes } from "../../../utils";
-
-function convert_data() {
-  const res = JSON.parse(Host.inputString());
-  res.items.nodes = processItemLines(res);
-  Host.outputString(JSON.stringify(res));
-}
+import { cleanUpNodes } from "../../../../utils";
 
 const processItemLines = (res) => {
   res.items.nodes.forEach((item) => {
