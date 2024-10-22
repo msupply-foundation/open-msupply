@@ -110,9 +110,10 @@ pub async fn generate_report(
             }))
         }
     };
-
+    let ctx_with_con = service_provider.basic_context()?;
     // generate the report with the fetched data
     let file_id = match service.generate_html_report(
+        ctx_with_con.connection,
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
@@ -193,8 +194,10 @@ pub async fn generate_report_definition(
         }
     };
 
+    let ctx_with_connection = service_provider.basic_context()?;
     // generate the report with the fetched data
     let file_id = match service.generate_html_report(
+        ctx_with_connection.connection,
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
