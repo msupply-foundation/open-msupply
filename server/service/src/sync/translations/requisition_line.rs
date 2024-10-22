@@ -46,24 +46,25 @@ pub struct LegacyRequisitionLineRow {
     pub item_name: String,
 
     #[serde(rename = "Cust_prev_stock_balance")]
-    pub cust_prev_stock_balance: f64,
+    pub initial_stock_on_hand_units: f64,
 
     #[serde(rename = "Cust_stock_received")]
-    pub cust_stock_received: f64,
+    pub incoming_units: f64,
 
     #[serde(rename = "Cust_stock_issued")]
-    pub cust_stock_issued: f64,
+    pub outgoing_units: f64,
 
     #[serde(rename = "stockLosses")]
-    pub stock_losses: f64,
+    pub loss_in_units: f64,
 
     #[serde(rename = "stockAdditions")]
-    pub stock_additions: f64,
+    pub addition_in_units: f64,
 
     #[serde(rename = "stockExpiring")]
-    pub stock_expiring: f64,
+    pub expiring_units: f64,
 
-    pub days_out_or_new_demand: f64,
+    #[serde(rename = "days_out_or_new_demand")]
+    pub days_out_of_stock: f64,
 
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option")]
@@ -113,13 +114,13 @@ impl SyncTranslation for RequisitionLineTranslation {
             approved_quantity: data.approved_quantity,
             approval_comment: data.approval_comment,
             item_name: data.item_name,
-            initial_stock_on_hand_units: data.cust_prev_stock_balance,
-            incoming_units: data.cust_stock_received,
-            outgoing_units: data.cust_stock_issued,
-            loss_in_units: data.stock_losses,
-            addition_in_units: data.stock_additions,
-            expiring_units: data.stock_expiring,
-            days_out_of_stock: data.days_out_or_new_demand,
+            initial_stock_on_hand_units: data.initial_stock_on_hand_units,
+            incoming_units: data.incoming_units,
+            outgoing_units: data.outgoing_units,
+            loss_in_units: data.loss_in_units,
+            addition_in_units: data.addition_in_units,
+            expiring_units: data.expiring_units,
+            days_out_of_stock: data.days_out_of_stock,
             option_id: data.option_id,
         };
 
@@ -193,13 +194,13 @@ impl SyncTranslation for RequisitionLineTranslation {
             approved_quantity,
             approval_comment,
             item_name,
-            cust_prev_stock_balance: initial_stock_on_hand_units,
-            cust_stock_received: incoming_units,
-            cust_stock_issued: outgoing_units,
-            stock_losses: loss_in_units,
-            stock_additions: addition_in_units,
-            stock_expiring: expiring_units,
-            days_out_or_new_demand: days_out_of_stock,
+            initial_stock_on_hand_units,
+            incoming_units,
+            outgoing_units,
+            loss_in_units,
+            addition_in_units,
+            expiring_units,
+            days_out_of_stock,
             option_id,
         };
 
