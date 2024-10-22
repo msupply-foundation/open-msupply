@@ -16,7 +16,7 @@ import { MasterListsTab } from './Tabs/MasterLists';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { usePackVariant } from '../context';
 import { PackVariantsTab } from './Tabs/PackVariants';
-import { ItemVariantsTab } from './Tabs/Variants';
+import { ItemVariantsTab } from './Tabs/ItemVariants';
 
 export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
