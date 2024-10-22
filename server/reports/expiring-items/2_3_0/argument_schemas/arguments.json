@@ -14,8 +14,17 @@
         },
         "sortBy": {
           "description": "sort by",
-          "type": "string",
-          "enum": ["name", "code", "expiryDate"]
+          "type": "object",
+          "properties": {
+            "sort": {
+              "type": "string",
+              "enum": ["name", "code", "expiryDate"]
+            },
+            "dir": {
+              "type": "string",
+              "enum": ["asc", "desc"]
+            }
+          }
         },
         "monthlyConsumptionLookBackPeriod": {
           "description": "Average Monthly Consumption Look Back Period",
