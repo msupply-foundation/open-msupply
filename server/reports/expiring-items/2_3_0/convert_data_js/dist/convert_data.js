@@ -148,7 +148,7 @@ var require_utils2 = __commonJS({
 var import_utils = __toESM(require_utils2());
 function convert_data() {
   let res = JSON.parse(Host.inputString());
-  res.stockLines.nodes = (0, import_utils.processStockLines)(res.stockLines.nodes);
+  res.data.stockLines.nodes = (0, import_utils.processStockLines)(res.data.stockLines.nodes);
   Host.outputString(JSON.stringify(res));
 }
 module.exports = {
