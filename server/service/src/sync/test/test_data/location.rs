@@ -29,6 +29,8 @@ const LOCATION_1: (&str, &str) = (
     }"#,
 );
 
+// TODO: Add a sync location with location_type attached to test
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
@@ -39,6 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             code: "Red.02".to_string(),
             on_hold: false,
             store_id: "store_a".to_string(),
+            cold_storage_type_id: None,
         },
     )]
 }
