@@ -8,6 +8,7 @@ export const useResponse = {
     list: Document.useResponses,
     listAll: Document.useResponsesAll,
 
+    insert: Document.useInsertRResponse,
     update: Document.useUpdateResponse,
 
     fields: Document.useResponseFields,
