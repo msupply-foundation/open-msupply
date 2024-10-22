@@ -93,7 +93,12 @@ fn should_update_batches_total_number_of_packs(
         false
     }
 }
-
+// Replace datetimes that are not null with the new status_datetime
+fn replace_status_datetimes(invoice: &mut InvoiceRow, new_status_datetime: NaiveDateTime) {
+    invoice.allocated_datetime = invoice.allocated_datetime.map(|_| new_status_datetime);
+    invoice.picked_datetime = invoice.picked_datetime.map(|_| new_status_datetime);
+    invoice.verified_datetime = invoice.verified_datetime.map(|_| new_status_datetime);
+}
 
 // Handle a change to backdated_time
 fn handle_new_backdated_datetime(invoice: &mut InvoiceRow, backdated_datetime: NaiveDateTime){
@@ -110,13 +115,6 @@ fn handle_new_backdated_datetime(invoice: &mut InvoiceRow, backdated_datetime: N
         replace_status_datetimes(invoice, backdated_datetime);
     }
 
-}
-
-// Replace datetimes that are not null with the new status_datetime
-fn replace_status_datetimes(invoice: &mut InvoiceRow, new_status_datetime: NaiveDateTime) {
-    invoice.allocated_datetime = invoice.allocated_datetime.map(|_| new_status_datetime);
-    invoice.picked_datetime = invoice.picked_datetime.map(|_| new_status_datetime);
-    invoice.verified_datetime = invoice.verified_datetime.map(|_| new_status_datetime);
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePrescriptionStatus>) {
