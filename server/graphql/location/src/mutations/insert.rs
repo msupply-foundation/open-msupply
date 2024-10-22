@@ -47,6 +47,7 @@ pub struct InsertLocationInput {
     pub code: String,
     pub name: Option<String>,
     pub on_hold: Option<bool>,
+    pub temperature_range_id: Option<String>,
 }
 
 impl From<InsertLocationInput> for InsertLocation {
@@ -56,6 +57,7 @@ impl From<InsertLocationInput> for InsertLocation {
             code,
             name,
             on_hold,
+            temperature_range_id,
         }: InsertLocationInput,
     ) -> Self {
         InsertLocation {
@@ -63,6 +65,7 @@ impl From<InsertLocationInput> for InsertLocation {
             code,
             name,
             on_hold,
+            temperature_range_id,
         }
     }
 }
