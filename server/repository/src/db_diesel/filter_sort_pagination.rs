@@ -1,6 +1,7 @@
 use std::ops::Range;
 
 use chrono::{NaiveDate, NaiveDateTime};
+use serde::{Deserialize, Serialize};
 use util::inline_init;
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -100,8 +101,11 @@ impl StringFilter {
     }
 }
 
-#[derive(Clone, PartialEq, Debug)]
-pub struct EqualFilter<T> {
+#[derive(Clone, Deserialize, Serialize, PartialEq, Debug)]
+pub struct EqualFilter<T>
+where
+    T: 'static,
+{
     pub equal_to: Option<T>,
     pub not_equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
