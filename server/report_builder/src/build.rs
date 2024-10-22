@@ -262,7 +262,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
                 .arg("build")
                 .current_dir(dir)
                 .status()
-                .expect("failed to build wasm plugin function");
+                .expect(&format!("failed to build wasm plugin function at: {}", dir));
 
             let encoded = BASE64_STANDARD.encode(fs::read(wasm).unwrap());
 
