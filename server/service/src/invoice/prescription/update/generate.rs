@@ -47,7 +47,6 @@ pub(crate) fn generate(
     update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
     update_invoice.comment = input_comment.or(update_invoice.comment);
     update_invoice.colour = input_colour.or(update_invoice.colour);
-    update_invoice.backdated_datetime = backdated_datetime;
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status()
