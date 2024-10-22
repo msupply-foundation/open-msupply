@@ -31,7 +31,7 @@ pub struct CustomerProgramRequisitionSettingNode {
     pub program_name: String,
     pub program_id: String,
     pub master_list: MasterListNode,
-    pub customer_and_order_type: Vec<CustomerAndOrderTypeNode>,
+    pub customer_and_order_types: Vec<CustomerAndOrderTypeNode>,
 }
 
 #[derive(SimpleObject)]
@@ -123,12 +123,12 @@ pub fn get_customer_program_requisition_settings(
         .map(
             |CustomerProgramSettings {
                  program_requisition_settings,
-                 customer_and_order_type,
+                 customer_and_order_types,
              }: CustomerProgramSettings| CustomerProgramRequisitionSettingNode {
                 program_name: program_requisition_settings.program_row.name,
                 program_id: program_requisition_settings.program_row.id,
                 master_list: MasterListNode::from_domain(program_requisition_settings.master_list),
-                customer_and_order_type: customer_and_order_type
+                customer_and_order_types: customer_and_order_types
                     .into_iter()
                     .map(
                         |(ProgramCustomer { customer, .. }, order_types): (
