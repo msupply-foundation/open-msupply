@@ -18,7 +18,7 @@
           "properties": {
             "sort": {
               "type": "string",
-              "enum": ["name", "code", "expiryDate"]
+              "enum": ["item.name", "code", "expiryDate"]
             },
             "dir": {
               "type": "string",

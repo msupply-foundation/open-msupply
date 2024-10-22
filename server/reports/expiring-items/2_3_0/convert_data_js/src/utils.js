@@ -1,6 +1,6 @@
 import { cleanUpNodes } from "../../../../utils";
 
-const processStockLines = (nodes) => {
+const processStockLines = (nodes, sortBy) => {
   nodes.forEach((line) => {
     if (Object.keys(line).length == 0) {
       return;
@@ -25,7 +25,8 @@ const processStockLines = (nodes) => {
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
   });
   let cleanNodes = cleanUpNodes(nodes);
-  return cleanNodes;
+  let sortedNodes = sortNodes(cleanNodes, sortBy);
+  return sortedNodes;
 };
 
 const calculateDaysUntilExpired = (expiryDateString) => {
@@ -87,10 +88,37 @@ const roundDaysToInteger = (daysUntilExpired) => {
   return rounded;
 };
 
+function getNestedValue(node, key) {
+  return key.split(".").reduce((value, part) => value && value[part], node);
+}
+
+const sortNodes = (nodes, sortBy) => {
+  let { sort, dir } = sortBy ?? { sort: "expiryDate", dir: "desc" };
+
+  nodes.sort((a, b) => {
+    const valueA = getNestedValue(a, sort);
+    const valueB = getNestedValue(b, sort);
+
+    if (valueA === valueB) {
+      return 0;
+    }
+
+    if (dir === "asc") {
+      return valueA > valueB ? 1 : -1;
+    } else {
+      return valueA < valueB ? 1 : -1;
+    }
+  });
+
+  return nodes;
+};
+
 module.exports = {
   calculateExpectedUsage,
   processStockLines,
   calculateDaysUntilExpired,
   calculateStockAtRisk,
   roundDaysToInteger,
+  sortNodes,
+  getNestedValue,
 };

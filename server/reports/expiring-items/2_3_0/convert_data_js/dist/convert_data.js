@@ -60,7 +60,7 @@ var require_utils = __commonJS({
 var require_utils2 = __commonJS({
   "src/utils.js"(exports2, module2) {
     var import_utils2 = __toESM(require_utils());
-    var processStockLines2 = (nodes) => {
+    var processStockLines2 = (nodes, sortBy) => {
       nodes.forEach((line) => {
         if (Object.keys(line).length == 0) {
           return;
@@ -85,7 +85,8 @@ var require_utils2 = __commonJS({
         line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
       });
       let cleanNodes = (0, import_utils2.cleanUpNodes)(nodes);
-      return cleanNodes;
+      sortedNodes = sortNodes(cleanNodes, sortBy);
+      return sortedNodes;
     };
     var calculateDaysUntilExpired = (expiryDateString) => {
       let daysUntilExpired = void 0;
@@ -134,6 +135,27 @@ var require_utils2 = __commonJS({
       }
       return rounded;
     };
+    function getNestedValue(node, key) {
+      return key.split(".").reduce((value, part) => value && value[part], node);
+    }
+    var sortNodes = (nodes, sortBy) => {
+      let { sort, dir } = sortBy;
+      sort = sort ?? "expiryDate";
+      dir = dir ?? "desc";
+      nodes.sort((a, b) => {
+        const valueA = getNestedValue(a, sort);
+        const valueB = getNestedValue(b, sort);
+        if (valueA === valueB) {
+          return 0;
+        }
+        if (dir === "asc") {
+          return valueA > valueB ? 1 : -1;
+        } else {
+          return valueA < valueB ? 1 : -1;
+        }
+      });
+      return nodes;
+    };
     module2.exports = {
       calculateExpectedUsage,
       processStockLines: processStockLines2,
@@ -148,7 +170,15 @@ var require_utils2 = __commonJS({
 var import_utils = __toESM(require_utils2());
 function convert_data() {
   let res = JSON.parse(Host.inputString());
-  res.data.stockLines.nodes = (0, import_utils.processStockLines)(res.data.stockLines.nodes);
+  console.log(
+    "#### sort by: ",
+    res.arguments.sortBy.sort,
+    res.arguments.sortBy.dir
+  );
+  res.data.stockLines.nodes = (0, import_utils.processStockLines)(
+    res.data.stockLines.nodes,
+    res.arguments.sortBy
+  );
   Host.outputString(JSON.stringify(res));
 }
 module.exports = {

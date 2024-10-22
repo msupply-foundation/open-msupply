@@ -4,6 +4,8 @@ import {
   roundDaysToInteger,
   calculateExpectedUsage,
   calculateStockAtRisk,
+  sortNodes,
+  getNestedValue,
 } from "./utils";
 import inputData from "../input.json" assert { type: "json" };
 import outputData from "../output.json" assert { type: "json" };
@@ -18,7 +20,10 @@ describe("test process stock lines", () => {
   // calculateStockAtRisk.mockImplementation(() => 10);
   // roundDaysToInteger.mockImplementation(() => 10);
   it("end to end", () => {
-    const result = processStockLines(inputData.stockLines.nodes);
+    const result = processStockLines(inputData.stockLines.nodes, {
+      sort: "expiryDate",
+      dir: "desc",
+    });
     expect(result).toEqual(outputData.stockLines.nodes);
   });
   afterAll(() => {
@@ -85,6 +90,27 @@ describe("test round days to integer", () => {
     expect(roundDaysToInteger(2.11)).toBe(2);
     expect(roundDaysToInteger(0.123)).toBe(0);
     expect(roundDaysToInteger(2)).toBe(2);
+  });
+});
+
+describe("sorts nodes as expected", () => {
+  it("returns sorted by expiryDate and asc if no sort provided", () => {
+    expect(
+      sortNodes([
+        { expiryDate: 1 },
+        { expiryDate: 3 },
+        { expiryDate: 2 },
+        { expiryDate: 5 },
+      ])
+    ).toEqual([
+      { expiryDate: 5 },
+      { expiryDate: 3 },
+      { expiryDate: 2 },
+      { expiryDate: 1 },
+    ]);
+  });
+  it("returns sorting on nested value", () => {
+    expect(true).toBe(false);
   });
 });
 
