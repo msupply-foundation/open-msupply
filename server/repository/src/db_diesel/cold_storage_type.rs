@@ -1,6 +1,6 @@
 use super::{
-    temperature_range_row::{temperature_range, temperature_range::dsl as temperature_range_dsl},
-    DBType, StorageConnection, TemperatureRangeRow,
+    cold_storage_type_row::{cold_storage_type, cold_storage_type::dsl as cold_storage_type_dsl},
+    ColdStorageTypeRow, DBType, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -14,7 +14,7 @@ use crate::{EqualFilter, Pagination, Sort};
 
 #[derive(PartialEq, Debug, Clone, serde::Serialize)]
 pub struct TemperatureRange {
-    pub temperature_range_row: TemperatureRangeRow,
+    pub temperature_range_row: ColdStorageTypeRow,
 }
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -64,20 +64,20 @@ impl<'a> TemperatureRangeRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 TemperatureRangeSortField::Id => {
-                    apply_sort_no_case!(query, sort, temperature_range_dsl::id)
+                    apply_sort_no_case!(query, sort, cold_storage_type_dsl::id)
                 }
                 TemperatureRangeSortField::Name => {
-                    apply_sort!(query, sort, temperature_range_dsl::name)
+                    apply_sort!(query, sort, cold_storage_type_dsl::name)
                 }
             }
         } else {
-            query = query.order(temperature_range_dsl::name.desc())
+            query = query.order(cold_storage_type_dsl::name.desc())
         }
 
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<TemperatureRangeRow>(self.connection.lock().connection())?;
+            .load::<ColdStorageTypeRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -85,22 +85,22 @@ impl<'a> TemperatureRangeRepository<'a> {
     pub fn create_filtered_query(
         filter: Option<TemperatureRangeFilter>,
     ) -> BoxedTemperatureRangeQuery {
-        let mut query = temperature_range_dsl::temperature_range.into_boxed();
+        let mut query = cold_storage_type_dsl::cold_storage_type.into_boxed();
 
         if let Some(f) = filter {
             let TemperatureRangeFilter { id, name } = f;
 
-            apply_equal_filter!(query, id, temperature_range_dsl::id);
-            apply_equal_filter!(query, name, temperature_range_dsl::name);
+            apply_equal_filter!(query, id, cold_storage_type_dsl::id);
+            apply_equal_filter!(query, name, cold_storage_type_dsl::name);
         }
 
         query
     }
 }
 
-type BoxedTemperatureRangeQuery = temperature_range::BoxedQuery<'static, DBType>;
+type BoxedTemperatureRangeQuery = cold_storage_type::BoxedQuery<'static, DBType>;
 
-fn to_domain(temperature_range_row: TemperatureRangeRow) -> TemperatureRange {
+fn to_domain(temperature_range_row: ColdStorageTypeRow) -> TemperatureRange {
     TemperatureRange {
         temperature_range_row,
     }
