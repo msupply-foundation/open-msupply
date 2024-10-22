@@ -11,8 +11,10 @@ use self::{
     },
     requisition_supply_status::{get_requisitions_supply_statuses, RequisitionLineSupplyStatus},
     response_requisition::{
-        create_requisition_shipment, insert_response_requisition, supply_requested_quantity,
-        update_response_requisition, CreateRequisitionShipment, CreateRequisitionShipmentError,
+        create_requisition_shipment, insert_program_response_requisition,
+        insert_response_requisition, supply_requested_quantity, update_response_requisition,
+        CreateRequisitionShipment, CreateRequisitionShipmentError,
+        InsertProgramResponseRequisition, InsertProgramResponseRequisitionError,
         InsertResponseRequisition, InsertResponseRequisitionError, SupplyRequestedQuantity,
         SupplyRequestedQuantityError, UpdateResponseRequisition, UpdateResponseRequisitionError,
     },
@@ -24,10 +26,9 @@ use program_settings::{
     customer_program_settings::CustomerProgramSettings, get_customer_program_requisition_settings,
     get_supplier_program_requisition_settings, supplier_program_settings::SupplierProgramSettings,
 };
-use repository::PaginationOption;
 use repository::{
-    requisition_row::RequisitionType, Invoice, RepositoryError, Requisition, RequisitionFilter,
-    RequisitionLine, RequisitionSort,
+    requisition_row::RequisitionType, Invoice, PaginationOption, RepositoryError, Requisition,
+    RequisitionFilter, RequisitionLine, RequisitionSort,
 };
 
 pub mod common;
@@ -130,6 +131,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: InsertResponseRequisition,
     ) -> Result<Requisition, InsertResponseRequisitionError> {
         insert_response_requisition(ctx, input)
+    }
+
+    fn insert_program_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertProgramResponseRequisition,
+    ) -> Result<Requisition, InsertProgramResponseRequisitionError> {
+        insert_program_response_requisition(ctx, input)
     }
 
     fn update_response_requisition(
