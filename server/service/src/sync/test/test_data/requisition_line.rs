@@ -99,6 +99,7 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
             expiring_units: 0.0,
             days_out_of_stock: 0.0,
             option_id: None,
+            stock_adjustment_in_units: 0.0
         }),
     }
 }
@@ -204,6 +205,7 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             expiring_units: 0.0,
             days_out_of_stock: 0.0,
             option_id: None,
+            stock_adjustment_in_units: 0.0
         }),
     }
 }

@@ -69,6 +69,9 @@ pub struct LegacyRequisitionLineRow {
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub option_id: Option<String>,
+
+    #[serde(rename = "Cust_loss_adjust")]
+    pub stock_adjustment_in_units: f64,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -202,6 +205,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             expiring_units,
             days_out_of_stock,
             option_id,
+            stock_adjustment_in_units: addition_in_units - loss_in_units,
         };
 
         Ok(PushTranslateResult::upsert(
