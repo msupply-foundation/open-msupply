@@ -12,8 +12,9 @@ use self::{
     },
     requisition_supply_status::{get_requisitions_supply_statuses, RequisitionLineSupplyStatus},
     response_requisition::{
-        create_requisition_shipment, supply_requested_quantity, update_response_requisition,
-        CreateRequisitionShipment, CreateRequisitionShipmentError, SupplyRequestedQuantity,
+        create_requisition_shipment, insert_response_requisition, supply_requested_quantity,
+        update_response_requisition, CreateRequisitionShipment, CreateRequisitionShipmentError,
+        InsertResponseRequisition, InsertResponseRequisitionError, SupplyRequestedQuantity,
         SupplyRequestedQuantityError, UpdateResponseRequisition, UpdateResponseRequisitionError,
     },
 };
@@ -118,6 +119,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: AddFromMasterList,
     ) -> Result<Vec<RequisitionLine>, AddFromMasterListError> {
         add_from_master_list(ctx, input)
+    }
+
+    fn insert_response_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertResponseRequisition,
+    ) -> Result<Requisition, InsertResponseRequisitionError> {
+        insert_response_requisition(ctx, input)
     }
 
     fn update_response_requisition(
