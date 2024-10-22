@@ -1,9 +1,9 @@
-import { cleanUpNodes } from "../../../utils";
+import { cleanUpNodes } from "../../../../utils";
 
 function convert_data() {
   let res = JSON.parse(Host.inputString());
-  res.stockLines.nodes = processStockLines(res.stockLines.nodes);
-  Host.outputString(JSON.stringify(resProcessed));
+  // res.stockLines.nodes = processStockLines(res.stockLines.nodes);
+  Host.outputString(JSON.stringify(res));
 }
 
 const processStockLines = (nodes) => {
