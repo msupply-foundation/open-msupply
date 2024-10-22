@@ -108,7 +108,7 @@ fn generate(
         name_link_id: other_party_id,
         store_id: store_id.to_string(),
         r#type: RequisitionType::Response,
-        status: RequisitionStatus::Draft,
+        status: RequisitionStatus::New,
         created_datetime: Utc::now().naive_utc(),
         max_months_of_stock,
         min_months_of_stock,
