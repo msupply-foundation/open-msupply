@@ -24,7 +24,7 @@ impl MigrationFragment for Migrate {
             connection,
             r#"
                 ALTER TABLE location
-                ADD COLUMN IF NOT EXISTS cold_storage_type_id TEXT
+                ADD COLUMN cold_storage_type_id TEXT
                 REFERENCES cold_storage_type(id);
             "#
         )?;

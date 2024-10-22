@@ -288,12 +288,7 @@ mod test {
         // Record Already Exists
         let test_service = TestService(Box::new(|_| {
             Ok(Location {
-                location_row: LocationRow {
-                    id: "id".to_owned(),
-                    name: "name".to_owned(),
-                    code: "code".to_owned(),
-                    on_hold: true,
-                    store_id: "store_a".to_owned(),
+                location_row: LocationRow {id:"id".to_owned(),name:"name".to_owned(),code:"code".to_owned(),on_hold:true,store_id:"store_a".to_owned(), cold_storage_type_id: None 
                 },
             })
         }));
