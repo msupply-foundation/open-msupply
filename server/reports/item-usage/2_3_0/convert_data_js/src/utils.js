@@ -56,7 +56,6 @@ const calculateStatValue = (value) => {
 };
 
 module.exports = {
-  convert_data,
   calculateQuantity,
   calculateStatValue,
   processItemLines,
