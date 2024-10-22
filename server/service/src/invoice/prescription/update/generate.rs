@@ -34,28 +34,14 @@ pub(crate) fn generate(
         should_update_batches_total_number_of_packs(&existing_invoice, &input_status);
     let mut update_invoice = existing_invoice.clone();
 
-    let backdated_datetime = backdated_datetime.or(existing_invoice.backdated_datetime);
 
-    // check if backdated_datetime is after created_datetime, if so it's not really backdated
-    let backdated_datetime = match backdated_datetime {
-        Some(backdated_datetime) => {
-            if backdated_datetime > existing_invoice.created_datetime {
-                if update_invoice.picked_datetime.is_some() {
-                    // Since we aren't really backdating, we should set picked_datetime to now
-                    update_invoice.picked_datetime = Some(Utc::now().naive_utc());
-                }
-                None
-            } else {
-                Some(backdated_datetime)
-            }
-        }
-        None => None,
-    };
-
-    set_new_status_datetime(&mut update_invoice, &input_status);
     if let Some(backdated_datetime) = backdated_datetime {
-        backdate_status_datetimes(&mut update_invoice, backdated_datetime);
+        // This will update the backdated_datetime in the mut update_invoice
+        // So status code can assume it's already been set on the update_invoice
+        handle_new_backdated_datetime(&mut update_invoice, backdated_datetime);
     }
+   
+    set_new_status_datetime(&mut update_invoice, &input_status);
 
     update_invoice.name_link_id = input_patient_id.unwrap_or(update_invoice.name_link_id);
     update_invoice.clinician_link_id = input_clinician_id.or(update_invoice.clinician_link_id);
@@ -108,11 +94,29 @@ fn should_update_batches_total_number_of_packs(
     }
 }
 
-// Replace datestimes that are not null with backdated_datime
-fn backdate_status_datetimes(invoice: &mut InvoiceRow, backdated_datetime: NaiveDateTime) {
-    invoice.allocated_datetime = invoice.allocated_datetime.map(|_| backdated_datetime);
-    invoice.picked_datetime = invoice.picked_datetime.map(|_| backdated_datetime);
-    invoice.verified_datetime = invoice.verified_datetime.map(|_| backdated_datetime);
+
+// Handle a change to backdated_time
+fn handle_new_backdated_datetime(invoice: &mut InvoiceRow, backdated_datetime: NaiveDateTime){
+    
+    // We need to check if we are actually needing to back_date here, if the backdated_datetime is in the future, we unset the backdated_datetime as it isn't possible to future date.
+    if invoice.created_datetime < backdated_datetime {
+        // Not actually backdated!
+        let now = Utc::now().naive_utc();
+        invoice.backdated_datetime = None;
+        replace_status_datetimes(invoice, now);
+     } else{
+        // Otherwise, we need to update the backdated_datetime to the new one, and replace existing status times
+        invoice.backdated_datetime = Some(backdated_datetime);
+        replace_status_datetimes(invoice, backdated_datetime);
+    }
+
+}
+
+// Replace datetimes that are not null with the new status_datetime
+fn replace_status_datetimes(invoice: &mut InvoiceRow, new_status_datetime: NaiveDateTime) {
+    invoice.allocated_datetime = invoice.allocated_datetime.map(|_| new_status_datetime);
+    invoice.picked_datetime = invoice.picked_datetime.map(|_| new_status_datetime);
+    invoice.verified_datetime = invoice.verified_datetime.map(|_| new_status_datetime);
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePrescriptionStatus>) {
@@ -125,19 +129,20 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePresc
         return;
     }
 
-    let current_datetime = Utc::now().naive_utc();
+    // Use the invoice's backdated datetime if it's set, otherwise set the status to now
+    let status_datetime = invoice.backdated_datetime.unwrap_or(Utc::now().naive_utc());
 
     match (&invoice.status, new_status) {
         (InvoiceStatus::Verified, _) => {}
         (InvoiceStatus::New, UpdatePrescriptionStatus::Verified) => {
-            invoice.picked_datetime = Some(current_datetime);
-            invoice.verified_datetime = Some(current_datetime)
+            invoice.picked_datetime = Some(status_datetime);
+            invoice.verified_datetime = Some(status_datetime)
         }
         (InvoiceStatus::New, UpdatePrescriptionStatus::Picked) => {
-            invoice.picked_datetime = Some(current_datetime);
+            invoice.picked_datetime = Some(status_datetime);
         }
         (InvoiceStatus::Picked, UpdatePrescriptionStatus::Verified) => {
-            invoice.verified_datetime = Some(current_datetime)
+            invoice.verified_datetime = Some(status_datetime)
         }
         _ => {}
     }
