@@ -2740,6 +2740,24 @@ export type InsertProgramRequestRequisitionInput = {
 
 export type InsertProgramRequestRequisitionResponse = InsertProgramRequestRequisitionError | RequisitionNode;
 
+export type InsertProgramResponseRequisitionError = {
+  __typename: 'InsertProgramResponseRequisitionError';
+  error: InsertProgramResponseRequisitionErrorInterface;
+};
+
+export type InsertProgramResponseRequisitionErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertProgramResponseRequisitionInput = {
+  id: Scalars['String']['input'];
+  otherPartyId: Scalars['String']['input'];
+  periodId: Scalars['String']['input'];
+  programOrderTypeId: Scalars['String']['input'];
+};
+
+export type InsertProgramResponseRequisitionResponse = InsertProgramResponseRequisitionError | RequisitionNode;
+
 export type InsertRepackError = {
   __typename: 'InsertRepackError';
   error: InsertRepackErrorInterface;
@@ -3715,7 +3733,7 @@ export type MasterListSortInput = {
 
 export type MasterListsResponse = MasterListConnector;
 
-export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInterface & {
+export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInterface & InsertProgramResponseRequisitionErrorInterface & {
   __typename: 'MaxOrdersReachedForPeriod';
   description: Scalars['String']['output'];
 };
@@ -3799,6 +3817,7 @@ export type Mutations = {
    */
   insertProgramPatient: InsertProgramPatientResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
+  insertProgramResponseRequisition: InsertProgramResponseRequisitionResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
@@ -4182,6 +4201,12 @@ export type MutationsInsertProgramPatientArgs = {
 
 export type MutationsInsertProgramRequestRequisitionArgs = {
   input: InsertProgramRequestRequisitionInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertProgramResponseRequisitionArgs = {
+  input: InsertProgramResponseRequisitionInput;
   storeId: Scalars['String']['input'];
 };
 
