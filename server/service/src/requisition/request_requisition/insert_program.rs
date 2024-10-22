@@ -2,8 +2,8 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_row_exists, program_settings::get_program_requisition_settings,
-        query::get_requisition,
+        common::check_requisition_row_exists,
+        program_settings::get_supplier_program_requisition_settings, query::get_requisition,
     },
     service_provider::ServiceContext,
 };
@@ -87,7 +87,7 @@ fn validate(
         return Err(OutError::RequisitionAlreadyExists);
     }
 
-    let program_settings = get_program_requisition_settings(ctx, &ctx.store_id)?;
+    let program_settings = get_supplier_program_requisition_settings(ctx, &ctx.store_id)?;
 
     let (program_setting, order_type) = program_settings
         .iter()
