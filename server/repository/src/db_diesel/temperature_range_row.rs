@@ -1,7 +1,5 @@
 use super::{
-    // temperature_range_row::temperature_range,
-    temperature_range_row::temperature_range::dsl as temperature_range_dsl,
-    StorageConnection,
+    temperature_range_row::temperature_range::dsl as temperature_range_dsl, StorageConnection,
 };
 use crate::{repository_error::RepositoryError, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
@@ -16,10 +14,6 @@ table! {
         max_temperature -> Double,
     }
 }
-
-// joinable!(location_movement -> store (store_id));
-// joinable!(location_movement -> stock_line (stock_line_id));
-// joinable!(location_movement -> location (location_id));
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
