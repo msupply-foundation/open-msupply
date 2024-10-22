@@ -113,6 +113,15 @@ impl RequisitionMutations {
         request_requisition::add_from_master_list::add_from_master_list(ctx, &store_id, input)
     }
 
+    async fn insert_response_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: response_requisition::insert::InsertInput,
+    ) -> Result<response_requisition::insert::InsertResponse> {
+        response_requisition::insert::insert(ctx, &store_id, input)
+    }
+
     async fn update_response_requisition(
         &self,
         ctx: &Context<'_>,
