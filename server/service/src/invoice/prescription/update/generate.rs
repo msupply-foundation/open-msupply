@@ -26,7 +26,7 @@ pub(crate) fn generate(
         clinician_id: input_clinician_id,
         comment: input_comment,
         colour: input_colour,
-        backdated_datetime,
+        backdated_datetime: backdated_datetime_input,
     }: UpdatePrescription,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdatePrescriptionError> {
@@ -35,7 +35,7 @@ pub(crate) fn generate(
     let mut update_invoice = existing_invoice.clone();
 
 
-    if let Some(backdated_datetime) = backdated_datetime {
+    if let Some(backdated_datetime) = backdated_datetime_input {
         // This will update the backdated_datetime in the mut update_invoice
         // So status code can assume it's already been set on the update_invoice
         handle_new_backdated_datetime(&mut update_invoice, backdated_datetime);
