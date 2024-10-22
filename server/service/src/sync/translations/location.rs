@@ -60,7 +60,7 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id,
-            temperature_range_id: None,
+            cold_storage_type_id: None,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -77,7 +77,7 @@ impl SyncTranslation for LocationTranslation {
             code,
             on_hold,
             store_id,
-            temperature_range_id: _,
+            cold_storage_type_id: _,
         } = LocationRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(

@@ -1,5 +1,5 @@
 use super::{
-    temperature_range_row::temperature_range::dsl as temperature_range_dsl, StorageConnection,
+    cold_storage_type_row::cold_storage_type::dsl as cold_storage_type_dsl, StorageConnection,
 };
 use crate::{repository_error::RepositoryError, Upsert};
 use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType};
@@ -7,7 +7,7 @@ use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActi
 use diesel::prelude::*;
 
 table! {
-    temperature_range (id) {
+    cold_storage_type (id) {
         id -> Text,
         name -> Text,
         min_temperature -> Double,
@@ -18,27 +18,27 @@ table! {
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
 )]
-#[diesel(table_name = temperature_range)]
-pub struct TemperatureRangeRow {
+#[diesel(table_name = cold_storage_type)]
+pub struct ColdStorageTypeRow {
     pub id: String,
     pub name: String,
     pub min_temperature: f64,
     pub max_temperature: f64,
 }
 
-pub struct TemperatureRangeRowRepository<'a> {
+pub struct ColdStorageTypeRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> TemperatureRangeRowRepository<'a> {
+impl<'a> ColdStorageTypeRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        TemperatureRangeRowRepository { connection }
+        ColdStorageTypeRowRepository { connection }
     }
 
-    pub fn upsert_one(&self, row: &TemperatureRangeRow) -> Result<i64, RepositoryError> {
-        diesel::insert_into(temperature_range_dsl::temperature_range)
+    pub fn upsert_one(&self, row: &ColdStorageTypeRow) -> Result<i64, RepositoryError> {
+        diesel::insert_into(cold_storage_type_dsl::cold_storage_type)
             .values(row)
-            .on_conflict(temperature_range_dsl::id)
+            .on_conflict(cold_storage_type_dsl::id)
             .do_update()
             .set(row)
             .execute(self.connection.lock().connection())?;
@@ -47,11 +47,11 @@ impl<'a> TemperatureRangeRowRepository<'a> {
 
     fn insert_changelog(
         &self,
-        row: &TemperatureRangeRow,
+        row: &ColdStorageTypeRow,
         action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
-            table_name: ChangelogTableName::TemperatureRange,
+            table_name: ChangelogTableName::ColdStorageType,
             record_id: row.id.clone(),
             row_action: action,
             store_id: None,
@@ -61,9 +61,9 @@ impl<'a> TemperatureRangeRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&row)
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<TemperatureRangeRow>, RepositoryError> {
-        let result = temperature_range_dsl::temperature_range
-            .filter(temperature_range_dsl::id.eq(id))
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ColdStorageTypeRow>, RepositoryError> {
+        let result = cold_storage_type_dsl::cold_storage_type
+            .filter(cold_storage_type_dsl::id.eq(id))
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
@@ -71,23 +71,23 @@ impl<'a> TemperatureRangeRowRepository<'a> {
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
-            temperature_range_dsl::temperature_range.filter(temperature_range_dsl::id.eq(id)),
+            cold_storage_type_dsl::cold_storage_type.filter(cold_storage_type_dsl::id.eq(id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
-impl Upsert for TemperatureRangeRow {
+impl Upsert for ColdStorageTypeRow {
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        let change_log_id = TemperatureRangeRowRepository::new(con).upsert_one(self)?;
+        let change_log_id = ColdStorageTypeRowRepository::new(con).upsert_one(self)?;
         Ok(Some(change_log_id))
     }
 
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            TemperatureRangeRowRepository::new(con).find_one_by_id(&self.id),
+            ColdStorageTypeRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }
