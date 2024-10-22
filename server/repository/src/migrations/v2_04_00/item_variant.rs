@@ -17,7 +17,7 @@ impl MigrationFragment for Migrate {
                 id TEXT PRIMARY KEY NOT NULL,
                 name TEXT NOT NULL,
                 item_link_id TEXT NOT NULL REFERENCES item_link(id),
-                --TODO temperature_range_id TEXT REFERENCES temperature_range(id),
+                cold_storage_type_id TEXT REFERENCES cold_storage_type(id),
                 doses_per_unit {DOUBLE},
                 manufacturer_link_id TEXT REFERENCES name_link(id),
                 deleted_datetime {DATETIME}
