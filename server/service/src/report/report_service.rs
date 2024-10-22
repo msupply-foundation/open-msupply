@@ -455,6 +455,12 @@ fn wasm_sql(
     })
 }
 
+#[derive(Serialize)]
+struct WasmData {
+    data: serde_json::Value,
+    arguments: Option<serde_json::Value>,
+}
+
 fn transform_data(
     connection: StorageConnection,
     data: serde_json::Value,
@@ -466,15 +472,8 @@ fn transform_data(
     };
 
     // add arguments in to data passed to wasm function if arguments are passed
-    let mut input_data = data;
-    if let Some(arguments) = arguments {
-        let arguments_map: serde_json::Map<String, serde_json::Value> =
-            arguments.as_object().unwrap().clone();
-        let mut input_data_map: serde_json::Map<String, serde_json::Value> =
-            input_data.as_object().unwrap().clone();
-        input_data_map.extend(arguments_map);
-        input_data = serde_json::to_value(&input_data_map).unwrap();
-    }
+    let input_data = WasmData { data, arguments };
+    let input_data_serialised = serde_json::to_value(input_data).unwrap();
 
     let manifest = Manifest::new([Wasm::Data {
         data: BASE64_STANDARD.decode(convert_data).unwrap(),
@@ -489,10 +488,8 @@ fn transform_data(
         .build()
         .unwrap();
 
-    // println!("convert data {:?}", data);
-
     plugin
-        .call::<serde_json::Value, serde_json::Value>("convert_data", input_data)
+        .call::<serde_json::Value, serde_json::Value>("convert_data", input_data_serialised)
         .unwrap()
 }
 
