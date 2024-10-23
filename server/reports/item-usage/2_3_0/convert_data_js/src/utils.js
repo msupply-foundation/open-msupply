@@ -1,6 +1,6 @@
 import { cleanUpNodes } from "../../../../utils";
 
-const processItemLines = (res) => {
+const processItemLines = (res, sortBy) => {
   res.items.nodes.forEach((item) => {
     // don't add default values if empty object added
     if (Object.keys(item).length == 0) {
@@ -32,8 +32,8 @@ const processItemLines = (res) => {
     item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
     item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
   });
-  let cleanNodes = cleanUpNodes(res.items.nodes);
-  return cleanNodes;
+  let sortedNodes = sortNodes(cleanNodes, sortBy);
+  return sortedNodes;
 };
 
 // function adds month consumption to data  (either this or last month)
@@ -55,9 +55,37 @@ const calculateStatValue = (value) => {
   return returnValue;
 };
 
+function getNestedValue(node, key) {
+  return key.split(".").reduce((value, part) => value && value[part], node);
+}
+
+const sortNodes = (nodes, sortBy) => {
+  let { sort, dir } = sortBy ?? {};
+
+  sort = sort ?? "expiryDate";
+  dir = dir ?? "desc";
+  nodes.sort((a, b) => {
+    const valueA = getNestedValue(a, sort);
+    const valueB = getNestedValue(b, sort);
+
+    if (valueA === valueB) {
+      return 0;
+    }
+
+    if (dir === "asc") {
+      return valueA > valueB ? 1 : -1;
+    } else {
+      return valueA < valueB ? 1 : -1;
+    }
+  });
+
+  return nodes;
+};
+
 module.exports = {
   calculateQuantity,
   calculateStatValue,
   processItemLines,
   cleanUpNodes,
+  sortNodes,
 };
