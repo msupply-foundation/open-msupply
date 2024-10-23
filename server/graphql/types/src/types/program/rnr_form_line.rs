@@ -53,6 +53,10 @@ impl RnRFormLineNode {
         self.rnr_form_line_row.adjusted_quantity_consumed
     }
 
+    pub async fn losses(&self) -> f64 {
+        self.rnr_form_line_row.entered_losses.unwrap_or(0.0)
+    }
+
     pub async fn adjustments(&self) -> f64 {
         self.rnr_form_line_row
             .entered_adjustments
@@ -65,6 +69,10 @@ impl RnRFormLineNode {
 
     pub async fn final_balance(&self) -> f64 {
         self.rnr_form_line_row.final_balance
+    }
+
+    pub async fn minimum_quantity(&self) -> f64 {
+        self.rnr_form_line_row.minimum_quantity
     }
 
     pub async fn maximum_quantity(&self) -> f64 {
