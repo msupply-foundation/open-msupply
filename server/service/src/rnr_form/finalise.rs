@@ -132,8 +132,8 @@ fn generate(
         expected_delivery_date: None,
         colour: None,
         comment: Some("Automatically created from R&R Form".to_string()),
-        their_reference: None,
         max_months_of_stock: 0.0,
+        their_reference: rnr_form_row.their_reference.clone(),
         min_months_of_stock: 0.0,
         approval_status: None,
         linked_requisition_id: None,
@@ -186,7 +186,14 @@ fn generate(
                     approved_quantity: 0.0,
                     approval_comment: None,
                     comment: None,
-                    // TODO add Cust_pre_stock_balance, Cust_stock_received, Cust_stock_ord, Cust_stock_adj (in mSupply but not in OMS Yet)
+                    initial_stock_on_hand_units: 0.0,
+                    incoming_units: 0.0,
+                    outgoing_units: 0.0,
+                    loss_in_units: 0.0,
+                    addition_in_units: 0.0,
+                    expiring_units: 0.0,
+                    days_out_of_stock: 0.0,
+                    option_id: None,
                 };
 
                 // Also return rnr_form_line_id, so we can update the rnr form line with the requisition line id

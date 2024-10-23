@@ -1,5 +1,5 @@
 use repository::{
-    demographic_indicator_row::{DemographicIndicatorRow, DemographicIndicatorRowRepository},
+    demographic_row::{DemographicRow, DemographicRowRepository},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
@@ -10,14 +10,14 @@ use super::{
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(DemographicIndicatorTranslation)
+    Box::new(DemographicTranslation)
 }
 
-pub(crate) struct DemographicIndicatorTranslation;
+pub(crate) struct DemographicTranslation;
 
-impl SyncTranslation for DemographicIndicatorTranslation {
+impl SyncTranslation for DemographicTranslation {
     fn table_name(&self) -> &'static str {
-        "demographic_indicator"
+        "demographic"
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
@@ -30,12 +30,12 @@ impl SyncTranslation for DemographicIndicatorTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            DemographicIndicatorRow,
+            DemographicRow,
         >(&sync_record.data)?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::DemographicIndicator)
+        Some(ChangelogTableName::Demographic)
     }
 
     fn should_translate_to_sync_record(
@@ -56,10 +56,10 @@ impl SyncTranslation for DemographicIndicatorTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = DemographicIndicatorRowRepository::new(connection)
+        let row = DemographicRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "DemographicIndicator row ({}) not found",
+                "Demographic row ({}) not found",
                 changelog.record_id
             )))?;
 
@@ -77,15 +77,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_demographic_indicator_translation() {
-        use crate::sync::test::test_data::demographic_indicator as test_data;
-        let translator = DemographicIndicatorTranslation;
+    async fn test_demographic_translation() {
+        use crate::sync::test::test_data::demographic as test_data;
+        let translator = DemographicTranslation;
 
-        let (_, connection, _, _) = setup_all(
-            "test_demographic_indicator_translation",
-            MockDataInserts::none(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_demographic_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
