@@ -18,7 +18,7 @@ impl MigrationFragment for Migrate {
                 ALTER TABLE requisition_line ADD addition_in_units {DOUBLE} NOT NULL DEFAULT 0;
                 ALTER TABLE requisition_line ADD expiring_units {DOUBLE} NOT NULL DEFAULT 0;
                 ALTER TABLE requisition_line ADD days_out_of_stock {DOUBLE} NOT NULL DEFAULT 0;
-                ALTER TABLE requisition_line ADD option_ID REFERENCES reason_option(id);
+                ALTER TABLE requisition_line ADD option_id TEXT REFERENCES reason_option(id);
                 "#
         )?;
 
