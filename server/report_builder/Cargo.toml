@@ -24,3 +24,4 @@ serde_yaml = { workspace = true }
 log = { workspace = true }
 reqwest = { workspace = true }
 regex = { workspace = true }
+base64 = "0.22.1"

@@ -130,7 +130,7 @@ use crate::{
     },
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
-    ContextRowRepository, CurrencyRow, DemographicIndicatorRow, Document, DocumentRegistryRow,
+    ContextRowRepository, CurrencyRow, DemographicRow, Document, DocumentRegistryRow,
     DocumentRegistryRowRepository, DocumentRepository, EncounterRow, EncounterRowRepository,
     FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
@@ -162,7 +162,7 @@ use super::{
     StoreRowRepository, UnitRow, UnitRowRepository,
 };
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct MockData {
     pub user_accounts: Vec<UserAccountRow>,
     pub user_store_joins: Vec<UserStoreJoinRow>,
@@ -216,7 +216,7 @@ pub struct MockData {
     pub plugin_data: Vec<PluginDataRow>,
     pub assets: Vec<AssetRow>,
     pub asset_logs: Vec<AssetLogRow>,
-    pub demographic_indicators: Vec<DemographicIndicatorRow>,
+    pub demographics: Vec<DemographicRow>,
     pub properties: Vec<PropertyRow>,
     pub rnr_forms: Vec<RnRFormRow>,
     pub rnr_form_lines: Vec<RnRFormLineRow>,
@@ -292,7 +292,7 @@ pub struct MockDataInserts {
     pub plugin_data: bool,
     pub assets: bool,
     pub asset_logs: bool,
-    pub demographic_indicators: bool,
+    pub demographics: bool,
     pub properties: bool,
     pub rnr_forms: bool,
     pub rnr_form_lines: bool,
@@ -357,7 +357,7 @@ impl MockDataInserts {
             plugin_data: true,
             assets: true,
             asset_logs: true,
-            demographic_indicators: true,
+            demographics: true,
             properties: true,
             rnr_forms: true,
             rnr_form_lines: true,
@@ -616,13 +616,13 @@ impl MockDataInserts {
         self
     }
 
-    pub fn demographic_indicators(mut self) -> Self {
-        self.demographic_indicators = true;
+    pub fn demographics(mut self) -> Self {
+        self.demographics = true;
         self
     }
 
     pub fn properties(mut self) -> Self {
-        self.demographic_indicators = true;
+        self.demographics = true;
         self
     }
 
@@ -749,7 +749,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             clinicians: mock_clinicians(),
             assets: mock_assets(),
             asset_logs: mock_asset_logs(),
-            demographic_indicators: mock_demographic_indicators(),
+            demographics: mock_demographics(),
             properties: mock_properties(),
             rnr_forms: mock_rnr_forms(),
             rnr_form_lines: mock_rnr_form_lines(),
@@ -1180,9 +1180,9 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.demographic_indicators {
-            let repo = crate::DemographicIndicatorRowRepository::new(connection);
-            for row in &mock_data.demographic_indicators {
+        if inserts.demographics {
+            let repo = crate::DemographicRowRepository::new(connection);
+            for row in &mock_data.demographics {
                 repo.upsert_one(row).unwrap();
             }
         }
@@ -1304,7 +1304,7 @@ impl MockData {
             mut asset_logs,
             plugin_data: _,
             mut currencies,
-            mut demographic_indicators,
+            mut demographics,
             mut properties,
             mut rnr_forms,
             mut rnr_form_lines,
@@ -1369,8 +1369,7 @@ impl MockData {
         self.currencies.append(&mut currencies);
         self.assets.append(&mut assets);
         self.asset_logs.append(&mut asset_logs);
-        self.demographic_indicators
-            .append(&mut demographic_indicators);
+        self.demographics.append(&mut demographics);
         self.properties.append(&mut properties);
         self.rnr_forms.append(&mut rnr_forms);
         self.rnr_form_lines.append(&mut rnr_form_lines);

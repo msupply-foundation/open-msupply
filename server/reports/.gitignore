@@ -1,0 +1,3 @@
+# ignore all built wasm functions
+target/
+*.wasm

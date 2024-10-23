@@ -2,8 +2,7 @@ use super::*;
 use copy_dir::copy_dir;
 use diesel::{Connection, RunQueryDsl};
 use repository::DBBackendConnection;
-use service::settings::Settings;
-use simple_log::is_debug;
+use service::settings::{is_develop, Settings};
 use std::{fs, io, path::PathBuf, process::Command, str::FromStr};
 
 pub(crate) fn restore(
@@ -40,7 +39,7 @@ pub(crate) fn restore(
 }
 
 fn confirmation(skip_confirmation: bool) -> Result<(), BackupError> {
-    if is_debug() && skip_confirmation {
+    if is_develop() && skip_confirmation {
         return Ok(());
     }
 

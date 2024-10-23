@@ -16,6 +16,8 @@ use service::{
 pub struct UpdateRnRFormInput {
     pub id: String,
     pub lines: Vec<UpdateRnRFormLineInput>,
+    pub their_reference: Option<String>,
+    pub comment: Option<String>,
 }
 
 #[derive(InputObject)]
@@ -23,6 +25,7 @@ pub struct UpdateRnRFormLineInput {
     pub id: String,
     pub quantity_received: Option<f64>,
     pub quantity_consumed: Option<f64>,
+    pub losses: Option<f64>,
     pub adjustments: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
     pub stock_out_duration: i32,
@@ -30,6 +33,7 @@ pub struct UpdateRnRFormLineInput {
     pub average_monthly_consumption: f64,
     pub initial_balance: f64,
     pub final_balance: f64,
+    pub minimum_quantity: f64,
     pub maximum_quantity: f64,
     pub calculated_requested_quantity: f64,
     pub entered_requested_quantity: Option<f64>,
@@ -99,13 +103,22 @@ fn map_error(error: ServiceError) -> Result<UpdateRnRFormResponse> {
 }
 
 impl UpdateRnRFormInput {
-    fn to_domain(UpdateRnRFormInput { id, lines }: UpdateRnRFormInput) -> UpdateRnRForm {
+    fn to_domain(
+        UpdateRnRFormInput {
+            id,
+            lines,
+            their_reference,
+            comment,
+        }: UpdateRnRFormInput,
+    ) -> UpdateRnRForm {
         UpdateRnRForm {
             id,
             lines: lines
                 .into_iter()
                 .map(UpdateRnRFormLineInput::to_domain)
                 .collect(),
+            their_reference,
+            comment,
         }
     }
 }
@@ -129,6 +142,8 @@ impl UpdateRnRFormLineInput {
             calculated_requested_quantity,
             entered_requested_quantity,
             low_stock,
+            losses,
+            minimum_quantity,
         }: UpdateRnRFormLineInput,
     ) -> UpdateRnRFormLine {
         UpdateRnRFormLine {
@@ -136,10 +151,12 @@ impl UpdateRnRFormLineInput {
             quantity_received,
             quantity_consumed,
             adjustments,
+            losses,
             stock_out_duration,
             adjusted_quantity_consumed,
             average_monthly_consumption,
             final_balance,
+            minimum_quantity,
             maximum_quantity,
             calculated_requested_quantity,
             entered_requested_quantity,
