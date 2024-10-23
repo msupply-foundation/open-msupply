@@ -93,8 +93,10 @@ function getNestedValue(node, key) {
 }
 
 const sortNodes = (nodes, sortBy) => {
-  let { sort, dir } = sortBy ?? { sort: "expiryDate", dir: "desc" };
+  let { sort, dir } = sortBy ?? {};
 
+  sort = sort ?? "expiryDate";
+  dir = dir ?? "desc";
   nodes.sort((a, b) => {
     const valueA = getNestedValue(a, sort);
     const valueB = getNestedValue(b, sort);
