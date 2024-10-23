@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 
 import {
   AppBarButtonsPortal,
+  AppFooterPortal,
   BasicTextInput,
   ButtonWithIcon,
+  DialogButton,
+  FlatButton,
   InputWithLabelRow,
   Typography,
 } from '@common/components';
@@ -11,11 +14,12 @@ import {
   Box,
   useTranslation,
   PlusCircleIcon,
+  EditIcon,
 } from '@openmsupply-client/common';
 import { ItemPackagingVariantsTable } from './ItemPackagingVariantsTable';
 import { ItemVariantFragment, PackagingVariantFragment } from '../../../api';
 
-const packVariants: PackagingVariantFragment[] = [
+const dummyPackVariants: PackagingVariantFragment[] = [
   {
     __typename: 'PackagingVariantNode',
     id: '1',
@@ -71,7 +75,7 @@ export const ItemVariantsTab = ({
                 __typename: 'ItemVariantNode',
                 id: Date.now().toString(),
                 name: '',
-                packagingVariants: [...packVariants],
+                packagingVariants: [...dummyPackVariants],
               },
             ]);
           }}
@@ -83,7 +87,21 @@ export const ItemVariantsTab = ({
           <ItemVariant variant={v} setVariant={setVariant} index={idx} />
         ))}
       </Box>
-      {/* // TODO footer */}
+      <AppFooterPortal
+        Content={
+          <Box
+            gap={2}
+            display="flex"
+            flexDirection="row"
+            justifyContent="flex-end"
+            alignItems="center"
+            height={64}
+          >
+            <DialogButton onClick={() => {}} variant="cancel" />
+            <DialogButton onClick={() => {}} variant="save" />
+          </Box>
+        }
+      />
     </>
   );
 };
@@ -163,7 +181,14 @@ const ItemVariant = ({
           />
         </Box>
         <Box flex={1}>
-          <Typography fontWeight="bold">{t('title.packaging')}</Typography>
+          <Box display="flex" justifyContent="space-between">
+            <Typography fontWeight="bold">{t('title.packaging')}</Typography>
+            <FlatButton
+              label={t('label.edit')}
+              onClick={() => {}}
+              startIcon={<EditIcon />}
+            />
+          </Box>
           <ItemPackagingVariantsTable data={variant.packagingVariants} />
         </Box>
       </Box>
