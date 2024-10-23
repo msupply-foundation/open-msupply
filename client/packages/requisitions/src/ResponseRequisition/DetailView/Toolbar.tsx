@@ -24,24 +24,13 @@ export const Toolbar: FC = () => {
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
 
-  const {
-    approvalStatus,
-    otherParty,
-    theirReference,
-    shipments,
-    update,
-    programName,
-    period,
-    orderType,
-  } = useResponse.document.fields([
-    'approvalStatus',
-    'otherParty',
-    'theirReference',
-    'shipments',
-    'programName',
-    'period',
-    'orderType',
-  ]);
+  const { approvalStatus, otherParty, theirReference, shipments, update } =
+    useResponse.document.fields([
+      'approvalStatus',
+      'otherParty',
+      'theirReference',
+      'shipments',
+    ]);
   const { onDelete } = useResponse.line.delete();
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
   const showInfo = noLinkedShipments && !isDisabled;
@@ -96,24 +85,6 @@ export const Toolbar: FC = () => {
                       {t(getApprovalStatusKey(approvalStatus))}
                     </Typography>
                   }
-                />
-              )}
-              {orderType && (
-                <InputWithLabelRow
-                  label={t('label.order-type')}
-                  Input={<Typography>{orderType ?? ''}</Typography>}
-                />
-              )}
-              {programName && (
-                <InputWithLabelRow
-                  label={t('label.program')}
-                  Input={<Typography>{programName ?? ''}</Typography>}
-                />
-              )}
-              {period && (
-                <InputWithLabelRow
-                  label={t('label.period')}
-                  Input={<Typography>{period?.name ?? ''}</Typography>}
                 />
               )}
             </Box>
