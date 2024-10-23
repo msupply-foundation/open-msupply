@@ -156,7 +156,7 @@ const useCreate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
         id: FnUtils.generateUUID(),
         name: input.name,
         programId: input.programId,
-        demographicIndicatorId: input.demographicIndicatorId,
+        demographicId: input.demographicId,
         coverageRate: input.coverageRate,
         isActive: input.isActive,
         wastageRate: input.wastageRate,
@@ -216,7 +216,7 @@ const useUpdate = (setErrorMessage: Dispatch<SetStateAction<string>>) => {
       input: {
         id: input.id,
         name: input.name,
-        demographicIndicatorId: input.demographicIndicatorId,
+        demographicId: input.demographicId,
         coverageRate: input.coverageRate,
         isActive: input.isActive,
         wastageRate: input.wastageRate,

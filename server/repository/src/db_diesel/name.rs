@@ -647,7 +647,7 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), 2);
 
-        // case insensitive search with umlaute
+        // case insensitive search with umlaut
         // Works for postgres but not for sqlite:
         #[cfg(feature = "postgres")]
         {

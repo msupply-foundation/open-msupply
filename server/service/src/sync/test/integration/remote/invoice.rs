@@ -66,6 +66,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             // Tax on invoice/transact is not nullable in mSupply
             tax_percentage: Some(0.0),
             original_shipment_id: None,
+            backdated_datetime: None,
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),

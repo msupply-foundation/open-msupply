@@ -108,7 +108,7 @@ impl SyncTranslation for StocktakeTranslation {
             }
             None => (
                 data.stock_take_created_date.and_time(data.stock_take_time),
-                None,
+                Some(data.stock_take_created_date.and_time(data.stock_take_time)),
             ),
         };
 

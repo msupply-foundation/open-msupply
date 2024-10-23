@@ -145,7 +145,7 @@ pub async fn start_server(
     let _ = set_log_callback(|log| info!("log {:?}", log), "info");
 
     // SET HARDWARE UUID
-    info!("Setting hardware uuid..");
+    info!("Getting hardware uuid..");
     #[cfg(not(target_os = "android"))]
     let machine_uid = machine_uid::get().expect("Failed to query OS for hardware id");
 
@@ -155,11 +155,13 @@ pub async fn start_server(
         .machine_uid
         .clone()
         .unwrap_or("".to_string());
+
+    info!("Setting hardware uuid [{}]", machine_uid.clone());
     service_provider
         .app_data_service
         .set_hardware_id(machine_uid.clone())
         .unwrap();
-    info!("Setting hardware uuid..done [{}]", machine_uid.clone());
+    info!("Setting hardware uuid.. done");
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
