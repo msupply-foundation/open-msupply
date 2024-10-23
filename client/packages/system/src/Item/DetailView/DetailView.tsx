@@ -44,8 +44,6 @@ export const ItemDetailView: FC = () => {
     },
   ];
 
-  console.log('ADDING SOME EXCITING TEST CODE');
-
   Environment.FEATURE_PACK_VARIANTS &&
     tabs.push({
       Component: <PackVariantsTab itemId={data.id} />,
