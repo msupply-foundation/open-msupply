@@ -8,6 +8,7 @@ import {
   DialogButton,
   FlatButton,
   InputWithLabelRow,
+  NumericTextInput,
   Typography,
 } from '@common/components';
 import {
@@ -146,7 +147,7 @@ const ItemVariant = ({
           />
 
           <InputWithLabelRow
-            label={t('label.storage-temperature')}
+            label={t('label.temperature')}
             labelWidth="200"
             Input={
               // TODO: temp range dropdown
@@ -177,6 +178,22 @@ const ItemVariant = ({
                 }}
                 fullWidth
               />
+            }
+          />
+
+          <InputWithLabelRow
+            label={t('label.doses-per-unit')}
+            labelWidth="200"
+            Input={
+              <Box width="100%">
+                <NumericTextInput
+                  value={variant.dosesPerUnit ?? undefined}
+                  onChange={v => {
+                    setVariant({ ...variant, dosesPerUnit: v });
+                  }}
+                  style={{ justifyContent: 'flex-start' }}
+                />
+              </Box>
             }
           />
         </Box>
