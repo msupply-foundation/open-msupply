@@ -257,7 +257,7 @@ export type ImmunisationProgramsQueryVariables = Types.Exact<{
 
 export type ImmunisationProgramsQuery = { __typename: 'Queries', programs: { __typename: 'ProgramConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramNode', id: string, name: string, vaccineCourses?: Array<{ __typename: 'VaccineCourseNode', name: string }> | null }> } };
 
-export type VaccineCourseFragment = { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null };
+export type VaccineCourseFragment = { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographic?: { __typename: 'DemographicNode', name: string, id: string } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null };
 
 export type VaccineCoursesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -268,7 +268,7 @@ export type VaccineCoursesQueryVariables = Types.Exact<{
 }>;
 
 
-export type VaccineCoursesQuery = { __typename: 'Queries', vaccineCourses: { __typename: 'VaccineCourseConnector', totalCount: number, nodes: Array<{ __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null }> } };
+export type VaccineCoursesQuery = { __typename: 'Queries', vaccineCourses: { __typename: 'VaccineCourseConnector', totalCount: number, nodes: Array<{ __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographic?: { __typename: 'DemographicNode', name: string, id: string } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null }> } };
 
 export type InsertVaccineCourseMutationVariables = Types.Exact<{
   input: Types.InsertVaccineCourseInput;
@@ -276,7 +276,7 @@ export type InsertVaccineCourseMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', insertVaccineCourse: { __typename: 'InsertVaccineCourseError', error: { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null } } } };
+export type InsertVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', insertVaccineCourse: { __typename: 'InsertVaccineCourseError', error: { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographic?: { __typename: 'DemographicNode', name: string, id: string } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null } } } };
 
 export type UpdateVaccineCourseMutationVariables = Types.Exact<{
   input: Types.UpdateVaccineCourseInput;
@@ -284,7 +284,7 @@ export type UpdateVaccineCourseMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', updateVaccineCourse: { __typename: 'UpdateVaccineCourseError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicIndicatorId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographicIndicator?: { __typename: 'DemographicIndicatorNode', name: string, id: string, baseYear: number } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null } } } };
+export type UpdateVaccineCourseMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', vaccineCourse: { __typename: 'VaccineCourseMutations', updateVaccineCourse: { __typename: 'UpdateVaccineCourseError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordProgramCombinationAlreadyExists', description: string } } | { __typename: 'VaccineCourseNode', id: string, name: string, programId: string, demographicId?: string | null, coverageRate: number, wastageRate: number, isActive: boolean, demographic?: { __typename: 'DemographicNode', name: string, id: string } | null, vaccineCourseItems?: Array<{ __typename: 'VaccineCourseItemNode', id: string, itemId: string, name: string }> | null, vaccineCourseDoses?: Array<{ __typename: 'VaccineCourseDoseNode', id: string, label: string, minAgeMonths: number, maxAgeMonths: number, minIntervalDays: number, customAgeLabel?: string | null }> | null } } } };
 
 export type DeleteVaccineCourseMutationVariables = Types.Exact<{
   vaccineCourseId: Types.Scalars['String']['input'];
@@ -564,14 +564,13 @@ export const VaccineCourseFragmentDoc = gql`
   id
   name
   programId
-  demographicIndicatorId
+  demographicId
   coverageRate
   wastageRate
   isActive
-  demographicIndicator {
+  demographic {
     name
     id
-    baseYear
   }
   vaccineCourseItems {
     ...VaccineCourseItem

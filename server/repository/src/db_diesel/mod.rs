@@ -11,16 +11,20 @@ pub mod clinician;
 mod clinician_link_row;
 mod clinician_row;
 mod clinician_store_join_row;
+pub mod cold_storage_type;
+mod cold_storage_type_row;
 pub mod consumption;
 pub mod contact_trace;
 pub mod contact_trace_row;
 mod context_row;
 pub mod currency;
 mod currency_row;
+pub mod demographic;
 pub mod demographic_indicator;
 pub mod demographic_indicator_row;
 pub mod demographic_projection;
 pub mod demographic_projection_row;
+pub mod demographic_row;
 pub mod diesel_schema;
 pub mod document;
 pub mod document_registry;
@@ -76,6 +80,8 @@ mod program_event_row;
 mod program_requisition;
 pub mod property;
 pub mod property_row;
+pub mod reason_option;
+pub mod reason_option_row;
 pub mod replenishment;
 pub mod report;
 mod report_query;
@@ -134,6 +140,8 @@ pub use clinician::*;
 pub use clinician_link_row::*;
 pub use clinician_row::*;
 pub use clinician_store_join_row::*;
+pub use cold_storage_type::*;
+pub use cold_storage_type_row::*;
 pub use consumption::*;
 pub use context_row::*;
 pub use currency::*;
@@ -141,6 +149,7 @@ pub use currency_row::*;
 pub use demographic_indicator::*;
 pub use demographic_indicator_row::*;
 pub use demographic_projection_row::*;
+pub use demographic_row::*;
 pub use document::*;
 pub use document_registry::*;
 pub use document_registry_config::*;
@@ -189,6 +198,7 @@ pub use program_event::*;
 pub use program_event_row::*;
 pub use program_requisition::*;
 pub use property_row::*;
+pub use reason_option::*;
 pub use replenishment::*;
 pub use report::*;
 pub use report_query::*;
@@ -240,6 +250,8 @@ use diesel::{
     prelude::*,
     r2d2::{ConnectionManager, Pool, PooledConnection},
     result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as DieselError},
+    sql_query,
+    sql_types::Text,
 };
 
 #[cfg(not(feature = "postgres"))]
@@ -311,4 +323,16 @@ fn get_connection(
         msg: "Failed to open Connection".to_string(),
         extra: format!("{:?}", error),
     })
+}
+
+#[derive(QueryableByName, Debug, PartialEq)]
+pub struct JsonRawRow {
+    #[diesel(sql_type = Text)]
+    pub json_row: String,
+}
+
+pub fn raw_query(connection: &StorageConnection, query: String) -> Vec<JsonRawRow> {
+    sql_query(&query)
+        .get_results::<JsonRawRow>(connection.lock().connection())
+        .unwrap()
 }
