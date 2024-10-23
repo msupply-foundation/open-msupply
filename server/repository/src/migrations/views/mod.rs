@@ -381,10 +381,21 @@ pub(crate) fn rebuild_views(connection: &StorageConnection) -> anyhow::Result<()
     LEFT JOIN name_link nl ON nl.id = program_enrolment.patient_link_id
     LEFT JOIN report_document doc ON doc.name = program_enrolment.document_name;
 
-
-      CREATE VIEW requisitions_in_period AS
-          SELECT 'n/a' as id, program_id, period_id, store_id, order_type, type, count(*) as count FROM requisition WHERE order_type IS NOT NULL
-            GROUP BY 1,2,3,4,5,6;   
+  CREATE VIEW requisitions_in_period AS
+    SELECT
+      'n/a' as id,
+      r.program_id,
+      r.period_id,
+      r.store_id,
+      r.order_type,
+      r.type,
+      n.id AS other_party_id,
+      count(*) as count
+    FROM requisition r 
+    INNER JOIN name_link nl ON r.name_link_id = nl.id
+    INNER JOIN name n ON nl.name_id = n.id
+    WHERE r.order_type IS NOT NULL
+    GROUP BY 1,2,3,4,5,6,7;
 
   CREATE VIEW vaccination_card AS
     SELECT 

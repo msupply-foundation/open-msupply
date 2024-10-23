@@ -12,6 +12,7 @@ import {
   useDetailPanel,
   useParams,
   useTranslation,
+  FullScreenButton,
 } from '@openmsupply-client/common';
 import {
   ReportRowFragment,
@@ -45,6 +46,7 @@ export const AppBarButtonsComponent = () => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <FullScreenButton />
         <ReportSelector
           context={ReportContext.Requisition}
           subContext="R&R"
