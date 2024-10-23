@@ -21,6 +21,24 @@
       "options": {
         "readonly": true
       }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/sort",
+      "label": "Sort by:",
+      "options": {
+        "show": [
+          ["name", "name"],
+          ["code", "code"],
+          ["SOH", "stock on hand"],
+          ["MOS", "months cover"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dir",
+      "label": "Sort direction"
     }
   ]
 }

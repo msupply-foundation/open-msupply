@@ -60,39 +60,40 @@ var require_utils = __commonJS({
 var require_utils2 = __commonJS({
   "src/utils.js"(exports2, module2) {
     var import_utils2 = __toESM(require_utils());
-    var processItemLines2 = (res) => {
-      res.items.nodes.forEach((item) => {
+    var processItemLines2 = (data, sort, dir) => {
+      data.items.nodes.forEach((item) => {
         if (Object.keys(item).length == 0) {
           return;
         }
         item.monthConsumption = calculateQuantity(
-          res.thisMonthConsumption,
+          data.thisMonthConsumption,
           item.id
         );
         item.lastMonthConsumption = calculateQuantity(
-          res.lastMonthConsumption,
+          data.lastMonthConsumption,
           item.id
         );
         item.twoMonthsAgoConsumption = calculateQuantity(
-          res.twoMonthsAgoConsumption,
+          data.twoMonthsAgoConsumption,
           item.id
         );
         item.expiringInSixMonths = calculateQuantity(
-          res.expiringInSixMonths,
+          data.expiringInSixMonths,
           item.id
         );
         item.expiringInTwelveMonths = calculateQuantity(
-          res.expiringInTwelveMonths,
+          data.expiringInTwelveMonths,
           item.id
         );
-        item.stockOnOrder = calculateQuantity(res.stockOnOrder, item.id);
-        item.AMC12 = calculateQuantity(res.AMCTwelve, item.id);
-        item.AMC24 = calculateQuantity(res.AMCTwentyFour, item.id);
+        item.stockOnOrder = calculateQuantity(data.stockOnOrder, item.id);
+        item.AMC12 = calculateQuantity(data.AMCTwelve, item.id);
+        item.AMC24 = calculateQuantity(data.AMCTwentyFour, item.id);
         item.SOH = calculateStatValue(item?.stats?.availableStockOnHand);
         item.MOS = calculateStatValue(item?.stats?.availableMonthsOfStockOnHand);
       });
-      let cleanNodes = (0, import_utils2.cleanUpNodes)(res.items.nodes);
-      return cleanNodes;
+      let cleanNodes = (0, import_utils2.cleanUpNodes)(data.items.nodes);
+      let sortedNodes = sortNodes(cleanNodes, sort, dir);
+      return sortedNodes;
     };
     var calculateQuantity = (queryResult, id) => {
       let quantity = 0;
@@ -109,11 +110,33 @@ var require_utils2 = __commonJS({
       }
       return returnValue;
     };
+    function getNestedValue(node, key) {
+      key = key + "";
+      return key.split(".").reduce((value, part) => value && value[part], node);
+    }
+    var sortNodes = (nodes, sort, dir) => {
+      sort = sort ?? "expiryDate";
+      dir = dir ?? "desc";
+      nodes.sort((a, b) => {
+        const valueA = getNestedValue(a, sort);
+        const valueB = getNestedValue(b, sort);
+        if (valueA === valueB) {
+          return 0;
+        }
+        if (dir === "asc") {
+          return valueA > valueB ? 1 : -1;
+        } else {
+          return valueA < valueB ? 1 : -1;
+        }
+      });
+      return nodes;
+    };
     module2.exports = {
       calculateQuantity,
       calculateStatValue,
       processItemLines: processItemLines2,
-      cleanUpNodes: import_utils2.cleanUpNodes
+      cleanUpNodes: import_utils2.cleanUpNodes,
+      sortNodes
     };
   }
 });
@@ -122,7 +145,12 @@ var require_utils2 = __commonJS({
 var import_utils = __toESM(require_utils2());
 function convert_data() {
   const res = JSON.parse(Host.inputString());
-  res.data.items.nodes = (0, import_utils.processItemLines)(res.data);
+  console.log("arguments", res?.arguments?.sort, res?.arguments?.dir);
+  res.data.items.nodes = (0, import_utils.processItemLines)(
+    res.data,
+    res?.arguments?.sort ?? void 0,
+    res?.arguments?.dir ?? void 0
+  );
   Host.outputString(JSON.stringify(res));
 }
 module.exports = {
